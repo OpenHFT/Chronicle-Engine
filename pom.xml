@@ -25,7 +25,7 @@
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>chronicle-map</artifactId>
+    <artifactId>chronicle-engine</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <name>OpenHFT/Chronicle-Engine</name>
     <description>Chronicle-Engine</description>
