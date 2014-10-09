@@ -7,6 +7,7 @@ import net.openhft.chronicle.map.ChronicleSet;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * Created by peter on 09/10/14.
@@ -75,5 +76,10 @@ public class ChronicleEngine implements ChronicleContext {
     @Override
     public ChronicleCluster getCluster(String name) {
         return clusters.get(name);
+    }
+
+    @Override
+    public Logger getLogger(String name) {
+        return Logger.getLogger(name);
     }
 }
