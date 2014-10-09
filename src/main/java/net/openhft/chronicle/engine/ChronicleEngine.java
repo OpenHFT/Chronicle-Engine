@@ -41,7 +41,7 @@ public class ChronicleEngine implements ChronicleContext {
     }
 
     private <K, V> void validateClasses(ChronicleMap map, Class<K> kClass, Class<V> vClass) {
-
+        // TODO runtime check the key and values classes match
     }
 
     public void setSet(String name, ChronicleSet set) {
@@ -57,7 +57,7 @@ public class ChronicleEngine implements ChronicleContext {
     }
 
     private <E> void validateClasses(ChronicleSet set, Class<E> eClass) {
-
+        // TODO runtime check the element class matches.
     }
 
     public void setThreadPool(String name, ChronicleThreadPool threadPool) {
