@@ -8,4 +8,6 @@
 *.war
 *.ear
 *.iml
-chronicle-map (1).iml
+
+# maven
+target
