@@ -43,7 +43,7 @@ public class ChronicleEngine implements ChronicleContext {
 
     }
 
-    public void setSets(String name, ChronicleSet set) {
+    public void setSet(String name, ChronicleSet set) {
         sets.put(name, set);
     }
 
