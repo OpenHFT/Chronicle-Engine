@@ -45,13 +45,13 @@
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>lang</artifactId>
-                <version>6.4.9</version>
+                <version>6.4.10</version>
             </dependency>
 
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>chronicle-map</artifactId>
-                <version>2.0.2a-SNAPSHOT</version>
+                <version>2.0.2a</version>
             </dependency>
             <dependency>
                 <groupId>net.openhft</groupId>
