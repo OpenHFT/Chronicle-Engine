@@ -2,7 +2,7 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.Chronicle;
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ChronicleSet;
+import net.openhft.chronicle.set.ChronicleSet;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
