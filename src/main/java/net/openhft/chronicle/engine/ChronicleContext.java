@@ -34,6 +34,8 @@ public interface ChronicleContext {
 
     <E> ChronicleSet<E> getSet(String name, Class<E> eClass);
 
+    <I> I getService(Class<I> iClass, String name, Class... args);
+
     ChronicleThreadPool getThreadPool(String name);
 
     ChronicleCluster getCluster(String name); // check name of cluster interface.

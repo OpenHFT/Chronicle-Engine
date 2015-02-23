@@ -58,6 +58,17 @@ public class ChronicleEngine implements ChronicleContext {
         return map;
     }
 
+    @Override
+    public <I> I getService(Class<I> iClass, String name, Class... args) {
+        if (iClass == Chronicle.class)
+            return (I) getQueue(name);
+        if (iClass == ChronicleSet.class)
+            return (I) getSet(name, args[0]);
+        if (iClass == ChronicleMap.class)
+            return (I) getMap(name, args[0], args[1]);
+        throw new UnsupportedOperationException();
+    }
+
     private <K, V> void validateClasses(ChronicleMap map, Class<K> kClass, Class<V> vClass) {
         // TODO runtime check the key and values classes match
     }
