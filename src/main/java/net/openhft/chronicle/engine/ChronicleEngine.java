@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 /**
- * Created by peter on 09/10/14.
+ * Created by peter.lawrey on 09/10/14.
  */
 public class ChronicleEngine implements ChronicleContext {
     private final Map<String, Chronicle> queues = Collections.synchronizedMap(new LinkedHashMap<String, Chronicle>());

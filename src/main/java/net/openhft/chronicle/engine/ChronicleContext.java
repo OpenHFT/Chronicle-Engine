@@ -25,7 +25,7 @@ import net.openhft.chronicle.set.ChronicleSet;
 import java.util.logging.Logger;
 
 /**
- * Created by peter on 09/10/14.
+ * Created by peter.lawrey on 09/10/14.
  */
 public interface ChronicleContext {
     Chronicle getQueue(String name);
