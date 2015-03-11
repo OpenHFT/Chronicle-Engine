@@ -19,6 +19,8 @@
 package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.Chronicle;
+import net.openhft.chronicle.engine.old.ChronicleContext;
+import net.openhft.chronicle.engine.old.ChronicleEngine;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.set.ChronicleSet;
 import org.junit.Before;
