@@ -18,28 +18,22 @@
 
 package net.openhft.chronicle.engine;
 
-import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.map.ServerEndpoint;
+import net.openhft.chronicle.map.WiredChronicleMapStatelessClientBuilder;
+import net.openhft.chronicle.map.WiredStatelessChronicleMap;
 import net.openhft.chronicle.network2.AcceptorEventHandler;
-import net.openhft.chronicle.network2.WireTcpHandler;
-import net.openhft.chronicle.network2.event.EventGroup;
-import net.openhft.chronicle.wire.BinaryWire;
-import net.openhft.chronicle.wire.RawWire;
-import net.openhft.chronicle.wire.TextWire;
-import net.openhft.chronicle.wire.Wire;
-import net.openhft.lang.io.ByteBufferBytes;
-
+import net.openhft.chronicle.wire.Marshallable;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
+import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.function.Function;
+
+import static org.junit.Assert.assertEquals;
 
 /*
 Running on an i7-3970X
@@ -48,32 +42,19 @@ TextWire: Loop back echo latency was 7.4/8.9 12/20 108/925 us for 50/90 99/99.9 
 BinaryWire: Loop back echo latency was 6.6/8.0 9/11 19/3056 us for 50/90 99/99.9 99.99/worst %tile
 RawWire: Loop back echo latency was 5.9/6.8 8/10 12/80 us for 50/90 99/99.9 99.99/worst %tile
  */
-@RunWith(value = Parameterized.class)
+
 public class WireTcpHandlerTest {
 
-    private final String desc;
-    private final Function<Bytes, Wire> wireWrapper;
 
-    public WireTcpHandlerTest(String desc, Function<Bytes, Wire> wireWrapper) {
-        this.desc = desc;
-        this.wireWrapper = wireWrapper;
-    }
 
-    @Parameterized.Parameters
-    public static Collection<Object[]> combinations() {
-        return Arrays.asList(
-                new Object[]{"TextWire", (Function<Bytes, Wire>) TextWire::new},
-                new Object[]{"BinaryWire", (Function<Bytes, Wire>) BinaryWire::new},
-                new Object[]{"RawWire", (Function<Bytes, Wire>) RawWire::new}
-        );
-    }
 
     @Test
     public void testProcess() throws Exception {
-        EventGroup eg = new EventGroup();
-        eg.start();
-        AcceptorEventHandler eah = new AcceptorEventHandler(0, () -> new EchoRequestHandler(wireWrapper));
-        eg.addHandler(eah);
+
+
+        final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1);
+
+        final AcceptorEventHandler eah = serverEndpoint.run();
 
         SocketChannel[] sc = new SocketChannel[1];
         for (int i = 0; i < sc.length; i++) {
@@ -82,97 +63,108 @@ public class WireTcpHandlerTest {
             sc[i] = SocketChannel.open(localAddress);
             sc[i].configureBlocking(false);
         }
-//        testThroughput(sc);
-        testLatency(desc, wireWrapper, sc[0]);
 
-        eg.stop();
+
+
+        final WiredChronicleMapStatelessClientBuilder<String, ServiceLocator> builder =
+                new WiredChronicleMapStatelessClientBuilder<>(
+                        new InetSocketAddress("localhost", eah.getLocalPort()),
+                        String.class,
+                        ServiceLocator.class,
+                        (short) 1);
+
+        builder.identifier((byte)1);
+        final ChronicleMap<String, ServiceLocator> detailsMap = builder.create();
+
+        ServiceLocator serviceLocator = detailsMap.get("Colours");
+
+
+        final  short colourChannelId = 2;
+
+        // todo add some sort of cross node locking
+        if (serviceLocator == null) {
+            short channelID = colourChannelId;
+            ((WiredStatelessChronicleMap) detailsMap).createChannel(channelID);
+            serviceLocator = new ServiceLocator(String.class, String.class, channelID);
+            detailsMap.put("Colours", serviceLocator);
+        }
+
+        ChronicleMap<String, String> colours = new WiredChronicleMapStatelessClientBuilder<String, String>(
+                builder.hub(),
+                serviceLocator.keyClass,
+                serviceLocator.valueClass,
+                serviceLocator.channelID).hub(builder.hub()).create();
+
+        colours.put("Rob", "Blue");
+
+        assertEquals(1, colours.size());
+
+
+        ServiceLocator result = detailsMap.get("Colours");
+        Assert.assertEquals(2, result.channelID);
+
+        serverEndpoint.stop();
     }
 
 
 
 
-    private static void testLatency(String desc, Function<Bytes, Wire> wireWrapper, SocketChannel... sockets) throws IOException {
-//        System.out.println("Starting latency test");
-        int tests = 500000;
-        long[] times = new long[tests * sockets.length];
-        int count = 0;
-        ByteBuffer out = ByteBuffer.allocateDirect(64 * 1024);
-        Bytes outBytes = Bytes.wrap(out);
-        Wire outWire = wireWrapper.apply(outBytes);
+    public static class ServiceLocator implements Marshallable {
 
-        ByteBuffer in = ByteBuffer.allocateDirect(64 * 1024);
-        Bytes inBytes = Bytes.wrap(in);
-        Wire inWire = wireWrapper.apply(inBytes);
-        TestData td = new TestData();
-        TestData td2 = new TestData();
-        for (int i = -50000; i < tests; i++) {
-            long now = System.nanoTime();
-            for (SocketChannel socket : sockets) {
-                out.clear();
-                outBytes.clear();
-                outBytes.writeUnsignedShort(0);
-                td.key3 = td.key2 = td.key1 = i;
-                td.writeMarshallable(outWire);
+        Class keyClass;
+        Class valueClass;
+        short channelID;
 
-                outBytes.writeUnsignedShort(0, (int) outBytes.position() - 2);
-                out.limit((int) outBytes.position());
-                socket.write(out);
-                if (out.remaining() > 0)
-                    throw new AssertionError("Unable to write in one go.");
-            }
 
-            for (SocketChannel socket : sockets) {
-                in.clear();
-                inBytes.clear();
-                while (true) {
-                    int read = socket.read(in);
-                    inBytes.limit(in.position());
-                    if (inBytes.remaining() >= 2) {
-                        int length = inBytes.readUnsignedShort(0);
-                        if (inBytes.remaining() >= length + 2) {
-                            inBytes.limit(length + 2);
-                            inBytes.skip(2);
-                            td2.readMarshallable(inWire);
-                        }
-                        break;
-                    }
-                    if (read < 0)
-                        throw new AssertionError("Unable to read in one go.");
-                }
-                if (i >= 0)
-                    times[count++] = System.nanoTime() - now;
-            }
+        public ServiceLocator() {
         }
-        Arrays.sort(times);
-        System.out.printf("%s: Loop back echo latency was %.1f/%.1f %,d/%,d %,d/%d us for 50/90 99/99.9 99.99/worst %%tile%n",
-                desc,
-                times[times.length / 2] / 1e3,
-                times[times.length * 9 / 10] / 1e3,
-                times[times.length - times.length / 100] / 1000,
-                times[times.length - times.length / 1000] / 1000,
-                times[times.length - times.length / 10000] / 1000,
-                times[times.length - 1] / 1000
-        );
+
+
+        public ServiceLocator(Class<String> keyClass, Class<String> valueClass, short channelID) {
+            this.keyClass = keyClass;
+            this.valueClass = valueClass;
+            this.channelID = channelID;
+        }
+
+
+        @Override
+        public void writeMarshallable(WireOut wire) {
+            wire.write(() -> "keyClass").text(keyClass.getName());
+            wire.write(() -> "valueClass").text(valueClass.getName());
+            wire.write(() -> "channelID").int16(channelID);
+        }
+
+        @Override
+        public void readMarshallable(WireIn wire) throws IllegalStateException {
+            try {
+                keyClass = Class.forName(wire.read(() -> "keyClass").text());
+                valueClass = Class.forName(wire.read(() -> "valueClass").text());
+                channelID = wire.read(() -> "channelID").int16();
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+        }
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            ServiceLocator serviceLocator = (ServiceLocator) o;
+
+            if (channelID != serviceLocator.channelID) return false;
+            if (!keyClass.equals(serviceLocator.keyClass)) return false;
+            if (!valueClass.equals(serviceLocator.valueClass)) return false;
+
+            return true;
     }
 
-
-    static class EchoRequestHandler extends WireTcpHandler {
-        private final TestData td = new TestData();
-        private final Function<Bytes, Wire> wireWrapper;
-
-        EchoRequestHandler(Function<Bytes, Wire> wireWrapper) {
-            this.wireWrapper = wireWrapper;
-        }
-
         @Override
-        protected void process(Wire inWire, Wire outWire) {
-            td.readMarshallable(inWire);
-            td.writeMarshallable(outWire);
-        }
-
-        @Override
-        protected Wire createWriteFor(Bytes bytes) {
-            return wireWrapper.apply(bytes);
+        public int hashCode() {
+            int result = keyClass.hashCode();
+            result = 31 * result + valueClass.hashCode();
+            result = 31 * result + (int) channelID;
+            return result;
         }
     }
 }
