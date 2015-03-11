@@ -43,7 +43,7 @@ BinaryWire: Loop back echo latency was 6.6/8.0 9/11 19/3056 us for 50/90 99/99.9
 RawWire: Loop back echo latency was 5.9/6.8 8/10 12/80 us for 50/90 99/99.9 99.99/worst %tile
  */
 
-public class WireTcpHandlerTest {
+public class WireMapTcpTest {
 
 
 
