@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class RemoteClientServiceLocator {
 
-    private final ClientWiredStatelessClientTcpConnectionHub hub;
+    private final ClientWiredStatelessTcpConnectionHub hub;
     private final ChronicleMap<String, ServiceDescriptor> serviceLocator;
     private final AtomicInteger nextFreeChannel = new AtomicInteger(2);
 
@@ -40,8 +40,8 @@ public class RemoteClientServiceLocator {
                                       int port,
                                       byte identifier) throws IOException {
 
-        final ClientWiredChronicleMapStatelessClientBuilder<String, ServiceDescriptor> builder =
-                new ClientWiredChronicleMapStatelessClientBuilder<>(
+        final ClientWiredChronicleMapStatelessBuilder<String, ServiceDescriptor> builder =
+                new ClientWiredChronicleMapStatelessBuilder<>(
                         new InetSocketAddress(hostname, port),
                         String.class,
                         ServiceDescriptor.class,
@@ -69,7 +69,7 @@ public class RemoteClientServiceLocator {
 
     private <I, KI, VI> I mapInstance(Class<KI> kClass, Class<VI> vClass, short channelID) throws IOException {
 
-        return (I) new ClientWiredChronicleMapStatelessClientBuilder<KI, VI>(
+        return (I) new ClientWiredChronicleMapStatelessBuilder<KI, VI>(
                 hub,
                 kClass,
                 vClass,

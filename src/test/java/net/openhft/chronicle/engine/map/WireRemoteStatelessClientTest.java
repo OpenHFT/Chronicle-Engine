@@ -51,7 +51,7 @@ public class WireRemoteStatelessClientTest {
     }
 
 
-    class RemoteMapSupplier<K, V> implements Closeable, Supplier<ChronicleMap<K, V>> {
+   public static class RemoteMapSupplier<K, V> implements Closeable, Supplier<ChronicleMap<K, V>> {
 
         private final ServerEndpoint serverEndpoint;
         private final ChronicleMap<K, V> map;
