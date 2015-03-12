@@ -56,7 +56,7 @@ public class ServerEndpoint implements Closeable {
                 .createWithId(localIdentifier);
 
         // this is how you add maps after the custer is created
-        ChronicleMap serviceLocatorMap = of(byte[].class, byte[].class)
+         of(byte[].class, byte[].class)
                 .instance().replicatedViaChannel(replicationHub.createChannel((short) 1)).create();
 
         final ChannelProvider provider = ChannelProvider.getProvider(replicationHub);
