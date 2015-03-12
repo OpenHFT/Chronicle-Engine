@@ -19,7 +19,6 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.map.MapWireHandler;
 import net.openhft.chronicle.network2.WireHandler;
 import net.openhft.chronicle.network2.WireTcpHandler;
 import net.openhft.chronicle.wire.BinaryWire;
@@ -30,8 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.StreamCorruptedException;
 
-import static net.openhft.chronicle.map.MapWireHandler.Fields.RESULT;
-import static net.openhft.chronicle.map.MapWireHandler.Fields.TRANSACTION_ID;
+import static net.openhft.chronicle.map.MapWireHandlerBuilder.Fields.*;
 
 /**
  * Created by Rob Austin
@@ -64,7 +62,7 @@ public class EngineWireHandler extends WireTcpHandler {
     @Override
     protected void process(Wire in, Wire out) throws StreamCorruptedException {
 
-        in.read(MapWireHandler.Fields.TYPE).text(text);
+        in.read(TYPE).text(text);
 
         if ("MAP".contentEquals(text)) {
             mapWireHandler.process(in, out);
@@ -102,7 +100,7 @@ public class EngineWireHandler extends WireTcpHandler {
             long transactionId = inWire.read(TRANSACTION_ID).int64();
             outWire.write(TRANSACTION_ID).int64(transactionId);
 
-            in.read(MapWireHandler.Fields.METHOD_NAME).text(text);
+            in.read(METHOD_NAME).text(text);
 
             if ("getWireFormats".contentEquals(text)) {
                 out.write(RESULT).text(TEXT_WIRE + "," + BINARY_WIRE);

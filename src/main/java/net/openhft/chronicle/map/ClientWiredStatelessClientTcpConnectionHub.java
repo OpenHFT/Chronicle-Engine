@@ -40,7 +40,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_SIZE;
 import static net.openhft.chronicle.map.ClientWiredStatelessChronicleMap.EventId.APPLICATION_VERSION;
-import static net.openhft.chronicle.map.MapWireHandler.Fields.*;
+import static net.openhft.chronicle.map.MapWireHandlerBuilder.Fields.*;
 
 /**
  * Created by Rob Austin

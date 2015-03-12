@@ -23,13 +23,11 @@ package net.openhft.chronicle.map;
  */
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.bytes.BytesMarshallable;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.chronicle.network2.WireHandler;
 import net.openhft.chronicle.network2.event.EventGroup;
-import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireKey;
@@ -54,49 +52,36 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static java.nio.channels.SelectionKey.OP_READ;
-import static java.nio.channels.SelectionKey.OP_WRITE;
 import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_SIZE;
+import static net.openhft.chronicle.map.MapWireHandlerBuilder.Fields.*;
 
 /**
  * @author Rob Austin.
  */
-public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshallable> implements WireHandler {
+class MapWireHandler<K, V> implements WireHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
+
     private final NativeBytes inLangBytes = new NativeBytes(0, 0);
     @NotNull
+
     private final OutMessageAdapter outMessageAdapter = new OutMessageAdapter();
     @NotNull
+
     private final ArrayList<BytesChronicleMap> bytesChronicleMaps = new ArrayList<>();
     @NotNull
+
     private final ByteBuffer inLanByteBuffer = ByteBuffer.allocateDirect(64);
     private final StringBuilder methodName = new StringBuilder();
     private final Supplier<ChronicleHashInstanceBuilder<ChronicleMap<K, V>>> chronicleHashInstanceBuilder;
-
-    Map<Long, Runnable> incompleteWork = new HashMap<>();
-    private Wire inWire = new TextWire(Bytes.elasticByteBuffer());
-    private Wire outWire = new TextWire(Bytes.elasticByteBuffer());
-    final Consumer writeElement = new Consumer<Iterator<byte[]>>() {
+    private Wire inWire = null;
+    private Wire outWire = null;
+    private final Consumer writeElement = new Consumer<Iterator<byte[]>>() {
 
         @Override
         public void accept(Iterator<byte[]> iterator) {
-            outWire.write(Fields.RESULT);
+            outWire.write(RESULT);
             outWire.bytes().write(iterator.next());
-        }
-    };
-    final Consumer writeEntry = new Consumer<Iterator<Map.Entry<byte[], byte[]>>>() {
-
-        @Override
-        public void accept(Iterator<Map.Entry<byte[], byte[]>> iterator) {
-
-            final Map.Entry<byte[], byte[]> entry = iterator.next();
-
-            outWire.write(Fields.RESULT_KEY);
-            outWire.bytes().write(entry.getKey());
-
-            outWire.write(Fields.RESULT_VALUE);
-            outWire.bytes().write(entry.getValue());
         }
     };
     private byte localIdentifier;
@@ -105,7 +90,20 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
     private List<Replica> channelList;
     private ReplicationHub hub;
     private byte remoteIdentifier;
-    private boolean hasEatenFirstByte = false;
+    private final Consumer writeEntry = new Consumer<Iterator<Map.Entry<byte[], byte[]>>>() {
+
+        @Override
+        public void accept(Iterator<Map.Entry<byte[], byte[]>> iterator) {
+
+            final Map.Entry<byte[], byte[]> entry = iterator.next();
+
+            outWire.write(RESULT_KEY);
+            outWire.bytes().write(entry.getKey());
+
+            outWire.write(RESULT_VALUE);
+            outWire.bytes().write(entry.getValue());
+        }
+    };
     private Runnable out = null;
     private SelectionKey key = null;
 
@@ -123,6 +121,8 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
         this.chronicleHashInstanceBuilder = chronicleHashInstanceBuilder;
         this.hub = hub;
     }
+
+    private Map<Long, Runnable> incompleteWork = new HashMap<>();
 
 
     @Override
@@ -149,12 +149,12 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
         out = () -> {
 
             // each chunk has its own transaction-id
-            outWire.write(Fields.TRANSACTION_ID).int64(transactionId);
+            outWire.write(TRANSACTION_ID).int64(transactionId);
 
             write(map -> {
 
                 boolean hasNext = iterator.hasNext();
-                outWire.write(Fields.HAS_NEXT).bool(hasNext);
+                outWire.write(HAS_NEXT).bool(hasNext);
 
                 if (hasNext)
                     c.accept(iterator);
@@ -174,14 +174,14 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
 
         // it is assumed by this point that the buffer has all the bytes in it for this message
 
-        long transactionId = inWire.read(Fields.TRANSACTION_ID).int64();
-        timestamp = inWire.read(Fields.TIME_STAMP).int64();
-        channelId = inWire.read(Fields.CHANNEL_ID).int16();
-        inWire.read(Fields.METHOD_NAME).text(methodName);
+        long transactionId = inWire.read(TRANSACTION_ID).int64();
+        timestamp = inWire.read(TIME_STAMP).int64();
+        channelId = inWire.read(CHANNEL_ID).int16();
+        inWire.read(METHOD_NAME).text(methodName);
 
         if ("PUT_WITHOUT_ACC".contentEquals(methodName)) {
             writeVoid(bytesMap -> {
-                final net.openhft.lang.io.Bytes reader = toReader(inWire, Fields.ARG_1, Fields.ARG_2);
+                final net.openhft.lang.io.Bytes reader = toReader(inWire, ARG_1, ARG_2);
                 bytesMap.put(reader, reader, timestamp, identifier());
             });
             return;
@@ -214,7 +214,7 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
 
             if ("CREATE_CHANNEL".contentEquals(methodName)) {
                 writeVoid(() -> {
-                    short channelId1 = inWire.read(Fields.ARG_1).int16();
+                    short channelId1 = inWire.read(ARG_1).int16();
                     chronicleHashInstanceBuilder.get().replicatedViaChannel(hub.createChannel(channelId1)).create();
                     return null;
                 });
@@ -223,36 +223,36 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
 
 
             if ("REMOTE_IDENTIFIER".contentEquals(methodName)) {
-                this.remoteIdentifier = inWire.read(Fields.RESULT).int8();
+                this.remoteIdentifier = inWire.read(RESULT).int8();
                 return;
             }
 
             if ("LONG_SIZE".contentEquals(methodName)) {
-                write(b -> outWire.write(Fields.RESULT).int64(b.longSize()));
+                write(b -> outWire.write(RESULT).int64(b.longSize()));
                 return;
             }
 
             if ("IS_EMPTY".contentEquals(methodName)) {
-                write(b -> outWire.write(Fields.RESULT).bool(b.isEmpty()));
+                write(b -> outWire.write(RESULT).bool(b.isEmpty()));
                 return;
             }
 
             if ("CONTAINS_KEY".contentEquals(methodName)) {
-                write(b -> outWire.write(Fields.RESULT).
-                        bool(b.containsKey(toReader(inWire, Fields.ARG_1))));
+                write(b -> outWire.write(RESULT).
+                        bool(b.containsKey(toReader(inWire, ARG_1))));
                 return;
             }
 
             if ("CONTAINS_VALUE".contentEquals(methodName)) {
-                write(b -> outWire.write(Fields.RESULT).
-                        bool(b.containsKey(toReader(inWire, Fields.ARG_1))));
+                write(b -> outWire.write(RESULT).
+                        bool(b.containsKey(toReader(inWire, ARG_1))));
                 return;
             }
 
             if ("GET".contentEquals(methodName)) {
 
                 writeValueUsingDelegate(map -> {
-                    byte[] key1 = this.toByteArray(inWire, Fields.ARG_1);
+                    byte[] key1 = this.toByteArray(inWire, ARG_1);
                     return map.get(key1);
                 });
 
@@ -261,7 +261,7 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
 
             if ("PUT".contentEquals(methodName)) {
                 writeValue(b -> {
-                    final net.openhft.lang.io.Bytes reader = toReader(inWire, Fields.ARG_1, Fields.ARG_2);
+                    final net.openhft.lang.io.Bytes reader = toReader(inWire, ARG_1, ARG_2);
                     return b.put(reader, reader, timestamp, identifier());
                 });
 
@@ -269,7 +269,7 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
             }
 
             if ("REMOVE".contentEquals(methodName)) {
-                writeValue(b -> b.remove(toReader(inWire, Fields.ARG_1)));
+                writeValue(b -> b.remove(toReader(inWire, ARG_1)));
                 return;
             }
 
@@ -280,7 +280,7 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
 
             if ("REPLACE".contentEquals(methodName)) {
                 writeValue(bytesMap -> {
-                    final net.openhft.lang.io.Bytes reader = toReader(inWire, Fields.ARG_1, Fields.ARG_2);
+                    final net.openhft.lang.io.Bytes reader = toReader(inWire, ARG_1, ARG_2);
                     return bytesMap.replace(reader, reader);
                 });
                 return;
@@ -289,7 +289,7 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
             if ("REPLACE_WITH_OLD_AND_NEW_VALUE".contentEquals(methodName)) {
 
                 writeValue(bytesMap -> {
-                    final net.openhft.lang.io.Bytes reader = toReader(inWire, Fields.ARG_1, Fields.ARG_2, Fields.ARG_3);
+                    final net.openhft.lang.io.Bytes reader = toReader(inWire, ARG_1, ARG_2, ARG_3);
                     return bytesMap.replace(reader, reader);
                 });
 
@@ -298,7 +298,7 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
 
             if ("PUT_IF_ABSENT".contentEquals(methodName)) {
                 writeValue(bytesMap -> {
-                    final net.openhft.lang.io.Bytes reader = toReader(inWire, Fields.ARG_1, Fields.ARG_2);
+                    final net.openhft.lang.io.Bytes reader = toReader(inWire, ARG_1, ARG_2);
                     return bytesMap.putIfAbsent(reader, reader, timestamp, identifier());
                 });
                 return;
@@ -306,30 +306,30 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
 
             if ("REMOVE_WITH_VALUE".contentEquals(methodName)) {
                 write(bytesMap -> {
-                    final net.openhft.lang.io.Bytes reader = toReader(inWire, Fields.ARG_1, Fields.ARG_2);
-                    outWire.write(Fields.RESULT).bool(bytesMap.remove(reader, reader, timestamp, identifier()));
+                    final net.openhft.lang.io.Bytes reader = toReader(inWire, ARG_1, ARG_2);
+                    outWire.write(RESULT).bool(bytesMap.remove(reader, reader, timestamp, identifier()));
                 });
                 return;
             }
 
             if ("TO_STRING".contentEquals(methodName)) {
-                write(b -> outWire.write(Fields.RESULT).text(b.toString()));
+                write(b -> outWire.write(RESULT).text(b.toString()));
                 return;
             }
 
             if ("APPLICATION_VERSION".contentEquals(methodName)) {
-                write(b -> outWire.write(Fields.RESULT).text(applicationVersion()));
+                write(b -> outWire.write(RESULT).text(applicationVersion()));
                 return;
             }
 
             if ("PERSISTED_DATA_VERSION".contentEquals(methodName)) {
-                write(b -> outWire.write(Fields.RESULT).text(persistedDataVersion()));
+                write(b -> outWire.write(RESULT).text(persistedDataVersion()));
 
                 return;
             }
 
             if ("HASH_CODE".contentEquals(methodName)) {
-                write(b -> outWire.write(Fields.RESULT).int32(b.hashCode()));
+                write(b -> outWire.write(RESULT).int32(b.hashCode()));
                 return;
             }
 
@@ -361,29 +361,26 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
 
     private byte[] toBytes(WireKey fieldName) {
 
-        Wire wire = inWire;
+        final Wire wire = inWire;
         System.out.println(Bytes.toDebugString(inWire.bytes()));
 
-        ValueIn read = wire.read(fieldName);
+        final ValueIn read = wire.read(fieldName);
+        final long l = read.readLength();
 
-        long l = read.readLength();
         if (l > Integer.MAX_VALUE)
             throw new BufferOverflowException();
 
-        int fieldLength = (int) l;
+        final int fieldLength = (int) l;
 
-        long endPos = wire.bytes().position() + fieldLength;
-        long limit = wire.bytes().limit();
+        final long endPos = wire.bytes().position() + fieldLength;
+        final long limit = wire.bytes().limit();
 
         try {
             byte[] bytes = new byte[fieldLength];
 
             wire.bytes().read(bytes);
             return bytes;
-
-        } finally
-
-        {
+        } finally {
             wire.bytes().position(endPos);
             wire.bytes().limit(limit);
         }
@@ -410,20 +407,19 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
 
             @Override
             public void run() {
-                if (inWire.read(Fields.HAS_NEXT).bool()) {
-                    collectData.put(toBytes(Fields.ARG_1), toBytes(Fields.ARG_2));
+                if (inWire.read(HAS_NEXT).bool()) {
+                    collectData.put(toBytes(ARG_1), toBytes(ARG_2));
                 } else {
                     // the old code assumed that all the data would fit into a single buffer
                     // this assumption is invalid
                     if (!collectData.isEmpty()) {
                         bytesMap.delegate.putAll((Map) collectData);
                         incompleteWork.remove(transactionId);
-                        outWire.write(Fields.TRANSACTION_ID).int64(transactionId);
+                        outWire.write(TRANSACTION_ID).int64(transactionId);
 
                         // todo handle the case where there is an exception
-                        outWire.write(Fields.IS_EXCEPTION).bool(false);
+                        outWire.write(IS_EXCEPTION).bool(false);
 
-                        nofityDataWritten();
                     }
                 }
             }
@@ -441,7 +437,7 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
 
     @NotNull
     private CharSequence persistedDataVersion() {
-        BytesChronicleMap bytesChronicleMap = bytesMap(channelId);
+        final BytesChronicleMap bytesChronicleMap = bytesMap(channelId);
         if (bytesChronicleMap == null)
             return "";
         return bytesChronicleMap.persistedDataVersion();
@@ -461,17 +457,17 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
      */
     private net.openhft.lang.io.Bytes toReader(@NotNull Wire wire, @NotNull WireKey... args) {
 
-        long inSize = wire.bytes().limit();
+        final long inSize = wire.bytes().limit();
         final net.openhft.lang.io.Bytes bytes = DirectStore.allocate(inSize).bytes();
 
         // copy the bytes to the reader
         for (final WireKey field : args) {
 
-            ValueIn read = wire.read(field);
-            long fieldLength = read.readLength();
+            final  ValueIn read = wire.read(field);
+            final  long fieldLength = read.readLength();
 
-            long endPos = wire.bytes().position() + fieldLength;
-            long limit = wire.bytes().limit();
+            final   long endPos = wire.bytes().position() + fieldLength;
+            final  long limit = wire.bytes().limit();
 
             try {
 
@@ -508,16 +504,12 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
     // todo remove this method - just added to get it to work for now
     private byte[] toByteArray(@NotNull Wire wire, @NotNull WireKey field) {
 
-        long inSize = wire.bytes().limit();
-        // final net.openhft.lang.io.Bytes bytes = DirectStore.allocate(inSize).bytes();
+        final   ValueIn read = wire.read(field);
+        final  long fieldLength = read.readLength();
 
-
-        ValueIn read = wire.read(field);
-        long fieldLength = read.readLength();
-
-        long endPos = wire.bytes().position() + fieldLength;
-        long limit = wire.bytes().limit();
-        byte[] result = new byte[]{};
+        final long endPos = wire.bytes().position() + fieldLength;
+        final  long limit = wire.bytes().limit();
+           byte[] result = new byte[]{};
         try {
 
             final Bytes source = wire.bytes();
@@ -594,17 +586,15 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
 
             byte[] fromBytes = toByteArray(f.apply(b));
             boolean isNull = fromBytes.length == 0;
-            outWire.write(Fields.RESULT_IS_NULL).bool(isNull);
+            outWire.write(RESULT_IS_NULL).bool(isNull);
             if (isNull)
                 return;
 
-            outWire.write(Fields.RESULT);
+            outWire.write(RESULT);
             outWire.bytes().write(fromBytes);
 
         });
 
-
-        nofityDataWritten();
 
     }
 
@@ -616,19 +606,17 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
             byte[] result = f.apply((ChronicleMap) b.delegate);
             boolean isNull = result == null;
 
-            outWire.write(Fields.RESULT_IS_NULL).bool(isNull);
+            outWire.write(RESULT_IS_NULL).bool(isNull);
             if (isNull)
                 return;
 
             isNull = result.length == 0;
 
-            outWire.write(Fields.RESULT);
+            outWire.write(RESULT);
             outWire.bytes().write(result);
 
         });
 
-
-        nofityDataWritten();
 
     }
 
@@ -653,14 +641,13 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
 
             // the idea of wire is that is platform independent,
             // so we wil have to send the exception as a String
-            outWire.write(Fields.IS_EXCEPTION).bool(true);
-            outWire.write(Fields.EXCEPTION).text(toString(e));
+            outWire.write(IS_EXCEPTION).bool(true);
+            outWire.write(EXCEPTION).text(toString(e));
             LOG.error("", e);
             return;
         }
 
         outMessageAdapter.accept(outWire);
-        nofityDataWritten();
 
     }
 
@@ -676,7 +663,7 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
 
         bytesMap.output = null;
         outWire.bytes().mark();
-        outWire.write(Fields.IS_EXCEPTION).bool(false);
+        outWire.write(IS_EXCEPTION).bool(false);
 
         try {
             c.accept(bytesMap);
@@ -684,13 +671,11 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
             outWire.bytes().reset();
             // the idea of wire is that is platform independent,
             // so we wil have to send the exception as a String
-            outWire.write(Fields.IS_EXCEPTION).bool(true);
-            outWire.write(Fields.EXCEPTION).text(toString(e));
+            outWire.write(IS_EXCEPTION).bool(true);
+            outWire.write(EXCEPTION).text(toString(e));
             LOG.error("", e);
             return;
         }
-
-        nofityDataWritten();
 
     }
 
@@ -706,7 +691,7 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
 
         bytesMap.output = null;
         outWire.bytes().mark();
-        outWire.write(Fields.IS_EXCEPTION).bool(false);
+        outWire.write(IS_EXCEPTION).bool(false);
 
         try {
             r.call();
@@ -714,13 +699,11 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
             outWire.bytes().reset();
             // the idea of wire is that is platform independent,
             // so we wil have to send the exception as a String
-            outWire.write(Fields.IS_EXCEPTION).bool(true);
-            outWire.write(Fields.EXCEPTION).text(toString(e));
+            outWire.write(IS_EXCEPTION).bool(true);
+            outWire.write(EXCEPTION).text(toString(e));
             LOG.error("", e);
             return;
         }
-
-        nofityDataWritten();
 
     }
 
@@ -748,9 +731,7 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
             process.accept(bytesMap);
         } catch (Exception e) {
             LOG.error("", e);
-            return;
         }
-
 
     }
 
@@ -768,29 +749,6 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
         this.localIdentifier = localIdentifier;
     }
 
-    private void nofityDataWritten() {
-        if (key != null)
-            key.interestOps(OP_WRITE | OP_READ);
-    }
-
-
-    public static enum Fields implements WireKey {
-        HAS_NEXT,
-        TIME_STAMP,
-        CHANNEL_ID,
-        METHOD_NAME,
-        TYPE,
-        TRANSACTION_ID,
-        RESULT,
-        RESULT_KEY,
-        RESULT_VALUE,
-        ARG_1,
-        ARG_2,
-        ARG_3,
-        IS_EXCEPTION,
-        EXCEPTION,
-        RESULT_IS_NULL
-    }
 
     /**
      * used to send data to the wired stateless client, this class converts/adapts a chronicle map
@@ -838,9 +796,11 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
             public net.openhft.lang.io.Bytes in() {
                 return outLangBytes;
             }
-        };
-        private long startChunk;
 
+        };
+
+
+        private long startChunk;
 
         void clear() {
             outChronBytes.clear();
@@ -855,7 +815,7 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
          */
         void accept(@NotNull Wire wire) {
 
-            wire.write(Fields.IS_EXCEPTION).bool(false);
+            wire.write(IS_EXCEPTION).bool(false);
 
             // flips calls flip on this message so that we can read it
             flipMessage();
@@ -870,10 +830,10 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
             // read the size - not used
             outChronBytes.readStopBit();
 
-            wire.write(Fields.RESULT_IS_NULL).bool(isNull);
+            wire.write(RESULT_IS_NULL).bool(isNull);
             if (!isNull) {
                 // write the result
-                wire.write(Fields.RESULT);
+                wire.write(RESULT);
                 wire.bytes().write(outChronBytes);
             }
         }

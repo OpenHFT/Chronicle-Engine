@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @author Rob Austin.
  */
-public final class ClientWiredChronicleMapStatelessClientBuilder<K, V> implements
+ public final class ClientWiredChronicleMapStatelessClientBuilder<K, V> implements
         ChronicleHashStatelessClientBuilder<ClientWiredChronicleMapStatelessClientBuilder<K, V>,
                 ChronicleMap<K, V>>,
         MapBuilder<ClientWiredChronicleMapStatelessClientBuilder<K, V>> {

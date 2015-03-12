@@ -22,6 +22,7 @@ import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.*;
 import net.openhft.chronicle.network2.AcceptorEventHandler;
+import net.openhft.chronicle.network2.WireHandler;
 import net.openhft.chronicle.network2.event.EventGroup;
 
 import java.io.Closeable;
@@ -68,7 +69,7 @@ public class ServerEndpoint implements Closeable {
 
         AcceptorEventHandler eah = new AcceptorEventHandler(0, () -> {
 
-            final MapWireHandler mapWireHandler = new MapWireHandler(
+            final WireHandler mapWireHandler = MapWireHandlerBuilder.of(
                     () -> (ChronicleHashInstanceBuilder) ChronicleMapBuilder.of(byte[].class, byte[].class).instance(),
                     replicationHub,
                     localIdentifier,

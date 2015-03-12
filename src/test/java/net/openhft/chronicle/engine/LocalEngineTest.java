@@ -29,7 +29,7 @@ import org.junit.Test;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
 
-public class ChronicleEngineTest {
+public class LocalEngineTest {
     final ChronicleContext context = new ChronicleEngine();
     final Chronicle mockedQueue = mock(Chronicle.class);
     @SuppressWarnings("unchecked")

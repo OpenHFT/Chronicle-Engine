@@ -56,7 +56,7 @@ public class RemoteClientServiceLocator {
         return serviceLocator;
     }
 
-    public <K, V> ChronicleMap<K, V> newMapInstance(@NotNull String name,
+    private <K, V> ChronicleMap<K, V> newMapInstance(@NotNull String name,
                                                     @NotNull Class<K> kClass,
                                                     @NotNull Class<V> vClass) throws IOException {
         final short channelID = findNextFreeChannel();
