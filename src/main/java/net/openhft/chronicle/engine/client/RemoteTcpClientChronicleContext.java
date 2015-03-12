@@ -19,7 +19,7 @@
 package net.openhft.chronicle.engine.client;
 
 import net.openhft.chronicle.Chronicle;
-import net.openhft.chronicle.ChronicleContext;
+import net.openhft.chronicle.engine.ChronicleContext;
 import net.openhft.chronicle.engine.client.internal.RemoteClientServiceLocator;
 import net.openhft.chronicle.engine.old.ChronicleCluster;
 import net.openhft.chronicle.engine.old.ChronicleThreadPool;
