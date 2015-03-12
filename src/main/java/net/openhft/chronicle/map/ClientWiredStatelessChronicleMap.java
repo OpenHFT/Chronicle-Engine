@@ -33,14 +33,13 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import static java.util.Collections.emptyList;
-
 import static net.openhft.chronicle.map.ClientWiredStatelessChronicleMap.EventId.*;
 
 
 /**
  * @author Rob Austin.
  */
-public class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Cloneable {
+class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Cloneable, ChannelFactory {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientWiredStatelessChronicleMap.class);
 
@@ -260,6 +259,7 @@ public class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V
         return proxyReturnObject(vClass, removeReturnsNull ? REMOVE_WITHOUT_ACC.toString() : REMOVE.toString(), (K) key);
     }
 
+    @Override
     public void createChannel(short channelID) {
         proxyReturnVoid(
                 () -> {
@@ -525,6 +525,37 @@ public class ClientWiredStatelessChronicleMap<K, V> implements ChronicleMap<K, V
         } else if (String.class.isAssignableFrom(vClass)) {
             //noinspection unchecked
             return (V) wireIn.read(argName).text();
+
+        } else if (Long.class.isAssignableFrom(vClass)) {
+            //noinspection unchecked
+            return (V) (Long) wireIn.read(argName).int64();
+        } else if (Double.class.isAssignableFrom(vClass)) {
+            //noinspection unchecked
+            return (V) (Double) wireIn.read(argName).float64();
+
+        } else if (Integer.class.isAssignableFrom(vClass)) {
+            //noinspection unchecked
+            return (V) (Integer) wireIn.read(argName).int32();
+
+        } else if (Float.class.isAssignableFrom(vClass)) {
+            //noinspection unchecked
+            return (V) (Float) wireIn.read(argName).float32();
+
+        } else if (Short.class.isAssignableFrom(vClass)) {
+            //noinspection unchecked
+            return (V) (Short) wireIn.read(argName).int16();
+
+        } else if (Character.class.isAssignableFrom(vClass)) {
+            //noinspection unchecked
+            final String text = wireIn.read(argName).text();
+            if (text == null || text.length() == 0)
+                return null;
+            return (V) (Character) text.charAt(0);
+
+        } else if (Byte.class.isAssignableFrom(vClass)) {
+            //noinspection unchecked
+            return (V) (Byte) wireIn.read(argName).int8();
+
 
         } else {
             throw new IllegalStateException("unsupported type");

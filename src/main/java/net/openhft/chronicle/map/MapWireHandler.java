@@ -28,7 +28,6 @@ import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.chronicle.network2.WireHandler;
-import net.openhft.chronicle.network2.WireTcpHandler;
 import net.openhft.chronicle.network2.event.EventGroup;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.ValueIn;
@@ -43,18 +42,17 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StreamCorruptedException;
 import java.io.StringWriter;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
-import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static java.nio.channels.SelectionKey.OP_READ;
 import static java.nio.channels.SelectionKey.OP_WRITE;
@@ -74,7 +72,7 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
     @NotNull
     private final ByteBuffer inLanByteBuffer = ByteBuffer.allocateDirect(64);
     private final StringBuilder methodName = new StringBuilder();
-    private final ChronicleHashInstanceBuilder<ChronicleMap<K, V>> chronicleHashInstanceBuilder;
+    private final Supplier<ChronicleHashInstanceBuilder<ChronicleMap<K, V>>> chronicleHashInstanceBuilder;
 
     Map<Long, Runnable> incompleteWork = new HashMap<>();
     private Wire inWire = new TextWire(Bytes.elasticByteBuffer());
@@ -111,7 +109,7 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
     private Runnable out = null;
     private SelectionKey key = null;
 
-    public MapWireHandler(@NotNull final ChronicleHashInstanceBuilder<ChronicleMap<K, V>> chronicleHashInstanceBuilder,
+    public MapWireHandler(@NotNull final Supplier<ChronicleHashInstanceBuilder<ChronicleMap<K, V>>> chronicleHashInstanceBuilder,
                           @NotNull final ReplicationHub hub,
                           byte localIdentifier,
                           @NotNull final List<Replica> channelList) {
@@ -121,7 +119,7 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
     }
 
 
-    public MapWireHandler(ChronicleHashInstanceBuilder<ChronicleMap<K, V>> chronicleHashInstanceBuilder, ReplicationHub hub) {
+    public MapWireHandler(Supplier<ChronicleHashInstanceBuilder<ChronicleMap<K, V>>> chronicleHashInstanceBuilder, ReplicationHub hub) {
         this.chronicleHashInstanceBuilder = chronicleHashInstanceBuilder;
         this.hub = hub;
     }
@@ -131,80 +129,13 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
     public void process(Wire in, Wire out) throws StreamCorruptedException {
 
 
-  //      if(LOG.isDebugEnabled()) {
-            System.out.println("--------------------------------------------\nserver read:\n\n" + Bytes.toDebugString(in.bytes()));
-    //    }
+        //      if(LOG.isDebugEnabled()) {
+        System.out.println("--------------------------------------------\nserver read:\n\n" + Bytes.toDebugString(in.bytes()));
+        //    }
 
         this.inWire = in;
         this.outWire = out;
         onEvent();
-    }
-
-
-
-
-    private void clearInBuffer() {
-        inWire.bytes().clear();
-        inWireBuffer().clear();
-    }
-
-    private boolean shouldClearInBuffer() {
-        return inWire.bytes().position() == inWireBuffer().position();
-    }
-
-    /**
-     * @return true if remaining space is less than 50%
-     */
-    private boolean shouldCompactInBuffer() {
-        return inWire.bytes().position() > 0 && inWire.bytes().remaining() < (inWireBuffer().capacity() / 2);
-    }
-
-
-    private void compactInBuffer() {
-        inWireBuffer().position((int) inWire.bytes().position());
-        inWireBuffer().limit(inWireBuffer().position());
-        inWireBuffer().compact();
-
-        inWire.bytes().position(0);
-        inWire.bytes().limit(0);
-    }
-
-    @NotNull
-    private ByteBuffer inWireBuffer() {
-        return (ByteBuffer) inWire.bytes().underlyingObject();
-    }
-
-    private int readSocket(@NotNull SocketChannel socketChannel) throws IOException {
-        ByteBuffer dst = inWireBuffer();
-        int len = socketChannel.read(dst);
-        int readUpTo = dst.position();
-        inWire.bytes().limit(readUpTo);
-        return len;
-    }
-
-    @Nullable
-    private Wire nextWireMessage() {
-        if (inWire.bytes().remaining() < SIZE_OF_SIZE)
-            return null;
-
-        final Bytes<?> bytes = inWire.bytes();
-
-        // the size of the next wire message
-        int size = bytes.readUnsignedShort(bytes.position());
-
-        inWire.bytes().ensureCapacity(bytes.position() + size);
-
-        if (bytes.remaining() < size) {
-            assert size < 100000;
-            return null;
-        }
-
-        inWire.bytes().limit(bytes.position() + size);
-
-        // skip the size
-        inWire.bytes().skip(SIZE_OF_SIZE);
-
-        return inWire;
     }
 
     private void writeChunked(long transactionId,
@@ -284,7 +215,7 @@ public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshall
             if ("CREATE_CHANNEL".contentEquals(methodName)) {
                 writeVoid(() -> {
                     short channelId1 = inWire.read(Fields.ARG_1).int16();
-                    chronicleHashInstanceBuilder.replicatedViaChannel(hub.createChannel(channelId1)).create();
+                    chronicleHashInstanceBuilder.get().replicatedViaChannel(hub.createChannel(channelId1)).create();
                     return null;
                 });
                 return;

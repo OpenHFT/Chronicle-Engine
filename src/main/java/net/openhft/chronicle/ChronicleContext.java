@@ -16,9 +16,11 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.engine.old;
+package net.openhft.chronicle;
 
 import net.openhft.chronicle.Chronicle;
+import net.openhft.chronicle.engine.old.ChronicleCluster;
+import net.openhft.chronicle.engine.old.ChronicleThreadPool;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.set.ChronicleSet;
 

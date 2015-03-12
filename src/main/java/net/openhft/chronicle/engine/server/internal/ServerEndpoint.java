@@ -15,12 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.openhft.chronicle.map;
+package net.openhft.chronicle.engine.server.internal;
 
-import net.openhft.chronicle.EngineWireHandler;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
+import net.openhft.chronicle.map.*;
 import net.openhft.chronicle.network2.AcceptorEventHandler;
 import net.openhft.chronicle.network2.event.EventGroup;
 
@@ -37,7 +37,7 @@ import static net.openhft.chronicle.map.ChronicleMapBuilder.of;
 public class ServerEndpoint implements Closeable {
 
     private EventGroup eg = new EventGroup();
-    private ChronicleHashInstanceBuilder<ChronicleMap> chronicleHashInstanceBuilder;
+    //   private ChronicleHashInstanceBuilder<ChronicleMap> chronicleHashInstanceBuilder;
     private ReplicationHub replicationHub;
     private byte localIdentifier;
     private List<Replica> channelList;
@@ -58,7 +58,7 @@ public class ServerEndpoint implements Closeable {
 
         final ChannelProvider provider = ChannelProvider.getProvider(replicationHub);
 
-        chronicleHashInstanceBuilder = (ChronicleHashInstanceBuilder) ChronicleMapBuilder.of(byte[].class, byte[].class).instance();
+        //  chronicleHashInstanceBuilder = ;
         this.channelList = provider.chronicleChannelList();
 
     }
@@ -68,7 +68,8 @@ public class ServerEndpoint implements Closeable {
 
         AcceptorEventHandler eah = new AcceptorEventHandler(0, () -> {
 
-            final MapWireHandler mapWireHandler = new MapWireHandler(chronicleHashInstanceBuilder,
+            final MapWireHandler mapWireHandler = new MapWireHandler(
+                    () -> (ChronicleHashInstanceBuilder) ChronicleMapBuilder.of(byte[].class, byte[].class).instance(),
                     replicationHub,
                     localIdentifier,
                     channelList);

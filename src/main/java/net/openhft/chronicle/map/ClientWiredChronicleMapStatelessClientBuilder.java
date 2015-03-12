@@ -51,7 +51,7 @@ public final class ClientWiredChronicleMapStatelessClientBuilder<K, V> implement
     public ClientWiredChronicleMapStatelessClientBuilder(ClientWiredStatelessClientTcpConnectionHub hub, Class keyClass, Class valueClass, short channelID) {
         this.keyClass = keyClass;
         this.valueClass = valueClass;
-
+        this.hub = hub;
         this.channelID = channelID;
     }
 
@@ -159,9 +159,6 @@ public final class ClientWiredChronicleMapStatelessClientBuilder<K, V> implement
         return hub;
     }
 
-    public ClientWiredChronicleMapStatelessClientBuilder<K, V> hub(ClientWiredStatelessClientTcpConnectionHub hub) {
-        this.hub = hub;
-        return this;
-    }
+
 
 }
