@@ -26,6 +26,7 @@ import net.openhft.chronicle.engine.old.ChronicleThreadPool;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.set.ChronicleSet;
 
+import java.io.IOException;
 import java.util.logging.Logger;
 
 /**
@@ -35,8 +36,8 @@ public class RemoteTcpClientChronicleContext implements ChronicleContext {
 
     RemoteClientServiceLocator remoteClientServiceLocator;
 
-    public RemoteTcpClientChronicleContext(RemoteClientServiceLocator remoteClientServiceLocator) {
-        this.remoteClientServiceLocator = remoteClientServiceLocator;
+    public RemoteTcpClientChronicleContext(String hostname, int port) throws IOException {
+        this.remoteClientServiceLocator = new RemoteClientServiceLocator(hostname, port, (byte) 2);
     }
 
     @Override

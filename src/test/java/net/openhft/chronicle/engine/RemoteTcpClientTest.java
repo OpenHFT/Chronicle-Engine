@@ -19,7 +19,6 @@
 package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.engine.client.RemoteTcpClientChronicleContext;
-import net.openhft.chronicle.engine.client.internal.RemoteClientServiceLocator;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.wire.Marshallable;
@@ -36,19 +35,23 @@ public class RemoteTcpClientTest {
 
         // sever
         final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1);
+        int serverPort = serverEndpoint.getPort();
 
         //client
-        final RemoteClientServiceLocator remoteClientServiceLocator = new RemoteClientServiceLocator("localhost", serverEndpoint.getPort(), (byte) 2);
-        final RemoteTcpClientChronicleContext context = new RemoteTcpClientChronicleContext(remoteClientServiceLocator);
+        final RemoteTcpClientChronicleContext context = new RemoteTcpClientChronicleContext(
+                "localhost", serverPort);
 
         {
             final ChronicleMap<String, String> colourMap = context.getMap("Colours", String.class, String.class);
             colourMap.put("Rob", "Blue");
             colourMap.put("Peter", "Green");
-            assertEquals(2, colourMap.size());
 
-            assertEquals("Blue", colourMap.get("Rob"));
-            assertEquals("Green", colourMap.get("Peter"));
+        }
+        {
+            final ChronicleMap<String, String> colourMap2 = context.getMap("Colours", String.class, String.class);
+            assertEquals(2, colourMap2.size());
+            assertEquals("Blue", colourMap2.get("Rob"));
+            assertEquals("Green", colourMap2.get("Peter"));
         }
 
         {
