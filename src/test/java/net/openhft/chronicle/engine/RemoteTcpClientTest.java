@@ -66,7 +66,6 @@ public class RemoteTcpClientTest {
             numbers.put("Rob", 123L);
             numbers.put("Peter", 101010101L);
 
-
             assertEquals(2, numbers.size());
             assertEquals(Long.valueOf(123L), numbers.get("Rob"));
             assertEquals(Long.valueOf(101010101L), numbers.get("Peter"));
