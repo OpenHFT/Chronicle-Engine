@@ -55,7 +55,7 @@ public class ServerEndpoint implements Closeable {
         ChronicleMap serviceLocatorMap = of(byte[].class, byte[].class)
                 .instance().replicatedViaChannel(replicationHub.createChannel((short) 1)).create();
 
-        final ChannelProvider provider = ChannelProvider.getProvider(replicationHub, null);
+        final ChannelProvider provider = ChannelProvider.getProvider(replicationHub);
 
         chronicleHashInstanceBuilder = (ChronicleHashInstanceBuilder) ChronicleMapBuilder.of(byte[].class, byte[].class).instance();
         this.channelList = provider.chronicleChannelList();

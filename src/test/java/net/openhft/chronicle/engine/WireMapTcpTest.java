@@ -20,8 +20,8 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ServerEndpoint;
-import net.openhft.chronicle.map.WiredChronicleMapStatelessClientBuilder;
-import net.openhft.chronicle.map.WiredStatelessChronicleMap;
+import net.openhft.chronicle.map.ClientWiredChronicleMapStatelessClientBuilder;
+import net.openhft.chronicle.map.ClientWiredStatelessChronicleMap;
 import net.openhft.chronicle.network2.AcceptorEventHandler;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
@@ -66,8 +66,8 @@ public class WireMapTcpTest {
 
 
 
-        final WiredChronicleMapStatelessClientBuilder<String, ServiceLocator> builder =
-                new WiredChronicleMapStatelessClientBuilder<>(
+        final ClientWiredChronicleMapStatelessClientBuilder<String, ServiceLocator> builder =
+                new ClientWiredChronicleMapStatelessClientBuilder<>(
                         new InetSocketAddress("localhost", eah.getLocalPort()),
                         String.class,
                         ServiceLocator.class,
@@ -84,12 +84,12 @@ public class WireMapTcpTest {
         // todo add some sort of cross node locking
         if (serviceLocator == null) {
             short channelID = colourChannelId;
-            ((WiredStatelessChronicleMap) detailsMap).createChannel(channelID);
+            ((ClientWiredStatelessChronicleMap) detailsMap).createChannel(channelID);
             serviceLocator = new ServiceLocator(String.class, String.class, channelID);
             detailsMap.put("Colours", serviceLocator);
         }
 
-        ChronicleMap<String, String> colours = new WiredChronicleMapStatelessClientBuilder<String, String>(
+        ChronicleMap<String, String> colours = new ClientWiredChronicleMapStatelessClientBuilder<String, String>(
                 builder.hub(),
                 serviceLocator.keyClass,
                 serviceLocator.valueClass,
