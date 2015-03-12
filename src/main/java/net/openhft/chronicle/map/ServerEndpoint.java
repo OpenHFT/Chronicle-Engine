@@ -17,6 +17,7 @@
  */
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.EngineWireHandler;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
@@ -64,7 +65,19 @@ public class ServerEndpoint implements Closeable {
 
     public AcceptorEventHandler run() throws IOException {
         eg.start();
-        AcceptorEventHandler eah = new AcceptorEventHandler(0, () -> new StatelessWiredConnector(chronicleHashInstanceBuilder, replicationHub, localIdentifier, channelList));
+
+        AcceptorEventHandler eah = new AcceptorEventHandler(0, () -> {
+
+            final MapWireHandler mapWireHandler = new MapWireHandler(chronicleHashInstanceBuilder,
+                    replicationHub,
+                    localIdentifier,
+                    channelList);
+
+            return new EngineWireHandler(
+                    mapWireHandler,
+                    null);
+        });
+
         eg.addHandler(eah);
         return eah;
     }

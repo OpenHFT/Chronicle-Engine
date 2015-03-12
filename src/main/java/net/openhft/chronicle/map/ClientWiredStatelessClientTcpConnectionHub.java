@@ -33,16 +33,14 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static java.nio.ByteBuffer.wrap;
 import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_SIZE;
-
 import static net.openhft.chronicle.map.ClientWiredStatelessChronicleMap.EventId.APPLICATION_VERSION;
+import static net.openhft.chronicle.map.MapWireHandler.Fields.*;
 
 /**
  * Created by Rob Austin
@@ -619,10 +617,10 @@ public class ClientWiredStatelessClientTcpConnectionHub {
         startTime(startTime);
 
         long transactionId = nextUniqueTransaction(startTime);
-
-        wire.write(() -> "TRANSACTION_ID").int64(transactionId);
-        wire.write(() -> "TIME_STAMP").int64(startTime);
-        wire.write(() -> "CHANNEL_ID").int16(channelID);
+        wire.write(TYPE).text("MAP");
+        wire.write(TRANSACTION_ID).int64(transactionId);
+        wire.write(TIME_STAMP).int64(startTime);
+        wire.write(CHANNEL_ID).int16(channelID);
 
         return transactionId;
     }

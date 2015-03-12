@@ -27,6 +27,7 @@ import net.openhft.chronicle.bytes.BytesMarshallable;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
+import net.openhft.chronicle.network2.WireHandler;
 import net.openhft.chronicle.network2.WireTcpHandler;
 import net.openhft.chronicle.network2.event.EventGroup;
 import net.openhft.chronicle.wire.TextWire;
@@ -62,9 +63,9 @@ import static net.openhft.chronicle.map.AbstractChannelReplicator.SIZE_OF_SIZE;
 /**
  * @author Rob Austin.
  */
-public class StatelessWiredConnector<K extends BytesMarshallable, V extends BytesMarshallable> extends WireTcpHandler {
+public class MapWireHandler<K extends BytesMarshallable, V extends BytesMarshallable> implements WireHandler {
 
-    private static final Logger LOG = LoggerFactory.getLogger(StatelessWiredConnector.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
     private final NativeBytes inLangBytes = new NativeBytes(0, 0);
     @NotNull
     private final OutMessageAdapter outMessageAdapter = new OutMessageAdapter();
@@ -110,24 +111,24 @@ public class StatelessWiredConnector<K extends BytesMarshallable, V extends Byte
     private Runnable out = null;
     private SelectionKey key = null;
 
-    public StatelessWiredConnector(@NotNull final ChronicleHashInstanceBuilder<ChronicleMap<K, V>> chronicleHashInstanceBuilder,
-                                   @NotNull final ReplicationHub hub,
-                                   byte localIdentifier,
-                                   @NotNull final List<Replica> channelList) {
+    public MapWireHandler(@NotNull final ChronicleHashInstanceBuilder<ChronicleMap<K, V>> chronicleHashInstanceBuilder,
+                          @NotNull final ReplicationHub hub,
+                          byte localIdentifier,
+                          @NotNull final List<Replica> channelList) {
         this(chronicleHashInstanceBuilder, hub);
         this.channelList = channelList;
         this.localIdentifier = localIdentifier;
     }
 
 
-    public StatelessWiredConnector(ChronicleHashInstanceBuilder<ChronicleMap<K, V>> chronicleHashInstanceBuilder, ReplicationHub hub) {
+    public MapWireHandler(ChronicleHashInstanceBuilder<ChronicleMap<K, V>> chronicleHashInstanceBuilder, ReplicationHub hub) {
         this.chronicleHashInstanceBuilder = chronicleHashInstanceBuilder;
         this.hub = hub;
     }
 
 
     @Override
-    protected void process(Wire in, Wire out) throws StreamCorruptedException {
+    public void process(Wire in, Wire out) throws StreamCorruptedException {
 
 
   //      if(LOG.isDebugEnabled()) {
@@ -241,6 +242,7 @@ public class StatelessWiredConnector<K extends BytesMarshallable, V extends Byte
     void onEvent() {
 
         // it is assumed by this point that the buffer has all the bytes in it for this message
+
         long transactionId = inWire.read(Fields.TRANSACTION_ID).int64();
         timestamp = inWire.read(Fields.TIME_STAMP).int64();
         channelId = inWire.read(Fields.CHANNEL_ID).int16();
@@ -458,7 +460,7 @@ public class StatelessWiredConnector<K extends BytesMarshallable, V extends Byte
 
     private void putAll(long transactionId) {
 
-        final BytesChronicleMap bytesMap = bytesMap(StatelessWiredConnector.this.channelId);
+        final BytesChronicleMap bytesMap = bytesMap(MapWireHandler.this.channelId);
 
         if (bytesMap == null)
             return;
@@ -841,11 +843,12 @@ public class StatelessWiredConnector<K extends BytesMarshallable, V extends Byte
     }
 
 
-    static enum Fields implements WireKey {
+    public static enum Fields implements WireKey {
         HAS_NEXT,
         TIME_STAMP,
         CHANNEL_ID,
         METHOD_NAME,
+        TYPE,
         TRANSACTION_ID,
         RESULT,
         RESULT_KEY,
