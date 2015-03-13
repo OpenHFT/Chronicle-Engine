@@ -141,6 +141,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                 out.write(result).text(preferredWireType);
                 recreateWire(true);
             }
+
         }
 
     }
