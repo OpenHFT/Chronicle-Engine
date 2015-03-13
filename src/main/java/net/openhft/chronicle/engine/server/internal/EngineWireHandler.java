@@ -21,6 +21,7 @@ package net.openhft.chronicle.engine.server.internal;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.network2.WireHandler;
 import net.openhft.chronicle.network2.WireTcpHandler;
+import net.openhft.chronicle.network2.event.WireHandlers;
 import net.openhft.chronicle.wire.BinaryWire;
 import net.openhft.chronicle.wire.RawWire;
 import net.openhft.chronicle.wire.TextWire;
@@ -28,13 +29,15 @@ import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.StreamCorruptedException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static net.openhft.chronicle.map.MapWireHandlerBuilder.Fields.*;
 
 /**
  * Created by Rob Austin
  */
-public class EngineWireHandler extends WireTcpHandler {
+public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
 
     public static final String TEXT_WIRE = TextWire.class.getSimpleName();
@@ -59,8 +62,30 @@ public class EngineWireHandler extends WireTcpHandler {
         this.queueWireHandler = queueWireHandler;
     }
 
+    private final List<WireHandler> handlers = new ArrayList<>();
+
+    protected void publish(Wire out) {
+        if (!handlers.isEmpty()) {
+
+            final WireHandler remove = handlers.remove(handlers.size() - 1);
+
+            try {
+                remove.process(null, out);
+            } catch (StreamCorruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
     @Override
     protected void process(Wire in, Wire out) throws StreamCorruptedException {
+
+
+        //      if(LOG.isDebugEnabled()) {
+        System.out.println("--------------------------------------------\nserver read:\n\n" + Bytes.toDebugString(in.bytes()));
+        //    }
+
+
 
         in.read(TYPE).text(text);
 
@@ -92,6 +117,12 @@ public class EngineWireHandler extends WireTcpHandler {
         throw new IllegalStateException("preferredWireType=" + preferredWireType + " is not supported.");
 
     }
+
+    @Override
+    public void add(WireHandler handler) {
+        handlers.add(handler);
+    }
+
 
     class CoreWireHandler implements WireHandler {
 

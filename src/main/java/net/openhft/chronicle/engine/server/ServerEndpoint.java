@@ -21,14 +21,19 @@ import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
-import net.openhft.chronicle.map.*;
+import net.openhft.chronicle.map.ChannelProvider;
+import net.openhft.chronicle.map.ChronicleMapBuilder;
+import net.openhft.chronicle.map.MapWireHandlerBuilder;
+import net.openhft.chronicle.map.Replica;
 import net.openhft.chronicle.network2.AcceptorEventHandler;
 import net.openhft.chronicle.network2.WireHandler;
 import net.openhft.chronicle.network2.event.EventGroup;
+import net.openhft.chronicle.network2.event.WireHandlers;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.map.ChronicleMapBuilder.of;
@@ -79,14 +84,20 @@ public class ServerEndpoint implements Closeable {
                     localIdentifier,
                     channelList);
 
-            return new EngineWireHandler(
+            EngineWireHandler engineWireHandler = new EngineWireHandler(
                     mapWireHandler,
                     null);
+
+            ((Consumer<WireHandlers>) mapWireHandler).accept(engineWireHandler);
+
+            return engineWireHandler;
         });
 
         eg.addHandler(eah);
         this.eah = eah;
         return eah;
+
+
     }
 
 

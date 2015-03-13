@@ -274,7 +274,8 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * entrySet contains all pairs
      */
-    @Test(timeout = 10000)
+    @Test
+            //(timeout = 10000)
     public void testEntrySet() throws IOException {
         try (ChronicleMap map = map5()) {
             Set s = map.entrySet();
