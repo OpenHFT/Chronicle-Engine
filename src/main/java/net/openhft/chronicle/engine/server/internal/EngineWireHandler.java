@@ -85,8 +85,6 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
         System.out.println("--------------------------------------------\nserver read:\n\n" + Bytes.toDebugString(in.bytes()));
         //    }
 
-
-
         in.read(TYPE).text(text);
 
         if ("MAP".contentEquals(text)) {
