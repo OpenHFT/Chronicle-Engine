@@ -19,6 +19,7 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.map.MapWireHandlerBuilder;
 import net.openhft.chronicle.network2.WireHandler;
 import net.openhft.chronicle.network2.WireTcpHandler;
 import net.openhft.chronicle.network2.event.WireHandlers;
@@ -85,7 +86,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
         System.out.println("--------------------------------------------\nserver read:\n\n" + Bytes.toDebugString(in.bytes()));
         //    }
 
-        in.read(TYPE).text(text);
+        in.read(type).text(text);
 
         if ("MAP".contentEquals(text)) {
             mapWireHandler.process(in, out);
@@ -126,18 +127,18 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
         public void process(Wire in, Wire out) {
 
-            long transactionId = inWire.read(TRANSACTION_ID).int64();
-            outWire.write(TRANSACTION_ID).int64(transactionId);
+            long transactionId = inWire.read(MapWireHandlerBuilder.Fields.transactionId).int64();
+            outWire.write(MapWireHandlerBuilder.Fields.transactionId).int64(transactionId);
 
-            in.read(METHOD_NAME).text(text);
+            in.read(methodName).text(text);
 
             if ("getWireFormats".contentEquals(text)) {
-                out.write(RESULT).text(TEXT_WIRE + "," + BINARY_WIRE);
+                out.write(result).text(TEXT_WIRE + "," + BINARY_WIRE);
                 return;
             }
 
             if ("setWireFormat".contentEquals(text)) {
-                out.write(RESULT).text(preferredWireType);
+                out.write(result).text(preferredWireType);
                 recreateWire(true);
             }
         }
