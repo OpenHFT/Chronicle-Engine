@@ -297,7 +297,8 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * putAll adds all key-value pairs from the given map
      */
-    @Test(timeout = 5000)
+    @Test
+            //(timeout = 5000)
     public void testPutAll() throws IOException {
         int port = s_port++;
         try (ChronicleMap empty = newShmIntString()) {
