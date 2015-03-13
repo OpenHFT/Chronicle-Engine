@@ -58,7 +58,6 @@ public class WireRemoteStatelessClientTest {
 
         public RemoteMapSupplier(Class<K> kClass, Class<V> vClass) throws IOException {
 
-
             serverEndpoint = new ServerEndpoint((byte) 1);
             int serverPort = serverEndpoint.getPort();
 
