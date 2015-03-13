@@ -177,7 +177,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * isEmpty is true of empty map and false for non-empty
      */
-    @Test(timeout = 10000)
+    @Test(timeout = 20000)
     public void testIsEmpty() throws IOException {
         try (ChronicleMap empty = newShmIntString()) {
             try (ChronicleMap map = map5()) {
