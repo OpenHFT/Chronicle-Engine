@@ -1,38 +1,40 @@
-on initial connection the server and the client exchange version numbers, see example below :
+# Getting data from map
 
+on initial connection the server and the client exchange version numbers, see example below :
+```
 --------------------------------------------
 client writes:
-
+```
 type: MAP
 transactionId: 1426502826520
 timeStamp: 1426502826520
 channelId: 1
 methodName: applicationVersion
-
+```
 --------------------------------------------
 server reads:
-
+```
 type: MAP
 transactionId: 1426502826520
 timeStamp: 1426502826520
 channelId: 1
 methodName: applicationVersion
-
+```
 --------------------------------------------
 server writes:
-
+```
 transactionId: 1426502826520
 isException: false
 result: 3.0.0-alpha-SNAPSHOT
 
-
+```
 --------------------------------
 client reads:
-
+```
 transactionId: 1426502826520
 isException: false
 result: 3.0.0-alpha-SNAPSHOT
-
+```
 
 If the version number differ
 - A warning is logged.
@@ -77,41 +79,41 @@ and the map name of the map is resolved to channel1 then the protocol becomes th
 
 
 client writes:
-
+```
 type: MAP
 transactionId: 1426504502494
 timeStamp: 1426504502494
 channelId: 1
 methodName: createChannel
 arg1: 2
-
+```
 --------------------------------------------
 server reads:
-
+```
 type: MAP
 transactionId: 1426504502494
 timeStamp: 1426504502494
 channelId: 1
 methodName: createChannel
 arg1: 2
-
+```
 --------------------------------------------
 server writes:
-
+```
 transactionId: 1426504502494
 isException: false
 
-
+```
 --------------------------------
 client read:
-
+```
 transactionId: 1426504502494
 isException: false
 
-
+```
 --------------------------------------------
 client writes:
-
+```
 type: MAP
 transactionId: 1426504502816
 timeStamp: 1426504502816
@@ -123,10 +125,10 @@ valueClass: java.lang.String
 channelID: 2
 }
 
-
+```
 --------------------------------------------
 server reads:
-
+```
 type: MAP
 transactionId: 1426504502816
 timeStamp: 1426504502816
@@ -136,18 +138,18 @@ arg1: test
 arg2: { keyClass: java.lang.Integer
 valueClass: java.lang.String
 channelID: 2
-}
+}```
 --------------------------------------------
 server writes:
-
+```
 transactionId: 1426504502816
 isException: false
 resultIsNull: true
 
-
+```
 --------------------------------
 client read:
-
+```
 transactionId: 1426504502816
 isException: false
 resultIsNull: true
@@ -173,11 +175,11 @@ changed to you host and port.
 now the client is able to write data the this new service, in other words channel 2, so as in the
  code sample above we are going to map.put(1, "hello");
 
-
+```
 ------------------------------
 client writes:
 
-
+```
 type: MAP
 transactionId: 1426504502823
 timeStamp: 1426504502823
@@ -185,11 +187,11 @@ channelId: 2
 methodName: put
 arg1: 1
 arg2: hello
-
+```
 -------------------------------
 server reads:
 
-
+```
 type: MAP
 transactionId: 1426504502823
 timeStamp: 1426504502823
@@ -197,18 +199,18 @@ channelId: 2
 methodName: put
 arg1: 1
 arg2: hello
-
+```
 --------------------------------
 server writes:
-
+```
 transactionId: 1426504502823
 isException: false
 resultIsNull: true
 
-
+```
 --------------------------------
 client read:
-
+```
 transactionId: 1426504502823
 isException: false
 resultIsNull: true
@@ -218,8 +220,6 @@ old value will return null.
 
 resultIsNull: true
 
-
-# Getting data from map
 
 
 

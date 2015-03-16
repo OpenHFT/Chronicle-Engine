@@ -1,13 +1,13 @@
 All messages that are send from the server are made up from a
 
-
+```
 type: < This could be MAP, QUEUE, CORE >
 
 MAP : denotes that we wish to bind to a map instance,
 QUEUE  :denotes that we wish to bind to a map instance,
 CORE : used when instruction the engine to carry out general tasks such as change the protocol
 type from TEXT WIRE to BINARY WIRE.
-
+```
 transactionId: < a long number >
 the transaction id must be a unique number of this request, it must be unique per server
 connection. Typically this is implemented as a unique time stamp in milliseconds, but it is upto
@@ -26,7 +26,7 @@ currently implemented as a number, but this will short changed to a String, this
 become the server name.
 
 example of the above
-
+```
 type: MAP
 transactionId: 1426502826520
 timeStamp: 1426502826520
@@ -47,7 +47,7 @@ this name maps to a channel id. this channel id must be unique mapped to the ser
 Each request has a transaction :
 
 client writes:
-
+```
 type: MAP
 transactionId: 1426504502494
 timeStamp: 1426504502494
@@ -57,7 +57,7 @@ the server notifies that it recieved this message by relecting the transaction i
 
 
 server writes:
-
+```
 transactionId: 1426504502494
 isException: false
 
