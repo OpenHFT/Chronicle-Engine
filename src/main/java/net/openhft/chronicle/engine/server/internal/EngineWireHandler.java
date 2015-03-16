@@ -83,7 +83,8 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
 
         //      if(LOG.isDebugEnabled()) {
-        System.out.println("--------------------------------------------\nserver read:\n\n" + Bytes.toDebugString(in.bytes()));
+        System.out.println("--------------------------------------------\nserver reads:\n\n" +
+                Bytes.toDebugString(in.bytes()));
         //    }
 
         in.read(type).text(text);
