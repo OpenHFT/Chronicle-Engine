@@ -80,7 +80,7 @@ transactionId: 1426504502494
 timeStamp: 1426504502494
 ```
 
-the server notifies that it relieved this message by reelecting the transaction id back
+the server notifies that it relieved this message by reflecting the transaction id back
 
 
 server writes:
