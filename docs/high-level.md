@@ -1,9 +1,10 @@
 All messages that are send to the server follow the initial header :
 
 
-| field              |                           Description |
+### type: <see table below >
+
+| type              |                     This could be MAP, QUEUE, CORE > |
 |:------------------ | -------------------------------------------------------------------------- |
-|TYPE                |  This could be MAP, QUEUE, CORE >  |
 |MAP | denotes that we wish to bind to a map instance,    |
 |QUEUE  | denotes that we wish to bind to a map instance  |
 |CORE | used when instruction the engine to carry out general tasks |
