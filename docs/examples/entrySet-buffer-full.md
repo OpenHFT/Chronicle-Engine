@@ -101,6 +101,91 @@ transactionId: 1426529566218
 isException: false
 hasNext: false
 ```
- 
+
+--------------------------------------------
+client writes:
+```
+type: MAP
+transactionId: 1426529566266
+timeStamp: 1426529566266
+channelId: 2
+methodName: entrySet
+```
+--------------------------------------------
+server reads:
+```
+type: MAP
+transactionId: 1426529566266
+timeStamp: 1426529566266
+channelId: 2
+methodName: entrySet
+```
+--------------------------------------------
+server writes:
+```
+transactionId: 1426529566266
+isException: false
+hasNext: true
+resultKey: 4
+resultValue: "hello 4"
+```
+
+--------------------------------
+client read:
+```
+transactionId: 1426529566266
+isException: false
+hasNext: true
+resultKey: 4
+resultValue: "hello 4"
+```
+
+--------------------------------
+client read:
+```
+transactionId: 1426529566266
+isException: false
+hasNext: true
+resultKey: 3
+resultValue: "hello 3"
+```
+
+--------------------------------
+client read:
+```
+transactionId: 1426529566266
+isException: false
+hasNext: true
+resultKey: 0
+resultValue: "hello 0"
+```
+
+--------------------------------
+client read:
+```
+transactionId: 1426529566266
+isException: false
+hasNext: true
+resultKey: 1
+resultValue: "hello 1"
+```
+
+--------------------------------
+client read:
+```
+transactionId: 1426529566266
+isException: false
+hasNext: true
+resultKey: 2
+resultValue: "hello 2"
+```
+
+--------------------------------
+client read:
+```
+transactionId: 1426529566266
+isException: false
+hasNext: false
+```
 
 [0=hello 0, 1=hello 1, 2=hello 2, 3=hello 3, 4=hello 4]
