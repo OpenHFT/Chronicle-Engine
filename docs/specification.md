@@ -35,7 +35,7 @@ connection. Typically this is implemented as a unique time stamp in milliseconds
  ever if the number of entries are large and they don’t all fit into a single tcp/ip buffer the server may send additional
  data with the same transaction id in order to complete the message.
 
-#### Time Stamp: < time stamp in milliseconds ( EPOC ) >
+#### Time Stamp: < time stamp in milliseconds ( epoc ) >
 A time stamp in milliseconds. This is the time the client sent the request.
 This time is used by the maps reconciliation algorithm, so ideally should be as accurate as
 possible, this field should always be sent in its entirety and should not be derived from the
