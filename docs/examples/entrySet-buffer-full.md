@@ -44,6 +44,43 @@ resultKey: 4
 resultValue: "hello 4"
 ```
 
+--------------------------------------------
+server writes:
+```
+transactionId: 1426529566218
+isException: false
+hasNext: true
+resultKey: 4
+resultValue: "hello 3"
+```
+
+--------------------------------------------
+server writes:
+```
+transactionId: 1426529566218
+isException: false
+hasNext: true
+resultKey: 4
+resultValue: "hello 0"
+```
+--------------------------------------------
+server writes:
+```
+transactionId: 1426529566218
+isException: false
+hasNext: true
+resultKey: 4
+resultValue: "hello 1"
+```
+--------------------------------------------
+server writes:
+```
+transactionId: 1426529566218
+isException: false
+hasNext: true
+resultKey: 4
+resultValue: "hello 2"
+```
 --------------------------------
 client read:
 ```
@@ -101,6 +138,5 @@ transactionId: 1426529566218
 isException: false
 hasNext: false
 ```
-
 
 [0=hello 0, 1=hello 1, 2=hello 2, 3=hello 3, 4=hello 4]
