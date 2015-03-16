@@ -105,10 +105,8 @@ result : < the exception as a text string>
 #### Below is covered some of the point raised above in more detail
 
 When client initially connects to the server, it must exchange version numbers,
-see example
+see example below :
 
-below :
-```
 --------------------------------------------
 client writes:
 ```
