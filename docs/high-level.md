@@ -30,12 +30,12 @@ possible, this field should always be sent in its entirety and should not be der
 transaction id is as an offset, as the transaction-id may not necessary be a time stamp.
 
 #### Channel Id: <unique channel id>
-Currently implemented as a number, but this will shortly changed to a String, this string will
+Currently implemented as a number, but this will shortly changed to a String, this String will
 become the service name.
 
 ----------------------------------
 
-##### Example of the above
+## Example Header
 
 ```
 type: MAP
@@ -53,6 +53,7 @@ channelId: 1
 If the version number differs between the client and server:
 - A warning is logged.
 - Data can only be exchanged using text wire, NOT binary wire.
+
 If the version numbers are the same between the client and server:
 the client can ask the server to change to use the more efficient binary wire encoding.
 
@@ -63,7 +64,7 @@ this name maps to a channel id. this channel id must be unique mapped to the ser
 The client can handle a number of simultaneous requests ( each on a different thread ). A single TCP connection is used to handle all the traffic between the client and the server, and the thread that is making a request does not hold onto the socket connection waiting for a response. It will allow other threads in the meantime, to make separate requests, once a response is received it should marry up with the thread that made the request and hence return the result back to the user. So from a users perspective each thread blocks until it gets a response but you can make a number of different request at the same time, as long as they are on separate threads they don’t block each other.
 
 
-exxample message :
+## Example message :
 
 client writes:
 ```
@@ -82,22 +83,31 @@ isException: false
 ```
 
 not all all requests require a require a reply, but some do. receiving a reply with a
- ```
+
+```
 isException: false
 ```
+
 gives you confidence that the request was processed correctly. For messages that have
+
 ```
 isException: true
 ```
 
 the subsequent result will contain an exception :
+
 ```
 result : < the exception as a text string>
 ```
 
-# Getting data from map
+##  Detailed Specification
 
-on initial connection the server and the client exchange version numbers, see example below :
+#### Below is covered some of the point raised above in more detail
+
+When client initially connects to the server, it must exchange version numbers,
+see example
+
+below :
 ```
 --------------------------------------------
 client writes:
