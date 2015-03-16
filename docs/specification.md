@@ -1,6 +1,6 @@
 # Engine High Level Spec
 
-This page covers the specifiaction initial hand shaking and header for Chronicle Engine TCP connectivity, if you wish to look at some messages flow based on some chronicle map functions see :
+This page covers the specification of the initial hand shaking and header for Chronicle Engine TCP connectivity, if you wish to look at the message flow based on, some chronicle map functions, see the table below :
 
 | method   | description      |   URL                                                                                         |
 |:---------|------|-----------------------------------------------------------------------------------------------------------|
