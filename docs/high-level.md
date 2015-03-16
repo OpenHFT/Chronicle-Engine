@@ -22,13 +22,13 @@ connection. Typically this is implemented as a unique time stamp in milliseconds
  within the same transaction id ) as it may not be possible for all the data to fit within a
  single TcpBuffer.
 
-### Time Stamp: 1426502826520
+### Time Stamp: < time stamp in milliseconds ( EPOC ) >
 The time stamp in milliseconds that the client sent the response, this field should always be
 sent in its entirety and should not be derived from the transaction-id is as an offset, as the
 transaction id may not be necessary be a time stamp.
 
-### Channel Id: 1
-currently implemented as a number, but this will short changed to a String, this string will
+### Channel Id: <unique channel id>
+Currently implemented as a number, but this will short changed to a String, this string will
 become the server name.
 
 ----------------------------------
