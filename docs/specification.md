@@ -244,21 +244,24 @@ arg1: test
 arg2: { keyClass: java.lang.Integer
 valueClass: java.lang.String
 channelID: 2
-}```
+}
+```
 --------------------------------------------
 server writes:
 ```
 transactionId: 1426504502816
 isException: false
 resultIsNull: true
-
 ```
+
 --------------------------------
 client read:
+
 ```
 transactionId: 1426504502816
 isException: false
 resultIsNull: true
+```
 
 The key and value types are sent as the fully qualified name of the classes.
 channel 1 is reserved for holding the details about the maps, in other words the service
