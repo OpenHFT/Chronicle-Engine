@@ -4,14 +4,14 @@ This page covers the specification of the initial hand shaking and header for Ch
 
 | method   | description      |   URL                                                                                         |
 |:---------|------|-----------------------------------------------------------------------------------------------------------|
-|toString()|                  |    https://github.com/OpenHFT/Chronicle-Engine/blob/master/docs/examples/toString.md          |
-|toString()|large number of entries|https://github.com/OpenHFT/Chronicle-Engine/blob/master/docs/examples/toString-large-number-of-entries.md|           
-|put<key,value>|              | https://github.com/OpenHFT/Chronicle-Engine/blob/master/docs/examples/put.md                  |
-|putAll<map>|           | https://github.com/OpenHFT/Chronicle-Engine/blob/master/docs/examples/putAll.md                  |
-|get<key>  | returns non null |https://github.com/OpenHFT/Chronicle-Engine/blob/master/docs/examples/get-returns-a-value.md   |
-|get<key>  | returns null     |https://github.com/OpenHFT/Chronicle-Engine/blob/master/docs/examples/get-returns-null.md      |
-|entrySet<key>  | chunked - when the server buffer full  |https://github.com/OpenHFT/Chronicle-Engine/blob/master/docs/entrySet-buffer-full.md      |
-|entrySet<key>  | the whole entry set in a single message  | [link](https://github.com/OpenHFT/Chronicle-Engine/blob/master/docs/entrySet.md  )    |
+|toString()|                  |    [link](https://github.com/OpenHFT/Chronicle-Engine/blob/master/docs/examples/toString.md)          |
+|toString()|large number of entries|[link](https://github.com/OpenHFT/Chronicle-Engine/blob/master/docs/examples/toString-large-number-of-entries.md)|           
+|put<key,value>|              | [link](https://github.com/OpenHFT/Chronicle-Engine/blob/master/docs/examples/put.md)                  |
+|putAll<map>|           | [link](https://github.com/OpenHFT/Chronicle-Engine/blob/master/docs/examples/putAll.md)                  |
+|get<key>  | returns non null |[link](https://github.com/OpenHFT/Chronicle-Engine/blob/master/docs/examples/get-returns-a-valu)e.md   |
+|get<key>  | returns null     |[link](https://github.com/OpenHFT/Chronicle-Engine/blob/master/docs/examples/get-returns-null.md)      |
+|entrySet<key>  | chunked - when the server buffer full  |[link](https://github.com/OpenHFT/Chronicle-Engine/blob/master/docs/entrySet-buffer-full.md)      |
+|entrySet<key>  | the whole entry set in a single message  | [link](https://github.com/OpenHFT/Chronicle-Engine/blob/master/docs/examples/entrySet.md )    |
 
 
 
