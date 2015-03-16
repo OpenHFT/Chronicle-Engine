@@ -1,4 +1,8 @@
-All messages that are send to the server follow the initial header :
+# Engine High Level Spec
+
+## Header
+All messages that are sent from a client to a Chronicle Engine via TCP contains a header, below is
+ the specification for this header.
 
 
 ### Type: <see table below >
