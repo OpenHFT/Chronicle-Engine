@@ -102,10 +102,10 @@ result : < the exception as a text string>
 
 ##  Detailed Specification
 
-#### Below is covered some of the point raised above in more detail
+##### Below is covered some of the points raised above in more detail
 
-When client initially connects to the server, it must exchange version numbers,
-see example below :
+When clients connect to the server, they should exchange version numbers, below show sample message
+ of this exchange :
 
 --------------------------------------------
 client writes:
@@ -148,11 +148,10 @@ If the version number differ
 
 # Service API
 
-engine uses the following API to :
+Engine supports the following API=
 
-```
+``` java
 public interface ChronicleContext {
-
     ...
 
     <K, V> ChronicleMap<K, V> getMap(String name, Class<K> kClass, Class<V> vClass);
@@ -165,23 +164,25 @@ public interface ChronicleContext {
 }
 ```
 
-This lets you access a map, queue of other serve by name, maps that name to a channel ID, for
-example :
-
+This lets you access a map, queue or other service by name, currently the client translates that
+name into a channel id ( which at the moment is a number ) however later versions will support a
+channel ID as a name.
+```
  channelId: 1
-
-how ever later version will support channel names, for example
-
+```
+and in later versions
+```
  channelId: <name of channel>
-
+```
 
 If you wished to create a Map that has
 
+```
 key -> Integer
 value -> String
+```
 
-and the map name of the map is resolved to channel1 then the protocol becomes the following :
-
+when the name of the map is resolved to channel1 then the protocol becomes the following :
 
 client writes:
 ```
@@ -260,12 +261,12 @@ isException: false
 resultIsNull: true
 
 The key and value types are sent as the fully qualified name of the classes.
-channel 1 is reserved for holding the details about the maps, in other word the service
+channel 1 is reserved for holding the details about the maps, in other words the service
 descriptor is held in a map at channel 1, this descriptor holds the keys class value class and
 channel id. } in this example above the name of the service was "test", it was created from the
 following java code :
 
-```
+``` java
 RemoteTcpClientChronicleContext context = new RemoteTcpClientChronicleContext(
        "localhost", 1234);
 
@@ -274,13 +275,16 @@ ChronicleMap<Integer, String> map = context.getMap("test", Integer.class, String
 map.put(1, "hello");
 ```
 
-in this example the server is connecting to a remove map on localhost:1234, but this would be
-changed to you host and port.
+in this example the server is connecting to a remote map on localhost:1234, but this would be
+changed to your host and port. Now the client is able to write data the this new service, in
+other words channel 2, so as in the code sample above we are going to
 
-now the client is able to write data the this new service, in other words channel 2, so as in the
- code sample above we are going to map.put(1, "hello");
-
+``` java
+map.put(1, "hello");
 ```
+
+and the following data is exchanged between the client and server :
+
 ------------------------------
 client writes:
 
