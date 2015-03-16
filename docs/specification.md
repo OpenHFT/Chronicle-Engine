@@ -61,10 +61,9 @@ channelId: 1
 
 1. Engine provides a service interface, these services maybe MAP's or QUEUE's  ( amongst others )
 2. On initial connection the server and the client version numbers are exchanged :
- If the version number differs between the client and server:
-   * A warning is logged.
-   * Data can only be exchanged using text wire, NOT binary wire.
-  If the version numbers are the same between the client and server:
+ 2.1 If the version number differs between the client and server:
+   * A warning is logged, Data can only be exchanged using text wire, NOT binary wire.
+ 2.2 If the version numbers are the same between the client and server:
 the client can ask the server to change to use the more efficient binary wire encoding.
 
 3. In later versions the services will be given names, in the current version under the covers
