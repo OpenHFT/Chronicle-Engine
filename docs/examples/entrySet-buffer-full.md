@@ -1,7 +1,6 @@
-# toString()
+# entrySet()
 
-When the server outbound buffer get full entry can come back in separate messages, the worst case of this is for each entry to come back in a separate message as illistrated below. This is realistically only like to happend when the enteies are very large.
-
+When the server outbound buffer get full entry can come back in separate messages, the worst case of this is for each entry to come back in a separate message as illistrated below. This is realistically only likely to happend when the size of each entry is very large.
 ```
 final ChronicleMap<Integer, String> map = createMap();
 
