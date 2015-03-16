@@ -23,7 +23,7 @@ All messages that are sent from a client to a Chronicle Engine via TCP contain a
 |:----- | --------------------------------------------------------------------------  |
 |Map    | denotes that we wish to bind to a map instance.                                          |
 |Queue  | denotes that we wish to bind to a queue instance. |
-|Core   | denotes that we wish carry out general tasks.                              |
+|Core   | denotes that we wish to carry out general tasks,for example, changing the wire format.                              |
 
 
 #### Transaction Id: < a long number >
