@@ -3,11 +3,11 @@ All messages that are send to the server follow the initial header :
 
 ### Type: <see table below >
 
-| type              |                     This could be MAP, QUEUE, CORE > |
-|:------------------ | -------------------------------------------------------------------------- |
-|Map | denotes that we wish to bind to a map instance,    |
-|Queue  | denotes that we wish to bind to a map instance  |
-|Core | used when instruction the engine to carry out general tasks |
+| type               | description   |
+|:------------------ | --------------------------------------------------------------------------  |
+|Map    | denotes that we wish to bind to a map instance,                                          |
+|Queue  | denotes that we wish to bind to a map instance                                           |
+|Core   | used when instruction the engine to carry out general tasks                              |
 
 
 ### Transaction Id: < a long number >
