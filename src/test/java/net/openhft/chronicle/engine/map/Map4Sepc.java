@@ -22,6 +22,8 @@ import net.openhft.chronicle.map.ChronicleMap;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by Rob Austin
@@ -36,11 +38,17 @@ public class Map4Sepc {
 
     @Test
     public void testPut() throws IOException {
-        ChronicleMap<Integer, String> map = createMap();
-        for (int i = 0; i < 110; i++) {
-            map.put(i, "hello " + i);
+        final ChronicleMap<Integer, String> map = createMap();
+
+        Map<Integer, String> m = new HashMap<>();
+
+        for (int i = 0; i < 5; i++) {
+            m.put(i, "hello " + i);
         }
 
-        System.out.println(map.toString());
+        map.putAll(m);
+        map.entrySet();
+
+        System.out.println(map.entrySet().toString());
     }
 }

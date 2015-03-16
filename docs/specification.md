@@ -10,6 +10,9 @@ This page covers the specification of the initial hand shaking and header for Ch
 |putAll<map>|           | https://github.com/OpenHFT/Chronicle-Engine/blob/master/docs/examples/putAll.md                  |
 |get<key>  | returns non null |https://github.com/OpenHFT/Chronicle-Engine/blob/master/docs/examples/get-returns-a-value.md   |
 |get<key>  | returns null     |https://github.com/OpenHFT/Chronicle-Engine/blob/master/docs/examples/get-returns-null.md      |
+|entrySet<key>  | server buffer full  |https://github
+.com/OpenHFT/Chronicle-Engine/blob/master/docs/entrySet-buffer-full.md      |
+
 
 
 ## Header
