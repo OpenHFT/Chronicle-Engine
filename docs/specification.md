@@ -1,4 +1,5 @@
-# Chronicle Engine - Remote Handshaking Sepcification
+# Chronicle Engine 
+## TCP Cleint/Servew Remote IPC using Chronicle Wire
 
 This page covers the specification of the initial hand shaking and header for Chronicle Engine TCP connectivity, if you wish to look at the message flow based on, some chronicle map functions, see the table below :
 
