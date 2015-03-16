@@ -89,13 +89,13 @@ transactionId: 1426504502494
 isException: false
 ```
 
-not all all requests require a require a reply, but some do. receiving a reply with a
+not all all requests require a require a reply, but most do. When you receive a reply with a :
 
 ```
 isException: false
 ```
 
-gives you confidence that the request was processed correctly. For messages that have
+this gives you confidence that the request was processed correctly. For messages that have
 
 ```
 isException: true
