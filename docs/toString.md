@@ -9,48 +9,7 @@ for a small number of entries ( less than 100 )  the entry set is return.
  System.out.println(map.toString());
 ```
 
---------------------------------------------
-client writes:
-```
-type: MAP
-transactionId: 1426515176235
-timeStamp: 1426515176235
-channelId: 1
-methodName: put
-arg1: test
-arg2: { keyClass: java.lang.Integer
-valueClass: java.lang.String
-channelID: 2
-}```
---------------------------------------------
-server reads:
-```
-type: MAP
-transactionId: 1426515176235
-timeStamp: 1426515176235
-channelId: 1
-methodName: put
-arg1: test
-arg2: { keyClass: java.lang.Integer
-valueClass: java.lang.String
-channelID: 2
-}```
---------------------------------------------
-server writes:
-```
-transactionId: 1426515176235
-isException: false
-resultIsNull: true
 
-```
---------------------------------
-client read:
-```
-transactionId: 1426515176235
-isException: false
-resultIsNull: true
-
-```
 --------------------------------------------
 client writes:
 
