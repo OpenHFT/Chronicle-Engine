@@ -1,12 +1,15 @@
-All messages that are send from the server are made up from a
+All messages that are send to the server follow the initial header :
 
-```
-type: < This could be MAP, QUEUE, CORE >
 
-MAP : denotes that we wish to bind to a map instance,
-QUEUE  :denotes that we wish to bind to a map instance,
-CORE : used when instruction the engine to carry out general tasks such as change the protocol
-type from TEXT WIRE to BINARY WIRE.
+| field              |                           Description |
+|:------------------ | -------------------------------------------------------------------------- |
+|type                |  This could be MAP, QUEUE, CORE >  |
+|
+|MAP | denotes that we wish to bind to a map instance,    |
+|QUEUE  | denotes that we wish to bind to a map instance  |
+|CORE | used when instruction the engine to carry out general tasks such as change the protocol
+|type from TEXT WIRE to BINARY WIRE|
+
 ```
 transactionId: < a long number >
 the transaction id must be a unique number of this request, it must be unique per server
