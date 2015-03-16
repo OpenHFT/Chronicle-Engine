@@ -8,7 +8,7 @@ All messages that are send to the server follow the initial header :
 |QUEUE  | denotes that we wish to bind to a map instance  |
 |CORE | used when instruction the engine to carry out general tasks |
 
-```
+
 ### transactionId: < a long number >
 the transaction id must be a unique number of this request, it must be unique per server
 connection. Typically this is implemented as a unique time stamp in milliseconds, but it is upto
