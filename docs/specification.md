@@ -61,8 +61,7 @@ timeStamp: 1426502826520
 channelId: 1
 ```
 
-### Specification
-
+### Specification Overview
 
 1. Engine provides a service interface, these services maybe MAP's or QUEUE's  ( amongst others )
 2. On initial connection the server and the client version numbers are exchanged :
