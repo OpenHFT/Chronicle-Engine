@@ -1,4 +1,4 @@
-# get(<key>)
+# get(key)
 
 ``` java
 final ChronicleMap<Integer, String> map = createMap();
