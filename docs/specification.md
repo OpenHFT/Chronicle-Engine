@@ -50,6 +50,7 @@ become the service name.
 ## Example Header
 
 ```
+<2 byte unsigned short that denotes the size of ALL the wire messages in this chunk>
 type: MAP
 transactionId: 1426502826520
 timeStamp: 1426502826520
@@ -189,7 +190,7 @@ key -> Integer
 value -> String
 ```
 
-when the name of the map is resolved to channel1 then the protocol becomes the following :
+when the name of the map is resolved to channel=2 then the protocol becomes the following :
 
 client writes:
 ```
