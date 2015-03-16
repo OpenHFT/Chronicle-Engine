@@ -7,29 +7,31 @@ All messages that are sent from a client to a Chronicle Engine via TCP contain a
 
 #### Type: <see table below >
 
-| type               | description   |
-|:------------------ | --------------------------------------------------------------------------  |
-|Map    | denotes that we wish to bind to a map instance,                                          |
-|Queue  | denotes that we wish to bind to a map instance                                           |
-|Core   | used when instruction the engine to carry out general tasks                              |
+| type  | description   |
+|:----- | --------------------------------------------------------------------------  |
+|Map    | denotes that we wish to bind to a map instance.                                          |
+|Queue  | denotes that we wish to bind to a queue instance. |
+|Core   | denotes that we wish carry out general tasks.                              |
 
 
 #### Transaction Id: < a long number >
-the transaction id must be a unique number of this request, it must be unique per server
+The transaction id must be a unique number of this request, it must be unique per server
 connection. Typically this is implemented as a unique time stamp in milliseconds, but it is upto
- the client to decided who this is generated. The server will reflect the transaction id back to
- the client in response to a request. When chucking the server may provided several responses (
- within the same transaction id ) as it may not be possible for all the data to fit within a
- single TcpBuffer.
+ the client to decide how this is generated. The server will reflect the transaction id back to
+ the client in response to a request. When responding the server may provide several
+ responses or entries for a single transaction id, this is typically how entry set works. How
+ ever if the number of entries are large and they don’t all fit into a single tcp/ip buffer the server may send additional
+ data with the same transaction id in order to complete the message.
 
 #### Time Stamp: < time stamp in milliseconds ( EPOC ) >
-The time stamp in milliseconds that the client sent the response, this field should always be
-sent in its entirety and should not be derived from the transaction-id is as an offset, as the
-transaction id may not be necessary be a time stamp.
+A time stamp in milliseconds. This is the time the client sent the request.
+This time is used by the maps reconciliation algorithm, so ideally should be as accurate as
+possible, this field should always be sent in its entirety and should not be derived from the
+transaction id is as an offset, as the transaction-id may not necessary be a time stamp.
 
 #### Channel Id: <unique channel id>
-Currently implemented as a number, but this will short changed to a String, this string will
-become the server name.
+Currently implemented as a number, but this will shortly changed to a String, this string will
+become the service name.
 
 ----------------------------------
 
@@ -44,18 +46,24 @@ channelId: 1
 
 #### Overview
 
+
 1. Engine provides a service interface, these services maybe MAP's or QUEUE's  ( amongst others )
+2. On initial connection the server and the client version numbers are exchanged :
 
-2. On initial connection the server and the client version numbers :
-
-If the version number differ
+If the version number differs between the client and server:
 - A warning is logged.
 - Data can only be exchanged using text wire, NOT binary wire.
+If the version numbers are the same between the client and server:
+the client can ask the server to change to use the more efficient binary wire encoding.
 
-3. in later version the services will be given names, in the current version under the covers
+3. In later versions the services will be given names, in the current version under the covers
 this name maps to a channel id. this channel id must be unique mapped to the service name.
 
-Each request has a transaction :
+4 Each request has a transaction, the server will in most cases ( accept for a few rare cases ) reflect this transaction id to the client. If the client does not receive the transaction id it should time out the message to the user.
+The client can handle a number of simultaneous requests ( each on a different thread ). A single TCP connection is used to handle all the traffic between the client and the server, and the thread that is making a request does not hold onto the socket connection waiting for a response. It will allow other threads in the meantime, to make separate requests, once a response is received it should marry up with the thread that made the request and hence return the result back to the user. So from a users perspective each thread blocks until it gets a response but you can make a number of different request at the same time, as long as they are on separate threads they don’t block each other.
+
+
+exxample message :
 
 client writes:
 ```
@@ -64,7 +72,7 @@ transactionId: 1426504502494
 timeStamp: 1426504502494
 ```
 
-the server notifies that it recieved this message by relecting the transaction id back
+the server notifies that it relieved this message by reelecting the transaction id back
 
 
 server writes:
