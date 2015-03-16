@@ -1,16 +1,16 @@
 All messages that are send to the server follow the initial header :
 
 
-### type: <see table below >
+### Type: <see table below >
 
 | type              |                     This could be MAP, QUEUE, CORE > |
 |:------------------ | -------------------------------------------------------------------------- |
-|MAP | denotes that we wish to bind to a map instance,    |
-|QUEUE  | denotes that we wish to bind to a map instance  |
-|CORE | used when instruction the engine to carry out general tasks |
+|Map | denotes that we wish to bind to a map instance,    |
+|Queue  | denotes that we wish to bind to a map instance  |
+|Core | used when instruction the engine to carry out general tasks |
 
 
-### transactionId: < a long number >
+### Transaction Id: < a long number >
 the transaction id must be a unique number of this request, it must be unique per server
 connection. Typically this is implemented as a unique time stamp in milliseconds, but it is upto
  the client to decided who this is generated. The server will reflect the transaction id back to
@@ -18,18 +18,19 @@ connection. Typically this is implemented as a unique time stamp in milliseconds
  within the same transaction id ) as it may not be possible for all the data to fit within a
  single TcpBuffer.
 
-### timeStamp: 1426502826520
+### Time Stamp: 1426502826520
 The time stamp in milliseconds that the client sent the response, this field should always be
 sent in its entirety and should not be derived from the transaction-id is as an offset, as the
 transaction id may not be necessary be a time stamp.
 
-### channelId: 1
+### Channel Id: 1
 currently implemented as a number, but this will short changed to a String, this string will
 become the server name.
 
 ----------------------------------
 
 #### Example of the above
+
 ```
 type: MAP
 transactionId: 1426502826520
