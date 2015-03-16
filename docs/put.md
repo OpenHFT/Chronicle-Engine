@@ -1,3 +1,6 @@
+# get(<key>) returning NULL
+
+
 ```
  ChronicleMap<Integer, String> map = createMap();
  map.put(1, "hello");

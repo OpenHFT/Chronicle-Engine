@@ -1,4 +1,4 @@
-# get returns a value
+# get(<key>)
 
 ```
  map.get(1);

@@ -1,4 +1,4 @@
-# toString
+# toString()
 
 for a small number of entries ( less than 100 )  the entry set is return.
 
@@ -8,7 +8,7 @@ for a small number of entries ( less than 100 )  the entry set is return.
  map.put(2, "world");
  System.out.println(map.toString());
 ```
-```
+
 --------------------------------------------
 client writes:
 ```
