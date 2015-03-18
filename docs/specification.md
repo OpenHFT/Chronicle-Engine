@@ -35,8 +35,7 @@ The transaction id must be a unique number of this request, it must be unique pe
 connection. Typically this is implemented as a unique time stamp in milliseconds, but it is upto
  the client to decide how this is generated. The server will reflect the transaction id back to
  the client in response to a request. When responding the server may provide several
- responses or entries for a single transaction id, this is typically how entry set works. How
- ever if the number of entries are large and they don’t all fit into a single tcp/ip buffer the server may send additional
+ responses or a single response for a single transaction id, this is typically how entry set works. So, if the number of entries are large and they don’t all fit into a single tcp/ip buffer the server may send additional
  data with the same transaction id in order to complete the message.
 
 #### Time Stamp: < time stamp in milliseconds ( epoc ) >
