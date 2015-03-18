@@ -68,7 +68,7 @@ If the version number differs between the client and server,  A warning is logge
 the client can ask the server to change to use the more efficient binary wire encoding.
 
 3. In later versions the services will be given names, in the current version under the covers
-this name maps to a channel id. this channel id must be unique mapped to the service name.
+this name maps to a channel id. this channel id must be uniquely mapped to the service name.
 
 4. Each request has a transaction, the server will in most cases ( accept for a few rare cases ) reflect this transaction id to the client. If the client does not receive the transaction id it should time out the message to the user.
 The client can handle a number of simultaneous requests ( each on a different thread ). A single TCP connection is used to handle all the traffic between the client and the server, and the thread that is making a request does not hold onto the socket connection waiting for a response. It will allow other threads in the meantime, to make separate requests, once a response is received it should marry up with the thread that made the request and hence return the result back to the user. So from a users perspective each thread blocks until it gets a response but you can make a number of different request at the same time, as long as they are on separate threads they don’t block each other.
