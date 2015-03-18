@@ -114,7 +114,7 @@ result : < the exception as a text string>
 
 ##  Detailed Specification
 
-##### Below is covered some of the points raised above in more detail
+##### Below coveres some of the points raised above in more detail
 
 When clients connect to the server, they should exchange version numbers, below show sample message
  of this exchange :
