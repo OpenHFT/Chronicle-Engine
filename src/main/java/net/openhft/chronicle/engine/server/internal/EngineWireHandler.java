@@ -23,10 +23,7 @@ import net.openhft.chronicle.map.MapWireHandlerBuilder;
 import net.openhft.chronicle.network2.WireHandler;
 import net.openhft.chronicle.network2.WireTcpHandler;
 import net.openhft.chronicle.network2.event.WireHandlers;
-import net.openhft.chronicle.wire.BinaryWire;
-import net.openhft.chronicle.wire.RawWire;
-import net.openhft.chronicle.wire.TextWire;
-import net.openhft.chronicle.wire.Wire;
+import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.StreamCorruptedException;
@@ -82,12 +79,18 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     protected void process(Wire in, Wire out) throws StreamCorruptedException {
 
 
+        final Bytes<?> bytes = in.bytes();
+        int header = bytes.readVolatileInt();
+
+
+        assert !Wires.isData(header) : "should be a header";
+
         //      if(LOG.isDebugEnabled()) {
         System.out.println("--------------------------------------------\nserver reads:\n\n" +
                 Bytes.toDebugString(in.bytes()));
         //    }
 
-        in.read(type).text(text);
+        in.read(csp).text(text);
 
         if ("MAP".contentEquals(text)) {
             mapWireHandler.process(in, out);

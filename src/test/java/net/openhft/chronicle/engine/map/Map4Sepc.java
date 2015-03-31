@@ -19,6 +19,7 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.map.ChronicleMap;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -35,7 +36,7 @@ public class Map4Sepc {
         return remoteMapSupplier.get();
     }
 
-
+    @Ignore
     @Test
     public void testPut() throws IOException {
         final ChronicleMap<Integer, String> map = createMap();

@@ -185,6 +185,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * keySet returns a Set containing all the keys
      */
+    @Ignore
     @Test(timeout = 10000)
     public void testKeySet() throws IOException {
         try (ChronicleMap map = map5()) {
@@ -201,6 +202,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * keySet.toArray returns contains all keys
      */
+    @Ignore
     @Test(timeout = 10000)
     public void testKeySetToArray() throws IOException {
         try (ChronicleMap map = map5()) {
@@ -216,6 +218,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * Values.toArray contains all values
      */
+    @Ignore
     @Test(timeout = 10000)
     public void testValuesToArray() throws IOException {
         try (ChronicleMap map = map5()) {
@@ -234,6 +237,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * entrySet.toArray contains all entries
      */
+    @Ignore
     @Test(timeout = 5000)
     public void testEntrySetToArray() throws IOException {
         try (ChronicleMap map = map5()) {
@@ -250,6 +254,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * values collection contains all values
      */
+    @Ignore
     @Test(timeout = 5000)
     public void testValues() throws IOException {
         try (ChronicleMap map = map5()) {
@@ -266,6 +271,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * entrySet contains all pairs
      */
+    @Ignore
     @Test
             //(timeout = 10000)
     public void testEntrySet() throws IOException {
@@ -289,6 +295,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * putAll adds all key-value pairs from the given map
      */
+    @Ignore
     @Test
             //(timeout = 5000)
     public void testPutAll() throws IOException {
@@ -444,6 +451,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * toString.md contains toString.md of elements
      */
+    @Ignore
     @Test(timeout = 5000)
     public void testToString() throws IOException {
         try (ChronicleMap map = map5()) {
