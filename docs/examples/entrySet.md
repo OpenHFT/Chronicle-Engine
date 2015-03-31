@@ -20,7 +20,7 @@ map.entrySet();
 client writes:
 ```
 type: MAP
-transactionId: 1426529866215
+tid: 1426529866215
 timeStamp: 1426529866215
 channelId: 2
 methodName: putAll
@@ -45,7 +45,7 @@ server reads:
 
 ```
 type: MAP
-transactionId: 1426529866215
+tid: 1426529866215
 timeStamp: 1426529866215
 channelId: 2
 methodName: putAll
@@ -68,14 +68,14 @@ arg2: "hello 4"
 --------------------------------------------
 server writes:
 ```
-transactionId: 1426529866215
+tid: 1426529866215
 isException: false
 ```
 
 --------------------------------
 client read:
 ```
-transactionId: 1426529866215
+tid: 1426529866215
 isException: false
 ```
 
@@ -83,7 +83,7 @@ isException: false
 client writes:
 ```
 type: MAP
-transactionId: 1426529866222
+tid: 1426529866222
 timeStamp: 1426529866222
 channelId: 2
 methodName: entrySet
@@ -92,7 +92,7 @@ methodName: entrySet
 server reads:
 ```
 type: MAP
-transactionId: 1426529866222
+tid: 1426529866222
 timeStamp: 1426529866222
 channelId: 2
 methodName: entrySet
@@ -100,7 +100,7 @@ methodName: entrySet
 --------------------------------------------
 server writes:
 ```
-transactionId: 1426529866222
+tid: 1426529866222
 isException: false
 hasNext: true
 resultKey: 4
@@ -128,7 +128,7 @@ hasNext: false
 --------------------------------
 client read:
 ```
-transactionId: 1426529866222
+tid: 1426529866222
 isException: false
 hasNext: true
 resultKey: 4

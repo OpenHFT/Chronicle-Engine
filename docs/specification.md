@@ -55,7 +55,7 @@ become the service name.
 ```
 <2 byte unsigned short that denotes the size of ALL the wire messages in this chunk>
 type: MAP
-transactionId: 1426502826520
+tid: 1426502826520
 timeStamp: 1426502826520
 channelId: 1
 ```
@@ -81,7 +81,7 @@ The client can handle a number of simultaneous requests ( each on a different th
 client writes:
 ```
 type: MAP
-transactionId: 1426504502494
+tid: 1426504502494
 timeStamp: 1426504502494
 ```
 
@@ -90,7 +90,7 @@ the server notifies that it relieved this message by reflecting the transaction 
 
 server writes:
 ```
-transactionId: 1426504502494
+tid: 1426504502494
 isException: false
 ```
 
@@ -123,7 +123,7 @@ When clients connect to the server, they should exchange version numbers, below 
 client writes:
 ```
 type: MAP
-transactionId: 1426502826520
+tid: 1426502826520
 timeStamp: 1426502826520
 channelId: 1
 methodName: applicationVersion
@@ -132,7 +132,7 @@ methodName: applicationVersion
 server reads:
 ```
 type: MAP
-transactionId: 1426502826520
+tid: 1426502826520
 timeStamp: 1426502826520
 channelId: 1
 methodName: applicationVersion
@@ -140,7 +140,7 @@ methodName: applicationVersion
 --------------------------------------------
 server writes:
 ```
-transactionId: 1426502826520
+tid: 1426502826520
 isException: false
 result: 3.0.0-alpha-SNAPSHOT
 
@@ -148,7 +148,7 @@ result: 3.0.0-alpha-SNAPSHOT
 --------------------------------
 client reads:
 ```
-transactionId: 1426502826520
+tid: 1426502826520
 isException: false
 result: 3.0.0-alpha-SNAPSHOT
 ```
@@ -199,7 +199,7 @@ when the name of the map is resolved to channel=2 then the protocol becomes the 
 client writes:
 ```
 type: MAP
-transactionId: 1426504502494
+tid: 1426504502494
 timeStamp: 1426504502494
 channelId: 1
 methodName: createChannel
@@ -209,7 +209,7 @@ arg1: 2
 server reads:
 ```
 type: MAP
-transactionId: 1426504502494
+tid: 1426504502494
 timeStamp: 1426504502494
 channelId: 1
 methodName: createChannel
@@ -218,14 +218,14 @@ arg1: 2
 --------------------------------------------
 server writes:
 ```
-transactionId: 1426504502494
+tid: 1426504502494
 isException: false
 
 ```
 --------------------------------
 client read:
 ```
-transactionId: 1426504502494
+tid: 1426504502494
 isException: false
 
 ```
@@ -233,7 +233,7 @@ isException: false
 client writes:
 ```
 type: MAP
-transactionId: 1426504502816
+tid: 1426504502816
 timeStamp: 1426504502816
 channelId: 1
 methodName: put
@@ -248,7 +248,7 @@ channelID: 2
 server reads:
 ```
 type: MAP
-transactionId: 1426504502816
+tid: 1426504502816
 timeStamp: 1426504502816
 channelId: 1
 methodName: put
@@ -261,7 +261,7 @@ channelID: 2
 --------------------------------------------
 server writes:
 ```
-transactionId: 1426504502816
+tid: 1426504502816
 isException: false
 resultIsNull: true
 ```
@@ -270,7 +270,7 @@ resultIsNull: true
 client read:
 
 ```
-transactionId: 1426504502816
+tid: 1426504502816
 isException: false
 resultIsNull: true
 ```
@@ -305,7 +305,7 @@ client writes:
 
 ```
 type: MAP
-transactionId: 1426504502823
+tid: 1426504502823
 timeStamp: 1426504502823
 channelId: 2
 methodName: put
@@ -317,7 +317,7 @@ server reads:
 
 ```
 type: MAP
-transactionId: 1426504502823
+tid: 1426504502823
 timeStamp: 1426504502823
 channelId: 2
 methodName: put
@@ -327,7 +327,7 @@ arg2: hello
 --------------------------------
 server writes:
 ```
-transactionId: 1426504502823
+tid: 1426504502823
 isException: false
 resultIsNull: true
 
@@ -335,7 +335,7 @@ resultIsNull: true
 --------------------------------
 client read:
 ```
-transactionId: 1426504502823
+tid: 1426504502823
 isException: false
 resultIsNull: true
 ```

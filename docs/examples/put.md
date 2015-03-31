@@ -11,7 +11,7 @@ client writes:
 
 ```
 type: MAP
-transactionId: 1426514770289
+tid: 1426514770289
 timeStamp: 1426514770289
 channelId: 2
 methodName: put
@@ -23,7 +23,7 @@ server reads:
 
 ```
 type: MAP
-transactionId: 1426514770289
+tid: 1426514770289
 timeStamp: 1426514770289
 channelId: 2
 methodName: put
@@ -33,7 +33,7 @@ arg2: hello
 --------------------------------------------
 server writes:
 ```
-transactionId: 1426514770289
+tid: 1426514770289
 isException: false
 resultIsNull: true
 
@@ -41,7 +41,7 @@ resultIsNull: true
 --------------------------------
 client read:
 ```
-transactionId: 1426514770289
+tid: 1426514770289
 isException: false
 resultIsNull: true
 ```

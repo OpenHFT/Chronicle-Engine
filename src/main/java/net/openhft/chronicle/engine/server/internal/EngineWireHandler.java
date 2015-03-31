@@ -128,8 +128,8 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
         public void process(Wire in, Wire out) {
 
-            long transactionId = inWire.read(MapWireHandlerBuilder.Fields.transactionId).int64();
-            outWire.write(MapWireHandlerBuilder.Fields.transactionId).int64(transactionId);
+            long tid = inWire.read(MapWireHandlerBuilder.Fields.tid).int64();
+            outWire.write(MapWireHandlerBuilder.Fields.tid).int64(tid);
 
             in.read(methodName).text(text);
 
