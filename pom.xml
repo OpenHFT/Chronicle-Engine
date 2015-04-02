@@ -55,13 +55,14 @@
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>chronicle-queue</artifactId>
-                <version>4.0.0-alapha-SNAPSHOT</version>
+                <version>4.0.0-alpha-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>chronicle</artifactId>
                 <version>3.4.1</version>
             </dependency>
+
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>chronicle-logger</artifactId>
@@ -85,7 +86,7 @@
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>chronicle-bytes</artifactId>
-                <version>1.0.0-alpha-SNAPSHOT</version>
+                <version>1.0.1-alpha-SNAPSHOT</version>
             </dependency>
 
             <dependency>
@@ -107,6 +108,10 @@
     <dependencies>
 
 
+        <dependency>
+            <groupId>net.openhft</groupId>
+            <artifactId>chronicle-queue</artifactId>
+        </dependency>
         <dependency>
             <groupId>net.openhft</groupId>
             <artifactId>chronicle-core</artifactId>

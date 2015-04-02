@@ -504,7 +504,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * put(x, null) throws NPE
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 10000)
     public void testPut2_NullPointerException() throws IOException {
         try (ChronicleMap c = newIntString()) {
             c.put(notPresent, null);

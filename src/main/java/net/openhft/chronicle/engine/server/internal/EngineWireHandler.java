@@ -30,7 +30,8 @@ import java.io.StreamCorruptedException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static net.openhft.chronicle.map.MapWireHandlerBuilder.Fields.*;
+import static net.openhft.chronicle.map.MapWireHandlerBuilder.Fields.csp;
+import static net.openhft.chronicle.map.MapWireHandlerBuilder.Fields.reply;
 
 /**
  * Created by Rob Austin
@@ -78,17 +79,14 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     @Override
     protected void process(Wire in, Wire out) throws StreamCorruptedException {
 
-
         final Bytes<?> bytes = in.bytes();
+
+        System.out.println("--------------------------------------------\nserver reads:\n\n" +
+                Wires.fromSizePrefixedBlobs(in.bytes()));
+
         int header = bytes.readVolatileInt();
-
-
         assert !Wires.isData(header) : "should be a header";
 
-        //      if(LOG.isDebugEnabled()) {
-        System.out.println("--------------------------------------------\nserver reads:\n\n" +
-                Bytes.toDebugString(in.bytes()));
-        //    }
 
         in.read(csp).text(text);
 
@@ -134,15 +132,15 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
             long tid = inWire.read(MapWireHandlerBuilder.Fields.tid).int64();
             outWire.write(MapWireHandlerBuilder.Fields.tid).int64(tid);
 
-            in.read(methodName).text(text);
+            in.readEventName(text);
 
             if ("getWireFormats".contentEquals(text)) {
-                out.write(result).text(TEXT_WIRE + "," + BINARY_WIRE);
+                out.write(reply).text(TEXT_WIRE + "," + BINARY_WIRE);
                 return;
             }
 
             if ("setWireFormat".contentEquals(text)) {
-                out.write(result).text(preferredWireType);
+                out.write(reply).text(preferredWireType);
                 recreateWire(true);
             }
 
