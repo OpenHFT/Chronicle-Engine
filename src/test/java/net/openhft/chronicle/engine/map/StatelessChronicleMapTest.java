@@ -384,7 +384,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * remove removes the correct key-value pair from the map
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 50000)
     public void testRemove() throws IOException {
         try (ChronicleMap map = map5()) {
             map.remove(five);
@@ -412,7 +412,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * size returns the correct values
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 50000)
     public void testSize() throws IOException {
         try (ChronicleMap map = map5()) {
             try (ChronicleMap empty = newIntString()) {
@@ -438,7 +438,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * size returns the correct values
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 50000)
     public void testSize3() throws IOException {
         try (ChronicleMap map = map5()) {
             try (ChronicleMap empty = newIntString()) {

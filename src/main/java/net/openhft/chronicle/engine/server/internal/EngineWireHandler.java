@@ -81,9 +81,13 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
         final Bytes<?> bytes = in.bytes();
 
-        System.out.println("--------------------------------------------\nserver reads:\n\n" +
-                Wires.fromSizePrefixedBlobs(in.bytes()));
-
+        try {
+            System.out.println("--------------------------------------------\nserver reads:\n\n" +
+                    Wires.fromSizePrefixedBlobs(in.bytes()));
+        } catch (Exception e) {
+            System.out.println("--------------------------------------------\nserver reads:\n\n" +
+                    Bytes.toDebugString(in.bytes()));
+        }
         int header = bytes.readVolatileInt();
         assert !Wires.isData(header) : "should be a header";
 
