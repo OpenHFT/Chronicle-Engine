@@ -238,7 +238,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
      * entrySet.toArray contains all entries
      */
     @Ignore
-    @Test(timeout = 5000)
+    @Test(timeout = 50000)
     public void testEntrySetToArray() throws IOException {
         try (ChronicleMap map = map5()) {
             Set s = map.entrySet();
@@ -255,7 +255,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
      * values collection contains all values
      */
     @Ignore
-    @Test(timeout = 5000)
+    @Test(timeout = 50000)
     public void testValues() throws IOException {
         try (ChronicleMap map = map5()) {
             Collection s = map.values();
@@ -297,7 +297,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
      */
     @Ignore
     @Test
-            //(timeout = 5000)
+            //(timeout = 50000)
     public void testPutAll() throws IOException {
         int port = s_port++;
         try (ChronicleMap empty = newIntString()) {
@@ -316,7 +316,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * putIfAbsent works when the given key is not present
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 50000)
     public void testPutIfAbsent() throws IOException {
         try (ChronicleMap map = map5()) {
             map.putIfAbsent(six, "Z");
@@ -327,7 +327,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * putIfAbsent does not add the pair if the key is already present
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 50000)
     public void testPutIfAbsent2() throws IOException {
         try (ChronicleMap map = map5()) {
             assertEquals("A", map.putIfAbsent(one, "Z"));
@@ -337,7 +337,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * replace fails when the given key is not present
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 50000)
     public void testReplace() throws IOException {
         try (ChronicleMap map = map5()) {
             assertNull(map.replace(six, "Z"));
@@ -348,7 +348,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * replace succeeds if the key is already present
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 50000)
     public void testReplace2() throws
             IOException {
         try (ChronicleMap map = map5()) {
@@ -360,7 +360,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * replace value fails when the given key not mapped to expected value
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 50000)
     public void testReplaceValue() throws IOException {
         try (ChronicleMap map = map5()) {
             assertEquals("A", map.get(one));
@@ -372,7 +372,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * replace value succeeds when the given key mapped to expected value
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 50000)
     public void testReplaceValue2() throws IOException {
         try (ChronicleMap map = map5()) {
             assertEquals("A", map.get(one));
@@ -396,7 +396,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * remove(key,value) removes only if pair present
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 50000)
     public void testRemove2
     () throws IOException {
    /*     try(   ChronicleMap map = map5(8076)) {
@@ -425,7 +425,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * size returns the correct values
      */
-    @Test(timeout = 15000)
+    @Test(timeout = 150000)
     public void testSize2() throws IOException {
         try (ChronicleMap map = map5()) {
             try (ChronicleMap empty = newIntString()) {
@@ -452,7 +452,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
      * toString.md contains toString.md of elements
      */
     @Ignore
-    @Test(timeout = 5000)
+    @Test(timeout = 50000)
     public void testToString() throws IOException {
         try (ChronicleMap map = map5()) {
             String s = map.toString();
@@ -465,7 +465,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * get(null) throws NPE
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 50000)
     public void testGet_NullPointerException() throws IOException {
 
         try (ChronicleMap c = newIntString()) {
@@ -479,7 +479,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * containsKey(null) throws NPE
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 50000)
     public void testContainsKey_NullPointerException() throws IOException {
         try (ChronicleMap c = newIntString()) {
             c.containsKey(null);
@@ -492,7 +492,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * put(null,x) throws NPE
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 50000)
     public void testPut1_NullPointerException() throws IOException {
         try (ChronicleMap c = newIntString()) {
             c.put(null, "whatever");
@@ -516,7 +516,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * putIfAbsent(null, x) throws NPE
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 50000)
     public void testPutIfAbsent1_NullPointerException() throws IOException {
         try (ChronicleMap c = newIntString()) {
             c.putIfAbsent(null, "whatever");
@@ -564,7 +564,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * replace(x, null) throws NPE
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 50000)
     public void testReplace2_NullPointerException() throws IOException {
         try (ChronicleMap c = newIntString()) {
             c.replace(notPresent, null);
@@ -576,7 +576,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * replace(x, null, y) throws NPE
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 50000)
     public void testReplaceValue2_NullPointerException() throws IOException {
         try (ChronicleMap c = newIntString()) {
             c.replace(notPresent, null, "A");
@@ -588,7 +588,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * replace(x, y, null) throws NPE
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 50000)
     public void testReplaceValue3_NullPointerException() throws IOException {
         try (ChronicleMap c = newIntString()) {
             c.replace(notPresent, "A", null);
@@ -613,7 +613,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * remove(null, x) throws NPE
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 50000)
     public void testRemove2_NullPointerException
     () throws IOException {
         try (ChronicleMap c = newStrStrMap()) {
@@ -627,7 +627,7 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
     /**
      * remove(x, null) returns false
      */
-    @Test(timeout = 5000)
+    @Test(timeout = 50000)
     public void testRemove3() throws IOException {
 
         try (ChronicleMap c = newStrStrMap()) {
