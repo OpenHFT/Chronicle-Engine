@@ -44,7 +44,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     public static final String RAW_WIRE = RawWire.class.getSimpleName();
 
     private final CharSequence preferredWireType = new StringBuilder(TextWire.class.getSimpleName());
-    private final StringBuilder text = new StringBuilder();
+    private final StringBuilder cspText = new StringBuilder();
 
     @NotNull
     private final WireHandler mapWireHandler;
@@ -88,24 +88,50 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
             System.out.println("--------------------------------------------\nserver reads:\n\n" +
                     Bytes.toDebugString(in.bytes()));
         }
+
         int header = bytes.readVolatileInt();
         assert !Wires.isData(header) : "should be a header";
 
+        final StringBuilder cspText = peekCsp(in);
 
-        in.read(csp).text(text);
-
-        if ("MAP".contentEquals(text)) {
+        if (endsWith(cspText, "#MAP")) {
             mapWireHandler.process(in, out);
             return;
         }
 
-        if ("QUEUE".contentEquals(text)) {
+        if (endsWith(cspText, "QUEUE")) {
             queueWireHandler.process(in, out);
             return;
         }
 
-        if ("CORE".contentEquals(text))
+        if (endsWith(cspText, "CORE"))
             coreWireHandler.process(in, out);
+    }
+
+    private StringBuilder peekCsp(@NotNull final Wire in) {
+        final long position = in.bytes().position();
+
+        try {
+            in.read(csp).text(cspText);
+        } finally {
+            in.bytes().position(position);
+        }
+
+        return cspText;
+    }
+
+
+    private boolean endsWith(@NotNull final CharSequence source, @NotNull final String endsWith) {
+
+        for (int i = 1; i <= endsWith.length(); i++) {
+
+            if (source.charAt(source.length() - i) != endsWith.charAt(endsWith.length() - i)) {
+                return false;
+            }
+        }
+
+        return true;
+
     }
 
     protected Wire createWriteFor(Bytes bytes) {
@@ -136,14 +162,14 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
             long tid = inWire.read(MapWireHandlerBuilder.Fields.tid).int64();
             outWire.write(MapWireHandlerBuilder.Fields.tid).int64(tid);
 
-            in.readEventName(text);
+            in.readEventName(cspText);
 
-            if ("getWireFormats".contentEquals(text)) {
+            if ("getWireFormats".contentEquals(cspText)) {
                 out.write(reply).text(TEXT_WIRE + "," + BINARY_WIRE);
                 return;
             }
 
-            if ("setWireFormat".contentEquals(text)) {
+            if ("setWireFormat".contentEquals(cspText)) {
                 out.write(reply).text(preferredWireType);
                 recreateWire(true);
             }
