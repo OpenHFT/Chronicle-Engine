@@ -44,7 +44,6 @@ import static net.openhft.chronicle.map.ChronicleMapBuilder.of;
 public class ServerEndpoint implements Closeable {
 
     private EventGroup eg = new EventGroup();
-    //   private ChronicleHashInstanceBuilder<ChronicleMap> chronicleHashInstanceBuilder;
     private ReplicationHub replicationHub;
     private byte localIdentifier;
     private List<Replica> channelList;
@@ -54,7 +53,7 @@ public class ServerEndpoint implements Closeable {
 
         this.localIdentifier = localIdentifier;
         final TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                .of(1425)
+                .of(8085)
                 .heartBeatInterval(1, SECONDS);
 
         replicationHub = ReplicationHub.builder().tcpTransportAndNetwork(tcpConfig)
@@ -65,18 +64,16 @@ public class ServerEndpoint implements Closeable {
                 .instance().replicatedViaChannel(replicationHub.createChannel((short) 1)).create();
 
         final ChannelProvider provider = ChannelProvider.getProvider(replicationHub);
-
-        //  chronicleHashInstanceBuilder = ;
         this.channelList = provider.chronicleChannelList();
 
-        start();
+        start(0);
 
     }
 
-    public AcceptorEventHandler start() throws IOException {
+    public AcceptorEventHandler start(int port) throws IOException {
         eg.start();
 
-        AcceptorEventHandler eah = new AcceptorEventHandler(0, () -> {
+        AcceptorEventHandler eah = new AcceptorEventHandler(port, () -> {
 
             final WireHandler mapWireHandler = MapWireHandlerBuilder.of(
                     () -> (ChronicleHashInstanceBuilder) ChronicleMapBuilder.of(byte[].class, byte[].class).instance(),
