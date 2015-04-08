@@ -25,10 +25,10 @@ import net.openhft.chronicle.map.ChannelProvider;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.MapWireHandlerBuilder;
 import net.openhft.chronicle.map.Replica;
-import net.openhft.chronicle.network2.AcceptorEventHandler;
-import net.openhft.chronicle.network2.WireHandler;
-import net.openhft.chronicle.network2.event.EventGroup;
-import net.openhft.chronicle.network2.event.WireHandlers;
+import net.openhft.chronicle.network.AcceptorEventHandler;
+import net.openhft.chronicle.network.WireHandler;
+import net.openhft.chronicle.network.event.EventGroup;
+import net.openhft.chronicle.network.event.WireHandlers;
 
 import java.io.Closeable;
 import java.io.IOException;

@@ -20,9 +20,9 @@ package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.map.MapWireHandlerBuilder;
-import net.openhft.chronicle.network2.WireHandler;
-import net.openhft.chronicle.network2.WireTcpHandler;
-import net.openhft.chronicle.network2.event.WireHandlers;
+import net.openhft.chronicle.network.WireHandler;
+import net.openhft.chronicle.network.WireTcpHandler;
+import net.openhft.chronicle.network.event.WireHandlers;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 
