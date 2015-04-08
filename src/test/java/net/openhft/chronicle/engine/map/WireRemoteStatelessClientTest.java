@@ -39,7 +39,7 @@ public class WireRemoteStatelessClientTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(WireRemoteStatelessClientTest.class);
 
-    @Test(timeout = 10000)
+    @Test(timeout =50000)
     public void testPutAndGet() throws IOException, InterruptedException {
 
         try (RemoteMapSupplier<Integer, CharSequence> r = new RemoteMapSupplier<>(Integer.class, CharSequence.class)) {
