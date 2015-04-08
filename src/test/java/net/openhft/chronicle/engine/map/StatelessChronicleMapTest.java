@@ -39,7 +39,6 @@ import static org.junit.Assert.*;
 
 public class StatelessChronicleMapTest extends JSR166TestCase {
 
-    public static final int SIZE = 1024;
 
      static ChronicleMap<Integer, String> newIntString() throws IOException {
         final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier(Integer.class, String.class);
