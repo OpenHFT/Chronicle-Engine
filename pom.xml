@@ -68,7 +68,6 @@
 
     <dependencies>
 
-
         <dependency>
             <groupId>net.openhft</groupId>
             <artifactId>chronicle-queue</artifactId>
