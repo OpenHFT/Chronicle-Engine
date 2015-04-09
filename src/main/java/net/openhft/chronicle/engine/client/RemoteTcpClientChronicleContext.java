@@ -26,13 +26,14 @@ import net.openhft.chronicle.engine.old.ChronicleThreadPool;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.set.ChronicleSet;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.logging.Logger;
 
 /**
  * used to connect to remove engines over TCP/IP Created by Rob Austin
  */
-public class RemoteTcpClientChronicleContext implements ChronicleContext {
+public class RemoteTcpClientChronicleContext implements ChronicleContext, Closeable {
 
     RemoteClientServiceLocator remoteClientServiceLocator;
 
@@ -77,4 +78,8 @@ public class RemoteTcpClientChronicleContext implements ChronicleContext {
     }
 
 
+    @Override
+    public void close() throws IOException {
+        remoteClientServiceLocator.close();
+    }
 }

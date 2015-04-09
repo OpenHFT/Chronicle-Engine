@@ -19,9 +19,9 @@
 package net.openhft.chronicle.engine.client.internal;
 
 import net.openhft.chronicle.bytes.IORuntimeException;
+import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ClientWiredChronicleMapStatelessBuilder;
-import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.lang.MemoryUnit;
 import org.jetbrains.annotations.NotNull;
 
@@ -91,4 +91,7 @@ public class RemoteClientServiceLocator {
     }
 
 
+    public void close() {
+        hub.close();
+    }
 }

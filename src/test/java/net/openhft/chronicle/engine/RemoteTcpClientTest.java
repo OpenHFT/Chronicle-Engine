@@ -30,72 +30,6 @@ import static org.junit.Assert.assertEquals;
 
 public class RemoteTcpClientTest {
 
-    @Test
-    public void testProcess() throws Exception {
-
-        // sever
-        final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1);
-        int serverPort = serverEndpoint.getPort();
-
-        //client
-        final RemoteTcpClientChronicleContext context = new RemoteTcpClientChronicleContext(
-                "localhost", serverPort);
-
-        {
-            final ChronicleMap<String, String> colourMap = context.getMap("colours", String.class, String.class);
-            colourMap.put("Rob", "Blue");
-            colourMap.put("Peter", "Green");
-
-        }
-        {
-            final ChronicleMap<String, String> colourMap2 = context.getMap("colours", String.class, String.class);
-            assertEquals(2, colourMap2.size());
-            assertEquals("Blue", colourMap2.get("Rob"));
-            assertEquals("Green", colourMap2.get("Peter"));
-        }
-
-        {
-            ChronicleMap<String, Long> numbers = context.getMap("numbers", String.class, Long.class);
-            numbers.put("Rob", 123L);
-            numbers.put("Peter", 101010101L);
-
-            assertEquals(2, numbers.size());
-            assertEquals(Long.valueOf(123L), numbers.get("Rob"));
-            assertEquals(Long.valueOf(101010101L), numbers.get("Peter"));
-        }
-
-        {
-            ChronicleMap<String, Long> numbers = context.getMap("numbers", String.class, Long.class);
-            numbers.put("Rob", 123L);
-            numbers.put("Peter", 101010101L);
-
-            assertEquals(2, numbers.size());
-            assertEquals(Long.valueOf(123L), numbers.get("Rob"));
-            assertEquals(Long.valueOf(101010101L), numbers.get("Peter"));
-        }
-
-        // test using Marshallable Keys
-        {
-            {
-                ChronicleMap<MyMarshallable, Long> numbers = context.getMap("marshallable-keys", MyMarshallable.class, Long.class);
-                MyMarshallable key1 = new MyMarshallable("key1");
-                MyMarshallable key2 = new MyMarshallable("key2");
-                numbers.put(key1, 1L);
-                numbers.put(key2, 2L);
-            }
-            {
-                ChronicleMap<MyMarshallable, Long> numbers = context.getMap("marshallable-keys", MyMarshallable.class, Long.class);
-                MyMarshallable key1 = new MyMarshallable("key1");
-                MyMarshallable key2 = new MyMarshallable("key2");
-                assertEquals(2, numbers.size());
-                assertEquals(Long.valueOf(1), numbers.get(key1));
-                assertEquals(Long.valueOf(2), numbers.get(key2));
-            }
-        }
-
-        serverEndpoint.stop();
-    }
-
 
     class MyMarshallable implements Marshallable {
 
@@ -139,5 +73,73 @@ public class RemoteTcpClientTest {
         }
     }
 
+
+    @Test
+    public void testProcess() throws Exception {
+
+        // sever
+        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1)) {
+            int serverPort = serverEndpoint.getPort();
+
+            //client
+            try (final RemoteTcpClientChronicleContext context = new RemoteTcpClientChronicleContext(
+                    "localhost", serverPort)) {
+
+
+                try (final ChronicleMap<String, String> colourMap = context.getMap("colours", String
+                        .class, String.class)) {
+                    colourMap.put("Rob", "Blue");
+                    colourMap.put("Peter", "Green");
+                }
+
+
+                try (final ChronicleMap<String, String> colourMap2 = context.getMap("colours",
+                        String.class, String.class)) {
+                    assertEquals(2, colourMap2.size());
+                    assertEquals("Blue", colourMap2.get("Rob"));
+                    assertEquals("Green", colourMap2.get("Peter"));
+                }
+                try (ChronicleMap<String, Long> numbers = context.getMap("numbers", String.class, Long
+                        .class)) {
+                    numbers.put("Rob", 123L);
+                    numbers.put("Peter", 101010101L);
+
+                    assertEquals(2, numbers.size());
+                    assertEquals(Long.valueOf(123L), numbers.get("Rob"));
+                    assertEquals(Long.valueOf(101010101L), numbers.get("Peter"));
+                }
+                try (ChronicleMap<String, Long> numbers = context.getMap("numbers", String.class, Long
+                        .class)) {
+                    numbers.put("Rob", 123L);
+                    numbers.put("Peter", 101010101L);
+
+                    assertEquals(2, numbers.size());
+                    assertEquals(Long.valueOf(123L), numbers.get("Rob"));
+                    assertEquals(Long.valueOf(101010101L), numbers.get("Peter"));
+                }
+
+                // test using Marshallable Keys
+
+                try (ChronicleMap<MyMarshallable, Long> numbers = context.getMap
+                        ("marshallable-keys", MyMarshallable.class, Long.class)) {
+                    MyMarshallable key1 = new MyMarshallable("key1");
+                    MyMarshallable key2 = new MyMarshallable("key2");
+                    numbers.put(key1, 1L);
+                    numbers.put(key2, 2L);
+                }
+
+                try (ChronicleMap<MyMarshallable, Long> numbers = context.getMap
+                        ("marshallable-keys", MyMarshallable.class, Long.class)) {
+                    MyMarshallable key1 = new MyMarshallable("key1");
+                    MyMarshallable key2 = new MyMarshallable("key2");
+                    assertEquals(2, numbers.size());
+                    assertEquals(Long.valueOf(1), numbers.get(key1));
+                    assertEquals(Long.valueOf(2), numbers.get(key2));
+
+                }
+
+            }
+        }
+    }
 
 }
