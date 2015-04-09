@@ -46,6 +46,8 @@ public class ServerEndpoint implements Closeable {
     private byte localIdentifier;
     private Map<Integer,Replica> channelMap;
     private AcceptorEventHandler eah;
+    private WireHandler mapWireHandler;
+    private final ChannelProvider provider;
 
     public ServerEndpoint(byte localIdentifier) throws IOException {
 
@@ -61,7 +63,7 @@ public class ServerEndpoint implements Closeable {
          of(byte[].class, byte[].class)
                 .instance().replicatedViaChannel(replicationHub.createChannel((short) 1)).create();
 
-        final ChannelProvider provider = ChannelProvider.getProvider(replicationHub);
+        provider = ChannelProvider.getProvider(replicationHub);
         this.channelMap = provider.chronicleChannelMap();
 
         start(0);
@@ -73,7 +75,7 @@ public class ServerEndpoint implements Closeable {
 
         AcceptorEventHandler eah = new AcceptorEventHandler(port, () -> {
 
-            final WireHandler mapWireHandler = MapWireHandlerBuilder.of(
+            mapWireHandler = MapWireHandlerBuilder.of(
                     () -> of(byte[].class, byte[].class).instance(),
                     () -> of(String.class, Integer.class).instance(),
                     replicationHub,
@@ -107,6 +109,7 @@ public class ServerEndpoint implements Closeable {
 
     @Override
     public void close() throws IOException {
+        provider.close();
         stop();
     }
 }
