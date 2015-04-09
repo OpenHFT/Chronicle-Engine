@@ -19,9 +19,9 @@
 package net.openhft.chronicle.engine.client.internal;
 
 import net.openhft.chronicle.bytes.IORuntimeException;
+import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ClientWiredChronicleMapStatelessBuilder;
-import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.lang.MemoryUnit;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,16 +49,16 @@ public class RemoteClientServiceLocator {
 
         int tcpBufferSize = (int) MemoryUnit.KILOBYTES.toBytes(64);
 
-        long timeoutMs = TimeUnit.SECONDS.toMillis(10);
+        long timeoutMs = TimeUnit.SECONDS.toMillis(20);
 
-        hub = new ClientWiredStatelessTcpConnectionHub(identifier, true, "MAP", inetSocketAddress, tcpBufferSize, timeoutMs);
+        hub = new ClientWiredStatelessTcpConnectionHub(identifier, false, "MAP", inetSocketAddress, tcpBufferSize, timeoutMs);
 
     }
 
 
     private <K, V> ChronicleMap<K, V> newMapInstance(@NotNull String name,
-                                                    @NotNull Class<K> kClass,
-                                                    @NotNull Class<V> vClass) throws IOException {
+                                                     @NotNull Class<K> kClass,
+                                                     @NotNull Class<V> vClass) throws IOException {
         return mapInstance(kClass, vClass, name);
     }
 
@@ -78,9 +78,9 @@ public class RemoteClientServiceLocator {
         try {
 
             if (Map.class.isAssignableFrom(iClass)) {
-                    final Class kClass = args[0];
-                    final Class vClass = args[1];
-                    return (I) newMapInstance(name, kClass, vClass);
+                final Class kClass = args[0];
+                final Class vClass = args[1];
+                return (I) newMapInstance(name, kClass, vClass);
             }
 
         } catch (IOException e) {
