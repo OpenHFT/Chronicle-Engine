@@ -22,6 +22,9 @@ import net.openhft.chronicle.engine.map.WireRemoteStatelessClientTest.RemoteMapS
 import net.openhft.chronicle.map.ChronicleMap;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -42,19 +45,41 @@ public class StatelessChronicleMapTest extends JSR166TestCase {
 
      static ChronicleMap<Integer, String> newIntString() throws IOException {
         final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier(Integer.class, String.class);
-        return remoteMapSupplier.get();
+
+         final ChronicleMap spy = Mockito.spy(remoteMapSupplier.get());
+
+         Mockito.doAnswer(invocationOnMock -> {
+             remoteMapSupplier.close();
+             return null;
+         }).when(spy).close();
+
+         return spy;
     }
 
     static ChronicleMap<CharSequence, CharSequence> newStrStrMap() throws
             IOException {
 
         final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier(CharSequence.class, CharSequence.class);
-        return remoteMapSupplier.get();
+        final ChronicleMap spy = Mockito.spy(remoteMapSupplier.get());
+
+        Mockito.doAnswer(invocationOnMock -> {
+            remoteMapSupplier.close();
+            return null;
+        }).when(spy).close();
+
+        return spy;
     }
 
     static ChronicleMap<byte[], byte[]> newByteArrayMap() throws IOException {
         final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier(byte[].class, byte[].class);
-        return remoteMapSupplier.get();
+        final ChronicleMap spy = Mockito.spy(remoteMapSupplier.get());
+
+        Mockito.doAnswer(invocationOnMock -> {
+            remoteMapSupplier.close();
+            return null;
+        }).when(spy).close();
+
+        return spy;
 
     }
 
