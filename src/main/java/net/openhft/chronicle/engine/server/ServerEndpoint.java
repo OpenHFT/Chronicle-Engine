@@ -18,11 +18,9 @@
 package net.openhft.chronicle.engine.server;
 
 import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
-import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.ChannelProvider;
-import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.MapWireHandlerBuilder;
 import net.openhft.chronicle.map.Replica;
 import net.openhft.chronicle.network.AcceptorEventHandler;
@@ -32,7 +30,7 @@ import net.openhft.chronicle.network.event.WireHandlers;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -46,7 +44,7 @@ public class ServerEndpoint implements Closeable {
     private EventGroup eg = new EventGroup();
     private ReplicationHub replicationHub;
     private byte localIdentifier;
-    private List<Replica> channelList;
+    private Map<Integer,Replica> channelMap;
     private AcceptorEventHandler eah;
 
     public ServerEndpoint(byte localIdentifier) throws IOException {
@@ -64,7 +62,7 @@ public class ServerEndpoint implements Closeable {
                 .instance().replicatedViaChannel(replicationHub.createChannel((short) 1)).create();
 
         final ChannelProvider provider = ChannelProvider.getProvider(replicationHub);
-        this.channelList = provider.chronicleChannelList();
+        this.channelMap = provider.chronicleChannelMap();
 
         start(0);
 
@@ -76,10 +74,11 @@ public class ServerEndpoint implements Closeable {
         AcceptorEventHandler eah = new AcceptorEventHandler(port, () -> {
 
             final WireHandler mapWireHandler = MapWireHandlerBuilder.of(
-                    () -> (ChronicleHashInstanceBuilder) ChronicleMapBuilder.of(byte[].class, byte[].class).instance(),
+                    () -> of(byte[].class, byte[].class).instance(),
+                    () -> of(String.class, Integer.class).instance(),
                     replicationHub,
                     localIdentifier,
-                    channelList);
+                    channelMap);
 
             EngineWireHandler engineWireHandler = new EngineWireHandler(
                     mapWireHandler,

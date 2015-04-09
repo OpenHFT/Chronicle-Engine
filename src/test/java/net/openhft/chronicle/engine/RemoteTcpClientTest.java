@@ -42,20 +42,20 @@ public class RemoteTcpClientTest {
                 "localhost", serverPort);
 
         {
-            final ChronicleMap<String, String> colourMap = context.getMap("Colours", String.class, String.class);
+            final ChronicleMap<String, String> colourMap = context.getMap("colours", String.class, String.class);
             colourMap.put("Rob", "Blue");
             colourMap.put("Peter", "Green");
 
         }
         {
-            final ChronicleMap<String, String> colourMap2 = context.getMap("Colours", String.class, String.class);
+            final ChronicleMap<String, String> colourMap2 = context.getMap("colours", String.class, String.class);
             assertEquals(2, colourMap2.size());
             assertEquals("Blue", colourMap2.get("Rob"));
             assertEquals("Green", colourMap2.get("Peter"));
         }
 
         {
-            ChronicleMap<String, Long> numbers = context.getMap("Numbers", String.class, Long.class);
+            ChronicleMap<String, Long> numbers = context.getMap("numbers", String.class, Long.class);
             numbers.put("Rob", 123L);
             numbers.put("Peter", 101010101L);
 
@@ -65,7 +65,7 @@ public class RemoteTcpClientTest {
         }
 
         {
-            ChronicleMap<String, Long> numbers = context.getMap("Numbers", String.class, Long.class);
+            ChronicleMap<String, Long> numbers = context.getMap("numbers", String.class, Long.class);
             numbers.put("Rob", 123L);
             numbers.put("Peter", 101010101L);
 
@@ -77,14 +77,14 @@ public class RemoteTcpClientTest {
         // test using Marshallable Keys
         {
             {
-                ChronicleMap<MyMarshallable, Long> numbers = context.getMap("MarshallableKeys", MyMarshallable.class, Long.class);
+                ChronicleMap<MyMarshallable, Long> numbers = context.getMap("marshallable-keys", MyMarshallable.class, Long.class);
                 MyMarshallable key1 = new MyMarshallable("key1");
                 MyMarshallable key2 = new MyMarshallable("key2");
                 numbers.put(key1, 1L);
                 numbers.put(key2, 2L);
             }
             {
-                ChronicleMap<MyMarshallable, Long> numbers = context.getMap("MarshallableKeys", MyMarshallable.class, Long.class);
+                ChronicleMap<MyMarshallable, Long> numbers = context.getMap("marshallable-keys", MyMarshallable.class, Long.class);
                 MyMarshallable key1 = new MyMarshallable("key1");
                 MyMarshallable key2 = new MyMarshallable("key2");
                 assertEquals(2, numbers.size());

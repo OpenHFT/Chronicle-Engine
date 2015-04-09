@@ -19,12 +19,16 @@
 package net.openhft.chronicle.engine.client.internal;
 
 import net.openhft.chronicle.bytes.IORuntimeException;
-import net.openhft.chronicle.map.*;
+import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.map.ClientWiredChronicleMapStatelessBuilder;
+import net.openhft.chronicle.map.ClientWiredStatelessTcpConnectionHub;
+import net.openhft.lang.MemoryUnit;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -33,90 +37,57 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class RemoteClientServiceLocator {
 
     private final ClientWiredStatelessTcpConnectionHub hub;
-    private final ChronicleMap<String, ServiceDescriptor> serviceLocator;
-    private final AtomicInteger nextFreeChannel = new AtomicInteger(2);
+
+    private final AtomicInteger nextFreeChannel = new AtomicInteger(10);
 
     public RemoteClientServiceLocator(@NotNull String hostname,
                                       int port,
                                       byte identifier) throws IOException {
 
-        final ClientWiredChronicleMapStatelessBuilder<String, ServiceDescriptor> builder =
-                new ClientWiredChronicleMapStatelessBuilder<>(
-                        new InetSocketAddress(hostname, port),
-                        String.class,
-                        ServiceDescriptor.class,
-                        (short) 1);
-        builder.identifier(identifier);
 
-        serviceLocator = builder.create();
-        hub = builder.hub();
+        final InetSocketAddress inetSocketAddress = new InetSocketAddress(hostname, port);
+
+        int tcpBufferSize = (int) MemoryUnit.KILOBYTES.toBytes(64);
+
+        long timeoutMs = TimeUnit.SECONDS.toMillis(10);
+
+        hub = new ClientWiredStatelessTcpConnectionHub(identifier, true, "MAP", inetSocketAddress, tcpBufferSize, timeoutMs);
+
     }
 
-    public ChronicleMap<String, ServiceDescriptor> serviceLocator() {
-        return serviceLocator;
-    }
 
     private <K, V> ChronicleMap<K, V> newMapInstance(@NotNull String name,
                                                     @NotNull Class<K> kClass,
                                                     @NotNull Class<V> vClass) throws IOException {
-        final short channelID = findNextFreeChannel();
-        final ServiceDescriptor serviceDescriptor = new ServiceDescriptor<K, V>(kClass, vClass, channelID);
-        ((ChannelFactory) serviceLocator).createChannel(channelID);
-        serviceLocator.put(name, serviceDescriptor);
-        return mapInstance(kClass, vClass, channelID);
+        return mapInstance(kClass, vClass, name);
     }
 
 
-    private <I, KI, VI> I mapInstance(Class<KI> kClass, Class<VI> vClass, short channelID) throws IOException {
+    private <I, KI, VI> I mapInstance(Class<KI> kClass, Class<VI> vClass, String name)
+            throws IOException {
 
         return (I) new ClientWiredChronicleMapStatelessBuilder<KI, VI>(
                 hub,
                 kClass,
                 vClass,
-                channelID).create();
+                name).create();
     }
 
     public <I> I getService(Class<I> iClass, String name, Class... args) {
 
         try {
-            final ChronicleMap<String, ServiceDescriptor> service = serviceLocator();
-            final ServiceDescriptor<?, ?> serviceDescriptor = service.get(name);
 
             if (Map.class.isAssignableFrom(iClass)) {
-
-                if (args.length < 2)
-                    throw new IllegalStateException("please provide at least 2 args to create a Map");
-
-                if (serviceDescriptor == null) {
                     final Class kClass = args[0];
                     final Class vClass = args[1];
-
                     return (I) newMapInstance(name, kClass, vClass);
-
-                } else {
-                    final Class<?> keyClass = serviceDescriptor.keyClass;
-                    final Class<?> valueClass = serviceDescriptor.valueClass;
-                    short channelID = serviceDescriptor.channelID;
-                    return mapInstance(keyClass, valueClass, channelID);
-                }
-
             }
+
         } catch (IOException e) {
             throw new IORuntimeException(e);
         }
 
         throw new IllegalStateException("iClass=" + iClass + " not supported");
-    }
-
-
-    // todo - this has to be improved so that is processor safe across all the node,
-    // todo - just gonna increase an atomic integer for now, which is an extreemely dangerous assuption,
-    // todo but this will get it to work for now  ( assuming you only ever have one client ) !
-    private short findNextFreeChannel() {
-        int c = nextFreeChannel.getAndIncrement();
-        if (c > Short.MAX_VALUE)
-            throw new IllegalStateException("too many channels allocated");
-        return (short) c;
     }
 
 
