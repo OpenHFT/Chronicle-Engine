@@ -39,7 +39,7 @@ public class WireRemoteStatelessClientTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(WireRemoteStatelessClientTest.class);
 
-    @Test(timeout =50000)
+    @Test(timeout = 50000)
     public void testPutAndGet() throws IOException, InterruptedException {
 
         try (RemoteMapSupplier<Integer, CharSequence> r = new RemoteMapSupplier<>(Integer.class, CharSequence.class)) {
@@ -51,18 +51,19 @@ public class WireRemoteStatelessClientTest {
     }
 
 
-   public static class RemoteMapSupplier<K, V> implements Closeable, Supplier<ChronicleMap<K, V>> {
+    public static class RemoteMapSupplier<K, V> implements Closeable, Supplier<ChronicleMap<K, V>> {
 
         private final ServerEndpoint serverEndpoint;
         private final ChronicleMap<K, V> map;
+        private final RemoteTcpClientChronicleContext context;
 
         public RemoteMapSupplier(Class<K> kClass, Class<V> vClass) throws IOException {
 
             serverEndpoint = new ServerEndpoint((byte) 1);
             int serverPort = serverEndpoint.getPort();
 
-            map = new RemoteTcpClientChronicleContext(
-                    "localhost", serverPort).getMap("test", kClass, vClass);
+            context = new RemoteTcpClientChronicleContext("localhost", serverPort);
+            map = context.getMap("test", kClass, vClass);
         }
 
 
@@ -70,7 +71,7 @@ public class WireRemoteStatelessClientTest {
         public void close() throws IOException {
             if (map != null)
                 map.close();
-
+            context.close();
             serverEndpoint.close();
         }
 
