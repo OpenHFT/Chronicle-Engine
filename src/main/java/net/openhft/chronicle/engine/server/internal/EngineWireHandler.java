@@ -19,7 +19,7 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.map.MapWireHandlerBuilder;
+import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.CoreFields;
 import net.openhft.chronicle.network.WireHandler;
 import net.openhft.chronicle.network.WireTcpHandler;
 import net.openhft.chronicle.network.event.WireHandlers;
@@ -30,8 +30,6 @@ import java.io.StreamCorruptedException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static net.openhft.chronicle.map.MapWireHandlerBuilder.Fields.csp;
-import static net.openhft.chronicle.map.MapWireHandlerBuilder.Fields.reply;
 
 /**
  * Created by Rob Austin
@@ -79,18 +77,6 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     @Override
     protected void process(Wire in, Wire out) throws StreamCorruptedException {
 
-        final Bytes<?> bytes = in.bytes();
-
-        try {
-            System.out.println("--------------------------------------------\nserver reads:\n\n" +
-                    Wires.fromSizePrefixedBlobs(in.bytes()));
-        } catch (Exception e) {
-            System.out.println("--------------------------------------------\nserver reads:\n\n" +
-                    Bytes.toDebugString(in.bytes()));
-        }
-
-        int header = bytes.readVolatileInt();
-        assert !Wires.isData(header) : "should be a header";
 
         final StringBuilder cspText = peekCsp(in);
 
@@ -109,17 +95,26 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     }
 
     private StringBuilder peekCsp(@NotNull final Wire in) {
-        final long position = in.bytes().position();
+
+        final Bytes<?> bytes = in.bytes();
 
         try {
-            in.read(csp).text(cspText);
+            System.out.println("--------------------------------------------\nserver reads:\n\n" +
+                    Wires.fromSizePrefixedBlobs(in.bytes()));
+        } catch (Exception e) {
+            System.out.println("--------------------------------------------\nserver reads:\n\n" +
+                    Bytes.toDebugString(in.bytes()));
+        }
+
+        try {
+            bytes.mark();
+            inWire.readDocument(wireIn -> wireIn.read(CoreFields.csp).text(cspText), null);
         } finally {
-            in.bytes().position(position);
+            bytes.reset();
         }
 
         return cspText;
     }
-
 
     private boolean endsWith(@NotNull final CharSequence source, @NotNull final String endsWith) {
 
@@ -159,18 +154,18 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
         public void process(Wire in, Wire out) {
 
-            long tid = inWire.read(MapWireHandlerBuilder.Fields.tid).int64();
-            outWire.write(MapWireHandlerBuilder.Fields.tid).int64(tid);
+            long tid = inWire.read(CoreFields.tid).int64();
+            outWire.write(CoreFields.tid).int64(tid);
 
             in.readEventName(cspText);
 
             if ("getWireFormats".contentEquals(cspText)) {
-                out.write(reply).text(TEXT_WIRE + "," + BINARY_WIRE);
+                out.write(CoreFields.reply).text(TEXT_WIRE + "," + BINARY_WIRE);
                 return;
             }
 
             if ("setWireFormat".contentEquals(cspText)) {
-                out.write(reply).text(preferredWireType);
+                out.write(CoreFields.reply).text(preferredWireType);
                 recreateWire(true);
             }
 

@@ -18,20 +18,28 @@
 package net.openhft.chronicle.engine.server;
 
 import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
+import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.ChannelProvider;
-import net.openhft.chronicle.map.MapWireHandlerBuilder;
+import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.map.MapWireHandler;
 import net.openhft.chronicle.map.Replica;
 import net.openhft.chronicle.network.AcceptorEventHandler;
 import net.openhft.chronicle.network.WireHandler;
 import net.openhft.chronicle.network.event.EventGroup;
 import net.openhft.chronicle.network.event.WireHandlers;
+import net.openhft.chronicle.queue.ChronicleQueueBuilder;
+import net.openhft.chronicle.queue.QueueWireHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.map.ChronicleMapBuilder.of;
@@ -40,13 +48,15 @@ import static net.openhft.chronicle.map.ChronicleMapBuilder.of;
  * Created by Rob Austin
  */
 public class ServerEndpoint implements Closeable {
+    private static final Logger LOG = LoggerFactory.getLogger(ServerEndpoint.class);
 
     private EventGroup eg = new EventGroup();
     private ReplicationHub replicationHub;
     private byte localIdentifier;
-    private Map<Integer,Replica> channelMap;
+    private Map<Integer, Replica> channelMap;
     private AcceptorEventHandler eah;
     private WireHandler mapWireHandler;
+    private WireHandler queueWireHandler;
     private final ChannelProvider provider;
 
     public ServerEndpoint(byte localIdentifier) throws IOException {
@@ -60,7 +70,7 @@ public class ServerEndpoint implements Closeable {
                 .createWithId(localIdentifier);
 
         // this is how you add maps after the custer is created
-         of(byte[].class, byte[].class)
+        of(byte[].class, byte[].class)
                 .instance().replicatedViaChannel(replicationHub.createChannel((short) 1)).create();
 
         provider = ChannelProvider.getProvider(replicationHub);
@@ -75,16 +85,29 @@ public class ServerEndpoint implements Closeable {
 
         AcceptorEventHandler eah = new AcceptorEventHandler(port, () -> {
 
-            mapWireHandler = MapWireHandlerBuilder.of(
-                    () -> of(byte[].class, byte[].class).instance(),
-                    () -> of(String.class, Integer.class).instance(),
+            Supplier<ChronicleHashInstanceBuilder<ChronicleMap<byte[], byte[]>>> mapFactory = () -> of(byte[].class, byte[].class).instance();
+            Supplier<ChronicleHashInstanceBuilder<ChronicleMap<String, Integer>>> channelNameToIdFactory = () -> of(String.class, Integer.class).instance();
+
+            mapWireHandler = new MapWireHandler<>(
+                    mapFactory,
+                    channelNameToIdFactory,
                     replicationHub,
                     localIdentifier,
                     channelMap);
 
+
+            try {
+                // todo improve this
+                final File file = File.createTempFile("chron", "q");
+                queueWireHandler = new QueueWireHandler(new ChronicleQueueBuilder(file.getAbsolutePath()).build());
+            } catch (IOException e) {
+                LOG.error("", e);
+                queueWireHandler = null;
+            }
+
             EngineWireHandler engineWireHandler = new EngineWireHandler(
                     mapWireHandler,
-                    null);
+                    queueWireHandler);
 
             ((Consumer<WireHandlers>) mapWireHandler).accept(engineWireHandler);
 
