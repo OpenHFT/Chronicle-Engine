@@ -110,6 +110,7 @@ public class ServerEndpoint implements Closeable {
     @Override
     public void close() throws IOException {
         stop();
+        eg.close();
         eah.close();
         provider.close();
     }

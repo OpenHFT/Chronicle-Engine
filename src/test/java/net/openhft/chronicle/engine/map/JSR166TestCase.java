@@ -19,6 +19,7 @@
 package net.openhft.chronicle.engine.map;
 
 import junit.framework.AssertionFailedError;
+import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -108,7 +109,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  *
  * </ul>
  */
-public class JSR166TestCase {
+public class JSR166TestCase extends ThreadMonitoringTest {
 
     /**
      * The number of elements to place in collections, arrays, etc.

@@ -24,11 +24,17 @@ import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
+
+import java.util.Map;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 
-public class RemoteTcpClientTest {
+public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
 
     class MyMarshallable implements Marshallable {
@@ -73,8 +79,9 @@ public class RemoteTcpClientTest {
         }
     }
 
-
-    @Test(timeout = 50000)
+   /* @Ignore("commented out as this maybe resource leaking (possibly not closing socket " +
+            "connection ) anyway its failing on TC")
+*/    @Test(timeout = 50000)
     public void testProcess() throws Exception {
 
         // sever
@@ -142,5 +149,7 @@ public class RemoteTcpClientTest {
             }
         }
     }
+
+
 
 }

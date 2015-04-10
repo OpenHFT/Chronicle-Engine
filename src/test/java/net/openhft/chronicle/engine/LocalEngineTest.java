@@ -28,7 +28,7 @@ import org.junit.Test;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
 
-public class LocalEngineTest {
+public class LocalEngineTest extends ThreadMonitoringTest {
     final ChronicleContext context = new ChronicleEngine();
     final Chronicle mockedQueue = mock(Chronicle.class);
     @SuppressWarnings("unchecked")

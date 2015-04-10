@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.client.RemoteTcpClientChronicleContext;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.map.ChronicleMap;
@@ -35,7 +36,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author Rob Austin.
  */
-public class WireRemoteStatelessClientTest {
+public class WireRemoteStatelessClientTest extends ThreadMonitoringTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(WireRemoteStatelessClientTest.class);
 

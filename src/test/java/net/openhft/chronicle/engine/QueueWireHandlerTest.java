@@ -18,7 +18,7 @@ import static net.openhft.chronicle.engine.QueueWireHandler.Fields.*;
 /**
  * Created by daniel on 01/04/15.
  */
-public class QueueWireHandlerTest {
+public class QueueWireHandlerTest extends ThreadMonitoringTest {
     /**
      * Simple reference test using wire on a SingleChronicleQueue directly
      * @throws IOException
