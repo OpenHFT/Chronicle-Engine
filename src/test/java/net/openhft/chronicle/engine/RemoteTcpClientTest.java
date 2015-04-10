@@ -74,7 +74,7 @@ public class RemoteTcpClientTest {
     }
 
 
-    @Test
+    @Test(timeout = 50000)
     public void testProcess() throws Exception {
 
         // sever
@@ -99,6 +99,7 @@ public class RemoteTcpClientTest {
                     assertEquals("Blue", colourMap2.get("Rob"));
                     assertEquals("Green", colourMap2.get("Peter"));
                 }
+
                 try (ChronicleMap<String, Long> numbers = context.getMap("numbers", String.class, Long
                         .class)) {
                     numbers.put("Rob", 123L);
