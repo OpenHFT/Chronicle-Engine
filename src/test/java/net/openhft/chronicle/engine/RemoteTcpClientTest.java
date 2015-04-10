@@ -73,7 +73,6 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
         }
     }
 
-
     @Test(timeout = 50000)
     public void testProcess() throws Exception {
 
