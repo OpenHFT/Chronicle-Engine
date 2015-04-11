@@ -18,13 +18,11 @@
 
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.engine.map.WireRemoteStatelessClientTest.RemoteMapSupplier;
+import net.openhft.chronicle.engine.map.WireRemoteStatelessMapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.map.ChronicleMap;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

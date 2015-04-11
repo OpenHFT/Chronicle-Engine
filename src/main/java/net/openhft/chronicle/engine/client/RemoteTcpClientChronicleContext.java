@@ -18,12 +18,12 @@
 
 package net.openhft.chronicle.engine.client;
 
-import net.openhft.chronicle.Chronicle;
 import net.openhft.chronicle.engine.ChronicleContext;
 import net.openhft.chronicle.engine.client.internal.RemoteClientServiceLocator;
 import net.openhft.chronicle.engine.old.ChronicleCluster;
 import net.openhft.chronicle.engine.old.ChronicleThreadPool;
 import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.set.ChronicleSet;
 
 import java.io.Closeable;
@@ -42,8 +42,8 @@ public class RemoteTcpClientChronicleContext implements ChronicleContext, Closea
     }
 
     @Override
-    public Chronicle getQueue(String name) {
-        throw new UnsupportedOperationException("todo");
+    public ChronicleQueue getQueue(String name) {
+        return remoteClientServiceLocator.getService(ChronicleQueue.class, name);
     }
 
     @Override

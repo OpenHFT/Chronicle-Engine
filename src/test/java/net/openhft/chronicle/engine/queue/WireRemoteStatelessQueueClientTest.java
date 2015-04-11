@@ -16,12 +16,12 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.engine.map;
+package net.openhft.chronicle.engine.queue;
 
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.client.RemoteTcpClientChronicleContext;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
-import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.queue.ChronicleQueue;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,50 +36,48 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author Rob Austin.
  */
-public class WireRemoteStatelessClientTest extends ThreadMonitoringTest {
+public class WireRemoteStatelessQueueClientTest extends ThreadMonitoringTest {
 
-    private static final Logger LOG = LoggerFactory.getLogger(WireRemoteStatelessClientTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(WireRemoteStatelessQueueClientTest.class);
 
     @Test(timeout = 50000)
-    public void testPutAndGet() throws IOException, InterruptedException {
+    public void testLastWrittenIndex() throws IOException, InterruptedException {
 
-        try (RemoteMapSupplier<Integer, CharSequence> r = new RemoteMapSupplier<>(Integer.class, CharSequence.class)) {
-
-            ChronicleMap<Integer, CharSequence> clientMap = r.get();
-            clientMap.put(1, "hello");
-            assertEquals(1, clientMap.size());
+        try (RemoteQueueSupplier remoteQueueSupplier = new RemoteQueueSupplier()) {
+            final ChronicleQueue clientQueue = remoteQueueSupplier.get();
+            assertEquals(0, clientQueue.lastWrittenIndex());
         }
     }
 
 
-    public static class RemoteMapSupplier<K, V> implements Closeable, Supplier<ChronicleMap<K, V>> {
+    public static class RemoteQueueSupplier implements Closeable, Supplier<ChronicleQueue> {
 
         private final ServerEndpoint serverEndpoint;
-        private final ChronicleMap<K, V> map;
+        private final ChronicleQueue queue;
         private final RemoteTcpClientChronicleContext context;
 
-        public RemoteMapSupplier(Class<K> kClass, Class<V> vClass) throws IOException {
+        public RemoteQueueSupplier() throws IOException {
 
             serverEndpoint = new ServerEndpoint((byte) 1);
             int serverPort = serverEndpoint.getPort();
 
             context = new RemoteTcpClientChronicleContext("localhost", serverPort);
-            map = context.getMap("test", kClass, vClass);
+            queue = context.getQueue("test");
         }
 
 
         @Override
         public void close() throws IOException {
-            if (map != null)
-                map.close();
+            if (queue != null)
+                queue.close();
             context.close();
             serverEndpoint.close();
         }
 
 
         @Override
-        public ChronicleMap<K, V> get() {
-            return map;
+        public ChronicleQueue get() {
+            return queue;
         }
     }
 

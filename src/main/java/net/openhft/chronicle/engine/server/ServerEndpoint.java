@@ -30,7 +30,7 @@ import net.openhft.chronicle.network.WireHandler;
 import net.openhft.chronicle.network.event.EventGroup;
 import net.openhft.chronicle.network.event.WireHandlers;
 import net.openhft.chronicle.queue.ChronicleQueueBuilder;
-import net.openhft.chronicle.queue.QueueWireHandler;
+import net.openhft.chronicle.engine.client.internal.QueueWireHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -21,6 +21,7 @@ package net.openhft.chronicle.engine.old;
 import net.openhft.chronicle.Chronicle;
 import net.openhft.chronicle.engine.ChronicleContext;
 import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.set.ChronicleSet;
 
 import java.util.Collections;
@@ -32,18 +33,18 @@ import java.util.logging.Logger;
  * Created by peter.lawrey on 09/10/14.
  */
 public class ChronicleEngine implements ChronicleContext {
-    private final Map<String, Chronicle> queues = Collections.synchronizedMap(new LinkedHashMap<String, Chronicle>());
+    private final Map<String, ChronicleQueue> queues = Collections.synchronizedMap(new LinkedHashMap<String, ChronicleQueue>());
     private final Map<String, ChronicleMap> maps = Collections.synchronizedMap(new LinkedHashMap<String, ChronicleMap>());
     private final Map<String, ChronicleSet> sets = Collections.synchronizedMap(new LinkedHashMap<String, ChronicleSet>());
     private final Map<String, ChronicleThreadPool> threadPools = Collections.synchronizedMap(new LinkedHashMap<String, ChronicleThreadPool>());
     private final Map<String, ChronicleCluster> clusters = Collections.synchronizedMap(new LinkedHashMap<String, ChronicleCluster>());
 
-    public void setQueue(String name, Chronicle chronicle) {
+    public void setQueue(String name, ChronicleQueue chronicle) {
         queues.put(name, chronicle);
     }
 
     @Override
-    public Chronicle getQueue(String name) {
+    public ChronicleQueue getQueue(String name) {
         return queues.get(name);
     }
 

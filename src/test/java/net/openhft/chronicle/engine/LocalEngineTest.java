@@ -18,9 +18,9 @@
 
 package net.openhft.chronicle.engine;
 
-import net.openhft.chronicle.Chronicle;
 import net.openhft.chronicle.engine.old.ChronicleEngine;
 import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.set.ChronicleSet;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,7 +30,7 @@ import static org.mockito.Mockito.mock;
 
 public class LocalEngineTest extends ThreadMonitoringTest {
     final ChronicleContext context = new ChronicleEngine();
-    final Chronicle mockedQueue = mock(Chronicle.class);
+    final ChronicleQueue mockedQueue = mock(ChronicleQueue.class);
     @SuppressWarnings("unchecked")
     final ChronicleMap<String, String> mockedMap = mock(ChronicleMap.class);
     final ChronicleSet<String> mockedSet = mock(ChronicleSet.class);
@@ -56,7 +56,7 @@ public class LocalEngineTest extends ThreadMonitoringTest {
 
     @Test
     public void testGetQueue() {
-        Chronicle chronicle = context.getQueue("queue1");
+        ChronicleQueue chronicle = context.getQueue("queue1");
         assertNotNull(chronicle);
     }
 }

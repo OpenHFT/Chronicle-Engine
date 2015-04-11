@@ -32,7 +32,7 @@ import java.util.Map;
 public class Map4Sepc {
 
     static ChronicleMap<Integer, String> createMap() throws IOException {
-        final WireRemoteStatelessClientTest.RemoteMapSupplier remoteMapSupplier = new WireRemoteStatelessClientTest.RemoteMapSupplier(Integer.class, String.class);
+        final WireRemoteStatelessMapClientTest.RemoteMapSupplier remoteMapSupplier = new WireRemoteStatelessMapClientTest.RemoteMapSupplier(Integer.class, String.class);
         return remoteMapSupplier.get();
     }
 
