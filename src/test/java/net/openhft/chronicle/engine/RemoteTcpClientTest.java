@@ -31,6 +31,7 @@ import static org.junit.Assert.assertEquals;
 public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
 
+
     class MyMarshallable implements Marshallable {
 
         String someData;
