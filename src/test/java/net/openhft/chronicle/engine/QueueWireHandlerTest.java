@@ -4,6 +4,7 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.queue.ExcerptAppender;
 import net.openhft.chronicle.queue.ExcerptTailer;
 import net.openhft.chronicle.queue.impl.SingleChronicleQueue;
+import net.openhft.chronicle.wire.BinaryWire;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.Wire;
@@ -28,7 +29,7 @@ public class QueueWireHandlerTest extends ThreadMonitoringTest {
         File f = new File("/tmp/qservertest");
         f.delete();
         f.deleteOnExit();
-        SingleChronicleQueue q = new SingleChronicleQueue("/tmp/qservertest", 1024);
+        SingleChronicleQueue q = new SingleChronicleQueue("/tmp/qservertest", 1024, BinaryWire.class);
         ExcerptAppender appender = q.createAppender();
         for (int i = 0; i < 5; i++) {
             appender.writeDocument(wire -> wire.write(() -> "Message").text("Hello"));

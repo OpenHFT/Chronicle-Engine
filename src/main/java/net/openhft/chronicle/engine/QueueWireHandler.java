@@ -65,7 +65,7 @@ public class QueueWireHandler implements WireHandler {
                     SingleChronicleQueue singleChronicleQueue = fileNameToChronicle.computeIfAbsent
                             (filename, s -> {
                                 try {
-                                    return new SingleChronicleQueue(filename, 1024);
+                                    return new SingleChronicleQueue(filename, 1024, BinaryWire.class);
                                 } catch (IOException e) {
                                     e.printStackTrace();
                                 }
