@@ -29,6 +29,10 @@ import org.jetbrains.annotations.NotNull;
 import java.io.StreamCorruptedException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
+import static net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.CoreFields.*;
+import static net.openhft.chronicle.engine.client.StringUtils.endsWith;
 
 
 /**
@@ -49,14 +53,17 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
     @NotNull
     private final WireHandler queueWireHandler;
+    private final Map<Long, CharSequence> cidToCsp;
 
     @NotNull
     private final WireHandler coreWireHandler = new CoreWireHandler();
 
     public EngineWireHandler(@NotNull final WireHandler mapWireHandler,
-                             final WireHandler queueWireHandler) {
+                             final WireHandler queueWireHandler,
+                             Map<Long, CharSequence> cidToCsp) {
         this.mapWireHandler = mapWireHandler;
         this.queueWireHandler = queueWireHandler;
+        this.cidToCsp = cidToCsp;
     }
 
     private final List<WireHandler> handlers = new ArrayList<>();
@@ -80,12 +87,17 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
         final StringBuilder cspText = peekCsp(in);
 
-        if (endsWith(cspText, "#MAP")) {
+        if (endsWith(cspText, "#map")) {
             mapWireHandler.process(in, out);
             return;
         }
 
-        if (endsWith(cspText, "QUEUE")) {
+        if (endsWith(cspText, "#entrySet")) {
+            mapWireHandler.process(in, out);
+            return;
+        }
+
+        if (endsWith(cspText, "#queue")) {
             queueWireHandler.process(in, out);
             return;
         }
@@ -94,6 +106,13 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
             coreWireHandler.process(in, out);
     }
 
+
+    /**
+     * peeks the Csp or if its a cid converts the Cid into a Csp and returns that
+     *
+     * @param in
+     * @return
+     */
     private StringBuilder peekCsp(@NotNull final Wire in) {
 
         final Bytes<?> bytes = in.bytes();
@@ -108,7 +127,20 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
         try {
             bytes.mark();
-            inWire.readDocument(wireIn -> wireIn.read(CoreFields.csp).text(cspText), null);
+            inWire.readDocument(wireIn -> {
+
+                final StringBuilder keyName = Wires.acquireStringBuilder();
+
+                final ValueIn read = wireIn.read(keyName);
+                if (csp.contentEquals(keyName)) {
+                    read.text(cspText);
+                } else if (cid.contentEquals(keyName)) {
+                    final long cid = read.int64();
+                    final CharSequence s = cidToCsp.get(cid);
+                    cspText.append(s);
+                }
+
+            }, null);
         } finally {
             bytes.reset();
         }
@@ -116,18 +148,6 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
         return cspText;
     }
 
-    private boolean endsWith(@NotNull final CharSequence source, @NotNull final String endsWith) {
-
-        for (int i = 1; i <= endsWith.length(); i++) {
-
-            if (source.charAt(source.length() - i) != endsWith.charAt(endsWith.length() - i)) {
-                return false;
-            }
-        }
-
-        return true;
-
-    }
 
     protected Wire createWriteFor(Bytes bytes) {
 
@@ -160,12 +180,12 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
             in.readEventName(cspText);
 
             if ("getWireFormats".contentEquals(cspText)) {
-                out.write(CoreFields.reply).text(TEXT_WIRE + "," + BINARY_WIRE);
+                out.write(reply).text(TEXT_WIRE + "," + BINARY_WIRE);
                 return;
             }
 
             if ("setWireFormat".contentEquals(cspText)) {
-                out.write(CoreFields.reply).text(preferredWireType);
+                out.write(reply).text(preferredWireType);
                 recreateWire(true);
             }
 

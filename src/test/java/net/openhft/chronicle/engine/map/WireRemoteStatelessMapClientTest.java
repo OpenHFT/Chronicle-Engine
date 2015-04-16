@@ -28,6 +28,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import static org.junit.Assert.assertEquals;
@@ -48,6 +50,19 @@ public class WireRemoteStatelessMapClientTest extends ThreadMonitoringTest {
             ChronicleMap<Integer, CharSequence> clientMap = r.get();
             clientMap.put(1, "hello");
             assertEquals(1, clientMap.size());
+        }
+    }
+
+
+    @Test(timeout = 50000)
+    public void testEntrySetIsEmpty() throws IOException, InterruptedException {
+
+        try (RemoteMapSupplier<Integer, CharSequence> r = new RemoteMapSupplier<>(Integer.class, CharSequence.class)) {
+
+            ChronicleMap<Integer, CharSequence> mapProxy = r.get();
+            final Set<Map.Entry<Integer, CharSequence>> entries = mapProxy.entrySet();
+
+            assertEquals(true, entries.isEmpty());
         }
     }
 

@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by Rob Austin
@@ -37,8 +36,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class RemoteClientServiceLocator {
 
     private final ClientWiredStatelessTcpConnectionHub hub;
-
-    private final AtomicInteger nextFreeChannel = new AtomicInteger(10);
 
     public RemoteClientServiceLocator(@NotNull String hostname,
                                       int port,
@@ -51,7 +48,7 @@ public class RemoteClientServiceLocator {
 
         long timeoutMs = TimeUnit.SECONDS.toMillis(20);
 
-        hub = new ClientWiredStatelessTcpConnectionHub(identifier, false, "MAP", inetSocketAddress, tcpBufferSize, timeoutMs);
+        hub = new ClientWiredStatelessTcpConnectionHub(identifier, false, inetSocketAddress, tcpBufferSize, timeoutMs);
 
     }
 

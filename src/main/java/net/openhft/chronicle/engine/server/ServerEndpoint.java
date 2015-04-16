@@ -17,6 +17,7 @@
  */
 package net.openhft.chronicle.engine.server;
 
+import net.openhft.chronicle.engine.client.internal.QueueWireHandler;
 import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
@@ -30,13 +31,13 @@ import net.openhft.chronicle.network.WireHandler;
 import net.openhft.chronicle.network.event.EventGroup;
 import net.openhft.chronicle.network.event.WireHandlers;
 import net.openhft.chronicle.queue.ChronicleQueueBuilder;
-import net.openhft.chronicle.engine.client.internal.QueueWireHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -85,19 +86,23 @@ public class ServerEndpoint implements Closeable {
 
         AcceptorEventHandler eah = new AcceptorEventHandler(port, () -> {
 
-            Supplier<ChronicleHashInstanceBuilder<ChronicleMap<byte[], byte[]>>> mapFactory = () -> of(byte[].class, byte[].class).instance();
-            Supplier<ChronicleHashInstanceBuilder<ChronicleMap<String, Integer>>> channelNameToIdFactory = () -> of(String.class, Integer.class).instance();
+            final Supplier<ChronicleHashInstanceBuilder<ChronicleMap<byte[], byte[]>>> mapFactory
+                    = () -> of(byte[].class, byte[].class).instance();
+            final Supplier<ChronicleHashInstanceBuilder<ChronicleMap<String, Integer>>> channelNameToIdFactory = () -> of(String.class, Integer.class).instance();
+
+            final Map<Long, CharSequence> cidToCsp = new HashMap<>();
 
             mapWireHandler = new MapWireHandler<>(
                     mapFactory,
                     channelNameToIdFactory,
                     replicationHub,
                     localIdentifier,
-                    channelMap);
-
+                    channelMap,
+                    cidToCsp);
 
             try {
-                // todo improve this
+                // todo move andimprove this so that it uses a chronicle based on the CSP name,
+                // todo this code
                 final File file = File.createTempFile("chron", "q");
                 queueWireHandler = new QueueWireHandler(new ChronicleQueueBuilder(file.getAbsolutePath()).build());
             } catch (IOException e) {
@@ -107,7 +112,8 @@ public class ServerEndpoint implements Closeable {
 
             EngineWireHandler engineWireHandler = new EngineWireHandler(
                     mapWireHandler,
-                    queueWireHandler);
+                    queueWireHandler,
+                    cidToCsp);
 
             ((Consumer<WireHandlers>) mapWireHandler).accept(engineWireHandler);
 
@@ -120,7 +126,6 @@ public class ServerEndpoint implements Closeable {
 
 
     }
-
 
     public int getPort() throws IOException {
         return eah.getLocalPort();
