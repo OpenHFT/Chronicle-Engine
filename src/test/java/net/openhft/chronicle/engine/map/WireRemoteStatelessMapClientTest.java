@@ -67,6 +67,27 @@ public class WireRemoteStatelessMapClientTest extends ThreadMonitoringTest {
     }
 
 
+    @Test(timeout = 50000)
+    public void testEntrySetRemove() throws IOException, InterruptedException {
+
+        try (RemoteMapSupplier<Integer, CharSequence> r = new RemoteMapSupplier<>(Integer.class, CharSequence.class)) {
+
+            ChronicleMap<Integer, CharSequence> mapProxy = r.get();
+            final Set<Map.Entry<Integer, CharSequence>> entries = mapProxy.entrySet();
+
+            assertEquals(true, entries.isEmpty());
+
+            mapProxy.put(1, "hello");
+
+            assertEquals(false, entries.isEmpty());
+            entries.remove(1);
+
+            assertEquals(true, entries.isEmpty());
+        }
+    }
+
+
+
     public static class RemoteMapSupplier<K, V> implements Closeable, Supplier<ChronicleMap<K, V>> {
 
         private final ServerEndpoint serverEndpoint;
