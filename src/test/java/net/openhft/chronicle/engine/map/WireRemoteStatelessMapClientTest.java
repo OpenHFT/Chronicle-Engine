@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -76,13 +77,35 @@ public class WireRemoteStatelessMapClientTest extends ThreadMonitoringTest {
             final Set<Map.Entry<Integer, CharSequence>> entries = mapProxy.entrySet();
 
             assertEquals(true, entries.isEmpty());
-
             mapProxy.put(1, "hello");
 
             assertEquals(false, entries.isEmpty());
             entries.remove(1);
 
             assertEquals(true, entries.isEmpty());
+        }
+    }
+
+
+    @Test(timeout = 50000)
+    public void testPutAll() throws IOException, InterruptedException {
+
+        try (RemoteMapSupplier<Integer, CharSequence> r = new RemoteMapSupplier<>(Integer.class, CharSequence.class)) {
+
+            ChronicleMap<Integer, CharSequence> mapProxy = r.get();
+            final Set<Map.Entry<Integer, CharSequence>> entries = mapProxy.entrySet();
+
+            assertEquals(true, entries.isEmpty());
+
+
+            Map<Integer, String> data = new HashMap<>();
+            data.put(1, "hello");
+            data.put(2, "world");
+
+            assertEquals(true, entries.isEmpty());
+            mapProxy.putAll(data);
+            assertEquals(2, entries.size());
+
         }
     }
 
