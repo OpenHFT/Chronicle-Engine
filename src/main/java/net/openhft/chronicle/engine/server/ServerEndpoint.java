@@ -104,7 +104,7 @@ public class ServerEndpoint implements Closeable {
                 // todo move andimprove this so that it uses a chronicle based on the CSP name,
                 // todo this code
                 final File file = File.createTempFile("chron", "q");
-                queueWireHandler = new QueueWireHandler(new ChronicleQueueBuilder(file.getAbsolutePath()).build());
+                queueWireHandler = new QueueWireHandler();
             } catch (IOException e) {
                 LOG.error("", e);
                 queueWireHandler = null;

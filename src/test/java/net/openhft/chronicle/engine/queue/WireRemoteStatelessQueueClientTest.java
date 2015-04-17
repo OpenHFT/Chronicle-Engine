@@ -22,6 +22,7 @@ import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.client.RemoteTcpClientChronicleContext;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.queue.ChronicleQueue;
+import net.openhft.chronicle.queue.ExcerptAppender;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +46,13 @@ public class WireRemoteStatelessQueueClientTest extends ThreadMonitoringTest {
 
         try (RemoteQueueSupplier remoteQueueSupplier = new RemoteQueueSupplier()) {
             final ChronicleQueue clientQueue = remoteQueueSupplier.get();
+            //Create an appender
+            ExcerptAppender appender = clientQueue.createAppender();
+            for (int i = 0; i < 5; i++) {
+                appender.writeDocument(wire -> wire.write(() -> "Message").text("Hello"));
+                System.out.println(appender.lastWrittenIndex());
+            }
+
             assertEquals(0, clientQueue.lastWrittenIndex());
         }
     }
