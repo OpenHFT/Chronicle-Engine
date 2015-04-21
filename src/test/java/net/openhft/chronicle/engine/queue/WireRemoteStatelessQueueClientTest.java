@@ -23,6 +23,8 @@ import net.openhft.chronicle.engine.client.RemoteTcpClientChronicleContext;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ExcerptAppender;
+import net.openhft.chronicle.queue.ExcerptTailer;
+import net.openhft.chronicle.wire.WireKey;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,12 +50,18 @@ public class WireRemoteStatelessQueueClientTest extends ThreadMonitoringTest {
             final ChronicleQueue clientQueue = remoteQueueSupplier.get();
             //Create an appender
             ExcerptAppender appender = clientQueue.createAppender();
+            long lastIndex = -1;
             for (int i = 0; i < 5; i++) {
-                appender.writeDocument(wire -> wire.write(() -> "Message").text("Hello"));
-                System.out.println(appender.lastWrittenIndex());
+                appender.writeDocument(wire -> wire.write(() -> "Message").text("Hello" +1));
+                System.out.println(lastIndex = appender.lastWrittenIndex());
             }
 
-            assertEquals(0, clientQueue.lastWrittenIndex());
+            assertEquals(lastIndex, clientQueue.lastWrittenIndex());
+
+            StringBuilder sb = new StringBuilder();
+            ExcerptTailer tailer = clientQueue.createTailer();
+            tailer.readDocument(wire -> wire.read(() -> "Message").text(sb));
+
         }
     }
 
@@ -65,7 +73,6 @@ public class WireRemoteStatelessQueueClientTest extends ThreadMonitoringTest {
         private final RemoteTcpClientChronicleContext context;
 
         public RemoteQueueSupplier() throws IOException {
-
             serverEndpoint = new ServerEndpoint((byte) 1);
             int serverPort = serverEndpoint.getPort();
 
