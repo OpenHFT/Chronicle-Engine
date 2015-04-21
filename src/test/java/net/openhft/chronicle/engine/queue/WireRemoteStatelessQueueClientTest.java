@@ -25,6 +25,8 @@ import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ExcerptAppender;
 import net.openhft.chronicle.queue.ExcerptTailer;
 import net.openhft.chronicle.wire.WireKey;
+import net.openhft.chronicle.wire.Wires;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +46,7 @@ public class WireRemoteStatelessQueueClientTest extends ThreadMonitoringTest {
     private static final Logger LOG = LoggerFactory.getLogger(WireRemoteStatelessQueueClientTest.class);
 
     @Test(timeout = 50000)
+    @Ignore
     public void testLastWrittenIndex() throws IOException, InterruptedException {
 
         try (RemoteQueueSupplier remoteQueueSupplier = new RemoteQueueSupplier()) {
@@ -60,8 +63,12 @@ public class WireRemoteStatelessQueueClientTest extends ThreadMonitoringTest {
 
             StringBuilder sb = new StringBuilder();
             ExcerptTailer tailer = clientQueue.createTailer();
-            tailer.readDocument(wire -> wire.read(() -> "Message").text(sb));
+            tailer.readDocument(wire -> {
+                System.out.println(Wires.fromSizePrefixedBlobs(wire.bytes()));
+                wire.read(() -> "Message").text(sb);
+            });
 
+            System.out.println("Result: " + sb);
         }
     }
 
