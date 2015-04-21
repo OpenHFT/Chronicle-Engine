@@ -24,8 +24,6 @@ import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ExcerptAppender;
 import net.openhft.chronicle.queue.ExcerptTailer;
-import net.openhft.chronicle.wire.WireKey;
-import net.openhft.chronicle.wire.Wires;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -36,6 +34,7 @@ import java.io.IOException;
 import java.util.function.Supplier;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 
 /**
@@ -53,20 +52,26 @@ public class WireRemoteStatelessQueueClientTest extends ThreadMonitoringTest {
             final ChronicleQueue clientQueue = remoteQueueSupplier.get();
             //Create an appender
             ExcerptAppender appender = clientQueue.createAppender();
+            StringBuilder sb = new StringBuilder();
+            ExcerptTailer tailer = clientQueue.createTailer();
             long lastIndex = -1;
+
             for (int i = 0; i < 5; i++) {
-                appender.writeDocument(wire -> wire.write(() -> "Message").text("Hello" +1));
+                final int finalI = i;
+                appender.writeDocument(wire -> wire.write(() -> "Message").text("Hello" + finalI));
+
+//                System.out.println(Wires.fromSizePrefixedBlobs(tailer.wire().bytes()));
+                assertTrue(tailer.readDocument(wire -> {
+                    wire.read(() -> "Message")
+                            .text(sb);
+                    assertEquals("Hello" + finalI, sb.toString());
+                }));
+
                 System.out.println(lastIndex = appender.lastWrittenIndex());
             }
 
             assertEquals(lastIndex, clientQueue.lastWrittenIndex());
 
-            StringBuilder sb = new StringBuilder();
-            ExcerptTailer tailer = clientQueue.createTailer();
-            tailer.readDocument(wire -> {
-                System.out.println(Wires.fromSizePrefixedBlobs(wire.bytes()));
-                wire.read(() -> "Message").text(sb);
-            });
 
             System.out.println("Result: " + sb);
         }
