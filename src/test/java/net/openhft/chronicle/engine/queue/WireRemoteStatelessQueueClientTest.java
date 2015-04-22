@@ -23,6 +23,8 @@ import net.openhft.chronicle.engine.client.RemoteTcpClientChronicleContext;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ExcerptAppender;
+import net.openhft.chronicle.queue.ExcerptTailer;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +34,7 @@ import java.io.IOException;
 import java.util.function.Supplier;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 
 /**
@@ -42,18 +45,35 @@ public class WireRemoteStatelessQueueClientTest extends ThreadMonitoringTest {
     private static final Logger LOG = LoggerFactory.getLogger(WireRemoteStatelessQueueClientTest.class);
 
     @Test(timeout = 50000)
+    @Ignore
     public void testLastWrittenIndex() throws IOException, InterruptedException {
 
         try (RemoteQueueSupplier remoteQueueSupplier = new RemoteQueueSupplier()) {
             final ChronicleQueue clientQueue = remoteQueueSupplier.get();
             //Create an appender
             ExcerptAppender appender = clientQueue.createAppender();
+            StringBuilder sb = new StringBuilder();
+            ExcerptTailer tailer = clientQueue.createTailer();
+            long lastIndex = -1;
+
             for (int i = 0; i < 5; i++) {
-                appender.writeDocument(wire -> wire.write(() -> "Message").text("Hello"));
-                System.out.println(appender.lastWrittenIndex());
+                final int finalI = i;
+                appender.writeDocument(wire -> wire.write(() -> "Message").text("Hello" + finalI));
+
+//                System.out.println(Wires.fromSizePrefixedBlobs(tailer.wire().bytes()));
+                assertTrue(tailer.readDocument(wire -> {
+                    wire.read(() -> "Message")
+                            .text(sb);
+                    assertEquals("Hello" + finalI, sb.toString());
+                }));
+
+                System.out.println(lastIndex = appender.lastWrittenIndex());
             }
 
-            assertEquals(0, clientQueue.lastWrittenIndex());
+            assertEquals(lastIndex, clientQueue.lastWrittenIndex());
+
+
+            System.out.println("Result: " + sb);
         }
     }
 
@@ -65,7 +85,6 @@ public class WireRemoteStatelessQueueClientTest extends ThreadMonitoringTest {
         private final RemoteTcpClientChronicleContext context;
 
         public RemoteQueueSupplier() throws IOException {
-
             serverEndpoint = new ServerEndpoint((byte) 1);
             int serverPort = serverEndpoint.getPort();
 
