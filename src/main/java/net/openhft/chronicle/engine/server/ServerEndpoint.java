@@ -24,13 +24,12 @@ import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.map.ChannelProvider;
 import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.map.MapWireConnectionHub;
 import net.openhft.chronicle.map.MapWireHandler;
-import net.openhft.chronicle.map.Replica;
 import net.openhft.chronicle.network.AcceptorEventHandler;
 import net.openhft.chronicle.network.WireHandler;
 import net.openhft.chronicle.network.event.EventGroup;
 import net.openhft.chronicle.network.event.WireHandlers;
-import net.openhft.chronicle.queue.ChronicleQueueBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,16 +52,18 @@ public class ServerEndpoint implements Closeable {
 
     private EventGroup eg = new EventGroup();
     private ReplicationHub replicationHub;
-    private byte localIdentifier;
-    private Map<Integer, Replica> channelMap;
     private AcceptorEventHandler eah;
     private WireHandler mapWireHandler;
     private WireHandler queueWireHandler;
     private final ChannelProvider provider;
 
+
+    MapWireConnectionHub mapWireConnectionHub;
+
+
     public ServerEndpoint(byte localIdentifier) throws IOException {
 
-        this.localIdentifier = localIdentifier;
+
         final TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
                 .of(8085)
                 .heartBeatInterval(1, SECONDS);
@@ -75,10 +76,14 @@ public class ServerEndpoint implements Closeable {
                 .instance().replicatedViaChannel(replicationHub.createChannel((short) 1)).create();
 
         provider = ChannelProvider.getProvider(replicationHub);
-        this.channelMap = provider.chronicleChannelMap();
+        // this.channelMap = provider.chronicleChannelMap();
 
         start(0);
 
+    }
+
+    public MapWireConnectionHub mapWireConnectionHub() {
+        return mapWireConnectionHub;
     }
 
     public AcceptorEventHandler start(int port) throws IOException {
@@ -92,14 +97,6 @@ public class ServerEndpoint implements Closeable {
 
             final Map<Long, CharSequence> cidToCsp = new HashMap<>();
 
-            mapWireHandler = new MapWireHandler<>(
-                    mapFactory,
-                    channelNameToIdFactory,
-                    replicationHub,
-                    localIdentifier,
-                    channelMap,
-                    cidToCsp);
-
             try {
                 // todo move andimprove this so that it uses a chronicle based on the CSP name,
                 // todo this code
@@ -108,6 +105,13 @@ public class ServerEndpoint implements Closeable {
             } catch (IOException e) {
                 LOG.error("", e);
                 queueWireHandler = null;
+            }
+
+            try {
+                mapWireConnectionHub = new MapWireConnectionHub(mapFactory, channelNameToIdFactory, (byte) 1, 8085);
+                mapWireHandler = new MapWireHandler<>(cidToCsp, mapWireConnectionHub);
+            } catch (IOException e) {
+                LOG.error("", e);
             }
 
             EngineWireHandler engineWireHandler = new EngineWireHandler(

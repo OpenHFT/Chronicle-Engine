@@ -110,7 +110,6 @@ public class WireRemoteStatelessMapClientTest extends ThreadMonitoringTest {
     }
 
 
-
     public static class RemoteMapSupplier<K, V> implements Closeable, Supplier<ChronicleMap<K, V>> {
 
         private final ServerEndpoint serverEndpoint;
@@ -139,6 +138,10 @@ public class WireRemoteStatelessMapClientTest extends ThreadMonitoringTest {
         @Override
         public ChronicleMap<K, V> get() {
             return map;
+        }
+
+        public ServerEndpoint serverEndpoint() {
+            return serverEndpoint;
         }
     }
 
