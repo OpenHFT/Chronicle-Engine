@@ -97,7 +97,6 @@ public class WireRemoteStatelessMapClientTest extends ThreadMonitoringTest {
 
             assertEquals(true, entries.isEmpty());
 
-
             Map<Integer, String> data = new HashMap<>();
             data.put(1, "hello");
             data.put(2, "world");

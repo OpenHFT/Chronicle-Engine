@@ -20,9 +20,6 @@ package net.openhft.chronicle.engine.server;
 import net.openhft.chronicle.engine.client.internal.QueueWireHandler;
 import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
-import net.openhft.chronicle.hash.replication.ReplicationHub;
-import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
-import net.openhft.chronicle.map.ChannelProvider;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.MapWireConnectionHub;
 import net.openhft.chronicle.map.MapWireHandler;
@@ -41,7 +38,6 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.map.ChronicleMapBuilder.of;
 
 /**
@@ -49,35 +45,22 @@ import static net.openhft.chronicle.map.ChronicleMapBuilder.of;
  */
 public class ServerEndpoint implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(ServerEndpoint.class);
+    private final byte localIdentifier;
+
 
     private EventGroup eg = new EventGroup();
-    private ReplicationHub replicationHub;
+
     private AcceptorEventHandler eah;
     private WireHandler mapWireHandler;
     private WireHandler queueWireHandler;
-    private final ChannelProvider provider;
+    // private final ChannelProvider provider;
 
 
     MapWireConnectionHub mapWireConnectionHub;
 
 
     public ServerEndpoint(byte localIdentifier) throws IOException {
-
-
-        final TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                .of(8085)
-                .heartBeatInterval(1, SECONDS);
-
-        replicationHub = ReplicationHub.builder().tcpTransportAndNetwork(tcpConfig)
-                .createWithId(localIdentifier);
-
-        // this is how you add maps after the custer is created
-        of(byte[].class, byte[].class)
-                .instance().replicatedViaChannel(replicationHub.createChannel((short) 1)).create();
-
-        provider = ChannelProvider.getProvider(replicationHub);
-        // this.channelMap = provider.chronicleChannelMap();
-
+        this.localIdentifier = localIdentifier;
         start(0);
 
     }
@@ -108,7 +91,7 @@ public class ServerEndpoint implements Closeable {
             }
 
             try {
-                mapWireConnectionHub = new MapWireConnectionHub(mapFactory, channelNameToIdFactory, (byte) 1, 8085);
+                mapWireConnectionHub = new MapWireConnectionHub(mapFactory, channelNameToIdFactory, localIdentifier, 8085);
                 mapWireHandler = new MapWireHandler<>(cidToCsp, mapWireConnectionHub);
             } catch (IOException e) {
                 LOG.error("", e);
@@ -144,6 +127,6 @@ public class ServerEndpoint implements Closeable {
         stop();
         eg.close();
         eah.close();
-        provider.close();
+        mapWireConnectionHub.close();
     }
 }
