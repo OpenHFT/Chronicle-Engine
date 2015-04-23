@@ -16,28 +16,55 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.engine.old;
+package net.openhft.chronicle.engine.client.internal;
 
 import net.openhft.chronicle.Chronicle;
 import net.openhft.chronicle.engine.ChronicleContext;
+import net.openhft.chronicle.engine.old.ChronicleCluster;
+import net.openhft.chronicle.engine.old.ChronicleThreadPool;
 import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.map.MapWireConnectionHub;
+import net.openhft.chronicle.map.WireMap;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.set.ChronicleSet;
+import net.openhft.chronicle.wire.TextWire;
+import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
 
 /**
  * Created by peter.lawrey on 09/10/14.
  */
-public class ChronicleEngine implements ChronicleContext {
+public class ChronicleEngine implements ChronicleContext, Closeable {
+
+    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(ChronicleEngine.class);
+
     private final Map<String, ChronicleQueue> queues = Collections.synchronizedMap(new LinkedHashMap<String, ChronicleQueue>());
-    private final Map<String, ChronicleMap> maps = Collections.synchronizedMap(new LinkedHashMap<String, ChronicleMap>());
-    private final Map<String, ChronicleSet> sets = Collections.synchronizedMap(new LinkedHashMap<String, ChronicleSet>());
+    private final Map<String, ChronicleSet> sets = Collections.synchronizedMap(new
+            LinkedHashMap<String, ChronicleSet>());
     private final Map<String, ChronicleThreadPool> threadPools = Collections.synchronizedMap(new LinkedHashMap<String, ChronicleThreadPool>());
     private final Map<String, ChronicleCluster> clusters = Collections.synchronizedMap(new LinkedHashMap<String, ChronicleCluster>());
+    private MapWireConnectionHub mapWireConnectionHub = null;
+
+    public ChronicleEngine() {
+
+        // todo config port and identifiers
+        final byte localIdentifier = (byte) 1;
+        final int serverPort = 8085;
+
+        try {
+            mapWireConnectionHub = new MapWireConnectionHub(localIdentifier, serverPort);
+        } catch (IOException e) {
+            LOG.error("", e);
+        }
+
+    }
 
     public void setQueue(String name, ChronicleQueue chronicle) {
         queues.put(name, chronicle);
@@ -48,20 +75,32 @@ public class ChronicleEngine implements ChronicleContext {
         return queues.get(name);
     }
 
-    public void setMap(String name, ChronicleMap map) {
-        maps.put(name, map);
+    public void setMap(String name, ChronicleMap map) throws IOException {
+
+        final Map o = getMap(name, map.keyClass(), map.valueClass());
+        o.clear();
+        o.putAll(map);
     }
 
     @Override
-    public <K, V> ChronicleMap<K, V> getMap(String name, Class<K> kClass, Class<V> vClass) {
-        ChronicleMap map = maps.get(name);
+    public <K, V> ChronicleMap<K, V> getMap(String name, Class<K> kClass, Class<V> vClass) throws
+            IOException {
+
+        ChronicleMap map = new WireMap<>(
+                name,
+                kClass,
+                vClass,
+                mapWireConnectionHub,
+                TextWire.class);
+
         if (map != null)
             validateClasses(map, kClass, vClass);
+
         return map;
     }
 
     @Override
-    public <I> I getService(Class<I> iClass, String name, Class... args) {
+    public <I> I getService(Class<I> iClass, String name, Class... args) throws IOException {
         if (iClass == Chronicle.class)
             return (I) getQueue(name);
         if (iClass == ChronicleSet.class)
@@ -71,7 +110,7 @@ public class ChronicleEngine implements ChronicleContext {
         throw new UnsupportedOperationException();
     }
 
-    private <K, V> void validateClasses(ChronicleMap map, Class<K> kClass, Class<V> vClass) {
+    private <K, V> void validateClasses(Map map, Class<K> kClass, Class<V> vClass) {
         // TODO runtime check the key and values classes match
     }
 
@@ -112,5 +151,10 @@ public class ChronicleEngine implements ChronicleContext {
     @Override
     public Logger getLogger(String name) {
         return Logger.getLogger(name);
+    }
+
+    @Override
+    public void close() throws IOException {
+       mapWireConnectionHub.close();
     }
 }

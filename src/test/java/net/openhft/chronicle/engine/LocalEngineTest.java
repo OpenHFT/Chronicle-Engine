@@ -18,34 +18,41 @@
 
 package net.openhft.chronicle.engine;
 
-import net.openhft.chronicle.engine.old.ChronicleEngine;
-import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.set.ChronicleSet;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
 
 public class LocalEngineTest extends ThreadMonitoringTest {
     final ChronicleContext context = new ChronicleEngine();
     final ChronicleQueue mockedQueue = mock(ChronicleQueue.class);
-    @SuppressWarnings("unchecked")
-    final ChronicleMap<String, String> mockedMap = mock(ChronicleMap.class);
     final ChronicleSet<String> mockedSet = mock(ChronicleSet.class);
 
     @Before
-    public void setUp() {
+    public void setUp() throws IOException {
         ((ChronicleEngine) context).setQueue("queue1", mockedQueue);
-        ((ChronicleEngine) context).setMap("map1", mockedMap);
         ((ChronicleEngine) context).setSet("set1", mockedSet);
     }
 
     @Test
-    public void testGetMap() {
-        ChronicleMap<String, String> map1 = context.getMap("map1", String.class, String.class);
-        map1.put("Hello", "World");
+    public void testGetMap() throws IOException {
+        {
+            Map<String, String> map1 = context.getMap("map1", String.class, String.class);
+            map1.put("Hello", "World");
+        }
+
+        {
+            Map<String, String> map1 = context.getMap("map1", String.class, String.class);
+            assertEquals("World", map1.get("Hello"));
+        }
     }
 
     @Test

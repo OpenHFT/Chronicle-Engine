@@ -24,6 +24,8 @@ import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.set.ChronicleSet;
 
+import java.io.IOException;
+import java.util.Map;
 import java.util.logging.Logger;
 
 /**
@@ -32,11 +34,11 @@ import java.util.logging.Logger;
 public interface ChronicleContext {
     ChronicleQueue getQueue(String name);
 
-    <K, V> ChronicleMap<K, V> getMap(String name, Class<K> kClass, Class<V> vClass);
+    <K, V> ChronicleMap<K, V> getMap(String name, Class<K> kClass, Class<V> vClass) throws IOException;
 
     <E> ChronicleSet<E> getSet(String name, Class<E> eClass);
 
-    <I> I getService(Class<I> iClass, String name, Class... args);
+    <I> I getService(Class<I> iClass, String name, Class... args) throws IOException;
 
     ChronicleThreadPool getThreadPool(String name);
 
