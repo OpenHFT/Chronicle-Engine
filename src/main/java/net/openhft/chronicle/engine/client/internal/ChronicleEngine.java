@@ -24,7 +24,7 @@ import net.openhft.chronicle.engine.old.ChronicleCluster;
 import net.openhft.chronicle.engine.old.ChronicleThreadPool;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.MapWireConnectionHub;
-import net.openhft.chronicle.map.WireMap;
+import net.openhft.chronicle.map.EngineMap;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.set.ChronicleSet;
 import net.openhft.chronicle.wire.TextWire;
@@ -35,7 +35,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
 
 /**
@@ -86,7 +85,7 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
     public <K, V> ChronicleMap<K, V> getMap(String name, Class<K> kClass, Class<V> vClass) throws
             IOException {
 
-        ChronicleMap map = new WireMap<>(
+        ChronicleMap map = new EngineMap<>(
                 name,
                 kClass,
                 vClass,

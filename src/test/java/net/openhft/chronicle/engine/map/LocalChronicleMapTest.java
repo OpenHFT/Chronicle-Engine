@@ -19,14 +19,13 @@
 package net.openhft.chronicle.engine.map;
 
 
-import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
+import net.openhft.chronicle.engine.map.MapClientTest.LocalMapSupplier;
 import net.openhft.chronicle.map.ChronicleMap;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.*;
 
 import static org.junit.Assert.*;
@@ -42,39 +41,40 @@ import static org.junit.Assert.*;
 public class LocalChronicleMapTest extends JSR166TestCase {
 
 
-     static ChronicleMap<Integer, String> newIntString() throws IOException {
-        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier(Integer.class, String.class);
+    static ChronicleMap<Integer, String> newIntString() throws IOException {
+        final LocalMapSupplier supplier = new LocalMapSupplier(Integer.class, String.class);
 
-         final ChronicleMap spy = Mockito.spy(remoteMapSupplier.get());
+        final ChronicleMap spy = Mockito.spy(supplier.get());
 
-         Mockito.doAnswer(invocationOnMock -> {
-             remoteMapSupplier.close();
-             return null;
-         }).when(spy).close();
+        Mockito.doAnswer(invocationOnMock -> {
+            supplier.close();
+            return null;
+        }).when(spy).close();
 
-         return spy;
+
+        return spy;
     }
 
     static ChronicleMap<CharSequence, CharSequence> newStrStrMap() throws
             IOException {
 
-        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier(CharSequence.class, CharSequence.class);
-        final ChronicleMap spy = Mockito.spy(remoteMapSupplier.get());
+        final LocalMapSupplier supplier = new LocalMapSupplier(CharSequence.class, CharSequence.class);
+        final ChronicleMap spy = Mockito.spy(supplier.get());
 
         Mockito.doAnswer(invocationOnMock -> {
-            remoteMapSupplier.close();
+            supplier.close();
             return null;
         }).when(spy).close();
-
+        Mockito.when(spy.toString()).thenCallRealMethod();
         return spy;
     }
 
     static ChronicleMap<byte[], byte[]> newByteArrayMap() throws IOException {
-        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier(byte[].class, byte[].class);
-        final ChronicleMap spy = Mockito.spy(remoteMapSupplier.get());
+        final LocalMapSupplier supplier = new LocalMapSupplier(byte[].class, byte[].class);
+        final ChronicleMap spy = Mockito.spy(supplier.get());
 
         Mockito.doAnswer(invocationOnMock -> {
-            remoteMapSupplier.close();
+            supplier.close();
             return null;
         }).when(spy).close();
 
@@ -84,7 +84,6 @@ public class LocalChronicleMapTest extends JSR166TestCase {
 
     /**
      * Returns a new map from Integers 1-5 to Strings "A"-"E".
-     *
      */
     private ChronicleMap<Integer, String> map5() throws IOException {
         ChronicleMap<Integer, String> map = newIntString();
@@ -101,41 +100,12 @@ public class LocalChronicleMapTest extends JSR166TestCase {
 
     static int s_port = 11050;
 
-    @Test(timeout = 30000)
-    @Ignore
-    public void testByteArrayPerf() throws IOException {
-        ByteBuffer key = ByteBuffer.allocate(8);
-        ByteBuffer value = ByteBuffer.allocate(50);
-        int runs = 100000;
-        try (ChronicleMap<byte[], byte[]> map = newByteArrayMap()) {
-            for (int t = 0; t < 5; t++) {
-                {
-                    long start = System.nanoTime();
-                    for (int i = 0; i < runs; i++) {
-                        key.putLong(0, i);
-                        value.putLong(0, i);
-                        map.put(key.array(), value.array());
-                    }
-                    long time = System.nanoTime() - start;
-                    System.out.printf("%d: Took %.1f us on average to put %n", t, time / 1e3 / runs);
-                }
-                {
-                    long start = System.nanoTime();
-                    for (int i = 0; i < runs; i++) {
-                        key.putLong(0, i);
-                        byte[] b = map.get(key.array());
-                    }
-                    long time = System.nanoTime() - start;
-                    System.out.printf("%d: Took %.1f us on average to get %n", t, time / 1e3 / runs);
-                }
-            }
-        }
-    }
+
 
     /**
      * clear removes all pairs
      */
-    @Test(timeout =50000)
+    @Test(timeout = 50000)
     public void testClear() throws IOException {
         try (ChronicleMap<Integer, String> map = map5()) {
             map.clear();
@@ -146,7 +116,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * contains returns true for contained value
      */
-    @Test(timeout =50000)
+    @Test(timeout = 50000)
     public void testContains() throws IOException {
         try (ChronicleMap map = map5()) {
             assertTrue(map.containsValue("A"));
@@ -157,7 +127,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * containsKey returns true for contained key
      */
-    @Test(timeout =50000)
+    @Test(timeout = 50000)
     public void testContainsKey() throws IOException {
         try (ChronicleMap map = map5()) {
             assertTrue(map.containsKey(one));
@@ -168,7 +138,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * containsValue returns true for held values
      */
-    @Test(timeout =50000)
+    @Test(timeout = 50000)
     public void testContainsValue() throws IOException {
         try (ChronicleMap map = map5()) {
             assertTrue(map.containsValue("A"));
@@ -179,7 +149,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * get returns the correct element at the given key, or null if not present
      */
-    @Test(timeout =50000)
+    @Test(timeout = 50000)
     public void testGet() throws IOException {
         try (ChronicleMap map = map5()) {
             assertEquals("A", (String) map.get(one));
@@ -208,8 +178,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * keySet returns a Set containing all the keys
      */
-    @Ignore
-    @Test(timeout =50000)
+    @Test(timeout = 50000)
     public void testKeySet() throws IOException {
         try (ChronicleMap map = map5()) {
             Set s = map.keySet();
@@ -225,8 +194,8 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * keySet.toArray returns contains all keys
      */
-    @Ignore
-    @Test(timeout =50000)
+
+    @Test(timeout = 50000)
     public void testKeySetToArray() throws IOException {
         try (ChronicleMap map = map5()) {
             Set s = map.keySet();
@@ -241,8 +210,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * Values.toArray contains all values
      */
-    @Ignore
-    @Test(timeout =50000)
+    @Test(timeout = 50000)
     public void testValuesToArray() throws IOException {
         try (ChronicleMap map = map5()) {
             Collection v = map.values();
@@ -260,7 +228,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * entrySet.toArray contains all entries
      */
-    @Ignore
+
     @Test(timeout = 50000)
     public void testEntrySetToArray() throws IOException {
         try (ChronicleMap map = map5()) {
@@ -277,7 +245,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * values collection contains all values
      */
-    @Ignore
+
     @Test(timeout = 50000)
     public void testValues() throws IOException {
         try (ChronicleMap map = map5()) {
@@ -294,9 +262,8 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * entrySet contains all pairs
      */
-    @Ignore
+
     @Test
-            //(timeout =50000)
     public void testEntrySet() throws IOException {
         try (ChronicleMap map = map5()) {
             Set s = map.entrySet();
@@ -318,9 +285,8 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * putAll adds all key-value pairs from the given map
      */
-    @Ignore
+
     @Test
-            //(timeout = 50000)
     public void testPutAll() throws IOException {
         int port = s_port++;
         try (ChronicleMap empty = newIntString()) {
@@ -474,7 +440,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * toString.md contains toString.md of elements
      */
-    @Ignore
+    @Ignore("wont work through mockito")
     @Test(timeout = 50000)
     public void testToString() throws IOException {
         try (ChronicleMap map = map5()) {
@@ -527,7 +493,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * put(x, null) throws NPE
      */
-    @Test(timeout =50000)
+    @Test(timeout = 50000)
     public void testPut2_NullPointerException() throws IOException {
         try (ChronicleMap c = newIntString()) {
             c.put(notPresent, null);
@@ -551,7 +517,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * replace(null, x) throws NPE
      */
-    @Test(timeout =50000)
+    @Test(timeout = 50000)
     public void testReplace_NullPointerException() throws IOException {
         try (ChronicleMap c = newIntString()) {
             c.replace(null, "whatever");
@@ -563,7 +529,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * replace(null, x, y) throws NPE
      */
-    @Test(timeout =50000)
+    @Test(timeout = 50000)
     public void testReplaceValue_NullPointerException() throws IOException {
         try (ChronicleMap c = newIntString()) {
             c.replace(null, "A", "whatever");
@@ -575,7 +541,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * putIfAbsent(x, null) throws NPE
      */
-    @Test(timeout =50000)
+    @Test(timeout = 50000)
     public void testPutIfAbsent2_NullPointerException() throws IOException {
         try (ChronicleMap c = newIntString()) {
             c.putIfAbsent(notPresent, null);
@@ -623,7 +589,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * remove(null) throws NPE
      */
-    @Test(timeout =50000)
+    @Test(timeout = 50000)
     public void testRemove1_NullPointerException() throws IOException {
         try (ChronicleMap c = newStrStrMap()) {
             c.put("sadsdf", "asdads");

@@ -4,7 +4,7 @@ import junit.framework.Assert;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.MapWireConnectionHub;
-import net.openhft.chronicle.map.WireMap;
+import net.openhft.chronicle.map.EngineMap;
 import net.openhft.chronicle.wire.TextWire;
 import org.junit.Test;
 
@@ -35,7 +35,7 @@ public class MapByNameTest {
 
 
             // local server map
-            WireMap test2 = new WireMap("test",
+            EngineMap test2 = new EngineMap("test",
                     CharSequence.class,
                     Integer.class,
                     r.serverEndpoint.mapWireConnectionHub(), TextWire.class);
@@ -59,10 +59,10 @@ public class MapByNameTest {
 
 
             // local server map
-            final WireMap<Integer, CharSequence> localServerMap = new WireMap<>(
+            final EngineMap<Integer, CharSequence> localServerMap = new EngineMap<>(
                     "test",
-                    CharSequence.class,
                     Integer.class,
+                    CharSequence.class,
                     r.serverEndpoint.mapWireConnectionHub(),
                     TextWire.class);
 
@@ -80,10 +80,10 @@ public class MapByNameTest {
                 LOCAL_IDENTIFIER,
                 SERVER_PORT)) {
 
-            final WireMap<Integer, CharSequence> localServerMap = new WireMap<>(
+            final EngineMap<Integer, CharSequence> localServerMap = new EngineMap<>(
                     "test",
-                    CharSequence.class,
                     Integer.class,
+                    CharSequence.class,
                     mapWireConnectionHub,
                     TextWire.class);
 

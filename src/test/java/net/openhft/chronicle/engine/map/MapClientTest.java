@@ -125,7 +125,7 @@ public class MapClientTest extends ThreadMonitoringTest {
     }
 
 
-    interface CloseableSupplier<X> extends Closeable, Supplier<X> {
+   public interface CloseableSupplier<X> extends Closeable, Supplier<X> {
     }
 
     static class RemoteMapSupplier<K, V> implements CloseableSupplier<ChronicleMap<K, V>> {
@@ -162,7 +162,7 @@ public class MapClientTest extends ThreadMonitoringTest {
     }
 
 
-    private static class LocalMapSupplier<K, V> implements CloseableSupplier<ChronicleMap<K, V>> {
+    public static class LocalMapSupplier<K, V> implements CloseableSupplier<ChronicleMap<K, V>> {
 
         private final ChronicleMap<K, V> map;
         private final ChronicleEngine context;
