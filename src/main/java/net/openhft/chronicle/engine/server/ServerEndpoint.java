@@ -24,16 +24,13 @@ import net.openhft.chronicle.map.MapWireHandler;
 import net.openhft.chronicle.network.AcceptorEventHandler;
 import net.openhft.chronicle.network.WireHandler;
 import net.openhft.chronicle.network.event.EventGroup;
-import net.openhft.chronicle.network.event.WireHandlers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Consumer;
 
 /**
  * Created by Rob Austin
@@ -48,15 +45,11 @@ public class ServerEndpoint implements Closeable {
     private AcceptorEventHandler eah;
     private WireHandler mapWireHandler;
     private WireHandler queueWireHandler;
-    // private final ChannelProvider provider;
-
     private MapWireConnectionHub mapWireConnectionHub;
-
 
     public ServerEndpoint(byte localIdentifier) throws IOException {
         this.localIdentifier = localIdentifier;
         start(0);
-
     }
 
     public MapWireConnectionHub mapWireConnectionHub() {
@@ -70,29 +63,23 @@ public class ServerEndpoint implements Closeable {
 
             final Map<Long, CharSequence> cidToCsp = new HashMap<>();
 
-            try {
-                // todo move andimprove this so that it uses a chronicle based on the CSP name,
-                // todo this code
-                final File file = File.createTempFile("chron", "q");
-                queueWireHandler = new QueueWireHandler();
-            } catch (IOException e) {
-                LOG.error("", e);
-                queueWireHandler = null;
-            }
+            queueWireHandler = new QueueWireHandler();
 
+            MapWireHandler wireHandler = null;
             try {
                 mapWireConnectionHub = new MapWireConnectionHub(localIdentifier, 8085);
-                mapWireHandler = new MapWireHandler<>(cidToCsp, mapWireConnectionHub);
+                mapWireHandler = wireHandler = new MapWireHandler<>(cidToCsp, mapWireConnectionHub);
             } catch (IOException e) {
                 LOG.error("", e);
             }
 
-            EngineWireHandler engineWireHandler = new EngineWireHandler(
+            final EngineWireHandler engineWireHandler = new EngineWireHandler(
                     mapWireHandler,
                     queueWireHandler,
                     cidToCsp);
 
-            ((Consumer<WireHandlers>) mapWireHandler).accept(engineWireHandler);
+            if (wireHandler != null)
+                wireHandler.accept(engineWireHandler);
 
             return engineWireHandler;
         });
