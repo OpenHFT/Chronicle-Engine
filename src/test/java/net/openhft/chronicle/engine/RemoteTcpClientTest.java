@@ -74,7 +74,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
         }
     }
 
-    @Test(timeout = 50000)
+    @Test(timeout = 500000)
     public void testProcess() throws Exception {
 
         // sever
