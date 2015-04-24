@@ -70,6 +70,7 @@ public class MapClientTest extends ThreadMonitoringTest {
 
         supplyMap(Integer.class, String.class, mapProxy -> {
             mapProxy.put(1, "hello");
+            assertEquals("hello", mapProxy.get(1));
             assertEquals(1, mapProxy.size());
         });
     }
