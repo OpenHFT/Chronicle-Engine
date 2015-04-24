@@ -74,8 +74,8 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
         }
     }
 
-    @Test(timeout = 500000)
-    public void testProcess() throws Exception {
+    @Test(timeout = 50000)
+    public void testMarshable() throws Exception {
 
         // sever
         try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1)) {
@@ -84,40 +84,6 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
             //client
             try (final RemoteTcpClientChronicleContext context = new RemoteTcpClientChronicleContext(
                     "localhost", serverPort)) {
-
-
-                try (final ChronicleMap<String, String> colourMap = context.getMap("colours", String
-                        .class, String.class)) {
-                    colourMap.put("Rob", "Blue");
-                    colourMap.put("Peter", "Green");
-                }
-
-
-                try (final ChronicleMap<String, String> colourMap2 = context.getMap("colours",
-                        String.class, String.class)) {
-                    assertEquals(2, colourMap2.size());
-                    assertEquals("Blue", colourMap2.get("Rob"));
-                    assertEquals("Green", colourMap2.get("Peter"));
-                }
-
-                try (ChronicleMap<String, Long> numbers = context.getMap("numbers", String.class, Long
-                        .class)) {
-                    numbers.put("Rob", 123L);
-                    numbers.put("Peter", 101010101L);
-
-                    assertEquals(2, numbers.size());
-                    assertEquals(Long.valueOf(123L), numbers.get("Rob"));
-                    assertEquals(Long.valueOf(101010101L), numbers.get("Peter"));
-                }
-                try (ChronicleMap<String, Long> numbers = context.getMap("numbers", String.class, Long
-                        .class)) {
-                    numbers.put("Rob", 123L);
-                    numbers.put("Peter", 101010101L);
-
-                    assertEquals(2, numbers.size());
-                    assertEquals(Long.valueOf(123L), numbers.get("Rob"));
-                    assertEquals(Long.valueOf(101010101L), numbers.get("Peter"));
-                }
 
                 // test using Marshallable Keys
 
@@ -139,10 +105,8 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
                 }
 
+                }
             }
-        }
+
     }
-
-
-
 }

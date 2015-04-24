@@ -39,7 +39,6 @@ public class ServerEndpoint implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(ServerEndpoint.class);
     private final byte localIdentifier;
 
-
     private EventGroup eg = new EventGroup();
 
     private AcceptorEventHandler eah;
