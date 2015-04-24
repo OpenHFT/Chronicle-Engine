@@ -37,8 +37,8 @@ public class RemoteTcpClientChronicleContext implements ChronicleContext, Closea
 
     RemoteClientServiceLocator remoteClientServiceLocator;
 
-    public RemoteTcpClientChronicleContext(String hostname, int port) throws IOException {
-        this.remoteClientServiceLocator = new RemoteClientServiceLocator(hostname, port, (byte) 2);
+    public RemoteTcpClientChronicleContext(String hostname, int port, byte identifier) throws IOException {
+        this.remoteClientServiceLocator = new RemoteClientServiceLocator(hostname, port, identifier);
     }
 
     @Override

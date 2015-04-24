@@ -83,7 +83,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
             //client
             try (final RemoteTcpClientChronicleContext context = new RemoteTcpClientChronicleContext(
-                    "localhost", serverPort)) {
+                    "localhost", serverPort, (byte) 2)) {
 
                 // test using Marshallable Keys
 

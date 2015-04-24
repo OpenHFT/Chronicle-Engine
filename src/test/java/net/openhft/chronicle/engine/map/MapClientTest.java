@@ -139,7 +139,7 @@ public class MapClientTest extends ThreadMonitoringTest {
             serverEndpoint = new ServerEndpoint((byte) 1);
             int serverPort = serverEndpoint.getPort();
 
-            context = new RemoteTcpClientChronicleContext("localhost", serverPort);
+            context = new RemoteTcpClientChronicleContext("localhost", serverPort, (byte) 2);
             map = context.getMap("test", kClass, vClass);
         }
 
