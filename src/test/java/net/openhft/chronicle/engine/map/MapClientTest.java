@@ -77,18 +77,6 @@ public class MapClientTest extends ThreadMonitoringTest {
 
 
     @Test(timeout = 50000)
-    public void testPutAndGet() throws IOException, InterruptedException {
-
-        supplyMap(Integer.class, String.class, mapProxy -> {
-            mapProxy.put(1, "hello");
-            assertEquals("hello", mapProxy.get(1));
-            assertEquals(1, mapProxy.size());
-        });
-    }
-
-
-
-    @Test(timeout = 50000)
     public void testEntrySetIsEmpty() throws IOException, InterruptedException {
 
         supplyMap(Integer.class, String.class, mapProxy -> {
@@ -137,11 +125,44 @@ public class MapClientTest extends ThreadMonitoringTest {
         });
     }
 
+    @Test
+    public void testMapsAsValues() throws IOException, InterruptedException {
+
+        supplyMap(Integer.class, Map.class, mapProxy -> {
+
+            final Map value = new HashMap<String, String>();
+            {
+                value.put("k1", "v1");
+                value.put("k2", "v2");
+
+                mapProxy.put(1, value);
+            }
+
+            {
+                value.put("k3", "v3");
+                value.put("k4", "v4");
+
+                mapProxy.put(2, value);
+            }
+
+            final Object k1 = mapProxy.get(1);
+            assertEquals("v2", mapProxy.get(1).get("k2"));
+
+            assertEquals(null, mapProxy.get(1).get("k3"));
+            assertEquals(null, mapProxy.get(1).get("k4"));
+
+            assertEquals("v3", mapProxy.get(2).get("k3"));
+            assertEquals("v4", mapProxy.get(2).get("k4"));
+
+            assertEquals(2, mapProxy.size());
+        });
+    }
+
 
    public interface CloseableSupplier<X> extends Closeable, Supplier<X> {
     }
 
-    static class RemoteMapSupplier<K, V> implements CloseableSupplier<ChronicleMap<K, V>> {
+    public static class RemoteMapSupplier<K, V> implements CloseableSupplier<ChronicleMap<K, V>> {
 
         final ServerEndpoint serverEndpoint;
         private final ChronicleMap<K, V> map;
