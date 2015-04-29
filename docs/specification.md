@@ -166,7 +166,7 @@ Engine supports the following API=
 public interface ChronicleContext {
     ...
 
-    <K, V> ChronicleMap<K, V> getMap(String name, Class<K> kClass, Class<V> vClass);
+    <K, V> ChronicleMap<K, V> getMap(String name, Class<K> uClass, Class<V> vClass);
 
     <E> ChronicleSet<E> getSet(String name, Class<E> eClass);
 
