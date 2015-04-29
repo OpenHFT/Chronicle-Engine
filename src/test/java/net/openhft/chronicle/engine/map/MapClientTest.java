@@ -23,6 +23,8 @@ import net.openhft.chronicle.engine.client.RemoteTcpClientChronicleContext;
 import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.map.ChronicleMap;
+import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -72,6 +74,9 @@ public class MapClientTest extends ThreadMonitoringTest {
             mapProxy.put(1, "hello");
             assertEquals("hello", mapProxy.get(1));
             assertEquals(1, mapProxy.size());
+
+            Assert.assertEquals("{1=hello}", mapProxy.toString());
+
         });
     }
 
@@ -125,7 +130,9 @@ public class MapClientTest extends ThreadMonitoringTest {
         });
     }
 
+
     @Test
+    @Ignore
     public void testMapsAsValues() throws IOException, InterruptedException {
 
         supplyMap(Integer.class, Map.class, mapProxy -> {
@@ -157,6 +164,23 @@ public class MapClientTest extends ThreadMonitoringTest {
             assertEquals(2, mapProxy.size());
         });
     }
+
+
+    @Test
+    public void testToString() throws IOException, InterruptedException {
+
+        supplyMap(Integer.class, String.class, mapProxy -> {
+
+            mapProxy.put(1, "Hello");
+            Assert.assertEquals("{1=Hello}", mapProxy.toString());
+            mapProxy.remove(1);
+
+            mapProxy.put(2, "World");
+            Assert.assertEquals("{2=World}", mapProxy.toString());
+        });
+
+    }
+
 
 
    public interface CloseableSupplier<X> extends Closeable, Supplier<X> {

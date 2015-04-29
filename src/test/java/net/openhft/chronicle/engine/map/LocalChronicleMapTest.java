@@ -437,19 +437,6 @@ public class LocalChronicleMapTest extends JSR166TestCase {
         }
     }
 
-    /**
-     * toString.md contains toString.md of elements
-     */
-    @Ignore("wont work through mockito")
-    @Test(timeout = 50000)
-    public void testToString() throws IOException {
-        try (ChronicleMap map = map5()) {
-            String s = map.toString();
-            for (int i = 1; i <= 5; ++i) {
-                assertTrue(s.contains(String.valueOf(i)));
-            }
-        }
-    }
 
     /**
      * get(null) throws NPE

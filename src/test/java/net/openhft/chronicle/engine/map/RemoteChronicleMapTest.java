@@ -208,7 +208,7 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
     /**
      * keySet returns a Set containing all the keys
      */
-    @Ignore
+      @Ignore
     @Test(timeout = 50000)
     public void testKeySet() throws IOException {
         try (ChronicleMap map = map5()) {
@@ -294,9 +294,8 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
     /**
      * entrySet contains all pairs
      */
-    @Ignore
+
     @Test
-    //(timeout =50000)
     public void testEntrySet() throws IOException {
         try (ChronicleMap map = map5()) {
             Set s = map.entrySet();
@@ -318,9 +317,8 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
     /**
      * putAll adds all key-value pairs from the given map
      */
-    @Ignore
-    @Test
-    //(timeout = 50000)
+
+    @Test(timeout = 50000)
     public void testPutAll() throws IOException {
         int port = s_port++;
         try (ChronicleMap empty = newIntString()) {
@@ -471,19 +469,6 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
         }
     }
 
-    /**
-     * toString.md contains toString.md of elements
-     */
-    @Ignore
-    @Test(timeout = 50000)
-    public void testToString() throws IOException {
-        try (ChronicleMap map = map5()) {
-            String s = map.toString();
-            for (int i = 1; i <= 5; ++i) {
-                assertTrue(s.contains(String.valueOf(i)));
-            }
-        }
-    }
 
     /**
      * get(null) throws NPE
