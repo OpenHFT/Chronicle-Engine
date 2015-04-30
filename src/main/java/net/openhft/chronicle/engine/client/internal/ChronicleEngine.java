@@ -83,7 +83,8 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
 
     @Override
     public <K, V> ChronicleMap<K, V> getMap(String name, Class<K> kClass, Class<V> vClass) throws IOException {
-        return maps.computeIfAbsent(name, k -> {
+        @SuppressWarnings("unchecked")
+        ChronicleMap<K, V> ret = (ChronicleMap<K, V>) maps.computeIfAbsent(name, k -> {
             try {
                 // TDODO make this configurable.
                 long entries = 1000;
@@ -95,14 +96,14 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
                         TextWire.class,
                         entries);
 
-                if (map != null)
-                    validateClasses(map, kClass, vClass);
+                validateClasses(map, kClass, vClass);
 
                 return map;
             } catch (IOException ioe) {
                 throw Jvm.rethrow(ioe);
             }
         });
+        return ret;
     }
 
     @Override
