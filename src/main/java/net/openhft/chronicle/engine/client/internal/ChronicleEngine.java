@@ -19,12 +19,15 @@
 package net.openhft.chronicle.engine.client.internal;
 
 import net.openhft.chronicle.Chronicle;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.ChronicleContext;
+import net.openhft.chronicle.engine.MapEventListener;
+import net.openhft.chronicle.engine.Subscription;
 import net.openhft.chronicle.engine.old.ChronicleCluster;
 import net.openhft.chronicle.engine.old.ChronicleThreadPool;
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.MapWireConnectionHub;
 import net.openhft.chronicle.map.EngineMap;
+import net.openhft.chronicle.map.MapWireConnectionHub;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.set.ChronicleSet;
 import net.openhft.chronicle.wire.TextWire;
@@ -44,11 +47,11 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
 
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(ChronicleEngine.class);
 
-    private final Map<String, ChronicleQueue> queues = Collections.synchronizedMap(new LinkedHashMap<String, ChronicleQueue>());
-    private final Map<String, ChronicleSet> sets = Collections.synchronizedMap(new
-            LinkedHashMap<String, ChronicleSet>());
-    private final Map<String, ChronicleThreadPool> threadPools = Collections.synchronizedMap(new LinkedHashMap<String, ChronicleThreadPool>());
-    private final Map<String, ChronicleCluster> clusters = Collections.synchronizedMap(new LinkedHashMap<String, ChronicleCluster>());
+    private final Map<String, ChronicleQueue> queues = Collections.synchronizedMap(new LinkedHashMap<>());
+    private final Map<String, ChronicleMap> maps = Collections.synchronizedMap(new LinkedHashMap<>());
+    private final Map<String, ChronicleSet> sets = Collections.synchronizedMap(new LinkedHashMap<>());
+    private final Map<String, ChronicleThreadPool> threadPools = Collections.synchronizedMap(new LinkedHashMap<>());
+    private final Map<String, ChronicleCluster> clusters = Collections.synchronizedMap(new LinkedHashMap<>());
     private MapWireConnectionHub mapWireConnectionHub = null;
 
     public ChronicleEngine() {
@@ -75,27 +78,28 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
     }
 
     public void setMap(String name, ChronicleMap map) throws IOException {
-
-        final Map o = getMap(name, map.keyClass(), map.valueClass());
-        o.clear();
-        o.putAll(map);
+        maps.put(name, map);
     }
 
     @Override
-    public <K, V> ChronicleMap<K, V> getMap(String name, Class<K> kClass, Class<V> vClass) throws
-            IOException {
+    public <K, V> ChronicleMap<K, V> getMap(String name, Class<K> kClass, Class<V> vClass) throws IOException {
+        return maps.computeIfAbsent(name, k -> {
+            try {
+                ChronicleMap map = new EngineMap<>(
+                        name,
+                        kClass,
+                        vClass,
+                        mapWireConnectionHub,
+                        TextWire.class);
 
-        ChronicleMap map = new EngineMap<>(
-                name,
-                kClass,
-                vClass,
-                mapWireConnectionHub,
-                TextWire.class);
+                if (map != null)
+                    validateClasses(map, kClass, vClass);
 
-        if (map != null)
-            validateClasses(map, kClass, vClass);
-
-        return map;
+                return map;
+            } catch (IOException ioe) {
+                throw Jvm.rethrow(ioe);
+            }
+        });
     }
 
     @Override
@@ -106,6 +110,16 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
             return (I) getSet(name, args[0]);
         if (iClass == ChronicleMap.class)
             return (I) getMap(name, args[0], args[1]);
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <K, V> Subscription<K, MapEventListener<K, V>> createMapSubscription(String name, Class<K> kClass, Class<V> vClass) {
+        return getSubscription(name, kClass, (Class<MapEventListener<K, V>>) (Class) MapEventListener.class);
+    }
+
+    @Override
+    public <K, C> Subscription<K, C> getSubscription(String name, Class<K> kClass, Class<C> callbackClass) {
         throw new UnsupportedOperationException();
     }
 
