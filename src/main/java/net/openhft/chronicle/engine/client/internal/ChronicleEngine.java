@@ -86,7 +86,7 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
         @SuppressWarnings("unchecked")
         ChronicleMap<K, V> ret = (ChronicleMap<K, V>) maps.computeIfAbsent(name, k -> {
             try {
-                // TDODO make this configurable.
+                // TODO make this configurable.
                 long entries = 1000;
                 ChronicleMap map = new EngineMap<>(
                         name,
