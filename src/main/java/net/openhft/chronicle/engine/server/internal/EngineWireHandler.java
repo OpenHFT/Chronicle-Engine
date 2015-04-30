@@ -125,8 +125,9 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                     Bytes.toDebugString(in.bytes()));
         }
 
+        long pos = bytes.position();
         try {
-            bytes.mark();
+
             inWire.readDocument(wireIn -> {
 
                 final StringBuilder keyName = Wires.acquireStringBuilder();
@@ -142,7 +143,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
             }, null);
         } finally {
-            bytes.reset();
+            bytes.position(pos);
         }
 
         return cspText;
