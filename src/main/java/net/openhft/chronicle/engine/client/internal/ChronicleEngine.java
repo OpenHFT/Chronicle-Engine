@@ -23,11 +23,12 @@ import net.openhft.chronicle.engine.ChronicleContext;
 import net.openhft.chronicle.engine.old.ChronicleCluster;
 import net.openhft.chronicle.engine.old.ChronicleThreadPool;
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.MapWireConnectionHub;
 import net.openhft.chronicle.map.EngineMap;
+import net.openhft.chronicle.map.MapWireConnectionHub;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.set.ChronicleSet;
 import net.openhft.chronicle.wire.TextWire;
+import net.openhft.lang.Jvm;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
@@ -44,11 +45,13 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
 
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(ChronicleEngine.class);
 
-    private final Map<String, ChronicleQueue> queues = Collections.synchronizedMap(new LinkedHashMap<String, ChronicleQueue>());
+    private final Map<String, ChronicleQueue> queues = Collections.synchronizedMap(new LinkedHashMap<>());
     private final Map<String, ChronicleSet> sets = Collections.synchronizedMap(new
-            LinkedHashMap<String, ChronicleSet>());
-    private final Map<String, ChronicleThreadPool> threadPools = Collections.synchronizedMap(new LinkedHashMap<String, ChronicleThreadPool>());
-    private final Map<String, ChronicleCluster> clusters = Collections.synchronizedMap(new LinkedHashMap<String, ChronicleCluster>());
+            LinkedHashMap<>());
+    private final Map<String, ChronicleMap> maps = Collections.synchronizedMap(new
+            LinkedHashMap<>());
+    private final Map<String, ChronicleThreadPool> threadPools = Collections.synchronizedMap(new LinkedHashMap<>());
+    private final Map<String, ChronicleCluster> clusters = Collections.synchronizedMap(new LinkedHashMap<>());
     private MapWireConnectionHub mapWireConnectionHub = null;
 
     public ChronicleEngine() {
@@ -85,17 +88,34 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
     public <K, V> ChronicleMap<K, V> getMap(String name, Class<K> kClass, Class<V> vClass) throws
             IOException {
 
-        ChronicleMap map = new EngineMap<>(
-                name,
-                kClass,
-                vClass,
-                mapWireConnectionHub,
-                TextWire.class);
 
-        if (map != null)
-            validateClasses(map, kClass, vClass);
+        return maps.computeIfAbsent(name, n ->
+        {
+            try {
 
-        return map;
+                // todo set this from config
+                final int entries = 100;
+
+                ChronicleMap map = new EngineMap<>(
+                        n,
+                        kClass,
+                        vClass,
+                        mapWireConnectionHub,
+                        TextWire.class,
+                        entries);
+
+                validateClasses(map, kClass, vClass);
+
+                return map;
+
+            } catch (IOException e) {
+                Jvm.rethrow(e);
+                return null;
+            }
+
+
+        });
+
     }
 
     @Override

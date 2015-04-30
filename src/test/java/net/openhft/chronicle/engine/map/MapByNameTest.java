@@ -3,8 +3,8 @@ package net.openhft.chronicle.engine.map;
 import junit.framework.Assert;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.MapWireConnectionHub;
 import net.openhft.chronicle.map.EngineMap;
+import net.openhft.chronicle.map.MapWireConnectionHub;
 import net.openhft.chronicle.wire.TextWire;
 import org.junit.Test;
 
@@ -35,10 +35,11 @@ public class MapByNameTest {
 
 
             // local server map
+
             EngineMap test2 = new EngineMap("test",
                     CharSequence.class,
                     Integer.class,
-                    r.serverEndpoint.mapWireConnectionHub(), TextWire.class);
+                    r.serverEndpoint.mapWireConnectionHub(), TextWire.class, 10);
 
             Assert.assertEquals(1, test2.size());
         }
@@ -59,12 +60,13 @@ public class MapByNameTest {
 
 
             // local server map
+
             final EngineMap<Integer, CharSequence> localServerMap = new EngineMap<>(
                     "test",
                     Integer.class,
                     CharSequence.class,
                     r.serverEndpoint.mapWireConnectionHub(),
-                    TextWire.class);
+                    TextWire.class, 10);
 
             Assert.assertEquals("hello", localServerMap.get(1));
 
@@ -85,7 +87,7 @@ public class MapByNameTest {
                     Integer.class,
                     CharSequence.class,
                     mapWireConnectionHub,
-                    TextWire.class);
+                    TextWire.class,10);
 
             Assert.assertEquals(null, localServerMap.put(1, "hello"));
 
