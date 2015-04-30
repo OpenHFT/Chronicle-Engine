@@ -80,7 +80,7 @@ public class RemoteClientServiceLocator {
     }
 
     private <I> I newQueueInstance(String name) {
-        return (I) new ClientWiredChronicleQueueStateless(hub,name);
+        return (I) new ClientWiredChronicleQueueStateless(hub, name);
     }
 
     private <I, KI, VI> I mapInstance(Class<KI> kClass, Class<VI> vClass, String name)
