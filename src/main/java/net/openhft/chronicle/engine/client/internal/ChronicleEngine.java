@@ -31,7 +31,6 @@ import net.openhft.chronicle.map.MapWireConnectionHub;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.set.ChronicleSet;
 import net.openhft.chronicle.wire.TextWire;
-import net.openhft.lang.Jvm;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
@@ -86,12 +85,15 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
     public <K, V> ChronicleMap<K, V> getMap(String name, Class<K> kClass, Class<V> vClass) throws IOException {
         return maps.computeIfAbsent(name, k -> {
             try {
+                // TDODO make this configurable.
+                long entries = 1000;
                 ChronicleMap map = new EngineMap<>(
                         name,
                         kClass,
                         vClass,
                         mapWireConnectionHub,
-                        TextWire.class);
+                        TextWire.class,
+                        entries);
 
                 if (map != null)
                     validateClasses(map, kClass, vClass);
