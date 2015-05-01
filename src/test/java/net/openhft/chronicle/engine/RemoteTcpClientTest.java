@@ -19,6 +19,7 @@
 package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.engine.client.RemoteTcpClientChronicleContext;
+import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.wire.Marshallable;
@@ -29,7 +30,6 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
 public class RemoteTcpClientTest extends ThreadMonitoringTest {
-
 
 
     class MyMarshallable implements Marshallable {
@@ -78,7 +78,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     public void testMarshable() throws Exception {
 
         // sever
-        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1)) {
+        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, new ChronicleEngine())) {
             int serverPort = serverEndpoint.getPort();
 
             //client
@@ -86,6 +86,15 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
                     "localhost", serverPort, (byte) 2)) {
 
                 // test using Marshallable Keys
+
+
+                try (ChronicleMap<MyMarshallable, Long> numbers = context.getMap
+                        ("marshallable-keys", MyMarshallable.class, Long.class)) {
+
+                    numbers.clear();
+
+                }
+
 
                 try (ChronicleMap<MyMarshallable, Long> numbers = context.getMap
                         ("marshallable-keys", MyMarshallable.class, Long.class)) {

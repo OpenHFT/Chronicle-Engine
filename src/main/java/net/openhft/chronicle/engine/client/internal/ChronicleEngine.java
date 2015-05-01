@@ -38,7 +38,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.logging.Logger;
 
 /**
@@ -84,8 +83,8 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
 
     @Override
     public <K, V> ChronicleMap<K, V> getMap(String name, Class<K> kClass, Class<V> vClass) throws IOException {
-
-        Function<String, ChronicleMap> mappingFunction = k -> {
+        @SuppressWarnings("unchecked")
+        ChronicleMap<K, V> ret = (ChronicleMap<K, V>) maps.computeIfAbsent(name, k -> {
             try {
                 // TODO make this configurable.
                 long entries = 1000;
@@ -103,12 +102,7 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
             } catch (IOException ioe) {
                 throw Jvm.rethrow(ioe);
             }
-        };
-        @SuppressWarnings("unchecked")
-        ChronicleMap<K, V> ret = (ChronicleMap<K, V>)
-                (name.startsWith("/tmp/")
-                        ? mappingFunction
-                        : maps.computeIfAbsent(name, mappingFunction));
+        });
         return ret;
     }
 
@@ -178,6 +172,6 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
 
     @Override
     public void close() throws IOException {
-        mapWireConnectionHub.close();
+       mapWireConnectionHub.close();
     }
 }

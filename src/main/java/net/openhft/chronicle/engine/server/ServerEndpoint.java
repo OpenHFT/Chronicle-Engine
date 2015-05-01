@@ -17,12 +17,15 @@
  */
 package net.openhft.chronicle.engine.server;
 
+import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.engine.client.internal.QueueWireHandler;
 import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
+import net.openhft.chronicle.wire.set.SetWireHandlerProcessor;
 import net.openhft.chronicle.map.MapWireConnectionHub;
-import net.openhft.chronicle.map.MapWireHandler;
+import net.openhft.chronicle.map.MapWireHandlerProcessor;
 import net.openhft.chronicle.network.AcceptorEventHandler;
-import net.openhft.chronicle.network.WireHandler;
+import net.openhft.chronicle.wire.MapWireHandler;
+import net.openhft.chronicle.wire.WireHandler;
 import net.openhft.chronicle.network.event.EventGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,12 +45,14 @@ public class ServerEndpoint implements Closeable {
     private EventGroup eg = new EventGroup();
 
     private AcceptorEventHandler eah;
-    private WireHandler mapWireHandler;
+    private MapWireHandler mapWireHandler;
     private WireHandler queueWireHandler;
     private MapWireConnectionHub mapWireConnectionHub;
+    private ChronicleEngine chronicleEngine;
 
-    public ServerEndpoint(byte localIdentifier) throws IOException {
+    public ServerEndpoint(byte localIdentifier, ChronicleEngine chronicleEngine) throws IOException {
         this.localIdentifier = localIdentifier;
+        this.chronicleEngine = chronicleEngine;
         start(0);
     }
 
@@ -64,10 +69,10 @@ public class ServerEndpoint implements Closeable {
 
             queueWireHandler = new QueueWireHandler();
 
-            MapWireHandler wireHandler = null;
+            MapWireHandlerProcessor wireHandler = null;
             try {
                 mapWireConnectionHub = new MapWireConnectionHub(localIdentifier, 8085);
-                mapWireHandler = wireHandler = new MapWireHandler<>(cidToCsp, mapWireConnectionHub);
+                mapWireHandler = wireHandler = new MapWireHandlerProcessor(cidToCsp);
             } catch (IOException e) {
                 LOG.error("", e);
             }
@@ -75,7 +80,9 @@ public class ServerEndpoint implements Closeable {
             final EngineWireHandler engineWireHandler = new EngineWireHandler(
                     mapWireHandler,
                     queueWireHandler,
-                    cidToCsp);
+                    cidToCsp,
+                    chronicleEngine,
+                    new SetWireHandlerProcessor<byte[]>());
 
             if (wireHandler != null)
                 wireHandler.accept(engineWireHandler);
@@ -103,6 +110,8 @@ public class ServerEndpoint implements Closeable {
         stop();
         eg.close();
         eah.close();
-        mapWireConnectionHub.close();
+        if (mapWireConnectionHub != null)
+            mapWireConnectionHub.close();
+        chronicleEngine.close();
     }
 }

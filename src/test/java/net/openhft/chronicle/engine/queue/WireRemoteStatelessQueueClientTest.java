@@ -20,6 +20,7 @@ package net.openhft.chronicle.engine.queue;
 
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.client.RemoteTcpClientChronicleContext;
+import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ExcerptAppender;
@@ -85,7 +86,7 @@ public class WireRemoteStatelessQueueClientTest extends ThreadMonitoringTest {
         private final RemoteTcpClientChronicleContext context;
 
         public RemoteQueueSupplier() throws IOException {
-            serverEndpoint = new ServerEndpoint((byte) 1);
+            serverEndpoint = new ServerEndpoint((byte) 1, new ChronicleEngine());
             int serverPort = serverEndpoint.getPort();
 
             context = new RemoteTcpClientChronicleContext("localhost", serverPort, (byte) 2);

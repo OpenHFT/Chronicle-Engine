@@ -19,19 +19,28 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.CoreFields;
-import net.openhft.chronicle.network.WireHandler;
+import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
+import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.wire.MapWireHandler;
+import net.openhft.chronicle.wire.set.SetWireHandler;
+import net.openhft.chronicle.wire.WireHandler;
 import net.openhft.chronicle.network.WireTcpHandler;
-import net.openhft.chronicle.network.event.WireHandlers;
+import net.openhft.chronicle.wire.WireHandlers;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.StreamCorruptedException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
-import static net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub.CoreFields.*;
+import static net.openhft.chronicle.wire.CoreFields.cid;
+import static net.openhft.chronicle.wire.CoreFields.csp;
 import static net.openhft.chronicle.engine.client.StringUtils.endsWith;
 
 
@@ -41,6 +50,8 @@ import static net.openhft.chronicle.engine.client.StringUtils.endsWith;
 public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
 
+    private static final Logger LOG = LoggerFactory.getLogger(EngineWireHandler.class);
+
     public static final String TEXT_WIRE = TextWire.class.getSimpleName();
     public static final String BINARY_WIRE = BinaryWire.class.getSimpleName();
     public static final String RAW_WIRE = RawWire.class.getSimpleName();
@@ -49,21 +60,26 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private final StringBuilder cspText = new StringBuilder();
 
     @NotNull
-    private final WireHandler mapWireHandler;
+    private final MapWireHandler mapWireHandler;
+    private final SetWireHandler setWireHandler;
 
     @NotNull
     private final WireHandler queueWireHandler;
     private final Map<Long, CharSequence> cidToCsp;
 
     @NotNull
-    private final WireHandler coreWireHandler = new CoreWireHandler();
+    private final ChronicleEngine chronicleEngine;
 
-    public EngineWireHandler(@NotNull final WireHandler mapWireHandler,
-                             final WireHandler queueWireHandler,
-                             Map<Long, CharSequence> cidToCsp) {
+    public EngineWireHandler(@NotNull final MapWireHandler mapWireHandler,
+                             @NotNull final WireHandler queueWireHandler,
+                             @NotNull final Map<Long, CharSequence> cidToCsp,
+                             @NotNull final ChronicleEngine chronicleEngine,
+                             @NotNull final SetWireHandler setWireHandler) {
         this.mapWireHandler = mapWireHandler;
+        this.setWireHandler = setWireHandler;
         this.queueWireHandler = queueWireHandler;
         this.cidToCsp = cidToCsp;
+        this.chronicleEngine = chronicleEngine;
     }
 
     private final List<WireHandler> handlers = new ArrayList<>();
@@ -84,26 +100,44 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     @Override
     protected void process(Wire in, Wire out) throws StreamCorruptedException {
 
+        try {
 
-        final StringBuilder cspText = peekCsp(in);
+            final StringBuilder cspText = peekType(in);
+            final String serviceName = serviceName(cspText);
 
-        if (endsWith(cspText, "#map")) {
-            mapWireHandler.process(in, out);
-            return;
+            if (endsWith(cspText, "#map")) {
+
+                final ChronicleMap<byte[], byte[]> map = chronicleEngine.getMap(
+                        serviceName,
+                        byte[].class,
+                        byte[].class);
+
+                mapWireHandler.process(in, out, map, cspText);
+                return;
+            }
+
+            if (endsWith(cspText, "#entrySet")) {
+
+                final ChronicleMap<byte[], byte[]> map = chronicleEngine.getMap(
+                        serviceName,
+                        byte[].class,
+                        byte[].class);
+
+
+                setWireHandler.process(in, out, map.entrySet(), cspText, entryToWire, wireToMapEntry);
+                return;
+            }
+
+            if (endsWith(cspText, "#queue")) {
+                queueWireHandler.process(in, out);
+                return;
+            }
+
+        } catch (IOException e) {
+            // todo
+            LOG.error("", e);
         }
 
-        if (endsWith(cspText, "#entrySet")) {
-            mapWireHandler.process(in, out);
-            return;
-        }
-
-        if (endsWith(cspText, "#queue")) {
-            queueWireHandler.process(in, out);
-            return;
-        }
-
-        if (endsWith(cspText, "CORE"))
-            coreWireHandler.process(in, out);
     }
 
 
@@ -113,7 +147,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
      * @param in
      * @return
      */
-    private StringBuilder peekCsp(@NotNull final Wire in) {
+    private StringBuilder peekType(@NotNull final Wire in) {
 
         final Bytes<?> bytes = in.bytes();
 
@@ -150,6 +184,20 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     }
 
 
+    private String serviceName(@NotNull final StringBuilder cspText) {
+
+        final int slash = cspText.lastIndexOf("/");
+        final int hash = cspText.lastIndexOf("#");
+
+        return (slash != -1 && slash < (cspText.length() - 1) &&
+                hash != -1 && hash < (cspText.length() - 1))
+                ? cspText.substring(slash + 1, hash)
+                : "";
+
+    }
+
+
+
     protected Wire createWriteFor(Bytes bytes) {
 
         if (TEXT_WIRE.contentEquals(preferredWireType))
@@ -171,27 +219,51 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     }
 
 
-    class CoreWireHandler implements WireHandler {
+    private final BiConsumer<Map.Entry<byte[], byte[]>, ValueOut> entryToWire = (e, v) -> {
 
-        public void process(Wire in, Wire out) {
+        v.marshallable(w -> {
+            w.write(() -> "key").object(e.getKey());
+            w.write(() -> "value").object(e.getValue());
+        });
 
-            long tid = inWire.read(CoreFields.tid).int64();
-            outWire.write(CoreFields.tid).int64(tid);
+    };
 
-            in.readEventName(cspText);
+    private Function<ValueIn, Map.Entry<byte[], byte[]>> wireToMapEntry = new Function<ValueIn, Map.Entry<byte[], byte[]>>() {
 
-            if ("getWireFormats".contentEquals(cspText)) {
-                out.write(reply).text(TEXT_WIRE + "," + BINARY_WIRE);
-                return;
-            }
+        // todo replace with a v.marshallable function
+        private Map.Entry<byte[], byte[]> m;
 
-            if ("setWireFormat".contentEquals(cspText)) {
-                out.write(reply).text(preferredWireType);
-                recreateWire(true);
-            }
+        @Override
+        public Map.Entry<byte[], byte[]> apply(ValueIn v) {
 
+
+            v.marshallable(x -> {
+                final byte[] key = x.read(() -> "key").object(byte[].class);
+                final byte[] value = x.read(() -> "value").object(byte[].class);
+
+                m = new Map.Entry<byte[], byte[]>() {
+
+                    @Override
+                    public byte[] getKey() {
+                        return key;
+                    }
+
+                    @Override
+                    public byte[] getValue() {
+                        return value;
+                    }
+
+                    @Override
+                    public byte[] setValue(byte[] value) {
+                        throw new UnsupportedOperationException();
+                    }
+                };
+
+            });
+
+            return m;
         }
+    };
 
-    }
 
 }

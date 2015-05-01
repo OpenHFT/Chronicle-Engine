@@ -1,11 +1,13 @@
 package net.openhft.chronicle.engine.map;
 
 import junit.framework.Assert;
+import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.EngineMap;
 import net.openhft.chronicle.map.MapWireConnectionHub;
 import net.openhft.chronicle.wire.TextWire;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -21,11 +23,13 @@ public class MapByNameTest {
     private static int SERVER_PORT = 8085;
 
 
+    @Ignore
     @Test
     public void testSizeUsingLocalMap() throws IOException {
 
         try (RemoteMapSupplier<Integer, CharSequence> r = new RemoteMapSupplier<>(Integer.class,
-                CharSequence.class)) {
+                CharSequence.class,
+                new ChronicleEngine())) {
 
             // remote client map
 
@@ -45,12 +49,13 @@ public class MapByNameTest {
         }
     }
 
-
+    @Ignore
     @Test
     public void testGetUsingLocalMap() throws IOException {
 
         try (RemoteMapSupplier<Integer, CharSequence> r = new RemoteMapSupplier<>(Integer.class,
-                CharSequence.class)) {
+                CharSequence.class,
+                new ChronicleEngine())) {
 
             // remote client map
 
@@ -60,7 +65,6 @@ public class MapByNameTest {
 
 
             // local server map
-
             final EngineMap<Integer, CharSequence> localServerMap = new EngineMap<>(
                     "test",
                     Integer.class,
