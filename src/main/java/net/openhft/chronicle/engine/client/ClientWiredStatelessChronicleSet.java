@@ -1,10 +1,8 @@
 package net.openhft.chronicle.engine.client;
 
-import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.map.MapStatelessClient;
-import net.openhft.chronicle.wire.set.SetWireHandler.SetEventId;
 import net.openhft.chronicle.wire.ValueIn;
-import net.openhft.chronicle.wire.WireKey;
+import net.openhft.chronicle.wire.set.SetWireHandler.SetEventId;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -166,12 +164,5 @@ public class ClientWiredStatelessChronicleSet<U> extends MapStatelessClient<SetE
     public void clear() {
         proxyReturnVoid(clear);
     }
-
-    enum Params implements WireKey {
-        key,
-        value,
-        segment
-    }
-
 
 }

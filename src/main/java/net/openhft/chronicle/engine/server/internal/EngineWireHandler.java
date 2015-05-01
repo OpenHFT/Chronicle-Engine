@@ -21,12 +21,9 @@ package net.openhft.chronicle.engine.server.internal;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.wire.MapWireHandler;
-import net.openhft.chronicle.wire.set.SetWireHandler;
-import net.openhft.chronicle.wire.WireHandler;
 import net.openhft.chronicle.network.WireTcpHandler;
-import net.openhft.chronicle.wire.WireHandlers;
 import net.openhft.chronicle.wire.*;
+import net.openhft.chronicle.wire.set.SetWireHandler;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,9 +36,9 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
+import static net.openhft.chronicle.engine.client.StringUtils.endsWith;
 import static net.openhft.chronicle.wire.CoreFields.cid;
 import static net.openhft.chronicle.wire.CoreFields.csp;
-import static net.openhft.chronicle.engine.client.StringUtils.endsWith;
 
 
 /**
@@ -97,6 +94,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
         }
     }
 
+
     @Override
     protected void process(Wire in, Wire out) throws StreamCorruptedException {
 
@@ -112,7 +110,13 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                         byte[].class,
                         byte[].class);
 
-                mapWireHandler.process(in, out, map, cspText);
+                mapWireHandler.process(in,
+                        out,
+                        map,
+                        cspText,
+                        valueToWire,
+                        wireToKey,
+                        wireToValue);
                 return;
             }
 
@@ -124,9 +128,22 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                         byte[].class);
 
 
-                setWireHandler.process(in, out, map.entrySet(), cspText, entryToWire, wireToMapEntry);
+                setWireHandler.process(in, out, map.entrySet(), cspText, entryToWire, wireToEntry);
                 return;
             }
+
+            if (endsWith(cspText, "#keySet")) {
+
+                final ChronicleMap<byte[], byte[]> map = chronicleEngine.getMap(
+                        serviceName,
+                        byte[].class,
+                        byte[].class);
+
+
+                setWireHandler.process(in, out, map.keySet(), cspText, keyToWire, wireToKey);
+                return;
+            }
+
 
             if (endsWith(cspText, "#queue")) {
                 queueWireHandler.process(in, out);
@@ -142,10 +159,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
 
     /**
-     * peeks the Csp or if its a cid converts the Cid into a Csp and returns that
-     *
-     * @param in
-     * @return
+     * peeks the csp or if it has a cid converts the cid into a Csp and returns that
      */
     private StringBuilder peekType(@NotNull final Wire in) {
 
@@ -183,7 +197,6 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
         return cspText;
     }
 
-
     private String serviceName(@NotNull final StringBuilder cspText) {
 
         final int slash = cspText.lastIndexOf("/");
@@ -193,10 +206,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                 hash != -1 && hash < (cspText.length() - 1))
                 ? cspText.substring(slash + 1, hash)
                 : "";
-
     }
-
-
 
     protected Wire createWriteFor(Bytes bytes) {
 
@@ -218,34 +228,35 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
         handlers.add(handler);
     }
 
+    private final BiConsumer<ValueOut, byte[]> keyToWire =
+            ValueOut::object;
 
-    private final BiConsumer<Map.Entry<byte[], byte[]>, ValueOut> entryToWire = (e, v) -> {
+    private final Function<ValueIn, byte[]> wireToKey =
+            v -> v.object(byte[].class);
 
-        v.marshallable(w -> {
-            w.write(() -> "key").object(e.getKey());
-            w.write(() -> "value").object(e.getValue());
-        });
+    private final BiConsumer<ValueOut, byte[]> valueToWire = ValueOut::object;
 
-    };
-
-    private Function<ValueIn, Map.Entry<byte[], byte[]>> wireToMapEntry = new Function<ValueIn, Map.Entry<byte[], byte[]>>() {
-
-        // todo replace with a v.marshallable function
-        private Map.Entry<byte[], byte[]> m;
-
-        @Override
-        public Map.Entry<byte[], byte[]> apply(ValueIn v) {
+    private final Function<ValueIn, byte[]> wireToValue =
+            v -> v.object(byte[].class);
 
 
-            v.marshallable(x -> {
-                final byte[] key = x.read(() -> "key").object(byte[].class);
+    private final BiConsumer<Map.Entry<byte[], byte[]>, ValueOut> entryToWire =
+            (e, v) -> v.marshallable(w -> {
+                w.write(() -> "key").object(e.getKey());
+                w.write(() -> "value").object(e.getValue());
+            });
+
+    private final Function<ValueIn, Map.Entry<byte[], byte[]>> wireToEntry =
+            v -> v.applyMarshallable(x -> {
+
+                final byte[] key1 = x.read(() -> "key").object(byte[].class);
                 final byte[] value = x.read(() -> "value").object(byte[].class);
 
-                m = new Map.Entry<byte[], byte[]>() {
+                return new Map.Entry<byte[], byte[]>() {
 
                     @Override
                     public byte[] getKey() {
-                        return key;
+                        return key1;
                     }
 
                     @Override
@@ -260,10 +271,6 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                 };
 
             });
-
-            return m;
-        }
-    };
 
 
 }
