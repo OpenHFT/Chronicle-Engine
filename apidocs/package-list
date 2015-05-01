@@ -4,3 +4,4 @@ net.openhft.chronicle.engine.client.internal
 net.openhft.chronicle.engine.old
 net.openhft.chronicle.engine.server
 net.openhft.chronicle.engine.server.internal
+net.openhft.chronicle.map
