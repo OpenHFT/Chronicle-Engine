@@ -405,7 +405,26 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<net.open
     @NotNull
     public Set<K> keySet() {
 
-        throw new UnsupportedOperationException("todo");
+        long cid = proxyReturnWireConsumer(keySet, (WireIn wireIn) -> {
+            final long[] cidRef = new long[1];
+            final StringBuilder type = Wires.acquireStringBuilder();
+            final ValueIn read = wireIn.read(reply);
+            read.type(type);
+            read.marshallable(w -> {
+
+                final String csp1 = w.read(CoreFields.csp).text();
+                final long cid0 = w.read(CoreFields.cid).int64();
+                cidToCsp.put(cid0, csp1);
+                cidRef[0] = cid0;
+
+            });
+            return cidRef[0];
+        });
+
+        return new ClientWiredStatelessChronicleSet<>(channelName, hub,
+                cid,
+                valueIn -> valueIn.object(kClass),
+                "entrySet");
     }
 
 

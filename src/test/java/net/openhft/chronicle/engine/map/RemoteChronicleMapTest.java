@@ -209,7 +209,7 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
     /**
      * keySet returns a Set containing all the keys
      */
-      @Ignore
+
     @Test(timeout = 50000)
     public void testKeySet() throws IOException {
         try (ChronicleMap map = map5()) {
