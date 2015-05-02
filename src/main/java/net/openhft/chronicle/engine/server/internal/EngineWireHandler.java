@@ -246,34 +246,43 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                 w.write(() -> "value").object(e.getValue());
             });
 
-    private final Function<ValueIn, Map.Entry<byte[], byte[]>> wireToEntry =
-            v -> {
-
-                return v.applyMarshallable((WireIn x) -> {
-
-                    final byte[] key1 = x.read(() -> "key").object(byte[].class);
-                    final byte[] value = x.read(() -> "value").object(byte[].class);
-
-                    return new Map.Entry<byte[], byte[]>() {
+    private final Function<ValueIn, Map.Entry<byte[], byte[]>> wireToEntry = new
+            Function<ValueIn, Map.Entry<byte[], byte[]>>() {
+                @Override
+                public Map.Entry<byte[], byte[]> apply(ValueIn valueIn) {
+                    return valueIn.applyMarshallable(new Function<WireIn, Map.Entry<byte[],
+                            byte[]>>() {
 
                         @Override
-                        public byte[] getKey() {
-                            return key1;
+                        public Map.Entry<byte[], byte[]> apply(WireIn x) {
+
+
+                            final byte[] key1 = x.read(() -> "key").object(byte[].class);
+                            final byte[] value = x.read(() -> "value").object(byte[].class);
+
+                            return new Map.Entry<byte[], byte[]>() {
+
+                                @Override
+                                public byte[] getKey() {
+                                    return key1;
+                                }
+
+                                @Override
+                                public byte[] getValue() {
+                                    return value;
+                                }
+
+                                @Override
+                                public byte[] setValue(byte[] value) {
+                                    throw new UnsupportedOperationException();
+                                }
+                            };
+
                         }
-
-                        @Override
-                        public byte[] getValue() {
-                            return value;
-                        }
-
-                        @Override
-                        public byte[] setValue(byte[] value) {
-                            throw new UnsupportedOperationException();
-                        }
-                    };
+                    });
 
 
-                });
+                }
             };
 
 
