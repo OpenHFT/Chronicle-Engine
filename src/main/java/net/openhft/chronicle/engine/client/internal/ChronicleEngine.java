@@ -40,6 +40,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import static net.openhft.chronicle.map.EngineMap.underlyingMap;
+
 /**
  * Created by peter.lawrey on 09/10/14.
  */
@@ -48,6 +50,8 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(ChronicleEngine.class);
 
     private final Map<String, ChronicleQueue> queues = Collections.synchronizedMap(new LinkedHashMap<>());
+    private final Map<String, Map<byte[], byte[]>> underlyingMaps
+            = Collections.synchronizedMap(new LinkedHashMap<>());
     private final Map<String, ChronicleMap> maps = Collections.synchronizedMap(new LinkedHashMap<>());
     private final Map<String, ChronicleSet> sets = Collections.synchronizedMap(new LinkedHashMap<>());
     private final Map<String, ChronicleThreadPool> threadPools = Collections.synchronizedMap(new LinkedHashMap<>());
@@ -84,26 +88,40 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
     @Override
     public <K, V> ChronicleMap<K, V> getMap(String name, Class<K> kClass, Class<V> vClass) throws IOException {
         @SuppressWarnings("unchecked")
-        ChronicleMap<K, V> ret = (ChronicleMap<K, V>) maps.computeIfAbsent(name, k -> {
+        Map<byte[], byte[]> underlyingMap = underlyingMaps.computeIfAbsent(name, k -> {
             try {
                 // TODO make this configurable.
                 long entries = 1000;
-                ChronicleMap map = new EngineMap<>(
-                        name,
-                        kClass,
-                        vClass,
-                        mapWireConnectionHub,
-                        TextWire.class,
-                        entries);
+                return underlyingMap(name, mapWireConnectionHub, entries);
 
-                validateClasses(map, kClass, vClass);
-
-                return map;
             } catch (IOException ioe) {
                 throw Jvm.rethrow(ioe);
             }
         });
-        return ret;
+
+
+        if (kClass == byte[].class && vClass == byte[].class)
+            return (ChronicleMap<K, V>) underlyingMap;
+
+        final ChronicleMap result = maps.computeIfAbsent(
+                name + "/" + kClass.getSimpleName() + "/" + vClass.getSimpleName(), k -> {
+                    try {
+
+                        return new EngineMap<>(
+                                underlyingMap,
+                                kClass,
+                                vClass,
+                                TextWire.class);
+
+                    } catch (IOException ioe) {
+                        throw Jvm.rethrow(ioe);
+                    }
+                });
+
+
+        validateClasses(result, kClass, vClass);
+
+        return (ChronicleMap<K, V>) result;
     }
 
     @Override

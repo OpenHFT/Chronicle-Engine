@@ -40,10 +40,12 @@ public class MapByNameTest {
 
             // local server map
 
-            EngineMap test2 = new EngineMap("test",
+            EngineMap test2 = new EngineMap<>(
+                    EngineMap.underlyingMap("test", r.serverEndpoint.mapWireConnectionHub(), 10),
                     CharSequence.class,
                     Integer.class,
-                    r.serverEndpoint.mapWireConnectionHub(), TextWire.class, 10);
+                    TextWire.class);
+
 
             Assert.assertEquals(1, test2.size());
         }
@@ -65,12 +67,11 @@ public class MapByNameTest {
 
 
             // local server map
-            final EngineMap<Integer, CharSequence> localServerMap = new EngineMap<>(
-                    "test",
+            EngineMap localServerMap = new EngineMap<>(
+                    EngineMap.underlyingMap("test", r.serverEndpoint.mapWireConnectionHub(), 10),
                     Integer.class,
                     CharSequence.class,
-                    r.serverEndpoint.mapWireConnectionHub(),
-                    TextWire.class, 10);
+                    TextWire.class);
 
             Assert.assertEquals("hello", localServerMap.get(1));
 
@@ -86,12 +87,12 @@ public class MapByNameTest {
                 LOCAL_IDENTIFIER,
                 SERVER_PORT)) {
 
-            final EngineMap<Integer, CharSequence> localServerMap = new EngineMap<>(
-                    "test",
+            EngineMap localServerMap = new EngineMap<>(
+                    EngineMap.underlyingMap("test", mapWireConnectionHub, 10),
                     Integer.class,
                     CharSequence.class,
-                    mapWireConnectionHub,
-                    TextWire.class,10);
+                    TextWire.class);
+
 
             Assert.assertEquals(null, localServerMap.put(1, "hello"));
 
