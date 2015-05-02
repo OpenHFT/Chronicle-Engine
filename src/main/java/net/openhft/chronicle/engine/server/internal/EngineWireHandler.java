@@ -34,6 +34,7 @@ import java.io.StreamCorruptedException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -58,7 +59,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private final StringBuilder cspText = new StringBuilder();
 
 
-    private final SetWireHandler setWireHandler;
+    private final SetWireHandler<Set<byte[]>, byte[]> keSetHandler;
 
 
     @NotNull
@@ -68,17 +69,21 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     @NotNull
     private final ChronicleEngine chronicleEngine;
     private final MapWireHandler<byte[], byte[]> mapWireHandler;
+    private final SetWireHandler<Set<Map.Entry<byte[], byte[]>>, Map.Entry<byte[], byte[]>> entrySetHandler;
 
     public EngineWireHandler(@NotNull final MapWireHandler<byte[], byte[]> mapWireHandler,
                              @NotNull final WireHandler queueWireHandler,
                              @NotNull final Map<Long, CharSequence> cidToCsp,
                              @NotNull final ChronicleEngine chronicleEngine,
-                             @NotNull final SetWireHandler setWireHandler) {
+                             @NotNull final SetWireHandler<Set<byte[]>, byte[]> keSetHandler,
+                             @NotNull final SetWireHandler<Set<Map.Entry<byte[], byte[]>>, Map
+                                     .Entry<byte[], byte[]>> entrySetHandler) {
         this.mapWireHandler = mapWireHandler;
-        this.setWireHandler = setWireHandler;
+        this.keSetHandler = keSetHandler;
         this.queueWireHandler = queueWireHandler;
         this.cidToCsp = cidToCsp;
         this.chronicleEngine = chronicleEngine;
+        this.entrySetHandler = entrySetHandler;
     }
 
     private final List<WireHandler> handlers = new ArrayList<>();
@@ -130,7 +135,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                         byte[].class);
 
 
-                setWireHandler.process(in, out, map.entrySet(), cspText, entryToWire, wireToEntry);
+                entrySetHandler.process(in, out, map.entrySet(), cspText, entryToWire, wireToEntry);
                 return;
             }
 
@@ -142,7 +147,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                         byte[].class);
 
 
-                setWireHandler.process(in, out, map.keySet(), cspText, keyToWire, wireToKey);
+                keSetHandler.process(in, out, map.keySet(), cspText, keyToWire, wireToKey);
                 return;
             }
 
@@ -230,8 +235,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
         handlers.add(handler);
     }
 
-    private final BiConsumer<ValueOut, byte[]> keyToWire =
-            ValueOut::object;
+    private final BiConsumer<ValueOut, byte[]> keyToWire = ValueOut::object;
 
     private final Function<ValueIn, byte[]> wireToKey =
             v -> v.object(byte[].class);
@@ -242,50 +246,36 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
             v -> v.object(byte[].class);
 
 
-    private final BiConsumer<Map.Entry<byte[], byte[]>, ValueOut> entryToWire =
-            (e, v) -> v.marshallable(w -> {
+    private final BiConsumer<ValueOut, Map.Entry<byte[], byte[]>> entryToWire =
+            (v, e) -> v.marshallable(w -> {
                 w.write(() -> "key").object(e.getKey());
                 w.write(() -> "value").object(e.getValue());
             });
 
-    private final Function<ValueIn, Map.Entry<byte[], byte[]>> wireToEntry = new
-            Function<ValueIn, Map.Entry<byte[], byte[]>>() {
-                @Override
-                public Map.Entry<byte[], byte[]> apply(ValueIn valueIn) {
-                    return valueIn.applyMarshallable(new Function<WireIn, Map.Entry<byte[],
-                            byte[]>>() {
+    private final Function<ValueIn, Map.Entry<byte[], byte[]>> wireToEntry = valueIn -> valueIn.applyMarshallable(x -> {
 
-                        @Override
-                        public Map.Entry<byte[], byte[]> apply(WireIn x) {
+        final byte[] key = x.read(() -> "key").object(byte[].class);
+        final byte[] value = x.read(() -> "value").object(byte[].class);
 
+        return new Map.Entry<byte[], byte[]>() {
 
-                            final byte[] key1 = x.read(() -> "key").object(byte[].class);
-                            final byte[] value = x.read(() -> "value").object(byte[].class);
+            @Override
+            public byte[] getKey() {
+                return key;
+            }
 
-                            return new Map.Entry<byte[], byte[]>() {
+            @Override
+            public byte[] getValue() {
+                return value;
+            }
 
-                                @Override
-                                public byte[] getKey() {
-                                    return key1;
-                                }
+            @Override
+            public byte[] setValue(byte[] value) {
+                throw new UnsupportedOperationException();
+            }
+        };
 
-                                @Override
-                                public byte[] getValue() {
-                                    return value;
-                                }
-
-                                @Override
-                                public byte[] setValue(byte[] value) {
-                                    throw new UnsupportedOperationException();
-                                }
-                            };
-
-                        }
-                    });
-
-
-                }
-            };
+    });
 
 
 }

@@ -20,13 +20,13 @@ package net.openhft.chronicle.engine.server;
 import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.engine.client.internal.QueueWireHandler;
 import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
-import net.openhft.chronicle.wire.set.SetWireHandlerProcessor;
 import net.openhft.chronicle.map.MapWireConnectionHub;
+import net.openhft.chronicle.map.MapWireHandler;
 import net.openhft.chronicle.map.MapWireHandlerProcessor;
 import net.openhft.chronicle.network.AcceptorEventHandler;
-import net.openhft.chronicle.map.MapWireHandler;
-import net.openhft.chronicle.wire.WireHandler;
 import net.openhft.chronicle.network.event.EventGroup;
+import net.openhft.chronicle.wire.WireHandler;
+import net.openhft.chronicle.wire.set.SetWireHandlerProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +45,7 @@ public class ServerEndpoint implements Closeable {
     private EventGroup eg = new EventGroup();
 
     private AcceptorEventHandler eah;
-    private MapWireHandler mapWireHandler;
+    private MapWireHandler<byte[], byte[]> mapWireHandler;
     private WireHandler queueWireHandler;
     private MapWireConnectionHub mapWireConnectionHub;
     private ChronicleEngine chronicleEngine;
@@ -69,25 +69,21 @@ public class ServerEndpoint implements Closeable {
 
             queueWireHandler = new QueueWireHandler();
 
-            MapWireHandlerProcessor wireHandler = null;
             try {
                 mapWireConnectionHub = new MapWireConnectionHub(localIdentifier, 8085);
-                mapWireHandler = wireHandler = new MapWireHandlerProcessor(cidToCsp);
+                mapWireHandler = new MapWireHandlerProcessor<>(cidToCsp);
             } catch (IOException e) {
                 LOG.error("", e);
             }
 
-            final EngineWireHandler engineWireHandler = new EngineWireHandler(
+
+            return new EngineWireHandler(
                     mapWireHandler,
                     queueWireHandler,
                     cidToCsp,
                     chronicleEngine,
-                    new SetWireHandlerProcessor<byte[]>());
-
-            if (wireHandler != null)
-                wireHandler.accept(engineWireHandler);
-
-            return engineWireHandler;
+                    new SetWireHandlerProcessor<>(),
+                    new SetWireHandlerProcessor<>());
         });
 
         eg.addHandler(eah);
