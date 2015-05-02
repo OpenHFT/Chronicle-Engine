@@ -24,7 +24,7 @@ import net.openhft.chronicle.wire.set.SetWireHandlerProcessor;
 import net.openhft.chronicle.map.MapWireConnectionHub;
 import net.openhft.chronicle.map.MapWireHandlerProcessor;
 import net.openhft.chronicle.network.AcceptorEventHandler;
-import net.openhft.chronicle.wire.MapWireHandler;
+import net.openhft.chronicle.map.MapWireHandler;
 import net.openhft.chronicle.wire.WireHandler;
 import net.openhft.chronicle.network.event.EventGroup;
 import org.slf4j.Logger;

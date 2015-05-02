@@ -21,6 +21,7 @@ package net.openhft.chronicle.engine.server.internal;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.map.MapWireHandler;
 import net.openhft.chronicle.network.WireTcpHandler;
 import net.openhft.chronicle.wire.*;
 import net.openhft.chronicle.wire.set.SetWireHandler;
@@ -56,9 +57,9 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private final CharSequence preferredWireType = new StringBuilder(TextWire.class.getSimpleName());
     private final StringBuilder cspText = new StringBuilder();
 
-    @NotNull
-    private final MapWireHandler mapWireHandler;
+
     private final SetWireHandler setWireHandler;
+
 
     @NotNull
     private final WireHandler queueWireHandler;
@@ -66,8 +67,9 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
     @NotNull
     private final ChronicleEngine chronicleEngine;
+    private final MapWireHandler<byte[], byte[]> mapWireHandler;
 
-    public EngineWireHandler(@NotNull final MapWireHandler mapWireHandler,
+    public EngineWireHandler(@NotNull final MapWireHandler<byte[], byte[]> mapWireHandler,
                              @NotNull final WireHandler queueWireHandler,
                              @NotNull final Map<Long, CharSequence> cidToCsp,
                              @NotNull final ChronicleEngine chronicleEngine,
