@@ -65,10 +65,9 @@
 
             <dependency>
                 <groupId>net.openhft</groupId>
-                <artifactId>chronicle-core</artifactId>
-                <version>1.0.1-alpha</version>
+                <artifactId>chronicle-wire</artifactId>
+                <version>1.0.3-alpha-SNAPSHOT</version>
             </dependency>
-
 
         </dependencies>
     </dependencyManagement>

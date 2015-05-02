@@ -34,7 +34,6 @@ import java.io.StreamCorruptedException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -59,7 +58,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private final StringBuilder cspText = new StringBuilder();
 
 
-    private final SetWireHandler<Set<byte[]>, byte[]> keSetHandler;
+    private final SetWireHandler<byte[]> keSetHandler;
 
 
     @NotNull
@@ -69,14 +68,14 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     @NotNull
     private final ChronicleEngine chronicleEngine;
     private final MapWireHandler<byte[], byte[]> mapWireHandler;
-    private final SetWireHandler<Set<Map.Entry<byte[], byte[]>>, Map.Entry<byte[], byte[]>> entrySetHandler;
+    private final SetWireHandler< Map.Entry<byte[], byte[]>> entrySetHandler;
 
     public EngineWireHandler(@NotNull final MapWireHandler<byte[], byte[]> mapWireHandler,
                              @NotNull final WireHandler queueWireHandler,
                              @NotNull final Map<Long, CharSequence> cidToCsp,
                              @NotNull final ChronicleEngine chronicleEngine,
-                             @NotNull final SetWireHandler<Set<byte[]>, byte[]> keSetHandler,
-                             @NotNull final SetWireHandler<Set<Map.Entry<byte[], byte[]>>, Map
+                             @NotNull final SetWireHandler<byte[]> keSetHandler,
+                             @NotNull final SetWireHandler< Map
                                      .Entry<byte[], byte[]>> entrySetHandler) {
         this.mapWireHandler = mapWireHandler;
         this.keSetHandler = keSetHandler;
