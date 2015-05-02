@@ -247,30 +247,34 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
             });
 
     private final Function<ValueIn, Map.Entry<byte[], byte[]>> wireToEntry =
-            v -> v.applyMarshallable(x -> {
+            v -> {
 
-                final byte[] key1 = x.read(() -> "key").object(byte[].class);
-                final byte[] value = x.read(() -> "value").object(byte[].class);
+                return v.applyMarshallable((WireIn x) -> {
 
-                return new Map.Entry<byte[], byte[]>() {
+                    final byte[] key1 = x.read(() -> "key").object(byte[].class);
+                    final byte[] value = x.read(() -> "value").object(byte[].class);
 
-                    @Override
-                    public byte[] getKey() {
-                        return key1;
-                    }
+                    return new Map.Entry<byte[], byte[]>() {
 
-                    @Override
-                    public byte[] getValue() {
-                        return value;
-                    }
+                        @Override
+                        public byte[] getKey() {
+                            return key1;
+                        }
 
-                    @Override
-                    public byte[] setValue(byte[] value) {
-                        throw new UnsupportedOperationException();
-                    }
-                };
+                        @Override
+                        public byte[] getValue() {
+                            return value;
+                        }
 
-            });
+                        @Override
+                        public byte[] setValue(byte[] value) {
+                            throw new UnsupportedOperationException();
+                        }
+                    };
+
+
+                });
+            };
 
 
 }
