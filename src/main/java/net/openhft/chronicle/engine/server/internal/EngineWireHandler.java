@@ -75,8 +75,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                              @NotNull final Map<Long, CharSequence> cidToCsp,
                              @NotNull final ChronicleEngine chronicleEngine,
                              @NotNull final SetWireHandler<byte[]> keSetHandler,
-                             @NotNull final SetWireHandler< Map
-                                     .Entry<byte[], byte[]>> entrySetHandler) {
+                             @NotNull final SetWireHandler<Map.Entry<byte[], byte[]>> entrySetHandler) {
         this.mapWireHandler = mapWireHandler;
         this.keSetHandler = keSetHandler;
         this.queueWireHandler = queueWireHandler;
@@ -144,7 +143,6 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                         serviceName,
                         byte[].class,
                         byte[].class);
-
 
                 keSetHandler.process(in, out, map.keySet(), cspText, keyToWire, wireToKey);
                 return;
@@ -244,14 +242,11 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private final Function<ValueIn, byte[]> wireToValue =
             v -> v.object(byte[].class);
 
-
     private final BiConsumer<ValueOut, Map.Entry<byte[], byte[]>> entryToWire =
             (v, e) -> v.marshallable(w -> {
                 w.write(() -> "key").object(e.getKey());
                 w.write(() -> "value").object(e.getValue());
             });
-
-
 
     private final Function<ValueIn, Map.Entry<byte[], byte[]>> wireToEntry = valueIn -> valueIn.applyMarshallable(x -> {
 

@@ -177,7 +177,7 @@ public class MapClientTest extends ThreadMonitoringTest {
 
         public RemoteMapSupplier(Class<K> kClass, Class<V> vClass, ChronicleEngine chronicleEngine) throws IOException {
 
-            serverEndpoint = new ServerEndpoint((byte) 1, chronicleEngine);
+            serverEndpoint = new ServerEndpoint( (byte) 1, chronicleEngine);
             int serverPort = serverEndpoint.getPort();
 
             context = new RemoteTcpClientChronicleContext("localhost", serverPort, (byte) 2);

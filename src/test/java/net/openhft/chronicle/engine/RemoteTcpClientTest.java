@@ -78,7 +78,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     public void testMarshable() throws Exception {
 
         // sever
-        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, new ChronicleEngine())) {
+        try (final ServerEndpoint serverEndpoint = new ServerEndpoint( (byte) 1, new ChronicleEngine())) {
             int serverPort = serverEndpoint.getPort();
 
             //client

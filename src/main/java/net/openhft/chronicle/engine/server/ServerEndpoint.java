@@ -50,10 +50,16 @@ public class ServerEndpoint implements Closeable {
     private MapWireConnectionHub mapWireConnectionHub;
     private ChronicleEngine chronicleEngine;
 
-    public ServerEndpoint(byte localIdentifier, ChronicleEngine chronicleEngine) throws IOException {
+    public ServerEndpoint( byte localIdentifier, ChronicleEngine chronicleEngine) throws IOException {
         this.localIdentifier = localIdentifier;
         this.chronicleEngine = chronicleEngine;
         start(0);
+    }
+
+    public ServerEndpoint(int port, byte localIdentifier, ChronicleEngine chronicleEngine) throws IOException {
+        this.localIdentifier = localIdentifier;
+        this.chronicleEngine = chronicleEngine;
+        start(port);
     }
 
     public MapWireConnectionHub mapWireConnectionHub() {
