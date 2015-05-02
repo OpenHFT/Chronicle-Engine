@@ -10,7 +10,7 @@ public class Main {
     public static void main(String[] args) {
         ChronicleEngine chronicleEngine = new ChronicleEngine();
         try {
-            int port = 55555;
+            int port = 8088;
             final ServerEndpoint serverEndpoint = new ServerEndpoint(port, (byte) 1, chronicleEngine);
 
             System.out.println("Server port seems to be " + serverEndpoint.getPort());
