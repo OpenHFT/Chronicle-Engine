@@ -47,7 +47,7 @@
                 <groupId>net.openhft</groupId>
                 <artifactId>chronicle-bom</artifactId>
                 <type>pom</type>
-                <version>1.0.5</version>
+                <version>1.0.6-SNAPSHOT</version>
                 <scope>import</scope>
             </dependency>
 
@@ -61,12 +61,6 @@
                 <groupId>net.openhft</groupId>
                 <artifactId>chronicle-queue</artifactId>
                 <version>4.0.0-alpha-SNAPSHOT</version>
-            </dependency>
-
-            <dependency>
-                <groupId>net.openhft</groupId>
-                <artifactId>chronicle-wire</artifactId>
-                <version>1.0.3-alpha-SNAPSHOT</version>
             </dependency>
 
         </dependencies>

@@ -353,10 +353,10 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<net.open
     public Set<Map.Entry<K, V>> entrySet() {
 
 
-        long cid = proxyReturnWireConsumer(entrySet, (WireIn wireIn) -> {
+        long cid = proxyReturnWireConsumer(entrySet, read -> {
             final long[] cidRef = new long[1];
             final StringBuilder type = Wires.acquireStringBuilder();
-            final ValueIn read = wireIn.read(reply);
+
             read.type(type);
             read.marshallable(w -> {
 
@@ -413,10 +413,10 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<net.open
     @NotNull
     public Set<K> keySet() {
 
-        long cid = proxyReturnWireConsumer(keySet, (WireIn wireIn) -> {
+        long cid = proxyReturnWireConsumer(keySet, read -> {
             final long[] cidRef = new long[1];
             final StringBuilder type = Wires.acquireStringBuilder();
-            final ValueIn read = wireIn.read(reply);
+
             read.type(type);
             read.marshallable(w -> {
 

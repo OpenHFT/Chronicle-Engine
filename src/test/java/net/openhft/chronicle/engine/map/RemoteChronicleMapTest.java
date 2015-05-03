@@ -489,7 +489,6 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
     /**
      * containsKey(null) throws NPE
      */
-    @Ignore
     @Test(timeout = 50000)
     public void testContainsKey_NullPointerException() throws IOException {
         try (ChronicleMap c = newIntString()) {
