@@ -172,7 +172,15 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<net.open
     }
 
     public int size() {
-        return (int) longSize();
+        final long size = longSize();
+
+        if (size > Integer.MAX_VALUE)
+            throw new IllegalStateException("size is longer than Integer.MAX_VALUE please use " +
+                    "longSize(), " +
+                    "size="+size());
+        return (int) size;
+
+
     }
 
     /**
@@ -237,7 +245,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<net.open
 
 
     public boolean isEmpty() {
-        return proxyReturnBoolean(isEmpty, null);
+        return size() == 0;
     }
 
     public boolean containsKey(Object key) {
@@ -263,7 +271,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<net.open
 
 
     public long longSize() {
-        return proxyReturnLong(longSize);
+        return proxyReturnLong(size);
     }
 
     @Override
