@@ -118,4 +118,28 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
         }
 
     }
+
+    @Test(timeout = 100000)
+    public void testEntrySet() throws Exception {
+
+        // sever
+        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, new ChronicleEngine())) {
+            int serverPort = serverEndpoint.getPort();
+
+            //client
+            try (final RemoteTcpClientChronicleContext context = new RemoteTcpClientChronicleContext(
+                    "localhost", serverPort, (byte) 2)) {
+
+                // test using Marshallable Keys
+
+
+                try (ChronicleMap<String, String> map = context.getMap
+                        ("test", String.class, String.class)) {
+                    map.put("hello", "world");
+                    map.entrySet();
+                }
+            }
+
+        }
+    }
 }

@@ -354,19 +354,19 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<net.open
 
 
         long cid = proxyReturnWireConsumer(entrySet, read -> {
-            final long[] cidRef = new long[1];
+
             final StringBuilder type = Wires.acquireStringBuilder();
 
             read.type(type);
-            read.marshallable(w -> {
+            return read.applyToMarshallable(w -> {
 
                 final String csp1 = w.read(CoreFields.csp).text();
                 final long cid0 = w.read(CoreFields.cid).int64();
                 cidToCsp.put(cid0, csp1);
-                cidRef[0] = cid0;
+                return cid0;
 
             });
-            return cidRef[0];
+
         });
 
 
