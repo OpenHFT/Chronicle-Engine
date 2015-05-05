@@ -74,11 +74,11 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
         }
     }
 
-    @Test(timeout = 50000)
+    @Test(timeout = 100000)
     public void testMarshable() throws Exception {
 
         // sever
-        try (final ServerEndpoint serverEndpoint = new ServerEndpoint( (byte) 1, new ChronicleEngine())) {
+        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, new ChronicleEngine())) {
             int serverPort = serverEndpoint.getPort();
 
             //client
@@ -114,8 +114,8 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
                 }
 
-                }
             }
+        }
 
     }
 }
