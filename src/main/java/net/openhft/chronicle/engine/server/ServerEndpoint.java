@@ -18,15 +18,14 @@
 package net.openhft.chronicle.engine.server;
 
 import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
-import net.openhft.chronicle.engine.client.internal.QueueWireHandler;
 import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
 import net.openhft.chronicle.map.MapWireConnectionHub;
-import net.openhft.chronicle.map.MapWireHandler;
-import net.openhft.chronicle.map.MapWireHandlerProcessor;
 import net.openhft.chronicle.network.AcceptorEventHandler;
 import net.openhft.chronicle.network.event.EventGroup;
 import net.openhft.chronicle.wire.WireHandler;
 import net.openhft.chronicle.wire.collection.CollectionWireHandlerProcessor;
+import net.openhft.chronicle.wire.map.MapWireHandler;
+import net.openhft.chronicle.wire.map.MapWireHandlerProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,7 +72,7 @@ public class ServerEndpoint implements Closeable {
 
             final Map<Long, CharSequence> cidToCsp = new HashMap<>();
 
-            queueWireHandler = new QueueWireHandler();
+            queueWireHandler = null; //new QueueWireHandler();
 
             try {
                 mapWireConnectionHub = new MapWireConnectionHub(localIdentifier, 8085);
@@ -81,7 +80,6 @@ public class ServerEndpoint implements Closeable {
             } catch (IOException e) {
                 LOG.error("", e);
             }
-
 
             return new EngineWireHandler(
                     mapWireHandler,

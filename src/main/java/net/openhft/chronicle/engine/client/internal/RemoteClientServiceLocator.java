@@ -22,7 +22,7 @@ import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ClientWiredChronicleMapStatelessBuilder;
-import net.openhft.chronicle.queue.ChronicleQueue;
+
 import net.openhft.lang.MemoryUnit;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,20 +68,20 @@ public class RemoteClientServiceLocator {
                 final Class kClass = args[0];
                 final Class vClass = args[1];
                 return (I) newMapInstance(name, kClass, vClass);
-            } else if (ChronicleQueue.class.isAssignableFrom(iClass)) {
+            }/*    } else if (ChronicleQueue.class.isAssignableFrom(iClass)) {
                 return (I) newQueueInstance(name);
             }
-
+*/
         } catch (IOException e) {
             throw new IORuntimeException(e);
         }
 
         throw new IllegalStateException("iClass=" + iClass + " not supported");
     }
-
+/*
     private <I> I newQueueInstance(String name) {
         return (I) new ClientWiredChronicleQueueStateless(hub, name);
-    }
+    }*/
 
     private <I, KI, VI> I mapInstance(Class<KI> kClass, Class<VI> vClass, String name)
             throws IOException {
