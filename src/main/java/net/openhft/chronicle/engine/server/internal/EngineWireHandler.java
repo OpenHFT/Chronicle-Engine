@@ -242,13 +242,15 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private final Function<ValueIn, byte[]> wireToValue =
             v -> v.object(byte[].class);
 
-    private final BiConsumer<ValueOut, Map.Entry<byte[], byte[]>> entryToWire =
-            (v, e) -> v.marshallable(w -> {
-                w.write(() -> "key").object(e.getKey());
-                w.write(() -> "value").object(e.getValue());
-            });
+    private final BiConsumer<ValueOut, Map.Entry<byte[], byte[]>> entryToWire
+            = (v, e) -> {
+        v.marshallable(w -> {
+            w.write(() -> "key").object(e.getKey()).write(() -> "value").object(e.getValue());
+        });
+    };
 
-    private final Function<ValueIn, Map.Entry<byte[], byte[]>> wireToEntry = valueIn -> valueIn.applyToMarshallable(x -> {
+    private final Function<ValueIn, Map.Entry<byte[], byte[]>> wireToEntry
+            = valueIn -> valueIn.applyToMarshallable(x -> {
 
         final byte[] key = x.read(() -> "key").object(byte[].class);
         final byte[] value = x.read(() -> "value").object(byte[].class);

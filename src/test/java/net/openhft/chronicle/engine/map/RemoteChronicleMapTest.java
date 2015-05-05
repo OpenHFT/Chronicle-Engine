@@ -227,7 +227,6 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
      * keySet.toArray returns contains all keys
      */
     @Ignore
-    @Test(timeout = 50000)
     public void testKeySetToArray() throws IOException {
         try (ChronicleMap map = map5()) {
             Set s = map.keySet();
@@ -261,7 +260,6 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
     /**
      * entrySet.toArray contains all entries
      */
-    @Ignore
     @Test(timeout = 50000)
     public void testEntrySetToArray() throws IOException {
         try (ChronicleMap map = map5()) {
@@ -474,7 +472,6 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
     /**
      * get(null) throws NPE
      */
-    @Ignore
     @Test(timeout = 50000)
     public void testGet_NullPointerException() throws IOException {
 

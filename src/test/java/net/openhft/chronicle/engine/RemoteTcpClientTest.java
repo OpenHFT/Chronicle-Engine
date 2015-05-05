@@ -27,6 +27,10 @@ import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.junit.Test;
 
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
 import static org.junit.Assert.assertEquals;
 
 public class RemoteTcpClientTest extends ThreadMonitoringTest {
@@ -136,7 +140,11 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
                 try (ChronicleMap<String, String> map = context.getMap
                         ("test", String.class, String.class)) {
                     map.put("hello", "world");
-                    map.entrySet();
+
+                    final Set<Map.Entry<String, String>> entries = map.entrySet();
+
+                    final Iterator<Map.Entry<String, String>> iterator = entries.iterator();
+
                 }
             }
 
