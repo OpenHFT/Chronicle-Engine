@@ -24,16 +24,14 @@ import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.MapWireHandler;
 import net.openhft.chronicle.network.WireTcpHandler;
 import net.openhft.chronicle.wire.*;
-import net.openhft.chronicle.wire.set.SetWireHandler;
+import net.openhft.chronicle.wire.collection.CollectionWireHandler;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.StreamCorruptedException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -57,8 +55,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private final CharSequence preferredWireType = new StringBuilder(TextWire.class.getSimpleName());
     private final StringBuilder cspText = new StringBuilder();
 
-
-    private final SetWireHandler<byte[]> keSetHandler;
+    private final CollectionWireHandler<byte[], Set<byte[]>> keSetHandler;
 
 
     @NotNull
@@ -68,14 +65,16 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     @NotNull
     private final ChronicleEngine chronicleEngine;
     private final MapWireHandler<byte[], byte[]> mapWireHandler;
-    private final SetWireHandler< Map.Entry<byte[], byte[]>> entrySetHandler;
+    private final CollectionWireHandler<Map.Entry<byte[], byte[]>, Set<Map.Entry<byte[], byte[]>>> entrySetHandler;
 
     public EngineWireHandler(@NotNull final MapWireHandler<byte[], byte[]> mapWireHandler,
                              @NotNull final WireHandler queueWireHandler,
                              @NotNull final Map<Long, CharSequence> cidToCsp,
                              @NotNull final ChronicleEngine chronicleEngine,
-                             @NotNull final SetWireHandler<byte[]> keSetHandler,
-                             @NotNull final SetWireHandler<Map.Entry<byte[], byte[]>> entrySetHandler) {
+                             @NotNull final CollectionWireHandler<byte[], Set<byte[]>> keSetHandler,
+                             @NotNull final CollectionWireHandler<Map.Entry<byte[], byte[]>, Set<Map
+                                                                  .Entry<byte[], byte[]>>>
+                                     entrySetHandler) {
         this.mapWireHandler = mapWireHandler;
         this.keSetHandler = keSetHandler;
         this.queueWireHandler = queueWireHandler;
@@ -133,7 +132,8 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                         byte[].class);
 
 
-                entrySetHandler.process(in, out, map.entrySet(), cspText, entryToWire, wireToEntry);
+                entrySetHandler.process(in, out, map.entrySet(), cspText, entryToWire,
+                        wireToEntry, HashSet::new);
                 return;
             }
 
@@ -144,7 +144,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                         byte[].class,
                         byte[].class);
 
-                keSetHandler.process(in, out, map.keySet(), cspText, keyToWire, wireToKey);
+                keSetHandler.process(in, out, map.keySet(), cspText, keyToWire, wireToKey, HashSet::new);
                 return;
             }
 

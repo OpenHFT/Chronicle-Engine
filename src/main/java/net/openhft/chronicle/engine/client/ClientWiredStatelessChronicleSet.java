@@ -2,7 +2,7 @@ package net.openhft.chronicle.engine.client;
 
 import net.openhft.chronicle.map.MapStatelessClient;
 import net.openhft.chronicle.wire.ValueIn;
-import net.openhft.chronicle.wire.set.SetWireHandler.SetEventId;
+import net.openhft.chronicle.wire.collection.CollectionWireHandler.SetEventId;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -12,7 +12,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 import static net.openhft.chronicle.wire.CoreFields.reply;
-import static net.openhft.chronicle.wire.set.SetWireHandler.SetEventId.*;
+import static net.openhft.chronicle.wire.collection.CollectionWireHandler.SetEventId.*;
 
 
 public class ClientWiredStatelessChronicleSet<U> extends MapStatelessClient<SetEventId>

@@ -26,7 +26,7 @@ import net.openhft.chronicle.map.MapWireHandlerProcessor;
 import net.openhft.chronicle.network.AcceptorEventHandler;
 import net.openhft.chronicle.network.event.EventGroup;
 import net.openhft.chronicle.wire.WireHandler;
-import net.openhft.chronicle.wire.set.SetWireHandlerProcessor;
+import net.openhft.chronicle.wire.collection.CollectionWireHandlerProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,8 +88,8 @@ public class ServerEndpoint implements Closeable {
                     queueWireHandler,
                     cidToCsp,
                     chronicleEngine,
-                    new SetWireHandlerProcessor<>(),
-                    new SetWireHandlerProcessor<>());
+                    new CollectionWireHandlerProcessor<>(),
+                    new CollectionWireHandlerProcessor<>());
         });
 
         eg.addHandler(eah);
