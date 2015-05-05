@@ -21,11 +21,12 @@ package net.openhft.chronicle.engine.server.internal;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.MapWireHandler;
+import net.openhft.chronicle.wire.map.MapWireHandler;
 import net.openhft.chronicle.network.WireTcpHandler;
 import net.openhft.chronicle.wire.*;
 import net.openhft.chronicle.wire.collection.CollectionWireHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,7 +69,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private final CollectionWireHandler<Map.Entry<byte[], byte[]>, Set<Map.Entry<byte[], byte[]>>> entrySetHandler;
 
     public EngineWireHandler(@NotNull final MapWireHandler<byte[], byte[]> mapWireHandler,
-                             @NotNull final WireHandler queueWireHandler,
+                             @Nullable final WireHandler queueWireHandler,
                              @NotNull final Map<Long, CharSequence> cidToCsp,
                              @NotNull final ChronicleEngine chronicleEngine,
                              @NotNull final CollectionWireHandler<byte[], Set<byte[]>> keSetHandler,

@@ -51,27 +51,15 @@
                 <scope>import</scope>
             </dependency>
 
-            <dependency>
-                <groupId>net.openhft</groupId>
-                <artifactId>chronicle-map</artifactId>
-                <version>3.0.0-alpha-SNAPSHOT</version>
-            </dependency>
-
-            <dependency>
-                <groupId>net.openhft</groupId>
-                <artifactId>chronicle-queue</artifactId>
-                <version>4.0.0-alpha-SNAPSHOT</version>
-            </dependency>
-
         </dependencies>
     </dependencyManagement>
 
     <dependencies>
 
-        <dependency>
+    <!--    <dependency>
             <groupId>net.openhft</groupId>
             <artifactId>chronicle-queue</artifactId>
-        </dependency>
+        </dependency>-->
         <dependency>
             <groupId>net.openhft</groupId>
             <artifactId>chronicle-core</artifactId>

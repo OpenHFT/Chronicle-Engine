@@ -23,6 +23,7 @@ import net.openhft.chronicle.engine.client.ClientWiredStatelessChronicleSet;
 import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.wire.*;
+import net.openhft.chronicle.wire.map.MapWireHandlerProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -33,28 +34,24 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 import static java.util.Collections.emptyList;
-import static net.openhft.chronicle.map.MapWireHandlerProcessor.EventId;
-import static net.openhft.chronicle.map.MapWireHandlerProcessor.EventId.*;
-import static net.openhft.chronicle.map.MapWireHandlerProcessor.Params.key;
-import static net.openhft.chronicle.map.MapWireHandlerProcessor.Params.value;
 import static net.openhft.chronicle.map.VanillaChronicleMap.newInstance;
 import static net.openhft.chronicle.wire.CoreFields.reply;
+import static net.openhft.chronicle.wire.map.MapWireHandlerProcessor.EventId;
+import static net.openhft.chronicle.wire.map.MapWireHandlerProcessor.EventId.*;
 
 
 /**
  * @author Rob Austin.
  */
-class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<net.openhft.chronicle.map
-        .MapWireHandlerProcessor.EventId>
+class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<MapWireHandlerProcessor.EventId>
         implements ChronicleMap<K, V>, Cloneable, ChannelFactory {
 
     private static final Logger LOG =
             LoggerFactory.getLogger(ClientWiredStatelessChronicleMap.class);
 
-    public static final Consumer<ValueOut> VOID_PARAMETERS = out -> out.marshallable(AbstactStatelessClient.EMPTY);
+    public static final Consumer<ValueOut> VOID_PARAMETERS = out -> out.marshallable(WireOut.EMPTY);
     private final Class<V> vClass;
     protected Class<K> kClass;
     private boolean putReturnsNull;
@@ -105,18 +102,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<net.open
     @Override
     public Class<K> keyClass() {
         return kClass;
-    }
-
-    @Override
-    public boolean forEachEntryWhile(Predicate<? super MapKeyContext<K, V>> predicate) {
-        // TODO implement!
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void forEachEntry(Consumer<? super MapKeyContext<K, V>> action) {
-        // TODO implement!
-        throw new UnsupportedOperationException();
     }
 
 
@@ -274,11 +259,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<net.open
         return proxyReturnLong(size);
     }
 
-    @Override
-    public MapKeyContext<K, V> context(K key) {
-        throw new UnsupportedOperationException("Contexts are not supported by stateless clients");
-    }
-
     public V get(Object key) {
         return (V) this.proxyReturnTypedObject(get, vClass, key);
     }
@@ -289,6 +269,12 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<net.open
     }
 
     @NotNull
+    @Override
+    public ReadContext<K, V> getUsingLocked(@NotNull K k, @NotNull V v) {
+        return null;
+    }
+
+    @NotNull
     public V acquireUsing(@NotNull K key, V usingValue) {
         throw new UnsupportedOperationException(
                 "acquireUsing() is not supported for stateless clients");
@@ -296,9 +282,15 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<net.open
 
     @NotNull
     @Override
-    public MapKeyContext<K, V> acquireContext(@NotNull K key, @NotNull V usingValue) {
-        throw new UnsupportedOperationException("Contexts are not supported by stateless clients");
+    public WriteContext<K, V> acquireUsingLocked(@NotNull K k, @NotNull V v) {
+        return null;
     }
+
+    @Override
+    public <R> R getMapped(K k, @NotNull net.openhft.chronicle.map.Function<? super V, R> function) {
+        return null;
+    }
+
 
     public V remove(Object key) {
         if (key == null)
@@ -377,8 +369,8 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<net.open
             public Map.Entry apply(ValueIn valueIn) {
 
                 valueIn.marshallable(r -> {
-                            final K k = r.read(key).object(kClass);
-                            final V v = r.read(value).object(vClass);
+                            final K k = r.read(() -> "key").object(kClass);
+                            final V v = r.read(() -> "value").object(vClass);
 
                             e = new Map.Entry() {
 

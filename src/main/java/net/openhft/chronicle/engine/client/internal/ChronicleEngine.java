@@ -28,7 +28,7 @@ import net.openhft.chronicle.engine.old.ChronicleThreadPool;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.EngineMap;
 import net.openhft.chronicle.map.MapWireConnectionHub;
-import net.openhft.chronicle.queue.ChronicleQueue;
+
 import net.openhft.chronicle.set.ChronicleSet;
 import net.openhft.chronicle.wire.TextWire;
 import org.slf4j.LoggerFactory;
@@ -49,7 +49,8 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
 
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(ChronicleEngine.class);
 
-    private final Map<String, ChronicleQueue> queues = Collections.synchronizedMap(new LinkedHashMap<>());
+//    private final Map<String, ChronicleQueue> queues = Collections.synchronizedMap(new
+    //        LinkedHashMap<>());
     private final Map<String, Map<byte[], byte[]>> underlyingMaps
             = Collections.synchronizedMap(new LinkedHashMap<>());
     private final Map<String, ChronicleMap> maps = Collections.synchronizedMap(new LinkedHashMap<>());
@@ -71,7 +72,7 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
         }
 
     }
-
+   /*
     public void setQueue(String name, ChronicleQueue chronicle) {
         queues.put(name, chronicle);
     }
@@ -80,6 +81,7 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
     public ChronicleQueue getQueue(String name) {
         return queues.get(name);
     }
+    */
 
     public void setMap(String name, ChronicleMap map) throws IOException {
         maps.put(name, map);
@@ -126,8 +128,8 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
 
     @Override
     public <I> I getService(Class<I> iClass, String name, Class... args) throws IOException {
-        if (iClass == Chronicle.class)
-            return (I) getQueue(name);
+      //  if (iClass == Chronicle.class)
+        //    return (I) getQueue(name);
         if (iClass == ChronicleSet.class)
             return (I) getSet(name, args[0]);
         if (iClass == ChronicleMap.class)

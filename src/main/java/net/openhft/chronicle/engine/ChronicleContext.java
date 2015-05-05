@@ -21,7 +21,7 @@ package net.openhft.chronicle.engine;
 import net.openhft.chronicle.engine.old.ChronicleCluster;
 import net.openhft.chronicle.engine.old.ChronicleThreadPool;
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.queue.ChronicleQueue;
+
 import net.openhft.chronicle.set.ChronicleSet;
 
 import java.io.IOException;
@@ -31,7 +31,7 @@ import java.util.logging.Logger;
  * Created by peter.lawrey on 09/10/14.
  */
 public interface ChronicleContext {
-    ChronicleQueue getQueue(String name);
+    //ChronicleQueue getQueue(String name);
 
     // get any map
     <K, V> ChronicleMap<K, V> getMap(String name, Class<K> kClass, Class<V> vClass) throws IOException;

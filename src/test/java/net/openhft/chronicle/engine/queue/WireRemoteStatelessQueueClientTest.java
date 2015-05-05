@@ -22,9 +22,7 @@ import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.client.RemoteTcpClientChronicleContext;
 import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
-import net.openhft.chronicle.queue.ChronicleQueue;
-import net.openhft.chronicle.queue.ExcerptAppender;
-import net.openhft.chronicle.queue.ExcerptTailer;
+
 import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -43,7 +41,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class WireRemoteStatelessQueueClientTest extends ThreadMonitoringTest {
 
-    private static final Logger LOG = LoggerFactory.getLogger(WireRemoteStatelessQueueClientTest.class);
+    /*private static final Logger LOG = LoggerFactory.getLogger(WireRemoteStatelessQueueClientTest.class);
 
     @Test(timeout = 50000)
     @Ignore
@@ -107,7 +105,7 @@ public class WireRemoteStatelessQueueClientTest extends ThreadMonitoringTest {
         public ChronicleQueue get() {
             return queue;
         }
-    }
+    }*/
 
 
 }
