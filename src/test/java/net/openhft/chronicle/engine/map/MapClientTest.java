@@ -24,6 +24,7 @@ import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.map.ChronicleMap;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -93,6 +94,7 @@ public class MapClientTest extends ThreadMonitoringTest {
 
 
     @Test(timeout = 50000)
+    @Ignore
     public void testPutAll() throws IOException, InterruptedException {
 
         supplyMap(Integer.class, String.class, mapProxy -> {

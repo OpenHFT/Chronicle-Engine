@@ -25,6 +25,7 @@ import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Iterator;
@@ -124,6 +125,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     }
 
     @Test(timeout = 100000)
+    @Ignore
     public void testEntrySet() throws Exception {
 
         // sever
