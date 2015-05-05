@@ -2,6 +2,7 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
+import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
@@ -12,6 +13,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static net.openhft.chronicle.map.ChronicleMapBuilder.of;
@@ -125,11 +128,6 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
         throw new UnsupportedOperationException("todo");
     }
 
-    @NotNull
-    @Override
-    public ReadContext<K, V> getUsingLocked(@NotNull K k, @NotNull V v) {
-        return null;
-    }
 
     @Override
     public V acquireUsing(@NotNull K key, V usingValue) {
@@ -138,13 +136,13 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
 
     @NotNull
     @Override
-    public WriteContext<K, V> acquireUsingLocked(@NotNull K k, @NotNull V v) {
-        return null;
+    public MapKeyContext<K, V> acquireContext(@NotNull K key, @NotNull V usingValue) {
+        throw new UnsupportedOperationException("todo");
     }
 
     @Override
-    public <R> R getMapped(K k, @NotNull Function<? super V, R> function) {
-        return null;
+    public <R> R getMapped(K key, @NotNull SerializableFunction<? super V, R> function) {
+        throw new UnsupportedOperationException("todo");
     }
 
 
@@ -176,6 +174,16 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
     @Override
     public Class<K> keyClass() {
         return null;
+    }
+
+    @Override
+    public boolean forEachEntryWhile(Predicate<? super MapKeyContext<K, V>> predicate) {
+        return false;
+    }
+
+    @Override
+    public void forEachEntry(Consumer<? super MapKeyContext<K, V>> action) {
+
     }
 
     @Override
@@ -424,6 +432,11 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
     @Override
     public long longSize() {
         return map.size();
+    }
+
+    @Override
+    public MapKeyContext<K, V> context(K key) {
+        return null;
     }
 
     @Override

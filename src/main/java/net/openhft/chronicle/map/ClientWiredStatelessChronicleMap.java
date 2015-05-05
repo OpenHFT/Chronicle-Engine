@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static java.util.Collections.emptyList;
 import static net.openhft.chronicle.map.VanillaChronicleMap.newInstance;
@@ -102,6 +103,16 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<MapWireH
     @Override
     public Class<K> keyClass() {
         return kClass;
+    }
+
+    @Override
+    public boolean forEachEntryWhile(Predicate<? super MapKeyContext<K, V>> predicate) {
+        return false;
+    }
+
+    @Override
+    public void forEachEntry(Consumer<? super MapKeyContext<K, V>> action) {
+
     }
 
 
@@ -259,6 +270,11 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<MapWireH
         return proxyReturnLong(size);
     }
 
+    @Override
+    public MapKeyContext<K, V> context(K key) {
+        return null;
+    }
+
     public V get(Object key) {
         return (V) this.proxyReturnTypedObject(get, vClass, key);
     }
@@ -268,11 +284,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<MapWireH
         throw new UnsupportedOperationException();
     }
 
-    @NotNull
-    @Override
-    public ReadContext<K, V> getUsingLocked(@NotNull K k, @NotNull V v) {
-        return null;
-    }
 
     @NotNull
     public V acquireUsing(@NotNull K key, V usingValue) {
@@ -282,12 +293,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<MapWireH
 
     @NotNull
     @Override
-    public WriteContext<K, V> acquireUsingLocked(@NotNull K k, @NotNull V v) {
-        return null;
-    }
-
-    @Override
-    public <R> R getMapped(K k, @NotNull net.openhft.chronicle.map.Function<? super V, R> function) {
+    public MapKeyContext<K, V> acquireContext(@NotNull K key, @NotNull V usingValue) {
         return null;
     }
 
