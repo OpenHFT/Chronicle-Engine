@@ -25,6 +25,7 @@ import net.openhft.chronicle.engine.client.internal.RemoteClientServiceLocator;
 import net.openhft.chronicle.engine.old.ChronicleCluster;
 import net.openhft.chronicle.engine.old.ChronicleThreadPool;
 import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.map.FilePerKeyMap;
 
 import net.openhft.chronicle.set.ChronicleSet;
 
@@ -81,6 +82,11 @@ public class RemoteTcpClientChronicleContext implements ChronicleContext, Closea
     @Override
     public ChronicleCluster getCluster(String name) {
         throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public FilePerKeyMap getFilePerKeyMap(String name) {
+        return null;
     }
 
     @Override
