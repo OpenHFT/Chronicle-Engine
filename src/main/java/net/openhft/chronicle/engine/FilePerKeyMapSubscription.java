@@ -48,7 +48,7 @@ public class FilePerKeyMapSubscription implements Subscription{
         Consumer<FPMEvent> fpmEventConsumer = (FPMEvent e) -> {
             System.out.println(e);
             if(subscribeAll || subscribedKeys.contains(e.getKey())) {
-                mel.update(e.getKey(), e.getValue(), e.getValue());
+                mel.update(e.getKey(), e.getLastValue(), e.getValue());
             }
         };
         filePerKeyMap.registerForEvents(fpmEventConsumer);
