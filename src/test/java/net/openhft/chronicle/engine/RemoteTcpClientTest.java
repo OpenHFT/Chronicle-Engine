@@ -25,7 +25,12 @@ import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
+import org.junit.Ignore;
 import org.junit.Test;
+
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 
@@ -74,7 +79,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
         }
     }
 
-    @Test(timeout = 50000)
+    @Test(timeout = 100000)
     public void testMarshable() throws Exception {
 
         // sever
@@ -114,8 +119,37 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
                 }
 
+            }
+        }
+
+    }
+
+    @Test(timeout = 100000)
+    @Ignore
+    public void testEntrySet() throws Exception {
+
+        // sever
+        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, new ChronicleEngine())) {
+            int serverPort = serverEndpoint.getPort();
+
+            //client
+            try (final RemoteTcpClientChronicleContext context = new RemoteTcpClientChronicleContext(
+                    "localhost", serverPort, (byte) 2)) {
+
+                // test using Marshallable Keys
+
+
+                try (ChronicleMap<String, String> map = context.getMap
+                        ("test", String.class, String.class)) {
+                    map.put("hello", "world");
+
+                    final Set<Map.Entry<String, String>> entries = map.entrySet();
+
+                    final Iterator<Map.Entry<String, String>> iterator = entries.iterator();
+
                 }
             }
 
+        }
     }
 }

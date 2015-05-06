@@ -2,7 +2,7 @@ package net.openhft.chronicle.engine.client;
 
 import net.openhft.chronicle.map.MapStatelessClient;
 import net.openhft.chronicle.wire.ValueIn;
-import net.openhft.chronicle.wire.set.SetWireHandler.SetEventId;
+import net.openhft.chronicle.wire.collection.CollectionWireHandler.SetEventId;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -12,7 +12,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 import static net.openhft.chronicle.wire.CoreFields.reply;
-import static net.openhft.chronicle.wire.set.SetWireHandler.SetEventId.*;
+import static net.openhft.chronicle.wire.collection.CollectionWireHandler.SetEventId.*;
 
 
 public class ClientWiredStatelessChronicleSet<U> extends MapStatelessClient<SetEventId>
@@ -70,13 +70,8 @@ public class ClientWiredStatelessChronicleSet<U> extends MapStatelessClient<SetE
 
         final Set<U> e = new HashSet<U>();
 
-        proxyReturnWireConsumerInOut(iterator,
-
-                valueOut -> valueOut.uint16(segment),
-
-                wireIn -> {
-
-                    final ValueIn read = wireIn.read(reply);
+        proxyReturnWireConsumerInOut(iterator, reply, valueOut -> valueOut.uint16(segment),
+                read -> {
 
                     while (read.hasNextSequenceItem()) {
                         read.sequence(v -> e.add(consumer.apply(read)));
@@ -104,14 +99,9 @@ public class ClientWiredStatelessChronicleSet<U> extends MapStatelessClient<SetE
         for (long j = 0; j < numberOfSegments; j++) {
 
             final long i = j;
-            proxyReturnWireConsumerInOut(iterator,
+            proxyReturnWireConsumerInOut(iterator, reply, valueOut -> valueOut.uint16(i),
 
-                    valueOut -> valueOut.uint16(i),
-
-                    wireIn -> {
-
-                        final ValueIn read = wireIn.read(reply);
-
+                    read -> {
                         while (read.hasNextSequenceItem()) {
                             read.sequence(v -> e.add(consumer.apply(read)));
                         }

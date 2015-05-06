@@ -23,6 +23,7 @@ import net.openhft.chronicle.engine.client.ClientWiredStatelessChronicleSet;
 import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.wire.*;
+import net.openhft.chronicle.wire.map.MapWireHandlerProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -36,25 +37,22 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static java.util.Collections.emptyList;
-import static net.openhft.chronicle.map.MapWireHandlerProcessor.EventId;
-import static net.openhft.chronicle.map.MapWireHandlerProcessor.EventId.*;
-import static net.openhft.chronicle.map.MapWireHandlerProcessor.Params.key;
-import static net.openhft.chronicle.map.MapWireHandlerProcessor.Params.value;
 import static net.openhft.chronicle.map.VanillaChronicleMap.newInstance;
 import static net.openhft.chronicle.wire.CoreFields.reply;
+import static net.openhft.chronicle.wire.map.MapWireHandlerProcessor.EventId;
+import static net.openhft.chronicle.wire.map.MapWireHandlerProcessor.EventId.*;
 
 
 /**
  * @author Rob Austin.
  */
-class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<net.openhft.chronicle.map
-        .MapWireHandlerProcessor.EventId>
+class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<MapWireHandlerProcessor.EventId>
         implements ChronicleMap<K, V>, Cloneable, ChannelFactory {
 
     private static final Logger LOG =
             LoggerFactory.getLogger(ClientWiredStatelessChronicleMap.class);
 
-    public static final Consumer<ValueOut> VOID_PARAMETERS = out -> out.marshallable(AbstactStatelessClient.EMPTY);
+    public static final Consumer<ValueOut> VOID_PARAMETERS = out -> out.marshallable(WireOut.EMPTY);
     private final Class<V> vClass;
     protected Class<K> kClass;
     private boolean putReturnsNull;
@@ -109,14 +107,12 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<net.open
 
     @Override
     public boolean forEachEntryWhile(Predicate<? super MapKeyContext<K, V>> predicate) {
-        // TODO implement!
-        throw new UnsupportedOperationException();
+        return false;
     }
 
     @Override
     public void forEachEntry(Consumer<? super MapKeyContext<K, V>> action) {
-        // TODO implement!
-        throw new UnsupportedOperationException();
+
     }
 
 
@@ -172,7 +168,15 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<net.open
     }
 
     public int size() {
-        return (int) longSize();
+        final long size = longSize();
+
+        if (size > Integer.MAX_VALUE)
+            throw new IllegalStateException("size is longer than Integer.MAX_VALUE please use " +
+                    "longSize(), " +
+                    "size="+size());
+        return (int) size;
+
+
     }
 
     /**
@@ -237,7 +241,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<net.open
 
 
     public boolean isEmpty() {
-        return proxyReturnBoolean(isEmpty, null);
+        return size() == 0;
     }
 
     public boolean containsKey(Object key) {
@@ -263,12 +267,12 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<net.open
 
 
     public long longSize() {
-        return proxyReturnLong(longSize);
+        return proxyReturnLong(size);
     }
 
     @Override
     public MapKeyContext<K, V> context(K key) {
-        throw new UnsupportedOperationException("Contexts are not supported by stateless clients");
+        return null;
     }
 
     public V get(Object key) {
@@ -280,6 +284,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<net.open
         throw new UnsupportedOperationException();
     }
 
+
     @NotNull
     public V acquireUsing(@NotNull K key, V usingValue) {
         throw new UnsupportedOperationException(
@@ -289,8 +294,9 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<net.open
     @NotNull
     @Override
     public MapKeyContext<K, V> acquireContext(@NotNull K key, @NotNull V usingValue) {
-        throw new UnsupportedOperationException("Contexts are not supported by stateless clients");
+        return null;
     }
+
 
     public V remove(Object key) {
         if (key == null)
@@ -345,20 +351,20 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<net.open
     public Set<Map.Entry<K, V>> entrySet() {
 
 
-        long cid = proxyReturnWireConsumer(entrySet, (WireIn wireIn) -> {
-            final long[] cidRef = new long[1];
+        long cid = proxyReturnWireConsumer(entrySet, read -> {
+
             final StringBuilder type = Wires.acquireStringBuilder();
-            final ValueIn read = wireIn.read(reply);
+
             read.type(type);
-            read.marshallable(w -> {
+            return read.applyToMarshallable(w -> {
 
                 final String csp1 = w.read(CoreFields.csp).text();
                 final long cid0 = w.read(CoreFields.cid).int64();
                 cidToCsp.put(cid0, csp1);
-                cidRef[0] = cid0;
+                return cid0;
 
             });
-            return cidRef[0];
+
         });
 
 
@@ -369,8 +375,8 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<net.open
             public Map.Entry apply(ValueIn valueIn) {
 
                 valueIn.marshallable(r -> {
-                            final K k = r.read(key).object(kClass);
-                            final V v = r.read(value).object(vClass);
+                            final K k = r.read(() -> "key").object(kClass);
+                            final V v = r.read(() -> "value").object(vClass);
 
                             e = new Map.Entry() {
 
@@ -405,10 +411,10 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<net.open
     @NotNull
     public Set<K> keySet() {
 
-        long cid = proxyReturnWireConsumer(keySet, (WireIn wireIn) -> {
+        long cid = proxyReturnWireConsumer(keySet, read -> {
             final long[] cidRef = new long[1];
             final StringBuilder type = Wires.acquireStringBuilder();
-            final ValueIn read = wireIn.read(reply);
+
             read.type(type);
             read.marshallable(w -> {
 

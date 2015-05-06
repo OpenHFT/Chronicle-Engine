@@ -28,7 +28,7 @@
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>chronicle-engine</artifactId>
-    <version>1.0.0-alpha-SNAPSHOT</version>
+    <version>1.0.1-alpha-SNAPSHOT</version>
     <name>OpenHFT/Chronicle-Engine</name>
     <description>Chronicle Engine Framework</description>
 
@@ -47,32 +47,15 @@
                 <groupId>net.openhft</groupId>
                 <artifactId>chronicle-bom</artifactId>
                 <type>pom</type>
-                <version>1.0.5</version>
+                <version>1.0.6</version>
                 <scope>import</scope>
             </dependency>
-
-            <dependency>
-                <groupId>net.openhft</groupId>
-                <artifactId>chronicle-map</artifactId>
-                <version>3.0.0-alpha-SNAPSHOT</version>
-            </dependency>
-
-            <dependency>
-                <groupId>net.openhft</groupId>
-                <artifactId>chronicle-queue</artifactId>
-                <version>4.0.0-alpha-SNAPSHOT</version>
-            </dependency>
-
 
         </dependencies>
     </dependencyManagement>
 
     <dependencies>
 
-        <dependency>
-            <groupId>net.openhft</groupId>
-            <artifactId>chronicle-queue</artifactId>
-        </dependency>
         <dependency>
             <groupId>net.openhft</groupId>
             <artifactId>chronicle-core</artifactId>

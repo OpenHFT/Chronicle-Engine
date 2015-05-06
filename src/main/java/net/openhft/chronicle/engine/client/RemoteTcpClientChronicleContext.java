@@ -25,7 +25,7 @@ import net.openhft.chronicle.engine.client.internal.RemoteClientServiceLocator;
 import net.openhft.chronicle.engine.old.ChronicleCluster;
 import net.openhft.chronicle.engine.old.ChronicleThreadPool;
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.queue.ChronicleQueue;
+
 import net.openhft.chronicle.set.ChronicleSet;
 
 import java.io.Closeable;
@@ -43,10 +43,10 @@ public class RemoteTcpClientChronicleContext implements ChronicleContext, Closea
         this.remoteClientServiceLocator = new RemoteClientServiceLocator(hostname, port, identifier);
     }
 
-    @Override
+  /*   @Override
     public ChronicleQueue getQueue(String name) {
         return remoteClientServiceLocator.getService(ChronicleQueue.class, name);
-    }
+    }*/
 
     @Override
     public <K, V> ChronicleMap<K, V> getMap(String name, Class<K> kClass, Class<V> vClass) {
