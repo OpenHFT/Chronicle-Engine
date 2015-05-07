@@ -21,12 +21,14 @@ package net.openhft.chronicle.engine.client.internal;
 import net.openhft.chronicle.Chronicle;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.ChronicleContext;
+import net.openhft.chronicle.engine.FilePerKeyMapSubscription;
 import net.openhft.chronicle.engine.MapEventListener;
 import net.openhft.chronicle.engine.Subscription;
 import net.openhft.chronicle.engine.old.ChronicleCluster;
 import net.openhft.chronicle.engine.old.ChronicleThreadPool;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.EngineMap;
+import net.openhft.chronicle.map.FilePerKeyMap;
 import net.openhft.chronicle.map.MapWireConnectionHub;
 
 import net.openhft.chronicle.set.ChronicleSet;
@@ -54,6 +56,7 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
     private final Map<String, Map<byte[], byte[]>> underlyingMaps
             = Collections.synchronizedMap(new LinkedHashMap<>());
     private final Map<String, ChronicleMap> maps = Collections.synchronizedMap(new LinkedHashMap<>());
+    private final Map<String, FilePerKeyMap> fpMaps = Collections.synchronizedMap(new LinkedHashMap<>());
     private final Map<String, ChronicleSet> sets = Collections.synchronizedMap(new LinkedHashMap<>());
     private final Map<String, ChronicleThreadPool> threadPools = Collections.synchronizedMap(new LinkedHashMap<>());
     private final Map<String, ChronicleCluster> clusters = Collections.synchronizedMap(new LinkedHashMap<>());
@@ -127,6 +130,14 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
     }
 
     @Override
+    public FilePerKeyMap getFilePerKeyMap(String name){
+        FilePerKeyMap fpkm = fpMaps.computeIfAbsent(name,
+                k -> new FilePerKeyMap(name));
+        return fpkm;
+    }
+
+
+    @Override
     public <I> I getService(Class<I> iClass, String name, Class... args) throws IOException {
       //  if (iClass == Chronicle.class)
         //    return (I) getQueue(name);
@@ -140,6 +151,12 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
     @Override
     public <K, V> Subscription<K, MapEventListener<K, V>> createMapSubscription(String name, Class<K> kClass, Class<V> vClass) {
         return getSubscription(name, kClass, (Class<MapEventListener<K, V>>) (Class) MapEventListener.class);
+    }
+
+    public <K, V> Subscription<K, MapEventListener<K, V>> createFilePerKeyMapMapSubscription(String name) {
+        //Find the corresponding map
+        FilePerKeyMap filePerKeyMap = fpMaps.get(name);
+        return new FilePerKeyMapSubscription(filePerKeyMap);
     }
 
     @Override
