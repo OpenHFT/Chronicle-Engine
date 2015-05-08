@@ -56,10 +56,9 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private final CharSequence preferredWireType = new StringBuilder(TextWire.class.getSimpleName());
     private final StringBuilder cspText = new StringBuilder();
 
-    private final CollectionWireHandler<byte[], Set<byte[]>> keSetHandler;
+    private final CollectionWireHandler<byte[], Set<byte[]>> keySetHandler;
 
-
-    @NotNull
+    @Nullable
     private final WireHandler queueWireHandler;
     private final Map<Long, CharSequence> cidToCsp;
 
@@ -68,6 +67,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private final MapWireHandler<byte[], byte[]> mapWireHandler;
     private final MapWireHandler<String, String> fileMapWireHandler;
     private final CollectionWireHandler<Map.Entry<byte[], byte[]>, Set<Map.Entry<byte[], byte[]>>> entrySetHandler;
+    private final CollectionWireHandler<byte[], Collection<byte[]>> valuesHander;
 
     public EngineWireHandler(@NotNull final Map<Long, CharSequence> cidToCsp,
                              @NotNull final ChronicleEngine chronicleEngine)
@@ -79,6 +79,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
             this.cidToCsp = cidToCsp;
             this.chronicleEngine = chronicleEngine;
             this.entrySetHandler = new CollectionWireHandlerProcessor<>();
+            this.valuesHander = new CollectionWireHandlerProcessor<>();
     }
 
     private final List<WireHandler> handlers = new ArrayList<>();
@@ -134,8 +135,6 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
             if (endsWith(cspText, "#entrySet")) {
                 MapHandler mapHandler = MapHandler.create(cspText);
                 final Map map = mapHandler.getMap(chronicleEngine, serviceName);
-
-
                 entrySetHandler.process(in, out, map.entrySet(), cspText, mapHandler.getEntryToWire(),
                         mapHandler.getWireToEntry(), HashSet::new);
                 return;
@@ -144,14 +143,21 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
             if (endsWith(cspText, "#keySet")) {
                 MapHandler mapHandler = MapHandler.create(cspText);
                 final Map map = mapHandler.getMap(chronicleEngine, serviceName);
-
-                keSetHandler.process(in, out, map.keySet(), cspText, mapHandler.getKeyToWire(),
+                keySetHandler.process(in, out, map.keySet(), cspText, mapHandler.getKeyToWire(),
                         mapHandler.getWireToKey(), HashSet::new);
                 return;
             }
 
+            if (endsWith(cspText, "#values")) {
+                MapHandler mapHandler = MapHandler.create(cspText);
+                final Map map = mapHandler.getMap(chronicleEngine, serviceName);
+                valuesHander.process(in, out, map.values(), cspText, mapHandler.getKeyToWire(),
+                        mapHandler.getWireToKey(), ArrayList::new);
+                return;
+            }
 
-            if (endsWith(cspText, "#queue")) {
+
+            if (endsWith(cspText, "#queue") && queueWireHandler != null) {
                 queueWireHandler.process(in, out);
                 return;
             }
@@ -233,4 +239,6 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     public void add(WireHandler handler) {
         handlers.add(handler);
     }
+
+
 }

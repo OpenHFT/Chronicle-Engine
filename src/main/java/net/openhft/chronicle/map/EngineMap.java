@@ -75,7 +75,7 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
         buffer.clear();
         if (TextWire.class.isAssignableFrom(wireType)) {
             return new TextWire(buffer);
-        } else throw new UnsupportedOperationException("todo");
+        } else throw new UnsupportedOperationException("todo, wireType="+wireType);
     }
 
 
@@ -85,7 +85,7 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
 
         if (TextWire.class.isAssignableFrom(wireType)) {
             return new TextWire(wrap);
-        } else throw new UnsupportedOperationException("todo");
+        } else throw new UnsupportedOperationException("todo, wireType="+wireType);
     }
 
     @Override
@@ -354,7 +354,7 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
 
                             @Override
                             public V setValue(V value) {
-                                throw new UnsupportedOperationException("todo");
+                                throw new UnsupportedOperationException("todo (setValue)");
                             }
                         };
 
@@ -426,7 +426,7 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
 
     @Override
     public File file() {
-        throw new UnsupportedOperationException("todo");
+        throw new UnsupportedOperationException("todo (file)");
     }
 
     @Override

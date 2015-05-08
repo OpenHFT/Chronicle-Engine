@@ -1,35 +1,36 @@
-package net.openhft.chronicle.engine.client;
+package net.openhft.chronicle.engine.collection;
 
+import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.map.MapStatelessClient;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.collection.CollectionWireHandler.SetEventId;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static net.openhft.chronicle.wire.CoreFields.reply;
 import static net.openhft.chronicle.wire.collection.CollectionWireHandler.SetEventId.*;
 
 
-public class ClientWiredStatelessChronicleSet<U> extends MapStatelessClient<SetEventId>
-        implements Set<U> {
+public class ClientWiredStatelessChronicleCollection<U, E extends Collection<U>> extends
+        MapStatelessClient<SetEventId> implements Collection<U> {
 
     private final Function<ValueIn, U> consumer;
+    private final Supplier<E> factory;
 
-    public ClientWiredStatelessChronicleSet(@NotNull final String channelName,
-                                            @NotNull final ClientWiredStatelessTcpConnectionHub hub,
-                                            final long cid,
-                                            @NotNull final Function<ValueIn, U> wireToSet,
-                                            @NotNull final String type) {
-
+    public ClientWiredStatelessChronicleCollection(@NotNull final String channelName,
+                                                   @NotNull final ClientWiredStatelessTcpConnectionHub hub,
+                                                   final long cid,
+                                                   @NotNull final Function<ValueIn, U> wireToSet,
+                                                   @NotNull final String type,
+                                                   @NotNull Supplier<E> factory) {
         super(channelName, hub, type, cid);
         this.consumer = wireToSet;
+        this.factory = factory;
     }
-
 
     @Override
     public int size() {
@@ -46,8 +47,8 @@ public class ClientWiredStatelessChronicleSet<U> extends MapStatelessClient<SetE
         return proxyReturnBooleanWithArgs(contains, o);
     }
 
-    @NotNull
     @Override
+    @NotNull
     public Iterator<U> iterator() {
 
         // todo improve numberOfSegments
@@ -66,9 +67,9 @@ public class ClientWiredStatelessChronicleSet<U> extends MapStatelessClient<SetE
      * @return and iterator for the {@code segment}
      */
     @NotNull
-    private Set<U> segmentSet(int segment) {
+    private E segmentSet(int segment) {
 
-        final Set<U> e = new HashSet<U>();
+        final E e = factory.get();
 
         proxyReturnWireConsumerInOut(iterator, reply, valueOut -> valueOut.uint16(segment),
                 read -> {
@@ -84,16 +85,17 @@ public class ClientWiredStatelessChronicleSet<U> extends MapStatelessClient<SetE
         return e;
     }
 
-    @NotNull
     @Override
+    @NotNull
     public Object[] toArray() {
-        return asSet().toArray();
+        return asCollection().toArray();
     }
 
-    @NotNull
-    private Set<U> asSet() {
 
-        final Set<U> e = new HashSet<U>();
+    @NotNull
+    private E asCollection() {
+
+        final E e = factory.get();
         final int numberOfSegments = proxyReturnUint16(SetEventId.numberOfSegments);
 
         for (long j = 0; j < numberOfSegments; j++) {
@@ -112,17 +114,16 @@ public class ClientWiredStatelessChronicleSet<U> extends MapStatelessClient<SetE
         return e;
     }
 
-    @NotNull
     @Override
+    @NotNull
     public <T> T[] toArray(T[] array) {
-        return asSet().toArray(array);
+        return asCollection().toArray(array);
     }
 
     @Override
     public boolean add(U u) {
         return proxyReturnBoolean(add);
     }
-
 
     @Override
     public boolean remove(Object o) {
@@ -138,7 +139,6 @@ public class ClientWiredStatelessChronicleSet<U> extends MapStatelessClient<SetE
     public boolean addAll(Collection<? extends U> c) {
         return proxyReturnBooleanWithSequence(addAll, c);
     }
-
 
     @Override
     public boolean retainAll(Collection<?> c) {

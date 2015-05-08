@@ -19,7 +19,8 @@
 package net.openhft.chronicle.map;
 
 
-import net.openhft.chronicle.engine.client.ClientWiredStatelessChronicleSet;
+import net.openhft.chronicle.engine.collection.ClientWiredStatelessChronicleCollection;
+import net.openhft.chronicle.engine.collection.ClientWiredStatelessChronicleSet;
 import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.wire.*;
@@ -341,7 +342,29 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<MapWireH
     @NotNull
     @Override
     public Collection<V> values() {
-        return null;
+
+        long cid = proxyReturnWireConsumer(values, read -> {
+
+            final StringBuilder type = Wires.acquireStringBuilder();
+
+            read.type(type);
+            return read.applyToMarshallable(w -> {
+
+                final String csp1 = w.read(CoreFields.csp).text();
+                final long cid0 = w.read(CoreFields.cid).int64();
+                cidToCsp.put(cid0, csp1);
+                return cid0;
+
+            });
+
+        });
+
+
+        final Function<ValueIn, V> conumer
+                = valueIn -> valueIn.object(vClass);
+
+        return new ClientWiredStatelessChronicleCollection<>(channelName, hub, cid, conumer,
+                "values", ArrayList::new);
     }
 
 
@@ -368,41 +391,32 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<MapWireH
         });
 
 
-        Function<ValueIn, Map.Entry<K, V>> conumer = new Function<ValueIn, Map.Entry<K, V>>() {
-            Map.Entry e = null;
+        Function<ValueIn, Map.Entry<K, V>> conumer = valueIn -> valueIn.applyToMarshallable(r -> {
 
-            @Override
-            public Map.Entry apply(ValueIn valueIn) {
+                    final K k = r.read(() -> "key").object(kClass);
+                    final V v = r.read(() -> "value").object(vClass);
 
-                valueIn.marshallable(r -> {
-                            final K k = r.read(() -> "key").object(kClass);
-                            final V v = r.read(() -> "value").object(vClass);
+                    return new Map.Entry<K, V>() {
 
-                            e = new Map.Entry() {
-
-                                @Override
-                                public K getKey() {
-                                    return k;
-                                }
-
-                                @Override
-                                public V getValue() {
-                                    return v;
-                                }
-
-                                @Override
-                                public Object setValue(Object value) {
-                                    throw new UnsupportedOperationException();
-                                }
-                            };
-
+                        @Override
+                        public K getKey() {
+                            return k;
                         }
 
-                );
+                        @Override
+                        public V getValue() {
+                            return v;
+                        }
 
-                return e;
-            }
-        };
+                        @Override
+                        public V setValue(Object value) {
+                            throw new UnsupportedOperationException();
+                        }
+                    };
+
+                }
+
+        );
 
         return new ClientWiredStatelessChronicleSet<>(channelName, hub, cid, conumer, "entrySet");
     }
