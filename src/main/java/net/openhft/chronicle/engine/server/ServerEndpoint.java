@@ -45,6 +45,7 @@ public class ServerEndpoint implements Closeable {
 
     private AcceptorEventHandler eah;
     private MapWireHandler<byte[], byte[]> mapWireHandler;
+    private MapWireHandler<String, String> fileMapWireHandler;
     private WireHandler queueWireHandler;
     private MapWireConnectionHub mapWireConnectionHub;
     private ChronicleEngine chronicleEngine;
@@ -77,12 +78,14 @@ public class ServerEndpoint implements Closeable {
             try {
                 mapWireConnectionHub = new MapWireConnectionHub(localIdentifier, 8085);
                 mapWireHandler = new MapWireHandlerProcessor<>(cidToCsp);
+                fileMapWireHandler = new MapWireHandlerProcessor<>(cidToCsp);
             } catch (IOException e) {
                 LOG.error("", e);
             }
 
             return new EngineWireHandler(
                     mapWireHandler,
+                    fileMapWireHandler,
                     queueWireHandler,
                     cidToCsp,
                     chronicleEngine,

@@ -21,20 +21,18 @@ package net.openhft.chronicle.engine.server.internal;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.wire.map.MapWireHandler;
 import net.openhft.chronicle.network.WireTcpHandler;
 import net.openhft.chronicle.wire.*;
 import net.openhft.chronicle.wire.collection.CollectionWireHandler;
-import net.openhft.chronicle.wire.map.MapWireHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import net.openhft.chronicle.map.FilePerKeyMap;
 import java.io.IOException;
 import java.io.StreamCorruptedException;
 import java.util.*;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.client.StringUtils.endsWith;
 import static net.openhft.chronicle.wire.CoreFields.cid;
@@ -65,18 +63,22 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     @NotNull
     private final ChronicleEngine chronicleEngine;
     private final MapWireHandler<byte[], byte[]> mapWireHandler;
+    private final MapWireHandler<String, String> fileMapWireHandler;
     private final CollectionWireHandler<Map.Entry<byte[], byte[]>, Set<Map.Entry<byte[], byte[]>>> entrySetHandler;
     private final CollectionWireHandler<byte[], Collection<byte[]>> valuesHander;
 
     public EngineWireHandler(@NotNull final MapWireHandler<byte[], byte[]> mapWireHandler,
+                             @Nullable final MapWireHandler<String, String> fileMapWireHandler,
                              @Nullable final WireHandler queueWireHandler,
                              @NotNull final Map<Long, CharSequence> cidToCsp,
                              @NotNull final ChronicleEngine chronicleEngine,
-                             @NotNull final CollectionWireHandler<byte[], Set<byte[]>> keySetHandler,
-                             @NotNull final CollectionWireHandler<Map.Entry<byte[], byte[]>,
-                                     Set<Map.Entry<byte[], byte[]>>> entrySetHandler,
-                             @NotNull final CollectionWireHandler<byte[], Collection<byte[]>> valuesHander) {
+                             @NotNull final CollectionWireHandler<byte[], Set<byte[]>> keSetHandler,
+                             @NotNull final CollectionWireHandler<Map.Entry<byte[], byte[]>, Set<Map
+                                                                  .Entry<byte[], byte[]>>>
+                                     entrySetHandler) {
         this.mapWireHandler = mapWireHandler;
+        this.fileMapWireHandler = fileMapWireHandler;
+      
         this.keySetHandler = keySetHandler;
         this.queueWireHandler = queueWireHandler;
         this.cidToCsp = cidToCsp;
@@ -110,11 +112,27 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
             final String serviceName = serviceName(cspText);
 
             if (endsWith(cspText, "#map")) {
+                MapHandler mapHandler = MapHandler.create(cspText);
+                final Map map = mapHandler.getMap(chronicleEngine, serviceName);
 
-                final ChronicleMap<byte[], byte[]> map = chronicleEngine.getMap(
-                        serviceName,
-                        byte[].class,
-                        byte[].class);
+                //todo need to do something better than instanceof
+                if(map instanceof FilePerKeyMap){
+                    fileMapWireHandler.process(in,
+                            out,
+                            map,
+                            cspText,
+                            mapHandler.getValueToWire(),
+                            mapHandler.getWireToKey(),
+                            mapHandler.getWireToValue());
+                }else {
+                    mapWireHandler.process(in,
+                            out,
+                            map,
+                            cspText,
+                            mapHandler.getValueToWire(),
+                            mapHandler.getWireToKey(),
+                            mapHandler.getWireToValue());
+                }
 
                 mapWireHandler.process(in,
                         out,
@@ -127,29 +145,23 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
             }
 
             if (endsWith(cspText, "#entrySet")) {
-
-                final ChronicleMap<byte[], byte[]> map = chronicleEngine.getMap(
-                        serviceName,
-                        byte[].class,
-                        byte[].class);
+                MapHandler mapHandler = MapHandler.create(cspText);
+                final Map map = mapHandler.getMap(chronicleEngine, serviceName);
 
 
-                entrySetHandler.process(in, out, map.entrySet(), cspText, entryToWire,
-                        wireToEntry, HashSet::new);
+                entrySetHandler.process(in, out, map.entrySet(), cspText, mapHandler.getEntryToWire(),
+                        mapHandler.getWireToEntry(), HashSet::new);
                 return;
             }
 
             if (endsWith(cspText, "#keySet")) {
+                MapHandler mapHandler = MapHandler.create(cspText);
+                final Map map = mapHandler.getMap(chronicleEngine, serviceName);
 
-                final ChronicleMap<byte[], byte[]> map = chronicleEngine.getMap(
-                        serviceName,
-                        byte[].class,
-                        byte[].class);
-
-                keySetHandler.process(in, out, map.keySet(), cspText, keyToWire, wireToKey, HashSet::new);
+                keSetHandler.process(in, out, map.keySet(), cspText, mapHandler.getKeyToWire(),
+                        mapHandler.getWireToKey(), HashSet::new);
                 return;
             }
-
 
             if (endsWith(cspText, "#values")) {
 
@@ -161,7 +173,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                 valuesHander.process(in, out, map.values(), cspText, keyToWire, wireToKey, ArrayList::new);
                 return;
             }
-
+            
 
             if (endsWith(cspText, "#queue")) {
                 queueWireHandler.process(in, out);

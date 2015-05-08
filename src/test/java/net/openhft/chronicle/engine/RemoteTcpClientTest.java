@@ -25,6 +25,7 @@ import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Iterator;
@@ -144,6 +145,30 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
                     final Set<Map.Entry<String, String>> entries = map.entrySet();
 
                     final Iterator<Map.Entry<String, String>> iterator = entries.iterator();
+
+                }
+            }
+
+        }
+    }
+
+    //Test for FilePerKeyMap
+    @Ignore
+    @Test(timeout = 100000)
+    public void testFPKMap() throws Exception {
+
+        // sever
+        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, new ChronicleEngine())) {
+            int serverPort = serverEndpoint.getPort();
+
+            //client
+            try (final RemoteTcpClientChronicleContext context = new RemoteTcpClientChronicleContext(
+                    "localhost", serverPort, (byte) 2)) {
+
+                try (ChronicleMap<String, String> map = context.getMap
+                        ("filetest", String.class, String.class)) {
+                    map.put("hello", "world");
+                    System.out.println(map.get("hello"));
 
                 }
             }
