@@ -19,8 +19,8 @@
 package net.openhft.chronicle.map;
 
 
-import net.openhft.chronicle.engine.client.ClientWiredStatelessChronicleCollection;
-import net.openhft.chronicle.engine.client.ClientWiredStatelessChronicleSet;
+import net.openhft.chronicle.engine.collection.ClientWiredStatelessChronicleCollection;
+import net.openhft.chronicle.engine.collection.ClientWiredStatelessChronicleSet;
 import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.wire.*;
@@ -363,7 +363,8 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<MapWireH
         final Function<ValueIn, V> conumer
                 = valueIn -> valueIn.object(vClass);
 
-        return new ClientWiredStatelessChronicleCollection<>(channelName, hub, cid, conumer, "values");
+        return new ClientWiredStatelessChronicleCollection<>(channelName, hub, cid, conumer,
+                "values", ArrayList::new);
     }
 
 
