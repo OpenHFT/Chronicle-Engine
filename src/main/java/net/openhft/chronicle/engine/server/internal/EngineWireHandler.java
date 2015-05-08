@@ -20,16 +20,16 @@ package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
-import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.wire.map.MapWireHandler;
+import net.openhft.chronicle.map.FilePerKeyMap;
 import net.openhft.chronicle.network.WireTcpHandler;
 import net.openhft.chronicle.wire.*;
 import net.openhft.chronicle.wire.collection.CollectionWireHandler;
+import net.openhft.chronicle.wire.map.MapWireHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import net.openhft.chronicle.map.FilePerKeyMap;
+
 import java.io.IOException;
 import java.io.StreamCorruptedException;
 import java.util.*;
@@ -56,7 +56,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
     private final CollectionWireHandler<byte[], Set<byte[]>> keySetHandler;
 
-    @NotNull
+    @Nullable
     private final WireHandler queueWireHandler;
     private final Map<Long, CharSequence> cidToCsp;
 
@@ -72,13 +72,13 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                              @Nullable final WireHandler queueWireHandler,
                              @NotNull final Map<Long, CharSequence> cidToCsp,
                              @NotNull final ChronicleEngine chronicleEngine,
-                             @NotNull final CollectionWireHandler<byte[], Set<byte[]>> keSetHandler,
-                             @NotNull final CollectionWireHandler<Map.Entry<byte[], byte[]>, Set<Map
-                                                                  .Entry<byte[], byte[]>>>
-                                     entrySetHandler) {
+                             @NotNull final CollectionWireHandler<byte[], Set<byte[]>>
+                                     keySetHandler,
+                             @NotNull final CollectionWireHandler<Map.Entry<byte[], byte[]>,
+                                     Set<Map.Entry<byte[], byte[]>>> entrySetHandler,
+                             @NotNull final CollectionWireHandler<byte[], Collection<byte[]>> valuesHander) {
         this.mapWireHandler = mapWireHandler;
         this.fileMapWireHandler = fileMapWireHandler;
-      
         this.keySetHandler = keySetHandler;
         this.queueWireHandler = queueWireHandler;
         this.cidToCsp = cidToCsp;
@@ -134,21 +134,12 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                             mapHandler.getWireToValue());
                 }
 
-                mapWireHandler.process(in,
-                        out,
-                        map,
-                        cspText,
-                        valueToWire,
-                        wireToKey,
-                        wireToValue);
                 return;
             }
 
             if (endsWith(cspText, "#entrySet")) {
                 MapHandler mapHandler = MapHandler.create(cspText);
                 final Map map = mapHandler.getMap(chronicleEngine, serviceName);
-
-
                 entrySetHandler.process(in, out, map.entrySet(), cspText, mapHandler.getEntryToWire(),
                         mapHandler.getWireToEntry(), HashSet::new);
                 return;
@@ -157,25 +148,21 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
             if (endsWith(cspText, "#keySet")) {
                 MapHandler mapHandler = MapHandler.create(cspText);
                 final Map map = mapHandler.getMap(chronicleEngine, serviceName);
-
-                keSetHandler.process(in, out, map.keySet(), cspText, mapHandler.getKeyToWire(),
+                keySetHandler.process(in, out, map.keySet(), cspText, mapHandler.getKeyToWire(),
                         mapHandler.getWireToKey(), HashSet::new);
                 return;
             }
 
             if (endsWith(cspText, "#values")) {
-
-                final ChronicleMap<byte[], byte[]> map = chronicleEngine.getMap(
-                        serviceName,
-                        byte[].class,
-                        byte[].class);
-
-                valuesHander.process(in, out, map.values(), cspText, keyToWire, wireToKey, ArrayList::new);
+                MapHandler mapHandler = MapHandler.create(cspText);
+                final Map map = mapHandler.getMap(chronicleEngine, serviceName);
+                valuesHander.process(in, out, map.values(), cspText, mapHandler.getKeyToWire(),
+                        mapHandler.getWireToKey(), ArrayList::new);
                 return;
             }
-            
 
-            if (endsWith(cspText, "#queue")) {
+
+            if (endsWith(cspText, "#queue") && queueWireHandler != null) {
                 queueWireHandler.process(in, out);
                 return;
             }
@@ -257,49 +244,6 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     public void add(WireHandler handler) {
         handlers.add(handler);
     }
-
-    private final BiConsumer<ValueOut, byte[]> keyToWire = ValueOut::object;
-
-    private final Function<ValueIn, byte[]> wireToKey =
-            v -> v.object(byte[].class);
-
-    private final BiConsumer<ValueOut, byte[]> valueToWire = ValueOut::object;
-
-    private final Function<ValueIn, byte[]> wireToValue =
-            v -> v.object(byte[].class);
-
-    private final BiConsumer<ValueOut, Map.Entry<byte[], byte[]>> entryToWire
-            = (v, e) -> {
-        v.marshallable(w -> {
-            w.write(() -> "key").object(e.getKey()).write(() -> "value").object(e.getValue());
-        });
-    };
-
-    private final Function<ValueIn, Map.Entry<byte[], byte[]>> wireToEntry
-            = valueIn -> valueIn.applyToMarshallable(x -> {
-
-        final byte[] key = x.read(() -> "key").object(byte[].class);
-        final byte[] value = x.read(() -> "value").object(byte[].class);
-
-        return new Map.Entry<byte[], byte[]>() {
-
-            @Override
-            public byte[] getKey() {
-                return key;
-            }
-
-            @Override
-            public byte[] getValue() {
-                return value;
-            }
-
-            @Override
-            public byte[] setValue(byte[] value) {
-                throw new UnsupportedOperationException();
-            }
-        };
-
-    });
 
 
 }
