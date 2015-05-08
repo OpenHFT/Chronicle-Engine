@@ -90,11 +90,7 @@ public class MapClientTest extends ThreadMonitoringTest {
 
     }
 
-
-
-
     @Test(timeout = 50000)
-    @Ignore
     public void testPutAll() throws IOException, InterruptedException {
 
         supplyMap(Integer.class, String.class, mapProxy -> {

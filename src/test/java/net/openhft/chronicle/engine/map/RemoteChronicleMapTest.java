@@ -102,36 +102,6 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
 
     static int s_port = 11050;
 
-    @Test(timeout = 30000)
-    @Ignore
-    public void testByteArrayPerf() throws IOException {
-        ByteBuffer key = ByteBuffer.allocate(8);
-        ByteBuffer value = ByteBuffer.allocate(50);
-        int runs = 100000;
-        try (ChronicleMap<byte[], byte[]> map = newByteArrayMap()) {
-            for (int t = 0; t < 5; t++) {
-                {
-                    long start = System.nanoTime();
-                    for (int i = 0; i < runs; i++) {
-                        key.putLong(0, i);
-                        value.putLong(0, i);
-                        map.put(key.array(), value.array());
-                    }
-                    long time = System.nanoTime() - start;
-                    System.out.printf("%d: Took %.1f us on average to put %n", t, time / 1e3 / runs);
-                }
-                {
-                    long start = System.nanoTime();
-                    for (int i = 0; i < runs; i++) {
-                        key.putLong(0, i);
-                        byte[] b = map.get(key.array());
-                    }
-                    long time = System.nanoTime() - start;
-                    System.out.printf("%d: Took %.1f us on average to get %n", t, time / 1e3 / runs);
-                }
-            }
-        }
-    }
 
     /**
      * clear removes all pairs
@@ -241,7 +211,6 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
     /**
      * Values.toArray contains all values
      */
-    @Ignore
     @Test(timeout = 50000)
     public void testValuesToArray() throws IOException {
         try (ChronicleMap map = map5()) {
@@ -276,7 +245,6 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
     /**
      * values collection contains all values
      */
-    @Ignore
     @Test(timeout = 50000)
     public void testValues() throws IOException {
         try (ChronicleMap map = map5()) {

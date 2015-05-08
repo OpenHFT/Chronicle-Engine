@@ -87,6 +87,7 @@ public class ServerEndpoint implements Closeable {
                     cidToCsp,
                     chronicleEngine,
                     new CollectionWireHandlerProcessor<>(),
+                    new CollectionWireHandlerProcessor<>(),
                     new CollectionWireHandlerProcessor<>());
         });
 
