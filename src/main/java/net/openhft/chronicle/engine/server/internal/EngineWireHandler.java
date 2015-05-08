@@ -74,7 +74,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                               throws IOException{
             this.mapWireHandler = new MapWireHandlerProcessor<>(cidToCsp);
             this.fileMapWireHandler = new MapWireHandlerProcessor<>(cidToCsp);
-            this.keSetHandler = new CollectionWireHandlerProcessor<>();
+            this.keySetHandler = new CollectionWireHandlerProcessor<>();
             this.queueWireHandler = null; //QueueWireHandler();
             this.cidToCsp = cidToCsp;
             this.chronicleEngine = chronicleEngine;
