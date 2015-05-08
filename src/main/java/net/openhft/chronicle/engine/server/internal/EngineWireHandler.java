@@ -21,10 +21,12 @@ package net.openhft.chronicle.engine.server.internal;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.map.FilePerKeyMap;
+import net.openhft.chronicle.wire.collection.CollectionWireHandlerProcessor;
 import net.openhft.chronicle.wire.map.MapWireHandler;
 import net.openhft.chronicle.network.WireTcpHandler;
 import net.openhft.chronicle.wire.*;
 import net.openhft.chronicle.wire.collection.CollectionWireHandler;
+import net.openhft.chronicle.wire.map.MapWireHandlerProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -67,22 +69,16 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private final MapWireHandler<String, String> fileMapWireHandler;
     private final CollectionWireHandler<Map.Entry<byte[], byte[]>, Set<Map.Entry<byte[], byte[]>>> entrySetHandler;
 
-    public EngineWireHandler(@NotNull final MapWireHandler<byte[], byte[]> mapWireHandler,
-                             @Nullable final MapWireHandler<String, String> fileMapWireHandler,
-                             @Nullable final WireHandler queueWireHandler,
-                             @NotNull final Map<Long, CharSequence> cidToCsp,
-                             @NotNull final ChronicleEngine chronicleEngine,
-                             @NotNull final CollectionWireHandler<byte[], Set<byte[]>> keSetHandler,
-                             @NotNull final CollectionWireHandler<Map.Entry<byte[], byte[]>, Set<Map
-                                                                  .Entry<byte[], byte[]>>>
-                                     entrySetHandler) {
-        this.mapWireHandler = mapWireHandler;
-        this.fileMapWireHandler = fileMapWireHandler;
-        this.keSetHandler = keSetHandler;
-        this.queueWireHandler = queueWireHandler;
-        this.cidToCsp = cidToCsp;
-        this.chronicleEngine = chronicleEngine;
-        this.entrySetHandler = entrySetHandler;
+    public EngineWireHandler(@NotNull final Map<Long, CharSequence> cidToCsp,
+                             @NotNull final ChronicleEngine chronicleEngine)
+                              throws IOException{
+            this.mapWireHandler = new MapWireHandlerProcessor<>(cidToCsp);
+            this.fileMapWireHandler = new MapWireHandlerProcessor<>(cidToCsp);
+            this.keSetHandler = new CollectionWireHandlerProcessor<>();
+            this.queueWireHandler = null; //QueueWireHandler();
+            this.cidToCsp = cidToCsp;
+            this.chronicleEngine = chronicleEngine;
+            this.entrySetHandler = new CollectionWireHandlerProcessor<>();
     }
 
     private final List<WireHandler> handlers = new ArrayList<>();

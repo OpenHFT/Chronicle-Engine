@@ -25,7 +25,7 @@ public interface MapHandler {
 
     <V> Function<ValueIn, Map.Entry<V, V>> getWireToEntry();
 
-    static MapHandler create(StringBuilder csp){
+    static MapHandler create(StringBuilder csp) {
         if(csp.toString().contains("file")){
             return new FilePerKeyMapHandler();
         }
