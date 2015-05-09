@@ -76,12 +76,12 @@ public class RemoteTcpClientChronicleContext implements ChronicleContext, Closea
 
     @Override
     public ChronicleThreadPool getThreadPool(String name) {
-        throw new UnsupportedOperationException("todo");
+        throw new UnsupportedOperationException("todo (getThreadPool)");
     }
 
     @Override
     public ChronicleCluster getCluster(String name) {
-        throw new UnsupportedOperationException("todo");
+        throw new UnsupportedOperationException("todo (getCluster)");
     }
 
     @Override
@@ -91,7 +91,7 @@ public class RemoteTcpClientChronicleContext implements ChronicleContext, Closea
 
     @Override
     public Logger getLogger(String name) {
-        throw new UnsupportedOperationException("todo");
+        throw new UnsupportedOperationException("todo (getLogger)");
     }
 
 

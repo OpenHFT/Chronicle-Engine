@@ -125,7 +125,6 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     }
 
     @Test(timeout = 100000)
-    @Ignore
     public void testEntrySet() throws Exception {
 
         // sever
@@ -152,4 +151,29 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
         }
     }
+
+    //Test for FilePerKeyMap
+    @Ignore
+    @Test(timeout = 100000)
+    public void testFPKMap() throws Exception {
+
+        // sever
+        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, new ChronicleEngine())) {
+            int serverPort = serverEndpoint.getPort();
+
+            //client
+            try (final RemoteTcpClientChronicleContext context = new RemoteTcpClientChronicleContext(
+                    "localhost", serverPort, (byte) 2)) {
+
+                try (ChronicleMap<String, String> map = context.getMap
+                        ("filetest", String.class, String.class)) {
+                    map.put("hello", "world");
+                    System.out.println(map.get("hello"));
+
+                }
+            }
+
+        }
+    }
+
 }
