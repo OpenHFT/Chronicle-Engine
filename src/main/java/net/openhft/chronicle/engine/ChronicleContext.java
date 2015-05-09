@@ -22,7 +22,6 @@ import net.openhft.chronicle.engine.old.ChronicleCluster;
 import net.openhft.chronicle.engine.old.ChronicleThreadPool;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.FilePerKeyMap;
-
 import net.openhft.chronicle.set.ChronicleSet;
 
 import java.io.IOException;
@@ -52,7 +51,7 @@ public interface ChronicleContext {
 
     ChronicleCluster getCluster(String name); // check name of cluster interface.
 
-    public FilePerKeyMap getFilePerKeyMap(String name);
+    FilePerKeyMap getFilePerKeyMap(String name);
 
     Logger getLogger(String name);
 }

@@ -64,7 +64,7 @@ public class ServerEndpoint implements Closeable {
 
         AcceptorEventHandler eah = new AcceptorEventHandler(port, () -> {
 
-            final Map<Long, CharSequence> cidToCsp = new HashMap<>();
+            final Map<Long, String> cidToCsp = new HashMap<>();
 
 
             try {

@@ -60,7 +60,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
     @Nullable
     private final WireHandler queueWireHandler;
-    private final Map<Long, CharSequence> cidToCsp;
+    private final Map<Long, String> cidToCsp;
 
     @NotNull
     private final ChronicleEngine chronicleEngine;
@@ -69,7 +69,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private final CollectionWireHandler<Map.Entry<byte[], byte[]>, Set<Map.Entry<byte[], byte[]>>> entrySetHandler;
     private final CollectionWireHandler<byte[], Collection<byte[]>> valuesHander;
 
-    public EngineWireHandler(@NotNull final Map<Long, CharSequence> cidToCsp,
+    public EngineWireHandler(@NotNull final Map<Long, String> cidToCsp,
                              @NotNull final ChronicleEngine chronicleEngine)
                               throws IOException{
             this.mapWireHandler = new MapWireHandlerProcessor<>(cidToCsp);
