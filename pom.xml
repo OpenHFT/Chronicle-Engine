@@ -51,6 +51,12 @@
                 <scope>import</scope>
             </dependency>
 
+            <dependency>
+                <groupId>net.openhft</groupId>
+                <artifactId>chronicle-map</artifactId>
+                <version>3.0.2-alpha</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
