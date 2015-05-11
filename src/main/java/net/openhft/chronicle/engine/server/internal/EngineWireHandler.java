@@ -104,7 +104,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
             final StringBuilder cspText = peekType(in);
             final String serviceName = serviceName(cspText);
 
-            if (endsWith(cspText, "#map")) {
+            if (endsWith(cspText, "?view=map")) {
                 MapHandler mapHandler = MapHandler.create(cspText);
                 final Map map = mapHandler.getMap(chronicleEngine, serviceName);
 
@@ -120,7 +120,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                 return;
             }
 
-            if (endsWith(cspText, "#entrySet")) {
+            if (endsWith(cspText, "?view=entrySet")) {
                 MapHandler mapHandler = MapHandler.create(cspText);
                 final Map map = mapHandler.getMap(chronicleEngine, serviceName);
                 entrySetHandler.process(in, out, map.entrySet(), cspText, mapHandler.getEntryToWire(),
@@ -128,7 +128,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                 return;
             }
 
-            if (endsWith(cspText, "#keySet")) {
+            if (endsWith(cspText, "?view=keySet")) {
                 MapHandler mapHandler = MapHandler.create(cspText);
                 final Map map = mapHandler.getMap(chronicleEngine, serviceName);
                 keySetHandler.process(in, out, map.keySet(), cspText, mapHandler.getKeyToWire(),
@@ -136,7 +136,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                 return;
             }
 
-            if (endsWith(cspText, "#values")) {
+            if (endsWith(cspText, "?view=values")) {
                 MapHandler mapHandler = MapHandler.create(cspText);
                 final Map map = mapHandler.getMap(chronicleEngine, serviceName);
                 valuesHander.process(in, out, map.values(), cspText, mapHandler.getKeyToWire(),
@@ -145,7 +145,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
             }
 
 
-            if (endsWith(cspText, "#queue") && queueWireHandler != null) {
+            if (endsWith(cspText, "?view=queue") && queueWireHandler != null) {
                 queueWireHandler.process(in, out);
                 return;
             }
@@ -202,7 +202,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private String serviceName(@NotNull final StringBuilder cspText) {
 
         final int slash = cspText.lastIndexOf("/");
-        final int hash = cspText.lastIndexOf("#");
+        final int hash = cspText.lastIndexOf("?view=");
 
         return (slash != -1 && slash < (cspText.length() - 1) &&
                 hash != -1 && hash < (cspText.length() - 1))
