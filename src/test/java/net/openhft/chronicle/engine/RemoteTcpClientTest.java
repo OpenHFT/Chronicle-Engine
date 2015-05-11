@@ -25,12 +25,9 @@ import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
+import net.openhft.chronicle.wire.YamlLogging;
 import org.junit.Ignore;
 import org.junit.Test;
-
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 
@@ -125,7 +122,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     }
 
     @Test(timeout = 100000)
-    public void testEntrySet() throws Exception {
+    public void testDisplayYamlForPut() throws Exception {
 
         // sever
         try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, new ChronicleEngine())) {
@@ -142,10 +139,12 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
                         ("test", String.class, String.class)) {
                     map.put("hello", "world");
 
-                    final Set<Map.Entry<String, String>> entries = map.entrySet();
+                    YamlLogging.clientReads = true;
+                    YamlLogging.clientWrites = true;
+                    YamlLogging.title = "put(<key>,<value>)";
+                    YamlLogging.writeMessage = "map.put(\"hello\", \"world\");";
 
-                    final Iterator<Map.Entry<String, String>> iterator = entries.iterator();
-
+                    map.put("hello", "world");
                 }
             }
 
