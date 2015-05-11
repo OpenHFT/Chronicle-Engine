@@ -165,7 +165,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
         final Bytes<?> bytes = in.bytes();
 
-        if (net.openhft.chronicle.wire.YamlLogging.showServerReads) {
+      /*  if (net.openhft.chronicle.wire.YamlLogging.showServerReads) {
             try {
                 System.out.println("--------------------------------------------\nserver reads:\n\n" +
                         Wires.fromSizePrefixedBlobs(in.bytes()));
@@ -173,7 +173,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                 System.out.println("--------------------------------------------\nserver reads:\n\n" +
                         Bytes.toDebugString(in.bytes()));
             }
-        }
+        }*/
 
         long pos = bytes.position();
         try {
