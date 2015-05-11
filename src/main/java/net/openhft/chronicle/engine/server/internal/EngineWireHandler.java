@@ -20,12 +20,11 @@ package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
-import net.openhft.chronicle.map.FilePerKeyMap;
-import net.openhft.chronicle.wire.collection.CollectionWireHandlerProcessor;
-import net.openhft.chronicle.wire.map.MapWireHandler;
 import net.openhft.chronicle.network.WireTcpHandler;
 import net.openhft.chronicle.wire.*;
 import net.openhft.chronicle.wire.collection.CollectionWireHandler;
+import net.openhft.chronicle.wire.collection.CollectionWireHandlerProcessor;
+import net.openhft.chronicle.wire.map.MapWireHandler;
 import net.openhft.chronicle.wire.map.MapWireHandlerProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,8 +63,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
     @NotNull
     private final ChronicleEngine chronicleEngine;
-    private final MapWireHandler<byte[], byte[]> mapWireHandler;
-    private final MapWireHandler<String, String> fileMapWireHandler;
+    private final MapWireHandler mapWireHandler;
     private final CollectionWireHandler<Map.Entry<byte[], byte[]>, Set<Map.Entry<byte[], byte[]>>> entrySetHandler;
     private final CollectionWireHandler<byte[], Collection<byte[]>> valuesHander;
 
@@ -73,8 +71,8 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                              @NotNull final ChronicleEngine chronicleEngine)
                               throws IOException{
             this.mapWireHandler = new MapWireHandlerProcessor<>(cidToCsp);
-            this.fileMapWireHandler = new MapWireHandlerProcessor<>(cidToCsp);
-            this.keySetHandler = new CollectionWireHandlerProcessor<>();
+
+        this.keySetHandler = new CollectionWireHandlerProcessor<>();
             this.queueWireHandler = null; //QueueWireHandler();
             this.cidToCsp = cidToCsp;
             this.chronicleEngine = chronicleEngine;
@@ -110,24 +108,14 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                 MapHandler mapHandler = MapHandler.create(cspText);
                 final Map map = mapHandler.getMap(chronicleEngine, serviceName);
 
-                //todo need to do something better than instanceof
-                if(map instanceof FilePerKeyMap){
-                    fileMapWireHandler.process(in,
+                mapWireHandler.process(in,
                             out,
                             map,
                             cspText,
                             mapHandler.getValueToWire(),
                             mapHandler.getWireToKey(),
                             mapHandler.getWireToValue());
-                }else {
-                    mapWireHandler.process(in,
-                            out,
-                            map,
-                            cspText,
-                            mapHandler.getValueToWire(),
-                            mapHandler.getWireToKey(),
-                            mapHandler.getWireToValue());
-                }
+
 
                 return;
             }
@@ -177,12 +165,14 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
         final Bytes<?> bytes = in.bytes();
 
-        try {
-            System.out.println("--------------------------------------------\nserver reads:\n\n" +
-                    Wires.fromSizePrefixedBlobs(in.bytes()));
-        } catch (Exception e) {
-            System.out.println("--------------------------------------------\nserver reads:\n\n" +
-                    Bytes.toDebugString(in.bytes()));
+        if (net.openhft.chronicle.wire.YamlLogging.showServerReads) {
+            try {
+                System.out.println("--------------------------------------------\nserver reads:\n\n" +
+                        Wires.fromSizePrefixedBlobs(in.bytes()));
+            } catch (Exception e) {
+                System.out.println("--------------------------------------------\nserver reads:\n\n" +
+                        Bytes.toDebugString(in.bytes()));
+            }
         }
 
         long pos = bytes.position();
