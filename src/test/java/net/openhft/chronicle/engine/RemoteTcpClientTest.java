@@ -175,4 +175,38 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
         }
     }
 
+    @Ignore
+    @Test
+    public void test2MBEntries() throws Exception {
+
+        // sever
+        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, new ChronicleEngine())) {
+            int serverPort = serverEndpoint.getPort();
+
+            //client
+            try (final RemoteTcpClientChronicleContext context = new RemoteTcpClientChronicleContext(
+                    "localhost", serverPort, (byte) 2)) {
+
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < 50_000; i++) {
+                    sb.append('x');
+                }
+
+                long time = System.currentTimeMillis();
+                int tl = 0;
+                //for (int j = 0; j < 1000; j++) {
+                for (int i = 0; i < 2_000; i++) {
+                    try (ChronicleMap<String, String> map = context.getMap
+                            ("test", String.class, String.class)) {
+                        map.put("largeEntry", sb.toString());
+//                        tl += map.get("largeEntry").length();
+                    }
+                }
+                //}
+                System.out.format("Time for 100MB %,dms%n", (System.currentTimeMillis() - time));
+//                assertEquals(100_000_000, tl);
+            }
+
+        }
+    }
 }

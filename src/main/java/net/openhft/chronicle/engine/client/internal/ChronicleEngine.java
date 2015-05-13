@@ -19,6 +19,7 @@
 package net.openhft.chronicle.engine.client.internal;
 
 import net.openhft.chronicle.Chronicle;
+import net.openhft.chronicle.bytes.BytesMarshaller;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.ChronicleContext;
 import net.openhft.chronicle.engine.FilePerKeyMapSubscription;
@@ -26,16 +27,15 @@ import net.openhft.chronicle.engine.MapEventListener;
 import net.openhft.chronicle.engine.Subscription;
 import net.openhft.chronicle.engine.old.ChronicleCluster;
 import net.openhft.chronicle.engine.old.ChronicleThreadPool;
-import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.EngineMap;
-import net.openhft.chronicle.map.FilePerKeyMap;
-import net.openhft.chronicle.map.MapWireConnectionHub;
+import net.openhft.chronicle.map.*;
 
 import net.openhft.chronicle.set.ChronicleSet;
 import net.openhft.chronicle.wire.TextWire;
+import net.openhft.lang.io.serialization.impl.SnappyStringMarshaller;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -51,7 +51,7 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
 
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(ChronicleEngine.class);
 
-//    private final Map<String, ChronicleQueue> queues = Collections.synchronizedMap(new
+    //    private final Map<String, ChronicleQueue> queues = Collections.synchronizedMap(new
     //        LinkedHashMap<>());
     private final Map<String, Map<byte[], byte[]>> underlyingMaps
             = Collections.synchronizedMap(new LinkedHashMap<>());
@@ -109,7 +109,7 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
             return (ChronicleMap<K, V>) underlyingMap;
 
         final ChronicleMap result = maps.computeIfAbsent(
-                name + "/" + kClass.getSimpleName() + "/" + vClass.getSimpleName(), k -> {
+                name, k -> {
                     try {
 
                         return new EngineMap<>(
@@ -130,16 +130,21 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
     }
 
     @Override
-    public FilePerKeyMap getFilePerKeyMap(String name){
-        FilePerKeyMap fpkm = fpMaps.computeIfAbsent(name,
-                k -> new FilePerKeyMap(name));
-        return fpkm;
+    public FilePerKeyMap getFilePerKeyMap(String name) {
+        return fpMaps.computeIfAbsent(name,
+                k -> {
+                    try {
+                        return new FilePerKeyMap(k);
+                    } catch (IOException e) {
+                        throw Jvm.rethrow(e);
+                    }
+                });
     }
 
 
     @Override
     public <I> I getService(Class<I> iClass, String name, Class... args) throws IOException {
-      //  if (iClass == Chronicle.class)
+        //  if (iClass == Chronicle.class)
         //    return (I) getQueue(name);
         if (iClass == ChronicleSet.class)
             return (I) getSet(name, args[0]);
@@ -209,6 +214,6 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
 
     @Override
     public void close() throws IOException {
-       mapWireConnectionHub.close();
+        mapWireConnectionHub.close();
     }
 }
