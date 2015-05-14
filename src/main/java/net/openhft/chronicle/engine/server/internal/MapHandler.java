@@ -3,6 +3,7 @@ package net.openhft.chronicle.engine.server.internal;
 import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.ValueOut;
+import net.openhft.lang.Jvm;
 
 import java.io.IOException;
 import java.util.Map;
@@ -26,10 +27,27 @@ public interface MapHandler {
     <V> Function<ValueIn, Map.Entry<V, V>> getWireToEntry();
 
     static MapHandler create(StringBuilder csp) {
-        if(csp.toString().contains("file")){
-            return new FilePerKeyMapHandler();
-        }
-        return new ByteByteMapHandler();
+
+        if (csp.toString().contains("file"))
+            return new StringStringMapHandler((engine, serviceName) -> engine.getFilePerKeyMap(
+                    serviceName));
+
+        else if (csp.toString().contains("object"))
+            return new ByteByteMapHandler();
+
+        else
+            return new StringStringMapHandler((engine, serviceName) -> {
+
+                try {
+                    return engine.getMap(serviceName, String.class, String.class);
+                } catch (IOException e) {
+                    Jvm.rethrow(e);
+                    // keeps the compiler happy :-)
+                    return null;
+                }
+
+            });
+
     }
 
     Map getMap(ChronicleEngine engine, String serviceName) throws IOException;

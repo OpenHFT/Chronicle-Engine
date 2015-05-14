@@ -29,7 +29,7 @@ public class MapWireConnectionHub implements Closeable {
     private final ReplicationHub hub;
     private final ArrayList<BytesChronicleMap> bytesChronicleMaps = new ArrayList<>();
     private final ChannelProvider provider;
-    private final Supplier<ChronicleHashInstanceBuilder<ChronicleMap<byte[], byte[]>>> mapFactory;
+
     protected ChronicleMap<String, Integer> channelNameToId;
 
 
@@ -52,8 +52,6 @@ public class MapWireConnectionHub implements Closeable {
 
         provider = ChannelProvider.getProvider(hub);
         channelMap = provider.chronicleChannelMap();
-
-        mapFactory = () -> of(byte[].class, byte[].class).instance();
 
 
     }
@@ -81,24 +79,24 @@ public class MapWireConnectionHub implements Closeable {
      * channel
      *
      * @param fromName the name of the channel
-     * @param builder
+     * @param mapFactory
      * @return the id associated with this name
      */
-    BytesChronicleMap acquireMap(@NotNull final String fromName,
-                                 @NotNull final ChronicleHashInstanceBuilder builder)
+    public <K, V> ChronicleMap<K, V> acquireMap(@NotNull final String fromName,
+                                                Supplier<ChronicleHashInstanceBuilder<ChronicleMap<K, V>>> mapFactory)
             throws IOException {
 
         final Integer channelId = channelNameToId.get(fromName);
 
         if (channelId != null)
-            return bytesMap(channelId);
+            return (ChronicleMap<K, V>) bytesMap(channelId).delegate;
 
         final int nextFreeChannel = getNextFreeChannel();
 
             mapFactory.get().replicatedViaChannel(hub.createChannel(nextFreeChannel)).create();
             channelNameToId.put(fromName, nextFreeChannel);
 
-            return bytesMap(nextFreeChannel);
+        return (ChronicleMap<K, V>) bytesMap(nextFreeChannel).delegate;
     }
 
 

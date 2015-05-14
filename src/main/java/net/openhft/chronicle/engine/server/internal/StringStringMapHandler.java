@@ -3,16 +3,27 @@ package net.openhft.chronicle.engine.server.internal;
 import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.ValueOut;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Created by daniel on 06/05/15.
  */
-public class FilePerKeyMapHandler implements MapHandler {
+public class StringStringMapHandler implements MapHandler {
+
+    private final BiFunction<ChronicleEngine,String,Map> supplier;
+
+    StringStringMapHandler(@NotNull BiFunction<ChronicleEngine, String, Map> supplier) {
+        this.supplier = supplier;
+    }
+
+
     private final BiConsumer<ValueOut, String> keyToWire = ValueOut::object;
 
     private final Function<ValueIn, String> wireToKey =
@@ -82,8 +93,7 @@ public class FilePerKeyMapHandler implements MapHandler {
 
     @Override
     public Map getMap(ChronicleEngine engine, String serviceName) throws IOException{
-        return engine.getFilePerKeyMap(
-                serviceName);
+        return supplier.apply(engine,serviceName);
     }
 
 }

@@ -40,7 +40,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import static net.openhft.chronicle.map.EngineMap.underlyingMap;
+import static net.openhft.chronicle.map.ChronicleMapBuilder.of;
 
 /**
  * Created by peter.lawrey on 09/10/14.
@@ -54,6 +54,10 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
     private final Map<String, Map<byte[], byte[]>> underlyingMaps
             = Collections.synchronizedMap(new LinkedHashMap<>());
     private final Map<String, ChronicleMap> maps = Collections.synchronizedMap(new LinkedHashMap<>());
+
+    private final Map<String, ChronicleMap<String, String>> chronStringMap = Collections
+            .synchronizedMap(new
+                    LinkedHashMap<>());
     private final Map<String, FilePerKeyMap> fpMaps = Collections.synchronizedMap(new LinkedHashMap<>());
     private final Map<String, ChronicleSet> sets = Collections.synchronizedMap(new LinkedHashMap<>());
     private final Map<String, ChronicleThreadPool> threadPools = Collections.synchronizedMap(new LinkedHashMap<>());
@@ -90,13 +94,31 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
 
     @Override
     public <K, V> ChronicleMap<K, V> getMap(String name, Class<K> kClass, Class<V> vClass) throws IOException {
+
+
+        // if its a string map the we will use the string map directly
+        if (CharSequence.class.isAssignableFrom(kClass) &&
+                CharSequence.class.isAssignableFrom(vClass)) {
+
+            // TODO make this configurable.
+            long entries = 1000;
+
+
+            // todo - for the moment we will default to 100 entries per map, but this is for engine to
+            // todo decided later.
+
+            return mapWireConnectionHub.acquireMap(name, () -> of(kClass, vClass).entries(entries).instance());
+        }
+
+
+
         @SuppressWarnings("unchecked")
         Map<byte[], byte[]> underlyingMap = underlyingMaps.computeIfAbsent(name, k -> {
             try {
                 // TODO make this configurable.
                 long entries = 1000;
-                return underlyingMap(name, mapWireConnectionHub, entries);
-
+                return mapWireConnectionHub.acquireMap(name, () -> of(byte[]
+                        .class, byte[].class).entries(entries).instance());
             } catch (IOException ioe) {
                 throw Jvm.rethrow(ioe);
             }
@@ -151,6 +173,7 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
             return (I) getMap(name, args[0], args[1]);
         throw new UnsupportedOperationException();
     }
+
 
     @Override
     public <K, V> Subscription<K, MapEventListener<K, V>> createMapSubscription(String name, Class<K> kClass, Class<V> vClass) {

@@ -53,11 +53,10 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
 
         // todo - for the moment we will default to 100 entries per map, but this is for engine to
         // todo decided later.
-        final ChronicleHashInstanceBuilder instance
-                = of(byte[].class, byte[].class).entries(entries).instance();
 
-        final BytesChronicleMap bytesChronicleMap = mapWireConnectionHub.acquireMap(name, instance);
-        return (Map) bytesChronicleMap.delegate;
+        return  mapWireConnectionHub.acquireMap(name, () -> of(byte[].class, byte[].class).entries
+                (entries)
+                .instance());
     }
 
     @Override
