@@ -130,7 +130,14 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
     @Override
     public FilePerKeyMap getFilePerKeyMap(String name) {
         return fpMaps.computeIfAbsent(name,
-                k -> new FilePerKeyMap(k));
+                k -> {
+                    try {
+                        return new FilePerKeyMap(k);
+                    } catch (IOException e) {
+                        Jvm.rethrow(e);
+                        return null;
+                    }
+                });
     }
 
 
