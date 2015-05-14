@@ -21,14 +21,19 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.map.ChronicleMap;
+import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.mockito.Mockito;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.*;
 
+import static net.openhft.chronicle.engine.Utils.methodName;
+import static net.openhft.chronicle.engine.Utils.yamlLoggger;
+import static net.openhft.chronicle.wire.YamlLogging.writeMessage;
 import static org.junit.Assert.*;
 
 /*
@@ -41,6 +46,14 @@ import static org.junit.Assert.*;
 
 public class RemoteChronicleMapTest extends JSR166TestCase {
 
+
+    @Rule
+    public TestName name = new TestName();
+
+    @Before
+    public void before() {
+        methodName(name.getMethodName());
+    }
 
     static ChronicleMap<Integer, String> newIntString() throws IOException {
         final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier(Integer.class, String.class, new ChronicleEngine());
@@ -131,8 +144,10 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
     @Test(timeout = 50000)
     public void testContainsKey() throws IOException {
         try (ChronicleMap map = map5()) {
-            assertTrue(map.containsKey(one));
+            writeMessage = "example of containsKey(<key>) returning true";
+            yamlLoggger(() -> assertTrue(map.containsKey(one)));
             assertFalse(map.containsKey(zero));
+
         }
     }
 
@@ -142,7 +157,8 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
     @Test(timeout = 50000)
     public void testContainsValue() throws IOException {
         try (ChronicleMap map = map5()) {
-            assertTrue(map.containsValue("A"));
+            writeMessage = "example of containsValue(<value>) returning true";
+            yamlLoggger(() -> assertTrue(map.containsValue("A")));
             assertFalse(map.containsValue("Z"));
         }
     }
@@ -155,7 +171,11 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
         try (ChronicleMap map = map5()) {
             assertEquals("A", (String) map.get(one));
             try (ChronicleMap empty = newStrStrMap()) {
-                assertNull(map.get(notPresent));
+
+                writeMessage = "example of get(<key>) returning null, when the keys is not " +
+                        "present in the map";
+
+                yamlLoggger(() -> assertNull(map.get(notPresent)));
             }
         }
     }
@@ -170,7 +190,8 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
                 if (!empty.isEmpty()) {
                     System.out.print("not empty " + empty);
                 }
-                assertTrue(empty.isEmpty());
+                writeMessage = "example of isEmpty() returning true, not it uses the size() method";
+                yamlLoggger(() -> assertTrue(empty.isEmpty()));
                 assertFalse(map.isEmpty());
             }
         }
@@ -183,8 +204,13 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
     @Test(timeout = 50000)
     public void testKeySet() throws IOException {
         try (ChronicleMap map = map5()) {
+            writeMessage = "example of checking the size of a keyset";
+            yamlLoggger(() -> {
+                        Set s = map.keySet();
+                        assertEquals(5, s.size());
+                    }
+            );
             Set s = map.keySet();
-            assertEquals(5, s.size());
             assertTrue(s.contains(one));
             assertTrue(s.contains(two));
             assertTrue(s.contains(three));

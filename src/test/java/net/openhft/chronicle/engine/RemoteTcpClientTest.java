@@ -26,13 +26,25 @@ import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import net.openhft.chronicle.wire.YamlLogging;
+import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 
+import static net.openhft.chronicle.engine.Utils.yamlLoggger;
+import static net.openhft.chronicle.engine.Utils.methodName;
 import static org.junit.Assert.assertEquals;
 
 public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
+    @Rule
+    public TestName name = new TestName();
+
+    @Before
+    public void before() {
+        methodName(name.getMethodName());
+    }
 
     class MyMarshallable implements Marshallable {
 
@@ -76,6 +88,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
         }
     }
 
+
     @Test(timeout = 100000)
     public void testMarshable() throws Exception {
 
@@ -87,22 +100,17 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
             try (final RemoteTcpClientChronicleContext context = new RemoteTcpClientChronicleContext(
                     "localhost", serverPort, (byte) 2)) {
 
-                // test using Marshallable Keys
-
-
                 try (ChronicleMap<MyMarshallable, Long> numbers = context.getMap
                         ("marshallable-keys", MyMarshallable.class, Long.class)) {
-
                     numbers.clear();
 
                 }
-
 
                 try (ChronicleMap<MyMarshallable, Long> numbers = context.getMap
                         ("marshallable-keys", MyMarshallable.class, Long.class)) {
                     MyMarshallable key1 = new MyMarshallable("key1");
                     MyMarshallable key2 = new MyMarshallable("key2");
-                    numbers.put(key1, 1L);
+                    yamlLoggger(() -> numbers.put(key1, 1L));
                     numbers.put(key2, 2L);
                 }
 
@@ -122,7 +130,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     }
 
     @Test(timeout = 100000)
-    public void testDisplayYamlForPut() throws Exception {
+    public void testPut() throws Exception {
 
         // sever
         try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, new ChronicleEngine())) {
@@ -139,12 +147,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
                         ("test", String.class, String.class)) {
                     map.put("hello", "world");
 
-                    YamlLogging.clientReads = true;
-                    YamlLogging.clientWrites = true;
-                    YamlLogging.title = "put(<key>,<value>)";
-                    YamlLogging.writeMessage = "map.put(\"hello\", \"world\");";
-
-                    map.put("hello", "world");
+                    yamlLoggger(() -> map.put("hello", "world"));
                 }
             }
 

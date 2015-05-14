@@ -167,10 +167,10 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
         if (net.openhft.chronicle.wire.YamlLogging.showServerReads) {
             try {
-                System.out.println("--------------------------------------------\nserver reads:\n\n" +
+                System.out.println("\n\n" +
                         Wires.fromSizePrefixedBlobs(in.bytes()));
             } catch (Exception e) {
-                System.out.println("--------------------------------------------\nserver reads:\n\n" +
+                System.out.println("\n\n" +
                         Bytes.toDebugString(in.bytes()));
             }
         }
