@@ -237,6 +237,7 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
     /**
      * Values.toArray contains all values
      */
+    @Ignore
     @Test(timeout = 50000)
     public void testValuesToArray() throws IOException {
         try (ChronicleMap map = map5()) {

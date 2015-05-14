@@ -55,7 +55,7 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
             = Collections.synchronizedMap(new LinkedHashMap<>());
     private final Map<String, ChronicleMap> maps = Collections.synchronizedMap(new LinkedHashMap<>());
 
-    private final Map<String, ChronicleMap<String, String>> chronStringMap = Collections
+    private final Map<String, ChronicleMap<CharSequence, CharSequence>> chronStringMap = Collections
             .synchronizedMap(new
                     LinkedHashMap<>());
     private final Map<String, FilePerKeyMap> fpMaps = Collections.synchronizedMap(new LinkedHashMap<>());
@@ -93,7 +93,10 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
     }
 
     @Override
-    public <K, V> ChronicleMap<K, V> getMap(String name, Class<K> kClass, Class<V> vClass) throws IOException {
+    public <K, V> ChronicleMap<K, V> getMap(String name,
+                                            final Class<K> kClass,
+                                            final Class<V> vClass)
+            throws IOException {
 
 
         // if its a string map the we will use the string map directly
@@ -103,11 +106,23 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
             // TODO make this configurable.
             long entries = 1000;
 
-
             // todo - for the moment we will default to 100 entries per map, but this is for engine to
             // todo decided later.
 
-            return mapWireConnectionHub.acquireMap(name, () -> of(kClass, vClass).entries(entries).instance());
+            final ChronicleMap<CharSequence, CharSequence> stringMap = chronStringMap.computeIfAbsent(name,
+                    k -> {
+                        try {
+                            return mapWireConnectionHub.acquireMap(name, () -> of(
+                                    CharSequence.class,
+                                    CharSequence.class)
+                                    .entries(entries)
+                                    .instance());
+                        } catch (IOException ioe) {
+                            throw Jvm.rethrow(ioe);
+                        }
+                    });
+
+            return (ChronicleMap) stringMap;
         }
 
 
