@@ -103,6 +103,11 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
         if (CharSequence.class.isAssignableFrom(kClass) &&
                 CharSequence.class.isAssignableFrom(vClass)) {
 
+
+            if (String.class.isAssignableFrom(kClass) &&
+                    String.class.isAssignableFrom(vClass)) {
+                throw new UnsupportedOperationException("Please use a Map<CharSequence,CharSequence> rather than a Map<String,String>");
+            }
             // TODO make this configurable.
             long entries = 1000;
 
@@ -124,7 +129,6 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
 
             return (ChronicleMap) stringMap;
         }
-
 
 
         @SuppressWarnings("unchecked")
