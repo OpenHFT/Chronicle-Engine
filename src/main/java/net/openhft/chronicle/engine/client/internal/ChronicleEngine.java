@@ -99,6 +99,14 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
             throws IOException {
 
 
+        // TODO make this configurable.
+        long entries = 1000;
+        final int maxValueSize = 1 << 21;
+        final int maxKeySize = 1024;
+        final boolean putReturnsNull = true;
+        final boolean removeReturnsNull = true;
+
+
         // if its a string map the we will use the string map directly
         if (CharSequence.class.isAssignableFrom(kClass) &&
                 CharSequence.class.isAssignableFrom(vClass)) {
@@ -108,8 +116,6 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
                     String.class.isAssignableFrom(vClass)) {
                 throw new UnsupportedOperationException("Please use a Map<CharSequence,CharSequence> rather than a Map<String,String>");
             }
-            // TODO make this configurable.
-            long entries = 1000;
 
             // todo - for the moment we will default to 100 entries per map, but this is for engine to
             // todo decided later.
@@ -117,10 +123,15 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
             final ChronicleMap<CharSequence, CharSequence> stringMap = chronStringMap.computeIfAbsent(name,
                     k -> {
                         try {
+
                             return mapWireConnectionHub.acquireMap(name, () -> of(
                                     CharSequence.class,
                                     CharSequence.class)
                                     .entries(entries)
+                                    .averageValueSize(maxValueSize)
+                                    .averageKeySize(maxKeySize)
+                                    .putReturnsNull(putReturnsNull)
+                                    .removeReturnsNull(removeReturnsNull)
                                     .instance());
                         } catch (IOException ioe) {
                             throw Jvm.rethrow(ioe);
@@ -134,10 +145,14 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
         @SuppressWarnings("unchecked")
         Map<byte[], byte[]> underlyingMap = underlyingMaps.computeIfAbsent(name, k -> {
             try {
-                // TODO make this configurable.
-                long entries = 1000;
+
                 return mapWireConnectionHub.acquireMap(name, () -> of(byte[]
-                        .class, byte[].class).entries(entries).instance());
+                        .class, byte[].class)
+                        .averageValueSize(maxValueSize)
+                        .averageKeySize(maxKeySize)
+                        .putReturnsNull(putReturnsNull)
+                        .removeReturnsNull(removeReturnsNull)
+                        .entries(entries).instance());
             } catch (IOException ioe) {
                 throw Jvm.rethrow(ioe);
             }

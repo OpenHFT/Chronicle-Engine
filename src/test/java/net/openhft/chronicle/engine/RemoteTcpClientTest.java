@@ -107,7 +107,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
 
                 // char[] charArray2MB = new char[(1 << 20) * 2];
-                char[] charArray2MB = new char[(1 << 16) * 2];
+                char[] charArray2MB = new char[(1 << 17) * 2];
 
                 Arrays.fill(charArray2MB, 'X');
                 test.put("key", new String(charArray2MB));

@@ -146,7 +146,6 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
             if (endsWith(cspText, "?view=queue") && queueWireHandler != null) {
                 queueWireHandler.process(in, out);
-                return;
             }
 
         } catch (IOException e) {
