@@ -25,10 +25,7 @@ import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TestName;
 
 import java.util.Arrays;
@@ -105,15 +102,15 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
                 final ChronicleMap<String, String> test = remoteContext.getMap("test",
                         String.class, String.class);
 
-
-                // char[] charArray2MB = new char[(1 << 20) * 2];
-                char[] charArray2MB = new char[(1 << 17) * 2];
+                final int MB = 1 << 20;
+                char[] charArray2MB = new char[MB * 2];
 
                 Arrays.fill(charArray2MB, 'X');
-                test.put("key", new String(charArray2MB));
+                final String expected = new String(charArray2MB);
+                test.put("key", expected);
 
-                final String s = test.get("key");
-                System.out.println(s);
+                final String actual = test.get("key");
+                Assert.assertEquals(expected, actual);
             }
         }
 
