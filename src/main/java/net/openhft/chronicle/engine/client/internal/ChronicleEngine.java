@@ -117,8 +117,6 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
                 throw new UnsupportedOperationException("Please use a Map<CharSequence,CharSequence> rather than a Map<String,String>");
             }
 
-            // todo - for the moment we will default to 100 entries per map, but this is for engine to
-            // todo decided later.
 
             final ChronicleMap<CharSequence, CharSequence> stringMap = chronStringMap.computeIfAbsent(name,
                     k -> {
