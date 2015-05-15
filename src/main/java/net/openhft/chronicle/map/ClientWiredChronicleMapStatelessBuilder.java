@@ -20,7 +20,7 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.hash.ChronicleHashStatelessClientBuilder;
-import net.openhft.lang.MemoryUnit;
+import net.openhft.chronicle.core.MemoryUnit;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;

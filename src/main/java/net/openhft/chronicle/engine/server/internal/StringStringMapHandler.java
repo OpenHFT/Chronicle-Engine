@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * Created by daniel on 06/05/15.
@@ -37,7 +36,7 @@ public class StringStringMapHandler implements MapHandler {
     private final BiConsumer<ValueOut, Map.Entry<String, String>> entryToWire
             = (v, e) -> {
         v.marshallable(w -> {
-            w.write(() -> "key").object(e.getKey()).write(() -> "value").object(e.getValue());
+            w.write(() -> "key").object(e.getKey().toString()).write(() -> "value").object(e.getValue().toString());
         });
     };
 

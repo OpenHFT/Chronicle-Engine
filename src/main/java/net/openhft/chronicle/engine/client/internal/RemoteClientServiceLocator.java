@@ -23,7 +23,7 @@ import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ClientWiredChronicleMapStatelessBuilder;
 
-import net.openhft.lang.MemoryUnit;
+import net.openhft.chronicle.core.MemoryUnit;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;

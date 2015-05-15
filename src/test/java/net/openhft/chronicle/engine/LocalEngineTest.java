@@ -21,26 +21,15 @@ package net.openhft.chronicle.engine;
 import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.FilePerKeyChronicleMap;
-import net.openhft.chronicle.map.FilePerKeyMap;
-import net.openhft.chronicle.set.ChronicleSet;
-import net.openhft.lang.Jvm;
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.mockito.Mockito.mock;
 
 public class LocalEngineTest {
   /*  final ChronicleContext context = new ChronicleEngine();
@@ -84,7 +73,7 @@ public class LocalEngineTest {
         int factor = 5;
 
         ChronicleEngine engine = new ChronicleEngine();
-        String dir = Jvm.TMP + "/localtest.deleteme";
+        String dir = System.getProperty("java.io.tmpdir") + "/localtest.deleteme";
         File file = new File(dir);
         engine.setMap("localtest", new FilePerKeyChronicleMap(dir));
         try (ChronicleMap<String, String> map = engine.getMap("localtest", String.class, String.class)) {
