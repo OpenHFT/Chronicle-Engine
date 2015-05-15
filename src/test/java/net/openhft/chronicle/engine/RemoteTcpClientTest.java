@@ -25,15 +25,16 @@ import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
-import net.openhft.chronicle.wire.YamlLogging;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 
-import static net.openhft.chronicle.engine.Utils.yamlLoggger;
+import java.util.Arrays;
+
 import static net.openhft.chronicle.engine.Utils.methodName;
+import static net.openhft.chronicle.engine.Utils.yamlLoggger;
 import static org.junit.Assert.assertEquals;
 
 public class RemoteTcpClientTest extends ThreadMonitoringTest {
@@ -86,6 +87,36 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
         public String toString() {
             return "MyMarshable{" + "someData='" + someData + '\'' + '}';
         }
+    }
+
+
+    @Test(timeout = 100000)
+    public void testLargeString() throws Exception {
+
+        // sever
+        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, new ChronicleEngine())) {
+            int serverPort = serverEndpoint.getPort();
+
+            //client
+            try (final RemoteTcpClientChronicleContext remoteContext = new
+                    RemoteTcpClientChronicleContext(
+                    "localhost", serverPort, (byte) 2)) {
+
+                final ChronicleMap<String, String> test = remoteContext.getMap("test",
+                        String.class, String.class);
+
+
+                // char[] charArray2MB = new char[(1 << 20) * 2];
+                char[] charArray2MB = new char[(1 << 16) * 2];
+
+                Arrays.fill(charArray2MB, 'X');
+                test.put("key", new String(charArray2MB));
+
+                final String s = test.get("key");
+                System.out.println(s);
+            }
+        }
+
     }
 
 
