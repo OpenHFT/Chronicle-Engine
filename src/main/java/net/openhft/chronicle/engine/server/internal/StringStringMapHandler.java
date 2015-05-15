@@ -22,21 +22,18 @@ public class StringStringMapHandler implements MapHandler {
         this.supplier = supplier;
     }
 
-
     private final BiConsumer<ValueOut, String> keyToWire = ValueOut::object;
 
-    private final Function<ValueIn, String> wireToKey =
-            v -> v.object(String.class);
+    private final Function<ValueIn, String> wireToKey = ValueIn::text;
 
     private final BiConsumer<ValueOut, String> valueToWire = ValueOut::object;
 
-    private final Function<ValueIn, String> wireToValue =
-            v -> v.object(String.class);
+    private final Function<ValueIn, String> wireToValue = ValueIn::text;
 
     private final BiConsumer<ValueOut, Map.Entry<String, String>> entryToWire
             = (v, e) -> {
         v.marshallable(w -> {
-            w.write(() -> "key").object(e.getKey().toString()).write(() -> "value").object(e.getValue().toString());
+            w.write(() -> "key").object(e.getKey()).write(() -> "value").object(e.getValue());
         });
     };
 

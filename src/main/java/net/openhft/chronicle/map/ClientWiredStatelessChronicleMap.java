@@ -76,10 +76,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<MapWireH
     }
 
 
-    @SuppressWarnings("UnusedDeclaration")
-    void identifier(int localIdentifier) {
-        hub.localIdentifier = localIdentifier;
-    }
 
     @Override
     public void getAll(File toFile) throws IOException {
@@ -448,21 +444,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<MapWireH
     }
 
 
-    private int readInt(long tid, long startTime) {
-        assert !hub.outBytesLock().isHeldByCurrentThread();
 
-        long timeoutTime = startTime + hub.timeoutMs;
-
-        // receive
-        hub.inBytesLock().lock();
-        try {
-            final Wire wireIn = hub.proxyReply(timeoutTime, tid);
-            checkIsData(wireIn);
-            return wireIn.read(reply).int32();
-        } finally {
-            hub.inBytesLock().unlock();
-        }
-    }
 
 
     @SuppressWarnings("SameParameterValue")
