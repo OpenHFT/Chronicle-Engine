@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.StreamCorruptedException;
 import java.util.*;
+import java.util.function.Consumer;
 
 import static net.openhft.chronicle.engine.client.StringUtils.endsWith;
 import static net.openhft.chronicle.wire.CoreFields.cid;
@@ -69,15 +70,15 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
     public EngineWireHandler(@NotNull final Map<Long, String> cidToCsp,
                              @NotNull final ChronicleEngine chronicleEngine)
-                              throws IOException{
-            this.mapWireHandler = new MapWireHandlerProcessor<>(cidToCsp);
+            throws IOException {
+        this.mapWireHandler = new MapWireHandlerProcessor<>(cidToCsp);
 
         this.keySetHandler = new CollectionWireHandlerProcessor<>();
-            this.queueWireHandler = null; //QueueWireHandler();
-            this.cidToCsp = cidToCsp;
-            this.chronicleEngine = chronicleEngine;
-            this.entrySetHandler = new CollectionWireHandlerProcessor<>();
-            this.valuesHander = new CollectionWireHandlerProcessor<>();
+        this.queueWireHandler = null; //QueueWireHandler();
+        this.cidToCsp = cidToCsp;
+        this.chronicleEngine = chronicleEngine;
+        this.entrySetHandler = new CollectionWireHandlerProcessor<>();
+        this.valuesHander = new CollectionWireHandlerProcessor<>();
     }
 
     private final List<WireHandler> handlers = new ArrayList<>();
@@ -95,75 +96,85 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
         }
     }
 
+    private String serviceName;
+    private long tid;
+
+
+    private final Consumer<WireIn> metaDataConsumer = (metaDataWire) -> {
+        //metaDataWire.read(csp).text(cspText);
+        readCsp(metaDataWire);
+        serviceName = serviceName(cspText);
+        tid = metaDataWire.read(CoreFields.tid).int64();
+    };
+
 
     @Override
-    protected void process(Wire in, Wire out) throws StreamCorruptedException {
+    protected void process(@NotNull final Wire in, @NotNull final Wire out) throws
+            StreamCorruptedException {
 
-        try {
+        logYamlToStandardOut(in);
 
-            final StringBuilder cspText = peekType(in);
-            final String serviceName = serviceName(cspText);
+        in.readDocument(metaDataConsumer, (WireIn dataWire) -> {
 
-            if (endsWith(cspText, "?view=map")) {
-                MapHandler mapHandler = MapHandler.create(cspText);
-                final Map map = mapHandler.getMap(chronicleEngine, serviceName);
+            try {
 
-                mapWireHandler.process(in,
+                if (endsWith(cspText, "?view=map")) {
+                    MapHandler mapHandler = MapHandler.create(cspText);
+                    final Map map = mapHandler.getMap(chronicleEngine, serviceName);
+
+                    mapWireHandler.process(in,
                             out,
                             map,
                             cspText,
+                            tid,
                             mapHandler.getValueToWire(),
                             mapHandler.getWireToKey(),
-                            mapHandler.getWireToValue());
+                            mapHandler.getWireToValue()
+                    );
 
-                return;
+                    return;
+                }
+
+                if (endsWith(cspText, "?view=entrySet")) {
+                    MapHandler mapHandler = MapHandler.create(cspText);
+                    final Map map = mapHandler.getMap(chronicleEngine, serviceName);
+                    entrySetHandler.process(in, out, map.entrySet(), cspText, mapHandler.getEntryToWire(),
+                            mapHandler.getWireToEntry(), HashSet::new, tid);
+                    return;
+                }
+
+                if (endsWith(cspText, "?view=keySet")) {
+                    MapHandler mapHandler = MapHandler.create(cspText);
+                    final Map map = mapHandler.getMap(chronicleEngine, serviceName);
+                    keySetHandler.process(in, out, map.keySet(), cspText, mapHandler.getKeyToWire(),
+                            mapHandler.getWireToKey(), HashSet::new, tid);
+                    return;
+                }
+
+                if (endsWith(cspText, "?view=values")) {
+                    MapHandler mapHandler = MapHandler.create(cspText);
+                    final Map map = mapHandler.getMap(chronicleEngine, serviceName);
+                    valuesHander.process(in, out, map.values(), cspText, mapHandler.getKeyToWire(),
+                            mapHandler.getWireToKey(), ArrayList::new, tid);
+                    return;
+                }
+
+
+                if (endsWith(cspText, "?view=queue") && queueWireHandler != null) {
+                    queueWireHandler.process(in, out);
+                }
+
+            } catch (Exception e) {
+                LOG.error("", e);
             }
 
-            if (endsWith(cspText, "?view=entrySet")) {
-                MapHandler mapHandler = MapHandler.create(cspText);
-                final Map map = mapHandler.getMap(chronicleEngine, serviceName);
-                entrySetHandler.process(in, out, map.entrySet(), cspText, mapHandler.getEntryToWire(),
-                        mapHandler.getWireToEntry(), HashSet::new);
-                return;
-            }
+        });
 
-            if (endsWith(cspText, "?view=keySet")) {
-                MapHandler mapHandler = MapHandler.create(cspText);
-                final Map map = mapHandler.getMap(chronicleEngine, serviceName);
-                keySetHandler.process(in, out, map.keySet(), cspText, mapHandler.getKeyToWire(),
-                        mapHandler.getWireToKey(), HashSet::new);
-                return;
-            }
-
-            if (endsWith(cspText, "?view=values")) {
-                MapHandler mapHandler = MapHandler.create(cspText);
-                final Map map = mapHandler.getMap(chronicleEngine, serviceName);
-                valuesHander.process(in, out, map.values(), cspText, mapHandler.getKeyToWire(),
-                        mapHandler.getWireToKey(), ArrayList::new);
-                return;
-            }
-
-
-            if (endsWith(cspText, "?view=queue") && queueWireHandler != null) {
-                queueWireHandler.process(in, out);
-            }
-
-        } catch (IOException e) {
-            // todo
-            LOG.error("", e);
-        }
 
     }
 
-
-    /**
-     * peeks the csp or if it has a cid converts the cid into a Csp and returns that
-     */
-    private StringBuilder peekType(@NotNull final Wire in) {
-
-        final Bytes<?> bytes = in.bytes();
-
-        if (net.openhft.chronicle.wire.YamlLogging.showServerReads) {
+    private void logYamlToStandardOut(@NotNull Wire in) {
+        if (YamlLogging.showServerReads) {
             try {
                 System.out.println("\n\n" +
                         Wires.fromSizePrefixedBlobs(in.bytes()));
@@ -172,29 +183,24 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                         Bytes.toDebugString(in.bytes()));
             }
         }
+    }
 
-        long pos = bytes.position();
-        try {
 
-            inWire.readDocument(wireIn -> {
+    /**
+     * peeks the csp or if it has a cid converts the cid into a Csp and returns that
+     */
+    private void readCsp(@NotNull final WireIn wireIn) {
 
-                final StringBuilder keyName = Wires.acquireStringBuilder();
+        final StringBuilder keyName = Wires.acquireStringBuilder();
 
-                final ValueIn read = wireIn.read(keyName);
-                if (csp.contentEquals(keyName)) {
-                    read.text(cspText);
-                } else if (cid.contentEquals(keyName)) {
-                    final long cid = read.int64();
-                    final CharSequence s = cidToCsp.get(cid);
-                    cspText.append(s);
-                }
-
-            }, null);
-        } finally {
-            bytes.position(pos);
+        final ValueIn read = wireIn.read(keyName);
+        if (csp.contentEquals(keyName)) {
+            read.text(cspText);
+        } else if (cid.contentEquals(keyName)) {
+            final long cid = read.int64();
+            final CharSequence s = cidToCsp.get(cid);
+            cspText.append(s);
         }
-
-        return cspText;
     }
 
     private String serviceName(@NotNull final StringBuilder cspText) {
