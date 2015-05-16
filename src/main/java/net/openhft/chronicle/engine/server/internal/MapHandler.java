@@ -10,10 +10,32 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
+import static net.openhft.chronicle.engine.client.StringUtils.contains;
+
 /**
  * Created by daniel on 06/05/15.
  */
 public interface MapHandler {
+
+    MapHandler STRING_STRING_MAP_HANDLER = new StringStringMapHandler((engine, serviceName) ->
+            engine.getFilePerKeyMap(
+                    serviceName));
+    MapHandler BYTE_BYTE_MAP_HANDLER = new ByteByteMapHandler();
+
+
+    MapHandler CHAR_CHAR_MAP_HANDLER = new StringStringMapHandler((engine, serviceName) -> {
+
+        try {
+            return engine.getMap(serviceName, CharSequence.class, CharSequence.class);
+        } catch (IOException e) {
+            Jvm.rethrow(e);
+            // keeps the compiler happy :-)
+            return null;
+        }
+
+    });
+
+
     <V> BiConsumer<ValueOut, V> getKeyToWire();
 
     <V> Function<ValueIn, V> getWireToKey();
@@ -26,27 +48,14 @@ public interface MapHandler {
 
     <V> Function<ValueIn, Map.Entry<V, V>> getWireToEntry();
 
-    static MapHandler create(StringBuilder csp) {
+    static MapHandler instance(CharSequence csp) {
 
-        if (csp.toString().contains("file"))
-            return new StringStringMapHandler((engine, serviceName) -> engine.getFilePerKeyMap(
-                    serviceName));
-
-        else if (csp.toString().contains("object"))
-            return new ByteByteMapHandler();
-
+        if (contains(csp, "file")) {
+            return STRING_STRING_MAP_HANDLER;
+        } else if (contains(csp, "object"))
+            return BYTE_BYTE_MAP_HANDLER;
         else
-            return new StringStringMapHandler((engine, serviceName) -> {
-
-                try {
-                    return engine.getMap(serviceName, CharSequence.class, CharSequence.class);
-                } catch (IOException e) {
-                    Jvm.rethrow(e);
-                    // keeps the compiler happy :-)
-                    return null;
-                }
-
-            });
+            return CHAR_CHAR_MAP_HANDLER;
 
     }
 

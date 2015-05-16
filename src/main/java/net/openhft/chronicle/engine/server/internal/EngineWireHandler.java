@@ -37,6 +37,7 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import static net.openhft.chronicle.engine.client.StringUtils.endsWith;
+import static net.openhft.chronicle.engine.server.internal.MapHandler.instance;
 import static net.openhft.chronicle.wire.CoreFields.cid;
 import static net.openhft.chronicle.wire.CoreFields.csp;
 
@@ -119,7 +120,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
             try {
 
                 if (endsWith(cspText, "?view=map")) {
-                    MapHandler mapHandler = MapHandler.create(cspText);
+                    MapHandler mapHandler = instance(cspText);
                     final Map map = mapHandler.getMap(chronicleEngine, serviceName);
 
                     mapWireHandler.process(in,
@@ -136,7 +137,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                 }
 
                 if (endsWith(cspText, "?view=entrySet")) {
-                    MapHandler mapHandler = MapHandler.create(cspText);
+                    MapHandler mapHandler = instance(cspText);
                     final Map map = mapHandler.getMap(chronicleEngine, serviceName);
                     entrySetHandler.process(in, out, map.entrySet(), cspText, mapHandler.getEntryToWire(),
                             mapHandler.getWireToEntry(), HashSet::new, tid);
@@ -144,7 +145,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                 }
 
                 if (endsWith(cspText, "?view=keySet")) {
-                    MapHandler mapHandler = MapHandler.create(cspText);
+                    MapHandler mapHandler = instance(cspText);
                     final Map map = mapHandler.getMap(chronicleEngine, serviceName);
                     keySetHandler.process(in, out, map.keySet(), cspText, mapHandler.getKeyToWire(),
                             mapHandler.getWireToKey(), HashSet::new, tid);
@@ -152,7 +153,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                 }
 
                 if (endsWith(cspText, "?view=values")) {
-                    MapHandler mapHandler = MapHandler.create(cspText);
+                    MapHandler mapHandler = instance(cspText);
                     final Map map = mapHandler.getMap(chronicleEngine, serviceName);
                     valuesHander.process(in, out, map.values(), cspText, mapHandler.getKeyToWire(),
                             mapHandler.getWireToKey(), ArrayList::new, tid);
