@@ -23,7 +23,7 @@ public interface MapHandler {
     MapHandler BYTE_BYTE_MAP_HANDLER = new ByteByteMapHandler();
 
 
-    MapHandler CHAR_CHAR_MAP_HANDLER = new CharCharMapHandler((engine, serviceName) -> {
+    MapHandler CHAR_CHAR_MAP_HANDLER = new StringStringMapHandler((engine, serviceName) -> {
 
         try {
             return engine.getMap(serviceName, CharSequence.class, CharSequence.class);
