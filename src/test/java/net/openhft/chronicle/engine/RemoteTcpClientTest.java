@@ -29,6 +29,7 @@ import org.junit.*;
 import org.junit.rules.TestName;
 
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
@@ -104,13 +105,44 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
                 final int MB = 1 << 20;
                 char[] charArray2MB = new char[MB * 2];
-
                 Arrays.fill(charArray2MB, 'X');
-                final String expected = new String(charArray2MB);
-                test.put("key", expected);
 
-                final String actual = test.get("key");
-                Assert.assertEquals(expected, actual);
+                final String expected = new String(charArray2MB);
+
+                // warm up
+                for (int j = 0; j < 2; j++) {
+                    for (int i = 0; i < 50; i++) {
+
+                        test.put("key" + i, expected);
+                        System.out.println("put" + i);
+                    }
+                }
+
+                // time puts
+                {
+                    long l = System.currentTimeMillis();
+
+                    for (int i = 0; i < 50; i++) {
+                        test.put("key" + i, expected);
+                        System.out.println("put" + i);
+                    }
+
+                    Assert.assertTrue("This should take 1 second but took " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - l) + " seconds. ", System.currentTimeMillis() - l < 1000);
+                }
+
+                // time gets
+                {
+                    long l = System.currentTimeMillis();
+
+                    for (int i = 0; i < 50; i++) {
+                        Assert.assertEquals(expected, test.get("key" + i));
+                        System.out.println("get");
+                    }
+
+                    Assert.assertTrue("This should take 1 second but took " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - l) + " seconds. ", System.currentTimeMillis() - l < 1000);
+                }
+
+
             }
         }
 

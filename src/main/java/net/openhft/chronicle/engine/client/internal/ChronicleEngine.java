@@ -100,8 +100,8 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
 
 
         // TODO make this configurable.
-        long entries = 5;
-        final int maxValueSize = 1 << 20;
+        long entries = 300;
+        final int maxValueSize = 1 << 19;
         final int maxKeySize = 1024;
         final boolean putReturnsNull = false;
         final boolean removeReturnsNull = false;
