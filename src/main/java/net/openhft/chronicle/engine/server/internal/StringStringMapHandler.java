@@ -14,7 +14,7 @@ import java.util.function.Function;
 /**
  * Created by daniel on 06/05/15.
  */
-public class StringStringMapHandler implements MapHandler {
+public class StringStringMapHandler implements MapHandler<Map> {
 
     private final BiFunction<ChronicleEngine,String,Map> supplier;
 
@@ -91,5 +91,12 @@ public class StringStringMapHandler implements MapHandler {
     public Map getMap(ChronicleEngine engine, String serviceName) throws IOException{
         return supplier.apply(engine,serviceName);
     }
+
+    @Override
+    public <V> V usingValue() {
+        return null;
+    }
+
+
 
 }

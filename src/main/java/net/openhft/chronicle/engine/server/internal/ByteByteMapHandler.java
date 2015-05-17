@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
+import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.ValueOut;
 
@@ -12,7 +13,7 @@ import java.util.function.Function;
 /**
  * Created by daniel on 06/05/15.
  */
-public class ByteByteMapHandler implements MapHandler {
+public class ByteByteMapHandler implements MapHandler<ChronicleMap> {
     private final BiConsumer<ValueOut, byte[]> keyToWire = ValueOut::object;
 
     private final Function<ValueIn, byte[]> wireToKey =
@@ -81,12 +82,18 @@ public class ByteByteMapHandler implements MapHandler {
     }
 
     @Override
-    public Map getMap(ChronicleEngine engine, String serviceName) throws IOException{
+    public ChronicleMap getMap(ChronicleEngine engine, String serviceName) throws IOException {
         return engine.getMap(
                 serviceName,
                 byte[].class,
                 byte[].class);
     }
+
+
+    public <V> V usingValue() {
+        return null;
+    }
+
 
 
 }

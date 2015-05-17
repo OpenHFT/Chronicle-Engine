@@ -41,12 +41,12 @@ import static java.util.Collections.emptyList;
 import static net.openhft.chronicle.engine.map.MapWireHandlerProcessor.EventId;
 import static net.openhft.chronicle.engine.map.MapWireHandlerProcessor.EventId.*;
 import static net.openhft.chronicle.map.VanillaChronicleMap.newInstance;
-
+import static net.openhft.chronicle.wire.CoreFields.reply;
 
 /**
  * @author Rob Austin.
  */
-class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<MapWireHandlerProcessor.EventId>
+class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<MapWireHandler.EventId>
         implements ChronicleMap<K, V>, Cloneable, ChannelFactory {
 
     private static final Logger LOG =
