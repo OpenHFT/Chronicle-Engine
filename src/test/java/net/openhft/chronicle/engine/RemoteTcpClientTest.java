@@ -22,6 +22,7 @@ import net.openhft.chronicle.engine.client.RemoteTcpClientChronicleContext;
 import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
@@ -29,7 +30,7 @@ import org.junit.*;
 import org.junit.rules.TestName;
 
 import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
@@ -90,9 +91,19 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
     @Test(timeout = 100000)
     public void testLargeString() throws Exception {
+        int noPutsAndGets = 50;
+        final int MB = 1 << 20;
 
         // sever
-        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, new ChronicleEngine())) {
+        ChronicleEngine chronicleEngine = new ChronicleEngine();
+        chronicleEngine.setMap("test", ChronicleMapBuilder
+                .of(String.class, String.class)
+                .entries(noPutsAndGets)
+                .averageKeySize(16)
+                .actualChunkSize(2 * MB + 16)
+                .putReturnsNull(true)
+                .create());
+        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, chronicleEngine)) {
             int serverPort = serverEndpoint.getPort();
 
             //client
@@ -103,49 +114,40 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
                 final ChronicleMap<String, String> test = remoteContext.getMap("test",
                         String.class, String.class);
 
-                final int MB = 1 << 20;
                 char[] charArray2MB = new char[MB * 2];
                 Arrays.fill(charArray2MB, 'X');
 
                 final String expected = new String(charArray2MB);
 
                 // warm up
-                for (int j = 0; j < 2; j++) {
-                    for (int i = 0; i < 50; i++) {
-
+                for (int j = -1; j < 2; j++) {
+                    long start1 = System.currentTimeMillis();
+                    // TODO adding .parallel() should work.
+//                    IntStream.range(0, noPutsAndGets).parallel().forEach(i -> {
+                    IntStream.range(0, noPutsAndGets).forEach(i -> {
                         test.put("key" + i, expected);
-                        System.out.println("put" + i);
-                    }
-                }
-
-                // time puts
-                {
-                    long l = System.currentTimeMillis();
-
-                    for (int i = 0; i < 50; i++) {
-                        test.put("key" + i, expected);
-                        System.out.println("put" + i);
+                        System.out.println("put key" + i);
+                    });
+                    long duration1 = System.currentTimeMillis() - start1;
+                    if (j >= 0) {
+                        System.out.printf("Took %.3f seconds to perform %,d puts%n", duration1 / 1e3, noPutsAndGets);
+                        Assert.assertTrue("This should take 1 second but took " + duration1 / 1e3 + " seconds. ", duration1 < 1000);
                     }
 
-                    Assert.assertTrue("This should take 1 second but took " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - l) + " seconds. ", System.currentTimeMillis() - l < 1000);
-                }
+                    long start2 = System.currentTimeMillis();
 
-                // time gets
-                {
-                    long l = System.currentTimeMillis();
-
-                    for (int i = 0; i < 50; i++) {
-                        Assert.assertEquals(expected, test.get("key" + i));
-                        System.out.println("get");
+                    IntStream.range(0, noPutsAndGets).parallel().forEach(i -> {
+                        test.get("key" + i);
+                        System.out.println("get key" + i);
+                    });
+                    long duration2 = System.currentTimeMillis() - start2;
+                    if (j >= 0) {
+                        System.out.printf("Took %.3f seconds to perform %,d puts%n", duration2 / 1e3, noPutsAndGets);
+                        Assert.assertTrue("This should take 1 second but took " + duration2 / 1e3 + " seconds. ", duration2 < 1000);
                     }
-
-                    Assert.assertTrue("This should take 1 second but took " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - l) + " seconds. ", System.currentTimeMillis() - l < 1000);
                 }
-
-
             }
         }
-
     }
 
     @Ignore

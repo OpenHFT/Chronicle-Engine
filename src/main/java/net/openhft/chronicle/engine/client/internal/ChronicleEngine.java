@@ -100,11 +100,11 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
 
 
         // TODO make this configurable.
-        long entries = 300;
-        final int maxValueSize = 1 << 19;
-        final int maxKeySize = 1024;
-        final boolean putReturnsNull = false;
-        final boolean removeReturnsNull = false;
+        long entries = 1000;
+        final int maxValueSize = 4 << 10;
+        final int maxKeySize = 64;
+        final boolean putReturnsNull = true;
+        final boolean removeReturnsNull = true;
 
 
         // if its a string map the we will use the string map directly
@@ -117,7 +117,9 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
                 throw new UnsupportedOperationException("Please use a Map<CharSequence,CharSequence> rather than a Map<String,String>");
             }
 
-
+            ChronicleMap map = maps.get(name);
+            if (map != null)
+                return map;
             final ChronicleMap<CharSequence, CharSequence> stringMap = chronStringMap.computeIfAbsent(name,
                     k -> {
                         try {

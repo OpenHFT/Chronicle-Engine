@@ -5,6 +5,7 @@ import org.junit.Before;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Created by Rob Austin
@@ -32,6 +33,11 @@ public class ThreadMonitoringTest {
         }
         Map<Thread, StackTraceElement[]> threadMap = Thread.getAllStackTraces();
         threadMap.keySet().removeAll(threads);
+        threadMap.keySet().removeAll(
+                threadMap.keySet().stream()
+                        .filter(t -> t.getName()
+                                .startsWith("ForkJoinPool.commonPool-worker"))
+                        .collect(Collectors.toList()));
         if (!threadMap.isEmpty()) {
             System.out.println("### threads still running after the test ###");
             for (Map.Entry<Thread, StackTraceElement[]> entry : threadMap.entrySet()) {

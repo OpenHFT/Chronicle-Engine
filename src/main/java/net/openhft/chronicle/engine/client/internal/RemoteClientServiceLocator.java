@@ -19,11 +19,10 @@
 package net.openhft.chronicle.engine.client.internal;
 
 import net.openhft.chronicle.bytes.IORuntimeException;
+import net.openhft.chronicle.core.MemoryUnit;
 import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ClientWiredChronicleMapStatelessBuilder;
-
-import net.openhft.chronicle.core.MemoryUnit;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -90,7 +89,10 @@ public class RemoteClientServiceLocator {
                 hub,
                 kClass,
                 vClass,
-                name).create();
+                name)
+                .putReturnsNull(true)
+                .removeReturnsNull(true)
+                .create();
     }
 
 
