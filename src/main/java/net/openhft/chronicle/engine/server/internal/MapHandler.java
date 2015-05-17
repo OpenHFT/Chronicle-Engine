@@ -17,24 +17,18 @@ import static net.openhft.chronicle.engine.client.StringUtils.contains;
  */
 public interface MapHandler {
 
-    MapHandler STRING_STRING_MAP_HANDLER = new StringStringMapHandler((engine, serviceName) ->
-            engine.getFilePerKeyMap(
-                    serviceName));
+    MapHandler STRING_STRING_MAP_HANDLER = new StringStringMapHandler(
+            (engine, serviceName) -> engine.getFilePerKeyMap(serviceName));
     MapHandler BYTE_BYTE_MAP_HANDLER = new ByteByteMapHandler();
 
-
-    MapHandler CHAR_CHAR_MAP_HANDLER = new StringStringMapHandler((engine, serviceName) -> {
+    MapHandler STRING_CHAR_SEQUENCE_MAP_HANDLER = new StringCharSequenceMapHandler((engine, serviceName) -> {
 
         try {
-            return engine.getMap(serviceName, CharSequence.class, CharSequence.class);
+            return engine.getMap(serviceName, String.class, CharSequence.class);
         } catch (IOException e) {
-            Jvm.rethrow(e);
-            // keeps the compiler happy :-)
-            return null;
+            throw Jvm.rethrow(e);
         }
-
     });
-
 
     <V> BiConsumer<ValueOut, V> getKeyToWire();
 
@@ -49,14 +43,12 @@ public interface MapHandler {
     <V> Function<ValueIn, Map.Entry<V, V>> getWireToEntry();
 
     static MapHandler instance(CharSequence csp) {
-
         if (contains(csp, "file")) {
             return STRING_STRING_MAP_HANDLER;
         } else if (contains(csp, "object"))
             return BYTE_BYTE_MAP_HANDLER;
         else
-            return CHAR_CHAR_MAP_HANDLER;
-
+            return STRING_CHAR_SEQUENCE_MAP_HANDLER;
     }
 
     Map getMap(ChronicleEngine engine, String serviceName) throws IOException;

@@ -19,12 +19,12 @@
 package net.openhft.chronicle.map;
 
 
+import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.engine.collection.ClientWiredStatelessChronicleCollection;
 import net.openhft.chronicle.engine.collection.ClientWiredStatelessChronicleSet;
-import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
+import net.openhft.chronicle.engine.map.MapWireHandlerProcessor;
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.wire.*;
-import net.openhft.chronicle.wire.map.MapWireHandlerProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -38,10 +38,9 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static java.util.Collections.emptyList;
+import static net.openhft.chronicle.engine.map.MapWireHandlerProcessor.EventId;
+import static net.openhft.chronicle.engine.map.MapWireHandlerProcessor.EventId.*;
 import static net.openhft.chronicle.map.VanillaChronicleMap.newInstance;
-import static net.openhft.chronicle.wire.CoreFields.reply;
-import static net.openhft.chronicle.wire.map.MapWireHandlerProcessor.EventId;
-import static net.openhft.chronicle.wire.map.MapWireHandlerProcessor.EventId.*;
 
 
 /**
@@ -74,7 +73,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<MapWireH
         this.vClass = vClass;
 
     }
-
 
 
     @Override
@@ -139,7 +137,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<MapWireH
         if (key == null || value == null)
             throw new NullPointerException();
 
-        return (V) proxyReturnTypedObject(putIfAbsent, vClass, key, value);
+        return (V) proxyReturnTypedObject(putIfAbsent, null, vClass, key, value);
     }
 
     @SuppressWarnings("NullableProblems")
@@ -154,14 +152,14 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<MapWireH
     public boolean replace(K key, V oldValue, V newValue) {
         if (key == null || oldValue == null || newValue == null)
             throw new NullPointerException();
-        return proxyReturnBooleanWithArgs(replaceWithOldAndNewValue, key, oldValue, newValue);
+        return proxyReturnBooleanWithArgs(replaceForOld, key, oldValue, newValue);
     }
 
     @SuppressWarnings("NullableProblems")
     public V replace(K key, V value) {
         if (key == null || value == null)
             throw new NullPointerException();
-        return (V) proxyReturnTypedObject(replace, vClass, key, value);
+        return (V) proxyReturnTypedObject(replace, null, vClass, key, value);
     }
 
     public int size() {
@@ -170,7 +168,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<MapWireH
         if (size > Integer.MAX_VALUE)
             throw new IllegalStateException("size is longer than Integer.MAX_VALUE please use " +
                     "longSize(), " +
-                    "size="+size());
+                    "size=" + size());
         return (int) size;
 
 
@@ -257,7 +255,8 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<MapWireH
     public void putAll(@NotNull Map<? extends K, ? extends V> map) {
 
         proxyReturnVoid(putAll, v ->
-                        map.entrySet().forEach(e -> v.sequence(toParameters(put, e.getKey(), e.getValue())))
+                        v.sequence(out -> map.entrySet().forEach(
+                                e -> toParameters(put, e.getKey(), e.getValue()).accept(out)))
         );
 
     }
@@ -273,12 +272,12 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<MapWireH
     }
 
     public V get(Object key) {
-        return (V) this.proxyReturnTypedObject(get, vClass, key);
+        return (V) this.proxyReturnTypedObject(get, null, vClass, key);
     }
 
     @Nullable
     public V getUsing(K key, V usingValue) {
-        throw new UnsupportedOperationException();
+        return (V) this.proxyReturnTypedObject(get, usingValue, vClass, key);
     }
 
 
@@ -291,15 +290,15 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<MapWireH
     @NotNull
     @Override
     public MapKeyContext<K, V> acquireContext(@NotNull K key, @NotNull V usingValue) {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
 
     public V remove(Object key) {
         if (key == null)
             throw keyNotNullNPE();
-        final EventId eventId = removeReturnsNull ? removeWithoutAcc : remove;
-        return (V) this.proxyReturnTypedObject(eventId, vClass, key);
+        final EventId eventId = removeReturnsNull ? remove : getAndRemove;
+        return (V) this.proxyReturnTypedObject(eventId, null, vClass, key);
     }
 
     @Override
@@ -313,6 +312,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<MapWireH
         if (key == null || value == null)
             throw new NullPointerException();
         return (V) proxyReturnTypedObject(putReturnsNull ? put : getAndPut,
+                null,
                 vClass,
                 key,
                 value);
@@ -440,11 +440,8 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<MapWireH
         return new ClientWiredStatelessChronicleSet<>(channelName, hub,
                 cid,
                 valueIn -> valueIn.object(kClass),
-                "entrySet");
+                "keySet");
     }
-
-
-
 
 
     @SuppressWarnings("SameParameterValue")

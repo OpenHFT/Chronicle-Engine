@@ -26,6 +26,7 @@ import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
+import net.openhft.chronicle.wire.Wires;
 import org.junit.*;
 import org.junit.rules.TestName;
 
@@ -97,7 +98,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
         // sever
         ChronicleEngine chronicleEngine = new ChronicleEngine();
         chronicleEngine.setMap("test", ChronicleMapBuilder
-                .of(String.class, String.class)
+                .of(String.class, CharSequence.class)
                 .entries(noPutsAndGets)
                 .averageKeySize(16)
                 .actualChunkSize(2 * MB + 16)
@@ -111,8 +112,8 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
                     RemoteTcpClientChronicleContext(
                     "localhost", serverPort, (byte) 2)) {
 
-                final ChronicleMap<String, String> test = remoteContext.getMap("test",
-                        String.class, String.class);
+                final ChronicleMap<String, CharSequence> test = remoteContext.getMap("test",
+                        String.class, CharSequence.class);
 
                 char[] charArray2MB = new char[MB * 2];
                 Arrays.fill(charArray2MB, 'X');
@@ -120,13 +121,14 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
                 final String expected = new String(charArray2MB);
 
                 // warm up
-                for (int j = -1; j < 2; j++) {
+                for (int j = -1; j < 1; j++) {
                     long start1 = System.currentTimeMillis();
                     // TODO adding .parallel() should work.
 //                    IntStream.range(0, noPutsAndGets).parallel().forEach(i -> {
                     IntStream.range(0, noPutsAndGets).forEach(i -> {
                         test.put("key" + i, expected);
-                        System.out.println("put key" + i);
+                        if (i % 10 == 5)
+                            System.out.println("put key" + i);
                     });
                     long duration1 = System.currentTimeMillis() - start1;
                     if (j >= 0) {
@@ -136,9 +138,11 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
                     long start2 = System.currentTimeMillis();
 
-                    IntStream.range(0, noPutsAndGets).parallel().forEach(i -> {
-                        test.get("key" + i);
-                        System.out.println("get key" + i);
+//                    IntStream.range(0, noPutsAndGets).parallel().forEach(i -> {
+                    IntStream.range(0, noPutsAndGets).forEach(i -> {
+                        test.getUsing("key" + i, Wires.acquireStringBuilder());
+                        if (i % 10 == 5)
+                            System.out.println("get key" + i);
                     });
                     long duration2 = System.currentTimeMillis() - start2;
                     if (j >= 0) {

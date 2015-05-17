@@ -1,9 +1,9 @@
 package net.openhft.chronicle.engine.collection;
 
 import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
+import net.openhft.chronicle.engine.collection.CollectionWireHandler.SetEventId;
 import net.openhft.chronicle.map.MapStatelessClient;
 import net.openhft.chronicle.wire.ValueIn;
-import net.openhft.chronicle.wire.collection.CollectionWireHandler.SetEventId;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -11,8 +11,8 @@ import java.util.Iterator;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static net.openhft.chronicle.engine.collection.CollectionWireHandler.SetEventId.*;
 import static net.openhft.chronicle.wire.CoreFields.reply;
-import static net.openhft.chronicle.wire.collection.CollectionWireHandler.SetEventId.*;
 
 
 public class ClientWiredStatelessChronicleCollection<U, E extends Collection<U>> extends
@@ -99,14 +99,11 @@ public class ClientWiredStatelessChronicleCollection<U, E extends Collection<U>>
 
             final long i = j;
             proxyReturnWireConsumerInOut(iterator, reply, valueOut -> valueOut.uint16(i),
-
-                    read -> {
-                        while (read.hasNextSequenceItem()) {
-                            read.sequence(v -> e.add(consumer.apply(read)));
+                    read -> read.sequence(r -> {
+                        while (r.hasNextSequenceItem()) {
+                            e.add(consumer.apply(r));
                         }
-
-                        return e;
-                    });
+                    }));
         }
         return e;
     }

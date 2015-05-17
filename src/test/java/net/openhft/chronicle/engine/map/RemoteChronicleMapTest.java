@@ -58,7 +58,8 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
     static ChronicleMap<Integer, String> newIntString() throws IOException {
         final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier(Integer.class, String.class, new ChronicleEngine());
 
-        final ChronicleMap spy = Mockito.spy(remoteMapSupplier.get());
+        ChronicleMap map = remoteMapSupplier.get();
+        final ChronicleMap spy = Mockito.spy(map);
 
         Mockito.doAnswer(invocationOnMock -> {
             remoteMapSupplier.close();
@@ -169,13 +170,16 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
     @Test(timeout = 50000)
     public void testGet() throws IOException {
         try (ChronicleMap map = map5()) {
-            assertEquals("A", (String) map.get(one));
+            assertEquals("A", map.get(one));
             try (ChronicleMap empty = newStrStrMap()) {
 
                 writeMessage = "example of get(<key>) returning null, when the keys is not " +
                         "present in the map";
 
-                yamlLoggger(() -> assertNull(map.get(notPresent)));
+                yamlLoggger(() -> {
+                    Object object = map.get(notPresent);
+                    assertNull(object);
+                });
             }
         }
     }
@@ -313,6 +317,7 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
      */
 
     @Test(timeout = 50000)
+    @Ignore("The copy needs to be performed on the server which is not supported yet.")
     public void testPutAll() throws IOException {
         int port = s_port++;
         try (ChronicleMap empty = newIntString()) {

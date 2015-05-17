@@ -20,12 +20,12 @@ package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
+import net.openhft.chronicle.engine.collection.CollectionWireHandler;
+import net.openhft.chronicle.engine.collection.CollectionWireHandlerProcessor;
+import net.openhft.chronicle.engine.map.MapWireHandler;
+import net.openhft.chronicle.engine.map.MapWireHandlerProcessor;
 import net.openhft.chronicle.network.WireTcpHandler;
 import net.openhft.chronicle.wire.*;
-import net.openhft.chronicle.wire.collection.CollectionWireHandler;
-import net.openhft.chronicle.wire.collection.CollectionWireHandlerProcessor;
-import net.openhft.chronicle.wire.map.MapWireHandler;
-import net.openhft.chronicle.wire.map.MapWireHandlerProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;

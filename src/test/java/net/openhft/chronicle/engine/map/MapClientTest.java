@@ -90,7 +90,7 @@ public class MapClientTest extends ThreadMonitoringTest {
 
     }
 
-    @Test(timeout = 50000)
+    @Test(timeout = 500000)
     public void testPutAll() throws IOException, InterruptedException {
 
         supplyMap(Integer.class, String.class, mapProxy -> {
@@ -154,10 +154,10 @@ public class MapClientTest extends ThreadMonitoringTest {
 
             mapProxy.put(1, "Hello");
             Assert.assertEquals("{1=Hello}", mapProxy.toString());
-         /*   mapProxy.remove(1);
+            mapProxy.remove(1);
 
             mapProxy.put(2, "World");
-            Assert.assertEquals("{2=World}", mapProxy.toString());*/
+            Assert.assertEquals("{2=World}", mapProxy.toString());
         });
 
     }
