@@ -2,20 +2,17 @@ package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
-import net.openhft.chronicle.wire.ValueIn;
-import net.openhft.chronicle.wire.ValueOut;
+import net.openhft.chronicle.wire.map.MapHandlerFunction;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.client.StringUtils.contains;
 
 /**
  * Created by daniel on 06/05/15.
  */
-public interface MapHandler<M extends Map> {
+public interface MapHandler<M extends Map> extends MapHandlerFunction {
 
     MapHandler STRING_STRING_MAP_HANDLER = new StringStringMapHandler((engine, serviceName) ->
             engine.getFilePerKeyMap(serviceName));
@@ -34,19 +31,6 @@ public interface MapHandler<M extends Map> {
 
     });
 
-
-    <V> BiConsumer<ValueOut, V> getKeyToWire();
-
-    <V> Function<ValueIn, V> getWireToKey();
-
-    <V> BiConsumer<ValueOut, V> getValueToWire();
-
-    <V> Function<ValueIn, V> getWireToValue();
-
-    <V> BiConsumer<ValueOut, Map.Entry<V, V>> getEntryToWire();
-
-    <V> Function<ValueIn, Map.Entry<V, V>> getWireToEntry();
-
     static MapHandler instance(CharSequence csp) {
 
         if (contains(csp, "file")) {
@@ -59,8 +43,6 @@ public interface MapHandler<M extends Map> {
     }
 
     M getMap(ChronicleEngine engine, String serviceName) throws IOException;
-
-    <V> V usingValue();
 
 
 }

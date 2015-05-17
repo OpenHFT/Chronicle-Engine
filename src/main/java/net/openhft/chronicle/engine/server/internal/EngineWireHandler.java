@@ -129,21 +129,12 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
             try {
 
-                if (mapHandler!=null) {
+                if (mapHandler != null) {
 
                     final Map map = mapHandler.getMap(chronicleEngine, serviceName);
 
                     if (endsWith(cspText, "?view=map")) {
-                        mapWireHandler.process(in,
-                                out,
-                                map,
-                                cspText,
-                                tid,
-                                mapHandler.getValueToWire(),
-                                mapHandler.getWireToKey(),
-                                mapHandler.getWireToValue(),
-                                mapHandler.usingValue()
-                        );
+                        mapWireHandler.process(in, out, map, cspText, tid, mapHandler);
                         return;
                     }
 
@@ -154,7 +145,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                     }
 
                     if (endsWith(cspText, "?view=keySet")) {
-                         keySetHandler.process(in, out, map.keySet(), cspText, mapHandler.getKeyToWire(),
+                        keySetHandler.process(in, out, map.keySet(), cspText, mapHandler.getKeyToWire(),
                                 mapHandler.getWireToKey(), HashSet::new, tid);
                         return;
                     }
