@@ -35,7 +35,7 @@ public class CharCharMapHandler implements MapHandler {
         return keySb;
     };
 
-    private final BiConsumer<ValueOut, CharSequence> valueToWire = ValueOut::object;
+    private final BiConsumer<ValueOut, CharSequence> valueToWire = (valueOut, value) -> valueOut.object(value);
 
     private final Function<ValueIn, CharSequence> wireToValue = (valueIn) -> {
         if (valueIn.isNull())
@@ -47,7 +47,9 @@ public class CharCharMapHandler implements MapHandler {
     private final BiConsumer<ValueOut, Map.Entry<CharSequence, CharSequence>> entryToWire
             = (v, e) -> {
         v.marshallable(w -> {
-            w.write(() -> "key").object(e.getKey()).write(() -> "value").object(e.getValue());
+            CharSequence key = e.getKey();
+            CharSequence value = e.getValue();
+            w.write(() -> "key").object(key).write(() -> "value").object(value);
         });
     };
 
