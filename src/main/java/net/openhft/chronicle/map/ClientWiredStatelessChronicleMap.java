@@ -24,7 +24,7 @@ import net.openhft.chronicle.engine.collection.ClientWiredStatelessChronicleSet;
 import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.wire.*;
-import net.openhft.chronicle.wire.map.MapWireHandlerProcessor;
+import net.openhft.chronicle.wire.map.MapWireHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -39,15 +39,14 @@ import java.util.function.Predicate;
 
 import static java.util.Collections.emptyList;
 import static net.openhft.chronicle.map.VanillaChronicleMap.newInstance;
-import static net.openhft.chronicle.wire.CoreFields.reply;
-import static net.openhft.chronicle.wire.map.MapWireHandlerProcessor.EventId;
-import static net.openhft.chronicle.wire.map.MapWireHandlerProcessor.EventId.*;
+import static net.openhft.chronicle.wire.map.MapWireHandler.EventId;
+import static net.openhft.chronicle.wire.map.MapWireHandler.EventId.*;
 
 
 /**
  * @author Rob Austin.
  */
-class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<MapWireHandlerProcessor.EventId>
+class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<MapWireHandler.EventId>
         implements ChronicleMap<K, V>, Cloneable, ChannelFactory {
 
     private static final Logger LOG =

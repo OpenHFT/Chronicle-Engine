@@ -3,7 +3,7 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
-import net.openhft.chronicle.wire.map.MapWireHandlerProcessor;
+import net.openhft.chronicle.wire.map.MapWireHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -24,7 +24,7 @@ import static net.openhft.chronicle.map.ChronicleMapBuilder.of;
 public class MapWireConnectionHub implements Closeable {
 
     public static final int MAP_SERVICE = 3;
-    private static final Logger LOG = LoggerFactory.getLogger(MapWireHandlerProcessor.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
     private final Map<Integer, Replica> channelMap;
     private final ReplicationHub hub;
     private final ArrayList<BytesChronicleMap> bytesChronicleMaps = new ArrayList<>();

@@ -15,11 +15,10 @@ import static net.openhft.chronicle.engine.client.StringUtils.contains;
 /**
  * Created by daniel on 06/05/15.
  */
-public interface MapHandler {
+public interface MapHandler<M extends Map> {
 
     MapHandler STRING_STRING_MAP_HANDLER = new StringStringMapHandler((engine, serviceName) ->
-            engine.getFilePerKeyMap(
-                    serviceName));
+            engine.getFilePerKeyMap(serviceName));
     MapHandler BYTE_BYTE_MAP_HANDLER = new ByteByteMapHandler();
 
 
@@ -59,5 +58,9 @@ public interface MapHandler {
 
     }
 
-    Map getMap(ChronicleEngine engine, String serviceName) throws IOException;
+    M getMap(ChronicleEngine engine, String serviceName) throws IOException;
+
+    <V> V usingValue();
+
+
 }

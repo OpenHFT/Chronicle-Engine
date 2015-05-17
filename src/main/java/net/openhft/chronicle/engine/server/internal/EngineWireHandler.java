@@ -25,7 +25,6 @@ import net.openhft.chronicle.wire.*;
 import net.openhft.chronicle.wire.collection.CollectionWireHandler;
 import net.openhft.chronicle.wire.collection.CollectionWireHandlerProcessor;
 import net.openhft.chronicle.wire.map.MapWireHandler;
-import net.openhft.chronicle.wire.map.MapWireHandlerProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -73,7 +72,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     public EngineWireHandler(@NotNull final Map<Long, String> cidToCsp,
                              @NotNull final ChronicleEngine chronicleEngine)
             throws IOException {
-        this.mapWireHandler = new MapWireHandlerProcessor<>(cidToCsp);
+        this.mapWireHandler = new MapWireHandler<>(cidToCsp);
 
         this.keySetHandler = new CollectionWireHandlerProcessor<>();
         this.queueWireHandler = null; //QueueWireHandler();
@@ -142,7 +141,8 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                                 tid,
                                 mapHandler.getValueToWire(),
                                 mapHandler.getWireToKey(),
-                                mapHandler.getWireToValue()
+                                mapHandler.getWireToValue(),
+                                mapHandler.usingValue()
                         );
                         return;
                     }

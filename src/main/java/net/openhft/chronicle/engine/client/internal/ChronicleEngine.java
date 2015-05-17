@@ -93,9 +93,7 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
     }
 
     @Override
-    public <K, V> ChronicleMap<K, V> getMap(String name,
-                                            final Class<K> kClass,
-                                            final Class<V> vClass)
+    public <K, V> ChronicleMap<K, V> getMap(String name, final Class<K> kClass, final Class<V> vClass)
             throws IOException {
 
 
