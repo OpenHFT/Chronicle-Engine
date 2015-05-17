@@ -13,7 +13,7 @@ import java.util.function.Function;
 /**
  * Created by daniel on 06/05/15.
  */
-public class ByteByteMapHandler implements MapHandler<ChronicleMap> {
+public class ByteByteMapHandler implements MapHandler<byte[], byte[]> {
     private final BiConsumer<ValueOut, byte[]> keyToWire = ValueOut::object;
 
     private final Function<ValueIn, byte[]> wireToKey =
@@ -82,7 +82,7 @@ public class ByteByteMapHandler implements MapHandler<ChronicleMap> {
     }
 
     @Override
-    public ChronicleMap getMap(ChronicleEngine engine, String serviceName) throws IOException {
+    public ChronicleMap<byte[], byte[]> getMap(ChronicleEngine engine, String serviceName) throws IOException {
         return engine.getMap(
                 serviceName,
                 byte[].class,
@@ -90,10 +90,8 @@ public class ByteByteMapHandler implements MapHandler<ChronicleMap> {
     }
 
 
-    public <V> V usingValue() {
+    @Override
+    public byte[] usingValue() {
         return null;
     }
-
-
-
 }

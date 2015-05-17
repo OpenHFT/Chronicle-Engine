@@ -23,7 +23,6 @@ import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.engine.collection.CollectionWireHandler;
 import net.openhft.chronicle.engine.collection.CollectionWireHandlerProcessor;
 import net.openhft.chronicle.engine.map.MapWireHandler;
-import net.openhft.chronicle.engine.map.MapWireHandlerProcessor;
 import net.openhft.chronicle.network.WireTcpHandler;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;

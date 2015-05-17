@@ -15,7 +15,7 @@ import java.util.function.Function;
 /**
  * Created by daniel on 06/05/15.
  */
-public class StringCharSequenceMapHandler implements MapHandler {
+public class StringCharSequenceMapHandler implements MapHandler<String, CharSequence> {
 
     private final BiFunction<ChronicleEngine, String, Map> supplier;
 
@@ -99,4 +99,8 @@ public class StringCharSequenceMapHandler implements MapHandler {
         return supplier.apply(engine, serviceName);
     }
 
+    @Override
+    public StringBuilder usingValue() {
+        return Wires.acquireStringBuilder();
+    }
 }

@@ -15,7 +15,7 @@ import java.util.function.Function;
 /**
  * Created by daniel on 06/05/15.
  */
-public class CharCharMapHandler implements MapHandler<ChronicleMap> {
+public class CharCharMapHandler implements MapHandler<CharSequence, CharSequence> {
 
     private final BiFunction<ChronicleEngine, String, ChronicleMap> supplier;
 
@@ -110,12 +110,9 @@ public class CharCharMapHandler implements MapHandler<ChronicleMap> {
     }
 
     StringBuilder usingValue = new StringBuilder();
+
     @Override
-    public <V> V usingValue() {
-        return (V)usingValue;
+    public StringBuilder usingValue() {
+        return usingValue;
     }
-
-    StringBuilder usingKey = new StringBuilder();
-
-
 }

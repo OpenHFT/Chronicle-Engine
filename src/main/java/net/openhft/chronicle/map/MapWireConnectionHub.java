@@ -1,6 +1,6 @@
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.engine.map.MapWireHandlerProcessor;
+import net.openhft.chronicle.engine.map.MapWireHandler;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.replication.ReplicationHub;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;

@@ -22,7 +22,7 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.engine.collection.ClientWiredStatelessChronicleCollection;
 import net.openhft.chronicle.engine.collection.ClientWiredStatelessChronicleSet;
-import net.openhft.chronicle.engine.map.MapWireHandlerProcessor;
+import net.openhft.chronicle.engine.map.MapWireHandler;
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
@@ -38,10 +38,9 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static java.util.Collections.emptyList;
-import static net.openhft.chronicle.engine.map.MapWireHandlerProcessor.EventId;
-import static net.openhft.chronicle.engine.map.MapWireHandlerProcessor.EventId.*;
+import static net.openhft.chronicle.engine.map.MapWireHandler.EventId;
+import static net.openhft.chronicle.engine.map.MapWireHandler.EventId.*;
 import static net.openhft.chronicle.map.VanillaChronicleMap.newInstance;
-import static net.openhft.chronicle.wire.CoreFields.reply;
 
 /**
  * @author Rob Austin.

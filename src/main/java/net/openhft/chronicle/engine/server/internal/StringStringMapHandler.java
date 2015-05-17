@@ -14,9 +14,9 @@ import java.util.function.Function;
 /**
  * Created by daniel on 06/05/15.
  */
-public class StringStringMapHandler implements MapHandler<Map> {
+public class StringStringMapHandler implements MapHandler<String, String> {
 
-    private final BiFunction<ChronicleEngine,String,Map> supplier;
+    private final BiFunction<ChronicleEngine, String, Map> supplier;
 
     StringStringMapHandler(@NotNull BiFunction<ChronicleEngine, String, Map> supplier) {
         this.supplier = supplier;
@@ -33,7 +33,8 @@ public class StringStringMapHandler implements MapHandler<Map> {
     private final BiConsumer<ValueOut, Map.Entry<String, String>> entryToWire
             = (v, e) -> {
         v.marshallable(w -> {
-            w.write(() -> "key").object(e.getKey()).write(() -> "value").object(e.getValue());
+            w.write(() -> "key").object(e.getKey())
+                    .write(() -> "value").object(e.getValue());
         });
     };
 
@@ -88,15 +89,12 @@ public class StringStringMapHandler implements MapHandler<Map> {
     }
 
     @Override
-    public Map getMap(ChronicleEngine engine, String serviceName) throws IOException{
-        return supplier.apply(engine,serviceName);
+    public Map<String, String> getMap(ChronicleEngine engine, String serviceName) throws IOException {
+        return supplier.apply(engine, serviceName);
     }
 
     @Override
-    public <V> V usingValue() {
+    public String usingValue() {
         return null;
     }
-
-
-
 }
