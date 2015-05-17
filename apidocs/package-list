@@ -2,6 +2,7 @@ net.openhft.chronicle.engine
 net.openhft.chronicle.engine.client
 net.openhft.chronicle.engine.client.internal
 net.openhft.chronicle.engine.collection
+net.openhft.chronicle.engine.map
 net.openhft.chronicle.engine.old
 net.openhft.chronicle.engine.server
 net.openhft.chronicle.engine.server.internal
