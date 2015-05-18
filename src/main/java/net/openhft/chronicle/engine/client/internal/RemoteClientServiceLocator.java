@@ -43,7 +43,7 @@ public class RemoteClientServiceLocator {
 
         final InetSocketAddress inetSocketAddress = new InetSocketAddress(hostname, port);
 
-        int tcpBufferSize = (int) MemoryUnit.KILOBYTES.toBytes(64);
+        int tcpBufferSize = (int) MemoryUnit.MEGABYTES.toBytes(2) + 1024;
 
         long timeoutMs = TimeUnit.SECONDS.toMillis(20);
 
