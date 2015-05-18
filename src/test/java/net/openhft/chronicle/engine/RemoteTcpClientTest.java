@@ -155,7 +155,6 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     @Ignore
     @Test(timeout = 100000)
     public void testMarshable() throws Exception {
-
         // sever
         try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, new ChronicleEngine())) {
             int serverPort = serverEndpoint.getPort();
@@ -167,7 +166,6 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
                 try (ChronicleMap<MyMarshallable, Long> numbers = context.getMap
                         ("marshallable-keys", MyMarshallable.class, Long.class)) {
                     numbers.clear();
-
                 }
 
                 try (ChronicleMap<MyMarshallable, Long> numbers = context.getMap
@@ -185,17 +183,13 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
                     assertEquals(2, numbers.size());
                     assertEquals(Long.valueOf(1), numbers.get(key1));
                     assertEquals(Long.valueOf(2), numbers.get(key2));
-
                 }
-
             }
         }
-
     }
 
     @Test(timeout = 100000)
     public void testPut() throws Exception {
-
         // sever
         try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, new ChronicleEngine())) {
             int serverPort = serverEndpoint.getPort();
@@ -238,7 +232,8 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     @Ignore
     @Test
     public void test2MBEntries() throws Exception {
-        // sever
+
+        // server
         try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, new ChronicleEngine())) {
             int serverPort = serverEndpoint.getPort();
 
@@ -251,18 +246,18 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
                     sb.append('x');
                 }
 
+                String value = sb.toString();
                 long time = System.currentTimeMillis();
                 int tl = 0;
-                for (int i = 0; i < 2_000; i++) {
-                    try (ChronicleMap<String, String> map = context.getMap
-                            ("test", String.class, String.class)) {
-                        map.put("largeEntry", sb.toString());
+                try (ChronicleMap<String, String> map = context.getMap
+                        ("test", String.class, String.class)) {
+                    for (int i = 0; i < 2_000; i++) {
+                        map.put("largeEntry", value);
 //                        tl += map.get("largeEntry").length();
                     }
                 }
                 System.out.format("Time for 100MB %,dms%n", (System.currentTimeMillis() - time));
             }
-
         }
     }
 }
