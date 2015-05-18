@@ -296,6 +296,13 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
     @Test
     public void testEntrySet() throws IOException {
         try (ChronicleMap map = map5()) {
+
+            writeMessage = "example of getting and entry set itterator";
+            yamlLoggger(() -> {
+                Set entrySet = map.entrySet();
+                entrySet.iterator();
+            });
+
             Set s = map.entrySet();
             assertEquals(5, s.size());
             Iterator it = s.iterator();
