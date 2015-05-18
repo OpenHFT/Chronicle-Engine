@@ -35,6 +35,7 @@ import java.io.StreamCorruptedException;
 import java.util.*;
 import java.util.function.Consumer;
 
+import static net.openhft.chronicle.core.Jvm.rethrow;
 import static net.openhft.chronicle.engine.client.StringUtils.endsWith;
 import static net.openhft.chronicle.engine.server.internal.MapHandler.instance;
 import static net.openhft.chronicle.wire.CoreFields.cid;
@@ -68,6 +69,8 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private final CollectionWireHandler<Map.Entry<byte[], byte[]>, Set<Map.Entry<byte[], byte[]>>> entrySetHandler;
     private final CollectionWireHandler<byte[], Collection<byte[]>> valuesHander;
     private MapHandler mapHandler;
+    private Map map;
+    private final Consumer<WireIn> metaDataConsumer;
 
     public EngineWireHandler(@NotNull final Map<Long, String> cidToCsp,
                              @NotNull final ChronicleEngine chronicleEngine)
@@ -80,6 +83,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
         this.chronicleEngine = chronicleEngine;
         this.entrySetHandler = new CollectionWireHandlerProcessor<>();
         this.valuesHander = new CollectionWireHandlerProcessor<>();
+        this.metaDataConsumer = getWireInConsumer();
     }
 
     private final List<WireHandler> handlers = new ArrayList<>();
@@ -101,22 +105,32 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private long tid;
 
 
-    private final Consumer<WireIn> metaDataConsumer = (metaDataWire) -> {
-        //metaDataWire.read(csp).text(cspText);
-        readCsp(metaDataWire);
-        serviceName = serviceName(cspText);
-        tid = metaDataWire.read(CoreFields.tid).int64();
+    @NotNull
+    private Consumer<WireIn> getWireInConsumer() throws IOException {
+        return (metaDataWire) -> {
+
+            try {
+                //metaDataWire.read(csp).text(cspText);
+                readCsp(metaDataWire);
+                serviceName = serviceName(cspText);
+                tid = metaDataWire.read(CoreFields.tid).int64();
 
 
-        if (endsWith(cspText, "?view=map") ||
-                endsWith(cspText, "?view=entrySet") ||
-                endsWith(cspText, "?view=keySet") ||
-                endsWith(cspText, "?view=values"))
-            mapHandler = instance(cspText);
+                if (endsWith(cspText, "?view=map") ||
+                        endsWith(cspText, "?view=entrySet") ||
+                        endsWith(cspText, "?view=keySet") ||
+                        endsWith(cspText, "?view=values"))
+                    mapHandler = instance(cspText);
 
-        else
-            mapHandler = null;
-    };
+                else
+                    mapHandler = null;
+
+                map = mapHandler.getMap(chronicleEngine, serviceName);
+            } catch (Exception e) {
+                rethrow(e);
+            }
+        };
+    }
 
 
     @Override
@@ -131,7 +145,6 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
                 if (mapHandler != null) {
 
-                    final Map map = mapHandler.getMap(chronicleEngine, serviceName);
 
                     if (endsWith(cspText, "?view=map")) {
                         mapWireHandler.process(in, out, map, cspText, tid, mapHandler);

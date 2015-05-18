@@ -22,6 +22,7 @@ import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
 import net.openhft.chronicle.map.MapWireConnectionHub;
 import net.openhft.chronicle.network.AcceptorEventHandler;
 import net.openhft.chronicle.network.event.EventGroup;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +50,7 @@ public class ServerEndpoint implements Closeable {
         start(0);
     }
 
-    public ServerEndpoint(int port, byte localIdentifier, ChronicleEngine chronicleEngine) throws IOException {
+    public ServerEndpoint(int port, byte localIdentifier, @NotNull ChronicleEngine chronicleEngine) throws IOException {
         this.localIdentifier = localIdentifier;
         this.chronicleEngine = chronicleEngine;
         start(port);

@@ -6,7 +6,7 @@ import java.io.IOException;
 /**
  * Created by andre on 01/05/2015.
  */
-public class Main {
+public class TextWireMain {
     public static void main(String[] args) {
         ChronicleEngine chronicleEngine = new ChronicleEngine();
         try {

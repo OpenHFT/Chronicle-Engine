@@ -12,9 +12,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-/**
- * Created by daniel on 06/05/15.
- */
+
 public class StringCharSequenceMapHandler implements MapHandler<String, CharSequence> {
 
     private final BiFunction<ChronicleEngine, String, Map> supplier;
