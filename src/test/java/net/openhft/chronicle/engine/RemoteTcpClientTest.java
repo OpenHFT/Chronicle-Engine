@@ -26,7 +26,6 @@ import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
-import net.openhft.chronicle.wire.Wires;
 import org.junit.*;
 import org.junit.rules.TestName;
 
@@ -134,19 +133,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
                         Assert.assertTrue("This should take 1 second but took " + duration1 / 1e3 + " seconds. ", duration1 < 1000);
                     }
 
-                    long start2 = System.currentTimeMillis();
-
-//                    IntStream.range(0, noPutsAndGets).parallel().forEach(i -> {
-                    IntStream.range(0, noPutsAndGets).forEach(i -> {
-                        test.getUsing("key" + i, Wires.acquireStringBuilder());
-                        if (i % 10 == 5)
-                            System.out.println("get key" + i);
-                    });
-                    long duration2 = System.currentTimeMillis() - start2;
-                    if (j >= 0) {
-                        System.out.printf("Took %.3f seconds to perform %,d puts%n", duration2 / 1e3, noPutsAndGets);
-                        Assert.assertTrue("This should take 1 second but took " + duration2 / 1e3 + " seconds. ", duration2 < 1000);
-                    }
+                   
                 }
             }
         }
