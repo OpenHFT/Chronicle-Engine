@@ -18,6 +18,8 @@
 
 package net.openhft.chronicle.engine;
 
+import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.NativeBytes;
 import net.openhft.chronicle.engine.client.RemoteTcpClientChronicleContext;
 import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
@@ -26,11 +28,12 @@ import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
-import net.openhft.chronicle.wire.Wires;
-import org.junit.*;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestName;
 
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
@@ -95,11 +98,12 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
         // sever
         ChronicleEngine chronicleEngine = new ChronicleEngine();
+        int valueLength = 2 * MB;
         chronicleEngine.setMap("test", ChronicleMapBuilder
                 .of(String.class, CharSequence.class)
                 .entries(noPutsAndGets)
                 .averageKeySize(16)
-                .actualChunkSize(2 * MB + 16)
+                .actualChunkSize(valueLength + 16)
                 .putReturnsNull(true)
                 .create());
         try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, chronicleEngine)) {
@@ -113,28 +117,30 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
                 final ChronicleMap<String, CharSequence> test = remoteContext.getMap("test",
                         String.class, CharSequence.class);
 
-                char[] charArray2MB = new char[MB * 2];
-                Arrays.fill(charArray2MB, 'X');
+                Bytes bytes = NativeBytes.nativeBytes(valueLength);
+                while (bytes.position() < valueLength)
+                    bytes.append('x');
+                bytes.flip();
 
-                final String expected = new String(charArray2MB);
 
                 // warm up
-                for (int j = -1; j < 1; j++) {
+                for (int j = -1; j < 30; j++) {
                     long start1 = System.currentTimeMillis();
                     // TODO adding .parallel() should work.
-//                    IntStream.range(0, noPutsAndGets).parallel().forEach(i -> {
-                    IntStream.range(0, noPutsAndGets).forEach(i -> {
-                        test.put("key" + i, expected);
+                    IntStream.range(0, noPutsAndGets).parallel().forEach(i -> {
+//                    IntStream.range(0, noPutsAndGets).forEach(i -> {
+                        test.put("key" + i, bytes);
                         if (i % 10 == 5)
                             System.out.println("put key" + i);
                     });
                     long duration1 = System.currentTimeMillis() - start1;
-                    if (j >= 0) {
+                   /* if (j >= 0)*/
+                    {
                         System.out.printf("Took %.3f seconds to perform %,d puts%n", duration1 / 1e3, noPutsAndGets);
-                        Assert.assertTrue("This should take 1 second but took " + duration1 / 1e3 + " seconds. ", duration1 < 1000);
+//                        Assert.assertTrue("This should take 1 second but took " + duration1 / 1e3 + " seconds. ", duration1 < 1000);
                     }
 
-                    long start2 = System.currentTimeMillis();
+/*                    long start2 = System.currentTimeMillis();
 
 //                    IntStream.range(0, noPutsAndGets).parallel().forEach(i -> {
                     IntStream.range(0, noPutsAndGets).forEach(i -> {
@@ -146,7 +152,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
                     if (j >= 0) {
                         System.out.printf("Took %.3f seconds to perform %,d puts%n", duration2 / 1e3, noPutsAndGets);
                         Assert.assertTrue("This should take 1 second but took " + duration2 / 1e3 + " seconds. ", duration2 < 1000);
-                    }
+                    }*/
                 }
             }
         }

@@ -114,18 +114,18 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                 readCsp(metaDataWire);
                 serviceName = serviceName(cspText);
                 tid = metaDataWire.read(CoreFields.tid).int64();
+                if (mapHandler == null) {
+                    if (endsWith(cspText, "?view=map") ||
+                            endsWith(cspText, "?view=entrySet") ||
+                            endsWith(cspText, "?view=keySet") ||
+                            endsWith(cspText, "?view=values"))
+                        mapHandler = instance(cspText);
 
+                    else
+                        mapHandler = null;
 
-                if (endsWith(cspText, "?view=map") ||
-                        endsWith(cspText, "?view=entrySet") ||
-                        endsWith(cspText, "?view=keySet") ||
-                        endsWith(cspText, "?view=values"))
-                    mapHandler = instance(cspText);
-
-                else
-                    mapHandler = null;
-
-                map = mapHandler.getMap(chronicleEngine, serviceName);
+                    map = mapHandler.getMap(chronicleEngine, serviceName);
+                }
             } catch (Exception e) {
                 rethrow(e);
             }
@@ -139,12 +139,12 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
         logYamlToStandardOut(in);
 
-        in.readDocument(metaDataConsumer, (WireIn dataWire) -> {
+        // TODO for testing only.
+        in.readDocument(this.metaDataConsumer, (WireIn dataWire) -> {
 
             try {
 
                 if (mapHandler != null) {
-
 
                     if (endsWith(cspText, "?view=map")) {
                         mapWireHandler.process(in, out, map, cspText, tid, mapHandler);
