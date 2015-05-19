@@ -35,11 +35,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import static java.util.Collections.synchronizedMap;
 import static net.openhft.chronicle.map.ChronicleMapBuilder.of;
 
 /**
@@ -52,16 +52,14 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
     //    private final Map<String, ChronicleQueue> queues = Collections.synchronizedMap(new
     //        LinkedHashMap<>());
     private final Map<String, Map<byte[], byte[]>> underlyingMaps
-            = Collections.synchronizedMap(new LinkedHashMap<>());
-    private final Map<String, ChronicleMap> maps = Collections.synchronizedMap(new LinkedHashMap<>());
+            = synchronizedMap(new LinkedHashMap<>());
+    private final Map<String, ChronicleMap> maps = synchronizedMap(new LinkedHashMap<>());
 
-    private final Map<String, ChronicleMap<CharSequence, CharSequence>> chronStringMap = Collections
-            .synchronizedMap(new
-                    LinkedHashMap<>());
-    private final Map<String, FilePerKeyMap> fpMaps = Collections.synchronizedMap(new LinkedHashMap<>());
-    private final Map<String, ChronicleSet> sets = Collections.synchronizedMap(new LinkedHashMap<>());
-    private final Map<String, ChronicleThreadPool> threadPools = Collections.synchronizedMap(new LinkedHashMap<>());
-    private final Map<String, ChronicleCluster> clusters = Collections.synchronizedMap(new LinkedHashMap<>());
+    private final Map<String, ChronicleMap<CharSequence, CharSequence>> chronStringMap = synchronizedMap(new LinkedHashMap<>());
+    private final Map<String, FilePerKeyMap> fpMaps = synchronizedMap(new LinkedHashMap<>());
+    private final Map<String, ChronicleSet> sets = synchronizedMap(new LinkedHashMap<>());
+    private final Map<String, ChronicleThreadPool> threadPools = synchronizedMap(new LinkedHashMap<>());
+    private final Map<String, ChronicleCluster> clusters = synchronizedMap(new LinkedHashMap<>());
     private MapWireConnectionHub mapWireConnectionHub = null;
 
     public ChronicleEngine() {
@@ -269,5 +267,8 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
     @Override
     public void close() throws IOException {
         mapWireConnectionHub.close();
+        fpMaps.values().forEach(FilePerKeyMap::close);
+        maps.values().forEach(ChronicleMap::close);
+        chronStringMap.values().forEach(ChronicleMap::close);
     }
 }

@@ -142,7 +142,6 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
         logYamlToStandardOut(in);
 
-
         in.readDocument(this.metaDataConsumer, (WireIn dataWire) -> {
 
             try {

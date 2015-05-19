@@ -214,7 +214,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
         }
     }
 
-    @Ignore("not cleaning up resources correctly")
+
     @Test
     public void testFPKMap() throws Exception {
         // sever
