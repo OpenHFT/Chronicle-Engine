@@ -94,7 +94,6 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
     }
 
     public enum EventId implements ParameterizeWireKey {
-        longSize,
         size,
         containsKey(key),
         containsValue(value),
@@ -107,7 +106,6 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
         keySet,
         values,
         entrySet,
-        entrySetRestricted,
         replace(key, value),
         replaceForOld(key, oldValue, newValue),
         putIfAbsent(key, value),
@@ -115,11 +113,12 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
         toString,
         putAll,
         hashCode,
+        createChannel,
+        entrySetRestricted,
         mapForKey,
         putMapped,
         keyBuilder,
         valueBuilder,
-        createChannel,
         remoteIdentifier;
 
         private final WireKey[] params;

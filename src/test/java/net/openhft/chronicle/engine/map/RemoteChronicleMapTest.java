@@ -338,8 +338,6 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
         try (ChronicleMap empty = newIntString()) {
             try (ChronicleMap map = map5()) {
                 yamlLoggger(() -> empty.putAll(map));
-
-
                 assertEquals(5, empty.size());
                 assertTrue(empty.containsKey(one));
                 assertTrue(empty.containsKey(two));
@@ -356,7 +354,7 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
     @Test(timeout = 50000)
     public void testPutIfAbsent() throws IOException {
         try (ChronicleMap map = map5()) {
-            map.putIfAbsent(six, "Z");
+            yamlLoggger(() -> map.putIfAbsent(six, "Z"));
             assertTrue(map.containsKey(six));
         }
     }
@@ -367,7 +365,7 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
     @Test(timeout = 50000)
     public void testPutIfAbsent2() throws IOException {
         try (ChronicleMap map = map5()) {
-            assertEquals("A", map.putIfAbsent(one, "Z"));
+            yamlLoggger(() -> assertEquals("A", map.putIfAbsent(one, "Z")));
         }
     }
 
