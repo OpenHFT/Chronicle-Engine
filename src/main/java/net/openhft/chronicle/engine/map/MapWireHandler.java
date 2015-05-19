@@ -37,6 +37,8 @@ import java.io.IOException;
 import java.io.StreamCorruptedException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -60,6 +62,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
     private Function<ValueIn, K> wireToK;
     private Function<ValueIn, V> wireToV;
 
+    final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     public void process(@NotNull final Wire in,
                         @NotNull final Wire out, @NotNull Map<K, V> map,
@@ -110,10 +113,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
         putIfAbsent(key, value),
         removeWithValue(key, value),
         toString,
-        getApplicationVersion,
-        persistedDataVersion,
         putAll,
-        putAllWithoutAcc,
         hashCode,
         mapForKey,
         putMapped,
@@ -182,6 +182,22 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
             try {
 
                 final ValueIn valueIn = inWire.readEventName(eventName);
+
+                if (put.contentEquals(eventName)) {
+
+                    valueIn.marshallable(wire -> {
+
+                        final Params[] params = put.params();
+                        final K key = wireToK.apply(wire.read(params[0]));
+                        final V value = wireToV.apply(wire.read(params[1]));
+
+                        nullCheck(key);
+                        nullCheck(value);
+                        map.put(key, value);
+
+                    });
+                    return;
+                }
 
                 outWire.writeDocument(true, wire -> outWire.write(CoreFields.tid).int64(tid));
 
@@ -285,21 +301,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                         return;
                     }
 
-                    if (put.contentEquals(eventName)) {
 
-                        valueIn.marshallable(wire -> {
-
-                            final Params[] params = getAndPut.params();
-                            final K key = wireToK.apply(wire.read(params[0]));
-                            final V value = wireToV.apply(wire.read(params[1]));
-
-                            nullCheck(key);
-                            nullCheck(value);
-                            map.put(key, value);
-                            vToWire.accept(outWire.writeEventName(reply), null);
-                        });
-                        return;
-                    }
 
                     if (getAndRemove.contentEquals(eventName)) {
                         final K key = wireToK.apply(valueIn);
