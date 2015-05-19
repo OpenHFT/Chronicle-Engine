@@ -104,17 +104,18 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private String serviceName;
     private long tid;
 
+    StringBuilder lastCsp;
 
     @NotNull
     private Consumer<WireIn> getWireInConsumer() throws IOException {
         return (metaDataWire) -> {
 
             try {
-                //metaDataWire.read(csp).text(cspText);
                 readCsp(metaDataWire);
-                serviceName = serviceName(cspText);
                 tid = metaDataWire.read(CoreFields.tid).int64();
-                if (mapHandler == null) {
+                if (!cspText.equals(lastCsp)) {
+                    lastCsp = cspText;
+                    serviceName = serviceName(cspText);
                     if (endsWith(cspText, "?view=map") ||
                             endsWith(cspText, "?view=entrySet") ||
                             endsWith(cspText, "?view=keySet") ||
@@ -125,6 +126,8 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                         mapHandler = null;
 
                     map = mapHandler.getMap(chronicleEngine, serviceName);
+
+
                 }
             } catch (Exception e) {
                 rethrow(e);
@@ -139,7 +142,6 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
         logYamlToStandardOut(in);
 
-        // TODO for testing only.
         in.readDocument(this.metaDataConsumer, (WireIn dataWire) -> {
 
             try {
