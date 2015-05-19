@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.engine.client;
 
+import net.openhft.chronicle.core.util.Closeable;
 import net.openhft.chronicle.engine.ChronicleContext;
 import net.openhft.chronicle.engine.MapEventListener;
 import net.openhft.chronicle.engine.Subscription;
@@ -26,10 +27,8 @@ import net.openhft.chronicle.engine.old.ChronicleCluster;
 import net.openhft.chronicle.engine.old.ChronicleThreadPool;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.FilePerKeyMap;
-
 import net.openhft.chronicle.set.ChronicleSet;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.logging.Logger;
 
@@ -96,7 +95,7 @@ public class RemoteTcpClientChronicleContext implements ChronicleContext, Closea
 
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         remoteClientServiceLocator.close();
     }
 }
