@@ -265,6 +265,13 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
     @Test(timeout = 50000)
     public void testEntrySetToArray() throws IOException {
         try (ChronicleMap map = map5()) {
+            writeMessage = "map.entrySet().toArray() first gets the entry set and then converts " +
+                    "it to an array";
+            yamlLoggger(() -> {
+                Set s = map.entrySet();
+                s.toArray();
+            });
+
             Set s = map.entrySet();
             Object[] ar = s.toArray();
             assertEquals(5, ar.length);
@@ -401,7 +408,8 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
     public void testReplaceValue() throws IOException {
         try (ChronicleMap map = map5()) {
             assertEquals("A", map.get(one));
-            assertFalse(map.replace(one, "Z", "Z"));
+            writeMessage = "example of when then value was not replaced";
+            yamlLoggger(() -> assertFalse(map.replace(one, "Z", "Z")));
             assertEquals("A", map.get(one));
         }
     }
@@ -511,7 +519,8 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
     @Test(timeout = 50000)
     public void testContainsKey_NullPointerException() throws IOException {
         try (ChronicleMap c = newIntString()) {
-            c.containsKey(null);
+            writeMessage = "c.containsKey(null) will throw a NullPointerException";
+            yamlLoggger(() -> c.containsKey(null));
             shouldThrow();
         } catch (NullPointerException success) {
         } catch (IllegalArgumentException success) {
@@ -599,7 +608,8 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
     @Test(timeout = 50000)
     public void testReplace2_NullPointerException() throws IOException {
         try (ChronicleMap c = newIntString()) {
-            c.replace(notPresent, null);
+            writeMessage = "replace(notPresent,null) will throw a NullPointerException";
+            yamlLoggger(() -> c.replace(notPresent, null));
             shouldThrow();
         } catch (NullPointerException success) {
         }
@@ -623,7 +633,8 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
     @Test(timeout = 50000)
     public void testReplaceValue3_NullPointerException() throws IOException {
         try (ChronicleMap c = newIntString()) {
-            c.replace(notPresent, "A", null);
+            writeMessage = "replace(notPresent, \"A\", null will throw a NullPointerException";
+            yamlLoggger(() -> c.replace(notPresent, "A", null));
             shouldThrow();
         } catch (NullPointerException success) {
         }
@@ -636,7 +647,9 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
     public void testRemove1_NullPointerException() throws IOException {
         try (ChronicleMap c = newStrStrMap()) {
             c.put("sadsdf", "asdads");
-            c.remove(null);
+
+            writeMessage = "remove(null) will throw a NullPointerException";
+            yamlLoggger(() -> c.remove(null));
             shouldThrow();
         } catch (NullPointerException success) {
         }
@@ -650,7 +663,8 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
     () throws IOException {
         try (ChronicleMap c = newStrStrMap()) {
             c.put("sadsdf", "asdads");
-            c.remove(null, "whatever");
+            writeMessage = "remove(null,whatever) will throw a NullPointerException";
+            yamlLoggger(() -> c.remove(null, "whatever"));
             shouldThrow();
         } catch (NullPointerException success) {
         }
