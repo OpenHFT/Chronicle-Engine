@@ -18,9 +18,9 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.core.MemoryUnit;
 import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.hash.ChronicleHashStatelessClientBuilder;
-import net.openhft.chronicle.core.MemoryUnit;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -54,7 +54,7 @@ public final class ClientWiredChronicleMapStatelessBuilder<K, V> implements
     private boolean removeReturnsNull = false;
     private long timeoutMs = TimeUnit.SECONDS.toMillis(10);
     private String name;
-    private int tcpBufferSize = (int) MemoryUnit.KILOBYTES.toBytes(64);
+    private int tcpBufferSize = (int) MemoryUnit.MEGABYTES.toBytes(3);
 
     private final AtomicBoolean used = new AtomicBoolean(false);
 

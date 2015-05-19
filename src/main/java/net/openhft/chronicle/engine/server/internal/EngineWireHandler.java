@@ -182,7 +182,6 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
         });
 
-
     }
 
     private void logYamlToStandardOut(@NotNull Wire in) {

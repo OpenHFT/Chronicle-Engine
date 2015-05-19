@@ -37,8 +37,6 @@ import java.io.IOException;
 import java.io.StreamCorruptedException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -61,8 +59,6 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
     private BiConsumer<ValueOut, V> vToWire;
     private Function<ValueIn, K> wireToK;
     private Function<ValueIn, V> wireToV;
-
-    final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     public void process(@NotNull final Wire in,
                         @NotNull final Wire out, @NotNull Map<K, V> map,
@@ -188,11 +184,12 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
 
                         final Params[] params = put.params();
                         final K key = wireToK.apply(wire.read(params[0]));
-                        final V value = wireToV.apply(wire.read(params[1]));
+                        final ValueIn read = wire.read(params[1]);
+                        final V value = wireToV.apply(read);
 
                         nullCheck(key);
                         nullCheck(value);
-                        map.put(key, value);
+                        map.put(key, (V)value);
 
                     });
                     return;
