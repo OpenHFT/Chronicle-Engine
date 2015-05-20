@@ -28,7 +28,6 @@ import net.openhft.chronicle.core.pool.StringBuilderPool;
 import net.openhft.chronicle.engine.collection.CollectionWireHandlerProcessor;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.wire.*;
-import net.openhft.chronicle.wire.util.ExceptionMarshaller;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -429,10 +428,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
 
             } catch (Exception exception) {
                 outWire.bytes().position(position);
-                outWire.writeEventName(() -> "exception");
-
-                final WriteMarshallable exceptionMarshaller = new ExceptionMarshaller(exception);
-                exceptionMarshaller.writeMarshallable(outWire);
+                outWire.writeEventName(() -> "exception").throwable(exception);
             }
 
             // write 'reply : {} ' if no data was sent

@@ -431,7 +431,6 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
     @Test(timeout = 50000)
     public void testRemove() throws IOException {
         try (ChronicleMap map = map5()) {
-
             yamlLoggger(() -> map.remove(five));
             assertEquals(4, map.size());
             assertFalse(map.containsKey(five));
@@ -442,8 +441,7 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
      * remove(key,value) removes only if pair present
      */
     @Test(timeout = 50000)
-    public void testRemove2
-    () throws IOException {
+    public void testRemove2() throws IOException {
    /*     try(   ChronicleMap map = map5(8076)) {
         map.remove(five, "E");
     assertEquals(4, map.size());
@@ -499,172 +497,143 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
     /**
      * get(null) throws NPE
      */
-    @Test(timeout = 50000)
+    @Test(timeout = 50000, expected = NullPointerException.class)
     public void testGet_NullPointerException() throws IOException {
 
         try (ChronicleMap c = newIntString()) {
             writeMessage = "get(null) returns a NullPointerException";
             yamlLoggger(() -> c.get(null));
-            shouldThrow();
-        } catch (NullPointerException success) {
-        } catch (IllegalArgumentException success) {
         }
     }
 
     /**
      * containsKey(null) throws NPE
      */
-    @Test(timeout = 50000)
+    @Test(timeout = 50000, expected = NullPointerException.class)
     public void testContainsKey_NullPointerException() throws IOException {
         try (ChronicleMap c = newIntString()) {
             writeMessage = "c.containsKey(null) will throw a NullPointerException";
             yamlLoggger(() -> c.containsKey(null));
-            shouldThrow();
-        } catch (NullPointerException success) {
-        } catch (IllegalArgumentException success) {
         }
     }
 
     /**
      * put(null,x) throws NPE
      */
-    @Test(timeout = 50000)
+    @Test(timeout = 50000, expected = NullPointerException.class)
     public void testPut1_NullPointerException() throws IOException {
         try (ChronicleMap c = newIntString()) {
             writeMessage = "put(null) will throw a NullPointerException";
             yamlLoggger(() -> c.put(null, "whatever"));
-            shouldThrow();
-        } catch (NullPointerException success) {
         }
     }
 
     /**
      * put(x, null) throws NPE
      */
-    @Test(timeout = 50000)
+    @Test(timeout = 50000, expected = NullPointerException.class)
     public void testPut2_NullPointerException() throws IOException {
         try (ChronicleMap c = newIntString()) {
             writeMessage = "put(notPresent,null) will throw a NullPointerException";
             yamlLoggger(() -> c.put(notPresent, null));
-            shouldThrow();
-        } catch (NullPointerException success) {
         }
     }
 
     /**
      * putIfAbsent(null, x) throws NPE
      */
-    @Test(timeout = 50000)
+    @Test(timeout = 50000, expected = NullPointerException.class)
     public void testPutIfAbsent1_NullPointerException() throws IOException {
         try (ChronicleMap c = newIntString()) {
             writeMessage = "put(null, \"whatever\") will throw a NullPointerException";
             yamlLoggger(() -> c.putIfAbsent(null, "whatever"));
-            shouldThrow();
-        } catch (NullPointerException success) {
         }
     }
 
     /**
      * replace(null, x) throws NPE
      */
-    @Test(timeout = 50000)
+    @Test(timeout = 50000, expected = NullPointerException.class)
     public void testReplace_NullPointerException() throws IOException {
         try (ChronicleMap c = newIntString()) {
             c.replace(null, "whatever");
-            shouldThrow();
-        } catch (NullPointerException success) {
         }
     }
 
     /**
      * replace(null, x, y) throws NPE
      */
-    @Test(timeout = 50000)
+    @Test(timeout = 50000, expected = NullPointerException.class)
     public void testReplaceValue_NullPointerException() throws IOException {
         try (ChronicleMap c = newIntString()) {
             c.replace(null, "A", "whatever");
-            shouldThrow();
-        } catch (NullPointerException success) {
         }
     }
 
     /**
      * putIfAbsent(x, null) throws NPE
      */
-    @Test(timeout = 50000)
+    @Test(timeout = 50000, expected = NullPointerException.class)
     public void testPutIfAbsent2_NullPointerException() throws IOException {
         try (ChronicleMap c = newIntString()) {
             c.putIfAbsent(notPresent, null);
-            shouldThrow();
-        } catch (NullPointerException success) {
         }
     }
 
     /**
      * replace(x, null) throws NPE
      */
-    @Test(timeout = 50000)
+    @Test(timeout = 50000, expected = NullPointerException.class)
     public void testReplace2_NullPointerException() throws IOException {
         try (ChronicleMap c = newIntString()) {
             writeMessage = "replace(notPresent,null) will throw a NullPointerException";
             yamlLoggger(() -> c.replace(notPresent, null));
-            shouldThrow();
-        } catch (NullPointerException success) {
         }
     }
 
     /**
      * replace(x, null, y) throws NPE
      */
-    @Test(timeout = 50000)
+    @Test(timeout = 50000, expected = NullPointerException.class)
     public void testReplaceValue2_NullPointerException() throws IOException {
         try (ChronicleMap c = newIntString()) {
             c.replace(notPresent, null, "A");
-            shouldThrow();
-        } catch (NullPointerException success) {
         }
     }
 
     /**
      * replace(x, y, null) throws NPE
      */
-    @Test(timeout = 50000)
+    @Test(timeout = 50000, expected = NullPointerException.class)
     public void testReplaceValue3_NullPointerException() throws IOException {
         try (ChronicleMap c = newIntString()) {
             writeMessage = "replace(notPresent, \"A\", null will throw a NullPointerException";
             yamlLoggger(() -> c.replace(notPresent, "A", null));
-            shouldThrow();
-        } catch (NullPointerException success) {
         }
     }
 
     /**
      * remove(null) throws NPE
      */
-    @Test(timeout = 50000)
+    @Test(timeout = 50000, expected = NullPointerException.class)
     public void testRemove1_NullPointerException() throws IOException {
         try (ChronicleMap c = newStrStrMap()) {
             c.put("sadsdf", "asdads");
 
             writeMessage = "remove(null) will throw a NullPointerException";
             yamlLoggger(() -> c.remove(null));
-            shouldThrow();
-        } catch (NullPointerException success) {
         }
     }
 
     /**
      * remove(null, x) throws NPE
      */
-    @Test(timeout = 50000)
-    public void testRemove2_NullPointerException
-    () throws IOException {
+    @Test(timeout = 50000, expected = NullPointerException.class)
+    public void testRemove2_NullPointerException() throws IOException {
         try (ChronicleMap c = newStrStrMap()) {
             c.put("sadsdf", "asdads");
             writeMessage = "remove(null,whatever) will throw a NullPointerException";
             yamlLoggger(() -> c.remove(null, "whatever"));
-            shouldThrow();
-        } catch (NullPointerException success) {
         }
     }
 
