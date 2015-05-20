@@ -41,7 +41,7 @@ public interface MapHandler<K, V> extends MapHandlerFunction<K, V> {
         } else if (contains(csp, "object"))
             return BYTE_BYTE_MAP_HANDLER;
         else
-            return STRING_CHAR_SEQUENCE_MAP_HANDLER;
+            return STRING_ISO8859_MAP_HANDLER;
     }
 
     Map<K, V> getMap(ChronicleEngine engine, String serviceName) throws IOException;

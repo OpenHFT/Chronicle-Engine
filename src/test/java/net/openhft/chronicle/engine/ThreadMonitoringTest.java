@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine;
 
+import net.openhft.lang.Jvm;
 import org.junit.After;
 import org.junit.Before;
 
@@ -41,10 +42,9 @@ public class ThreadMonitoringTest {
         if (!threadMap.isEmpty()) {
             System.out.println("### threads still running after the test ###");
             for (Map.Entry<Thread, StackTraceElement[]> entry : threadMap.entrySet()) {
-                System.out.println(entry.getKey());
-                for (StackTraceElement ste : entry.getValue()) {
-                    System.out.println("\t" + ste);
-                }
+                StringBuilder sb = new StringBuilder(entry.getKey().toString());
+                Jvm.trimStackTrace(sb, entry.getValue());
+                System.out.println(sb);
             }
             try {
                 for (Thread thread : threadMap.keySet()) {
