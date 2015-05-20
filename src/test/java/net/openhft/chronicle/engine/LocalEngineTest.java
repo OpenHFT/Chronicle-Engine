@@ -76,9 +76,10 @@ public class LocalEngineTest {
         String dir = System.getProperty("java.io.tmpdir") + "/localtest.deleteme";
         File file = new File(dir);
         engine.setMap("localtest", new FilePerKeyChronicleMap(dir));
+        AtomicInteger count = new AtomicInteger();
+
         try (ChronicleMap<String, String> map = engine.getMap("localtest", String.class, String.class)) {
             for (boolean test : new boolean[]{true, false}) {
-                AtomicInteger count = new AtomicInteger();
                 ((FilePerKeyChronicleMap) map).registerForEvents(e -> count.incrementAndGet());
                 int factor0 = test ? 1 : factor;
                 long time = System.currentTimeMillis();
