@@ -238,9 +238,12 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     @Ignore
     @Test
     public void test2MBEntries() throws Exception {
+        // sever
+        ChronicleEngine engine = new ChronicleEngine();
+        engine.setMap("testLarge", ChronicleMapBuilder.of(CharSequence.class,CharSequence.class).
+                entries(50).averageValueSize(2_000_000).create());
 
-        // server
-        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, new ChronicleEngine())) {
+        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, engine)) {
             int serverPort = serverEndpoint.getPort();
 
             //client
@@ -248,21 +251,23 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
                     "localhost", serverPort, (byte) 2)) {
 
                 StringBuilder sb = new StringBuilder();
-                for (int i = 0; i < 50_000; i++) {
+                for (int i = 0; i < 2_000_000; i++) {
                     sb.append('x');
                 }
 
-                String value = sb.toString();
-                long time = System.currentTimeMillis();
-                int tl = 0;
-                try (ChronicleMap<String, String> map = context.getMap
-                        ("test", String.class, String.class)) {
-                    for (int i = 0; i < 2_000; i++) {
-                        map.put("largeEntry", value);
+
+                for (int j = 0; j < 4; j++) {
+                    long time = System.currentTimeMillis();
+                    int tl = 0;
+                    for (int i = 0; i < 50; i++) {
+                        try (ChronicleMap<String, String> map = context.getMap
+                                ("testLarge", String.class, String.class)) {
+                            map.put("largeEntry" + i, sb.toString());
 //                        tl += map.get("largeEntry").length();
+                        }
                     }
+                    System.out.format("Time for 100MB %,dms%n", (System.currentTimeMillis() - time));
                 }
-                System.out.format("Time for 100MB %,dms%n", (System.currentTimeMillis() - time));
             }
         }
     }
