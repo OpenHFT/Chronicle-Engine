@@ -382,15 +382,13 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
             } catch (Exception e) {
                 LOG.error("", e);
             } finally {
-                if (OS.IS_DEBUG && YamlLogging.showServerWrites) {
+                if (OS.isDebug() && YamlLogging.showServerWrites) {
                     final Bytes<?> outBytes = outWire.bytes();
                     long len = outBytes.position() - CollectionWireHandlerProcessor.SIZE_OF_SIZE;
                     if (len == 0) {
                         System.out.println("--------------------------------------------\n" +
                                 "server writes:\n\n<EMPTY>");
                     } else {
-
-
                         System.out.println("--------------------------------------------\n" +
                                 "server writes:\n\n" +
                                 Wires.fromSizePrefixedBlobs(outBytes, CollectionWireHandlerProcessor.SIZE_OF_SIZE, len));
