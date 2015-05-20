@@ -25,6 +25,7 @@ import net.openhft.chronicle.map.FilePerKeyMap;
 import net.openhft.chronicle.set.ChronicleSet;
 
 import java.io.IOException;
+import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
 
 /**
@@ -34,7 +35,9 @@ public interface ChronicleContext {
     //ChronicleQueue getQueue(String name);
 
     // get any map
-    <K, V> ChronicleMap<K, V> getMap(String name, Class<K> kClass, Class<V> vClass) throws IOException;
+    <K, V> ConcurrentMap<K, V> getMap(String name, Class<K> kClass, Class<V> vClass) throws IOException;
+
+    <K, V> ChronicleMap<K, V> getChronicleMap(String name, Class<K> kClass, Class<V> vClass) throws IOException;
 
     // get a subscription on a map
     <K, V> Subscription<K, MapEventListener<K, V>> createMapSubscription(String name, Class<K> kClass, Class<V> vClass);
@@ -45,7 +48,7 @@ public interface ChronicleContext {
     <I> I getService(Class<I> iClass, String name, Class... args) throws IOException;
 
     // A generic subscription
-    <K, C> Subscription<K, C> getSubscription(String name, Class<K> kClass, Class<C> callbackClass);
+    <K, C> Subscription<K, C> createSubscription(String name, Class<K> kClass, Class<C> callbackClass);
 
     ChronicleThreadPool getThreadPool(String name);
 

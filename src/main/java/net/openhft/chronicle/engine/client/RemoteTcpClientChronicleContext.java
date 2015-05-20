@@ -54,6 +54,11 @@ public class RemoteTcpClientChronicleContext implements ChronicleContext, Closea
     }
 
     @Override
+    public <K, V> ChronicleMap<K, V> getChronicleMap(String name, Class<K> kClass, Class<V> vClass) throws IOException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public <E> ChronicleSet<E> getSet(String name, Class<E> eClass) {
         return null;
     }
@@ -69,7 +74,7 @@ public class RemoteTcpClientChronicleContext implements ChronicleContext, Closea
     }
 
     @Override
-    public <K, C> Subscription<K, C> getSubscription(String name, Class<K> kClass, Class<C> callbackClass) {
+    public <K, C> Subscription<K, C> createSubscription(String name, Class<K> kClass, Class<C> callbackClass) {
         throw new UnsupportedOperationException();
     }
 

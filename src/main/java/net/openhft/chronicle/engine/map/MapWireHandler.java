@@ -400,7 +400,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
         }
     };
 
-    private void nullCheck(Object o) {
+    void nullCheck(Object o) {
         if (o == null)
             throw new NullPointerException();
     }

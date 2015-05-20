@@ -45,8 +45,6 @@ import static org.junit.Assert.*;
  */
 
 public class RemoteChronicleMapTest extends JSR166TestCase {
-
-
     @Rule
     public TestName name = new TestName();
 

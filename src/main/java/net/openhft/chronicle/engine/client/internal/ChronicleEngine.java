@@ -207,18 +207,13 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
 
     @Override
     public <K, V> Subscription<K, MapEventListener<K, V>> createMapSubscription(String name, Class<K> kClass, Class<V> vClass) {
-        return getSubscription(name, kClass, (Class<MapEventListener<K, V>>) (Class) MapEventListener.class);
+        return createSubscription(name, kClass, (Class<MapEventListener<K, V>>) (Class) MapEventListener.class);
     }
 
     public <K, V> Subscription<K, MapEventListener<K, V>> createFilePerKeyMapMapSubscription(String name) {
         //Find the corresponding map
         FilePerKeyMap filePerKeyMap = fpMaps.get(name);
         return new FilePerKeyMapSubscription(filePerKeyMap);
-    }
-
-    @Override
-    public <K, C> Subscription<K, C> getSubscription(String name, Class<K> kClass, Class<C> callbackClass) {
-        throw new UnsupportedOperationException();
     }
 
     private <K, V> void validateClasses(Map map, Class<K> kClass, Class<V> vClass) {
@@ -270,5 +265,15 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
         fpMaps.values().forEach(FilePerKeyMap::close);
         maps.values().forEach(ChronicleMap::close);
         chronStringMap.values().forEach(ChronicleMap::close);
+    }
+
+    @Override
+    public <K, V> ChronicleMap<K, V> getChronicleMap(String name, Class<K> kClass, Class<V> vClass) throws IOException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <K, C> Subscription<K, C> createSubscription(String name, Class<K> kClass, Class<C> callbackClass) {
+        throw new UnsupportedOperationException();
     }
 }

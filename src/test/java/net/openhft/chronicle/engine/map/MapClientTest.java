@@ -153,6 +153,7 @@ public class MapClientTest extends ThreadMonitoringTest {
         supplyMap(Integer.class, String.class, mapProxy -> {
 
             mapProxy.put(1, "Hello");
+            Assert.assertEquals("Hello", mapProxy.get(1));
             Assert.assertEquals("{1=Hello}", mapProxy.toString());
             mapProxy.remove(1);
 
