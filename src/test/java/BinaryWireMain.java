@@ -3,7 +3,7 @@
 
 import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
-import net.openhft.chronicle.wire.TextWire;
+import net.openhft.chronicle.wire.BinaryWire;
 
 import java.io.IOException;
 
@@ -15,7 +15,7 @@ public class BinaryWireMain {
         ChronicleEngine chronicleEngine = new ChronicleEngine();
         try {
             int port = 8088;
-            final ServerEndpoint serverEndpoint = new ServerEndpoint(port, (byte) 1, chronicleEngine, TextWire.class);
+            final ServerEndpoint serverEndpoint = new ServerEndpoint(port, (byte) 1, chronicleEngine, BinaryWire.class);
 
             System.out.println("Server port seems to be " + serverEndpoint.getPort());
             while (true) {
