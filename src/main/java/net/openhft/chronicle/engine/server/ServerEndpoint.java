@@ -17,11 +17,13 @@
  */
 package net.openhft.chronicle.engine.server;
 
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
 import net.openhft.chronicle.map.MapWireConnectionHub;
 import net.openhft.chronicle.network.AcceptorEventHandler;
 import net.openhft.chronicle.network.event.EventGroup;
+import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,35 +32,40 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * Created by Rob Austin
  */
 public class ServerEndpoint implements Closeable {
+
     private static final Logger LOG = LoggerFactory.getLogger(ServerEndpoint.class);
     private final byte localIdentifier;
-
+    private final Function<Bytes, Wire> byteToWire;
     private EventGroup eg = new EventGroup();
 
     private AcceptorEventHandler eah;
     private MapWireConnectionHub mapWireConnectionHub;
     private ChronicleEngine chronicleEngine;
 
-    public ServerEndpoint( byte localIdentifier, ChronicleEngine chronicleEngine) throws IOException {
-        this.localIdentifier = localIdentifier;
-        this.chronicleEngine = chronicleEngine;
-        start(0);
+    public ServerEndpoint(byte localIdentifier,
+                          @NotNull final ChronicleEngine chronicleEngine,
+                          @NotNull final Class<? extends Wire> wireClass) throws IOException {
+        this(0, localIdentifier, chronicleEngine, wireClass);
     }
 
-    public ServerEndpoint(int port, byte localIdentifier, @NotNull ChronicleEngine chronicleEngine) throws IOException {
+    public ServerEndpoint(int port,
+                          byte localIdentifier,
+                          @NotNull final ChronicleEngine chronicleEngine,
+                          @NotNull final Class<? extends Wire> wireClass) throws IOException {
         this.localIdentifier = localIdentifier;
         this.chronicleEngine = chronicleEngine;
+
+        this.byteToWire = Wire.bytesToWire(wireClass);
+
         start(port);
     }
 
-    public MapWireConnectionHub mapWireConnectionHub() {
-        return mapWireConnectionHub;
-    }
 
     public AcceptorEventHandler start(int port) throws IOException {
         eg.start();
@@ -67,13 +74,10 @@ public class ServerEndpoint implements Closeable {
 
             final Map<Long, String> cidToCsp = new HashMap<>();
 
-
             try {
                 mapWireConnectionHub = new MapWireConnectionHub(localIdentifier, 8085);
 
-                return new EngineWireHandler(
-                    cidToCsp,
-                    chronicleEngine);
+                return new EngineWireHandler(cidToCsp, chronicleEngine, byteToWire);
             } catch (IOException e) {
                 LOG.error("", e);
             }

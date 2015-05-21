@@ -21,6 +21,7 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.wire.TextWire;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -44,7 +45,9 @@ import static org.junit.Assert.*;
  * Pat Fisher, Mike Judd.
  */
 
-public class RemoteChronicleMapTest extends JSR166TestCase {
+public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
+
+
     @Rule
     public TestName name = new TestName();
 
@@ -54,7 +57,7 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
     }
 
     static ChronicleMap<Integer, String> newIntString() throws IOException {
-        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier(Integer.class, String.class, new ChronicleEngine());
+        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier(Integer.class, String.class, new ChronicleEngine(),TextWire.class);
 
         ChronicleMap map = remoteMapSupplier.get();
         final ChronicleMap spy = Mockito.spy(map);
@@ -70,7 +73,7 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
     static ChronicleMap<CharSequence, CharSequence> newStrStrMap() throws
             IOException {
 
-        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier(CharSequence.class, CharSequence.class, new ChronicleEngine());
+        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier(CharSequence.class, CharSequence.class, new ChronicleEngine(), TextWire.class);
         final ChronicleMap spy = Mockito.spy(remoteMapSupplier.get());
 
         Mockito.doAnswer(invocationOnMock -> {
@@ -84,7 +87,7 @@ public class RemoteChronicleMapTest extends JSR166TestCase {
     static ChronicleMap<byte[], byte[]> newByteArrayMap() throws IOException {
         final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier(byte[]
                 .class, byte[]
-                .class, new ChronicleEngine());
+                .class, new ChronicleEngine(), TextWire.class);
         final ChronicleMap spy = Mockito.spy(remoteMapSupplier.get());
 
         Mockito.doAnswer(invocationOnMock -> {

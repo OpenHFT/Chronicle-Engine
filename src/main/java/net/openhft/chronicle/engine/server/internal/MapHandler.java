@@ -26,6 +26,7 @@ public interface MapHandler<K, V> extends MapHandlerFunction<K, V> {
             throw Jvm.rethrow(e);
         }
     });
+
     MapHandler STRING_ISO8859_MAP_HANDLER = new StringISO8859MapHandler((engine, serviceName) -> {
 
         try {

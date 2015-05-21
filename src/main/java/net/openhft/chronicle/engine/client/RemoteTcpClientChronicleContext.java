@@ -28,6 +28,8 @@ import net.openhft.chronicle.engine.old.ChronicleThreadPool;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.FilePerKeyMap;
 import net.openhft.chronicle.set.ChronicleSet;
+import net.openhft.chronicle.wire.Wire;
+import net.openhft.lang.model.constraints.NotNull;
 
 import java.io.IOException;
 import java.util.logging.Logger;
@@ -39,8 +41,15 @@ public class RemoteTcpClientChronicleContext implements ChronicleContext, Closea
 
     RemoteClientServiceLocator remoteClientServiceLocator;
 
-    public RemoteTcpClientChronicleContext(String hostname, int port, byte identifier) throws IOException {
-        this.remoteClientServiceLocator = new RemoteClientServiceLocator(hostname, port, identifier);
+    public RemoteTcpClientChronicleContext(@NotNull final String hostname,
+                                           int port,
+                                           byte identifier, Class<? extends Wire> wireClass)
+            throws IOException {
+        this.remoteClientServiceLocator = new RemoteClientServiceLocator(
+                hostname,
+                port,
+                identifier,
+                Wire.bytesToWire(wireClass));
     }
 
   /*   @Override

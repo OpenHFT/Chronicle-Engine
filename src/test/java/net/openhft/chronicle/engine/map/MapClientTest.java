@@ -18,11 +18,16 @@
 
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.client.RemoteTcpClientChronicleContext;
 import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.wire.BinaryWire;
+import net.openhft.chronicle.wire.TextWire;
+import net.openhft.chronicle.wire.Wire;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -33,9 +38,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static org.junit.Assert.assertEquals;
@@ -107,7 +114,7 @@ public class MapClientTest extends ThreadMonitoringTest {
 
             assertEquals(true, entries.isEmpty());
             mapProxy.putAll(data);
-           assertEquals(2, mapProxy.size());
+            assertEquals(2, mapProxy.size());
 
         });
     }
@@ -164,8 +171,7 @@ public class MapClientTest extends ThreadMonitoringTest {
     }
 
 
-
-   public interface CloseableSupplier<X> extends Closeable, Supplier<X> {
+    public interface CloseableSupplier<X> extends Closeable, Supplier<X> {
     }
 
     public static class RemoteMapSupplier<K, V> implements CloseableSupplier<ChronicleMap<K, V>> {
@@ -174,12 +180,24 @@ public class MapClientTest extends ThreadMonitoringTest {
         private final ChronicleMap<K, V> map;
         private final RemoteTcpClientChronicleContext context;
 
-        public RemoteMapSupplier(Class<K> kClass, Class<V> vClass, ChronicleEngine chronicleEngine) throws IOException {
+        public RemoteMapSupplier(@NotNull final Class<K> kClass,
+                                 @NotNull final Class<V> vClass,
+                                 @NotNull final ChronicleEngine chronicleEngine,
+                                 @NotNull final Class<TextWire> wireClass) throws IOException {
 
-            serverEndpoint = new ServerEndpoint( (byte) 1, chronicleEngine);
+            serverEndpoint = new ServerEndpoint((byte) 1, chronicleEngine, wireClass);
             int serverPort = serverEndpoint.getPort();
 
-            context = new RemoteTcpClientChronicleContext("localhost", serverPort, (byte) 2);
+            final Function<Bytes<ByteBuffer>, ? extends Wire> byteToWire;
+
+            if (wireClass.isAssignableFrom(TextWire.class))
+                byteToWire = TextWire::new;
+            else if (wireClass.isAssignableFrom(BinaryWire.class))
+                byteToWire = BinaryWire::new;
+            else
+                throw new IllegalArgumentException();
+
+            context = new RemoteTcpClientChronicleContext("localhost", serverPort, (byte) 2, wireClass);
             map = context.getMap("test", kClass, vClass);
         }
 
@@ -239,7 +257,7 @@ public class MapClientTest extends ThreadMonitoringTest {
             result = new LocalMapSupplier<K, V>(kClass, vClass);
 
         } else if (RemoteMapSupplier.class.equals(supplier)) {
-            result = new RemoteMapSupplier<K, V>(kClass, vClass, new ChronicleEngine());
+            result = new RemoteMapSupplier<K, V>(kClass, vClass, new ChronicleEngine(), TextWire.class);
 
         } else {
             throw new IllegalStateException("unsuported type");

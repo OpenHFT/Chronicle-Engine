@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.StreamCorruptedException;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static net.openhft.chronicle.core.Jvm.rethrow;
 import static net.openhft.chronicle.engine.client.StringUtils.endsWith;
@@ -47,16 +48,13 @@ import static net.openhft.chronicle.wire.CoreFields.csp;
  */
 public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
-
     private static final Logger LOG = LoggerFactory.getLogger(EngineWireHandler.class);
-
     public static final String TEXT_WIRE = TextWire.class.getSimpleName();
     public static final String BINARY_WIRE = BinaryWire.class.getSimpleName();
     public static final String RAW_WIRE = RawWire.class.getSimpleName();
 
     private final CharSequence preferredWireType = new StringBuilder(TextWire.class.getSimpleName());
     private final StringBuilder cspText = new StringBuilder();
-
     private final CollectionWireHandler<byte[], Set<byte[]>> keySetHandler;
 
     @Nullable
@@ -73,12 +71,15 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private final Consumer<WireIn> metaDataConsumer;
 
     public EngineWireHandler(@NotNull final Map<Long, String> cidToCsp,
-                             @NotNull final ChronicleEngine chronicleEngine)
+                             @NotNull final ChronicleEngine chronicleEngine,
+                             @NotNull final Function<Bytes, Wire> byteToWire)
             throws IOException {
-        this.mapWireHandler = new MapWireHandler<>(cidToCsp);
 
+        super(byteToWire);
+
+        this.mapWireHandler = new MapWireHandler<>(cidToCsp);
         this.keySetHandler = new CollectionWireHandlerProcessor<>();
-        this.queueWireHandler = null; //QueueWireHandler();
+        this.queueWireHandler = null;
         this.cidToCsp = cidToCsp;
         this.chronicleEngine = chronicleEngine;
         this.entrySetHandler = new CollectionWireHandlerProcessor<>();
@@ -105,6 +106,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private long tid;
 
     StringBuilder lastCsp;
+    StringBuilder eventName = new StringBuilder();
 
     @NotNull
     private Consumer<WireIn> getWireInConsumer() throws IOException {
@@ -112,7 +114,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
             try {
                 readCsp(metaDataWire);
-                tid = metaDataWire.read(CoreFields.tid).int64();
+                readTid(metaDataWire);
                 if (!cspText.equals(lastCsp)) {
                     lastCsp = cspText;
                     serviceName = serviceName(cspText);
@@ -133,6 +135,13 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                 rethrow(e);
             }
         };
+    }
+
+    private void readTid(WireIn metaDataWire) {
+        ValueIn valueIn = metaDataWire.readEventName(eventName);
+        if (CoreFields.tid.contentEquals(eventName)) {
+            tid = valueIn.int64();
+        }
     }
 
 
@@ -204,7 +213,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
         final StringBuilder keyName = Wires.acquireStringBuilder();
 
-        final ValueIn read = wireIn.read(keyName);
+        final ValueIn read = wireIn.readEventName(keyName);
         if (csp.contentEquals(keyName)) {
             read.text(cspText);
         } else if (cid.contentEquals(keyName)) {

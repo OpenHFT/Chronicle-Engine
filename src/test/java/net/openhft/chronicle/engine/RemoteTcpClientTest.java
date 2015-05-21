@@ -25,9 +25,7 @@ import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
-import net.openhft.chronicle.wire.Marshallable;
-import net.openhft.chronicle.wire.WireIn;
-import net.openhft.chronicle.wire.WireOut;
+import net.openhft.chronicle.wire.*;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -106,13 +104,13 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
                 .actualChunkSize(valueLength + 16)
                 .putReturnsNull(true)
                 .create());
-        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, chronicleEngine)) {
+        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, chronicleEngine, TextWire.class)) {
             int serverPort = serverEndpoint.getPort();
 
             //client
             try (final RemoteTcpClientChronicleContext remoteContext = new
                     RemoteTcpClientChronicleContext(
-                    "localhost", serverPort, (byte) 2)) {
+                    "localhost", serverPort, (byte) 2, TextWire.class)) {
 
                 final ChronicleMap<String, CharSequence> test = remoteContext.getMap("test",
                         String.class, CharSequence.class);
@@ -121,7 +119,6 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
                 while (bytes.position() < valueLength)
                     bytes.append('x');
                 bytes.flip();
-
 
                 // warm up
                 for (int j = -1; j < 30; j++) {
@@ -162,12 +159,12 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     @Test(timeout = 100000)
     public void testMarshable() throws Exception {
         // sever
-        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, new ChronicleEngine())) {
+        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, new ChronicleEngine(), TextWire.class)) {
             int serverPort = serverEndpoint.getPort();
 
             //client
             try (final RemoteTcpClientChronicleContext context = new RemoteTcpClientChronicleContext(
-                    "localhost", serverPort, (byte) 2)) {
+                    "localhost", serverPort, (byte) 2, TextWire.class)) {
 
                 try (ChronicleMap<MyMarshallable, Long> numbers = context.getMap
                         ("marshallable-keys", MyMarshallable.class, Long.class)) {
@@ -197,12 +194,12 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     @Test(timeout = 100000)
     public void testPut() throws Exception {
         // sever
-        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, new ChronicleEngine())) {
+        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, new ChronicleEngine(), TextWire.class)) {
             int serverPort = serverEndpoint.getPort();
 
             //client
             try (final RemoteTcpClientChronicleContext context = new RemoteTcpClientChronicleContext(
-                    "localhost", serverPort, (byte) 2)) {
+                    "localhost", serverPort, (byte) 2, TextWire.class)) {
                 // test using Marshallable Keys
                 try (ChronicleMap<String, String> map = context.getMap
                         ("test", String.class, String.class)) {
@@ -218,12 +215,12 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     @Test
     public void testFPKMap() throws Exception {
         // sever
-        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, new ChronicleEngine())) {
+        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, new ChronicleEngine(), TextWire.class)) {
             int serverPort = serverEndpoint.getPort();
 
             //client
             try (final RemoteTcpClientChronicleContext context = new RemoteTcpClientChronicleContext(
-                    "localhost", serverPort, (byte) 2)) {
+                    "localhost", serverPort, (byte) 2, TextWire.class)) {
 
                 try (ChronicleMap<String, String> map = context.getMap
                         ("filetest", String.class, String.class)) {
@@ -238,12 +235,12 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     public void test2MBEntries() throws Exception {
 
         // server
-        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, new ChronicleEngine())) {
+        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, new ChronicleEngine(),TextWire.class)) {
             int serverPort = serverEndpoint.getPort();
 
             //client
             try (final RemoteTcpClientChronicleContext context = new RemoteTcpClientChronicleContext(
-                    "localhost", serverPort, (byte) 2)) {
+                    "localhost", serverPort, (byte) 2, TextWire.class)) {
 
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < 50_000; i++) {

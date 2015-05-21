@@ -194,7 +194,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                     return;
                 }
 
-                outWire.writeDocument(true, wire -> outWire.write(CoreFields.tid).int64(tid));
+                outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
 
                 writeData(out -> {
                     if (clear.contentEquals(eventName)) {
@@ -411,8 +411,8 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                     final StringBuilder csp = acquireStringBuilder()
                             .append(root).append(type);
 
-                    w.write(CoreFields.csp).text(csp);
-                    w.write(CoreFields.cid).int64(createCid(csp));
+                    w.writeEventName(CoreFields.csp).text(csp);
+                    w.writeEventName(CoreFields.cid).int64(createCid(csp));
                 });
     }
 

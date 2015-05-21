@@ -38,6 +38,8 @@ import static java.util.Collections.emptyList;
 import static net.openhft.chronicle.engine.map.MapWireHandler.EventId;
 import static net.openhft.chronicle.engine.map.MapWireHandler.EventId.*;
 import static net.openhft.chronicle.map.VanillaChronicleMap.newInstance;
+import static net.openhft.chronicle.wire.CoreFields.cid;
+import static net.openhft.chronicle.wire.CoreFields.csp;
 
 /**
  * @author Rob Austin.
@@ -47,9 +49,9 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
 
     public static final Consumer<ValueOut> VOID_PARAMETERS = out -> out.marshallable(WireOut.EMPTY);
     private final Class<V> vClass;
-    protected Class<K> kClass;
-    private boolean putReturnsNull;
-    private boolean removeReturnsNull;
+    private final Class<K> kClass;
+    private final boolean putReturnsNull;
+    private final boolean removeReturnsNull;
 
     public ClientWiredStatelessChronicleMap(
             @NotNull final ClientWiredChronicleMapStatelessBuilder config,
@@ -317,8 +319,8 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
 
             read.type(type);
             return read.applyToMarshallable(w -> {
-                final String csp1 = w.read(CoreFields.csp).text();
-                final long cid0 = w.read(CoreFields.cid).int64();
+                final String csp1 = csp(w).toString();
+                final long cid0 =  CoreFields.cid(w);
                 cidToCsp.put(cid0, csp1);
                 return cid0;
             });
@@ -345,8 +347,8 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
             read.type(type);
             return read.applyToMarshallable(w -> {
 
-                final String csp1 = w.read(CoreFields.csp).text();
-                final long cid0 = w.read(CoreFields.cid).int64();
+                final String csp1 = csp(w).toString();
+                final long cid0 = cid(w);
                 cidToCsp.put(cid0, csp1);
                 return cid0;
 
@@ -396,8 +398,8 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
             read.type(type);
             read.marshallable(w -> {
 
-                final String csp1 = w.read(CoreFields.csp).text();
-                final long cid0 = w.read(CoreFields.cid).int64();
+                final String csp1 = csp(w).toString();
+                final long cid0 = cid(w);
                 cidToCsp.put(cid0, csp1);
                 cidRef[0] = cid0;
 

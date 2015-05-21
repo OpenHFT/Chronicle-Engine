@@ -18,16 +18,19 @@
 
 package net.openhft.chronicle.engine.client.internal;
 
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.MemoryUnit;
 import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ClientWiredChronicleMapStatelessBuilder;
+import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 /**
  * Created by Rob Austin
@@ -38,17 +41,18 @@ public class RemoteClientServiceLocator {
 
     public RemoteClientServiceLocator(@NotNull String hostname,
                                       int port,
-                                      byte identifier) throws IOException {
-
+                                      byte identifier,
+                                      @NotNull Function<Bytes, ? extends Wire> byteToWire) throws IOException {
 
         final InetSocketAddress inetSocketAddress = new InetSocketAddress(hostname, port);
-
         int tcpBufferSize = (int) MemoryUnit.MEGABYTES.toBytes(2) + 1024;
-
         long timeoutMs = TimeUnit.SECONDS.toMillis(20);
 
-        hub = new ClientWiredStatelessTcpConnectionHub(identifier, false, inetSocketAddress, tcpBufferSize, timeoutMs);
-
+        hub = new ClientWiredStatelessTcpConnectionHub(identifier,
+                false,
+                inetSocketAddress,
+                tcpBufferSize,
+                timeoutMs, byteToWire);
     }
 
 
@@ -85,11 +89,7 @@ public class RemoteClientServiceLocator {
     private <I, KI, VI> I mapInstance(Class<KI> kClass, Class<VI> vClass, String name)
             throws IOException {
 
-        return (I) new ClientWiredChronicleMapStatelessBuilder<KI, VI>(
-                hub,
-                kClass,
-                vClass,
-                name)
+        return (I) new ClientWiredChronicleMapStatelessBuilder<KI, VI>(hub, kClass, vClass, name)
                 .putReturnsNull(true)
                 .removeReturnsNull(true)
                 .create();

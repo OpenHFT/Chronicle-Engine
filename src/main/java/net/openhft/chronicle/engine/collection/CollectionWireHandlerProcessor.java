@@ -71,7 +71,7 @@ public class CollectionWireHandlerProcessor<U, C extends Collection<U>> implemen
                 final StringBuilder eventName = acquireStringBuilder();
                 final ValueIn valueIn = inWire.readEventName(eventName);
 
-                outWire.writeDocument(true, wire -> outWire.write(CoreFields.tid).int64
+                outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64
                         (CollectionWireHandlerProcessor.this.tid));
 
                 outWire.writeDocument(false, out -> {
