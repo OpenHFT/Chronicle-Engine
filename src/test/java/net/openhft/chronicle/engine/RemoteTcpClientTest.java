@@ -32,6 +32,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 
+import java.io.IOException;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
@@ -90,13 +91,23 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
     @Test(timeout = 100000)
     @Ignore("TODO fix performance test")
-    public void testLargeString() throws Exception {
-        int noPutsAndGets = 50;
+    public void testLargeStringTextWire() throws Exception {
         final int MB = 1 << 20;
+        testStrings(50, 2 * MB, TextWire.class);
+    }
+
+    @Test(timeout = 100000)
+    @Ignore("TODO fix performance test")
+    public void testLargeStringBinaryWire() throws Exception {
+        final int MB = 1 << 20;
+        testStrings(50, 2 * MB, BinaryWire.class);
+    }
+
+    private void testStrings(int noPutsAndGets, int valueLength, Class<? extends Wire> wireType) throws IOException {
+
 
         // sever
         ChronicleEngine chronicleEngine = new ChronicleEngine();
-        int valueLength = 2 * MB;
         chronicleEngine.setMap("test", ChronicleMapBuilder
                 .of(String.class, CharSequence.class)
                 .entries(noPutsAndGets)
@@ -104,13 +115,13 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
                 .actualChunkSize(valueLength + 16)
                 .putReturnsNull(true)
                 .create());
-        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, chronicleEngine, TextWire.class)) {
+        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, chronicleEngine, wireType)) {
             int serverPort = serverEndpoint.getPort();
 
             //client
             try (final RemoteTcpClientChronicleContext remoteContext = new
                     RemoteTcpClientChronicleContext(
-                    "localhost", serverPort, (byte) 2, TextWire.class)) {
+                    "localhost", serverPort, (byte) 2, wireType)) {
 
                 final ChronicleMap<String, CharSequence> test = remoteContext.getMap("test",
                         String.class, CharSequence.class);
@@ -154,6 +165,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
             }
         }
     }
+
 
     @Ignore("broken text")
     @Test(timeout = 100000)
@@ -235,7 +247,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     public void test2MBEntries() throws Exception {
 
         // server
-        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, new ChronicleEngine(),TextWire.class)) {
+        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, new ChronicleEngine(), TextWire.class)) {
             int serverPort = serverEndpoint.getPort();
 
             //client
