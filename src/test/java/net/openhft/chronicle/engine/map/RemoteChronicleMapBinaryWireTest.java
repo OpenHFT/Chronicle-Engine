@@ -287,7 +287,6 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     /**
      * values collection contains all values
      */
-    @Ignore
     @Test(timeout = 50000)
     public void testValues() throws IOException {
         try (ChronicleMap map = map5()) {
@@ -311,8 +310,8 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     /**
      * entrySet contains all pairs
      */
-    @Ignore
     @Test
+    @Ignore
     public void testEntrySet() throws IOException {
         try (ChronicleMap map = map5()) {
 
@@ -569,6 +568,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
             yamlLoggger(() -> c.putIfAbsent(null, "whatever"));
             shouldThrow();
         } catch (NullPointerException success) {
+            success.printStackTrace();
         }
     }
 
