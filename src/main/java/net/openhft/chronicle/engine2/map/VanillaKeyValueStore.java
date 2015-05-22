@@ -1,8 +1,10 @@
 package net.openhft.chronicle.engine2.map;
 
 import net.openhft.chronicle.engine2.api.Asset;
-import net.openhft.chronicle.engine2.api.KeyValueStore;
+import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 
+import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
@@ -14,7 +16,7 @@ public class VanillaKeyValueStore<K, V> implements KeyValueStore<K, V> {
     private final ConcurrentMap<K, V> map = new ConcurrentHashMap<>();
     private Asset asset;
 
-    public VanillaKeyValueStore() {
+    public VanillaKeyValueStore(String name) {
     }
 
     @Override
@@ -45,6 +47,11 @@ public class VanillaKeyValueStore<K, V> implements KeyValueStore<K, V> {
     @Override
     public void entriesFor(int segment, Consumer<Entry<K, V>> kConsumer) {
         map.entrySet().forEach(e -> new VanillaEntry<>(e.getKey(), e.getValue()));
+    }
+
+    @Override
+    public Iterator<Map.Entry<K, V>> entrySetIterator() {
+        return map.entrySet().iterator();
     }
 
     @Override

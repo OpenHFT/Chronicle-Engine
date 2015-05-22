@@ -1,24 +1,23 @@
 package net.openhft.chronicle.engine2.map;
 
 import net.openhft.chronicle.engine2.api.Asset;
-import net.openhft.chronicle.engine2.api.Assetted;
-import net.openhft.chronicle.engine2.api.KeyValueStore;
+import net.openhft.chronicle.engine2.api.map.KeyValueStore;
+import net.openhft.chronicle.engine2.api.map.MapView;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.AbstractMap;
 import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * Created by peter on 22/05/15.
  */
-public class MapView<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V>, Assetted<KeyValueStore<K, V>> {
+public class VanillaMapView<K, V> extends AbstractMap<K, V> implements MapView<K, V> {
     private final boolean putReturnsNull;
     private final boolean removeReturnsNull;
     private Asset asset;
     private KeyValueStore<K, V> kvStore;
 
-    public MapView(Asset asset, KeyValueStore<K, V> kvStore, String queryString) {
+    public VanillaMapView(Asset asset, KeyValueStore<K, V> kvStore, String queryString) {
         this.asset = asset;
         this.kvStore = kvStore;
         queryString = queryString.toLowerCase();

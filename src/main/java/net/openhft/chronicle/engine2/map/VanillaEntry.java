@@ -1,6 +1,6 @@
 package net.openhft.chronicle.engine2.map;
 
-import net.openhft.chronicle.engine2.api.KeyValueStore;
+import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 
 /**
  * Created by peter on 22/05/15.

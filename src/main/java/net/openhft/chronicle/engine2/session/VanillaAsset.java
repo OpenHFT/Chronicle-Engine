@@ -2,12 +2,14 @@ package net.openhft.chronicle.engine2.session;
 
 import net.openhft.chronicle.core.util.Closeable;
 import net.openhft.chronicle.engine2.api.*;
-import net.openhft.chronicle.engine2.map.MapView;
-import net.openhft.chronicle.engine2.map.SubscriptionKeyValueStore;
+import net.openhft.chronicle.engine2.api.map.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.stream.Stream;
@@ -19,6 +21,8 @@ public class VanillaAsset implements Asset, Closeable {
     private final Asset parent;
     private final String name;
     private final Assetted item;
+    private final Map<Class, View> viewMap = Collections.synchronizedMap(new LinkedHashMap<>());
+    private final Map<Class, Interceptor> interceptorMap = Collections.synchronizedMap(new LinkedHashMap<>());
     private Subscription subscription;
 
     VanillaAsset(Asset parent, String name, Assetted item) {
@@ -27,7 +31,8 @@ public class VanillaAsset implements Asset, Closeable {
         this.item = item;
 
         if (item instanceof KeyValueStore) {
-            SubscriptionKeyValueStore skvStore = new SubscriptionKeyValueStore();
+            SubscriptionKeyValueStoreSupplier supplier = parent.acquireInterceptor(SubscriptionKeyValueStoreSupplier.class);
+            SubscriptionKeyValueStore skvStore = supplier.get();
             skvStore.underlying((KeyValueStore) item);
             subscription = skvStore;
         }
@@ -50,20 +55,49 @@ public class VanillaAsset implements Asset, Closeable {
 
     @Override
     public <V> V acquireView(Class<V> vClass, Class class1, String queryString) {
+        if (vClass == Set.class) {
+            if (class1 == Map.Entry.class) {
+                return (V) viewMap.computeIfAbsent(EntrySetView.class, aClass ->
+                        acquireInterceptor(EntrySetViewFactory.class)
+                                .create(VanillaAsset.this, (KeyValueStore) subscription, queryString));
+            }
+        }
         throw new UnsupportedOperationException("todo");
     }
 
     @Override
     public <V> V acquireView(Class<V> vClass, Class class1, Class class2, String queryString) {
         if (vClass == Map.class || vClass == ConcurrentMap.class) {
-            return (V) new MapView(this, (KeyValueStore) subscription, queryString);
+            return (V) viewMap.computeIfAbsent(MapView.class, aClass ->
+                    acquireInterceptor(MapViewFactory.class)
+                            .create(VanillaAsset.this, (KeyValueStore) subscription, queryString));
         }
         throw new UnsupportedOperationException("todo");
     }
 
     @Override
-    public <I extends Interceptor> I acquireInterceptor(Class<I> iClass) {
-        throw new UnsupportedOperationException("todo");
+    public <I extends Interceptor> I acquireInterceptor(Class<I> iClass) throws AssetNotFoundException {
+        I interceptor = (I) interceptorMap.get(iClass);
+        if (interceptor != null)
+            return (I) interceptor;
+        try {
+            if (parent == null) {
+                throw new AssetNotFoundException("Cannot find an interceptor for " + iClass);
+            }
+            return parent.acquireInterceptor(iClass);
+        } catch (AssetNotFoundException e) {
+            if (iClass != InterceptorFactory.class) {
+                InterceptorFactory interceptorFactory = (InterceptorFactory) interceptorMap.get(InterceptorFactory.class);
+                if (interceptorFactory != null) {
+                    interceptor = interceptorFactory.create(iClass);
+                    if (interceptor != null) {
+                        interceptorMap.put(iClass, interceptor);
+                        return interceptor;
+                    }
+                }
+            }
+            throw e;
+        }
     }
 
     @Override
@@ -106,21 +140,36 @@ public class VanillaAsset implements Asset, Closeable {
 
     @NotNull
     @Override
-    public Asset acquireChild(String name) throws AssetNotFoundException {
+    public <A> Asset acquireChild(String name, Class<A> assetClass) throws AssetNotFoundException {
         int pos = name.indexOf("/");
         if (pos >= 0) {
             String name1 = name.substring(0, pos);
             String name2 = name.substring(pos + 1);
-            getAssetOrANFE(name1).acquireChild(name2);
+            getAssetOrANFE(name1, assetClass).acquireChild(name2, assetClass);
         }
-        return getAssetOrANFE(name);
+        return getAssetOrANFE(name, assetClass);
     }
 
-    private Asset getAssetOrANFE(String name) throws AssetNotFoundException {
+    private <A> Asset getAssetOrANFE(String name, Class<A> assetClass) throws AssetNotFoundException {
         Asset asset = children.get(name);
-        if (asset == null)
-            throw new AssetNotFoundException(name);
+        if (asset == null) {
+            asset = createAsset(name, assetClass);
+            if (asset == null)
+                throw new AssetNotFoundException(name);
+        }
         return asset;
+    }
+
+    @Nullable
+    protected <A> Asset createAsset(String name, Class<A> assetClass) {
+        if (assetClass == null)
+            return null;
+        if (assetClass == Map.class || assetClass == ConcurrentMap.class) {
+            KeyValueStoreFactory kvStore = acquireInterceptor(KeyValueStoreFactory.class);
+            return add(name, kvStore.create(name));
+        } else {
+            throw new UnsupportedOperationException("todo");
+        }
     }
 
     @Override
@@ -154,12 +203,19 @@ public class VanillaAsset implements Asset, Closeable {
         if (pos >= 0) {
             String name1 = name.substring(0, pos);
             String name2 = name.substring(pos + 1);
-            getAssetOrANFE(name1).add(name2, resource);
+            getAssetOrANFE(name1, null).add(name2, resource);
         }
         if (children.containsKey(name))
             throw new IllegalStateException(name + " already exists");
-        VanillaAsset asset = new VanillaAsset(this, name, resource);
+        AssetFactory assetFactory = acquireInterceptor(AssetFactory.class);
+        Asset asset = assetFactory.create(this, name, resource);
         children.put(name, asset);
         return asset;
+    }
+
+    public <I extends Interceptor> void registerInterceptor(Class<I> iClass, I interceptor) {
+        synchronized (interceptorMap) {
+            interceptorMap.put(iClass, interceptor);
+        }
     }
 }
