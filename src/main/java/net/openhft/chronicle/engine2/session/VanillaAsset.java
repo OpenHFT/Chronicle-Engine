@@ -3,13 +3,13 @@ package net.openhft.chronicle.engine2.session;
 import net.openhft.chronicle.core.util.Closeable;
 import net.openhft.chronicle.engine2.api.*;
 import net.openhft.chronicle.engine2.api.map.*;
-import net.openhft.chronicle.engine2.map.MapView;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.stream.Stream;
@@ -55,6 +55,13 @@ public class VanillaAsset implements Asset, Closeable {
 
     @Override
     public <V> V acquireView(Class<V> vClass, Class class1, String queryString) {
+        if (vClass == Set.class) {
+            if (class1 == Map.Entry.class) {
+                return (V) viewMap.computeIfAbsent(EntrySetView.class, aClass ->
+                        acquireInterceptor(EntrySetViewFactory.class)
+                                .create(VanillaAsset.this, (KeyValueStore) subscription, queryString));
+            }
+        }
         throw new UnsupportedOperationException("todo");
     }
 

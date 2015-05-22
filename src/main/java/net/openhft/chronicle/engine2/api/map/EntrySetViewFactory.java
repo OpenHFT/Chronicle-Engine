@@ -6,6 +6,6 @@ import net.openhft.chronicle.engine2.api.Interceptor;
 /**
  * Created by peter on 22/05/15.
  */
-public interface MapViewFactory<K, V> extends Interceptor {
-    MapView<K, V> create(Asset asset, KeyValueStore<K, V> kvStore, String queryString);
+public interface EntrySetViewFactory<K, V> extends Interceptor {
+    EntrySetView<K, V> create(Asset asset, KeyValueStore<K, V> kvStore, String queryString);
 }

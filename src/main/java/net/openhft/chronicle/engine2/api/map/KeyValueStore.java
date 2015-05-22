@@ -2,6 +2,8 @@ package net.openhft.chronicle.engine2.api.map;
 
 import net.openhft.chronicle.engine2.api.Assetted;
 
+import java.util.Iterator;
+import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -48,6 +50,8 @@ public interface KeyValueStore<K, V> extends Assetted<KeyValueStore> {
     void keysFor(int segment, Consumer<K> kConsumer);
 
     void entriesFor(int segment, Consumer<Entry<K, V>> kConsumer);
+
+    Iterator<Map.Entry<K, V>> entrySetIterator();
 
     interface Entry<K, V> {
         K key();

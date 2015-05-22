@@ -1,33 +1,19 @@
 package net.openhft.chronicle.engine2.map;
 
-import net.openhft.chronicle.engine2.api.Asset;
 import net.openhft.chronicle.engine2.api.Subscriber;
 import net.openhft.chronicle.engine2.api.TopicSubscriber;
-import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.SubscriptionKeyValueStore;
 
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.function.Consumer;
 
 /**
  * Created by peter on 22/05/15.
  */
-public class VanillaSubscriptionKeyValueStore<K, V> implements SubscriptionKeyValueStore<K, V> {
+public class VanillaSubscriptionKeyValueStore<K, V> extends AbstractKeyValueStore<K, V> implements SubscriptionKeyValueStore<K, V> {
     final Set<TopicSubscriber<V>> topicSubscribers = new CopyOnWriteArraySet<>();
     final Set<Subscriber<Entry<K, V>>> subscribers = new CopyOnWriteArraySet<>();
     boolean hasSubscribers = false;
-    KeyValueStore<K, V> kvStore;
-
-    @Override
-    public void underlying(KeyValueStore underlying) {
-        this.kvStore = underlying;
-    }
-
-    @Override
-    public KeyValueStore underlying() {
-        return kvStore;
-    }
 
     @Override
     public V getAndPut(K key, V value) {
@@ -64,36 +50,6 @@ public class VanillaSubscriptionKeyValueStore<K, V> implements SubscriptionKeyVa
             }
         }
         return oldValue;
-    }
-
-    @Override
-    public V getUsing(K key, V value) {
-        return kvStore.getUsing(key, value);
-    }
-
-    @Override
-    public long size() {
-        return kvStore.size();
-    }
-
-    @Override
-    public void keysFor(int segment, Consumer<K> kConsumer) {
-        kvStore.keysFor(segment, kConsumer);
-    }
-
-    @Override
-    public void entriesFor(int segment, Consumer<Entry<K, V>> kConsumer) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
-    public void asset(Asset asset) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
-    public Asset asset() {
-        throw new UnsupportedOperationException("todo");
     }
 
     @Override

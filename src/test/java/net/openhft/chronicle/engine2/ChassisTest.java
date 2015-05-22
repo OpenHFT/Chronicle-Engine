@@ -8,6 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 import static net.openhft.chronicle.engine2.Chassis.*;
 import static org.junit.Assert.*;
@@ -35,6 +36,28 @@ public class ChassisTest {
         map2.put("Bye", "soon");
 
         map2.put("Bye", "now.");
+    }
+
+    @Test
+    public void keySet_entrySet() {
+        ConcurrentMap<String, String> map = acquireMap("map-name", String.class, String.class);
+        map.put("Hello", "World");
+        map.put("Bye", "soon");
+
+        assertEquals("Hello=World\n" +
+                        "Bye=soon",
+                map.entrySet().stream()
+                        .map(Object::toString)
+                        .collect(Collectors.joining("\n")));
+
+        assertEquals("Hello, Bye",
+                map.keySet().stream()
+                        .collect(Collectors.joining(", ")));
+
+        assertEquals("World, soon",
+                map.values().stream()
+                        .collect(Collectors.joining(", ")));
+
     }
 
     @Test(expected = AssetNotFoundException.class)

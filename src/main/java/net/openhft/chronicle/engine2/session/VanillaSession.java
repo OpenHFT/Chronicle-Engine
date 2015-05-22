@@ -1,11 +1,13 @@
 package net.openhft.chronicle.engine2.session;
 
 import net.openhft.chronicle.engine2.api.*;
+import net.openhft.chronicle.engine2.api.map.EntrySetViewFactory;
 import net.openhft.chronicle.engine2.api.map.KeyValueStoreFactory;
 import net.openhft.chronicle.engine2.api.map.MapViewFactory;
 import net.openhft.chronicle.engine2.api.map.SubscriptionKeyValueStoreSupplier;
-import net.openhft.chronicle.engine2.map.MapView;
+import net.openhft.chronicle.engine2.map.VanillaEntrySetView;
 import net.openhft.chronicle.engine2.map.VanillaKeyValueStore;
+import net.openhft.chronicle.engine2.map.VanillaMapView;
 import net.openhft.chronicle.engine2.map.VanillaSubscriptionKeyValueStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +20,8 @@ public class VanillaSession implements Session {
 
     public VanillaSession() {
         root.registerInterceptor(SubscriptionKeyValueStoreSupplier.class, VanillaSubscriptionKeyValueStore::new);
-        root.registerInterceptor(MapViewFactory.class, MapView::new);
+        root.registerInterceptor(MapViewFactory.class, VanillaMapView::new);
+        root.registerInterceptor(EntrySetViewFactory.class, VanillaEntrySetView::new);
         root.registerInterceptor(AssetFactory.class, VanillaAsset::new);
         root.registerInterceptor(KeyValueStoreFactory.class, VanillaKeyValueStore::new);
     }
