@@ -38,6 +38,4 @@ public class TestMarshallable implements Marshallable {
     public void setCount(int count) {
         this.count = count;
     }
-
-
 }

@@ -45,7 +45,6 @@ public class StringStringMapHandler implements MapHandler<String, String> {
         final String value = x.read(() -> "value").object(String.class);
 
         return new Map.Entry<String, String>() {
-
             @Override
             public String getKey() {
                 return key;
@@ -61,7 +60,6 @@ public class StringStringMapHandler implements MapHandler<String, String> {
                 throw new UnsupportedOperationException();
             }
         };
-
     });
 
     public BiConsumer<ValueOut, String> getKeyToWire() {

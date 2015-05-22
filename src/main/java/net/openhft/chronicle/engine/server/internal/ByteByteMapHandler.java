@@ -38,7 +38,6 @@ public class ByteByteMapHandler implements MapHandler<byte[], byte[]> {
         final byte[] value = x.read(() -> "value").object(byte[].class);
 
         return new Map.Entry<byte[], byte[]>() {
-
             @Override
             public byte[] getKey() {
                 return key;
@@ -54,7 +53,6 @@ public class ByteByteMapHandler implements MapHandler<byte[], byte[]> {
                 throw new UnsupportedOperationException();
             }
         };
-
     });
 
     public BiConsumer<ValueOut, byte[]> getKeyToWire() {
@@ -88,7 +86,6 @@ public class ByteByteMapHandler implements MapHandler<byte[], byte[]> {
                 byte[].class,
                 byte[].class);
     }
-
 
     @Override
     public byte[] usingValue() {

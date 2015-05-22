@@ -37,11 +37,10 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static net.openhft.chronicle.core.Jvm.rethrow;
-import static net.openhft.chronicle.engine.client.StringUtils.endsWith;
 import static net.openhft.chronicle.engine.server.internal.MapHandler.instance;
+import static net.openhft.chronicle.engine.utils.StringUtils.endsWith;
 import static net.openhft.chronicle.wire.CoreFields.cid;
 import static net.openhft.chronicle.wire.CoreFields.csp;
-
 
 /**
  * Created by Rob Austin
@@ -91,7 +90,6 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
     protected void publish(Wire out) {
         if (!handlers.isEmpty()) {
-
             final WireHandler remove = handlers.remove(handlers.size() - 1);
 
             try {
@@ -128,8 +126,6 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                         mapHandler = null;
 
                     map = mapHandler.getMap(chronicleEngine, serviceName);
-
-
                 }
             } catch (Exception e) {
                 rethrow(e);
@@ -144,7 +140,6 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
         }
     }
 
-
     @Override
     protected void process(@NotNull final Wire in, @NotNull final Wire out) throws
             StreamCorruptedException {
@@ -156,7 +151,6 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
             try {
 
                 if (mapHandler != null) {
-
                     if (endsWith(cspText, "?view=map")) {
                         mapWireHandler.process(in, out, map, cspText, tid, mapHandler);
                         return;
@@ -190,7 +184,6 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
             }
 
         });
-
     }
 
     private void logYamlToStandardOut(@NotNull Wire in) {
@@ -205,17 +198,16 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
         }
     }
 
-
     /**
      * peeks the csp or if it has a cid converts the cid into a Csp and returns that
      */
     private void readCsp(@NotNull final WireIn wireIn) {
-
         final StringBuilder keyName = Wires.acquireStringBuilder();
 
         final ValueIn read = wireIn.readEventName(keyName);
         if (csp.contentEquals(keyName)) {
             read.text(cspText);
+
         } else if (cid.contentEquals(keyName)) {
             final long cid = read.int64();
             final CharSequence s = cidToCsp.get(cid);
@@ -224,7 +216,6 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     }
 
     private String serviceName(@NotNull final StringBuilder cspText) {
-
         final int slash = cspText.lastIndexOf("/");
         final int hash = cspText.lastIndexOf("?view=");
 
@@ -235,7 +226,6 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     }
 
     protected Wire createWriteFor(Bytes bytes) {
-
         if (TEXT_WIRE.contentEquals(preferredWireType))
             return new TextWire(bytes);
 
@@ -246,13 +236,10 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
             return new RawWire(bytes);
 
         throw new IllegalStateException("preferredWireType=" + preferredWireType + " is not supported.");
-
     }
 
     @Override
     public void add(WireHandler handler) {
         handlers.add(handler);
     }
-
-
 }

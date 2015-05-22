@@ -43,7 +43,6 @@ public interface CollectionWireHandler<U, C extends Collection<U>> {
                  Supplier<C> factory,
                  long tid) throws StreamCorruptedException;
 
-
     enum Params implements WireKey {
         key,
         segment,
@@ -71,7 +70,6 @@ public interface CollectionWireHandler<U, C extends Collection<U>> {
 
         public <P extends WireKey> P[] params() {
             return (P[]) this.params;
-
         }
     }
 }

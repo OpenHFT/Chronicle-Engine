@@ -23,7 +23,6 @@ public class CharCharMapHandler implements MapHandler<CharSequence, CharSequence
         this.supplier = supplier;
     }
 
-
     StringBuilder keySb = new StringBuilder();
     StringBuilder valueSb = new StringBuilder();
 
@@ -61,7 +60,6 @@ public class CharCharMapHandler implements MapHandler<CharSequence, CharSequence
         final CharSequence value = x.read(() -> "value").object(String.class);
 
         return new Map.Entry<CharSequence, CharSequence>() {
-
             @Override
             public CharSequence getKey() {
                 return key;
@@ -77,7 +75,6 @@ public class CharCharMapHandler implements MapHandler<CharSequence, CharSequence
                 throw new UnsupportedOperationException();
             }
         };
-
     });
 
     public BiConsumer<ValueOut, CharSequence> getKeyToWire() {

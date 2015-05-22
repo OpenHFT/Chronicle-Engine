@@ -11,7 +11,6 @@ import java.io.IOException;
 public class TextWireMain {
     public static void main(String[] args) throws IOException {
 
-
         int noPutsAndGets = 50;
         final int MB = 1 << 20;
 
@@ -39,6 +38,4 @@ public class TextWireMain {
             e.printStackTrace();
         }
     }
-
-
 }

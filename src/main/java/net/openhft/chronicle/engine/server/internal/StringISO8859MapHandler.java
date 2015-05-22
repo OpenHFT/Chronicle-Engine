@@ -13,7 +13,6 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-
 public class StringISO8859MapHandler implements MapHandler<String, Bytes> {
 
     private final BiFunction<ChronicleEngine, String, Map> supplier;
@@ -51,7 +50,6 @@ public class StringISO8859MapHandler implements MapHandler<String, Bytes> {
         inBytes.flip();
 
         return new Map.Entry<String, Bytes>() {
-
             @Override
             public String getKey() {
                 return key;
@@ -67,7 +65,6 @@ public class StringISO8859MapHandler implements MapHandler<String, Bytes> {
                 throw new UnsupportedOperationException();
             }
         };
-
     });
 
     public BiConsumer<ValueOut, String> getKeyToWire() {

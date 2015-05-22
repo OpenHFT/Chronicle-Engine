@@ -32,7 +32,6 @@ public class MapWireConnectionHub implements Closeable {
 
     protected ChronicleMap<String, Integer> channelNameToId;
 
-
     public MapWireConnectionHub(
             byte localIdentifier,
             int serverPort) throws IOException {
@@ -52,16 +51,12 @@ public class MapWireConnectionHub implements Closeable {
 
         provider = ChannelProvider.getProvider(hub);
         channelMap = provider.chronicleChannelMap();
-
-
     }
-
 
     /**
      * @return the next free channel id
      */
     short getNextFreeChannel() {
-
         // todo this is a horrible hack, it slow and not processor safe, but was added to get
         // todo something working for now.
 
@@ -71,7 +66,6 @@ public class MapWireConnectionHub implements Closeable {
         }
 
         return (short) (max + 1);
-
     }
 
     /**
@@ -99,7 +93,6 @@ public class MapWireConnectionHub implements Closeable {
         return (ChronicleMap<K, V>) bytesMap(nextFreeChannel).delegate;
     }
 
-
     /**
      * this is used to push the data straight into the entry in memory
      *
@@ -108,7 +101,6 @@ public class MapWireConnectionHub implements Closeable {
      */
     @Nullable
     BytesChronicleMap bytesMap(int channelId) {
-
         final BytesChronicleMap bytesChronicleMap = (channelId < bytesChronicleMaps.size())
                 ? bytesChronicleMaps.get(channelId)
                 : null;
@@ -125,7 +117,6 @@ public class MapWireConnectionHub implements Closeable {
         final BytesChronicleMap element = new BytesChronicleMap(delegate);
         bytesChronicleMaps.set(channelId, element);
         return element;
-
     }
 
     /**
@@ -136,7 +127,6 @@ public class MapWireConnectionHub implements Closeable {
      */
     @NotNull
     private ReplicatedChronicleMap map(int channelId) {
-
         // todo this cast is a bit of a hack, improve later
         final ReplicatedChronicleMap map =
                 (ReplicatedChronicleMap) channelMap.get(channelId);

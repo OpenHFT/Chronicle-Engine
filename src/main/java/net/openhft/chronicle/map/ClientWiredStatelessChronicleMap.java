@@ -18,11 +18,10 @@
 
 package net.openhft.chronicle.map;
 
-
-import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.engine.collection.ClientWiredStatelessChronicleCollection;
 import net.openhft.chronicle.engine.collection.ClientWiredStatelessChronicleSet;
 import net.openhft.chronicle.hash.function.SerializableFunction;
+import net.openhft.chronicle.network.connection.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,7 +64,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
         this.kClass = kClass;
         this.vClass = vClass;
     }
-
 
     @Override
     public void getAll(File toFile) throws IOException {
@@ -112,7 +110,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
         return vClass;
     }
 
-
     @NotNull
     public File file() {
         throw new UnsupportedOperationException();
@@ -120,7 +117,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
 
     @SuppressWarnings("NullableProblems")
     public V putIfAbsent(K key, V value) {
-
         if (key == null || value == null)
             throw new NullPointerException();
 
@@ -157,8 +153,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
                     "longSize(), " +
                     "size=" + size());
         return (int) size;
-
-
     }
 
     /**
@@ -292,7 +286,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
         }
     }
 
-
     @Nullable
     public <R> R getMapped(@Nullable K key, @NotNull SerializableFunction<? super V, R> function) {
         throw new UnsupportedOperationException();
@@ -308,11 +301,9 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
         proxyReturnVoid(clear);
     }
 
-
     @NotNull
     @Override
     public Collection<V> values() {
-
         long cid = proxyReturnWireConsumer(values, read -> {
 
             final StringBuilder type = Wires.acquireStringBuilder();
@@ -324,7 +315,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
                 cidToCsp.put(cid0, csp1);
                 return cid0;
             });
-
         });
 
         final Function<ValueIn, V> conumer = valueIn -> valueIn.object(vClass);
@@ -333,13 +323,10 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
                 "values", ArrayList::new);
     }
 
-
     private final Map<Long, String> cidToCsp = new HashMap<>();
 
     @NotNull
     public Set<Map.Entry<K, V>> entrySet() {
-
-
         long cid = proxyReturnWireConsumer(entrySet, read -> {
 
             final StringBuilder type = Wires.acquireStringBuilder();
@@ -351,11 +338,8 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
                 final long cid0 = cid(w);
                 cidToCsp.put(cid0, csp1);
                 return cid0;
-
             });
-
         });
-
 
         Function<ValueIn, Map.Entry<K, V>> conumer = valueIn -> valueIn.applyToMarshallable(r -> {
 
@@ -363,7 +347,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
                     final V v = r.read(() -> "value").object(vClass);
 
                     return new Map.Entry<K, V>() {
-
                         @Override
                         public K getKey() {
                             return k;
@@ -379,7 +362,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
                             throw new UnsupportedOperationException();
                         }
                     };
-
                 }
 
         );
@@ -387,10 +369,8 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
         return new ClientWiredStatelessChronicleSet<>(channelName, hub, cid, conumer, "entrySet");
     }
 
-
     @NotNull
     public Set<K> keySet() {
-
         long cid = proxyReturnWireConsumer(keySet, read -> {
             final long[] cidRef = new long[1];
             final StringBuilder type = Wires.acquireStringBuilder();
@@ -402,7 +382,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
                 final long cid0 = cid(w);
                 cidToCsp.put(cid0, csp1);
                 cidRef[0] = cid0;
-
             });
             return cidRef[0];
         });
@@ -413,7 +392,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
                 "keySet");
     }
 
-
     @SuppressWarnings("SameParameterValue")
     private boolean proxyReturnBoolean(@NotNull final EventId eventId,
                                        @Nullable final Consumer<ValueOut> consumer) {
@@ -421,13 +399,11 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
         return readBoolean(sendEvent(startTime, eventId, consumer), startTime);
     }
 
-
     @SuppressWarnings("SameParameterValue")
     private int proxyReturnInt(@NotNull final EventId eventId) {
         final long startTime = System.currentTimeMillis();
         return readInt(sendEvent(startTime, eventId, VOID_PARAMETERS), startTime);
     }
-
 
     class Entry implements Map.Entry<K, V> {
 
@@ -481,7 +457,5 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
             return getKey() + "=" + getValue();
         }
     }
-
-
 }
 

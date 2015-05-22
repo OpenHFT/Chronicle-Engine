@@ -21,9 +21,9 @@ package net.openhft.chronicle.engine.client.internal;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.MemoryUnit;
-import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ClientWiredChronicleMapStatelessBuilder;
+import net.openhft.chronicle.network.connection.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,7 +42,7 @@ public class RemoteClientServiceLocator {
     public RemoteClientServiceLocator(@NotNull String hostname,
                                       int port,
                                       byte identifier,
-                                      @NotNull Function<Bytes, ? extends Wire> byteToWire) throws IOException {
+                                      @NotNull Function<Bytes, Wire> byteToWire) throws IOException {
 
         final InetSocketAddress inetSocketAddress = new InetSocketAddress(hostname, port);
         int tcpBufferSize = (int) MemoryUnit.MEGABYTES.toBytes(2) + 1024;
@@ -55,16 +55,13 @@ public class RemoteClientServiceLocator {
                 timeoutMs, byteToWire);
     }
 
-
     private <K, V> ChronicleMap<K, V> newMapInstance(@NotNull String name,
                                                      @NotNull Class<K> kClass,
                                                      @NotNull Class<V> vClass) throws IOException {
         return mapInstance(kClass, vClass, name);
     }
 
-
     public <I> I getService(Class<I> iClass, String name, Class... args) {
-
         try {
 
             if (ChronicleMap.class.isAssignableFrom(iClass)) {
@@ -94,7 +91,6 @@ public class RemoteClientServiceLocator {
                 .removeReturnsNull(true)
                 .create();
     }
-
 
     public void close() {
         hub.close();

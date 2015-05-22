@@ -1,6 +1,5 @@
 
 
-
 import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.wire.BinaryWire;
@@ -27,6 +26,4 @@ public class BinaryWireMain {
             e.printStackTrace();
         }
     }
-
-
 }

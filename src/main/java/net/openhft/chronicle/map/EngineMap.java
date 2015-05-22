@@ -1,7 +1,6 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
@@ -41,15 +40,12 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
         this.kClass = kClass;
         this.vClass = vClass;
         this.map = underlyingMap;
-
     }
-
 
     public static Map<byte[], byte[]> underlyingMap(@NotNull final String name,
                                                     @NotNull final MapWireConnectionHub
                                                             mapWireConnectionHub,
                                                     final long entries) throws IOException {
-
 
         // todo - for the moment we will default to 100 entries per map, but this is for engine to
         // todo decided later.
@@ -69,21 +65,20 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
         return map.isEmpty();
     }
 
-
     Wire toWire() {
         buffer.clear();
         if (TextWire.class.isAssignableFrom(wireType)) {
             return new TextWire(buffer);
+
         } else throw new UnsupportedOperationException("todo, wireType="+wireType);
     }
 
-
     Wire toWire(byte[] bytes) {
-
         Bytes<byte[]> wrap = Bytes.wrap(bytes);
 
         if (TextWire.class.isAssignableFrom(wireType)) {
             return new TextWire(wrap);
+
         } else throw new UnsupportedOperationException("todo, wireType="+wireType);
     }
 
@@ -93,7 +88,6 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
     }
 
     private byte[] bytes(Object b) {
-
         if (b instanceof byte[])
             return (byte[]) b;
 
@@ -106,7 +100,6 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
         return toWire().getValueIn().bytes();
     }
 
-
     @Override
     public boolean containsValue(Object value) {
         return map.containsValue(bytes(value));
@@ -114,7 +107,6 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
 
     @Override
     public V get(@NotNull final Object key) {
-
         return toObject(vClass, () -> {
 
             final byte[] bytes = bytes(key);
@@ -126,7 +118,6 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
     public V getUsing(K key, V usingValue) {
         throw new UnsupportedOperationException("todo");
     }
-
 
     @Override
     public V acquireUsing(@NotNull K key, V usingValue) {
@@ -143,7 +134,6 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
     public <R> R getMapped(K key, @NotNull SerializableFunction<? super V, R> function) {
         throw new UnsupportedOperationException("todo");
     }
-
 
     @Override
     public V putMapped(K key, @NotNull UnaryOperator<V> unaryOperator) {
@@ -182,7 +172,6 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
 
     @Override
     public void forEachEntry(Consumer<? super MapKeyContext<K, V>> action) {
-
     }
 
     @Override
@@ -191,7 +180,6 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
     }
 
     private <E> E toObject(Class<E> eClass, Supplier<byte[]> b) {
-
         final byte[] bytes = b.get();
         if (byte[].class.isAssignableFrom(eClass))
             return (E) bytes;
@@ -220,7 +208,6 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
 
     @Override
     public void putAll(Map<? extends K, ? extends V> m) {
-
         for (final Map.Entry<? extends K, ? extends V> e : m.entrySet()) {
             map.put(bytes(e.getKey()), bytes(e.getValue()));
         }
@@ -232,13 +219,10 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
         map.clear();
     }
 
-
     @NotNull
     @Override
     public Set<K> keySet() {
-
         return new AbstractSet<K>() {
-
             public Iterator<K> iterator() {
                 return new Iterator<K>() {
                     private Iterator<Entry<K, V>> i = entrySet().iterator();
@@ -273,9 +257,7 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
                 return EngineMap.this.containsKey(k);
             }
         };
-
     }
-
 
     public Collection<V> values() {
         return new AbstractCollection<V>() {
@@ -315,20 +297,15 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
         };
     }
 
-
     @NotNull
     @Override
     public Set<Entry<K, V>> entrySet() {
-
         return new AbstractSet<Entry<K, V>>() {
-
-
             @NotNull
             @Override
             public Iterator<Entry<K, V>> iterator() {
                 final Iterator<Entry<byte[], byte[]>> iterator = map.entrySet().iterator();
                 return new Iterator<Entry<K, V>>() {
-
                     @Override
                     public boolean hasNext() {
                         return iterator.hasNext();
@@ -336,11 +313,9 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
 
                     @Override
                     public Entry<K, V> next() {
-
                         final Entry<byte[], byte[]> next = iterator.next();
 
                         return new Entry<K, V>() {
-
                             @Override
                             public K getKey() {
                                 return toObject(kClass, () -> next.getKey());
@@ -356,12 +331,9 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
                                 throw new UnsupportedOperationException("todo (setValue)");
                             }
                         };
-
-
                     }
                 };
             }
-
 
             public int size() {
                 return EngineMap.this.size();
@@ -379,14 +351,12 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
                 return EngineMap.this.containsValue(v);
             }
 
-
             @Override
             public boolean remove(Object o) {
                 return EngineMap.this.remove(o) != null;
             }
         };
     }
-
 
     @Override
     public V putIfAbsent(K key, V value) {
@@ -409,7 +379,6 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
 
     @Override
     public boolean replace(K key, V oldValue, V newValue) {
-
         nullCheck(key);
         nullCheck(oldValue);
         nullCheck(newValue);
@@ -440,9 +409,7 @@ public class EngineMap<K, V> implements ChronicleMap<K, V> {
 
     @Override
     public void close() {
-
     }
-
 
     @Override
     public String toString() {

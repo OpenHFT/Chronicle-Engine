@@ -57,7 +57,6 @@ public class ChassisTest {
         assertEquals("World, soon",
                 map.values().stream()
                         .collect(Collectors.joining(", ")));
-
     }
 
     @Test(expected = AssetNotFoundException.class)
@@ -98,7 +97,6 @@ public class ChassisTest {
     }
 
     static class MyInterceptor implements Interceptor {
-
 
     }
 }

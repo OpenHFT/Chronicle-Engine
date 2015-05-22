@@ -47,7 +47,6 @@ import static org.junit.Assert.*;
 
 public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
 
-
     @Rule
     public TestName name = new TestName();
 
@@ -96,7 +95,6 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
         }).when(spy).close();
 
         return spy;
-
     }
 
     /**
@@ -116,7 +114,6 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     }
 
     static int s_port = 11050;
-
 
     /**
      * clear removes all pairs
@@ -151,7 +148,6 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
             writeMessage = "example of containsKey(<key>) returning true";
             yamlLoggger(() -> assertTrue(map.containsKey(one)));
             assertFalse(map.containsKey(zero));
-
         }
     }
 
@@ -175,7 +171,6 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
         try (ChronicleMap map = map5()) {
             assertEquals("A", map.get(one));
             try (ChronicleMap empty = newStrStrMap()) {
-
                 writeMessage = "example of get(<key>) returning null, when the keys is not " +
                         "present in the map";
 
@@ -290,7 +285,6 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     @Test(timeout = 50000)
     public void testValues() throws IOException {
         try (ChronicleMap map = map5()) {
-
             writeMessage = "example of getting the values and then calling size()";
             yamlLoggger(() -> {
                 Collection s = map.values();
@@ -314,7 +308,6 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     @Ignore
     public void testEntrySet() throws IOException {
         try (ChronicleMap map = map5()) {
-
             writeMessage = "example of getting and entry set itterator";
             yamlLoggger(() -> {
                 Set entrySet = map.entrySet();
@@ -436,7 +429,6 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     @Test(timeout = 50000)
     public void testRemove() throws IOException {
         try (ChronicleMap map = map5()) {
-
             yamlLoggger(() -> map.remove(five));
             assertEquals(4, map.size());
             assertFalse(map.containsKey(five));
@@ -499,7 +491,6 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
             }
         }
     }
-
 
     /**
      * get(null) throws NPE
@@ -769,6 +760,5 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
             return r;
         }
     }
-
 }
 

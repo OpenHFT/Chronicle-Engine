@@ -7,7 +7,7 @@ import net.openhft.chronicle.engine.map.MapHandlerFunction;
 import java.io.IOException;
 import java.util.Map;
 
-import static net.openhft.chronicle.engine.client.StringUtils.contains;
+import static net.openhft.chronicle.engine.utils.StringUtils.contains;
 
 /**
  * Created by daniel on 06/05/15.
@@ -39,6 +39,7 @@ public interface MapHandler<K, V> extends MapHandlerFunction<K, V> {
     static MapHandler instance(CharSequence csp) {
         if (contains(csp, "file")) {
             return STRING_STRING_MAP_HANDLER;
+
         } else if (contains(csp, "object"))
             return BYTE_BYTE_MAP_HANDLER;
         else

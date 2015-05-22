@@ -66,7 +66,6 @@ public class ServerEndpoint implements Closeable {
         start(port);
     }
 
-
     public AcceptorEventHandler start(int port) throws IOException {
         eg.start();
 
@@ -87,8 +86,6 @@ public class ServerEndpoint implements Closeable {
         eg.addHandler(eah);
         this.eah = eah;
         return eah;
-
-
     }
 
     public int getPort() throws IOException {

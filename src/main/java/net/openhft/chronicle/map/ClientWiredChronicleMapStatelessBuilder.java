@@ -19,8 +19,8 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.MemoryUnit;
-import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.hash.ChronicleHashStatelessClientBuilder;
+import net.openhft.chronicle.network.connection.ClientWiredStatelessTcpConnectionHub;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -33,7 +33,6 @@ public final class ClientWiredChronicleMapStatelessBuilder<K, V> implements
         ChronicleHashStatelessClientBuilder<ClientWiredChronicleMapStatelessBuilder<K, V>,
                 ChronicleMap<K, V>>,
         MapBuilder<ClientWiredChronicleMapStatelessBuilder<K, V>> {
-
 
     private final ClientWiredStatelessTcpConnectionHub hub;
     private Class keyClass;
@@ -119,6 +118,4 @@ public final class ClientWiredChronicleMapStatelessBuilder<K, V> implements
                             "to create a new stateless client");
         }
     }
-
-
 }

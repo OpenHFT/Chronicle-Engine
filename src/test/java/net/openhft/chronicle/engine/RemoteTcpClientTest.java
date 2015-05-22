@@ -105,7 +105,6 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
     private void testStrings(int noPutsAndGets, int valueLength, Class<? extends Wire> wireType) throws IOException {
 
-
         // sever
         ChronicleEngine chronicleEngine = new ChronicleEngine();
         chronicleEngine.setMap("test", ChronicleMapBuilder
@@ -122,7 +121,6 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
             try (final RemoteTcpClientChronicleContext remoteContext = new
                     RemoteTcpClientChronicleContext(
                     "localhost", serverPort, (byte) 2, wireType)) {
-
                 final ChronicleMap<String, CharSequence> test = remoteContext.getMap("test",
                         String.class, CharSequence.class);
 
@@ -166,7 +164,6 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
         }
     }
 
-
     @Ignore("broken text")
     @Test(timeout = 100000)
     public void testMarshable() throws Exception {
@@ -177,7 +174,6 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
             //client
             try (final RemoteTcpClientChronicleContext context = new RemoteTcpClientChronicleContext(
                     "localhost", serverPort, (byte) 2, TextWire.class)) {
-
                 try (ChronicleMap<MyMarshallable, Long> numbers = context.getMap
                         ("marshallable-keys", MyMarshallable.class, Long.class)) {
                     numbers.clear();
@@ -223,7 +219,6 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
         }
     }
 
-
     @Test
     public void testFPKMap() throws Exception {
         // sever
@@ -233,7 +228,6 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
             //client
             try (final RemoteTcpClientChronicleContext context = new RemoteTcpClientChronicleContext(
                     "localhost", serverPort, (byte) 2, TextWire.class)) {
-
                 try (ChronicleMap<String, String> map = context.getMap
                         ("filetest", String.class, String.class)) {
                     map.put("hello", "world");
@@ -253,7 +247,6 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
             //client
             try (final RemoteTcpClientChronicleContext context = new RemoteTcpClientChronicleContext(
                     "localhost", serverPort, (byte) 2, TextWire.class)) {
-
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < 50_000; i++) {
                     sb.append('x');

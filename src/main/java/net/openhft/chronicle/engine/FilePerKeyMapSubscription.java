@@ -20,7 +20,6 @@ public class FilePerKeyMapSubscription implements Subscription{
         this.filePerKeyMap = filePerKeyMap;
     }
 
-
     @Override
     public void subscribeAll() {
         subscribeAll = true;

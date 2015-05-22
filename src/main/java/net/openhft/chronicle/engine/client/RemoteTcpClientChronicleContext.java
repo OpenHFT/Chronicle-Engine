@@ -107,7 +107,6 @@ public class RemoteTcpClientChronicleContext implements ChronicleContext, Closea
         throw new UnsupportedOperationException("todo (getLogger)");
     }
 
-
     @Override
     public void close() {
         remoteClientServiceLocator.close();

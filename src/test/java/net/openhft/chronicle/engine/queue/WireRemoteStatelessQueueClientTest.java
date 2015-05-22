@@ -19,22 +19,6 @@
 package net.openhft.chronicle.engine.queue;
 
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
-import net.openhft.chronicle.engine.client.RemoteTcpClientChronicleContext;
-import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
-import net.openhft.chronicle.engine.server.ServerEndpoint;
-
-import org.junit.Ignore;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.function.Supplier;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 
 /**
  * @author Rob Austin.
@@ -71,11 +55,9 @@ public class WireRemoteStatelessQueueClientTest extends ThreadMonitoringTest {
 
             assertEquals(lastIndex, clientQueue.lastWrittenIndex());
 
-
             System.out.println("Result: " + sb);
         }
     }
-
 
     public static class RemoteQueueSupplier implements Closeable, Supplier<ChronicleQueue> {
 
@@ -91,7 +73,6 @@ public class WireRemoteStatelessQueueClientTest extends ThreadMonitoringTest {
             queue = context.getQueue("test");
         }
 
-
         @Override
         public void close() throws IOException {
             if (queue != null)
@@ -100,16 +81,11 @@ public class WireRemoteStatelessQueueClientTest extends ThreadMonitoringTest {
             serverEndpoint.close();
         }
 
-
         @Override
         public ChronicleQueue get() {
             return queue;
         }
     }*/
 
-
 }
-
-
-
 

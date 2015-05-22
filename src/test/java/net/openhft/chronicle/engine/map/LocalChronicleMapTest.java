@@ -18,7 +18,6 @@
 
 package net.openhft.chronicle.engine.map;
 
-
 import net.openhft.chronicle.engine.map.MapClientTest.LocalMapSupplier;
 import net.openhft.chronicle.map.ChronicleMap;
 import org.junit.Ignore;
@@ -40,7 +39,6 @@ import static org.junit.Assert.*;
 
 public class LocalChronicleMapTest extends JSR166TestCase {
 
-
     static ChronicleMap<Integer, String> newIntString() throws IOException {
         final LocalMapSupplier supplier = new LocalMapSupplier(Integer.class, String.class);
 
@@ -50,7 +48,6 @@ public class LocalChronicleMapTest extends JSR166TestCase {
             supplier.close();
             return null;
         }).when(spy).close();
-
 
         return spy;
     }
@@ -79,7 +76,6 @@ public class LocalChronicleMapTest extends JSR166TestCase {
         }).when(spy).close();
 
         return spy;
-
     }
 
     /**
@@ -99,8 +95,6 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     }
 
     static int s_port = 11050;
-
-
 
     /**
      * clear removes all pairs
@@ -437,7 +431,6 @@ public class LocalChronicleMapTest extends JSR166TestCase {
         }
     }
 
-
     /**
      * get(null) throws NPE
      */
@@ -697,6 +690,5 @@ public class LocalChronicleMapTest extends JSR166TestCase {
             return r;
         }
     }
-
 }
 

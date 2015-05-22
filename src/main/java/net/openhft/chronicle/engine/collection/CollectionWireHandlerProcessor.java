@@ -37,7 +37,6 @@ import java.util.function.Supplier;
 
 import static net.openhft.chronicle.wire.Wires.acquireStringBuilder;
 
-
 /**
  * @author Rob Austin.
  */
@@ -61,7 +60,6 @@ public class CollectionWireHandlerProcessor<U, C extends Collection<U>> implemen
     private Supplier<C> factory;
 
     private final Consumer<WireIn> dataConsumer = new Consumer<WireIn>() {
-
         @Override
         public void accept(WireIn wireIn) {
             final Bytes<?> outBytes = outWire.bytes();
@@ -154,10 +152,7 @@ public class CollectionWireHandlerProcessor<U, C extends Collection<U>> implemen
                     }
 
                     throw new IllegalStateException("unsupported event=" + eventName);
-
                 });
-
-
             } catch (Exception e) {
                 LOG.error("", e);
             } finally {
@@ -167,14 +162,13 @@ public class CollectionWireHandlerProcessor<U, C extends Collection<U>> implemen
                     if (len == 0) {
                         System.out.println(
                                 "\n\nserver writes:\n\n<EMPTY>");
-                    } else {
 
+                    } else {
 
                         System.out.println(
                                 "server writes:\n\n" +
                                         //      Bytes.toDebugString(outBytes, SIZE_OF_SIZE, len));
                                         Wires.fromSizePrefixedBlobs(outBytes, SIZE_OF_SIZE, len));
-
                     }
                 }
             }
@@ -182,16 +176,13 @@ public class CollectionWireHandlerProcessor<U, C extends Collection<U>> implemen
         }
     };
 
-
     private C collectionFromWire() {
-
         C c = factory.get();
         final ValueIn valueIn = outWire.getValueIn();
         while (valueIn.hasNextSequenceItem()) {
             c.add(fromWire.apply(valueIn));
         }
         return c;
-
     }
 
     @Override
@@ -203,7 +194,6 @@ public class CollectionWireHandlerProcessor<U, C extends Collection<U>> implemen
                         @NotNull Function<ValueIn, U> fromWire,
                         @NotNull Supplier<C> factory,
                         long tid) throws StreamCorruptedException {
-
 
         this.fromWire = fromWire;
         this.toWire = toWire;
@@ -220,12 +210,8 @@ public class CollectionWireHandlerProcessor<U, C extends Collection<U>> implemen
         }
     }
 
-
     @Override
     public void accept(@NotNull final WireHandlers wireHandlers) {
-
     }
-
-
 }
 

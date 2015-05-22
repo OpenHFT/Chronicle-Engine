@@ -50,6 +50,7 @@ public class VanillaMapView<K, V> extends AbstractMap<K, V> implements MapView<K
         if (putReturnsNull) {
             kvStore.put(key, value);
             return null;
+
         } else {
             return kvStore.getAndPut(key, value);
         }
@@ -60,6 +61,7 @@ public class VanillaMapView<K, V> extends AbstractMap<K, V> implements MapView<K
         if (removeReturnsNull) {
             kvStore.remove((K) key);
             return null;
+
         } else {
             return kvStore.getAndRemove((K) key);
         }

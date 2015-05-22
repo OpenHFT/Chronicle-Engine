@@ -1,8 +1,8 @@
 package net.openhft.chronicle.engine.collection;
 
-import net.openhft.chronicle.engine.client.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.engine.collection.CollectionWireHandler.SetEventId;
 import net.openhft.chronicle.map.MapStatelessClient;
+import net.openhft.chronicle.network.connection.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.wire.ValueIn;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,7 +13,6 @@ import java.util.function.Supplier;
 
 import static net.openhft.chronicle.engine.collection.CollectionWireHandler.SetEventId.*;
 import static net.openhft.chronicle.wire.CoreFields.reply;
-
 
 public class ClientWiredStatelessChronicleCollection<U, E extends Collection<U>> extends
         MapStatelessClient<SetEventId> implements Collection<U> {
@@ -50,15 +49,12 @@ public class ClientWiredStatelessChronicleCollection<U, E extends Collection<U>>
     @Override
     @NotNull
     public Iterator<U> iterator() {
-
         // todo improve numberOfSegments
         final int numberOfSegments = proxyReturnUint16(SetEventId.numberOfSegments);
 
         // todo iterate the segments for the moment we just assume one segment
         return segmentSet(1).iterator();
-
     }
-
 
     /**
      * gets the iterator for a given segment
@@ -68,7 +64,6 @@ public class ClientWiredStatelessChronicleCollection<U, E extends Collection<U>>
      */
     @NotNull
     private E segmentSet(int segment) {
-
         final E e = factory.get();
 
         return proxyReturnWireConsumerInOut(iterator, reply, valueOut -> valueOut.uint16(segment),
@@ -88,15 +83,12 @@ public class ClientWiredStatelessChronicleCollection<U, E extends Collection<U>>
         return asCollection().toArray();
     }
 
-
     @NotNull
     private E asCollection() {
-
         final E e = factory.get();
         final int numberOfSegments = proxyReturnUint16(SetEventId.numberOfSegments);
 
         for (long j = 0; j < numberOfSegments; j++) {
-
             final long i = j;
             proxyReturnWireConsumerInOut(iterator, reply, valueOut -> valueOut.uint16(i),
                     read -> read.sequence(r -> {
@@ -148,5 +140,4 @@ public class ClientWiredStatelessChronicleCollection<U, E extends Collection<U>>
     public void clear() {
         proxyReturnVoid(clear);
     }
-
 }

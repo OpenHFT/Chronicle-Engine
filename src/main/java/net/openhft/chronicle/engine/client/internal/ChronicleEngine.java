@@ -63,7 +63,6 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
     private MapWireConnectionHub mapWireConnectionHub = null;
 
     public ChronicleEngine() {
-
         // todo config port and identifiers
         final byte localIdentifier = (byte) 1;
         final int serverPort = 8085;
@@ -94,7 +93,6 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
     public <K, V> ChronicleMap<K, V> getMap(String name, final Class<K> kClass, final Class<V> vClass)
             throws IOException {
 
-
         // TODO make this configurable.
         long entries = 1000;
         final int maxValueSize = 4 << 10;
@@ -102,12 +100,9 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
         final boolean putReturnsNull = true;
         final boolean removeReturnsNull = true;
 
-
         // if its a string map the we will use the string map directly
         if (CharSequence.class.isAssignableFrom(kClass) &&
                 CharSequence.class.isAssignableFrom(vClass)) {
-
-
             if (String.class.isAssignableFrom(kClass) &&
                     String.class.isAssignableFrom(vClass)) {
                 throw new UnsupportedOperationException("Please use a Map<CharSequence,CharSequence> rather than a Map<String,String>");
@@ -137,7 +132,6 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
             return (ChronicleMap) stringMap;
         }
 
-
         @SuppressWarnings("unchecked")
         Map<byte[], byte[]> underlyingMap = underlyingMaps.computeIfAbsent(name, k -> {
             try {
@@ -154,7 +148,6 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
             }
         });
 
-
         if (kClass == byte[].class && vClass == byte[].class)
             return (ChronicleMap<K, V>) underlyingMap;
 
@@ -167,12 +160,10 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
                                 kClass,
                                 vClass,
                                 TextWire.class);
-
                     } catch (IOException ioe) {
                         throw Jvm.rethrow(ioe);
                     }
                 });
-
 
         validateClasses(result, kClass, vClass);
 
@@ -192,7 +183,6 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
                 });
     }
 
-
     @Override
     public <I> I getService(Class<I> iClass, String name, Class... args) throws IOException {
         //  if (iClass == Chronicle.class)
@@ -203,7 +193,6 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
             return (I) getMap(name, args[0], args[1]);
         throw new UnsupportedOperationException();
     }
-
 
     @Override
     public <K, V> Subscription<K, MapEventListener<K, V>> createMapSubscription(String name, Class<K> kClass, Class<V> vClass) {

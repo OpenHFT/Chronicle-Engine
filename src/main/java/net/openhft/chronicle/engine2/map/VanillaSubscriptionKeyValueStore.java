@@ -27,6 +27,7 @@ public class VanillaSubscriptionKeyValueStore<K, V> extends AbstractKeyValueStor
                 if (oldValue == null) {
                     InsertEvent<K, V> inserted = new InsertEvent<>(key, value);
                     subscribers.forEach(s -> s.on(inserted));
+
                 } else {
                     UpdatedEvent<K, V> updated = new UpdatedEvent<>(key, oldValue, value);
                     subscribers.forEach(s -> s.on(updated));

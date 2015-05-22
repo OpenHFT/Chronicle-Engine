@@ -47,7 +47,6 @@ import java.util.function.Supplier;
 
 import static org.junit.Assert.assertEquals;
 
-
 /**
  * test using the map both remotely or locally via the engine
  *
@@ -58,7 +57,6 @@ public class MapClientTest extends ThreadMonitoringTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(MapClientTest.class);
     private Class<? extends CloseableSupplier> supplier = null;
-
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() throws IOException {
@@ -73,7 +71,6 @@ public class MapClientTest extends ThreadMonitoringTest {
         this.supplier = supplier;
     }
 
-
     @Test(timeout = 50000)
     public void testPutAndGet() throws IOException, InterruptedException {
 
@@ -83,10 +80,8 @@ public class MapClientTest extends ThreadMonitoringTest {
             assertEquals(1, mapProxy.size());
 
             Assert.assertEquals("{1=hello}", mapProxy.toString());
-
         });
     }
-
 
     @Test(timeout = 50000)
     public void testEntrySetIsEmpty() throws IOException, InterruptedException {
@@ -94,7 +89,6 @@ public class MapClientTest extends ThreadMonitoringTest {
         supplyMap(Integer.class, String.class, mapProxy -> {
             assertEquals(true, mapProxy.isEmpty());
         });
-
     }
 
     @Test(timeout = 500000)
@@ -115,7 +109,6 @@ public class MapClientTest extends ThreadMonitoringTest {
             assertEquals(true, entries.isEmpty());
             mapProxy.putAll(data);
             assertEquals(2, mapProxy.size());
-
         });
     }
 
@@ -153,7 +146,6 @@ public class MapClientTest extends ThreadMonitoringTest {
         });
     }
 
-
     @Test
     public void testToString() throws IOException, InterruptedException {
 
@@ -167,9 +159,7 @@ public class MapClientTest extends ThreadMonitoringTest {
             mapProxy.put(2, "World");
             Assert.assertEquals("{2=World}", mapProxy.toString());
         });
-
     }
-
 
     public interface CloseableSupplier<X> extends Closeable, Supplier<X> {
     }
@@ -201,7 +191,6 @@ public class MapClientTest extends ThreadMonitoringTest {
             map = context.getMap("test", kClass, vClass);
         }
 
-
         @Override
         public void close() throws IOException {
             if (map != null)
@@ -210,15 +199,12 @@ public class MapClientTest extends ThreadMonitoringTest {
             serverEndpoint.close();
         }
 
-
         @Override
         public ChronicleMap<K, V> get() {
             return map;
         }
 
-
     }
-
 
     public static class LocalMapSupplier<K, V> implements CloseableSupplier<ChronicleMap<K, V>> {
 
@@ -230,18 +216,15 @@ public class MapClientTest extends ThreadMonitoringTest {
             map = context.getMap("test", kClass, vClass);
         }
 
-
         @Override
         public void close() throws IOException {
             context.close();
         }
 
-
         @Override
         public ChronicleMap<K, V> get() {
             return map;
         }
-
 
     }
 
@@ -271,9 +254,5 @@ public class MapClientTest extends ThreadMonitoringTest {
         }
 
     }
-
 }
-
-
-
 

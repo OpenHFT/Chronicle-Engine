@@ -12,7 +12,6 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-
 public class StringCharSequenceMapHandler implements MapHandler<String, CharSequence> {
 
     private final BiFunction<ChronicleEngine, String, Map> supplier;
@@ -49,7 +48,6 @@ public class StringCharSequenceMapHandler implements MapHandler<String, CharSequ
         x.read(() -> "value").text(value);
 
         return new Map.Entry<String, CharSequence>() {
-
             @Override
             public String getKey() {
                 return key;
@@ -65,7 +63,6 @@ public class StringCharSequenceMapHandler implements MapHandler<String, CharSequ
                 throw new UnsupportedOperationException();
             }
         };
-
     });
 
     public BiConsumer<ValueOut, String> getKeyToWire() {

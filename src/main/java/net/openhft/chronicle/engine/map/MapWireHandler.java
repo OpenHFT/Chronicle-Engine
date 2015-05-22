@@ -47,7 +47,6 @@ import static net.openhft.chronicle.wire.CoreFields.reply;
 import static net.openhft.chronicle.wire.WireOut.EMPTY;
 import static net.openhft.chronicle.wire.Wires.acquireStringBuilder;
 
-
 /**
  * @author Rob Austin.
  */
@@ -178,7 +177,6 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                 final ValueIn valueIn = inWire.readEventName(eventName);
 
                 if (put.contentEquals(eventName)) {
-
                     valueIn.marshallable(wire -> {
 
                         final Params[] params = put.params();
@@ -189,7 +187,6 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                         nullCheck(key);
                         nullCheck(value);
                         map.put(key, (V)value);
-
                     });
                     return;
                 }
@@ -203,7 +200,6 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                     }
 
                     if (putAll.contentEquals(eventName)) {
-
                         final Map data = new HashMap();
                         valueIn.sequence(v -> {
                             while (v.hasNextSequenceItem()) {
@@ -272,6 +268,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                         if (charSequenceValue) {
                             StringBuilder sb = SBP.acquireStringBuilder();
                             vToWire.accept(outWire.writeEventName(reply), (V) ((ChronicleMap) map).getUsing(key, sb));
+
                         } else {
                             vToWire.accept(outWire.writeEventName(reply),
                                     map.get(key));
@@ -280,7 +277,6 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                     }
 
                     if (getAndPut.contentEquals(eventName)) {
-
                         valueIn.marshallable(wire -> {
 
                             final Params[] params = getAndPut.params();
@@ -295,8 +291,6 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                         });
                         return;
                     }
-
-
 
                     if (getAndRemove.contentEquals(eventName)) {
                         final K key = wireToK.apply(valueIn);
@@ -323,7 +317,6 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
 
                             vToWire.accept(outWire.writeEventName(reply),
                                     map.replace(key, value));
-
                         });
                         return;
                     }
@@ -353,7 +346,6 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                             nullCheck(value);
                             vToWire.accept(outWire.writeEventName(reply),
                                     map.putIfAbsent(key, value));
-
                         });
 
                         return;
@@ -369,7 +361,6 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                             outWire.writeEventName(reply).bool(map.remove(key, value));
                         });
                     }
-
 
                     if (hashCode.contentEquals(eventName)) {
                         outWire.writeEventName(reply).int32(map.hashCode());
@@ -387,6 +378,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                     if (len == 0) {
                         System.out.println("--------------------------------------------\n" +
                                 "server writes:\n\n<EMPTY>");
+
                     } else {
                         System.out.println("--------------------------------------------\n" +
                                 "server writes:\n\n" +
@@ -425,7 +417,6 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
             final long position = outWire.bytes().position();
             try {
                 c.accept(outWire);
-
             } catch (Exception exception) {
                 outWire.bytes().position(position);
                 outWire.writeEventName(() -> "exception").throwable(exception);

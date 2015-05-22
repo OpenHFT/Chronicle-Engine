@@ -167,6 +167,7 @@ public class VanillaAsset implements Asset, Closeable {
         if (assetClass == Map.class || assetClass == ConcurrentMap.class) {
             KeyValueStoreFactory kvStore = acquireInterceptor(KeyValueStoreFactory.class);
             return add(name, kvStore.create(name));
+
         } else {
             throw new UnsupportedOperationException("todo");
         }
@@ -181,6 +182,7 @@ public class VanillaAsset implements Asset, Closeable {
             Asset asset = getAsset(name1);
             if (asset == null) {
                 return null;
+
             } else {
                 return asset.getChild(name2);
             }

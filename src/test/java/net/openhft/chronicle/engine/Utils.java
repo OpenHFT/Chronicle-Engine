@@ -20,7 +20,6 @@ public class Utils {
     }
 
     public static void methodName(@NotNull String methodName) {
-
         String methodName1 = (methodName.startsWith("test"))
                 ? methodName.substring("test".length())
                 : methodName;
@@ -30,7 +29,6 @@ public class Utils {
         YamlLogging.clientReads = false;
         YamlLogging.title = name;
     }
-
 
     public static void yamlLoggger(Runnable r) {
         try {
