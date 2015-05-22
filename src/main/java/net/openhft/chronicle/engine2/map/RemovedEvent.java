@@ -1,5 +1,8 @@
 package net.openhft.chronicle.engine2.map;
 
+import net.openhft.chronicle.engine2.api.map.MapEvent;
+import net.openhft.chronicle.engine2.api.map.MapEventListener;
+
 /**
  * Created by peter on 22/05/15.
  */

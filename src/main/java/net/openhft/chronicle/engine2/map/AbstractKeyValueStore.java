@@ -1,7 +1,7 @@
 package net.openhft.chronicle.engine2.map;
 
 import net.openhft.chronicle.engine2.api.Asset;
-import net.openhft.chronicle.engine2.api.KeyValueStore;
+import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 
 import java.util.function.Consumer;
 

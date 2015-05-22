@@ -2,7 +2,8 @@ package net.openhft.chronicle.engine2.map;
 
 import net.openhft.chronicle.engine2.api.Asset;
 import net.openhft.chronicle.engine2.api.Assetted;
-import net.openhft.chronicle.engine2.api.KeyValueStore;
+import net.openhft.chronicle.engine2.api.View;
+import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.AbstractMap;
@@ -12,7 +13,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * Created by peter on 22/05/15.
  */
-public class MapView<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V>, Assetted<KeyValueStore<K, V>> {
+public class MapView<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V>, Assetted<KeyValueStore<K, V>>, View {
     private final boolean putReturnsNull;
     private final boolean removeReturnsNull;
     private Asset asset;

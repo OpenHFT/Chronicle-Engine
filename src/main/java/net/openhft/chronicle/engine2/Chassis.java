@@ -9,17 +9,19 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * Created by peter on 22/05/15.
  */
-public enum CommonSession {
+public enum Chassis {
     /* no instances */;
+    private static volatile Session session;
 
-    public static SessionFactory factory() {
-        throw new UnsupportedOperationException("todo");
+    static {
+        resetChassis();
     }
 
-    private static volatile Session session = new VanillaSession();
-
+    public static void resetChassis() {
+        session = new VanillaSession();
+    }
     public static void defaultSession(Session session) {
-        CommonSession.session = session;
+        Chassis.session = session;
     }
 
     public static Session defaultSession() {
@@ -42,23 +44,27 @@ public enum CommonSession {
         return session.acquireTopicPublisher(name, eClass);
     }
 
-    public static <E> void register(String name, Class<E> eClass, Subscriber<E> subscriber) throws AssetNotFoundException {
+    public static <E> void registerSubscriber(String name, Class<E> eClass, Subscriber<E> subscriber) throws AssetNotFoundException {
         session.register(name, eClass, subscriber);
     }
 
-    public static <E> void unregister(String name, Class<E> eClass, Subscriber<E> subscriber) {
+    public static <E> void unregisterSubscriber(String name, Class<E> eClass, Subscriber<E> subscriber) {
         session.unregister(name, eClass, subscriber);
     }
 
-    public static <E> void register(String name, Class<E> eClass, TopicSubscriber<E> subscriber) throws AssetNotFoundException {
+    public static <E> void registerTopicSubscriber(String name, Class<E> eClass, TopicSubscriber<E> subscriber) throws AssetNotFoundException {
         session.register(name, eClass, subscriber);
     }
 
-    public static <E> void unregister(String name, Class<E> eClass, TopicSubscriber<E> subscriber) {
+    public static <E> void unregisterTopicSubscriber(String name, Class<E> eClass, TopicSubscriber<E> subscriber) {
         session.unregister(name, eClass, subscriber);
     }
 
-    public static Asset add(String name, Assetted item) {
+    public static Asset addAsset(String name, Assetted item) {
         return session.add(name, item);
+    }
+
+    public static <A> Asset acquireAsset(String name, Class<A> assetClass) {
+        return session.acquireAsset(name, assetClass);
     }
 }

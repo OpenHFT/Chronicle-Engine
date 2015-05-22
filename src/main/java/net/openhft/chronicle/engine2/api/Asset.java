@@ -17,8 +17,10 @@ public interface Asset extends Permissoned, Subscription {
     @NotNull
     Stream<Asset> children();
 
+    Asset add(String name, Assetted resource);
+
     @NotNull
-    Asset acquireChild(String name) throws AssetNotFoundException;
+    <A> Asset acquireChild(String name, Class<A> assetClass) throws AssetNotFoundException;
 
     @Nullable
     Asset getChild(String name);
@@ -33,7 +35,7 @@ public interface Asset extends Permissoned, Subscription {
 
     <V> V acquireView(Class<V> vClass, Class class1, Class class2, String queryString);
 
-    <I extends Interceptor> I acquireInterceptor(Class<I> iClass);
+    <I extends Interceptor> I acquireInterceptor(Class<I> iClass) throws AssetNotFoundException;
 
-    Asset add(String name, Assetted resource);
+    <I extends Interceptor> void registerInterceptor(Class<I> iClass, I interceptor);
 }

@@ -1,6 +1,10 @@
 package net.openhft.chronicle.engine2.map;
 
-import net.openhft.chronicle.engine2.api.*;
+import net.openhft.chronicle.engine2.api.Asset;
+import net.openhft.chronicle.engine2.api.Subscriber;
+import net.openhft.chronicle.engine2.api.TopicSubscriber;
+import net.openhft.chronicle.engine2.api.map.KeyValueStore;
+import net.openhft.chronicle.engine2.api.map.SubscriptionKeyValueStore;
 
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -9,7 +13,7 @@ import java.util.function.Consumer;
 /**
  * Created by peter on 22/05/15.
  */
-public class SubscriptionKeyValueStore<K, V> implements Subscription, KeyValueStore<K, V> {
+public class VanillaSubscriptionKeyValueStore<K, V> implements SubscriptionKeyValueStore<K, V> {
     final Set<TopicSubscriber<V>> topicSubscribers = new CopyOnWriteArraySet<>();
     final Set<Subscriber<Entry<K, V>>> subscribers = new CopyOnWriteArraySet<>();
     boolean hasSubscribers = false;
