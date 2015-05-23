@@ -2,6 +2,10 @@ package net.openhft.chronicle.engine2;
 
 import net.openhft.chronicle.engine2.api.*;
 import net.openhft.chronicle.engine2.api.map.InterceptorFactory;
+import net.openhft.chronicle.engine2.api.map.MapEvent;
+import net.openhft.chronicle.engine2.map.InsertEvent;
+import net.openhft.chronicle.engine2.map.RemovedEvent;
+import net.openhft.chronicle.engine2.map.UpdatedEvent;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -197,6 +201,52 @@ public class ChassisTest {
         assertEquals("Message-1, Value-2, World, soon",
                 map.values().stream()
                         .collect(Collectors.joining(", ")));
+    }
+
+    @Test
+    public void entrySubscription() {
+        ConcurrentMap<String, String> map = acquireMap("map-name?putReturnsNull=true", String.class, String.class);
+
+        map.put("Key-1", "Value-1");
+        map.put("Key-2", "Value-2");
+
+        assertEquals(2, map.size());
+
+        // test the bootstrap finds old keys
+        Subscriber<MapEvent<String, String>> subscriber = createMock(Subscriber.class);
+        subscriber.on(InsertEvent.of("Key-1", "Value-1"));
+        subscriber.on(InsertEvent.of("Key-2", "Value-2"));
+        replay(subscriber);
+        registerSubscriber("map-name?bootstrap=true", MapEvent.class, (Subscriber) subscriber);
+        verify(subscriber);
+        reset(subscriber);
+
+        assertEquals(2, map.size());
+
+        // test the topic publish triggers events
+        subscriber.on(UpdatedEvent.of("Key-1", "Value-1", "Message-1"));
+        subscriber.on(InsertEvent.of("Topic-1", "Message-1"));
+        replay(subscriber);
+
+        TopicPublisher<String> publisher = Chassis.acquireTopicPublisher("map-name", String.class);
+        publisher.publish("Key-1", "Message-1");
+        publisher.publish("Topic-1", "Message-1");
+        verify(subscriber);
+        reset(subscriber);
+        assertEquals(3, map.size());
+
+        subscriber.on(InsertEvent.of("Hello", "World"));
+        subscriber.on(InsertEvent.of("Bye", "soon"));
+        subscriber.on(RemovedEvent.of("Key-1", "Message-1"));
+        replay(subscriber);
+
+        // test plain puts trigger events
+        map.put("Hello", "World");
+        map.put("Bye", "soon");
+        map.remove("Key-1");
+        verify(subscriber);
+
+        assertEquals(4, map.size());
     }
 
     @Test(expected = AssetNotFoundException.class)

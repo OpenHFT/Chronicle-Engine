@@ -2,6 +2,7 @@ package net.openhft.chronicle.engine2.map;
 
 import net.openhft.chronicle.engine2.api.Subscriber;
 import net.openhft.chronicle.engine2.api.TopicSubscriber;
+import net.openhft.chronicle.engine2.api.map.MapEvent;
 import net.openhft.chronicle.engine2.api.map.SubscriptionKeyValueStore;
 
 import java.util.Set;
@@ -32,11 +33,11 @@ public class VanillaSubscriptionKeyValueStore<K, V> extends AbstractKeyValueStor
         }
         if (!subscribers.isEmpty()) {
             if (oldValue == null) {
-                InsertEvent<K, V> inserted = new InsertEvent<>(key, value);
+                InsertEvent<K, V> inserted = InsertEvent.of(key, value);
                 subscribers.forEach(s -> s.on(inserted));
 
             } else {
-                UpdatedEvent<K, V> updated = new UpdatedEvent<>(key, oldValue, value);
+                UpdatedEvent<K, V> updated = UpdatedEvent.of(key, oldValue, value);
                 subscribers.forEach(s -> s.on(updated));
             }
         }
@@ -60,7 +61,7 @@ public class VanillaSubscriptionKeyValueStore<K, V> extends AbstractKeyValueStor
             topicSubscribers.forEach(ts -> ts.on(key2, null));
         }
         if (!subscribers.isEmpty()) {
-            RemovedEvent<K, V> removed = new RemovedEvent<>(key, oldValue);
+            RemovedEvent<K, V> removed = RemovedEvent.of(key, oldValue);
             subscribers.forEach(s -> s.on(removed));
         }
         if (!keySubscribers.isEmpty()) {
@@ -71,11 +72,11 @@ public class VanillaSubscriptionKeyValueStore<K, V> extends AbstractKeyValueStor
     @Override
     public <E> void registerSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query) {
         boolean bootstrap = query.contains("bootstrap=true");
-        if (eClass == Entry.class) {
-            subscribers.add((Subscriber<Entry<K, V>>) subscriber);
+        if (eClass == Entry.class || eClass == MapEvent.class) {
+            subscribers.add((Subscriber) subscriber);
             if (bootstrap) {
                 for (int i = 0; i < kvStore.segments(); i++)
-                    kvStore.entriesFor(i, e -> subscriber.on((E) e));
+                    kvStore.entriesFor(i, e -> subscriber.on((E) InsertEvent.of(e.key(), e.value())));
             }
         } else {
             keySubscribers.add((Subscriber<K>) subscriber);

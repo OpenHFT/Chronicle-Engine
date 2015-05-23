@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine2.api.map;
 
 import net.openhft.chronicle.engine2.api.Assetted;
+import net.openhft.chronicle.engine2.map.VanillaEntry;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -57,5 +58,9 @@ public interface KeyValueStore<K, V> extends Assetted<KeyValueStore> {
         K key();
 
         V value();
+
+        static <K, V> Entry<K, V> of(K key, V value) {
+            return new VanillaEntry<>(key, value);
+        }
     }
 }
