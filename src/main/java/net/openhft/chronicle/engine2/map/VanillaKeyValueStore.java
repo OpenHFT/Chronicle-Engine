@@ -16,7 +16,7 @@ public class VanillaKeyValueStore<K, V> implements KeyValueStore<K, V> {
     private final ConcurrentMap<K, V> map = new ConcurrentHashMap<>();
     private Asset asset;
 
-    public VanillaKeyValueStore(String name, Class<K> kClass, Class<V> vClass) {
+    public VanillaKeyValueStore(String name, String query, Class<K> kClass, Class<V> vClass) {
     }
 
     @Override

@@ -35,7 +35,7 @@ public class FilePerKeyValueStoreTest {
 
         resetChassis();
         Function<Bytes, Wire> writeType = TextWire::new;
-        defaultSession().registerInterceptor(KeyValueStoreFactory.class, (name, kClass, vClass) -> new FilePerKeyValueStore(TMP + "/" + name, writeType, (Class) vClass));
+        defaultSession().registerInterceptor(KeyValueStoreFactory.class, (name, q, kClass, vClass) -> new FilePerKeyValueStore(TMP + "/" + name, q, writeType, (Class) vClass));
 
         map = acquireMap(NAME, String.class, TestMarshallable.class);
 

@@ -17,7 +17,7 @@ public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscrib
     private final String name;
     private final Set<Subscriber<T>> subscribers = new CopyOnWriteArraySet<>();
 
-    VanillaSubAsset(Asset parent, String name) {
+    VanillaSubAsset(Asset parent, String name, String query) {
         this.parent = parent;
         this.name = name;
     }

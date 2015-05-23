@@ -65,7 +65,7 @@ public class ChassisTest {
         subscriber.on("Topic-1");
         replay(subscriber);
 
-        TopicPublisher<String> publisher = Chassis.acquireTopicPublisher("map-name", String.class);
+        TopicPublisher<String> publisher = acquireTopicPublisher("map-name", String.class);
         publisher.publish("Topic-1", "Message-1");
         verify(subscriber);
         reset(subscriber);
@@ -125,7 +125,7 @@ public class ChassisTest {
         subscriber.on("Message-1");
         replay(subscriber);
 
-        TopicPublisher<String> publisher = Chassis.acquireTopicPublisher("map-name", String.class);
+        TopicPublisher<String> publisher = acquireTopicPublisher("map-name", String.class);
         publisher.publish("Key-1", "Message-1");
         publisher.publish("Key-2", "Message-2");
         verify(subscriber);
@@ -166,7 +166,7 @@ public class ChassisTest {
         subscriber.on("Topic-1", "Message-1");
         replay(subscriber);
 
-        TopicPublisher<String> publisher = Chassis.acquireTopicPublisher("map-name", String.class);
+        TopicPublisher<String> publisher = acquireTopicPublisher("map-name", String.class);
         publisher.publish("Topic-1", "Message-1");
         verify(subscriber);
         reset(subscriber);
@@ -228,7 +228,7 @@ public class ChassisTest {
         subscriber.on(InsertedEvent.of("Topic-1", "Message-1"));
         replay(subscriber);
 
-        TopicPublisher<String> publisher = Chassis.acquireTopicPublisher("map-name", String.class);
+        TopicPublisher<String> publisher = acquireTopicPublisher("map-name", String.class);
         publisher.publish("Key-1", "Message-1");
         publisher.publish("Topic-1", "Message-1");
         verify(subscriber);
@@ -249,6 +249,16 @@ public class ChassisTest {
         assertEquals(4, map.size());
     }
 
+    @Test
+    public void newNode() {
+        Asset group = acquireAsset("group", Void.class, null, null);
+        Asset subgroup = acquireAsset("group/sub-group?option=unknown", Void.class, null, null);
+        assertEquals("group/sub-group", subgroup.fullName());
+
+        Asset group2 = acquireAsset("group2/sub-group?who=knows", Void.class, null, null);
+        assertEquals("group2/sub-group", group2.fullName());
+    }
+
     @Test(expected = AssetNotFoundException.class)
     public void noAsset() {
         registerTopicSubscriber("map-name", String.class, (t, e) -> System.out.println("{ key: " + t + ", event: " + e + " }"));
@@ -256,23 +266,15 @@ public class ChassisTest {
 
     @Test(expected = AssetNotFoundException.class)
     public void noInterceptor() {
-        Asset asset;
-        try {
-            asset = Chassis.acquireAsset("", null, null, null);
-        } catch (Exception e) {
-            throw new AssertionError(e);
-        }
+        Asset asset = acquireAsset("", null, null, null);
+
         asset.acquireInterceptor(MyInterceptor.class);
     }
 
     @Test
     public void generateInterceptor() {
-        Asset asset;
-        try {
-            asset = Chassis.acquireAsset("", null, null, null);
-        } catch (Exception e) {
-            throw new AssertionError(e);
-        }
+        Asset asset = acquireAsset("", null, null, null);
+
         asset.registerInterceptor(InterceptorFactory.class, new InterceptorFactory() {
             @Override
             public <I extends Interceptor> I create(Class<I> iClass) {

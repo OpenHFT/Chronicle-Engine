@@ -60,7 +60,7 @@ public class FilePerKeyValueStore<V extends Marshallable> implements Subscriptio
     private volatile boolean closed = false;
     private Asset asset;
 
-    public FilePerKeyValueStore(String dir,
+    public FilePerKeyValueStore(String dir, String query,
                                 Function<Bytes, Wire> bytesToWire,
                                 Class<V> vClass) throws IORuntimeException {
         try {

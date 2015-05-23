@@ -14,6 +14,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.stream.Stream;
 
+import static net.openhft.chronicle.engine.utils.StringUtils.split2;
+
 /**
  * Created by peter on 22/05/15.
  */
@@ -173,15 +175,22 @@ public class VanillaAsset implements Asset, Closeable {
     protected <A> Asset createAsset(String name, Class<A> assetClass, Class class1, Class class2) {
         if (assetClass == null)
             return null;
+        String[] nameQuery = split2(name, '?');
         if (assetClass == Map.class || assetClass == ConcurrentMap.class) {
             KeyValueStoreFactory kvStoreFactory = acquireInterceptor(KeyValueStoreFactory.class);
-            return add(name, kvStoreFactory.create(name, class1, class2));
+            return add(nameQuery[0], kvStoreFactory.create(nameQuery[0], nameQuery[1], class1, class2));
 
         } else if (assetClass == String.class && subscription instanceof KeyValueStore) {
             SubAssetFactory subAssetFactory = acquireInterceptor(SubAssetFactory.class);
-            SubAsset value = subAssetFactory.create(this, name);
-            children.put(name, value);
+            SubAsset value = subAssetFactory.create(this, nameQuery[0], nameQuery[1]);
+            children.put(nameQuery[0], value);
             return value;
+
+        } else if (assetClass == Void.class) {
+            AssetFactory assetFactory = acquireInterceptor(AssetFactory.class);
+            Asset asset = assetFactory.create(this, nameQuery[0], null);
+            children.put(nameQuery[0], asset);
+            return asset;
 
         } else {
             throw new UnsupportedOperationException("todo name:" + name + " asset " + assetClass);
