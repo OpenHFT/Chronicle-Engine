@@ -39,7 +39,7 @@
                 <groupId>net.openhft</groupId>
                 <artifactId>third-party-bom</artifactId>
                 <type>pom</type>
-                <version>3.4.18</version>
+                <version>3.4.20-SNAPSHOT</version>
                 <scope>import</scope>
             </dependency>
 
@@ -127,6 +127,11 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.easymock</groupId>
+            <artifactId>easymock</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

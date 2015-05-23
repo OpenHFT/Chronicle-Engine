@@ -10,6 +10,13 @@ import static java.lang.Character.toLowerCase;
 public enum StringUtils {
     ;
 
+    public static String[] split2(String str, int ch) {
+        int pos = str.indexOf(ch);
+        return pos >= 0
+                ? new String[]{str.substring(0, pos), str.substring(pos + 1)}
+                : new String[]{str, ""};
+    }
+
     public static boolean endsWith(@NotNull final CharSequence source,
                                    @NotNull final String endsWith) {
         for (int i = 1; i <= endsWith.length(); i++) {

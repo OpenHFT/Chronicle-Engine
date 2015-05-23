@@ -11,6 +11,14 @@ import java.util.stream.Stream;
 public interface Asset extends Permissoned, Subscription {
     String name();
 
+    default String fullName() {
+        return parent() == null
+                ? "/"
+                : parent().parent() == null
+                ? name()
+                : parent().fullName() + "/" + name();
+    }
+
     @Nullable
     Asset parent();
 

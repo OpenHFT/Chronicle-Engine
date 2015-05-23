@@ -62,6 +62,11 @@ public class VanillaAsset implements Asset, Closeable {
                                 .create(VanillaAsset.this, (KeyValueStore) subscription, queryString));
             }
         }
+        if (vClass == TopicPublisher.class) {
+            return (V) viewMap.computeIfAbsent(TopicPublisher.class, aClass ->
+                    acquireInterceptor(TopicPublisherFactory.class)
+                            .create(VanillaAsset.this, (KeyValueStore) subscription, queryString));
+        }
         throw new UnsupportedOperationException("todo");
     }
 
@@ -101,23 +106,23 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Override
-    public <E> void registerSubscriber(Class<E> eClass, Subscriber<E> subscriber) {
-        subscription.registerSubscriber(eClass, subscriber);
+    public <E> void registerSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query) {
+        subscription.registerSubscriber(eClass, subscriber, query);
     }
 
     @Override
-    public <E> void registerSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber) {
-        subscription.registerSubscriber(eClass, subscriber);
+    public <E> void registerSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query) {
+        subscription.registerSubscriber(eClass, subscriber, query);
     }
 
     @Override
-    public <E> void unregisterSubscriber(Class<E> eClass, Subscriber<E> subscriber) {
-        subscription.unregisterSubscriber(eClass, subscriber);
+    public <E> void unregisterSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query) {
+        subscription.unregisterSubscriber(eClass, subscriber, query);
     }
 
     @Override
-    public <E> void unregisterSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber) {
-        subscription.unregisterSubscriber(eClass, subscriber);
+    public <E> void unregisterSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query) {
+        subscription.unregisterSubscriber(eClass, subscriber, query);
     }
 
     @Override
@@ -145,7 +150,7 @@ public class VanillaAsset implements Asset, Closeable {
         if (pos >= 0) {
             String name1 = name.substring(0, pos);
             String name2 = name.substring(pos + 1);
-            getAssetOrANFE(name1, assetClass).acquireChild(name2, assetClass);
+            return getAssetOrANFE(name1, assetClass).acquireChild(name2, assetClass);
         }
         return getAssetOrANFE(name, assetClass);
     }
@@ -165,11 +170,17 @@ public class VanillaAsset implements Asset, Closeable {
         if (assetClass == null)
             return null;
         if (assetClass == Map.class || assetClass == ConcurrentMap.class) {
-            KeyValueStoreFactory kvStore = acquireInterceptor(KeyValueStoreFactory.class);
-            return add(name, kvStore.create(name));
+            KeyValueStoreFactory kvStoreFactory = acquireInterceptor(KeyValueStoreFactory.class);
+            return add(name, kvStoreFactory.create(name));
+
+        } else if (assetClass == String.class && subscription instanceof KeyValueStore) {
+            SubAssetFactory subAssetFactory = acquireInterceptor(SubAssetFactory.class);
+            SubAsset value = subAssetFactory.create(this, name);
+            children.put(name, value);
+            return value;
 
         } else {
-            throw new UnsupportedOperationException("todo");
+            throw new UnsupportedOperationException("todo name:" + name + " asset " + assetClass);
         }
     }
 
@@ -219,5 +230,10 @@ public class VanillaAsset implements Asset, Closeable {
         synchronized (interceptorMap) {
             interceptorMap.put(iClass, interceptor);
         }
+    }
+
+    @Override
+    public String toString() {
+        return (subscription == null ? "node" : subscription.getClass().getSimpleName()) + "@" + fullName();
     }
 }

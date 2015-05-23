@@ -46,7 +46,7 @@ public class VanillaKeyValueStore<K, V> implements KeyValueStore<K, V> {
 
     @Override
     public void entriesFor(int segment, Consumer<Entry<K, V>> kConsumer) {
-        map.entrySet().forEach(e -> new VanillaEntry<>(e.getKey(), e.getValue()));
+        map.entrySet().forEach(e -> kConsumer.accept(new VanillaEntry<>(e.getKey(), e.getValue())));
     }
 
     @Override

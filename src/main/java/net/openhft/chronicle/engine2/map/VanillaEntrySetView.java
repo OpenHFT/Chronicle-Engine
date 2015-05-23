@@ -27,7 +27,7 @@ public class VanillaEntrySetView<K, V> extends AbstractCollection<Map.Entry<K, V
 
     @Override
     public int size() {
-        return (int) Math.min(Integer.MIN_VALUE, underlying.size());
+        return (int) Math.min(Integer.MAX_VALUE, underlying.size());
     }
 
     @Override

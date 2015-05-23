@@ -7,6 +7,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
+import static net.openhft.chronicle.engine.utils.StringUtils.split2;
+
 /**
  * Created by peter on 22/05/15.
  */
@@ -22,44 +24,53 @@ public interface Session extends Closeable {
     <I extends Interceptor> void registerInterceptor(Class<I> iClass, I interceptor);
 
     default <E> Set<E> acquireSet(String name, Class<E> eClass) throws AssetNotFoundException {
+        String[] parts = split2(name, '?');
         //noinspection unchecked
-        return acquireAsset(name, Set.class).acquireView(Set.class, eClass, "");
+        return acquireAsset(parts[0], Set.class).acquireView(Set.class, eClass, parts[1]);
     }
 
     default <K, V> ConcurrentMap<K, V> acquireMap(String name, Class<K> kClass, Class<V> vClass) throws AssetNotFoundException {
+        String[] parts = split2(name, '?');
         //noinspection unchecked
-        return acquireAsset(name, ConcurrentMap.class).acquireView(ConcurrentMap.class, kClass, vClass, "");
+        return acquireAsset(parts[0], ConcurrentMap.class).acquireView(ConcurrentMap.class, kClass, vClass, parts[1]);
     }
 
     default <E> Publisher<E> acquirePublisher(String name, Class<E> eClass) throws AssetNotFoundException {
+        String[] parts = split2(name, '?');
         //noinspection unchecked
-        return acquireAsset(name, Publisher.class).acquireView(Publisher.class, eClass, "");
+        return acquireAsset(parts[0], Publisher.class).acquireView(Publisher.class, eClass, parts[1]);
     }
 
     default <E> TopicPublisher<E> acquireTopicPublisher(String name, Class<E> eClass) throws AssetNotFoundException {
+        String[] parts = split2(name, '?');
         //noinspection unchecked
-        return acquireAsset(name, TopicPublisher.class).acquireView(TopicPublisher.class, eClass, "");
+        return acquireAsset(parts[0], TopicPublisher.class).acquireView(TopicPublisher.class, eClass, parts[1]);
     }
 
     default <E> void register(String name, Class<E> eClass, Subscriber<E> subscriber) throws AssetNotFoundException {
-        acquireAsset(name, null).registerSubscriber(eClass, subscriber);
+        String[] parts = split2(name, '?');
+        acquireAsset(parts[0], String.class)
+                .registerSubscriber(eClass, subscriber, parts[1]);
     }
 
     default <E> void unregister(String name, Class<E> eClass, Subscriber<E> subscriber) {
-        Asset asset = getAsset(name);
+        String[] parts = split2(name, '?');
+        Asset asset = getAsset(parts[0]);
         if (asset != null) {
-            asset.unregisterSubscriber(eClass, subscriber);
+            asset.unregisterSubscriber(eClass, subscriber, "");
         }
     }
 
     default <E> void register(String name, Class<E> eClass, TopicSubscriber<E> subscriber) throws AssetNotFoundException {
-        acquireAsset(name, null).registerSubscriber(eClass, subscriber);
+        String[] parts = split2(name, '?');
+        acquireAsset(parts[0], null).registerSubscriber(eClass, subscriber, parts[1]);
     }
 
     default <E> void unregister(String name, Class<E> eClass, TopicSubscriber<E> subscriber) {
-        Asset asset = getAsset(name);
+        String[] parts = split2(name, '?');
+        Asset asset = getAsset(parts[0]);
         if (asset != null) {
-            asset.unregisterSubscriber(eClass, subscriber);
+            asset.unregisterSubscriber(eClass, subscriber, parts[1]);
         }
     }
 }

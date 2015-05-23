@@ -47,23 +47,23 @@ public class SimpleSubscriptionKeyValueStore<K, V> extends AbstractKeyValueStore
     }
 
     @Override
-    public <E> void registerSubscriber(Class<E> eClass, Subscriber<E> subscriber) {
+    public <E> void registerSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query) {
         throw new UnsupportedOperationException("todo");
     }
 
     @Override
-    public <E> void registerSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber) {
+    public <E> void registerSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query) {
         topicSubscribers.add((TopicSubscriber<V>) subscriber);
         hasSubscribers = true;
     }
 
     @Override
-    public <E> void unregisterSubscriber(Class<E> eClass, Subscriber<E> subscriber) {
+    public <E> void unregisterSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query) {
         throw new UnsupportedOperationException("todo");
     }
 
     @Override
-    public <E> void unregisterSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber) {
+    public <E> void unregisterSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query) {
         topicSubscribers.remove(subscriber);
         hasSubscribers = !topicSubscribers.isEmpty() && !subscribers.isEmpty();
     }
