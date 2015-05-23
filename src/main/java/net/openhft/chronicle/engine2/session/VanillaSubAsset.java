@@ -93,7 +93,7 @@ public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscrib
 
     @NotNull
     @Override
-    public <A> Asset acquireChild(String name, Class<A> assetClass) throws AssetNotFoundException {
+    public <A> Asset acquireChild(String name, Class<A> assetClass, Class class1, Class class2) throws AssetNotFoundException {
         throw new UnsupportedOperationException("todo");
     }
 

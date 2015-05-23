@@ -16,7 +16,7 @@ public class VanillaKeyValueStore<K, V> implements KeyValueStore<K, V> {
     private final ConcurrentMap<K, V> map = new ConcurrentHashMap<>();
     private Asset asset;
 
-    public VanillaKeyValueStore(String name) {
+    public VanillaKeyValueStore(String name, Class<K> kClass, Class<V> vClass) {
     }
 
     @Override
@@ -45,8 +45,8 @@ public class VanillaKeyValueStore<K, V> implements KeyValueStore<K, V> {
     }
 
     @Override
-    public void entriesFor(int segment, Consumer<Entry<K, V>> kConsumer) {
-        map.entrySet().forEach(e -> kConsumer.accept(new VanillaEntry<>(e.getKey(), e.getValue())));
+    public void entriesFor(int segment, Consumer<Entry<K, V>> kvConsumer) {
+        map.entrySet().forEach(e -> kvConsumer.accept(new VanillaEntry<>(e.getKey(), e.getValue())));
     }
 
     @Override
@@ -58,6 +58,12 @@ public class VanillaKeyValueStore<K, V> implements KeyValueStore<K, V> {
     public void asset(Asset asset) {
         if (this.asset != null) throw new IllegalStateException();
         this.asset = asset;
+    }
+
+    @Override
+    public void clear() {
+        for (int i = 0, segs = segments(); i < segs; i++)
+            keysFor(i, k -> map.remove(k));
     }
 
     @Override

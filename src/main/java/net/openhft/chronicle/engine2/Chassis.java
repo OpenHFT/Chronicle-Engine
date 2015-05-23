@@ -64,7 +64,7 @@ public enum Chassis {
         return session.add(name, item);
     }
 
-    public static <A> Asset acquireAsset(String name, Class<A> assetClass) {
-        return session.acquireAsset(name, assetClass);
+    public static <A> Asset acquireAsset(String name, Class<A> assetClass, Class class1, Class class2) {
+        return session.acquireAsset(name, assetClass, class1, class2);
     }
 }

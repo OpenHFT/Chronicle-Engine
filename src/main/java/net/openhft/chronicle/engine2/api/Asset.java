@@ -28,7 +28,7 @@ public interface Asset extends Permissoned, Subscription {
     Asset add(String name, Assetted resource);
 
     @NotNull
-    <A> Asset acquireChild(String name, Class<A> assetClass) throws AssetNotFoundException;
+    <A> Asset acquireChild(String name, Class<A> assetClass, Class class1, Class class2) throws AssetNotFoundException;
 
     @Nullable
     Asset getChild(String name);

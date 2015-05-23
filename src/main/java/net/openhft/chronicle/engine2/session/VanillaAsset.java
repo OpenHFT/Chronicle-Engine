@@ -30,11 +30,15 @@ public class VanillaAsset implements Asset, Closeable {
         this.name = name;
         this.item = item;
 
-        if (item instanceof KeyValueStore) {
+        if (item instanceof Subscription) {
+            subscription = (Subscription) item;
+        } else if (item instanceof KeyValueStore) {
             SubscriptionKeyValueStoreSupplier supplier = parent.acquireInterceptor(SubscriptionKeyValueStoreSupplier.class);
             SubscriptionKeyValueStore skvStore = supplier.get();
             skvStore.underlying((KeyValueStore) item);
             subscription = skvStore;
+        } else if (item != null) {
+            throw new UnsupportedOperationException("todo " + item);
         }
     }
 
@@ -145,20 +149,20 @@ public class VanillaAsset implements Asset, Closeable {
 
     @NotNull
     @Override
-    public <A> Asset acquireChild(String name, Class<A> assetClass) throws AssetNotFoundException {
+    public <A> Asset acquireChild(String name, Class<A> assetClass, Class class1, Class class2) throws AssetNotFoundException {
         int pos = name.indexOf("/");
         if (pos >= 0) {
             String name1 = name.substring(0, pos);
             String name2 = name.substring(pos + 1);
-            return getAssetOrANFE(name1, assetClass).acquireChild(name2, assetClass);
+            return getAssetOrANFE(name1, assetClass, class1, class2).acquireChild(name2, assetClass, class1, class2);
         }
-        return getAssetOrANFE(name, assetClass);
+        return getAssetOrANFE(name, assetClass, class1, class2);
     }
 
-    private <A> Asset getAssetOrANFE(String name, Class<A> assetClass) throws AssetNotFoundException {
+    private <A> Asset getAssetOrANFE(String name, Class<A> assetClass, Class class1, Class class2) throws AssetNotFoundException {
         Asset asset = children.get(name);
         if (asset == null) {
-            asset = createAsset(name, assetClass);
+            asset = createAsset(name, assetClass, class1, class2);
             if (asset == null)
                 throw new AssetNotFoundException(name);
         }
@@ -166,12 +170,12 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Nullable
-    protected <A> Asset createAsset(String name, Class<A> assetClass) {
+    protected <A> Asset createAsset(String name, Class<A> assetClass, Class class1, Class class2) {
         if (assetClass == null)
             return null;
         if (assetClass == Map.class || assetClass == ConcurrentMap.class) {
             KeyValueStoreFactory kvStoreFactory = acquireInterceptor(KeyValueStoreFactory.class);
-            return add(name, kvStoreFactory.create(name));
+            return add(name, kvStoreFactory.create(name, class1, class2));
 
         } else if (assetClass == String.class && subscription instanceof KeyValueStore) {
             SubAssetFactory subAssetFactory = acquireInterceptor(SubAssetFactory.class);
@@ -216,7 +220,7 @@ public class VanillaAsset implements Asset, Closeable {
         if (pos >= 0) {
             String name1 = name.substring(0, pos);
             String name2 = name.substring(pos + 1);
-            getAssetOrANFE(name1, null).add(name2, resource);
+            getAssetOrANFE(name1, null, null, null).add(name2, resource);
         }
         if (children.containsKey(name))
             throw new IllegalStateException(name + " already exists");

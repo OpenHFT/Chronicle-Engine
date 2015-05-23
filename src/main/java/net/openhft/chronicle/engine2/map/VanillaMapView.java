@@ -75,6 +75,11 @@ public class VanillaMapView<K, V> extends AbstractMap<K, V> implements MapView<K
     }
 
     @Override
+    public void clear() {
+        kvStore.clear();
+    }
+
+    @Override
     public V putIfAbsent(@NotNull K key, V value) {
         throw new UnsupportedOperationException("todo");
     }

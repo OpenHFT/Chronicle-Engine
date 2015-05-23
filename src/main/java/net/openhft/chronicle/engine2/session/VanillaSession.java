@@ -24,8 +24,8 @@ public class VanillaSession implements Session {
 
     @NotNull
     @Override
-    public <A> Asset acquireAsset(String name, Class<A> assetClass) throws AssetNotFoundException {
-        return name.isEmpty() || name.equals("/") ? root : root.acquireChild(name, assetClass);
+    public <A> Asset acquireAsset(String name, Class<A> assetClass, Class class1, Class class2) throws AssetNotFoundException {
+        return name.isEmpty() || name.equals("/") ? root : root.acquireChild(name, assetClass, class1, class2);
     }
 
     @Override

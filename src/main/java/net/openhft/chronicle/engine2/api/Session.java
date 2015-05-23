@@ -14,7 +14,7 @@ import static net.openhft.chronicle.engine.utils.StringUtils.split2;
  */
 public interface Session extends Closeable {
     @NotNull
-    <A> Asset acquireAsset(String name, Class<A> assetClass) throws AssetNotFoundException;
+    <A> Asset acquireAsset(String name, Class<A> assetClass, Class class1, Class class2) throws AssetNotFoundException;
 
     @Nullable
     Asset getAsset(String name);
@@ -26,30 +26,30 @@ public interface Session extends Closeable {
     default <E> Set<E> acquireSet(String name, Class<E> eClass) throws AssetNotFoundException {
         String[] parts = split2(name, '?');
         //noinspection unchecked
-        return acquireAsset(parts[0], Set.class).acquireView(Set.class, eClass, parts[1]);
+        return acquireAsset(parts[0], Set.class, eClass, null).acquireView(Set.class, eClass, parts[1]);
     }
 
     default <K, V> ConcurrentMap<K, V> acquireMap(String name, Class<K> kClass, Class<V> vClass) throws AssetNotFoundException {
         String[] parts = split2(name, '?');
         //noinspection unchecked
-        return acquireAsset(parts[0], ConcurrentMap.class).acquireView(ConcurrentMap.class, kClass, vClass, parts[1]);
+        return acquireAsset(parts[0], ConcurrentMap.class, kClass, vClass).acquireView(ConcurrentMap.class, kClass, vClass, parts[1]);
     }
 
     default <E> Publisher<E> acquirePublisher(String name, Class<E> eClass) throws AssetNotFoundException {
         String[] parts = split2(name, '?');
         //noinspection unchecked
-        return acquireAsset(parts[0], Publisher.class).acquireView(Publisher.class, eClass, parts[1]);
+        return acquireAsset(parts[0], Publisher.class, eClass, null).acquireView(Publisher.class, eClass, parts[1]);
     }
 
     default <E> TopicPublisher<E> acquireTopicPublisher(String name, Class<E> eClass) throws AssetNotFoundException {
         String[] parts = split2(name, '?');
         //noinspection unchecked
-        return acquireAsset(parts[0], TopicPublisher.class).acquireView(TopicPublisher.class, eClass, parts[1]);
+        return acquireAsset(parts[0], TopicPublisher.class, eClass, null).acquireView(TopicPublisher.class, eClass, parts[1]);
     }
 
     default <E> void register(String name, Class<E> eClass, Subscriber<E> subscriber) throws AssetNotFoundException {
         String[] parts = split2(name, '?');
-        acquireAsset(parts[0], String.class)
+        acquireAsset(parts[0], String.class, null, null)
                 .registerSubscriber(eClass, subscriber, parts[1]);
     }
 
@@ -63,7 +63,7 @@ public interface Session extends Closeable {
 
     default <E> void register(String name, Class<E> eClass, TopicSubscriber<E> subscriber) throws AssetNotFoundException {
         String[] parts = split2(name, '?');
-        acquireAsset(parts[0], null).registerSubscriber(eClass, subscriber, parts[1]);
+        acquireAsset(parts[0], null, null, null).registerSubscriber(eClass, subscriber, parts[1]);
     }
 
     default <E> void unregister(String name, Class<E> eClass, TopicSubscriber<E> subscriber) {

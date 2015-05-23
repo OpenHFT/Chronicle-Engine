@@ -50,9 +50,11 @@ public interface KeyValueStore<K, V> extends Assetted<KeyValueStore> {
 
     void keysFor(int segment, Consumer<K> kConsumer);
 
-    void entriesFor(int segment, Consumer<Entry<K, V>> kConsumer);
+    void entriesFor(int segment, Consumer<Entry<K, V>> kvConsumer);
 
     Iterator<Map.Entry<K, V>> entrySetIterator();
+
+    void clear();
 
     interface Entry<K, V> {
         K key();

@@ -258,7 +258,7 @@ public class ChassisTest {
     public void noInterceptor() {
         Asset asset;
         try {
-            asset = Chassis.acquireAsset("", null);
+            asset = Chassis.acquireAsset("", null, null, null);
         } catch (Exception e) {
             throw new AssertionError(e);
         }
@@ -269,7 +269,7 @@ public class ChassisTest {
     public void generateInterceptor() {
         Asset asset;
         try {
-            asset = Chassis.acquireAsset("", null);
+            asset = Chassis.acquireAsset("", null, null, null);
         } catch (Exception e) {
             throw new AssertionError(e);
         }

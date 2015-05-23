@@ -54,8 +54,8 @@ public class AbstractKeyValueStore<K, V> implements KeyValueStore<K, V> {
     }
 
     @Override
-    public void entriesFor(int segment, Consumer<Entry<K, V>> kConsumer) {
-        kvStore.entriesFor(segment, kConsumer);
+    public void entriesFor(int segment, Consumer<Entry<K, V>> kvConsumer) {
+        kvStore.entriesFor(segment, kvConsumer);
     }
 
     @Override
@@ -66,5 +66,10 @@ public class AbstractKeyValueStore<K, V> implements KeyValueStore<K, V> {
     @Override
     public Asset asset() {
         return kvStore.asset();
+    }
+
+    @Override
+    public void clear() {
+        kvStore.clear();
     }
 }
