@@ -3,7 +3,7 @@ package net.openhft.chronicle.engine2;
 import net.openhft.chronicle.engine2.api.*;
 import net.openhft.chronicle.engine2.api.map.InterceptorFactory;
 import net.openhft.chronicle.engine2.api.map.MapEvent;
-import net.openhft.chronicle.engine2.map.InsertEvent;
+import net.openhft.chronicle.engine2.map.InsertedEvent;
 import net.openhft.chronicle.engine2.map.RemovedEvent;
 import net.openhft.chronicle.engine2.map.UpdatedEvent;
 import org.junit.Before;
@@ -214,8 +214,8 @@ public class ChassisTest {
 
         // test the bootstrap finds old keys
         Subscriber<MapEvent<String, String>> subscriber = createMock(Subscriber.class);
-        subscriber.on(InsertEvent.of("Key-1", "Value-1"));
-        subscriber.on(InsertEvent.of("Key-2", "Value-2"));
+        subscriber.on(InsertedEvent.of("Key-1", "Value-1"));
+        subscriber.on(InsertedEvent.of("Key-2", "Value-2"));
         replay(subscriber);
         registerSubscriber("map-name?bootstrap=true", MapEvent.class, (Subscriber) subscriber);
         verify(subscriber);
@@ -225,7 +225,7 @@ public class ChassisTest {
 
         // test the topic publish triggers events
         subscriber.on(UpdatedEvent.of("Key-1", "Value-1", "Message-1"));
-        subscriber.on(InsertEvent.of("Topic-1", "Message-1"));
+        subscriber.on(InsertedEvent.of("Topic-1", "Message-1"));
         replay(subscriber);
 
         TopicPublisher<String> publisher = Chassis.acquireTopicPublisher("map-name", String.class);
@@ -235,8 +235,8 @@ public class ChassisTest {
         reset(subscriber);
         assertEquals(3, map.size());
 
-        subscriber.on(InsertEvent.of("Hello", "World"));
-        subscriber.on(InsertEvent.of("Bye", "soon"));
+        subscriber.on(InsertedEvent.of("Hello", "World"));
+        subscriber.on(InsertedEvent.of("Bye", "soon"));
         subscriber.on(RemovedEvent.of("Key-1", "Message-1"));
         replay(subscriber);
 

@@ -33,7 +33,7 @@ public class VanillaSubscriptionKeyValueStore<K, V> extends AbstractKeyValueStor
         }
         if (!subscribers.isEmpty()) {
             if (oldValue == null) {
-                InsertEvent<K, V> inserted = InsertEvent.of(key, value);
+                InsertedEvent<K, V> inserted = InsertedEvent.of(key, value);
                 subscribers.forEach(s -> s.on(inserted));
 
             } else {
@@ -76,7 +76,7 @@ public class VanillaSubscriptionKeyValueStore<K, V> extends AbstractKeyValueStor
             subscribers.add((Subscriber) subscriber);
             if (bootstrap) {
                 for (int i = 0; i < kvStore.segments(); i++)
-                    kvStore.entriesFor(i, e -> subscriber.on((E) InsertEvent.of(e.key(), e.value())));
+                    kvStore.entriesFor(i, e -> subscriber.on((E) InsertedEvent.of(e.key(), e.value())));
             }
         } else {
             keySubscribers.add((Subscriber<K>) subscriber);
