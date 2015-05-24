@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine2.map;
 
 import net.openhft.chronicle.engine2.api.Asset;
+import net.openhft.chronicle.engine2.api.FactoryContext;
 import net.openhft.chronicle.engine2.api.map.EntrySetView;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 
@@ -15,9 +16,9 @@ public class VanillaEntrySetView<K, V> extends AbstractCollection<Map.Entry<K, V
     private Asset asset;
     private KeyValueStore<K, V> underlying;
 
-    public VanillaEntrySetView(Asset asset, KeyValueStore<K, V> kvStore, String queryString) {
-        this.asset = asset;
-        this.underlying = kvStore;
+    public VanillaEntrySetView(FactoryContext<KeyValueStore<K, V>> context) {
+        this.asset = context.parent();
+        this.underlying = context.item();
     }
 
     @Override

@@ -17,9 +17,9 @@ public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscrib
     private final String name;
     private final Set<Subscriber<T>> subscribers = new CopyOnWriteArraySet<>();
 
-    VanillaSubAsset(Asset parent, String name, String query) {
-        this.parent = parent;
-        this.name = name;
+    VanillaSubAsset(FactoryContext context) {
+        this.parent = context.parent();
+        this.name = context.name();
     }
 
     @Override
@@ -119,5 +119,15 @@ public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscrib
     public void on(String name, T t) {
         if (name.equals(this.name))
             subscribers.forEach(s -> s.on(t));
+    }
+
+    @Override
+    public <I> Factory<I> acquireFactory(Class<I> iClass) throws AssetNotFoundException {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public <I> void registerFactory(Class<I> iClass, Factory<I> factory) {
+        throw new UnsupportedOperationException("todo");
     }
 }

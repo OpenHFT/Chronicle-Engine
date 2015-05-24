@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine2.map;
 
 import net.openhft.chronicle.engine2.api.Asset;
+import net.openhft.chronicle.engine2.api.FactoryContext;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.MapView;
 import org.jetbrains.annotations.NotNull;
@@ -17,12 +18,13 @@ public class VanillaMapView<K, V> extends AbstractMap<K, V> implements MapView<K
     private Asset asset;
     private KeyValueStore<K, V> kvStore;
 
-    public VanillaMapView(Asset asset, KeyValueStore<K, V> kvStore, String queryString) {
-        this.asset = asset;
-        this.kvStore = kvStore;
-        queryString = queryString.toLowerCase();
+    public VanillaMapView(FactoryContext<KeyValueStore<K, V>> context) {
+        this.asset = context.parent();
+        this.kvStore = context.item();
+        String queryString = context.queryString().toLowerCase();
         putReturnsNull = queryString.contains("putreturnsnull=true");
         removeReturnsNull = queryString.contains("removereturnsnull=true");
+        kvStore = context.item();
     }
 
     @Override

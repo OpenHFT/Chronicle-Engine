@@ -1,7 +1,6 @@
 package net.openhft.chronicle.engine2;
 
 import net.openhft.chronicle.engine2.api.*;
-import net.openhft.chronicle.engine2.api.map.InterceptorFactory;
 import net.openhft.chronicle.engine2.api.map.MapEvent;
 import net.openhft.chronicle.engine2.map.InsertedEvent;
 import net.openhft.chronicle.engine2.map.RemovedEvent;
@@ -275,12 +274,9 @@ public class ChassisTest {
     public void generateInterceptor() {
         Asset asset = acquireAsset("", null, null, null);
 
-        asset.registerInterceptor(InterceptorFactory.class, new InterceptorFactory() {
-            @Override
-            public <I extends Interceptor> I create(Class<I> iClass) {
-                assertEquals(MyInterceptor.class, iClass);
-                return (I) new MyInterceptor();
-            }
+        asset.registerFactory(Interceptor.class, (FactoryContext context) -> {
+            assertEquals(MyInterceptor.class, context.type());
+            return new MyInterceptor();
         });
         MyInterceptor mi = asset.acquireInterceptor(MyInterceptor.class);
         MyInterceptor mi2 = asset.acquireInterceptor(MyInterceptor.class);

@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine2.map;
 
 import net.openhft.chronicle.engine2.api.Asset;
+import net.openhft.chronicle.engine2.api.FactoryContext;
 import net.openhft.chronicle.engine2.api.TopicPublisher;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 
@@ -11,9 +12,9 @@ public class VanillaTopicPublisher<M> implements TopicPublisher<M> {
     private Asset asset;
     private KeyValueStore<String, M> underlying;
 
-    public VanillaTopicPublisher(Asset asset, KeyValueStore<String, M> kvStore, String queryString) {
-        this.asset = asset;
-        this.underlying = kvStore;
+    public VanillaTopicPublisher(FactoryContext<KeyValueStore<String, M>> context) {
+        this.asset = context.parent();
+        this.underlying = context.item();
     }
 
     @Override

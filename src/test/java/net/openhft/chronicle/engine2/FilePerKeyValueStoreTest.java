@@ -1,7 +1,7 @@
 package net.openhft.chronicle.engine2;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.engine2.api.map.KeyValueStoreFactory;
+import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.MapEvent;
 import net.openhft.chronicle.engine2.api.map.MapEventListener;
 import net.openhft.chronicle.engine2.map.FilePerKeyValueStore;
@@ -35,7 +35,7 @@ public class FilePerKeyValueStoreTest {
 
         resetChassis();
         Function<Bytes, Wire> writeType = TextWire::new;
-        defaultSession().registerInterceptor(KeyValueStoreFactory.class, (name, q, kClass, vClass) -> new FilePerKeyValueStore(TMP + "/" + name, q, writeType, (Class) vClass));
+        registerFactory("", KeyValueStore.class, context -> new FilePerKeyValueStore(context.basePath(TMP).writeType(writeType)));
 
         map = acquireMap(NAME, String.class, TestMarshallable.class);
 

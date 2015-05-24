@@ -6,20 +6,22 @@ import net.openhft.chronicle.engine2.map.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static net.openhft.chronicle.engine2.api.FactoryContext.factoryContext;
+
 /**
  * Created by peter on 22/05/15.
  */
 public class VanillaSession implements Session {
-    final VanillaAsset root = new VanillaAsset(null, "", null);
+    final VanillaAsset root = new VanillaAsset(factoryContext(null).name(""));
 
     public VanillaSession() {
-        root.registerInterceptor(SubscriptionKeyValueStoreSupplier.class, VanillaSubscriptionKeyValueStore::new);
-        root.registerInterceptor(MapViewFactory.class, VanillaMapView::new);
-        root.registerInterceptor(EntrySetViewFactory.class, VanillaEntrySetView::new);
-        root.registerInterceptor(AssetFactory.class, VanillaAsset::new);
-        root.registerInterceptor(SubAssetFactory.class, VanillaSubAsset::new);
-        root.registerInterceptor(KeyValueStoreFactory.class, VanillaKeyValueStore::new);
-        root.registerInterceptor(TopicPublisherFactory.class, VanillaTopicPublisher::new);
+        root.registerFactory(SubscriptionKeyValueStore.class, VanillaSubscriptionKeyValueStore::new);
+        root.registerFactory(MapView.class, VanillaMapView::new);
+        root.registerFactory(EntrySetView.class, VanillaEntrySetView::new);
+        root.registerFactory(Asset.class, VanillaAsset::new);
+        root.registerFactory(SubAsset.class, VanillaSubAsset::new);
+        root.registerFactory(KeyValueStore.class, VanillaKeyValueStore::new);
+        root.registerFactory(TopicPublisher.class, VanillaTopicPublisher::new);
     }
 
     @NotNull

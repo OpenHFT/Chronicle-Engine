@@ -15,6 +15,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.stream.Stream;
 
 import static net.openhft.chronicle.engine.utils.StringUtils.split2;
+import static net.openhft.chronicle.engine2.api.FactoryContext.factoryContext;
 
 /**
  * Created by peter on 22/05/15.
@@ -25,19 +26,25 @@ public class VanillaAsset implements Asset, Closeable {
     private final Assetted item;
     private final Map<Class, View> viewMap = Collections.synchronizedMap(new LinkedHashMap<>());
     private final Map<Class, Interceptor> interceptorMap = Collections.synchronizedMap(new LinkedHashMap<>());
+    private final Map<Class, Factory> factoryMap = Collections.synchronizedMap(new LinkedHashMap<>());
     private Subscription subscription;
 
-    VanillaAsset(Asset parent, String name, Assetted item) {
-        this.parent = parent;
-        this.name = name;
-        this.item = item;
+    VanillaAsset(FactoryContext<Assetted> context) {
+        this.parent = context.parent();
+        this.name = context.name();
+        this.item = context.item();
+        if ("".equals(name)) {
+            assert parent == null;
+        } else {
+            assert parent != null;
+            assert name != null;
+        }
 
         if (item instanceof Subscription) {
             subscription = (Subscription) item;
         } else if (item instanceof KeyValueStore) {
-            SubscriptionKeyValueStoreSupplier supplier = parent.acquireInterceptor(SubscriptionKeyValueStoreSupplier.class);
-            SubscriptionKeyValueStore skvStore = supplier.get();
-            skvStore.underlying((KeyValueStore) item);
+            Factory<SubscriptionKeyValueStore> supplier = parent.acquireFactory(SubscriptionKeyValueStore.class);
+            SubscriptionKeyValueStore skvStore = supplier.create(factoryContext(this).item(item));
             subscription = skvStore;
         } else if (item != null) {
             throw new UnsupportedOperationException("todo " + item);
@@ -62,26 +69,26 @@ public class VanillaAsset implements Asset, Closeable {
     @Override
     public <V> V acquireView(Class<V> vClass, Class class1, String queryString) {
         if (vClass == Set.class) {
-            if (class1 == Map.Entry.class) {
+            if (class1 == Map.Entry.class && subscription instanceof KeyValueStore) {
                 return (V) viewMap.computeIfAbsent(EntrySetView.class, aClass ->
-                        acquireInterceptor(EntrySetViewFactory.class)
-                                .create(VanillaAsset.this, (KeyValueStore) subscription, queryString));
+                        acquireFactory(EntrySetView.class)
+                                .create(factoryContext(VanillaAsset.this).queryString(queryString).item((KeyValueStore) subscription)));
             }
         }
-        if (vClass == TopicPublisher.class) {
+        if (vClass == TopicPublisher.class && subscription instanceof KeyValueStore) {
             return (V) viewMap.computeIfAbsent(TopicPublisher.class, aClass ->
-                    acquireInterceptor(TopicPublisherFactory.class)
-                            .create(VanillaAsset.this, (KeyValueStore) subscription, queryString));
+                    acquireFactory(TopicPublisher.class)
+                            .create(factoryContext(VanillaAsset.this).queryString(queryString).item((KeyValueStore) subscription)));
         }
         throw new UnsupportedOperationException("todo");
     }
 
     @Override
     public <V> V acquireView(Class<V> vClass, Class class1, Class class2, String queryString) {
-        if (vClass == Map.class || vClass == ConcurrentMap.class) {
+        if ((vClass == Map.class || vClass == ConcurrentMap.class) && subscription instanceof KeyValueStore) {
             return (V) viewMap.computeIfAbsent(MapView.class, aClass ->
-                    acquireInterceptor(MapViewFactory.class)
-                            .create(VanillaAsset.this, (KeyValueStore) subscription, queryString));
+                    acquireFactory(MapView.class)
+                            .create(factoryContext(VanillaAsset.this).queryString(queryString).item((KeyValueStore) subscription)));
         }
         throw new UnsupportedOperationException("todo");
     }
@@ -91,19 +98,36 @@ public class VanillaAsset implements Asset, Closeable {
         I interceptor = (I) interceptorMap.get(iClass);
         if (interceptor != null)
             return (I) interceptor;
+
+        Factory<Interceptor> interceptorFactory = acquireFactory(Interceptor.class);
+        if (interceptorFactory != null) {
+            interceptor = (I) interceptorFactory.create(factoryContext(this).type(iClass));
+            if (interceptor != null) {
+                interceptorMap.put(iClass, interceptor);
+                return interceptor;
+            }
+        }
+        throw new AssetNotFoundException("Cannot find or build an Interceptor for " + iClass);
+    }
+
+    @Override
+    public <I> Factory<I> acquireFactory(Class<I> iClass) throws AssetNotFoundException {
+        Factory<I> factory = factoryMap.get(iClass);
+        if (factory != null)
+            return factory;
         try {
             if (parent == null) {
-                throw new AssetNotFoundException("Cannot find an interceptor for " + iClass);
+                throw new AssetNotFoundException("Cannot find or build an factory for " + iClass);
             }
-            return parent.acquireInterceptor(iClass);
+            return parent.acquireFactory(iClass);
         } catch (AssetNotFoundException e) {
-            if (iClass != InterceptorFactory.class) {
-                InterceptorFactory interceptorFactory = (InterceptorFactory) interceptorMap.get(InterceptorFactory.class);
-                if (interceptorFactory != null) {
-                    interceptor = interceptorFactory.create(iClass);
-                    if (interceptor != null) {
-                        interceptorMap.put(iClass, interceptor);
-                        return interceptor;
+            if (iClass != Interceptor.class) {
+                Factory<Factory> factoryFactory = factoryMap.get(Factory.class);
+                if (factoryFactory != null) {
+                    factory = factoryFactory.create(factoryContext(this).type(iClass));
+                    if (factory != null) {
+                        factoryMap.put(iClass, factory);
+                        return factory;
                     }
                 }
             }
@@ -177,18 +201,19 @@ public class VanillaAsset implements Asset, Closeable {
             return null;
         String[] nameQuery = split2(name, '?');
         if (assetClass == Map.class || assetClass == ConcurrentMap.class) {
-            KeyValueStoreFactory kvStoreFactory = acquireInterceptor(KeyValueStoreFactory.class);
-            return add(nameQuery[0], kvStoreFactory.create(nameQuery[0], nameQuery[1], class1, class2));
+            Factory<KeyValueStore> kvStoreFactory = acquireFactory(KeyValueStore.class);
+            KeyValueStore resource = kvStoreFactory.create(factoryContext(this).name(nameQuery[0]).queryString(nameQuery[1]).type(class1).type2(class2));
+            return add(nameQuery[0], resource);
 
         } else if (assetClass == String.class && subscription instanceof KeyValueStore) {
-            SubAssetFactory subAssetFactory = acquireInterceptor(SubAssetFactory.class);
-            SubAsset value = subAssetFactory.create(this, nameQuery[0], nameQuery[1]);
+            Factory<SubAsset> subAssetFactory = acquireFactory(SubAsset.class);
+            SubAsset value = subAssetFactory.create(factoryContext(this).name(nameQuery[0]).queryString(nameQuery[1]));
             children.put(nameQuery[0], value);
             return value;
 
         } else if (assetClass == Void.class) {
-            AssetFactory assetFactory = acquireInterceptor(AssetFactory.class);
-            Asset asset = assetFactory.create(this, nameQuery[0], null);
+            Factory<Asset> factory = acquireFactory(Asset.class);
+            Asset asset = factory.create(factoryContext(this).name(nameQuery[0]).queryString(nameQuery[1]));
             children.put(nameQuery[0], asset);
             return asset;
 
@@ -233,16 +258,19 @@ public class VanillaAsset implements Asset, Closeable {
         }
         if (children.containsKey(name))
             throw new IllegalStateException(name + " already exists");
-        AssetFactory assetFactory = acquireInterceptor(AssetFactory.class);
-        Asset asset = assetFactory.create(this, name, resource);
+        Factory<Asset> factory = acquireFactory(Asset.class);
+        Asset asset = factory.create(factoryContext(this).name(name).item(resource));
         children.put(name, asset);
         return asset;
     }
 
     public <I extends Interceptor> void registerInterceptor(Class<I> iClass, I interceptor) {
-        synchronized (interceptorMap) {
-            interceptorMap.put(iClass, interceptor);
-        }
+        interceptorMap.put(iClass, interceptor);
+    }
+
+    @Override
+    public <I> void registerFactory(Class<I> iClass, Factory<I> factory) {
+        factoryMap.put(iClass, factory);
     }
 
     @Override

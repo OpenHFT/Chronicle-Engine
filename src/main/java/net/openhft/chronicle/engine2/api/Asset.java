@@ -46,4 +46,8 @@ public interface Asset extends Permissoned, Subscription {
     <I extends Interceptor> I acquireInterceptor(Class<I> iClass) throws AssetNotFoundException;
 
     <I extends Interceptor> void registerInterceptor(Class<I> iClass, I interceptor);
+
+    <I> Factory<I> acquireFactory(Class<I> iClass) throws AssetNotFoundException;
+
+    <I> void registerFactory(Class<I> iClass, Factory<I> factory);
 }

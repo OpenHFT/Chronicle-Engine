@@ -4,6 +4,7 @@ import com.sun.nio.file.SensitivityWatchEventModifier;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.engine2.api.Asset;
+import net.openhft.chronicle.engine2.api.FactoryContext;
 import net.openhft.chronicle.engine2.api.Subscriber;
 import net.openhft.chronicle.engine2.api.TopicSubscriber;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
@@ -60,17 +61,19 @@ public class FilePerKeyValueStore<V extends Marshallable> implements Subscriptio
     private volatile boolean closed = false;
     private Asset asset;
 
-    public FilePerKeyValueStore(String dir, String query,
-                                Function<Bytes, Wire> bytesToWire,
-                                Class<V> vClass) throws IORuntimeException {
+    public FilePerKeyValueStore(FactoryContext context) throws IORuntimeException {
         try {
-            this.vConstructor = vClass.getConstructor();
+            assert context.type() == String.class;
+            this.vConstructor = context.type2().getConstructor();
             vConstructor.setAccessible(true);
         } catch (NoSuchMethodException e) {
             throw new AssertionError(e);
         }
 
-        this.dirPath = Paths.get(dir);
+        String first = context.basePath();
+        String dirName = first == null ? context.name() : first + "/" + context.name();
+        this.dirPath = Paths.get(dirName);
+        Function<Bytes, Wire> bytesToWire = context.writeType();
         writingWire = bytesToWire.apply(writingBytes);
         readingWire = bytesToWire.apply(readingBytes);
         WatchService watcher;
@@ -87,7 +90,7 @@ public class FilePerKeyValueStore<V extends Marshallable> implements Subscriptio
             throw new IORuntimeException(e);
         }
 
-        fileFpmWatcher = new Thread(new FPMWatcher(watcher), dir + "-watcher");
+        fileFpmWatcher = new Thread(new FPMWatcher(watcher), dirName + "-watcher");
         fileFpmWatcher.setDaemon(true);
         fileFpmWatcher.start();
     }

@@ -66,6 +66,11 @@ public interface Session extends Closeable {
         acquireAsset(parts[0], null, null, null).registerSubscriber(eClass, subscriber, parts[1]);
     }
 
+    default <E> void register(String name, Class<E> eClass, Factory<E> factory) throws AssetNotFoundException {
+        String[] parts = split2(name, '?');
+        acquireAsset(parts[0], null, null, null).registerFactory(eClass, factory);
+    }
+
     default <E> void unregister(String name, Class<E> eClass, TopicSubscriber<E> subscriber) {
         String[] parts = split2(name, '?');
         Asset asset = getAsset(parts[0]);

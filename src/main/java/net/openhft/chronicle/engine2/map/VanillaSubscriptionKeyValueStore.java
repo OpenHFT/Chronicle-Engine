@@ -1,7 +1,9 @@
 package net.openhft.chronicle.engine2.map;
 
+import net.openhft.chronicle.engine2.api.FactoryContext;
 import net.openhft.chronicle.engine2.api.Subscriber;
 import net.openhft.chronicle.engine2.api.TopicSubscriber;
+import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.SubscriptionKeyValueStore;
 
 /**
@@ -9,6 +11,10 @@ import net.openhft.chronicle.engine2.api.map.SubscriptionKeyValueStore;
  */
 public class VanillaSubscriptionKeyValueStore<K, V> extends AbstractKeyValueStore<K, V> implements SubscriptionKeyValueStore<K, V> {
     final SubscriptionKVSCollection<K, V> subscriptions = new SubscriptionKVSCollection<>(this);
+
+    public VanillaSubscriptionKeyValueStore(FactoryContext<KeyValueStore<K, V>> context) {
+        super(context);
+    }
 
     @Override
     public V getAndPut(K key, V value) {

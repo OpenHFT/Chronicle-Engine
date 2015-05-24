@@ -60,6 +60,10 @@ public enum Chassis {
         session.unregister(name, eClass, subscriber);
     }
 
+    public static <E> void registerFactory(String name, Class<E> eClass, Factory<E> factory) {
+        session.register(name, eClass, factory);
+    }
+
     public static Asset addAsset(String name, Assetted item) {
         return session.add(name, item);
     }

@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine2.map;
 
 import net.openhft.chronicle.engine2.api.Asset;
+import net.openhft.chronicle.engine2.api.FactoryContext;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 
 import java.util.Iterator;
@@ -16,7 +17,8 @@ public class VanillaKeyValueStore<K, V> implements KeyValueStore<K, V> {
     private final ConcurrentMap<K, V> map = new ConcurrentHashMap<>();
     private Asset asset;
 
-    public VanillaKeyValueStore(String name, String query, Class<K> kClass, Class<V> vClass) {
+    public VanillaKeyValueStore(FactoryContext context) {
+        asset = context.parent();
     }
 
     @Override
