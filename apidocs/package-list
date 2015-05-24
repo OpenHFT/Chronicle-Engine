@@ -6,6 +6,7 @@ net.openhft.chronicle.engine.map
 net.openhft.chronicle.engine.old
 net.openhft.chronicle.engine.server
 net.openhft.chronicle.engine.server.internal
+net.openhft.chronicle.engine.utils
 net.openhft.chronicle.engine2
 net.openhft.chronicle.engine2.api
 net.openhft.chronicle.engine2.api.map
