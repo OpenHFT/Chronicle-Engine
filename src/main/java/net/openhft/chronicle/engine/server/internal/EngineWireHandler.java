@@ -104,7 +104,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private long tid;
 
     StringBuilder lastCsp;
-    StringBuilder eventName = new StringBuilder();
+    final StringBuilder eventName = new StringBuilder();
 
     @NotNull
     private Consumer<WireIn> getWireInConsumer() throws IOException {
@@ -137,6 +137,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
         ValueIn valueIn = metaDataWire.readEventName(eventName);
         if (CoreFields.tid.contentEquals(eventName)) {
             tid = valueIn.int64();
+            eventName.setLength(0);
         }
     }
 

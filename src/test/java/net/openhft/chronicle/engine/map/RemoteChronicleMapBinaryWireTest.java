@@ -202,7 +202,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     /**
      * keySet returns a Set containing all the keys
      */
-    @Ignore
+
     @Test(timeout = 50000)
     public void testKeySet() throws IOException {
         try (ChronicleMap map = map5()) {
@@ -225,6 +225,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
      * keySet.toArray returns contains all keys
      */
     @Ignore
+    @Test(timeout = 50000)
     public void testKeySetToArray() throws IOException {
         try (ChronicleMap map = map5()) {
             Set s = map.keySet();
@@ -305,7 +306,6 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
      * entrySet contains all pairs
      */
     @Test
-    @Ignore
     public void testEntrySet() throws IOException {
         try (ChronicleMap map = map5()) {
             writeMessage = "example of getting and entry set itterator";
@@ -333,7 +333,6 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     /**
      * putAll adds all key-value pairs from the given map
      */
-    @Ignore
     @Test(timeout = 50000)
     public void testPutAll() throws IOException {
         int port = s_port++;
@@ -495,7 +494,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     /**
      * get(null) throws NPE
      */
-    @Ignore
+       @Ignore
     @Test(timeout = 50000)
     public void testGet_NullPointerException() throws IOException {
 
