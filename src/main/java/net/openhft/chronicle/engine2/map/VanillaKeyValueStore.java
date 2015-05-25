@@ -13,7 +13,7 @@ import java.util.function.Consumer;
 /**
  * Created by peter on 22/05/15.
  */
-public class VanillaKeyValueStore<K, V> implements KeyValueStore<K, V> {
+public class VanillaKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> {
     private final ConcurrentMap<K, V> map = new ConcurrentHashMap<>();
     private Asset asset;
 
@@ -32,7 +32,7 @@ public class VanillaKeyValueStore<K, V> implements KeyValueStore<K, V> {
     }
 
     @Override
-    public V getUsing(K key, V value) {
+    public V getUsing(K key, MV value) {
         return map.get(key);
     }
 

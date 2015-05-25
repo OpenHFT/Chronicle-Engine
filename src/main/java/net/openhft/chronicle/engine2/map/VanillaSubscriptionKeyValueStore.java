@@ -4,16 +4,19 @@ import net.openhft.chronicle.engine2.api.FactoryContext;
 import net.openhft.chronicle.engine2.api.Subscriber;
 import net.openhft.chronicle.engine2.api.TopicSubscriber;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
+import net.openhft.chronicle.engine2.api.map.MapView;
 import net.openhft.chronicle.engine2.api.map.SubscriptionKeyValueStore;
 
 /**
  * Created by peter on 22/05/15.
  */
-public class VanillaSubscriptionKeyValueStore<K, V> extends AbstractKeyValueStore<K, V> implements SubscriptionKeyValueStore<K, V> {
-    final SubscriptionKVSCollection<K, V> subscriptions = new SubscriptionKVSCollection<>(this);
+public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValueStore<K, MV, V> implements SubscriptionKeyValueStore<K, MV, V> {
+    final SubscriptionKVSCollection<K, MV, V> subscriptions = new SubscriptionKVSCollection<>(this);
 
-    public VanillaSubscriptionKeyValueStore(FactoryContext<KeyValueStore<K, V>> context) {
+    public VanillaSubscriptionKeyValueStore(FactoryContext<KeyValueStore<K, MV, V>> context) {
         super(context);
+        MapView view = context.parent.getView(MapView.class);
+        view.underlying(this);
     }
 
     @Override
@@ -37,8 +40,8 @@ public class VanillaSubscriptionKeyValueStore<K, V> extends AbstractKeyValueStor
     }
 
     @Override
-    public <E> void registerSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query) {
-        subscriptions.registerSubscriber(eClass, subscriber, query);
+    public <E> void registerTopicSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query) {
+        subscriptions.registerTopicSubscriber(eClass, subscriber, query);
     }
 
     @Override
@@ -47,7 +50,7 @@ public class VanillaSubscriptionKeyValueStore<K, V> extends AbstractKeyValueStor
     }
 
     @Override
-    public <E> void unregisterSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query) {
-        subscriptions.unregisterSubscriber(eClass, subscriber, query);
+    public <E> void unregisterTopicSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query) {
+        subscriptions.unregisterTopicSubscriber(eClass, subscriber, query);
     }
 }

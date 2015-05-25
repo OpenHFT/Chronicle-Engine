@@ -267,24 +267,24 @@ public class ChassisTest {
     public void noInterceptor() {
         Asset asset = acquireAsset("", null, null, null);
 
-        asset.acquireInterceptor(MyInterceptor.class);
+        asset.acquireView(MyInterceptor.class);
     }
 
     @Test
     public void generateInterceptor() {
         Asset asset = acquireAsset("", null, null, null);
 
-        asset.registerFactory(Interceptor.class, (FactoryContext context) -> {
+        asset.registerFactory(MyInterceptor.class, (FactoryContext context) -> {
             assertEquals(MyInterceptor.class, context.type());
             return new MyInterceptor();
         });
-        MyInterceptor mi = asset.acquireInterceptor(MyInterceptor.class);
-        MyInterceptor mi2 = asset.acquireInterceptor(MyInterceptor.class);
+        MyInterceptor mi = asset.acquireView(MyInterceptor.class);
+        MyInterceptor mi2 = asset.acquireView(MyInterceptor.class);
         assertNotNull(mi);
         assertSame(mi, mi2);
     }
 
-    static class MyInterceptor implements Interceptor {
+    static class MyInterceptor implements View {
 
     }
 }

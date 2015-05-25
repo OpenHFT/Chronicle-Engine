@@ -66,7 +66,7 @@ public class FactoryContext<I extends Assetted> {
     }
 
     public I item() {
-        return item;
+        return item == null ? parent == null ? null : (I) parent.item() : item;
     }
 
     public <Item extends Assetted> FactoryContext<Item> item(Item resource) {
@@ -83,12 +83,12 @@ public class FactoryContext<I extends Assetted> {
         return basePath;
     }
 
-    public FactoryContext<I> writeType(Function<Bytes, Wire> writeType) {
+    public FactoryContext<I> wireType(Function<Bytes, Wire> writeType) {
         this.writeType = writeType;
         return this;
     }
 
-    public Function<Bytes, Wire> writeType() {
+    public Function<Bytes, Wire> wireType() {
         return writeType;
     }
 }

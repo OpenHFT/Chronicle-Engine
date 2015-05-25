@@ -12,13 +12,13 @@ import java.util.Set;
 /**
  * Created by peter on 22/05/15.
  */
-public class VanillaMapView<K, V> extends AbstractMap<K, V> implements MapView<K, V> {
+public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapView<K, MV, V> {
     private final boolean putReturnsNull;
     private final boolean removeReturnsNull;
     private Asset asset;
-    private KeyValueStore<K, V> kvStore;
+    private KeyValueStore<K, MV, V> kvStore;
 
-    public VanillaMapView(FactoryContext<KeyValueStore<K, V>> context) {
+    public VanillaMapView(FactoryContext<KeyValueStore<K, MV, V>> context) {
         this.asset = context.parent();
         this.kvStore = context.item();
         String queryString = context.queryString().toLowerCase();
@@ -38,13 +38,18 @@ public class VanillaMapView<K, V> extends AbstractMap<K, V> implements MapView<K
     }
 
     @Override
-    public void underlying(KeyValueStore<K, V> underlying) {
+    public void underlying(KeyValueStore<K, MV, V> underlying) {
         this.kvStore = underlying;
     }
 
     @Override
-    public KeyValueStore<K, V> underlying() {
+    public KeyValueStore<K, MV, V> underlying() {
         return kvStore;
+    }
+
+    @Override
+    public V get(Object key) {
+        return kvStore.getUsing((K) key, null);
     }
 
     @Override

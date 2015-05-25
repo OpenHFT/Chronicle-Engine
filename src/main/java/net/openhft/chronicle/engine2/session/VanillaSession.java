@@ -22,6 +22,7 @@ public class VanillaSession implements Session {
         root.registerFactory(SubAsset.class, VanillaSubAsset::new);
         root.registerFactory(KeyValueStore.class, VanillaKeyValueStore::new);
         root.registerFactory(TopicPublisher.class, VanillaTopicPublisher::new);
+        root.registerFactory(Subscription.class, f -> (Subscription) f.parent.acquireView(SubscriptionKeyValueStore.class, f.queryString()));
     }
 
     @NotNull
@@ -31,8 +32,8 @@ public class VanillaSession implements Session {
     }
 
     @Override
-    public <I extends Interceptor> void registerInterceptor(Class<I> iClass, I interceptor) {
-        root.registerInterceptor(iClass, interceptor);
+    public <I> void registerView(Class<I> iClass, I interceptor) {
+        root.registerView(iClass, interceptor);
     }
 
     @Nullable

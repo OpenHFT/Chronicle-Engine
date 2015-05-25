@@ -12,14 +12,14 @@ import java.util.concurrent.CopyOnWriteArraySet;
 /**
  * Created by peter on 22/05/15.
  */
-public class SubscriptionKVSCollection<K, V> implements Subscription {
+public class SubscriptionKVSCollection<K, MV, V> implements Subscription {
     final Set<TopicSubscriber<V>> topicSubscribers = new CopyOnWriteArraySet<>();
     final Set<Subscriber<KeyValueStore.Entry<K, V>>> subscribers = new CopyOnWriteArraySet<>();
     final Set<Subscriber<K>> keySubscribers = new CopyOnWriteArraySet<>();
     boolean hasSubscribers = false;
-    final KeyValueStore<K, V> kvStore;
+    final KeyValueStore<K, MV, V> kvStore;
 
-    public SubscriptionKVSCollection(KeyValueStore<K, V> kvStore) {
+    public SubscriptionKVSCollection(KeyValueStore<K, MV, V> kvStore) {
         this.kvStore = kvStore;
     }
 
@@ -87,7 +87,7 @@ public class SubscriptionKVSCollection<K, V> implements Subscription {
     }
 
     @Override
-    public <E> void registerSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query) {
+    public <E> void registerTopicSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query) {
         boolean bootstrap = query.contains("bootstrap=true");
         topicSubscribers.add((TopicSubscriber<V>) subscriber);
         if (bootstrap) {
@@ -103,7 +103,7 @@ public class SubscriptionKVSCollection<K, V> implements Subscription {
     }
 
     @Override
-    public <E> void unregisterSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query) {
+    public <E> void unregisterTopicSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query) {
         topicSubscribers.remove(subscriber);
         hasSubscribers = !topicSubscribers.isEmpty() && !subscribers.isEmpty();
     }

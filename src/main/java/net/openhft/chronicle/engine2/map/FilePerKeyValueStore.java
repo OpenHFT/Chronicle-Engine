@@ -2,20 +2,17 @@ package net.openhft.chronicle.engine2.map;
 
 import com.sun.nio.file.SensitivityWatchEventModifier;
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.engine2.api.Asset;
 import net.openhft.chronicle.engine2.api.FactoryContext;
 import net.openhft.chronicle.engine2.api.Subscriber;
 import net.openhft.chronicle.engine2.api.TopicSubscriber;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
-import net.openhft.chronicle.engine2.api.map.SubscriptionKeyValueStore;
-import net.openhft.chronicle.wire.Marshallable;
-import net.openhft.chronicle.wire.Wire;
+import net.openhft.chronicle.engine2.session.StringBytesStoreKeyValueStore;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.*;
@@ -25,7 +22,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
@@ -46,36 +42,22 @@ import java.util.stream.Stream;
  * very few events if they are done quickly and there is a significant delay
  * between the event and the event being triggered.
  */
-public class FilePerKeyValueStore<V extends Marshallable> implements SubscriptionKeyValueStore<String, V>, Closeable {
+public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Closeable {
     private final Path dirPath;
     //Use BytesStore so that it can be shared safely between threads
-    private final Map<File, FileRecord<V>> lastFileRecordMap = new ConcurrentHashMap<>();
+    private final Map<File, FileRecord<BytesStore>> lastFileRecordMap = new ConcurrentHashMap<>();
 
     private final Thread fileFpmWatcher;
-    private final Bytes<ByteBuffer> writingBytes = Bytes.elasticByteBuffer();
-    private final Bytes<ByteBuffer> readingBytes = Bytes.elasticByteBuffer();
-    private final Wire writingWire;
-    private final Wire readingWire;
-    private final SubscriptionKVSCollection<String, V> subscriptions = new SubscriptionKVSCollection<>(this);
-    private final Constructor<V> vConstructor;
+    private final SubscriptionKVSCollection<String, Bytes, BytesStore> subscriptions = new SubscriptionKVSCollection<>(this);
     private volatile boolean closed = false;
     private Asset asset;
 
     public FilePerKeyValueStore(FactoryContext context) throws IORuntimeException {
-        try {
-            assert context.type() == String.class;
-            this.vConstructor = context.type2().getConstructor();
-            vConstructor.setAccessible(true);
-        } catch (NoSuchMethodException e) {
-            throw new AssertionError(e);
-        }
+        assert context.type() == String.class;
 
         String first = context.basePath();
         String dirName = first == null ? context.name() : first + "/" + context.name();
         this.dirPath = Paths.get(dirName);
-        Function<Bytes, Wire> bytesToWire = context.writeType();
-        writingWire = bytesToWire.apply(writingBytes);
-        readingWire = bytesToWire.apply(readingBytes);
         WatchService watcher;
         try {
             Files.createDirectories(dirPath);
@@ -101,7 +83,7 @@ public class FilePerKeyValueStore<V extends Marshallable> implements Subscriptio
     }
 
     @Override
-    public V getUsing(String key, V value) {
+    public BytesStore getUsing(String key, Bytes value) {
         Path path = dirPath.resolve(key);
         return getFileContents(path, value);
     }
@@ -112,20 +94,20 @@ public class FilePerKeyValueStore<V extends Marshallable> implements Subscriptio
     }
 
     @Override
-    public void entriesFor(int segment, Consumer<Entry<String, V>> kvConsumer) {
+    public void entriesFor(int segment, Consumer<Entry<String, BytesStore>> kvConsumer) {
         getFiles().map(p -> Entry.of(p.getFileName().toString(), getFileContents(p, null)))
                 .forEach(kvConsumer);
     }
 
     @Override
-    public Iterator<Map.Entry<String, V>> entrySetIterator() {
+    public Iterator<Map.Entry<String, BytesStore>> entrySetIterator() {
         return getFiles()
-                .map(p -> (Map.Entry<String, V>) new AbstractMap.SimpleEntry<>(p.getFileName().toString(), getFileContents(p, null)))
+                .map(p -> (Map.Entry<String, BytesStore>) new AbstractMap.SimpleEntry<>(p.getFileName().toString(), getFileContents(p, null)))
                 .iterator();
     }
 
     @Override
-    public void put(String key, V value) {
+    public void put(String key, BytesStore value) {
         if (closed) throw new IllegalStateException("closed");
         Path path = dirPath.resolve(key);
         FileRecord fr = lastFileRecordMap.get(path.toFile());
@@ -134,20 +116,20 @@ public class FilePerKeyValueStore<V extends Marshallable> implements Subscriptio
     }
 
     @Override
-    public V getAndPut(String key, V value) {
+    public BytesStore getAndPut(String key, BytesStore value) {
         if (closed) throw new IllegalStateException("closed");
         Path path = dirPath.resolve(key);
         FileRecord fr = lastFileRecordMap.get(path.toFile());
-        V existingValue = getFileContents(path, value);
+        BytesStore existingValue = getFileContents(path, null);
         writeToFile(path, value);
         if (fr != null) fr.valid = false;
-        return existingValue;
+        return existingValue == null ? null : existingValue.bytes();
     }
 
     @Override
-    public V getAndRemove(String key) {
+    public BytesStore getAndRemove(String key) {
         if (closed) throw new IllegalStateException("closed");
-        V existing = get(key);
+        BytesStore existing = get(key);
         if (existing != null) {
             deleteFile(dirPath.resolve(key));
         }
@@ -192,13 +174,13 @@ public class FilePerKeyValueStore<V extends Marshallable> implements Subscriptio
         }
     }
 
-    V getFileContents(Path path, V using) {
+    BytesStore getFileContents(Path path, Bytes using) {
         try {
             File file = path.toFile();
-            FileRecord<V> lastFileRecord = lastFileRecordMap.get(file);
+            FileRecord<BytesStore> lastFileRecord = lastFileRecordMap.get(file);
             if (lastFileRecord != null && lastFileRecord.valid
                     && file.lastModified() == lastFileRecord.timestamp) {
-                return lastFileRecord.contents;
+                return lastFileRecord.contents.bytes();
             }
             return getFileContentsFromDisk(path, using);
         } catch (IOException ioe) {
@@ -206,57 +188,54 @@ public class FilePerKeyValueStore<V extends Marshallable> implements Subscriptio
         }
     }
 
-    V getFileContentsFromDisk(Path path, V using) throws IOException {
+    Bytes getFileContentsFromDisk(Path path, Bytes using) throws IOException {
         if (!Files.exists(path)) return null;
         File file = path.toFile();
 
-        synchronized (readingBytes) {
-            try (FileChannel fc = new FileInputStream(file).getChannel()) {
-                readingBytes.ensureCapacity(fc.size());
+        Buffers b = Buffers.BUFFERS.get();
+        Bytes<ByteBuffer> readingBytes = b.valueBuffer;
+        try (FileChannel fc = new FileInputStream(file).getChannel()) {
+            readingBytes.ensureCapacity(fc.size());
 
-                ByteBuffer dst = readingBytes.underlyingObject();
-                dst.clear();
+            ByteBuffer dst = readingBytes.underlyingObject();
+            dst.clear();
 
-                fc.read(dst);
+            fc.read(dst);
 
-                readingBytes.position(0);
-                readingBytes.limit(dst.position());
-            }
-
-            V v = using == null ? createValue() : using;
-            v.readMarshallable(readingWire);
-            return v;
+            readingBytes.position(0);
+            readingBytes.limit(dst.position());
+            dst.flip();
         }
+        return readingBytes;
     }
 
-    private V createValue() {
-        try {
-            return vConstructor.newInstance();
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+    private void writeToFile(Path path, BytesStore value) {
+        BytesStore<?, ByteBuffer> writingBytes;
+        if (value.underlyingObject() instanceof ByteBuffer) {
+            writingBytes = value;
+        } else {
+            Buffers b = Buffers.BUFFERS.get();
+            Bytes<ByteBuffer> valueBuffer = b.valueBuffer;
+            valueBuffer.clear();
+            valueBuffer.write(value);
+            valueBuffer.flip();
+            writingBytes = valueBuffer;
+        }
+
+        File file = path.toFile();
+        File tmpFile = new File(file.getParentFile(), "." + file.getName());
+        try (FileChannel fc = new FileOutputStream(tmpFile).getChannel()) {
+            ByteBuffer byteBuffer = writingBytes.underlyingObject();
+            byteBuffer.position(0);
+            byteBuffer.limit((int) writingBytes.limit());
+            fc.write(byteBuffer);
+        } catch (IOException e) {
             throw new AssertionError(e);
         }
-    }
-
-    private void writeToFile(Path path, V value) {
-        synchronized (writingBytes) {
-            writingBytes.clear();
-            value.writeMarshallable(writingWire);
-
-            File file = path.toFile();
-            File tmpFile = new File(file.getParentFile(), "." + file.getName());
-            try (FileChannel fc = new FileOutputStream(tmpFile).getChannel()) {
-                ByteBuffer byteBuffer = writingBytes.underlyingObject();
-                byteBuffer.position(0);
-                byteBuffer.limit((int) writingBytes.position());
-                fc.write(byteBuffer);
-            } catch (IOException e) {
-                throw new AssertionError(e);
-            }
-            try {
-                Files.move(tmpFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-            } catch (IOException e) {
-                throw new IllegalStateException(e);
-            }
+        try {
+            Files.move(tmpFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
         }
     }
 
@@ -279,8 +258,8 @@ public class FilePerKeyValueStore<V extends Marshallable> implements Subscriptio
     }
 
     @Override
-    public <E> void registerSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query) {
-        subscriptions.registerSubscriber(eClass, subscriber, query);
+    public <E> void registerTopicSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query) {
+        subscriptions.registerTopicSubscriber(eClass, subscriber, query);
     }
 
     @Override
@@ -289,8 +268,8 @@ public class FilePerKeyValueStore<V extends Marshallable> implements Subscriptio
     }
 
     @Override
-    public <E> void unregisterSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query) {
-        subscriptions.unregisterSubscriber(eClass, subscriber, query);
+    public <E> void unregisterTopicSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query) {
+        subscriptions.unregisterTopicSubscriber(eClass, subscriber, query);
     }
 
     @Override
@@ -363,19 +342,20 @@ public class FilePerKeyValueStore<V extends Marshallable> implements Subscriptio
 
                 if (kind == StandardWatchEventKinds.ENTRY_CREATE || kind == StandardWatchEventKinds.ENTRY_MODIFY) {
                     Path p = dirPath.resolve(fileName);
-                    V mapVal = null;
+                    Bytes mapVal = null;
                     try {
                         mapVal = getFileContentsFromDisk(p, null);
                     } catch (FileNotFoundException ignored) {
                     }
-                    FileRecord<V> prev = lastFileRecordMap.put(p.toFile(), new FileRecord<>(p.toFile().lastModified(), mapVal));
-                    subscriptions.notifyUpdate(p.toFile().getName(), prev == null ? null : prev.contents, mapVal);
+                    FileRecord<BytesStore> prev = mapVal == null ? lastFileRecordMap.get(p.toFile())
+                            : lastFileRecordMap.put(p.toFile(), new FileRecord<>(p.toFile().lastModified(), mapVal.copy()));
+                    subscriptions.notifyUpdate(p.toFile().getName(), prev == null ? null : prev.contents.bytes(), mapVal);
 
                 } else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
                     Path p = dirPath.resolve(fileName);
 
-                    FileRecord<V> prev = lastFileRecordMap.remove(p.toFile());
-                    V lastVal = prev == null ? null : prev.contents;
+                    FileRecord<BytesStore> prev = lastFileRecordMap.remove(p.toFile());
+                    BytesStore lastVal = prev == null ? null : prev.contents;
                     subscriptions.notifyRemoval(p.toFile().getName(), lastVal);
 
                 }

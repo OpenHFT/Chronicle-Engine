@@ -21,7 +21,7 @@ public interface Session extends Closeable {
 
     Asset add(String name, Assetted resource);
 
-    <I extends Interceptor> void registerInterceptor(Class<I> iClass, I interceptor);
+    <I> void registerView(Class<I> iClass, I interceptor);
 
     default <E> Set<E> acquireSet(String name, Class<E> eClass) throws AssetNotFoundException {
         String[] parts = split2(name, '?');
@@ -63,7 +63,7 @@ public interface Session extends Closeable {
 
     default <E> void register(String name, Class<E> eClass, TopicSubscriber<E> subscriber) throws AssetNotFoundException {
         String[] parts = split2(name, '?');
-        acquireAsset(parts[0], null, null, null).registerSubscriber(eClass, subscriber, parts[1]);
+        acquireAsset(parts[0], null, null, null).registerTopicSubscriber(eClass, subscriber, parts[1]);
     }
 
     default <E> void register(String name, Class<E> eClass, Factory<E> factory) throws AssetNotFoundException {
@@ -75,7 +75,7 @@ public interface Session extends Closeable {
         String[] parts = split2(name, '?');
         Asset asset = getAsset(parts[0]);
         if (asset != null) {
-            asset.unregisterSubscriber(eClass, subscriber, parts[1]);
+            asset.unregisterTopicSubscriber(eClass, subscriber, parts[1]);
         }
     }
 }

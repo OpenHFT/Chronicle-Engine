@@ -8,5 +8,5 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * Created by peter on 22/05/15.
  */
-public interface MapView<K, V> extends ConcurrentMap<K, V>, Assetted<KeyValueStore<K, V>>, View {
+public interface MapView<K, MV, V> extends ConcurrentMap<K, V>, Assetted<KeyValueStore<K, MV, V>>, View {
 }

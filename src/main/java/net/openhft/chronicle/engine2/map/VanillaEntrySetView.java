@@ -12,11 +12,11 @@ import java.util.Map;
 /**
  * Created by peter on 22/05/15.
  */
-public class VanillaEntrySetView<K, V> extends AbstractCollection<Map.Entry<K, V>> implements EntrySetView<K, V> {
+public class VanillaEntrySetView<K, MV, V> extends AbstractCollection<Map.Entry<K, V>> implements EntrySetView<K, MV, V> {
     private Asset asset;
-    private KeyValueStore<K, V> underlying;
+    private KeyValueStore<K, MV, V> underlying;
 
-    public VanillaEntrySetView(FactoryContext<KeyValueStore<K, V>> context) {
+    public VanillaEntrySetView(FactoryContext<KeyValueStore<K, MV, V>> context) {
         this.asset = context.parent();
         this.underlying = context.item();
     }
@@ -42,12 +42,12 @@ public class VanillaEntrySetView<K, V> extends AbstractCollection<Map.Entry<K, V
     }
 
     @Override
-    public void underlying(KeyValueStore<K, V> underlying) {
+    public void underlying(KeyValueStore<K, MV, V> underlying) {
         this.underlying = underlying;
     }
 
     @Override
-    public KeyValueStore<K, V> underlying() {
+    public KeyValueStore<K, MV, V> underlying() {
         return underlying;
     }
 }

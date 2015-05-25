@@ -37,17 +37,27 @@ public interface Asset extends Permissoned, Subscription {
 
     boolean isReadOnly();
 
-    <V> V acquireView(Class<V> vClass, String queryString);
+    default <V> V acquireView(Class<V> vClass) {
+        return acquireView(vClass, "");
+    }
 
-    <V> V acquireView(Class<V> vClass, Class class1, String queryString);
+    default <V> V acquireView(Class<V> vClass, String queryString) {
+        return acquireView(vClass, null, "");
+    }
 
-    <V> V acquireView(Class<V> vClass, Class class1, Class class2, String queryString);
+    default <V> V acquireView(Class<V> vClass, Class class1, String queryString) {
+        return acquireView(vClass, class1, null, queryString);
+    }
 
-    <I extends Interceptor> I acquireInterceptor(Class<I> iClass) throws AssetNotFoundException;
+    <I> I acquireView(Class<I> vClass, Class class1, Class class2, String queryString);
 
-    <I extends Interceptor> void registerInterceptor(Class<I> iClass, I interceptor);
+    <V> V getView(Class<V> vClass);
+
+    <I> void registerView(Class<I> iClass, I interceptor);
 
     <I> Factory<I> acquireFactory(Class<I> iClass) throws AssetNotFoundException;
 
     <I> void registerFactory(Class<I> iClass, Factory<I> factory);
+
+    Object item();
 }

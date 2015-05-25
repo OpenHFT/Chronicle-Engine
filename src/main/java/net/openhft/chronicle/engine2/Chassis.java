@@ -64,6 +64,10 @@ public enum Chassis {
         session.register(name, eClass, factory);
     }
 
+    public static Asset getAsset(String name) {
+        return session.getAsset(name);
+    }
+
     public static Asset addAsset(String name, Assetted item) {
         return session.add(name, item);
     }

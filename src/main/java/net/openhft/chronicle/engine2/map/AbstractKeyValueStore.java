@@ -11,11 +11,12 @@ import java.util.function.Consumer;
 /**
  * Created by peter on 22/05/15.
  */
-public class AbstractKeyValueStore<K, V> implements KeyValueStore<K, V> {
-    KeyValueStore<K, V> kvStore;
+public class AbstractKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> {
+    KeyValueStore<K, MV, V> kvStore;
 
-    protected AbstractKeyValueStore(FactoryContext<KeyValueStore<K, V>> context) {
+    protected AbstractKeyValueStore(FactoryContext<KeyValueStore<K, MV, V>> context) {
         kvStore = context.item();
+        assert kvStore != null;
     }
 
     @Override
@@ -39,7 +40,7 @@ public class AbstractKeyValueStore<K, V> implements KeyValueStore<K, V> {
     }
 
     @Override
-    public V getUsing(K key, V value) {
+    public V getUsing(K key, MV value) {
         return kvStore.getUsing(key, value);
     }
 

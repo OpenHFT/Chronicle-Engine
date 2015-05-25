@@ -9,8 +9,11 @@ import java.util.function.Consumer;
 
 /**
  * Created by peter on 22/05/15.
+ * @implNote K key type
+ * @implNote MV mutable value type
+ * @implNote V immutable value type.
  */
-public interface KeyValueStore<K, V> extends Assetted<KeyValueStore> {
+public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V>> {
 
     default void put(K key, V value) {
         getAndPut(key, value);
@@ -28,7 +31,7 @@ public interface KeyValueStore<K, V> extends Assetted<KeyValueStore> {
         return getUsing(key, null);
     }
 
-    V getUsing(K key, V value);
+    V getUsing(K key, MV value);
 
     default boolean containsKey(K key) {
         return get(key) != null;

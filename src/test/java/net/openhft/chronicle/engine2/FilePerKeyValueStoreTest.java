@@ -1,10 +1,15 @@
 package net.openhft.chronicle.engine2;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.engine2.api.Asset;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.MapEvent;
 import net.openhft.chronicle.engine2.api.map.MapEventListener;
 import net.openhft.chronicle.engine2.map.FilePerKeyValueStore;
+import net.openhft.chronicle.engine2.map.VanillaMapView;
+import net.openhft.chronicle.engine2.map.VanillaStringMarshallableKeyValueStore;
+import net.openhft.chronicle.engine2.session.StringBytesStoreKeyValueStore;
+import net.openhft.chronicle.engine2.session.StringMarshallableKeyValueStore;
 import net.openhft.chronicle.wire.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -35,9 +40,13 @@ public class FilePerKeyValueStoreTest {
 
         resetChassis();
         Function<Bytes, Wire> writeType = TextWire::new;
-        registerFactory("", KeyValueStore.class, context -> new FilePerKeyValueStore(context.basePath(TMP).writeType(writeType)));
+        registerFactory("", StringMarshallableKeyValueStore.class, VanillaStringMarshallableKeyValueStore::new);
+        registerFactory("", KeyValueStore.class, context -> new FilePerKeyValueStore(context.basePath(TMP).wireType(writeType)));
 
         map = acquireMap(NAME, String.class, TestMarshallable.class);
+        KeyValueStore mapU = ((VanillaMapView) map).underlying();
+        assertEquals(VanillaStringMarshallableKeyValueStore.class, mapU.getClass());
+        assertEquals(FilePerKeyValueStore.class, mapU.underlying().getClass());
 
         //just in case it hasn't been cleared up last time
         map.clear();
@@ -68,7 +77,11 @@ public class FilePerKeyValueStoreTest {
                 success.set(-100);
             }
         };
+        Asset asset = getAsset(NAME);
         registerSubscriber(NAME, MapEvent.class, e -> e.apply(listener));
+        StringBytesStoreKeyValueStore sbskvStore = asset.acquireView(StringBytesStoreKeyValueStore.class);
+        sbskvStore.registerSubscriber(MapEvent.class, (x) ->
+                System.out.println(x), "");
 
         map.put("testA", tm);
         assertEquals(1, map.size());

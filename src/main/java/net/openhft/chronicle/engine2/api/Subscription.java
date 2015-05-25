@@ -6,9 +6,9 @@ package net.openhft.chronicle.engine2.api;
 public interface Subscription {
     <E> void registerSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query);
 
-    <E> void registerSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query);
+    <E> void registerTopicSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query);
 
     <E> void unregisterSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query);
 
-    <E> void unregisterSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query);
+    <E> void unregisterTopicSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query);
 }

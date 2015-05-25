@@ -2,6 +2,7 @@ package net.openhft.chronicle.engine2.session;
 
 import net.openhft.chronicle.core.util.Closeable;
 import net.openhft.chronicle.engine2.api.*;
+import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.SubAsset;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,6 +24,16 @@ public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscrib
     }
 
     @Override
+    public Object item() {
+        return parent.getView(KeyValueStore.class).get(name);
+    }
+
+    @Override
+    public <V> V getView(Class<V> vClass) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
     public String name() {
         return name;
     }
@@ -33,33 +44,23 @@ public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscrib
     }
 
     @Override
-    public <V> V acquireView(Class<V> vClass, String queryString) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
-    public <V> V acquireView(Class<V> vClass, Class class1, String queryString) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
     public <V> V acquireView(Class<V> vClass, Class class1, Class class2, String queryString) {
         throw new UnsupportedOperationException("todo");
     }
 
     @Override
-    public <I extends Interceptor> I acquireInterceptor(Class<I> iClass) throws AssetNotFoundException {
+    public <I> void registerView(Class<I> iClass, I interceptor) {
         throw new UnsupportedOperationException("todo");
     }
 
     @Override
     public <E> void registerSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query) {
         subscribers.add((Subscriber) subscriber);
-        parent().registerSubscriber(eClass, (TopicSubscriber<E>) this, query);
+        parent().registerTopicSubscriber(eClass, (TopicSubscriber<E>) this, query);
     }
 
     @Override
-    public <E> void registerSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query) {
+    public <E> void registerTopicSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query) {
         throw new UnsupportedOperationException("todo");
     }
 
@@ -67,11 +68,11 @@ public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscrib
     public <E> void unregisterSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query) {
         subscribers.remove((Subscriber) subscriber);
         if (subscribers.isEmpty())
-            parent().unregisterSubscriber(eClass, (TopicSubscriber<E>) this, query);
+            parent().unregisterTopicSubscriber(eClass, (TopicSubscriber<E>) this, query);
     }
 
     @Override
-    public <E> void unregisterSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query) {
+    public <E> void unregisterTopicSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query) {
         throw new UnsupportedOperationException("todo");
     }
 
@@ -108,10 +109,6 @@ public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscrib
     }
 
     public Asset add(String name, Assetted resource) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    public <I extends Interceptor> void registerInterceptor(Class<I> iClass, I interceptor) {
         throw new UnsupportedOperationException("todo");
     }
 
