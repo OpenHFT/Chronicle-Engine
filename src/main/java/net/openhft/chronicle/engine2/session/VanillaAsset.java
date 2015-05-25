@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.stream.Stream;
 
-import static net.openhft.chronicle.engine.utils.StringUtils.split2;
+import static net.openhft.chronicle.core.util.StringUtils.split2;
 import static net.openhft.chronicle.engine2.api.FactoryContext.factoryContext;
 
 /**

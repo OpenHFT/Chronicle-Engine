@@ -38,7 +38,7 @@ import java.util.function.Function;
 
 import static net.openhft.chronicle.core.Jvm.rethrow;
 import static net.openhft.chronicle.engine.server.internal.MapHandler.instance;
-import static net.openhft.chronicle.engine.utils.StringUtils.endsWith;
+import static net.openhft.chronicle.core.util.StringUtils.endsWith;
 import static net.openhft.chronicle.wire.CoreFields.cid;
 import static net.openhft.chronicle.wire.CoreFields.csp;
 
@@ -138,6 +138,8 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
         if (CoreFields.tid.contentEquals(eventName)) {
             tid = valueIn.int64();
             eventName.setLength(0);
+        } else {
+            tid = -1;
         }
     }
 

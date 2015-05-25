@@ -7,7 +7,7 @@ import net.openhft.chronicle.engine.map.MapHandlerFunction;
 import java.io.IOException;
 import java.util.Map;
 
-import static net.openhft.chronicle.engine.utils.StringUtils.contains;
+import static net.openhft.chronicle.core.util.StringUtils.contains;
 
 /**
  * Created by daniel on 06/05/15.

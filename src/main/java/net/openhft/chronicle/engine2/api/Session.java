@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
-import static net.openhft.chronicle.engine.utils.StringUtils.split2;
+import static net.openhft.chronicle.core.util.StringUtils.split2;
 
 /**
  * Created by peter on 22/05/15.
