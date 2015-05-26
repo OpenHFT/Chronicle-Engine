@@ -350,6 +350,8 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
                     FileRecord<BytesStore> prev = mapVal == null ? lastFileRecordMap.get(p.toFile())
                             : lastFileRecordMap.put(p.toFile(), new FileRecord<>(p.toFile().lastModified(), mapVal.copy()));
                     subscriptions.notifyUpdate(p.toFile().getName(), prev == null ? null : prev.contents.bytes(), mapVal);
+                    if (prev != null)
+                        prev.contents.release();
 
                 } else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
                     Path p = dirPath.resolve(fileName);

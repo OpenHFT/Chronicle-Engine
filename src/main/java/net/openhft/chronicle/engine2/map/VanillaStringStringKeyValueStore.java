@@ -19,7 +19,6 @@ import net.openhft.chronicle.wire.WireOut;
 import java.lang.reflect.Constructor;
 import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
@@ -41,11 +40,10 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     private final SubscriptionKVSCollection<String, StringBuilder, String> subscriptions = new SubscriptionKVSCollection<>(this);
     private SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore;
     private Asset asset;
-    private BiConsumer<BytesStore, Object> bytesToValue = (b, o) -> b.toString();
+
 
     public VanillaStringStringKeyValueStore(FactoryContext<SubscriptionKeyValueStore<String, Bytes, BytesStore>> context) {
         asset = context.parent();
-        Class type2 = context.type2();
         kvStore = context.item();
     }
 
@@ -86,6 +84,16 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     }
 
     @Override
+    public void put(String key, String value) {
+        Buffers b = BUFFERS.get();
+        Bytes<ByteBuffer> bytes = b.valueBuffer;
+        bytes.clear();
+        bytes.append(value);
+        bytes.flip();
+        kvStore.put(key, bytes);
+    }
+
+    @Override
     public String getAndPut(String key, String value) {
         Buffers b = BUFFERS.get();
         Bytes<ByteBuffer> bytes = b.valueBuffer;
@@ -94,6 +102,11 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         bytes.flip();
         BytesStore retBytes = kvStore.getAndPut(key, bytes);
         return retBytes == null ? null : retBytes.toString();
+    }
+
+    @Override
+    public void remove(String key) {
+        kvStore.remove(key);
     }
 
     @Override

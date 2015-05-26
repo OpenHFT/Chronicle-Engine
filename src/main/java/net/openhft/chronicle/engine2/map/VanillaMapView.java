@@ -103,6 +103,6 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
 
     @Override
     public V replace(@NotNull K key, @NotNull V value) {
-        throw new UnsupportedOperationException("todo");
+        return kvStore.replace(key, value);
     }
 }

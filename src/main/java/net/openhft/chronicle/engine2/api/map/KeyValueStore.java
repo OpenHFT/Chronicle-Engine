@@ -8,10 +8,9 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 /**
- *
- * @param <K> key type
+ * @param <K>  key type
  * @param <MV> mutable value type
- * @param <V> immutable value type
+ * @param <V>  immutable value type
  */
 
 public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V>> {
@@ -59,6 +58,14 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
     Iterator<Map.Entry<K, V>> entrySetIterator();
 
     void clear();
+
+    default V replace(K key, V value) {
+        if (containsKey(key)) {
+            return getAndPut(key, value);
+        } else {
+            return null;
+        }
+    }
 
     interface Entry<K, V> {
         K key();

@@ -101,6 +101,11 @@ public class ObjectObjectKeyValueStore<K, MV extends V, V> implements KeyValueSt
     }
 
     @Override
+    public V replace(K key, V value) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
     public void asset(Asset asset) {
         this.asset = asset;
     }

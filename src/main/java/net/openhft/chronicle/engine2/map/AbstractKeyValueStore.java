@@ -78,4 +78,9 @@ public class AbstractKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> 
     public void clear() {
         kvStore.clear();
     }
+
+    @Override
+    public V replace(K key, V value) {
+        return kvStore.replace(key, value);
+    }
 }
