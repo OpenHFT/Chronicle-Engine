@@ -23,8 +23,6 @@ import net.openhft.chronicle.engine.ChronicleContext;
 import net.openhft.chronicle.engine.FilePerKeyMapSubscription;
 import net.openhft.chronicle.engine.MapEventListener;
 import net.openhft.chronicle.engine.Subscription;
-import net.openhft.chronicle.engine.old.ChronicleCluster;
-import net.openhft.chronicle.engine.old.ChronicleThreadPool;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.EngineMap;
 import net.openhft.chronicle.map.FilePerKeyMap;
@@ -58,8 +56,6 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
     private final Map<String, ChronicleMap<CharSequence, CharSequence>> chronStringMap = synchronizedMap(new LinkedHashMap<>());
     private final Map<String, FilePerKeyMap> fpMaps = synchronizedMap(new LinkedHashMap<>());
     private final Map<String, ChronicleSet> sets = synchronizedMap(new LinkedHashMap<>());
-    private final Map<String, ChronicleThreadPool> threadPools = synchronizedMap(new LinkedHashMap<>());
-    private final Map<String, ChronicleCluster> clusters = synchronizedMap(new LinkedHashMap<>());
     private MapWireConnectionHub mapWireConnectionHub = null;
 
     public ChronicleEngine() {
@@ -223,24 +219,6 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
 
     private <E> void validateClasses(ChronicleSet set, Class<E> eClass) {
         // TODO runtime check the element class matches.
-    }
-
-    public void setThreadPool(String name, ChronicleThreadPool threadPool) {
-        threadPools.put(name, threadPool);
-    }
-
-    @Override
-    public ChronicleThreadPool getThreadPool(String name) {
-        return threadPools.get(name);
-    }
-
-    public void setCluster(String name, ChronicleCluster cluster) {
-        clusters.put(name, cluster);
-    }
-
-    @Override
-    public ChronicleCluster getCluster(String name) {
-        return clusters.get(name);
     }
 
     @Override

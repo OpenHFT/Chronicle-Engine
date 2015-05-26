@@ -44,7 +44,7 @@ import java.util.function.Function;
 import static net.openhft.chronicle.engine.map.MapWireHandler.EventId.*;
 import static net.openhft.chronicle.engine.map.MapWireHandler.Params.*;
 import static net.openhft.chronicle.wire.CoreFields.reply;
-import static net.openhft.chronicle.wire.WireOut.EMPTY;
+import static net.openhft.chronicle.wire.WriteMarshallable.EMPTY;
 import static net.openhft.chronicle.wire.Wires.acquireStringBuilder;
 
 /**
@@ -190,6 +190,13 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                     });
                     return;
                 }
+                if (remove.contentEquals(eventName)) {
+                    final K key = wireToK.apply(valueIn);
+                    nullCheck(key);
+                    map.remove(key);
+                    vToWire.accept(outWire.writeEventName(reply), null);
+                    return;
+                }
 
                 outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
 
@@ -296,13 +303,6 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                         final K key = wireToK.apply(valueIn);
                         nullCheck(key);
                         vToWire.accept(outWire.writeEventName(reply), map.remove(key));
-                        return;
-                    }
-                    if (remove.contentEquals(eventName)) {
-                        final K key = wireToK.apply(valueIn);
-                        nullCheck(key);
-                        map.remove(key);
-                        vToWire.accept(outWire.writeEventName(reply), null);
                         return;
                     }
 

@@ -23,8 +23,6 @@ import net.openhft.chronicle.engine.ChronicleContext;
 import net.openhft.chronicle.engine.MapEventListener;
 import net.openhft.chronicle.engine.Subscription;
 import net.openhft.chronicle.engine.client.internal.RemoteClientServiceLocator;
-import net.openhft.chronicle.engine.old.ChronicleCluster;
-import net.openhft.chronicle.engine.old.ChronicleThreadPool;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.FilePerKeyMap;
 import net.openhft.chronicle.set.ChronicleSet;
@@ -85,16 +83,6 @@ public class RemoteTcpClientChronicleContext implements ChronicleContext, Closea
     @Override
     public <K, C> Subscription<K, C> createSubscription(String name, Class<K> kClass, Class<C> callbackClass) {
         throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public ChronicleThreadPool getThreadPool(String name) {
-        throw new UnsupportedOperationException("todo (getThreadPool)");
-    }
-
-    @Override
-    public ChronicleCluster getCluster(String name) {
-        throw new UnsupportedOperationException("todo (getCluster)");
     }
 
     @Override

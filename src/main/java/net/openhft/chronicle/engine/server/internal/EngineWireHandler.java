@@ -214,6 +214,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
         } else if (cid.contentEquals(keyName)) {
             final long cid = read.int64();
             final CharSequence s = cidToCsp.get(cid);
+            cspText.setLength(0);
             cspText.append(s);
         }
     }

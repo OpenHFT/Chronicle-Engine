@@ -18,8 +18,6 @@
 
 package net.openhft.chronicle.engine;
 
-import net.openhft.chronicle.engine.old.ChronicleCluster;
-import net.openhft.chronicle.engine.old.ChronicleThreadPool;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.FilePerKeyMap;
 import net.openhft.chronicle.set.ChronicleSet;
@@ -49,10 +47,6 @@ public interface ChronicleContext {
 
     // A generic subscription
     <K, C> Subscription<K, C> createSubscription(String name, Class<K> kClass, Class<C> callbackClass);
-
-    ChronicleThreadPool getThreadPool(String name);
-
-    ChronicleCluster getCluster(String name); // check name of cluster interface.
 
     FilePerKeyMap getFilePerKeyMap(String name);
 

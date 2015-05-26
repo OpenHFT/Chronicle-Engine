@@ -46,7 +46,7 @@ import static net.openhft.chronicle.wire.CoreFields.csp;
 class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
         implements ChronicleMap<K, V>, Cloneable, ChannelFactory {
 
-    public static final Consumer<ValueOut> VOID_PARAMETERS = out -> out.marshallable(WireOut.EMPTY);
+    public static final Consumer<ValueOut> VOID_PARAMETERS = out -> out.marshallable(WriteMarshallable.EMPTY);
     private final Class<V> vClass;
     private final Class<K> kClass;
     private final boolean putReturnsNull;
