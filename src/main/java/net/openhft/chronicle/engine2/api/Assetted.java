@@ -11,4 +11,11 @@ public interface Assetted<U> {
     void underlying(U underlying);
 
     U underlying();
+
+    default boolean isUnderlying(U underlying) {
+        U u = underlying();
+        if (u == null) return false;
+        if (u == underlying) return true;
+        return u instanceof Assetted && ((Assetted) u).isUnderlying(underlying);
+    }
 }

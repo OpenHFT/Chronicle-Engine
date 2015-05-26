@@ -28,7 +28,7 @@ public class ChassisTest {
     public void simpleGetMapView() {
         ConcurrentMap<String, String> map = acquireMap("map-name", String.class, String.class);
 
-        registerTopicSubscriber("map-name", String.class, (t, e) -> System.out.println("{ key: " + t + ", event: " + e + " }"));
+        registerTopicSubscriber("map-name", String.class, String.class, (t, e) -> System.out.println("{ key: " + t + ", event: " + e + " }"));
 
         map.put("Hello", "World");
 
@@ -64,7 +64,7 @@ public class ChassisTest {
         subscriber.on("Topic-1");
         replay(subscriber);
 
-        TopicPublisher<String, String> publisher = acquireTopicPublisher("map-name", String.class);
+        TopicPublisher<String, String> publisher = acquireTopicPublisher("map-name", String.class, String.class);
         publisher.publish("Topic-1", "Message-1");
         verify(subscriber);
         reset(subscriber);
@@ -124,7 +124,7 @@ public class ChassisTest {
         subscriber.on("Message-1");
         replay(subscriber);
 
-        TopicPublisher<String, String> publisher = acquireTopicPublisher("map-name", String.class);
+        TopicPublisher<String, String> publisher = acquireTopicPublisher("map-name", String.class, String.class);
         publisher.publish("Key-1", "Message-1");
         publisher.publish("Key-2", "Message-2");
         verify(subscriber);
@@ -155,7 +155,7 @@ public class ChassisTest {
         subscriber.onMessage("Key-1", "Value-1");
         subscriber.onMessage("Key-2", "Value-2");
         replay(subscriber);
-        registerTopicSubscriber("map-name?bootstrap=true", String.class, subscriber);
+        registerTopicSubscriber("map-name?bootstrap=true", String.class, String.class, subscriber);
         verify(subscriber);
         reset(subscriber);
 
@@ -165,7 +165,7 @@ public class ChassisTest {
         subscriber.onMessage("Topic-1", "Message-1");
         replay(subscriber);
 
-        TopicPublisher<String, String> publisher = acquireTopicPublisher("map-name", String.class);
+        TopicPublisher<String, String> publisher = acquireTopicPublisher("map-name", String.class, String.class);
         publisher.publish("Topic-1", "Message-1");
         verify(subscriber);
         reset(subscriber);
@@ -227,7 +227,7 @@ public class ChassisTest {
         subscriber.on(InsertedEvent.of("Topic-1", "Message-1"));
         replay(subscriber);
 
-        TopicPublisher<String, String> publisher = acquireTopicPublisher("map-name", String.class);
+        TopicPublisher<String, String> publisher = acquireTopicPublisher("map-name", String.class, String.class);
         publisher.publish("Key-1", "Message-1");
         publisher.publish("Topic-1", "Message-1");
         verify(subscriber);
@@ -260,7 +260,7 @@ public class ChassisTest {
 
     @Test(expected = AssetNotFoundException.class)
     public void noAsset() {
-        registerTopicSubscriber("map-name", String.class, (t, e) -> System.out.println("{ key: " + t + ", event: " + e + " }"));
+        registerTopicSubscriber("map-name", String.class, String.class, (t, e) -> System.out.println("{ key: " + t + ", event: " + e + " }"));
     }
 
     @Test(expected = AssetNotFoundException.class)

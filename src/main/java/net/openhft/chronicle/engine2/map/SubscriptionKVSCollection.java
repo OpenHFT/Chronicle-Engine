@@ -87,7 +87,7 @@ public class SubscriptionKVSCollection<K, MV, V> implements Subscription {
     }
 
     @Override
-    public <T, E> void registerTopicSubscriber(Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
+    public <T, E> void registerTopicSubscriber(Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
         boolean bootstrap = query.contains("bootstrap=true");
         topicSubscribers.add((TopicSubscriber<K, V>) subscriber);
         if (bootstrap) {
@@ -103,7 +103,7 @@ public class SubscriptionKVSCollection<K, MV, V> implements Subscription {
     }
 
     @Override
-    public <T, E> void unregisterTopicSubscriber(Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
+    public <T, E> void unregisterTopicSubscriber(Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
         topicSubscribers.remove(subscriber);
         hasSubscribers = !topicSubscribers.isEmpty() && !subscribers.isEmpty();
     }

@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine2.api;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
 
 import java.util.function.Function;
@@ -15,7 +16,7 @@ public class FactoryContext<I extends Assetted> {
     private String name;
     private I item;
     private String basePath;
-    private Function<Bytes, Wire> writeType;
+    private Function<Bytes, Wire> wireType = TextWire::new;
 
     private FactoryContext(Asset parent) {
         this.parent = parent;
@@ -84,11 +85,11 @@ public class FactoryContext<I extends Assetted> {
     }
 
     public FactoryContext<I> wireType(Function<Bytes, Wire> writeType) {
-        this.writeType = writeType;
+        this.wireType = writeType;
         return this;
     }
 
     public Function<Bytes, Wire> wireType() {
-        return writeType;
+        return wireType;
     }
 }

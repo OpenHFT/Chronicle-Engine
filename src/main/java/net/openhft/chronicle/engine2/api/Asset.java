@@ -55,6 +55,8 @@ public interface Asset extends Permissoned, Subscription {
 
     <I> void registerView(Class<I> iClass, I interceptor);
 
+    <I> Factory<I> getFactory(Class<I> iClass);
+
     <I> Factory<I> acquireFactory(Class<I> iClass) throws AssetNotFoundException;
 
     <I> void registerFactory(Class<I> iClass, Factory<I> factory);

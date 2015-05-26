@@ -49,6 +49,11 @@ public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscrib
     }
 
     @Override
+    public <I> Factory<I> getFactory(Class<I> iClass) {
+        return parent.getFactory(iClass);
+    }
+
+    @Override
     public <I> void registerView(Class<I> iClass, I interceptor) {
         throw new UnsupportedOperationException("todo");
     }
@@ -56,11 +61,11 @@ public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscrib
     @Override
     public <E> void registerSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query) {
         subscribers.add((Subscriber) subscriber);
-        parent().registerTopicSubscriber(eClass, (TopicSubscriber<String, E>) this, query);
+        parent().registerTopicSubscriber(String.class, eClass, (TopicSubscriber<String, E>) this, query);
     }
 
     @Override
-    public <T, E> void registerTopicSubscriber(Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
+    public <T, E> void registerTopicSubscriber(Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
         throw new UnsupportedOperationException("todo");
     }
 
@@ -68,11 +73,11 @@ public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscrib
     public <E> void unregisterSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query) {
         subscribers.remove((Subscriber) subscriber);
         if (subscribers.isEmpty())
-            parent().unregisterTopicSubscriber(eClass, (TopicSubscriber<String, E>) this, query);
+            parent().unregisterTopicSubscriber(String.class, eClass, (TopicSubscriber<String, E>) this, query);
     }
 
     @Override
-    public <T, E> void unregisterTopicSubscriber(Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
+    public <T, E> void unregisterTopicSubscriber(Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
         throw new UnsupportedOperationException("todo");
     }
 

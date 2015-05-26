@@ -3,6 +3,7 @@ package net.openhft.chronicle.engine2.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.ClassLocal;
+import net.openhft.chronicle.core.util.StringUtils;
 import net.openhft.chronicle.engine2.api.Asset;
 import net.openhft.chronicle.engine2.api.FactoryContext;
 import net.openhft.chronicle.engine2.api.Subscriber;
@@ -10,13 +11,15 @@ import net.openhft.chronicle.engine2.api.TopicSubscriber;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.MapEvent;
 import net.openhft.chronicle.engine2.api.map.SubscriptionKeyValueStore;
-import net.openhft.chronicle.engine2.session.StringMarshallableKeyValueStore;
+import net.openhft.chronicle.engine2.session.StringStringKeyValueStore;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 
 import java.lang.reflect.Constructor;
+import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
@@ -25,7 +28,7 @@ import static net.openhft.chronicle.engine2.map.Buffers.BUFFERS;
 /**
  * Created by peter on 25/05/15.
  */
-public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> implements StringMarshallableKeyValueStore<V> {
+public class VanillaStringStringKeyValueStore implements StringStringKeyValueStore {
     private static final ClassLocal<Constructor> CONSTRUCTORS = ClassLocal.withInitial(c -> {
         try {
             Constructor con = c.getDeclaredConstructor();
@@ -35,17 +38,14 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
             throw new AssertionError(e);
         }
     });
-    private final BiFunction<V, Bytes, Bytes> valueToBytes;
-    private final BiFunction<BytesStore, V, V> bytesToValue;
-    private final SubscriptionKVSCollection<String, V, V> subscriptions = new SubscriptionKVSCollection<>(this);
+    private final SubscriptionKVSCollection<String, StringBuilder, String> subscriptions = new SubscriptionKVSCollection<>(this);
     private SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore;
     private Asset asset;
+    private BiConsumer<BytesStore, Object> bytesToValue = (b, o) -> b.toString();
 
-    public VanillaStringMarshallableKeyValueStore(FactoryContext<SubscriptionKeyValueStore<String, Bytes, BytesStore>> context) {
+    public VanillaStringStringKeyValueStore(FactoryContext<SubscriptionKeyValueStore<String, Bytes, BytesStore>> context) {
         asset = context.parent();
         Class type2 = context.type2();
-        valueToBytes = toBytes(context, type2);
-        bytesToValue = fromBytes(context, type2);
         kvStore = context.item();
     }
 
@@ -86,25 +86,27 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     }
 
     @Override
-    public V getAndPut(String key, V value) {
+    public String getAndPut(String key, String value) {
         Buffers b = BUFFERS.get();
-        Bytes valueBytes = valueToBytes.apply(value, b.valueBuffer);
-        BytesStore retBytes = kvStore.getAndPut(key, valueBytes);
-        return retBytes == null ? null : bytesToValue.apply(retBytes, null);
+        Bytes<ByteBuffer> bytes = b.valueBuffer;
+        bytes.clear();
+        bytes.append(value);
+        bytes.flip();
+        BytesStore retBytes = kvStore.getAndPut(key, bytes);
+        return retBytes == null ? null : retBytes.toString();
     }
 
     @Override
-    public V getAndRemove(String key) {
-        Buffers b = BUFFERS.get();
+    public String getAndRemove(String key) {
         BytesStore retBytes = kvStore.getAndRemove(key);
-        return retBytes == null ? null : bytesToValue.apply(retBytes, null);
+        return retBytes == null ? null : retBytes.toString();
     }
 
     @Override
-    public V getUsing(String key, V value) {
+    public String getUsing(String key, StringBuilder value) {
         Buffers b = BUFFERS.get();
         BytesStore retBytes = kvStore.getUsing(key, b.valueBuffer);
-        return retBytes == null ? null : bytesToValue.apply(retBytes, value);
+        return retBytes == null ? null : retBytes.toString();
     }
 
     @Override
@@ -118,15 +120,14 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     }
 
     @Override
-    public void entriesFor(int segment, Consumer<Entry<String, V>> kvConsumer) {
+    public void entriesFor(int segment, Consumer<Entry<String, String>> kvConsumer) {
         kvStore.entriesFor(segment, e -> kvConsumer.accept(
-                Entry.of(e.key(),
-                        bytesToValue.apply(e.value(), null))));
+                Entry.of(e.key(), e.value().toString())));
     }
 
     @Override
-    public Iterator<Map.Entry<String, V>> entrySetIterator() {
-        List<Map.Entry<String, V>> entries = new ArrayList<>();
+    public Iterator<Map.Entry<String, String>> entrySetIterator() {
+        List<Map.Entry<String, String>> entries = new ArrayList<>();
         for (int i = 0, seg = segments(); i < seg; i++)
             entriesFor(i, e -> entries.add(new AbstractMap.SimpleEntry<>(e.key(), e.value())));
         return entries.iterator();
@@ -148,7 +149,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     }
 
     @Override
-    public void underlying(KeyValueStore<String, V, V> underlying) {
+    public void underlying(KeyValueStore<String, StringBuilder, String> underlying) {
         throw new UnsupportedOperationException("todo");
     }
 
@@ -160,15 +161,15 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     @Override
     public <E> void registerSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query) {
         if (eClass == MapEvent.class) {
-            Subscriber<MapEvent<String, V>> sub = (Subscriber<MapEvent<String, V>>) subscriber;
+            Subscriber<MapEvent<String, String>> sub = (Subscriber<MapEvent<String, String>>) subscriber;
 
             kvStore.registerSubscriber((Class<MapEvent<String, BytesStore>>) eClass, e -> {
                 if (e.getClass() == InsertedEvent.class)
-                    sub.on(InsertedEvent.of(e.key(), bytesToValue.apply(e.value(), null)));
+                    sub.on(InsertedEvent.of(e.key(), e.value().toString()));
                 else if (e.getClass() == UpdatedEvent.class)
-                    sub.on(UpdatedEvent.of(e.key(), bytesToValue.apply(((UpdatedEvent<String, BytesStore>) e).oldValue(), null), bytesToValue.apply(e.value(), null)));
+                    sub.on(UpdatedEvent.of(e.key(), ((UpdatedEvent<String, BytesStore>) e).oldValue().toString(), e.value().toString()));
                 else
-                    sub.on(RemovedEvent.of(e.key(), bytesToValue.apply(e.value(), null)));
+                    sub.on(RemovedEvent.of(e.key(), e.value().toString()));
             }, query);
         }
         subscriptions.registerSubscriber(eClass, subscriber, query);
@@ -177,7 +178,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     @Override
     public <T, E> void registerTopicSubscriber(Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
         kvStore.registerTopicSubscriber(tClass, eClass, (topic, message) -> {
-            throw new UnsupportedOperationException("todo");
+            subscriber.onMessage(topic, (E) StringUtils.toString(message));
         }, query);
         subscriptions.registerTopicSubscriber(tClass, eClass, subscriber, query);
     }

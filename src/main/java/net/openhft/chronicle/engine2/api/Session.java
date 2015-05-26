@@ -23,6 +23,13 @@ public interface Session extends Closeable {
 
     <I> void registerView(Class<I> iClass, I interceptor);
 
+    default Asset getAssetOrANFE(String name) throws AssetNotFoundException {
+        Asset asset = getAsset(name);
+        if (asset == null)
+            throw new AssetNotFoundException(name);
+        return asset;
+    }
+
     default <E> Set<E> acquireSet(String name, Class<E> eClass) throws AssetNotFoundException {
         String[] parts = split2(name, '?');
         //noinspection unchecked
@@ -41,19 +48,24 @@ public interface Session extends Closeable {
         return acquireAsset(parts[0], Publisher.class, eClass, null).acquireView(Publisher.class, eClass, parts[1]);
     }
 
-    default <T, E> TopicPublisher<T, E> acquireTopicPublisher(String name, Class<E> eClass) throws AssetNotFoundException {
+    default <T, E> TopicPublisher<T, E> acquireTopicPublisher(String name, Class<T> tClass, Class<E> eClass) throws AssetNotFoundException {
         String[] parts = split2(name, '?');
         //noinspection unchecked
-        return acquireAsset(parts[0], TopicPublisher.class, eClass, null).acquireView(TopicPublisher.class, eClass, parts[1]);
+        return acquireAsset(parts[0], TopicPublisher.class, tClass, eClass).acquireView(TopicPublisher.class, tClass, eClass, parts[1]);
     }
 
-    default <E> void register(String name, Class<E> eClass, Subscriber<E> subscriber) throws AssetNotFoundException {
+    default <E> void registerSubscriber(String name, Class<E> eClass, Subscriber<E> subscriber) throws AssetNotFoundException {
         String[] parts = split2(name, '?');
-        acquireAsset(parts[0], String.class, null, null)
+        acquireAsset(parts[0], eClass, null, null)
                 .registerSubscriber(eClass, subscriber, parts[1]);
     }
 
-    default <E> void unregister(String name, Class<E> eClass, Subscriber<E> subscriber) {
+    default <T, E> void registerTopicSubscriber(String name, Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
+        String[] parts = split2(name, '?');
+        getAssetOrANFE(parts[0]).registerTopicSubscriber(tClass, eClass, subscriber, parts[1]);
+    }
+
+    default <E> void unregisterSubscriber(String name, Class<E> eClass, Subscriber<E> subscriber) {
         String[] parts = split2(name, '?');
         Asset asset = getAsset(parts[0]);
         if (asset != null) {
@@ -61,21 +73,16 @@ public interface Session extends Closeable {
         }
     }
 
-    default <T, E> void register(String name, Class<E> eClass, TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
+    default <E> void registerFactory(String name, Class<E> eClass, Factory<E> factory) throws AssetNotFoundException {
         String[] parts = split2(name, '?');
-        acquireAsset(parts[0], null, null, null).registerTopicSubscriber(eClass, subscriber, parts[1]);
+        getAsset(parts[0]).registerFactory(eClass, factory);
     }
 
-    default <E> void register(String name, Class<E> eClass, Factory<E> factory) throws AssetNotFoundException {
-        String[] parts = split2(name, '?');
-        acquireAsset(parts[0], null, null, null).registerFactory(eClass, factory);
-    }
-
-    default <T, E> void unregister(String name, Class<E> eClass, TopicSubscriber<T, E> subscriber) {
+    default <T, E> void unregisterTopicSubscriber(String name, Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber) {
         String[] parts = split2(name, '?');
         Asset asset = getAsset(parts[0]);
         if (asset != null) {
-            asset.unregisterTopicSubscriber(eClass, subscriber, parts[1]);
+            asset.unregisterTopicSubscriber(tClass, eClass, subscriber, parts[1]);
         }
     }
 }

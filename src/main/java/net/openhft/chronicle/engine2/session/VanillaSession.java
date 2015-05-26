@@ -22,6 +22,7 @@ public class VanillaSession implements Session {
         root.registerFactory(SubAsset.class, VanillaSubAsset::new);
         root.registerFactory(KeyValueStore.class, VanillaKeyValueStore::new);
         root.registerFactory(TopicPublisher.class, VanillaTopicPublisher::new);
+        root.registerFactory(StringMarshallableKeyValueStore.class, VanillaStringMarshallableKeyValueStore::new);
         root.registerFactory(Subscription.class, f -> (Subscription) f.parent.acquireView(SubscriptionKeyValueStore.class, f.queryString()));
     }
 

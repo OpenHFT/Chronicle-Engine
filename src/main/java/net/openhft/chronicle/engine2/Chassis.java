@@ -40,28 +40,28 @@ public enum Chassis {
         return session.acquirePublisher(name, eClass);
     }
 
-    public static <T, E> TopicPublisher<T, E> acquireTopicPublisher(String name, Class<E> eClass) throws AssetNotFoundException {
-        return session.acquireTopicPublisher(name, eClass);
+    public static <T, E> TopicPublisher<T, E> acquireTopicPublisher(String name, Class<T> tClass, Class<E> eClass) throws AssetNotFoundException {
+        return session.acquireTopicPublisher(name, tClass, eClass);
     }
 
     public static <E> void registerSubscriber(String name, Class<E> eClass, Subscriber<E> subscriber) throws AssetNotFoundException {
-        session.register(name, eClass, subscriber);
+        session.registerSubscriber(name, eClass, subscriber);
     }
 
     public static <E> void unregisterSubscriber(String name, Class<E> eClass, Subscriber<E> subscriber) {
-        session.unregister(name, eClass, subscriber);
+        session.unregisterSubscriber(name, eClass, subscriber);
     }
 
-    public static <T, E> void registerTopicSubscriber(String name, Class<E> eClass, TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
-        session.register(name, eClass, subscriber);
+    public static <T, E> void registerTopicSubscriber(String name, Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
+        session.registerTopicSubscriber(name, tClass, eClass, subscriber);
     }
 
-    public static <T, E> void unregisterTopicSubscriber(String name, Class<E> eClass, TopicSubscriber<T, E> subscriber) {
-        session.unregister(name, eClass, subscriber);
+    public static <T, E> void unregisterTopicSubscriber(String name, Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber) {
+        session.unregisterTopicSubscriber(name, tClass, eClass, subscriber);
     }
 
     public static <E> void registerFactory(String name, Class<E> eClass, Factory<E> factory) {
-        session.register(name, eClass, factory);
+        session.registerFactory(name, eClass, factory);
     }
 
     public static Asset getAsset(String name) {

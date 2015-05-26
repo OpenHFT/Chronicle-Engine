@@ -11,8 +11,7 @@ import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
@@ -27,12 +26,13 @@ import static net.openhft.chronicle.engine2.api.FactoryContext.factoryContext;
  * Created by peter on 22/05/15.
  */
 public class VanillaAsset implements Asset, Closeable {
+    public static final Comparator<Class> CLASS_COMPARATOR = Comparator.comparing(Class::getName);
     private final Asset parent;
     private final String name;
     private final Assetted item;
 
-    private final Map<Class, View> viewMap = Collections.synchronizedMap(new LinkedHashMap<>());
-    private final Map<Class, Factory> factoryMap = Collections.synchronizedMap(new LinkedHashMap<>());
+    private final Map<Class, View> viewMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
+    private final Map<Class, Factory> factoryMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
 
     VanillaAsset(FactoryContext<Assetted> context) {
         this.parent = context.parent();
@@ -71,11 +71,12 @@ public class VanillaAsset implements Asset, Closeable {
     @Override
     public <V> V acquireView(Class<V> vClass, String queryString) {
         V view = getView(vClass);
-        if (view == null) {
-            Factory factory = acquireFactory(vClass);
-            return (V) viewMap.computeIfAbsent(vClass, v -> (View) factory.create(factoryContext(this).type(v).queryString(queryString)));
+        if (view != null) {
+            return view;
         }
-        return view;
+        Factory factory = acquireFactory(vClass);
+        View view2 = viewMap.computeIfAbsent(vClass, v -> (View) factory.create(factoryContext(this).type(v).queryString(queryString)));
+        return (V) view2;
     }
 
     @Override
@@ -91,12 +92,6 @@ public class VanillaAsset implements Asset, Closeable {
                                 .create(factoryContext(VanillaAsset.this).queryString(queryString).item(keyValueStore)));
             }
         }
-        if (vClass == TopicPublisher.class) {
-            SubscriptionKeyValueStore subscription = acquireView(SubscriptionKeyValueStore.class, class1, queryString);
-            return (V) viewMap.computeIfAbsent(TopicPublisher.class, aClass ->
-                    acquireFactory(TopicPublisher.class)
-                            .create(factoryContext(VanillaAsset.this).queryString(queryString).item(subscription)));
-        }
         if (vClass == KeyValueStore.class) {
             KeyValueStore kvStore = (KeyValueStore) viewMap.get(KeyValueStore.class);
             if (kvStore == null) {
@@ -107,6 +102,10 @@ public class VanillaAsset implements Asset, Closeable {
             }
             return (V) kvStore;
         }
+        if (vClass == SubscriptionKeyValueStore.class || vClass == Subscription.class) {
+            View view = acquireView(SubscriptionKeyValueStore.class, null, null, queryString);
+            return (V) view;
+        }
         throw new UnsupportedOperationException("todo " + vClass + " type: " + class1);
     }
 
@@ -116,7 +115,7 @@ public class VanillaAsset implements Asset, Closeable {
         if (v != null)
             return v;
         if (item instanceof KeyValueStore) {
-            if ((vClass == Map.class || vClass == ConcurrentMap.class) && item instanceof KeyValueStore) {
+            if ((vClass == Map.class || vClass == ConcurrentMap.class)) {
                 return (V) acquireView(MapView.class, class1, class2, queryString);
             }
             if (vClass == MapView.class) {
@@ -127,6 +126,8 @@ public class VanillaAsset implements Asset, Closeable {
                             kvStore = acquireView(StringBytesStoreKeyValueStore.class, class1, class2, queryString);
                         } else if (Marshallable.class.isAssignableFrom(class2)) {
                             kvStore = acquireView(StringMarshallableKeyValueStore.class, class1, class2, queryString);
+                        } else if (class2 == String.class && getFactory(StringStringKeyValueStore.class) != null) {
+                            kvStore = acquireView(StringStringKeyValueStore.class, class1, class2, queryString);
                         } else {
                             kvStore = (KeyValueStore) item;
                         }
@@ -147,17 +148,62 @@ public class VanillaAsset implements Asset, Closeable {
                                     .queryString(queryString)
                                     .wireType((Function<Bytes, Wire>) TextWire::new)
                                     .item(kvStore));
-                    viewMap.put(Subscription.class, smkvStore);
-                    viewMap.put(KeyValueStore.class, smkvStore);
+                    topSubscription(smkvStore);
                     return smkvStore;
                 });
                 return (V) view;
             }
-            if (vClass == StringBytesStoreKeyValueStore.class) {
-                return (V) item;
+            if (vClass == StringStringKeyValueStore.class) {
+                View view = viewMap.computeIfAbsent(StringStringKeyValueStore.class, aClass -> {
+                    SubscriptionKeyValueStore kvStore = acquireView(SubscriptionKeyValueStore.class, String.class, BytesStore.class, queryString);
+                    StringStringKeyValueStore sskvStore = acquireFactory(StringStringKeyValueStore.class)
+                            .create(factoryContext(VanillaAsset.this).queryString(queryString).item(kvStore));
+                    topSubscription(sskvStore);
+                    return sskvStore;
+                });
+                return (V) view;
+            }
+            if (vClass == SubscriptionKeyValueStore.class || vClass == Subscription.class) {
+                View view = viewMap.computeIfAbsent(SubscriptionKeyValueStore.class, aClass -> {
+                    KeyValueStore kvStore = acquireView(KeyValueStore.class, class1, class2, queryString);
+                    SubscriptionKeyValueStore skvStore = acquireFactory(SubscriptionKeyValueStore.class)
+                            .create(factoryContext(VanillaAsset.this).queryString(queryString).item(kvStore));
+                    topSubscription(skvStore);
+                    return skvStore;
+                });
+                return (V) view;
+            }
+            if (vClass == TopicPublisher.class) {
+                SubscriptionKeyValueStore subscription = acquireView(SubscriptionKeyValueStore.class, class1, class2, queryString);
+                View view = viewMap.computeIfAbsent(TopicPublisher.class, aClass ->
+                        acquireFactory(TopicPublisher.class)
+                                .create(factoryContext(VanillaAsset.this).queryString(queryString).item(subscription)));
+                return (V) view;
             }
         }
         throw new UnsupportedOperationException("todo " + vClass + " type: " + class1 + " type2: " + class2);
+    }
+
+    private void topSubscription(SubscriptionKeyValueStore skvStore) {
+        MapView view = getView(MapView.class);
+        if (view != null) {
+            if (!skvStore.isUnderlying(view.underlying()))
+                throw new AssertionError("Miss wiring");
+            view.underlying(skvStore);
+        }
+        viewMap.put(Subscription.class, skvStore);
+        viewMap.put(KeyValueStore.class, skvStore);
+    }
+
+    public <I> Factory<I> getFactory(Class<I> iClass) {
+        Factory<I> factory = factoryMap.get(iClass);
+        if (factory != null)
+            return factory;
+
+        if (parent == null) {
+            return null;
+        }
+        return parent.getFactory(iClass);
     }
 
 
@@ -193,14 +239,14 @@ public class VanillaAsset implements Asset, Closeable {
 
     @Override
     public <E> void registerSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query) {
-        Subscription sub = acquireView(Subscription.class, query);
+        Subscription sub = acquireView(Subscription.class, eClass, query);
         sub.registerSubscriber(eClass, subscriber, query);
     }
 
     @Override
-    public <T, E> void registerTopicSubscriber(Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
-        Subscription sub = acquireView(Subscription.class, query);
-        sub.registerTopicSubscriber(eClass, subscriber, query);
+    public <T, E> void registerTopicSubscriber(Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
+        Subscription sub = acquireView(Subscription.class, tClass, eClass, query);
+        sub.registerTopicSubscriber(tClass, eClass, subscriber, query);
     }
 
     @Override
@@ -211,15 +257,15 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Override
-    public <T, E> void unregisterTopicSubscriber(Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
+    public <T, E> void unregisterTopicSubscriber(Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
         Subscription sub = getView(Subscription.class);
         if (sub != null)
-            sub.unregisterTopicSubscriber(eClass, subscriber, query);
+            sub.unregisterTopicSubscriber(tClass, eClass, subscriber, query);
     }
 
     @Override
     public void close() {
-        throw new UnsupportedOperationException("todo");
+        // throw new UnsupportedOperationException("todo");
     }
 
     @Override

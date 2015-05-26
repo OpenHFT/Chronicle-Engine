@@ -4,7 +4,6 @@ import net.openhft.chronicle.engine2.api.FactoryContext;
 import net.openhft.chronicle.engine2.api.Subscriber;
 import net.openhft.chronicle.engine2.api.TopicSubscriber;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
-import net.openhft.chronicle.engine2.api.map.MapView;
 import net.openhft.chronicle.engine2.api.map.SubscriptionKeyValueStore;
 
 /**
@@ -15,8 +14,6 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
 
     public VanillaSubscriptionKeyValueStore(FactoryContext<KeyValueStore<K, MV, V>> context) {
         super(context);
-        MapView view = context.parent.getView(MapView.class);
-        view.underlying(this);
     }
 
     @Override
@@ -40,8 +37,8 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     }
 
     @Override
-    public <T, E> void registerTopicSubscriber(Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
-        subscriptions.registerTopicSubscriber(eClass, subscriber, query);
+    public <T, E> void registerTopicSubscriber(Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
+        subscriptions.registerTopicSubscriber(tClass, eClass, subscriber, query);
     }
 
     @Override
@@ -50,7 +47,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     }
 
     @Override
-    public <T, E> void unregisterTopicSubscriber(Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
-        subscriptions.unregisterTopicSubscriber(eClass, subscriber, query);
+    public <T, E> void unregisterTopicSubscriber(Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
+        subscriptions.unregisterTopicSubscriber(tClass, eClass, subscriber, query);
     }
 }
