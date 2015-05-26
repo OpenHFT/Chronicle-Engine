@@ -8,11 +8,12 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 /**
- * Created by peter on 22/05/15.
- * @implNote K key type
- * @implNote MV mutable value type
- * @implNote V immutable value type.
+ *
+ * @param <K> key type
+ * @param <MV> mutable value type
+ * @param <V> immutable value type
  */
+
 public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V>> {
 
     default void put(K key, V value) {

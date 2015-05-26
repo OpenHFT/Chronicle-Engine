@@ -40,7 +40,7 @@ public enum Chassis {
         return session.acquirePublisher(name, eClass);
     }
 
-    public static <E> TopicPublisher<E> acquireTopicPublisher(String name, Class<E> eClass) throws AssetNotFoundException {
+    public static <T, E> TopicPublisher<T, E> acquireTopicPublisher(String name, Class<E> eClass) throws AssetNotFoundException {
         return session.acquireTopicPublisher(name, eClass);
     }
 
@@ -52,11 +52,11 @@ public enum Chassis {
         session.unregister(name, eClass, subscriber);
     }
 
-    public static <E> void registerTopicSubscriber(String name, Class<E> eClass, TopicSubscriber<E> subscriber) throws AssetNotFoundException {
+    public static <T, E> void registerTopicSubscriber(String name, Class<E> eClass, TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
         session.register(name, eClass, subscriber);
     }
 
-    public static <E> void unregisterTopicSubscriber(String name, Class<E> eClass, TopicSubscriber<E> subscriber) {
+    public static <T, E> void unregisterTopicSubscriber(String name, Class<E> eClass, TopicSubscriber<T, E> subscriber) {
         session.unregister(name, eClass, subscriber);
     }
 

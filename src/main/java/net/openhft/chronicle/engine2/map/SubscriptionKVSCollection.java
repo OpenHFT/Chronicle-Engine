@@ -13,7 +13,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
  * Created by peter on 22/05/15.
  */
 public class SubscriptionKVSCollection<K, MV, V> implements Subscription {
-    final Set<TopicSubscriber<V>> topicSubscribers = new CopyOnWriteArraySet<>();
+    final Set<TopicSubscriber<K, V>> topicSubscribers = new CopyOnWriteArraySet<>();
     final Set<Subscriber<KeyValueStore.Entry<K, V>>> subscribers = new CopyOnWriteArraySet<>();
     final Set<Subscriber<K>> keySubscribers = new CopyOnWriteArraySet<>();
     boolean hasSubscribers = false;
@@ -31,7 +31,7 @@ public class SubscriptionKVSCollection<K, MV, V> implements Subscription {
     private void notifyUpdate0(K key, V oldValue, V value) {
         if (!topicSubscribers.isEmpty()) {
             String key2 = key.toString();
-            topicSubscribers.forEach(ts -> ts.on(key2, value));
+            topicSubscribers.forEach(ts -> ts.onMessage((K) key2, value));
         }
         if (!subscribers.isEmpty()) {
             if (oldValue == null) {
@@ -56,7 +56,7 @@ public class SubscriptionKVSCollection<K, MV, V> implements Subscription {
     private void notifyRemoval0(K key, V oldValue) {
         if (!topicSubscribers.isEmpty()) {
             String key2 = key.toString();
-            topicSubscribers.forEach(ts -> ts.on(key2, null));
+            topicSubscribers.forEach(ts -> ts.onMessage((K) key2, null));
         }
         if (!subscribers.isEmpty()) {
             RemovedEvent<K, V> removed = RemovedEvent.of(key, oldValue);
@@ -87,12 +87,12 @@ public class SubscriptionKVSCollection<K, MV, V> implements Subscription {
     }
 
     @Override
-    public <E> void registerTopicSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query) {
+    public <T, E> void registerTopicSubscriber(Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
         boolean bootstrap = query.contains("bootstrap=true");
-        topicSubscribers.add((TopicSubscriber<V>) subscriber);
+        topicSubscribers.add((TopicSubscriber<K, V>) subscriber);
         if (bootstrap) {
             for (int i = 0; i < kvStore.segments(); i++)
-                kvStore.entriesFor(i, (KeyValueStore.Entry<K, V> e) -> subscriber.on(e.key().toString(), (E) e.value()));
+                kvStore.entriesFor(i, (KeyValueStore.Entry<K, V> e) -> subscriber.onMessage((T) e.key(), (E) e.value()));
         }
         hasSubscribers = true;
     }
@@ -103,7 +103,7 @@ public class SubscriptionKVSCollection<K, MV, V> implements Subscription {
     }
 
     @Override
-    public <E> void unregisterTopicSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query) {
+    public <T, E> void unregisterTopicSubscriber(Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
         topicSubscribers.remove(subscriber);
         hasSubscribers = !topicSubscribers.isEmpty() && !subscribers.isEmpty();
     }

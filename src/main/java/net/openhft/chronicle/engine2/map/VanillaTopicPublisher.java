@@ -8,17 +8,17 @@ import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 /**
  * Created by peter on 23/05/15.
  */
-public class VanillaTopicPublisher<M> implements TopicPublisher<M> {
+public class VanillaTopicPublisher<T, M> implements TopicPublisher<T, M> {
     private Asset asset;
-    private KeyValueStore<String, M, M> underlying;
+    private KeyValueStore<T, M, M> underlying;
 
-    public VanillaTopicPublisher(FactoryContext<KeyValueStore<String, M, M>> context) {
+    public VanillaTopicPublisher(FactoryContext<KeyValueStore<T, M, M>> context) {
         this.asset = context.parent();
         this.underlying = context.item();
     }
 
     @Override
-    public void publish(String topic, M message) {
+    public void publish(T topic, M message) {
         underlying.put(topic, message);
     }
 
@@ -33,12 +33,12 @@ public class VanillaTopicPublisher<M> implements TopicPublisher<M> {
     }
 
     @Override
-    public void underlying(KeyValueStore<String, M, M> underlying) {
+    public void underlying(KeyValueStore<T, M, M> underlying) {
         this.underlying = underlying;
     }
 
     @Override
-    public KeyValueStore<String, M, M> underlying() {
+    public KeyValueStore<T, M, M> underlying() {
         return underlying;
     }
 }

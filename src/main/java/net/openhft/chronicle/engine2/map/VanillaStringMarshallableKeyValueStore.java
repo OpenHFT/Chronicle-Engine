@@ -175,12 +175,9 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     }
 
     @Override
-    public <E> void registerTopicSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query) {
-        kvStore.registerTopicSubscriber(eClass, new TopicSubscriber<E>() {
-            @Override
-            public void on(String name, E e) {
-                throw new UnsupportedOperationException("todo");
-            }
+    public <T, E> void registerTopicSubscriber(Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
+        kvStore.registerTopicSubscriber(eClass, (topic, message) -> {
+            throw new UnsupportedOperationException("todo");
         }, query);
         subscriptions.registerTopicSubscriber(eClass, subscriber, query);
     }
@@ -191,7 +188,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     }
 
     @Override
-    public <E> void unregisterTopicSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query) {
+    public <T, E> void unregisterTopicSubscriber(Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
         throw new UnsupportedOperationException("todo");
     }
 }

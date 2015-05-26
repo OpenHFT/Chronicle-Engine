@@ -13,7 +13,7 @@ import java.util.stream.Stream;
 /**
  * Created by peter on 22/05/15.
  */
-public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscriber<T> {
+public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscriber<String, T> {
     private final Asset parent;
     private final String name;
     private final Set<Subscriber<T>> subscribers = new CopyOnWriteArraySet<>();
@@ -56,11 +56,11 @@ public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscrib
     @Override
     public <E> void registerSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query) {
         subscribers.add((Subscriber) subscriber);
-        parent().registerTopicSubscriber(eClass, (TopicSubscriber<E>) this, query);
+        parent().registerTopicSubscriber(eClass, (TopicSubscriber<String, E>) this, query);
     }
 
     @Override
-    public <E> void registerTopicSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query) {
+    public <T, E> void registerTopicSubscriber(Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
         throw new UnsupportedOperationException("todo");
     }
 
@@ -68,11 +68,11 @@ public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscrib
     public <E> void unregisterSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query) {
         subscribers.remove((Subscriber) subscriber);
         if (subscribers.isEmpty())
-            parent().unregisterTopicSubscriber(eClass, (TopicSubscriber<E>) this, query);
+            parent().unregisterTopicSubscriber(eClass, (TopicSubscriber<String, E>) this, query);
     }
 
     @Override
-    public <E> void unregisterTopicSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query) {
+    public <T, E> void unregisterTopicSubscriber(Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
         throw new UnsupportedOperationException("todo");
     }
 
@@ -113,7 +113,7 @@ public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscrib
     }
 
     @Override
-    public void on(String name, T t) {
+    public void onMessage(String name, T t) {
         if (name.equals(this.name))
             subscribers.forEach(s -> s.on(t));
     }

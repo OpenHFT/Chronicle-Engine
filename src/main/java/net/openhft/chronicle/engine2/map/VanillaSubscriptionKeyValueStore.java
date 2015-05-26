@@ -40,7 +40,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     }
 
     @Override
-    public <E> void registerTopicSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query) {
+    public <T, E> void registerTopicSubscriber(Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
         subscriptions.registerTopicSubscriber(eClass, subscriber, query);
     }
 
@@ -50,7 +50,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     }
 
     @Override
-    public <E> void unregisterTopicSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query) {
+    public <T, E> void unregisterTopicSubscriber(Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
         subscriptions.unregisterTopicSubscriber(eClass, subscriber, query);
     }
 }

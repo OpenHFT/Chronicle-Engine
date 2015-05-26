@@ -64,7 +64,7 @@ public class ChassisTest {
         subscriber.on("Topic-1");
         replay(subscriber);
 
-        TopicPublisher<String> publisher = acquireTopicPublisher("map-name", String.class);
+        TopicPublisher<String, String> publisher = acquireTopicPublisher("map-name", String.class);
         publisher.publish("Topic-1", "Message-1");
         verify(subscriber);
         reset(subscriber);
@@ -124,7 +124,7 @@ public class ChassisTest {
         subscriber.on("Message-1");
         replay(subscriber);
 
-        TopicPublisher<String> publisher = acquireTopicPublisher("map-name", String.class);
+        TopicPublisher<String, String> publisher = acquireTopicPublisher("map-name", String.class);
         publisher.publish("Key-1", "Message-1");
         publisher.publish("Key-2", "Message-2");
         verify(subscriber);
@@ -151,9 +151,9 @@ public class ChassisTest {
         assertEquals(2, map.size());
 
         // test the bootstrap finds old keys
-        TopicSubscriber<String> subscriber = createMock(TopicSubscriber.class);
-        subscriber.on("Key-1", "Value-1");
-        subscriber.on("Key-2", "Value-2");
+        TopicSubscriber<String, String> subscriber = createMock(TopicSubscriber.class);
+        subscriber.onMessage("Key-1", "Value-1");
+        subscriber.onMessage("Key-2", "Value-2");
         replay(subscriber);
         registerTopicSubscriber("map-name?bootstrap=true", String.class, subscriber);
         verify(subscriber);
@@ -162,18 +162,18 @@ public class ChassisTest {
         assertEquals(2, map.size());
 
         // test the topic publish triggers events
-        subscriber.on("Topic-1", "Message-1");
+        subscriber.onMessage("Topic-1", "Message-1");
         replay(subscriber);
 
-        TopicPublisher<String> publisher = acquireTopicPublisher("map-name", String.class);
+        TopicPublisher<String, String> publisher = acquireTopicPublisher("map-name", String.class);
         publisher.publish("Topic-1", "Message-1");
         verify(subscriber);
         reset(subscriber);
         assertEquals(3, map.size());
 
-        subscriber.on("Hello", "World");
-        subscriber.on("Bye", "soon");
-        subscriber.on("Key-1", null);
+        subscriber.onMessage("Hello", "World");
+        subscriber.onMessage("Bye", "soon");
+        subscriber.onMessage("Key-1", null);
         replay(subscriber);
 
         // test plain puts trigger events
@@ -227,7 +227,7 @@ public class ChassisTest {
         subscriber.on(InsertedEvent.of("Topic-1", "Message-1"));
         replay(subscriber);
 
-        TopicPublisher<String> publisher = acquireTopicPublisher("map-name", String.class);
+        TopicPublisher<String, String> publisher = acquireTopicPublisher("map-name", String.class);
         publisher.publish("Key-1", "Message-1");
         publisher.publish("Topic-1", "Message-1");
         verify(subscriber);

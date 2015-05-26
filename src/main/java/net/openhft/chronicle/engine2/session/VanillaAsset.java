@@ -198,7 +198,7 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Override
-    public <E> void registerTopicSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query) {
+    public <T, E> void registerTopicSubscriber(Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
         Subscription sub = acquireView(Subscription.class, query);
         sub.registerTopicSubscriber(eClass, subscriber, query);
     }
@@ -211,7 +211,7 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Override
-    public <E> void unregisterTopicSubscriber(Class<E> eClass, TopicSubscriber<E> subscriber, String query) {
+    public <T, E> void unregisterTopicSubscriber(Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
         Subscription sub = getView(Subscription.class);
         if (sub != null)
             sub.unregisterTopicSubscriber(eClass, subscriber, query);

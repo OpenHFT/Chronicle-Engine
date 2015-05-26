@@ -41,7 +41,7 @@ public interface Session extends Closeable {
         return acquireAsset(parts[0], Publisher.class, eClass, null).acquireView(Publisher.class, eClass, parts[1]);
     }
 
-    default <E> TopicPublisher<E> acquireTopicPublisher(String name, Class<E> eClass) throws AssetNotFoundException {
+    default <T, E> TopicPublisher<T, E> acquireTopicPublisher(String name, Class<E> eClass) throws AssetNotFoundException {
         String[] parts = split2(name, '?');
         //noinspection unchecked
         return acquireAsset(parts[0], TopicPublisher.class, eClass, null).acquireView(TopicPublisher.class, eClass, parts[1]);
@@ -61,7 +61,7 @@ public interface Session extends Closeable {
         }
     }
 
-    default <E> void register(String name, Class<E> eClass, TopicSubscriber<E> subscriber) throws AssetNotFoundException {
+    default <T, E> void register(String name, Class<E> eClass, TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
         String[] parts = split2(name, '?');
         acquireAsset(parts[0], null, null, null).registerTopicSubscriber(eClass, subscriber, parts[1]);
     }
@@ -71,7 +71,7 @@ public interface Session extends Closeable {
         acquireAsset(parts[0], null, null, null).registerFactory(eClass, factory);
     }
 
-    default <E> void unregister(String name, Class<E> eClass, TopicSubscriber<E> subscriber) {
+    default <T, E> void unregister(String name, Class<E> eClass, TopicSubscriber<T, E> subscriber) {
         String[] parts = split2(name, '?');
         Asset asset = getAsset(parts[0]);
         if (asset != null) {
