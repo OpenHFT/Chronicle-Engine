@@ -240,7 +240,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     /**
      * Values.toArray contains all values
      */
-    @Ignore
+    @Ignore("broken tests")
     @Test(timeout = 50000)
     public void testValuesToArray() throws IOException {
         try (ChronicleMap map = map5()) {
@@ -259,7 +259,6 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     /**
      * entrySet.toArray contains all entries
      */
-    @Ignore
     @Test(timeout = 50000)
     public void testEntrySetToArray() throws IOException {
         try (ChronicleMap map = map5()) {
@@ -425,7 +424,6 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     /**
      * remove removes the correct key-value pair from the map
      */
-    @Ignore
     @Test(timeout = 50000)
     public void testRemove() throws IOException {
         try (ChronicleMap map = map5()) {
@@ -495,7 +493,6 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     /**
      * get(null) throws NPE
      */
-       @Ignore
     @Test(timeout = 50000)
     public void testGet_NullPointerException() throws IOException {
 
