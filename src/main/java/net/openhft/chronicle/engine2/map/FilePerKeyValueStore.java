@@ -9,7 +9,7 @@ import net.openhft.chronicle.engine2.api.FactoryContext;
 import net.openhft.chronicle.engine2.api.Subscriber;
 import net.openhft.chronicle.engine2.api.TopicSubscriber;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
-import net.openhft.chronicle.engine2.session.StringBytesStoreKeyValueStore;
+import net.openhft.chronicle.engine2.api.map.StringBytesStoreKeyValueStore;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;

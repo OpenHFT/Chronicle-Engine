@@ -3,7 +3,7 @@ package net.openhft.chronicle.engine2.session;
 import net.openhft.chronicle.engine2.api.*;
 import net.openhft.chronicle.engine2.api.map.*;
 import net.openhft.chronicle.engine2.map.*;
-import net.openhft.chronicle.engine2.pubsub.VanillaPublisher;
+import net.openhft.chronicle.engine2.pubsub.VanillaReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +17,7 @@ public class VanillaSession implements Session {
 
     public VanillaSession() {
         root.registerFactory(MapView.class, VanillaMapView::new);
+        root.registerFactory(StringMarshallableKeyValueStore.class, VanillaStringMarshallableKeyValueStore::new);
         root.registerFactory(SubscriptionKeyValueStore.class, VanillaSubscriptionKeyValueStore::new);
         root.registerFactory(EntrySetView.class, VanillaEntrySetView::new);
         root.registerFactory(KeyValueStore.class, VanillaKeyValueStore::new);
@@ -24,8 +25,8 @@ public class VanillaSession implements Session {
         root.registerFactory(Asset.class, VanillaAsset::new);
         root.registerFactory(SubAsset.class, VanillaSubAsset::new);
         root.registerFactory(TopicPublisher.class, VanillaTopicPublisher::new);
-        root.registerFactory(StringMarshallableKeyValueStore.class, VanillaStringMarshallableKeyValueStore::new);
-        root.registerFactory(Publisher.class, VanillaPublisher::new);
+        root.registerFactory(Publisher.class, VanillaReference::new);
+        root.registerFactory(Reference.class, VanillaReference::new);
         root.registerFactory(Subscription.class, f -> (Subscription) f.parent.acquireView(SubscriptionKeyValueStore.class, f.queryString()));
     }
 

@@ -48,6 +48,12 @@ public interface Session extends Closeable {
         return acquireAsset(parts[0], Publisher.class, eClass, null).acquireView(Publisher.class, eClass, parts[1]);
     }
 
+    default <E> Reference<E> acquireReference(String name, Class<E> eClass) throws AssetNotFoundException {
+        String[] parts = split2(name, '?');
+        //noinspection unchecked
+        return acquireAsset(parts[0], Reference.class, eClass, null).acquireView(Reference.class, eClass, parts[1]);
+    }
+
     default <T, E> TopicPublisher<T, E> acquireTopicPublisher(String name, Class<T> tClass, Class<E> eClass) throws AssetNotFoundException {
         String[] parts = split2(name, '?');
         //noinspection unchecked

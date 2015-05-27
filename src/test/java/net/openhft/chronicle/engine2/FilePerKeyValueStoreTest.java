@@ -2,14 +2,10 @@ package net.openhft.chronicle.engine2;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine2.api.Asset;
-import net.openhft.chronicle.engine2.api.map.KeyValueStore;
-import net.openhft.chronicle.engine2.api.map.MapEvent;
-import net.openhft.chronicle.engine2.api.map.MapEventListener;
+import net.openhft.chronicle.engine2.api.map.*;
 import net.openhft.chronicle.engine2.map.FilePerKeyValueStore;
 import net.openhft.chronicle.engine2.map.VanillaMapView;
 import net.openhft.chronicle.engine2.map.VanillaStringMarshallableKeyValueStore;
-import net.openhft.chronicle.engine2.session.StringBytesStoreKeyValueStore;
-import net.openhft.chronicle.engine2.session.StringMarshallableKeyValueStore;
 import net.openhft.chronicle.wire.*;
 import org.junit.BeforeClass;
 import org.junit.Test;

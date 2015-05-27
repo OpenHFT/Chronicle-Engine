@@ -315,7 +315,7 @@ public class VanillaAsset implements Asset, Closeable {
             KeyValueStore resource = kvStoreFactory.create(factoryContext(this).name(nameQuery[0]).queryString(nameQuery[1]).type(class1).type2(class2));
             return add(nameQuery[0], resource);
 
-        } else if ((assetClass == Subscriber.class || assetClass == Publisher.class) && item instanceof KeyValueStore) {
+        } else if ((assetClass == Subscriber.class || assetClass == Publisher.class || assetClass == Reference.class) && item instanceof KeyValueStore) {
             Factory<SubAsset> subAssetFactory = acquireFactory(SubAsset.class);
             SubAsset value = subAssetFactory.create(factoryContext(this).name(nameQuery[0]).queryString(nameQuery[1]));
             children.put(nameQuery[0], value);

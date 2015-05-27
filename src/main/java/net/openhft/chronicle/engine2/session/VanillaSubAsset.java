@@ -48,9 +48,9 @@ public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscrib
 
     @Override
     public <V> V acquireView(Class<V> vClass, Class class1, Class class2, String queryString) {
-        if (vClass == Publisher.class) {
+        if (vClass == Publisher.class || vClass == Reference.class) {
             MapView parentMap = parent.acquireView(MapView.class, String.class, class1, queryString);
-            return (V) parent.acquireFactory(Publisher.class).create(factoryContext(this).type(class1).name(name).item(parentMap));
+            return (V) parent.acquireFactory(vClass).create(factoryContext(this).type(class1).name(name).item(parentMap));
         }
         throw new UnsupportedOperationException("todo vClass: " + vClass + ", class1: " + class1 + ", class2: " + class2 + ", queryString: " + queryString);
     }

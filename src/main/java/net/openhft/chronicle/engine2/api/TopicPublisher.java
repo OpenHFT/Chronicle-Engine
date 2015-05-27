@@ -7,4 +7,6 @@ import net.openhft.chronicle.engine2.api.map.KeyValueStore;
  */
 public interface TopicPublisher<T, M> extends View, Assetted<KeyValueStore<T, M, M>> {
     void publish(T topic, M message);
+
+    void registerSubscriber(TopicSubscriber<T, M> topicSubscriber);
 }

@@ -1,9 +1,6 @@
 package net.openhft.chronicle.engine2;
 
-import net.openhft.chronicle.engine2.api.Publisher;
-import net.openhft.chronicle.engine2.api.Subscriber;
-import net.openhft.chronicle.engine2.api.TopicPublisher;
-import net.openhft.chronicle.engine2.api.TopicSubscriber;
+import net.openhft.chronicle.engine2.api.*;
 import net.openhft.chronicle.engine2.api.map.MapEvent;
 import org.junit.Before;
 import org.junit.Test;
@@ -93,6 +90,31 @@ public class ChassisRFCTest {
     }
 
     @Test
+    public void referenceToATopic() {
+        Map<String, String> map = acquireMap("group", String.class, String.class);
+        Reference<String> reference = acquireReference("group/topic", String.class);
+
+        List<String> values = new ArrayList<>();
+        Subscriber<String> subscriber = values::add;
+        registerSubscriber("group/topic", String.class, subscriber);
+
+        List<String> values2 = new ArrayList<>();
+        Subscriber<String> subscriber2 = values2::add;
+        reference.registerSubscriber(subscriber2);
+
+        reference.set("Message-1");
+        assertEquals("Message-1", reference.get());
+
+        assertEquals("Message-1", map.get("topic"));
+
+        reference.publish("Message-2");
+        assertEquals("Message-2", reference.get());
+        assertEquals("Message-2", map.get("topic"));
+        assertEquals("[Message-1, Message-2]", values.toString());
+        assertEquals("[Message-1, Message-2]", values2.toString());
+    }
+
+    @Test
     public void publishToAnyTopicInAGroup() {
         Map<String, String> map = acquireMap("group", String.class, String.class);
         TopicPublisher<String, String> publisher = acquireTopicPublisher("group", String.class, String.class);
@@ -100,12 +122,17 @@ public class ChassisRFCTest {
         TopicSubscriber<String, String> subscriber = (topic, message) -> values.add("{name: " + topic + ", message: " + message + "}");
         registerTopicSubscriber("group", String.class, String.class, subscriber);
 
+        List<String> values2 = new ArrayList<>();
+        TopicSubscriber<String, String> subscriber2 = (topic, message) -> values2.add("{name: " + topic + ", message: " + message + "}");
+        publisher.registerSubscriber(subscriber2);
+
         publisher.publish("topic-1", "Message-1");
         assertEquals("Message-1", map.get("topic-1"));
 
         publisher.publish("topic-1", "Message-2");
         assertEquals("Message-2", map.get("topic-1"));
         assertEquals("[{name: topic-1, message: Message-1}, {name: topic-1, message: Message-2}]", values.toString());
+        assertEquals("[{name: topic-1, message: Message-1}, {name: topic-1, message: Message-2}]", values2.toString());
     }
 
     @Test

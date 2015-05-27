@@ -5,4 +5,6 @@ package net.openhft.chronicle.engine2.api;
  */
 public interface Publisher<E> {
     void publish(E event);
+
+    void registerSubscriber(Subscriber<E> subscriber);
 }

@@ -36,6 +36,10 @@ public enum Chassis {
         return session.acquireMap(name, kClass, vClass);
     }
 
+    public static <E> Reference<E> acquireReference(String name, Class<E> eClass) throws AssetNotFoundException {
+        return session.acquireReference(name, eClass);
+    }
+
     public static <E> Publisher<E> acquirePublisher(String name, Class<E> eClass) throws AssetNotFoundException {
         return session.acquirePublisher(name, eClass);
     }
