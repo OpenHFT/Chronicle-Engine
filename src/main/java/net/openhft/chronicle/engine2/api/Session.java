@@ -56,7 +56,7 @@ public interface Session extends Closeable {
 
     default <E> void registerSubscriber(String name, Class<E> eClass, Subscriber<E> subscriber) throws AssetNotFoundException {
         String[] parts = split2(name, '?');
-        acquireAsset(parts[0], eClass, null, null)
+        acquireAsset(parts[0], Subscriber.class, eClass, null)
                 .registerSubscriber(eClass, subscriber, parts[1]);
     }
 

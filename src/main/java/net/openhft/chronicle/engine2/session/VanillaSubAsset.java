@@ -3,12 +3,15 @@ package net.openhft.chronicle.engine2.session;
 import net.openhft.chronicle.core.util.Closeable;
 import net.openhft.chronicle.engine2.api.*;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
+import net.openhft.chronicle.engine2.api.map.MapView;
 import net.openhft.chronicle.engine2.api.map.SubAsset;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.stream.Stream;
+
+import static net.openhft.chronicle.engine2.api.FactoryContext.factoryContext;
 
 /**
  * Created by peter on 22/05/15.
@@ -45,7 +48,11 @@ public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscrib
 
     @Override
     public <V> V acquireView(Class<V> vClass, Class class1, Class class2, String queryString) {
-        throw new UnsupportedOperationException("todo");
+        if (vClass == Publisher.class) {
+            MapView parentMap = parent.acquireView(MapView.class, String.class, class1, queryString);
+            return (V) parent.acquireFactory(Publisher.class).create(factoryContext(this).type(class1).name(name).item(parentMap));
+        }
+        throw new UnsupportedOperationException("todo vClass: " + vClass + ", class1: " + class1 + ", class2: " + class2 + ", queryString: " + queryString);
     }
 
     @Override

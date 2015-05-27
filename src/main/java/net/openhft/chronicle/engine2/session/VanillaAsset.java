@@ -174,10 +174,11 @@ public class VanillaAsset implements Asset, Closeable {
                 return (V) view;
             }
             if (vClass == TopicPublisher.class) {
-                SubscriptionKeyValueStore subscription = acquireView(SubscriptionKeyValueStore.class, class1, class2, queryString);
-                View view = viewMap.computeIfAbsent(TopicPublisher.class, aClass ->
-                        acquireFactory(TopicPublisher.class)
-                                .create(factoryContext(VanillaAsset.this).queryString(queryString).item(subscription)));
+                View view = viewMap.computeIfAbsent(TopicPublisher.class, aClass -> {
+                    SubscriptionKeyValueStore subscription = acquireView(SubscriptionKeyValueStore.class, class1, class2, queryString);
+                    return acquireFactory(TopicPublisher.class)
+                            .create(factoryContext(VanillaAsset.this).queryString(queryString).item(subscription));
+                });
                 return (V) view;
             }
         }
@@ -314,7 +315,7 @@ public class VanillaAsset implements Asset, Closeable {
             KeyValueStore resource = kvStoreFactory.create(factoryContext(this).name(nameQuery[0]).queryString(nameQuery[1]).type(class1).type2(class2));
             return add(nameQuery[0], resource);
 
-        } else if (assetClass == String.class && item instanceof KeyValueStore) {
+        } else if ((assetClass == Subscriber.class || assetClass == Publisher.class) && item instanceof KeyValueStore) {
             Factory<SubAsset> subAssetFactory = acquireFactory(SubAsset.class);
             SubAsset value = subAssetFactory.create(factoryContext(this).name(nameQuery[0]).queryString(nameQuery[1]));
             children.put(nameQuery[0], value);
@@ -327,7 +328,8 @@ public class VanillaAsset implements Asset, Closeable {
             return asset;
 
         } else {
-            throw new UnsupportedOperationException("todo name:" + name + " asset " + assetClass);
+            throw new UnsupportedOperationException("todo name: " + name + ", assetClass: " + assetClass
+                    + ", class1: " + class1 + ", class2: " + class2);
         }
     }
 
