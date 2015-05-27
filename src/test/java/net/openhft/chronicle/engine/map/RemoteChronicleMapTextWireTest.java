@@ -503,7 +503,6 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     /**
      * containsKey(null) throws NPE
      */
-    @Ignore("broken exception parsing")
     @Test(timeout = 50000, expected = NullPointerException.class)
     public void testContainsKey_NullPointerException() throws IOException {
         try (ChronicleMap c = newIntString()) {
