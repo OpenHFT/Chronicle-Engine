@@ -53,7 +53,7 @@ import static org.junit.Assert.assertEquals;
  * @author Rob Austin.
  */
 @RunWith(value = Parameterized.class)
-@Ignore("todo fix")
+
 public class MapClientTest extends ThreadMonitoringTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(MapClientTest.class);
@@ -113,7 +113,7 @@ public class MapClientTest extends ThreadMonitoringTest {
         });
     }
 
-    @Ignore("fails on team city - takes too long !")
+    @Ignore("Unsupported type :!!seqmap[")
     @Test
     public void testMapsAsValues() throws IOException, InterruptedException {
 
