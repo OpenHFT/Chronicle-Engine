@@ -265,8 +265,13 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
     public V remove(Object key) {
         if (key == null)
             throw keyNotNullNPE();
-        final EventId eventId = removeReturnsNull ? remove : getAndRemove;
-        return this.proxyReturnTypedObject(eventId, null, vClass, key);
+
+        if (removeReturnsNull) {
+            sendEventAsync(remove, toParameters(remove, key));
+            return null;
+        } else {
+            return proxyReturnTypedObject(getAndRemove, null, vClass, key);
+        }
     }
 
     @Override
@@ -311,7 +316,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
             read.type(type);
             return read.applyToMarshallable(w -> {
                 final String csp1 = csp(w).toString();
-                final long cid0 =  CoreFields.cid(w);
+                final long cid0 = CoreFields.cid(w);
                 cidToCsp.put(cid0, csp1);
                 return cid0;
             });

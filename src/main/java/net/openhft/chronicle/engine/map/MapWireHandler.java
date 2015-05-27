@@ -190,11 +190,11 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                     });
                     return;
                 }
+
                 if (remove.contentEquals(eventName)) {
                     final K key = wireToK.apply(valueIn);
                     nullCheck(key);
                     map.remove(key);
-                    vToWire.accept(outWire.writeEventName(reply), null);
                     return;
                 }
 

@@ -44,7 +44,7 @@ import static org.junit.Assert.*;
  * Other contributors include Andrew Wright, Jeffrey Hayes,
  * Pat Fisher, Mike Judd.
  */
-@Ignore("todo fix")
+
 public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
 
     @Rule
@@ -425,6 +425,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     /**
      * remove removes the correct key-value pair from the map
      */
+    @Ignore
     @Test(timeout = 50000)
     public void testRemove() throws IOException {
         try (ChronicleMap map = map5()) {
