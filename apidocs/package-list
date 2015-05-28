@@ -9,5 +9,6 @@ net.openhft.chronicle.engine2
 net.openhft.chronicle.engine2.api
 net.openhft.chronicle.engine2.api.map
 net.openhft.chronicle.engine2.map
+net.openhft.chronicle.engine2.pubsub
 net.openhft.chronicle.engine2.session
 net.openhft.chronicle.map
