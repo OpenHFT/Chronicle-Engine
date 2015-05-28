@@ -178,11 +178,11 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     }
 
     @Override
-    public <T, E> void registerTopicSubscriber(Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
-        kvStore.registerTopicSubscriber(tClass, eClass, (topic, message) -> {
+    public <T, E> void registerTopicSubscriber(RequestContext rc, TopicSubscriber<T, E> subscriber) {
+        kvStore.registerTopicSubscriber(rc, (T topic, E message) -> {
             throw new UnsupportedOperationException("todo");
-        }, query);
-        subscriptions.registerTopicSubscriber(tClass, eClass, subscriber, query);
+        });
+        subscriptions.registerTopicSubscriber(rc, subscriber);
     }
 
     @Override

@@ -81,7 +81,7 @@ public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscrib
     }
 
     @Override
-    public <T, E> void registerTopicSubscriber(Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
+    public <T, E> void registerTopicSubscriber(RequestContext rc, TopicSubscriber<T, E> subscriber) {
         throw new UnsupportedOperationException("todo");
     }
 

@@ -199,11 +199,11 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     }
 
     @Override
-    public <T, E> void registerTopicSubscriber(Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
-        kvStore.registerTopicSubscriber(tClass, eClass, (topic, message) -> {
+    public <T, E> void registerTopicSubscriber(RequestContext rc, TopicSubscriber<T, E> subscriber) {
+        kvStore.registerTopicSubscriber(rc, (T topic, E message) -> {
             subscriber.onMessage(topic, (E) StringUtils.toString(message));
-        }, query);
-        subscriptions.registerTopicSubscriber(tClass, eClass, subscriber, query);
+        });
+        subscriptions.registerTopicSubscriber(rc, subscriber);
     }
 
     @Override

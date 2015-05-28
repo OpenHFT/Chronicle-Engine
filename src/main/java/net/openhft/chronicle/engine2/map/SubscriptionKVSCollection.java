@@ -89,8 +89,8 @@ public class SubscriptionKVSCollection<K, MV, V> implements Subscription {
     }
 
     @Override
-    public <T, E> void registerTopicSubscriber(Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
-        boolean bootstrap = query.contains("bootstrap=true");
+    public <T, E> void registerTopicSubscriber(RequestContext rc, TopicSubscriber<T, E> subscriber) {
+        boolean bootstrap = rc.bootstrap();
         topicSubscribers.add((TopicSubscriber<K, V>) subscriber);
         if (bootstrap) {
             for (int i = 0; i < kvStore.segments(); i++)

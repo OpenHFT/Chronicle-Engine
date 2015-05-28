@@ -279,9 +279,9 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Override
-    public <T, E> void registerTopicSubscriber(Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
-        Subscription sub = acquireView(Subscription.class, tClass, eClass, query);
-        sub.registerTopicSubscriber(tClass, eClass, subscriber, query);
+    public <T, E> void registerTopicSubscriber(RequestContext rc, TopicSubscriber<T, E> subscriber) {
+        Subscription sub = acquireView(Subscription.class, rc);
+        sub.registerTopicSubscriber(rc, subscriber);
     }
 
     @Override

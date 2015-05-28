@@ -45,8 +45,8 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     }
 
     @Override
-    public <T, E> void registerTopicSubscriber(Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
-        subscriptions.registerTopicSubscriber(tClass, eClass, subscriber, query);
+    public <T, E> void registerTopicSubscriber(RequestContext rc, TopicSubscriber<T, E> subscriber) {
+        subscriptions.registerTopicSubscriber(rc, subscriber);
     }
 
     @Override
