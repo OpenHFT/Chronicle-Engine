@@ -60,8 +60,7 @@ public class RequestContext<I extends Assetted> {
         parser.register(() -> "keyType", v -> v.typeLiteral(this::lookupType, x -> this.type = x));
         parser.register(() -> "valueType", v -> v.typeLiteral(this::lookupType, x -> this.type2 = x));
         parser.register(() -> "elementType", v -> v.typeLiteral(this::lookupType, x -> this.type = x));
-        parser.register(WireParser.DEFAULT, v -> {
-        });
+        parser.register(WireParser.DEFAULT, ValueIn.DISCARD);
         Bytes bytes = Bytes.from(queryString);
         QueryWire wire = new QueryWire(bytes);
         while (bytes.remaining() > 0)
