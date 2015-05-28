@@ -275,7 +275,7 @@ public class ChassisTest {
     public void generateInterceptor() {
         Asset asset = acquireAsset("", null, null, null);
 
-        asset.registerFactory(MyInterceptor.class, (FactoryContext context) -> {
+        asset.registerFactory(MyInterceptor.class, (RequestContext context) -> {
             assertEquals(MyInterceptor.class, context.type());
             return new MyInterceptor();
         });

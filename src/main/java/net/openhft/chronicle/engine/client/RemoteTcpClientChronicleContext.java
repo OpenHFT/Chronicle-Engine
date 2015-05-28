@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.engine.client;
 
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.util.Closeable;
 import net.openhft.chronicle.engine.ChronicleContext;
 import net.openhft.chronicle.engine.MapEventListener;
@@ -30,6 +31,7 @@ import net.openhft.chronicle.wire.Wire;
 import net.openhft.lang.model.constraints.NotNull;
 
 import java.io.IOException;
+import java.util.function.Function;
 import java.util.logging.Logger;
 
 /**
@@ -41,18 +43,18 @@ public class RemoteTcpClientChronicleContext implements ChronicleContext, Closea
 
     public RemoteTcpClientChronicleContext(@NotNull final String hostname,
                                            int port,
-                                           byte identifier, Class<? extends Wire> wireClass)
+                                           byte identifier, Function<Bytes, Wire> wireType)
             throws IOException {
         this.remoteClientServiceLocator = new RemoteClientServiceLocator(
                 hostname,
                 port,
                 identifier,
-                Wire.bytesToWire(wireClass));
+                wireType);
     }
 
   /*   @Override
-    public ChronicleQueue getQueue(String name) {
-        return remoteClientServiceLocator.getService(ChronicleQueue.class, name);
+    public ChronicleQueue getQueue(String fullName) {
+        return remoteClientServiceLocator.getService(ChronicleQueue.class, fullName);
     }*/
 
     @Override

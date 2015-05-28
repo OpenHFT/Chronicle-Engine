@@ -40,7 +40,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     private Asset asset;
 
 
-    public VanillaStringStringKeyValueStore(FactoryContext<SubscriptionKeyValueStore<String, Bytes, BytesStore>> context) {
+    public VanillaStringStringKeyValueStore(RequestContext<SubscriptionKeyValueStore<String, Bytes, BytesStore>> context) {
         this(context.parent(), context.item());
     }
 
@@ -54,7 +54,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         return new VanillaStringStringKeyValueStore(asset, View.forSession(kvStore, session, asset));
     }
 
-    static <T> BiFunction<T, Bytes, Bytes> toBytes(FactoryContext context, Class type) {
+    static <T> BiFunction<T, Bytes, Bytes> toBytes(RequestContext context, Class type) {
         if (type == String.class)
             return (t, bytes) -> (Bytes) bytes.append((String) t);
         if (Marshallable.class.isAssignableFrom(type))
@@ -77,7 +77,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         return t;
     }
 
-    private <T> BiFunction<BytesStore, T, T> fromBytes(FactoryContext context, Class type) {
+    private <T> BiFunction<BytesStore, T, T> fromBytes(RequestContext context, Class type) {
         if (type == String.class)
             return (t, bytes) -> (T) (bytes == null ? null : bytes.toString());
         if (Marshallable.class.isAssignableFrom(type))

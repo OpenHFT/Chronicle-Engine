@@ -13,7 +13,7 @@ public class VanillaTopicPublisher<T, M> implements TopicPublisher<T, M> {
     private Asset asset;
     private KeyValueStore<T, M, M> underlying;
 
-    public VanillaTopicPublisher(FactoryContext<KeyValueStore<T, M, M>> context) {
+    public VanillaTopicPublisher(RequestContext<KeyValueStore<T, M, M>> context) {
         this(context.parent(), context.type(), context.type2(), context.item());
     }
 

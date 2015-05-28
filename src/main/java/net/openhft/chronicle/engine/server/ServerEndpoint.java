@@ -40,7 +40,7 @@ public class ServerEndpoint implements Closeable {
 
     private static final Logger LOG = LoggerFactory.getLogger(ServerEndpoint.class);
 
-    private final Function<Bytes, Wire> byteToWire;
+    private final Function<Bytes, Wire> wireType;
     private EventGroup eg = new EventGroup();
 
     private AcceptorEventHandler eah;
@@ -49,18 +49,17 @@ public class ServerEndpoint implements Closeable {
 
     public ServerEndpoint(byte localIdentifier,
                           @NotNull final ChronicleEngine chronicleEngine,
-                          @NotNull final Class<? extends Wire> wireClass) throws IOException {
-        this(0, localIdentifier, chronicleEngine, wireClass);
+                          @NotNull final Function<Bytes, Wire> wireType) throws IOException {
+        this(0, localIdentifier, chronicleEngine, wireType);
     }
 
     public ServerEndpoint(int port,
                           byte localIdentifier,
                           @NotNull final ChronicleEngine chronicleEngine,
-                          @NotNull final Class<? extends Wire> wireClass) throws IOException {
+                          @NotNull final Function<Bytes, Wire> wireType) throws IOException {
 
         this.chronicleEngine = chronicleEngine;
-
-        this.byteToWire = Wire.bytesToWire(wireClass);
+        this.wireType = wireType;
 
         start(port);
     }
@@ -73,7 +72,7 @@ public class ServerEndpoint implements Closeable {
             final Map<Long, String> cidToCsp = new HashMap<>();
 
             try {
-                return new EngineWireHandler(cidToCsp, chronicleEngine, byteToWire);
+                return new EngineWireHandler(cidToCsp, chronicleEngine, wireType);
             } catch (IOException e) {
                 LOG.error("", e);
             }

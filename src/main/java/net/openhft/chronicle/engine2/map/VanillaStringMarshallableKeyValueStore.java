@@ -39,7 +39,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     private SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore;
     private Asset asset;
 
-    public VanillaStringMarshallableKeyValueStore(FactoryContext<SubscriptionKeyValueStore<String, Bytes, BytesStore>> context) {
+    public VanillaStringMarshallableKeyValueStore(RequestContext<SubscriptionKeyValueStore<String, Bytes, BytesStore>> context) {
         this(context.parent(), context.type2(), context.item(), context.wireType());
     }
 

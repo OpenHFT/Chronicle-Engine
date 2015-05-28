@@ -11,7 +11,7 @@ import net.openhft.chronicle.engine2.session.LocalSession;
 public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValueStore<K, MV, V> implements SubscriptionKeyValueStore<K, MV, V> {
     final SubscriptionKVSCollection<K, MV, V> subscriptions = new SubscriptionKVSCollection<>(this);
 
-    public VanillaSubscriptionKeyValueStore(FactoryContext<KeyValueStore<K, MV, V>> context) {
+    public VanillaSubscriptionKeyValueStore(RequestContext<KeyValueStore<K, MV, V>> context) {
         this(context.item());
     }
 

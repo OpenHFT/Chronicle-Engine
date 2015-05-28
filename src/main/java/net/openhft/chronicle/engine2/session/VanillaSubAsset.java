@@ -11,7 +11,7 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.stream.Stream;
 
-import static net.openhft.chronicle.engine2.api.FactoryContext.factoryContext;
+import static net.openhft.chronicle.engine2.api.RequestContext.requestContext;
 
 /**
  * Created by peter on 22/05/15.
@@ -21,7 +21,7 @@ public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscrib
     private final String name;
     private final Set<Subscriber<T>> subscribers = new CopyOnWriteArraySet<>();
 
-    VanillaSubAsset(FactoryContext context) {
+    VanillaSubAsset(RequestContext context) {
         this(context.parent(), context.name());
     }
 
@@ -59,7 +59,7 @@ public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscrib
     public <V> V acquireView(Class<V> vClass, Class class1, Class class2, String queryString) {
         if (vClass == Publisher.class || vClass == Reference.class) {
             MapView parentMap = parent.acquireView(MapView.class, String.class, class1, queryString);
-            return (V) parent.acquireFactory(vClass).create(factoryContext(this).type(class1).name(name).item(parentMap));
+            return (V) parent.acquireFactory(vClass).create(requestContext(this).type(class1).fullName(name).item(parentMap));
         }
         throw new UnsupportedOperationException("todo vClass: " + vClass + ", class1: " + class1 + ", class2: " + class2 + ", queryString: " + queryString);
     }

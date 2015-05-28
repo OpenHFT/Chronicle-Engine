@@ -56,7 +56,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     }
 
     static ChronicleMap<Integer, String> newIntString() throws IOException {
-        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier(Integer.class, String.class, new ChronicleEngine(), BinaryWire.class);
+        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(Integer.class, String.class, new ChronicleEngine(), BinaryWire::new);
 
         ChronicleMap map = remoteMapSupplier.get();
         final ChronicleMap spy = Mockito.spy(map);
@@ -72,7 +72,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     static ChronicleMap<CharSequence, CharSequence> newStrStrMap() throws
             IOException {
 
-        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier(CharSequence.class, CharSequence.class, new ChronicleEngine(), BinaryWire.class);
+        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(CharSequence.class, CharSequence.class, new ChronicleEngine(), BinaryWire::new);
         final ChronicleMap spy = Mockito.spy(remoteMapSupplier.get());
 
         Mockito.doAnswer(invocationOnMock -> {
@@ -84,9 +84,8 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     }
 
     static ChronicleMap<byte[], byte[]> newByteArrayMap() throws IOException {
-        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier(byte[]
-                .class, byte[]
-                .class, new ChronicleEngine(), BinaryWire.class);
+        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(
+                byte[].class, byte[].class, new ChronicleEngine(), BinaryWire::new);
         final ChronicleMap spy = Mockito.spy(remoteMapSupplier.get());
 
         Mockito.doAnswer(invocationOnMock -> {

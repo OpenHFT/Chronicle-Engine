@@ -32,7 +32,6 @@ import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.wire.TextWire;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.mockito.Mockito;
 
 import java.io.IOException;
@@ -143,8 +142,8 @@ public class GuavaEngineTest extends TestCase {
 
         RemoteMapSupplier remoteMapSupplierTemp = null;
         try {
-            remoteMapSupplierTemp = new RemoteMapSupplier(CharSequence.class, CharSequence.class,
-                    new ChronicleEngine(), TextWire.class);
+            remoteMapSupplierTemp = new RemoteMapSupplier<>(CharSequence.class, CharSequence.class,
+                    new ChronicleEngine(), TextWire::new);
         } catch (IOException e) {
             e.printStackTrace();
         }

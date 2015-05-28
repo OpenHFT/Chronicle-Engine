@@ -1,7 +1,7 @@
 package net.openhft.chronicle.engine2.map;
 
 import net.openhft.chronicle.engine2.api.Asset;
-import net.openhft.chronicle.engine2.api.FactoryContext;
+import net.openhft.chronicle.engine2.api.RequestContext;
 import net.openhft.chronicle.engine2.api.View;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.MapView;
@@ -20,10 +20,8 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
     private Asset asset;
     private KeyValueStore<K, MV, V> kvStore;
 
-    public VanillaMapView(FactoryContext<KeyValueStore<K, MV, V>> context) {
-        this(context.parent(), context.item(),
-                context.queryString().toLowerCase().contains("putreturnsnull=true"),
-                context.queryString().toLowerCase().contains("removereturnsnull=true"));
+    public VanillaMapView(RequestContext<KeyValueStore<K, MV, V>> context) {
+        this(context.parent(), context.item(), context.putReturnsNull(), context.removeReturnsNull());
     }
 
     public VanillaMapView(Asset asset, KeyValueStore<K, MV, V> kvStore, boolean putReturnsNull, boolean removeReturnsNull) {

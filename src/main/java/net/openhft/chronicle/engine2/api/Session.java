@@ -8,13 +8,18 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
 import static net.openhft.chronicle.core.util.StringUtils.split2;
+import static net.openhft.chronicle.engine2.api.RequestContext.requestContext;
 
 /**
  * Created by peter on 22/05/15.
  */
 public interface Session extends Closeable {
     @NotNull
-    <A> Asset acquireAsset(String name, Class<A> assetClass, Class class1, Class class2) throws AssetNotFoundException;
+    default <A> Asset acquireAsset(String name, Class<A> assetClass, Class class1, Class class2) throws AssetNotFoundException {
+        return acquireAsset(requestContext(name).assetType(assetClass).type(class1).type2(class2));
+    }
+
+    <A> Asset acquireAsset(RequestContext request) throws AssetNotFoundException;
 
     @Nullable
     Asset getAsset(String name);

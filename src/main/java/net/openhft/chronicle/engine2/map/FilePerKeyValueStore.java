@@ -24,13 +24,12 @@ import java.util.stream.Stream;
 
 /**
  * A {@link Map} implementation that stores each entry as a file in a
- * directory. The <code>key</code> is the file name and the <code>value</code>
+ * directory. The <code>key</code> is the file fullName and the <code>value</code>
  * is the contents of the file.
  * <p>
  * The class is effectively an abstraction over a directory in the file system.
  * Therefore when the underlying files are changed an event will be fired to those
  * registered for notifications.
- * <p>
  * <p>
  * Updates will be fired every time the file is saved but will be suppressed
  * if the value has not changed.  To avoid temporary files (e.g. if edited in vi)
@@ -50,7 +49,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     private volatile boolean closed = false;
     private Asset asset;
 
-    public FilePerKeyValueStore(FactoryContext context) throws IORuntimeException {
+    public FilePerKeyValueStore(RequestContext context) throws IORuntimeException {
         this(context.type(), context.basePath(), context.name());
     }
 
@@ -337,7 +336,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
                     continue;
                 }
 
-                // get file name
+                // get file fullName
                 WatchEvent<Path> ev = (WatchEvent<Path>) event;
                 Path fileName = ev.context();
                 String mapKey = fileName.toString();
