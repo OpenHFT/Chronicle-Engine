@@ -106,13 +106,13 @@ public class LocalAsset implements Asset, Assetted, Closeable {
     }
 
     @Override
-    public <I> I acquireView(Class<I> vClass, Class class1, Class class2, String queryString) {
+    public <V> V acquireView(Class<V> vClass, RequestContext rc) {
         viewMap.computeIfAbsent(vClass, vc -> {
-            I i = underlying.acquireView(vClass, class1, class2, queryString);
+            V i = underlying.acquireView(vClass, rc);
             View i2 = (View) View.forSession(i, session, this);
             return i2;
         });
-        throw new UnsupportedOperationException("todo vClass: " + vClass + ", class1: " + class1 + ", class2: " + class2 + ", query: " + queryString);
+        throw new UnsupportedOperationException("todo vClass: " + vClass + ", rc: " + rc);
     }
 
     @Override

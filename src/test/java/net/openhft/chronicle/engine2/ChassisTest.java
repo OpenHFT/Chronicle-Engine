@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 import static net.openhft.chronicle.engine2.Chassis.*;
+import static net.openhft.chronicle.engine2.api.RequestContext.requestContext;
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
 
@@ -268,7 +269,7 @@ public class ChassisTest {
     public void noInterceptor() {
         Asset asset = acquireAsset("", null, null, null);
 
-        asset.acquireView(MyInterceptor.class);
+        asset.acquireView(requestContext("").assetType(MyInterceptor.class));
     }
 
     @Test
@@ -279,8 +280,8 @@ public class ChassisTest {
             assertEquals(MyInterceptor.class, context.type());
             return new MyInterceptor();
         });
-        MyInterceptor mi = asset.acquireView(MyInterceptor.class);
-        MyInterceptor mi2 = asset.acquireView(MyInterceptor.class);
+        MyInterceptor mi = asset.acquireView(requestContext("").assetType(MyInterceptor.class));
+        MyInterceptor mi2 = asset.acquireView(requestContext("").assetType(MyInterceptor.class));
         assertNotNull(mi);
         assertSame(mi, mi2);
     }

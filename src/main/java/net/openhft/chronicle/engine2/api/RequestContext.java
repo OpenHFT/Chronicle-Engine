@@ -196,4 +196,22 @@ public class RequestContext<I extends Assetted> {
     public boolean bootstrap() {
         return bootstrap;
     }
+
+    @Override
+    public String toString() {
+        return "RequestContext{" +
+                "pathName='" + pathName + '\'' +
+                ", name='" + name + '\'' +
+                ", parent=" + parent +
+                ", assetType=" + assetType +
+                ", type=" + type +
+                ", type2=" + type2 +
+                ", item=" + item +
+                ", basePath='" + basePath + '\'' +
+                ", wireType=" + wireType +
+                ", putReturnsNull=" + putReturnsNull +
+                ", removeReturnsNull=" + removeReturnsNull +
+                ", bootstrap=" + bootstrap +
+                '}';
+    }
 }

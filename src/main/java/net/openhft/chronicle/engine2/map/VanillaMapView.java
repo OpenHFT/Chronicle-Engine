@@ -5,11 +5,14 @@ import net.openhft.chronicle.engine2.api.RequestContext;
 import net.openhft.chronicle.engine2.api.View;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.MapView;
+import net.openhft.chronicle.engine2.api.set.EntrySet;
 import net.openhft.chronicle.engine2.session.LocalSession;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.AbstractMap;
 import java.util.Set;
+
+import static net.openhft.chronicle.engine2.api.RequestContext.requestContext;
 
 /**
  * Created by peter on 22/05/15.
@@ -87,7 +90,7 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
     @Override
     public Set<Entry<K, V>> entrySet() {
         //noinspection unchecked
-        return asset.acquireView(Set.class, Entry.class, "");
+        return asset.acquireView(requestContext(asset.fullName()).assetType(EntrySet.class));
     }
 
     @Override

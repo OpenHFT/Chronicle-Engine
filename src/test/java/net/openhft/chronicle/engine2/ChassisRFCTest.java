@@ -3,11 +3,13 @@ package net.openhft.chronicle.engine2;
 import net.openhft.chronicle.engine2.api.*;
 import net.openhft.chronicle.engine2.api.map.MapEvent;
 import net.openhft.chronicle.engine2.session.VanillaSession;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 import static net.openhft.chronicle.engine2.Chassis.*;
 import static org.junit.Assert.assertEquals;
@@ -18,17 +20,24 @@ import static org.junit.Assert.assertEquals;
 @RunWith(Parameterized.class)
 public class ChassisRFCTest {
 
+    private final Supplier<Session> sessionSupplier;
+
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
-                new Object[]{new VanillaSession()},
-                new Object[]{new VanillaSession()}
+                new Object[]{(Supplier<Session>) VanillaSession::new},
+                new Object[]{(Supplier<Session>) VanillaSession::new}
 //                new Object[]{new LocalSession(new VanillaSession())}
         );
     }
 
-    public ChassisRFCTest(Session session) {
-        Chassis.defaultSession(session);
+    public ChassisRFCTest(Supplier<Session> sessionSupplier) {
+        this.sessionSupplier = sessionSupplier;
+    }
+
+    @Before
+    public void setUpTest() {
+        Chassis.defaultSession(sessionSupplier.get());
     }
 
     @Test
@@ -60,7 +69,8 @@ public class ChassisRFCTest {
         map.put("Key-1", "Value-2");
         map.remove("Key-1");
 
-        assertEquals("[{name: Key-1, message: Value-2}, " +
+        assertEquals("[{name: Key-1, message: Value-1}, " +
+                        "{name: Key-1, message: Value-2}, " +
                         "{name: Key-1, message: null}]",
                 values.toString());
     }

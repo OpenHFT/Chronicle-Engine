@@ -76,7 +76,7 @@ public class FilePerKeyValueStoreTest {
         };
         Asset asset = getAsset(NAME);
         registerSubscriber(NAME, MapEvent.class, e -> e.apply(listener));
-        StringBytesStoreKeyValueStore sbskvStore = asset.acquireView(StringBytesStoreKeyValueStore.class);
+        StringBytesStoreKeyValueStore sbskvStore = asset.getView(StringBytesStoreKeyValueStore.class);
         sbskvStore.registerSubscriber(RequestContext.requestContext("").type(MapEvent.class), System.out::println);
 
         map.put("testA", tm);

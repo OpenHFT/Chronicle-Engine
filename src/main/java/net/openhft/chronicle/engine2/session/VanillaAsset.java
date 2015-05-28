@@ -71,6 +71,17 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Override
+    public <V> V acquireView(Class<V> vClass, RequestContext rc) {
+        if (rc.type2() == null) {
+            if (rc.type() == null)
+                return (V) acquireView(vClass, rc.toString());
+            else
+                return (V) acquireView(vClass, rc.type(), rc.toString());
+        } else {
+            return (V) acquireView(vClass, rc.type(), rc.type2(), rc.toString());
+        }
+    }
+
     public <V> V acquireView(Class<V> vClass, String queryString) {
         V view = getView(vClass);
         if (view != null) {
@@ -81,7 +92,6 @@ public class VanillaAsset implements Asset, Closeable {
         return (V) view2;
     }
 
-    @Override
     public <V> V acquireView(Class<V> vClass, Class class1, String queryString) {
         V v = getView(vClass);
         if (v != null)
@@ -125,7 +135,6 @@ public class VanillaAsset implements Asset, Closeable {
         }
     }
 
-    @Override
     public <V> V acquireView(Class<V> vClass, Class class1, Class class2, String queryString) {
         V v = getView(vClass);
         if (v != null)
