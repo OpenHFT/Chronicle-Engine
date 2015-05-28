@@ -23,6 +23,8 @@ public class RequestContext<I extends Assetted> {
     private String basePath;
     private Function<Bytes, Wire> wireType = TextWire::new;
     private boolean putReturnsNull, removeReturnsNull, bootstrap = true;
+    private double averageValueSize;
+    private long entries;
 
     private RequestContext(Asset parent) {
         this.parent = parent;
@@ -164,6 +166,24 @@ public class RequestContext<I extends Assetted> {
         return name;
     }
 
+    public double getAverageValueSize() {
+        return averageValueSize;
+    }
+
+    public RequestContext<I> averageValueSize(double averageValueSize) {
+        this.averageValueSize = averageValueSize;
+        return this;
+    }
+
+    public long getEntries() {
+        return entries;
+    }
+
+    public RequestContext<I> entries(long entries) {
+        this.entries = entries;
+        return this;
+    }
+
     public RequestContext<I> name(String name) {
         this.name = name;
         return this;
@@ -173,6 +193,8 @@ public class RequestContext<I extends Assetted> {
         this.assetType = assetType;
         return this;
     }
+
+
 
     public Class assetType() {
         return assetType;

@@ -35,6 +35,12 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         ChronicleMapBuilder builder = ChronicleMapBuilder.of(kClass, vClass)
                 .entryOperations(publishingOperations);
 
+        if(context.getAverageValueSize()!=0){
+            builder.averageValueSize(context.getAverageValueSize());
+        }
+        if(context.getEntries()!=0){
+            builder.entries(context.getEntries());
+        }
         if(basePath!=null) {
             try {
                 builder.createPersistedTo(new File(basePath));
