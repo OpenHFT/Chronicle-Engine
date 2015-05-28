@@ -7,7 +7,9 @@ net.openhft.chronicle.engine.server
 net.openhft.chronicle.engine.server.internal
 net.openhft.chronicle.engine2
 net.openhft.chronicle.engine2.api
+net.openhft.chronicle.engine2.api.collection
 net.openhft.chronicle.engine2.api.map
+net.openhft.chronicle.engine2.api.set
 net.openhft.chronicle.engine2.map
 net.openhft.chronicle.engine2.pubsub
 net.openhft.chronicle.engine2.session
