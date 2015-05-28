@@ -24,7 +24,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
     private final SubscriptionKVSCollection<K, MV, V> subscriptions = new SubscriptionKVSCollection<>(this);
     private Asset asset;
 
-    public ChronicleMapKeyValueStore(FactoryContext context){
+    public ChronicleMapKeyValueStore(RequestContext context){
         PublishingOperations publishingOperations = new PublishingOperations();
 
         Class kClass = context.type();

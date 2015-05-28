@@ -137,7 +137,7 @@ public class VanillaAsset implements Asset, Closeable {
                             kvStore = acquireView(StringBytesStoreKeyValueStore.class, class1, class2, queryString);
                         }
                         else if (BytesMarshallable.class.isAssignableFrom(class2)) {
-                            kvStore = new ChronicleMapKeyValueStore(factoryContext(VanillaAsset.this).type(class1).type2(class2).queryString(queryString));
+                            kvStore = new ChronicleMapKeyValueStore(requestContext(VanillaAsset.this).type(class1).type2(class2).queryString(queryString));
                         }
                         else if (Marshallable.class.isAssignableFrom(class2)) {
                             kvStore = acquireView(StringMarshallableKeyValueStore.class, class1, class2, queryString);
@@ -184,7 +184,7 @@ public class VanillaAsset implements Asset, Closeable {
                 View view = viewMap.computeIfAbsent(SubscriptionKeyValueStore.class, aClass -> {
                     SubscriptionKeyValueStore kvStore = acquireView(SubscriptionKeyValueStore.class, String.class, BytesStore.class, queryString);
                     StringBytesStoreKeyValueStore sskvStore = acquireFactory(StringBytesStoreKeyValueStore.class)
-                            .create(factoryContext(VanillaAsset.this).queryString(queryString).item(kvStore));
+                            .create(requestContext(VanillaAsset.this).queryString(queryString).item(kvStore));
                     topSubscription(sskvStore);
                     return sskvStore;
                 });
