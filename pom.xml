@@ -36,8 +36,6 @@
     <dependencyManagement>
         <dependencies>
 
-
-
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>third-party-bom</artifactId>
@@ -52,12 +50,6 @@
                 <type>pom</type>
                 <version>1.0.9</version>
                 <scope>import</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>net.openhft</groupId>
-                <artifactId>chronicle-map</artifactId>
-                <version>3.0.4-alpha-SNAPSHOT</version>
             </dependency>
 
         </dependencies>

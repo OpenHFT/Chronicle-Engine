@@ -40,16 +40,16 @@ import static org.junit.Assert.*;
 public class LocalChronicleMapTest extends JSR166TestCase {
 
     static ChronicleMap<Integer, String> newIntString() throws IOException {
-        final LocalMapSupplier supplier = new LocalMapSupplier(Integer.class, String.class);
+     return new LocalMapSupplier(Integer.class, String.class).get();
 
-        final ChronicleMap spy = Mockito.spy(supplier.get());
+       /* final ChronicleMap spy = Mockito.spy(supplier.get());
 
         Mockito.doAnswer(invocationOnMock -> {
             supplier.close();
             return null;
         }).when(spy).close();
 
-        return spy;
+        return spy;*/
     }
 
     static ChronicleMap<CharSequence, CharSequence> newStrStrMap() throws

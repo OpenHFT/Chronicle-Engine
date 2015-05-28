@@ -90,6 +90,12 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
         return kClass;
     }
 
+    @NotNull
+    @Override
+    public ExternalMapQueryContext<K, V, ?> queryContext(K k) {
+        throw new UnsupportedOperationException("todo");
+    }
+
     @Override
     public boolean forEachEntryWhile(Predicate<? super MapKeyContext<K, V>> predicate) {
         return false;

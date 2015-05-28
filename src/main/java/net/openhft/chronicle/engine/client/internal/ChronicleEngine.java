@@ -24,11 +24,8 @@ import net.openhft.chronicle.engine.FilePerKeyMapSubscription;
 import net.openhft.chronicle.engine.MapEventListener;
 import net.openhft.chronicle.engine.Subscription;
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.EngineMap;
 import net.openhft.chronicle.map.FilePerKeyMap;
-import net.openhft.chronicle.map.MapWireConnectionHub;
 import net.openhft.chronicle.set.ChronicleSet;
-import net.openhft.chronicle.wire.TextWire;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
@@ -54,20 +51,15 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
     private final Map<String, ChronicleMap> maps = synchronizedMap(new LinkedHashMap<>());
 
     private final Map<String, ChronicleMap<CharSequence, CharSequence>> chronStringMap = synchronizedMap(new LinkedHashMap<>());
+    private final Map<String, ChronicleMap<Integer, CharSequence>> chronIntegerStringMap =
+            synchronizedMap(new LinkedHashMap<>());
     private final Map<String, FilePerKeyMap> fpMaps = synchronizedMap(new LinkedHashMap<>());
     private final Map<String, ChronicleSet> sets = synchronizedMap(new LinkedHashMap<>());
-    private MapWireConnectionHub mapWireConnectionHub = null;
 
     public ChronicleEngine() {
         // todo config port and identifiers
         final byte localIdentifier = (byte) 1;
         final int serverPort = 8085;
-
-        try {
-            mapWireConnectionHub = new MapWireConnectionHub(localIdentifier, serverPort);
-        } catch (IOException e) {
-            LOG.error("", e);
-        }
 
     }
    /*
@@ -99,71 +91,41 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
         // if its a string map the we will use the string map directly
         if (CharSequence.class.isAssignableFrom(kClass) &&
                 CharSequence.class.isAssignableFrom(vClass)) {
+
             if (String.class.isAssignableFrom(kClass) &&
-                    String.class.isAssignableFrom(vClass)) {
+                    String.class.isAssignableFrom(vClass))
                 throw new UnsupportedOperationException("Please use a Map<CharSequence,CharSequence> rather than a Map<String,String>");
-            }
 
-            ChronicleMap map = maps.get(name);
-            if (map != null)
-                return map;
             final ChronicleMap<CharSequence, CharSequence> stringMap = chronStringMap.computeIfAbsent(name,
-                    k -> {
-                        try {
-
-                            return mapWireConnectionHub.acquireMap(name, () -> of(
-                                    CharSequence.class,
-                                    CharSequence.class)
-                                    .entries(entries)
-                                    .averageValueSize(maxValueSize)
-                                    .averageKeySize(maxKeySize)
-                                    .putReturnsNull(putReturnsNull)
-                                    .removeReturnsNull(removeReturnsNull)
-                                    .instance());
-                        } catch (IOException ioe) {
-                            throw Jvm.rethrow(ioe);
-                        }
-                    });
+                    s -> of(CharSequence.class, CharSequence.class)
+                            .entries(entries)
+                            .averageValueSize(maxValueSize)
+                            .averageKeySize(maxKeySize)
+                            .putReturnsNull(putReturnsNull)
+                            .removeReturnsNull(removeReturnsNull).create());
 
             return (ChronicleMap) stringMap;
         }
 
-        @SuppressWarnings("unchecked")
-        Map<byte[], byte[]> underlyingMap = underlyingMaps.computeIfAbsent(name, k -> {
-            try {
+        // if its a string map the we will use the string map directly
+        if (Integer.class.isAssignableFrom(kClass) &&
+                CharSequence.class.isAssignableFrom(vClass)) {
 
-                return mapWireConnectionHub.acquireMap(name, () -> of(byte[]
-                        .class, byte[].class)
-                        .averageValueSize(maxValueSize)
-                        .averageKeySize(maxKeySize)
-                        .putReturnsNull(putReturnsNull)
-                        .removeReturnsNull(removeReturnsNull)
-                        .entries(entries).instance());
-            } catch (IOException ioe) {
-                throw Jvm.rethrow(ioe);
-            }
-        });
+            if (String.class.isAssignableFrom(kClass) &&
+                    String.class.isAssignableFrom(vClass))
+                throw new UnsupportedOperationException("Please use a Map<CharSequence,CharSequence> rather than a Map<String,String>");
 
-        if (kClass == byte[].class && vClass == byte[].class)
-            return (ChronicleMap<K, V>) underlyingMap;
+            final ChronicleMap<Integer, CharSequence> stringMap = chronIntegerStringMap.computeIfAbsent(name,
+                    s -> of(Integer.class, CharSequence.class)
+                            .entries(entries)
+                            .averageValueSize(maxValueSize)
+                            .putReturnsNull(putReturnsNull)
+                            .removeReturnsNull(removeReturnsNull).create());
 
-        final ChronicleMap result = maps.computeIfAbsent(
-                name, k -> {
-                    try {
+            return (ChronicleMap) stringMap;
+        }
 
-                        return new EngineMap<>(
-                                underlyingMap,
-                                kClass,
-                                vClass,
-                                TextWire.class);
-                    } catch (IOException ioe) {
-                        throw Jvm.rethrow(ioe);
-                    }
-                });
-
-        validateClasses(result, kClass, vClass);
-
-        return (ChronicleMap<K, V>) result;
+        throw new UnsupportedOperationException("todo");
     }
 
     @Override
@@ -228,7 +190,6 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
 
     @Override
     public void close() throws IOException {
-        mapWireConnectionHub.close();
         fpMaps.values().forEach(FilePerKeyMap::close);
         maps.values().forEach(ChronicleMap::close);
         chronStringMap.values().forEach(ChronicleMap::close);
