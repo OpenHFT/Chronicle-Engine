@@ -73,7 +73,7 @@ public class ChassisRFCTest {
 
         List<MapEvent> values = new ArrayList<>();
         Subscriber<MapEvent> subscriber = values::add;
-        registerSubscriber("group-A?bootstrap=true", MapEvent.class, subscriber);
+        registerSubscriber("group-A?view=map&bootstrap=true", MapEvent.class, subscriber);
 
         map.put("Key-1", "Value-2");
         map.remove("Key-1");

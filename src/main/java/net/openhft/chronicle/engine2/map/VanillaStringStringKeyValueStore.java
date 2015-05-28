@@ -179,20 +179,23 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     }
 
     @Override
-    public <E> void registerSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query) {
+    public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {
+        Class eClass = rc.type();
         if (eClass == MapEvent.class) {
-            Subscriber<MapEvent<String, String>> sub = (Subscriber<MapEvent<String, String>>) subscriber;
+            Subscriber<MapEvent<String, String>> sub = (Subscriber) subscriber;
 
-            kvStore.registerSubscriber((Class<MapEvent<String, BytesStore>>) eClass, e -> {
+            Subscriber<MapEvent<String, BytesStore>> sub2 = e -> {
                 if (e.getClass() == InsertedEvent.class)
                     sub.on(InsertedEvent.of(e.key(), e.value().toString()));
                 else if (e.getClass() == UpdatedEvent.class)
                     sub.on(UpdatedEvent.of(e.key(), ((UpdatedEvent<String, BytesStore>) e).oldValue().toString(), e.value().toString()));
                 else
                     sub.on(RemovedEvent.of(e.key(), e.value().toString()));
-            }, query);
+            };
+            kvStore.registerSubscriber(rc, sub2);
+        } else {
+            subscriptions.registerSubscriber(rc, subscriber);
         }
-        subscriptions.registerSubscriber(eClass, subscriber, query);
     }
 
     @Override

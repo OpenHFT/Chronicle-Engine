@@ -5,6 +5,8 @@ import net.openhft.chronicle.engine2.api.RequestContext;
 import net.openhft.chronicle.engine2.api.Subscriber;
 import net.openhft.chronicle.engine2.api.map.MapView;
 
+import static net.openhft.chronicle.engine2.api.RequestContext.requestContext;
+
 public class VanillaReference<E> implements Reference<E> {
     private final String name;
     private final MapView<String, E, E> parentMap;
@@ -33,6 +35,6 @@ public class VanillaReference<E> implements Reference<E> {
 
     @Override
     public void registerSubscriber(Subscriber<E> subscriber) {
-        parentMap.asset().getChild(name).registerSubscriber(eClass, subscriber, "bootstrap=true");
+        parentMap.asset().getChild(name).registerSubscriber(requestContext("?boostrap=true").type(eClass), subscriber);
     }
 }

@@ -259,8 +259,8 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     }
 
     @Override
-    public <E> void registerSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query) {
-        subscriptions.registerSubscriber(eClass, subscriber, query);
+    public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {
+        subscriptions.registerSubscriber(rc, subscriber);
     }
 
     @Override

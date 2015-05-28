@@ -146,8 +146,8 @@ public class LocalAsset implements Asset, Assetted, Closeable {
     }
 
     @Override
-    public <E> void registerSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query) {
-        throw new UnsupportedOperationException();
+    public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {
+        throw new UnsupportedOperationException("todo");
     }
 
     @Override

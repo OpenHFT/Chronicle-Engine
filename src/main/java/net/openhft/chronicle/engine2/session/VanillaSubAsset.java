@@ -75,9 +75,9 @@ public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscrib
     }
 
     @Override
-    public <E> void registerSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query) {
+    public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {
         subscribers.add((Subscriber) subscriber);
-        parent().registerTopicSubscriber(String.class, eClass, (TopicSubscriber<String, E>) this, query);
+        parent().registerTopicSubscriber(rc, this);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine2.map;
 
+import net.openhft.chronicle.engine2.api.RequestContext;
 import net.openhft.chronicle.engine2.api.Subscriber;
 import net.openhft.chronicle.engine2.api.Subscription;
 import net.openhft.chronicle.engine2.api.TopicSubscriber;
@@ -68,8 +69,9 @@ public class SubscriptionKVSCollection<K, MV, V> implements Subscription {
     }
 
     @Override
-    public <E> void registerSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query) {
-        boolean bootstrap = query.contains("bootstrap=true");
+    public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {
+        boolean bootstrap = rc.bootstrap();
+        Class eClass = rc.type();
         if (eClass == KeyValueStore.Entry.class || eClass == MapEvent.class) {
             subscribers.add((Subscriber) subscriber);
             if (bootstrap) {

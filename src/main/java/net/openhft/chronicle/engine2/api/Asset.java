@@ -54,6 +54,21 @@ public interface Asset extends Permissoned, Subscription {
 
     boolean isReadOnly();
 
+    default <V> V acquireView(RequestContext rc) {
+        return (V) acquireView(rc.assetType(), rc);
+    }
+
+    default <V> V acquireView(Class<V> vClass, RequestContext rc) {
+        if (rc.type2() == null) {
+            if (rc.type() == null)
+                return (V) acquireView(vClass, rc.toString());
+            else
+                return (V) acquireView(vClass, rc.type(), rc.toString());
+        } else {
+            return (V) acquireView(vClass, rc.type(), rc.type2(), rc.toString());
+        }
+    }
+
     default <V> V acquireView(Class<V> vClass) {
         return acquireView(vClass, "");
     }

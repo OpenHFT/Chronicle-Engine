@@ -106,7 +106,12 @@ public class VanillaAsset implements Asset, Closeable {
             View view = acquireView(SubscriptionKeyValueStore.class, null, null, queryString);
             return (V) view;
         }
-        throw new UnsupportedOperationException("todo " + vClass + " type: " + class1);
+        try {
+            Factory factory = acquireFactory(vClass);
+            return acquireView(vClass, viewType -> (View) factory.create(requestContext(this).type(class1).queryString(queryString)));
+        } catch (AssetNotFoundException e) {
+            throw new UnsupportedOperationException("todo " + vClass + " type: " + class1);
+        }
     }
 
     <V> V acquireView(Class viewClass, Function<Class, View> builder) {
@@ -248,9 +253,9 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Override
-    public <E> void registerSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query) {
-        Subscription sub = acquireView(Subscription.class, eClass, query);
-        sub.registerSubscriber(eClass, subscriber, query);
+    public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {
+        Subscription sub = acquireView(Subscription.class, rc);
+        sub.registerSubscriber(rc, subscriber);
     }
 
     @Override
