@@ -3,8 +3,8 @@ package net.openhft.chronicle.engine2.map;
 import net.openhft.chronicle.engine2.api.Asset;
 import net.openhft.chronicle.engine2.api.RequestContext;
 import net.openhft.chronicle.engine2.api.View;
-import net.openhft.chronicle.engine2.api.map.EntrySetView;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
+import net.openhft.chronicle.engine2.api.set.EntrySetView;
 import net.openhft.chronicle.engine2.session.LocalSession;
 
 import java.util.AbstractCollection;

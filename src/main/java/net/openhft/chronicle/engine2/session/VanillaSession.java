@@ -2,6 +2,7 @@ package net.openhft.chronicle.engine2.session;
 
 import net.openhft.chronicle.engine2.api.*;
 import net.openhft.chronicle.engine2.api.map.*;
+import net.openhft.chronicle.engine2.api.set.EntrySetView;
 import net.openhft.chronicle.engine2.map.*;
 import net.openhft.chronicle.engine2.pubsub.VanillaReference;
 import org.jetbrains.annotations.NotNull;

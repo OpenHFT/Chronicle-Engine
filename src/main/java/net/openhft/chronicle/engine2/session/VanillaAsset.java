@@ -6,6 +6,7 @@ import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.util.Closeable;
 import net.openhft.chronicle.engine2.api.*;
 import net.openhft.chronicle.engine2.api.map.*;
+import net.openhft.chronicle.engine2.api.set.EntrySetView;
 import net.openhft.chronicle.engine2.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.TextWire;

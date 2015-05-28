@@ -1,7 +1,8 @@
-package net.openhft.chronicle.engine2.api.map;
+package net.openhft.chronicle.engine2.api.set;
 
 import net.openhft.chronicle.engine2.api.Assetted;
 import net.openhft.chronicle.engine2.api.View;
+import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 
 import java.util.Map;
 import java.util.Set;

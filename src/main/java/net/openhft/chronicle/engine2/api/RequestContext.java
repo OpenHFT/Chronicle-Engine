@@ -3,8 +3,8 @@ package net.openhft.chronicle.engine2.api;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine2.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine2.api.map.MapView;
-import net.openhft.chronicle.engine2.api.set.EntrySet;
-import net.openhft.chronicle.engine2.api.set.KeySet;
+import net.openhft.chronicle.engine2.api.set.EntrySetView;
+import net.openhft.chronicle.engine2.api.set.KeySetView;
 import net.openhft.chronicle.wire.*;
 
 import java.util.Set;
@@ -78,11 +78,11 @@ public class RequestContext<I extends Assetted> {
                 break;
             case "EntrySet":
             case "entrySet":
-                assetType = EntrySet.class;
+                assetType = EntrySetView.class;
                 break;
             case "KeySet":
             case "keySet":
-                assetType = KeySet.class;
+                assetType = KeySetView.class;
                 break;
             case "Values":
             case "values":
