@@ -56,9 +56,11 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         return chronicleMap.remove(key);
     }
 
+
     @Override
     public V getUsing(K key, MV value) {
-        //TODO is this cast correct?
+        //MutableValues are not really supported by ChronicleMap
+        //so try our best to store them as they are
         return chronicleMap.getUsing(key, (V)value);
     }
 
@@ -69,14 +71,14 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
 
     @Override
     public void keysFor(int segment, Consumer<K> kConsumer) {
-        //TODO can't see a way of implementing this on ChronicleMap
-        throw new UnsupportedOperationException();
+        //Ignore the segments and return keysFor the whole map
+        chronicleMap.keySet().forEach(kConsumer);
     }
 
     @Override
     public void entriesFor(int segment, Consumer<Entry<K, V>> kvConsumer) {
-        //TODO can't see a way of implementing this on ChronicleMap
-        throw new UnsupportedOperationException();
+        //Ignore the segments and return entriesFor the whole map
+        chronicleMap.entrySet().stream().map(e ->Entry.of(e.getKey(), e.getValue())).forEach(kvConsumer);
     }
 
     @Override
