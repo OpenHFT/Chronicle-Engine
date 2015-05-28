@@ -86,14 +86,14 @@ public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscrib
     }
 
     @Override
-    public <E> void unregisterSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query) {
+    public void unregisterSubscriber(RequestContext rc, Subscriber subscriber) {
         subscribers.remove((Subscriber) subscriber);
         if (subscribers.isEmpty())
-            parent().unregisterTopicSubscriber(String.class, eClass, (TopicSubscriber<String, E>) this, query);
+            parent().unregisterTopicSubscriber(rc, this);
     }
 
     @Override
-    public <T, E> void unregisterTopicSubscriber(Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
+    public void unregisterTopicSubscriber(RequestContext rc, TopicSubscriber subscriber) {
         throw new UnsupportedOperationException("todo");
     }
 

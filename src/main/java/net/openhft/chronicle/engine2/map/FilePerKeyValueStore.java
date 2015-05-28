@@ -269,13 +269,13 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     }
 
     @Override
-    public <E> void unregisterSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query) {
-        subscriptions.unregisterSubscriber(eClass, subscriber, query);
+    public void unregisterSubscriber(RequestContext rc, Subscriber subscriber) {
+        subscriptions.unregisterSubscriber(rc, subscriber);
     }
 
     @Override
-    public <T, E> void unregisterTopicSubscriber(Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
-        subscriptions.unregisterTopicSubscriber(tClass, eClass, subscriber, query);
+    public void unregisterTopicSubscriber(RequestContext rc, TopicSubscriber subscriber) {
+        subscriptions.unregisterTopicSubscriber(rc, subscriber);
     }
 
     @Override

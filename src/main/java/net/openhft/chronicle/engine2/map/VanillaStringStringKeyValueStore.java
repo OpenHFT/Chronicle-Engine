@@ -207,12 +207,12 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     }
 
     @Override
-    public <E> void unregisterSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query) {
+    public void unregisterSubscriber(RequestContext rc, Subscriber subscriber) {
         throw new UnsupportedOperationException("todo");
     }
 
     @Override
-    public <T, E> void unregisterTopicSubscriber(Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
+    public void unregisterTopicSubscriber(RequestContext rc, TopicSubscriber subscriber) {
         throw new UnsupportedOperationException("todo");
     }
 }

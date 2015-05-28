@@ -8,14 +8,9 @@ public interface Subscription {
 
     <T, E> void registerTopicSubscriber(RequestContext rc, TopicSubscriber<T, E> subscriber);
 
-    default void unregisterSubscriber(RequestContext rc, Subscriber subscriber) {
-        unregisterSubscriber(rc.type(), subscriber, rc.toString());
-    }
-    <E> void unregisterSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query);
+    void unregisterSubscriber(RequestContext rc, Subscriber subscriber);
 
-    default void unregisterTopicSubscriber(RequestContext rc, TopicSubscriber subscriber) {
-        unregisterTopicSubscriber(rc.type(), rc.type2(), subscriber, rc.toString());
-    }
+    void unregisterTopicSubscriber(RequestContext rc, TopicSubscriber subscriber);
 
-    <T, E> void unregisterTopicSubscriber(Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber, String query);
+//    void unregisterAll(RequestContext rc);
 }

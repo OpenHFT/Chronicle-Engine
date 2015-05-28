@@ -285,17 +285,17 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Override
-    public <E> void unregisterSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query) {
+    public void unregisterSubscriber(RequestContext rc, Subscriber subscriber) {
         Subscription sub = getView(Subscription.class);
         if (sub != null)
-            sub.unregisterSubscriber(eClass, subscriber, query);
+            sub.unregisterSubscriber(rc, subscriber);
     }
 
     @Override
-    public <T, E> void unregisterTopicSubscriber(Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
+    public void unregisterTopicSubscriber(RequestContext rc, TopicSubscriber subscriber) {
         Subscription sub = getView(Subscription.class);
         if (sub != null)
-            sub.unregisterTopicSubscriber(tClass, eClass, subscriber, query);
+            sub.unregisterTopicSubscriber(rc, subscriber);
     }
 
     @Override
