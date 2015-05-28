@@ -44,7 +44,7 @@ public class VanillaSession implements Session {
     @Nullable
     @Override
     public Asset getAsset(String name) {
-        return name.isEmpty() || name.equals("/") ? root : root.getChild(name);
+        return name.isEmpty() || name.equals("/") ? root : root.getAsset(name);
     }
 
     @Override

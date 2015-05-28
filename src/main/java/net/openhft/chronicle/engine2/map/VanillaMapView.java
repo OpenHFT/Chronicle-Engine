@@ -2,8 +2,10 @@ package net.openhft.chronicle.engine2.map;
 
 import net.openhft.chronicle.engine2.api.Asset;
 import net.openhft.chronicle.engine2.api.FactoryContext;
+import net.openhft.chronicle.engine2.api.View;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.MapView;
+import net.openhft.chronicle.engine2.session.LocalSession;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.AbstractMap;
@@ -19,12 +21,21 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
     private KeyValueStore<K, MV, V> kvStore;
 
     public VanillaMapView(FactoryContext<KeyValueStore<K, MV, V>> context) {
-        this.asset = context.parent();
-        this.kvStore = context.item();
-        String queryString = context.queryString().toLowerCase();
-        putReturnsNull = queryString.contains("putreturnsnull=true");
-        removeReturnsNull = queryString.contains("removereturnsnull=true");
-        kvStore = context.item();
+        this(context.parent(), context.item(),
+                context.queryString().toLowerCase().contains("putreturnsnull=true"),
+                context.queryString().toLowerCase().contains("removereturnsnull=true"));
+    }
+
+    public VanillaMapView(Asset asset, KeyValueStore<K, MV, V> kvStore, boolean putReturnsNull, boolean removeReturnsNull) {
+        this.asset = asset;
+        this.kvStore = kvStore;
+        this.putReturnsNull = putReturnsNull;
+        this.removeReturnsNull = removeReturnsNull;
+    }
+
+    @Override
+    public View forSession(LocalSession session, Asset asset) {
+        return new VanillaMapView<K, MV, V>(asset, View.forSession(kvStore, session, asset), putReturnsNull, removeReturnsNull);
     }
 
     @Override

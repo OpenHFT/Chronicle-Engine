@@ -1,10 +1,9 @@
 package net.openhft.chronicle.engine2.map;
 
-import net.openhft.chronicle.engine2.api.FactoryContext;
-import net.openhft.chronicle.engine2.api.Subscriber;
-import net.openhft.chronicle.engine2.api.TopicSubscriber;
+import net.openhft.chronicle.engine2.api.*;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.SubscriptionKeyValueStore;
+import net.openhft.chronicle.engine2.session.LocalSession;
 
 /**
  * Created by peter on 22/05/15.
@@ -13,7 +12,16 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     final SubscriptionKVSCollection<K, MV, V> subscriptions = new SubscriptionKVSCollection<>(this);
 
     public VanillaSubscriptionKeyValueStore(FactoryContext<KeyValueStore<K, MV, V>> context) {
-        super(context);
+        this(context.item());
+    }
+
+    VanillaSubscriptionKeyValueStore(KeyValueStore<K, MV, V> item) {
+        super(item);
+    }
+
+    @Override
+    public View forSession(LocalSession session, Asset asset) {
+        return new VanillaSubscriptionKeyValueStore<>(View.forSession(kvStore, session, asset));
     }
 
     @Override

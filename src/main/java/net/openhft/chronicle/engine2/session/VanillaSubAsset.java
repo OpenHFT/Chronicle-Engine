@@ -22,8 +22,17 @@ public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscrib
     private final Set<Subscriber<T>> subscribers = new CopyOnWriteArraySet<>();
 
     VanillaSubAsset(FactoryContext context) {
-        this.parent = context.parent();
-        this.name = context.name();
+        this(context.parent(), context.name());
+    }
+
+    VanillaSubAsset(Asset parent, String name) {
+        this.parent = parent;
+        this.name = name;
+    }
+
+    @Override
+    public View forSession(LocalSession session, Asset asset) {
+        throw new UnsupportedOperationException("todo");
     }
 
     @Override
@@ -111,8 +120,13 @@ public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscrib
     }
 
     @Override
-    public Asset getChild(String name) {
+    public Asset getAsset(String name) {
         throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public Asset getChild(String name) {
+        throw new UnsupportedOperationException();
     }
 
     @Override

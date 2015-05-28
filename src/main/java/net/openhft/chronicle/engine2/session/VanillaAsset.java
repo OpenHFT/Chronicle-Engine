@@ -31,7 +31,7 @@ public class VanillaAsset implements Asset, Closeable {
     private final String name;
     private final Assetted item;
 
-    private final Map<Class, View> viewMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
+    final Map<Class, View> viewMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
     private final Map<Class, Factory> factoryMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
 
     VanillaAsset(FactoryContext<Assetted> context) {
@@ -335,23 +335,11 @@ public class VanillaAsset implements Asset, Closeable {
 
     @Override
     public Asset getChild(String name) {
-        int pos = name.indexOf("/");
-        if (pos >= 0) {
-            String name1 = name.substring(0, pos);
-            String name2 = name.substring(pos + 1);
-            Asset asset = getAsset(name1);
-            if (asset == null) {
-                return null;
-
-            } else {
-                return asset.getChild(name2);
-            }
-        }
-        return getAsset(name);
+        return children.get(name);
     }
 
     @Nullable
-    private Asset getAsset(String name) {
+    private Asset getChild0(String name) {
         return children.get(name);
     }
 
@@ -369,8 +357,13 @@ public class VanillaAsset implements Asset, Closeable {
         }
         if (children.containsKey(name))
             throw new IllegalStateException(name + " already exists");
-        Factory<Asset> factory = acquireFactory(Asset.class);
-        Asset asset = factory.create(factoryContext(this).name(name).item(resource));
+        Asset asset;
+        if (resource instanceof Asset) {
+            asset = (Asset) resource;
+        } else {
+            Factory<Asset> factory = acquireFactory(Asset.class);
+            asset = factory.create(factoryContext(this).name(name).item(resource));
+        }
         children.put(name, asset);
         return asset;
     }

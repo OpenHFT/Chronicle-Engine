@@ -3,22 +3,20 @@ package net.openhft.chronicle.engine2.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.ClassLocal;
-import net.openhft.chronicle.engine2.api.Asset;
-import net.openhft.chronicle.engine2.api.FactoryContext;
-import net.openhft.chronicle.engine2.api.Subscriber;
-import net.openhft.chronicle.engine2.api.TopicSubscriber;
+import net.openhft.chronicle.engine2.api.*;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.MapEvent;
 import net.openhft.chronicle.engine2.api.map.StringMarshallableKeyValueStore;
 import net.openhft.chronicle.engine2.api.map.SubscriptionKeyValueStore;
+import net.openhft.chronicle.engine2.session.LocalSession;
 import net.openhft.chronicle.wire.Marshallable;
-import net.openhft.chronicle.wire.WireIn;
-import net.openhft.chronicle.wire.WireOut;
+import net.openhft.chronicle.wire.Wire;
 
 import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static net.openhft.chronicle.engine2.map.Buffers.BUFFERS;
 
@@ -42,20 +40,23 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     private Asset asset;
 
     public VanillaStringMarshallableKeyValueStore(FactoryContext<SubscriptionKeyValueStore<String, Bytes, BytesStore>> context) {
-        asset = context.parent();
-        Class type2 = context.type2();
-        valueToBytes = toBytes(context, type2);
-        bytesToValue = fromBytes(context, type2);
-        kvStore = context.item();
+        this(context.parent(), context.type2(), context.item(), context.wireType());
     }
 
-    static <T> BiFunction<T, Bytes, Bytes> toBytes(FactoryContext context, Class type) {
+    VanillaStringMarshallableKeyValueStore(Asset asset, Class type2, SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore, Function<Bytes, Wire> wireType) {
+        this.asset = asset;
+        valueToBytes = toBytes(type2, wireType);
+        bytesToValue = fromBytes(type2, wireType);
+        this.kvStore = kvStore;
+    }
+
+    static <T> BiFunction<T, Bytes, Bytes> toBytes(Class type, Function<Bytes, Wire> wireType) {
         if (type == String.class)
             return (t, bytes) -> (Bytes) bytes.append((String) t);
         if (Marshallable.class.isAssignableFrom(type))
             return (t, bytes) -> {
                 t = acquireInstance(type, t);
-                ((Marshallable) t).writeMarshallable((WireOut) context.wireType().apply(bytes));
+                ((Marshallable) t).writeMarshallable(wireType.apply(bytes));
                 bytes.flip();
                 return bytes;
             };
@@ -72,13 +73,13 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
         return t;
     }
 
-    private <T> BiFunction<BytesStore, T, T> fromBytes(FactoryContext context, Class type) {
+    private <T> BiFunction<BytesStore, T, T> fromBytes(Class type, Function<Bytes, Wire> wireType) {
         if (type == String.class)
             return (t, bytes) -> (T) (bytes == null ? null : bytes.toString());
         if (Marshallable.class.isAssignableFrom(type))
             return (bytes, t) -> {
                 t = acquireInstance(type, t);
-                ((Marshallable) t).readMarshallable((WireIn) context.wireType().apply(bytes));
+                ((Marshallable) t).readMarshallable(wireType.apply(bytes.bytes()));
                 ((Bytes) bytes).position(0);
                 return t;
             };
@@ -190,5 +191,10 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     @Override
     public <T, E> void unregisterTopicSubscriber(Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
         throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public View forSession(LocalSession session, Asset asset) {
+        throw new UnsupportedOperationException();
     }
 }

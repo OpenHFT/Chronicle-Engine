@@ -2,8 +2,10 @@ package net.openhft.chronicle.engine2.map;
 
 import net.openhft.chronicle.engine2.api.Asset;
 import net.openhft.chronicle.engine2.api.FactoryContext;
+import net.openhft.chronicle.engine2.api.View;
 import net.openhft.chronicle.engine2.api.map.EntrySetView;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
+import net.openhft.chronicle.engine2.session.LocalSession;
 
 import java.util.AbstractCollection;
 import java.util.Iterator;
@@ -17,8 +19,17 @@ public class VanillaEntrySetView<K, MV, V> extends AbstractCollection<Map.Entry<
     private KeyValueStore<K, MV, V> underlying;
 
     public VanillaEntrySetView(FactoryContext<KeyValueStore<K, MV, V>> context) {
-        this.asset = context.parent();
-        this.underlying = context.item();
+        this(context.parent(), context.item());
+    }
+
+    public VanillaEntrySetView(Asset asset, KeyValueStore<K, MV, V> underlying) {
+        this.asset = asset;
+        this.underlying = underlying;
+    }
+
+    @Override
+    public View forSession(LocalSession session, Asset asset) {
+        return new VanillaEntrySetView<K, MV, V>(asset, View.forSession(underlying, session, asset));
     }
 
     @Override

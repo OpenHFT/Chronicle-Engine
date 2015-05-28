@@ -4,14 +4,12 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.ClassLocal;
 import net.openhft.chronicle.core.util.StringUtils;
-import net.openhft.chronicle.engine2.api.Asset;
-import net.openhft.chronicle.engine2.api.FactoryContext;
-import net.openhft.chronicle.engine2.api.Subscriber;
-import net.openhft.chronicle.engine2.api.TopicSubscriber;
+import net.openhft.chronicle.engine2.api.*;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.MapEvent;
 import net.openhft.chronicle.engine2.api.map.StringStringKeyValueStore;
 import net.openhft.chronicle.engine2.api.map.SubscriptionKeyValueStore;
+import net.openhft.chronicle.engine2.session.LocalSession;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
@@ -43,8 +41,17 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
 
 
     public VanillaStringStringKeyValueStore(FactoryContext<SubscriptionKeyValueStore<String, Bytes, BytesStore>> context) {
-        asset = context.parent();
-        kvStore = context.item();
+        this(context.parent(), context.item());
+    }
+
+    VanillaStringStringKeyValueStore(Asset asset, SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore) {
+        this.asset = asset;
+        this.kvStore = kvStore;
+    }
+
+    @Override
+    public View forSession(LocalSession session, Asset asset) {
+        return new VanillaStringStringKeyValueStore(asset, View.forSession(kvStore, session, asset));
     }
 
     static <T> BiFunction<T, Bytes, Bytes> toBytes(FactoryContext context, Class type) {

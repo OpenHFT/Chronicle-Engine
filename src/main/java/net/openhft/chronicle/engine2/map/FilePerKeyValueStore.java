@@ -4,12 +4,10 @@ import com.sun.nio.file.SensitivityWatchEventModifier;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.IORuntimeException;
-import net.openhft.chronicle.engine2.api.Asset;
-import net.openhft.chronicle.engine2.api.FactoryContext;
-import net.openhft.chronicle.engine2.api.Subscriber;
-import net.openhft.chronicle.engine2.api.TopicSubscriber;
+import net.openhft.chronicle.engine2.api.*;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.StringBytesStoreKeyValueStore;
+import net.openhft.chronicle.engine2.session.LocalSession;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -53,10 +51,14 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     private Asset asset;
 
     public FilePerKeyValueStore(FactoryContext context) throws IORuntimeException {
-        assert context.type() == String.class;
+        this(context.type(), context.basePath(), context.name());
+    }
 
-        String first = context.basePath();
-        String dirName = first == null ? context.name() : first + "/" + context.name();
+    FilePerKeyValueStore(Class type, String basePath, String name) {
+        assert type == String.class;
+
+        String first = basePath;
+        String dirName = first == null ? name : first + "/" + name;
         this.dirPath = Paths.get(dirName);
         WatchService watcher;
         try {
@@ -75,6 +77,11 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         fileFpmWatcher = new Thread(new FPMWatcher(watcher), dirName + "-watcher");
         fileFpmWatcher.setDaemon(true);
         fileFpmWatcher.start();
+    }
+
+    @Override
+    public View forSession(LocalSession session, Asset asset) {
+        return this;
     }
 
     @Override

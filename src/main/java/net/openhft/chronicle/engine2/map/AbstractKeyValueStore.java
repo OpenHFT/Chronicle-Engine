@@ -1,7 +1,6 @@
 package net.openhft.chronicle.engine2.map;
 
 import net.openhft.chronicle.engine2.api.Asset;
-import net.openhft.chronicle.engine2.api.FactoryContext;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 
 import java.util.Iterator;
@@ -14,8 +13,8 @@ import java.util.function.Consumer;
 public class AbstractKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> {
     KeyValueStore<K, MV, V> kvStore;
 
-    protected AbstractKeyValueStore(FactoryContext<KeyValueStore<K, MV, V>> context) {
-        kvStore = context.item();
+    protected AbstractKeyValueStore(KeyValueStore<K, MV, V> kvStore) {
+        this.kvStore = kvStore;
         assert kvStore != null;
     }
 

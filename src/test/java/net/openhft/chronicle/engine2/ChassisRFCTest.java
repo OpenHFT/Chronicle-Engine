@@ -1,13 +1,14 @@
-package net.openhft.chronicle.engine2;
+//package net.openhft.chronicle.engine2;
 
+import net.openhft.chronicle.engine2.Chassis;
 import net.openhft.chronicle.engine2.api.*;
 import net.openhft.chronicle.engine2.api.map.MapEvent;
-import org.junit.Before;
+import net.openhft.chronicle.engine2.session.VanillaSession;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static net.openhft.chronicle.engine2.Chassis.*;
 import static org.junit.Assert.assertEquals;
@@ -15,10 +16,20 @@ import static org.junit.Assert.assertEquals;
 /**
  * Created by peter on 22/05/15.
  */
+@RunWith(Parameterized.class)
 public class ChassisRFCTest {
-    @Before
-    public void setUp() {
-        resetChassis();
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(
+                new Object[]{new VanillaSession()},
+                new Object[]{new VanillaSession()}
+//                new Object[]{new LocalSession(new VanillaSession())}
+        );
+    }
+
+    public ChassisRFCTest(Session session) {
+        Chassis.defaultSession(session);
     }
 
     @Test
@@ -117,6 +128,7 @@ public class ChassisRFCTest {
     @Test
     public void publishToAnyTopicInAGroup() {
         Map<String, String> map = acquireMap("group", String.class, String.class);
+        map.clear();
         TopicPublisher<String, String> publisher = acquireTopicPublisher("group", String.class, String.class);
         List<String> values = new ArrayList<>();
         TopicSubscriber<String, String> subscriber = (topic, message) -> values.add("{name: " + topic + ", message: " + message + "}");

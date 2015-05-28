@@ -33,6 +33,6 @@ public class VanillaReference<E> implements Reference<E> {
 
     @Override
     public void registerSubscriber(Subscriber<E> subscriber) {
-        parentMap.asset().getChild(name).registerSubscriber(eClass, subscriber, "bootstrap=true");
+        parentMap.asset().getAsset(name).registerSubscriber(eClass, subscriber, "bootstrap=true");
     }
 }

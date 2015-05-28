@@ -31,6 +31,23 @@ public interface Asset extends Permissoned, Subscription {
     <A> Asset acquireChild(String name, Class<A> assetClass, Class class1, Class class2) throws AssetNotFoundException;
 
     @Nullable
+    default Asset getAsset(String name) {
+        if (name.isEmpty()) return this;
+        int pos = name.indexOf("/");
+        if (pos >= 0) {
+            String name1 = name.substring(0, pos);
+            String name2 = name.substring(pos + 1);
+            Asset asset = getChild(name1);
+            if (asset == null) {
+                return null;
+
+            } else {
+                return asset.getAsset(name2);
+            }
+        }
+        return getChild(name);
+    }
+
     Asset getChild(String name);
 
     void removeChild(String name);

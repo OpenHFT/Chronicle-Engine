@@ -5,6 +5,7 @@ import net.openhft.chronicle.engine2.api.map.MapEvent;
 import net.openhft.chronicle.engine2.map.InsertedEvent;
 import net.openhft.chronicle.engine2.map.RemovedEvent;
 import net.openhft.chronicle.engine2.map.UpdatedEvent;
+import net.openhft.chronicle.engine2.session.LocalSession;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -286,5 +287,9 @@ public class ChassisTest {
 
     static class MyInterceptor implements View {
 
+        @Override
+        public View forSession(LocalSession session, Asset asset) {
+            throw new UnsupportedOperationException("todo");
+        }
     }
 }
