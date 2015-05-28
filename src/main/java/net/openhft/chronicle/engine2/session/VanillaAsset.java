@@ -1,10 +1,12 @@
 package net.openhft.chronicle.engine2.session;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.BytesMarshallable;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.util.Closeable;
 import net.openhft.chronicle.engine2.api.*;
 import net.openhft.chronicle.engine2.api.map.*;
+import net.openhft.chronicle.engine2.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
@@ -124,9 +126,14 @@ public class VanillaAsset implements Asset, Closeable {
                     if (class1 == String.class) {
                         if (class2 == BytesStore.class) {
                             kvStore = acquireView(StringBytesStoreKeyValueStore.class, class1, class2, queryString);
-                        } else if (Marshallable.class.isAssignableFrom(class2)) {
+                        }
+                        else if (BytesMarshallable.class.isAssignableFrom(class2)) {
+                            kvStore = new ChronicleMapKeyValueStore(factoryContext(VanillaAsset.this).type(class1).type2(class2).queryString(queryString));
+                        }
+                        else if (Marshallable.class.isAssignableFrom(class2)) {
                             kvStore = acquireView(StringMarshallableKeyValueStore.class, class1, class2, queryString);
-                        } else if (class2 == String.class && getFactory(StringStringKeyValueStore.class) != null) {
+                        }
+                        else if (class2 == String.class && getFactory(StringStringKeyValueStore.class) != null) {
                             kvStore = acquireView(StringStringKeyValueStore.class, class1, class2, queryString);
                         } else {
                             kvStore = (KeyValueStore) item;
@@ -163,6 +170,19 @@ public class VanillaAsset implements Asset, Closeable {
                 });
                 return (V) view;
             }
+
+            if (vClass == StringBytesStoreKeyValueStore.class) {
+                View view = viewMap.computeIfAbsent(SubscriptionKeyValueStore.class, aClass -> {
+                    SubscriptionKeyValueStore kvStore = acquireView(SubscriptionKeyValueStore.class, String.class, BytesStore.class, queryString);
+                    StringBytesStoreKeyValueStore sskvStore = acquireFactory(StringBytesStoreKeyValueStore.class)
+                            .create(factoryContext(VanillaAsset.this).queryString(queryString).item(kvStore));
+                    topSubscription(sskvStore);
+                    return sskvStore;
+                });
+
+                return (V) view;
+            }
+
             if (vClass == SubscriptionKeyValueStore.class || vClass == Subscription.class) {
                 View view = viewMap.computeIfAbsent(SubscriptionKeyValueStore.class, aClass -> {
                     KeyValueStore kvStore = acquireView(KeyValueStore.class, class1, class2, queryString);
