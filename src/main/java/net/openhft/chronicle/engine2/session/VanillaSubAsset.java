@@ -22,7 +22,7 @@ public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscrib
     private final Set<Subscriber<T>> subscribers = new CopyOnWriteArraySet<>();
 
     VanillaSubAsset(RequestContext context) {
-        this(context.parent(), context.fullName());
+        this(context.parent(), context.name());
     }
 
     VanillaSubAsset(Asset parent, String name) {

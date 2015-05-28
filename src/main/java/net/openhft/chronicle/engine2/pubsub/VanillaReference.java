@@ -11,7 +11,7 @@ public class VanillaReference<E> implements Reference<E> {
     private final Class<E> eClass;
 
     public VanillaReference(RequestContext<MapView<String, E, E>> context) {
-        this.name = context.fullName();
+        this.name = context.name();
         this.eClass = context.type();
         this.parentMap = context.item();
     }
@@ -33,6 +33,6 @@ public class VanillaReference<E> implements Reference<E> {
 
     @Override
     public void registerSubscriber(Subscriber<E> subscriber) {
-        parentMap.asset().getAsset(name).registerSubscriber(eClass, subscriber, "bootstrap=true");
+        parentMap.asset().getChild(name).registerSubscriber(eClass, subscriber, "bootstrap=true");
     }
 }

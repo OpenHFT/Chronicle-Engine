@@ -5,10 +5,7 @@ import net.openhft.chronicle.engine2.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine2.api.map.MapView;
 import net.openhft.chronicle.engine2.api.set.EntrySet;
 import net.openhft.chronicle.engine2.api.set.KeySet;
-import net.openhft.chronicle.wire.TextWire;
-import net.openhft.chronicle.wire.VanillaWireParser;
-import net.openhft.chronicle.wire.Wire;
-import net.openhft.chronicle.wire.WireParser;
+import net.openhft.chronicle.wire.*;
 
 import java.util.Set;
 import java.util.function.Consumer;
@@ -22,11 +19,10 @@ public class RequestContext<I extends Assetted> {
     private String name;
     private Asset parent;
     private Class assetType, type, type2;
-    private String fullName;
     private I item;
     private String basePath;
     private Function<Bytes, Wire> wireType = TextWire::new;
-    private boolean putReturnsNull, removeReturnsNull;
+    private boolean putReturnsNull, removeReturnsNull, bootstrap;
 
     private RequestContext(Asset parent) {
         this.parent = parent;
@@ -51,16 +47,12 @@ public class RequestContext<I extends Assetted> {
         return new RequestContext<>(pathName, name).queryString(query);
     }
 
-    public RequestContext<I> fullName(String name) {
-        this.fullName = name;
-        return this;
-    }
-
     public RequestContext<I> queryString(String queryString) {
         if (queryString.isEmpty())
             return this;
         WireParser parser = new VanillaWireParser();
         parser.register(() -> "view", v -> v.text((Consumer<String>) this::view));
+        parser.register(() -> "bootstrap", v -> v.bool(b -> this.bootstrap = b));
         parser.register(() -> "putReturnsNull", v -> v.bool(b -> this.putReturnsNull = b));
         parser.register(() -> "removeReturnsNull", v -> v.bool(b -> this.removeReturnsNull = b));
         parser.register(() -> "basePath", v -> v.text((Consumer<String>) x -> this.basePath = x));
@@ -68,6 +60,8 @@ public class RequestContext<I extends Assetted> {
         parser.register(() -> "keyType", v -> v.typeLiteral(this::lookupType, x -> this.type = x));
         parser.register(() -> "valueType", v -> v.typeLiteral(this::lookupType, x -> this.type2 = x));
         parser.register(() -> "elementType", v -> v.typeLiteral(this::lookupType, x -> this.type = x));
+        parser.register(WireParser.DEFAULT, v -> {
+        });
         Bytes bytes = Bytes.from(queryString);
         QueryWire wire = new QueryWire(bytes);
         while (bytes.remaining() > 0)
@@ -128,7 +122,7 @@ public class RequestContext<I extends Assetted> {
     }
 
     public String fullName() {
-        return fullName;
+        return pathName + "/" + name;
     }
 
     public I item() {
@@ -166,6 +160,11 @@ public class RequestContext<I extends Assetted> {
         return name;
     }
 
+    public RequestContext<I> name(String name) {
+        this.name = name;
+        return this;
+    }
+
     public <A> RequestContext<I> assetType(Class<A> assetType) {
         this.assetType = assetType;
         return this;
@@ -181,5 +180,12 @@ public class RequestContext<I extends Assetted> {
 
     public boolean removeReturnsNull() {
         return removeReturnsNull;
+    }
+
+    public RequestContext<I> fullName(String fullName) {
+        int dirPos = fullName.lastIndexOf('/');
+        this.pathName = dirPos >= 0 ? fullName.substring(0, dirPos) : "";
+        this.name = dirPos >= 0 ? fullName.substring(dirPos + 1) : fullName;
+        return this;
     }
 }

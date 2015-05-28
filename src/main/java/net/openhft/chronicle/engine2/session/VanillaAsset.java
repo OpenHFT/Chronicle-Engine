@@ -36,7 +36,7 @@ public class VanillaAsset implements Asset, Closeable {
 
     VanillaAsset(RequestContext<Assetted> context) {
         this.parent = context.parent();
-        this.name = context.fullName();
+        this.name = context.name();
         this.item = context.item();
         if ("".equals(name)) {
             assert parent == null;
@@ -371,7 +371,7 @@ public class VanillaAsset implements Asset, Closeable {
             asset = (Asset) resource;
         } else {
             Factory<Asset> factory = acquireFactory(Asset.class);
-            asset = factory.create(requestContext(this).fullName(name).item(resource));
+            asset = factory.create(requestContext(this).name(name).item(resource));
         }
         children.put(name, asset);
         return asset;

@@ -50,7 +50,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     private Asset asset;
 
     public FilePerKeyValueStore(RequestContext context) throws IORuntimeException {
-        this(context.type(), context.basePath(), context.fullName());
+        this(context.type(), context.basePath(), context.name());
     }
 
     FilePerKeyValueStore(Class type, String basePath, String name) {
