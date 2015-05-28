@@ -22,7 +22,7 @@ public class RequestContext<I extends Assetted> {
     private I item;
     private String basePath;
     private Function<Bytes, Wire> wireType = TextWire::new;
-    private boolean putReturnsNull, removeReturnsNull, bootstrap;
+    private boolean putReturnsNull, removeReturnsNull, bootstrap = true;
 
     private RequestContext(Asset parent) {
         this.parent = parent;
@@ -70,23 +70,28 @@ public class RequestContext<I extends Assetted> {
 
     void view(String viewName) {
         switch (viewName) {
+            case "Map":
             case "map":
                 assetType = MapView.class;
                 break;
+            case "EntrySet":
             case "entrySet":
                 assetType = EntrySet.class;
                 break;
+            case "KeySet":
             case "keySet":
                 assetType = KeySet.class;
                 break;
+            case "Values":
             case "values":
                 assetType = ValuesCollection.class;
                 break;
+            case "Set":
             case "set":
                 assetType = Set.class;
                 break;
             default:
-                throw new IllegalArgumentException("Unknown viewName");
+                throw new IllegalArgumentException("Unknown view name:" + viewName);
         }
     }
 
@@ -121,7 +126,7 @@ public class RequestContext<I extends Assetted> {
     }
 
     public String fullName() {
-        return pathName + "/" + name;
+        return pathName.isEmpty() ? name : (pathName + "/" + name);
     }
 
     public I item() {
@@ -186,5 +191,27 @@ public class RequestContext<I extends Assetted> {
         this.pathName = dirPos >= 0 ? fullName.substring(0, dirPos) : "";
         this.name = dirPos >= 0 ? fullName.substring(dirPos + 1) : fullName;
         return this;
+    }
+
+    public boolean bootstrap() {
+        return bootstrap;
+    }
+
+    @Override
+    public String toString() {
+        return "RequestContext{" +
+                "pathName='" + pathName + '\'' +
+                ", name='" + name + '\'' +
+                ", parent=" + parent +
+                ", assetType=" + assetType +
+                ", type=" + type +
+                ", type2=" + type2 +
+                ", item=" + item +
+                ", basePath='" + basePath + '\'' +
+                ", wireType=" + wireType +
+                ", putReturnsNull=" + putReturnsNull +
+                ", removeReturnsNull=" + removeReturnsNull +
+                ", bootstrap=" + bootstrap +
+                '}';
     }
 }

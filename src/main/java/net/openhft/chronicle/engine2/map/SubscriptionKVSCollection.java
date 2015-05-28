@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine2.map;
 
+import net.openhft.chronicle.engine2.api.RequestContext;
 import net.openhft.chronicle.engine2.api.Subscriber;
 import net.openhft.chronicle.engine2.api.Subscription;
 import net.openhft.chronicle.engine2.api.TopicSubscriber;
@@ -68,8 +69,9 @@ public class SubscriptionKVSCollection<K, MV, V> implements Subscription {
     }
 
     @Override
-    public <E> void registerSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query) {
-        boolean bootstrap = query.contains("bootstrap=true");
+    public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {
+        boolean bootstrap = rc.bootstrap();
+        Class eClass = rc.type();
         if (eClass == KeyValueStore.Entry.class || eClass == MapEvent.class) {
             subscribers.add((Subscriber) subscriber);
             if (bootstrap) {
@@ -87,8 +89,8 @@ public class SubscriptionKVSCollection<K, MV, V> implements Subscription {
     }
 
     @Override
-    public <T, E> void registerTopicSubscriber(Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
-        boolean bootstrap = query.contains("bootstrap=true");
+    public <T, E> void registerTopicSubscriber(RequestContext rc, TopicSubscriber<T, E> subscriber) {
+        boolean bootstrap = rc.bootstrap();
         topicSubscribers.add((TopicSubscriber<K, V>) subscriber);
         if (bootstrap) {
             for (int i = 0; i < kvStore.segments(); i++)
@@ -98,12 +100,12 @@ public class SubscriptionKVSCollection<K, MV, V> implements Subscription {
     }
 
     @Override
-    public <E> void unregisterSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query) {
+    public void unregisterSubscriber(RequestContext rc, Subscriber subscriber) {
         throw new UnsupportedOperationException("todo");
     }
 
     @Override
-    public <T, E> void unregisterTopicSubscriber(Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
+    public void unregisterTopicSubscriber(RequestContext rc, TopicSubscriber subscriber) {
         topicSubscribers.remove(subscriber);
         hasSubscribers = !topicSubscribers.isEmpty() && !subscribers.isEmpty();
     }

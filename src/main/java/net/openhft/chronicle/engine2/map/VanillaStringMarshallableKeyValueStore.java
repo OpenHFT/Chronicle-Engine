@@ -159,37 +159,39 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     }
 
     @Override
-    public <E> void registerSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query) {
+    public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {
+        Class eClass = rc.type();
         if (eClass == MapEvent.class) {
             Subscriber<MapEvent<String, V>> sub = (Subscriber<MapEvent<String, V>>) subscriber;
 
-            kvStore.registerSubscriber((Class<MapEvent<String, BytesStore>>) eClass, e -> {
+            kvStore.registerSubscriber(rc, (MapEvent<String, BytesStore> e) -> {
                 if (e.getClass() == InsertedEvent.class)
                     sub.on(InsertedEvent.of(e.key(), bytesToValue.apply(e.value(), null)));
                 else if (e.getClass() == UpdatedEvent.class)
                     sub.on(UpdatedEvent.of(e.key(), bytesToValue.apply(((UpdatedEvent<String, BytesStore>) e).oldValue(), null), bytesToValue.apply(e.value(), null)));
                 else
                     sub.on(RemovedEvent.of(e.key(), bytesToValue.apply(e.value(), null)));
-            }, query);
+            });
+        } else {
+            subscriptions.registerSubscriber(rc, subscriber);
         }
-        subscriptions.registerSubscriber(eClass, subscriber, query);
     }
 
     @Override
-    public <T, E> void registerTopicSubscriber(Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
-        kvStore.registerTopicSubscriber(tClass, eClass, (topic, message) -> {
+    public <T, E> void registerTopicSubscriber(RequestContext rc, TopicSubscriber<T, E> subscriber) {
+        kvStore.registerTopicSubscriber(rc, (T topic, E message) -> {
             throw new UnsupportedOperationException("todo");
-        }, query);
-        subscriptions.registerTopicSubscriber(tClass, eClass, subscriber, query);
+        });
+        subscriptions.registerTopicSubscriber(rc, subscriber);
     }
 
     @Override
-    public <E> void unregisterSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query) {
+    public void unregisterSubscriber(RequestContext rc, Subscriber subscriber) {
         throw new UnsupportedOperationException("todo");
     }
 
     @Override
-    public <T, E> void unregisterTopicSubscriber(Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
+    public void unregisterTopicSubscriber(RequestContext rc, TopicSubscriber subscriber) {
         throw new UnsupportedOperationException("todo");
     }
 

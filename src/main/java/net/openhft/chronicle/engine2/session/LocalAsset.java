@@ -106,13 +106,13 @@ public class LocalAsset implements Asset, Assetted, Closeable {
     }
 
     @Override
-    public <I> I acquireView(Class<I> vClass, Class class1, Class class2, String queryString) {
+    public <V> V acquireView(Class<V> vClass, RequestContext rc) {
         viewMap.computeIfAbsent(vClass, vc -> {
-            I i = underlying.acquireView(vClass, class1, class2, queryString);
+            V i = underlying.acquireView(vClass, rc);
             View i2 = (View) View.forSession(i, session, this);
             return i2;
         });
-        throw new UnsupportedOperationException("todo vClass: " + vClass + ", class1: " + class1 + ", class2: " + class2 + ", query: " + queryString);
+        throw new UnsupportedOperationException("todo vClass: " + vClass + ", rc: " + rc);
     }
 
     @Override
@@ -146,23 +146,23 @@ public class LocalAsset implements Asset, Assetted, Closeable {
     }
 
     @Override
-    public <E> void registerSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query) {
+    public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public <T, E> void registerTopicSubscriber(RequestContext rc, TopicSubscriber<T, E> subscriber) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public <T, E> void registerTopicSubscriber(Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
-        throw new UnsupportedOperationException();
+    public void unregisterSubscriber(RequestContext rc, Subscriber subscriber) {
+        throw new UnsupportedOperationException("todo");
     }
 
     @Override
-    public <E> void unregisterSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public <T, E> void unregisterTopicSubscriber(Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
-        throw new UnsupportedOperationException();
+    public void unregisterTopicSubscriber(RequestContext rc, TopicSubscriber subscriber) {
+        throw new UnsupportedOperationException("todo");
     }
 
     @Override

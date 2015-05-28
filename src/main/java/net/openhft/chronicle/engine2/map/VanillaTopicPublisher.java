@@ -56,6 +56,6 @@ public class VanillaTopicPublisher<T, M> implements TopicPublisher<T, M> {
 
     @Override
     public void registerSubscriber(TopicSubscriber<T, M> topicSubscriber) {
-        asset.registerTopicSubscriber(tClass, mClass, topicSubscriber, "bootstrap=true");
+        asset.registerTopicSubscriber(RequestContext.requestContext("?bootstrap=true").type(tClass).type2(mClass), topicSubscriber);
     }
 }

@@ -54,19 +54,11 @@ public interface Asset extends Permissoned, Subscription {
 
     boolean isReadOnly();
 
-    default <V> V acquireView(Class<V> vClass) {
-        return acquireView(vClass, "");
+    default <V> V acquireView(RequestContext rc) {
+        return (V) acquireView(rc.assetType(), rc);
     }
 
-    default <V> V acquireView(Class<V> vClass, String queryString) {
-        return acquireView(vClass, null, "");
-    }
-
-    default <V> V acquireView(Class<V> vClass, Class class1, String queryString) {
-        return acquireView(vClass, class1, null, queryString);
-    }
-
-    <I> I acquireView(Class<I> vClass, Class class1, Class class2, String queryString);
+    <V> V acquireView(Class<V> vClass, RequestContext rc);
 
     <V> V getView(Class<V> vClass);
 

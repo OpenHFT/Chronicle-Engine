@@ -2,6 +2,7 @@ package net.openhft.chronicle.engine2;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine2.api.Asset;
+import net.openhft.chronicle.engine2.api.RequestContext;
 import net.openhft.chronicle.engine2.api.map.*;
 import net.openhft.chronicle.engine2.map.FilePerKeyValueStore;
 import net.openhft.chronicle.engine2.map.VanillaMapView;
@@ -75,9 +76,8 @@ public class FilePerKeyValueStoreTest {
         };
         Asset asset = getAsset(NAME);
         registerSubscriber(NAME, MapEvent.class, e -> e.apply(listener));
-        StringBytesStoreKeyValueStore sbskvStore = asset.acquireView(StringBytesStoreKeyValueStore.class);
-        sbskvStore.registerSubscriber(MapEvent.class, (x) ->
-                System.out.println(x), "");
+        StringBytesStoreKeyValueStore sbskvStore = asset.getView(StringBytesStoreKeyValueStore.class);
+        sbskvStore.registerSubscriber(RequestContext.requestContext("").type(MapEvent.class), System.out::println);
 
         map.put("testA", tm);
         assertEquals(1, map.size());

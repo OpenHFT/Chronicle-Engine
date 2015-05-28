@@ -113,23 +113,23 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
     }
 
     @Override
-    public <E> void registerSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query) {
-        subscriptions.registerSubscriber(eClass, subscriber, query);
+    public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {
+        subscriptions.registerSubscriber(rc, subscriber);
     }
 
     @Override
-    public <T, E> void registerTopicSubscriber(Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
-        subscriptions.registerTopicSubscriber(tClass, eClass, subscriber, query);
+    public <T, E> void registerTopicSubscriber(RequestContext rc, TopicSubscriber<T, E> subscriber) {
+        subscriptions.registerTopicSubscriber(rc, subscriber);
     }
 
     @Override
-    public <E> void unregisterSubscriber(Class<E> eClass, Subscriber<E> subscriber, String query) {
-        subscriptions.unregisterSubscriber(eClass, subscriber, query);
+    public void unregisterSubscriber(RequestContext rc, Subscriber subscriber) {
+        subscriptions.unregisterSubscriber(rc, subscriber);
     }
 
     @Override
-    public <T, E> void unregisterTopicSubscriber(Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber, String query) {
-        subscriptions.unregisterTopicSubscriber(tClass, eClass, subscriber, query);
+    public void unregisterTopicSubscriber(RequestContext rc, TopicSubscriber subscriber) {
+        subscriptions.unregisterTopicSubscriber(rc, subscriber);
     }
 
     @Override
