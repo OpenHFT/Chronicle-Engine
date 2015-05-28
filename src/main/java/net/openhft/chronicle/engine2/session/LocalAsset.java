@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.stream.Stream;
 
-import static net.openhft.chronicle.engine2.api.FactoryContext.factoryContext;
+import static net.openhft.chronicle.engine2.api.RequestContext.requestContext;
 
 public class LocalAsset implements Asset, Assetted, Closeable {
     private final LocalSession session;
@@ -63,7 +63,7 @@ public class LocalAsset implements Asset, Assetted, Closeable {
             asset = (Asset) resource;
         } else {
             Factory<Asset> factory = acquireFactory(Asset.class);
-            asset = factory.create(factoryContext(this).name(name).item(resource));
+            asset = factory.create(requestContext(this).fullName(name).item(resource));
         }
         children.put(name, asset);
         return asset;

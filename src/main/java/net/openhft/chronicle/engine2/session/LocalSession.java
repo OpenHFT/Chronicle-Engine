@@ -1,10 +1,6 @@
 package net.openhft.chronicle.engine2.session;
 
-import net.openhft.chronicle.engine2.api.Asset;
-import net.openhft.chronicle.engine2.api.AssetNotFoundException;
-import net.openhft.chronicle.engine2.api.Assetted;
-import net.openhft.chronicle.engine2.api.Session;
-import org.jetbrains.annotations.NotNull;
+import net.openhft.chronicle.engine2.api.*;
 import org.jetbrains.annotations.Nullable;
 
 public class LocalSession implements Session {
@@ -16,21 +12,20 @@ public class LocalSession implements Session {
         root = new LocalAsset(this, "", null, baseSession.getAsset(""));
     }
 
-    @NotNull
     @Override
-    public <A> Asset acquireAsset(String name, Class<A> assetClass, Class class1, Class class2) throws AssetNotFoundException {
-        Asset asset = getAsset(name);
+    public <A> Asset acquireAsset(RequestContext request) throws AssetNotFoundException {
+        Asset asset = getAsset(request.fullName());
         if (asset == null) {
-            int endIndex = name.lastIndexOf('/');
-            String parent = endIndex > 0 ? name.substring(0, endIndex) : "";
-            String name0 = name.substring(endIndex + 1);
+            String parent = request.namePath();
+            String name0 = request.name();
             LocalAsset asset3 = (LocalAsset) getAssetOrANFE(parent);
-            Asset asset2 = baseSession.acquireAsset(name, assetClass, class1, class2);
-            LocalAsset ret = new LocalAsset(this, name, asset3, asset2);
+            Asset asset2 = baseSession.acquireAsset(request);
+            LocalAsset ret = new LocalAsset(this, name0, asset3, asset2);
             asset3.add(name0, ret);
             return ret;
         }
         return asset;
+
     }
 
     @Nullable

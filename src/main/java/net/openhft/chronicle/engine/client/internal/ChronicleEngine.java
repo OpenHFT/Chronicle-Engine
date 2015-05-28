@@ -63,13 +63,13 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
 
     }
    /*
-    public void setQueue(String name, ChronicleQueue chronicle) {
-        queues.put(name, chronicle);
+    public void setQueue(String fullName, ChronicleQueue chronicle) {
+        queues.put(fullName, chronicle);
     }
 
     @Override
-    public ChronicleQueue getQueue(String name) {
-        return queues.get(name);
+    public ChronicleQueue getQueue(String fullName) {
+        return queues.get(fullName);
     }
     */
 
@@ -144,7 +144,7 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
     @Override
     public <I> I getService(Class<I> iClass, String name, Class... args) throws IOException {
         //  if (iClass == Chronicle.class)
-        //    return (I) getQueue(name);
+        //    return (I) getQueue(fullName);
         if (iClass == ChronicleSet.class)
             return (I) getSet(name, args[0]);
         if (iClass == ChronicleMap.class)

@@ -3,7 +3,7 @@ package net.openhft.chronicle.engine2.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.engine2.api.Asset;
-import net.openhft.chronicle.engine2.api.FactoryContext;
+import net.openhft.chronicle.engine2.api.RequestContext;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 
 import java.util.Iterator;
@@ -24,7 +24,7 @@ public class ObjectObjectKeyValueStore<K, MV extends V, V> implements KeyValueSt
     private KeyValueStore<BytesStore, Bytes, BytesStore> kvStore;
     private Asset asset;
 
-    public ObjectObjectKeyValueStore(FactoryContext<KeyValueStore<BytesStore, Bytes, BytesStore>> context) {
+    public ObjectObjectKeyValueStore(RequestContext<KeyValueStore<BytesStore, Bytes, BytesStore>> context) {
         asset = context.parent();
         Class type = context.type();
         keyToBytes = toBytes(type);

@@ -24,7 +24,6 @@ import net.openhft.chronicle.engine.client.RemoteTcpClientChronicleContext;
 import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.wire.BinaryWire;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +37,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
@@ -174,21 +172,12 @@ public class MapClientTest extends ThreadMonitoringTest {
         public RemoteMapSupplier(@NotNull final Class<K> kClass,
                                  @NotNull final Class<V> vClass,
                                  @NotNull final ChronicleEngine chronicleEngine,
-                                 @NotNull final Class<TextWire> wireClass) throws IOException {
+                                 @NotNull final Function<Bytes, Wire> wireType) throws IOException {
 
-            serverEndpoint = new ServerEndpoint((byte) 1, chronicleEngine, wireClass);
+            serverEndpoint = new ServerEndpoint((byte) 1, chronicleEngine, wireType);
             int serverPort = serverEndpoint.getPort();
 
-            final Function<Bytes<ByteBuffer>, ? extends Wire> byteToWire;
-
-            if (wireClass.isAssignableFrom(TextWire.class))
-                byteToWire = TextWire::new;
-            else if (wireClass.isAssignableFrom(BinaryWire.class))
-                byteToWire = BinaryWire::new;
-            else
-                throw new IllegalArgumentException();
-
-            context = new RemoteTcpClientChronicleContext("localhost", serverPort, (byte) 2, wireClass);
+            context = new RemoteTcpClientChronicleContext("localhost", serverPort, (byte) 2, wireType);
             map = context.getMap("test", kClass, vClass);
         }
 
@@ -241,7 +230,7 @@ public class MapClientTest extends ThreadMonitoringTest {
             result = new LocalMapSupplier<K, V>(kClass, vClass);
 
         } else if (RemoteMapSupplier.class.equals(supplier)) {
-            result = new RemoteMapSupplier<K, V>(kClass, vClass, new ChronicleEngine(), TextWire.class);
+            result = new RemoteMapSupplier<K, V>(kClass, vClass, new ChronicleEngine(), TextWire::new);
 
         } else {
             throw new IllegalStateException("unsuported type");

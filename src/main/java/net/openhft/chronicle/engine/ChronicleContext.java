@@ -30,7 +30,7 @@ import java.util.logging.Logger;
  * Created by peter.lawrey on 09/10/14.
  */
 public interface ChronicleContext {
-    //ChronicleQueue getQueue(String name);
+    //ChronicleQueue getQueue(String fullName);
 
     // get any map
     <K, V> ConcurrentMap<K, V> getMap(String name, Class<K> kClass, Class<V> vClass) throws IOException;

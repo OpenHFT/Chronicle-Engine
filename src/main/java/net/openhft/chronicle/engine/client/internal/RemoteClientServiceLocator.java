@@ -69,7 +69,7 @@ public class RemoteClientServiceLocator {
                 final Class vClass = args[1];
                 return (I) newMapInstance(name, kClass, vClass);
             }/*    } else if (ChronicleQueue.class.isAssignableFrom(iClass)) {
-                return (I) newQueueInstance(name);
+                return (I) newQueueInstance(fullName);
             }
 */
         } catch (IOException e) {
@@ -79,8 +79,8 @@ public class RemoteClientServiceLocator {
         throw new IllegalStateException("iClass=" + iClass + " not supported");
     }
 /*
-    private <I> I newQueueInstance(String name) {
-        return (I) new ClientWiredChronicleQueueStateless(hub, name);
+    private <I> I newQueueInstance(String fullName) {
+        return (I) new ClientWiredChronicleQueueStateless(hub, fullName);
     }*/
 
     private <I, KI, VI> I mapInstance(Class<KI> kClass, Class<VI> vClass, String name)
