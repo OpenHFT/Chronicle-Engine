@@ -35,6 +35,9 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         ChronicleMapBuilder builder = ChronicleMapBuilder.of(kClass, vClass)
                 .entryOperations(publishingOperations);
 
+        if(context.putReturnsNull()){
+            builder.putReturnsNull(true);
+        }
         if(context.getAverageValueSize()!=0){
             builder.averageValueSize(context.getAverageValueSize());
         }
@@ -65,8 +68,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
 
     @Override
     public V getUsing(K key, MV value) {
-        //MutableValues are not really supported by ChronicleMap
-        //so try our best to store them as they are
+        if(value != null)throw new UnsupportedOperationException("Mutable values not supported");
         return chronicleMap.getUsing(key, (V)value);
     }
 
