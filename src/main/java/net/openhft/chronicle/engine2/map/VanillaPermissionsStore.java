@@ -1,8 +1,11 @@
 package net.openhft.chronicle.engine2.map;
 
-import net.openhft.chronicle.engine2.api.*;
-import net.openhft.chronicle.engine2.api.map.PermissionsStore;
+import net.openhft.chronicle.engine2.api.Asset;
+import net.openhft.chronicle.engine2.api.Permissions;
+import net.openhft.chronicle.engine2.api.VanillaPermissions;
+import net.openhft.chronicle.engine2.api.View;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
+import net.openhft.chronicle.engine2.api.map.PermissionsStore;
 import net.openhft.chronicle.engine2.session.LocalSession;
 
 import java.util.Iterator;
@@ -44,67 +47,47 @@ public class VanillaPermissionsStore<MV> implements PermissionsStore<MV> {
     }
 
     @Override
-    public void keysFor(int segment, Consumer<String> stringConsumer) {
+    public SubscriptionKVSCollection<String, Permissions> subscription(boolean createIfAbsent) {
+        throw new UnsupportedOperationException("todo");
+    }
 
+    @Override
+    public void keysFor(int segment, Consumer<String> stringConsumer) {
+        throw new UnsupportedOperationException("todo");
     }
 
     @Override
     public void entriesFor(int segment, Consumer<Entry<String, Permissions>> kvConsumer) {
-
+        throw new UnsupportedOperationException("todo");
     }
 
     @Override
     public Iterator<Map.Entry<String, Permissions>> entrySetIterator() {
-        return null;
+        throw new UnsupportedOperationException("todo");
     }
 
     @Override
     public void clear() {
-
-    }
-
-    @Override
-    public void asset(Asset asset) {
-
+        throw new UnsupportedOperationException("todo");
     }
 
     @Override
     public Asset asset() {
-        return null;
+        throw new UnsupportedOperationException("todo");
     }
 
     @Override
     public void underlying(KeyValueStore<String, MV, Permissions> underlying) {
-
+        throw new UnsupportedOperationException("todo");
     }
 
     @Override
     public KeyValueStore<String, MV, Permissions> underlying() {
-        return null;
-    }
-
-    @Override
-    public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {
-
-    }
-
-    @Override
-    public <T, E> void registerTopicSubscriber(RequestContext rc, TopicSubscriber<T, E> subscriber) {
-
-    }
-
-    @Override
-    public void unregisterSubscriber(RequestContext rc, Subscriber subscriber) {
-
-    }
-
-    @Override
-    public void unregisterTopicSubscriber(RequestContext rc, TopicSubscriber subscriber) {
-
+        throw new UnsupportedOperationException("todo");
     }
 
     @Override
     public View forSession(LocalSession session, Asset asset) {
-        return null;
+        throw new UnsupportedOperationException("todo");
     }
 }

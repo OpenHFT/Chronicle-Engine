@@ -92,48 +92,28 @@ public class AuthenticationStore<K, MV, V> implements SubscriptionKeyValueStore<
     }
 
     @Override
-    public void asset(Asset asset) {
-
+    public SubscriptionKVSCollection<K, V> subscription(boolean createIfAbsent) {
+        throw new UnsupportedOperationException("todo");
     }
 
     @Override
     public Asset asset() {
-        return null;
+        throw new UnsupportedOperationException("todo");
     }
 
     @Override
     public void underlying(KeyValueStore<K, MV, V> underlying) {
-
+        throw new UnsupportedOperationException("todo");
     }
 
     @Override
     public KeyValueStore<K, MV, V> underlying() {
-        return null;
-    }
-
-    @Override
-    public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {
-
-    }
-
-    @Override
-    public <T, E> void registerTopicSubscriber(RequestContext rc, TopicSubscriber<T, E> subscriber) {
-
-    }
-
-    @Override
-    public void unregisterSubscriber(RequestContext rc, Subscriber subscriber) {
-
-    }
-
-    @Override
-    public void unregisterTopicSubscriber(RequestContext rc, TopicSubscriber subscriber) {
-
+        throw new UnsupportedOperationException("todo");
     }
 
     @Override
     public View forSession(LocalSession session, Asset asset) {
-        return null;
+        throw new UnsupportedOperationException("todo");
     }
 
     private Object operateWithPermission(Supplier f, Predicate<Permissions> p) {
