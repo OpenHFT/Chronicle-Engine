@@ -108,6 +108,7 @@ public class CharCharMapHandler implements MapHandler<CharSequence, CharSequence
 
     @Override
     public StringBuilder usingValue() {
+        usingValue.setLength(0);
         return usingValue;
     }
 }
