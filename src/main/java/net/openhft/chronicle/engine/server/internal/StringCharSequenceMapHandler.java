@@ -33,12 +33,8 @@ public class StringCharSequenceMapHandler implements MapHandler<String, CharSequ
     };
 
     private final BiConsumer<ValueOut, Map.Entry<String, CharSequence>> entryToWire
-            = (v, e) -> {
-        v.marshallable(w -> {
-            w.write(() -> "key").object(e.getKey())
-                    .write(() -> "value").text(e.getValue());
-        });
-    };
+            = (v, e) -> v.marshallable(w -> w.write(() -> "key").object(e.getKey())
+                    .write(() -> "value").text(e.getValue()));
 
     private final Function<ValueIn, Map.Entry<String, CharSequence>> wireToEntry
             = valueIn -> valueIn.applyToMarshallable(x -> {
