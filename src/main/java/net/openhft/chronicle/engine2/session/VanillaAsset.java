@@ -1,28 +1,25 @@
 package net.openhft.chronicle.engine2.session;
 
-import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.bytes.BytesMarshallable;
-import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.util.Closeable;
 import net.openhft.chronicle.engine2.api.*;
-import net.openhft.chronicle.engine2.api.map.*;
-import net.openhft.chronicle.engine2.api.set.EntrySetView;
-import net.openhft.chronicle.engine2.map.ChronicleMapKeyValueStore;
+import net.openhft.chronicle.engine2.api.map.MapView;
+import net.openhft.chronicle.engine2.api.map.StringMarshallableKeyValueStore;
+import net.openhft.chronicle.engine2.api.map.StringStringKeyValueStore;
+import net.openhft.chronicle.engine2.api.map.SubscriptionKeyValueStore;
+import net.openhft.chronicle.engine2.map.VanillaStringMarshallableKeyValueStore;
+import net.openhft.chronicle.engine2.map.VanillaStringStringKeyValueStore;
 import net.openhft.chronicle.wire.Marshallable;
-import net.openhft.chronicle.wire.TextWire;
-import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static net.openhft.chronicle.core.util.StringUtils.split2;
 import static net.openhft.chronicle.engine2.api.RequestContext.requestContext;
 
 /**
@@ -32,15 +29,21 @@ public class VanillaAsset implements Asset, Closeable {
     public static final Comparator<Class> CLASS_COMPARATOR = Comparator.comparing(Class::getName);
     private final Asset parent;
     private final String name;
-    private final Assetted item;
 
+    final Map<Class, Map<String, Function<RequestContext, ViewLayer>>> classifierMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
     final Map<Class, View> viewMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
     private final Map<Class, Factory> factoryMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
 
-    VanillaAsset(RequestContext<Assetted> context) {
-        this.parent = context.parent();
+    VanillaAsset(RequestContext context, Asset asset, Supplier<Assetted> assetted) {
+        this(context, asset);
+        assert assetted == null;
+
+    }
+
+    VanillaAsset(RequestContext context, Asset asset) {
+        this.parent = asset;
         this.name = context.name();
-        this.item = context.item();
+
         if ("".equals(name)) {
             assert parent == null;
         } else {
@@ -50,14 +53,28 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Override
-    public Assetted item() {
-        return item;
+    public <V> void prependClassifier(Class<V> assetType, String name, Function<RequestContext, ViewLayer> viewBuilderFactory) {
+        Map<String, Function<RequestContext, ViewLayer>> stringFunctionMap = classifierMap.computeIfAbsent(assetType, k -> new ConcurrentSkipListMap<>());
+        stringFunctionMap.put(name, viewBuilderFactory);
+    }
+
+    public ViewLayer classify(Class viewType, RequestContext rc) throws AssetNotFoundException {
+        Map<String, Function<RequestContext, ViewLayer>> stringFunctionMap = classifierMap.get(viewType);
+        if (stringFunctionMap != null) {
+            for (Function<RequestContext, ViewLayer> function : stringFunctionMap.values()) {
+                ViewLayer apply = function.apply(rc);
+                if (apply != null)
+                    return apply;
+            }
+        }
+        if (parent == null)
+            throw new AssetNotFoundException("Unable to classify " + viewType + ", rc: " + rc);
+        return parent.classify(viewType, rc);
     }
 
     @Override
     public <V> V getView(Class<V> vClass) {
         View view = viewMap.get(vClass);
-        if (view == null && vClass.isInstance(item)) return (V) item;
         return (V) view;
     }
 
@@ -72,174 +89,208 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Override
-    public <V> V acquireView(Class<V> vClass, RequestContext rc) {
-        if (rc.type2() == null) {
-            if (rc.type() == null)
-                return (V) acquireView(vClass, rc.toString());
-            else
-                return (V) acquireView(vClass, rc.type(), rc.toString());
-        } else {
-            return (V) acquireView(vClass, rc.type(), rc.type2(), rc.toString());
-        }
-    }
+    public <V> V acquireView(Class<V> viewType, RequestContext rc) {
+        synchronized (viewMap) {
+            V view = getView(viewType);
+            if (view != null) {
+                return (V) view;
+            }
+            ViewLayer classify;
+            try {
+                classify = classify(viewType, rc);
 
-    public <V> V acquireView(Class<V> vClass, String queryString) {
-        V view = getView(vClass);
-        if (view != null) {
+            } catch (AssetNotFoundException e) {
+                Factory<V> factory = getFactory(viewType);
+                if (factory == null)
+                    throw e;
+                view = (V) factory.create(rc, this, null);
+                addView(viewType, view);
+                return view;
+            }
+            view = (V) classify.create(rc, this);
+            addView(viewType, view);
             return view;
         }
-        Factory factory = acquireFactory(vClass);
-        View view2 = acquireView(vClass, v -> (View) factory.create(requestContext(this).type(v).queryString(queryString)));
-        return (V) view2;
     }
 
-    public <V> V acquireView(Class<V> vClass, Class class1, String queryString) {
-        V v = getView(vClass);
-        if (v != null)
-            return v;
-        if (vClass == Set.class) {
-            if (class1 == Map.Entry.class) {
-                KeyValueStore keyValueStore = acquireView(KeyValueStore.class, class1, queryString);
-                return (V) acquireView(EntrySetView.class, aClass ->
-                        acquireFactory(EntrySetView.class)
-                                .create(requestContext(VanillaAsset.this).queryString(queryString).item(keyValueStore)));
-            }
-        }
-        if (vClass == KeyValueStore.class) {
-            KeyValueStore kvStore = (KeyValueStore) viewMap.get(KeyValueStore.class);
-            if (kvStore == null) {
-                if (item instanceof KeyValueStore)
-                    return (V) item;
-                else
-                    throw new AssetNotFoundException("type: " + vClass);
-            }
-            return (V) kvStore;
-        }
-        if (vClass == SubscriptionKeyValueStore.class || vClass == Subscription.class) {
-            View view = acquireView(SubscriptionKeyValueStore.class, null, null, queryString);
-            return (V) view;
-        }
-        try {
-            Factory factory = acquireFactory(vClass);
-            return acquireView(vClass, viewType -> (View) factory.create(requestContext(this).type(class1).queryString(queryString)));
-        } catch (AssetNotFoundException e) {
-            throw new UnsupportedOperationException("todo " + vClass + " type: " + class1);
-        }
-    }
-
-    <V> V acquireView(Class viewClass, Function<Class, View> builder) {
-        synchronized (viewMap) {
-            View view = viewMap.get(viewClass);
-            if (view == null)
-                viewMap.put(viewClass, view = builder.apply(viewClass));
-            return (V) view;
-        }
-    }
-
-    public <V> V acquireView(Class<V> vClass, Class class1, Class class2, String queryString) {
-        V v = getView(vClass);
-        if (v != null)
-            return v;
-        if (item instanceof KeyValueStore) {
-            if ((vClass == Map.class || vClass == ConcurrentMap.class)) {
-                return (V) acquireView(MapView.class, class1, class2, queryString);
-            }
-            if (vClass == MapView.class) {
-                View view = acquireView(MapView.class, aClass -> {
-                    KeyValueStore kvStore;
-                    if (class1 == String.class) {
-                        if (class2 == BytesStore.class) {
-                            kvStore = acquireView(StringBytesStoreKeyValueStore.class, class1, class2, queryString);
-                        }
-                        else if (BytesMarshallable.class.isAssignableFrom(class2)) {
-                            kvStore = new ChronicleMapKeyValueStore(requestContext(VanillaAsset.this).type(class1).type2(class2).queryString(queryString));
-                        }
-                        else if (Marshallable.class.isAssignableFrom(class2)) {
-                            kvStore = acquireView(StringMarshallableKeyValueStore.class, class1, class2, queryString);
-                        }
-                        else if (class2 == String.class && getFactory(StringStringKeyValueStore.class) != null) {
-                            kvStore = acquireView(StringStringKeyValueStore.class, class1, class2, queryString);
-                        } else {
-                            kvStore = (KeyValueStore) item;
-                        }
-                    } else {
-                        kvStore = (KeyValueStore) item;
-                    }
-                    return acquireFactory(MapView.class)
-                            .create(requestContext(VanillaAsset.this).type(class1).type2(class2).queryString(queryString).item(kvStore));
-                });
-                return (V) view;
-            }
-            if (vClass == StringMarshallableKeyValueStore.class) {
-                View view = acquireView(StringMarshallableKeyValueStore.class, aClass -> {
-                    KeyValueStore kvStore = acquireView(StringBytesStoreKeyValueStore.class, String.class, BytesStore.class, queryString);
-                    StringMarshallableKeyValueStore smkvStore = acquireFactory(StringMarshallableKeyValueStore.class)
-                            .create(requestContext(VanillaAsset.this)
-                                    .type(class1).type2(class2)
-                                    .queryString(queryString)
-                                    .wireType((Function<Bytes, Wire>) TextWire::new)
-                                    .item(kvStore));
-                    topSubscription(smkvStore);
-                    return smkvStore;
-                });
-                return (V) view;
-            }
-            if (vClass == StringStringKeyValueStore.class) {
-                View view = acquireView(StringStringKeyValueStore.class, aClass -> {
-                    SubscriptionKeyValueStore kvStore = acquireView(SubscriptionKeyValueStore.class, String.class, BytesStore.class, queryString);
-                    StringStringKeyValueStore sskvStore = acquireFactory(StringStringKeyValueStore.class)
-                            .create(requestContext(VanillaAsset.this).queryString(queryString).item(kvStore));
-                    topSubscription(sskvStore);
-                    return sskvStore;
-                });
-                return (V) view;
-            }
-
-            if (vClass == StringBytesStoreKeyValueStore.class) {
-                View view = viewMap.computeIfAbsent(SubscriptionKeyValueStore.class, aClass -> {
-                    SubscriptionKeyValueStore kvStore = acquireView(SubscriptionKeyValueStore.class, String.class, BytesStore.class, queryString);
-                    StringBytesStoreKeyValueStore sskvStore = acquireFactory(StringBytesStoreKeyValueStore.class)
-                            .create(requestContext(VanillaAsset.this).queryString(queryString).item(kvStore));
-                    topSubscription(sskvStore);
-                    return sskvStore;
-                });
-
-                return (V) view;
-            }
-
-            if (vClass == SubscriptionKeyValueStore.class || vClass == Subscription.class) {
-                View view = acquireView(SubscriptionKeyValueStore.class, aClass -> {
-                    KeyValueStore kvStore = acquireView(KeyValueStore.class, class1, class2, queryString);
-                    SubscriptionKeyValueStore skvStore = acquireFactory(SubscriptionKeyValueStore.class)
-                            .create(requestContext(VanillaAsset.this).queryString(queryString).item(kvStore));
-                    topSubscription(skvStore);
-                    return skvStore;
-                });
-                return (V) view;
-            }
-            if (vClass == TopicPublisher.class) {
-                View view = acquireView(TopicPublisher.class, aClass -> {
-                    SubscriptionKeyValueStore subscription = acquireView(SubscriptionKeyValueStore.class, class1, class2, queryString);
-                    return acquireFactory(TopicPublisher.class)
-                            .create(requestContext(VanillaAsset.this).queryString(queryString).item(subscription));
-                });
-                return (V) view;
-            }
-        }
-        throw new UnsupportedOperationException("todo " + vClass + " type: " + class1 + " type2: " + class2);
+    private <V> void addView(Class<V> viewType, V view) {
+        viewMap.put(viewType, (View) view);
+        if (view instanceof SubscriptionKeyValueStore)
+            topSubscription(((SubscriptionKeyValueStore) view));
     }
 
     private void topSubscription(SubscriptionKeyValueStore skvStore) {
-        MapView view = getView(MapView.class);
-        if (view != null) {
-            if (!skvStore.isUnderlying(view.underlying()))
-                throw new AssertionError("Miss wiring");
-            view.underlying(skvStore);
-        }
-        viewMap.put(Subscription.class, skvStore);
-        viewMap.put(KeyValueStore.class, skvStore);
+        System.out.println("topSubscription " + skvStore);
+        viewMap.put(Subscription.class, skvStore.subscription(true));
     }
 
+    /*
+        public <V> V acquireView(Class<V> vClass, String queryString) {
+            V view = getView(vClass);
+            if (view != null) {
+                return view;
+            }
+            if (vClass == Subscription.class) {
+                if (item instanceof KeyValueStore) {
+                    SubscriptionKeyValueStore skvStore = acquireView(SubscriptionKeyValueStore.class, queryString);
+                    topSubscription(skvStore);
+                    return (V) skvStore.subscription(true);
+                }
+            }
+            Factory factory = acquireFactory(vClass);
+            View view2 = acquireView(vClass, v -> (View) factory.create(requestContext(this).type(v).queryString(queryString)));
+            return (V) view2;
+        }
+
+        public <V> V acquireView(Class<V> vClass, Class class1, String queryString) {
+            V v = getView(vClass);
+            if (v != null)
+                return v;
+            if (vClass == Set.class) {
+                if (class1 == Map.Entry.class) {
+                    KeyValueStore keyValueStore = acquireView(KeyValueStore.class, class1, queryString);
+                    return (V) acquireView(EntrySetView.class, aClass ->
+                            acquireFactory(EntrySetView.class)
+                                    .create(requestContext(VanillaAsset.this).queryString(queryString).item(keyValueStore)));
+                }
+            }
+            if (vClass == KeyValueStore.class) {
+                KeyValueStore kvStore = getView(KeyValueStore.class);
+                if (kvStore == null) {
+                    if (item instanceof KeyValueStore)
+                        return (V) item;
+                    else
+                        throw new AssetNotFoundException("type: " + vClass);
+                }
+                return (V) kvStore;
+            }
+            if (vClass == SubscriptionKeyValueStore.class || vClass == Subscription.class) {
+                View view = acquireView(SubscriptionKeyValueStore.class, null, null, queryString);
+                return (V) view;
+            }
+            try {
+                Factory factory = acquireFactory(vClass);
+                return acquireView(vClass, viewType -> (View) factory.create(requestContext(this).type(class1).queryString(queryString)));
+            } catch (AssetNotFoundException e) {
+                throw new UnsupportedOperationException("todo " + vClass + " type: " + class1);
+            }
+        }
+
+        <V> V acquireView(Class viewClass, Function<Class<V>, View> builder) {
+            synchronized (viewMap) {
+                View view = viewMap.get(viewClass);
+                if (view == null)
+                    viewMap.put(viewClass, view = builder.apply(viewClass));
+                return (V) view;
+            }
+        }
+
+        public <V> V acquireView(Class<V> vClass, Class class1, Class class2, String queryString) {
+            V v = getView(vClass);
+            if (v != null)
+                return v;
+            if (item instanceof KeyValueStore) {
+                if (vClass == MapView.class) {
+                    View view = acquireView(MapView.class, aClass -> {
+                        KeyValueStore kvStore;
+                        if (class1 == String.class) {
+                            if (class2 == BytesStore.class) {
+                                kvStore = acquireView(StringBytesStoreKeyValueStore.class, class1, class2, queryString);
+                            } else if (BytesMarshallable.class.isAssignableFrom(class2)) {
+                                kvStore = new ChronicleMapKeyValueStore(requestContext(VanillaAsset.this).type(class1).type2(class2).queryString(queryString));
+                            } else if (Marshallable.class.isAssignableFrom(class2)) {
+                                kvStore = acquireView(StringMarshallableKeyValueStore.class, class1, class2, queryString);
+                            } else if (class2 == String.class && getFactory(StringStringKeyValueStore.class) != null) {
+                                kvStore = acquireView(StringStringKeyValueStore.class, class1, class2, queryString);
+                            } else {
+                                kvStore = (KeyValueStore) item;
+                            }
+                        } else {
+                            kvStore = (KeyValueStore) item;
+                        }
+                        return acquireFactory(MapView.class)
+                                .create(requestContext(VanillaAsset.this).type(class1).type2(class2).queryString(queryString).item(kvStore));
+                    });
+                    return (V) view;
+                }
+                if (vClass == StringMarshallableKeyValueStore.class) {
+                    View view = acquireView(StringMarshallableKeyValueStore.class, aClass -> {
+                        KeyValueStore kvStore = acquireView(StringBytesStoreKeyValueStore.class, String.class, BytesStore.class, queryString);
+                        StringMarshallableKeyValueStore smkvStore = acquireFactory(StringMarshallableKeyValueStore.class)
+                                .create(requestContext(VanillaAsset.this)
+                                        .type(class1).type2(class2)
+                                        .queryString(queryString)
+                                        .wireType((Function<Bytes, Wire>) TextWire::new)
+                                        .item(kvStore));
+                        topSubscription(smkvStore);
+                        return smkvStore;
+                    });
+                    return (V) view;
+                }
+                if (vClass == StringStringKeyValueStore.class) {
+                    View view = acquireView(StringStringKeyValueStore.class, aClass -> {
+                        SubscriptionKeyValueStore kvStore = acquireView(SubscriptionKeyValueStore.class, String.class, BytesStore.class, queryString);
+                        StringStringKeyValueStore sskvStore = acquireFactory(StringStringKeyValueStore.class)
+                                .create(requestContext(VanillaAsset.this).queryString(queryString).item(kvStore));
+                        topSubscription(sskvStore);
+                        return sskvStore;
+                    });
+                    return (V) view;
+                }
+
+                if (vClass == StringBytesStoreKeyValueStore.class) {
+                    View view = acquireView(SubscriptionKeyValueStore.class, aClass -> {
+                        SubscriptionKeyValueStore kvStore = acquireView(SubscriptionKeyValueStore.class, String.class, BytesStore.class, queryString);
+                        StringBytesStoreKeyValueStore sskvStore = acquireFactory(StringBytesStoreKeyValueStore.class)
+                                .create(requestContext(VanillaAsset.this).queryString(queryString).item(kvStore));
+                        topSubscription(sskvStore);
+                        return sskvStore;
+                    });
+
+                    return (V) view;
+                }
+
+                if (vClass == SubscriptionKeyValueStore.class || vClass == Subscription.class) {
+                    View view = acquireView(SubscriptionKeyValueStore.class, aClass -> {
+                        KeyValueStore kvStore = acquireView(KeyValueStore.class, class1, class2, queryString);
+                        SubscriptionKeyValueStore skvStore = acquireFactory(SubscriptionKeyValueStore.class)
+                                .create(requestContext(VanillaAsset.this).queryString(queryString).item(kvStore));
+                        topSubscription(skvStore);
+                        return skvStore;
+                    });
+                    return (V) view;
+                }
+                if (vClass == TopicPublisher.class) {
+                    View view = acquireView(TopicPublisher.class, aClass -> {
+                        SubscriptionKeyValueStore subscription = acquireView(SubscriptionKeyValueStore.class, class1, class2, queryString);
+                        return acquireFactory(TopicPublisher.class)
+                                .create(requestContext(VanillaAsset.this).queryString(queryString).item(subscription));
+                    });
+                    return (V) view;
+                }
+            }
+            throw new UnsupportedOperationException("todo " + vClass + " type: " + class1 + " type2: " + class2);
+        }
+
+        <V> void putView(Class<V> vClass, V v) {
+            if (vClass.isInstance(v))
+                viewMap.put(vClass, (View) v);
+            else
+                throw new IllegalArgumentException(v + "is not a " + vClass);
+        }
+
+        private void topSubscription(SubscriptionKeyValueStore skvStore) {
+            MapView view = getView(MapView.class);
+            if (view != null) {
+                if (!skvStore.isUnderlying(view.underlying()))
+                    throw new AssertionError("Miss wiring");
+                view.underlying(skvStore);
+            }
+            putView(Subscription.class, skvStore.subscription(true));
+            putView(KeyValueStore.class, skvStore);
+        }
+    */
+    @Nullable
     public <I> Factory<I> getFactory(Class<I> iClass) {
         Factory<I> factory = factoryMap.get(iClass);
         if (factory != null)
@@ -266,7 +317,9 @@ public class VanillaAsset implements Asset, Closeable {
             if (iClass != View.class) {
                 Factory<Factory> factoryFactory = factoryMap.get(Factory.class);
                 if (factoryFactory != null) {
-                    factory = factoryFactory.create(requestContext(this).type(iClass));
+                    factory = factoryFactory.create(requestContext(), this, () -> {
+                        throw new UnsupportedOperationException();
+                    });
                     if (factory != null) {
                         factoryMap.put(iClass, factory);
                         return factory;
@@ -278,34 +331,13 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Override
-    public <I> void registerView(Class<I> iClass, I interceptor) {
-        throw new UnsupportedOperationException("todo");
+    public <I> void registerView(Class<I> viewType, I view) {
+        viewMap.put(viewType, (View) view);
     }
 
     @Override
-    public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {
-        Subscription sub = acquireView(Subscription.class, rc);
-        sub.registerSubscriber(rc, subscriber);
-    }
-
-    @Override
-    public <T, E> void registerTopicSubscriber(RequestContext rc, TopicSubscriber<T, E> subscriber) {
-        Subscription sub = acquireView(Subscription.class, rc);
-        sub.registerTopicSubscriber(rc, subscriber);
-    }
-
-    @Override
-    public void unregisterSubscriber(RequestContext rc, Subscriber subscriber) {
-        Subscription sub = getView(Subscription.class);
-        if (sub != null)
-            sub.unregisterSubscriber(rc, subscriber);
-    }
-
-    @Override
-    public void unregisterTopicSubscriber(RequestContext rc, TopicSubscriber subscriber) {
-        Subscription sub = getView(Subscription.class);
-        if (sub != null)
-            sub.unregisterTopicSubscriber(rc, subscriber);
+    public Subscription subscription(boolean createIfAbsent) {
+        return createIfAbsent ? acquireView(Subscription.class, requestContext()) : getView(Subscription.class);
     }
 
     @Override
@@ -328,21 +360,20 @@ public class VanillaAsset implements Asset, Closeable {
 
     @NotNull
     @Override
-    public <A> Asset acquireChild(String name, Class<A> assetClass, Class class1, Class class2) throws
-            AssetNotFoundException {
+    public <A> Asset acquireChild(Class<A> assetClass, RequestContext context, String name) throws AssetNotFoundException {
         int pos = name.indexOf("/");
         if (pos >= 0) {
             String name1 = name.substring(0, pos);
             String name2 = name.substring(pos + 1);
-            return getAssetOrANFE(name1, assetClass, class1, class2).acquireChild(name2, assetClass, class1, class2);
+            return getAssetOrANFE(assetClass, context, name1).acquireChild(assetClass, context, name2);
         }
-        return getAssetOrANFE(name, assetClass, class1, class2);
+        return getAssetOrANFE(assetClass, context, name);
     }
 
-    private <A> Asset getAssetOrANFE(String name, Class<A> assetClass, Class class1, Class class2) throws AssetNotFoundException {
+    private Asset getAssetOrANFE(Class assetClass, RequestContext context, String name) throws AssetNotFoundException {
         Asset asset = children.get(name);
         if (asset == null) {
-            asset = createAsset(name, assetClass, class1, class2);
+            asset = createAsset(assetClass, context, name);
             if (asset == null)
                 throw new AssetNotFoundException(name);
         }
@@ -350,31 +381,10 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Nullable
-    protected <A> Asset createAsset(String name, Class<A> assetClass, Class class1, Class class2) {
+    protected Asset createAsset(Class assetClass, RequestContext context, String name) {
         if (assetClass == null)
             return null;
-        String[] nameQuery = split2(name, '?');
-        if (assetClass == Map.class || assetClass == ConcurrentMap.class) {
-            Factory<KeyValueStore> kvStoreFactory = acquireFactory(KeyValueStore.class);
-            KeyValueStore resource = kvStoreFactory.create(requestContext(this).fullName(nameQuery[0]).queryString(nameQuery[1]).type(class1).type2(class2));
-            return add(nameQuery[0], resource);
-
-        } else if ((assetClass == Subscriber.class || assetClass == Publisher.class || assetClass == Reference.class) && item instanceof KeyValueStore) {
-            Factory<SubAsset> subAssetFactory = acquireFactory(SubAsset.class);
-            SubAsset value = subAssetFactory.create(requestContext(this).fullName(nameQuery[0]).queryString(nameQuery[1]));
-            children.put(nameQuery[0], value);
-            return value;
-
-        } else if (assetClass == Void.class) {
-            Factory<Asset> factory = acquireFactory(Asset.class);
-            Asset asset = factory.create(requestContext(this).fullName(nameQuery[0]).queryString(nameQuery[1]));
-            children.put(nameQuery[0], asset);
-            return asset;
-
-        } else {
-            throw new UnsupportedOperationException("todo name: " + name + ", assetClass: " + assetClass
-                    + ", class1: " + class1 + ", class2: " + class2);
-        }
+        return children.computeIfAbsent(name, n -> new VanillaAsset(new RequestContext(context.fullName(), name), this));
     }
 
     @Override
@@ -397,7 +407,7 @@ public class VanillaAsset implements Asset, Closeable {
         if (pos >= 0) {
             String name1 = name.substring(0, pos);
             String name2 = name.substring(pos + 1);
-            getAssetOrANFE(name1, null, null, null).add(name2, resource);
+            getAssetOrANFE(Void.class, null, name1).add(name2, resource);
         }
         if (children.containsKey(name))
             throw new IllegalStateException(name + " already exists");
@@ -406,7 +416,7 @@ public class VanillaAsset implements Asset, Closeable {
             asset = (Asset) resource;
         } else {
             Factory<Asset> factory = acquireFactory(Asset.class);
-            asset = factory.create(requestContext(this).name(name).item(resource));
+            asset = factory.create(requestContext().name(name), this, () -> resource);
         }
         children.put(name, asset);
         return asset;
@@ -419,6 +429,18 @@ public class VanillaAsset implements Asset, Closeable {
 
     @Override
     public String toString() {
-        return (item == null ? "node" : item.getClass().getSimpleName()) + "@" + fullName();
+        return fullName();
+    }
+
+    public void enableTranslatingValuesToBytesStore() {
+        prependClassifier(MapView.class, "string key maps", rc ->
+                        rc.keyType() == String.class
+                                ? rc.valueType() == String.class ? (rc2, asset) -> asset.acquireFactory(MapView.class).create(rc2, asset, () -> asset.acquireView(StringStringKeyValueStore.class, rc2))
+                                : Marshallable.class.isAssignableFrom(rc.valueType()) ? (rc2, asset) -> asset.acquireFactory(MapView.class).create(rc2, asset, () -> asset.acquireView(StringMarshallableKeyValueStore.class, rc2))
+                                : null
+                                : null
+        );
+        registerFactory(StringMarshallableKeyValueStore.class, VanillaStringMarshallableKeyValueStore::new);
+        registerFactory(StringStringKeyValueStore.class, VanillaStringStringKeyValueStore::new);
     }
 }

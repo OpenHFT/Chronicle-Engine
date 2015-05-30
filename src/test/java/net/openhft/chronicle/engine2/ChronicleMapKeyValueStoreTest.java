@@ -5,11 +5,11 @@ import net.openhft.chronicle.engine2.api.Asset;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.MapEvent;
 import net.openhft.chronicle.engine2.api.map.MapEventListener;
-import net.openhft.chronicle.engine2.api.map.StringMarshallableKeyValueStore;
+import net.openhft.chronicle.engine2.api.map.MapView;
 import net.openhft.chronicle.engine2.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.engine2.map.VanillaMapView;
-import net.openhft.chronicle.engine2.map.VanillaStringMarshallableKeyValueStore;
-import net.openhft.chronicle.wire.*;
+import net.openhft.chronicle.wire.TextWire;
+import net.openhft.chronicle.wire.Wire;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -34,8 +34,9 @@ public class ChronicleMapKeyValueStoreTest {
 
         resetChassis();
         Function<Bytes, Wire> writeType = TextWire::new;
-        registerFactory("", StringMarshallableKeyValueStore.class, VanillaStringMarshallableKeyValueStore::new);
-        registerFactory("", KeyValueStore.class, context -> new ChronicleMapKeyValueStore(context.wireType(writeType)));
+
+        viewTypeLayersOn(MapView.class, "map directly to KeyValueStore", KeyValueStore.class);
+        registerFactory("", KeyValueStore.class, (context, asset, underlyingSupplier) -> new ChronicleMapKeyValueStore(context.wireType(writeType), asset));
 
         map = acquireMap(NAME, String.class, Factor.class);
         KeyValueStore mapU = ((VanillaMapView) map).underlying();

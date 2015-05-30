@@ -1,22 +1,32 @@
 package net.openhft.chronicle.engine2.map;
 
-import net.openhft.chronicle.engine2.api.*;
+import net.openhft.chronicle.engine2.api.Asset;
+import net.openhft.chronicle.engine2.api.Assetted;
+import net.openhft.chronicle.engine2.api.RequestContext;
+import net.openhft.chronicle.engine2.api.View;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.SubscriptionKeyValueStore;
 import net.openhft.chronicle.engine2.session.LocalSession;
+
+import java.util.function.Supplier;
 
 /**
  * Created by peter on 22/05/15.
  */
 public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValueStore<K, MV, V> implements SubscriptionKeyValueStore<K, MV, V> {
-    final SubscriptionKVSCollection<K, MV, V> subscriptions = new SubscriptionKVSCollection<>(this);
+    final SubscriptionKVSCollection<K, V> subscriptions = new VanillaSubscriptionKVSCollection<>(this);
 
-    public VanillaSubscriptionKeyValueStore(RequestContext<KeyValueStore<K, MV, V>> context) {
-        this(context.item());
+    public VanillaSubscriptionKeyValueStore(RequestContext context, Asset asset, Supplier<Assetted> assetted) {
+        this((KeyValueStore<K, MV, V>) assetted.get());
     }
 
     VanillaSubscriptionKeyValueStore(KeyValueStore<K, MV, V> item) {
         super(item);
+    }
+
+    @Override
+    public SubscriptionKVSCollection<K, V> subscription(boolean createIfAbsent) {
+        return subscriptions;
     }
 
     @Override
@@ -37,25 +47,5 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
         if (oldValue != null)
             subscriptions.notifyRemoval(key, oldValue);
         return oldValue;
-    }
-
-    @Override
-    public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {
-        subscriptions.registerSubscriber(rc, subscriber);
-    }
-
-    @Override
-    public <T, E> void registerTopicSubscriber(RequestContext rc, TopicSubscriber<T, E> subscriber) {
-        subscriptions.registerTopicSubscriber(rc, subscriber);
-    }
-
-    @Override
-    public void unregisterSubscriber(RequestContext rc, Subscriber subscriber) {
-        subscriptions.unregisterSubscriber(rc, subscriber);
-    }
-
-    @Override
-    public void unregisterTopicSubscriber(RequestContext rc, TopicSubscriber subscriber) {
-        subscriptions.unregisterTopicSubscriber(rc, subscriber);
     }
 }

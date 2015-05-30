@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine2;
 
 import net.openhft.chronicle.engine2.api.*;
+import net.openhft.chronicle.engine2.session.VanillaAsset;
 import net.openhft.chronicle.engine2.session.VanillaSession;
 
 import java.util.Set;
@@ -68,6 +69,14 @@ public enum Chassis {
         session.registerFactory(name, eClass, factory);
     }
 
+    public static void viewTypeLayersOn(Class viewType, String description, Class underlyingType) {
+        ((VanillaSession) session).viewTypeLayersOn(viewType, description, underlyingType);
+    }
+
+    public static void enableTranslatingValuesToBytesStore() {
+        ((VanillaAsset) session.getAsset("")).enableTranslatingValuesToBytesStore();
+    }
+
     public static Asset getAsset(String name) {
         return session.getAsset(name);
     }
@@ -77,6 +86,6 @@ public enum Chassis {
     }
 
     public static <A> Asset acquireAsset(String name, Class<A> assetClass, Class class1, Class class2) {
-        return session.acquireAsset(name, assetClass, class1, class2);
+        return session.acquireAsset(assetClass, RequestContext.requestContext(name).type(class1).type2(class2));
     }
 }

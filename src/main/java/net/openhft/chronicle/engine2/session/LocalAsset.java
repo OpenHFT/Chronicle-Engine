@@ -2,6 +2,8 @@ package net.openhft.chronicle.engine2.session;
 
 import net.openhft.chronicle.core.util.Closeable;
 import net.openhft.chronicle.engine2.api.*;
+import net.openhft.chronicle.engine2.api.map.MapView;
+import net.openhft.chronicle.engine2.api.map.SubscriptionKeyValueStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -9,6 +11,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static net.openhft.chronicle.engine2.api.RequestContext.requestContext;
@@ -20,7 +23,6 @@ public class LocalAsset implements Asset, Assetted, Closeable {
     private final Asset underlying;
     private final Map<String, Asset> children = Collections.synchronizedMap(new HashMap<>());
     private final Map<Class, View> viewMap = new ConcurrentSkipListMap<>(VanillaAsset.CLASS_COMPARATOR);
-
 
     public LocalAsset(LocalSession session, String name, Asset parent, Asset underlying) {
         this.session = session;
@@ -63,7 +65,7 @@ public class LocalAsset implements Asset, Assetted, Closeable {
             asset = (Asset) resource;
         } else {
             Factory<Asset> factory = acquireFactory(Asset.class);
-            asset = factory.create(requestContext(this).fullName(name).item(resource));
+            asset = factory.create(requestContext(name), this, () -> resource);
         }
         children.put(name, asset);
         return asset;
@@ -85,10 +87,19 @@ public class LocalAsset implements Asset, Assetted, Closeable {
 
     @NotNull
     @Override
-    public <A> Asset acquireChild(String name, Class<A> assetClass, Class class1, Class class2) throws AssetNotFoundException {
+    public <A> Asset acquireChild(Class<A> assetClass, RequestContext context, String name) throws AssetNotFoundException {
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public <V> void prependClassifier(Class<V> assetType, String name, Function<RequestContext, ViewLayer> viewBuilderFactory) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public ViewLayer classify(Class viewType, RequestContext rc) {
+        throw new UnsupportedOperationException("todo");
+    }
 
     @Override
     public Asset getChild(String name) {
@@ -105,19 +116,33 @@ public class LocalAsset implements Asset, Assetted, Closeable {
         throw new UnsupportedOperationException();
     }
 
+    <V> V acquireView0(Class viewClass, Function<Class<V>, View> builder) {
+        synchronized (viewMap) {
+            View view = viewMap.get(viewClass);
+            if (view == null)
+                viewMap.put(viewClass, view = builder.apply(viewClass));
+            return (V) view;
+        }
+    }
+
     @Override
-    public <V> V acquireView(Class<V> vClass, RequestContext rc) {
-        viewMap.computeIfAbsent(vClass, vc -> {
-            V i = underlying.acquireView(vClass, rc);
+    public <V> V acquireView(Class<V> viewType, RequestContext rc) {
+        View view = acquireView0(viewType, vc -> {
+            V i = underlying.acquireView(viewType, rc);
             View i2 = (View) View.forSession(i, session, this);
+            if (i2 instanceof SubscriptionKeyValueStore) {
+                MapView mv = getView(MapView.class);
+                if (mv != null)
+                    mv.underlying(i2);
+            }
             return i2;
         });
-        throw new UnsupportedOperationException("todo vClass: " + vClass + ", rc: " + rc);
+        return (V) view;
     }
 
     @Override
     public <V> V getView(Class<V> vClass) {
-        throw new UnsupportedOperationException();
+        return (V) viewMap.get(vClass);
     }
 
     @Override
@@ -141,33 +166,16 @@ public class LocalAsset implements Asset, Assetted, Closeable {
     }
 
     @Override
-    public Object item() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
-    public <T, E> void registerTopicSubscriber(RequestContext rc, TopicSubscriber<T, E> subscriber) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void unregisterSubscriber(RequestContext rc, Subscriber subscriber) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
-    public void unregisterTopicSubscriber(RequestContext rc, TopicSubscriber subscriber) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
-    public void asset(Asset asset) {
-        throw new UnsupportedOperationException();
+    public Subscription subscription(boolean createIfAbsent) {
+        if (createIfAbsent) {
+            RequestContext rc0 = requestContext();
+            Subscription subscription0 = underlying.acquireView(Subscription.class, rc0);
+            Subscription subscription = acquireView(Subscription.class, rc0);
+            subscription0.registerDownstream(rc0, subscription);
+            return subscription;
+        } else {
+            return getView(Subscription.class);
+        }
     }
 
     @Override

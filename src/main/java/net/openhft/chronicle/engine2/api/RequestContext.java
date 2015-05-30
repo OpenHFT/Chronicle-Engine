@@ -14,20 +14,19 @@ import java.util.function.Function;
 /**
  * Created by peter on 24/05/15.
  */
-public class RequestContext<I extends Assetted> {
+public class RequestContext {
     private String pathName;
     private String name;
-    private Asset parent;
-    private Class assetType, type, type2;
-    private I item;
+    private Class viewType, type, type2;
     private String basePath;
     private Function<Bytes, Wire> wireType = TextWire::new;
-    private boolean putReturnsNull, removeReturnsNull, bootstrap = true;
+    private boolean putReturnsNull = true,
+            removeReturnsNull = true,
+            bootstrap = true;
     private double averageValueSize;
     private long entries;
 
-    private RequestContext(Asset parent) {
-        this.parent = parent;
+    private RequestContext() {
     }
 
     public RequestContext(String pathName, String name) {
@@ -35,21 +34,21 @@ public class RequestContext<I extends Assetted> {
         this.name = name;
     }
 
-    public static RequestContext<Assetted> requestContext(Asset parent) {
-        return new RequestContext<>(parent);
+    public static RequestContext requestContext() {
+        return new RequestContext();
     }
 
-    public static RequestContext<Assetted> requestContext(String uri) {
+    public static RequestContext requestContext(String uri) {
         int queryPos = uri.indexOf('?');
         String fullName = queryPos >= 0 ? uri.substring(0, queryPos) : uri;
         String query = queryPos >= 0 ? uri.substring(queryPos + 1) : "";
         int dirPos = fullName.lastIndexOf('/');
         String pathName = dirPos >= 0 ? fullName.substring(0, dirPos) : "";
         String name = dirPos >= 0 ? fullName.substring(dirPos + 1) : fullName;
-        return new RequestContext<>(pathName, name).queryString(query);
+        return new RequestContext(pathName, name).queryString(query);
     }
 
-    public RequestContext<I> queryString(String queryString) {
+    public RequestContext queryString(String queryString) {
         if (queryString.isEmpty())
             return this;
         WireParser parser = new VanillaWireParser();
@@ -58,7 +57,7 @@ public class RequestContext<I extends Assetted> {
         parser.register(() -> "putReturnsNull", v -> v.bool(b -> this.putReturnsNull = b));
         parser.register(() -> "removeReturnsNull", v -> v.bool(b -> this.removeReturnsNull = b));
         parser.register(() -> "basePath", v -> v.text((Consumer<String>) x -> this.basePath = x));
-        parser.register(() -> "assetType", v -> v.typeLiteral(this::lookupType, x -> this.assetType = x));
+        parser.register(() -> "viewType", v -> v.typeLiteral(this::lookupType, x -> this.viewType = x));
         parser.register(() -> "keyType", v -> v.typeLiteral(this::lookupType, x -> this.type = x));
         parser.register(() -> "valueType", v -> v.typeLiteral(this::lookupType, x -> this.type2 = x));
         parser.register(() -> "elementType", v -> v.typeLiteral(this::lookupType, x -> this.type = x));
@@ -70,31 +69,45 @@ public class RequestContext<I extends Assetted> {
         return this;
     }
 
-    void view(String viewName) {
+    RequestContext view(String viewName) {
         switch (viewName) {
             case "Map":
             case "map":
-                assetType = MapView.class;
+                viewType = MapView.class;
                 break;
             case "EntrySet":
             case "entrySet":
-                assetType = EntrySetView.class;
+                viewType = EntrySetView.class;
                 break;
             case "KeySet":
             case "keySet":
-                assetType = KeySetView.class;
+                viewType = KeySetView.class;
                 break;
             case "Values":
             case "values":
-                assetType = ValuesCollection.class;
+                viewType = ValuesCollection.class;
                 break;
             case "Set":
             case "set":
-                assetType = Set.class;
+                viewType = Set.class;
+                break;
+            case "Pub":
+            case "pub":
+                viewType = Publisher.class;
+                break;
+            case "TopicPub":
+            case "topicPub":
+            case "topicpub":
+                viewType = TopicPublisher.class;
+                break;
+            case "Ref":
+            case "ref":
+                viewType = Reference.class;
                 break;
             default:
                 throw new IllegalArgumentException("Unknown view name:" + viewName);
         }
+        return this;
     }
 
     Class lookupType(CharSequence typeName) {
@@ -105,13 +118,25 @@ public class RequestContext<I extends Assetted> {
         }
     }
 
-    public RequestContext<I> type(Class type) {
+    public RequestContext type(Class type) {
         this.type = type;
         return this;
     }
 
     public Class type() {
         return type;
+    }
+
+    public Class elementType() {
+        return type;
+    }
+
+    public Class keyType() {
+        return type;
+    }
+
+    public Class valueType() {
+        return type2;
     }
 
     public RequestContext type2(Class type2) {
@@ -123,24 +148,11 @@ public class RequestContext<I extends Assetted> {
         return type2;
     }
 
-    public Asset parent() {
-        return parent;
-    }
-
     public String fullName() {
         return pathName.isEmpty() ? name : (pathName + "/" + name);
     }
 
-    public I item() {
-        return item == null ? parent == null ? null : (I) parent.item() : item;
-    }
-
-    public <Item extends Assetted> RequestContext<Item> item(Item resource) {
-        this.item = (I) resource;
-        return (RequestContext<Item>) this;
-    }
-
-    public RequestContext<I> basePath(String basePath) {
+    public RequestContext basePath(String basePath) {
         this.basePath = basePath;
         return this;
     }
@@ -149,7 +161,7 @@ public class RequestContext<I extends Assetted> {
         return basePath;
     }
 
-    public RequestContext<I> wireType(Function<Bytes, Wire> writeType) {
+    public RequestContext wireType(Function<Bytes, Wire> writeType) {
         this.wireType = writeType;
         return this;
     }
@@ -170,7 +182,7 @@ public class RequestContext<I extends Assetted> {
         return averageValueSize;
     }
 
-    public RequestContext<I> averageValueSize(double averageValueSize) {
+    public RequestContext averageValueSize(double averageValueSize) {
         this.averageValueSize = averageValueSize;
         return this;
     }
@@ -179,25 +191,24 @@ public class RequestContext<I extends Assetted> {
         return entries;
     }
 
-    public RequestContext<I> entries(long entries) {
+    public RequestContext entries(long entries) {
         this.entries = entries;
         return this;
     }
 
-    public RequestContext<I> name(String name) {
+    public RequestContext name(String name) {
         this.name = name;
         return this;
     }
 
-    public <A> RequestContext<I> assetType(Class<A> assetType) {
-        this.assetType = assetType;
+    public <A> RequestContext viewType(Class<A> assetType) {
+        this.viewType = assetType;
         return this;
     }
 
 
-
-    public Class assetType() {
-        return assetType;
+    public Class viewType() {
+        return viewType;
     }
 
     public boolean putReturnsNull() {
@@ -208,7 +219,7 @@ public class RequestContext<I extends Assetted> {
         return removeReturnsNull;
     }
 
-    public RequestContext<I> fullName(String fullName) {
+    public RequestContext fullName(String fullName) {
         int dirPos = fullName.lastIndexOf('/');
         this.pathName = dirPos >= 0 ? fullName.substring(0, dirPos) : "";
         this.name = dirPos >= 0 ? fullName.substring(dirPos + 1) : fullName;
@@ -219,16 +230,19 @@ public class RequestContext<I extends Assetted> {
         return bootstrap;
     }
 
+    public RequestContext bootstrap(boolean bootstrap) {
+        this.bootstrap = bootstrap;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "RequestContext{" +
                 "pathName='" + pathName + '\'' +
                 ", name='" + name + '\'' +
-                ", parent=" + parent +
-                ", assetType=" + assetType +
+                ", viewType=" + viewType +
                 ", type=" + type +
                 ", type2=" + type2 +
-                ", item=" + item +
                 ", basePath='" + basePath + '\'' +
                 ", wireType=" + wireType +
                 ", putReturnsNull=" + putReturnsNull +

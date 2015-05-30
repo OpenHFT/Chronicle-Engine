@@ -37,8 +37,10 @@ public class FilePerKeyValueStoreTest {
 
         resetChassis();
         Function<Bytes, Wire> writeType = TextWire::new;
-        registerFactory("", StringMarshallableKeyValueStore.class, VanillaStringMarshallableKeyValueStore::new);
-        registerFactory("", KeyValueStore.class, context -> new FilePerKeyValueStore(context.basePath(TMP).wireType(writeType)));
+        enableTranslatingValuesToBytesStore();
+
+        viewTypeLayersOn(StringMarshallableKeyValueStore.class, "string -> marshallable", KeyValueStore.class);
+        registerFactory("", KeyValueStore.class, (context, asset, underlyingSupplier) -> new FilePerKeyValueStore(context.basePath(TMP).wireType(writeType), asset));
 
         map = acquireMap(NAME, String.class, TestMarshallable.class);
         KeyValueStore mapU = ((VanillaMapView) map).underlying();
@@ -77,7 +79,7 @@ public class FilePerKeyValueStoreTest {
         Asset asset = getAsset(NAME);
         registerSubscriber(NAME, MapEvent.class, e -> e.apply(listener));
         StringBytesStoreKeyValueStore sbskvStore = asset.getView(StringBytesStoreKeyValueStore.class);
-        sbskvStore.registerSubscriber(RequestContext.requestContext("").type(MapEvent.class), System.out::println);
+        sbskvStore.subscription(true).registerSubscriber(RequestContext.requestContext("").type(MapEvent.class), System.out::println);
 
         map.put("testA", tm);
         assertEquals(1, map.size());

@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine2.map;
 
 import net.openhft.chronicle.engine2.api.Asset;
+import net.openhft.chronicle.engine2.api.Assetted;
 import net.openhft.chronicle.engine2.api.RequestContext;
 import net.openhft.chronicle.engine2.api.View;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.AbstractMap;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import static net.openhft.chronicle.engine2.api.RequestContext.requestContext;
 
@@ -23,8 +25,8 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
     private Asset asset;
     private KeyValueStore<K, MV, V> kvStore;
 
-    public VanillaMapView(RequestContext<KeyValueStore<K, MV, V>> context) {
-        this(context.parent(), context.item(), context.putReturnsNull(), context.removeReturnsNull());
+    public VanillaMapView(RequestContext context, Asset asset, Supplier<Assetted> kvStore) {
+        this(asset, (KeyValueStore<K, MV, V>) kvStore.get(), context.putReturnsNull(), context.removeReturnsNull());
     }
 
     public VanillaMapView(Asset asset, KeyValueStore<K, MV, V> kvStore, boolean putReturnsNull, boolean removeReturnsNull) {
@@ -37,11 +39,6 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
     @Override
     public View forSession(LocalSession session, Asset asset) {
         return new VanillaMapView<K, MV, V>(asset, View.forSession(kvStore, session, asset), putReturnsNull, removeReturnsNull);
-    }
-
-    @Override
-    public void asset(Asset asset) {
-        this.asset = asset;
     }
 
     @Override
@@ -95,7 +92,7 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
     @Override
     public Set<Entry<K, V>> entrySet() {
         //noinspection unchecked
-        return asset.acquireView(requestContext(asset.fullName()).assetType(EntrySetView.class).item(kvStore));
+        return asset.acquireView(EntrySetView.class, requestContext(asset.fullName()).viewType(EntrySetView.class));
     }
 
     @Override

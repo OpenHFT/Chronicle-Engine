@@ -2,13 +2,13 @@ package net.openhft.chronicle.engine2.session;
 
 import net.openhft.chronicle.core.util.Closeable;
 import net.openhft.chronicle.engine2.api.*;
-import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.MapView;
 import net.openhft.chronicle.engine2.api.map.SubAsset;
+import net.openhft.chronicle.engine2.pubsub.SimpleSubscription;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static net.openhft.chronicle.engine2.api.RequestContext.requestContext;
@@ -16,13 +16,13 @@ import static net.openhft.chronicle.engine2.api.RequestContext.requestContext;
 /**
  * Created by peter on 22/05/15.
  */
-public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscriber<String, T> {
+public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscriber<String, E> {
     private final Asset parent;
     private final String name;
-    private final Set<Subscriber<T>> subscribers = new CopyOnWriteArraySet<>();
+    private final SimpleSubscription<E> subscription = new SimpleSubscription<>();
 
-    VanillaSubAsset(RequestContext context) {
-        this(context.parent(), context.name());
+    VanillaSubAsset(RequestContext context, Asset asset, Supplier<Assetted> assetted) {
+        this(asset, context.name());
     }
 
     VanillaSubAsset(Asset parent, String name) {
@@ -31,13 +31,18 @@ public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscrib
     }
 
     @Override
+    public Subscription subscription(boolean createIfAbsent) {
+        return subscription;
+    }
+
+    @Override
     public View forSession(LocalSession session, Asset asset) {
         throw new UnsupportedOperationException("todo");
     }
 
     @Override
-    public Object item() {
-        return parent.getView(KeyValueStore.class).get(name);
+    public <V> void prependClassifier(Class<V> assetType, String name, Function<RequestContext, ViewLayer> viewBuilderFactory) {
+        throw new UnsupportedOperationException("todo");
     }
 
     @Override
@@ -56,13 +61,18 @@ public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscrib
     }
 
     @Override
-    public <V> V acquireView(Class<V> vClass, RequestContext rc) {
-        if (vClass == Publisher.class || vClass == Reference.class) {
-            RequestContext rc1 = requestContext(parent).assetType(MapView.class).type(String.class).type2(rc.type());
-            MapView parentMap = parent.acquireView(rc1);
-            return (V) parent.acquireFactory(vClass).create(requestContext(this).type(rc.type()).fullName(name).item(parentMap));
+    public <V> V acquireView(Class<V> viewType, RequestContext rc) {
+        if (viewType == Publisher.class || viewType == Reference.class) {
+            return (V) parent.acquireFactory(viewType).create(requestContext().type(rc.type()).fullName(name), this, () ->
+                            acquireView(requestContext().viewType(MapView.class).type(String.class).type2(rc.type()))
+            );
         }
-        throw new UnsupportedOperationException("todo vClass: " + vClass + ", rc: " + rc);
+        throw new UnsupportedOperationException("todo vClass: " + viewType + ", rc: " + rc);
+    }
+
+    @Override
+    public ViewLayer classify(Class viewType, RequestContext rc) {
+        throw new UnsupportedOperationException("todo");
     }
 
     @Override
@@ -72,29 +82,6 @@ public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscrib
 
     @Override
     public <I> void registerView(Class<I> iClass, I interceptor) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
-    public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {
-        subscribers.add((Subscriber) subscriber);
-        parent().registerTopicSubscriber(rc, this);
-    }
-
-    @Override
-    public <T, E> void registerTopicSubscriber(RequestContext rc, TopicSubscriber<T, E> subscriber) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
-    public void unregisterSubscriber(RequestContext rc, Subscriber subscriber) {
-        subscribers.remove((Subscriber) subscriber);
-        if (subscribers.isEmpty())
-            parent().unregisterTopicSubscriber(rc, this);
-    }
-
-    @Override
-    public void unregisterTopicSubscriber(RequestContext rc, TopicSubscriber subscriber) {
         throw new UnsupportedOperationException("todo");
     }
 
@@ -116,7 +103,7 @@ public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscrib
 
     @NotNull
     @Override
-    public <A> Asset acquireChild(String name, Class<A> assetClass, Class class1, Class class2) throws AssetNotFoundException {
+    public <A> Asset acquireChild(Class<A> assetClass, RequestContext context, String name) throws AssetNotFoundException {
         throw new UnsupportedOperationException("todo");
     }
 
@@ -140,9 +127,9 @@ public class VanillaSubAsset<T> implements SubAsset<T>, Closeable, TopicSubscrib
     }
 
     @Override
-    public void onMessage(String name, T t) {
+    public void onMessage(String name, E e) {
         if (name.equals(this.name))
-            subscribers.forEach(s -> s.on(t));
+            subscription.notifyMessage(e);
     }
 
     @Override

@@ -13,13 +13,13 @@ public class LocalSession implements Session {
     }
 
     @Override
-    public <A> Asset acquireAsset(RequestContext request) throws AssetNotFoundException {
-        Asset asset = getAsset(request.fullName());
+    public <A> Asset acquireAsset(Class<A> assetClass, RequestContext context) throws AssetNotFoundException {
+        Asset asset = getAsset(context.fullName());
         if (asset == null) {
-            String parent = request.namePath();
-            String name0 = request.name();
+            String parent = context.namePath();
+            String name0 = context.name();
             LocalAsset asset3 = (LocalAsset) getAssetOrANFE(parent);
-            Asset asset2 = baseSession.acquireAsset(request);
+            Asset asset2 = baseSession.acquireAsset(assetClass, context);
             LocalAsset ret = new LocalAsset(this, name0, asset3, asset2);
             asset3.add(name0, ret);
             return ret;
@@ -28,27 +28,21 @@ public class LocalSession implements Session {
 
     }
 
+
     @Nullable
     @Override
-    public Asset getAsset(String name) {
-        return root.getAsset(name);
+    public Asset getAsset(String fullName) {
+        return root.getAsset(fullName);
     }
-
 
     @Override
-    public Asset add(String name, Assetted resource) {
-        return root.add(name, resource);
+    public Asset add(String fullName, Assetted resource) {
+        return root.add(fullName, resource);
     }
+
 
     @Override
     public void close() {
         root.close();
     }
-
-
-    @Override
-    public <I> void registerView(Class<I> iClass, I interceptor) {
-        root.registerView(iClass, interceptor);
-    }
-
 }

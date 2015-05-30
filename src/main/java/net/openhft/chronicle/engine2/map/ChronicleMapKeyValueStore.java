@@ -1,7 +1,9 @@
 package net.openhft.chronicle.engine2.map;
 
 import net.openhft.chronicle.bytes.IORuntimeException;
-import net.openhft.chronicle.engine2.api.*;
+import net.openhft.chronicle.engine2.api.Asset;
+import net.openhft.chronicle.engine2.api.RequestContext;
+import net.openhft.chronicle.engine2.api.View;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.SubscriptionKeyValueStore;
 import net.openhft.chronicle.engine2.session.LocalSession;
@@ -21,10 +23,10 @@ import java.util.function.Consumer;
  */
 public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValueStore<K, MV, V>, Closeable {
     private final ChronicleMap<K,V> chronicleMap;
-    private final SubscriptionKVSCollection<K, MV, V> subscriptions = new SubscriptionKVSCollection<>(this);
+    private final SubscriptionKVSCollection<K, V> subscriptions = new VanillaSubscriptionKVSCollection<>(this);
     private Asset asset;
 
-    public ChronicleMapKeyValueStore(RequestContext context){
+    public ChronicleMapKeyValueStore(RequestContext context, Asset asset) {
         PublishingOperations publishingOperations = new PublishingOperations();
 
         Class kClass = context.type();
@@ -50,6 +52,11 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         }
 
         chronicleMap = builder.create();
+    }
+
+    @Override
+    public SubscriptionKVSCollection<K, V> subscription(boolean createIfAbsent) {
+        return subscriptions;
     }
 
     @Override
@@ -98,12 +105,6 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
     }
 
     @Override
-    public void asset(Asset asset) {
-        if (this.asset != null) throw new IllegalStateException();
-        this.asset = asset;
-    }
-
-    @Override
     public Asset asset() {
         return asset;
     }
@@ -116,26 +117,6 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
     @Override
     public KeyValueStore<K, MV, V> underlying() {
         return null;
-    }
-
-    @Override
-    public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {
-        subscriptions.registerSubscriber(rc, subscriber);
-    }
-
-    @Override
-    public <T, E> void registerTopicSubscriber(RequestContext rc, TopicSubscriber<T, E> subscriber) {
-        subscriptions.registerTopicSubscriber(rc, subscriber);
-    }
-
-    @Override
-    public void unregisterSubscriber(RequestContext rc, Subscriber subscriber) {
-        subscriptions.unregisterSubscriber(rc, subscriber);
-    }
-
-    @Override
-    public void unregisterTopicSubscriber(RequestContext rc, TopicSubscriber subscriber) {
-        subscriptions.unregisterTopicSubscriber(rc, subscriber);
     }
 
     @Override

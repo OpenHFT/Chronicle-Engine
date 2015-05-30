@@ -3,8 +3,11 @@ package net.openhft.chronicle.engine2.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.engine2.api.Asset;
+import net.openhft.chronicle.engine2.api.Assetted;
 import net.openhft.chronicle.engine2.api.RequestContext;
+import net.openhft.chronicle.engine2.api.View;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
+import net.openhft.chronicle.engine2.session.LocalSession;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -24,15 +27,15 @@ public class ObjectObjectKeyValueStore<K, MV extends V, V> implements KeyValueSt
     private KeyValueStore<BytesStore, Bytes, BytesStore> kvStore;
     private Asset asset;
 
-    public ObjectObjectKeyValueStore(RequestContext<KeyValueStore<BytesStore, Bytes, BytesStore>> context) {
-        asset = context.parent();
+    public ObjectObjectKeyValueStore(RequestContext context, Asset asset, Assetted assetted) {
+        this.asset = asset;
         Class type = context.type();
         keyToBytes = toBytes(type);
         bytesToKey = fromBytes(type);
         Class type2 = context.type2();
         valueToBytes = toBytes(type2);
         bytesToValue = fromBytes(type2);
-        kvStore = context.item();
+        kvStore = (KeyValueStore<BytesStore, Bytes, BytesStore>) assetted;
     }
 
     static <T> BiFunction<T, Bytes, Bytes> toBytes(Class type) {
@@ -106,11 +109,6 @@ public class ObjectObjectKeyValueStore<K, MV extends V, V> implements KeyValueSt
     }
 
     @Override
-    public void asset(Asset asset) {
-        this.asset = asset;
-    }
-
-    @Override
     public Asset asset() {
         return asset;
     }
@@ -123,5 +121,10 @@ public class ObjectObjectKeyValueStore<K, MV extends V, V> implements KeyValueSt
     @Override
     public KeyValueStore underlying() {
         return kvStore;
+    }
+
+    @Override
+    public View forSession(LocalSession session, Asset asset) {
+        throw new UnsupportedOperationException("todo");
     }
 }

@@ -3,13 +3,16 @@ package net.openhft.chronicle.engine2.api;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
  * Created by peter on 22/05/15.
  */
-public interface Asset extends Permissoned, Subscription {
+public interface Asset extends Permissoned {
     String name();
+
+    Subscription subscription(boolean createIfAbsent);
 
     default String fullName() {
         return parent() == null
@@ -28,7 +31,7 @@ public interface Asset extends Permissoned, Subscription {
     Asset add(String name, Assetted resource);
 
     @NotNull
-    <A> Asset acquireChild(String name, Class<A> assetClass, Class class1, Class class2) throws AssetNotFoundException;
+    <A> Asset acquireChild(Class<A> assetClass, RequestContext context, String name) throws AssetNotFoundException;
 
     @Nullable
     default Asset getAsset(String name) {
@@ -55,10 +58,10 @@ public interface Asset extends Permissoned, Subscription {
     boolean isReadOnly();
 
     default <V> V acquireView(RequestContext rc) {
-        return (V) acquireView(rc.assetType(), rc);
+        return (V) acquireView(rc.viewType(), rc);
     }
 
-    <V> V acquireView(Class<V> vClass, RequestContext rc);
+    <V> V acquireView(Class<V> viewType, RequestContext rc);
 
     <V> V getView(Class<V> vClass);
 
@@ -70,5 +73,7 @@ public interface Asset extends Permissoned, Subscription {
 
     <I> void registerFactory(Class<I> iClass, Factory<I> factory);
 
-    Object item();
+    <V> void prependClassifier(Class<V> assetType, String name, Function<RequestContext, ViewLayer> viewBuilderFactory);
+
+    ViewLayer classify(Class viewType, RequestContext rc) throws AssetNotFoundException;
 }

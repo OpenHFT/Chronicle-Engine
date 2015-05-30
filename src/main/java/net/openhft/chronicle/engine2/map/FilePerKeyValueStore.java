@@ -4,7 +4,9 @@ import com.sun.nio.file.SensitivityWatchEventModifier;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.IORuntimeException;
-import net.openhft.chronicle.engine2.api.*;
+import net.openhft.chronicle.engine2.api.Asset;
+import net.openhft.chronicle.engine2.api.RequestContext;
+import net.openhft.chronicle.engine2.api.View;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.StringBytesStoreKeyValueStore;
 import net.openhft.chronicle.engine2.session.LocalSession;
@@ -45,12 +47,13 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     private final Map<File, FileRecord<BytesStore>> lastFileRecordMap = new ConcurrentHashMap<>();
 
     private final Thread fileFpmWatcher;
-    private final SubscriptionKVSCollection<String, Bytes, BytesStore> subscriptions = new SubscriptionKVSCollection<>(this);
+    private final VanillaSubscriptionKVSCollection<String, Bytes, BytesStore> subscriptions = new VanillaSubscriptionKVSCollection<>(this);
     private volatile boolean closed = false;
     private Asset asset;
 
-    public FilePerKeyValueStore(RequestContext context) throws IORuntimeException {
+    public FilePerKeyValueStore(RequestContext context, Asset asset) throws IORuntimeException {
         this(context.type(), context.basePath(), context.name());
+        asset.registerView(StringBytesStoreKeyValueStore.class, this);
     }
 
     FilePerKeyValueStore(Class type, String basePath, String name) {
@@ -76,6 +79,11 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         fileFpmWatcher = new Thread(new FPMWatcher(watcher), dirName + "-watcher");
         fileFpmWatcher.setDaemon(true);
         fileFpmWatcher.start();
+    }
+
+    @Override
+    public SubscriptionKVSCollection<String, BytesStore> subscription(boolean createIfAbsent) {
+        return subscriptions;
     }
 
     @Override
@@ -259,32 +267,6 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     }
 
     @Override
-    public <T, E> void registerTopicSubscriber(RequestContext rc, TopicSubscriber<T, E> subscriber) {
-        subscriptions.registerTopicSubscriber(rc, subscriber);
-    }
-
-    @Override
-    public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {
-        subscriptions.registerSubscriber(rc, subscriber);
-    }
-
-    @Override
-    public void unregisterSubscriber(RequestContext rc, Subscriber subscriber) {
-        subscriptions.unregisterSubscriber(rc, subscriber);
-    }
-
-    @Override
-    public void unregisterTopicSubscriber(RequestContext rc, TopicSubscriber subscriber) {
-        subscriptions.unregisterTopicSubscriber(rc, subscriber);
-    }
-
-    @Override
-    public void asset(Asset asset) {
-        if (this.asset != null) throw new IllegalStateException();
-        this.asset = asset;
-    }
-
-    @Override
     public Asset asset() {
         return asset;
     }
@@ -295,7 +277,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     }
 
     @Override
-    public KeyValueStore underlying() {
+    public KeyValueStore<String, Bytes, BytesStore> underlying() {
         return null;
     }
 

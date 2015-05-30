@@ -19,6 +19,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static net.openhft.chronicle.engine2.map.Buffers.BUFFERS;
 
@@ -35,23 +36,20 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
             throw new AssertionError(e);
         }
     });
-    private final SubscriptionKVSCollection<String, StringBuilder, String> subscriptions = new SubscriptionKVSCollection<>(this);
+    private final SubscriptionKVSCollection<String, String> subscriptions = new TranslatingSubscriptionKVSCollection();
     private SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore;
     private Asset asset;
 
 
-    public VanillaStringStringKeyValueStore(RequestContext<SubscriptionKeyValueStore<String, Bytes, BytesStore>> context) {
-        this(context.parent(), context.item());
-    }
-
-    VanillaStringStringKeyValueStore(Asset asset, SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore) {
+    public VanillaStringStringKeyValueStore(RequestContext context, Asset asset, Supplier<Assetted> kvStore) {
         this.asset = asset;
-        this.kvStore = kvStore;
+        this.kvStore = (SubscriptionKeyValueStore<String, Bytes, BytesStore>) kvStore.get();
     }
 
     @Override
     public View forSession(LocalSession session, Asset asset) {
-        return new VanillaStringStringKeyValueStore(asset, View.forSession(kvStore, session, asset));
+        throw new UnsupportedOperationException("todo");
+//        return new VanillaStringStringKeyValueStore(asset, View.forSession(kvStore, session, asset));
     }
 
     static <T> BiFunction<T, Bytes, Bytes> toBytes(RequestContext context, Class type) {
@@ -83,11 +81,16 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         if (Marshallable.class.isAssignableFrom(type))
             return (bytes, t) -> {
                 t = acquireInstance(type, t);
-                ((Marshallable) t).readMarshallable((WireIn) context.wireType().apply(bytes));
+                ((Marshallable) t).readMarshallable((WireIn) context.wireType().apply(bytes.bytes()));
                 ((Bytes) bytes).position(0);
                 return t;
             };
         throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public SubscriptionKVSCollection<String, String> subscription(boolean createIfAbsent) {
+        return subscriptions;
     }
 
     @Override
@@ -159,11 +162,6 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     }
 
     @Override
-    public void asset(Asset asset) {
-        this.asset = asset;
-    }
-
-    @Override
     public Asset asset() {
         return asset;
     }
@@ -178,41 +176,75 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         return kvStore;
     }
 
-    @Override
-    public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {
-        Class eClass = rc.type();
-        if (eClass == MapEvent.class) {
-            Subscriber<MapEvent<String, String>> sub = (Subscriber) subscriber;
+    class TranslatingSubscriptionKVSCollection implements SubscriptionKVSCollection<String, String> {
+        SubscriptionKVSCollection<String, String> subscriptions = new VanillaSubscriptionKVSCollection<>(VanillaStringStringKeyValueStore.this);
 
-            Subscriber<MapEvent<String, BytesStore>> sub2 = e -> {
-                if (e.getClass() == InsertedEvent.class)
-                    sub.on(InsertedEvent.of(e.key(), e.value().toString()));
-                else if (e.getClass() == UpdatedEvent.class)
-                    sub.on(UpdatedEvent.of(e.key(), ((UpdatedEvent<String, BytesStore>) e).oldValue().toString(), e.value().toString()));
-                else
-                    sub.on(RemovedEvent.of(e.key(), e.value().toString()));
-            };
-            kvStore.registerSubscriber(rc, sub2);
-        } else {
-            subscriptions.registerSubscriber(rc, subscriber);
+        @Override
+        public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {
+            Class eClass = rc.type();
+            if (eClass == MapEvent.class) {
+                Subscriber<MapEvent<String, String>> sub = (Subscriber) subscriber;
+
+                Subscriber<MapEvent<String, BytesStore>> sub2 = e -> {
+                    if (e.getClass() == InsertedEvent.class)
+                        sub.onMessage(InsertedEvent.of(e.key(), e.value().toString()));
+                    else if (e.getClass() == UpdatedEvent.class)
+                        sub.onMessage(UpdatedEvent.of(e.key(), ((UpdatedEvent<String, BytesStore>) e).oldValue().toString(), e.value().toString()));
+                    else
+                        sub.onMessage(RemovedEvent.of(e.key(), e.value().toString()));
+                };
+                kvStore.subscription(true).registerSubscriber(rc, sub2);
+            } else {
+                subscriptions.registerSubscriber(rc, subscriber);
+            }
         }
-    }
 
-    @Override
-    public <T, E> void registerTopicSubscriber(RequestContext rc, TopicSubscriber<T, E> subscriber) {
-        kvStore.registerTopicSubscriber(rc, (T topic, E message) -> {
-            subscriber.onMessage(topic, (E) StringUtils.toString(message));
-        });
-        subscriptions.registerTopicSubscriber(rc, subscriber);
-    }
+        @Override
+        public <T, E> void registerTopicSubscriber(RequestContext rc, TopicSubscriber<T, E> subscriber) {
+            kvStore.subscription(true).registerTopicSubscriber(rc, (T topic, E message) -> {
+                subscriber.onMessage(topic, (E) StringUtils.toString(message));
+            });
+            subscriptions.registerTopicSubscriber(rc, subscriber);
+        }
 
-    @Override
-    public void unregisterSubscriber(RequestContext rc, Subscriber subscriber) {
-        throw new UnsupportedOperationException("todo");
-    }
+        @Override
+        public void notifyUpdate(String key, String oldValue, String value) {
+            throw new UnsupportedOperationException("todo");
+        }
 
-    @Override
-    public void unregisterTopicSubscriber(RequestContext rc, TopicSubscriber subscriber) {
-        throw new UnsupportedOperationException("todo");
+        @Override
+        public void notifyRemoval(String key, String oldValue) {
+            throw new UnsupportedOperationException("todo");
+        }
+
+        @Override
+        public boolean hasSubscribers() {
+            throw new UnsupportedOperationException("todo");
+        }
+
+        @Override
+        public void unregisterSubscriber(RequestContext rc, Subscriber subscriber) {
+            throw new UnsupportedOperationException("todo");
+        }
+
+        @Override
+        public void unregisterTopicSubscriber(RequestContext rc, TopicSubscriber subscriber) {
+            throw new UnsupportedOperationException("todo");
+        }
+
+        @Override
+        public void registerDownstream(RequestContext rc, Subscription subscription) {
+            throw new UnsupportedOperationException("todo");
+        }
+
+        @Override
+        public void unregisterDownstream(RequestContext rc, Subscription subscription) {
+            throw new UnsupportedOperationException("todo");
+        }
+
+        @Override
+        public View forSession(LocalSession session, Asset asset) {
+            throw new UnsupportedOperationException("todo");
+        }
     }
 }
