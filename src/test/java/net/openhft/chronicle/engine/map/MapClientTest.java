@@ -105,8 +105,26 @@ public class MapClientTest extends ThreadMonitoringTest {
             data.put(1, "hello");
             data.put(2, "world");
 
+
             assertEquals(true, entries.isEmpty());
             mapProxy.putAll(data);
+
+            final Set<Map.Entry<Integer, String>> e = mapProxy.entrySet();
+            {
+                final Map.Entry<Integer, String> entry = e.iterator().next();
+                if (entry.getKey() == 1)
+                    assertEquals(e.toString(),"hello", entry.getValue());
+                else if (entry.getKey() == 2)
+                    assertEquals(e.toString(),"world", entry.getValue());
+            }
+            {
+                final Map.Entry<Integer, String> entry = e.iterator().next();
+                if (entry.getKey() == 1)
+                    assertEquals(e.toString(),"hello", entry.getValue());
+                else if (entry.getKey() == 2)
+                    assertEquals(e.toString(),"world", entry.getValue());
+            }
+
             assertEquals(2, mapProxy.size());
         });
     }

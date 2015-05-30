@@ -173,7 +173,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
         @Override
         public void accept(WireIn wireIn) {
             try {
-
+                eventName.setLength(0);
                 final ValueIn valueIn = inWire.readEventName(eventName);
 
                 if (put.contentEquals(eventName)) {
@@ -397,8 +397,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
     private void createProxy(final String type) {
         outWire.writeEventName(reply).type("set-proxy").writeValue()
                 .marshallable(w -> {
-                    CharSequence root = csp.subSequence(0, csp
-                            .length() - "map".length());
+                    CharSequence root = csp.subSequence(0, csp.length() - "map".length());
 
                     final StringBuilder csp = acquireStringBuilder()
                             .append(root).append(type);
