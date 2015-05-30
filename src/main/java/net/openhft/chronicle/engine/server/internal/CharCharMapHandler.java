@@ -30,9 +30,17 @@ public class CharCharMapHandler implements MapHandler<CharSequence, CharSequence
 
     private final BiConsumer<ValueOut, CharSequence> valueToWire = (valueOut, value) -> valueOut.object(value);
 
-    private final Function<ValueIn, CharSequence> wireToKey = (valueIn) -> valueIn.text(keySb);
+    private final Function<ValueIn, CharSequence> wireToKey = valueIn -> {
+        keySb.setLength(1);
+        valueIn.text(keySb);
+        return keySb;
+    };
 
-    private final Function<ValueIn, CharSequence> wireToValue = (valueIn) -> valueIn.text(valueSb);
+    private final Function<ValueIn, CharSequence> wireToValue = valueIn -> {
+        valueSb.setLength(1);
+        valueIn.text(valueSb);
+        return valueSb;
+    };
 
     private final BiConsumer<ValueOut, Map.Entry<CharSequence, CharSequence>> entryToWire
             = (v, e) -> {
