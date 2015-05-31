@@ -64,7 +64,7 @@ public class LocalAsset implements Asset, Assetted, Closeable {
         if (resource instanceof Asset) {
             asset = (Asset) resource;
         } else {
-            Factory<Asset> factory = acquireFactory(Asset.class);
+            ViewFactory<Asset> factory = acquireFactory(Asset.class);
             asset = factory.create(requestContext(name), this, () -> resource);
         }
         children.put(name, asset);
@@ -92,7 +92,7 @@ public class LocalAsset implements Asset, Assetted, Closeable {
     }
 
     @Override
-    public <V> void prependClassifier(Class<V> assetType, String name, Function<RequestContext, ViewLayer> viewBuilderFactory) {
+    public <V> void addClassifier(Class<V> assetType, String name, Function<RequestContext, ViewLayer> viewBuilderFactory) {
         throw new UnsupportedOperationException("todo");
     }
 
@@ -151,17 +151,17 @@ public class LocalAsset implements Asset, Assetted, Closeable {
     }
 
     @Override
-    public <I> Factory<I> getFactory(Class<I> iClass) {
+    public <I> ViewFactory<I> getFactory(Class<I> iClass) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public <I> Factory<I> acquireFactory(Class<I> iClass) throws AssetNotFoundException {
+    public <I> ViewFactory<I> acquireFactory(Class<I> iClass) throws AssetNotFoundException {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public <I> void registerFactory(Class<I> iClass, Factory<I> factory) {
+    public <I> void registerFactory(Class<I> iClass, ViewFactory<I> factory) {
         throw new UnsupportedOperationException();
     }
 

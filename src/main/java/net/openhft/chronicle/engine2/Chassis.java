@@ -65,7 +65,7 @@ public enum Chassis {
         session.unregisterTopicSubscriber(name, tClass, eClass, subscriber);
     }
 
-    public static <E> void registerFactory(String name, Class<E> eClass, Factory<E> factory) {
+    public static <E> void registerFactory(String name, Class<E> eClass, ViewFactory<E> factory) {
         session.registerFactory(name, eClass, factory);
     }
 

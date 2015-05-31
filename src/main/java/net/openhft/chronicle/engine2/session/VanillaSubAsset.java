@@ -8,7 +8,6 @@ import net.openhft.chronicle.engine2.pubsub.SimpleSubscription;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static net.openhft.chronicle.engine2.api.RequestContext.requestContext;
@@ -21,7 +20,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     private final String name;
     private final SimpleSubscription<E> subscription = new SimpleSubscription<>();
 
-    VanillaSubAsset(RequestContext context, Asset asset, Supplier<Assetted> assetted) {
+    VanillaSubAsset(RequestContext context, Asset asset) {
         this(asset, context.name());
     }
 
@@ -41,7 +40,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     }
 
     @Override
-    public <V> void prependClassifier(Class<V> assetType, String name, Function<RequestContext, ViewLayer> viewBuilderFactory) {
+    public <V> void addClassifier(Class<V> assetType, String name, Function<RequestContext, ViewLayer> viewBuilderFactory) {
         throw new UnsupportedOperationException("todo");
     }
 
@@ -76,7 +75,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     }
 
     @Override
-    public <I> Factory<I> getFactory(Class<I> iClass) {
+    public <I> ViewFactory<I> getFactory(Class<I> iClass) {
         return parent.getFactory(iClass);
     }
 
@@ -133,12 +132,12 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     }
 
     @Override
-    public <I> Factory<I> acquireFactory(Class<I> iClass) throws AssetNotFoundException {
+    public <I> ViewFactory<I> acquireFactory(Class<I> iClass) throws AssetNotFoundException {
         throw new UnsupportedOperationException("todo");
     }
 
     @Override
-    public <I> void registerFactory(Class<I> iClass, Factory<I> factory) {
+    public <I> void registerFactory(Class<I> iClass, ViewFactory<I> factory) {
         throw new UnsupportedOperationException("todo");
     }
 }

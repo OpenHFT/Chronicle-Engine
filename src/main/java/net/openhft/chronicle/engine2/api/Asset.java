@@ -67,13 +67,13 @@ public interface Asset extends Permissoned {
 
     <I> void registerView(Class<I> iClass, I interceptor);
 
-    <I> Factory<I> getFactory(Class<I> iClass);
+    <I> ViewFactory<I> getFactory(Class<I> iClass);
 
-    <I> Factory<I> acquireFactory(Class<I> iClass) throws AssetNotFoundException;
+    <I> ViewFactory<I> acquireFactory(Class<I> iClass) throws AssetNotFoundException;
 
-    <I> void registerFactory(Class<I> iClass, Factory<I> factory);
+    <I> void registerFactory(Class<I> iClass, ViewFactory<I> factory);
 
-    <V> void prependClassifier(Class<V> assetType, String name, Function<RequestContext, ViewLayer> viewBuilderFactory);
+    <V> void addClassifier(Class<V> assetType, String name, Function<RequestContext, ViewLayer> viewBuilderFactory);
 
     ViewLayer classify(Class viewType, RequestContext rc) throws AssetNotFoundException;
 }

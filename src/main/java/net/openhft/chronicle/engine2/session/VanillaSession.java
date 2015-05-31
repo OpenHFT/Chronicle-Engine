@@ -17,38 +17,39 @@ import static net.openhft.chronicle.engine2.api.RequestContext.requestContext;
  * Created by peter on 22/05/15.
  */
 public class VanillaSession implements Session {
-    final VanillaAsset root = new VanillaAsset(requestContext(""), null, null);
+    private static final String LAST = "{last}";
+    final VanillaAsset root = new VanillaAsset(requestContext(""), null);
 
     public VanillaSession() {
-        viewTypeLayersOn(MapView.class, "string key maps", SubscriptionKeyValueStore.class);
+        viewTypeLayersOn(MapView.class, LAST + " string key maps", SubscriptionKeyValueStore.class);
 
-        root.prependClassifier(Subscriber.class, "generic subscriber", rc ->
+        root.addClassifier(Subscriber.class, LAST + " generic subscriber", rc ->
                         rc.elementType() == MapEvent.class ? (rc2, asset) -> asset.acquireFactory(MapEventSubscriber.class).create(rc2, asset, () -> (Assetted) asset.acquireView(Subscription.class, rc2))
                                 : rc.elementType() == Map.Entry.class ? (rc2, asset) -> asset.acquireFactory(EntrySetSubscriber.class).create(rc2, asset, () -> (Assetted) asset.acquireView(Subscription.class, rc2))
                                 : (rc2, asset) -> asset.acquireFactory(KeySubscriber.class).create(rc2, asset, () -> (Assetted) asset.acquireView(Subscription.class, rc2))
         );
-        viewTypeLayersOn(MapEventSubscriber.class, "MapEvent subscriber", Subscription.class);
-        viewTypeLayersOn(KeySubscriber.class, "keySet subscriber", Subscription.class);
-        viewTypeLayersOn(EntrySetSubscriber.class, "entrySet subscriber", Subscription.class);
-        viewTypeLayersOn(TopicSubscriber.class, "key,value topic subscriber", Subscription.class);
+        viewTypeLayersOn(MapEventSubscriber.class, LAST + " MapEvent subscriber", Subscription.class);
+        viewTypeLayersOn(KeySubscriber.class, LAST + " keySet subscriber", Subscription.class);
+        viewTypeLayersOn(EntrySetSubscriber.class, LAST + " entrySet subscriber", Subscription.class);
+        viewTypeLayersOn(TopicSubscriber.class, LAST + " key,value topic subscriber", Subscription.class);
 
-        viewTypeLayersOn(KeySetView.class, "keySet", MapView.class);
-        viewTypeLayersOn(EntrySetView.class, "entrySet", MapView.class);
-        viewTypeLayersOn(ValuesCollection.class, "values", MapView.class);
+        viewTypeLayersOn(KeySetView.class, LAST + " keySet", MapView.class);
+        viewTypeLayersOn(EntrySetView.class, LAST + " entrySet", MapView.class);
+        viewTypeLayersOn(ValuesCollection.class, LAST + " values", MapView.class);
 
-        viewTypeLayersOn(Publisher.class, "publisher", SubscriptionKeyValueStore.class);
-        viewTypeLayersOn(TopicPublisher.class, "topic publisher", SubscriptionKeyValueStore.class);
-        viewTypeLayersOn(StringStringKeyValueStore.class, "string -> string", SubscriptionKeyValueStore.class);
-        viewTypeLayersOn(StringMarshallableKeyValueStore.class, "string -> marshallable", SubscriptionKeyValueStore.class);
-        viewTypeLayersOn(SubscriptionKeyValueStore.class, "string -> marshallable", KeyValueStore.class);
+        viewTypeLayersOn(Publisher.class, LAST + "publisher", SubscriptionKeyValueStore.class);
+        viewTypeLayersOn(TopicPublisher.class, LAST + " topic publisher", SubscriptionKeyValueStore.class);
+        viewTypeLayersOn(StringStringKeyValueStore.class, LAST + " string -> string", SubscriptionKeyValueStore.class);
+        viewTypeLayersOn(StringMarshallableKeyValueStore.class, LAST + " string -> marshallable", SubscriptionKeyValueStore.class);
+        viewTypeLayersOn(SubscriptionKeyValueStore.class, LAST + " string -> marshallable", KeyValueStore.class);
+
+        root.addClassifier(Asset.class, LAST + " Asset", rc -> VanillaAsset::new);
+        root.addClassifier(SubAsset.class, LAST + " SubAsset", rc -> VanillaSubAsset::new);
 
         root.registerFactory(MapView.class, VanillaMapView::new);
         root.registerFactory(SubscriptionKeyValueStore.class, VanillaSubscriptionKeyValueStore::new);
         root.registerFactory(EntrySetView.class, VanillaEntrySetView::new);
         root.registerFactory(KeyValueStore.class, VanillaKeyValueStore::new);
-
-        root.registerFactory(Asset.class, VanillaAsset::new);
-        root.registerFactory(SubAsset.class, VanillaSubAsset::new);
         root.registerFactory(TopicPublisher.class, VanillaTopicPublisher::new);
 
 //        root.registerFactory(Publisher.class, VanillaReference::new);
@@ -56,7 +57,7 @@ public class VanillaSession implements Session {
     }
 
     public void viewTypeLayersOn(Class viewType, String description, Class underlyingType) {
-        root.prependClassifier(viewType, description, rc -> (rc2, asset) ->
+        root.addClassifier(viewType, description, rc -> (rc2, asset) ->
                 (View) asset.acquireFactory(viewType).create(rc2, asset, () -> (Assetted) asset.acquireView(underlyingType, rc2)));
     }
 

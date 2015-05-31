@@ -5,6 +5,6 @@ import java.util.function.Supplier;
 /**
  * Created by peter on 22/05/15.
  */
-public interface Factory<I> {
+public interface ViewFactory<I> {
     I create(RequestContext context, Asset asset, Supplier<Assetted> underlying);
 }

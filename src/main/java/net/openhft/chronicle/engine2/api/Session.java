@@ -81,7 +81,7 @@ public interface Session extends Closeable {
         }
     }
 
-    default <E> void registerFactory(String name, Class<E> eClass, Factory<E> factory) throws AssetNotFoundException {
+    default <E> void registerFactory(String name, Class<E> eClass, ViewFactory<E> factory) throws AssetNotFoundException {
         RequestContext rc = requestContext(name).viewType(Subscriber.class).type(eClass);
         getAsset(rc.fullName()).registerFactory(rc.type(), factory);
     }
