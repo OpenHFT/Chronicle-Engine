@@ -6,14 +6,5 @@ package net.openhft.chronicle.engine2.api;
 public interface Assetted<U> {
     Asset asset();
 
-    void underlying(U underlying);
-
     U underlying();
-
-    default boolean isUnderlying(U underlying) {
-        U u = underlying();
-        if (u == null) return false;
-        if (u == underlying) return true;
-        return u instanceof Assetted && ((Assetted) u).isUnderlying(underlying);
-    }
 }

@@ -6,6 +6,7 @@ import net.openhft.chronicle.engine2.api.map.*;
 import net.openhft.chronicle.engine2.api.set.EntrySetView;
 import net.openhft.chronicle.engine2.api.set.KeySetView;
 import net.openhft.chronicle.engine2.map.*;
+import net.openhft.chronicle.engine2.pubsub.VanillaReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,8 +53,8 @@ public class VanillaSession implements Session {
         root.registerFactory(KeyValueStore.class, VanillaKeyValueStore::new);
         root.registerFactory(TopicPublisher.class, VanillaTopicPublisher::new);
 
-//        root.registerFactory(Publisher.class, VanillaReference::new);
-//        root.registerFactory(Reference.class, VanillaReference::new);
+        root.registerFactory(Publisher.class, VanillaReference::new);
+        root.registerFactory(Reference.class, VanillaReference::new);
     }
 
     public void viewTypeLayersOn(Class viewType, String description, Class underlyingType) {

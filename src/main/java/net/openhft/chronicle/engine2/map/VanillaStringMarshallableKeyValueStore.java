@@ -170,11 +170,6 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     }
 
     @Override
-    public void underlying(KeyValueStore<String, V, V> underlying) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
     public KeyValueStore underlying() {
         return kvStore;
     }

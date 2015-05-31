@@ -9,4 +9,8 @@ public interface SubscriptionKVSCollection<K, V> extends Subscription {
     void notifyUpdate(K key, V oldValue, V value);
 
     void notifyRemoval(K key, V oldValue);
+
+    default boolean keyedView() {
+        return true;
+    }
 }

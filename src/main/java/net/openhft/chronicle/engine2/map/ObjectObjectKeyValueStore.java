@@ -114,11 +114,6 @@ public class ObjectObjectKeyValueStore<K, MV extends V, V> implements KeyValueSt
     }
 
     @Override
-    public void underlying(KeyValueStore underlying) {
-        kvStore = underlying;
-    }
-
-    @Override
     public KeyValueStore underlying() {
         return kvStore;
     }

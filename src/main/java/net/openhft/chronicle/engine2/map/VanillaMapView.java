@@ -26,7 +26,7 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
     private KeyValueStore<K, MV, V> kvStore;
 
     public VanillaMapView(RequestContext context, Asset asset, Supplier<Assetted> kvStore) {
-        this(asset, (KeyValueStore<K, MV, V>) kvStore.get(), context.putReturnsNull(), context.removeReturnsNull());
+        this(asset, (KeyValueStore<K, MV, V>) kvStore.get(), context.putReturnsNull() != Boolean.FALSE, context.removeReturnsNull() != Boolean.FALSE);
     }
 
     public VanillaMapView(Asset asset, KeyValueStore<K, MV, V> kvStore, boolean putReturnsNull, boolean removeReturnsNull) {
@@ -44,11 +44,6 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
     @Override
     public Asset asset() {
         return asset;
-    }
-
-    @Override
-    public void underlying(KeyValueStore<K, MV, V> underlying) {
-        this.kvStore = underlying;
     }
 
     @Override

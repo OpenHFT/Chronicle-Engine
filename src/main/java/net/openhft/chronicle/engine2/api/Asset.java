@@ -76,4 +76,6 @@ public interface Asset extends Permissoned {
     <V> void addClassifier(Class<V> assetType, String name, Function<RequestContext, ViewLayer> viewBuilderFactory);
 
     ViewLayer classify(Class viewType, RequestContext rc) throws AssetNotFoundException;
+
+    boolean isSubAsset();
 }

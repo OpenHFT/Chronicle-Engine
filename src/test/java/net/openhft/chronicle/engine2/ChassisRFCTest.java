@@ -4,7 +4,6 @@ import net.openhft.chronicle.engine2.api.*;
 import net.openhft.chronicle.engine2.api.map.MapEvent;
 import net.openhft.chronicle.engine2.session.VanillaSession;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -44,7 +43,6 @@ public class ChassisRFCTest {
     }
 
     @Test
-    @Ignore
     public void subscriptionToATopic() {
         Map<String, String> map = acquireMap("group-A", String.class, String.class);
 
@@ -98,13 +96,12 @@ public class ChassisRFCTest {
     }
 
     @Test
-    @Ignore
     public void publishToATopic() {
         Map<String, String> map = acquireMap("group", String.class, String.class);
         Publisher<String> publisher = acquirePublisher("group/topic", String.class);
         List<String> values = new ArrayList<>();
         Subscriber<String> subscriber = values::add;
-        registerSubscriber("group/topic", String.class, subscriber);
+        registerSubscriber("group/topic?bootstrap=false", String.class, subscriber);
 
         publisher.publish("Message-1");
         assertEquals("Message-1", map.get("topic"));
@@ -115,14 +112,13 @@ public class ChassisRFCTest {
     }
 
     @Test
-    @Ignore
     public void referenceToATopic() {
         Map<String, String> map = acquireMap("group", String.class, String.class);
         Reference<String> reference = acquireReference("group/topic", String.class);
 
         List<String> values = new ArrayList<>();
         Subscriber<String> subscriber = values::add;
-        registerSubscriber("group/topic", String.class, subscriber);
+        registerSubscriber("group/topic?bootstrap=false", String.class, subscriber);
 
         List<String> values2 = new ArrayList<>();
         Subscriber<String> subscriber2 = values2::add;
@@ -137,7 +133,7 @@ public class ChassisRFCTest {
         assertEquals("Message-2", reference.get());
         assertEquals("Message-2", map.get("topic"));
         assertEquals("[Message-1, Message-2]", values.toString());
-        assertEquals("[Message-1, Message-2]", values2.toString());
+        assertEquals("[null, Message-1, Message-2]", values2.toString());
     }
 
     @Test

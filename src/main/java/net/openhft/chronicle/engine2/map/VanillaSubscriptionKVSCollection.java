@@ -82,17 +82,17 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements SubscriptionK
 
     @Override
     public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {
-        boolean bootstrap = rc.bootstrap();
+        Boolean bootstrap = rc.bootstrap();
         Class eClass = rc.type();
         if (eClass == KeyValueStore.Entry.class || eClass == MapEvent.class) {
             subscribers.add((Subscriber) subscriber);
-            if (bootstrap) {
+            if (bootstrap != Boolean.FALSE) {
                 for (int i = 0; i < kvStore.segments(); i++)
                     kvStore.entriesFor(i, e -> subscriber.onMessage((E) InsertedEvent.of(e.key(), e.value())));
             }
         } else {
             keySubscribers.add((Subscriber<K>) subscriber);
-            if (bootstrap) {
+            if (bootstrap != Boolean.FALSE) {
                 for (int i = 0; i < kvStore.segments(); i++)
                     kvStore.keysFor(i, k -> subscriber.onMessage((E) k));
             }
@@ -102,9 +102,9 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements SubscriptionK
 
     @Override
     public <T, E> void registerTopicSubscriber(RequestContext rc, TopicSubscriber<T, E> subscriber) {
-        boolean bootstrap = rc.bootstrap();
+        Boolean bootstrap = rc.bootstrap();
         topicSubscribers.add((TopicSubscriber<K, V>) subscriber);
-        if (bootstrap) {
+        if (bootstrap != Boolean.FALSE) {
             for (int i = 0; i < kvStore.segments(); i++)
                 kvStore.entriesFor(i, (KeyValueStore.Entry<K, V> e) -> subscriber.onMessage((T) e.key(), (E) e.value()));
         }

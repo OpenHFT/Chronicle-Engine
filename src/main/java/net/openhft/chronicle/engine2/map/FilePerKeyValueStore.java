@@ -272,11 +272,6 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     }
 
     @Override
-    public void underlying(KeyValueStore underlying) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public KeyValueStore<String, Bytes, BytesStore> underlying() {
         return null;
     }

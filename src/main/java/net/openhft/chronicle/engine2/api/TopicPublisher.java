@@ -9,4 +9,8 @@ public interface TopicPublisher<T, M> extends View, Assetted<SubscriptionKeyValu
     void publish(T topic, M message);
 
     void registerSubscriber(TopicSubscriber<T, M> topicSubscriber);
+
+    default boolean keyedView() {
+        return true;
+    }
 }

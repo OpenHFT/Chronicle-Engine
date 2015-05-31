@@ -1,9 +1,9 @@
 package net.openhft.chronicle.engine2;
 
 import net.openhft.chronicle.engine2.api.RequestContext;
-import org.junit.Ignore;
 import org.junit.Test;
 
+import static net.openhft.chronicle.engine2.api.RequestContext.requestContext;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -11,16 +11,28 @@ import static org.junit.Assert.assertEquals;
  */
 public class RequestContextTest {
 
-    @Ignore("todo fix")
     @Test
     public void testParsing() {
-        String queryString = "RequestContext{pathName='', name='chronicleMapString', parent=null, assetType=interface java.util.concurrent.ConcurrentMap, " +
-                "type=class java.lang.String, type2=class java.lang.String, item=null, basePath='null', " +
-                "wireType=net.openhft.chronicle.engine2.api.RequestContext$$Lambda$3/11003494@74a10858, putReturnsNull=true, " +
-                "removeReturnsNull=false, bootstrap=true}";
-
-        RequestContext rc = new RequestContext("","");
-        rc = rc.queryString(queryString);
-        assertEquals(true, rc.putReturnsNull());
+        RequestContext rc = requestContext("/chronicleMapString?" +
+                "view=map&" +
+                "keyType=java.lang.String&" +
+                "valueType=string&" +
+                "putReturnsNull=true&" +
+                "removeReturnsNull=false&" +
+                "bootstrap=true");
+        assertEquals("RequestContext{" +
+                "pathName='', " +
+                "name='chronicleMapString', " +
+                "viewType=interface net.openhft.chronicle.engine2.api.map.MapView, " +
+                "type=class java.lang.String, " +
+                "type2=class java.lang.String, " +
+                "basePath='null', " +
+                "wireType=" + rc.wireType() + ", " +
+                "putReturnsNull=true, " +
+                "removeReturnsNull=false, " +
+                "bootstrap=true}", rc.toString());
+        assertEquals(Boolean.TRUE, rc.putReturnsNull());
+        assertEquals(Boolean.FALSE, rc.removeReturnsNull());
+        assertEquals(Boolean.TRUE, rc.bootstrap());
     }
 }

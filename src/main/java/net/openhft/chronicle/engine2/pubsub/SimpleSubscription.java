@@ -5,12 +5,18 @@ import net.openhft.chronicle.engine2.session.LocalSession;
 
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.function.Supplier;
 
 /**
  * Created by peter on 29/05/15.
  */
 public class SimpleSubscription<E> implements Subscription {
     private final Set<Subscriber<E>> subscribers = new CopyOnWriteArraySet<>();
+    private final Supplier<E> currentValue;
+
+    public SimpleSubscription(Supplier<E> currentValue) {
+        this.currentValue = currentValue;
+    }
 
     @Override
     public boolean hasSubscribers() {
@@ -20,6 +26,8 @@ public class SimpleSubscription<E> implements Subscription {
     @Override
     public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {
         subscribers.add((Subscriber) subscriber);
+        if (rc.bootstrap() != Boolean.FALSE)
+            subscriber.onMessage((E) currentValue.get());
     }
 
     @Override
@@ -52,8 +60,13 @@ public class SimpleSubscription<E> implements Subscription {
     }
 
     @Override
+    public boolean keyedView() {
+        return false;
+    }
+
+    @Override
     public View forSession(LocalSession session, Asset asset) {
-        SimpleSubscription<E> ss = new SimpleSubscription<>();
+        SimpleSubscription<E> ss = new SimpleSubscription<>(currentValue);
         registerDownstream(RequestContext.requestContext(), ss);
         return ss;
     }

@@ -6,8 +6,10 @@ import net.openhft.chronicle.engine2.api.RequestContext;
 import net.openhft.chronicle.engine2.api.View;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.SubscriptionKeyValueStore;
+import net.openhft.chronicle.engine2.pubsub.SimpleSubscription;
 import net.openhft.chronicle.engine2.session.LocalSession;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
@@ -15,13 +17,15 @@ import java.util.function.Supplier;
  */
 public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValueStore<K, MV, V> implements SubscriptionKeyValueStore<K, MV, V> {
     final SubscriptionKVSCollection<K, V> subscriptions = new VanillaSubscriptionKVSCollection<>(this);
+    private final Asset asset;
 
     public VanillaSubscriptionKeyValueStore(RequestContext context, Asset asset, Supplier<Assetted> assetted) {
-        this((KeyValueStore<K, MV, V>) assetted.get());
+        this(asset, (KeyValueStore<K, MV, V>) assetted.get());
     }
 
-    VanillaSubscriptionKeyValueStore(KeyValueStore<K, MV, V> item) {
+    VanillaSubscriptionKeyValueStore(Asset asset, KeyValueStore<K, MV, V> item) {
         super(item);
+        this.asset = asset;
     }
 
     @Override
@@ -31,21 +35,34 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
 
     @Override
     public View forSession(LocalSession session, Asset asset) {
-        return new VanillaSubscriptionKeyValueStore<>(View.forSession(kvStore, session, asset));
+        throw new UnsupportedOperationException("todo");
+//        return new VanillaSubscriptionKeyValueStore<>(View.forSession(kvStore, session, asset));
     }
 
     @Override
     public V getAndPut(K key, V value) {
         V oldValue = kvStore.getAndPut(key, value);
         subscriptions.notifyUpdate(key, oldValue, value);
+        publishValueToChild(key, value);
         return oldValue;
     }
 
     @Override
     public V getAndRemove(K key) {
         V oldValue = kvStore.getAndRemove(key);
-        if (oldValue != null)
+        if (oldValue != null) {
             subscriptions.notifyRemoval(key, oldValue);
+            publishValueToChild(key, null);
+        }
         return oldValue;
+    }
+
+    private void publishValueToChild(K key, V value) {
+        Optional.of(key)
+                .filter(k -> k instanceof CharSequence)
+                .map(Object::toString)
+                .map(asset::getChild)
+                .map(c -> c.getView(SimpleSubscription.class))
+                .ifPresent(v -> v.notifyMessage(value));
     }
 }

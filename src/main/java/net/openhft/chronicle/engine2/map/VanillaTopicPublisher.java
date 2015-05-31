@@ -42,11 +42,6 @@ public class VanillaTopicPublisher<T, M> implements TopicPublisher<T, M> {
     }
 
     @Override
-    public void underlying(SubscriptionKeyValueStore<T, M, M> underlying) {
-        this.underlying = underlying;
-    }
-
-    @Override
     public SubscriptionKeyValueStore<T, M, M> underlying() {
         return underlying;
     }

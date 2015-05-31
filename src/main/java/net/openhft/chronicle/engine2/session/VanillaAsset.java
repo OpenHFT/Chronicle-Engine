@@ -29,9 +29,10 @@ public class VanillaAsset implements Asset, Closeable {
     private final Asset parent;
     private final String name;
 
-    final Map<Class, Map<String, Function<RequestContext, ViewLayer>>> classifierMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
+    private final Map<Class, Map<String, Function<RequestContext, ViewLayer>>> classifierMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
     final Map<Class, View> viewMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
     private final Map<Class, ViewFactory> factoryMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
+    private Boolean keyedAsset;
 
     public VanillaAsset(RequestContext context, Asset asset) {
         this.parent = asset;
@@ -63,6 +64,11 @@ public class VanillaAsset implements Asset, Closeable {
         if (parent == null)
             throw new AssetNotFoundException("Unable to classify " + viewType + ", rc: " + rc);
         return parent.classify(viewType, rc);
+    }
+
+    @Override
+    public boolean isSubAsset() {
+        return false;
     }
 
     @Override
@@ -106,14 +112,16 @@ public class VanillaAsset implements Asset, Closeable {
         }
     }
 
-    private <V> void addView(Class<V> viewType, V view) {
-        viewMap.put(viewType, (View) view);
-        if (view instanceof SubscriptionKeyValueStore)
-            topSubscription(((SubscriptionKeyValueStore) view));
+    private <V> void addView(Class<V> viewType, V v) {
+        View view = (View) v;
+        if (view.keyedView())
+            keyedAsset = true;
+        viewMap.put(viewType, view);
+        if (v instanceof SubscriptionKeyValueStore)
+            topSubscription(((SubscriptionKeyValueStore) v));
     }
 
     private void topSubscription(SubscriptionKeyValueStore skvStore) {
-        System.out.println("topSubscription " + skvStore);
         viewMap.put(Subscription.class, skvStore.subscription(true));
     }
 
@@ -188,11 +196,13 @@ public class VanillaAsset implements Asset, Closeable {
     @NotNull
     @Override
     public <A> Asset acquireChild(Class<A> assetClass, RequestContext context, String name) throws AssetNotFoundException {
-        int pos = name.indexOf("/");
-        if (pos >= 0) {
-            String name1 = name.substring(0, pos);
-            String name2 = name.substring(pos + 1);
-            return getAssetOrANFE(assetClass, context, name1).acquireChild(assetClass, context, name2);
+        if (keyedAsset != Boolean.TRUE) {
+            int pos = name.indexOf("/");
+            if (pos >= 0) {
+                String name1 = name.substring(0, pos);
+                String name2 = name.substring(pos + 1);
+                return getAssetOrANFE(assetClass, context, name1).acquireChild(assetClass, context, name2);
+            }
         }
         return getAssetOrANFE(assetClass, context, name);
     }
@@ -211,7 +221,9 @@ public class VanillaAsset implements Asset, Closeable {
     protected Asset createAsset(Class assetClass, RequestContext context, String name) {
         if (assetClass == null)
             return null;
-        return children.computeIfAbsent(name, n -> new VanillaAsset(new RequestContext(context.fullName(), name), this));
+        return children.computeIfAbsent(name, keyedAsset != Boolean.TRUE
+                ? n -> new VanillaAsset(new RequestContext(context.fullName(), name), this)
+                : n -> new VanillaSubAsset(new RequestContext(context.fullName(), name), this));
     }
 
     @Override

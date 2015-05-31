@@ -21,11 +21,6 @@ public class AbstractKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> 
     }
 
     @Override
-    public void underlying(KeyValueStore underlying) {
-        this.kvStore = underlying;
-    }
-
-    @Override
     public KeyValueStore underlying() {
         return kvStore;
     }

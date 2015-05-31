@@ -7,7 +7,6 @@ import net.openhft.chronicle.engine2.map.RemovedEvent;
 import net.openhft.chronicle.engine2.map.UpdatedEvent;
 import net.openhft.chronicle.engine2.session.LocalSession;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.concurrent.ConcurrentMap;
@@ -44,7 +43,6 @@ public class ChassisTest {
     }
 
     @Test
-    @Ignore
     public void subscription() {
         ConcurrentMap<String, String> map = acquireMap("map-name?putReturnsNull=true", String.class, String.class);
 
@@ -106,7 +104,6 @@ public class ChassisTest {
     }
 
     @Test
-    @Ignore
     public void keySubscription() {
         ConcurrentMap<String, String> map = acquireMap("map-name?putReturnsNull=true", String.class, String.class);
 
@@ -120,6 +117,7 @@ public class ChassisTest {
         subscriber.onMessage("Value-1");
         replay(subscriber);
         registerSubscriber("map-name/Key-1?bootstrap=true", String.class, subscriber);
+        assertTrue(getAsset("map-name/Key-1").isSubAsset());
         verify(subscriber);
         reset(subscriber);
 
@@ -147,7 +145,6 @@ public class ChassisTest {
     }
 
     @Test
-    @Ignore
     public void topicSubscription() {
         ConcurrentMap<String, String> map = acquireMap("map-name?putReturnsNull=true", String.class, String.class);
 
@@ -277,12 +274,11 @@ public class ChassisTest {
     }
 
     @Test
-    @Ignore
     public void generateInterceptor() {
         Asset asset = acquireAsset("", null, null, null);
 
         asset.registerFactory(MyInterceptor.class, (context, asset2, underlyingSupplier) -> {
-            assertEquals(MyInterceptor.class, context.type());
+            assertEquals(MyInterceptor.class, context.viewType());
             return new MyInterceptor();
         });
         MyInterceptor mi = asset.acquireView(requestContext("").viewType(MyInterceptor.class));
@@ -292,7 +288,6 @@ public class ChassisTest {
     }
 
     static class MyInterceptor implements View {
-
         @Override
         public View forSession(LocalSession session, Asset asset) {
             throw new UnsupportedOperationException("todo");

@@ -7,7 +7,9 @@ import net.openhft.chronicle.engine2.api.set.EntrySetView;
 import net.openhft.chronicle.engine2.api.set.KeySetView;
 import net.openhft.chronicle.wire.*;
 
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -20,11 +22,39 @@ public class RequestContext {
     private Class viewType, type, type2;
     private String basePath;
     private Function<Bytes, Wire> wireType = TextWire::new;
-    private boolean putReturnsNull = true,
-            removeReturnsNull = true,
-            bootstrap = true;
+    private Boolean putReturnsNull = null,
+            removeReturnsNull = null,
+            bootstrap = null;
     private double averageValueSize;
     private long entries;
+
+    private static final Map<String, Class> classAliases = new ConcurrentHashMap<>();
+
+    private static void addAlias(Class type, String aliases) {
+        for (String alias : aliases.split(", ?")) {
+            classAliases.put(alias, type);
+            classAliases.put(Character.toLowerCase(alias.charAt(0)) + alias.substring(1), type);
+            classAliases.put(alias.toLowerCase(), type);
+        }
+    }
+
+    static {
+        addAlias(MapView.class, "Map");
+        addAlias(EntrySetView.class, "EntrySet");
+        addAlias(KeySetView.class, "KeySet");
+        addAlias(ValuesCollection.class, "Values");
+        addAlias(Set.class, "Set");
+        addAlias(Publisher.class, "Publisher, Pub");
+        addAlias(TopicPublisher.class, "TopicPublisher, TopicPub");
+        addAlias(Reference.class, "Reference, Ref");
+        addAlias(String.class, "String");
+        addAlias(Bytes.class, "Byte, int8");
+        addAlias(Character.class, "Character, Char");
+        addAlias(Integer.class, "Integer, int32");
+        addAlias(Long.class, "Long, Int, int64");
+        addAlias(Float.class, "Float, Float32");
+        addAlias(Double.class, "Double, Float64");
+    }
 
     private RequestContext() {
     }
@@ -70,51 +100,26 @@ public class RequestContext {
     }
 
     RequestContext view(String viewName) {
-        switch (viewName) {
-            case "Map":
-            case "map":
-                viewType = MapView.class;
-                break;
-            case "EntrySet":
-            case "entrySet":
-                viewType = EntrySetView.class;
-                break;
-            case "KeySet":
-            case "keySet":
-                viewType = KeySetView.class;
-                break;
-            case "Values":
-            case "values":
-                viewType = ValuesCollection.class;
-                break;
-            case "Set":
-            case "set":
-                viewType = Set.class;
-                break;
-            case "Pub":
-            case "pub":
-                viewType = Publisher.class;
-                break;
-            case "TopicPub":
-            case "topicPub":
-            case "topicpub":
-                viewType = TopicPublisher.class;
-                break;
-            case "Ref":
-            case "ref":
-                viewType = Reference.class;
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown view name:" + viewName);
+        try {
+            Class clazz = lookupType(viewName);
+            viewType(clazz);
+        } catch (IllegalArgumentException iae) {
+            throw new IllegalArgumentException("Unknown view name:" + viewName);
         }
         return this;
     }
 
-    Class lookupType(CharSequence typeName) {
+    Class lookupType(CharSequence typeName) throws IllegalArgumentException {
+        String typeNameStr = typeName.toString();
+        Class clazz = classAliases.get(typeNameStr);
+        if (clazz != null)
+            return clazz;
         try {
-            return Class.forName(typeName.toString());
+            clazz = Class.forName(typeNameStr);
+            classAliases.put(typeNameStr, clazz);
+            return clazz;
         } catch (ClassNotFoundException e) {
-            throw new AssertionError(e);
+            throw new IllegalArgumentException("Unknown class name:" + typeNameStr);
         }
     }
 
@@ -201,7 +206,7 @@ public class RequestContext {
         return this;
     }
 
-    public <A> RequestContext viewType(Class<A> assetType) {
+    public RequestContext viewType(Class assetType) {
         this.viewType = assetType;
         return this;
     }
@@ -211,14 +216,6 @@ public class RequestContext {
         return viewType;
     }
 
-    public boolean putReturnsNull() {
-        return putReturnsNull;
-    }
-
-    public boolean removeReturnsNull() {
-        return removeReturnsNull;
-    }
-
     public RequestContext fullName(String fullName) {
         int dirPos = fullName.lastIndexOf('/');
         this.pathName = dirPos >= 0 ? fullName.substring(0, dirPos) : "";
@@ -226,7 +223,15 @@ public class RequestContext {
         return this;
     }
 
-    public boolean bootstrap() {
+    public Boolean putReturnsNull() {
+        return putReturnsNull;
+    }
+
+    public Boolean removeReturnsNull() {
+        return removeReturnsNull;
+    }
+
+    public Boolean bootstrap() {
         return bootstrap;
     }
 

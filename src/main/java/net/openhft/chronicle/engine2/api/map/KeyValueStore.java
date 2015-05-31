@@ -77,4 +77,8 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
             return new VanillaEntry<>(key, value);
         }
     }
+
+    default boolean keyedView() {
+        return true;
+    }
 }

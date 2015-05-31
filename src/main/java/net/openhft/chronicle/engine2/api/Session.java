@@ -30,31 +30,36 @@ public interface Session extends Closeable {
     default <E> Set<E> acquireSet(String name, Class<E> eClass) throws AssetNotFoundException {
         RequestContext rc = requestContext(name).view("set").type(eClass);
         //noinspection unchecked
-        return acquireAsset(rc.viewType(), rc).acquireView(rc);
+        Asset asset = acquireAsset(rc.viewType(), rc);
+        return asset.acquireView(rc);
     }
 
     default <K, V> ConcurrentMap<K, V> acquireMap(String name, Class<K> kClass, Class<V> vClass) throws AssetNotFoundException {
         RequestContext rc = requestContext(name).view("map").type(kClass).type2(vClass);
         //noinspection unchecked
-        return acquireAsset(rc.viewType(), rc).acquireView(rc);
+        Asset asset = acquireAsset(rc.viewType(), rc);
+        return asset.acquireView(rc);
     }
 
     default <E> Publisher<E> acquirePublisher(String name, Class<E> eClass) throws AssetNotFoundException {
         RequestContext rc = requestContext(name).view("pub").type(eClass);
         //noinspection unchecked
-        return acquireAsset(rc.viewType(), rc).acquireView(rc);
+        Asset asset = acquireAsset(rc.viewType(), rc);
+        return asset.acquireView(rc);
     }
 
     default <E> Reference<E> acquireReference(String name, Class<E> eClass) throws AssetNotFoundException {
         RequestContext rc = requestContext(name).view("ref").type(eClass);
         //noinspection unchecked
-        return acquireAsset(rc.viewType(), rc).acquireView(rc);
+        Asset asset = acquireAsset(rc.viewType(), rc);
+        return asset.acquireView(rc);
     }
 
     default <T, E> TopicPublisher<T, E> acquireTopicPublisher(String name, Class<T> tClass, Class<E> eClass) throws AssetNotFoundException {
         RequestContext rc = requestContext(name).view("topicPub").type(tClass).type2(eClass);
         //noinspection unchecked
-        return acquireAsset(rc.viewType(), rc).acquireView(rc);
+        Asset asset = acquireAsset(rc.viewType(), rc);
+        return asset.acquireView(rc);
     }
 
     default <E> void registerSubscriber(String name, Class<E> eClass, Subscriber<E> subscriber) throws AssetNotFoundException {
@@ -83,7 +88,8 @@ public interface Session extends Closeable {
 
     default <E> void registerFactory(String name, Class<E> eClass, ViewFactory<E> factory) throws AssetNotFoundException {
         RequestContext rc = requestContext(name).viewType(Subscriber.class).type(eClass);
-        getAsset(rc.fullName()).registerFactory(rc.type(), factory);
+        Asset asset = getAsset(rc.fullName());
+        asset.registerFactory(rc.type(), factory);
     }
 
     default <T, E> void unregisterTopicSubscriber(String name, Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber) {

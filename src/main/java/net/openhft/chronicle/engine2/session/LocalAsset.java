@@ -102,6 +102,11 @@ public class LocalAsset implements Asset, Assetted, Closeable {
     }
 
     @Override
+    public boolean isSubAsset() {
+        return underlying.isSubAsset();
+    }
+
+    @Override
     public Asset getChild(String name) {
         return children.get(name);
     }
@@ -132,8 +137,10 @@ public class LocalAsset implements Asset, Assetted, Closeable {
             View i2 = (View) View.forSession(i, session, this);
             if (i2 instanceof SubscriptionKeyValueStore) {
                 MapView mv = getView(MapView.class);
-                if (mv != null)
-                    mv.underlying(i2);
+                if (mv != null) {
+                    throw new UnsupportedOperationException();
+//                    mv.underlying(i2);
+                }
             }
             return i2;
         });
@@ -180,11 +187,6 @@ public class LocalAsset implements Asset, Assetted, Closeable {
 
     @Override
     public Asset asset() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void underlying(Object underlying) {
         throw new UnsupportedOperationException();
     }
 

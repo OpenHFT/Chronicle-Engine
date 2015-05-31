@@ -77,11 +77,6 @@ public class VanillaPermissionsStore<MV> implements PermissionsStore<MV> {
     }
 
     @Override
-    public void underlying(KeyValueStore<String, MV, Permissions> underlying) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
     public KeyValueStore<String, MV, Permissions> underlying() {
         throw new UnsupportedOperationException("todo");
     }

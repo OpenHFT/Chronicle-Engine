@@ -102,11 +102,6 @@ public class AuthenticationStore<K, MV, V> implements SubscriptionKeyValueStore<
     }
 
     @Override
-    public void underlying(KeyValueStore<K, MV, V> underlying) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
     public KeyValueStore<K, MV, V> underlying() {
         throw new UnsupportedOperationException("todo");
     }

@@ -167,11 +167,6 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     }
 
     @Override
-    public void underlying(KeyValueStore<String, StringBuilder, String> underlying) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
     public KeyValueStore underlying() {
         return kvStore;
     }

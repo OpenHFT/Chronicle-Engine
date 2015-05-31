@@ -37,7 +37,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         ChronicleMapBuilder builder = ChronicleMapBuilder.of(kClass, vClass)
                 .entryOperations(publishingOperations);
 
-        if(context.putReturnsNull()){
+        if (context.putReturnsNull() != Boolean.FALSE) {
             builder.putReturnsNull(true);
         }
         if(context.getAverageValueSize()!=0){
@@ -109,11 +109,6 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
     @Override
     public Asset asset() {
         return asset;
-    }
-
-    @Override
-    public void underlying(KeyValueStore<K, MV, V> underlying) {
-        throw new UnsupportedOperationException();
     }
 
     @Override

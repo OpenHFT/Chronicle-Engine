@@ -72,11 +72,6 @@ public class VanillaKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> {
     }
 
     @Override
-    public void underlying(KeyValueStore underlying) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public KeyValueStore underlying() {
         return null;
     }
