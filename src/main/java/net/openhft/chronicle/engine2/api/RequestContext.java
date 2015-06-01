@@ -128,6 +128,11 @@ public class RequestContext {
         return this;
     }
 
+    public RequestContext keyType(Class type) {
+        this.type = type;
+        return this;
+    }
+
     public Class type() {
         return type;
     }
@@ -142,6 +147,11 @@ public class RequestContext {
 
     public Class valueType() {
         return type2;
+    }
+
+    public RequestContext valueType(Class type2) {
+        this.type2 = type2;
+        return this;
     }
 
     public RequestContext type2(Class type2) {

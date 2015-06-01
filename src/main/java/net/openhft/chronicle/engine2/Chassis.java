@@ -82,9 +82,6 @@ public enum Chassis {
         return assetTree.getAsset(name);
     }
 
-    public static Asset addAsset(String name, Assetted item) {
-        return assetTree.add(name, item);
-    }
 
     public static <A> Asset acquireAsset(String name, Class<A> assetClass, Class class1, Class class2) {
         return assetTree.acquireAsset(assetClass, RequestContext.requestContext(name).type(class1).type2(class2));

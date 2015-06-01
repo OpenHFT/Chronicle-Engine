@@ -15,11 +15,12 @@ public class VanillaSessionDetails implements SessionDetails {
     private final InetSocketAddress connectionAddress;
     private final long connectTimeMS;
 
-    VanillaSessionDetails() {
-        this.userId = null;
-        this.securityToken = null;
-        connectionAddress = null;
-        connectTimeMS = System.currentTimeMillis();
+    public VanillaSessionDetails(String userId) {
+        this(userId, null);
+    }
+
+    public VanillaSessionDetails(String userId, String securityToken) {
+        this(userId, securityToken, null, System.currentTimeMillis());
     }
 
     public VanillaSessionDetails(String userId, String securityToken, InetSocketAddress connectionAddress, long connectTimeMS) {

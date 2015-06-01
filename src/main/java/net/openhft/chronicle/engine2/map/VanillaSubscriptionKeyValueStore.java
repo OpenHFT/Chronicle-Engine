@@ -13,7 +13,7 @@ import java.util.function.Supplier;
 /**
  * Created by peter on 22/05/15.
  */
-public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValueStore<K, MV, V> implements SubscriptionKeyValueStore<K, MV, V> {
+public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValueStore<K, MV, V> implements SubscriptionKeyValueStore<K, MV, V>, AuthenticatedKeyValueStore<K, MV, V> {
     final SubscriptionKVSCollection<K, V> subscriptions = new VanillaSubscriptionKVSCollection<>(this);
     private final Asset asset;
 

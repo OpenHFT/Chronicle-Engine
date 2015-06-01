@@ -18,8 +18,6 @@ public interface AssetTree extends Closeable {
     @Nullable
     Asset getAsset(String fullName);
 
-    Asset add(String fullName, Assetted resource);
-
     default <E> Set<E> acquireSet(String name, Class<E> eClass) throws AssetNotFoundException {
         RequestContext rc = requestContext(name).view("set").type(eClass);
         //noinspection unchecked

@@ -13,14 +13,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-import static net.openhft.chronicle.engine2.api.RequestContext.requestContext;
-
 /**
  * Created by peter on 22/05/15.
  */
 public class VanillaAssetTree implements AssetTree {
     private static final String LAST = "{last}";
-    final VanillaAsset root = new VanillaAsset(requestContext(""), null);
+    final VanillaAsset root = new VanillaAsset(null, "");
 
     public VanillaAssetTree() {
 
@@ -59,14 +57,14 @@ public class VanillaAssetTree implements AssetTree {
                                 : (rc2, asset) -> asset.acquireFactory(KeySubscriber.class).create(rc2, asset, () -> (Assetted) asset.acquireView(Subscription.class, rc2))
         );
 
-        root.viewTypeLayersOn(MapView.class, LAST + " string key maps", SubscriptionKeyValueStore.class);
+        root.viewTypeLayersOn(MapView.class, LAST + " string key maps", AuthenticatedKeyValueStore.class);
         root.registerFactory(MapView.class, VanillaMapView::new);
 
-        root.viewTypeLayersOn(SubscriptionKeyValueStore.class, LAST + " string -> marshallable", KeyValueStore.class);
-        root.registerFactory(SubscriptionKeyValueStore.class, VanillaSubscriptionKeyValueStore::new);
+        root.viewTypeLayersOn(AuthenticatedKeyValueStore.class, LAST + " string -> marshallable", KeyValueStore.class);
+        root.registerFactory(AuthenticatedKeyValueStore.class, VanillaSubscriptionKeyValueStore::new);
 
-        root.addClassifier(Asset.class, LAST + " Asset", rc -> VanillaAsset::new);
-        root.addClassifier(SubAsset.class, LAST + " SubAsset", rc -> VanillaSubAsset::new);
+        root.viewTypeLayersOn(SubscriptionKeyValueStore.class, LAST + " sub -> foundation", KeyValueStore.class);
+        root.registerFactory(SubscriptionKeyValueStore.class, VanillaSubscriptionKeyValueStore::new);
 
         root.registerFactory(KeyValueStore.class, VanillaKeyValueStore::new);
 
@@ -77,18 +75,13 @@ public class VanillaAssetTree implements AssetTree {
     @Override
     public <A> Asset acquireAsset(Class<A> assetClass, RequestContext context) throws AssetNotFoundException {
         String name = context.fullName();
-        return name.isEmpty() || name.equals("/") ? root : root.acquireChild(assetClass, context, name);
+        return name.isEmpty() || name.equals("/") ? root : root.acquireAsset(name);
     }
 
     @Nullable
     @Override
     public Asset getAsset(String fullName) {
         return fullName.isEmpty() || fullName.equals("/") ? root : root.getAsset(fullName);
-    }
-
-    @Override
-    public Asset add(String fullName, Assetted resource) {
-        return root.add(fullName, resource);
     }
 
     @Override

@@ -4,7 +4,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 /**
  * Created by peter on 22/05/15.
@@ -26,12 +25,7 @@ public interface Asset {
     Asset parent();
 
     @NotNull
-    Stream<Asset> children();
-
-    Asset add(String name, Assetted resource);
-
-    @NotNull
-    <A> Asset acquireChild(Class<A> assetClass, RequestContext context, String name) throws AssetNotFoundException;
+    Asset acquireAsset(String name) throws AssetNotFoundException;
 
     @Nullable
     default Asset getAsset(String name) {
@@ -77,12 +71,15 @@ public interface Asset {
 
     ViewLayer classify(Class viewType, RequestContext rc) throws AssetNotFoundException;
 
-    boolean isSubAsset();
 
+    boolean isSubAsset();
 
     default void viewTypeLayersOn(Class viewType, String description, Class underlyingType) {
         addClassifier(viewType, description, rc -> (rc2, asset) ->
                 (View) asset.acquireFactory(viewType).create(rc2, asset, () -> (Assetted) asset.acquireView(underlyingType, rc2)));
     }
 
+    default Asset root() {
+        return parent() == null ? this : parent().root();
+    }
 }
