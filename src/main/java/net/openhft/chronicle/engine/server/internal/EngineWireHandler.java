@@ -48,6 +48,7 @@ import static net.openhft.chronicle.wire.CoreFields.csp;
 public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
     private static final Logger LOG = LoggerFactory.getLogger(EngineWireHandler.class);
+
     public static final String TEXT_WIRE = TextWire.class.getSimpleName();
     public static final String BINARY_WIRE = BinaryWire.class.getSimpleName();
     public static final String RAW_WIRE = RawWire.class.getSimpleName();
@@ -192,10 +193,10 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private void logYamlToStandardOut(@NotNull Wire in) {
         if (YamlLogging.showServerReads) {
             try {
-                System.out.println("\n\n" +
+                LOG.info("\n\n" +
                         Wires.fromSizePrefixedBlobs(in.bytes()));
             } catch (Exception e) {
-                System.out.println("\n\n" +
+                LOG.info("\n\n" +
                         Bytes.toDebugString(in.bytes()));
             }
         }

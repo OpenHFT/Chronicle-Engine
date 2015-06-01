@@ -44,13 +44,14 @@ import java.util.function.Function;
 import static net.openhft.chronicle.engine.map.MapWireHandler.EventId.*;
 import static net.openhft.chronicle.engine.map.MapWireHandler.Params.*;
 import static net.openhft.chronicle.wire.CoreFields.reply;
-import static net.openhft.chronicle.wire.WriteMarshallable.EMPTY;
 import static net.openhft.chronicle.wire.Wires.acquireStringBuilder;
+import static net.openhft.chronicle.wire.WriteMarshallable.EMPTY;
 
 /**
  * @author Rob Austin.
  */
 public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
+
 
     private static final StringBuilderPool SBP = new StringBuilderPool();
     private CharSequence csp;
@@ -178,15 +179,12 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
 
                 if (put.contentEquals(eventName)) {
                     valueIn.marshallable(wire -> {
-
                         final Params[] params = put.params();
                         final K key = wireToK.apply(wire.read(params[0]));
-                        final ValueIn read = wire.read(params[1]);
-                        final V value = wireToV.apply(read);
-
+                        final V value = wireToV.apply(wire.read(params[1]));
                         nullCheck(key);
                         nullCheck(value);
-                        map.put(key, (V)value);
+                        map.put(key, value);
                     });
                     return;
                 }
@@ -207,16 +205,25 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                     }
 
                     if (putAll.contentEquals(eventName)) {
-                        final Map data = new HashMap();
+
                         valueIn.sequence(v -> {
                             while (v.hasNextSequenceItem()) {
-                                valueIn.marshallable(wire -> data.put(
-                                        wireToK.apply(wire.read(put.params()[0])),
-                                        wireToV.apply(wire.read(put.params()[1]))));
+                                valueIn.marshallable(wire -> {
+
+                                    LOG.info(wire.bytes().toDebugString());
+                                    final ValueIn key = wire.read(put.params()[0]);
+                                    final K k0 = wireToK.apply(key);
+
+                                    LOG.info(wire.bytes().toDebugString());
+                                    final ValueIn value = wire.read(put.params()[1]);
+
+                                    final V v0 = wireToV.apply(value);
+                                    map.put(k0, v0);
+                                });
                             }
                         });
 
-                        map.putAll(data);
+
                         return;
                     }
 
@@ -376,11 +383,11 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                     final Bytes<?> outBytes = outWire.bytes();
                     long len = outBytes.position() - CollectionWireHandlerProcessor.SIZE_OF_SIZE;
                     if (len == 0) {
-                        System.out.println("--------------------------------------------\n" +
+                        LOG.info("--------------------------------------------\n" +
                                 "server writes:\n\n<EMPTY>");
 
                     } else {
-                        System.out.println("--------------------------------------------\n" +
+                        LOG.info("--------------------------------------------\n" +
                                 "server writes:\n\n" +
                                 Wires.fromSizePrefixedBlobs(outBytes, CollectionWireHandlerProcessor.SIZE_OF_SIZE, len));
                     }
