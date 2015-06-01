@@ -28,7 +28,7 @@ public class StringCharSequenceMapHandler implements MapHandler<String, CharSequ
 
     private final Function<ValueIn, CharSequence> wireToValue = in -> {
         StringBuilder sb = Wires.acquireStringBuilder();
-        in.text(sb);
+        in.textTo(sb);
         return sb;
     };
 
@@ -45,7 +45,7 @@ public class StringCharSequenceMapHandler implements MapHandler<String, CharSequ
 
         final String key = x.read(() -> "key").object(String.class);
         final StringBuilder value = Wires.acquireStringBuilder();
-        x.read(() -> "value").text(value);
+        x.read(() -> "value").textTo(value);
 
         return new Map.Entry<String, CharSequence>() {
             @Override
