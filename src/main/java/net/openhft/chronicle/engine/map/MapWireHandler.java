@@ -182,9 +182,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
 
                         final Params[] params = put.params();
                         final K key = wireToK.apply(wire.read(params[0]));
-                        final ValueIn read = wire.read(params[1]);
-                        final V value = wireToV.apply(read);
-
+                        final V value = wireToV.apply(wire.read(params[1]));
                         nullCheck(key);
                         nullCheck(value);
                         map.put(key, value);
