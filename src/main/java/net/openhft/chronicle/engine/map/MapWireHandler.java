@@ -179,7 +179,6 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
 
                 if (put.contentEquals(eventName)) {
                     valueIn.marshallable(wire -> {
-
                         final Params[] params = put.params();
                         final K key = wireToK.apply(wire.read(params[0]));
                         final V value = wireToV.apply(wire.read(params[1]));
