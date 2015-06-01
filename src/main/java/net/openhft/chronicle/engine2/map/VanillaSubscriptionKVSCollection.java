@@ -114,13 +114,13 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements SubscriptionK
     }
 
     @Override
-    public void registerDownstream(RequestContext rc, Subscription subscription) {
+    public void registerDownstream(Subscription subscription) {
         downstream.add((SubscriptionKVSCollection<K, V>) subscription);
         hasSubscribers = true;
     }
 
     @Override
-    public void unregisterDownstream(RequestContext rc, Subscription subscription) {
+    public void unregisterDownstream(Subscription subscription) {
         downstream.remove(subscription);
         updateHasSubscribers();
     }

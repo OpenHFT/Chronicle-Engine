@@ -210,7 +210,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
         final ValueIn read = wireIn.readEventName(keyName);
         if (csp.contentEquals(keyName)) {
-            read.text(cspText);
+            read.textTo(cspText);
 
         } else if (cid.contentEquals(keyName)) {
             final long cid = read.int64();

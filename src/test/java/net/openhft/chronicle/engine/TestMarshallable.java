@@ -13,7 +13,7 @@ public class TestMarshallable implements Marshallable {
 
     @Override
     public void readMarshallable(WireIn wire) throws IllegalStateException {
-        wire.read(()->"name").text(name);
+        wire.read(() -> "name").textTo(name);
         count = wire.read(()->"count").int32();
     }
 

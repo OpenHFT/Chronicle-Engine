@@ -14,9 +14,9 @@ public interface Subscription extends View {
 
     void unregisterTopicSubscriber(RequestContext rc, TopicSubscriber subscriber);
 
-    void registerDownstream(RequestContext rc, Subscription subscription);
+    void registerDownstream(Subscription subscription);
 
-    void unregisterDownstream(RequestContext rc, Subscription subscription);
+    void unregisterDownstream(Subscription subscription);
 
 //    void unregisterAll(RequestContext rc);
 }

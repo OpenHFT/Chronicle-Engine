@@ -228,12 +228,12 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
         }
 
         @Override
-        public void registerDownstream(RequestContext rc, Subscription subscription) {
+        public void registerDownstream(Subscription subscription) {
             throw new UnsupportedOperationException("todo");
         }
 
         @Override
-        public void unregisterDownstream(RequestContext rc, Subscription subscription) {
+        public void unregisterDownstream(Subscription subscription) {
             throw new UnsupportedOperationException("todo");
         }
     }

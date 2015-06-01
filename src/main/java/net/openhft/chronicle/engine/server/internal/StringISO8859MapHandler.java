@@ -29,7 +29,7 @@ public class StringISO8859MapHandler implements MapHandler<String, Bytes> {
 
     final Bytes inBytes = NativeBytes.nativeBytes(2_500_000);
     private final Function<ValueIn, Bytes> wireToValue = in -> {
-        in.text(inBytes);
+        in.textTo(inBytes);
         inBytes.flip();
         return inBytes;
     };
@@ -46,7 +46,7 @@ public class StringISO8859MapHandler implements MapHandler<String, Bytes> {
             = valueIn -> valueIn.applyToMarshallable(x -> {
 
         final String key = x.read(() -> "key").object(String.class);
-        x.read(() -> "value").text(inBytes);
+        x.read(() -> "value").textTo(inBytes);
         inBytes.flip();
 
         return new Map.Entry<String, Bytes>() {

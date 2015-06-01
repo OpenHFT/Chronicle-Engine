@@ -32,13 +32,13 @@ public class CharCharMapHandler implements MapHandler<CharSequence, CharSequence
 
     private final Function<ValueIn, CharSequence> wireToKey = valueIn -> {
         keySb.setLength(1);
-        valueIn.text(keySb);
+        valueIn.textTo(keySb);
         return keySb;
     };
 
     private final Function<ValueIn, CharSequence> wireToValue = valueIn -> {
         valueSb.setLength(1);
-        valueIn.text(valueSb);
+        valueIn.textTo(valueSb);
         return valueSb;
     };
 
