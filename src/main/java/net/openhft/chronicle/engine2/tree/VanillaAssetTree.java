@@ -1,4 +1,4 @@
-package net.openhft.chronicle.engine2.session;
+package net.openhft.chronicle.engine2.tree;
 
 import net.openhft.chronicle.engine2.api.*;
 import net.openhft.chronicle.engine2.api.collection.ValuesCollection;
@@ -7,6 +7,7 @@ import net.openhft.chronicle.engine2.api.set.EntrySetView;
 import net.openhft.chronicle.engine2.api.set.KeySetView;
 import net.openhft.chronicle.engine2.map.*;
 import net.openhft.chronicle.engine2.pubsub.VanillaReference;
+import net.openhft.chronicle.engine2.session.VanillaSessionProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,8 +23,6 @@ public class VanillaAssetTree implements AssetTree {
     final VanillaAsset root = new VanillaAsset(requestContext(""), null);
 
     public VanillaAssetTree() {
-        viewTypeLayersOn(MapView.class, LAST + " string key maps", SubscriptionKeyValueStore.class);
-
         root.addClassifier(Subscriber.class, LAST + " generic subscriber", rc ->
                         rc.elementType() == MapEvent.class ? (rc2, asset) -> asset.acquireFactory(MapEventSubscriber.class).create(rc2, asset, () -> (Assetted) asset.acquireView(Subscription.class, rc2))
                                 : rc.elementType() == Map.Entry.class ? (rc2, asset) -> asset.acquireFactory(EntrySetSubscriber.class).create(rc2, asset, () -> (Assetted) asset.acquireView(Subscription.class, rc2))
@@ -43,9 +42,11 @@ public class VanillaAssetTree implements AssetTree {
         viewTypeLayersOn(StringStringKeyValueStore.class, LAST + " string -> string", SubscriptionKeyValueStore.class);
         viewTypeLayersOn(StringMarshallableKeyValueStore.class, LAST + " string -> marshallable", SubscriptionKeyValueStore.class);
         viewTypeLayersOn(SubscriptionKeyValueStore.class, LAST + " string -> marshallable", KeyValueStore.class);
+        viewTypeLayersOn(MapView.class, LAST + " string key maps", SubscriptionKeyValueStore.class);
 
         root.addClassifier(Asset.class, LAST + " Asset", rc -> VanillaAsset::new);
         root.addClassifier(SubAsset.class, LAST + " SubAsset", rc -> VanillaSubAsset::new);
+        root.addClassifier(SessionProvider.class, LAST + " SessionProvider", rc -> VanillaSessionProvider::new);
 
         root.registerFactory(MapView.class, VanillaMapView::new);
         root.registerFactory(SubscriptionKeyValueStore.class, VanillaSubscriptionKeyValueStore::new);

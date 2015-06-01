@@ -20,13 +20,6 @@ public interface AssetTree extends Closeable {
 
     Asset add(String fullName, Assetted resource);
 
-    default Asset getAssetOrANFE(String name) throws AssetNotFoundException {
-        Asset asset = getAsset(name);
-        if (asset == null)
-            throw new AssetNotFoundException(name);
-        return asset;
-    }
-
     default <E> Set<E> acquireSet(String name, Class<E> eClass) throws AssetNotFoundException {
         RequestContext rc = requestContext(name).view("set").type(eClass);
         //noinspection unchecked

@@ -1,8 +1,8 @@
 package net.openhft.chronicle.engine2;
 
 import net.openhft.chronicle.engine2.api.*;
-import net.openhft.chronicle.engine2.session.VanillaAsset;
-import net.openhft.chronicle.engine2.session.VanillaAssetTree;
+import net.openhft.chronicle.engine2.tree.VanillaAsset;
+import net.openhft.chronicle.engine2.tree.VanillaAssetTree;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
