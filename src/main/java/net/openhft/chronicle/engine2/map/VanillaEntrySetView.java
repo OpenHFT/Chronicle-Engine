@@ -3,10 +3,8 @@ package net.openhft.chronicle.engine2.map;
 import net.openhft.chronicle.engine2.api.Asset;
 import net.openhft.chronicle.engine2.api.Assetted;
 import net.openhft.chronicle.engine2.api.RequestContext;
-import net.openhft.chronicle.engine2.api.View;
 import net.openhft.chronicle.engine2.api.map.MapView;
 import net.openhft.chronicle.engine2.api.set.EntrySetView;
-import net.openhft.chronicle.engine2.session.LocalSession;
 
 import java.util.AbstractCollection;
 import java.util.Iterator;
@@ -23,12 +21,6 @@ public class VanillaEntrySetView<K, MV, V> extends AbstractCollection<Map.Entry<
     public VanillaEntrySetView(RequestContext context, Asset asset, Supplier<Assetted> underlying) {
         this.asset = asset;
         this.underlying = (MapView<K, MV, V>) underlying.get();
-    }
-
-    @Override
-    public View forSession(LocalSession session, Asset asset) {
-        throw new UnsupportedOperationException("todo");
-//   return new VanillaEntrySetView<K, MV, V>(asset, View.forSession(underlying, session, asset));
     }
 
     @Override

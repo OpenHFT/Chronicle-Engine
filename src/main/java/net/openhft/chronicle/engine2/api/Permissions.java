@@ -4,7 +4,7 @@ package net.openhft.chronicle.engine2.api;
  * Created by peter on 22/05/15.
  */
 public interface Permissions {
-    boolean isReadOnly();
+    boolean isReadable();
 
-    boolean isAuthenticated();
+    boolean isWriteable();
 }

@@ -1,4 +1,4 @@
-package net.openhft.chronicle.engine2.session;
+package net.openhft.chronicle.engine2.tree;
 
 import net.openhft.chronicle.engine2.api.*;
 import net.openhft.chronicle.engine2.api.collection.ValuesCollection;
@@ -7,6 +7,7 @@ import net.openhft.chronicle.engine2.api.set.EntrySetView;
 import net.openhft.chronicle.engine2.api.set.KeySetView;
 import net.openhft.chronicle.engine2.map.*;
 import net.openhft.chronicle.engine2.pubsub.VanillaReference;
+import net.openhft.chronicle.engine2.session.VanillaSessionProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,13 +18,11 @@ import static net.openhft.chronicle.engine2.api.RequestContext.requestContext;
 /**
  * Created by peter on 22/05/15.
  */
-public class VanillaSession implements Session {
+public class VanillaAssetTree implements AssetTree {
     private static final String LAST = "{last}";
     final VanillaAsset root = new VanillaAsset(requestContext(""), null);
 
-    public VanillaSession() {
-        viewTypeLayersOn(MapView.class, LAST + " string key maps", SubscriptionKeyValueStore.class);
-
+    public VanillaAssetTree() {
         root.addClassifier(Subscriber.class, LAST + " generic subscriber", rc ->
                         rc.elementType() == MapEvent.class ? (rc2, asset) -> asset.acquireFactory(MapEventSubscriber.class).create(rc2, asset, () -> (Assetted) asset.acquireView(Subscription.class, rc2))
                                 : rc.elementType() == Map.Entry.class ? (rc2, asset) -> asset.acquireFactory(EntrySetSubscriber.class).create(rc2, asset, () -> (Assetted) asset.acquireView(Subscription.class, rc2))
@@ -43,6 +42,7 @@ public class VanillaSession implements Session {
         viewTypeLayersOn(StringStringKeyValueStore.class, LAST + " string -> string", SubscriptionKeyValueStore.class);
         viewTypeLayersOn(StringMarshallableKeyValueStore.class, LAST + " string -> marshallable", SubscriptionKeyValueStore.class);
         viewTypeLayersOn(SubscriptionKeyValueStore.class, LAST + " string -> marshallable", KeyValueStore.class);
+        viewTypeLayersOn(MapView.class, LAST + " string key maps", SubscriptionKeyValueStore.class);
 
         root.addClassifier(Asset.class, LAST + " Asset", rc -> VanillaAsset::new);
         root.addClassifier(SubAsset.class, LAST + " SubAsset", rc -> VanillaSubAsset::new);
@@ -55,6 +55,8 @@ public class VanillaSession implements Session {
 
         root.registerFactory(Publisher.class, VanillaReference::new);
         root.registerFactory(Reference.class, VanillaReference::new);
+
+        root.addView(SessionProvider.class, new VanillaSessionProvider(root));
     }
 
     public void viewTypeLayersOn(Class viewType, String description, Class underlyingType) {

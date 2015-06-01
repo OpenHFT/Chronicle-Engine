@@ -8,7 +8,6 @@ import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.MapEvent;
 import net.openhft.chronicle.engine2.api.map.StringMarshallableKeyValueStore;
 import net.openhft.chronicle.engine2.api.map.SubscriptionKeyValueStore;
-import net.openhft.chronicle.engine2.session.LocalSession;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.Wire;
 
@@ -54,11 +53,6 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
         valueToBytes = toBytes(type2, wireType);
         bytesToValue = fromBytes(type2, wireType);
         this.kvStore = kvStore;
-    }
-
-    @Override
-    public View forSession(LocalSession session, Asset asset) {
-        return new VanillaStringMarshallableKeyValueStore<V>(asset, type2, View.forSession(kvStore, session, asset), wireType);
     }
 
     static <T> BiFunction<T, Bytes, Bytes> toBytes(Class type, Function<Bytes, Wire> wireType) {
@@ -174,6 +168,11 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
         return kvStore;
     }
 
+    @Override
+    public void close() {
+        kvStore.close();
+    }
+
     class TranslatingSubscriptionKVSCollection implements SubscriptionKVSCollection<String, V> {
         @Override
         public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {
@@ -235,11 +234,6 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
 
         @Override
         public void unregisterDownstream(RequestContext rc, Subscription subscription) {
-            throw new UnsupportedOperationException("todo");
-        }
-
-        @Override
-        public View forSession(LocalSession session, Asset asset) {
             throw new UnsupportedOperationException("todo");
         }
     }

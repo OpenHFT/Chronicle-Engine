@@ -9,7 +9,6 @@ import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.MapEvent;
 import net.openhft.chronicle.engine2.api.map.StringStringKeyValueStore;
 import net.openhft.chronicle.engine2.api.map.SubscriptionKeyValueStore;
-import net.openhft.chronicle.engine2.session.LocalSession;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
@@ -44,12 +43,6 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     public VanillaStringStringKeyValueStore(RequestContext context, Asset asset, Supplier<Assetted> kvStore) {
         this.asset = asset;
         this.kvStore = (SubscriptionKeyValueStore<String, Bytes, BytesStore>) kvStore.get();
-    }
-
-    @Override
-    public View forSession(LocalSession session, Asset asset) {
-        throw new UnsupportedOperationException("todo");
-//        return new VanillaStringStringKeyValueStore(asset, View.forSession(kvStore, session, asset));
     }
 
     static <T> BiFunction<T, Bytes, Bytes> toBytes(RequestContext context, Class type) {
@@ -171,6 +164,11 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         return kvStore;
     }
 
+    @Override
+    public void close() {
+        kvStore.close();
+    }
+
     class TranslatingSubscriptionKVSCollection implements SubscriptionKVSCollection<String, String> {
         SubscriptionKVSCollection<String, String> subscriptions = new VanillaSubscriptionKVSCollection<>(VanillaStringStringKeyValueStore.this);
 
@@ -234,11 +232,6 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
 
         @Override
         public void unregisterDownstream(RequestContext rc, Subscription subscription) {
-            throw new UnsupportedOperationException("todo");
-        }
-
-        @Override
-        public View forSession(LocalSession session, Asset asset) {
             throw new UnsupportedOperationException("todo");
         }
     }

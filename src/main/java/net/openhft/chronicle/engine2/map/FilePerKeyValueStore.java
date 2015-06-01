@@ -6,10 +6,8 @@ import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.engine2.api.Asset;
 import net.openhft.chronicle.engine2.api.RequestContext;
-import net.openhft.chronicle.engine2.api.View;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.StringBytesStoreKeyValueStore;
-import net.openhft.chronicle.engine2.session.LocalSession;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -84,11 +82,6 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     @Override
     public SubscriptionKVSCollection<String, BytesStore> subscription(boolean createIfAbsent) {
         return subscriptions;
-    }
-
-    @Override
-    public View forSession(LocalSession session, Asset asset) {
-        return this;
     }
 
     @Override

@@ -1,7 +1,9 @@
 package net.openhft.chronicle.engine2.pubsub;
 
-import net.openhft.chronicle.engine2.api.*;
-import net.openhft.chronicle.engine2.session.LocalSession;
+import net.openhft.chronicle.engine2.api.RequestContext;
+import net.openhft.chronicle.engine2.api.Subscriber;
+import net.openhft.chronicle.engine2.api.Subscription;
+import net.openhft.chronicle.engine2.api.TopicSubscriber;
 
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -62,12 +64,5 @@ public class SimpleSubscription<E> implements Subscription {
     @Override
     public boolean keyedView() {
         return false;
-    }
-
-    @Override
-    public View forSession(LocalSession session, Asset asset) {
-        SimpleSubscription<E> ss = new SimpleSubscription<>(currentValue);
-        registerDownstream(RequestContext.requestContext(), ss);
-        return ss;
     }
 }

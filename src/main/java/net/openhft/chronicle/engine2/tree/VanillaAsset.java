@@ -1,4 +1,4 @@
-package net.openhft.chronicle.engine2.session;
+package net.openhft.chronicle.engine2.tree;
 
 import net.openhft.chronicle.core.util.Closeable;
 import net.openhft.chronicle.engine2.api.*;
@@ -112,7 +112,7 @@ public class VanillaAsset implements Asset, Closeable {
         }
     }
 
-    private <V> void addView(Class<V> viewType, V v) {
+    public <V> void addView(Class<V> viewType, V v) {
         View view = (View) v;
         if (view.keyedView())
             keyedAsset = true;

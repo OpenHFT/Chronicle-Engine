@@ -1,4 +1,4 @@
-package net.openhft.chronicle.engine2.session;
+package net.openhft.chronicle.engine2.tree;
 
 import net.openhft.chronicle.core.util.Closeable;
 import net.openhft.chronicle.engine2.api.*;
@@ -35,11 +35,6 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     @Override
     public Subscription subscription(boolean createIfAbsent) {
         return subscription;
-    }
-
-    @Override
-    public View forSession(LocalSession session, Asset asset) {
-        throw new UnsupportedOperationException("todo");
     }
 
     @Override

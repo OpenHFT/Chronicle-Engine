@@ -13,13 +13,15 @@ public class RequestContextTest {
 
     @Test
     public void testParsing() {
-        RequestContext rc = requestContext("/chronicleMapString?" +
+        String uri = "/chronicleMapString?" +
                 "view=map&" +
                 "keyType=java.lang.String&" +
                 "valueType=string&" +
                 "putReturnsNull=true&" +
                 "removeReturnsNull=false&" +
-                "bootstrap=true");
+                "bootstrap=true";
+        System.out.println(uri);
+        RequestContext rc = requestContext(uri);
         assertEquals("RequestContext{" +
                 "pathName='', " +
                 "name='chronicleMapString', " +
