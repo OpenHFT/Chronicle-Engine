@@ -1,10 +1,12 @@
 package net.openhft.chronicle.engine2.map;
 
-import net.openhft.chronicle.engine2.api.*;
+import net.openhft.chronicle.engine2.api.Asset;
+import net.openhft.chronicle.engine2.api.PermissionDeniedException;
+import net.openhft.chronicle.engine2.api.Permissions;
+import net.openhft.chronicle.engine2.api.RequestContext;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.PermissionsStore;
 import net.openhft.chronicle.engine2.api.map.SubscriptionKeyValueStore;
-import net.openhft.chronicle.engine2.session.LocalSession;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -103,11 +105,6 @@ public class AuthenticationStore<K, MV, V> implements SubscriptionKeyValueStore<
 
     @Override
     public KeyValueStore<K, MV, V> underlying() {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
-    public View forSession(LocalSession session, Asset asset) {
         throw new UnsupportedOperationException("todo");
     }
 

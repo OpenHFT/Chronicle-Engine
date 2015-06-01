@@ -38,11 +38,6 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     }
 
     @Override
-    public View forSession(LocalSession session, Asset asset) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
     public <V> void addClassifier(Class<V> assetType, String name, Function<RequestContext, ViewLayer> viewBuilderFactory) {
         throw new UnsupportedOperationException("todo");
     }

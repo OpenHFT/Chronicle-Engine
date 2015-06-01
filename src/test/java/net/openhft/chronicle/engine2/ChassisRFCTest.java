@@ -2,17 +2,12 @@ package net.openhft.chronicle.engine2;
 
 import net.openhft.chronicle.engine2.api.*;
 import net.openhft.chronicle.engine2.api.map.MapEvent;
-import net.openhft.chronicle.engine2.session.VanillaSession;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 import static net.openhft.chronicle.engine2.Chassis.*;
 import static org.junit.Assert.assertEquals;
@@ -20,26 +15,11 @@ import static org.junit.Assert.assertEquals;
 /**
  * Created by peter on 22/05/15.
  */
-@RunWith(Parameterized.class)
 public class ChassisRFCTest {
-
-    private final Supplier<Session> sessionSupplier;
-
-    @Parameterized.Parameters
-    public static Collection<Object[]> data() {
-        List<Object[]> data = new ArrayList<>();
-        data.add(new Supplier[]{VanillaSession::new});
-//                new Object[]{(Supplier<Session>) () -> new LocalSession(new VanillaSession())}
-        return data;
-    }
-
-    public ChassisRFCTest(Supplier<Session> sessionSupplier) {
-        this.sessionSupplier = sessionSupplier;
-    }
 
     @Before
     public void setUpTest() {
-        Chassis.defaultSession(sessionSupplier.get());
+        Chassis.resetChassis();
     }
 
     @Test

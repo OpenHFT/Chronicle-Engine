@@ -1,9 +1,7 @@
 package net.openhft.chronicle.engine2.map;
 
 import net.openhft.chronicle.engine2.api.Asset;
-import net.openhft.chronicle.engine2.api.View;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
-import net.openhft.chronicle.engine2.session.LocalSession;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -75,8 +73,4 @@ public class AbstractKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> 
         return kvStore.replace(key, value);
     }
 
-    @Override
-    public View forSession(LocalSession session, Asset asset) {
-        throw new UnsupportedOperationException("todo");
-    }
 }

@@ -1,9 +1,11 @@
 package net.openhft.chronicle.engine2.map;
 
-import net.openhft.chronicle.engine2.api.*;
+import net.openhft.chronicle.engine2.api.RequestContext;
+import net.openhft.chronicle.engine2.api.Subscriber;
+import net.openhft.chronicle.engine2.api.Subscription;
+import net.openhft.chronicle.engine2.api.TopicSubscriber;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.MapEvent;
-import net.openhft.chronicle.engine2.session.LocalSession;
 
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -137,10 +139,5 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements SubscriptionK
 
     private void updateHasSubscribers() {
         hasSubscribers = !topicSubscribers.isEmpty() && !subscribers.isEmpty() && !downstream.isEmpty();
-    }
-
-    @Override
-    public View forSession(LocalSession session, Asset asset) {
-        throw new UnsupportedOperationException("todo");
     }
 }

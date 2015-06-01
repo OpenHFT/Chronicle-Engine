@@ -17,11 +17,11 @@ import static net.openhft.chronicle.engine2.api.RequestContext.requestContext;
 /**
  * Created by peter on 22/05/15.
  */
-public class VanillaSession implements Session {
+public class VanillaAssetTree implements AssetTree {
     private static final String LAST = "{last}";
     final VanillaAsset root = new VanillaAsset(requestContext(""), null);
 
-    public VanillaSession() {
+    public VanillaAssetTree() {
         viewTypeLayersOn(MapView.class, LAST + " string key maps", SubscriptionKeyValueStore.class);
 
         root.addClassifier(Subscriber.class, LAST + " generic subscriber", rc ->

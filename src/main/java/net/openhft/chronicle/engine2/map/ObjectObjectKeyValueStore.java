@@ -5,9 +5,7 @@ import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.engine2.api.Asset;
 import net.openhft.chronicle.engine2.api.Assetted;
 import net.openhft.chronicle.engine2.api.RequestContext;
-import net.openhft.chronicle.engine2.api.View;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
-import net.openhft.chronicle.engine2.session.LocalSession;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -116,10 +114,5 @@ public class ObjectObjectKeyValueStore<K, MV extends V, V> implements KeyValueSt
     @Override
     public KeyValueStore underlying() {
         return kvStore;
-    }
-
-    @Override
-    public View forSession(LocalSession session, Asset asset) {
-        throw new UnsupportedOperationException("todo");
     }
 }

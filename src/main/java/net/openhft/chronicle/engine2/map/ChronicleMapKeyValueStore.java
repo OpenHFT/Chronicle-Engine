@@ -3,10 +3,8 @@ package net.openhft.chronicle.engine2.map;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.engine2.api.Asset;
 import net.openhft.chronicle.engine2.api.RequestContext;
-import net.openhft.chronicle.engine2.api.View;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.SubscriptionKeyValueStore;
-import net.openhft.chronicle.engine2.session.LocalSession;
 import net.openhft.chronicle.hash.Value;
 import net.openhft.chronicle.map.*;
 import org.jetbrains.annotations.NotNull;
@@ -114,11 +112,6 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
     @Override
     public KeyValueStore<K, MV, V> underlying() {
         return null;
-    }
-
-    @Override
-    public View forSession(LocalSession session, Asset asset) {
-        return this;
     }
 
     @Override

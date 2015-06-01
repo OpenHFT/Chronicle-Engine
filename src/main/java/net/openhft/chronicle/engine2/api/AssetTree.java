@@ -11,7 +11,7 @@ import static net.openhft.chronicle.engine2.api.RequestContext.requestContext;
 /**
  * Created by peter on 22/05/15.
  */
-public interface Session extends Closeable {
+public interface AssetTree extends Closeable {
 
     <A> Asset acquireAsset(Class<A> assetClass, RequestContext context) throws AssetNotFoundException;
 

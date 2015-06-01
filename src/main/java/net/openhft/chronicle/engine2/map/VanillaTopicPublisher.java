@@ -2,7 +2,6 @@ package net.openhft.chronicle.engine2.map;
 
 import net.openhft.chronicle.engine2.api.*;
 import net.openhft.chronicle.engine2.api.map.SubscriptionKeyValueStore;
-import net.openhft.chronicle.engine2.session.LocalSession;
 
 import java.util.function.Supplier;
 
@@ -24,11 +23,6 @@ public class VanillaTopicPublisher<T, M> implements TopicPublisher<T, M> {
         this.tClass = tClass;
         this.mClass = mClass;
         this.underlying = underlying;
-    }
-
-    @Override
-    public View forSession(LocalSession session, Asset asset) {
-        return new VanillaTopicPublisher(asset, tClass, mClass, View.forSession(underlying, session, asset));
     }
 
     @Override

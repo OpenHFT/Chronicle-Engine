@@ -3,11 +3,9 @@ package net.openhft.chronicle.engine2.map;
 import net.openhft.chronicle.engine2.api.Asset;
 import net.openhft.chronicle.engine2.api.Assetted;
 import net.openhft.chronicle.engine2.api.RequestContext;
-import net.openhft.chronicle.engine2.api.View;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.MapView;
 import net.openhft.chronicle.engine2.api.set.EntrySetView;
-import net.openhft.chronicle.engine2.session.LocalSession;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.AbstractMap;
@@ -34,11 +32,6 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
         this.kvStore = kvStore;
         this.putReturnsNull = putReturnsNull;
         this.removeReturnsNull = removeReturnsNull;
-    }
-
-    @Override
-    public View forSession(LocalSession session, Asset asset) {
-        return new VanillaMapView<K, MV, V>(asset, View.forSession(kvStore, session, asset), putReturnsNull, removeReturnsNull);
     }
 
     @Override

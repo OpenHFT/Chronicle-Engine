@@ -3,10 +3,8 @@ package net.openhft.chronicle.engine2.map;
 import net.openhft.chronicle.engine2.api.Asset;
 import net.openhft.chronicle.engine2.api.Permissions;
 import net.openhft.chronicle.engine2.api.VanillaPermissions;
-import net.openhft.chronicle.engine2.api.View;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.PermissionsStore;
-import net.openhft.chronicle.engine2.session.LocalSession;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -78,11 +76,6 @@ public class VanillaPermissionsStore<MV> implements PermissionsStore<MV> {
 
     @Override
     public KeyValueStore<String, MV, Permissions> underlying() {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
-    public View forSession(LocalSession session, Asset asset) {
         throw new UnsupportedOperationException("todo");
     }
 }
