@@ -37,19 +37,19 @@ public class VanillaAssetTree implements AssetTree {
         root.viewTypeLayersOn(ValuesCollection.class, LAST + " values", MapView.class);
 
         root.viewTypeLayersOn(MapEventSubscriber.class, LAST + " MapEvent subscriber", Subscription.class);
-// todo       root.registerFactory(MapEventSubscriber.class, VanillaMapEventSubscriber::new);
+// todo CE-54      root.registerFactory(MapEventSubscriber.class, VanillaMapEventSubscriber::new);
 
         root.viewTypeLayersOn(KeySubscriber.class, LAST + " keySet subscriber", Subscription.class);
-// todo       root.registerFactory(KeySubscriber.class, VanillaKeySubscriber::new);
+// todo CE-54      root.registerFactory(KeySubscriber.class, VanillaKeySubscriber::new);
 
         root.viewTypeLayersOn(EntrySetSubscriber.class, LAST + " entrySet subscriber", Subscription.class);
-// todo       root.registerFactory(EntrySetView.class, VanillaEntrySetSubscriber::new);
+// todo  CE-54     root.registerFactory(EntrySetView.class, VanillaEntrySetSubscriber::new);
 
         root.viewTypeLayersOn(KeySetView.class, LAST + " keySet", MapView.class);
-// todo       root.registerFactory(KeySetView.class, VanillaKeySetView::new);
+// todo  CE-54     root.registerFactory(KeySetView.class, VanillaKeySetView::new);
 
         root.viewTypeLayersOn(TopicSubscriber.class, LAST + " key,value topic subscriber", Subscription.class);
-// todo       root.registerFactory(TopicSubscriber.class, VanillaTopicSubscriber::new);
+// todo   CE-54    root.registerFactory(TopicSubscriber.class, VanillaTopicSubscriber::new);
 
         root.addClassifier(Subscriber.class, LAST + " generic subscriber", rc ->
                         rc.elementType() == MapEvent.class ? (rc2, asset) -> asset.acquireFactory(MapEventSubscriber.class).create(rc2, asset, () -> (Assetted) asset.acquireView(Subscription.class, rc2))
