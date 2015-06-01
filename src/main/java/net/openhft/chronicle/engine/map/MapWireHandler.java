@@ -209,15 +209,8 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                         valueIn.sequence(v -> {
                             while (v.hasNextSequenceItem()) {
                                 valueIn.marshallable(wire -> {
-
-                                    LOG.info(wire.bytes().toDebugString());
-                                    final ValueIn key = wire.read(put.params()[0]);
-                                    final K k0 = wireToK.apply(key);
-
-                                    LOG.info(wire.bytes().toDebugString());
-                                    final ValueIn value = wire.read(put.params()[1]);
-
-                                    final V v0 = wireToV.apply(value);
+                                    final K k0 = wireToK.apply(wire.read(put.params()[0]));
+                                    final V v0 = wireToV.apply(wire.read(put.params()[1]));
                                     map.put(k0, v0);
                                 });
                             }

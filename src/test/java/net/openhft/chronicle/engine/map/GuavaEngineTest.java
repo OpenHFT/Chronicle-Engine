@@ -26,13 +26,16 @@ import com.google.common.collect.testing.features.CollectionSize;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.engine.map.MapClientTest.LocalMapSupplier;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.wire.TextWire;
-import org.junit.Assert;
-import org.mockito.Mockito;
+import org.junit.Ignore;
+import org.junit.runner.RunWith;
+import org.junit.runners.AllTests;
+import org.junit.runners.Suite;
 
 import java.io.IOException;
 import java.util.List;
@@ -42,7 +45,9 @@ import static com.google.common.collect.testing.features.MapFeature.*;
 
 
 @SuppressWarnings("all")
-public class GuavaEngineTest extends TestCase {
+@Ignore
+@RunWith(AllTests.class)
+public class GuavaEngineTest   {
 
     public static Test suite() {
         TestSuite remoteMapTests = MapTestSuiteBuilder.using(new RemoteTestGenerator())
@@ -62,8 +67,8 @@ public class GuavaEngineTest extends TestCase {
                 .createTestSuite();
 
         TestSuite tests = new TestSuite();
-     //   tests.addTest(remoteMapTests);
-     //   tests.addTest(localMapTests);
+        tests.addTest(remoteMapTests);
+        tests.addTest(localMapTests);
         return tests;
     }
 
@@ -140,41 +145,24 @@ public class GuavaEngineTest extends TestCase {
 
     static ChronicleMap<CharSequence, CharSequence> newStrStrRemoteMap() {
 
-        RemoteMapSupplier remoteMapSupplierTemp = null;
+
         try {
-            remoteMapSupplierTemp = new RemoteMapSupplier<>(CharSequence.class, CharSequence.class,
-                    new ChronicleEngine(), TextWire::new);
+            return new RemoteMapSupplier<>(CharSequence.class, CharSequence.class,
+                    new ChronicleEngine(), TextWire::new).get();
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new IORuntimeException(e);
         }
-        final RemoteMapSupplier remoteMapSupplier = remoteMapSupplierTemp;
-        final ChronicleMap spy = Mockito.spy(remoteMapSupplier.get());
-
-        Mockito.doAnswer(invocationOnMock -> {
-            remoteMapSupplier.close();
-            return null;
-        }).when(spy).close();
-
-        return spy;
     }
 
     static ChronicleMap<CharSequence, CharSequence> newStrStrLocalMap() {
 
-        LocalMapSupplier localMapSupplierTemp = null;
-        try {
-            localMapSupplierTemp = new LocalMapSupplier(CharSequence.class, CharSequence.class);
-        } catch (IOException e) {
-            Assert.fail(e.getMessage());
-        }
-        final LocalMapSupplier localMapSupplier = localMapSupplierTemp;
-        final ChronicleMap spy = Mockito.spy(localMapSupplier.get());
 
-        Mockito.doAnswer(invocationOnMock -> {
-            localMapSupplier.close();
-            return null;
-        }).when(spy).close();
-        Mockito.when(spy.toString()).thenCallRealMethod();
-        return spy;
+        try {
+            return new LocalMapSupplier(CharSequence.class, CharSequence.class).get();
+        } catch (IOException e) {
+            throw new IORuntimeException(e);
+        }
+
     }
 
 }
