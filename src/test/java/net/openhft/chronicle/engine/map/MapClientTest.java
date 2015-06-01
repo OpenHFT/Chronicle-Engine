@@ -44,7 +44,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static org.junit.Assert.assertEquals;
-
 /**
  * test using the map both remotely or locally via the engine
  *
@@ -90,8 +89,7 @@ public class MapClientTest extends ThreadMonitoringTest {
         });
     }
 
-    @Ignore("todo fix")
-    @Test(timeout = 500000)
+    @Test
     public void testPutAll() throws IOException, InterruptedException {
 
         supplyMap(Integer.class, String.class, mapProxy -> {
@@ -102,17 +100,17 @@ public class MapClientTest extends ThreadMonitoringTest {
 
             assertEquals(true, entries.isEmpty());
 
+
+            assertEquals(true, entries.isEmpty());
+
             Map<Integer, String> data = new HashMap<>();
             data.put(1, "hello");
             data.put(2, "world");
-
-
-            assertEquals(true, entries.isEmpty());
             mapProxy.putAll(data);
 
             final Set<Map.Entry<Integer, String>> e = mapProxy.entrySet();
             final Iterator<Map.Entry<Integer, String>> iterator = e.iterator();
-              Map.Entry<Integer, String> entry = iterator.next();
+            Map.Entry<Integer, String> entry = iterator.next();
 
             if (entry.getKey() == 1) {
                 assertEquals("hello", entry.getValue());

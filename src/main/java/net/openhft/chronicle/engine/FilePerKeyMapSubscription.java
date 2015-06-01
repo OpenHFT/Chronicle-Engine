@@ -2,6 +2,7 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.map.FPMEvent;
 import net.openhft.chronicle.map.FilePerKeyMap;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -12,6 +13,8 @@ import java.util.function.Consumer;
  * Created by daniel on 01/05/15.
  */
 public class FilePerKeyMapSubscription implements Subscription{
+
+    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(FilePerKeyMapSubscription.class);
     private FilePerKeyMap filePerKeyMap;
     private boolean subscribeAll = false;
     private Set<String> subscribedKeys = new HashSet<>();
@@ -45,7 +48,7 @@ public class FilePerKeyMapSubscription implements Subscription{
     public void setCallback(Object callback) {
         MapEventListener mel = (MapEventListener)callback;
         Consumer<FPMEvent> fpmEventConsumer = (FPMEvent e) -> {
-            System.out.println(e);
+            LOG.error("", e);
             if(subscribeAll || subscribedKeys.contains(e.getKey())) {
                 mel.update(e.getKey(), e.getLastValue(), e.getValue());
             }

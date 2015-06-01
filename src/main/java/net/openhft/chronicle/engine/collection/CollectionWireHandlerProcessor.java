@@ -44,19 +44,16 @@ public class CollectionWireHandlerProcessor<U, C extends Collection<U>> implemen
         CollectionWireHandler<U, C>,
         Consumer<WireHandlers> {
 
+    private static final Logger LOG = LoggerFactory.getLogger(CollectionWireHandlerProcessor.class);
+    public static final int SIZE_OF_SIZE = 4;
+
     private Function<ValueIn, U> fromWire;
     private BiConsumer<ValueOut, U> toWire;
 
-    private static final Logger LOG = LoggerFactory.getLogger(CollectionWireHandlerProcessor.class);
-
-    public static final int SIZE_OF_SIZE = 4;
-
     private Wire inWire = null;
     private Wire outWire = null;
-
     private C underlyingCollection;
     private long tid;
-
     private Supplier<C> factory;
 
     private final Consumer<WireIn> dataConsumer = new Consumer<WireIn>() {
@@ -160,12 +157,12 @@ public class CollectionWireHandlerProcessor<U, C extends Collection<U>> implemen
                 if (YamlLogging.showServerWrites) {
                     long len = outBytes.position() - SIZE_OF_SIZE;
                     if (len == 0) {
-                        System.out.println(
+                        LOG.info(
                                 "\n\nserver writes:\n\n<EMPTY>");
 
                     } else {
 
-                        System.out.println(
+                     LOG.info(
                                 "server writes:\n\n" +
                                         //      Bytes.toDebugString(outBytes, SIZE_OF_SIZE, len));
                                         Wires.fromSizePrefixedBlobs(outBytes, SIZE_OF_SIZE, len));
