@@ -97,10 +97,6 @@ public class MapClientTest extends ThreadMonitoringTest {
             final Set<Map.Entry<Integer, String>> entries = mapProxy.entrySet();
 
             assertEquals(0, entries.size());
-
-            assertEquals(true, entries.isEmpty());
-
-
             assertEquals(true, entries.isEmpty());
 
             Map<Integer, String> data = new HashMap<>();
