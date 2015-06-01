@@ -305,7 +305,11 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     @Test
     public void testEntrySet() throws IOException {
         try (ChronicleMap map = map5()) {
-            writeMessage = "example of getting and entry set itterator";
+            writeMessage = "The client asks the server for the number of segments, " +
+                    "the client will then ask for all the data in each segment calling iterator(), " +
+                    "typically a server will have more than one segment however for this " +
+                    "example we have simplified the server to a single segment.\n" +
+                    "\n";
             yamlLoggger(() -> {
                 Set entrySet = map.entrySet();
                 entrySet.iterator();
