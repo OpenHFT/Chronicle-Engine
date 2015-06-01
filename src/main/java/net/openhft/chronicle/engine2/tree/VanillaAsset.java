@@ -272,13 +272,16 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     public void enableTranslatingValuesToBytesStore() {
-        addClassifier(MapView.class, "string key maps", rc ->
+        addClassifier(MapView.class, "{Marshalling} string key maps", rc ->
                         rc.keyType() == String.class
                                 ? rc.valueType() == String.class ? (rc2, asset) -> asset.acquireFactory(MapView.class).create(rc2, asset, () -> asset.acquireView(StringStringKeyValueStore.class, rc2))
                                 : Marshallable.class.isAssignableFrom(rc.valueType()) ? (rc2, asset) -> asset.acquireFactory(MapView.class).create(rc2, asset, () -> asset.acquireView(StringMarshallableKeyValueStore.class, rc2))
                                 : null
                                 : null
         );
+        viewTypeLayersOn(StringStringKeyValueStore.class, "{Marshalling} string -> string", SubscriptionKeyValueStore.class);
+        viewTypeLayersOn(StringMarshallableKeyValueStore.class, "{Marshalling} string -> marshallable", SubscriptionKeyValueStore.class);
+
         registerFactory(StringMarshallableKeyValueStore.class, VanillaStringMarshallableKeyValueStore::new);
         registerFactory(StringStringKeyValueStore.class, VanillaStringStringKeyValueStore::new);
     }

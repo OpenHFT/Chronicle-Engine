@@ -78,4 +78,11 @@ public interface Asset {
     ViewLayer classify(Class viewType, RequestContext rc) throws AssetNotFoundException;
 
     boolean isSubAsset();
+
+
+    default void viewTypeLayersOn(Class viewType, String description, Class underlyingType) {
+        addClassifier(viewType, description, rc -> (rc2, asset) ->
+                (View) asset.acquireFactory(viewType).create(rc2, asset, () -> (Assetted) asset.acquireView(underlyingType, rc2)));
+    }
+
 }

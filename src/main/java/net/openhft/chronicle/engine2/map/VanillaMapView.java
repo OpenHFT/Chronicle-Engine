@@ -3,6 +3,7 @@ package net.openhft.chronicle.engine2.map;
 import net.openhft.chronicle.engine2.api.Asset;
 import net.openhft.chronicle.engine2.api.Assetted;
 import net.openhft.chronicle.engine2.api.RequestContext;
+import net.openhft.chronicle.engine2.api.TopicSubscriber;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.MapView;
 import net.openhft.chronicle.engine2.api.set.EntrySetView;
@@ -20,14 +21,18 @@ import static net.openhft.chronicle.engine2.api.RequestContext.requestContext;
 public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapView<K, MV, V> {
     private final boolean putReturnsNull;
     private final boolean removeReturnsNull;
+    private final Class keyClass;
+    private final Class valueType;
     private Asset asset;
     private KeyValueStore<K, MV, V> kvStore;
 
     public VanillaMapView(RequestContext context, Asset asset, Supplier<Assetted> kvStore) {
-        this(asset, (KeyValueStore<K, MV, V>) kvStore.get(), context.putReturnsNull() != Boolean.FALSE, context.removeReturnsNull() != Boolean.FALSE);
+        this(context.keyType(), context.valueType(), asset, (KeyValueStore<K, MV, V>) kvStore.get(), context.putReturnsNull() != Boolean.FALSE, context.removeReturnsNull() != Boolean.FALSE);
     }
 
-    public VanillaMapView(Asset asset, KeyValueStore<K, MV, V> kvStore, boolean putReturnsNull, boolean removeReturnsNull) {
+    public VanillaMapView(Class keyClass, Class valueType, Asset asset, KeyValueStore<K, MV, V> kvStore, boolean putReturnsNull, boolean removeReturnsNull) {
+        this.keyClass = keyClass;
+        this.valueType = valueType;
         this.asset = asset;
         this.kvStore = kvStore;
         this.putReturnsNull = putReturnsNull;
@@ -106,5 +111,10 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
     @Override
     public V replace(@NotNull K key, @NotNull V value) {
         return kvStore.replace(key, value);
+    }
+
+    @Override
+    public void registerTopicSubscriber(TopicSubscriber<K, V> topicSubscriber) {
+        asset.subscription(true).registerTopicSubscriber(RequestContext.requestContext().bootstrap(true).type(keyClass).type2(valueType), topicSubscriber);
     }
 }

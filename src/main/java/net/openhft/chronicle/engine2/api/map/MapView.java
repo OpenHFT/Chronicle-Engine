@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine2.api.map;
 
 import net.openhft.chronicle.engine2.api.Assetted;
+import net.openhft.chronicle.engine2.api.TopicSubscriber;
 import net.openhft.chronicle.engine2.api.View;
 
 import java.util.concurrent.ConcurrentMap;
@@ -12,4 +13,6 @@ public interface MapView<K, MV, V> extends ConcurrentMap<K, V>, Assetted<KeyValu
     default boolean keyedView() {
         return true;
     }
+
+    void registerTopicSubscriber(TopicSubscriber<K, V> topicSubscriber);
 }

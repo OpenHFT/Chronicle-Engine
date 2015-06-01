@@ -127,7 +127,7 @@ public class ChassisRFCTest {
 
         List<String> values2 = new ArrayList<>();
         TopicSubscriber<String, String> subscriber2 = (topic, message) -> values2.add("{name: " + topic + ", message: " + message + "}");
-        publisher.registerSubscriber(subscriber2);
+        publisher.registerTopicSubscriber(subscriber2);
 
         publisher.publish("topic-1", "Message-1");
         assertEquals("Message-1", map.get("topic-1"));

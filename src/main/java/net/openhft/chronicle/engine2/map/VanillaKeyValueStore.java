@@ -20,6 +20,10 @@ public class VanillaKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> {
     private Asset asset;
 
     public VanillaKeyValueStore(RequestContext context, Asset asset, Supplier<Assetted> assetted) {
+        this(asset);
+    }
+
+    public VanillaKeyValueStore(Asset asset) {
         this.asset = asset;
     }
 
