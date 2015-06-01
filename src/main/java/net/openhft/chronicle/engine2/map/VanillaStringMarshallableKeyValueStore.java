@@ -168,6 +168,11 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
         return kvStore;
     }
 
+    @Override
+    public void close() {
+        kvStore.close();
+    }
+
     class TranslatingSubscriptionKVSCollection implements SubscriptionKVSCollection<String, V> {
         @Override
         public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {

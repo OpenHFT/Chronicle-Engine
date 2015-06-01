@@ -46,7 +46,6 @@ public class VanillaAssetTree implements AssetTree {
 
         root.addClassifier(Asset.class, LAST + " Asset", rc -> VanillaAsset::new);
         root.addClassifier(SubAsset.class, LAST + " SubAsset", rc -> VanillaSubAsset::new);
-        root.addClassifier(SessionProvider.class, LAST + " SessionProvider", rc -> VanillaSessionProvider::new);
 
         root.registerFactory(MapView.class, VanillaMapView::new);
         root.registerFactory(SubscriptionKeyValueStore.class, VanillaSubscriptionKeyValueStore::new);
@@ -56,6 +55,8 @@ public class VanillaAssetTree implements AssetTree {
 
         root.registerFactory(Publisher.class, VanillaReference::new);
         root.registerFactory(Reference.class, VanillaReference::new);
+
+        root.addView(SessionProvider.class, new VanillaSessionProvider(root));
     }
 
     public void viewTypeLayersOn(Class viewType, String description, Class underlyingType) {

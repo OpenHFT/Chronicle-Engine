@@ -9,7 +9,7 @@ import java.util.stream.Stream;
 /**
  * Created by peter on 22/05/15.
  */
-public interface Asset extends Permissoned {
+public interface Asset {
     String name();
 
     Subscription subscription(boolean createIfAbsent);

@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine2.api.map;
 
+import net.openhft.chronicle.core.util.Closeable;
 import net.openhft.chronicle.engine2.api.Assetted;
 import net.openhft.chronicle.engine2.api.View;
 import net.openhft.chronicle.engine2.map.VanillaEntry;
@@ -14,7 +15,7 @@ import java.util.function.Consumer;
  * @param <V>  immutable value type
  */
 
-public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V>>, View {
+public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V>>, View, Closeable {
 
     default void put(K key, V value) {
         getAndPut(key, value);

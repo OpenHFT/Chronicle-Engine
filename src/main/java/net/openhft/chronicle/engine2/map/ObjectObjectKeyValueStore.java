@@ -115,4 +115,9 @@ public class ObjectObjectKeyValueStore<K, MV extends V, V> implements KeyValueSt
     public KeyValueStore underlying() {
         return kvStore;
     }
+
+    @Override
+    public void close() {
+        kvStore.close();
+    }
 }

@@ -73,4 +73,9 @@ public class VanillaKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> {
     public KeyValueStore underlying() {
         return null;
     }
+
+    @Override
+    public void close() {
+
+    }
 }

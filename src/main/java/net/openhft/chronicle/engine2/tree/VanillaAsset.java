@@ -112,7 +112,7 @@ public class VanillaAsset implements Asset, Closeable {
         }
     }
 
-    private <V> void addView(Class<V> viewType, V v) {
+    public <V> void addView(Class<V> viewType, V v) {
         View view = (View) v;
         if (view.keyedView())
             keyedAsset = true;

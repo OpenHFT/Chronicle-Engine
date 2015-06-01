@@ -5,10 +5,10 @@ import net.openhft.chronicle.engine2.api.*;
 /**
  * Created by peter on 01/06/15.
  */
-public class VanillaSessionProvider implements SessionProvider {
+public class VanillaSessionProvider implements SessionProvider, View {
     private ThreadLocal<SessionDetails> sessionDetails = new ThreadLocal<>();
 
-    public VanillaSessionProvider(RequestContext context, Asset asset) {
+    public VanillaSessionProvider(Asset asset) {
 
     }
 

@@ -115,7 +115,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         chronicleMap.close();
     }
 

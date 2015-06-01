@@ -164,6 +164,11 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         return kvStore;
     }
 
+    @Override
+    public void close() {
+        kvStore.close();
+    }
+
     class TranslatingSubscriptionKVSCollection implements SubscriptionKVSCollection<String, String> {
         SubscriptionKVSCollection<String, String> subscriptions = new VanillaSubscriptionKVSCollection<>(VanillaStringStringKeyValueStore.this);
 
