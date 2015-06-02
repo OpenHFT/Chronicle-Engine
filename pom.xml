@@ -28,7 +28,7 @@
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>chronicle-engine</artifactId>
-    <version>1.3.1-alpha-SNAPSHOT</version>
+    <version>1.3.1-alpha</version>
     <name>OpenHFT/Chronicle-Engine</name>
     <description>Chronicle Engine Framework</description>
 
@@ -181,7 +181,7 @@
         <url>scm:git:git@github.com:OpenHFT/Chronicle-Engine.git</url>
         <connection>scm:git:git@github.com:OpenHFT/Chronicle-Engine.git</connection>
         <developerConnection>scm:git:git@github.com:OpenHFT/Chronicle-Engine.git</developerConnection>
-        <tag>master</tag>
+        <tag>chronicle-engine-1.3.1-alpha</tag>
     </scm>
 
 </project>
