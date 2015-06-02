@@ -37,10 +37,9 @@ public interface MapHandler<K, V> extends MapHandlerFunction<K, V> {
     });
 
     static MapHandler instance(CharSequence csp) {
-        if (contains(csp, "file")) {
+        if (contains(csp, "file"))
             return STRING_STRING_MAP_HANDLER;
-
-        } else if (contains(csp, "object"))
+        else if (contains(csp, "object"))
             return BYTE_BYTE_MAP_HANDLER;
         else
             return STRING_CHAR_SEQUENCE_MAP_HANDLER;

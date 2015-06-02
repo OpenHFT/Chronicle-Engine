@@ -44,13 +44,15 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
 
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(ChronicleEngine.class);
 
-    //    private final Map<String, ChronicleQueue> queues = Collections.synchronizedMap(new
-    //        LinkedHashMap<>());
+    //   private final Map<String, ChronicleQueue> queues = Collections.synchronizedMap(new
+    //     LinkedHashMap<>());
     private final Map<String, Map<byte[], byte[]>> underlyingMaps
             = synchronizedMap(new LinkedHashMap<>());
     private final Map<String, ChronicleMap> maps = synchronizedMap(new LinkedHashMap<>());
 
-    private final Map<String, ChronicleMap<CharSequence, CharSequence>> chronStringMap = synchronizedMap(new LinkedHashMap<>());
+    private final Map<String, ChronicleMap<CharSequence, CharSequence>> chronCharSequenceCharSequenceMap = synchronizedMap(new LinkedHashMap<>());
+    private final Map<String, ChronicleMap<Integer, Integer>> chronIntegerIntegerMap = synchronizedMap
+            (new LinkedHashMap<>());
     private final Map<String, ChronicleMap<Integer, CharSequence>> chronIntegerStringMap =
             synchronizedMap(new LinkedHashMap<>());
     private final Map<String, FilePerKeyMap> fpMaps = synchronizedMap(new LinkedHashMap<>());
@@ -96,11 +98,24 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
                     String.class.isAssignableFrom(vClass))
                 throw new UnsupportedOperationException("Please use a Map<CharSequence,CharSequence> rather than a Map<String,String>");
 
-            final ChronicleMap<CharSequence, CharSequence> stringMap = chronStringMap.computeIfAbsent(name,
+            final ChronicleMap<CharSequence, CharSequence> stringMap = chronCharSequenceCharSequenceMap.computeIfAbsent(name,
                     s -> of(CharSequence.class, CharSequence.class)
                             .entries(entries)
                             .averageValueSize(maxValueSize)
                             .averageKeySize(maxKeySize)
+                            .putReturnsNull(putReturnsNull)
+                            .removeReturnsNull(removeReturnsNull).create());
+
+            return (ChronicleMap) stringMap;
+        }
+
+        // if its a string map the we will use the string map directly
+        if (Integer.class.isAssignableFrom(kClass) &&
+                Integer.class.isAssignableFrom(vClass)) {
+
+            final ChronicleMap<Integer, Integer> stringMap = chronIntegerIntegerMap.computeIfAbsent(name,
+                    s -> of(Integer.class, Integer.class)
+                            .entries(entries)
                             .putReturnsNull(putReturnsNull)
                             .removeReturnsNull(removeReturnsNull).create());
 
@@ -192,7 +207,10 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
     public void close() throws IOException {
         fpMaps.values().forEach(FilePerKeyMap::close);
         maps.values().forEach(ChronicleMap::close);
-        chronStringMap.values().forEach(ChronicleMap::close);
+
+        for (Map<String, ChronicleMap> map : new Map[]{chronIntegerStringMap, chronIntegerStringMap}) {
+            map.values().forEach(ChronicleMap::close);
+        }
     }
 
     @Override

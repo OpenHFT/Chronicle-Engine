@@ -45,8 +45,9 @@ import static com.google.common.collect.testing.features.MapFeature.*;
 
 
 @SuppressWarnings("all")
-@Ignore
+
 @RunWith(AllTests.class)
+@Ignore
 public class GuavaEngineTest   {
 
     public static Test suite() {
@@ -67,11 +68,12 @@ public class GuavaEngineTest   {
                 .createTestSuite();
 
         TestSuite tests = new TestSuite();
-        tests.addTest(remoteMapTests);
-        tests.addTest(localMapTests);
+   //     tests.addTest(remoteMapTests);
+       // tests.addTest(localMapTests);
         return tests;
     }
 
+    @Ignore
     static abstract class TestGenerator
             implements TestMapGenerator<CharSequence, CharSequence> {
 

@@ -55,23 +55,16 @@ public class RemoteClientServiceLocator {
                 timeoutMs, byteToWire);
     }
 
-    private <K, V> ChronicleMap<K, V> newMapInstance(@NotNull String name,
-                                                     @NotNull Class<K> kClass,
-                                                     @NotNull Class<V> vClass) throws IOException {
-        return mapInstance(kClass, vClass, name);
-    }
-
     public <I> I getService(Class<I> iClass, String name, Class... args) {
         try {
 
             if (ChronicleMap.class.isAssignableFrom(iClass)) {
                 final Class kClass = args[0];
                 final Class vClass = args[1];
-                return (I) newMapInstance(name, kClass, vClass);
-            }/*    } else if (ChronicleQueue.class.isAssignableFrom(iClass)) {
-                return (I) newQueueInstance(fullName);
+                return (I) mapInstance(kClass, vClass, name);
+
             }
-*/
+
         } catch (IOException e) {
             throw new IORuntimeException(e);
         }
