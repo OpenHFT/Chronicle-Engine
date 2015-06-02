@@ -17,7 +17,6 @@ import java.lang.reflect.Constructor;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static net.openhft.chronicle.engine2.map.Buffers.BUFFERS;
@@ -131,12 +130,12 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     }
 
     @Override
-    public void keysFor(int segment, Consumer<String> kConsumer) {
+    public void keysFor(int segment, SubscriptionConsumer<String> kConsumer) throws InvalidSubscriberException {
         kvStore.keysFor(segment, kConsumer);
     }
 
     @Override
-    public void entriesFor(int segment, Consumer<Entry<String, String>> kvConsumer) {
+    public void entriesFor(int segment, SubscriptionConsumer<Entry<String, String>> kvConsumer) throws InvalidSubscriberException {
         kvStore.entriesFor(segment, e -> kvConsumer.accept(
                 Entry.of(e.key(), e.value().toString())));
     }
@@ -144,8 +143,12 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     @Override
     public Iterator<Map.Entry<String, String>> entrySetIterator() {
         List<Map.Entry<String, String>> entries = new ArrayList<>();
-        for (int i = 0, seg = segments(); i < seg; i++)
-            entriesFor(i, e -> entries.add(new AbstractMap.SimpleEntry<>(e.key(), e.value())));
+        try {
+            for (int i = 0, seg = segments(); i < seg; i++)
+                entriesFor(i, e -> entries.add(new AbstractMap.SimpleEntry<>(e.key(), e.value())));
+        } catch (InvalidSubscriberException e) {
+            throw new AssertionError(e);
+        }
         return entries.iterator();
     }
 

@@ -42,7 +42,7 @@ public class ChassisTest {
     }
 
     @Test
-    public void subscription() {
+    public void subscription() throws InvalidSubscriberException {
         ConcurrentMap<String, String> map = acquireMap("map-name?putReturnsNull=true", String.class, String.class);
 
         map.put("Key-1", "Value-1");
@@ -103,7 +103,7 @@ public class ChassisTest {
     }
 
     @Test
-    public void keySubscription() {
+    public void keySubscription() throws InvalidSubscriberException {
         ConcurrentMap<String, String> map = acquireMap("map-name?putReturnsNull=true", String.class, String.class);
 
         map.put("Key-1", "Value-1");
@@ -144,7 +144,7 @@ public class ChassisTest {
     }
 
     @Test
-    public void topicSubscription() {
+    public void topicSubscription() throws InvalidSubscriberException {
         ConcurrentMap<String, String> map = acquireMap("map-name?putReturnsNull=true", String.class, String.class);
 
         map.put("Key-1", "Value-1");
@@ -205,7 +205,7 @@ public class ChassisTest {
     }
 
     @Test
-    public void entrySubscription() {
+    public void entrySubscription() throws InvalidSubscriberException {
         ConcurrentMap<String, String> map = acquireMap("map-name?putReturnsNull=true", String.class, String.class);
 
         map.put("Key-1", "Value-1");

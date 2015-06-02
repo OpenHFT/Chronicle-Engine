@@ -2,6 +2,7 @@ package net.openhft.chronicle.engine2.map;
 
 import net.openhft.chronicle.engine2.api.Asset;
 import net.openhft.chronicle.engine2.api.Assetted;
+import net.openhft.chronicle.engine2.api.InvalidSubscriberException;
 import net.openhft.chronicle.engine2.api.RequestContext;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.SubscriptionKeyValueStore;
@@ -34,7 +35,11 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     @Override
     public V getAndPut(K key, V value) {
         V oldValue = kvStore.getAndPut(key, value);
-        subscriptions.notifyUpdate(key, oldValue, value);
+        try {
+            subscriptions.notifyUpdate(key, oldValue, value);
+        } catch (InvalidSubscriberException e) {
+            throw new AssertionError(e);
+        }
         publishValueToChild(key, value);
         return oldValue;
     }
@@ -43,7 +48,11 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     public V getAndRemove(K key) {
         V oldValue = kvStore.getAndRemove(key);
         if (oldValue != null) {
-            subscriptions.notifyRemoval(key, oldValue);
+            try {
+                subscriptions.notifyRemoval(key, oldValue);
+            } catch (InvalidSubscriberException e) {
+                throw new AssertionError(e);
+            }
             publishValueToChild(key, null);
         }
         return oldValue;

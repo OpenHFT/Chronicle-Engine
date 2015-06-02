@@ -1,15 +1,12 @@
 package net.openhft.chronicle.engine2.map;
 
-import net.openhft.chronicle.engine2.api.Asset;
-import net.openhft.chronicle.engine2.api.Assetted;
-import net.openhft.chronicle.engine2.api.RequestContext;
+import net.openhft.chronicle.engine2.api.*;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -48,13 +45,13 @@ public class VanillaKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> {
     }
 
     @Override
-    public void keysFor(int segment, Consumer<K> kConsumer) {
-        map.keySet().forEach(kConsumer);
+    public void keysFor(int segment, SubscriptionConsumer<K> kConsumer) throws InvalidSubscriberException {
+        SubscriptionConsumer.notifyEachEvent(map.keySet(), kConsumer);
     }
 
     @Override
-    public void entriesFor(int segment, Consumer<Entry<K, V>> kvConsumer) {
-        map.entrySet().forEach(e -> kvConsumer.accept(new VanillaEntry<>(e.getKey(), e.getValue())));
+    public void entriesFor(int segment, SubscriptionConsumer<Entry<K, V>> kvConsumer) throws InvalidSubscriberException {
+        SubscriptionConsumer.notifyEachEvent(map.entrySet(), e -> kvConsumer.accept(new VanillaEntry<>(e.getKey(), e.getValue())));
     }
 
     @Override
@@ -64,8 +61,12 @@ public class VanillaKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> {
 
     @Override
     public void clear() {
-        for (int i = 0, segs = segments(); i < segs; i++)
-            keysFor(i, k -> map.remove(k));
+        try {
+            for (int i = 0, segs = segments(); i < segs; i++)
+                keysFor(i, (K k) -> map.remove(k));
+        } catch (InvalidSubscriberException e) {
+            throw new AssertionError(e);
+        }
     }
 
     @Override

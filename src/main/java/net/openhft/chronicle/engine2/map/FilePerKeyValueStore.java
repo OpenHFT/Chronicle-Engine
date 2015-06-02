@@ -4,8 +4,11 @@ import com.sun.nio.file.SensitivityWatchEventModifier;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.IORuntimeException;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine2.api.Asset;
+import net.openhft.chronicle.engine2.api.InvalidSubscriberException;
 import net.openhft.chronicle.engine2.api.RequestContext;
+import net.openhft.chronicle.engine2.api.SubscriptionConsumer;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.StringBytesStoreKeyValueStore;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +22,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
@@ -96,21 +98,52 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     }
 
     @Override
-    public void keysFor(int segment, Consumer<String> stringConsumer) {
-        getFiles().map(p -> p.getFileName().toString()).forEach(stringConsumer);
+    public void keysFor(int segment, SubscriptionConsumer<String> stringConsumer) {
+        try {
+            keysFor0(stringConsumer);
+        } catch (InvalidSubscriberException ise) {
+            // ignored
+        }
+    }
+
+    void keysFor0(SubscriptionConsumer<String> stringConsumer) throws InvalidSubscriberException {
+        getFiles().forEach(p -> {
+            try {
+                stringConsumer.accept(p.getFileName().toString());
+            } catch (InvalidSubscriberException e) {
+                throw Jvm.rethrow(e);
+            }
+        });
     }
 
     @Override
-    public void entriesFor(int segment, Consumer<Entry<String, BytesStore>> kvConsumer) {
+    public void entriesFor(int segment, SubscriptionConsumer<Entry<String, BytesStore>> kvConsumer) {
+        try {
+            entriesFor0(kvConsumer);
+        } catch (InvalidSubscriberException ise) {
+            // ignored
+        }
+    }
+
+    void entriesFor0(SubscriptionConsumer<Entry<String, BytesStore>> kvConsumer) throws InvalidSubscriberException {
         getFiles().map(p -> Entry.of(p.getFileName().toString(), getFileContents(p, null)))
-                .forEach(kvConsumer);
+                .forEach(e -> {
+                    try {
+                        kvConsumer.accept(e);
+                    } catch (InvalidSubscriberException ise) {
+                        throw Jvm.rethrow(ise);
+                    }
+                });
     }
 
     @Override
     public Iterator<Map.Entry<String, BytesStore>> entrySetIterator() {
+        return getEntryStream().iterator();
+    }
+
+    public Stream<Map.Entry<String, BytesStore>> getEntryStream() {
         return getFiles()
-                .map(p -> (Map.Entry<String, BytesStore>) new AbstractMap.SimpleEntry<>(p.getFileName().toString(), getFileContents(p, null)))
-                .iterator();
+                .map(p -> (Map.Entry<String, BytesStore>) new AbstractMap.SimpleEntry<>(p.getFileName().toString(), getFileContents(p, null)));
     }
 
     @Override
@@ -175,10 +208,17 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
 
     private Stream<Path> getFiles() {
         try {
-            return Files.walk(dirPath).filter(p -> !Files.isDirectory(p));
+            return Files
+                    .walk(dirPath)
+                    .filter(p -> !Files.isDirectory(p))
+                    .filter(this::isVisible);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw Jvm.rethrow(e);
         }
+    }
+
+    boolean isVisible(Path p) {
+        return !p.getFileName().startsWith(".");
     }
 
     BytesStore getFileContents(Path path, Bytes using) {

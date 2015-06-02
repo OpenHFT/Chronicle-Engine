@@ -1,8 +1,11 @@
 package net.openhft.chronicle.engine2.map;
 
 import net.openhft.chronicle.bytes.IORuntimeException;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine2.api.Asset;
+import net.openhft.chronicle.engine2.api.InvalidSubscriberException;
 import net.openhft.chronicle.engine2.api.RequestContext;
+import net.openhft.chronicle.engine2.api.SubscriptionConsumer;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.SubscriptionKeyValueStore;
 import net.openhft.chronicle.hash.Value;
@@ -14,7 +17,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.function.Consumer;
+
+import static net.openhft.chronicle.engine2.api.SubscriptionConsumer.notifyEachEvent;
 
 /**
  * Created by daniel on 27/05/15.
@@ -83,15 +87,21 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
     }
 
     @Override
-    public void keysFor(int segment, Consumer<K> kConsumer) {
+    public void keysFor(int segment, SubscriptionConsumer<K> kConsumer) throws InvalidSubscriberException {
         //Ignore the segments and return keysFor the whole map
-        chronicleMap.keySet().forEach(kConsumer);
+        notifyEachEvent(chronicleMap.keySet(), kConsumer);
     }
 
     @Override
-    public void entriesFor(int segment, Consumer<Entry<K, V>> kvConsumer) {
+    public void entriesFor(int segment, SubscriptionConsumer<Entry<K, V>> kvConsumer) throws InvalidSubscriberException {
         //Ignore the segments and return entriesFor the whole map
-        chronicleMap.entrySet().stream().map(e ->Entry.of(e.getKey(), e.getValue())).forEach(kvConsumer);
+        chronicleMap.entrySet().stream().map(e -> Entry.of(e.getKey(), e.getValue())).forEach(e -> {
+            try {
+                kvConsumer.accept(e);
+            } catch (InvalidSubscriberException t) {
+                throw Jvm.rethrow(t);
+            }
+        });
     }
 
     @Override
@@ -123,7 +133,12 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         @Override
         public Void remove(@NotNull MapEntry<K, V> entry) {
             Void v = MapEntryOperations.super.remove(entry);
-            subscriptions.notifyRemoval(entry.key().get(), entry.value().get());
+            try {
+                subscriptions.notifyRemoval(entry.key().get(), entry.value().get());
+            } catch (InvalidSubscriberException e) {
+                // todo
+                throw new AssertionError(e);
+            }
             return v;
         }
         @Override
@@ -131,14 +146,24 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
             V oValue = entry.value().get();
             V nValue = newValue.get();
             Void v = MapEntryOperations.super.replaceValue(entry, newValue);
-            subscriptions.notifyUpdate(entry.key().get(), oValue, nValue);
+            try {
+                subscriptions.notifyUpdate(entry.key().get(), oValue, nValue);
+            } catch (InvalidSubscriberException e) {
+                // todo
+                throw new AssertionError(e);
+            }
             return v;
         }
 
         @Override
         public Void insert(@NotNull MapAbsentEntry<K, V> absentEntry, Value<V, ?> value) {
             Void v = MapEntryOperations.super.insert(absentEntry, value);
-            subscriptions.notifyUpdate(absentEntry.absentKey().get(), null, value.get());
+            try {
+                subscriptions.notifyUpdate(absentEntry.absentKey().get(), null, value.get());
+            } catch (InvalidSubscriberException e) {
+                // todo
+                throw new AssertionError(e);
+            }
             return v;
         }
     }

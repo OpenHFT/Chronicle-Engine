@@ -2,12 +2,13 @@ package net.openhft.chronicle.engine2.api.map;
 
 import net.openhft.chronicle.core.util.Closeable;
 import net.openhft.chronicle.engine2.api.Assetted;
+import net.openhft.chronicle.engine2.api.InvalidSubscriberException;
+import net.openhft.chronicle.engine2.api.SubscriptionConsumer;
 import net.openhft.chronicle.engine2.api.View;
 import net.openhft.chronicle.engine2.map.VanillaEntry;
 
 import java.util.Iterator;
 import java.util.Map;
-import java.util.function.Consumer;
 
 /**
  * @param <K>  key type
@@ -53,9 +54,9 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
         return 0;
     }
 
-    void keysFor(int segment, Consumer<K> kConsumer);
+    void keysFor(int segment, SubscriptionConsumer<K> kConsumer) throws InvalidSubscriberException;
 
-    void entriesFor(int segment, Consumer<Entry<K, V>> kvConsumer);
+    void entriesFor(int segment, SubscriptionConsumer<Entry<K, V>> kvConsumer) throws InvalidSubscriberException;
 
     Iterator<Map.Entry<K, V>> entrySetIterator();
 

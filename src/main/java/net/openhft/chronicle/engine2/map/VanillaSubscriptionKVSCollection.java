@@ -1,14 +1,13 @@
 package net.openhft.chronicle.engine2.map;
 
-import net.openhft.chronicle.engine2.api.RequestContext;
-import net.openhft.chronicle.engine2.api.Subscriber;
-import net.openhft.chronicle.engine2.api.Subscription;
-import net.openhft.chronicle.engine2.api.TopicSubscriber;
+import net.openhft.chronicle.engine2.api.*;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.MapEvent;
 
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+
+import static net.openhft.chronicle.engine2.api.SubscriptionConsumer.notifyEachSubscriber;
 
 /**
  * Created by peter on 22/05/15.
@@ -35,23 +34,23 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements SubscriptionK
 
     private void notifyUpdate0(K key, V oldValue, V value) {
         if (!topicSubscribers.isEmpty()) {
-            topicSubscribers.forEach(ts -> ts.onMessage(key, value));
+            notifyEachSubscriber(topicSubscribers, ts -> ts.onMessage(key, value));
         }
         if (!subscribers.isEmpty()) {
             if (oldValue == null) {
                 InsertedEvent<K, V> inserted = InsertedEvent.of(key, value);
-                subscribers.forEach(s -> s.onMessage(inserted));
+                notifyEachSubscriber(subscribers, s -> s.onMessage(inserted));
 
             } else {
                 UpdatedEvent<K, V> updated = UpdatedEvent.of(key, oldValue, value);
-                subscribers.forEach(s -> s.onMessage(updated));
+                notifyEachSubscriber(subscribers, s -> s.onMessage(updated));
             }
         }
         if (!keySubscribers.isEmpty()) {
-            keySubscribers.forEach(s -> s.onMessage(key));
+            notifyEachSubscriber(keySubscribers, s -> s.onMessage(key));
         }
         if (!downstream.isEmpty()) {
-            downstream.forEach(d -> d.notifyUpdate(key, oldValue, value));
+            notifyEachSubscriber(downstream, d -> d.notifyUpdate(key, oldValue, value));
         }
     }
 
@@ -63,17 +62,17 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements SubscriptionK
 
     private void notifyRemoval0(K key, V oldValue) {
         if (!topicSubscribers.isEmpty()) {
-            topicSubscribers.forEach(ts -> ts.onMessage(key, null));
+            notifyEachSubscriber(topicSubscribers, ts -> ts.onMessage(key, null));
         }
         if (!subscribers.isEmpty()) {
             RemovedEvent<K, V> removed = RemovedEvent.of(key, oldValue);
-            subscribers.forEach(s -> s.onMessage(removed));
+            notifyEachSubscriber(subscribers, s -> s.onMessage(removed));
         }
         if (!keySubscribers.isEmpty()) {
-            keySubscribers.forEach(s -> s.onMessage(key));
+            notifyEachSubscriber(keySubscribers, s -> s.onMessage(key));
         }
         if (!downstream.isEmpty()) {
-            downstream.forEach(d -> d.notifyRemoval(key, oldValue));
+            notifyEachSubscriber(downstream, d -> d.notifyRemoval(key, oldValue));
         }
     }
 
@@ -89,14 +88,22 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements SubscriptionK
         if (eClass == KeyValueStore.Entry.class || eClass == MapEvent.class) {
             subscribers.add((Subscriber) subscriber);
             if (bootstrap != Boolean.FALSE) {
-                for (int i = 0; i < kvStore.segments(); i++)
-                    kvStore.entriesFor(i, e -> subscriber.onMessage((E) InsertedEvent.of(e.key(), e.value())));
+                try {
+                    for (int i = 0; i < kvStore.segments(); i++)
+                        kvStore.entriesFor(i, e -> subscriber.onMessage((E) InsertedEvent.of(e.key(), e.value())));
+                } catch (InvalidSubscriberException e) {
+                    subscribers.remove(subscriber);
+                }
             }
         } else {
             keySubscribers.add((Subscriber<K>) subscriber);
             if (bootstrap != Boolean.FALSE) {
-                for (int i = 0; i < kvStore.segments(); i++)
-                    kvStore.keysFor(i, k -> subscriber.onMessage((E) k));
+                try {
+                    for (int i = 0; i < kvStore.segments(); i++)
+                        kvStore.keysFor(i, k -> subscriber.onMessage((E) k));
+                } catch (InvalidSubscriberException e) {
+                    subscribers.remove(subscriber);
+                }
             }
         }
         hasSubscribers = true;
@@ -107,8 +114,12 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements SubscriptionK
         Boolean bootstrap = rc.bootstrap();
         topicSubscribers.add((TopicSubscriber<K, V>) subscriber);
         if (bootstrap != Boolean.FALSE) {
-            for (int i = 0; i < kvStore.segments(); i++)
-                kvStore.entriesFor(i, (KeyValueStore.Entry<K, V> e) -> subscriber.onMessage((T) e.key(), (E) e.value()));
+            try {
+                for (int i = 0; i < kvStore.segments(); i++)
+                    kvStore.entriesFor(i, e -> subscriber.onMessage((T) e.key(), (E) e.value()));
+            } catch (InvalidSubscriberException dontAdd) {
+                topicSubscribers.remove(subscriber);
+            }
         }
         hasSubscribers = true;
     }
