@@ -1,9 +1,6 @@
 package net.openhft.chronicle.engine2.pubsub;
 
-import net.openhft.chronicle.engine2.api.RequestContext;
-import net.openhft.chronicle.engine2.api.Subscriber;
-import net.openhft.chronicle.engine2.api.Subscription;
-import net.openhft.chronicle.engine2.api.TopicSubscriber;
+import net.openhft.chronicle.engine2.api.*;
 
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -29,7 +26,11 @@ public class SimpleSubscription<E> implements Subscription {
     public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {
         subscribers.add((Subscriber) subscriber);
         if (rc.bootstrap() != Boolean.FALSE)
-            subscriber.onMessage((E) currentValue.get());
+            try {
+                subscriber.onMessage((E) currentValue.get());
+            } catch (InvalidSubscriberException e) {
+                subscribers.remove(subscriber);
+            }
     }
 
     @Override
@@ -58,7 +59,7 @@ public class SimpleSubscription<E> implements Subscription {
     }
 
     public void notifyMessage(E e) {
-        subscribers.forEach(s -> s.onMessage(e));
+        SubscriptionConsumer.notifyEachSubscriber(subscribers, s -> s.onMessage(e));
     }
 
     @Override

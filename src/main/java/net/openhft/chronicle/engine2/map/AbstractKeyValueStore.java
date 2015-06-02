@@ -1,11 +1,12 @@
 package net.openhft.chronicle.engine2.map;
 
 import net.openhft.chronicle.engine2.api.Asset;
+import net.openhft.chronicle.engine2.api.InvalidSubscriberException;
+import net.openhft.chronicle.engine2.api.SubscriptionConsumer;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 
 import java.util.Iterator;
 import java.util.Map;
-import java.util.function.Consumer;
 
 /**
  * Created by peter on 22/05/15.
@@ -49,12 +50,12 @@ public class AbstractKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> 
     }
 
     @Override
-    public void keysFor(int segment, Consumer<K> kConsumer) {
+    public void keysFor(int segment, SubscriptionConsumer<K> kConsumer) throws InvalidSubscriberException {
         kvStore.keysFor(segment, kConsumer);
     }
 
     @Override
-    public void entriesFor(int segment, Consumer<Entry<K, V>> kvConsumer) {
+    public void entriesFor(int segment, SubscriptionConsumer<Entry<K, V>> kvConsumer) throws InvalidSubscriberException {
         kvStore.entriesFor(segment, kvConsumer);
     }
 

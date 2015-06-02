@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 import static net.openhft.chronicle.engine2.api.RequestContext.requestContext;
 
@@ -21,10 +20,6 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     private final String name;
     private final SimpleSubscription<E> subscription;
     private Reference<E> reference;
-
-    VanillaSubAsset(RequestContext context, Asset asset) {
-        this(asset, context.name());
-    }
 
     VanillaSubAsset(Asset parent, String name) {
         this.parent = parent;
@@ -115,13 +110,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
 
     @NotNull
     @Override
-    public Stream<Asset> children() {
-        return Stream.of();
-    }
-
-    @NotNull
-    @Override
-    public <A> Asset acquireChild(Class<A> assetClass, RequestContext context, String name) throws AssetNotFoundException {
+    public Asset acquireAsset(String name) throws AssetNotFoundException {
         throw new UnsupportedOperationException("todo");
     }
 

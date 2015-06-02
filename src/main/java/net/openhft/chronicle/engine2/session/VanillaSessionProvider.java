@@ -14,10 +14,7 @@ public class VanillaSessionProvider implements SessionProvider, View {
 
     @Override
     public SessionDetails get() {
-        SessionDetails sessionDetails = this.sessionDetails.get();
-        if (sessionDetails == null)
-            this.sessionDetails.set(sessionDetails = new VanillaSessionDetails());
-        return sessionDetails;
+        return this.sessionDetails.get();
     }
 
     @Override

@@ -14,7 +14,6 @@ import net.openhft.chronicle.wire.Wire;
 import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -135,12 +134,12 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     }
 
     @Override
-    public void keysFor(int segment, Consumer<String> kConsumer) {
+    public void keysFor(int segment, SubscriptionConsumer<String> kConsumer) throws InvalidSubscriberException {
         kvStore.keysFor(segment, kConsumer);
     }
 
     @Override
-    public void entriesFor(int segment, Consumer<Entry<String, V>> kvConsumer) {
+    public void entriesFor(int segment, SubscriptionConsumer<Entry<String, V>> kvConsumer) throws InvalidSubscriberException {
         kvStore.entriesFor(segment, e -> kvConsumer.accept(
                 Entry.of(e.key(), bytesToValue.apply(e.value(), null))));
     }
@@ -148,8 +147,12 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     @Override
     public Iterator<Map.Entry<String, V>> entrySetIterator() {
         List<Map.Entry<String, V>> entries = new ArrayList<>();
-        for (int i = 0, seg = segments(); i < seg; i++)
-            entriesFor(i, e -> entries.add(new AbstractMap.SimpleEntry<>(e.key(), e.value())));
+        try {
+            for (int i = 0, seg = segments(); i < seg; i++)
+                entriesFor(i, e -> entries.add(new AbstractMap.SimpleEntry<>(e.key(), e.value())));
+        } catch (InvalidSubscriberException e) {
+            throw new AssertionError(e);
+        }
         return entries.iterator();
     }
 

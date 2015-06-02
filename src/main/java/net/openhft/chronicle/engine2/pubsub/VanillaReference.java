@@ -12,10 +12,14 @@ public class VanillaReference<E> implements Reference<E> {
     private final Class<E> eClass;
     private final MapView<String, E, E> underlyingMap;
 
-    public VanillaReference(RequestContext context, Asset asset, Supplier<Assetted> assetted) {
-        this.name = context.name();
-        this.eClass = context.type();
-        this.underlyingMap = (MapView<String, E, E>) assetted.get();
+    public VanillaReference(RequestContext context, Asset asset, Supplier<Assetted> assettedSupplier) {
+        this(context.name(), context.type(), (MapView<String, E, E>) assettedSupplier.get());
+    }
+
+    public VanillaReference(String name, Class type, MapView<String, E, E> mapView) {
+        this.name = name;
+        this.eClass = type;
+        this.underlyingMap = mapView;
     }
 
     @Override

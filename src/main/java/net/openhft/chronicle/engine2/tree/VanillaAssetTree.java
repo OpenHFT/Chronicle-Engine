@@ -13,62 +13,69 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-import static net.openhft.chronicle.engine2.api.RequestContext.requestContext;
-
 /**
  * Created by peter on 22/05/15.
  */
 public class VanillaAssetTree implements AssetTree {
     private static final String LAST = "{last}";
-    final VanillaAsset root = new VanillaAsset(requestContext(""), null);
+    final VanillaAsset root = new VanillaAsset(null, "");
 
     public VanillaAssetTree() {
+
+        root.viewTypeLayersOn(TopicPublisher.class, LAST + " topic publisher", MapView.class);
+        root.registerFactory(TopicPublisher.class, VanillaTopicPublisher::new);
+
+        root.viewTypeLayersOn(Reference.class, LAST + "reference", MapView.class);
+        root.registerFactory(Reference.class, VanillaReference::new);
+
+        root.viewTypeLayersOn(Publisher.class, LAST + "publisher", MapView.class);
+        root.registerFactory(Publisher.class, VanillaReference::new);
+
+        root.viewTypeLayersOn(EntrySetView.class, LAST + " entrySet", MapView.class);
+        root.registerFactory(EntrySetView.class, VanillaEntrySetView::new);
+
+        root.viewTypeLayersOn(ValuesCollection.class, LAST + " values", MapView.class);
+
+        root.viewTypeLayersOn(MapEventSubscriber.class, LAST + " MapEvent subscriber", Subscription.class);
+// todo CE-54      root.registerFactory(MapEventSubscriber.class, VanillaMapEventSubscriber::new);
+
+        root.viewTypeLayersOn(KeySubscriber.class, LAST + " keySet subscriber", Subscription.class);
+// todo CE-54      root.registerFactory(KeySubscriber.class, VanillaKeySubscriber::new);
+
+        root.viewTypeLayersOn(EntrySetSubscriber.class, LAST + " entrySet subscriber", Subscription.class);
+// todo  CE-54     root.registerFactory(EntrySetView.class, VanillaEntrySetSubscriber::new);
+
+        root.viewTypeLayersOn(KeySetView.class, LAST + " keySet", MapView.class);
+// todo  CE-54     root.registerFactory(KeySetView.class, VanillaKeySetView::new);
+
+        root.viewTypeLayersOn(TopicSubscriber.class, LAST + " key,value topic subscriber", Subscription.class);
+// todo   CE-54    root.registerFactory(TopicSubscriber.class, VanillaTopicSubscriber::new);
+
         root.addClassifier(Subscriber.class, LAST + " generic subscriber", rc ->
                         rc.elementType() == MapEvent.class ? (rc2, asset) -> asset.acquireFactory(MapEventSubscriber.class).create(rc2, asset, () -> (Assetted) asset.acquireView(Subscription.class, rc2))
                                 : rc.elementType() == Map.Entry.class ? (rc2, asset) -> asset.acquireFactory(EntrySetSubscriber.class).create(rc2, asset, () -> (Assetted) asset.acquireView(Subscription.class, rc2))
                                 : (rc2, asset) -> asset.acquireFactory(KeySubscriber.class).create(rc2, asset, () -> (Assetted) asset.acquireView(Subscription.class, rc2))
         );
-        viewTypeLayersOn(MapEventSubscriber.class, LAST + " MapEvent subscriber", Subscription.class);
-        viewTypeLayersOn(KeySubscriber.class, LAST + " keySet subscriber", Subscription.class);
-        viewTypeLayersOn(EntrySetSubscriber.class, LAST + " entrySet subscriber", Subscription.class);
-        viewTypeLayersOn(TopicSubscriber.class, LAST + " key,value topic subscriber", Subscription.class);
 
-        viewTypeLayersOn(KeySetView.class, LAST + " keySet", MapView.class);
-        viewTypeLayersOn(EntrySetView.class, LAST + " entrySet", MapView.class);
-        viewTypeLayersOn(ValuesCollection.class, LAST + " values", MapView.class);
-
-        viewTypeLayersOn(Publisher.class, LAST + "publisher", SubscriptionKeyValueStore.class);
-        viewTypeLayersOn(TopicPublisher.class, LAST + " topic publisher", SubscriptionKeyValueStore.class);
-        viewTypeLayersOn(StringStringKeyValueStore.class, LAST + " string -> string", SubscriptionKeyValueStore.class);
-        viewTypeLayersOn(StringMarshallableKeyValueStore.class, LAST + " string -> marshallable", SubscriptionKeyValueStore.class);
-        viewTypeLayersOn(SubscriptionKeyValueStore.class, LAST + " string -> marshallable", KeyValueStore.class);
-        viewTypeLayersOn(MapView.class, LAST + " string key maps", SubscriptionKeyValueStore.class);
-
-        root.addClassifier(Asset.class, LAST + " Asset", rc -> VanillaAsset::new);
-        root.addClassifier(SubAsset.class, LAST + " SubAsset", rc -> VanillaSubAsset::new);
-
+        root.viewTypeLayersOn(MapView.class, LAST + " string key maps", AuthenticatedKeyValueStore.class);
         root.registerFactory(MapView.class, VanillaMapView::new);
-        root.registerFactory(SubscriptionKeyValueStore.class, VanillaSubscriptionKeyValueStore::new);
-        root.registerFactory(EntrySetView.class, VanillaEntrySetView::new);
-        root.registerFactory(KeyValueStore.class, VanillaKeyValueStore::new);
-        root.registerFactory(TopicPublisher.class, VanillaTopicPublisher::new);
 
-        root.registerFactory(Publisher.class, VanillaReference::new);
-        root.registerFactory(Reference.class, VanillaReference::new);
+        root.viewTypeLayersOn(AuthenticatedKeyValueStore.class, LAST + " string -> marshallable", KeyValueStore.class);
+        root.registerFactory(AuthenticatedKeyValueStore.class, VanillaSubscriptionKeyValueStore::new);
+
+        root.viewTypeLayersOn(SubscriptionKeyValueStore.class, LAST + " sub -> foundation", KeyValueStore.class);
+        root.registerFactory(SubscriptionKeyValueStore.class, VanillaSubscriptionKeyValueStore::new);
+
+        root.registerFactory(KeyValueStore.class, VanillaKeyValueStore::new);
 
         root.addView(SessionProvider.class, new VanillaSessionProvider(root));
-    }
-
-    public void viewTypeLayersOn(Class viewType, String description, Class underlyingType) {
-        root.addClassifier(viewType, description, rc -> (rc2, asset) ->
-                (View) asset.acquireFactory(viewType).create(rc2, asset, () -> (Assetted) asset.acquireView(underlyingType, rc2)));
     }
 
     @NotNull
     @Override
     public <A> Asset acquireAsset(Class<A> assetClass, RequestContext context) throws AssetNotFoundException {
         String name = context.fullName();
-        return name.isEmpty() || name.equals("/") ? root : root.acquireChild(assetClass, context, name);
+        return name.isEmpty() || name.equals("/") ? root : root.acquireAsset(name);
     }
 
     @Nullable
@@ -78,12 +85,11 @@ public class VanillaAssetTree implements AssetTree {
     }
 
     @Override
-    public Asset add(String fullName, Assetted resource) {
-        return root.add(fullName, resource);
-    }
-
-    @Override
     public void close() {
         root.close();
+    }
+
+    public void viewTypeLayersOn(Class viewType, String description, Class underlyingType) {
+        root.viewTypeLayersOn(viewType, description, underlyingType);
     }
 }

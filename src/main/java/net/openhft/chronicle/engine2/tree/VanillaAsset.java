@@ -6,6 +6,7 @@ import net.openhft.chronicle.engine2.api.map.MapView;
 import net.openhft.chronicle.engine2.api.map.StringMarshallableKeyValueStore;
 import net.openhft.chronicle.engine2.api.map.StringStringKeyValueStore;
 import net.openhft.chronicle.engine2.api.map.SubscriptionKeyValueStore;
+import net.openhft.chronicle.engine2.map.AuthenticatedKeyValueStore;
 import net.openhft.chronicle.engine2.map.VanillaStringMarshallableKeyValueStore;
 import net.openhft.chronicle.engine2.map.VanillaStringStringKeyValueStore;
 import net.openhft.chronicle.wire.Marshallable;
@@ -17,7 +18,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 import static net.openhft.chronicle.engine2.api.RequestContext.requestContext;
 
@@ -34,9 +34,9 @@ public class VanillaAsset implements Asset, Closeable {
     private final Map<Class, ViewFactory> factoryMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
     private Boolean keyedAsset;
 
-    public VanillaAsset(RequestContext context, Asset asset) {
+    public VanillaAsset(Asset asset, String name) {
         this.parent = asset;
-        this.name = context.name();
+        this.name = name;
 
         if ("".equals(name)) {
             assert parent == null;
@@ -114,8 +114,10 @@ public class VanillaAsset implements Asset, Closeable {
 
     public <V> void addView(Class<V> viewType, V v) {
         View view = (View) v;
-        if (view.keyedView())
+        if (view.keyedView()) {
+            assert children.isEmpty();
             keyedAsset = true;
+        }
         viewMap.put(viewType, view);
         if (v instanceof SubscriptionKeyValueStore)
             topSubscription(((SubscriptionKeyValueStore) v));
@@ -185,32 +187,26 @@ public class VanillaAsset implements Asset, Closeable {
         return parent;
     }
 
-    @NotNull
-    @Override
-    public Stream<Asset> children() {
-        return children.values().stream();
-    }
-
     final ConcurrentMap<String, Asset> children = new ConcurrentSkipListMap<>();
 
     @NotNull
     @Override
-    public <A> Asset acquireChild(Class<A> assetClass, RequestContext context, String name) throws AssetNotFoundException {
+    public Asset acquireAsset(String name) throws AssetNotFoundException {
         if (keyedAsset != Boolean.TRUE) {
             int pos = name.indexOf("/");
             if (pos >= 0) {
                 String name1 = name.substring(0, pos);
                 String name2 = name.substring(pos + 1);
-                return getAssetOrANFE(assetClass, context, name1).acquireChild(assetClass, context, name2);
+                return getAssetOrANFE(name1).acquireAsset(name2);
             }
         }
-        return getAssetOrANFE(assetClass, context, name);
+        return getAssetOrANFE(name);
     }
 
-    private Asset getAssetOrANFE(Class assetClass, RequestContext context, String name) throws AssetNotFoundException {
+    private Asset getAssetOrANFE(String name) throws AssetNotFoundException {
         Asset asset = children.get(name);
         if (asset == null) {
-            asset = createAsset(assetClass, context, name);
+            asset = createAsset(name);
             if (asset == null)
                 throw new AssetNotFoundException(name);
         }
@@ -218,12 +214,10 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Nullable
-    protected Asset createAsset(Class assetClass, RequestContext context, String name) {
-        if (assetClass == null)
-            return null;
+    protected Asset createAsset(String name) {
         return children.computeIfAbsent(name, keyedAsset != Boolean.TRUE
-                ? n -> new VanillaAsset(new RequestContext(context.fullName(), name), this)
-                : n -> new VanillaSubAsset(new RequestContext(context.fullName(), name), this));
+                ? n -> new VanillaAsset(this, name)
+                : n -> new VanillaSubAsset(this, name));
     }
 
     @Override
@@ -231,34 +225,9 @@ public class VanillaAsset implements Asset, Closeable {
         return children.get(name);
     }
 
-    @Nullable
-    private Asset getChild0(String name) {
-        return children.get(name);
-    }
-
     @Override
     public void removeChild(String name) {
         throw new UnsupportedOperationException("todo");
-    }
-
-    public Asset add(String name, Assetted resource) {
-        int pos = name.indexOf("/");
-        if (pos >= 0) {
-            String name1 = name.substring(0, pos);
-            String name2 = name.substring(pos + 1);
-            getAssetOrANFE(Void.class, null, name1).add(name2, resource);
-        }
-        if (children.containsKey(name))
-            throw new IllegalStateException(name + " already exists");
-        Asset asset;
-        if (resource instanceof Asset) {
-            asset = (Asset) resource;
-        } else {
-            ViewFactory<Asset> factory = acquireFactory(Asset.class);
-            asset = factory.create(requestContext().name(name), this, () -> resource);
-        }
-        children.put(name, asset);
-        return asset;
     }
 
     @Override
@@ -272,13 +241,16 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     public void enableTranslatingValuesToBytesStore() {
-        addClassifier(MapView.class, "string key maps", rc ->
+        addClassifier(MapView.class, "{Marshalling} string key maps", rc ->
                         rc.keyType() == String.class
                                 ? rc.valueType() == String.class ? (rc2, asset) -> asset.acquireFactory(MapView.class).create(rc2, asset, () -> asset.acquireView(StringStringKeyValueStore.class, rc2))
                                 : Marshallable.class.isAssignableFrom(rc.valueType()) ? (rc2, asset) -> asset.acquireFactory(MapView.class).create(rc2, asset, () -> asset.acquireView(StringMarshallableKeyValueStore.class, rc2))
                                 : null
                                 : null
         );
+        viewTypeLayersOn(StringStringKeyValueStore.class, "{Marshalling} string -> string", AuthenticatedKeyValueStore.class);
+        viewTypeLayersOn(StringMarshallableKeyValueStore.class, "{Marshalling} string -> marshallable", AuthenticatedKeyValueStore.class);
+
         registerFactory(StringMarshallableKeyValueStore.class, VanillaStringMarshallableKeyValueStore::new);
         registerFactory(StringStringKeyValueStore.class, VanillaStringStringKeyValueStore::new);
     }
