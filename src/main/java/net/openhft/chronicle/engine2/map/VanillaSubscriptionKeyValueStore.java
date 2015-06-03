@@ -36,7 +36,9 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     public V getAndPut(K key, V value) {
         V oldValue = kvStore.getAndPut(key, value);
         try {
-            subscriptions.notifyUpdate(key, oldValue, value);
+            subscriptions.notifyEvent(oldValue == null
+                    ? InsertedEvent.of(key, value, 0, System.currentTimeMillis())
+                    : UpdatedEvent.of(key, oldValue, value, 0, System.currentTimeMillis()));
         } catch (InvalidSubscriberException e) {
             throw new AssertionError(e);
         }
@@ -49,7 +51,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
         V oldValue = kvStore.getAndRemove(key);
         if (oldValue != null) {
             try {
-                subscriptions.notifyRemoval(key, oldValue);
+                subscriptions.notifyEvent(RemovedEvent.of(key, oldValue, 0, System.currentTimeMillis()));
             } catch (InvalidSubscriberException e) {
                 throw new AssertionError(e);
             }

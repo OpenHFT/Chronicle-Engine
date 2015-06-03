@@ -4,6 +4,7 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.engine2.api.*;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
+import net.openhft.chronicle.engine2.api.map.MapReplicationEvent;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -81,11 +82,10 @@ public class ObjectObjectKeyValueStore<K, MV extends V, V> implements KeyValueSt
     }
 
     @Override
-    public void entriesFor(int segment, SubscriptionConsumer<Entry<K, V>> kvConsumer) throws InvalidSubscriberException {
-        kvStore.entriesFor(segment, e -> kvConsumer.accept(
-                Entry.of(
-                        bytesToKey.apply(e.key(), null),
-                        bytesToValue.apply(e.value(), null))));
+    public void entriesFor(int segment, SubscriptionConsumer<MapReplicationEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
+        kvStore.entriesFor(segment, e -> kvConsumer.accept(EntryEvent.of(
+                bytesToKey.apply(e.key(), null),
+                bytesToValue.apply(e.value(), null), 0, System.currentTimeMillis())));
     }
 
     @Override

@@ -548,6 +548,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
      * putIfAbsent(null, x) throws NPE
      */
     @Test(timeout = 50000)
+    @Ignore
     public void testPutIfAbsent1_NullPointerException() throws IOException {
         try (ChronicleMap c = newIntString()) {
             writeMessage = "put(null, \"whatever\") will throw a NullPointerException";

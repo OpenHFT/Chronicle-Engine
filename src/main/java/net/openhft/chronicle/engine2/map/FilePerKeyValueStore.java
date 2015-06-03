@@ -10,6 +10,7 @@ import net.openhft.chronicle.engine2.api.InvalidSubscriberException;
 import net.openhft.chronicle.engine2.api.RequestContext;
 import net.openhft.chronicle.engine2.api.SubscriptionConsumer;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
+import net.openhft.chronicle.engine2.api.map.MapReplicationEvent;
 import net.openhft.chronicle.engine2.api.map.StringBytesStoreKeyValueStore;
 import org.jetbrains.annotations.NotNull;
 
@@ -117,7 +118,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     }
 
     @Override
-    public void entriesFor(int segment, SubscriptionConsumer<Entry<String, BytesStore>> kvConsumer) {
+    public void entriesFor(int segment, SubscriptionConsumer<MapReplicationEvent<String, BytesStore>> kvConsumer) throws InvalidSubscriberException {
         try {
             entriesFor0(kvConsumer);
         } catch (InvalidSubscriberException ise) {
@@ -125,8 +126,8 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         }
     }
 
-    void entriesFor0(SubscriptionConsumer<Entry<String, BytesStore>> kvConsumer) throws InvalidSubscriberException {
-        getFiles().map(p -> Entry.of(p.getFileName().toString(), getFileContents(p, null)))
+    void entriesFor0(SubscriptionConsumer<MapReplicationEvent<String, BytesStore>> kvConsumer) throws InvalidSubscriberException {
+        getFiles().map(p -> EntryEvent.of(p.getFileName().toString(), getFileContents(p, null), 0, p.toFile().lastModified()))
                 .forEach(e -> {
                     try {
                         kvConsumer.accept(e);
@@ -336,7 +337,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         }
 
         @NotNull
-        private WatchKey processKey() throws InterruptedException, IOException {
+        private WatchKey processKey() throws InterruptedException, IOException, InvalidSubscriberException {
             WatchKey key = watcher.take();
             for (WatchEvent<?> event : key.pollEvents()) {
                 WatchEvent.Kind<?> kind = event.kind();
@@ -358,24 +359,28 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
 
                 if (kind == StandardWatchEventKinds.ENTRY_CREATE || kind == StandardWatchEventKinds.ENTRY_MODIFY) {
                     Path p = dirPath.resolve(fileName);
-                    Bytes mapVal = null;
                     try {
-                        mapVal = getFileContentsFromDisk(p, null);
+                        Bytes mapVal = getFileContentsFromDisk(p, null);
+
+                        FileRecord<BytesStore> prev = mapVal == null ? lastFileRecordMap.get(p.toFile())
+                                : lastFileRecordMap.put(p.toFile(), new FileRecord<>(p.toFile().lastModified(), mapVal.copy()));
+                        if (prev == null) {
+                            subscriptions.notifyEvent(InsertedEvent.of(p.toFile().getName(), mapVal, 0, p.toFile().lastModified()));
+                        } else {
+                            subscriptions.notifyEvent(UpdatedEvent.of(p.toFile().getName(), prev.contents.bytes(), mapVal, 0, p.toFile().lastModified()));
+                            prev.contents.release();
+                        }
                     } catch (FileNotFoundException ignored) {
                     }
-                    FileRecord<BytesStore> prev = mapVal == null ? lastFileRecordMap.get(p.toFile())
-                            : lastFileRecordMap.put(p.toFile(), new FileRecord<>(p.toFile().lastModified(), mapVal.copy()));
-                    subscriptions.notifyUpdate(p.toFile().getName(), prev == null ? null : prev.contents.bytes(), mapVal);
-                    if (prev != null)
-                        prev.contents.release();
 
                 } else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
                     Path p = dirPath.resolve(fileName);
 
                     FileRecord<BytesStore> prev = lastFileRecordMap.remove(p.toFile());
                     BytesStore lastVal = prev == null ? null : prev.contents;
-                    subscriptions.notifyRemoval(p.toFile().getName(), lastVal);
-
+                    subscriptions.notifyEvent(RemovedEvent.of(p.toFile().getName(), lastVal, 0, p.toFile().lastModified()));
+                    if (prev != null)
+                        prev.contents.release();
                 }
             }
             return key;

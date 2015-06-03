@@ -4,10 +4,7 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.ClassLocal;
 import net.openhft.chronicle.engine2.api.*;
-import net.openhft.chronicle.engine2.api.map.KeyValueStore;
-import net.openhft.chronicle.engine2.api.map.MapEvent;
-import net.openhft.chronicle.engine2.api.map.StringMarshallableKeyValueStore;
-import net.openhft.chronicle.engine2.api.map.SubscriptionKeyValueStore;
+import net.openhft.chronicle.engine2.api.map.*;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.Wire;
 
@@ -82,9 +79,13 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
             return (t, bytes) -> (T) (bytes == null ? null : bytes.toString());
         if (Marshallable.class.isAssignableFrom(type))
             return (bytes, t) -> {
+                if (bytes == null)
+                    return null;
+
                 t = acquireInstance(type, t);
                 ((Marshallable) t).readMarshallable(wireType.apply(bytes.bytes()));
                 ((Bytes) bytes).position(0);
+
                 return t;
             };
         throw new UnsupportedOperationException("todo");
@@ -139,9 +140,9 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     }
 
     @Override
-    public void entriesFor(int segment, SubscriptionConsumer<Entry<String, V>> kvConsumer) throws InvalidSubscriberException {
+    public void entriesFor(int segment, SubscriptionConsumer<MapReplicationEvent<String, V>> kvConsumer) throws InvalidSubscriberException {
         kvStore.entriesFor(segment, e -> kvConsumer.accept(
-                Entry.of(e.key(), bytesToValue.apply(e.value(), null))));
+                EntryEvent.of(e.key(), bytesToValue.apply(e.value(), null), 0, System.currentTimeMillis())));
     }
 
     @Override
@@ -183,14 +184,9 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
             if (eClass == MapEvent.class) {
                 Subscriber<MapEvent<String, V>> sub = (Subscriber<MapEvent<String, V>>) subscriber;
 
-                Subscriber<MapEvent<String, BytesStore>> sub2 = e -> {
-                    if (e.getClass() == InsertedEvent.class)
-                        sub.onMessage(InsertedEvent.of(e.key(), bytesToValue.apply(e.value(), null)));
-                    else if (e.getClass() == UpdatedEvent.class)
-                        sub.onMessage(UpdatedEvent.of(e.key(), bytesToValue.apply(((UpdatedEvent<String, BytesStore>) e).oldValue(), null), bytesToValue.apply(e.value(), null)));
-                    else
-                        sub.onMessage(RemovedEvent.of(e.key(), bytesToValue.apply(e.value(), null)));
-                };
+                Subscriber<MapEvent<String, BytesStore>> sub2 = e ->
+                        sub.onMessage(e.translate(k -> k,
+                                v -> bytesToValue.apply(v, null)));
                 kvStore.subscription(true).registerSubscriber(rc, sub2);
             } else {
                 kvStore.subscription(true).registerSubscriber(rc, subscriber);
@@ -206,13 +202,8 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
         }
 
         @Override
-        public void notifyUpdate(String key, V oldValue, V value) {
-            throw new UnsupportedOperationException("todo");
-        }
-
-        @Override
-        public void notifyRemoval(String key, V oldValue) {
-            throw new UnsupportedOperationException("todo");
+        public void notifyEvent(MapReplicationEvent<String, V> mpe) throws InvalidSubscriberException {
+            throw new UnsupportedOperationException();
         }
 
         @Override

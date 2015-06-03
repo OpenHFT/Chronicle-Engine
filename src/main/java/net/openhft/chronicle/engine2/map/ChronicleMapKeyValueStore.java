@@ -7,8 +7,11 @@ import net.openhft.chronicle.engine2.api.InvalidSubscriberException;
 import net.openhft.chronicle.engine2.api.RequestContext;
 import net.openhft.chronicle.engine2.api.SubscriptionConsumer;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
+import net.openhft.chronicle.engine2.api.map.MapReplicationEvent;
 import net.openhft.chronicle.engine2.api.map.SubscriptionKeyValueStore;
-import net.openhft.chronicle.map.*;
+import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.map.ChronicleMapBuilder;
+import net.openhft.chronicle.map.MapEventListener;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
@@ -77,7 +80,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
     @Override
     public V getUsing(K key, MV value) {
         if(value != null)throw new UnsupportedOperationException("Mutable values not supported");
-        return chronicleMap.getUsing(key, (V)value);
+        return chronicleMap.getUsing(key, (V) value);
     }
 
     @Override
@@ -92,9 +95,9 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
     }
 
     @Override
-    public void entriesFor(int segment, SubscriptionConsumer<Entry<K, V>> kvConsumer) throws InvalidSubscriberException {
+    public void entriesFor(int segment, SubscriptionConsumer<MapReplicationEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
         //Ignore the segments and return entriesFor the whole map
-        chronicleMap.entrySet().stream().map(e -> Entry.of(e.getKey(), e.getValue())).forEach(e -> {
+        chronicleMap.entrySet().stream().map(e -> EntryEvent.of(e.getKey(), e.getValue(), 0, 0L)).forEach(e -> {
             try {
                 kvConsumer.accept(e);
             } catch (InvalidSubscriberException t) {
@@ -132,7 +135,9 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         @Override
         public void onRemove(K key, V value, boolean replicationEven) {
             try {
-                subscriptions.notifyRemoval(key, value);
+                int identifier = 0; // todo
+                long timeStampMS = 0; // todo
+                subscriptions.notifyEvent(RemovedEvent.of(key, value, identifier, timeStampMS));
             } catch (InvalidSubscriberException e) {
                 // todo
                 throw new AssertionError(e);
@@ -141,7 +146,9 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         @Override
         public void onPut(K key, V newValue, @Nullable V replacedValue, boolean replicationEvent) {
             try {
-                subscriptions.notifyUpdate(key, replacedValue, newValue);
+                int identifier = 0; // todo
+                long timeStampMS = 0; // todo
+                subscriptions.notifyEvent(UpdatedEvent.of(key, replacedValue, newValue, identifier, timeStampMS));
             } catch (InvalidSubscriberException e) {
                 // todo
                 throw new AssertionError(e);

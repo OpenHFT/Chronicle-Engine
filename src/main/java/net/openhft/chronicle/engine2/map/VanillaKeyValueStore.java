@@ -2,6 +2,7 @@ package net.openhft.chronicle.engine2.map;
 
 import net.openhft.chronicle.engine2.api.*;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
+import net.openhft.chronicle.engine2.api.map.MapReplicationEvent;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -50,8 +51,8 @@ public class VanillaKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> {
     }
 
     @Override
-    public void entriesFor(int segment, SubscriptionConsumer<Entry<K, V>> kvConsumer) throws InvalidSubscriberException {
-        SubscriptionConsumer.notifyEachEvent(map.entrySet(), e -> kvConsumer.accept(new VanillaEntry<>(e.getKey(), e.getValue())));
+    public void entriesFor(int segment, SubscriptionConsumer<MapReplicationEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
+        SubscriptionConsumer.notifyEachEvent(map.entrySet(), e -> kvConsumer.accept(EntryEvent.of(e.getKey(), e.getValue(), 0, System.currentTimeMillis())));
     }
 
     @Override

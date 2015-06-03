@@ -5,7 +5,6 @@ import net.openhft.chronicle.engine2.api.Assetted;
 import net.openhft.chronicle.engine2.api.InvalidSubscriberException;
 import net.openhft.chronicle.engine2.api.SubscriptionConsumer;
 import net.openhft.chronicle.engine2.api.View;
-import net.openhft.chronicle.engine2.map.VanillaEntry;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -56,7 +55,7 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
 
     void keysFor(int segment, SubscriptionConsumer<K> kConsumer) throws InvalidSubscriberException;
 
-    void entriesFor(int segment, SubscriptionConsumer<Entry<K, V>> kvConsumer) throws InvalidSubscriberException;
+    void entriesFor(int segment, SubscriptionConsumer<MapReplicationEvent<K, V>> kvConsumer) throws InvalidSubscriberException;
 
     Iterator<Map.Entry<K, V>> entrySetIterator();
 
@@ -74,10 +73,6 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
         K key();
 
         V value();
-
-        static <K, V> Entry<K, V> of(K key, V value) {
-            return new VanillaEntry<>(key, value);
-        }
     }
 
     default boolean keyedView() {

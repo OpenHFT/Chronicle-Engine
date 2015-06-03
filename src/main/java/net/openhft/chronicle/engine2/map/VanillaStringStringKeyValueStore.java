@@ -5,10 +5,7 @@ import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.ClassLocal;
 import net.openhft.chronicle.core.util.StringUtils;
 import net.openhft.chronicle.engine2.api.*;
-import net.openhft.chronicle.engine2.api.map.KeyValueStore;
-import net.openhft.chronicle.engine2.api.map.MapEvent;
-import net.openhft.chronicle.engine2.api.map.StringStringKeyValueStore;
-import net.openhft.chronicle.engine2.api.map.SubscriptionKeyValueStore;
+import net.openhft.chronicle.engine2.api.map.*;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
@@ -135,9 +132,8 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     }
 
     @Override
-    public void entriesFor(int segment, SubscriptionConsumer<Entry<String, String>> kvConsumer) throws InvalidSubscriberException {
-        kvStore.entriesFor(segment, e -> kvConsumer.accept(
-                Entry.of(e.key(), e.value().toString())));
+    public void entriesFor(int segment, SubscriptionConsumer<MapReplicationEvent<String, String>> kvConsumer) throws InvalidSubscriberException {
+        kvStore.entriesFor(segment, e -> kvConsumer.accept(e.translate(k -> k, Object::toString)));
     }
 
     @Override
@@ -179,16 +175,10 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {
             Class eClass = rc.type();
             if (eClass == MapEvent.class) {
-                Subscriber<MapEvent<String, String>> sub = (Subscriber) subscriber;
+                Subscriber<MapReplicationEvent<String, String>> sub = (Subscriber) subscriber;
 
-                Subscriber<MapEvent<String, BytesStore>> sub2 = e -> {
-                    if (e.getClass() == InsertedEvent.class)
-                        sub.onMessage(InsertedEvent.of(e.key(), e.value().toString()));
-                    else if (e.getClass() == UpdatedEvent.class)
-                        sub.onMessage(UpdatedEvent.of(e.key(), ((UpdatedEvent<String, BytesStore>) e).oldValue().toString(), e.value().toString()));
-                    else
-                        sub.onMessage(RemovedEvent.of(e.key(), e.value().toString()));
-                };
+                Subscriber<MapReplicationEvent<String, BytesStore>> sub2 = e ->
+                        sub.onMessage(e.translate(k -> k, Object::toString));
                 kvStore.subscription(true).registerSubscriber(rc, sub2);
             } else {
                 subscriptions.registerSubscriber(rc, subscriber);
@@ -204,13 +194,8 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         }
 
         @Override
-        public void notifyUpdate(String key, String oldValue, String value) {
-            throw new UnsupportedOperationException("todo");
-        }
-
-        @Override
-        public void notifyRemoval(String key, String oldValue) {
-            throw new UnsupportedOperationException("todo");
+        public void notifyEvent(MapReplicationEvent<String, String> mpe) throws InvalidSubscriberException {
+            throw new UnsupportedOperationException();
         }
 
         @Override

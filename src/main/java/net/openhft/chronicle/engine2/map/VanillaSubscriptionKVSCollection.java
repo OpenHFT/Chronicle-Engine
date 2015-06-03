@@ -3,6 +3,7 @@ package net.openhft.chronicle.engine2.map;
 import net.openhft.chronicle.engine2.api.*;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.MapEvent;
+import net.openhft.chronicle.engine2.api.map.MapReplicationEvent;
 
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -27,52 +28,26 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements SubscriptionK
     }
 
     @Override
-    public void notifyUpdate(K key, V oldValue, V value) {
+    public void notifyEvent(MapReplicationEvent<K, V> mpe) throws InvalidSubscriberException {
         if (hasSubscribers)
-            notifyUpdate0(key, oldValue, value);
+            notifyEvent0(mpe);
     }
 
-    private void notifyUpdate0(K key, V oldValue, V value) {
+    private void notifyEvent0(MapReplicationEvent<K, V> mpe) {
+        K key = mpe.key();
+
         if (!topicSubscribers.isEmpty()) {
+            V value = mpe.value();
             notifyEachSubscriber(topicSubscribers, ts -> ts.onMessage(key, value));
         }
         if (!subscribers.isEmpty()) {
-            if (oldValue == null) {
-                InsertedEvent<K, V> inserted = InsertedEvent.of(key, value);
-                notifyEachSubscriber(subscribers, s -> s.onMessage(inserted));
-
-            } else {
-                UpdatedEvent<K, V> updated = UpdatedEvent.of(key, oldValue, value);
-                notifyEachSubscriber(subscribers, s -> s.onMessage(updated));
-            }
+            notifyEachSubscriber(subscribers, s -> s.onMessage(mpe));
         }
         if (!keySubscribers.isEmpty()) {
             notifyEachSubscriber(keySubscribers, s -> s.onMessage(key));
         }
         if (!downstream.isEmpty()) {
-            notifyEachSubscriber(downstream, d -> d.notifyUpdate(key, oldValue, value));
-        }
-    }
-
-    @Override
-    public void notifyRemoval(K key, V oldValue) {
-        if (hasSubscribers)
-            notifyRemoval0(key, oldValue);
-    }
-
-    private void notifyRemoval0(K key, V oldValue) {
-        if (!topicSubscribers.isEmpty()) {
-            notifyEachSubscriber(topicSubscribers, ts -> ts.onMessage(key, null));
-        }
-        if (!subscribers.isEmpty()) {
-            RemovedEvent<K, V> removed = RemovedEvent.of(key, oldValue);
-            notifyEachSubscriber(subscribers, s -> s.onMessage(removed));
-        }
-        if (!keySubscribers.isEmpty()) {
-            notifyEachSubscriber(keySubscribers, s -> s.onMessage(key));
-        }
-        if (!downstream.isEmpty()) {
-            notifyEachSubscriber(downstream, d -> d.notifyRemoval(key, oldValue));
+            notifyEachSubscriber(downstream, d -> d.notifyEvent(mpe));
         }
     }
 
@@ -88,19 +63,21 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements SubscriptionK
         if (eClass == KeyValueStore.Entry.class || eClass == MapEvent.class) {
             subscribers.add((Subscriber) subscriber);
             if (bootstrap != Boolean.FALSE) {
+                Subscriber<MapReplicationEvent<K, V>> sub = (Subscriber<MapReplicationEvent<K, V>>) subscriber;
                 try {
                     for (int i = 0; i < kvStore.segments(); i++)
-                        kvStore.entriesFor(i, e -> subscriber.onMessage((E) InsertedEvent.of(e.key(), e.value())));
+                        kvStore.entriesFor(i, sub::onMessage);
                 } catch (InvalidSubscriberException e) {
                     subscribers.remove(subscriber);
                 }
             }
         } else {
-            keySubscribers.add((Subscriber<K>) subscriber);
+            Subscriber<K> sub = (Subscriber<K>) subscriber;
+            keySubscribers.add(sub);
             if (bootstrap != Boolean.FALSE) {
                 try {
                     for (int i = 0; i < kvStore.segments(); i++)
-                        kvStore.keysFor(i, k -> subscriber.onMessage((E) k));
+                        kvStore.keysFor(i, sub::onMessage);
                 } catch (InvalidSubscriberException e) {
                     subscribers.remove(subscriber);
                 }

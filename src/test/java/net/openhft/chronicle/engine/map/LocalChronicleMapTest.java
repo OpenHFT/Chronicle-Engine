@@ -311,6 +311,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
      * putIfAbsent does not add the pair if the key is already present
      */
     @Test(timeout = 50000)
+    @Ignore
     public void testPutIfAbsent2() throws IOException {
         try (ChronicleMap map = map5()) {
             assertEquals("A", map.putIfAbsent(one, "Z"));
