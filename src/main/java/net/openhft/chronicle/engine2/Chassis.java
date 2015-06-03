@@ -74,6 +74,7 @@ public enum Chassis {
         ((VanillaAssetTree) assetTree).viewTypeLayersOn(viewType, description, underlyingType);
     }
 
+    // TODO can we hide this.
     public static void enableTranslatingValuesToBytesStore() {
         ((VanillaAsset) assetTree.getAsset("")).enableTranslatingValuesToBytesStore();
     }
