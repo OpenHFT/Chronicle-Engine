@@ -20,7 +20,6 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.FilePerKeyChronicleMap;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -67,47 +66,47 @@ public class LocalEngineTest {
         assertNotNull(chronicle);
     }*/
 
-    @Ignore
-    @Test(timeout = 120000)
-    public void test2MBEntriesLocal() throws Exception {
-        int factor = 5;
-
-        ChronicleEngine engine = new ChronicleEngine();
-        String dir = System.getProperty("java.io.tmpdir") + "/localtest.deleteme";
-        File file = new File(dir);
-        engine.setMap("localtest", new FilePerKeyChronicleMap(dir));
-        AtomicInteger count = new AtomicInteger();
-
-        try (ChronicleMap<String, String> map = engine.getMap("localtest", String.class, String.class)) {
-            for (boolean test : new boolean[]{true, false}) {
-                ((FilePerKeyChronicleMap) map).registerForEvents(e -> count.incrementAndGet());
-                int factor0 = test ? 1 : factor;
-                long time = System.currentTimeMillis();
-                StringBuilder sb = new StringBuilder();
-                while (sb.length() < 2 << 20)
-                    sb.append(sb.length()).append('\n');
-
-                String s = sb.toString();
-                for (int f = 0; f < factor0; f++) {
-                    IntStream.range(0, 50).forEach(i -> {
-                        String key = "largeEntry-" + i;
-                        map.put(key, s);
-                        if (test)
-                            assertEquals(s, map.get(key));
-                    });
-                }
-                long rate = (System.currentTimeMillis() - time) / factor;
-                for (File f : file.listFiles()) {
-                    if (f.isDirectory()) continue;
-                    f.delete();
-                }
-                TimeUnit.SECONDS.sleep(1);
-                if (!test) {
-                    System.out.format("factor %,d: To write 100 MB took an average of %,dms, events=%,d%n", factor,
-                            rate, count.intValue());
-                }
-            }
-        }
-        file.delete();
-    }
+//    @Ignore
+//    @Test(timeout = 120000)
+//    public void test2MBEntriesLocal() throws Exception {
+//        int factor = 5;
+//
+//        ChronicleEngine engine = new ChronicleEngine();
+//        String dir = System.getProperty("java.io.tmpdir") + "/localtest.deleteme";
+//        File file = new File(dir);
+//        engine.setMap("localtest", new FilePerKeyChronicleMap(dir));
+//        AtomicInteger count = new AtomicInteger();
+//
+//        try (ChronicleMap<String, String> map = engine.getMap("localtest", String.class, String.class)) {
+//            for (boolean test : new boolean[]{true, false}) {
+//                ((FilePerKeyChronicleMap) map).registerForEvents(e -> count.incrementAndGet());
+//                int factor0 = test ? 1 : factor;
+//                long time = System.currentTimeMillis();
+//                StringBuilder sb = new StringBuilder();
+//                while (sb.length() < 2 << 20)
+//                    sb.append(sb.length()).append('\n');
+//
+//                String s = sb.toString();
+//                for (int f = 0; f < factor0; f++) {
+//                    IntStream.range(0, 50).forEach(i -> {
+//                        String key = "largeEntry-" + i;
+//                        map.put(key, s);
+//                        if (test)
+//                            assertEquals(s, map.get(key));
+//                    });
+//                }
+//                long rate = (System.currentTimeMillis() - time) / factor;
+//                for (File f : file.listFiles()) {
+//                    if (f.isDirectory()) continue;
+//                    f.delete();
+//                }
+//                TimeUnit.SECONDS.sleep(1);
+//                if (!test) {
+//                    System.out.format("factor %,d: To write 100 MB took an average of %,dms, events=%,d%n", factor,
+//                            rate, count.intValue());
+//                }
+//            }
+//        }
+//        file.delete();
+//    }
 }

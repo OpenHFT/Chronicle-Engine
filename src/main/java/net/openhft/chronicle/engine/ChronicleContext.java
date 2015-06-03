@@ -19,7 +19,6 @@
 package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.FilePerKeyMap;
 import net.openhft.chronicle.set.ChronicleSet;
 
 import java.io.IOException;
@@ -47,8 +46,6 @@ public interface ChronicleContext {
 
     // A generic subscription
     <K, C> Subscription<K, C> createSubscription(String name, Class<K> kClass, Class<C> callbackClass);
-
-    FilePerKeyMap getFilePerKeyMap(String name);
 
     Logger getLogger(String name);
 }

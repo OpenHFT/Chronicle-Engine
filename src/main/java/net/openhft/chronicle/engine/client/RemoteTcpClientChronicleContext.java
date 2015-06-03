@@ -25,7 +25,6 @@ import net.openhft.chronicle.engine.MapEventListener;
 import net.openhft.chronicle.engine.Subscription;
 import net.openhft.chronicle.engine.client.internal.RemoteClientServiceLocator;
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.FilePerKeyMap;
 import net.openhft.chronicle.set.ChronicleSet;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.lang.model.constraints.NotNull;
@@ -85,11 +84,6 @@ public class RemoteTcpClientChronicleContext implements ChronicleContext, Closea
     @Override
     public <K, C> Subscription<K, C> createSubscription(String name, Class<K> kClass, Class<C> callbackClass) {
         throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public FilePerKeyMap getFilePerKeyMap(String name) {
-        return null;
     }
 
     @Override

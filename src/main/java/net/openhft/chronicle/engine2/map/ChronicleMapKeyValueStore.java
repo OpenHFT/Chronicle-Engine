@@ -8,9 +8,8 @@ import net.openhft.chronicle.engine2.api.RequestContext;
 import net.openhft.chronicle.engine2.api.SubscriptionConsumer;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.SubscriptionKeyValueStore;
-import net.openhft.chronicle.hash.Value;
 import net.openhft.chronicle.map.*;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
 import java.io.File;
@@ -37,7 +36,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         String basePath = context.basePath();
 
         ChronicleMapBuilder builder = ChronicleMapBuilder.of(kClass, vClass)
-                .entryOperations(publishingOperations);
+                .eventListener(publishingOperations);
 
         if (context.putReturnsNull() != Boolean.FALSE) {
             builder.putReturnsNull(true);
@@ -129,42 +128,24 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         chronicleMap.close();
     }
 
-    class PublishingOperations implements MapEntryOperations<K, V, Void> {
+    class PublishingOperations extends MapEventListener<K,V> {
         @Override
-        public Void remove(@NotNull MapEntry<K, V> entry) {
-            Void v = MapEntryOperations.super.remove(entry);
+        public void onRemove(K key, V value, boolean replicationEven) {
             try {
-                subscriptions.notifyRemoval(entry.key().get(), entry.value().get());
+                subscriptions.notifyRemoval(key, value);
             } catch (InvalidSubscriberException e) {
                 // todo
                 throw new AssertionError(e);
             }
-            return v;
         }
         @Override
-        public Void replaceValue(@NotNull MapEntry<K, V> entry, Value<V, ?> newValue) {
-            V oValue = entry.value().get();
-            V nValue = newValue.get();
-            Void v = MapEntryOperations.super.replaceValue(entry, newValue);
+        public void onPut(K key, V newValue, @Nullable V replacedValue, boolean replicationEvent) {
             try {
-                subscriptions.notifyUpdate(entry.key().get(), oValue, nValue);
+                subscriptions.notifyUpdate(key, replacedValue, newValue);
             } catch (InvalidSubscriberException e) {
                 // todo
                 throw new AssertionError(e);
             }
-            return v;
-        }
-
-        @Override
-        public Void insert(@NotNull MapAbsentEntry<K, V> absentEntry, Value<V, ?> value) {
-            Void v = MapEntryOperations.super.insert(absentEntry, value);
-            try {
-                subscriptions.notifyUpdate(absentEntry.absentKey().get(), null, value.get());
-            } catch (InvalidSubscriberException e) {
-                // todo
-                throw new AssertionError(e);
-            }
-            return v;
         }
     }
 }

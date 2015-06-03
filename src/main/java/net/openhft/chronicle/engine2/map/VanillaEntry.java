@@ -1,7 +1,6 @@
 package net.openhft.chronicle.engine2.map;
 
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
-import net.openhft.chronicle.hash.impl.util.Objects;
 
 import java.util.Optional;
 
@@ -34,16 +33,11 @@ public class VanillaEntry<K, V> implements KeyValueStore.Entry<K, V> {
 
     @Override
     public int hashCode() {
-        return Objects.hash(key, value);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean equals(Object obj) {
-        return Optional.ofNullable(obj)
-                .filter(o -> o instanceof VanillaEntry)
-                .map(o -> (VanillaEntry) o)
-                .filter(e -> Objects.equal(key, e.key))
-                .filter(e -> Objects.equal(value, e.value))
-                .isPresent();
+        throw new UnsupportedOperationException();
     }
 }

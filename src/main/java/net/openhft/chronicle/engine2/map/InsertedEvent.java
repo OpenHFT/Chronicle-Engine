@@ -2,7 +2,7 @@ package net.openhft.chronicle.engine2.map;
 
 import net.openhft.chronicle.engine2.api.map.MapEvent;
 import net.openhft.chronicle.engine2.api.map.MapEventListener;
-import net.openhft.chronicle.hash.impl.util.Objects;
+//import net.openhft.chronicle.hash.impl.util.Objects;
 
 import java.util.Optional;
 
@@ -37,17 +37,13 @@ public class InsertedEvent<K, V> implements MapEvent<K, V> {
 
     @Override
     public int hashCode() {
-        return Objects.hash("insert", key, value);
+        throw new UnsupportedOperationException();
+
     }
 
     @Override
     public boolean equals(Object obj) {
-        return Optional.ofNullable(obj)
-                .filter(o -> o instanceof InsertedEvent)
-                .map(o -> (InsertedEvent<K, V>) o)
-                .filter(e -> Objects.equal(key, e.key))
-                .filter(e -> Objects.equal(value, e.value))
-                .isPresent();
+        throw new UnsupportedOperationException();
     }
 
     @Override

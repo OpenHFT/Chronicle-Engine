@@ -20,11 +20,9 @@ package net.openhft.chronicle.engine.client.internal;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.ChronicleContext;
-import net.openhft.chronicle.engine.FilePerKeyMapSubscription;
 import net.openhft.chronicle.engine.MapEventListener;
 import net.openhft.chronicle.engine.Subscription;
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.FilePerKeyMap;
 import net.openhft.chronicle.set.ChronicleSet;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +53,6 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
             (new LinkedHashMap<>());
     private final Map<String, ChronicleMap<Integer, CharSequence>> chronIntegerStringMap =
             synchronizedMap(new LinkedHashMap<>());
-    private final Map<String, FilePerKeyMap> fpMaps = synchronizedMap(new LinkedHashMap<>());
     private final Map<String, ChronicleSet> sets = synchronizedMap(new LinkedHashMap<>());
 
     public ChronicleEngine() {
@@ -143,18 +140,7 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
         throw new UnsupportedOperationException("todo");
     }
 
-    @Override
-    public FilePerKeyMap getFilePerKeyMap(String name) {
-        return fpMaps.computeIfAbsent(name,
-                k -> {
-                    try {
-                        return new FilePerKeyMap(k);
-                    } catch (IOException e) {
-                        Jvm.rethrow(e);
-                        return null;
-                    }
-                });
-    }
+
 
     @Override
     public <I> I getService(Class<I> iClass, String name, Class... args) throws IOException {
@@ -172,11 +158,6 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
         return createSubscription(name, kClass, (Class<MapEventListener<K, V>>) (Class) MapEventListener.class);
     }
 
-    public <K, V> Subscription<K, MapEventListener<K, V>> createFilePerKeyMapMapSubscription(String name) {
-        //Find the corresponding map
-        FilePerKeyMap filePerKeyMap = fpMaps.get(name);
-        return new FilePerKeyMapSubscription(filePerKeyMap);
-    }
 
     private <K, V> void validateClasses(Map map, Class<K> kClass, Class<V> vClass) {
         // TODO runtime check the key and values classes match
@@ -205,7 +186,6 @@ public class ChronicleEngine implements ChronicleContext, Closeable {
 
     @Override
     public void close() throws IOException {
-        fpMaps.values().forEach(FilePerKeyMap::close);
         maps.values().forEach(ChronicleMap::close);
 
         for (Map<String, ChronicleMap> map : new Map[]{chronIntegerStringMap, chronIntegerStringMap}) {

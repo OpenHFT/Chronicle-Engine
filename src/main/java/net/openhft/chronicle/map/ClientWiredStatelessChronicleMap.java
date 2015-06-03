@@ -20,7 +20,6 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.engine.collection.ClientWiredStatelessChronicleCollection;
 import net.openhft.chronicle.engine.collection.ClientWiredStatelessChronicleSet;
-import net.openhft.chronicle.hash.function.SerializableFunction;
 import net.openhft.chronicle.network.connection.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +43,7 @@ import static net.openhft.chronicle.wire.CoreFields.csp;
  * @author Rob Austin.
  */
 class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
-        implements ChronicleMap<K, V>, Cloneable, ChannelFactory {
+        implements ChronicleMap<K, V>, Cloneable {
 
     public static final Consumer<ValueOut> VOID_PARAMETERS = out -> out.marshallable(WriteMarshallable.EMPTY);
     private final Class<V> vClass;
@@ -88,22 +87,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
     @Override
     public Class<K> keyClass() {
         return kClass;
-    }
-
-    @NotNull
-    @Override
-    public ExternalMapQueryContext<K, V, ?> queryContext(K k) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
-    public boolean forEachEntryWhile(Predicate<? super MapKeyContext<K, V>> predicate) {
-        return false;
-    }
-
-    @Override
-    public void forEachEntry(Consumer<? super MapKeyContext<K, V>> action) {
-        throw new UnsupportedOperationException("todo");
     }
 
     @Override
@@ -242,10 +225,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
         return proxyReturnLong(size);
     }
 
-    @Override
-    public MapKeyContext<K, V> context(K key) {
-        return null;
-    }
 
     public V get(Object key) {
         return (V) this.proxyReturnTypedObject(get, null, vClass, key);
@@ -257,6 +236,12 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
     }
 
     @NotNull
+    @Override
+    public ReadContext<K, V> getUsingLocked(@NotNull K k, @NotNull V v) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @NotNull
     public V acquireUsing(@NotNull K key, V usingValue) {
         throw new UnsupportedOperationException(
                 "acquireUsing() is not supported for stateless clients");
@@ -264,8 +249,13 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
 
     @NotNull
     @Override
-    public MapKeyContext<K, V> acquireContext(@NotNull K key, @NotNull V usingValue) {
-        throw new UnsupportedOperationException();
+    public WriteContext<K, V> acquireUsingLocked(@NotNull K k, @NotNull V v) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public <R> R getMapped(K k, @NotNull net.openhft.chronicle.map.Function<? super V, R> function) {
+        throw new UnsupportedOperationException("todo");
     }
 
     public V remove(Object key) {
@@ -280,10 +270,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
         }
     }
 
-    @Override
-    public void createChannel(short channelID) {
-        proxyReturnVoid(createChannel, outValue -> outValue.int16(channelID));
-    }
 
     public V put(K key, V value) {
         if (key == null || value == null)
@@ -297,10 +283,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
         }
     }
 
-    @Nullable
-    public <R> R getMapped(@Nullable K key, @NotNull SerializableFunction<? super V, R> function) {
-        throw new UnsupportedOperationException();
-    }
 
     @Nullable
     @Override

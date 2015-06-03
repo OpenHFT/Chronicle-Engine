@@ -14,8 +14,6 @@ import static net.openhft.chronicle.core.util.StringUtils.contains;
  */
 public interface MapHandler<K, V> extends MapHandlerFunction<K, V> {
 
-    MapHandler STRING_STRING_MAP_HANDLER = new StringStringMapHandler(
-            (engine, serviceName) -> engine.getFilePerKeyMap(serviceName));
     MapHandler BYTE_BYTE_MAP_HANDLER = new ByteByteMapHandler();
 
     MapHandler STRING_CHAR_SEQUENCE_MAP_HANDLER = new StringCharSequenceMapHandler((engine, serviceName) -> {
@@ -37,9 +35,7 @@ public interface MapHandler<K, V> extends MapHandlerFunction<K, V> {
     });
 
     static MapHandler instance(CharSequence csp) {
-        if (contains(csp, "file"))
-            return STRING_STRING_MAP_HANDLER;
-        else if (contains(csp, "object"))
+        if (contains(csp, "object"))
             return BYTE_BYTE_MAP_HANDLER;
         else
             return STRING_CHAR_SEQUENCE_MAP_HANDLER;
