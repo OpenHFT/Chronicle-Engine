@@ -148,7 +148,11 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
             try {
                 int identifier = 0; // todo
                 long timeStampMS = 0; // todo
-                subscriptions.notifyEvent(UpdatedEvent.of(key, replacedValue, newValue, identifier, timeStampMS));
+                if(replacedValue!=null) {
+                    subscriptions.notifyEvent(UpdatedEvent.of(key, replacedValue, newValue, identifier, timeStampMS));
+                }else{
+                    subscriptions.notifyEvent(InsertedEvent.of(key, newValue, identifier, timeStampMS));
+                }
             } catch (InvalidSubscriberException e) {
                 // todo
                 throw new AssertionError(e);
