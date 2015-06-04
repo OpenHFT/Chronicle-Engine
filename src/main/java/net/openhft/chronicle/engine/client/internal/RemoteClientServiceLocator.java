@@ -52,7 +52,8 @@ public class RemoteClientServiceLocator {
                 false,
                 inetSocketAddress,
                 tcpBufferSize,
-                timeoutMs, byteToWire);
+                timeoutMs,
+                byteToWire);
     }
 
     public <I> I getService(Class<I> iClass, String name, Class... args) {
@@ -71,10 +72,6 @@ public class RemoteClientServiceLocator {
 
         throw new IllegalStateException("iClass=" + iClass + " not supported");
     }
-/*
-    private <I> I newQueueInstance(String fullName) {
-        return (I) new ClientWiredChronicleQueueStateless(hub, fullName);
-    }*/
 
     private <I, KI, VI> I mapInstance(Class<KI> kClass, Class<VI> vClass, String name)
             throws IOException {
