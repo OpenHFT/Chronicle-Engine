@@ -307,10 +307,8 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                             final Params[] params = replace.params();
                             final K key = wireToK.apply(wire.read(params[0]));
                             final V value = wireToV.apply(wire.read(params[1]));
-
                             nullCheck(key);
                             nullCheck(value);
-
                             vToWire.accept(outWire.writeEventName(reply),
                                     map.replace(key, value));
                         });
