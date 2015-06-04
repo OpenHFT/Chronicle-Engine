@@ -1,7 +1,7 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.engine.map.MapHandlerFunction;
-import net.openhft.chronicle.engine2.Chassis;
+import net.openhft.chronicle.engine.Chassis;
 
 import java.io.IOException;
 import java.util.Map;

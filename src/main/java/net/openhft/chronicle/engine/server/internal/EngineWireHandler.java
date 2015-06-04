@@ -113,12 +113,33 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                 if (!cspText.equals(lastCsp)) {
                     lastCsp = cspText;
                     serviceName = serviceName(cspText);
+
+   /*                 WireParser parser = new VanillaWireParser();
+                    parser.register(() -> "view", v -> v.text((Consumer<StringBuilder>) new Con
+                            EngineWireHandler.this.view));
+
+                    final RequestContext requestContext = RequestContext.requestContext(cspText);
+
+                    final Asset asset = Chassis.acquireAsset(requestContext);
+                    final Object view = asset.acquireView(requestContext);
+
+                    final Class viewType = requestContext.viewType();
+
+                    if (MapView.class == viewType) {
+
+                    }
+
+                    if (view instanceof EntrySetView) {
+                    }
+
+                    if (view instanceof EntrySetView) {
+                    }*/
+
                     if (endsWith(cspText, "?view=map") ||
                             endsWith(cspText, "?view=entrySet") ||
                             endsWith(cspText, "?view=keySet") ||
                             endsWith(cspText, "?view=values"))
                         mapHandler = instance(cspText);
-
                     else
                         mapHandler = null;
 

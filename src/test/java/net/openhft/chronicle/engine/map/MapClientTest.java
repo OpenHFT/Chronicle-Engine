@@ -22,7 +22,7 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.client.RemoteChassis;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
-import net.openhft.chronicle.engine2.Chassis;
+import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;

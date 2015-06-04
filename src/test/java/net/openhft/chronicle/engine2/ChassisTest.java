@@ -1,11 +1,12 @@
 package net.openhft.chronicle.engine2;
 
-import net.openhft.chronicle.engine2.api.*;
-import net.openhft.chronicle.engine2.api.map.MapEvent;
-import net.openhft.chronicle.engine2.map.EntryEvent;
-import net.openhft.chronicle.engine2.map.InsertedEvent;
-import net.openhft.chronicle.engine2.map.RemovedEvent;
-import net.openhft.chronicle.engine2.map.UpdatedEvent;
+import net.openhft.chronicle.engine.Chassis;
+import net.openhft.chronicle.engine.api.*;
+import net.openhft.chronicle.engine.api.map.MapEvent;
+import net.openhft.chronicle.engine.map.EntryEvent;
+import net.openhft.chronicle.engine.map.InsertedEvent;
+import net.openhft.chronicle.engine.map.RemovedEvent;
+import net.openhft.chronicle.engine.map.UpdatedEvent;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -14,8 +15,8 @@ import java.io.IOException;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
-import static net.openhft.chronicle.engine2.Chassis.*;
-import static net.openhft.chronicle.engine2.api.RequestContext.requestContext;
+import static net.openhft.chronicle.engine.Chassis.*;
+import static net.openhft.chronicle.engine.api.RequestContext.requestContext;
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
 

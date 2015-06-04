@@ -1,7 +1,8 @@
 package net.openhft.chronicle.engine2;
 
-import net.openhft.chronicle.engine2.api.*;
-import net.openhft.chronicle.engine2.api.map.MapEvent;
+import net.openhft.chronicle.engine.Chassis;
+import net.openhft.chronicle.engine.api.*;
+import net.openhft.chronicle.engine.api.map.MapEvent;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -9,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static net.openhft.chronicle.engine2.Chassis.*;
+import static net.openhft.chronicle.engine.Chassis.*;
 import static org.junit.Assert.assertEquals;
 
 /**

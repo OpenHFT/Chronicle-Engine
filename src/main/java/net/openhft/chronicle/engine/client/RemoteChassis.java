@@ -37,8 +37,7 @@ public class RemoteChassis implements Closeable {
 
     public RemoteChassis(@NotNull final String hostname,
                          int port,
-                         byte identifier, Function<Bytes, Wire> wireType)
-            throws IOException {
+                         byte identifier, Function<Bytes, Wire> wireType) throws IOException {
         this.remoteClientServiceLocator = new RemoteClientServiceLocator(
                 hostname,
                 port,
