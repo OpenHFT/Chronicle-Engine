@@ -178,7 +178,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
                     final Class viewType = requestContext.viewType();
                     if (viewType == MapView.class) {
-                        mapWireHandler.process(in, out, (MapView) view, cspText, tid, mh, requestContext);
+                        mapWireHandler.process(in, out, (MapView) view, tid, mh, requestContext);
                         return;
                     }
 

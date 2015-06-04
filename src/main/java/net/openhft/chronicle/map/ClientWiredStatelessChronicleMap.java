@@ -35,8 +35,7 @@ import static java.util.Collections.emptyList;
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId;
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.*;
 import static net.openhft.chronicle.map.VanillaChronicleMap.newInstance;
-import static net.openhft.chronicle.wire.CoreFields.cid;
-import static net.openhft.chronicle.wire.CoreFields.csp;
+import static net.openhft.chronicle.wire.CoreFields.stringEvent;
 
 /**
  * @author Rob Austin.
@@ -297,15 +296,16 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
     @NotNull
     @Override
     public Collection<V> values() {
+        final StringBuilder csp = Wires.acquireStringBuilder();
         long cid = proxyReturnWireConsumer(values, read -> {
 
-            final StringBuilder type = Wires.acquireStringBuilder();
+            final StringBuilder type = Wires.acquireAnotherStringBuilder(csp);
 
             read.type(type);
             return read.applyToMarshallable(w -> {
-                final String csp1 = csp(w).toString();
+
                 final long cid0 = CoreFields.cid(w);
-                cidToCsp.put(cid0, csp1);
+                cidToCsp.put(cid0, stringEvent(CoreFields.csp, csp, w).toString());
                 return cid0;
             });
         });
@@ -320,16 +320,18 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
 
     @NotNull
     public Set<Map.Entry<K, V>> entrySet() {
+
+        final StringBuilder csp = Wires.acquireStringBuilder();
+
         long cid = proxyReturnWireConsumer(entrySet, read -> {
 
-            final StringBuilder type = Wires.acquireStringBuilder();
+            final StringBuilder type = Wires.acquireAnotherStringBuilder(csp);
 
             read.type(type);
             return read.applyToMarshallable(w -> {
 
-                final String csp1 = csp(w).toString();
-                final long cid0 = cid(w);
-                cidToCsp.put(cid0, csp1);
+                final long cid0 = CoreFields.cid(w);
+                cidToCsp.put(cid0, stringEvent(CoreFields.csp, csp, w).toString());
                 return cid0;
             });
         });
@@ -359,31 +361,29 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
 
         );
 
-        return new ClientWiredStatelessChronicleSet<>(channelName, hub, cid, conumer, "/" +
-                channelName + "?view=entrySet");
+        return new ClientWiredStatelessChronicleSet<>(channelName, hub, cid, conumer, csp.toString());
     }
 
     @NotNull
     public Set<K> keySet() {
+
+        final StringBuilder csp = Wires.acquireStringBuilder();
+
         long cid = proxyReturnWireConsumer(keySet, read -> {
-            final long[] cidRef = new long[1];
-            final StringBuilder type = Wires.acquireStringBuilder();
+
+            final StringBuilder type = Wires.acquireAnotherStringBuilder(csp);
 
             read.type(type);
-            read.marshallable(w -> {
+            return read.applyToMarshallable(w -> {
 
-                final String csp1 = csp(w).toString();
-                final long cid0 = cid(w);
-                cidToCsp.put(cid0, csp1);
-                cidRef[0] = cid0;
+                final long cid0 = CoreFields.cid(w);
+                cidToCsp.put(cid0, stringEvent(CoreFields.csp, csp, w).toString());
+                return cid0;
             });
-            return cidRef[0];
         });
 
         return new ClientWiredStatelessChronicleSet<>(channelName, hub,
-                cid,
-                valueIn -> valueIn.object(kClass),
-                "/" + channelName + "?view=keySet");
+                cid,valueIn -> valueIn.object(kClass),csp.toString());
     }
 
     @SuppressWarnings("SameParameterValue")

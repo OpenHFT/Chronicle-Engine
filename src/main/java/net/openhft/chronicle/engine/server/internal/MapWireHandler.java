@@ -54,15 +54,16 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
 
 
     private static final StringBuilderPool SBP = new StringBuilderPool();
-    private CharSequence csp;
+
     private BiConsumer<ValueOut, V> vToWire;
     private Function<ValueIn, K> wireToK;
     private Function<ValueIn, V> wireToV;
     private RequestContext requestContext;
 
     public void process(@NotNull final Wire in,
-                        @NotNull final Wire out, @NotNull Map<K, V> map,
-                        @NotNull final CharSequence csp, long tid,
+                        @NotNull final Wire out,
+                        @NotNull Map<K, V> map,
+                        long tid,
                         @NotNull final MapHandler<K, V> mapHandler,
                         @NotNull final RequestContext requestContext) throws
             StreamCorruptedException {
@@ -77,7 +78,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
             this.outWire = out;
             this.map = map;
             charSequenceValue = map instanceof ChronicleMap && CharSequence.class == ((ChronicleMap) map).valueClass();
-            this.csp = csp;
+
             this.tid = tid;
             dataConsumer.accept(in);
         } catch (Exception e) {
