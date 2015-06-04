@@ -1,7 +1,6 @@
 package net.openhft.chronicle.map;
 
-
-import net.openhft.chronicle.network.connection.AbstactStatelessClient;
+import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.wire.CoreFields;
 import net.openhft.chronicle.wire.ParameterizeWireKey;
@@ -14,7 +13,7 @@ import java.util.function.Function;
 /**
  * Created by Rob Austin
  */
-public abstract class MapStatelessClient<E extends ParameterizeWireKey> extends AbstactStatelessClient<E> {
+public abstract class MapStatelessClient<E extends ParameterizeWireKey> extends AbstractStatelessClient<E> {
 
     /**
      * @param channelName

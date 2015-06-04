@@ -19,9 +19,15 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.engine.Chassis;
+import net.openhft.chronicle.engine.api.Asset;
+import net.openhft.chronicle.engine.api.RequestContext;
+import net.openhft.chronicle.engine.api.map.MapView;
+import net.openhft.chronicle.engine.api.set.EntrySetView;
+import net.openhft.chronicle.engine.api.set.KeySetView;
+import net.openhft.chronicle.engine.api.set.ValuesView;
 import net.openhft.chronicle.engine.collection.CollectionWireHandler;
 import net.openhft.chronicle.engine.collection.CollectionWireHandlerProcessor;
-import net.openhft.chronicle.engine.map.MapWireHandler;
 import net.openhft.chronicle.network.WireTcpHandler;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
@@ -32,12 +38,12 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.StreamCorruptedException;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static net.openhft.chronicle.core.Jvm.rethrow;
 import static net.openhft.chronicle.core.util.StringUtils.endsWith;
-import static net.openhft.chronicle.engine.server.internal.MapHandler.instance;
 import static net.openhft.chronicle.wire.CoreFields.cid;
 import static net.openhft.chronicle.wire.CoreFields.csp;
 
@@ -48,11 +54,6 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
     private static final Logger LOG = LoggerFactory.getLogger(EngineWireHandler.class);
 
-    public static final String TEXT_WIRE = TextWire.class.getSimpleName();
-    public static final String BINARY_WIRE = BinaryWire.class.getSimpleName();
-    public static final String RAW_WIRE = RawWire.class.getSimpleName();
-
-    private final CharSequence preferredWireType = new StringBuilder(TextWire.class.getSimpleName());
     private final StringBuilder cspText = new StringBuilder();
     private final CollectionWireHandler<byte[], Set<byte[]>> keySetHandler;
 
@@ -61,11 +62,12 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private final Map<Long, String> cidToCsp;
 
     private final MapWireHandler mapWireHandler;
-    private final CollectionWireHandler<Map.Entry<byte[], byte[]>, Set<Map.Entry<byte[], byte[]>>> entrySetHandler;
+    private final CollectionWireHandler<Entry<byte[], byte[]>, Set<Entry<byte[], byte[]>>> entrySetHandler;
     private final CollectionWireHandler<byte[], Collection<byte[]>> valuesHander;
     private MapHandler mapHandler;
-    private Map map;
+
     private final Consumer<WireIn> metaDataConsumer;
+    private Class viewType;
 
     public EngineWireHandler(@NotNull final Map<Long, String> cidToCsp,
                              @NotNull final Function<Bytes, Wire> byteToWire)
@@ -103,6 +105,8 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     StringBuilder lastCsp;
     final StringBuilder eventName = new StringBuilder();
 
+    Object view;
+
     @NotNull
     private Consumer<WireIn> getWireInConsumer() throws IOException {
         return (metaDataWire) -> {
@@ -114,37 +118,24 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                     lastCsp = cspText;
                     serviceName = serviceName(cspText);
 
-   /*                 WireParser parser = new VanillaWireParser();
-                    parser.register(() -> "view", v -> v.text((Consumer<StringBuilder>) new Con
-                            EngineWireHandler.this.view));
-
                     final RequestContext requestContext = RequestContext.requestContext(cspText);
-
                     final Asset asset = Chassis.acquireAsset(requestContext);
-                    final Object view = asset.acquireView(requestContext);
 
-                    final Class viewType = requestContext.viewType();
+                    view = asset.acquireView(requestContext);
+                    viewType = requestContext.viewType();
 
-                    if (MapView.class == viewType) {
-
-                    }
-
-                    if (view instanceof EntrySetView) {
-                    }
-
-                    if (view instanceof EntrySetView) {
-                    }*/
-
-                    if (endsWith(cspText, "?view=map") ||
-                            endsWith(cspText, "?view=entrySet") ||
-                            endsWith(cspText, "?view=keySet") ||
-                            endsWith(cspText, "?view=values"))
-                        mapHandler = instance(cspText);
+                    requestContext.keyType();
+                    if (viewType == MapView.class ||
+                            viewType == EntrySetView.class ||
+                            viewType == ValuesView.class ||
+                            viewType == KeySetView.class)
+                        mapHandler = new GenericMapHandler(
+                                requestContext.keyType(),
+                                requestContext.valueType());
                     else
-                        mapHandler = null;
+                        throw new UnsupportedOperationException("unspported view type");
 
 
-                    map = mapHandler.getMap(serviceName);
                 }
             } catch (Exception e) {
                 rethrow(e);
@@ -173,25 +164,29 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
             try {
 
                 if (mapHandler != null) {
-                    if (endsWith(cspText, "?view=map")) {
-                        mapWireHandler.process(in, out, map, cspText, tid, mapHandler);
+
+                    if (viewType == MapView.class) {
+                        mapWireHandler.process(in, out, (MapView) view, cspText, tid, mapHandler);
                         return;
                     }
 
-                    if (endsWith(cspText, "?view=entrySet")) {
-                        entrySetHandler.process(in, out, map.entrySet(), cspText, mapHandler.getEntryToWire(),
+                    if (viewType == EntrySetView.class) {
+                        entrySetHandler.process(in, out, (EntrySetView) view, cspText,
+                                mapHandler.getEntryToWire(),
                                 mapHandler.getWireToEntry(), HashSet::new, tid);
                         return;
                     }
 
-                    if (endsWith(cspText, "?view=keySet")) {
-                        keySetHandler.process(in, out, map.keySet(), cspText, mapHandler.getKeyToWire(),
+                    if (viewType == KeySetView.class) {
+                        keySetHandler.process(in, out, (KeySetView) view, cspText,
+                                mapHandler.getKeyToWire(),
                                 mapHandler.getWireToKey(), HashSet::new, tid);
                         return;
                     }
 
-                    if (endsWith(cspText, "?view=values")) {
-                        valuesHander.process(in, out, map.values(), cspText, mapHandler.getKeyToWire(),
+                    if (viewType == ValuesView.class) {
+                        valuesHander.process(in, out, (ValuesView) view, cspText,
+                                mapHandler.getKeyToWire(),
                                 mapHandler.getWireToKey(), ArrayList::new, tid);
                         return;
                     }
@@ -246,19 +241,6 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                 hash != -1 && hash < (cspText.length() - 1))
                 ? cspText.substring(slash + 1, hash)
                 : "";
-    }
-
-    protected Wire createWriteFor(Bytes bytes) {
-        if (TEXT_WIRE.contentEquals(preferredWireType))
-            return new TextWire(bytes);
-
-        if (BINARY_WIRE.contentEquals(preferredWireType))
-            return new BinaryWire(bytes);
-
-        if (RAW_WIRE.contentEquals(preferredWireType))
-            return new RawWire(bytes);
-
-        throw new IllegalStateException("preferredWireType=" + preferredWireType + " is not supported.");
     }
 
     @Override

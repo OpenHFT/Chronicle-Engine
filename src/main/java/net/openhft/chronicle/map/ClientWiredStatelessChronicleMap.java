@@ -32,8 +32,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static java.util.Collections.emptyList;
-import static net.openhft.chronicle.engine.map.MapWireHandler.EventId;
-import static net.openhft.chronicle.engine.map.MapWireHandler.EventId.*;
+import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId;
+import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.*;
 import static net.openhft.chronicle.map.VanillaChronicleMap.newInstance;
 import static net.openhft.chronicle.wire.CoreFields.cid;
 import static net.openhft.chronicle.wire.CoreFields.csp;
@@ -56,7 +56,8 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
             @NotNull final Class<V> vClass,
             @NotNull final String channelName,
             @NotNull final ClientWiredStatelessTcpConnectionHub hub) {
-        super(channelName, hub, "MAP", 0);
+        super(channelName, hub, "map&keyType=" + kClass.getSimpleName() + "&valueType=" + vClass
+                .getSimpleName(), 0);
         this.putReturnsNull = config.putReturnsNull();
         this.removeReturnsNull = config.removeReturnsNull();
         this.kClass = kClass;

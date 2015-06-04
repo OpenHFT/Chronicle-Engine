@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package net.openhft.chronicle.engine.map;
+package net.openhft.chronicle.engine.server.internal;
 
 /**
  * Created by Rob Austin
@@ -41,8 +41,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static net.openhft.chronicle.engine.map.MapWireHandler.EventId.*;
-import static net.openhft.chronicle.engine.map.MapWireHandler.Params.*;
+import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.*;
+import static net.openhft.chronicle.engine.server.internal.MapWireHandler.Params.*;
 import static net.openhft.chronicle.wire.CoreFields.reply;
 import static net.openhft.chronicle.wire.Wires.acquireStringBuilder;
 import static net.openhft.chronicle.wire.WriteMarshallable.EMPTY;
@@ -62,11 +62,11 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
     public void process(@NotNull final Wire in,
                         @NotNull final Wire out, @NotNull Map<K, V> map,
                         @NotNull final CharSequence csp, long tid,
-                        @NotNull final MapHandlerFunction<K, V> mapHandlerFunction) throws StreamCorruptedException {
+                        @NotNull final MapHandler<K, V> mapHandler) throws StreamCorruptedException {
 
-        this.vToWire = mapHandlerFunction.getValueToWire();
-        this.wireToK = mapHandlerFunction.getWireToKey();
-        this.wireToV = mapHandlerFunction.getWireToValue();
+        this.vToWire = mapHandler.getValueToWire();
+        this.wireToK = mapHandler.getWireToKey();
+        this.wireToV = mapHandler.getWireToValue();
 
         try {
             this.inWire = in;

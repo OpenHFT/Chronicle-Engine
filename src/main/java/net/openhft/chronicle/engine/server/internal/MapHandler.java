@@ -1,27 +1,42 @@
+/*
+ * Copyright 2014 Higher Frequency Trading
+ *
+ * http://www.higherfrequencytrading.com
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package net.openhft.chronicle.engine.server.internal;
 
-import net.openhft.chronicle.engine.map.MapHandlerFunction;
-import net.openhft.chronicle.engine.Chassis;
+import net.openhft.chronicle.wire.ValueIn;
+import net.openhft.chronicle.wire.ValueOut;
 
-import java.io.IOException;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
-/**
- * Created by daniel on 06/05/15.
- */
-public interface MapHandler<K, V> extends MapHandlerFunction<K, V> {
+public interface MapHandler<K, V> {
 
-    MapHandler STRING_CHAR_SEQUENCE_MAP_HANDLER = new StringCharSequenceMapHandler((
-            serviceName)
-            -> Chassis.acquireMap(serviceName, String.class, CharSequence.class));
+    BiConsumer<ValueOut, K> getKeyToWire();
 
-    MapHandler STRING_STING_SEQUENCE_MAP_HANDLER = new StringStringMapHandler((
-            serviceName) -> Chassis.acquireMap(serviceName, String.class, String.class));
+    Function<ValueIn, K> getWireToKey();
 
-    static MapHandler instance(CharSequence csp) {
-        return STRING_STING_SEQUENCE_MAP_HANDLER;
-    }
+    BiConsumer<ValueOut, V> getValueToWire();
 
-    Map<K, V> getMap(String serviceName) throws IOException;
+    Function<ValueIn, V> getWireToValue();
+
+    BiConsumer<ValueOut, Map.Entry<K, V>> getEntryToWire();
+
+    Function<ValueIn, Map.Entry<K, V>> getWireToEntry();
 
 }
