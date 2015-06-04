@@ -24,9 +24,8 @@ public class ClientWiredStatelessChronicleCollection<U, E extends Collection<U>>
                                                    @NotNull final ClientWiredStatelessTcpConnectionHub hub,
                                                    final long cid,
                                                    @NotNull final Function<ValueIn, U> wireToSet,
-                                                   @NotNull final String type,
-                                                   @NotNull Supplier<E> factory) {
-        super(channelName, hub, type, cid);
+                                                   @NotNull Supplier<E> factory, String csp) {
+        super(channelName, hub, cid, csp);
         this.consumer = wireToSet;
         this.factory = factory;
     }

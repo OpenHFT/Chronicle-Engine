@@ -14,8 +14,7 @@ public class ClientWiredStatelessChronicleSet<U> extends
     public ClientWiredStatelessChronicleSet(@NotNull String channelName,
                                             @NotNull ClientWiredStatelessTcpConnectionHub hub,
                                             long cid,
-                                            @NotNull Function<ValueIn, U> wireToSet,
-                                            @NotNull String type) {
-        super(channelName, hub, cid, wireToSet, type, HashSet::new);
+                                            @NotNull Function<ValueIn, U> wireToSet, String csp) {
+        super(channelName, hub, cid, wireToSet, HashSet::new, csp);
     }
 }

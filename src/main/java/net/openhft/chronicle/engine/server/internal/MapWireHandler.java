@@ -25,6 +25,7 @@ package net.openhft.chronicle.engine.server.internal;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.StringBuilderPool;
+import net.openhft.chronicle.engine.api.RequestContext;
 import net.openhft.chronicle.engine.collection.CollectionWireHandlerProcessor;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.wire.*;
@@ -44,7 +45,6 @@ import java.util.function.Function;
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.*;
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.Params.*;
 import static net.openhft.chronicle.wire.CoreFields.reply;
-import static net.openhft.chronicle.wire.Wires.acquireStringBuilder;
 import static net.openhft.chronicle.wire.WriteMarshallable.EMPTY;
 
 /**
@@ -58,15 +58,19 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
     private BiConsumer<ValueOut, V> vToWire;
     private Function<ValueIn, K> wireToK;
     private Function<ValueIn, V> wireToV;
+    private RequestContext requestContext;
 
     public void process(@NotNull final Wire in,
                         @NotNull final Wire out, @NotNull Map<K, V> map,
                         @NotNull final CharSequence csp, long tid,
-                        @NotNull final MapHandler<K, V> mapHandler) throws StreamCorruptedException {
+                        @NotNull final MapHandler<K, V> mapHandler,
+                        @NotNull final RequestContext requestContext) throws
+            StreamCorruptedException {
 
         this.vToWire = mapHandler.getValueToWire();
         this.wireToK = mapHandler.getWireToKey();
         this.wireToV = mapHandler.getWireToValue();
+        this.requestContext = requestContext;
 
         try {
             this.inWire = in;
@@ -114,7 +118,8 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
         putMapped,
         keyBuilder,
         valueBuilder,
-        remoteIdentifier;
+        remoteIdentifier,
+        numberOfSegments;
 
         private final WireKey[] params;
 
@@ -361,6 +366,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                         return;
                     }
 
+
                     throw new IllegalStateException("unsupported event=" + eventName);
                 });
             } catch (Exception e) {
@@ -388,16 +394,26 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
             throw new NullPointerException();
     }
 
+    final StringBuilder cpsBuff = new StringBuilder();
+
     private void createProxy(final String type) {
         outWire.writeEventName(reply).type("set-proxy").writeValue()
                 .marshallable(w -> {
-                    CharSequence root = csp.subSequence(0, csp.length() - "map".length());
 
-                    final StringBuilder csp = acquireStringBuilder()
-                            .append(root).append(type);
 
-                    w.writeEventName(CoreFields.csp).text(csp);
-                    w.writeEventName(CoreFields.cid).int64(createCid(csp));
+                    cpsBuff.setLength(0);
+                    cpsBuff.append("/").append(requestContext.name());
+                    cpsBuff.append("?");
+                    cpsBuff.append("view=").append(type);
+                    cpsBuff.append("&");
+                    cpsBuff.append("keyType=").append(requestContext.keyType().getSimpleName());
+                    cpsBuff.append("&");
+                    cpsBuff.append("valueType=").append(requestContext.valueType().getSimpleName());
+
+                    // todo add more fields
+
+                    w.writeEventName(CoreFields.csp).text(cpsBuff);
+                    w.writeEventName(CoreFields.cid).int64(createCid(cpsBuff));
                 });
     }
 

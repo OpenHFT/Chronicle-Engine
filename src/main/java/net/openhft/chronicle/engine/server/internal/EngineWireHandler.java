@@ -67,7 +67,8 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private MapHandler mapHandler;
 
     private final Consumer<WireIn> metaDataConsumer;
-    private Class viewType;
+
+    private RequestContext requestContext;
 
     public EngineWireHandler(@NotNull final Map<Long, String> cidToCsp,
                              @NotNull final Function<Bytes, Wire> byteToWire)
@@ -99,10 +100,10 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
         }
     }
 
-    private String serviceName;
+
     private long tid;
 
-    StringBuilder lastCsp;
+    final StringBuilder lastCsp = new StringBuilder();
     final StringBuilder eventName = new StringBuilder();
 
     Object view;
@@ -114,21 +115,20 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
             try {
                 readCsp(metaDataWire);
                 readTid(metaDataWire);
-                if (!cspText.equals(lastCsp)) {
-                    lastCsp = cspText;
-                    serviceName = serviceName(cspText);
+                if (hasCspChanged(cspText)) {
 
-                    final RequestContext requestContext = RequestContext.requestContext(cspText);
+                    requestContext = RequestContext.requestContext(cspText);
                     final Asset asset = Chassis.acquireAsset(requestContext);
 
                     view = asset.acquireView(requestContext);
-                    viewType = requestContext.viewType();
 
                     requestContext.keyType();
+                    final Class viewType = requestContext.viewType();
                     if (viewType == MapView.class ||
                             viewType == EntrySetView.class ||
                             viewType == ValuesView.class ||
                             viewType == KeySetView.class)
+
                         mapHandler = new GenericMapHandler(
                                 requestContext.keyType(),
                                 requestContext.valueType());
@@ -141,6 +141,18 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                 rethrow(e);
             }
         };
+    }
+
+    private boolean hasCspChanged(final StringBuilder cspText) {
+        boolean result = !cspText.equals(lastCsp);
+
+        // if it has changed remember what it changed to, for next time this method is called.
+        if (result) {
+            lastCsp.setLength(0);
+            lastCsp.append(cspText);
+        }
+
+        return result;
     }
 
     private void readTid(WireIn metaDataWire) {
@@ -165,8 +177,9 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
                 if (mapHandler != null) {
 
+                    final Class viewType = requestContext.viewType();
                     if (viewType == MapView.class) {
-                        mapWireHandler.process(in, out, (MapView) view, cspText, tid, mapHandler);
+                        mapWireHandler.process(in, out, (MapView) view, cspText, tid, mapHandler, requestContext);
                         return;
                     }
 
@@ -221,6 +234,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private void readCsp(@NotNull final WireIn wireIn) {
         final StringBuilder keyName = Wires.acquireStringBuilder();
 
+        cspText.setLength(0);
         final ValueIn read = wireIn.readEventName(keyName);
         if (csp.contentEquals(keyName)) {
             read.textTo(cspText);
@@ -228,7 +242,6 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
         } else if (cid.contentEquals(keyName)) {
             final long cid = read.int64();
             final CharSequence s = cidToCsp.get(cid);
-            cspText.setLength(0);
             cspText.append(s);
         }
     }

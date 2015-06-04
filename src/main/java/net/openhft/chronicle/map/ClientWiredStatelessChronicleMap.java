@@ -56,8 +56,8 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
             @NotNull final Class<V> vClass,
             @NotNull final String channelName,
             @NotNull final ClientWiredStatelessTcpConnectionHub hub) {
-        super(channelName, hub, "map&keyType=" + kClass.getSimpleName() + "&valueType=" + vClass
-                .getSimpleName(), 0);
+        super(channelName, hub, 0, "/" + channelName + "?view=" + "map&keyType=" + kClass.getSimpleName() + "&valueType=" + vClass
+                .getSimpleName());
         this.putReturnsNull = config.putReturnsNull();
         this.removeReturnsNull = config.removeReturnsNull();
         this.kClass = kClass;
@@ -313,7 +313,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
         final Function<ValueIn, V> conumer = valueIn -> valueIn.object(vClass);
 
         return new ClientWiredStatelessChronicleCollection<>(channelName, hub, cid, conumer,
-                "values", ArrayList::new);
+                ArrayList::new, "/" + channelName + "?view=" + "values");
     }
 
     private final Map<Long, String> cidToCsp = new HashMap<>();
@@ -359,7 +359,8 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
 
         );
 
-        return new ClientWiredStatelessChronicleSet<>(channelName, hub, cid, conumer, "entrySet");
+        return new ClientWiredStatelessChronicleSet<>(channelName, hub, cid, conumer, "/" +
+                channelName + "?view=entrySet");
     }
 
     @NotNull
@@ -382,7 +383,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
         return new ClientWiredStatelessChronicleSet<>(channelName, hub,
                 cid,
                 valueIn -> valueIn.object(kClass),
-                "keySet");
+                "/" + channelName + "?view=keySet");
     }
 
     @SuppressWarnings("SameParameterValue")

@@ -18,14 +18,13 @@ public abstract class MapStatelessClient<E extends ParameterizeWireKey> extends 
     /**
      * @param channelName
      * @param hub
-     * @param type        the type of wire handler for example "MAP" or "QUEUE"
      * @param cid         used by proxies such as the entry-set
+     * @param csp
      */
     public MapStatelessClient(@NotNull String channelName,
                               @NotNull ClientWiredStatelessTcpConnectionHub hub,
-                              @NotNull String type,
-                              long cid) {
-        super(channelName, hub, type, cid);
+                              long cid, String csp) {
+        super(channelName, hub, cid, csp);
 
     }
 
