@@ -18,7 +18,7 @@
 package net.openhft.chronicle.engine.server;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
+
 import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
 import net.openhft.chronicle.network.AcceptorEventHandler;
 import net.openhft.chronicle.network.event.EventGroup;
@@ -45,20 +45,13 @@ public class ServerEndpoint implements Closeable {
 
     private AcceptorEventHandler eah;
 
-    private ChronicleEngine chronicleEngine;
-
-    public ServerEndpoint(byte localIdentifier,
-                          @NotNull final Function<Bytes, Wire> wireType) throws IOException {
-        this(0, localIdentifier, wireType);
+    public ServerEndpoint(@NotNull final Function<Bytes, Wire> wireType) throws IOException {
+        this(0, wireType);
     }
 
     public ServerEndpoint(int port,
-                          byte localIdentifier,
                           @NotNull final Function<Bytes, Wire> wireType) throws IOException {
-
-        this.chronicleEngine = chronicleEngine;
         this.wireType = wireType;
-
         start(port);
     }
 

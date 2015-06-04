@@ -21,7 +21,7 @@ package net.openhft.chronicle.engine;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.NativeBytes;
 import net.openhft.chronicle.engine.client.RemoteTcpClientChronicleContext;
-import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
+
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
@@ -107,15 +107,8 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     private void testStrings(int noPutsAndGets, int valueLength, Function<Bytes, Wire> wireType) throws IOException {
 
         // sever
-        ChronicleEngine chronicleEngine = new ChronicleEngine();
-        chronicleEngine.setMap("test", ChronicleMapBuilder
-                .of(String.class, CharSequence.class)
-                .entries(noPutsAndGets)
-                .averageKeySize(16)
-                .actualChunkSize(valueLength + 16)
-                .putReturnsNull(true)
-                .create());
-        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, wireType)) {
+
+        try (final ServerEndpoint serverEndpoint = new ServerEndpoint(wireType)) {
             int serverPort = serverEndpoint.getPort();
 
             //client
@@ -169,7 +162,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     @Test(timeout = 100000)
     public void testMarshable() throws Exception {
         // sever
-        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, TextWire::new)) {
+        try (final ServerEndpoint serverEndpoint = new ServerEndpoint(TextWire::new)) {
             int serverPort = serverEndpoint.getPort();
 
             //client
@@ -203,7 +196,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     @Test(timeout = 100000)
     public void testPut() throws Exception {
         // sever
-        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, TextWire::new)) {
+        try (final ServerEndpoint serverEndpoint = new ServerEndpoint(TextWire::new)) {
             int serverPort = serverEndpoint.getPort();
 
             //client
@@ -223,7 +216,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     @Test
     public void testFPKMap() throws Exception {
         // sever
-        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, TextWire::new)) {
+        try (final ServerEndpoint serverEndpoint = new ServerEndpoint(TextWire::new)) {
             int serverPort = serverEndpoint.getPort();
 
             //client
@@ -242,7 +235,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     public void test2MBEntries() throws Exception {
 
         // server
-        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, TextWire::new)) {
+        try (final ServerEndpoint serverEndpoint = new ServerEndpoint(TextWire::new)) {
             int serverPort = serverEndpoint.getPort();
 
             //client

@@ -1,6 +1,4 @@
 
-
-import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.wire.BinaryWire;
 
@@ -11,10 +9,10 @@ import java.io.IOException;
  */
 public class BinaryWireMain {
     public static void main(String[] args) {
-        ChronicleEngine chronicleEngine = new ChronicleEngine();
+
         try {
             int port = 8088;
-            final ServerEndpoint serverEndpoint = new ServerEndpoint(port, (byte) 1, BinaryWire::new);
+            final ServerEndpoint serverEndpoint = new ServerEndpoint(port, BinaryWire::new);
 
             System.out.println("Server port seems to be " + serverEndpoint.getPort());
             while (true) {

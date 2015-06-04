@@ -196,7 +196,7 @@ public class MapClientTest extends ThreadMonitoringTest {
                                  @NotNull final Class<V> vClass,
                                  @NotNull final Function<Bytes, Wire> wireType) throws IOException {
 
-            serverEndpoint = new ServerEndpoint((byte) 1, wireType);
+            serverEndpoint = new ServerEndpoint(wireType);
             int serverPort = serverEndpoint.getPort();
 
             context = new RemoteTcpClientChronicleContext("localhost", serverPort, (byte) 2, wireType);
