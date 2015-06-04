@@ -20,11 +20,10 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.NativeBytes;
-import net.openhft.chronicle.engine.client.RemoteTcpClientChronicleContext;
+import net.openhft.chronicle.engine.client.RemoteChassis;
 
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.wire.*;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -112,10 +111,10 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
             int serverPort = serverEndpoint.getPort();
 
             //client
-            try (final RemoteTcpClientChronicleContext remoteContext = new
-                    RemoteTcpClientChronicleContext(
+            try (final RemoteChassis remoteContext = new
+                    RemoteChassis(
                     "localhost", serverPort, (byte) 2, wireType)) {
-                final ChronicleMap<String, CharSequence> test = remoteContext.getMap("test",
+                final ChronicleMap<String, CharSequence> test = remoteContext.acquireMap("test",
                         String.class, CharSequence.class);
 
                 Bytes bytes = NativeBytes.nativeBytes(valueLength);
@@ -166,14 +165,14 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
             int serverPort = serverEndpoint.getPort();
 
             //client
-            try (final RemoteTcpClientChronicleContext context = new RemoteTcpClientChronicleContext(
+            try (final RemoteChassis context = new RemoteChassis(
                     "localhost", serverPort, (byte) 2, TextWire::new)) {
-                try (ChronicleMap<MyMarshallable, Long> numbers = context.getMap
+                try (ChronicleMap<MyMarshallable, Long> numbers = context.acquireMap
                         ("marshallable-keys", MyMarshallable.class, Long.class)) {
                     numbers.clear();
                 }
 
-                try (ChronicleMap<MyMarshallable, Long> numbers = context.getMap
+                try (ChronicleMap<MyMarshallable, Long> numbers = context.acquireMap
                         ("marshallable-keys", MyMarshallable.class, Long.class)) {
                     MyMarshallable key1 = new MyMarshallable("key1");
                     MyMarshallable key2 = new MyMarshallable("key2");
@@ -181,7 +180,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
                     numbers.put(key2, 2L);
                 }
 
-                try (ChronicleMap<MyMarshallable, Long> numbers = context.getMap
+                try (ChronicleMap<MyMarshallable, Long> numbers = context.acquireMap
                         ("marshallable-keys", MyMarshallable.class, Long.class)) {
                     MyMarshallable key1 = new MyMarshallable("key1");
                     MyMarshallable key2 = new MyMarshallable("key2");
@@ -200,10 +199,10 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
             int serverPort = serverEndpoint.getPort();
 
             //client
-            try (final RemoteTcpClientChronicleContext context = new RemoteTcpClientChronicleContext(
+            try (final RemoteChassis context = new RemoteChassis(
                     "localhost", serverPort, (byte) 2, TextWire::new)) {
                 // test using Marshallable Keys
-                try (ChronicleMap<String, String> map = context.getMap
+                try (ChronicleMap<String, String> map = context.acquireMap
                         ("test", String.class, String.class)) {
                     map.put("hello", "world");
 
@@ -220,9 +219,9 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
             int serverPort = serverEndpoint.getPort();
 
             //client
-            try (final RemoteTcpClientChronicleContext context = new RemoteTcpClientChronicleContext(
+            try (final RemoteChassis context = new RemoteChassis(
                     "localhost", serverPort, (byte) 2, TextWire::new)) {
-                try (ChronicleMap<String, String> map = context.getMap
+                try (ChronicleMap<String, String> map = context.acquireMap
                         ("filetest", String.class, String.class)) {
                     map.put("hello", "world");
                     System.out.println(map.get("hello"));
@@ -239,7 +238,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
             int serverPort = serverEndpoint.getPort();
 
             //client
-            try (final RemoteTcpClientChronicleContext context = new RemoteTcpClientChronicleContext(
+            try (final RemoteChassis context = new RemoteChassis(
                     "localhost", serverPort, (byte) 2, TextWire::new)) {
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < 50_000; i++) {
@@ -248,7 +247,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
                 String value = sb.toString();
                 long time = System.currentTimeMillis();
-                try (ChronicleMap<String, String> map = context.getMap
+                try (ChronicleMap<String, String> map = context.acquireMap
                         ("test", String.class, String.class)) {
                     for (int i = 0; i < 2_000; i++) {
                         map.put("largeEntry", value);

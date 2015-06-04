@@ -20,7 +20,7 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
-import net.openhft.chronicle.engine.client.RemoteTcpClientChronicleContext;
+import net.openhft.chronicle.engine.client.RemoteChassis;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine2.Chassis;
 import net.openhft.chronicle.map.ChronicleMap;
@@ -190,7 +190,7 @@ public class MapClientTest extends ThreadMonitoringTest {
 
         final ServerEndpoint serverEndpoint;
         private final ChronicleMap<K, V> map;
-        private final RemoteTcpClientChronicleContext context;
+        private final RemoteChassis context;
 
         public RemoteMapSupplier(@NotNull final Class<K> kClass,
                                  @NotNull final Class<V> vClass,
@@ -199,8 +199,8 @@ public class MapClientTest extends ThreadMonitoringTest {
             serverEndpoint = new ServerEndpoint(wireType);
             int serverPort = serverEndpoint.getPort();
 
-            context = new RemoteTcpClientChronicleContext("localhost", serverPort, (byte) 2, wireType);
-            map = context.getMap("test" + i++, kClass, vClass);
+            context = new RemoteChassis("localhost", serverPort, (byte) 2, wireType);
+            map = context.acquireMap("test" + i++, kClass, vClass);
         }
 
         @Override
