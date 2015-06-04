@@ -36,7 +36,9 @@ public class ChronicleMapKeyValueStoreTest {
         Function<Bytes, Wire> writeType = TextWire::new;
 
         viewTypeLayersOn(MapView.class, "map directly to KeyValueStore", KeyValueStore.class);
-        registerFactory("", KeyValueStore.class, (context, asset, underlyingSupplier) -> new ChronicleMapKeyValueStore(context.wireType(writeType), asset));
+
+        registerFactory("", KeyValueStore.class, (context, asset, underlyingSupplier) ->
+                new ChronicleMapKeyValueStore(context.wireType(writeType).basePath("/tmp"), asset));
 
         map = acquireMap(NAME, String.class, Factor.class);
         KeyValueStore mapU = ((VanillaMapView) map).underlying();

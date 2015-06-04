@@ -52,7 +52,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         }
         if(basePath!=null) {
             try {
-                builder.createPersistedTo(new File(basePath));
+                builder.createPersistedTo(new File(basePath + "/" + context.name()));
             } catch (IOException e) {
                 throw new IORuntimeException(e);
             }
