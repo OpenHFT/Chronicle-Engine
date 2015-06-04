@@ -19,7 +19,6 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.engine.collection.CollectionWireHandler;
 import net.openhft.chronicle.engine.collection.CollectionWireHandlerProcessor;
 import net.openhft.chronicle.engine.map.MapWireHandler;
@@ -61,8 +60,6 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private final WireHandler queueWireHandler;
     private final Map<Long, String> cidToCsp;
 
-    @NotNull
-    private final ChronicleEngine chronicleEngine;
     private final MapWireHandler mapWireHandler;
     private final CollectionWireHandler<Map.Entry<byte[], byte[]>, Set<Map.Entry<byte[], byte[]>>> entrySetHandler;
     private final CollectionWireHandler<byte[], Collection<byte[]>> valuesHander;
@@ -71,7 +68,6 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private final Consumer<WireIn> metaDataConsumer;
 
     public EngineWireHandler(@NotNull final Map<Long, String> cidToCsp,
-                             @NotNull final ChronicleEngine chronicleEngine,
                              @NotNull final Function<Bytes, Wire> byteToWire)
             throws IOException {
 
@@ -81,7 +77,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
         this.keySetHandler = new CollectionWireHandlerProcessor<>();
         this.queueWireHandler = null;
         this.cidToCsp = cidToCsp;
-        this.chronicleEngine = chronicleEngine;
+
         this.entrySetHandler = new CollectionWireHandlerProcessor<>();
         this.valuesHander = new CollectionWireHandlerProcessor<>();
         this.metaDataConsumer = getWireInConsumer();
@@ -126,7 +122,8 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                     else
                         mapHandler = null;
 
-                    map = mapHandler.getMap(chronicleEngine, serviceName);
+
+                    map = mapHandler.getMap(serviceName);
                 }
             } catch (Exception e) {
                 rethrow(e);

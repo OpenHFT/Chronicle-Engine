@@ -2,22 +2,21 @@ package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.NativeBytes;
-import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.ValueOut;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public class StringISO8859MapHandler implements MapHandler<String, Bytes> {
 
-    private final BiFunction<ChronicleEngine, String, Map> supplier;
+    private final Function<String, Map> supplier;
 
-    StringISO8859MapHandler(@NotNull BiFunction<ChronicleEngine, String, Map> supplier) {
+    StringISO8859MapHandler(@NotNull Function<String, Map> supplier) {
         this.supplier = supplier;
     }
 
@@ -34,7 +33,7 @@ public class StringISO8859MapHandler implements MapHandler<String, Bytes> {
         return inBytes;
     };
 
-    private final BiConsumer<ValueOut, Map.Entry<String, Bytes>> entryToWire
+    private final BiConsumer<ValueOut,Entry<String, Bytes>> entryToWire
             = (v, e) -> {
         v.marshallable(w -> {
             w.write(() -> "key").object(e.getKey())
@@ -42,14 +41,14 @@ public class StringISO8859MapHandler implements MapHandler<String, Bytes> {
         });
     };
 
-    private final Function<ValueIn, Map.Entry<String, Bytes>> wireToEntry
+    private final Function<ValueIn,Entry<String, Bytes>> wireToEntry
             = valueIn -> valueIn.applyToMarshallable(x -> {
 
         final String key = x.read(() -> "key").object(String.class);
         x.read(() -> "value").textTo(inBytes);
         inBytes.flip();
 
-        return new Map.Entry<String, Bytes>() {
+        return new Entry<String, Bytes>() {
             @Override
             public String getKey() {
                 return key;
@@ -83,17 +82,17 @@ public class StringISO8859MapHandler implements MapHandler<String, Bytes> {
         return wireToValue;
     }
 
-    public BiConsumer<ValueOut, Map.Entry<String, Bytes>> getEntryToWire() {
+    public BiConsumer<ValueOut, Entry<String, Bytes>> getEntryToWire() {
         return entryToWire;
     }
 
-    public Function<ValueIn, Map.Entry<String, Bytes>> getWireToEntry() {
+    public Function<ValueIn, Entry<String, Bytes>> getWireToEntry() {
         return wireToEntry;
     }
 
     @Override
-    public Map getMap(ChronicleEngine engine, String serviceName) throws IOException {
-        return supplier.apply(engine, serviceName);
+    public Map getMap(String serviceName) throws IOException {
+        return supplier.apply(serviceName);
     }
 
     @Override

@@ -21,8 +21,8 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.client.RemoteTcpClientChronicleContext;
-import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
+import net.openhft.chronicle.engine2.Chassis;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
@@ -159,6 +159,16 @@ public class MapClientTest extends ThreadMonitoringTest {
     }
 
     @Test
+    public void testStringString() throws IOException, InterruptedException {
+
+        supplyMap(String.class, String.class, mapProxy -> {
+            mapProxy.put("hello", "world");
+            Assert.assertEquals("world", mapProxy.get("hello"));
+            assertEquals(1, mapProxy.size());
+        });
+    }
+
+    @Test
     public void testToString() throws IOException, InterruptedException {
 
         supplyMap(Integer.class, String.class, mapProxy -> {
@@ -176,7 +186,7 @@ public class MapClientTest extends ThreadMonitoringTest {
     public interface CloseableSupplier<X> extends Closeable, Supplier<X> {
     }
 
-    public static class RemoteMapSupplier<K, V> implements CloseableSupplier<ChronicleMap<K, V>> {
+    public static class RemoteMapSupplier<K, V> implements CloseableSupplier<ConcurrentMap<K, V>> {
 
         final ServerEndpoint serverEndpoint;
         private final ChronicleMap<K, V> map;
@@ -184,14 +194,13 @@ public class MapClientTest extends ThreadMonitoringTest {
 
         public RemoteMapSupplier(@NotNull final Class<K> kClass,
                                  @NotNull final Class<V> vClass,
-                                 @NotNull final ChronicleEngine chronicleEngine,
                                  @NotNull final Function<Bytes, Wire> wireType) throws IOException {
 
-            serverEndpoint = new ServerEndpoint((byte) 1, chronicleEngine, wireType);
+            serverEndpoint = new ServerEndpoint((byte) 1, wireType);
             int serverPort = serverEndpoint.getPort();
 
             context = new RemoteTcpClientChronicleContext("localhost", serverPort, (byte) 2, wireType);
-            map = context.getMap("test", kClass, vClass);
+            map = context.getMap("test" + i++, kClass, vClass);
         }
 
         @Override
@@ -209,23 +218,23 @@ public class MapClientTest extends ThreadMonitoringTest {
 
     }
 
-    public static class LocalMapSupplier<K, V> implements CloseableSupplier<ChronicleMap<K, V>> {
+    public static int i;
 
-        private final ChronicleMap<K, V> map;
-        private final ChronicleEngine context;
+    public static class LocalMapSupplier<K, V> implements CloseableSupplier<ConcurrentMap<K, V>> {
+
+        private final ConcurrentMap<K, V> map;
 
         public LocalMapSupplier(Class<K> kClass, Class<V> vClass) throws IOException {
-            context = new ChronicleEngine();
-            map = context.getMap("test", kClass, vClass);
+            map = Chassis.acquireMap("test" + i++, kClass, vClass);
         }
 
         @Override
         public void close() throws IOException {
-            context.close();
+            //    context.close();
         }
 
         @Override
-        public ChronicleMap<K, V> get() {
+        public ConcurrentMap<K, V> get() {
             return map;
         }
 
@@ -238,12 +247,12 @@ public class MapClientTest extends ThreadMonitoringTest {
     void supplyMap(Class<K> kClass, Class<V> vClass, Consumer<ConcurrentMap<K, V>> c)
             throws IOException {
 
-        CloseableSupplier<ChronicleMap<K, V>> result;
+        CloseableSupplier<ConcurrentMap<K, V>> result;
         if (LocalMapSupplier.class.equals(supplier)) {
             result = new LocalMapSupplier<K, V>(kClass, vClass);
 
         } else if (RemoteMapSupplier.class.equals(supplier)) {
-            result = new RemoteMapSupplier<K, V>(kClass, vClass, new ChronicleEngine(), TextWire::new);
+            result = new RemoteMapSupplier<K, V>(kClass, vClass, TextWire::new);
 
         } else {
             throw new IllegalStateException("unsuported type");
@@ -251,7 +260,7 @@ public class MapClientTest extends ThreadMonitoringTest {
 
         final ConcurrentMap<K, V> kvMap = result.get();
         try {
-            c.accept(kvMap);
+            c.accept(result.get());
         } finally {
             result.close();
         }

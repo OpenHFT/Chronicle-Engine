@@ -259,8 +259,9 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                     if (containsValue.contentEquals(eventName)) {
                         final V value = wireToV.apply(valueIn);
                         nullCheck(value);
+                        final boolean aBoolean = map.containsValue(value);
                         outWire.writeEventName(reply).bool(
-                                map.containsValue(value));
+                                aBoolean);
                         return;
                     }
 
@@ -272,10 +273,9 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                             StringBuilder sb = SBP.acquireStringBuilder();
                             vToWire.accept(outWire.writeEventName(reply), (V) ((ChronicleMap) map).getUsing(key, sb));
 
-                        } else {
-                            vToWire.accept(outWire.writeEventName(reply),
-                                    map.get(key));
-                        }
+                        } else
+                            vToWire.accept(outWire.writeEventName(reply), map.get(key));
+
                         return;
                     }
 

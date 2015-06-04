@@ -1,6 +1,5 @@
 package net.openhft.chronicle.engine.server.internal;
 
-import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.ValueOut;
 import org.jetbrains.annotations.NotNull;
@@ -8,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.Map;
 import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
@@ -16,9 +14,9 @@ import java.util.function.Function;
  */
 public class StringStringMapHandler implements MapHandler<String, String> {
 
-    private final BiFunction<ChronicleEngine, String, Map> supplier;
+    private final Function<String, Map> supplier;
 
-    StringStringMapHandler(@NotNull BiFunction<ChronicleEngine, String, Map> supplier) {
+    StringStringMapHandler(@NotNull Function<String, Map> supplier) {
         this.supplier = supplier;
     }
 
@@ -87,8 +85,8 @@ public class StringStringMapHandler implements MapHandler<String, String> {
     }
 
     @Override
-    public Map<String, String> getMap(ChronicleEngine engine, String serviceName) throws IOException {
-        return supplier.apply(engine, serviceName);
+    public Map<String, String> getMap(String serviceName) throws IOException {
+        return supplier.apply(serviceName);
     }
 
     @Override

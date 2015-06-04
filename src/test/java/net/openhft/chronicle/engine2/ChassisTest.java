@@ -6,9 +6,11 @@ import net.openhft.chronicle.engine2.map.EntryEvent;
 import net.openhft.chronicle.engine2.map.InsertedEvent;
 import net.openhft.chronicle.engine2.map.RemovedEvent;
 import net.openhft.chronicle.engine2.map.UpdatedEvent;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
@@ -251,6 +253,14 @@ todo fix this test
         verify(subscriber);
 
         assertEquals(4, map.size());
+    }
+
+    @Test
+    public void testStringString() throws IOException, InterruptedException {
+        final ConcurrentMap<String, String> mapProxy = Chassis.acquireMap("testStringString", String.class, String.class);
+        mapProxy.put("hello", "world");
+        Assert.assertEquals("world", mapProxy.get("hello"));
+        assertEquals(1, mapProxy.size());
     }
 
     @Test

@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine2.map;
 
+import net.openhft.chronicle.core.annotation.NotNull;
 import net.openhft.chronicle.engine2.api.Asset;
 import net.openhft.chronicle.engine2.api.Assetted;
 import net.openhft.chronicle.engine2.api.RequestContext;
@@ -7,7 +8,7 @@ import net.openhft.chronicle.engine2.api.TopicSubscriber;
 import net.openhft.chronicle.engine2.api.map.KeyValueStore;
 import net.openhft.chronicle.engine2.api.map.MapView;
 import net.openhft.chronicle.engine2.api.set.EntrySetView;
-import org.jetbrains.annotations.NotNull;
+
 
 import java.util.AbstractMap;
 import java.util.Set;
@@ -21,6 +22,18 @@ import static net.openhft.chronicle.engine2.api.RequestContext.requestContext;
 public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapView<K, MV, V> {
     private final boolean putReturnsNull;
     private final boolean removeReturnsNull;
+
+    @Override
+    public boolean containsKey(final Object key) {
+        nullCheckKey(key);
+        return super.containsKey(key);
+    }
+
+    private void nullCheckKey(final Object value) {
+        if (value == null)
+            throw new NullPointerException("key can not be null");
+    }
+
     private final Class keyClass;
     private final Class valueType;
     private Asset asset;

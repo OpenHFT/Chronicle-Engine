@@ -18,7 +18,6 @@
 
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.wire.TextWire;
@@ -55,7 +54,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     }
 
     static ChronicleMap<Integer, String> newIntString() throws IOException {
-        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(Integer.class, String.class, new ChronicleEngine(), TextWire::new);
+        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(Integer.class, String.class, TextWire::new);
 
         ChronicleMap<Integer, String> map = remoteMapSupplier.get();
         final ChronicleMap<Integer, String> spy = Mockito.spy(map);
@@ -71,7 +70,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     static ChronicleMap<CharSequence, CharSequence> newStrStrMap() throws
             IOException {
 
-        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(CharSequence.class, CharSequence.class, new ChronicleEngine(), TextWire::new);
+        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(CharSequence.class, CharSequence.class, TextWire::new);
         final ChronicleMap<CharSequence, CharSequence> spy = Mockito.spy(remoteMapSupplier.get());
 
         Mockito.doAnswer(invocationOnMock -> {
@@ -84,7 +83,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
 
     static ChronicleMap<byte[], byte[]> newByteArrayMap() throws IOException {
         final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(
-                byte[].class, byte[].class, new ChronicleEngine(), TextWire::new);
+                byte[].class, byte[].class, TextWire::new);
         final ChronicleMap<byte[], byte[]> spy = Mockito.spy(remoteMapSupplier.get());
 
         Mockito.doAnswer(invocationOnMock -> {

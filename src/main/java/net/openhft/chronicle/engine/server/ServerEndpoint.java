@@ -48,14 +48,12 @@ public class ServerEndpoint implements Closeable {
     private ChronicleEngine chronicleEngine;
 
     public ServerEndpoint(byte localIdentifier,
-                          @NotNull final ChronicleEngine chronicleEngine,
                           @NotNull final Function<Bytes, Wire> wireType) throws IOException {
-        this(0, localIdentifier, chronicleEngine, wireType);
+        this(0, localIdentifier, wireType);
     }
 
     public ServerEndpoint(int port,
                           byte localIdentifier,
-                          @NotNull final ChronicleEngine chronicleEngine,
                           @NotNull final Function<Bytes, Wire> wireType) throws IOException {
 
         this.chronicleEngine = chronicleEngine;
@@ -72,7 +70,7 @@ public class ServerEndpoint implements Closeable {
             final Map<Long, String> cidToCsp = new HashMap<>();
 
             try {
-                return new EngineWireHandler(cidToCsp, chronicleEngine, wireType);
+                return new EngineWireHandler(cidToCsp, wireType);
             } catch (IOException e) {
                 LOG.error("", e);
             }
@@ -97,6 +95,6 @@ public class ServerEndpoint implements Closeable {
         stop();
         eg.close();
         eah.close();
-        chronicleEngine.close();
+
     }
 }

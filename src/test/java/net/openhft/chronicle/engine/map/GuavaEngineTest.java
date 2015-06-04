@@ -24,22 +24,19 @@ import com.google.common.collect.testing.TestMapGenerator;
 import com.google.common.collect.testing.features.CollectionFeature;
 import com.google.common.collect.testing.features.CollectionSize;
 import junit.framework.Test;
-import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import net.openhft.chronicle.bytes.IORuntimeException;
-import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.engine.map.MapClientTest.LocalMapSupplier;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
-import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.wire.TextWire;
 import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.junit.runners.AllTests;
-import org.junit.runners.Suite;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 import static com.google.common.collect.testing.features.MapFeature.*;
 
@@ -145,18 +142,18 @@ public class GuavaEngineTest   {
         }
     }
 
-    static ChronicleMap<CharSequence, CharSequence> newStrStrRemoteMap() {
+    static ConcurrentMap<CharSequence, CharSequence> newStrStrRemoteMap() {
 
 
         try {
             return new RemoteMapSupplier<>(CharSequence.class, CharSequence.class,
-                    new ChronicleEngine(), TextWire::new).get();
+                    TextWire::new).get();
         } catch (IOException e) {
             throw new IORuntimeException(e);
         }
     }
 
-    static ChronicleMap<CharSequence, CharSequence> newStrStrLocalMap() {
+    static ConcurrentMap<CharSequence, CharSequence> newStrStrLocalMap() {
 
 
         try {

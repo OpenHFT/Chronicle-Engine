@@ -19,14 +19,18 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.engine.map.MapClientTest.LocalMapSupplier;
-import net.openhft.chronicle.map.ChronicleMap;
+import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
-import org.mockito.Mockito;
+import org.junit.rules.TestName;
 
 import java.io.IOException;
 import java.util.*;
 
+import static net.openhft.chronicle.engine.Utils.methodName;
+import static net.openhft.chronicle.engine.Utils.yamlLoggger;
+import static net.openhft.chronicle.wire.YamlLogging.writeMessage;
 import static org.junit.Assert.*;
 
 /*
@@ -38,51 +42,61 @@ import static org.junit.Assert.*;
  */
 
 public class LocalChronicleMapTest extends JSR166TestCase {
+    @Rule
+    public TestName name = new TestName();
 
-    static ChronicleMap<Integer, String> newIntString() throws IOException {
-     return new LocalMapSupplier(Integer.class, String.class).get();
-
-       /* final ChronicleMap spy = Mockito.spy(supplier.get());
-
-        Mockito.doAnswer(invocationOnMock -> {
-            supplier.close();
-            return null;
-        }).when(spy).close();
-
-        return spy;*/
+    @Before
+    public void before() {
+        methodName(name.getMethodName());
     }
 
-    static ChronicleMap<CharSequence, CharSequence> newStrStrMap() throws
+    static ClosableMapSupplier<Integer, String> newIntString() throws IOException {
+        final LocalMapSupplier supplier = new LocalMapSupplier<>(Integer
+                .class, String.class);
+
+        return new ClosableMapSupplier() {
+
+            @Override
+            public Map<Integer, String> get() {
+                return supplier.get();
+            }
+
+            @Override
+            public void close() throws IOException {
+                supplier.close();
+            }
+        };
+
+
+    }
+
+    static ClosableMapSupplier<CharSequence, CharSequence> newStrStrMap() throws
             IOException {
 
-        final LocalMapSupplier supplier = new LocalMapSupplier(CharSequence.class, CharSequence.class);
-        final ChronicleMap spy = Mockito.spy(supplier.get());
+        final MapClientTest.LocalMapSupplier supplier = new MapClientTest.LocalMapSupplier<>(CharSequence.class, CharSequence.class);
 
-        Mockito.doAnswer(invocationOnMock -> {
-            supplier.close();
-            return null;
-        }).when(spy).close();
-//        Mockito.when(spy.toString()).thenCallRealMethod();
-        return spy;
+        return new ClosableMapSupplier() {
+
+            @Override
+            public Map<Integer, String> get() {
+                return supplier.get();
+            }
+
+            @Override
+            public void close() throws IOException {
+                supplier.close();
+            }
+        };
     }
 
-    static ChronicleMap<byte[], byte[]> newByteArrayMap() throws IOException {
-        final LocalMapSupplier supplier = new LocalMapSupplier(byte[].class, byte[].class);
-        final ChronicleMap spy = Mockito.spy(supplier.get());
-
-        Mockito.doAnswer(invocationOnMock -> {
-            supplier.close();
-            return null;
-        }).when(spy).close();
-
-        return spy;
-    }
 
     /**
      * Returns a new map from Integers 1-5 to Strings "A"-"E".
      */
-    private ChronicleMap<Integer, String> map5() throws IOException {
-        ChronicleMap<Integer, String> map = newIntString();
+    private ClosableMapSupplier<Integer, String> map5() throws IOException {
+        ClosableMapSupplier<Integer, String> supplier = newIntString();
+        final Map<Integer, String> map = supplier.get();
+        System.out.println(map.size());
         assertTrue(map.isEmpty());
         map.put(one, "A");
         map.put(two, "B");
@@ -91,7 +105,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
         map.put(five, "E");
         assertFalse(map.isEmpty());
         assertEquals(5, map.size());
-        return map;
+        return supplier;
     }
 
     static int s_port = 11050;
@@ -101,8 +115,10 @@ public class LocalChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 50000)
     public void testClear() throws IOException {
-        try (ChronicleMap<Integer, String> map = map5()) {
-            map.clear();
+        try (ClosableMapSupplier<Integer, String> supplier = map5()) {
+            final Map map = supplier.get();
+
+            yamlLoggger(() -> map.clear());
             assertEquals(0, map.size());
         }
     }
@@ -112,9 +128,13 @@ public class LocalChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 50000)
     public void testContains() throws IOException {
-        try (ChronicleMap map = map5()) {
-            assertTrue(map.containsValue("A"));
-            assertFalse(map.containsValue("Z"));
+        try (ClosableMapSupplier<Integer, String> supplier = map5()) {
+            final Map map = supplier.get();
+
+            writeMessage = "when the key exists";
+            yamlLoggger(() -> assertTrue(map.containsValue("A")));
+            writeMessage = "when it doesnt exist";
+            yamlLoggger(() -> assertFalse(map.containsValue("Z")));
         }
     }
 
@@ -123,8 +143,10 @@ public class LocalChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 50000)
     public void testContainsKey() throws IOException {
-        try (ChronicleMap map = map5()) {
-            assertTrue(map.containsKey(one));
+        try (ClosableMapSupplier<Integer, String> supplier = map5()) {
+            final Map map = supplier.get();
+            writeMessage = "example of containsKey(<key>) returning true";
+            yamlLoggger(() -> assertTrue(map.containsKey(one)));
             assertFalse(map.containsKey(zero));
         }
     }
@@ -134,8 +156,10 @@ public class LocalChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 50000)
     public void testContainsValue() throws IOException {
-        try (ChronicleMap map = map5()) {
-            assertTrue(map.containsValue("A"));
+        try (ClosableMapSupplier<Integer, String> supplier = map5()) {
+            final Map map = supplier.get();
+            writeMessage = "example of containsValue(<value>) returning true";
+            yamlLoggger(() -> assertTrue(map.containsValue("A")));
             assertFalse(map.containsValue("Z"));
         }
     }
@@ -143,12 +167,19 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * get returns the correct element at the given key, or null if not present
      */
-    @Test(timeout = 50000)
+    @Test
     public void testGet() throws IOException {
-        try (ChronicleMap map = map5()) {
-            assertEquals("A", (String) map.get(one));
-            try (ChronicleMap empty = newStrStrMap()) {
-                assertNull(map.get(notPresent));
+        try (ClosableMapSupplier<Integer, String> supplier = map5()) {
+            final Map map = supplier.get();
+            assertEquals("A", map.get(one));
+            try (ClosableMapSupplier empty = newStrStrMap()) {
+                writeMessage = "example of get(<key>) returning null, when the keys is not " +
+                        "present in the map";
+
+                yamlLoggger(() -> {
+                    Object object = map.get(notPresent);
+                    assertNull(object);
+                });
             }
         }
     }
@@ -158,12 +189,17 @@ public class LocalChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 50000)
     public void testIsEmpty() throws IOException {
-        try (ChronicleMap empty = newIntString()) {
-            try (ChronicleMap map = map5()) {
+        try (ClosableMapSupplier<Integer, String> emptySupplier = newIntString()) {
+            final Map empty = emptySupplier.get();
+            try (ClosableMapSupplier<Integer, String> supplier = map5()) {
+
+                final Map map = supplier.get();
                 if (!empty.isEmpty()) {
                     System.out.print("not empty " + empty);
                 }
-                assertTrue(empty.isEmpty());
+
+                writeMessage = "example of isEmpty() returning true, not it uses the size() method";
+                yamlLoggger(() -> assertTrue(empty.isEmpty()));
                 assertFalse(map.isEmpty());
             }
         }
@@ -172,11 +208,18 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * keySet returns a Set containing all the keys
      */
+
     @Test(timeout = 50000)
     public void testKeySet() throws IOException {
-        try (ChronicleMap map = map5()) {
+        try (ClosableMapSupplier<Integer, String> supplier = map5()) {
+            final Map map = supplier.get();
+            writeMessage = "example of checking the size of a keyset";
+            yamlLoggger(() -> {
+                        Set s = map.keySet();
+                        assertEquals(5, s.size());
+                    }
+            );
             Set s = map.keySet();
-            assertEquals(5, s.size());
             assertTrue(s.contains(one));
             assertTrue(s.contains(two));
             assertTrue(s.contains(three));
@@ -188,10 +231,11 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * keySet.toArray returns contains all keys
      */
-
+    @Ignore
     @Test(timeout = 50000)
     public void testKeySetToArray() throws IOException {
-        try (ChronicleMap map = map5()) {
+        try (ClosableMapSupplier<Integer, String> supplier = map5()) {
+            final Map map = supplier.get();
             Set s = map.keySet();
             Object[] ar = s.toArray();
             assertTrue(s.containsAll(Arrays.asList(ar)));
@@ -204,9 +248,11 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * Values.toArray contains all values
      */
+    @Ignore("broken tests")
     @Test(timeout = 50000)
     public void testValuesToArray() throws IOException {
-        try (ChronicleMap map = map5()) {
+        try (ClosableMapSupplier<Integer, String> supplier = map5()) {
+            final Map map = supplier.get();
             Collection v = map.values();
             Object[] ar = v.toArray();
             ArrayList s = new ArrayList(Arrays.asList(ar));
@@ -222,10 +268,17 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * entrySet.toArray contains all entries
      */
-
     @Test(timeout = 50000)
     public void testEntrySetToArray() throws IOException {
-        try (ChronicleMap map = map5()) {
+        try (ClosableMapSupplier<Integer, String> supplier = map5()) {
+            final Map map = supplier.get();
+            writeMessage = "map.entrySet().toArray() first gets the entry set and then converts " +
+                    "it to an array";
+            yamlLoggger(() -> {
+                Set s = map.entrySet();
+                s.toArray();
+            });
+
             Set s = map.entrySet();
             Object[] ar = s.toArray();
             assertEquals(5, ar.length);
@@ -239,10 +292,16 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * values collection contains all values
      */
-
     @Test(timeout = 50000)
     public void testValues() throws IOException {
-        try (ChronicleMap map = map5()) {
+        try (ClosableMapSupplier<Integer, String> supplier = map5()) {
+            final Map map = supplier.get();
+            writeMessage = "example of getting the values and then calling size()";
+            yamlLoggger(() -> {
+                Collection s = map.values();
+                s.size();
+            });
+
             Collection s = map.values();
             assertEquals(5, s.size());
             assertTrue(s.contains("A"));
@@ -256,10 +315,16 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * entrySet contains all pairs
      */
-
     @Test
     public void testEntrySet() throws IOException {
-        try (ChronicleMap map = map5()) {
+        try (ClosableMapSupplier<Integer, String> supplier = map5()) {
+            final Map map = supplier.get();
+            writeMessage = "example of getting and entry set itterator";
+            yamlLoggger(() -> {
+                Set entrySet = map.entrySet();
+                entrySet.iterator();
+            });
+
             Set s = map.entrySet();
             assertEquals(5, s.size());
             Iterator it = s.iterator();
@@ -279,13 +344,14 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * putAll adds all key-value pairs from the given map
      */
-
-    @Test
+    @Test(timeout = 50000)
     public void testPutAll() throws IOException {
         int port = s_port++;
-        try (ChronicleMap empty = newIntString()) {
-            try (ChronicleMap map = map5()) {
-                empty.putAll(map);
+        try (ClosableMapSupplier<Integer, String> emptySupplier = newIntString()) {
+            final Map<Integer, String> empty = emptySupplier.get();
+            try (ClosableMapSupplier<Integer, String> supplier = map5()) {
+                final Map map = supplier.get();
+                yamlLoggger(() -> empty.putAll(map));
                 assertEquals(5, empty.size());
                 assertTrue(empty.containsKey(one));
                 assertTrue(empty.containsKey(two));
@@ -301,8 +367,9 @@ public class LocalChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 50000)
     public void testPutIfAbsent() throws IOException {
-        try (ChronicleMap map = map5()) {
-            map.putIfAbsent(six, "Z");
+        try (ClosableMapSupplier<Integer, String> supplier = map5()) {
+            final Map map = supplier.get();
+            yamlLoggger(() -> map.putIfAbsent(six, "Z"));
             assertTrue(map.containsKey(six));
         }
     }
@@ -311,10 +378,10 @@ public class LocalChronicleMapTest extends JSR166TestCase {
      * putIfAbsent does not add the pair if the key is already present
      */
     @Test(timeout = 50000)
-    @Ignore
     public void testPutIfAbsent2() throws IOException {
-        try (ChronicleMap map = map5()) {
-            assertEquals("A", map.putIfAbsent(one, "Z"));
+        try (ClosableMapSupplier<Integer, String> supplier = map5()) {
+            final Map map = supplier.get();
+            yamlLoggger(() -> assertEquals("A", map.putIfAbsent(one, "Z")));
         }
     }
 
@@ -323,8 +390,10 @@ public class LocalChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 50000)
     public void testReplace() throws IOException {
-        try (ChronicleMap map = map5()) {
-            assertNull(map.replace(six, "Z"));
+        try (ClosableMapSupplier<Integer, String> supplier = map5()) {
+            final Map map = supplier.get();
+            writeMessage = "example of replace where the value is not known";
+            yamlLoggger(() -> assertNull(map.replace(six, "Z")));
             assertFalse(map.containsKey(six));
         }
     }
@@ -335,8 +404,10 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     @Test(timeout = 50000)
     public void testReplace2() throws
             IOException {
-        try (ChronicleMap map = map5()) {
-            assertNotNull(map.replace(one, "Z"));
+        try (ClosableMapSupplier<Integer, String> supplier = map5()) {
+            final Map map = supplier.get();
+            writeMessage = "example of replace where the value is known";
+            yamlLoggger(() -> assertNotNull(map.replace(one, "Z")));
             assertEquals("Z", map.get(one));
         }
     }
@@ -346,9 +417,11 @@ public class LocalChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 50000)
     public void testReplaceValue() throws IOException {
-        try (ChronicleMap map = map5()) {
+        try (ClosableMapSupplier<Integer, String> supplier = map5()) {
+            final Map map = supplier.get();
             assertEquals("A", map.get(one));
-            assertFalse(map.replace(one, "Z", "Z"));
+            writeMessage = "example of when then value was not replaced";
+            yamlLoggger(() -> assertFalse(map.replace(one, "Z", "Z")));
             assertEquals("A", map.get(one));
         }
     }
@@ -356,11 +429,14 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * replace value succeeds when the given key mapped to expected value
      */
+
     @Test(timeout = 50000)
     public void testReplaceValue2() throws IOException {
-        try (ChronicleMap map = map5()) {
+        try (ClosableMapSupplier<Integer, String> supplier = map5()) {
+            final Map map = supplier.get();
             assertEquals("A", map.get(one));
-            assertTrue(map.replace(one, "A", "Z"));
+            writeMessage = "example of replace where the value is known";
+            yamlLoggger(() -> assertTrue(map.replace(one, "A", "Z")));
             assertEquals("Z", map.get(one));
         }
     }
@@ -370,8 +446,9 @@ public class LocalChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 50000)
     public void testRemove() throws IOException {
-        try (ChronicleMap map = map5()) {
-            map.remove(five);
+        try (ClosableMapSupplier<Integer, String> supplier = map5()) {
+            final Map map = supplier.get();
+            yamlLoggger(() -> map.remove(five));
             assertEquals(4, map.size());
             assertFalse(map.containsKey(five));
         }
@@ -383,7 +460,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     @Test(timeout = 50000)
     public void testRemove2
     () throws IOException {
-   /*     try(   ChronicleMap map = map5(8076)) {
+   /*     try(   ClosableMapSupplier map = map5(8076)) {
         map.remove(five, "E");
     assertEquals(4, map.size());
         assertFalse(map.containsKey(five));
@@ -398,10 +475,14 @@ public class LocalChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 50000)
     public void testSize() throws IOException {
-        try (ChronicleMap map = map5()) {
-            try (ChronicleMap empty = newIntString()) {
-                assertEquals(0, empty.size());
-                assertEquals(5, map.size());
+        try (ClosableMapSupplier<Integer, String> supplier = map5()) {
+            final Map map = supplier.get();
+            try (ClosableMapSupplier<Integer, String> supplier0 = newIntString()) {
+                final Map empty = supplier0.get();
+                writeMessage = "size on an empty map";
+                yamlLoggger(() -> assertEquals(0, empty.size()));
+                writeMessage = "size on a map with entries";
+                yamlLoggger(() -> assertEquals(5, map.size()));
             }
         }
     }
@@ -411,8 +492,10 @@ public class LocalChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 150000)
     public void testSize2() throws IOException {
-        try (ChronicleMap map = map5()) {
-            try (ChronicleMap empty = newIntString()) {
+        try (ClosableMapSupplier<Integer, String> supplier = map5()) {
+            final Map map = supplier.get();
+            try (ClosableMapSupplier<Integer, String> supplier0 = newIntString()) {
+                final Map empty = supplier0.get();
                 assertEquals(0, empty.size());
                 assertEquals(5, map.size());
             }
@@ -424,8 +507,10 @@ public class LocalChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 50000)
     public void testSize3() throws IOException {
-        try (ChronicleMap map = map5()) {
-            try (ChronicleMap empty = newIntString()) {
+        try (ClosableMapSupplier<Integer, String> supplier = map5()) {
+            final Map map = supplier.get();
+            try (ClosableMapSupplier<Integer, String> supplier0 = newIntString()) {
+                final Map empty = supplier0.get();
                 assertEquals(0, empty.size());
                 assertEquals(5, map.size());
             }
@@ -438,8 +523,10 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     @Test(timeout = 50000)
     public void testGet_NullPointerException() throws IOException {
 
-        try (ChronicleMap c = newIntString()) {
-            c.get(null);
+        try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
+            Map<Integer, String> c = supplier.get();
+            writeMessage = "get(null) returns a NullPointerException";
+            yamlLoggger(() -> c.get(null));
             shouldThrow();
         } catch (NullPointerException success) {
         } catch (IllegalArgumentException success) {
@@ -451,8 +538,10 @@ public class LocalChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 50000)
     public void testContainsKey_NullPointerException() throws IOException {
-        try (ChronicleMap c = newIntString()) {
-            c.containsKey(null);
+        try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
+            Map<Integer, String> c = supplier.get();
+            writeMessage = "c.containsKey(null) will throw a NullPointerException";
+            yamlLoggger(() -> c.containsKey(null));
             shouldThrow();
         } catch (NullPointerException success) {
         } catch (IllegalArgumentException success) {
@@ -464,8 +553,10 @@ public class LocalChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 50000)
     public void testPut1_NullPointerException() throws IOException {
-        try (ChronicleMap c = newIntString()) {
-            c.put(null, "whatever");
+        try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
+            Map<Integer, String> c = supplier.get();
+            writeMessage = "put(null) will throw a NullPointerException";
+            yamlLoggger(() -> c.put(null, "whatever"));
             shouldThrow();
         } catch (NullPointerException success) {
         }
@@ -476,8 +567,10 @@ public class LocalChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 50000)
     public void testPut2_NullPointerException() throws IOException {
-        try (ChronicleMap c = newIntString()) {
-            c.put(notPresent, null);
+        try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
+            Map<Integer, String> c = supplier.get();
+            writeMessage = "put(notPresent,null) will throw a NullPointerException";
+            yamlLoggger(() -> c.put(notPresent, null));
             shouldThrow();
         } catch (NullPointerException success) {
         }
@@ -487,11 +580,15 @@ public class LocalChronicleMapTest extends JSR166TestCase {
      * putIfAbsent(null, x) throws NPE
      */
     @Test(timeout = 50000)
+    @Ignore
     public void testPutIfAbsent1_NullPointerException() throws IOException {
-        try (ChronicleMap c = newIntString()) {
-            c.putIfAbsent(null, "whatever");
+        try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
+            Map<Integer, String> c = supplier.get();
+            writeMessage = "put(null, \"whatever\") will throw a NullPointerException";
+            yamlLoggger(() -> c.putIfAbsent(null, "whatever"));
             shouldThrow();
         } catch (NullPointerException success) {
+            success.printStackTrace();
         }
     }
 
@@ -500,7 +597,8 @@ public class LocalChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 50000)
     public void testReplace_NullPointerException() throws IOException {
-        try (ChronicleMap c = newIntString()) {
+        try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
+            Map<Integer, String> c = supplier.get();
             c.replace(null, "whatever");
             shouldThrow();
         } catch (NullPointerException success) {
@@ -512,7 +610,8 @@ public class LocalChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 50000)
     public void testReplaceValue_NullPointerException() throws IOException {
-        try (ChronicleMap c = newIntString()) {
+        try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
+            Map<Integer, String> c = supplier.get();
             c.replace(null, "A", "whatever");
             shouldThrow();
         } catch (NullPointerException success) {
@@ -524,7 +623,8 @@ public class LocalChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 50000)
     public void testPutIfAbsent2_NullPointerException() throws IOException {
-        try (ChronicleMap c = newIntString()) {
+        try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
+            Map<Integer, String> c = supplier.get();
             c.putIfAbsent(notPresent, null);
             shouldThrow();
         } catch (NullPointerException success) {
@@ -536,8 +636,10 @@ public class LocalChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 50000)
     public void testReplace2_NullPointerException() throws IOException {
-        try (ChronicleMap c = newIntString()) {
-            c.replace(notPresent, null);
+        try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
+            Map<Integer, String> c = supplier.get();
+            writeMessage = "replace(notPresent,null) will throw a NullPointerException";
+            yamlLoggger(() -> c.replace(notPresent, null));
             shouldThrow();
         } catch (NullPointerException success) {
         }
@@ -546,9 +648,11 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * replace(x, null, y) throws NPE
      */
+    @Ignore
     @Test(timeout = 50000)
     public void testReplaceValue2_NullPointerException() throws IOException {
-        try (ChronicleMap c = newIntString()) {
+        try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
+            Map<Integer, String> c = supplier.get();
             c.replace(notPresent, null, "A");
             shouldThrow();
         } catch (NullPointerException success) {
@@ -560,8 +664,10 @@ public class LocalChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 50000)
     public void testReplaceValue3_NullPointerException() throws IOException {
-        try (ChronicleMap c = newIntString()) {
-            c.replace(notPresent, "A", null);
+        try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
+            Map<Integer, String> c = supplier.get();
+            writeMessage = "replace(notPresent, \"A\", null will throw a NullPointerException";
+            yamlLoggger(() -> c.replace(notPresent, "A", null));
             shouldThrow();
         } catch (NullPointerException success) {
         }
@@ -571,11 +677,13 @@ public class LocalChronicleMapTest extends JSR166TestCase {
      * remove(null) throws NPE
      */
     @Test(timeout = 50000)
-    @Ignore("mockito issue")
     public void testRemove1_NullPointerException() throws IOException {
-        try (ChronicleMap c = newStrStrMap()) {
+        try (ClosableMapSupplier<CharSequence, CharSequence> supplier = newStrStrMap()) {
+            Map<CharSequence, CharSequence> c = supplier.get();
             c.put("sadsdf", "asdads");
-            c.remove(null);
+
+            writeMessage = "remove(null) will throw a NullPointerException";
+            yamlLoggger(() -> c.remove(null));
             shouldThrow();
         } catch (NullPointerException success) {
         }
@@ -584,13 +692,14 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * remove(null, x) throws NPE
      */
-    @Ignore("mockito issue")
     @Test(timeout = 50000)
     public void testRemove2_NullPointerException
     () throws IOException {
-        try (ChronicleMap c = newStrStrMap()) {
+        try (ClosableMapSupplier<CharSequence, CharSequence> supplier = newStrStrMap()) {
+            Map<CharSequence, CharSequence> c = supplier.get();
             c.put("sadsdf", "asdads");
-            c.remove(null, "whatever");
+            writeMessage = "remove(null,whatever) will throw a NullPointerException";
+            yamlLoggger(() -> c.remove(null, "whatever"));
             shouldThrow();
         } catch (NullPointerException success) {
         }
@@ -599,11 +708,10 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * remove(x, null) returns false
      */
-    @Ignore("mockito issue")
     @Test(timeout = 50000)
     public void testRemove3() throws IOException {
-
-        try (ChronicleMap c = newStrStrMap()) {
+        try (ClosableMapSupplier<CharSequence, CharSequence> supplier = newStrStrMap()) {
+            Map<CharSequence, CharSequence> c = supplier.get();
             c.put("sadsdf", "asdads");
             assertFalse(c.remove("sadsdf", null));
         }

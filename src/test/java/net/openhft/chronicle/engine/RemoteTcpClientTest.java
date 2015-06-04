@@ -115,7 +115,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
                 .actualChunkSize(valueLength + 16)
                 .putReturnsNull(true)
                 .create());
-        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, chronicleEngine, wireType)) {
+        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, wireType)) {
             int serverPort = serverEndpoint.getPort();
 
             //client
@@ -169,7 +169,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     @Test(timeout = 100000)
     public void testMarshable() throws Exception {
         // sever
-        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, new ChronicleEngine(), TextWire::new)) {
+        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, TextWire::new)) {
             int serverPort = serverEndpoint.getPort();
 
             //client
@@ -203,7 +203,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     @Test(timeout = 100000)
     public void testPut() throws Exception {
         // sever
-        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, new ChronicleEngine(), TextWire::new)) {
+        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, TextWire::new)) {
             int serverPort = serverEndpoint.getPort();
 
             //client
@@ -223,7 +223,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     @Test
     public void testFPKMap() throws Exception {
         // sever
-        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, new ChronicleEngine(), TextWire::new)) {
+        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, TextWire::new)) {
             int serverPort = serverEndpoint.getPort();
 
             //client
@@ -242,7 +242,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     public void test2MBEntries() throws Exception {
 
         // server
-        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, new ChronicleEngine(), TextWire::new)) {
+        try (final ServerEndpoint serverEndpoint = new ServerEndpoint((byte) 1, TextWire::new)) {
             int serverPort = serverEndpoint.getPort();
 
             //client

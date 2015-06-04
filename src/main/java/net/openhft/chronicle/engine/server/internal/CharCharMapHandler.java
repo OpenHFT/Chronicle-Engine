@@ -1,6 +1,5 @@
 package net.openhft.chronicle.engine.server.internal;
 
-import net.openhft.chronicle.engine.client.internal.ChronicleEngine;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.ValueOut;
@@ -9,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.Map;
 import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
@@ -17,9 +15,9 @@ import java.util.function.Function;
  */
 public class CharCharMapHandler implements MapHandler<CharSequence, CharSequence> {
 
-    private final BiFunction<ChronicleEngine, String, ChronicleMap> supplier;
+    private final Function<String, ChronicleMap> supplier;
 
-    CharCharMapHandler(@NotNull BiFunction<ChronicleEngine, String, ChronicleMap> supplier) {
+    CharCharMapHandler(@NotNull Function<String, ChronicleMap> supplier) {
         this.supplier = supplier;
     }
 
@@ -100,8 +98,8 @@ public class CharCharMapHandler implements MapHandler<CharSequence, CharSequence
     }
 
     @Override
-    public ChronicleMap getMap(ChronicleEngine engine, String serviceName) throws IOException {
-        return supplier.apply(engine, serviceName);
+    public ChronicleMap getMap(String serviceName) throws IOException {
+        return supplier.apply(serviceName);
     }
 
     StringBuilder usingValue = new StringBuilder();

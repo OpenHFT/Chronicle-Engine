@@ -26,7 +26,7 @@ public class TextWireMain {
 
         try {
             int port = 8088;
-            final ServerEndpoint serverEndpoint = new ServerEndpoint(port, (byte) 1, chronicleEngine, TextWire::new);
+            final ServerEndpoint serverEndpoint = new ServerEndpoint(port, (byte) 1, TextWire::new);
 
             System.out.println("Server port seems to be " + serverEndpoint.getPort());
             while (true) {

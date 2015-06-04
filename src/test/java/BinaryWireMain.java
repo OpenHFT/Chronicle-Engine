@@ -14,7 +14,7 @@ public class BinaryWireMain {
         ChronicleEngine chronicleEngine = new ChronicleEngine();
         try {
             int port = 8088;
-            final ServerEndpoint serverEndpoint = new ServerEndpoint(port, (byte) 1, chronicleEngine, BinaryWire::new);
+            final ServerEndpoint serverEndpoint = new ServerEndpoint(port, (byte) 1, BinaryWire::new);
 
             System.out.println("Server port seems to be " + serverEndpoint.getPort());
             while (true) {
