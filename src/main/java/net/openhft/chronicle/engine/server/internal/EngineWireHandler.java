@@ -64,10 +64,9 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private final MapWireHandler mapWireHandler;
     private final CollectionWireHandler<Entry<byte[], byte[]>, Set<Entry<byte[], byte[]>>> entrySetHandler;
     private final CollectionWireHandler<byte[], Collection<byte[]>> valuesHander;
-    private MapHandler mapHandler;
+    private MapHandler mh;
 
     private final Consumer<WireIn> metaDataConsumer;
-
     private RequestContext requestContext;
 
     public EngineWireHandler(@NotNull final Map<Long, String> cidToCsp,
@@ -129,7 +128,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                             viewType == ValuesView.class ||
                             viewType == KeySetView.class)
 
-                        mapHandler = new GenericMapHandler(
+                        mh = new GenericMapHandler(
                                 requestContext.keyType(),
                                 requestContext.valueType());
                     else
@@ -175,32 +174,32 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
             try {
 
-                if (mapHandler != null) {
+                if (mh != null) {
 
                     final Class viewType = requestContext.viewType();
                     if (viewType == MapView.class) {
-                        mapWireHandler.process(in, out, (MapView) view, cspText, tid, mapHandler, requestContext);
+                        mapWireHandler.process(in, out, (MapView) view, cspText, tid, mh, requestContext);
                         return;
                     }
 
                     if (viewType == EntrySetView.class) {
                         entrySetHandler.process(in, out, (EntrySetView) view, cspText,
-                                mapHandler.getEntryToWire(),
-                                mapHandler.getWireToEntry(), HashSet::new, tid);
+                                mh.entryToWire(),
+                                mh.wireToEntry(), HashSet::new, tid);
                         return;
                     }
 
                     if (viewType == KeySetView.class) {
                         keySetHandler.process(in, out, (KeySetView) view, cspText,
-                                mapHandler.getKeyToWire(),
-                                mapHandler.getWireToKey(), HashSet::new, tid);
+                                mh.keyToWire(),
+                                mh.wireToKey(), HashSet::new, tid);
                         return;
                     }
 
                     if (viewType == ValuesView.class) {
                         valuesHander.process(in, out, (ValuesView) view, cspText,
-                                mapHandler.getKeyToWire(),
-                                mapHandler.getWireToKey(), ArrayList::new, tid);
+                                mh.keyToWire(),
+                                mh.wireToKey(), ArrayList::new, tid);
                         return;
                     }
                 }

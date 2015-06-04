@@ -22,21 +22,22 @@ import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.ValueOut;
 
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public interface MapHandler<K, V> {
 
-    BiConsumer<ValueOut, K> getKeyToWire();
+    BiConsumer<ValueOut, K> keyToWire();
 
-    Function<ValueIn, K> getWireToKey();
+    Function<ValueIn, K> wireToKey();
 
-    BiConsumer<ValueOut, V> getValueToWire();
+    BiConsumer<ValueOut, V> valueToWire();
 
-    Function<ValueIn, V> getWireToValue();
+    Function<ValueIn, V> wireToValue();
 
-    BiConsumer<ValueOut, Map.Entry<K, V>> getEntryToWire();
+    BiConsumer<ValueOut, Entry<K, V>> entryToWire();
 
-    Function<ValueIn, Map.Entry<K, V>> getWireToEntry();
+    Function<ValueIn, Entry<K, V>> wireToEntry();
 
 }

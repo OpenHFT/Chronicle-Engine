@@ -67,9 +67,9 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                         @NotNull final RequestContext requestContext) throws
             StreamCorruptedException {
 
-        this.vToWire = mapHandler.getValueToWire();
-        this.wireToK = mapHandler.getWireToKey();
-        this.wireToV = mapHandler.getWireToValue();
+        this.vToWire = mapHandler.valueToWire();
+        this.wireToK = mapHandler.wireToKey();
+        this.wireToV = mapHandler.wireToValue();
         this.requestContext = requestContext;
 
         try {

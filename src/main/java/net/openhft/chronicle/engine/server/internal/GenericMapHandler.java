@@ -7,7 +7,7 @@ import java.util.Map.Entry;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-public class GenericMapHandler<K, V> implements MapHandler<K, V> {
+class GenericMapHandler<K, V> implements MapHandler<K, V> {
 
     private final BiConsumer<ValueOut, K> keyToWire = ValueOut::object;
     private final Function<ValueIn, K> wireToKey;
@@ -20,8 +20,7 @@ public class GenericMapHandler<K, V> implements MapHandler<K, V> {
         wireToKey = (valueIn) -> valueIn.object(kClass);
         wireToValue = in -> in.object(vClass);
 
-        wireToEntry
-                = valueIn -> valueIn.applyToMarshallable(x -> {
+        wireToEntry = valueIn -> valueIn.applyToMarshallable(x -> {
 
             final K key = x.read(() -> "key").object(kClass);
             final V value = x.read(() -> "value").object(vClass);
@@ -46,34 +45,30 @@ public class GenericMapHandler<K, V> implements MapHandler<K, V> {
     }
 
     private final BiConsumer<ValueOut, Entry<K, V>> entryToWire
-            = (v, e) -> {
-        v.marshallable(w -> {
-            w.write(() -> "key").object(e.getKey())
-                    .write(() -> "value").object(e.getValue());
-        });
-    };
+            = (v, e) -> v.marshallable(w -> w.write(() -> "key").object(e.getKey())
+            .write(() -> "value").object(e.getValue()));
 
-    public BiConsumer<ValueOut, K> getKeyToWire() {
+    public BiConsumer<ValueOut, K> keyToWire() {
         return keyToWire;
     }
 
-    public Function<ValueIn, K> getWireToKey() {
+    public Function<ValueIn, K> wireToKey() {
         return wireToKey;
     }
 
-    public BiConsumer<ValueOut, V> getValueToWire() {
+    public BiConsumer<ValueOut, V> valueToWire() {
         return valueToWire;
     }
 
-    public Function<ValueIn, V> getWireToValue() {
+    public Function<ValueIn, V> wireToValue() {
         return wireToValue;
     }
 
-    public BiConsumer<ValueOut, Entry<K, V>> getEntryToWire() {
+    public BiConsumer<ValueOut, Entry<K, V>> entryToWire() {
         return entryToWire;
     }
 
-    public Function<ValueIn, Entry<K, V>> getWireToEntry() {
+    public Function<ValueIn, Entry<K, V>> wireToEntry() {
         return wireToEntry;
     }
 
