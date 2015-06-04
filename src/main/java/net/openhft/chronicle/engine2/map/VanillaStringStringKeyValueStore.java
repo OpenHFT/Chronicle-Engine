@@ -8,7 +8,6 @@ import net.openhft.chronicle.engine2.api.*;
 import net.openhft.chronicle.engine2.api.map.*;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
-import net.openhft.chronicle.wire.WireOut;
 
 import java.lang.reflect.Constructor;
 import java.nio.ByteBuffer;
@@ -47,7 +46,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         if (Marshallable.class.isAssignableFrom(type))
             return (t, bytes) -> {
                 t = acquireInstance(type, t);
-                ((Marshallable) t).writeMarshallable((WireOut) context.wireType().apply(bytes));
+                ((Marshallable) t).writeMarshallable(context.wireType().apply(bytes));
                 bytes.flip();
                 return bytes;
             };
