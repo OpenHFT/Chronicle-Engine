@@ -68,6 +68,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
     private final Consumer<WireIn> metaDataConsumer;
     private RequestContext requestContext;
+    private Class viewType;
 
     public EngineWireHandler(@NotNull final Map<Long, String> cidToCsp,
                              @NotNull final Function<Bytes, Wire> byteToWire)
@@ -120,9 +121,13 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                     final Asset asset = Chassis.acquireAsset(requestContext);
 
                     view = asset.acquireView(requestContext);
+                    viewType = requestContext.viewType();
+                    if (viewType == KeySetView.class) {
+                        assert view.getClass() == KeySetView.class;
+                    }
 
                     requestContext.keyType();
-                    final Class viewType = requestContext.viewType();
+
                     if (viewType == MapView.class ||
                             viewType == EntrySetView.class ||
                             viewType == ValuesView.class ||
@@ -184,7 +189,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
                 if (mh != null) {
 
-                    final Class viewType = requestContext.viewType();
+
                     if (viewType == MapView.class) {
                         mapWireHandler.process(in, out, (MapView) view, tid, mh, requestContext);
                         return;
