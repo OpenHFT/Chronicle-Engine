@@ -126,11 +126,19 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                     if (viewType == MapView.class ||
                             viewType == EntrySetView.class ||
                             viewType == ValuesView.class ||
-                            viewType == KeySetView.class)
+                            viewType == KeySetView.class) {
+
+                        // default to string type if not provided
+                        final Class kClass = requestContext.keyType() == null ? String.class
+                                : requestContext.keyType();
+
+                        final Class vClass = requestContext.valueType() == null ? String.class
+                                : requestContext.valueType();
 
                         mh = new GenericMapHandler(
-                                requestContext.keyType(),
-                                requestContext.valueType());
+                                kClass,
+                                vClass);
+                    }
                     else
                         throw new UnsupportedOperationException("unspported view type");
 

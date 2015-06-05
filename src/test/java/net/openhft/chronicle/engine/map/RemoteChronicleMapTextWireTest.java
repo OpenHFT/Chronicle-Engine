@@ -164,7 +164,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
      * get returns the correct element at the given key, or null if not present
      */
     @Test(timeout = 50000)
-    public void testGet() throws IOException {
+    public void testGetReturnsNull() throws IOException {
         try (ChronicleMap map = map5()) {
             assertEquals("A", map.get(one));
             try (ChronicleMap empty = newStrStrMap()) {
