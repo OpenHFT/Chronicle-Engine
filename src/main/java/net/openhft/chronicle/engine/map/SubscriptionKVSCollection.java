@@ -11,4 +11,6 @@ public interface SubscriptionKVSCollection<K, V> extends Subscription, ISubscrib
     default boolean keyedView() {
         return true;
     }
+
+    boolean needsPrevious();
 }

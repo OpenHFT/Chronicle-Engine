@@ -18,11 +18,6 @@ public class SimpleSubscription<E> implements Subscription {
     }
 
     @Override
-    public boolean hasSubscribers() {
-        return !subscribers.isEmpty();
-    }
-
-    @Override
     public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {
         subscribers.add((Subscriber) subscriber);
         if (rc.bootstrap() != Boolean.FALSE)
@@ -50,11 +45,6 @@ public class SimpleSubscription<E> implements Subscription {
 
     @Override
     public void registerDownstream(Subscription subscription) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
-    public void unregisterDownstream(Subscription subscription) {
         throw new UnsupportedOperationException("todo");
     }
 

@@ -516,7 +516,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
         long startTime = System.nanoTime();
         try {
             future.get(timeoutMillis, MILLISECONDS);
-            shouldThrow();
+            shouldThrow("timeout");
         } catch (TimeoutException success) {
         } catch (Exception e) {
             threadUnexpectedException(e);
@@ -524,13 +524,6 @@ public class JSR166TestCase extends ThreadMonitoringTest {
             future.cancel(true);
         }
         Assert.assertTrue(millisElapsedSince(startTime) >= timeoutMillis);
-    }
-
-    /**
-     * Fails with message "should throw exception".
-     */
-    public void shouldThrow() {
-        Assert.fail("Should throw exception");
     }
 
     /**
@@ -706,35 +699,6 @@ public class JSR166TestCase extends ThreadMonitoringTest {
         };
     }
 
-    protected void checkEmpty(BlockingQueue q) {
-        try {
-            Assert.assertTrue(q.isEmpty());
-            Assert.assertEquals(0, q.size());
-            Assert.assertNull(q.peek());
-            Assert.assertNull(q.poll());
-            Assert.assertNull(q.poll(0, MILLISECONDS));
-            Assert.assertEquals(q.toString(), "[]");
-            Assert.assertTrue(Arrays.equals(q.toArray(), new Object[0]));
-            Assert.assertFalse(q.iterator().hasNext());
-            try {
-                q.element();
-                shouldThrow();
-            } catch (NoSuchElementException success) {
-            }
-            try {
-                q.iterator().next();
-                shouldThrow();
-            } catch (NoSuchElementException success) {
-            }
-            try {
-                q.remove();
-                shouldThrow();
-            } catch (NoSuchElementException success) {
-            }
-        } catch (InterruptedException ie) {
-            threadUnexpectedException(ie);
-        }
-    }
 
     void assertSerialEquals(Object x, Object y) {
         Assert.assertTrue(Arrays.equals(serialBytes(x), serialBytes(y)));

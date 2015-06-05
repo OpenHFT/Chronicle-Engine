@@ -79,4 +79,64 @@ public class AbstractKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> 
     public void close() {
         kvStore.close();
     }
+
+    @Override
+    public boolean put(K key, V value) {
+        return kvStore.put(key, value);
+    }
+
+    @Override
+    public boolean remove(K key) {
+        return kvStore.remove(key);
+    }
+
+    @Override
+    public V get(K key) {
+        return kvStore.get(key);
+    }
+
+    @Override
+    public boolean containsKey(K key) {
+        return kvStore.containsKey(key);
+    }
+
+    @Override
+    public boolean isReadOnly() {
+        return kvStore.isReadOnly();
+    }
+
+    @Override
+    public int segments() {
+        return kvStore.segments();
+    }
+
+    @Override
+    public int segmentFor(K key) {
+        return kvStore.segmentFor(key);
+    }
+
+    @Override
+    public boolean replaceIfEqual(K key, V oldValue, V newValue) {
+        return kvStore.replaceIfEqual(key, oldValue, newValue);
+    }
+
+    @Override
+    public boolean removeIfEqual(K key, V value) {
+        return kvStore.removeIfEqual(key, value);
+    }
+
+    @Override
+    public boolean isKeyType(Object key) {
+        return kvStore.isKeyType(key);
+    }
+
+    @Override
+    public V putIfAbsent(K key, V value) {
+        return kvStore.putIfAbsent(key, value);
+    }
+
+    @Override
+    public boolean keyedView() {
+        return kvStore.keyedView();
+    }
 }

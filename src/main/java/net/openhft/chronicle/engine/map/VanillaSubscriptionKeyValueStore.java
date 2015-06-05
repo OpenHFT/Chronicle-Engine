@@ -33,6 +33,96 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     }
 
     @Override
+    public V replace(K key, V value) {
+        V oldValue = kvStore.replace(key, value);
+        if (oldValue != null) {
+            try {
+                subscriptions.notifyEvent(UpdatedEvent.of(key, oldValue, value, 0, System.currentTimeMillis()));
+            } catch (InvalidSubscriberException e) {
+                throw new AssertionError(e);
+            }
+            publishValueToChild(key, value);
+        }
+        return oldValue;
+    }
+
+    @Override
+    public boolean put(K key, V value) {
+        if (subscriptions.needsPrevious()) {
+            return getAndPut(key, value) != null;
+        }
+        boolean replaced = kvStore.put(key, value);
+        try {
+            subscriptions.notifyEvent(replaced
+                    ? InsertedEvent.of(key, value, 0, System.currentTimeMillis())
+                    : UpdatedEvent.of(key, null, value, 0, System.currentTimeMillis()));
+        } catch (InvalidSubscriberException e) {
+            throw new AssertionError(e);
+        }
+        publishValueToChild(key, value);
+        return replaced;
+
+    }
+
+    @Override
+    public boolean remove(K key) {
+        if (subscriptions.needsPrevious()) {
+            return getAndRemove(key) != null;
+        }
+        if (kvStore.remove(key)) {
+            try {
+                subscriptions.notifyEvent(RemovedEvent.of(key, null, 0, System.currentTimeMillis()));
+            } catch (InvalidSubscriberException e) {
+                throw new AssertionError(e);
+            }
+            publishValueToChild(key, null);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean replaceIfEqual(K key, V oldValue, V newValue) {
+        if (kvStore.replaceIfEqual(key, oldValue, newValue)) {
+            try {
+                subscriptions.notifyEvent(UpdatedEvent.of(key, oldValue, newValue, 0, System.currentTimeMillis()));
+                publishValueToChild(key, newValue);
+            } catch (InvalidSubscriberException e) {
+                throw new AssertionError(e);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean removeIfEqual(K key, V value) {
+        if (kvStore.removeIfEqual(key, value)) {
+            try {
+                subscriptions.notifyEvent(RemovedEvent.of(key, value, 0, System.currentTimeMillis()));
+            } catch (InvalidSubscriberException e) {
+                throw new AssertionError(e);
+            }
+            publishValueToChild(key, null);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public V putIfAbsent(K key, V value) {
+        V ret = kvStore.putIfAbsent(key, value);
+        if (ret == null)
+            try {
+                subscriptions.notifyEvent(InsertedEvent.of(key, value, 0, System.currentTimeMillis()));
+                publishValueToChild(key, value);
+            } catch (InvalidSubscriberException e) {
+                throw new AssertionError(e);
+            }
+        return ret;
+    }
+
+    @Override
     public V getAndPut(K key, V value) {
         V oldValue = kvStore.getAndPut(key, value);
         try {

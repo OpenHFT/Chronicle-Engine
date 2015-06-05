@@ -52,8 +52,9 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements SubscriptionK
     }
 
     @Override
-    public boolean hasSubscribers() {
-        return hasSubscribers;
+    public boolean needsPrevious() {
+        // todo optimise this to reduce false positives.
+        return !subscribers.isEmpty() || !downstream.isEmpty();
     }
 
     @Override
@@ -107,7 +108,6 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements SubscriptionK
         hasSubscribers = true;
     }
 
-    @Override
     public void unregisterDownstream(Subscription subscription) {
         downstream.remove(subscription);
         updateHasSubscribers();

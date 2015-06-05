@@ -1,6 +1,7 @@
-package net.openhft.chronicle.engine2;
+package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.engine.api.Asset;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
@@ -38,7 +39,7 @@ public class ChronicleMapKeyValueStoreTest {
         viewTypeLayersOn(MapView.class, "map directly to KeyValueStore", KeyValueStore.class);
 
         registerFactory("", KeyValueStore.class, (context, asset, underlyingSupplier) ->
-                new ChronicleMapKeyValueStore(context.wireType(writeType).basePath("/tmp"), asset));
+                new ChronicleMapKeyValueStore(context.wireType(writeType).basePath(OS.TMP), asset));
 
         map = acquireMap(NAME, String.class, Factor.class);
         KeyValueStore mapU = ((VanillaMapView) map).underlying();
@@ -100,7 +101,7 @@ public class ChronicleMapKeyValueStoreTest {
 
     }
 
-    private void expectedSuccess(AtomicInteger success, int expected){
+    private void expectedSuccess(AtomicInteger success, int expected) {
         for (int i = 0; i < 20; i++) {
             if (success.get() == expected)
                 break;

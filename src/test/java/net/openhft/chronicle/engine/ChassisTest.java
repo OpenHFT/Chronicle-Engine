@@ -1,6 +1,5 @@
-package net.openhft.chronicle.engine2;
+package net.openhft.chronicle.engine;
 
-import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.map.EntryEvent;

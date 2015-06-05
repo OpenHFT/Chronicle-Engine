@@ -20,7 +20,6 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.engine.map.MapClientTest.LocalMapSupplier;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -231,7 +230,6 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * keySet.toArray returns contains all keys
      */
-    @Ignore
     @Test(timeout = 50000)
     public void testKeySetToArray() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
@@ -248,7 +246,6 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * Values.toArray contains all values
      */
-    @Ignore("broken tests")
     @Test(timeout = 50000)
     public void testValuesToArray() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
@@ -520,163 +517,136 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * get(null) throws NPE
      */
-    @Test(timeout = 50000)
+    @Test(timeout = 50000, expected = NullPointerException.class)
     public void testGet_NullPointerException() throws IOException {
 
         try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
             Map<Integer, String> c = supplier.get();
             writeMessage = "get(null) returns a NullPointerException";
             yamlLoggger(() -> c.get(null));
-            shouldThrow();
-        } catch (NullPointerException success) {
-        } catch (IllegalArgumentException success) {
         }
     }
 
     /**
      * containsKey(null) throws NPE
      */
-    @Test(timeout = 50000)
+    @Test(timeout = 50000, expected = NullPointerException.class)
     public void testContainsKey_NullPointerException() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
             Map<Integer, String> c = supplier.get();
             writeMessage = "c.containsKey(null) will throw a NullPointerException";
             yamlLoggger(() -> c.containsKey(null));
-            shouldThrow();
-        } catch (NullPointerException success) {
-        } catch (IllegalArgumentException success) {
         }
     }
 
     /**
      * put(null,x) throws NPE
      */
-    @Test(timeout = 50000)
+    @Test(timeout = 50000, expected = NullPointerException.class)
     public void testPut1_NullPointerException() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
             Map<Integer, String> c = supplier.get();
             writeMessage = "put(null) will throw a NullPointerException";
             yamlLoggger(() -> c.put(null, "whatever"));
-            shouldThrow();
-        } catch (NullPointerException success) {
         }
     }
 
     /**
      * put(x, null) throws NPE
      */
-    @Test(timeout = 50000)
+    @Test(timeout = 50000, expected = NullPointerException.class)
     public void testPut2_NullPointerException() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
             Map<Integer, String> c = supplier.get();
             writeMessage = "put(notPresent,null) will throw a NullPointerException";
             yamlLoggger(() -> c.put(notPresent, null));
-            shouldThrow();
-        } catch (NullPointerException success) {
         }
     }
 
     /**
      * putIfAbsent(null, x) throws NPE
      */
-    @Test(timeout = 50000)
-    @Ignore
+    @Test(timeout = 50000, expected = NullPointerException.class)
     public void testPutIfAbsent1_NullPointerException() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
             Map<Integer, String> c = supplier.get();
             writeMessage = "put(null, \"whatever\") will throw a NullPointerException";
             yamlLoggger(() -> c.putIfAbsent(null, "whatever"));
-            shouldThrow();
-        } catch (NullPointerException success) {
-            success.printStackTrace();
         }
     }
 
     /**
      * replace(null, x) throws NPE
      */
-    @Test(timeout = 50000)
+    @Test(timeout = 50000, expected = NullPointerException.class)
     public void testReplace_NullPointerException() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
             Map<Integer, String> c = supplier.get();
             c.replace(null, "whatever");
-            shouldThrow();
-        } catch (NullPointerException success) {
         }
     }
 
     /**
      * replace(null, x, y) throws NPE
      */
-    @Test(timeout = 50000)
+    @Test(timeout = 50000, expected = NullPointerException.class)
     public void testReplaceValue_NullPointerException() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
             Map<Integer, String> c = supplier.get();
             c.replace(null, "A", "whatever");
-            shouldThrow();
-        } catch (NullPointerException success) {
         }
     }
 
     /**
      * putIfAbsent(x, null) throws NPE
      */
-    @Test(timeout = 50000)
+    @Test(timeout = 50000, expected = NullPointerException.class)
     public void testPutIfAbsent2_NullPointerException() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
             Map<Integer, String> c = supplier.get();
             c.putIfAbsent(notPresent, null);
-            shouldThrow();
-        } catch (NullPointerException success) {
         }
     }
 
     /**
      * replace(x, null) throws NPE
      */
-    @Test(timeout = 50000)
+    @Test(timeout = 50000, expected = NullPointerException.class)
     public void testReplace2_NullPointerException() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
             Map<Integer, String> c = supplier.get();
             writeMessage = "replace(notPresent,null) will throw a NullPointerException";
             yamlLoggger(() -> c.replace(notPresent, null));
-            shouldThrow();
-        } catch (NullPointerException success) {
         }
     }
 
     /**
      * replace(x, null, y) throws NPE
      */
-    @Ignore
-    @Test(timeout = 50000)
+    @Test(timeout = 50000, expected = NullPointerException.class)
     public void testReplaceValue2_NullPointerException() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
             Map<Integer, String> c = supplier.get();
             c.replace(notPresent, null, "A");
-            shouldThrow();
-        } catch (NullPointerException success) {
         }
     }
 
     /**
      * replace(x, y, null) throws NPE
      */
-    @Test(timeout = 50000)
+    @Test(timeout = 50000, expected = NullPointerException.class)
     public void testReplaceValue3_NullPointerException() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
             Map<Integer, String> c = supplier.get();
             writeMessage = "replace(notPresent, \"A\", null will throw a NullPointerException";
             yamlLoggger(() -> c.replace(notPresent, "A", null));
-            shouldThrow();
-        } catch (NullPointerException success) {
         }
     }
 
     /**
      * remove(null) throws NPE
      */
-    @Test(timeout = 50000)
+    @Test(timeout = 50000, expected = NullPointerException.class)
     public void testRemove1_NullPointerException() throws IOException {
         try (ClosableMapSupplier<CharSequence, CharSequence> supplier = newStrStrMap()) {
             Map<CharSequence, CharSequence> c = supplier.get();
@@ -684,15 +654,13 @@ public class LocalChronicleMapTest extends JSR166TestCase {
 
             writeMessage = "remove(null) will throw a NullPointerException";
             yamlLoggger(() -> c.remove(null));
-            shouldThrow();
-        } catch (NullPointerException success) {
         }
     }
 
     /**
      * remove(null, x) throws NPE
      */
-    @Test(timeout = 50000)
+    @Test(timeout = 50000, expected = NullPointerException.class)
     public void testRemove2_NullPointerException
     () throws IOException {
         try (ClosableMapSupplier<CharSequence, CharSequence> supplier = newStrStrMap()) {
@@ -700,15 +668,13 @@ public class LocalChronicleMapTest extends JSR166TestCase {
             c.put("sadsdf", "asdads");
             writeMessage = "remove(null,whatever) will throw a NullPointerException";
             yamlLoggger(() -> c.remove(null, "whatever"));
-            shouldThrow();
-        } catch (NullPointerException success) {
         }
     }
 
     /**
      * remove(x, null) returns false
      */
-    @Test(timeout = 50000)
+    @Test(timeout = 50000, expected = NullPointerException.class)
     public void testRemove3() throws IOException {
         try (ClosableMapSupplier<CharSequence, CharSequence> supplier = newStrStrMap()) {
             Map<CharSequence, CharSequence> c = supplier.get();

@@ -148,12 +148,13 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     }
 
     @Override
-    public void put(String key, BytesStore value) {
+    public boolean put(String key, BytesStore value) {
         if (closed) throw new IllegalStateException("closed");
         Path path = dirPath.resolve(key);
         FileRecord fr = lastFileRecordMap.get(path.toFile());
         writeToFile(path, value);
         if (fr != null) fr.valid = false;
+        return fr != null;
     }
 
     @Override
@@ -178,11 +179,14 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     }
 
     @Override
-    public void remove(String key) {
+    public boolean remove(String key) {
         if (closed) throw new IllegalStateException("closed");
-        Path resolve = dirPath.resolve(key);
-        if (resolve.toFile().isFile())
-            deleteFile(resolve);
+        Path path = dirPath.resolve(key);
+        if (path.toFile().isFile())
+            deleteFile(path);
+        // todo check this is removed in watcher
+        FileRecord fr = lastFileRecordMap.get(path.toFile());
+        return fr != null;
     }
 
     @Override

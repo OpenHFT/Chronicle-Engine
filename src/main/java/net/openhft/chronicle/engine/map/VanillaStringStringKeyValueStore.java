@@ -82,13 +82,13 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     }
 
     @Override
-    public void put(String key, String value) {
+    public boolean put(String key, String value) {
         Buffers b = BUFFERS.get();
         Bytes<ByteBuffer> bytes = b.valueBuffer;
         bytes.clear();
         bytes.append(value);
         bytes.flip();
-        kvStore.put(key, bytes);
+        return kvStore.put(key, bytes);
     }
 
     @Override
@@ -103,8 +103,8 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     }
 
     @Override
-    public void remove(String key) {
-        kvStore.remove(key);
+    public boolean remove(String key) {
+        return kvStore.remove(key);
     }
 
     @Override
@@ -194,11 +194,6 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
 
         @Override
         public void notifyEvent(MapReplicationEvent<String, String> mpe) throws InvalidSubscriberException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean hasSubscribers() {
             throw new UnsupportedOperationException("todo");
         }
 
@@ -218,8 +213,9 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         }
 
         @Override
-        public void unregisterDownstream(Subscription subscription) {
-            throw new UnsupportedOperationException("todo");
+        public boolean needsPrevious() {
+            SubscriptionKVSCollection<String, BytesStore> subs = kvStore.subscription(false);
+            return subs != null && subs.needsPrevious();
         }
     }
 }

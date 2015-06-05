@@ -2,13 +2,13 @@ package net.openhft.chronicle.engine.tree;
 
 import net.openhft.chronicle.core.util.Closeable;
 import net.openhft.chronicle.engine.api.*;
-import net.openhft.chronicle.engine.api.map.MapView;
-import net.openhft.chronicle.engine.api.map.StringMarshallableKeyValueStore;
-import net.openhft.chronicle.engine.api.map.StringStringKeyValueStore;
-import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
-import net.openhft.chronicle.engine.map.AuthenticatedKeyValueStore;
-import net.openhft.chronicle.engine.map.VanillaStringMarshallableKeyValueStore;
-import net.openhft.chronicle.engine.map.VanillaStringStringKeyValueStore;
+import net.openhft.chronicle.engine.api.collection.ValuesCollection;
+import net.openhft.chronicle.engine.api.map.*;
+import net.openhft.chronicle.engine.api.set.EntrySetView;
+import net.openhft.chronicle.engine.api.set.KeySetView;
+import net.openhft.chronicle.engine.map.*;
+import net.openhft.chronicle.engine.pubsub.VanillaReference;
+import net.openhft.chronicle.engine.session.VanillaSessionProvider;
 import net.openhft.chronicle.wire.Marshallable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +26,8 @@ import static net.openhft.chronicle.engine.api.RequestContext.requestContext;
  */
 public class VanillaAsset implements Asset, Closeable {
     public static final Comparator<Class> CLASS_COMPARATOR = Comparator.comparing(Class::getName);
+    private static final String LAST = "{last}";
+
     private final Asset parent;
     private final String name;
 
@@ -44,6 +46,67 @@ public class VanillaAsset implements Asset, Closeable {
             assert parent != null;
             assert name != null;
         }
+    }
+
+    public void standardStack() {
+        viewTypeLayersOn(TopicPublisher.class, LAST + " topic publisher", MapView.class);
+        registerFactory(TopicPublisher.class, VanillaTopicPublisher::new);
+
+        viewTypeLayersOn(Reference.class, LAST + "reference", MapView.class);
+        registerFactory(Reference.class, VanillaReference::new);
+
+        viewTypeLayersOn(Publisher.class, LAST + "publisher", MapView.class);
+        registerFactory(Publisher.class, VanillaReference::new);
+
+        viewTypeLayersOn(EntrySetView.class, LAST + " entrySet", MapView.class);
+        registerFactory(EntrySetView.class, VanillaEntrySetView::new);
+
+        viewTypeLayersOn(ValuesCollection.class, LAST + " values", MapView.class);
+
+        viewTypeLayersOn(MapEventSubscriber.class, LAST + " MapEvent subscriber", Subscription.class);
+// todo CE-54      registerFactory(MapEventSubscriber.class, VanillaMapEventSubscriber::new);
+
+        viewTypeLayersOn(KeySubscriber.class, LAST + " keySet subscriber", Subscription.class);
+// todo CE-54      registerFactory(KeySubscriber.class, VanillaKeySubscriber::new);
+
+        viewTypeLayersOn(EntrySetSubscriber.class, LAST + " entrySet subscriber", Subscription.class);
+// todo  CE-54     registerFactory(EntrySetView.class, VanillaEntrySetSubscriber::new);
+
+        viewTypeLayersOn(KeySetView.class, LAST + " keySet", MapView.class);
+// todo  CE-54     registerFactory(KeySetView.class, VanillaKeySetView::new);
+
+        viewTypeLayersOn(TopicSubscriber.class, LAST + " key,value topic subscriber", Subscription.class);
+// todo   CE-54    registerFactory(TopicSubscriber.class, VanillaTopicSubscriber::new);
+
+        addClassifier(Subscriber.class, LAST + " generic subscriber", rc ->
+                        rc.elementType() == MapEvent.class ? (rc2, asset) -> asset.acquireFactory(MapEventSubscriber.class).create(rc2, asset, () -> (Assetted) asset.acquireView(Subscription.class, rc2))
+                                : rc.elementType() == Map.Entry.class ? (rc2, asset) -> asset.acquireFactory(EntrySetSubscriber.class).create(rc2, asset, () -> (Assetted) asset.acquireView(Subscription.class, rc2))
+                                : (rc2, asset) -> asset.acquireFactory(KeySubscriber.class).create(rc2, asset, () -> (Assetted) asset.acquireView(Subscription.class, rc2))
+        );
+
+        viewTypeLayersOn(MapView.class, LAST + " string key maps", AuthenticatedKeyValueStore.class);
+        registerFactory(MapView.class, VanillaMapView::new);
+    }
+
+    public void forTesting() {
+        standardStack();
+
+        viewTypeLayersOn(AuthenticatedKeyValueStore.class, LAST + " string -> marshallable", KeyValueStore.class);
+        registerFactory(AuthenticatedKeyValueStore.class, VanillaSubscriptionKeyValueStore::new);
+
+        viewTypeLayersOn(SubscriptionKeyValueStore.class, LAST + " sub -> foundation", KeyValueStore.class);
+        registerFactory(SubscriptionKeyValueStore.class, VanillaSubscriptionKeyValueStore::new);
+
+        registerFactory(KeyValueStore.class, VanillaKeyValueStore::new);
+
+        addView(SessionProvider.class, new VanillaSessionProvider(this));
+    }
+
+    public void forRemoteAccess() {
+        standardStack();
+
+        // todo remove this cast.
+        registerFactory(AuthenticatedKeyValueStore.class, (ViewFactory) RemoteKeyValueStore::new);
     }
 
     @Override

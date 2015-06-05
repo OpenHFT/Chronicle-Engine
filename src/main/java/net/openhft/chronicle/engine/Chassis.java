@@ -19,7 +19,7 @@ public enum Chassis {
     }
 
     public static void resetChassis() {
-        assetTree = new VanillaAssetTree();
+        assetTree = new VanillaAssetTree().forTesting();
     }
 
     public static void defaultSession(AssetTree assetTree) {

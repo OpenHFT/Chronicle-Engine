@@ -1,4 +1,4 @@
-package net.openhft.chronicle.engine2;
+package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.engine.api.RequestContext;
 import org.junit.Test;
@@ -25,7 +25,7 @@ public class RequestContextTest {
         assertEquals("RequestContext{" +
                 "pathName='', " +
                 "name='chronicleMapString', " +
-                "viewType=interface net.openhft.chronicle.engine2.api.map.MapView, " +
+                "viewType=interface net.openhft.chronicle.engine.api.map.MapView, " +
                 "type=class java.lang.String, " +
                 "type2=class java.lang.String, " +
                 "basePath='null', " +

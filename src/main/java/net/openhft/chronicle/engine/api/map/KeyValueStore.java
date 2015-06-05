@@ -8,6 +8,7 @@ import net.openhft.chronicle.engine.api.View;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @param <K>  key type
@@ -17,14 +18,27 @@ import java.util.Map;
 
 public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V>>, View, Closeable {
 
-    default void put(K key, V value) {
-        getAndPut(key, value);
+    /**
+     * put an entry
+     *
+     * @param key   to set
+     * @param value to set
+     * @return true if it was replaced, false if it was added.
+     */
+    default boolean put(K key, V value) {
+        return getAndPut(key, value) != null;
     }
 
     V getAndPut(K key, V value);
 
-    default void remove(K key) {
-        getAndRemove(key);
+    /**
+     * remove a key
+     *
+     * @param key to remove
+     * @return true if it was removed, false if not.
+     */
+    default boolean remove(K key) {
+        return getAndRemove(key) != null;
     }
 
     V getAndRemove(K key);
@@ -69,13 +83,40 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
         }
     }
 
-    interface Entry<K, V> {
-        K key();
+    default boolean replaceIfEqual(K key, V oldValue, V newValue) {
+        if (containsKey(key) && Objects.equals(get(key), oldValue)) {
+            put(key, newValue);
+            return true;
+        } else
+            return false;
+    }
 
-        V value();
+    default boolean removeIfEqual(K key, V value) {
+        if (!isKeyType(key))
+            return false;
+        if (containsKey(key) && Objects.equals(get(key), value)) {
+            remove(key);
+            return true;
+        } else
+            return false;
+    }
+
+    default boolean isKeyType(Object key) {
+        return true;
+    }
+
+    default V putIfAbsent(K key, V value) {
+        V value2 = get(key);
+        return value2 == null ? getAndPut(key, value) : value2;
     }
 
     default boolean keyedView() {
         return true;
+    }
+
+    interface Entry<K, V> {
+        K key();
+
+        V value();
     }
 }

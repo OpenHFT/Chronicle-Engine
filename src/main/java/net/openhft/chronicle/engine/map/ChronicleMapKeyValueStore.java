@@ -51,10 +51,13 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
             builder.entries(context.getEntries());
         }
         if(basePath!=null) {
+            String pathname = basePath + "/" + context.name();
             try {
-                builder.createPersistedTo(new File(basePath + "/" + context.name()));
+                builder.createPersistedTo(new File(pathname));
             } catch (IOException e) {
-                throw new IORuntimeException(e);
+                IORuntimeException iore = new IORuntimeException("Could not access " + pathname);
+                iore.initCause(e);
+                throw iore;
             }
         }
 

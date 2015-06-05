@@ -97,10 +97,10 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     }
 
     @Override
-    public void put(String key, V value) {
+    public boolean put(String key, V value) {
         Buffers b = BUFFERS.get();
         Bytes valueBytes = valueToBytes.apply(value, b.valueBuffer);
-        kvStore.put(key, valueBytes);
+        return kvStore.put(key, valueBytes);
     }
 
     @Override
@@ -112,8 +112,8 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     }
 
     @Override
-    public void remove(String key) {
-        kvStore.remove(key);
+    public boolean remove(String key) {
+        return kvStore.remove(key);
     }
 
     @Override
@@ -203,11 +203,6 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
 
         @Override
         public void notifyEvent(MapReplicationEvent<String, V> mpe) throws InvalidSubscriberException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean hasSubscribers() {
             throw new UnsupportedOperationException("todo");
         }
 
@@ -227,8 +222,9 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
         }
 
         @Override
-        public void unregisterDownstream(Subscription subscription) {
-            throw new UnsupportedOperationException("todo");
+        public boolean needsPrevious() {
+            SubscriptionKVSCollection<String, BytesStore> subs = kvStore.subscription(false);
+            return subs != null && subs.needsPrevious();
         }
     }
 }

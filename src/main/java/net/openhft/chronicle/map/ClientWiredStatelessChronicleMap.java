@@ -48,6 +48,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
     private final Class<K> kClass;
     private final boolean putReturnsNull;
     private final boolean removeReturnsNull;
+    private final Map<Long, String> cidToCsp = new HashMap<>();
 
     public ClientWiredStatelessChronicleMap(
             @NotNull final ClientWiredChronicleMapStatelessBuilder config,
@@ -105,31 +106,38 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
 
     @SuppressWarnings("NullableProblems")
     public V putIfAbsent(K key, V value) {
-        if (key == null || value == null)
-            throw new NullPointerException();
+        checkKey(key);
+        checkValue(value);
 
         return proxyReturnTypedObject(putIfAbsent, null, vClass, key, value);
+    }
+
+    private void checkValue(Object value) {
+        if (value == null)
+            throw new NullPointerException("value must not be null");
     }
 
     @SuppressWarnings("NullableProblems")
     public boolean remove(Object key, Object value) {
         if (key == null)
-            throw new NullPointerException();
+            return false;
+        checkValue(value);
 
-        return value != null && proxyReturnBooleanWithArgs(removeWithValue, (K) key, (V) value);
+        return proxyReturnBooleanWithArgs(removeWithValue, (K) key, (V) value);
     }
 
     @SuppressWarnings("NullableProblems")
     public boolean replace(K key, V oldValue, V newValue) {
-        if (key == null || oldValue == null || newValue == null)
-            throw new NullPointerException();
+        checkKey(key);
+        checkValue(oldValue);
+        checkValue(newValue);
         return proxyReturnBooleanWithArgs(replaceForOld, key, oldValue, newValue);
     }
 
     @SuppressWarnings("NullableProblems")
     public V replace(K key, V value) {
-        if (key == null || value == null)
-            throw new NullPointerException();
+        checkKey(key);
+        checkValue(value);
         return proxyReturnTypedObject(replace, null, vClass, key, value);
     }
 
@@ -201,15 +209,12 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
     }
 
     public boolean containsKey(Object key) {
+        checkKey(key);
         return proxyReturnBoolean(containsKey, out -> out.object(key));
     }
 
-    @NotNull
-    private NullPointerException keyNotNullNPE() {
-        return new NullPointerException("key can not be null");
-    }
-
     public boolean containsValue(Object value) {
+        checkValue(value);
         return proxyReturnBoolean(containsValue, out -> out.object(value));
     }
 
@@ -224,13 +229,14 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
         return proxyReturnLong(size);
     }
 
-
     public V get(Object key) {
+        checkKey(key);
         return (V) this.proxyReturnTypedObject(get, null, vClass, key);
     }
 
     @Nullable
     public V getUsing(K key, V usingValue) {
+        checkKey(key);
         return (V) this.proxyReturnTypedObject(get, usingValue, vClass, key);
     }
 
@@ -258,8 +264,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
     }
 
     public V remove(Object key) {
-        if (key == null)
-            throw keyNotNullNPE();
+        checkKey(key);
 
         if (removeReturnsNull) {
             sendEventAsync(remove, toParameters(remove, key));
@@ -269,10 +274,14 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
         }
     }
 
+    private void checkKey(Object key) {
+        if (key == null)
+            throw new NullPointerException("key can not be null");
+    }
 
     public V put(K key, V value) {
-        if (key == null || value == null)
-            throw new NullPointerException();
+        checkKey(key);
+        checkValue(value);
 
         if (!putReturnsNull)
             return proxyReturnTypedObject(getAndPut, null, vClass, key, value);
@@ -281,7 +290,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
             return null;
         }
     }
-
 
     @Nullable
     @Override
@@ -315,8 +323,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
         return new ClientWiredStatelessChronicleCollection<>(channelName, hub, cid, conumer,
                 ArrayList::new, "/" + channelName + "?view=" + "values");
     }
-
-    private final Map<Long, String> cidToCsp = new HashMap<>();
 
     @NotNull
     public Set<Map.Entry<K, V>> entrySet() {
@@ -383,7 +389,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
         });
 
         return new ClientWiredStatelessChronicleSet<>(channelName, hub,
-                cid,valueIn -> valueIn.object(kClass),csp.toString());
+                cid, valueIn -> valueIn.object(kClass), csp.toString());
     }
 
     @SuppressWarnings("SameParameterValue")

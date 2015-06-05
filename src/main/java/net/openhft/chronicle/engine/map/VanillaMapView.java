@@ -9,7 +9,6 @@ import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 
-
 import java.util.AbstractMap;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -22,18 +21,6 @@ import static net.openhft.chronicle.engine.api.RequestContext.requestContext;
 public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapView<K, MV, V> {
     private final boolean putReturnsNull;
     private final boolean removeReturnsNull;
-
-    @Override
-    public boolean containsKey(final Object key) {
-        nullCheckKey(key);
-        return super.containsKey(key);
-    }
-
-    private void nullCheckKey(final Object value) {
-        if (value == null)
-            throw new NullPointerException("key can not be null");
-    }
-
     private final Class keyClass;
     private final Class valueType;
     private Asset asset;
@@ -53,6 +40,22 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
     }
 
     @Override
+    public boolean containsKey(final Object key) {
+        checkKey(key);
+        return super.containsKey(key);
+    }
+
+    private void checkKey(final Object key) {
+        if (key == null)
+            throw new NullPointerException("key can not be null");
+    }
+
+    private void checkValue(final Object value) {
+        if (value == null)
+            throw new NullPointerException("value can not be null");
+    }
+
+    @Override
     public Asset asset() {
         return asset;
     }
@@ -64,11 +67,13 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
 
     @Override
     public V get(Object key) {
-        return kvStore.getUsing((K) key, null);
+        return kvStore.isKeyType(key) ? kvStore.getUsing((K) key, null) : null;
     }
 
     @Override
     public V put(K key, V value) {
+        checkKey(key);
+        checkValue(value);
         if (putReturnsNull) {
             kvStore.put(key, value);
             return null;
@@ -80,12 +85,16 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
 
     @Override
     public V remove(Object key) {
+        if (!kvStore.isKeyType(key)) {
+            return null;
+        }
+        K key2 = (K) key;
         if (removeReturnsNull) {
-            kvStore.remove((K) key);
+            kvStore.remove(key2);
             return null;
 
         } else {
-            return kvStore.getAndRemove((K) key);
+            return kvStore.getAndRemove(key2);
         }
     }
 
@@ -108,21 +117,30 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
 
     @Override
     public V putIfAbsent(@NotNull K key, V value) {
-        throw new UnsupportedOperationException("todo");
+        checkKey(key);
+        checkValue(value);
+        return kvStore.putIfAbsent(key, value);
     }
 
     @Override
     public boolean remove(@NotNull Object key, Object value) {
-        throw new UnsupportedOperationException("todo");
+        checkKey(key);
+        checkValue(value);
+        return kvStore.isKeyType(key) && kvStore.removeIfEqual((K) key, (V) value);
     }
 
     @Override
     public boolean replace(@NotNull K key, @NotNull V oldValue, @NotNull V newValue) {
-        throw new UnsupportedOperationException("todo");
+        checkKey(key);
+        checkValue(oldValue);
+        checkValue(newValue);
+        return kvStore.replaceIfEqual(key, oldValue, newValue);
     }
 
     @Override
     public V replace(@NotNull K key, @NotNull V value) {
+        checkKey(key);
+        checkValue(value);
         return kvStore.replace(key, value);
     }
 
