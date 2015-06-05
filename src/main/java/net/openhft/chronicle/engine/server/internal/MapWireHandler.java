@@ -406,10 +406,15 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                     cpsBuff.append("/").append(requestContext.name());
                     cpsBuff.append("?");
                     cpsBuff.append("view=").append(type);
-                    cpsBuff.append("&");
-                    cpsBuff.append("keyType=").append(requestContext.keyType().getSimpleName());
-                    cpsBuff.append("&");
-                    cpsBuff.append("valueType=").append(requestContext.valueType().getSimpleName());
+
+                    final Class keyType = requestContext.keyType();
+                    if (keyType != null)
+                        cpsBuff.append("&keyType=").append(keyType.getSimpleName
+                                ());
+                    final Class valueType = requestContext.valueType();
+                    if (valueType != null)
+                        cpsBuff.append("&valueType=").append(valueType.getSimpleName
+                                ());
 
                     // todo add more fields
 
