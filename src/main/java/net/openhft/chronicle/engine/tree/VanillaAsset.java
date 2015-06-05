@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.tree;
 
+import net.openhft.chronicle.core.MemoryUnit;
 import net.openhft.chronicle.core.util.Closeable;
 import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
@@ -9,15 +10,20 @@ import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.map.*;
 import net.openhft.chronicle.engine.pubsub.VanillaReference;
 import net.openhft.chronicle.engine.session.VanillaSessionProvider;
+import net.openhft.chronicle.network.connection.ClientWiredStatelessTcpConnectionHub;
 import net.openhft.chronicle.wire.Marshallable;
+import net.openhft.chronicle.wire.TextWire;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.net.InetSocketAddress;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static net.openhft.chronicle.engine.api.RequestContext.requestContext;
 
@@ -105,8 +111,28 @@ public class VanillaAsset implements Asset, Closeable {
     public void forRemoteAccess() {
         standardStack();
 
+        ViewFactory remoteKeyValueStore = (context, asset, underlying) -> {
+
+            String hostname = "localhost"; //todo
+            int port = 8080; //todo
+
+            final InetSocketAddress inetSocketAddress = new InetSocketAddress(hostname, port);
+            int tcpBufferSize = (int) MemoryUnit.MEGABYTES.toBytes(2) + 1024;
+            long timeoutMs = TimeUnit.SECONDS.toMillis(20);
+
+            ClientWiredStatelessTcpConnectionHub hub = new
+                    ClientWiredStatelessTcpConnectionHub((byte) 1,
+                    false,
+                    inetSocketAddress,
+                    tcpBufferSize,
+                    timeoutMs,
+                    TextWire::new);
+
+            return new RemoteKeyValueStore(String.class, String.class, "map-name", hub);
+        };
+
         // todo remove this cast.
-        registerFactory(AuthenticatedKeyValueStore.class, (ViewFactory) RemoteKeyValueStore::new);
+        registerFactory(AuthenticatedKeyValueStore.class, remoteKeyValueStore);
     }
 
     @Override
