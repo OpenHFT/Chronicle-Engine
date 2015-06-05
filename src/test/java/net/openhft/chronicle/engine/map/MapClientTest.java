@@ -19,10 +19,10 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.client.RemoteChassis;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
-import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
@@ -43,6 +43,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static net.openhft.chronicle.engine.Utils.yamlLoggger;
 import static org.junit.Assert.assertEquals;
 /**
  * test using the map both remotely or locally via the engine
@@ -94,33 +95,34 @@ public class MapClientTest extends ThreadMonitoringTest {
 
         supplyMap(Integer.class, String.class, mapProxy -> {
 
-            final Set<Map.Entry<Integer, String>> entries = mapProxy.entrySet();
+            yamlLoggger(() -> {
+                final Set<Map.Entry<Integer, String>> entries = mapProxy.entrySet();
 
-            assertEquals(0, entries.size());
-            assertEquals(true, entries.isEmpty());
+                assertEquals(0, entries.size());
+                assertEquals(true, entries.isEmpty());
 
-            Map<Integer, String> data = new HashMap<>();
-            data.put(1, "hello");
-            data.put(2, "world");
-            mapProxy.putAll(data);
+                Map<Integer, String> data = new HashMap<>();
+                data.put(1, "hello");
+                data.put(2, "world");
+                mapProxy.putAll(data);
 
-            final Set<Map.Entry<Integer, String>> e = mapProxy.entrySet();
-            final Iterator<Map.Entry<Integer, String>> iterator = e.iterator();
-            Map.Entry<Integer, String> entry = iterator.next();
+                final Set<Map.Entry<Integer, String>> e = mapProxy.entrySet();
+                final Iterator<Map.Entry<Integer, String>> iterator = e.iterator();
+                Map.Entry<Integer, String> entry = iterator.next();
 
-            if (entry.getKey() == 1) {
-                assertEquals("hello", entry.getValue());
-                entry = iterator.next();
-                assertEquals("world", entry.getValue());
+                if (entry.getKey() == 1) {
+                    assertEquals("hello", entry.getValue());
+                    entry = iterator.next();
+                    assertEquals("world", entry.getValue());
 
-            } else if (entry.getKey() == 2) {
-                assertEquals("world", entry.getValue());
-                entry = iterator.next();
-                assertEquals("hello", entry.getValue());
-            }
+                } else if (entry.getKey() == 2) {
+                    assertEquals("world", entry.getValue());
+                    entry = iterator.next();
+                    assertEquals("hello", entry.getValue());
+                }
 
-
-            assertEquals(2, mapProxy.size());
+                assertEquals(2, mapProxy.size());
+            });
         });
     }
 

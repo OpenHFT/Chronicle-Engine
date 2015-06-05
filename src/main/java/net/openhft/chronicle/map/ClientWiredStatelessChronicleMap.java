@@ -311,9 +311,9 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
 
             read.type(type);
             return read.applyToMarshallable(w -> {
-
+                stringEvent(CoreFields.csp, csp, w);
                 final long cid0 = CoreFields.cid(w);
-                cidToCsp.put(cid0, stringEvent(CoreFields.csp, csp, w).toString());
+                cidToCsp.put(cid0, csp.toString());
                 return cid0;
             });
         });
@@ -335,9 +335,9 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
 
             read.type(type);
             return read.applyToMarshallable(w -> {
-
+                stringEvent(CoreFields.csp, csp, w);
                 final long cid0 = CoreFields.cid(w);
-                cidToCsp.put(cid0, stringEvent(CoreFields.csp, csp, w).toString());
+                cidToCsp.put(cid0, csp.toString());
                 return cid0;
             });
         });
@@ -381,9 +381,9 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
 
             read.type(type);
             return read.applyToMarshallable(w -> {
-
+                stringEvent(CoreFields.csp, csp, w);
                 final long cid0 = CoreFields.cid(w);
-                cidToCsp.put(cid0, stringEvent(CoreFields.csp, csp, w).toString());
+                cidToCsp.put(cid0, csp.toString());
                 return cid0;
             });
         });
