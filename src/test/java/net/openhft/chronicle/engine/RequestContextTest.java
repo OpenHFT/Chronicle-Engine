@@ -32,7 +32,10 @@ public class RequestContextTest {
                 "wireType=" + rc.wireType() + ", " +
                 "putReturnsNull=true, " +
                 "removeReturnsNull=false, " +
-                "bootstrap=true}", rc.toString());
+                "bootstrap=true, " +
+                "port=0, " +
+                "host=, " +
+                "timeout=1000}", rc.toString());
         assertEquals(Boolean.TRUE, rc.putReturnsNull());
         assertEquals(Boolean.FALSE, rc.removeReturnsNull());
         assertEquals(Boolean.TRUE, rc.bootstrap());

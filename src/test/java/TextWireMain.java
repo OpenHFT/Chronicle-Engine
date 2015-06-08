@@ -1,4 +1,4 @@
-import net.openhft.chronicle.engine.server.ServerEndpoint;
+import net.openhft.chronicle.engine.api.WireType;
 import net.openhft.chronicle.wire.TextWire;
 
 import java.io.IOException;
@@ -9,21 +9,9 @@ import java.io.IOException;
 public class TextWireMain {
     public static void main(String[] args) throws IOException {
 
-        int noPutsAndGets = 50;
-        final int MB = 1 << 20;
+        WireType.wire = TextWire::new;
 
-        try {
-            int port = 8088;
-            final ServerEndpoint serverEndpoint = new ServerEndpoint(port, TextWire::new);
-
-            System.out.println("Server port seems to be " + serverEndpoint.getPort());
-            while (true) {
-                Thread.sleep(1000 * 10);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        // the default is BinaryWire
+        BinaryWireMain.main(args);
     }
 }

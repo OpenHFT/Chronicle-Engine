@@ -18,7 +18,7 @@ import java.util.function.Function;
  */
 public class RequestContext {
     private String pathName;
-    private String name;
+    private String uri;
     private Class viewType, type, type2;
     private String basePath;
     private Function<Bytes, Wire> wireType = TextWire::new;
@@ -27,8 +27,12 @@ public class RequestContext {
             bootstrap = null;
     private double averageValueSize;
     private long entries;
+    private int tcpBufferSize = 1024;
 
     private static final Map<String, Class> classAliases = new ConcurrentHashMap<>();
+    private int port;
+    private StringBuilder host = new StringBuilder();
+    private long timeout = 1000; // in ms
 
     private static void addAlias(Class type, String aliases) {
         for (String alias : aliases.split(", ?")) {
@@ -60,9 +64,9 @@ public class RequestContext {
     private RequestContext() {
     }
 
-    public RequestContext(String pathName, String name) {
+    public RequestContext(String pathName, String uri) {
         this.pathName = pathName;
-        this.name = name;
+        this.uri = uri;
     }
 
     public static RequestContext requestContext() {
@@ -98,6 +102,9 @@ public class RequestContext {
         parser.register(() -> "keyType", v -> v.typeLiteral(this::lookupType, x -> this.type = x));
         parser.register(() -> "valueType", v -> v.typeLiteral(this::lookupType, x -> this.type2 = x));
         parser.register(() -> "elementType", v -> v.typeLiteral(this::lookupType, x -> this.type = x));
+        parser.register(() -> "port", v -> v.int32(x -> this.port = x));
+        parser.register(() -> "host", v -> v.textTo(this.host));
+        parser.register(() -> "timeout", v -> v.int32(x -> this.timeout = x));
         parser.register(WireParser.DEFAULT, ValueIn.DISCARD);
         Bytes bytes = Bytes.from(queryString);
         QueryWire wire = new QueryWire(bytes);
@@ -170,8 +177,8 @@ public class RequestContext {
         return type2;
     }
 
-    public String fullName() {
-        return pathName.isEmpty() ? name : (pathName + "/" + name);
+    public String fullUri() {
+        return pathName.isEmpty() ? uri : (pathName + "/" + uri);
     }
 
     public RequestContext basePath(String basePath) {
@@ -197,7 +204,7 @@ public class RequestContext {
     }
 
     public String name() {
-        return name;
+        return uri;
     }
 
     public double getAverageValueSize() {
@@ -219,7 +226,7 @@ public class RequestContext {
     }
 
     public RequestContext name(String name) {
-        this.name = name;
+        this.uri = name;
         return this;
     }
 
@@ -233,10 +240,10 @@ public class RequestContext {
         return viewType;
     }
 
-    public RequestContext fullName(String fullName) {
+    public RequestContext fullUri(String fullName) {
         int dirPos = fullName.lastIndexOf('/');
         this.pathName = dirPos >= 0 ? fullName.substring(0, dirPos) : "";
-        this.name = dirPos >= 0 ? fullName.substring(dirPos + 1) : fullName;
+        this.uri = dirPos >= 0 ? fullName.substring(dirPos + 1) : fullName;
         return this;
     }
 
@@ -261,7 +268,7 @@ public class RequestContext {
     public String toString() {
         return "RequestContext{" +
                 "pathName='" + pathName + '\'' +
-                ", name='" + name + '\'' +
+                ", name='" + uri + '\'' +
                 ", viewType=" + viewType +
                 ", type=" + type +
                 ", type2=" + type2 +
@@ -270,8 +277,29 @@ public class RequestContext {
                 ", putReturnsNull=" + putReturnsNull +
                 ", removeReturnsNull=" + removeReturnsNull +
                 ", bootstrap=" + bootstrap +
+                ", port=" + port +
+                ", host=" + host +
+                ", timeout=" + timeout +
                 '}';
     }
 
+    public int port() {
+        return port;
+    }
 
+    public String host() {
+        return host.toString();
+    }
+
+    public boolean doHandShaking() {
+        return false;
+    }
+
+    public int tcpBufferSize() {
+        return tcpBufferSize;
+    }
+
+    public long timeout() {
+        return timeout;
+    }
 }

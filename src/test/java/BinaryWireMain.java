@@ -1,6 +1,6 @@
 
+import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
-import net.openhft.chronicle.wire.BinaryWire;
 
 import java.io.IOException;
 
@@ -12,7 +12,8 @@ public class BinaryWireMain {
 
         try {
             int port = 8088;
-            final ServerEndpoint serverEndpoint = new ServerEndpoint(port, BinaryWire::new);
+            Chassis.resetChassis();
+            final ServerEndpoint serverEndpoint = new ServerEndpoint(port);
 
             System.out.println("Server port seems to be " + serverEndpoint.getPort());
             while (true) {

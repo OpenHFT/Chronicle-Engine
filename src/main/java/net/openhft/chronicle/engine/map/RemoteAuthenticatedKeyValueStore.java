@@ -1,102 +1,62 @@
-/*
- * Copyright 2014 Higher Frequency Trading
- *
- * http://www.higherfrequencytrading.com
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+package net.openhft.chronicle.engine.map;
 
-package net.openhft.chronicle.map;
-
+import net.openhft.chronicle.core.annotation.NotNull;
+import net.openhft.chronicle.engine.api.*;
+import net.openhft.chronicle.engine.api.map.KeyValueStore;
+import net.openhft.chronicle.engine.api.map.MapReplicationEvent;
 import net.openhft.chronicle.engine.collection.ClientWiredStatelessChronicleCollection;
 import net.openhft.chronicle.engine.collection.ClientWiredStatelessChronicleSet;
-import net.openhft.chronicle.network.connection.ClientWiredStatelessTcpConnectionHub;
+import net.openhft.chronicle.map.MapStatelessClient;
+import net.openhft.chronicle.network.connection.TcpConnectionHub;
 import net.openhft.chronicle.wire.*;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
-import static java.util.Collections.emptyList;
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId;
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.*;
-import static net.openhft.chronicle.map.VanillaChronicleMap.newInstance;
 import static net.openhft.chronicle.wire.CoreFields.stringEvent;
 
-/**
- * @author Rob Austin.
- */
-class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
-        implements ChronicleMap<K, V>, Cloneable {
+public class RemoteAuthenticatedKeyValueStore<K, V> extends MapStatelessClient<EventId>
+        implements Cloneable, AuthenticatedKeyValueStore<K, V, V> {
 
     public static final Consumer<ValueOut> VOID_PARAMETERS = out -> out.marshallable(WriteMarshallable.EMPTY);
-    private final Class<V> vClass;
+
     private final Class<K> kClass;
-    private final boolean putReturnsNull;
-    private final boolean removeReturnsNull;
+    private final Class<V> vClass;
     private final Map<Long, String> cidToCsp = new HashMap<>();
 
-    public ClientWiredStatelessChronicleMap(
-            @NotNull final ClientWiredChronicleMapStatelessBuilder config,
+    @SuppressWarnings("unchecked")
+    public RemoteAuthenticatedKeyValueStore(RequestContext context, Asset asset, Supplier<Assetted> underlying) {
+        this(context.keyType(),
+                context.valueType(),
+                context.name(),
+                hub(context, asset));
+    }
+
+    private static TcpConnectionHub hub(final RequestContext context, final Asset asset) {
+        final TcpConnectionHub hub = asset.acquireView(TcpConnectionHub.class, context);
+        return hub;
+    }
+
+    private RemoteAuthenticatedKeyValueStore(
             @NotNull final Class<K> kClass,
             @NotNull final Class<V> vClass,
             @NotNull final String channelName,
-            @NotNull final ClientWiredStatelessTcpConnectionHub hub) {
+            @NotNull final TcpConnectionHub hub) {
         super(channelName, hub, 0, "/" + channelName + "?view=" + "map&keyType=" + kClass.getSimpleName() + "&valueType=" + vClass
                 .getSimpleName());
-        this.putReturnsNull = config.putReturnsNull();
-        this.removeReturnsNull = config.removeReturnsNull();
         this.kClass = kClass;
         this.vClass = vClass;
     }
 
     @Override
-    public void getAll(File toFile) throws IOException {
-        JsonSerializer.getAll(toFile, this, emptyList());
-    }
-
-    @Override
-    public void putAll(File fromFile) throws IOException {
-        JsonSerializer.putAll(fromFile, this, emptyList());
-    }
-
-    @Override
-    public V newValueInstance() {
-        return (V) newInstance(vClass, false);
-    }
-
-    @Override
-    public K newKeyInstance() {
-        return newInstance(kClass, true);
-    }
-
-    @Override
-    public Class<K> keyClass() {
-        return kClass;
-    }
-
-    @Override
     public void close() {
-        // todo add ref count
-    }
 
-    @Override
-    public Class<V> valueClass() {
-        return vClass;
     }
 
     @NotNull
@@ -108,7 +68,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
     public V putIfAbsent(K key, V value) {
         checkKey(key);
         checkValue(value);
-
         return proxyReturnTypedObject(putIfAbsent, null, vClass, key, value);
     }
 
@@ -141,14 +100,14 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
         return proxyReturnTypedObject(replace, null, vClass, key, value);
     }
 
-    public int size() {
-        final long size = longSize();
+    @Override
+    public void keysFor(final int segment, final SubscriptionConsumer<K> kConsumer) throws InvalidSubscriberException {
+        throw new UnsupportedOperationException("todo");
+    }
 
-        if (size > Integer.MAX_VALUE)
-            throw new IllegalStateException("size is longer than Integer.MAX_VALUE please use " +
-                    "longSize(), " +
-                    "size=" + size());
-        return (int) size;
+    @Override
+    public void entriesFor(final int segment, final SubscriptionConsumer<MapReplicationEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
+        throw new UnsupportedOperationException("todo");
     }
 
     /**
@@ -213,65 +172,44 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
         return proxyReturnBoolean(containsKey, out -> out.object(key));
     }
 
-    public boolean containsValue(Object value) {
+    /*public boolean containsValue(Object value) {
         checkValue(value);
         return proxyReturnBoolean(containsValue, out -> out.object(value));
     }
 
-    public void putAll(@NotNull Map<? extends K, ? extends V> map) {
+    public void putAll0(@NotNull Map<? extends K, ? extends V> map) {
         proxyReturnVoid(putAll, v ->
                         v.sequence(out -> map.entrySet().forEach(
                                 e -> toParameters(put, e.getKey(), e.getValue()).accept(out)))
         );
-    }
-
-    public long longSize() {
-        return proxyReturnLong(size);
-    }
+    }*/
 
     public V get(Object key) {
         checkKey(key);
-        return (V) this.proxyReturnTypedObject(get, null, vClass, key);
+        return this.proxyReturnTypedObject(get, null, vClass, key);
     }
 
     @Nullable
     public V getUsing(K key, V usingValue) {
         checkKey(key);
-        return (V) this.proxyReturnTypedObject(get, usingValue, vClass, key);
+        final V v = this.proxyReturnTypedObject(get, usingValue, vClass, key);
+        return v;
     }
 
-    @NotNull
-    @Override
-    public ReadContext<K, V> getUsingLocked(@NotNull K k, @NotNull V v) {
-        throw new UnsupportedOperationException("todo");
+    public long size() {
+        return proxyReturnLong(size);
     }
 
-    @NotNull
-    public V acquireUsing(@NotNull K key, V usingValue) {
-        throw new UnsupportedOperationException(
-                "acquireUsing() is not supported for stateless clients");
-    }
-
-    @NotNull
-    @Override
-    public WriteContext<K, V> acquireUsingLocked(@NotNull K k, @NotNull V v) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
-    public <R> R getMapped(K k, @NotNull net.openhft.chronicle.map.Function<? super V, R> function) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    public V remove(Object key) {
+    public boolean remove(Object key) {
         checkKey(key);
+        sendEventAsync(remove, toParameters(remove, key));
+        return false;
+    }
 
-        if (removeReturnsNull) {
-            sendEventAsync(remove, toParameters(remove, key));
-            return null;
-        } else {
-            return proxyReturnTypedObject(getAndRemove, null, vClass, key);
-        }
+    @Override
+    public V getAndRemove(final Object key) {
+        checkKey(key);
+        return proxyReturnTypedObject(getAndRemove, null, vClass, key);
     }
 
     private void checkKey(Object key) {
@@ -279,22 +217,18 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
             throw new NullPointerException("key can not be null");
     }
 
-    public V put(K key, V value) {
+    public boolean put(K key, V value) {
         checkKey(key);
         checkValue(value);
-
-        if (!putReturnsNull)
-            return proxyReturnTypedObject(getAndPut, null, vClass, key, value);
-        else {
-            sendEventAsync(put, toParameters(put, key, value));
-            return null;
-        }
+        sendEventAsync(put, toParameters(put, key, value));
+        return false;
     }
 
-    @Nullable
     @Override
-    public V putMapped(@Nullable K key, @NotNull UnaryOperator<V> unaryOperator) {
-        throw new UnsupportedOperationException();
+    public V getAndPut(final Object key, final Object value) {
+        checkKey(key);
+        checkValue(value);
+        return proxyReturnTypedObject(getAndPut, null, vClass, key, value);
     }
 
     public void clear() {
@@ -302,7 +236,6 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
     }
 
     @NotNull
-    @Override
     public Collection<V> values() {
         final StringBuilder csp = Wires.acquireStringBuilder();
         long cid = proxyReturnWireConsumer(values, read -> {
@@ -370,6 +303,11 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
         return new ClientWiredStatelessChronicleSet<>(channelName, hub, cid, conumer, csp.toString());
     }
 
+    @Override
+    public Iterator<Map.Entry<K, V>> entrySetIterator() {
+        return entrySet().iterator();
+    }
+
     @NotNull
     public Set<K> keySet() {
 
@@ -405,6 +343,25 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
         return readInt(sendEvent(startTime, eventId, VOID_PARAMETERS), startTime);
     }
 
+    @Override
+    public Asset asset() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public KeyValueStore<K, V, V> underlying() {
+        throw new UnsupportedOperationException();
+    }
+
+    // todo
+    private final SubscriptionKVSCollection<K, V> subscriptions = new
+            VanillaSubscriptionKVSCollection<>(this);
+
+    @Override
+    public SubscriptionKVSCollection<K, V> subscription(final boolean createIfAbsent) {
+        return subscriptions;
+    }
+
     class Entry implements Map.Entry<K, V> {
 
         final K key;
@@ -428,7 +385,7 @@ class ClientWiredStatelessChronicleMap<K, V> extends MapStatelessClient<EventId>
 
         public final V setValue(V newValue) {
             V oldValue = value;
-            ClientWiredStatelessChronicleMap.this.put(getKey(), newValue);
+            RemoteAuthenticatedKeyValueStore.this.put(getKey(), newValue);
             return oldValue;
         }
 

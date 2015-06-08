@@ -2,7 +2,8 @@ package net.openhft.chronicle.engine.collection;
 
 import net.openhft.chronicle.engine.collection.CollectionWireHandler.SetEventId;
 import net.openhft.chronicle.map.MapStatelessClient;
-import net.openhft.chronicle.network.connection.ClientWiredStatelessTcpConnectionHub;
+
+import net.openhft.chronicle.network.connection.TcpConnectionHub;
 import net.openhft.chronicle.wire.ValueIn;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,7 +22,7 @@ public class ClientWiredStatelessChronicleCollection<U, E extends Collection<U>>
     private final Supplier<E> factory;
 
     public ClientWiredStatelessChronicleCollection(@NotNull final String channelName,
-                                                   @NotNull final ClientWiredStatelessTcpConnectionHub hub,
+                                                   @NotNull final TcpConnectionHub hub,
                                                    final long cid,
                                                    @NotNull final Function<ValueIn, U> wireToSet,
                                                    @NotNull Supplier<E> factory, String csp) {

@@ -1,7 +1,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
-import net.openhft.chronicle.network.connection.ClientWiredStatelessTcpConnectionHub;
+import net.openhft.chronicle.network.connection.TcpConnectionHub;
 import net.openhft.chronicle.wire.CoreFields;
 import net.openhft.chronicle.wire.ParameterizeWireKey;
 import net.openhft.chronicle.wire.ValueIn;
@@ -22,7 +22,7 @@ public abstract class MapStatelessClient<E extends ParameterizeWireKey> extends 
      * @param csp
      */
     public MapStatelessClient(@NotNull String channelName,
-                              @NotNull ClientWiredStatelessTcpConnectionHub hub,
+                              @NotNull TcpConnectionHub hub,
                               long cid, String csp) {
         super(channelName, hub, cid, csp);
 

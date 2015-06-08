@@ -1,6 +1,5 @@
 package net.openhft.chronicle.engine.tree;
 
-import net.openhft.chronicle.core.MemoryUnit;
 import net.openhft.chronicle.core.util.Closeable;
 import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
@@ -10,20 +9,17 @@ import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.map.*;
 import net.openhft.chronicle.engine.pubsub.VanillaReference;
 import net.openhft.chronicle.engine.session.VanillaSessionProvider;
-import net.openhft.chronicle.network.connection.ClientWiredStatelessTcpConnectionHub;
+import net.openhft.chronicle.network.connection.TcpConnectionHub;
 import net.openhft.chronicle.wire.Marshallable;
-import net.openhft.chronicle.wire.TextWire;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.net.InetSocketAddress;
+import java.io.IOException;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static net.openhft.chronicle.engine.api.RequestContext.requestContext;
 
@@ -35,22 +31,22 @@ public class VanillaAsset implements Asset, Closeable {
     private static final String LAST = "{last}";
 
     private final Asset parent;
-    private final String name;
+    private final String uri;
 
     private final Map<Class, Map<String, Function<RequestContext, ViewLayer>>> classifierMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
     final Map<Class, View> viewMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
     private final Map<Class, ViewFactory> factoryMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
     private Boolean keyedAsset;
 
-    public VanillaAsset(Asset asset, String name) {
+    public VanillaAsset(Asset asset, String uri) {
         this.parent = asset;
-        this.name = name;
+        this.uri = uri;
 
-        if ("".equals(name)) {
+        if ("".equals(uri)) {
             assert parent == null;
         } else {
             assert parent != null;
-            assert name != null;
+            assert uri != null;
         }
     }
 
@@ -111,28 +107,9 @@ public class VanillaAsset implements Asset, Closeable {
     public void forRemoteAccess() {
         standardStack();
 
-        ViewFactory remoteKeyValueStore = (context, asset, underlying) -> {
-
-            String hostname = "localhost"; //todo
-            int port = 8080; //todo
-
-            final InetSocketAddress inetSocketAddress = new InetSocketAddress(hostname, port);
-            int tcpBufferSize = (int) MemoryUnit.MEGABYTES.toBytes(2) + 1024;
-            long timeoutMs = TimeUnit.SECONDS.toMillis(20);
-
-            ClientWiredStatelessTcpConnectionHub hub = new
-                    ClientWiredStatelessTcpConnectionHub((byte) 1,
-                    false,
-                    inetSocketAddress,
-                    tcpBufferSize,
-                    timeoutMs,
-                    TextWire::new);
-
-            return new RemoteKeyValueStore(String.class, String.class, "map-name", hub);
-        };
-
-        // todo remove this cast.
-        registerFactory(AuthenticatedKeyValueStore.class, remoteKeyValueStore);
+        //addView((ClientWiredStatelessTcpConnectionHub));
+        registerFactory(TcpConnectionHub.class, TcpConnectionHub::new);
+        registerFactory(AuthenticatedKeyValueStore.class, RemoteAuthenticatedKeyValueStore::new);
     }
 
     @Override
@@ -168,7 +145,7 @@ public class VanillaAsset implements Asset, Closeable {
 
     @Override
     public String name() {
-        return name;
+        return uri;
     }
 
     @Override
@@ -268,7 +245,15 @@ public class VanillaAsset implements Asset, Closeable {
 
     @Override
     public void close() {
-        // throw new UnsupportedOperationException("todo");
+
+        // do nothing
+        viewMap.values().stream().filter(v -> v instanceof Closeable).forEach(v -> {
+            try {
+                ((java.io.Closeable) v).close();
+            } catch (IOException e) {
+                // do nothing
+            }
+        });
     }
 
     @Override
@@ -280,33 +265,33 @@ public class VanillaAsset implements Asset, Closeable {
 
     @NotNull
     @Override
-    public Asset acquireAsset(String name) throws AssetNotFoundException {
+    public Asset acquireAsset(String uri) throws AssetNotFoundException {
         if (keyedAsset != Boolean.TRUE) {
-            int pos = name.indexOf("/");
+            int pos = uri.indexOf("/");
             if (pos >= 0) {
-                String name1 = name.substring(0, pos);
-                String name2 = name.substring(pos + 1);
+                String name1 = uri.substring(0, pos);
+                String name2 = uri.substring(pos + 1);
                 return getAssetOrANFE(name1).acquireAsset(name2);
             }
         }
-        return getAssetOrANFE(name);
+        return getAssetOrANFE(uri);
     }
 
-    private Asset getAssetOrANFE(String name) throws AssetNotFoundException {
-        Asset asset = children.get(name);
+    private Asset getAssetOrANFE(String uri) throws AssetNotFoundException {
+        Asset asset = children.get(uri);
         if (asset == null) {
-            asset = createAsset(name);
+            asset = createAsset(uri);
             if (asset == null)
-                throw new AssetNotFoundException(name);
+                throw new AssetNotFoundException(uri);
         }
         return asset;
     }
 
     @Nullable
-    protected Asset createAsset(String name) {
-        return children.computeIfAbsent(name, keyedAsset != Boolean.TRUE
-                ? n -> new VanillaAsset(this, name)
-                : n -> new VanillaSubAsset(this, name));
+    protected Asset createAsset(String uri) {
+        return children.computeIfAbsent(uri, keyedAsset != Boolean.TRUE
+                ? n -> new VanillaAsset(this, uri)
+                : n -> new VanillaSubAsset(this, uri));
     }
 
     @Override

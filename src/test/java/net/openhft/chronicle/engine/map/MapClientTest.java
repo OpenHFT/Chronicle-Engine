@@ -21,9 +21,8 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
-import net.openhft.chronicle.engine.client.RemoteChassis;
+import net.openhft.chronicle.engine.api.WireType;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
-import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
@@ -32,8 +31,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -45,6 +42,7 @@ import java.util.function.Supplier;
 
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
 import static org.junit.Assert.assertEquals;
+
 /**
  * test using the map both remotely or locally via the engine
  *
@@ -54,7 +52,7 @@ import static org.junit.Assert.assertEquals;
 
 public class MapClientTest extends ThreadMonitoringTest {
 
-    private static final Logger LOG = LoggerFactory.getLogger(MapClientTest.class);
+
     private Class<? extends CloseableSupplier> supplier = null;
 
     @Parameterized.Parameters
@@ -176,6 +174,7 @@ public class MapClientTest extends ThreadMonitoringTest {
         supplyMap(Integer.class, String.class, mapProxy -> {
 
             mapProxy.put(1, "Hello");
+
             Assert.assertEquals("Hello", mapProxy.get(1));
             Assert.assertEquals("{1=Hello}", mapProxy.toString());
             mapProxy.remove(1);
@@ -191,30 +190,44 @@ public class MapClientTest extends ThreadMonitoringTest {
     public static class RemoteMapSupplier<K, V> implements CloseableSupplier<ConcurrentMap<K, V>> {
 
         final ServerEndpoint serverEndpoint;
-        private final ChronicleMap<K, V> map;
-        private final RemoteChassis context;
+        private final ConcurrentMap<K, V> map;
+        //    private final RemoteChassis context;
 
         public RemoteMapSupplier(@NotNull final Class<K> kClass,
                                  @NotNull final Class<V> vClass,
                                  @NotNull final Function<Bytes, Wire> wireType) throws IOException {
 
-            serverEndpoint = new ServerEndpoint(wireType);
+            WireType.wire = wireType;
+
+            serverEndpoint = new ServerEndpoint();
             int serverPort = serverEndpoint.getPort();
 
-            context = new RemoteChassis("localhost", serverPort, (byte) 2, wireType);
-            map = context.acquireMap("test" + i++, kClass, vClass);
+            final String hostname = "localhost";
+
+            Chassis.forRemoteAccess();
+
+            map = Chassis.defaultSession().acquireMap(
+                    toUri(serverPort, hostname),
+                    kClass,
+                    vClass);
+        }
+
+        public static String toUri(final long serverPort, final String hostname) {
+            return "test?port=" + serverPort +
+                    "&host=" + hostname +
+                    "&timeout=1000";
         }
 
         @Override
         public void close() throws IOException {
-            if (map != null)
-                map.close();
-            context.close();
+            if (map instanceof Closeable)
+                ((Closeable) map).close();
+            Chassis.close();
             serverEndpoint.close();
         }
 
         @Override
-        public ChronicleMap<K, V> get() {
+        public ConcurrentMap<K, V> get() {
             return map;
         }
 
@@ -232,7 +245,8 @@ public class MapClientTest extends ThreadMonitoringTest {
 
         @Override
         public void close() throws IOException {
-            //    context.close();
+            if (map instanceof Closeable)
+                ((Closeable) map).close();
         }
 
         @Override
@@ -263,6 +277,8 @@ public class MapClientTest extends ThreadMonitoringTest {
         final ConcurrentMap<K, V> kvMap = result.get();
         try {
             c.accept(result.get());
+        } catch (Exception e) {
+            e.printStackTrace();
         } finally {
             result.close();
         }

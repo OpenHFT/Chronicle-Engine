@@ -20,9 +20,7 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.NativeBytes;
-import net.openhft.chronicle.engine.client.RemoteChassis;
-
-import net.openhft.chronicle.engine.server.ServerEndpoint;
+import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.wire.*;
 import org.junit.Before;
@@ -33,12 +31,12 @@ import org.junit.rules.TestName;
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
-import static org.junit.Assert.assertEquals;
 
 public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
@@ -90,14 +88,14 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     }
 
     @Test(timeout = 100000)
-    @Ignore("TODO fix performance test")
+    @Ignore("performance test")
     public void testLargeStringTextWire() throws Exception {
         final int MB = 1 << 20;
         testStrings(50, 2 * MB, TextWire::new);
     }
 
     @Test(timeout = 100000)
-    @Ignore("TODO fix performance test")
+    @Ignore("performance test")
     public void testLargeStringBinaryWire() throws Exception {
         final int MB = 1 << 20;
         testStrings(50, 2 * MB, BinaryWire::new);
@@ -105,39 +103,34 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
     private void testStrings(int noPutsAndGets, int valueLength, Function<Bytes, Wire> wireType) throws IOException {
 
-        // sever
+        try (final RemoteMapSupplier<CharSequence, CharSequence> remote = new
+                RemoteMapSupplier<>(CharSequence.class,
+                CharSequence.class,
+                BinaryWire::new)) {
 
-        try (final ServerEndpoint serverEndpoint = new ServerEndpoint(wireType)) {
-            int serverPort = serverEndpoint.getPort();
+            ConcurrentMap test = remote.get();
 
-            //client
-            try (final RemoteChassis remoteContext = new
-                    RemoteChassis(
-                    "localhost", serverPort, (byte) 2, wireType)) {
-                final ChronicleMap<String, CharSequence> test = remoteContext.acquireMap("test",
-                        String.class, CharSequence.class);
+            Bytes bytes = NativeBytes.nativeBytes(valueLength);
+            while (bytes.position() < valueLength)
+                bytes.append('x');
+            bytes.flip();
 
-                Bytes bytes = NativeBytes.nativeBytes(valueLength);
-                while (bytes.position() < valueLength)
-                    bytes.append('x');
-                bytes.flip();
-
-                // warm up
-                for (int j = -1; j < 30; j++) {
-                    long start1 = System.currentTimeMillis();
-                    // TODO adding .parallel() should work.
-                    IntStream.range(0, noPutsAndGets).parallel().forEach(i -> {
+            // warm up
+            for (int j = -1; j < 30; j++) {
+                long start1 = System.currentTimeMillis();
+                // TODO adding .parallel() should work.
+                IntStream.range(0, noPutsAndGets).parallel().forEach(i -> {
 //                    IntStream.range(0, noPutsAndGets).forEach(i -> {
-                        test.put("key" + i, bytes);
-                        if (i % 10 == 5)
-                            System.out.println("put key" + i);
-                    });
-                    long duration1 = System.currentTimeMillis() - start1;
+                    test.put("key" + i, bytes);
+                    if (i % 10 == 5)
+                        System.out.println("put key" + i);
+                });
+                long duration1 = System.currentTimeMillis() - start1;
                    /* if (j >= 0)*/
-                    {
-                        System.out.printf("Took %.3f seconds to perform %,d puts%n", duration1 / 1e3, noPutsAndGets);
+                {
+                    System.out.printf("Took %.3f seconds to perform %,d puts%n", duration1 / 1e3, noPutsAndGets);
 //                        Assert.assertTrue("This should take 1 second but took " + duration1 / 1e3 + " seconds. ", duration1 < 1000);
-                    }
+                }
 
 /*                    long start2 = System.currentTimeMillis();
 
@@ -152,109 +145,36 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
                         System.out.printf("Took %.3f seconds to perform %,d puts%n", duration2 / 1e3, noPutsAndGets);
                         Assert.assertTrue("This should take 1 second but took " + duration2 / 1e3 + " seconds. ", duration2 < 1000);
                     }*/
-                }
             }
         }
+
     }
 
-    @Ignore("broken text")
-    @Test(timeout = 100000)
-    public void testMarshable() throws Exception {
-        // sever
-        try (final ServerEndpoint serverEndpoint = new ServerEndpoint(TextWire::new)) {
-            int serverPort = serverEndpoint.getPort();
 
-            //client
-            try (final RemoteChassis context = new RemoteChassis(
-                    "localhost", serverPort, (byte) 2, TextWire::new)) {
-                try (ChronicleMap<MyMarshallable, Long> numbers = context.acquireMap
-                        ("marshallable-keys", MyMarshallable.class, Long.class)) {
-                    numbers.clear();
-                }
 
-                try (ChronicleMap<MyMarshallable, Long> numbers = context.acquireMap
-                        ("marshallable-keys", MyMarshallable.class, Long.class)) {
-                    MyMarshallable key1 = new MyMarshallable("key1");
-                    MyMarshallable key2 = new MyMarshallable("key2");
-                    yamlLoggger(() -> numbers.put(key1, 1L));
-                    numbers.put(key2, 2L);
-                }
-
-                try (ChronicleMap<MyMarshallable, Long> numbers = context.acquireMap
-                        ("marshallable-keys", MyMarshallable.class, Long.class)) {
-                    MyMarshallable key1 = new MyMarshallable("key1");
-                    MyMarshallable key2 = new MyMarshallable("key2");
-                    assertEquals(2, numbers.size());
-                    assertEquals(Long.valueOf(1), numbers.get(key1));
-                    assertEquals(Long.valueOf(2), numbers.get(key2));
-                }
-            }
-        }
-    }
-
-    @Test(timeout = 100000)
-    public void testPut() throws Exception {
-        // sever
-        try (final ServerEndpoint serverEndpoint = new ServerEndpoint(TextWire::new)) {
-            int serverPort = serverEndpoint.getPort();
-
-            //client
-            try (final RemoteChassis context = new RemoteChassis(
-                    "localhost", serverPort, (byte) 2, TextWire::new)) {
-                // test using Marshallable Keys
-                try (ChronicleMap<String, String> map = context.acquireMap
-                        ("test", String.class, String.class)) {
-                    map.put("hello", "world");
-
-                    yamlLoggger(() -> map.put("hello", "world"));
-                }
-            }
-        }
-    }
-
-    @Test
-    public void testFPKMap() throws Exception {
-        // sever
-        try (final ServerEndpoint serverEndpoint = new ServerEndpoint(TextWire::new)) {
-            int serverPort = serverEndpoint.getPort();
-
-            //client
-            try (final RemoteChassis context = new RemoteChassis(
-                    "localhost", serverPort, (byte) 2, TextWire::new)) {
-                try (ChronicleMap<String, String> map = context.acquireMap
-                        ("filetest", String.class, String.class)) {
-                    map.put("hello", "world");
-                    System.out.println(map.get("hello"));
-                }
-            }
-        }
-    }
 
     @Test
     public void test2MBEntries() throws Exception {
 
         // server
-        try (final ServerEndpoint serverEndpoint = new ServerEndpoint(TextWire::new)) {
-            int serverPort = serverEndpoint.getPort();
+        try (final RemoteMapSupplier<String, String> remote = new
+                RemoteMapSupplier<>(String.class,
+                String.class,
+                BinaryWire::new)) {
 
-            //client
-            try (final RemoteChassis context = new RemoteChassis(
-                    "localhost", serverPort, (byte) 2, TextWire::new)) {
-                StringBuilder sb = new StringBuilder();
-                for (int i = 0; i < 50_000; i++) {
-                    sb.append('x');
-                }
-
-                String value = sb.toString();
-                long time = System.currentTimeMillis();
-                try (ChronicleMap<String, String> map = context.acquireMap
-                        ("test", String.class, String.class)) {
-                    for (int i = 0; i < 2_000; i++) {
-                        map.put("largeEntry", value);
-                    }
-                }
-                System.out.format("Time for 100MB %,dms%n", (System.currentTimeMillis() - time));
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < 50_000; i++) {
+                sb.append('x');
             }
+
+            String value = sb.toString();
+            long time = System.currentTimeMillis();
+            final ConcurrentMap<String, String> map = remote.get();
+            for (int i = 0; i < 2_000; i++) {
+                map.put("largeEntry", value);
+            }
+
+            System.out.format("Time for 100MB %,dms%n", (System.currentTimeMillis() - time));
         }
     }
 }

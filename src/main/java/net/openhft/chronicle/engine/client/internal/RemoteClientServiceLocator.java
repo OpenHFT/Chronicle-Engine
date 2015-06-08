@@ -21,14 +21,16 @@ package net.openhft.chronicle.engine.client.internal;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.MemoryUnit;
+import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ClientWiredChronicleMapStatelessBuilder;
-import net.openhft.chronicle.network.connection.ClientWiredStatelessTcpConnectionHub;
+
+import net.openhft.chronicle.network.connection.TcpConnectionHub;
 import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -37,7 +39,7 @@ import java.util.function.Function;
  */
 public class RemoteClientServiceLocator {
 
-    private final ClientWiredStatelessTcpConnectionHub hub;
+    private final TcpConnectionHub hub;
 
     public RemoteClientServiceLocator(@NotNull String hostname,
                                       int port,
@@ -48,7 +50,7 @@ public class RemoteClientServiceLocator {
         int tcpBufferSize = (int) MemoryUnit.MEGABYTES.toBytes(2) + 1024;
         long timeoutMs = TimeUnit.SECONDS.toMillis(20);
 
-        hub = new ClientWiredStatelessTcpConnectionHub(identifier,
+        hub = new TcpConnectionHub(identifier,
                 false,
                 inetSocketAddress,
                 tcpBufferSize,
@@ -73,13 +75,9 @@ public class RemoteClientServiceLocator {
         throw new IllegalStateException("iClass=" + iClass + " not supported");
     }
 
-    private <I, KI, VI> I mapInstance(Class<KI> kClass, Class<VI> vClass, String name)
+    private < KI, VI> ConcurrentMap<KI, VI> mapInstance(Class<KI> kClass, Class<VI> vClass, String name)
             throws IOException {
-
-        return (I) new ClientWiredChronicleMapStatelessBuilder<KI, VI>(hub, kClass, vClass, name)
-                .putReturnsNull(true)
-                .removeReturnsNull(true)
-                .create();
+        return Chassis.acquireMap(name,kClass,vClass);
     }
 
     public void close() {

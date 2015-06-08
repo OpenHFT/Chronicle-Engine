@@ -22,6 +22,10 @@ public enum Chassis {
         assetTree = new VanillaAssetTree().forTesting();
     }
 
+    public static void forRemoteAccess() {
+        assetTree = new VanillaAssetTree().forRemoteAccess();
+    }
+
     public static void defaultSession(AssetTree assetTree) {
         Chassis.assetTree = assetTree;
     }
@@ -96,5 +100,9 @@ public enum Chassis {
 
     public static <A> Asset acquireAsset(String name, Class<A> assetClass, Class class1, Class class2) {
         return assetTree.acquireAsset(assetClass, RequestContext.requestContext(name).type(class1).type2(class2));
+    }
+
+    public static void close() {
+        assetTree.close();
     }
 }

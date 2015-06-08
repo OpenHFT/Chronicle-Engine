@@ -19,8 +19,8 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.engine.api.Asset;
+import net.openhft.chronicle.engine.api.AssetTree;
 import net.openhft.chronicle.engine.api.RequestContext;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
@@ -63,7 +63,9 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
     private final MapWireHandler mapWireHandler;
     private final CollectionWireHandler<Entry<byte[], byte[]>, Set<Entry<byte[], byte[]>>> entrySetHandler;
-    private final CollectionWireHandler<byte[], Collection<byte[]>> valuesHander;
+    private final CollectionWireHandler<byte[], Collection<byte[]>> valuesHandler;
+    private final AssetTree assetTree;
+
     private MapHandler mh;
 
     private final Consumer<WireIn> metaDataConsumer;
@@ -71,10 +73,12 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private Class viewType;
 
     public EngineWireHandler(@NotNull final Map<Long, String> cidToCsp,
-                             @NotNull final Function<Bytes, Wire> byteToWire)
+                             @NotNull final Function<Bytes, Wire> byteToWire,
+                             @NotNull final AssetTree assetTree)
             throws IOException {
 
         super(byteToWire);
+        this.assetTree = assetTree;
 
         this.mapWireHandler = new MapWireHandler<>(cidToCsp);
         this.keySetHandler = new CollectionWireHandlerProcessor<>();
@@ -82,8 +86,8 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
         this.cidToCsp = cidToCsp;
 
         this.entrySetHandler = new CollectionWireHandlerProcessor<>();
-        this.valuesHander = new CollectionWireHandlerProcessor<>();
-        this.metaDataConsumer = getWireInConsumer();
+        this.valuesHandler = new CollectionWireHandlerProcessor<>();
+        this.metaDataConsumer = wireInConsumer();
     }
 
     private final List<WireHandler> handlers = new ArrayList<>();
@@ -109,7 +113,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     Object view;
 
     @NotNull
-    private Consumer<WireIn> getWireInConsumer() throws IOException {
+    private Consumer<WireIn> wireInConsumer() throws IOException {
         return (metaDataWire) -> {
 
             try {
@@ -118,13 +122,9 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                 if (hasCspChanged(cspText)) {
 
                     requestContext = RequestContext.requestContext(cspText);
-                    final Asset asset = Chassis.acquireAsset(requestContext);
-
-                    view = asset.acquireView(requestContext);
                     viewType = requestContext.viewType();
-                    if (viewType == KeySetView.class) {
-                        assert view.getClass() == KeySetView.class;
-                    }
+                    final Asset asset = this.assetTree.acquireAsset(viewType, requestContext);
+                    view = asset.acquireView(requestContext);
 
                     requestContext.keyType();
 
@@ -150,6 +150,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
                 }
             } catch (Exception e) {
+                LOG.error("", e);
                 rethrow(e);
             }
         };
@@ -210,7 +211,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                     }
 
                     if (viewType == ValuesView.class) {
-                        valuesHander.process(in, out, (ValuesView) view, cspText,
+                        valuesHandler.process(in, out, (ValuesView) view, cspText,
                                 mh.keyToWire(),
                                 mh.wireToKey(), ArrayList::new, tid);
                         return;
@@ -231,7 +232,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private void logYamlToStandardOut(@NotNull Wire in) {
         if (YamlLogging.showServerReads) {
             try {
-                LOG.info("\n\n" +
+                LOG.info("\nServer Reads:\n" +
                         Wires.fromSizePrefixedBlobs(in.bytes()));
             } catch (Exception e) {
                 LOG.info("\n\n" +

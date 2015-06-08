@@ -25,7 +25,7 @@ public interface Asset {
     Asset parent();
 
     @NotNull
-    Asset acquireAsset(String name) throws AssetNotFoundException;
+    Asset acquireAsset(String uri) throws AssetNotFoundException;
 
     @Nullable
     default Asset getAsset(String name) {

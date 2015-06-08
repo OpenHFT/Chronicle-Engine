@@ -2,11 +2,13 @@ package net.openhft.chronicle.engine.api;
 
 import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.engine.session.VanillaSessionDetails;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
 public class SessionProviderTest {
+    @Ignore
     @Test
     public void testAcquireSessionProvider() {
         SessionProvider sessionProvider = Chassis.getAsset("").getView(SessionProvider.class);

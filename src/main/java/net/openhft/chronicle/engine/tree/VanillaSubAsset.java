@@ -74,7 +74,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     }
 
     private <V> V acquireViewFor(Class<V> viewType, RequestContext rc) {
-        return parent.acquireFactory(viewType).create(requestContext().type(rc.type()).fullName(name), this, () ->
+        return parent.acquireFactory(viewType).create(requestContext().type(rc.type()).fullUri(name), this, () ->
                 parent.getView(MapView.class));
     }
 
@@ -110,7 +110,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
 
     @NotNull
     @Override
-    public Asset acquireAsset(String name) throws AssetNotFoundException {
+    public Asset acquireAsset(String uri) throws AssetNotFoundException {
         throw new UnsupportedOperationException("todo");
     }
 

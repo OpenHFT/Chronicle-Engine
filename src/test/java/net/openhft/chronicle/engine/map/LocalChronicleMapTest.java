@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.engine.map.MapClientTest.LocalMapSupplier;
 import org.junit.Before;
 import org.junit.Rule;
@@ -46,6 +47,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
 
     @Before
     public void before() {
+        Chassis.resetChassis();
         methodName(name.getMethodName());
     }
 
