@@ -32,7 +32,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     private final BiFunction<V, Bytes, Bytes> valueToBytes;
     private final BiFunction<BytesStore, V, V> bytesToValue;
     private SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore;
-    private final SubscriptionKVSCollection<String, V> subscriptions = new TranslatingSubscriptionKVSCollection();
+    private final SubscriptionKVSCollection<String, V, V> subscriptions = new TranslatingSubscriptionKVSCollection();
     private Asset asset;
     private final Class type2;
     private final Function<Bytes, Wire> wireType;
@@ -92,7 +92,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     }
 
     @Override
-    public SubscriptionKVSCollection<String, V> subscription(boolean createIfAbsent) {
+    public SubscriptionKVSCollection<String, V, V> subscription(boolean createIfAbsent) {
         return subscriptions;
     }
 
@@ -177,7 +177,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
         kvStore.close();
     }
 
-    class TranslatingSubscriptionKVSCollection implements SubscriptionKVSCollection<String, V> {
+    class TranslatingSubscriptionKVSCollection implements SubscriptionKVSCollection<String, V, V> {
         @Override
         public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {
             Class eClass = rc.type();
@@ -223,8 +223,13 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
 
         @Override
         public boolean needsPrevious() {
-            SubscriptionKVSCollection<String, BytesStore> subs = kvStore.subscription(false);
+            SubscriptionKVSCollection<String, Bytes, BytesStore> subs = kvStore.subscription(false);
             return subs != null && subs.needsPrevious();
+        }
+
+        @Override
+        public void setKvStore(KeyValueStore<String, V, V> store) {
+            throw new UnsupportedOperationException("todo");
         }
     }
 }

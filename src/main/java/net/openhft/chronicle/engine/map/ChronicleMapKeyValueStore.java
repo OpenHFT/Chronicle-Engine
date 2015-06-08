@@ -9,6 +9,7 @@ import net.openhft.chronicle.engine.api.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapReplicationEvent;
 import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
+import net.openhft.chronicle.engine.pubsub.SimpleSubscription;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.MapEventListener;
@@ -19,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 
 import static net.openhft.chronicle.engine.api.SubscriptionConsumer.notifyEachEvent;
 
@@ -27,10 +29,11 @@ import static net.openhft.chronicle.engine.api.SubscriptionConsumer.notifyEachEv
  */
 public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValueStore<K, MV, V>, Closeable {
     private final ChronicleMap<K,V> chronicleMap;
-    private final SubscriptionKVSCollection<K, V> subscriptions = new VanillaSubscriptionKVSCollection<>(this);
+    private final SubscriptionKVSCollection<K, MV, V> subscriptions = new VanillaSubscriptionKVSCollection<>(this);
     private Asset asset;
 
     public ChronicleMapKeyValueStore(RequestContext context, Asset asset) {
+        this.asset = asset;
         PublishingOperations publishingOperations = new PublishingOperations();
 
         Class kClass = context.type();
@@ -52,6 +55,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         }
         if(basePath!=null) {
             String pathname = basePath + "/" + context.name();
+            new File(basePath).mkdirs();
             try {
                 builder.createPersistedTo(new File(pathname));
             } catch (IOException e) {
@@ -65,7 +69,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
     }
 
     @Override
-    public SubscriptionKVSCollection<K, V> subscription(boolean createIfAbsent) {
+    public SubscriptionKVSCollection<K, MV, V> subscription(boolean createIfAbsent) {
         return subscriptions;
     }
 
@@ -141,6 +145,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
                 int identifier = 0; // todo
                 long timeStampMS = 0; // todo
                 subscriptions.notifyEvent(RemovedEvent.of(key, value, identifier, timeStampMS));
+                publishValueToChild(key, null);
             } catch (InvalidSubscriberException e) {
                 // todo
                 throw new AssertionError(e);
@@ -156,10 +161,20 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
                 }else{
                     subscriptions.notifyEvent(InsertedEvent.of(key, newValue, identifier, timeStampMS));
                 }
+                publishValueToChild(key, newValue);
             } catch (InvalidSubscriberException e) {
                 // todo
                 throw new AssertionError(e);
             }
         }
+    }
+
+    private void publishValueToChild(K key, V value) {
+        Optional.of(key)
+                .filter(k -> k instanceof CharSequence)
+                .map(Object::toString)
+                .map(asset::getChild)
+                .map(c -> c.getView(SimpleSubscription.class))
+                .ifPresent(v -> v.notifyMessage(value));
     }
 }

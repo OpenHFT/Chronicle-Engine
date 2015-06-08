@@ -80,6 +80,8 @@ public class InsertedEvent<K, V> implements MapReplicationEvent<K, V> {
         return Optional.ofNullable(obj)
                 .filter(o -> o instanceof InsertedEvent)
                 .map(o -> (InsertedEvent<K, V>) o)
+               // .filter(e -> timeStampMS == e.timeStampMS)
+               // .filter(e -> identifier == e.identifier)
                 .filter(e -> Objects.equals(key, e.key))
                 .filter(e -> Objects.equals(value, e.value))
                 .isPresent();

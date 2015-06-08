@@ -30,7 +30,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
             throw new AssertionError(e);
         }
     });
-    private final SubscriptionKVSCollection<String, String> subscriptions = new TranslatingSubscriptionKVSCollection();
+    private final SubscriptionKVSCollection<String, StringBuilder, String> subscriptions = new TranslatingSubscriptionKVSCollection();
     private SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore;
     private Asset asset;
 
@@ -77,7 +77,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     }
 
     @Override
-    public SubscriptionKVSCollection<String, String> subscription(boolean createIfAbsent) {
+    public SubscriptionKVSCollection<String, StringBuilder, String> subscription(boolean createIfAbsent) {
         return subscriptions;
     }
 
@@ -167,8 +167,8 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         kvStore.close();
     }
 
-    class TranslatingSubscriptionKVSCollection implements SubscriptionKVSCollection<String, String> {
-        SubscriptionKVSCollection<String, String> subscriptions = new VanillaSubscriptionKVSCollection<>(VanillaStringStringKeyValueStore.this);
+    class TranslatingSubscriptionKVSCollection implements SubscriptionKVSCollection<String, StringBuilder, String> {
+        SubscriptionKVSCollection<String, StringBuilder, String> subscriptions = new VanillaSubscriptionKVSCollection<>(VanillaStringStringKeyValueStore.this);
 
         @Override
         public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {
@@ -214,8 +214,13 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
 
         @Override
         public boolean needsPrevious() {
-            SubscriptionKVSCollection<String, BytesStore> subs = kvStore.subscription(false);
+            SubscriptionKVSCollection<String, Bytes, BytesStore> subs = kvStore.subscription(false);
             return subs != null && subs.needsPrevious();
+        }
+
+        @Override
+        public void setKvStore(KeyValueStore<String, StringBuilder, String> store) {
+            throw new UnsupportedOperationException("todo");
         }
     }
 }

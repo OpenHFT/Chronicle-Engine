@@ -101,6 +101,9 @@ public class VanillaAsset implements Asset, Closeable {
 
         registerFactory(KeyValueStore.class, VanillaKeyValueStore::new);
 
+        registerFactory(SubscriptionKVSCollection.class, VanillaSubscriptionKVSCollection::new);
+        registerFactory(Subscription.class, VanillaSubscriptionKVSCollection::new);
+
         addView(SessionProvider.class, new VanillaSessionProvider(this));
     }
 

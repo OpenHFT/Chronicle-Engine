@@ -82,6 +82,8 @@ public class UpdatedEvent<K, V> implements MapReplicationEvent<K, V> {
         return Optional.ofNullable(obj)
                 .filter(o -> o instanceof UpdatedEvent)
                 .map(o -> (UpdatedEvent<K, V>) o)
+                //.filter(e -> timeStampMS == e.timeStampMS)
+                //.filter(e -> identifier == e.identifier)
                 .filter(e -> Objects.equals(key, e.key))
                 .filter(e -> Objects.equals(oldValue, e.oldValue))
                 .filter(e -> Objects.equals(value, e.value))

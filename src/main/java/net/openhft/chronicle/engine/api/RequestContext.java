@@ -83,9 +83,13 @@ public class RequestContext {
         int queryPos = uri.indexOf('?');
         String fullName = queryPos >= 0 ? uri.substring(0, queryPos) : uri;
         String query = queryPos >= 0 ? uri.substring(queryPos + 1) : "";
-        int dirPos = fullName.lastIndexOf('/');
-        String pathName = dirPos >= 0 ? fullName.substring(0, dirPos) : "";
-        String name = dirPos >= 0 ? fullName.substring(dirPos + 1) : fullName;
+        int lastForwardSlash = fullName.lastIndexOf('/');
+        if(lastForwardSlash >0 && fullName.length()==lastForwardSlash+1){
+            fullName=fullName.substring(0, fullName.length()-1);
+            lastForwardSlash = fullName.lastIndexOf('/');
+        }
+        String pathName = lastForwardSlash >= 0 ? fullName.substring(0, lastForwardSlash) : "";
+        String name = lastForwardSlash >= 0 ? fullName.substring(lastForwardSlash + 1) : fullName;
         return new RequestContext(pathName, name).queryString(query);
     }
 

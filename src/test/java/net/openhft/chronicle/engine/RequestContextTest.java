@@ -40,4 +40,18 @@ public class RequestContextTest {
         assertEquals(Boolean.FALSE, rc.removeReturnsNull());
         assertEquals(Boolean.TRUE, rc.bootstrap());
     }
+
+    @Test
+    public void parseDirectory(){
+        String uri = "/grandparent/parent/child/";
+        RequestContext rc = requestContext(uri);
+        assertEquals("child", rc.name());
+    }
+
+    @Test
+    public void parseEmptyString(){
+        String uri = "";
+        RequestContext rc = requestContext(uri);
+        assertEquals("", rc.name());
+    }
 }
