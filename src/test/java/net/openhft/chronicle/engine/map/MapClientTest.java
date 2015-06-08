@@ -26,7 +26,6 @@ import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -124,35 +123,63 @@ public class MapClientTest extends ThreadMonitoringTest {
         });
     }
 
-    @Ignore("Unsupported type :!!seqmap[")
+
     @Test
     public void testMapsAsValues() throws IOException, InterruptedException {
 
-        supplyMap(Integer.class, Map.class, mapProxy -> {
+        supplyMap(Integer.class, Map.class, map -> {
 
             final Map value = new HashMap<String, String>();
             {
                 value.put("k1", "v1");
                 value.put("k2", "v2");
 
-                mapProxy.put(1, value);
+                map.put(1, value);
             }
 
             {
                 value.put("k3", "v3");
                 value.put("k4", "v4");
 
-                mapProxy.put(2, value);
+                map.put(2, value);
             }
 
-            final Object k1 = mapProxy.get(1);
-            assertEquals("v2", mapProxy.get(1).get("k2"));
+            assertEquals("v1", map.get(1).get("k1"));
+            assertEquals("v2", map.get(1).get("k2"));
 
-            assertEquals(null, mapProxy.get(1).get("k3"));
-            assertEquals(null, mapProxy.get(1).get("k4"));
+            assertEquals(null, map.get(1).get("k3"));
+            assertEquals(null, map.get(1).get("k4"));
 
-            assertEquals("v3", mapProxy.get(2).get("k3"));
-            assertEquals("v4", mapProxy.get(2).get("k4"));
+            assertEquals("v3", map.get(2).get("k3"));
+            assertEquals("v4", map.get(2).get("k4"));
+
+            assertEquals(2, map.size());
+        });
+    }
+
+    @Test
+    public void testDoubleValues() throws IOException, InterruptedException {
+
+        supplyMap(Double.class, Double.class, mapProxy -> {
+
+            mapProxy.put(1.0, 1.0);
+            mapProxy.put(2.0, 2.0);
+            assertEquals(1.0, mapProxy.get(1.0), 0);
+            assertEquals(2.0, mapProxy.get(2.0), 0);
+
+            assertEquals(2, mapProxy.size());
+        });
+    }
+
+    @Test
+    public void testFloatValues() throws IOException, InterruptedException {
+
+        supplyMap(Float.class, Float.class, mapProxy -> {
+
+            mapProxy.put(1.0f, 1.0f);
+            mapProxy.put(2.0f, 2.0f);
+            assertEquals(1.0f, mapProxy.get(1.0f), 0);
+            assertEquals(2.0f, mapProxy.get(2.0f), 0);
 
             assertEquals(2, mapProxy.size());
         });
