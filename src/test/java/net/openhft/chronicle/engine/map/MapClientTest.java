@@ -21,7 +21,6 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
-import net.openhft.chronicle.engine.api.WireType;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
@@ -41,6 +40,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
+import static net.openhft.chronicle.engine.api.WireType.wire;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -191,13 +191,12 @@ public class MapClientTest extends ThreadMonitoringTest {
 
         final ServerEndpoint serverEndpoint;
         private final ConcurrentMap<K, V> map;
-        //    private final RemoteChassis context;
 
         public RemoteMapSupplier(@NotNull final Class<K> kClass,
                                  @NotNull final Class<V> vClass,
                                  @NotNull final Function<Bytes, Wire> wireType) throws IOException {
 
-            WireType.wire = wireType;
+            wire = wireType;
 
             serverEndpoint = new ServerEndpoint();
             int serverPort = serverEndpoint.getPort();

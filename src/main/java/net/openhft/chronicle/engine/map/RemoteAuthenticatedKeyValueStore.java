@@ -354,11 +354,11 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends MapStatelessClient<E
     }
 
     // todo
-    private final SubscriptionKVSCollection<K, V> subscriptions = new
+    private final SubscriptionKVSCollection<K, V, V> subscriptions = new
             VanillaSubscriptionKVSCollection<>(this);
 
     @Override
-    public SubscriptionKVSCollection<K, V> subscription(final boolean createIfAbsent) {
+    public SubscriptionKVSCollection<K, V, V> subscription(final boolean createIfAbsent) {
         return subscriptions;
     }
 
