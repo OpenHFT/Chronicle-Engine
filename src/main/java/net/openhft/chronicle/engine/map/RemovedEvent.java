@@ -80,8 +80,8 @@ public class RemovedEvent<K, V> implements MapReplicationEvent<K, V> {
         return Optional.ofNullable(obj)
                 .filter(o -> o instanceof RemovedEvent)
                 .map(o -> (RemovedEvent<K, V>) o)
-                .filter(e -> timeStampMS == e.timeStampMS)
-                .filter(e -> identifier == e.identifier)
+                //.filter(e -> timeStampMS == e.timeStampMS)
+                //.filter(e -> identifier == e.identifier)
                 .filter(e -> Objects.equals(key, e.key))
                 .filter(e -> Objects.equals(value, e.value))
                 .isPresent();

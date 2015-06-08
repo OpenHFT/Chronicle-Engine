@@ -7,6 +7,6 @@ import net.openhft.chronicle.engine.map.SubscriptionKVSCollection;
  * Created by peter on 22/05/15.
  */
 public interface SubscriptionKeyValueStore<K, MV, V> extends KeyValueStore<K, MV, V>, View {
-    SubscriptionKVSCollection<K, V> subscription(boolean createIfAbsent);
+    SubscriptionKVSCollection<K, MV, V> subscription(boolean createIfAbsent);
 
 }

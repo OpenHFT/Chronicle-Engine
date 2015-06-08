@@ -83,7 +83,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     }
 
     @Override
-    public SubscriptionKVSCollection<String, BytesStore> subscription(boolean createIfAbsent) {
+    public SubscriptionKVSCollection<String, Bytes, BytesStore> subscription(boolean createIfAbsent) {
         return subscriptions;
     }
 

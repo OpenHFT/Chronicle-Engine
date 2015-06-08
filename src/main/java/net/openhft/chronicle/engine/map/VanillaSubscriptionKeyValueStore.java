@@ -15,20 +15,24 @@ import java.util.function.Supplier;
  * Created by peter on 22/05/15.
  */
 public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValueStore<K, MV, V> implements SubscriptionKeyValueStore<K, MV, V>, AuthenticatedKeyValueStore<K, MV, V> {
-    final SubscriptionKVSCollection<K, V> subscriptions = new VanillaSubscriptionKVSCollection<>(this);
+    final SubscriptionKVSCollection<K, MV, V> subscriptions;
     private final Asset asset;
 
     public VanillaSubscriptionKeyValueStore(RequestContext context, Asset asset, Supplier<Assetted> assetted) {
-        this(asset, (KeyValueStore<K, MV, V>) assetted.get());
+        this(asset, (KeyValueStore<K, MV, V>) assetted.get(),
+                asset.acquireView(SubscriptionKVSCollection.class, context));
     }
 
-    VanillaSubscriptionKeyValueStore(Asset asset, KeyValueStore<K, MV, V> item) {
+    VanillaSubscriptionKeyValueStore(Asset asset, KeyValueStore<K, MV, V> item,
+                                     SubscriptionKVSCollection<K, MV, V> subscriptions) {
         super(item);
         this.asset = asset;
+        this.subscriptions = subscriptions;
+        subscriptions.setKvStore(this);
     }
 
     @Override
-    public SubscriptionKVSCollection<K, V> subscription(boolean createIfAbsent) {
+    public SubscriptionKVSCollection<K, MV, V> subscription(boolean createIfAbsent) {
         return subscriptions;
     }
 

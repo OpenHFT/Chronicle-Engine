@@ -13,7 +13,7 @@ import java.util.Map;
  * Created by peter on 22/05/15.
  */
 public class AbstractKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> {
-    KeyValueStore<K, MV, V> kvStore;
+    protected KeyValueStore<K, MV, V> kvStore;
 
     protected AbstractKeyValueStore(KeyValueStore<K, MV, V> kvStore) {
         this.kvStore = kvStore;
