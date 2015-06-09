@@ -3,7 +3,6 @@ net.openhft.chronicle.engine.api
 net.openhft.chronicle.engine.api.collection
 net.openhft.chronicle.engine.api.map
 net.openhft.chronicle.engine.api.set
-net.openhft.chronicle.engine.client.internal
 net.openhft.chronicle.engine.collection
 net.openhft.chronicle.engine.map
 net.openhft.chronicle.engine.pubsub
