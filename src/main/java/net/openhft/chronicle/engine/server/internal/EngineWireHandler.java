@@ -138,6 +138,8 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
                     requestContext = RequestContext.requestContext(cspText);
                     viewType = requestContext.viewType();
+                    if (viewType == null)
+                        System.out.println(requestContext.toString());
                     final Asset asset = this.assetTree.acquireAsset(viewType, requestContext);
                     view = asset.acquireView(requestContext);
 
@@ -208,7 +210,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                 sessionProvider.set(sessionDetails);
 
                 if (isSystemMessage) {
-                    sessionDetails.setUserId(wire.read(() -> "username").text());
+                    sessionDetails.setUserId(wire.read(() -> "userid").text());
                     return;
                 }
 

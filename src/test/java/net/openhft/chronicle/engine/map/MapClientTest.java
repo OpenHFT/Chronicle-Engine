@@ -72,13 +72,20 @@ public class MapClientTest extends ThreadMonitoringTest {
 
     @Test(timeout = 50000)
     public void testPutAndGet() throws IOException, InterruptedException {
+        yamlLoggger(() -> {
+            try {
+                supplyMap(Integer.class, String.class, mapProxy -> {
 
-        supplyMap(Integer.class, String.class, mapProxy -> {
-            mapProxy.put(1, "hello");
-            assertEquals("hello", mapProxy.get(1));
-            assertEquals(1, mapProxy.size());
+                mapProxy.put(1, "hello");
+                assertEquals("hello", mapProxy.get(1));
+                assertEquals(1, mapProxy.size());
 
-            Assert.assertEquals("{1=hello}", mapProxy.toString());
+                Assert.assertEquals("{1=hello}", mapProxy.toString());
+
+                });
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         });
     }
 

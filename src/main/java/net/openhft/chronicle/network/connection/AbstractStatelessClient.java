@@ -293,8 +293,4 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
         }
     }
 
-    @SuppressWarnings("UnusedDeclaration")
-    void identifier(int localIdentifier) {
-        hub.localIdentifier = localIdentifier;
-    }
 }

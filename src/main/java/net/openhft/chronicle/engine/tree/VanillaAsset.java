@@ -159,7 +159,7 @@ public class VanillaAsset implements Asset, Closeable {
 
     @Nullable
     @Override
-    public <V> V getView(Class<V> vClass) {
+    public <V> V getView(@NotNull Class<V> vClass) {
         View view = viewMap.get(vClass);
         return (V) view;
     }
@@ -177,7 +177,8 @@ public class VanillaAsset implements Asset, Closeable {
 
     @NotNull
     @Override
-    public <V> V acquireView(Class<V> viewType, RequestContext rc) throws AssetNotFoundException {
+    public <V> V acquireView(@NotNull Class<V> viewType, RequestContext rc) throws
+            AssetNotFoundException {
         synchronized (viewMap) {
             V view = getView(viewType);
             if (view != null) {

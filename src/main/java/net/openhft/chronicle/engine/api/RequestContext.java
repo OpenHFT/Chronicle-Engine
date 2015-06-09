@@ -259,7 +259,7 @@ public class RequestContext {
         return this;
     }
 
-
+    @Nullable
     public Class viewType() {
         return viewType;
     }
@@ -322,9 +322,6 @@ public class RequestContext {
         return host.toString();
     }
 
-    public boolean doHandShaking() {
-        return false;
-    }
 
     public int tcpBufferSize() {
         return tcpBufferSize;

@@ -24,6 +24,7 @@ import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.util.CloseablesManager;
 import net.openhft.chronicle.core.util.ThrowingSupplier;
+import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.network.event.EventGroup;
 import net.openhft.chronicle.wire.*;
@@ -39,7 +40,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.api.WireType.wire;
 import static net.openhft.chronicle.wire.CoreFields.reply;
@@ -71,8 +71,7 @@ public class TcpConnectionHub implements View, Closeable {
     final Wire inWire;
 
     private long largestChunkSoFar = 0;
-    //  used by the enterprise version
-    public int localIdentifier;
+
     @Nullable
     private SocketChannel clientChannel;
 
@@ -84,52 +83,38 @@ public class TcpConnectionHub implements View, Closeable {
 
     // set up in the header
     private long startTime;
-    private boolean doHandShaking;
 
     public TcpConnectionHub(@NotNull final RequestContext requestContext,
                             final Asset asset,
                             final ThrowingSupplier<Assetted, AssetNotFoundException> assettedSupplier) {
-        this((byte) 1,
-                requestContext.doHandShaking(),
-                new InetSocketAddress(requestContext.host(), requestContext.port()),
-                requestContext.tcpBufferSize(),
-                requestContext.timeout(),
-                wire // todo refactor and remove
-        );
-    }
 
-    public TcpConnectionHub(
-            byte localIdentifier,
-            boolean doHandShaking,
-            @NotNull final InetSocketAddress remoteAddress,
-            int tcpBufferSize,
-            long timeout,
-            @NotNull final Function<Bytes, Wire> byteToWire) {
-        this.localIdentifier = localIdentifier;
-        this.doHandShaking = doHandShaking;
-        this.tcpBufferSize = tcpBufferSize;
-        this.remoteAddress = remoteAddress;
-
-        outWire = byteToWire.apply(Bytes.elasticByteBuffer());
-        inWire = byteToWire.apply(Bytes.elasticByteBuffer());
+        this.tcpBufferSize = requestContext.tcpBufferSize();
+        this.remoteAddress = new InetSocketAddress(requestContext.host(), requestContext.port());
+        this.outWire = wire.apply(Bytes.elasticByteBuffer());
+        this.inWire = wire.apply(Bytes.elasticByteBuffer());
         this.name = " connected to " + remoteAddress.toString();
-        this.timeoutMs = timeout;
+        this.timeoutMs = requestContext.timeout();
 
         attemptConnect(remoteAddress);
     }
 
     private synchronized void attemptConnect(final InetSocketAddress remoteAddress) {
+
         // ensures that the excising connection are closed
         closeExisting();
 
+        if (closeables == null)
+            closeables = new CloseablesManager();
+
         try {
             SocketChannel socketChannel = openSocketChannel(closeables);
-            if (socketChannel.connect(remoteAddress)) {
+            if (socketChannel != null && socketChannel.connect(remoteAddress)) {
                 clientChannel = socketChannel;
                 clientChannel.configureBlocking(false);
                 clientChannel.socket().setTcpNoDelay(true);
                 clientChannel.socket().setReceiveBufferSize(tcpBufferSize);
                 clientChannel.socket().setSendBufferSize(tcpBufferSize);
+                doHandShaking();
             }
         } catch (IOException e) {
             LOG.error("", e);
@@ -161,19 +146,20 @@ public class TcpConnectionHub implements View, Closeable {
         if (LOG.isDebugEnabled())
             LOG.debug("attempting to connect to " + remoteAddress + " ,name=" + name);
 
-        SocketChannel result;
-
         long timeoutAt = System.currentTimeMillis() + timeoutMs;
 
-        for (; ; ) {
+        while (clientChannel == null) {
             checkTimeout(timeoutAt);
 
             // ensures that the excising connection are closed
             closeExisting();
 
             try {
-                result = openSocketChannel(closeables);
-                if (!result.connect(remoteAddress)) {
+                if (closeables == null)
+                    closeables = new CloseablesManager();
+
+                clientChannel = openSocketChannel(closeables);
+                if (clientChannel == null || !clientChannel.connect(remoteAddress)) {
                     try {
                         Thread.sleep(100);
                     } catch (InterruptedException e) {
@@ -182,20 +168,51 @@ public class TcpConnectionHub implements View, Closeable {
                     continue;
                 }
 
-                result.socket().setTcpNoDelay(true);
-                result.socket().setReceiveBufferSize(tcpBufferSize);
-                result.socket().setSendBufferSize(tcpBufferSize);
+                clientChannel.socket().setTcpNoDelay(true);
+                clientChannel.socket().setReceiveBufferSize(tcpBufferSize);
+                clientChannel.socket().setSendBufferSize(tcpBufferSize);
+                doHandShaking();
 
-                if (doHandShaking)
-                    break;
             } catch (IOException e) {
                 if (closeables != null) closeables.closeQuietly();
+                clientChannel = null;
             } catch (Exception e) {
                 if (closeables != null) closeables.closeQuietly();
                 throw e;
             }
         }
-        clientChannel = result;
+
+    }
+
+    private void doHandShaking() {
+        outBytesLock().lock();
+        try {
+
+            final SessionDetails sessionDetails = sessionDetails();
+
+            outWire().writeDocument(false, wireOut -> {
+                if (sessionDetails == null)
+                    wireOut.write(() -> "userid").text(System.getProperty("user.name"));
+                else
+                    wireOut.write(() -> "userid").text(sessionDetails.userId());
+            });
+
+            writeSocket(outWire());
+
+        } finally {
+            outBytesLock().unlock();
+        }
+    }
+
+    private SessionDetails sessionDetails() {
+        final AssetTree assetTree = Chassis.defaultSession();
+        final Asset asset = assetTree.getAsset("");
+        if (asset == null)
+            return null;
+        final SessionProvider view = asset.getView(SessionProvider.class);
+        if (view == null)
+            return null;
+        return view.get();
     }
 
     @Nullable
@@ -222,7 +239,7 @@ public class TcpConnectionHub implements View, Closeable {
         // ensure that any excising connection are first closed
         if (closeables != null)
             closeables.closeQuietly();
-        closeables = new CloseablesManager();
+        closeables = null;
     }
 
     public synchronized void close() {
