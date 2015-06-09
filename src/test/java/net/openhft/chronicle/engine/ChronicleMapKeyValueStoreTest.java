@@ -39,7 +39,7 @@ public class ChronicleMapKeyValueStoreTest {
     @BeforeClass
     public static void createMap() throws IOException {
         //Delete any files from the last run
-        Files.delete(Paths.get(OS.TMP, NAME));
+        Files.deleteIfExists(Paths.get(OS.TMP, NAME));
 
         resetChassis();
         Function<Bytes, Wire> writeType = TextWire::new;
