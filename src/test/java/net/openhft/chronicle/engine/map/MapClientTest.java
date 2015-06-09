@@ -26,6 +26,7 @@ import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -123,7 +124,7 @@ public class MapClientTest extends ThreadMonitoringTest {
         });
     }
 
-
+    @Ignore("JIRA https://higherfrequencytrading.atlassian.net/browse/CE-60")
     @Test
     public void testMapsAsValues() throws IOException, InterruptedException {
 

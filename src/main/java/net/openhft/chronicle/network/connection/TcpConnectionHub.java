@@ -94,7 +94,7 @@ public class TcpConnectionHub implements View, Closeable {
                 new InetSocketAddress(requestContext.host(), requestContext.port()),
                 requestContext.tcpBufferSize(),
                 requestContext.timeout(),
-                wire // todo refactor
+                wire // todo refactor and remove
         );
     }
 

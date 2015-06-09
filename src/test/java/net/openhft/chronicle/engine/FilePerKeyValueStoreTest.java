@@ -27,7 +27,8 @@ import static org.junit.Assert.assertEquals;
 /**
  * JUnit test class to support
  */
-@Ignore("todo fix test, getting more events on Windows")
+@Ignore("todo fix test, getting more events on Windows - JIRA https://higherfrequencytrading" +
+        ".atlassian.net/browse/CE-63")
 public class FilePerKeyValueStoreTest {
     public static final String NAME = "fileperkvstoretests";
     private static Map<String, TestMarshallable> map;

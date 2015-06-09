@@ -6,7 +6,7 @@ import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapReplicationEvent;
 import net.openhft.chronicle.engine.collection.ClientWiredStatelessChronicleCollection;
 import net.openhft.chronicle.engine.collection.ClientWiredStatelessChronicleSet;
-import net.openhft.chronicle.map.MapStatelessClient;
+import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.TcpConnectionHub;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +21,7 @@ import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventI
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.*;
 import static net.openhft.chronicle.wire.CoreFields.stringEvent;
 
-public class RemoteAuthenticatedKeyValueStore<K, V> extends MapStatelessClient<EventId>
+public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
         implements Cloneable, AuthenticatedKeyValueStore<K, V, V> {
 
     public static final Consumer<ValueOut> VOID_PARAMETERS = out -> out.marshallable(WriteMarshallable.EMPTY);
@@ -29,29 +29,31 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends MapStatelessClient<E
     private final Class<K> kClass;
     private final Class<V> vClass;
     private final Map<Long, String> cidToCsp = new HashMap<>();
+    private final RequestContext context;
 
     @SuppressWarnings("unchecked")
     public RemoteAuthenticatedKeyValueStore(RequestContext context, Asset asset, Supplier<Assetted> underlying) {
-        this(context.keyType(),
-                context.valueType(),
-                context.name(),
-                hub(context, asset));
+        this(context, hub(context, asset));
+    }
+
+    private RemoteAuthenticatedKeyValueStore(@NotNull final RequestContext context,
+                                             @NotNull final TcpConnectionHub hub) {
+        super(hub, (long) 0, toUri(context));
+        this.kClass = context.keyType();
+        this.vClass = context.valueType();
+        this.context = context;
+
     }
 
     private static TcpConnectionHub hub(final RequestContext context, final Asset asset) {
-        final TcpConnectionHub hub = asset.acquireView(TcpConnectionHub.class, context);
-        return hub;
+        return asset.acquireView(TcpConnectionHub.class, context);
     }
 
-    private RemoteAuthenticatedKeyValueStore(
-            @NotNull final Class<K> kClass,
-            @NotNull final Class<V> vClass,
-            @NotNull final String channelName,
-            @NotNull final TcpConnectionHub hub) {
-        super(channelName, hub, 0, "/" + channelName + "?view=" + "map&keyType=" + kClass.getSimpleName() + "&valueType=" + vClass
-                .getSimpleName());
-        this.kClass = kClass;
-        this.vClass = vClass;
+    @org.jetbrains.annotations.NotNull
+    private static String toUri(final @NotNull RequestContext context) {
+        return "/" + context.name()
+                + "?view=" + "map&keyType=" + context.keyType().getSimpleName() + "&valueType=" + context.valueType()
+                .getSimpleName();
     }
 
     @Override
@@ -253,8 +255,8 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends MapStatelessClient<E
 
         final Function<ValueIn, V> conumer = valueIn -> valueIn.object(vClass);
 
-        return new ClientWiredStatelessChronicleCollection<>(channelName, hub, cid, conumer,
-                ArrayList::new, "/" + channelName + "?view=" + "values");
+        return new ClientWiredStatelessChronicleCollection<>(hub, ArrayList::new, conumer, "/" + context.name() + "?view=" + "values", cid
+        );
     }
 
     @NotNull
@@ -300,7 +302,7 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends MapStatelessClient<E
 
         );
 
-        return new ClientWiredStatelessChronicleSet<>(channelName, hub, cid, conumer, csp.toString());
+        return new ClientWiredStatelessChronicleSet<>(hub, csp.toString(), cid, conumer);
     }
 
     @Override
@@ -326,8 +328,8 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends MapStatelessClient<E
             });
         });
 
-        return new ClientWiredStatelessChronicleSet<>(channelName, hub,
-                cid, valueIn -> valueIn.object(kClass), csp.toString());
+        return new ClientWiredStatelessChronicleSet<>(hub,
+                csp.toString(), cid, valueIn -> valueIn.object(kClass));
     }
 
     @SuppressWarnings("SameParameterValue")

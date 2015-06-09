@@ -19,23 +19,39 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
 
     protected final TcpConnectionHub hub;
     private final long cid;
-    protected final String channelName;
     protected String csp;
 
     /**
-     * @param channelName
      * @param hub
      * @param cid         used by proxies such as the entry-set
      * @param csp
      */
-    public AbstractStatelessClient(@NotNull final String channelName,
-                                   @NotNull final TcpConnectionHub hub,
+    public AbstractStatelessClient(@NotNull final TcpConnectionHub hub,
                                    long cid,
-                                   String csp) {
+                                   @NotNull final String csp) {
         this.cid = cid;
         this.csp = csp;
         this.hub = hub;
-        this.channelName = channelName;
+    }
+
+
+    @Nullable
+    protected <R> R proxyReturnTypedObject(
+            @NotNull final E eventId,
+            R usingValue,
+            @NotNull final Class<R> resultType,
+            @Nullable Object... args) {
+
+        Function<ValueIn, R> consumerIn = resultType == CharSequence.class && usingValue != null
+                ? f -> {
+            f.textTo((StringBuilder) usingValue);
+            return usingValue;
+        }
+                : f -> f.object(resultType);
+        return proxyReturnWireConsumerInOut(eventId,
+                CoreFields.reply,
+                toParameters(eventId, args),
+                consumerIn);
     }
 
     @SuppressWarnings("SameParameterValue")

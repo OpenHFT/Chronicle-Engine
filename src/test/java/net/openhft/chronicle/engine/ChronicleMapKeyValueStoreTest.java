@@ -12,6 +12,7 @@ import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -49,6 +50,7 @@ public class ChronicleMapKeyValueStoreTest {
         map.clear();
     }
 
+    @Ignore("fix https://higherfrequencytrading.atlassian.net/browse/CE-68")
     @Test
     public void test() {
         AtomicInteger success = new AtomicInteger();

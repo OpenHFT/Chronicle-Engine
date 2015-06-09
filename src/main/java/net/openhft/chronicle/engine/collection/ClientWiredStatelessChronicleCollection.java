@@ -1,8 +1,7 @@
 package net.openhft.chronicle.engine.collection;
 
 import net.openhft.chronicle.engine.collection.CollectionWireHandler.SetEventId;
-import net.openhft.chronicle.map.MapStatelessClient;
-
+import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.TcpConnectionHub;
 import net.openhft.chronicle.wire.ValueIn;
 import org.jetbrains.annotations.NotNull;
@@ -16,17 +15,16 @@ import static net.openhft.chronicle.engine.collection.CollectionWireHandler.SetE
 import static net.openhft.chronicle.wire.CoreFields.reply;
 
 public class ClientWiredStatelessChronicleCollection<U, E extends Collection<U>> extends
-        MapStatelessClient<SetEventId> implements Collection<U> {
+        AbstractStatelessClient<SetEventId> implements Collection<U> {
 
     private final Function<ValueIn, U> consumer;
     private final Supplier<E> factory;
 
-    public ClientWiredStatelessChronicleCollection(@NotNull final String channelName,
-                                                   @NotNull final TcpConnectionHub hub,
-                                                   final long cid,
-                                                   @NotNull final Function<ValueIn, U> wireToSet,
-                                                   @NotNull Supplier<E> factory, String csp) {
-        super(channelName, hub, cid, csp);
+    public ClientWiredStatelessChronicleCollection(@NotNull final TcpConnectionHub hub,
+                                                   @NotNull Supplier<E> factory,
+                                                   @NotNull Function<ValueIn, U> wireToSet,
+                                                   @NotNull String csp, long cid) {
+        super(hub, cid, csp);
         this.consumer = wireToSet;
         this.factory = factory;
     }

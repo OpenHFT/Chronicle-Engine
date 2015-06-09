@@ -12,10 +12,9 @@ import java.util.function.Function;
 public class ClientWiredStatelessChronicleSet<U> extends
         ClientWiredStatelessChronicleCollection<U, Set<U>> implements Set<U> {
 
-    public ClientWiredStatelessChronicleSet(@NotNull String channelName,
-                                            @NotNull TcpConnectionHub hub,
-                                            long cid,
-                                            @NotNull Function<ValueIn, U> wireToSet, String csp) {
-        super(channelName, hub, cid, wireToSet, HashSet::new, csp);
+    public ClientWiredStatelessChronicleSet(@NotNull TcpConnectionHub hub,
+                                            @NotNull String csp, long cid,
+                                            @NotNull Function<ValueIn, U> wireToSet) {
+        super(hub, HashSet::new, wireToSet, csp, cid);
     }
 }

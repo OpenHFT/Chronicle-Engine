@@ -274,7 +274,7 @@ todo fix this test
         assertEquals("group2/sub-group", group2.fullName());
     }
 
-    @Ignore
+    @Ignore("JIRA https://higherfrequencytrading.atlassian.net/browse/CE-62")
     @Test(expected = AssetNotFoundException.class)
     public void noAsset() {
         registerTopicSubscriber("map-name", String.class, String.class, (t, e) -> System.out.println("{ key: " + t + ", event: " + e + " }"));
