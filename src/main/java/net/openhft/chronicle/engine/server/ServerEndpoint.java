@@ -17,14 +17,13 @@
  */
 package net.openhft.chronicle.engine.server;
 
-import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.engine.api.AssetTree;
 import net.openhft.chronicle.engine.api.WireType;
 import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
+import net.openhft.chronicle.engine.session.VanillaSessionDetails;
 import net.openhft.chronicle.network.AcceptorEventHandler;
 import net.openhft.chronicle.network.event.EventGroup;
-import net.openhft.chronicle.wire.Wire;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +31,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
 
 /**
  * Created by Rob Austin
@@ -71,7 +69,7 @@ public class ServerEndpoint implements Closeable {
                 LOG.error("", e);
             }
             return null;
-        });
+        }, VanillaSessionDetails::new);
 
         eg.addHandler(eah);
         this.eah = eah;
