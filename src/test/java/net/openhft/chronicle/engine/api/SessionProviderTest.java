@@ -11,6 +11,7 @@ public class SessionProviderTest {
 
     @Test
     public void testAcquireSessionProvider() {
+        Chassis.resetChassis();
         SessionProvider sessionProvider = Chassis.getAsset("").getView(SessionProvider.class);
         VanillaSessionDetails sessionDetails0 = new VanillaSessionDetails();
 
