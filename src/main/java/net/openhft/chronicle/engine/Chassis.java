@@ -52,7 +52,6 @@ public enum Chassis {
 
     public static <T, E> TopicPublisher<T, E> acquireTopicPublisher(String name, Class<T> tClass, Class<E> eClass) throws AssetNotFoundException {
         return assetTree.acquireTopicPublisher(name, tClass, eClass);
-
     }
 
     public static <A> Asset acquireAsset(Class<A> assetClass, RequestContext context) throws

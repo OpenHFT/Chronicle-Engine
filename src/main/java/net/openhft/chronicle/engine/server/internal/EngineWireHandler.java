@@ -19,14 +19,11 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.engine.api.Asset;
-import net.openhft.chronicle.engine.api.AssetTree;
-import net.openhft.chronicle.engine.api.RequestContext;
-import net.openhft.chronicle.engine.api.SessionDetails;
+import net.openhft.chronicle.engine.api.*;
+import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
-import net.openhft.chronicle.engine.api.set.ValuesView;
 import net.openhft.chronicle.engine.collection.CollectionWireHandler;
 import net.openhft.chronicle.engine.collection.CollectionWireHandlerProcessor;
 import net.openhft.chronicle.network.WireTcpHandler;
@@ -60,34 +57,36 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
     @Nullable
     private final WireHandler queueWireHandler;
-    private final Map<Long, String> cidToCsp;
 
+    private final Map<Long, String> cidToCsp;
     private final MapWireHandler mapWireHandler;
     private final CollectionWireHandler<Entry<byte[], byte[]>, Set<Entry<byte[], byte[]>>> entrySetHandler;
     private final CollectionWireHandler<byte[], Collection<byte[]>> valuesHandler;
     private final AssetTree assetTree;
+    private final Consumer<WireIn> metaDataConsumer;
+    private boolean isSystemMessage = true;
+    private final StringBuilder lastCsp = new StringBuilder();
+    private final StringBuilder eventName = new StringBuilder();
 
     private MapHandler mh;
-
-    private final Consumer<WireIn> metaDataConsumer;
     private RequestContext requestContext;
     private Class viewType;
+    private SessionProvider sessionProvider;
 
     public EngineWireHandler(@NotNull final Map<Long, String> cidToCsp,
                              @NotNull final Function<Bytes, Wire> byteToWire,
                              @NotNull final AssetTree assetTree) throws IOException {
-
         super(byteToWire);
-        this.assetTree = assetTree;
 
+        this.assetTree = assetTree;
         this.mapWireHandler = new MapWireHandler<>(cidToCsp);
         this.keySetHandler = new CollectionWireHandlerProcessor<>();
         this.queueWireHandler = null;
         this.cidToCsp = cidToCsp;
-
         this.entrySetHandler = new CollectionWireHandlerProcessor<>();
         this.valuesHandler = new CollectionWireHandlerProcessor<>();
         this.metaDataConsumer = wireInConsumer();
+        this.sessionProvider = assetTree.getAsset("").getView(SessionProvider.class);
     }
 
     private final List<WireHandler> handlers = new ArrayList<>();
@@ -107,19 +106,28 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
     private long tid;
 
-    final StringBuilder lastCsp = new StringBuilder();
-    final StringBuilder eventName = new StringBuilder();
+
 
     Object view;
 
     @NotNull
     private Consumer<WireIn> wireInConsumer() throws IOException {
-        return (metaDataWire) -> {
+        return (wire) -> {
+
+            // if true the next data message will be a system message
+            isSystemMessage = wire.bytes().remaining() == 0;
+            if (isSystemMessage) {
+                if (LOG.isDebugEnabled()) LOG.debug("received system-meta-data");
+                return;
+            }
 
             try {
-                readCsp(metaDataWire);
-                readTid(metaDataWire);
+                readCsp(wire);
+                readTid(wire);
                 if (hasCspChanged(cspText)) {
+
+                    if (LOG.isDebugEnabled())
+                        LOG.debug("received meta-data:\n" + wire.bytes().toHexString());
 
                     requestContext = RequestContext.requestContext(cspText);
                     viewType = requestContext.viewType();
@@ -130,7 +138,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
                     if (viewType == MapView.class ||
                             viewType == EntrySetView.class ||
-                            viewType == ValuesView.class ||
+                            viewType == ValuesCollection.class ||
                             viewType == KeySetView.class) {
 
                         // default to string type if not provided
@@ -140,12 +148,10 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                         final Class vClass = requestContext.valueType() == null ? String.class
                                 : requestContext.valueType();
 
-                        mh = new GenericMapHandler(
-                                kClass,
-                                vClass);
+                        mh = new GenericMapHandler(kClass, vClass);
                     }
                     else
-                        throw new UnsupportedOperationException("unspported view type");
+                        throw new UnsupportedOperationException("unsupported view type");
 
 
                 }
@@ -173,25 +179,33 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
         if (CoreFields.tid.contentEquals(eventName)) {
             tid = valueIn.int64();
             eventName.setLength(0);
-        } else {
+        } else
             tid = -1;
-        }
     }
 
     @Override
     protected void process(@NotNull final Wire in,
                            @NotNull final Wire out,
-                           @NotNull final SessionDetails sessionDetails) throws
-            StreamCorruptedException {
+                           @NotNull final SessionDetailsProvider sessionDetails)
+            throws StreamCorruptedException {
 
         logYamlToStandardOut(in);
 
-        in.readDocument(this.metaDataConsumer, (WireIn dataWire) -> {
+        in.readDocument(this.metaDataConsumer, (WireIn wire) -> {
 
             try {
 
-                if (mh != null) {
+                if (LOG.isDebugEnabled())
+                    LOG.debug("received data:\n" + wire.bytes().toHexString());
 
+                sessionProvider.set(sessionDetails);
+
+                if (isSystemMessage) {
+                    sessionDetails.setUserId(wire.read(() -> "username").text());
+                    return;
+                }
+
+                if (mh != null) {
 
                     if (viewType == MapView.class) {
                         mapWireHandler.process(in, out, (MapView) view, tid, mh, requestContext);
@@ -212,8 +226,8 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                         return;
                     }
 
-                    if (viewType == ValuesView.class) {
-                        valuesHandler.process(in, out, (ValuesView) view, cspText,
+                    if (viewType == ValuesCollection.class) {
+                        valuesHandler.process(in, out, (ValuesCollection) view, cspText,
                                 mh.keyToWire(),
                                 mh.wireToKey(), ArrayList::new, tid);
                         return;
@@ -226,6 +240,8 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
             } catch (Exception e) {
                 LOG.error("", e);
+            } finally {
+                sessionProvider.remove();
             }
 
         });
@@ -259,16 +275,6 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
             final CharSequence s = cidToCsp.get(cid);
             cspText.append(s);
         }
-    }
-
-    private String serviceName(@NotNull final StringBuilder cspText) {
-        final int slash = cspText.lastIndexOf("/");
-        final int hash = cspText.lastIndexOf("?view=");
-
-        return (slash != -1 && slash < (cspText.length() - 1) &&
-                hash != -1 && hash < (cspText.length() - 1))
-                ? cspText.substring(slash + 1, hash)
-                : "";
     }
 
     @Override
