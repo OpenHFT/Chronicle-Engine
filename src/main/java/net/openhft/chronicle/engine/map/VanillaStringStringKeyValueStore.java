@@ -2,17 +2,16 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
+import net.openhft.chronicle.bytes.BytesUtil;
+import net.openhft.chronicle.bytes.StreamingDataInput;
 import net.openhft.chronicle.core.ClassLocal;
-import net.openhft.chronicle.core.util.StringUtils;
 import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.api.map.*;
-import net.openhft.chronicle.wire.Marshallable;
-import net.openhft.chronicle.wire.WireIn;
 
 import java.lang.reflect.Constructor;
 import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static net.openhft.chronicle.engine.map.Buffers.BUFFERS;
@@ -30,6 +29,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
             throw new AssertionError(e);
         }
     });
+    public static final Function<BytesStore, String> BYTES_STORE_STRING_FUNCTION = v -> BytesUtil.to8bitString((StreamingDataInput) v);
     private final SubscriptionKVSCollection<String, StringBuilder, String> subscriptions = new TranslatingSubscriptionKVSCollection();
     private SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore;
     private Asset asset;
@@ -38,20 +38,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     public VanillaStringStringKeyValueStore(RequestContext context, Asset asset, Supplier<Assetted> kvStore) {
         this.asset = asset;
         this.kvStore = (SubscriptionKeyValueStore<String, Bytes, BytesStore>) kvStore.get();
-        asset.registerView(ValueReader.class, (ValueReader<BytesStore, String>) (bs, s) -> bs.toString());
-    }
-
-    static <T> BiFunction<T, Bytes, Bytes> toBytes(RequestContext context, Class type) {
-        if (type == String.class)
-            return (t, bytes) -> (Bytes) bytes.append((String) t);
-        if (Marshallable.class.isAssignableFrom(type))
-            return (t, bytes) -> {
-                t = acquireInstance(type, t);
-                ((Marshallable) t).writeMarshallable(context.wireType().apply(bytes));
-                bytes.flip();
-                return bytes;
-            };
-        throw new UnsupportedOperationException("todo");
+        asset.registerView(ValueReader.class, (ValueReader<BytesStore, String>) (bs, s) -> BytesUtil.to8bitString((StreamingDataInput) bs));
     }
 
     static <T> T acquireInstance(Class type, T t) {
@@ -64,19 +51,6 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         return t;
     }
 
-    private <T> BiFunction<BytesStore, T, T> fromBytes(RequestContext context, Class type) {
-        if (type == String.class)
-            return (t, bytes) -> (T) (bytes == null ? null : bytes.toString());
-        if (Marshallable.class.isAssignableFrom(type))
-            return (bytes, t) -> {
-                t = acquireInstance(type, t);
-                ((Marshallable) t).readMarshallable((WireIn) context.wireType().apply(bytes.bytes()));
-                ((Bytes) bytes).position(0);
-                return t;
-            };
-        throw new UnsupportedOperationException("todo");
-    }
-
     @Override
     public SubscriptionKVSCollection<String, StringBuilder, String> subscription(boolean createIfAbsent) {
         return subscriptions;
@@ -87,7 +61,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         Buffers b = BUFFERS.get();
         Bytes<ByteBuffer> bytes = b.valueBuffer;
         bytes.clear();
-        bytes.append(value);
+        bytes.append8bit(value);
         bytes.flip();
         return kvStore.put(key, bytes);
     }
@@ -133,7 +107,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
 
     @Override
     public void entriesFor(int segment, SubscriptionConsumer<MapReplicationEvent<String, String>> kvConsumer) throws InvalidSubscriberException {
-        kvStore.entriesFor(segment, e -> kvConsumer.accept(e.translate(k -> k, Object::toString)));
+        kvStore.entriesFor(segment, e -> kvConsumer.accept(e.translate(k -> k, BYTES_STORE_STRING_FUNCTION)));
     }
 
     @Override
@@ -178,7 +152,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
                 Subscriber<MapReplicationEvent<String, String>> sub = (Subscriber) subscriber;
 
                 Subscriber<MapReplicationEvent<String, BytesStore>> sub2 = e ->
-                        sub.onMessage(e.translate(k -> k, Object::toString));
+                        sub.onMessage(e.translate(k -> k, BYTES_STORE_STRING_FUNCTION));
                 kvStore.subscription(true).registerSubscriber(rc, sub2);
             } else {
                 subscriptions.registerSubscriber(rc, subscriber);
@@ -188,7 +162,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         @Override
         public <T, E> void registerTopicSubscriber(RequestContext rc, TopicSubscriber<T, E> subscriber) {
             kvStore.subscription(true).registerTopicSubscriber(rc, (T topic, E message) -> {
-                subscriber.onMessage(topic, (E) StringUtils.toString(message));
+                subscriber.onMessage(topic, (E) BytesUtil.to8bitString((StreamingDataInput) message));
             });
             subscriptions.registerTopicSubscriber(rc, subscriber);
         }
