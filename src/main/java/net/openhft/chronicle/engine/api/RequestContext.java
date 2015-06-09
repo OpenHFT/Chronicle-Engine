@@ -18,7 +18,7 @@ import java.util.function.Function;
  */
 public class RequestContext {
     private String pathName;
-    private String uri;
+    private String name;
     private Class viewType, type, type2;
     private String basePath;
     private Function<Bytes, Wire> wireType = TextWire::new;
@@ -64,9 +64,9 @@ public class RequestContext {
     private RequestContext() {
     }
 
-    public RequestContext(String pathName, String uri) {
+    public RequestContext(String pathName, String name) {
         this.pathName = pathName;
-        this.uri = uri;
+        this.name = name;
     }
 
     public static RequestContext requestContext() {
@@ -181,8 +181,8 @@ public class RequestContext {
         return type2;
     }
 
-    public String fullUri() {
-        return pathName.isEmpty() ? uri : (pathName + "/" + uri);
+    public String fullName() {
+        return pathName.isEmpty() ? name : (pathName + "/" + name);
     }
 
     public RequestContext basePath(String basePath) {
@@ -208,7 +208,7 @@ public class RequestContext {
     }
 
     public String name() {
-        return uri;
+        return name;
     }
 
     public double getAverageValueSize() {
@@ -230,7 +230,7 @@ public class RequestContext {
     }
 
     public RequestContext name(String name) {
-        this.uri = name;
+        this.name = name;
         return this;
     }
 
@@ -244,10 +244,10 @@ public class RequestContext {
         return viewType;
     }
 
-    public RequestContext fullUri(String fullName) {
+    public RequestContext fullName(String fullName) {
         int dirPos = fullName.lastIndexOf('/');
         this.pathName = dirPos >= 0 ? fullName.substring(0, dirPos) : "";
-        this.uri = dirPos >= 0 ? fullName.substring(dirPos + 1) : fullName;
+        this.name = dirPos >= 0 ? fullName.substring(dirPos + 1) : fullName;
         return this;
     }
 
@@ -272,7 +272,7 @@ public class RequestContext {
     public String toString() {
         return "RequestContext{" +
                 "pathName='" + pathName + '\'' +
-                ", name='" + uri + '\'' +
+                ", name='" + name + '\'' +
                 ", viewType=" + viewType +
                 ", type=" + type +
                 ", type2=" + type2 +

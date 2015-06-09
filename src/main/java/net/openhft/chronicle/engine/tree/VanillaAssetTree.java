@@ -30,8 +30,8 @@ public class VanillaAssetTree implements AssetTree {
     @NotNull
     @Override
     public <A> Asset acquireAsset(Class<A> assetClass, RequestContext context) throws AssetNotFoundException {
-        String name = context.fullUri();
-        return name.isEmpty() || name.equals("/") ? root : root.acquireAsset(name);
+        String fullName = context.fullName();
+        return fullName.isEmpty() || fullName.equals("/") ? root : root.acquireAsset(context, fullName);
     }
 
     @Nullable
