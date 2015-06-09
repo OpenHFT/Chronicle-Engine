@@ -8,6 +8,7 @@ import net.openhft.chronicle.engine.api.map.SubAsset;
 import net.openhft.chronicle.engine.api.map.ValueReader;
 import net.openhft.chronicle.engine.pubsub.SimpleSubscription;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
@@ -17,12 +18,14 @@ import static net.openhft.chronicle.engine.api.RequestContext.requestContext;
  * Created by peter on 22/05/15.
  */
 public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscriber<String, E> {
+    @NotNull
     private final Asset parent;
     private final String name;
+    @NotNull
     private final SimpleSubscription<E> subscription;
     private Reference<E> reference;
 
-    VanillaSubAsset(RequestContext rc, Asset parent, String name) throws AssetNotFoundException {
+    VanillaSubAsset(@NotNull RequestContext rc, @NotNull Asset parent, String name) throws AssetNotFoundException {
         this.parent = parent;
         this.name = name;
         reference = (Reference<E>) acquireViewFor(Reference.class, rc);
@@ -35,6 +38,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
         subscription = new SimpleSubscription<>(reference, valueReader == null ? ValueReader.PASS : valueReader);
     }
 
+    @NotNull
     @Override
     public Subscription subscription(boolean createIfAbsent) {
         return subscription;
@@ -45,6 +49,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
         throw new UnsupportedOperationException("todo");
     }
 
+    @NotNull
     @Override
     public <V> V getView(Class<V> vClass) {
         if (vClass == Reference.class || vClass == Publisher.class || vClass == Supplier.class)
@@ -64,8 +69,9 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
         return false;
     }
 
+    @NotNull
     @Override
-    public <V> V acquireView(Class<V> viewType, RequestContext rc) throws AssetNotFoundException {
+    public <V> V acquireView(Class<V> viewType, @NotNull RequestContext rc) throws AssetNotFoundException {
         if (viewType == Reference.class || viewType == Supplier.class) {
             return (V) reference;
         }
@@ -80,11 +86,13 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
         throw new UnsupportedOperationException("todo vClass: " + viewType + ", rc: " + rc);
     }
 
-    private <V> V acquireViewFor(Class<V> viewType, RequestContext rc) throws AssetNotFoundException {
+    @NotNull
+    private <V> V acquireViewFor(Class<V> viewType, @NotNull RequestContext rc) throws AssetNotFoundException {
         return parent.acquireFactory(viewType).create(requestContext().type(rc.type()).fullName(name), this, () ->
                 parent.getView(MapView.class));
     }
 
+    @NotNull
     @Override
     public ViewLayer classify(Class viewType, RequestContext rc) {
         throw new UnsupportedOperationException("todo");
@@ -95,6 +103,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
         return true;
     }
 
+    @Nullable
     @Override
     public <I> ViewFactory<I> getFactory(Class<I> iClass) {
         return parent.getFactory(iClass);
@@ -126,6 +135,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
         throw new UnsupportedOperationException("todo");
     }
 
+    @NotNull
     @Override
     public Asset getChild(String name) {
         throw new UnsupportedOperationException();
@@ -136,16 +146,18 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
         throw new UnsupportedOperationException("todo");
     }
 
+    @NotNull
     public Asset add(String name, Assetted resource) {
         throw new UnsupportedOperationException("todo");
     }
 
     @Override
-    public void onMessage(String name, E e) {
+    public void onMessage(@NotNull String name, E e) {
         if (name.equals(this.name))
             subscription.notifyMessage(e);
     }
 
+    @NotNull
     @Override
     public <I> ViewFactory<I> acquireFactory(Class<I> iClass) throws AssetNotFoundException {
         throw new UnsupportedOperationException("todo");

@@ -13,6 +13,7 @@ import net.openhft.chronicle.engine.pubsub.SimpleSubscription;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.MapEventListener;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
@@ -32,7 +33,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
     private final SubscriptionKVSCollection<K, MV, V> subscriptions = new VanillaSubscriptionKVSCollection<>(this);
     private Asset asset;
 
-    public ChronicleMapKeyValueStore(RequestContext context, Asset asset) {
+    public ChronicleMapKeyValueStore(@NotNull RequestContext context, Asset asset) {
         this.asset = asset;
         PublishingOperations publishingOperations = new PublishingOperations();
 
@@ -68,6 +69,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         chronicleMap = builder.create();
     }
 
+    @NotNull
     @Override
     public SubscriptionKVSCollection<K, MV, V> subscription(boolean createIfAbsent) {
         return subscriptions;
@@ -85,7 +87,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
 
 
     @Override
-    public V getUsing(K key, MV value) {
+    public V getUsing(K key, @Nullable MV value) {
         if(value != null)throw new UnsupportedOperationException("Mutable values not supported");
         return chronicleMap.getUsing(key, (V) value);
     }
@@ -96,13 +98,13 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
     }
 
     @Override
-    public void keysFor(int segment, SubscriptionConsumer<K> kConsumer) throws InvalidSubscriberException {
+    public void keysFor(int segment, @NotNull SubscriptionConsumer<K> kConsumer) throws InvalidSubscriberException {
         //Ignore the segments and return keysFor the whole map
         notifyEachEvent(chronicleMap.keySet(), kConsumer);
     }
 
     @Override
-    public void entriesFor(int segment, SubscriptionConsumer<MapReplicationEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
+    public void entriesFor(int segment, @NotNull SubscriptionConsumer<MapReplicationEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
         //Ignore the segments and return entriesFor the whole map
         chronicleMap.entrySet().stream().map(e -> EntryEvent.of(e.getKey(), e.getValue(), 0, 0L)).forEach(e -> {
             try {
@@ -113,6 +115,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         });
     }
 
+    @NotNull
     @Override
     public Iterator<Map.Entry<K, V>> entrySetIterator() {
         return chronicleMap.entrySet().iterator();
@@ -128,6 +131,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         return asset;
     }
 
+    @Nullable
     @Override
     public KeyValueStore<K, MV, V> underlying() {
         return null;
@@ -140,7 +144,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
 
     class PublishingOperations extends MapEventListener<K,V> {
         @Override
-        public void onRemove(K key, V value, boolean replicationEven) {
+        public void onRemove(@NotNull K key, V value, boolean replicationEven) {
             try {
                 int identifier = 0; // todo
                 long timeStampMS = 0; // todo
@@ -152,7 +156,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
             }
         }
         @Override
-        public void onPut(K key, V newValue, @Nullable V replacedValue, boolean replicationEvent) {
+        public void onPut(@NotNull K key, V newValue, @Nullable V replacedValue, boolean replicationEvent) {
             try {
                 int identifier = 0; // todo
                 long timeStampMS = 0; // todo
@@ -169,7 +173,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         }
     }
 
-    private void publishValueToChild(K key, V value) {
+    private void publishValueToChild(@NotNull K key, V value) {
         Optional.of(key)
                 .filter(k -> k instanceof CharSequence)
                 .map(Object::toString)

@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class Utils {
 
-    static String splitCamelCase(String s) {
+    static String splitCamelCase(@NotNull String s) {
         return s.replaceAll(
                 String.format("%s|%s|%s",
                         "(?<=[A-Z])(?=[A-Z][a-z])",
@@ -30,7 +30,7 @@ public class Utils {
         YamlLogging.title = name;
     }
 
-    public static void yamlLoggger(Runnable r) {
+    public static void yamlLoggger(@NotNull Runnable r) {
         try {
             YamlLogging.clientWrites = true;
             YamlLogging.clientReads = true;

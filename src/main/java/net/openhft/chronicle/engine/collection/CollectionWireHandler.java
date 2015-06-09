@@ -19,6 +19,7 @@
 package net.openhft.chronicle.engine.collection;
 
 import net.openhft.chronicle.wire.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.StreamCorruptedException;
 import java.util.Collection;
@@ -68,6 +69,7 @@ public interface CollectionWireHandler<U, C extends Collection<U>> {
             this.params = params;
         }
 
+        @NotNull
         public <P extends WireKey> P[] params() {
             return (P[]) this.params;
         }

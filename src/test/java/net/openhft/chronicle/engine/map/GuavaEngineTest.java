@@ -29,6 +29,8 @@ import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.engine.map.MapClientTest.LocalMapSupplier;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.wire.TextWire;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.junit.runners.AllTests;
@@ -47,6 +49,7 @@ import static com.google.common.collect.testing.features.MapFeature.*;
 @Ignore
 public class GuavaEngineTest   {
 
+    @NotNull
     public static Test suite() {
         TestSuite remoteMapTests = MapTestSuiteBuilder.using(new RemoteTestGenerator())
                 .named("Chronicle RemoteEngine Guava tests")
@@ -74,17 +77,21 @@ public class GuavaEngineTest   {
     static abstract class TestGenerator
             implements TestMapGenerator<CharSequence, CharSequence> {
 
+        @Nullable
         abstract Map<CharSequence, CharSequence> newMap();
 
+        @NotNull
         public CharSequence[] createKeyArray(int length) {
             return new CharSequence[length];
         }
 
+        @NotNull
         @Override
         public CharSequence[] createValueArray(int length) {
             return new CharSequence[length];
         }
 
+        @NotNull
         @Override
         public SampleElements<Map.Entry<CharSequence, CharSequence>> samples() {
             return SampleElements.mapEntries(
@@ -97,8 +104,9 @@ public class GuavaEngineTest   {
             );
         }
 
+        @Nullable
         @Override
-        public Map<CharSequence, CharSequence> create(Object... objects) {
+        public Map<CharSequence, CharSequence> create(@NotNull Object... objects) {
             Map<CharSequence, CharSequence> map = newMap();
             for (Object obj : objects) {
                 Map.Entry e = (Map.Entry) obj;
@@ -108,6 +116,7 @@ public class GuavaEngineTest   {
             return map;
         }
 
+        @NotNull
         @Override
         public Map.Entry<CharSequence, CharSequence>[] createArray(int length) {
             return new Map.Entry[length];
@@ -122,6 +131,7 @@ public class GuavaEngineTest   {
 
     static class CHMTestGenerator extends TestGenerator {
 
+        @Nullable
         @Override
         Map<CharSequence, CharSequence> newMap() {
             return null;
@@ -129,6 +139,7 @@ public class GuavaEngineTest   {
     }
 
     static class RemoteTestGenerator extends CHMTestGenerator {
+        @NotNull
         @Override
         Map<CharSequence, CharSequence> newMap() {
             return newStrStrRemoteMap();
@@ -136,12 +147,14 @@ public class GuavaEngineTest   {
     }
 
     static class LocalTestGenerator extends CHMTestGenerator {
+        @NotNull
         @Override
         Map<CharSequence, CharSequence> newMap() {
             return newStrStrLocalMap();
         }
     }
 
+    @NotNull
     static ConcurrentMap<CharSequence, CharSequence> newStrStrRemoteMap() {
 
 
@@ -153,6 +166,7 @@ public class GuavaEngineTest   {
         }
     }
 
+    @NotNull
     static ConcurrentMap<CharSequence, CharSequence> newStrStrLocalMap() {
 
 

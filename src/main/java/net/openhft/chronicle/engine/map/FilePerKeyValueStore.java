@@ -13,6 +13,7 @@ import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapReplicationEvent;
 import net.openhft.chronicle.engine.api.map.StringBytesStoreKeyValueStore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -47,12 +48,13 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     //Use BytesStore so that it can be shared safely between threads
     private final Map<File, FileRecord<BytesStore>> lastFileRecordMap = new ConcurrentHashMap<>();
 
+    @NotNull
     private final Thread fileFpmWatcher;
     private final VanillaSubscriptionKVSCollection<String, Bytes, BytesStore> subscriptions = new VanillaSubscriptionKVSCollection<>(this);
     private volatile boolean closed = false;
     private Asset asset;
 
-    public FilePerKeyValueStore(RequestContext context, Asset asset) throws IORuntimeException {
+    public FilePerKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset) throws IORuntimeException {
         this(context.type(), context.basePath(), context.name());
         asset.registerView(StringBytesStoreKeyValueStore.class, this);
     }
@@ -82,6 +84,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         fileFpmWatcher.start();
     }
 
+    @NotNull
     @Override
     public SubscriptionKVSCollection<String, Bytes, BytesStore> subscription(boolean createIfAbsent) {
         return subscriptions;
@@ -92,6 +95,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         return getFiles().count();
     }
 
+    @Nullable
     @Override
     public BytesStore getUsing(String key, Bytes value) {
         Path path = dirPath.resolve(key);
@@ -99,7 +103,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     }
 
     @Override
-    public void keysFor(int segment, SubscriptionConsumer<String> stringConsumer) {
+    public void keysFor(int segment, @NotNull SubscriptionConsumer<String> stringConsumer) {
         try {
             keysFor0(stringConsumer);
         } catch (InvalidSubscriberException ise) {
@@ -107,7 +111,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         }
     }
 
-    void keysFor0(SubscriptionConsumer<String> stringConsumer) throws InvalidSubscriberException {
+    void keysFor0(@NotNull SubscriptionConsumer<String> stringConsumer) throws InvalidSubscriberException {
         getFiles().forEach(p -> {
             try {
                 stringConsumer.accept(p.getFileName().toString());
@@ -118,7 +122,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     }
 
     @Override
-    public void entriesFor(int segment, SubscriptionConsumer<MapReplicationEvent<String, BytesStore>> kvConsumer) throws InvalidSubscriberException {
+    public void entriesFor(int segment, @NotNull SubscriptionConsumer<MapReplicationEvent<String, BytesStore>> kvConsumer) throws InvalidSubscriberException {
         try {
             entriesFor0(kvConsumer);
         } catch (InvalidSubscriberException ise) {
@@ -126,7 +130,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         }
     }
 
-    void entriesFor0(SubscriptionConsumer<MapReplicationEvent<String, BytesStore>> kvConsumer) throws InvalidSubscriberException {
+    void entriesFor0(@NotNull SubscriptionConsumer<MapReplicationEvent<String, BytesStore>> kvConsumer) throws InvalidSubscriberException {
         getFiles().map(p -> EntryEvent.of(p.getFileName().toString(), getFileContents(p, null), 0, p.toFile().lastModified()))
                 .forEach(e -> {
                     try {
@@ -148,7 +152,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     }
 
     @Override
-    public boolean put(String key, BytesStore value) {
+    public boolean put(String key, @NotNull BytesStore value) {
         if (closed) throw new IllegalStateException("closed");
         Path path = dirPath.resolve(key);
         FileRecord fr = lastFileRecordMap.get(path.toFile());
@@ -157,8 +161,9 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         return fr != null;
     }
 
+    @Nullable
     @Override
-    public BytesStore getAndPut(String key, BytesStore value) {
+    public BytesStore getAndPut(String key, @NotNull BytesStore value) {
         if (closed) throw new IllegalStateException("closed");
         Path path = dirPath.resolve(key);
         FileRecord fr = lastFileRecordMap.get(path.toFile());
@@ -168,6 +173,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         return existingValue == null ? null : existingValue.bytes();
     }
 
+    @Nullable
     @Override
     public BytesStore getAndRemove(String key) {
         if (closed) throw new IllegalStateException("closed");
@@ -222,11 +228,12 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         }
     }
 
-    boolean isVisible(Path p) {
+    boolean isVisible(@NotNull Path p) {
         return !p.getFileName().startsWith(".");
     }
 
-    BytesStore getFileContents(Path path, Bytes using) {
+    @Nullable
+    BytesStore getFileContents(@NotNull Path path, Bytes using) {
         try {
             File file = path.toFile();
             FileRecord<BytesStore> lastFileRecord = lastFileRecordMap.get(file);
@@ -240,7 +247,8 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         }
     }
 
-    Bytes getFileContentsFromDisk(Path path, Bytes using) throws IOException {
+    @Nullable
+    Bytes getFileContentsFromDisk(@NotNull Path path, Bytes using) throws IOException {
         if (!Files.exists(path)) return null;
         File file = path.toFile();
 
@@ -261,7 +269,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         return readingBytes;
     }
 
-    private void writeToFile(Path path, BytesStore value) {
+    private void writeToFile(@NotNull Path path, @NotNull BytesStore value) {
         BytesStore<?, ByteBuffer> writingBytes;
         if (value.underlyingObject() instanceof ByteBuffer) {
             writingBytes = value;
@@ -291,7 +299,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         }
     }
 
-    private void deleteFile(Path path) {
+    private void deleteFile(@NotNull Path path) {
         try {
             Files.deleteIfExists(path);
         } catch (IOException e) {
@@ -309,6 +317,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         return asset;
     }
 
+    @Nullable
     @Override
     public KeyValueStore<String, Bytes, BytesStore> underlying() {
         return null;

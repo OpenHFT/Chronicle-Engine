@@ -29,15 +29,16 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
     private final Class<K> kClass;
     private final Class<V> vClass;
     private final Map<Long, String> cidToCsp = new HashMap<>();
+    @org.jetbrains.annotations.NotNull
     private final RequestContext context;
 
     @SuppressWarnings("unchecked")
-    public RemoteAuthenticatedKeyValueStore(RequestContext context, Asset asset, ThrowingSupplier<Assetted, AssetNotFoundException> underlying) throws AssetNotFoundException {
+    public RemoteAuthenticatedKeyValueStore(@org.jetbrains.annotations.NotNull RequestContext context, @org.jetbrains.annotations.NotNull Asset asset, ThrowingSupplier<Assetted, AssetNotFoundException> underlying) throws AssetNotFoundException {
         this(context, hub(context, asset));
     }
 
-    private RemoteAuthenticatedKeyValueStore(@NotNull final RequestContext context,
-                                             @NotNull final TcpConnectionHub hub) {
+    private RemoteAuthenticatedKeyValueStore(@org.jetbrains.annotations.NotNull @NotNull final RequestContext context,
+                                             @org.jetbrains.annotations.NotNull @NotNull final TcpConnectionHub hub) {
         super(hub, (long) 0, toUri(context));
         this.kClass = context.keyType();
         this.vClass = context.valueType();
@@ -45,12 +46,12 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
 
     }
 
-    private static TcpConnectionHub hub(final RequestContext context, final Asset asset) throws AssetNotFoundException {
+    private static TcpConnectionHub hub(final RequestContext context, @org.jetbrains.annotations.NotNull final Asset asset) throws AssetNotFoundException {
         return asset.acquireView(TcpConnectionHub.class, context);
     }
 
     @org.jetbrains.annotations.NotNull
-    private static String toUri(final @NotNull RequestContext context) {
+    private static String toUri(@org.jetbrains.annotations.NotNull final @NotNull RequestContext context) {
         return "/" + context.name()
                 + "?view=" + "map&keyType=" + context.keyType().getSimpleName() + "&valueType=" + context.valueType()
                 .getSimpleName();
@@ -61,11 +62,13 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
 
     }
 
+    @org.jetbrains.annotations.NotNull
     @NotNull
     public File file() {
         throw new UnsupportedOperationException();
     }
 
+    @Nullable
     @SuppressWarnings("NullableProblems")
     public V putIfAbsent(K key, V value) {
         checkKey(key);
@@ -73,13 +76,13 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
         return proxyReturnTypedObject(putIfAbsent, null, vClass, key, value);
     }
 
-    private void checkValue(Object value) {
+    private void checkValue(@Nullable Object value) {
         if (value == null)
             throw new NullPointerException("value must not be null");
     }
 
     @SuppressWarnings("NullableProblems")
-    public boolean remove(Object key, Object value) {
+    public boolean remove(@Nullable Object key, Object value) {
         if (key == null)
             return false;
         checkValue(value);
@@ -95,6 +98,7 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
         return proxyReturnBooleanWithArgs(replaceForOld, key, oldValue, newValue);
     }
 
+    @Nullable
     @SuppressWarnings("NullableProblems")
     public V replace(K key, V value) {
         checkKey(key);
@@ -141,6 +145,7 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
         return proxyReturnInt(hashCode);
     }
 
+    @org.jetbrains.annotations.NotNull
     @NotNull
     public String toString() {
         final Iterator<Map.Entry<K, V>> entries = entrySet().iterator();
@@ -186,6 +191,7 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
         );
     }*/
 
+    @Nullable
     public V get(Object key) {
         checkKey(key);
         return this.proxyReturnTypedObject(get, null, vClass, key);
@@ -208,13 +214,14 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
         return false;
     }
 
+    @Nullable
     @Override
     public V getAndRemove(final Object key) {
         checkKey(key);
         return proxyReturnTypedObject(getAndRemove, null, vClass, key);
     }
 
-    private void checkKey(Object key) {
+    private void checkKey(@Nullable Object key) {
         if (key == null)
             throw new NullPointerException("key can not be null");
     }
@@ -226,6 +233,7 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
         return false;
     }
 
+    @Nullable
     @Override
     public V getAndPut(final Object key, final Object value) {
         checkKey(key);
@@ -237,6 +245,7 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
         proxyReturnVoid(clear);
     }
 
+    @Nullable
     @NotNull
     public Collection<V> values() {
         final StringBuilder csp = Wires.acquireStringBuilder();
@@ -259,6 +268,7 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
         );
     }
 
+    @org.jetbrains.annotations.NotNull
     @NotNull
     public Set<Map.Entry<K, V>> entrySet() {
 
@@ -283,16 +293,19 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
                     final V v = r.read(() -> "value").object(vClass);
 
                     return new Map.Entry<K, V>() {
+                        @Nullable
                         @Override
                         public K getKey() {
                             return k;
                         }
 
+                        @Nullable
                         @Override
                         public V getValue() {
                             return v;
                         }
 
+                        @org.jetbrains.annotations.NotNull
                         @Override
                         public V setValue(Object value) {
                             throw new UnsupportedOperationException();
@@ -305,11 +318,13 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
         return new ClientWiredStatelessChronicleSet<>(hub, csp.toString(), cid, conumer);
     }
 
+    @org.jetbrains.annotations.NotNull
     @Override
     public Iterator<Map.Entry<K, V>> entrySetIterator() {
         return entrySet().iterator();
     }
 
+    @Nullable
     @NotNull
     public Set<K> keySet() {
 
@@ -333,23 +348,25 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
     }
 
     @SuppressWarnings("SameParameterValue")
-    private boolean proxyReturnBoolean(@NotNull final EventId eventId,
+    private boolean proxyReturnBoolean(@org.jetbrains.annotations.NotNull @NotNull final EventId eventId,
                                        @Nullable final Consumer<ValueOut> consumer) {
         final long startTime = System.currentTimeMillis();
         return readBoolean(sendEvent(startTime, eventId, consumer), startTime);
     }
 
     @SuppressWarnings("SameParameterValue")
-    private int proxyReturnInt(@NotNull final EventId eventId) {
+    private int proxyReturnInt(@org.jetbrains.annotations.NotNull @NotNull final EventId eventId) {
         final long startTime = System.currentTimeMillis();
         return readInt(sendEvent(startTime, eventId, VOID_PARAMETERS), startTime);
     }
 
+    @org.jetbrains.annotations.NotNull
     @Override
     public Asset asset() {
         throw new UnsupportedOperationException();
     }
 
+    @org.jetbrains.annotations.NotNull
     @Override
     public KeyValueStore<K, V, V> underlying() {
         throw new UnsupportedOperationException();
@@ -359,6 +376,7 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
     private final SubscriptionKVSCollection<K, V, V> subscriptions = new
             VanillaSubscriptionKVSCollection<>(this);
 
+    @org.jetbrains.annotations.NotNull
     @Override
     public SubscriptionKVSCollection<K, V, V> subscription(final boolean createIfAbsent) {
         return subscriptions;
@@ -411,6 +429,7 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
                     (value == null ? 0 : value.hashCode());
         }
 
+        @org.jetbrains.annotations.NotNull
         @NotNull
         public final String toString() {
             return getKey() + "=" + getValue();

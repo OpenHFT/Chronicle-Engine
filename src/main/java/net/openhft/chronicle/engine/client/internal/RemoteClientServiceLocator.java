@@ -39,6 +39,7 @@ import java.util.function.Function;
  */
 public class RemoteClientServiceLocator {
 
+    @NotNull
     private final TcpConnectionHub hub;
 
     public RemoteClientServiceLocator(@NotNull String hostname,
@@ -58,7 +59,8 @@ public class RemoteClientServiceLocator {
                 byteToWire);
     }
 
-    public <I> I getService(Class<I> iClass, String name, Class... args) {
+    @NotNull
+    public <I> I getService(@NotNull Class<I> iClass, String name, Class... args) {
         try {
 
             if (ChronicleMap.class.isAssignableFrom(iClass)) {

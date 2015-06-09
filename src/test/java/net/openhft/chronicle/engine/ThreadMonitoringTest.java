@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine;
 
 import net.openhft.lang.Jvm;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 
@@ -25,7 +26,7 @@ public class ThreadMonitoringTest {
         checkThreadsShutdown(threads);
     }
 
-    public static void checkThreadsShutdown(Set<Thread> threads) {
+    public static void checkThreadsShutdown(@NotNull Set<Thread> threads) {
         // give them a change to stop if there were killed.
         try {
             Thread.sleep(100);

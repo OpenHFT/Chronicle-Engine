@@ -20,6 +20,7 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.engine.map.MapClientTest.LocalMapSupplier;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -42,6 +43,7 @@ import static org.junit.Assert.*;
  */
 
 public class LocalChronicleMapTest extends JSR166TestCase {
+    @NotNull
     @Rule
     public TestName name = new TestName();
 
@@ -51,12 +53,14 @@ public class LocalChronicleMapTest extends JSR166TestCase {
         methodName(name.getMethodName());
     }
 
+    @NotNull
     static ClosableMapSupplier<Integer, String> newIntString() throws IOException {
         final LocalMapSupplier supplier = new LocalMapSupplier<>(Integer
                 .class, String.class);
 
         return new ClosableMapSupplier() {
 
+            @NotNull
             @Override
             public Map<Integer, String> get() {
                 return supplier.get();
@@ -71,6 +75,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
 
     }
 
+    @NotNull
     static ClosableMapSupplier<CharSequence, CharSequence> newStrStrMap() throws
             IOException {
 
@@ -78,6 +83,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
 
         return new ClosableMapSupplier() {
 
+            @NotNull
             @Override
             public Map<Integer, String> get() {
                 return supplier.get();
@@ -94,6 +100,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * Returns a new map from Integers 1-5 to Strings "A"-"E".
      */
+    @NotNull
     private ClosableMapSupplier<Integer, String> map5() throws IOException {
         ClosableMapSupplier<Integer, String> supplier = newIntString();
         final Map<Integer, String> map = supplier.get();
@@ -693,7 +700,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
             this.value = value;
         }
 
-        public int compareTo(BI other) {
+        public int compareTo(@NotNull BI other) {
             return Integer.compare(value, other.value);
         }
 
@@ -725,7 +732,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
             this.value = value;
         }
 
-        public int compareTo(BS other) {
+        public int compareTo(@NotNull BS other) {
             return value.compareTo(other.value);
         }
 
@@ -744,7 +751,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
         static long total;
         static long n;
 
-        LexicographicList(Collection<E> c) {
+        LexicographicList(@NotNull Collection<E> c) {
             super(c);
         }
 
@@ -752,7 +759,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
             super(Collections.singleton(e));
         }
 
-        public int compareTo(LexicographicList<E> other) {
+        public int compareTo(@NotNull LexicographicList<E> other) {
             long start = System.currentTimeMillis();
             int common = Math.min(size(), other.size());
             int r = 0;

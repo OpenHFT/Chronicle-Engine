@@ -3,6 +3,7 @@ package net.openhft.chronicle.engine.pubsub;
 import net.openhft.chronicle.core.util.ThrowingSupplier;
 import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.api.map.MapView;
+import org.jetbrains.annotations.NotNull;
 
 import static net.openhft.chronicle.engine.api.RequestContext.requestContext;
 
@@ -11,7 +12,7 @@ public class VanillaReference<E> implements Reference<E> {
     private final Class<E> eClass;
     private final MapView<String, E, E> underlyingMap;
 
-    public VanillaReference(RequestContext context, Asset asset, ThrowingSupplier<Assetted, AssetNotFoundException> assettedSupplier) throws AssetNotFoundException {
+    public VanillaReference(@NotNull RequestContext context, Asset asset, @NotNull ThrowingSupplier<Assetted, AssetNotFoundException> assettedSupplier) throws AssetNotFoundException {
         this(context.name(), context.type(), (MapView<String, E, E>) assettedSupplier.get());
     }
 

@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine.api;
 
 import net.openhft.lang.Jvm;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
@@ -9,11 +10,11 @@ import java.util.Set;
  */
 @FunctionalInterface
 public interface SubscriptionConsumer<T> {
-    static <S extends ISubscriber> void notifyEachSubscriber(Set<S> subs, SubscriptionConsumer<S> doNotify) {
+    static <S extends ISubscriber> void notifyEachSubscriber(@NotNull Set<S> subs, @NotNull SubscriptionConsumer<S> doNotify) {
         doNotify.notifyEachSubscriber(subs);
     }
 
-    default void notifyEachSubscriber(Set<T> subs) {
+    default void notifyEachSubscriber(@NotNull Set<T> subs) {
         subs.forEach(s -> {
             try {
                 accept(s);
@@ -23,11 +24,11 @@ public interface SubscriptionConsumer<T> {
         });
     }
 
-    static <E> void notifyEachEvent(Set<E> subs, SubscriptionConsumer<E> doNotify) throws InvalidSubscriberException {
+    static <E> void notifyEachEvent(@NotNull Set<E> subs, @NotNull SubscriptionConsumer<E> doNotify) throws InvalidSubscriberException {
         doNotify.notifyEachEvent(subs);
     }
 
-    default void notifyEachEvent(Set<T> subs) throws InvalidSubscriberException {
+    default void notifyEachEvent(@NotNull Set<T> subs) throws InvalidSubscriberException {
         subs.forEach(s -> {
             try {
                 accept(s);

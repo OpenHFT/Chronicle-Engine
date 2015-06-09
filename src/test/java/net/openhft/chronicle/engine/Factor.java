@@ -3,6 +3,7 @@ package net.openhft.chronicle.engine;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.serialization.BytesMarshallable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 
@@ -18,10 +19,13 @@ public class Factor implements BytesMarshallable {
     private byte rMLAgreementCodeFlag;
     private byte nMEAccountFlag;
     private byte accountClassificationTypeValue;
+    @Nullable
     private String accountNumber;
     private Date processDate;
+    @Nullable
     private String firm;
 
+    @Nullable
     public String getAccountNumber() {
         return accountNumber;
     }
@@ -141,6 +145,7 @@ public class Factor implements BytesMarshallable {
         bytes.writeUTFΔ(firm);
     }
 
+    @NotNull
     @Override
     public String toString() {
         return "Factor{" +

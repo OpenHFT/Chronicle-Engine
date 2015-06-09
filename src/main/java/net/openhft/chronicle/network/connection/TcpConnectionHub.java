@@ -52,7 +52,9 @@ public class TcpConnectionHub implements View, Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(TcpConnectionHub.class);
     public static final int SIZE_OF_SIZE = 4;
 
+    @NotNull
     protected final String name;
+    @NotNull
     protected final InetSocketAddress remoteAddress;
     public final long timeoutMs;
     protected final int tcpBufferSize;
@@ -71,6 +73,7 @@ public class TcpConnectionHub implements View, Closeable {
     private long largestChunkSoFar = 0;
     //  used by the enterprise version
     public int localIdentifier;
+    @Nullable
     private SocketChannel clientChannel;
 
     // this is a transaction id and size that has been read by another thread.
@@ -83,7 +86,7 @@ public class TcpConnectionHub implements View, Closeable {
     private long startTime;
     private boolean doHandShaking;
 
-    public TcpConnectionHub(final RequestContext requestContext,
+    public TcpConnectionHub(@NotNull final RequestContext requestContext,
                             final Asset asset,
                             final ThrowingSupplier<Assetted, AssetNotFoundException> assettedSupplier) {
         this((byte) 1,
@@ -135,10 +138,12 @@ public class TcpConnectionHub implements View, Closeable {
         }
     }
 
+    @NotNull
     public ReentrantLock inBytesLock() {
         return inBytesLock;
     }
 
+    @NotNull
     public ReentrantLock outBytesLock() {
         return outBytesLock;
     }
@@ -193,7 +198,8 @@ public class TcpConnectionHub implements View, Closeable {
         clientChannel = result;
     }
 
-    static SocketChannel openSocketChannel(final CloseablesManager closeables) throws IOException {
+    @Nullable
+    static SocketChannel openSocketChannel(@NotNull final CloseablesManager closeables) throws IOException {
         SocketChannel result = null;
         try {
             result = SocketChannel.open();
@@ -403,10 +409,12 @@ public class TcpConnectionHub implements View, Closeable {
         bytes.limit(position + requiredNumberOfBytes);
     }
 
+    @NotNull
     private ByteBuffer inWireByteBuffer() {
         return (ByteBuffer) inWire.bytes().underlyingObject();
     }
 
+    @NotNull
     private ByteBuffer inWireByteBuffer(long requiredCapacity) {
         final Bytes<?> bytes = inWire.bytes();
         bytes.ensureCapacity(requiredCapacity);
@@ -420,7 +428,7 @@ public class TcpConnectionHub implements View, Closeable {
      * @param timeoutTime how long before a we timeout
      * @throws java.io.IOException
      */
-    private void writeSocket(Wire outWire, long timeoutTime) throws IOException {
+    private void writeSocket(@NotNull Wire outWire, long timeoutTime) throws IOException {
 
         assert outBytesLock().isHeldByCurrentThread();
         assert !inBytesLock().isHeldByCurrentThread();
@@ -477,7 +485,7 @@ public class TcpConnectionHub implements View, Closeable {
         bytes.clear();
     }
 
-    private void logToStandardOutMessageSent(Wire wire, ByteBuffer outBuffer) {
+    private void logToStandardOutMessageSent(@NotNull Wire wire, @NotNull ByteBuffer outBuffer) {
         if (!YamlLogging.clientWrites || !Jvm.isDebug())
             return;
 
@@ -518,7 +526,7 @@ public class TcpConnectionHub implements View, Closeable {
         }
     }
 
-    private void logToStandardOutMessageReceived(Wire wire) {
+    private void logToStandardOutMessageReceived(@NotNull Wire wire) {
         Bytes<?> bytes = wire.bytes();
 
         if (!YamlLogging.clientReads || !Jvm.isDebug())
@@ -553,7 +561,7 @@ public class TcpConnectionHub implements View, Closeable {
      *
      * @param outBuffer
      */
-    private void upateLargestChunkSoFarSize(ByteBuffer outBuffer) {
+    private void upateLargestChunkSoFarSize(@NotNull ByteBuffer outBuffer) {
         int sizeOfThisChunk = (int) (outBuffer.limit() - limitOfLast);
         if (largestChunkSoFar < sizeOfThisChunk)
             largestChunkSoFar = sizeOfThisChunk;
@@ -602,7 +610,7 @@ public class TcpConnectionHub implements View, Closeable {
 
     @SuppressWarnings("SameParameterValue")
     @Nullable
-    String proxyReturnString(@NotNull final WireKey eventId, Wire outWire, String csp, long cid) {
+    String proxyReturnString(@NotNull final WireKey eventId, @NotNull Wire outWire, @NotNull String csp, long cid) {
         final long startTime = System.currentTimeMillis();
         long tid;
 
@@ -637,7 +645,7 @@ public class TcpConnectionHub implements View, Closeable {
         return outWire;
     }
 
-    public long writeMetaData(long startTime, Wire wire, String csp, long cid) {
+    public long writeMetaData(long startTime, @NotNull Wire wire, String csp, long cid) {
         assert outBytesLock().isHeldByCurrentThread();
         startTime(startTime);
         long tid = nextUniqueTransaction(startTime);
@@ -660,7 +668,7 @@ public class TcpConnectionHub implements View, Closeable {
      * @param csp  provide either the csp or the cid
      * @param cid  provide either the csp or the cid
      */
-    public void writeAsyncHeader(Wire wire, String csp, long cid) {
+    public void writeAsyncHeader(@NotNull Wire wire, String csp, long cid) {
         assert outBytesLock().isHeldByCurrentThread();
 
         wire.writeDocument(true, wireOut -> {

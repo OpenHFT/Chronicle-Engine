@@ -53,16 +53,23 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private static final Logger LOG = LoggerFactory.getLogger(EngineWireHandler.class);
 
     private final StringBuilder cspText = new StringBuilder();
+    @NotNull
     private final CollectionWireHandler<byte[], Set<byte[]>> keySetHandler;
 
     @Nullable
     private final WireHandler queueWireHandler;
 
+    @NotNull
     private final Map<Long, String> cidToCsp;
+    @NotNull
     private final MapWireHandler mapWireHandler;
+    @NotNull
     private final CollectionWireHandler<Entry<byte[], byte[]>, Set<Entry<byte[], byte[]>>> entrySetHandler;
+    @NotNull
     private final CollectionWireHandler<byte[], Collection<byte[]>> valuesHandler;
+    @NotNull
     private final AssetTree assetTree;
+    @NotNull
     private final Consumer<WireIn> metaDataConsumer;
     private boolean isSystemMessage = true;
     private final StringBuilder lastCsp = new StringBuilder();
@@ -162,7 +169,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
         };
     }
 
-    private boolean hasCspChanged(final StringBuilder cspText) {
+    private boolean hasCspChanged(@NotNull final StringBuilder cspText) {
         boolean result = !cspText.equals(lastCsp);
 
         // if it has changed remember what it changed to, for next time this method is called.
@@ -174,7 +181,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
         return result;
     }
 
-    private void readTid(WireIn metaDataWire) {
+    private void readTid(@NotNull WireIn metaDataWire) {
         ValueIn valueIn = metaDataWire.readEventName(eventName);
         if (CoreFields.tid.contentEquals(eventName)) {
             tid = valueIn.int64();

@@ -31,6 +31,7 @@ public class VanillaAsset implements Asset, Closeable {
     private static final String LAST = "{last}";
 
     private final Asset parent;
+    @NotNull
     private final String name;
 
     private final Map<Class, Map<String, ThrowingFunction<RequestContext, ViewLayer, AssetNotFoundException>>> classifierMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
@@ -38,7 +39,7 @@ public class VanillaAsset implements Asset, Closeable {
     private final Map<Class, ViewFactory> factoryMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
     private Boolean keyedAsset;
 
-    public VanillaAsset(Asset asset, String name) {
+    public VanillaAsset(Asset asset, @NotNull String name) {
         this.parent = asset;
         this.name = name;
 
@@ -156,12 +157,14 @@ public class VanillaAsset implements Asset, Closeable {
         return false;
     }
 
+    @Nullable
     @Override
     public <V> V getView(Class<V> vClass) {
         View view = viewMap.get(vClass);
         return (V) view;
     }
 
+    @NotNull
     @Override
     public String name() {
         return name;
@@ -172,6 +175,7 @@ public class VanillaAsset implements Asset, Closeable {
         return false;
     }
 
+    @NotNull
     @Override
     public <V> V acquireView(Class<V> viewType, RequestContext rc) throws AssetNotFoundException {
         synchronized (viewMap) {
@@ -208,7 +212,7 @@ public class VanillaAsset implements Asset, Closeable {
             topSubscription(((SubscriptionKeyValueStore) v));
     }
 
-    private void topSubscription(SubscriptionKeyValueStore skvStore) {
+    private void topSubscription(@NotNull SubscriptionKeyValueStore skvStore) {
         viewMap.put(Subscription.class, skvStore.subscription(true));
     }
 
@@ -257,6 +261,7 @@ public class VanillaAsset implements Asset, Closeable {
         viewMap.put(viewType, (View) view);
     }
 
+    @NotNull
     @Override
     public Subscription subscription(boolean createIfAbsent) throws AssetNotFoundException {
         return createIfAbsent ? acquireView(Subscription.class, requestContext()) : getView(Subscription.class);
@@ -284,7 +289,7 @@ public class VanillaAsset implements Asset, Closeable {
 
     @NotNull
     @Override
-    public Asset acquireAsset(RequestContext context, String fullName) throws AssetNotFoundException {
+    public Asset acquireAsset(RequestContext context, @NotNull String fullName) throws AssetNotFoundException {
         if (keyedAsset != Boolean.TRUE) {
             int pos = fullName.indexOf("/");
             if (pos >= 0) {
@@ -296,7 +301,8 @@ public class VanillaAsset implements Asset, Closeable {
         return getAssetOrANFE(context, fullName);
     }
 
-    private Asset getAssetOrANFE(RequestContext context, String name) throws AssetNotFoundException {
+    @Nullable
+    private Asset getAssetOrANFE(RequestContext context, @NotNull String name) throws AssetNotFoundException {
         Asset asset = children.get(name);
         if (asset == null) {
             asset = createAsset(context, name);
@@ -307,7 +313,7 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Nullable
-    protected Asset createAsset(RequestContext context, String name) {
+    protected Asset createAsset(RequestContext context, @NotNull String name) {
         return children.computeIfAbsent(name, keyedAsset != Boolean.TRUE
                 ? n -> new VanillaAsset(this, name)
                 : n -> new VanillaSubAsset(context, this, name));
@@ -328,6 +334,7 @@ public class VanillaAsset implements Asset, Closeable {
         factoryMap.put(iClass, factory);
     }
 
+    @NotNull
     @Override
     public String toString() {
         return fullName();

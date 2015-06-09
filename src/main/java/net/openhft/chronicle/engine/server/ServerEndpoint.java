@@ -24,6 +24,8 @@ import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
 import net.openhft.chronicle.engine.session.VanillaSessionDetails;
 import net.openhft.chronicle.network.AcceptorEventHandler;
 import net.openhft.chronicle.network.event.EventGroup;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,8 +42,10 @@ public class ServerEndpoint implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(ServerEndpoint.class);
 
 
+    @NotNull
     private EventGroup eg = new EventGroup();
 
+    @Nullable
     private AcceptorEventHandler eah;
 
     public ServerEndpoint() throws
@@ -56,7 +60,8 @@ public class ServerEndpoint implements Closeable {
         start(port, Chassis.defaultSession());
     }
 
-    public AcceptorEventHandler start(int port, final AssetTree asset) throws IOException {
+    @Nullable
+    public AcceptorEventHandler start(int port, @NotNull final AssetTree asset) throws IOException {
         eg.start();
 
         AcceptorEventHandler eah = new AcceptorEventHandler(port, () -> {

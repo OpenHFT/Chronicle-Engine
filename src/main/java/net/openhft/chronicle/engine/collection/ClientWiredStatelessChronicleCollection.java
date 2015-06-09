@@ -17,7 +17,9 @@ import static net.openhft.chronicle.wire.CoreFields.reply;
 public class ClientWiredStatelessChronicleCollection<U, E extends Collection<U>> extends
         AbstractStatelessClient<SetEventId> implements Collection<U> {
 
+    @NotNull
     private final Function<ValueIn, U> consumer;
+    @NotNull
     private final Supplier<E> factory;
 
     public ClientWiredStatelessChronicleCollection(@NotNull final TcpConnectionHub hub,
@@ -100,7 +102,7 @@ public class ClientWiredStatelessChronicleCollection<U, E extends Collection<U>>
 
     @Override
     @NotNull
-    public <T> T[] toArray(T[] array) {
+    public <T> T[] toArray(@NotNull T[] array) {
         return asCollection().toArray(array);
     }
 
@@ -115,22 +117,22 @@ public class ClientWiredStatelessChronicleCollection<U, E extends Collection<U>>
     }
 
     @Override
-    public boolean containsAll(Collection<?> c) {
+    public boolean containsAll(@NotNull Collection<?> c) {
         return proxyReturnBooleanWithSequence(containsAll, c);
     }
 
     @Override
-    public boolean addAll(Collection<? extends U> c) {
+    public boolean addAll(@NotNull Collection<? extends U> c) {
         return proxyReturnBooleanWithSequence(addAll, c);
     }
 
     @Override
-    public boolean retainAll(Collection<?> c) {
+    public boolean retainAll(@NotNull Collection<?> c) {
         return proxyReturnBooleanWithSequence(retainAll, c);
     }
 
     @Override
-    public boolean removeAll(Collection<?> c) {
+    public boolean removeAll(@NotNull Collection<?> c) {
         return proxyReturnBooleanWithSequence(removeAll, c);
     }
 

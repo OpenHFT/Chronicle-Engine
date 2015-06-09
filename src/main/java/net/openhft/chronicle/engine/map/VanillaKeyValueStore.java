@@ -4,6 +4,8 @@ import net.openhft.chronicle.core.util.ThrowingSupplier;
 import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapReplicationEvent;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -46,15 +48,16 @@ public class VanillaKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> {
     }
 
     @Override
-    public void keysFor(int segment, SubscriptionConsumer<K> kConsumer) throws InvalidSubscriberException {
+    public void keysFor(int segment, @NotNull SubscriptionConsumer<K> kConsumer) throws InvalidSubscriberException {
         SubscriptionConsumer.notifyEachEvent(map.keySet(), kConsumer);
     }
 
     @Override
-    public void entriesFor(int segment, SubscriptionConsumer<MapReplicationEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
+    public void entriesFor(int segment, @NotNull SubscriptionConsumer<MapReplicationEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
         SubscriptionConsumer.notifyEachEvent(map.entrySet(), e -> kvConsumer.accept(EntryEvent.of(e.getKey(), e.getValue(), 0, System.currentTimeMillis())));
     }
 
+    @NotNull
     @Override
     public Iterator<Map.Entry<K, V>> entrySetIterator() {
         return map.entrySet().iterator();
@@ -75,6 +78,7 @@ public class VanillaKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> {
         return asset;
     }
 
+    @Nullable
     @Override
     public KeyValueStore underlying() {
         return null;

@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine.api.map;
 
 import net.openhft.chronicle.engine.api.View;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by peter on 09/06/15.
@@ -9,5 +10,6 @@ import net.openhft.chronicle.engine.api.View;
 public interface ValueReader<U, T> extends View {
     ValueReader PASS = (u, t) -> u;
 
+    @NotNull
     T readFrom(U underlying, T usingValue);
 }

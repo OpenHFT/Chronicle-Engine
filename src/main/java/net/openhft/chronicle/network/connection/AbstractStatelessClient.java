@@ -17,6 +17,7 @@ import static net.openhft.chronicle.wire.CoreFields.reply;
  */
 public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
 
+    @NotNull
     protected final TcpConnectionHub hub;
     private final long cid;
     protected String csp;
@@ -38,7 +39,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
     @Nullable
     protected <R> R proxyReturnTypedObject(
             @NotNull final E eventId,
-            R usingValue,
+            @Nullable R usingValue,
             @NotNull final Class<R> resultType,
             @Nullable Object... args) {
 
@@ -166,7 +167,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
         hub.writeAsyncHeader(hub.outWire(), csp, cid);
     }
 
-    protected void checkIsData(Wire wireIn) {
+    protected void checkIsData(@NotNull Wire wireIn) {
         int datalen = wireIn.bytes().readVolatileInt();
 
         if (!Wires.isData(datalen))
@@ -174,6 +175,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
                     (wireIn.bytes(), 0, wireIn.bytes().limit()));
     }
 
+    @NotNull
     StringBuilder eventName = new StringBuilder();
 
     protected boolean readBoolean(long tid, long startTime) {
@@ -193,7 +195,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
         }
     }
 
-    <R> R readReply(WireIn wireIn, WireKey replyId, Function<ValueIn, R> function) {
+    <R> R readReply(@NotNull WireIn wireIn, @NotNull WireKey replyId, @NotNull Function<ValueIn, R> function) {
         final ValueIn event = wireIn.read(eventName);
 
         if (replyId.contentEquals(eventName))
@@ -232,7 +234,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
         return readBoolean(tid, startTime);
     }
 
-    private <T> T readWire(long tid, long startTime, WireKey reply, Function<ValueIn, T> c) {
+    private <T> T readWire(long tid, long startTime, @NotNull WireKey reply, @NotNull Function<ValueIn, T> c) {
         assert !hub.outBytesLock().isHeldByCurrentThread();
         final long timeoutTime = startTime + hub.timeoutMs;
 

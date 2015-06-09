@@ -5,6 +5,7 @@ import net.openhft.chronicle.engine.api.Assetted;
 import net.openhft.chronicle.engine.api.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.View;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -43,10 +44,12 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
 
     V getAndRemove(K key);
 
+    @Nullable
     default V get(K key) {
         return getUsing(key, null);
     }
 
+    @Nullable
     V getUsing(K key, MV value);
 
     default boolean containsKey(K key) {
@@ -75,6 +78,7 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
 
     void clear();
 
+    @Nullable
     default V replace(K key, V value) {
         if (containsKey(key)) {
             return getAndPut(key, value);

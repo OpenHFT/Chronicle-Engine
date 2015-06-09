@@ -2,6 +2,7 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.engine.api.map.MapEventListener;
 import net.openhft.chronicle.engine.api.map.MapReplicationEvent;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -25,12 +26,14 @@ public class UpdatedEvent<K, V> implements MapReplicationEvent<K, V> {
         this.timeStampMS = timeStampMS;
     }
 
+    @NotNull
     public static <K, V> UpdatedEvent<K, V> of(K key, V oldValue, V value, int identifier, long timeStampMS) {
         return new UpdatedEvent<>(key, oldValue, value, identifier, timeStampMS);
     }
 
+    @NotNull
     @Override
-    public <K2, V2> MapReplicationEvent<K2, V2> translate(Function<K, K2> keyFunction, Function<V, V2> valueFunction) {
+    public <K2, V2> MapReplicationEvent<K2, V2> translate(@NotNull Function<K, K2> keyFunction, @NotNull Function<V, V2> valueFunction) {
         return new UpdatedEvent<>(keyFunction.apply(key), valueFunction.apply(oldValue), valueFunction.apply(value), identifier, timeStampMS);
     }
 
@@ -68,7 +71,7 @@ public class UpdatedEvent<K, V> implements MapReplicationEvent<K, V> {
     }
 
     @Override
-    public void apply(MapEventListener<K, V> listener) {
+    public void apply(@NotNull MapEventListener<K, V> listener) {
         listener.update(key, oldValue, value);
     }
 
@@ -90,6 +93,7 @@ public class UpdatedEvent<K, V> implements MapReplicationEvent<K, V> {
                 .isPresent();
     }
 
+    @NotNull
     @Override
     public String toString() {
         return "UpdatedEvent{" +

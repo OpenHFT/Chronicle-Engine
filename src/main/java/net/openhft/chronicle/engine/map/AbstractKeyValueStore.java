@@ -5,6 +5,8 @@ import net.openhft.chronicle.engine.api.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapReplicationEvent;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -15,7 +17,7 @@ import java.util.Map;
 public class AbstractKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> {
     protected KeyValueStore<K, MV, V> kvStore;
 
-    protected AbstractKeyValueStore(KeyValueStore<K, MV, V> kvStore) {
+    protected AbstractKeyValueStore(@NotNull KeyValueStore<K, MV, V> kvStore) {
         this.kvStore = kvStore;
         assert kvStore != null;
     }
@@ -35,6 +37,7 @@ public class AbstractKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> 
         return kvStore.getAndRemove(key);
     }
 
+    @Nullable
     @Override
     public V getUsing(K key, MV value) {
         return kvStore.getUsing(key, value);
@@ -70,6 +73,7 @@ public class AbstractKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> 
         kvStore.clear();
     }
 
+    @Nullable
     @Override
     public V replace(K key, V value) {
         return kvStore.replace(key, value);
@@ -90,6 +94,7 @@ public class AbstractKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> 
         return kvStore.remove(key);
     }
 
+    @Nullable
     @Override
     public V get(K key) {
         return kvStore.get(key);

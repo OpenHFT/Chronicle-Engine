@@ -25,6 +25,7 @@ package net.openhft.chronicle.engine.collection;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +51,9 @@ public class CollectionWireHandlerProcessor<U, C extends Collection<U>> implemen
     private Function<ValueIn, U> fromWire;
     private BiConsumer<ValueOut, U> toWire;
 
+    @Nullable
     private Wire inWire = null;
+    @Nullable
     private Wire outWire = null;
     private C underlyingCollection;
     private long tid;

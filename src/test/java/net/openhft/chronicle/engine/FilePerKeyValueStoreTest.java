@@ -8,6 +8,7 @@ import net.openhft.chronicle.engine.map.FilePerKeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.map.VanillaStringMarshallableKeyValueStore;
 import net.openhft.chronicle.wire.*;
+import org.jetbrains.annotations.NotNull;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -62,7 +63,7 @@ public class FilePerKeyValueStoreTest {
         AtomicInteger success = new AtomicInteger();
         MapEventListener<String, TestMarshallable> listener = new MapEventListener<String, TestMarshallable>() {
             @Override
-            public void update(String key, TestMarshallable oldValue, TestMarshallable newValue) {
+            public void update(@NotNull String key, @NotNull TestMarshallable oldValue, @NotNull TestMarshallable newValue) {
                 assert key != null;
                 assert oldValue != null;
                 assert newValue != null;
@@ -71,7 +72,7 @@ public class FilePerKeyValueStoreTest {
             }
 
             @Override
-            public void insert(String key, TestMarshallable value) {
+            public void insert(@NotNull String key, @NotNull TestMarshallable value) {
                 assert key != null;
                 assert value != null;
                 System.out.println("Inserted { key: " + key + ", value: " + value + " }");
@@ -79,7 +80,7 @@ public class FilePerKeyValueStoreTest {
             }
 
             @Override
-            public void remove(String key, TestMarshallable oldValue) {
+            public void remove(@NotNull String key, TestMarshallable oldValue) {
                 assert key != null;
                 System.out.println("Removed { key: " + key + ", value: " + oldValue + " }");
                 success.set(-100);
@@ -145,14 +146,14 @@ public class FilePerKeyValueStoreTest {
         }
 
         @Override
-        public void readMarshallable(WireIn wireIn) throws IllegalStateException {
+        public void readMarshallable(@NotNull WireIn wireIn) throws IllegalStateException {
             setS1(wireIn.read(TestKey.S1).text());
             setS2(wireIn.read(TestKey.S2).text());
             wireIn.read(TestKey.nested).marshallable(nested);
         }
 
         @Override
-        public void writeMarshallable(WireOut wireOut) {
+        public void writeMarshallable(@NotNull WireOut wireOut) {
             wireOut.write(TestKey.S1).text(getS1());
             wireOut.write(TestKey.S2).text(getS2());
             wireOut.write(TestKey.nested).marshallable(nested);
@@ -162,6 +163,7 @@ public class FilePerKeyValueStoreTest {
             S1, S2, nested
         }
 
+        @NotNull
         @Override
         public String toString() {
             return "TestMarshallable{" +
@@ -192,7 +194,7 @@ public class FilePerKeyValueStoreTest {
         }
 
         @Override
-        public void readMarshallable(WireIn wireIn) throws IllegalStateException {
+        public void readMarshallable(@NotNull WireIn wireIn) throws IllegalStateException {
             listDouble.clear();
             wireIn.read(TestKey.listDouble).sequence(v -> {
                 while (v.hasNextSequenceItem()) {
@@ -202,7 +204,7 @@ public class FilePerKeyValueStoreTest {
         }
 
         @Override
-        public void writeMarshallable(WireOut wireOut) {
+        public void writeMarshallable(@NotNull WireOut wireOut) {
             wireOut.write(TestKey.listDouble).sequence(v ->
                             listDouble.stream().forEach(v::float64)
             );
@@ -212,6 +214,7 @@ public class FilePerKeyValueStoreTest {
             listDouble;
         }
 
+        @NotNull
         @Override
         public String toString() {
             return "Nested{" +

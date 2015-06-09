@@ -23,6 +23,8 @@ import net.openhft.chronicle.bytes.NativeBytes;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.wire.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -40,6 +42,7 @@ import static net.openhft.chronicle.engine.Utils.yamlLoggger;
 
 public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
+    @NotNull
     @Rule
     public TestName name = new TestName();
 
@@ -57,17 +60,17 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
         }
 
         @Override
-        public void writeMarshallable(WireOut wire) {
+        public void writeMarshallable(@NotNull WireOut wire) {
             wire.write(() -> "MyField").text(someData);
         }
 
         @Override
-        public void readMarshallable(WireIn wire) throws IllegalStateException {
+        public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
             someData = wire.read(() -> "MyField").text();
         }
 
         @Override
-        public boolean equals(Object o) {
+        public boolean equals(@Nullable Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
@@ -81,6 +84,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
             return someData != null ? someData.hashCode() : 0;
         }
 
+        @NotNull
         @Override
         public String toString() {
             return "MyMarshable{" + "someData='" + someData + '\'' + '}';

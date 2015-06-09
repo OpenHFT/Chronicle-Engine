@@ -3,6 +3,7 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.core.util.ThrowingSupplier;
 import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.api.map.MapView;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by peter on 23/05/15.
@@ -13,7 +14,7 @@ public class VanillaTopicPublisher<T, M> implements TopicPublisher<T, M> {
     private Asset asset;
     private MapView<T, M, M> underlying;
 
-    public VanillaTopicPublisher(RequestContext context, Asset asset, ThrowingSupplier<Assetted, AssetNotFoundException> assetted) throws AssetNotFoundException {
+    public VanillaTopicPublisher(@NotNull RequestContext context, Asset asset, @NotNull ThrowingSupplier<Assetted, AssetNotFoundException> assetted) throws AssetNotFoundException {
         this(asset, context.type(), context.type2(), (MapView<T, M, M>) assetted.get());
     }
 

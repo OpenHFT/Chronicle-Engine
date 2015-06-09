@@ -25,6 +25,7 @@ import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -53,6 +54,7 @@ import static org.junit.Assert.assertEquals;
 public class MapClientTest extends ThreadMonitoringTest {
 
 
+    @Nullable
     private Class<? extends CloseableSupplier> supplier = null;
 
     @Parameterized.Parameters
@@ -217,7 +219,9 @@ public class MapClientTest extends ThreadMonitoringTest {
 
     public static class RemoteMapSupplier<K, V> implements CloseableSupplier<ConcurrentMap<K, V>> {
 
+        @NotNull
         final ServerEndpoint serverEndpoint;
+        @NotNull
         private final ConcurrentMap<K, V> map;
 
         public RemoteMapSupplier(@NotNull final Class<K> kClass,
@@ -239,6 +243,7 @@ public class MapClientTest extends ThreadMonitoringTest {
                     vClass);
         }
 
+        @NotNull
         public static String toUri(final long serverPort, final String hostname) {
             return "test?port=" + serverPort +
                     "&host=" + hostname +
@@ -253,6 +258,7 @@ public class MapClientTest extends ThreadMonitoringTest {
             serverEndpoint.close();
         }
 
+        @NotNull
         @Override
         public ConcurrentMap<K, V> get() {
             return map;
@@ -264,6 +270,7 @@ public class MapClientTest extends ThreadMonitoringTest {
 
     public static class LocalMapSupplier<K, V> implements CloseableSupplier<ConcurrentMap<K, V>> {
 
+        @NotNull
         private final ConcurrentMap<K, V> map;
 
         public LocalMapSupplier(Class<K> kClass, Class<V> vClass) throws IOException {
@@ -276,6 +283,7 @@ public class MapClientTest extends ThreadMonitoringTest {
                 ((Closeable) map).close();
         }
 
+        @NotNull
         @Override
         public ConcurrentMap<K, V> get() {
             return map;
@@ -287,7 +295,7 @@ public class MapClientTest extends ThreadMonitoringTest {
      * supplies a map and closes it once the tests are finished
      */
     private <K, V>
-    void supplyMap(Class<K> kClass, Class<V> vClass, Consumer<ConcurrentMap<K, V>> c)
+    void supplyMap(@NotNull Class<K> kClass, @NotNull Class<V> vClass, @NotNull Consumer<ConcurrentMap<K, V>> c)
             throws IOException {
 
         CloseableSupplier<ConcurrentMap<K, V>> result;

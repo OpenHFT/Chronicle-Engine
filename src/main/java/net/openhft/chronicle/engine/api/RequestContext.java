@@ -6,6 +6,8 @@ import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.wire.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Set;
@@ -22,6 +24,7 @@ public class RequestContext {
     private Class viewType, type, type2;
     private String basePath;
     private Function<Bytes, Wire> wireType = TextWire::new;
+    @Nullable
     private Boolean putReturnsNull = null,
             removeReturnsNull = null,
             bootstrap = null;
@@ -31,10 +34,11 @@ public class RequestContext {
 
     private static final Map<String, Class> classAliases = new ConcurrentHashMap<>();
     private int port;
+    @NotNull
     private StringBuilder host = new StringBuilder();
     private long timeout = 1000; // in ms
 
-    private static void addAlias(Class type, String aliases) {
+    private static void addAlias(Class type, @NotNull String aliases) {
         for (String alias : aliases.split(", ?")) {
             classAliases.put(alias, type);
             classAliases.put(Character.toLowerCase(alias.charAt(0)) + alias.substring(1), type);
@@ -69,16 +73,19 @@ public class RequestContext {
         this.name = name;
     }
 
+    @NotNull
     public static RequestContext requestContext() {
         return new RequestContext();
     }
 
     // todo improve this !
-    public static RequestContext requestContext(CharSequence uri) {
+    @NotNull
+    public static RequestContext requestContext(@NotNull CharSequence uri) {
         return requestContext(uri.toString());
     }
 
-    public static RequestContext requestContext(String uri) {
+    @NotNull
+    public static RequestContext requestContext(@NotNull String uri) {
 
         int queryPos = uri.indexOf('?');
         String fullName = queryPos >= 0 ? uri.substring(0, queryPos) : uri;
@@ -93,7 +100,8 @@ public class RequestContext {
         return new RequestContext(pathName, name).queryString(query);
     }
 
-    public RequestContext queryString(String queryString) {
+    @NotNull
+    public RequestContext queryString(@NotNull String queryString) {
         if (queryString.isEmpty())
             return this;
         WireParser parser = new VanillaWireParser();
@@ -117,7 +125,8 @@ public class RequestContext {
         return this;
     }
 
-    RequestContext view(String viewName) {
+    @NotNull
+    RequestContext view(@NotNull String viewName) {
         try {
             Class clazz = lookupType(viewName);
             viewType(clazz);
@@ -127,7 +136,7 @@ public class RequestContext {
         return this;
     }
 
-    Class lookupType(CharSequence typeName) throws IllegalArgumentException {
+    Class lookupType(@NotNull CharSequence typeName) throws IllegalArgumentException {
         String typeNameStr = typeName.toString();
         Class clazz = classAliases.get(typeNameStr);
         if (clazz != null)
@@ -141,11 +150,13 @@ public class RequestContext {
         }
     }
 
+    @NotNull
     public RequestContext type(Class type) {
         this.type = type;
         return this;
     }
 
+    @NotNull
     public RequestContext keyType(Class type) {
         this.type = type;
         return this;
@@ -167,11 +178,13 @@ public class RequestContext {
         return type2;
     }
 
+    @NotNull
     public RequestContext valueType(Class type2) {
         this.type2 = type2;
         return this;
     }
 
+    @NotNull
     public RequestContext type2(Class type2) {
         this.type2 = type2;
         return this;
@@ -181,10 +194,12 @@ public class RequestContext {
         return type2;
     }
 
+    @NotNull
     public String fullName() {
         return pathName.isEmpty() ? name : (pathName + "/" + name);
     }
 
+    @NotNull
     public RequestContext basePath(String basePath) {
         this.basePath = basePath;
         return this;
@@ -194,6 +209,7 @@ public class RequestContext {
         return basePath;
     }
 
+    @NotNull
     public RequestContext wireType(Function<Bytes, Wire> writeType) {
         this.wireType = writeType;
         return this;
@@ -215,6 +231,7 @@ public class RequestContext {
         return averageValueSize;
     }
 
+    @NotNull
     public RequestContext averageValueSize(double averageValueSize) {
         this.averageValueSize = averageValueSize;
         return this;
@@ -224,16 +241,19 @@ public class RequestContext {
         return entries;
     }
 
+    @NotNull
     public RequestContext entries(long entries) {
         this.entries = entries;
         return this;
     }
 
+    @NotNull
     public RequestContext name(String name) {
         this.name = name;
         return this;
     }
 
+    @NotNull
     public RequestContext viewType(Class assetType) {
         this.viewType = assetType;
         return this;
@@ -244,30 +264,36 @@ public class RequestContext {
         return viewType;
     }
 
-    public RequestContext fullName(String fullName) {
+    @NotNull
+    public RequestContext fullName(@NotNull String fullName) {
         int dirPos = fullName.lastIndexOf('/');
         this.pathName = dirPos >= 0 ? fullName.substring(0, dirPos) : "";
         this.name = dirPos >= 0 ? fullName.substring(dirPos + 1) : fullName;
         return this;
     }
 
+    @Nullable
     public Boolean putReturnsNull() {
         return putReturnsNull;
     }
 
+    @Nullable
     public Boolean removeReturnsNull() {
         return removeReturnsNull;
     }
 
+    @Nullable
     public Boolean bootstrap() {
         return bootstrap;
     }
 
+    @NotNull
     public RequestContext bootstrap(boolean bootstrap) {
         this.bootstrap = bootstrap;
         return this;
     }
 
+    @NotNull
     @Override
     public String toString() {
         return "RequestContext{" +
@@ -291,6 +317,7 @@ public class RequestContext {
         return port;
     }
 
+    @NotNull
     public String host() {
         return host.toString();
     }

@@ -17,11 +17,13 @@ public class VanillaAssetTree implements AssetTree {
 
     }
 
+    @NotNull
     public VanillaAssetTree forTesting() {
         root.forTesting();
         return this;
     }
 
+    @NotNull
     public VanillaAssetTree forRemoteAccess() {
         root.forRemoteAccess();
         return this;
@@ -29,14 +31,14 @@ public class VanillaAssetTree implements AssetTree {
 
     @NotNull
     @Override
-    public <A> Asset acquireAsset(Class<A> assetClass, RequestContext context) throws AssetNotFoundException {
+    public <A> Asset acquireAsset(Class<A> assetClass, @NotNull RequestContext context) throws AssetNotFoundException {
         String fullName = context.fullName();
         return fullName.isEmpty() || fullName.equals("/") ? root : root.acquireAsset(context, fullName);
     }
 
     @Nullable
     @Override
-    public Asset getAsset(String fullName) {
+    public Asset getAsset(@NotNull String fullName) {
         return fullName.isEmpty() || fullName.equals("/") ? root : root.getAsset(fullName);
     }
 

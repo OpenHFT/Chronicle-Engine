@@ -11,6 +11,7 @@ import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
+import org.jetbrains.annotations.NotNull;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -114,7 +115,7 @@ public class ChronicleMapKeyValueStoreTest {
         success.set(0);
     }
 
-    private void expectedSuccess(AtomicInteger success, int expected) {
+    private void expectedSuccess(@NotNull AtomicInteger success, int expected) {
         for (int i = 0; i < 20; i++) {
             if (success.get() == expected)
                 break;

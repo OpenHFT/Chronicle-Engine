@@ -7,6 +7,7 @@ import net.openhft.chronicle.engine.api.Assetted;
 import net.openhft.chronicle.engine.api.RequestContext;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.AbstractCollection;
 import java.util.Iterator;
@@ -19,11 +20,12 @@ public class VanillaEntrySetView<K, MV, V> extends AbstractCollection<Map.Entry<
     private Asset asset;
     private MapView<K, MV, V> underlying;
 
-    public VanillaEntrySetView(RequestContext context, Asset asset, ThrowingSupplier<Assetted, AssetNotFoundException> underlying) throws AssetNotFoundException {
+    public VanillaEntrySetView(RequestContext context, Asset asset, @NotNull ThrowingSupplier<Assetted, AssetNotFoundException> underlying) throws AssetNotFoundException {
         this.asset = asset;
         this.underlying = (MapView<K, MV, V>) underlying.get();
     }
 
+    @NotNull
     @Override
     public Iterator<Map.Entry<K, V>> iterator() {
         return underlying.underlying().entrySetIterator();

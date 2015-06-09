@@ -3,6 +3,8 @@ package net.openhft.chronicle.engine;
 import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.tree.VanillaAsset;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
@@ -34,32 +36,39 @@ public enum Chassis {
         return assetTree;
     }
 
+    @NotNull
     public static <E> Set<E> acquireSet(String name, Class<E> eClass) throws AssetNotFoundException {
         return assetTree.acquireSet(name, eClass);
     }
 
+    @NotNull
     public static <K, V> ConcurrentMap<K, V> acquireMap(String name, Class<K> kClass, Class<V> vClass) throws AssetNotFoundException {
         return assetTree.acquireMap(name, kClass, vClass);
     }
 
+    @NotNull
     public static <E> Reference<E> acquireReference(String name, Class<E> eClass) throws AssetNotFoundException {
         return assetTree.acquireReference(name, eClass);
     }
 
+    @NotNull
     public static <E> Publisher<E> acquirePublisher(String name, Class<E> eClass) throws AssetNotFoundException {
         return assetTree.acquirePublisher(name, eClass);
     }
 
+    @NotNull
     public static <T, E> TopicPublisher<T, E> acquireTopicPublisher(String name, Class<T> tClass, Class<E> eClass) throws AssetNotFoundException {
         return assetTree.acquireTopicPublisher(name, tClass, eClass);
     }
 
+    @NotNull
     public static <A> Asset acquireAsset(Class<A> assetClass, RequestContext context) throws
             AssetNotFoundException {
         return assetTree.acquireAsset(assetClass, context);
     }
 
-    public static Asset acquireAsset(RequestContext context) throws AssetNotFoundException {
+    @NotNull
+    public static Asset acquireAsset(@NotNull RequestContext context) throws AssetNotFoundException {
         return assetTree.acquireAsset(context.viewType(), context);
     }
 
@@ -92,12 +101,14 @@ public enum Chassis {
         ((VanillaAsset) assetTree.getAsset("")).enableTranslatingValuesToBytesStore();
     }
 
+    @Nullable
     public static Asset getAsset(String name) {
         return assetTree.getAsset(name);
     }
 
 
-    public static <A> Asset acquireAsset(String name, Class<A> assetClass, Class class1, Class class2) {
+    @NotNull
+    public static <A> Asset acquireAsset(@NotNull String name, Class<A> assetClass, Class class1, Class class2) {
         return assetTree.acquireAsset(assetClass, RequestContext.requestContext(name).type(class1).type2(class2));
     }
 

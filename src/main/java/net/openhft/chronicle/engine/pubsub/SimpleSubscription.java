@@ -2,6 +2,7 @@ package net.openhft.chronicle.engine.pubsub;
 
 import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.api.map.ValueReader;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -20,7 +21,7 @@ public class SimpleSubscription<E> implements Subscription {
     }
 
     @Override
-    public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {
+    public <E> void registerSubscriber(@NotNull RequestContext rc, @NotNull Subscriber<E> subscriber) {
         subscribers.add((Subscriber) subscriber);
         if (rc.bootstrap() != Boolean.FALSE)
             try {

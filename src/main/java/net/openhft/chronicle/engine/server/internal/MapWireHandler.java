@@ -30,6 +30,7 @@ import net.openhft.chronicle.engine.collection.CollectionWireHandlerProcessor;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -128,6 +129,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
             this.params = params;
         }
 
+        @NotNull
         public <P extends WireKey> P[] params() {
             return (P[]) this.params;
         }
@@ -135,12 +137,15 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
 
     private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
 
+    @NotNull
     private final Map<Long, String> cidToCsp;
 
     @NotNull
     private final Map<String, Long> cspToCid = new HashMap<>();
 
+    @Nullable
     private Wire inWire = null;
+    @Nullable
     private Wire outWire = null;
 
     private Map<K, V> map;
@@ -163,7 +168,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
      * @param csp the csp we wish to check for a cid
      * @return the cid for this csp
      */
-    private long createCid(CharSequence csp) {
+    private long createCid(@NotNull CharSequence csp) {
         final long newCid = cid.incrementAndGet();
         String cspStr = csp.toString();
         final Long aLong = cspToCid.putIfAbsent(cspStr, newCid);
@@ -390,7 +395,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
         }
     };
 
-    void nullCheck(Object o) {
+    void nullCheck(@Nullable Object o) {
         if (o == null)
             throw new NullPointerException();
     }

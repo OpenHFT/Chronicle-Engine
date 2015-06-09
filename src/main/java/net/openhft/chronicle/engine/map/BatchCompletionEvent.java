@@ -2,6 +2,8 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.engine.api.map.MapEventListener;
 import net.openhft.chronicle.engine.api.map.MapReplicationEvent;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -19,24 +21,29 @@ public class BatchCompletionEvent<K, V> implements MapReplicationEvent<K, V> {
         this.dataUpToTimeStampMS = dataUpToTimeStampMS;
     }
 
+    @NotNull
     public static <K, V> BatchCompletionEvent<K, V> of(long dataUpToTimeStampMS) {
         return new BatchCompletionEvent<>(dataUpToTimeStampMS);
     }
 
+    @NotNull
     @Override
     public <K2, V2> MapReplicationEvent<K2, V2> translate(Function<K, K2> keyFunction, Function<V, V2> valueFunction) {
         return (MapReplicationEvent<K2, V2>) this;
     }
 
+    @Nullable
     public K key() {
         return null;
     }
 
+    @Nullable
     @Override
     public V oldValue() {
         return null;
     }
 
+    @Nullable
     public V value() {
         return null;
     }
@@ -80,6 +87,7 @@ public class BatchCompletionEvent<K, V> implements MapReplicationEvent<K, V> {
                 .isPresent();
     }
 
+    @NotNull
     @Override
     public String toString() {
         return "BootstrapEvent{" +

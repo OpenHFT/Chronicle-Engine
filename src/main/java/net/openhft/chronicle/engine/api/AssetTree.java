@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine.api;
 
 import net.openhft.chronicle.core.util.Closeable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
@@ -13,12 +14,14 @@ import static net.openhft.chronicle.engine.api.RequestContext.requestContext;
  */
 public interface AssetTree extends Closeable {
 
+    @NotNull
     <A> Asset acquireAsset(Class<A> assetClass, RequestContext context) throws
             AssetNotFoundException;
 
     @Nullable
     Asset getAsset(String fullName);
 
+    @NotNull
     default <E> Set<E> acquireSet(String name, Class<E> eClass) throws AssetNotFoundException {
         RequestContext rc = requestContext(name).view("set").type(eClass);
         //noinspection unchecked
@@ -26,6 +29,7 @@ public interface AssetTree extends Closeable {
         return asset.acquireView(rc);
     }
 
+    @NotNull
     default <K, V> ConcurrentMap<K, V> acquireMap(String name, Class<K> kClass, Class<V> vClass) throws AssetNotFoundException {
         RequestContext rc = requestContext(name).view("map").type(kClass).type2(vClass);
         //noinspection unchecked
@@ -33,6 +37,7 @@ public interface AssetTree extends Closeable {
         return asset.acquireView(rc);
     }
 
+    @NotNull
     default <E> Publisher<E> acquirePublisher(String name, Class<E> eClass) throws AssetNotFoundException {
         RequestContext rc = requestContext(name).view("pub").type(eClass);
         //noinspection unchecked
@@ -40,6 +45,7 @@ public interface AssetTree extends Closeable {
         return asset.acquireView(rc);
     }
 
+    @NotNull
     default <E> Reference<E> acquireReference(String name, Class<E> eClass) throws AssetNotFoundException {
         RequestContext rc = requestContext(name).view("ref").type(eClass);
         //noinspection unchecked
@@ -47,6 +53,7 @@ public interface AssetTree extends Closeable {
         return asset.acquireView(rc);
     }
 
+    @NotNull
     default <T, E> TopicPublisher<T, E> acquireTopicPublisher(String name, Class<T> tClass, Class<E> eClass) throws AssetNotFoundException {
         RequestContext rc = requestContext(name).view("topicPub").type(tClass).type2(eClass);
         //noinspection unchecked

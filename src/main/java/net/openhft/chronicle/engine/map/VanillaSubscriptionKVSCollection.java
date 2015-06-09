@@ -6,6 +6,7 @@ import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapReplicationEvent;
 import net.openhft.chronicle.engine.tree.VanillaAsset;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -36,7 +37,7 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements SubscriptionK
         this.kvStore = kvStore;
     }
 
-    public VanillaSubscriptionKVSCollection(RequestContext requestContext, Asset asset, ThrowingSupplier<Assetted, AssetNotFoundException> assettedSupplier) {
+    public VanillaSubscriptionKVSCollection(RequestContext requestContext, @NotNull Asset asset, ThrowingSupplier<Assetted, AssetNotFoundException> assettedSupplier) {
         ((VanillaAsset) asset).addView(Subscription.class, this);
         ((VanillaAsset) asset).addView(SubscriptionKVSCollection.class, this);
     }
@@ -49,12 +50,12 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements SubscriptionK
 
 
     @Override
-    public void notifyEvent(MapReplicationEvent<K, V> mpe) throws InvalidSubscriberException {
+    public void notifyEvent(@NotNull MapReplicationEvent<K, V> mpe) throws InvalidSubscriberException {
         if (hasSubscribers)
             notifyEvent0(mpe);
     }
 
-    private void notifyEvent0(MapReplicationEvent<K, V> mpe) {
+    private void notifyEvent0(@NotNull MapReplicationEvent<K, V> mpe) {
         K key = mpe.key();
 
         if (!topicSubscribers.isEmpty()) {
@@ -79,7 +80,7 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements SubscriptionK
     }
 
     @Override
-    public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {
+    public <E> void registerSubscriber(@NotNull RequestContext rc, Subscriber<E> subscriber) {
         Boolean bootstrap = rc.bootstrap();
         Class eClass = rc.type();
         if (eClass == KeyValueStore.Entry.class || eClass == MapEvent.class) {
@@ -109,7 +110,7 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements SubscriptionK
     }
 
     @Override
-    public <T, E> void registerTopicSubscriber(RequestContext rc, TopicSubscriber<T, E> subscriber) {
+    public <T, E> void registerTopicSubscriber(@NotNull RequestContext rc, @NotNull TopicSubscriber<T, E> subscriber) {
         Boolean bootstrap = rc.bootstrap();
         topicSubscribers.add((TopicSubscriber<K, V>) subscriber);
         if (bootstrap != Boolean.FALSE && kvStore != null) {

@@ -12,6 +12,7 @@ public interface Asset {
 
     Subscription subscription(boolean createIfAbsent) throws AssetNotFoundException;
 
+    @NotNull
     default String fullName() {
         return parent() == null
                 ? "/"
@@ -27,7 +28,7 @@ public interface Asset {
     Asset acquireAsset(RequestContext context, String fullName) throws AssetNotFoundException;
 
     @Nullable
-    default Asset getAsset(String fullName) {
+    default Asset getAsset(@NotNull String fullName) {
         if (fullName.isEmpty()) return this;
         int pos = fullName.indexOf("/");
         if (pos >= 0) {
@@ -50,7 +51,8 @@ public interface Asset {
 
     boolean isReadOnly();
 
-    default <V> V acquireView(RequestContext rc) throws AssetNotFoundException {
+    @NotNull
+    default <V> V acquireView(@NotNull RequestContext rc) throws AssetNotFoundException {
         return (V) acquireView(rc.viewType(), rc);
     }
 
@@ -60,6 +62,7 @@ public interface Asset {
 
     <I> void registerView(Class<I> iClass, I interceptor);
 
+    @Nullable
     <I> ViewFactory<I> getFactory(Class<I> iClass);
 
     <I> ViewFactory<I> acquireFactory(Class<I> iClass) throws AssetNotFoundException;
@@ -78,6 +81,7 @@ public interface Asset {
                 (View) asset.acquireFactory(viewType).create(rc2, asset, () -> (Assetted) asset.acquireView(underlyingType, rc2)));
     }
 
+    @NotNull
     default Asset root() {
         return parent() == null ? this : parent().root();
     }
