@@ -12,8 +12,10 @@ public class SessionProviderTest {
     @Test
     public void testAcquireSessionProvider() {
         SessionProvider sessionProvider = Chassis.getAsset("").getView(SessionProvider.class);
-        VanillaSessionDetails sessionDetails0 = new VanillaSessionDetails("userId");
+        VanillaSessionDetails sessionDetails0 = new VanillaSessionDetails();
+
         MyInfo info0 = new MyInfo();
+        sessionDetails0.setUserId("userId");
         sessionDetails0.set(MyInfo.class, info0);
         sessionProvider.set(sessionDetails0);
 

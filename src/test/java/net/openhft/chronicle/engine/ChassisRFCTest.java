@@ -3,6 +3,7 @@ package net.openhft.chronicle.engine;
 import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -15,6 +16,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * Created by peter on 22/05/15.
  */
+@Ignore("fix JIRA https://higherfrequencytrading.atlassian.net/browse/CE-70")
 public class ChassisRFCTest {
 
     @Before

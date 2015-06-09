@@ -106,6 +106,7 @@ public class ChassisTest {
                         .collect(Collectors.joining(", ")));
     }
 
+    @Ignore("fix JIRA https://higherfrequencytrading.atlassian.net/browse/CE-71")
     @Test
     public void keySubscription() throws InvalidSubscriberException {
         ConcurrentMap<String, String> map = acquireMap("map-name?putReturnsNull=true", String.class, String.class);

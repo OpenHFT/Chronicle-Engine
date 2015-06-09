@@ -22,6 +22,7 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.api.Asset;
 import net.openhft.chronicle.engine.api.AssetTree;
 import net.openhft.chronicle.engine.api.RequestContext;
+import net.openhft.chronicle.engine.api.SessionDetails;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
@@ -74,8 +75,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
     public EngineWireHandler(@NotNull final Map<Long, String> cidToCsp,
                              @NotNull final Function<Bytes, Wire> byteToWire,
-                             @NotNull final AssetTree assetTree)
-            throws IOException {
+                             @NotNull final AssetTree assetTree) throws IOException {
 
         super(byteToWire);
         this.assetTree = assetTree;
@@ -179,7 +179,9 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     }
 
     @Override
-    protected void process(@NotNull final Wire in, @NotNull final Wire out) throws
+    protected void process(@NotNull final Wire in,
+                           @NotNull final Wire out,
+                           @NotNull final SessionDetails sessionDetails) throws
             StreamCorruptedException {
 
         logYamlToStandardOut(in);
