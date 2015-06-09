@@ -1,6 +1,8 @@
 package net.openhft.chronicle.engine.session;
 
-import net.openhft.chronicle.engine.api.*;
+import net.openhft.chronicle.engine.api.SessionDetails;
+import net.openhft.chronicle.engine.api.SessionProvider;
+import net.openhft.chronicle.engine.api.View;
 
 /**
  * Created by peter on 01/06/15.
@@ -8,7 +10,7 @@ import net.openhft.chronicle.engine.api.*;
 public class VanillaSessionProvider implements SessionProvider, View {
     private ThreadLocal<SessionDetails> sessionDetails = new ThreadLocal<>();
 
-    public VanillaSessionProvider(Asset asset) {
+    public VanillaSessionProvider() {
 
     }
 
@@ -25,10 +27,5 @@ public class VanillaSessionProvider implements SessionProvider, View {
     @Override
     public void remove() {
         sessionDetails.remove();
-    }
-
-    @Override
-    public void registerSubscriber(Subscriber<SessionDetails> subscriber) {
-        throw new UnsupportedOperationException("todo");
     }
 }
