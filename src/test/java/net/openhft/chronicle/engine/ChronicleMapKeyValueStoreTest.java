@@ -11,11 +11,15 @@ import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.Closeable;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -30,9 +34,12 @@ import static org.junit.Assert.assertEquals;
 public class ChronicleMapKeyValueStoreTest {
     public static final String NAME = "chronmapkvstoretests";
     private static Map<String, Factor> map;
+    private static KeyValueStore mapU;
 
     @BeforeClass
     public static void createMap() throws IOException {
+        //Delete any files from the last run
+        Files.delete(Paths.get(OS.TMP, NAME));
 
         resetChassis();
         Function<Bytes, Wire> writeType = TextWire::new;
@@ -43,16 +50,21 @@ public class ChronicleMapKeyValueStoreTest {
                 new ChronicleMapKeyValueStore(context.wireType(writeType).basePath(OS.TMP), asset));
 
         map = acquireMap(NAME, String.class, Factor.class);
-        KeyValueStore mapU = ((VanillaMapView) map).underlying();
+        mapU = ((VanillaMapView) map).underlying();
         assertEquals(ChronicleMapKeyValueStore.class, mapU.getClass());
 
         //just in case it hasn't been cleared up last time
         map.clear();
+
     }
 
-    @Ignore("fix https://higherfrequencytrading.atlassian.net/browse/CE-68")
+    @AfterClass
+    public static void tearDown() throws Exception{
+        mapU.close();
+    }
+
     @Test
-    public void test() {
+    public void test() throws Exception{
         AtomicInteger success = new AtomicInteger();
         MapEventListener<String, Factor> listener = new MapEventListener<String, Factor>() {
             @Override
@@ -100,7 +112,6 @@ public class ChronicleMapKeyValueStoreTest {
 
         expectedSuccess(success, -100);
         success.set(0);
-
     }
 
     private void expectedSuccess(AtomicInteger success, int expected) {
