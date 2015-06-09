@@ -104,7 +104,7 @@ public class VanillaAsset implements Asset, Closeable {
         registerFactory(SubscriptionKVSCollection.class, VanillaSubscriptionKVSCollection::new);
         registerFactory(Subscription.class, VanillaSubscriptionKVSCollection::new);
 
-        addView(SessionProvider.class, new VanillaSessionProvider(this));
+        addView(SessionProvider.class, new VanillaSessionProvider());
     }
 
     public void forRemoteAccess() {
