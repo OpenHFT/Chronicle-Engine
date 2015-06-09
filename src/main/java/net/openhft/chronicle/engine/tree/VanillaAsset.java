@@ -63,6 +63,7 @@ public class VanillaAsset implements Asset, Closeable {
         viewTypeLayersOn(EntrySetView.class, LAST + " entrySet", MapView.class);
         registerFactory(EntrySetView.class, VanillaEntrySetView::new);
 
+        // todo CE-54  registerFactory(MapEventSubscriber.class,VanillaMapEventSubscriber::new);
         viewTypeLayersOn(ValuesCollection.class, LAST + " values", MapView.class);
 
         viewTypeLayersOn(MapEventSubscriber.class, LAST + " MapEvent subscriber", Subscription.class);
