@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine.tree;
 
 import net.openhft.chronicle.core.util.Closeable;
+import net.openhft.chronicle.core.util.ThrowingFunction;
 import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.map.*;
@@ -19,7 +20,6 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.api.RequestContext.requestContext;
 
@@ -33,7 +33,7 @@ public class VanillaAsset implements Asset, Closeable {
     private final Asset parent;
     private final String name;
 
-    private final Map<Class, Map<String, Function<RequestContext, ViewLayer>>> classifierMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
+    private final Map<Class, Map<String, ThrowingFunction<RequestContext, ViewLayer, AssetNotFoundException>>> classifierMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
     final Map<Class, View> viewMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
     private final Map<Class, ViewFactory> factoryMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
     private Boolean keyedAsset;
@@ -116,15 +116,30 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Override
-    public <V> void addClassifier(Class<V> assetType, String name, Function<RequestContext, ViewLayer> viewBuilderFactory) {
-        Map<String, Function<RequestContext, ViewLayer>> stringFunctionMap = classifierMap.computeIfAbsent(assetType, k -> new ConcurrentSkipListMap<>());
+    public <V> void addClassifier(Class<V> assetType, String name, ThrowingFunction<RequestContext, ViewLayer, AssetNotFoundException> viewBuilderFactory) {
+        Map<String, ThrowingFunction<RequestContext, ViewLayer, AssetNotFoundException>> stringFunctionMap = classifierMap.computeIfAbsent(assetType, k -> new ConcurrentSkipListMap<>());
         stringFunctionMap.put(name, viewBuilderFactory);
     }
 
+    public void enableTranslatingValuesToBytesStore() {
+        addClassifier(MapView.class, "{Marshalling} string key maps", rc ->
+                        rc.keyType() == String.class
+                                ? rc.valueType() == String.class ? (rc2, asset) -> asset.acquireFactory(MapView.class).create(rc2, asset, () -> asset.acquireView(StringStringKeyValueStore.class, rc2))
+                                : Marshallable.class.isAssignableFrom(rc.valueType()) ? (rc2, asset) -> asset.acquireFactory(MapView.class).create(rc2, asset, () -> asset.acquireView(StringMarshallableKeyValueStore.class, rc2))
+                                : null
+                                : null
+        );
+        viewTypeLayersOn(StringStringKeyValueStore.class, "{Marshalling} string -> string", AuthenticatedKeyValueStore.class);
+        viewTypeLayersOn(StringMarshallableKeyValueStore.class, "{Marshalling} string -> marshallable", AuthenticatedKeyValueStore.class);
+
+        registerFactory(StringMarshallableKeyValueStore.class, VanillaStringMarshallableKeyValueStore::new);
+        registerFactory(StringStringKeyValueStore.class, VanillaStringStringKeyValueStore::new);
+    }
+
     public ViewLayer classify(Class viewType, RequestContext rc) throws AssetNotFoundException {
-        Map<String, Function<RequestContext, ViewLayer>> stringFunctionMap = classifierMap.get(viewType);
+        Map<String, ThrowingFunction<RequestContext, ViewLayer, AssetNotFoundException>> stringFunctionMap = classifierMap.get(viewType);
         if (stringFunctionMap != null) {
-            for (Function<RequestContext, ViewLayer> function : stringFunctionMap.values()) {
+            for (ThrowingFunction<RequestContext, ViewLayer, AssetNotFoundException> function : stringFunctionMap.values()) {
                 ViewLayer apply = function.apply(rc);
                 if (apply != null)
                     return apply;
@@ -157,7 +172,7 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Override
-    public <V> V acquireView(Class<V> viewType, RequestContext rc) {
+    public <V> V acquireView(Class<V> viewType, RequestContext rc) throws AssetNotFoundException {
         synchronized (viewMap) {
             V view = getView(viewType);
             if (view != null) {
@@ -196,6 +211,7 @@ public class VanillaAsset implements Asset, Closeable {
         viewMap.put(Subscription.class, skvStore.subscription(true));
     }
 
+
     @Nullable
     public <I> ViewFactory<I> getFactory(Class<I> iClass) {
         ViewFactory<I> factory = factoryMap.get(iClass);
@@ -207,7 +223,6 @@ public class VanillaAsset implements Asset, Closeable {
         }
         return parent.getFactory(iClass);
     }
-
 
     @Override
     public <I> ViewFactory<I> acquireFactory(Class<I> iClass) throws AssetNotFoundException {
@@ -242,7 +257,7 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Override
-    public Subscription subscription(boolean createIfAbsent) {
+    public Subscription subscription(boolean createIfAbsent) throws AssetNotFoundException {
         return createIfAbsent ? acquireView(Subscription.class, requestContext()) : getView(Subscription.class);
     }
 
@@ -315,20 +330,5 @@ public class VanillaAsset implements Asset, Closeable {
     @Override
     public String toString() {
         return fullName();
-    }
-
-    public void enableTranslatingValuesToBytesStore() {
-        addClassifier(MapView.class, "{Marshalling} string key maps", rc ->
-                        rc.keyType() == String.class
-                                ? rc.valueType() == String.class ? (rc2, asset) -> asset.acquireFactory(MapView.class).create(rc2, asset, () -> asset.acquireView(StringStringKeyValueStore.class, rc2))
-                                : Marshallable.class.isAssignableFrom(rc.valueType()) ? (rc2, asset) -> asset.acquireFactory(MapView.class).create(rc2, asset, () -> asset.acquireView(StringMarshallableKeyValueStore.class, rc2))
-                                : null
-                                : null
-        );
-        viewTypeLayersOn(StringStringKeyValueStore.class, "{Marshalling} string -> string", AuthenticatedKeyValueStore.class);
-        viewTypeLayersOn(StringMarshallableKeyValueStore.class, "{Marshalling} string -> marshallable", AuthenticatedKeyValueStore.class);
-
-        registerFactory(StringMarshallableKeyValueStore.class, VanillaStringMarshallableKeyValueStore::new);
-        registerFactory(StringStringKeyValueStore.class, VanillaStringStringKeyValueStore::new);
     }
 }

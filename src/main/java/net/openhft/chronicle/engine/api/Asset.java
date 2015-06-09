@@ -1,9 +1,8 @@
 package net.openhft.chronicle.engine.api;
 
+import net.openhft.chronicle.core.util.ThrowingFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.function.Function;
 
 /**
  * Created by peter on 22/05/15.
@@ -11,7 +10,7 @@ import java.util.function.Function;
 public interface Asset {
     String name();
 
-    Subscription subscription(boolean createIfAbsent);
+    Subscription subscription(boolean createIfAbsent) throws AssetNotFoundException;
 
     default String fullName() {
         return parent() == null
@@ -51,11 +50,11 @@ public interface Asset {
 
     boolean isReadOnly();
 
-    default <V> V acquireView(RequestContext rc) {
+    default <V> V acquireView(RequestContext rc) throws AssetNotFoundException {
         return (V) acquireView(rc.viewType(), rc);
     }
 
-    <V> V acquireView(Class<V> viewType, RequestContext rc);
+    <V> V acquireView(Class<V> viewType, RequestContext rc) throws AssetNotFoundException;
 
     <V> V getView(Class<V> vClass);
 
@@ -67,7 +66,7 @@ public interface Asset {
 
     <I> void registerFactory(Class<I> iClass, ViewFactory<I> factory);
 
-    <V> void addClassifier(Class<V> assetType, String name, Function<RequestContext, ViewLayer> viewBuilderFactory);
+    <V> void addClassifier(Class<V> assetType, String name, ThrowingFunction<RequestContext, ViewLayer, AssetNotFoundException> viewBuilderFactory);
 
     ViewLayer classify(Class viewType, RequestContext rc) throws AssetNotFoundException;
 

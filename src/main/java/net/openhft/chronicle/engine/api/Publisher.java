@@ -6,5 +6,5 @@ package net.openhft.chronicle.engine.api;
 public interface Publisher<E> {
     void publish(E event);
 
-    void registerSubscriber(Subscriber<E> subscriber);
+    void registerSubscriber(Subscriber<E> subscriber) throws AssetNotFoundException;
 }

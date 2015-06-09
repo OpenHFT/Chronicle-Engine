@@ -8,7 +8,7 @@ import net.openhft.chronicle.engine.api.map.MapView;
 public interface TopicPublisher<T, M> extends View, Assetted<MapView<T, M, M>> {
     void publish(T topic, M message);
 
-    void registerTopicSubscriber(TopicSubscriber<T, M> topicSubscriber);
+    void registerTopicSubscriber(TopicSubscriber<T, M> topicSubscriber) throws AssetNotFoundException;
 
     default boolean keyedView() {
         return true;

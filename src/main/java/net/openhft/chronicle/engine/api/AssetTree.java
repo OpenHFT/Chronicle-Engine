@@ -68,7 +68,7 @@ public interface AssetTree extends Closeable {
         subscription.registerTopicSubscriber(rc, subscriber);
     }
 
-    default <E> void unregisterSubscriber(String name, Class<E> eClass, Subscriber<E> subscriber) {
+    default <E> void unregisterSubscriber(String name, Class<E> eClass, Subscriber<E> subscriber) throws AssetNotFoundException {
         RequestContext rc = requestContext(name).viewType(Subscription.class).type(eClass);
         Asset asset = getAsset(rc.fullName());
         if (asset != null) {
@@ -84,7 +84,7 @@ public interface AssetTree extends Closeable {
         asset.registerFactory(rc.type(), factory);
     }
 
-    default <T, E> void unregisterTopicSubscriber(String name, Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber) {
+    default <T, E> void unregisterTopicSubscriber(String name, Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
         RequestContext rc = requestContext(name).viewType(Subscriber.class).type(tClass).type2(eClass);
         Asset asset = getAsset(rc.fullName());
         if (asset != null) {

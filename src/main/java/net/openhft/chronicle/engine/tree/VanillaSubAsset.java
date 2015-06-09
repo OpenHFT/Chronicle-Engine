@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine.tree;
 
 import net.openhft.chronicle.core.util.Closeable;
+import net.openhft.chronicle.core.util.ThrowingFunction;
 import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.map.SubAsset;
@@ -8,7 +9,6 @@ import net.openhft.chronicle.engine.api.map.ValueReader;
 import net.openhft.chronicle.engine.pubsub.SimpleSubscription;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static net.openhft.chronicle.engine.api.RequestContext.requestContext;
@@ -22,11 +22,16 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     private final SimpleSubscription<E> subscription;
     private Reference<E> reference;
 
-    VanillaSubAsset(RequestContext rc, Asset parent, String name) {
+    VanillaSubAsset(RequestContext rc, Asset parent, String name) throws AssetNotFoundException {
         this.parent = parent;
         this.name = name;
         reference = (Reference<E>) acquireViewFor(Reference.class, rc);
-        ValueReader valueReader = parent.acquireView(ValueReader.class, rc);
+        ValueReader valueReader;
+        try {
+            valueReader = parent.acquireView(ValueReader.class, rc);
+        } catch (Exception e) {
+            valueReader = ValueReader.PASS;
+        }
         subscription = new SimpleSubscription<>(reference, valueReader == null ? ValueReader.PASS : valueReader);
     }
 
@@ -36,7 +41,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     }
 
     @Override
-    public <V> void addClassifier(Class<V> assetType, String name, Function<RequestContext, ViewLayer> viewBuilderFactory) {
+    public <V> void addClassifier(Class<V> assetType, String name, ThrowingFunction<RequestContext, ViewLayer, AssetNotFoundException> viewBuilderFactory) {
         throw new UnsupportedOperationException("todo");
     }
 
@@ -60,7 +65,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     }
 
     @Override
-    public <V> V acquireView(Class<V> viewType, RequestContext rc) {
+    public <V> V acquireView(Class<V> viewType, RequestContext rc) throws AssetNotFoundException {
         if (viewType == Reference.class || viewType == Supplier.class) {
             return (V) reference;
         }
@@ -75,7 +80,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
         throw new UnsupportedOperationException("todo vClass: " + viewType + ", rc: " + rc);
     }
 
-    private <V> V acquireViewFor(Class<V> viewType, RequestContext rc) {
+    private <V> V acquireViewFor(Class<V> viewType, RequestContext rc) throws AssetNotFoundException {
         return parent.acquireFactory(viewType).create(requestContext().type(rc.type()).fullName(name), this, () ->
                 parent.getView(MapView.class));
     }

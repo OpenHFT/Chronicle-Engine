@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.annotation.NotNull;
+import net.openhft.chronicle.core.util.ThrowingSupplier;
 import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapReplicationEvent;
@@ -15,7 +16,6 @@ import java.io.File;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId;
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.*;
@@ -32,7 +32,7 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
     private final RequestContext context;
 
     @SuppressWarnings("unchecked")
-    public RemoteAuthenticatedKeyValueStore(RequestContext context, Asset asset, Supplier<Assetted> underlying) {
+    public RemoteAuthenticatedKeyValueStore(RequestContext context, Asset asset, ThrowingSupplier<Assetted, AssetNotFoundException> underlying) throws AssetNotFoundException {
         this(context, hub(context, asset));
     }
 
@@ -45,7 +45,7 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
 
     }
 
-    private static TcpConnectionHub hub(final RequestContext context, final Asset asset) {
+    private static TcpConnectionHub hub(final RequestContext context, final Asset asset) throws AssetNotFoundException {
         return asset.acquireView(TcpConnectionHub.class, context);
     }
 

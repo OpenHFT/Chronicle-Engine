@@ -3,6 +3,7 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.ClassLocal;
+import net.openhft.chronicle.core.util.ThrowingSupplier;
 import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.api.map.*;
 import net.openhft.chronicle.wire.Marshallable;
@@ -12,7 +13,6 @@ import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static net.openhft.chronicle.engine.map.Buffers.BUFFERS;
 
@@ -37,7 +37,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     private final Class type2;
     private final Function<Bytes, Wire> wireType;
 
-    public VanillaStringMarshallableKeyValueStore(RequestContext context, Asset asset, Supplier<Assetted> kvStore) {
+    public VanillaStringMarshallableKeyValueStore(RequestContext context, Asset asset, ThrowingSupplier<Assetted, AssetNotFoundException> kvStore) throws AssetNotFoundException {
         this(asset, context.type2(), (SubscriptionKeyValueStore<String, Bytes, BytesStore>) kvStore.get(), context.wireType());
     }
 
@@ -49,6 +49,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
         valueToBytes = toBytes(type2, wireType);
         bytesToValue = fromBytes(type2, wireType);
         this.kvStore = kvStore;
+        asset.registerView(ValueReader.class, (ValueReader<BytesStore, V>) (bs, v) -> bytesToValue.apply(bs, null));
     }
 
     static <T> BiFunction<T, Bytes, Bytes> toBytes(Class type, Function<Bytes, Wire> wireType) {

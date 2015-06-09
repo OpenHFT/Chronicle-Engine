@@ -5,6 +5,7 @@ import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.bytes.StreamingDataInput;
 import net.openhft.chronicle.core.ClassLocal;
+import net.openhft.chronicle.core.util.ThrowingSupplier;
 import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.api.map.*;
 
@@ -12,7 +13,6 @@ import java.lang.reflect.Constructor;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static net.openhft.chronicle.engine.map.Buffers.BUFFERS;
 
@@ -35,7 +35,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     private Asset asset;
 
 
-    public VanillaStringStringKeyValueStore(RequestContext context, Asset asset, Supplier<Assetted> kvStore) {
+    public VanillaStringStringKeyValueStore(RequestContext context, Asset asset, ThrowingSupplier<Assetted, AssetNotFoundException> kvStore) throws AssetNotFoundException {
         this.asset = asset;
         this.kvStore = (SubscriptionKeyValueStore<String, Bytes, BytesStore>) kvStore.get();
         asset.registerView(ValueReader.class, (ValueReader<BytesStore, String>) (bs, s) -> BytesUtil.to8bitString((StreamingDataInput) bs));

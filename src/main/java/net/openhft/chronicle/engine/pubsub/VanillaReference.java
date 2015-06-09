@@ -1,9 +1,8 @@
 package net.openhft.chronicle.engine.pubsub;
 
+import net.openhft.chronicle.core.util.ThrowingSupplier;
 import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.api.map.MapView;
-
-import java.util.function.Supplier;
 
 import static net.openhft.chronicle.engine.api.RequestContext.requestContext;
 
@@ -12,7 +11,7 @@ public class VanillaReference<E> implements Reference<E> {
     private final Class<E> eClass;
     private final MapView<String, E, E> underlyingMap;
 
-    public VanillaReference(RequestContext context, Asset asset, Supplier<Assetted> assettedSupplier) {
+    public VanillaReference(RequestContext context, Asset asset, ThrowingSupplier<Assetted, AssetNotFoundException> assettedSupplier) throws AssetNotFoundException {
         this(context.name(), context.type(), (MapView<String, E, E>) assettedSupplier.get());
     }
 
@@ -38,7 +37,7 @@ public class VanillaReference<E> implements Reference<E> {
     }
 
     @Override
-    public void registerSubscriber(Subscriber<E> subscriber) {
+    public void registerSubscriber(Subscriber<E> subscriber) throws AssetNotFoundException {
         underlyingMap.asset().getChild(name)
                 .subscription(true)
                 .registerSubscriber(requestContext().bootstrap(true).type(eClass), subscriber);

@@ -1,6 +1,8 @@
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.core.util.ThrowingSupplier;
 import net.openhft.chronicle.engine.api.Asset;
+import net.openhft.chronicle.engine.api.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.Assetted;
 import net.openhft.chronicle.engine.api.RequestContext;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -9,7 +11,6 @@ import net.openhft.chronicle.engine.api.set.EntrySetView;
 import java.util.AbstractCollection;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.function.Supplier;
 
 /**
  * Created by peter on 22/05/15.
@@ -18,7 +19,7 @@ public class VanillaEntrySetView<K, MV, V> extends AbstractCollection<Map.Entry<
     private Asset asset;
     private MapView<K, MV, V> underlying;
 
-    public VanillaEntrySetView(RequestContext context, Asset asset, Supplier<Assetted> underlying) {
+    public VanillaEntrySetView(RequestContext context, Asset asset, ThrowingSupplier<Assetted, AssetNotFoundException> underlying) throws AssetNotFoundException {
         this.asset = asset;
         this.underlying = (MapView<K, MV, V>) underlying.get();
     }

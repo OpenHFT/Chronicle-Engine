@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.core.util.ThrowingSupplier;
 import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
@@ -8,7 +9,6 @@ import net.openhft.chronicle.engine.tree.VanillaAsset;
 
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.function.Supplier;
 
 import static net.openhft.chronicle.engine.api.SubscriptionConsumer.notifyEachSubscriber;
 
@@ -36,7 +36,7 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements SubscriptionK
         this.kvStore = kvStore;
     }
 
-    public VanillaSubscriptionKVSCollection(RequestContext requestContext, Asset asset, Supplier<Assetted> assettedSupplier) {
+    public VanillaSubscriptionKVSCollection(RequestContext requestContext, Asset asset, ThrowingSupplier<Assetted, AssetNotFoundException> assettedSupplier) {
         ((VanillaAsset) asset).addView(Subscription.class, this);
         ((VanillaAsset) asset).addView(SubscriptionKVSCollection.class, this);
     }

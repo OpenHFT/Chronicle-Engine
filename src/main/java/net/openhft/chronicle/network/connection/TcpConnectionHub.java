@@ -23,10 +23,8 @@ import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.util.CloseablesManager;
-import net.openhft.chronicle.engine.api.Asset;
-import net.openhft.chronicle.engine.api.Assetted;
-import net.openhft.chronicle.engine.api.RequestContext;
-import net.openhft.chronicle.engine.api.View;
+import net.openhft.chronicle.core.util.ThrowingSupplier;
+import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.network.event.EventGroup;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +40,6 @@ import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static net.openhft.chronicle.engine.api.WireType.wire;
 import static net.openhft.chronicle.wire.CoreFields.reply;
@@ -88,7 +85,7 @@ public class TcpConnectionHub implements View, Closeable {
 
     public TcpConnectionHub(final RequestContext requestContext,
                             final Asset asset,
-                            final Supplier<Assetted> assettedSupplier) {
+                            final ThrowingSupplier<Assetted, AssetNotFoundException> assettedSupplier) {
         this((byte) 1,
                 requestContext.doHandShaking(),
                 new InetSocketAddress(requestContext.host(), requestContext.port()),

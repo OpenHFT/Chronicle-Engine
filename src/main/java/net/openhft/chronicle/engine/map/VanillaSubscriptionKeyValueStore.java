@@ -1,15 +1,12 @@
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.engine.api.Asset;
-import net.openhft.chronicle.engine.api.Assetted;
-import net.openhft.chronicle.engine.api.InvalidSubscriberException;
-import net.openhft.chronicle.engine.api.RequestContext;
+import net.openhft.chronicle.core.util.ThrowingSupplier;
+import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
 import net.openhft.chronicle.engine.pubsub.SimpleSubscription;
 
 import java.util.Optional;
-import java.util.function.Supplier;
 
 /**
  * Created by peter on 22/05/15.
@@ -18,7 +15,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     final SubscriptionKVSCollection<K, MV, V> subscriptions;
     private final Asset asset;
 
-    public VanillaSubscriptionKeyValueStore(RequestContext context, Asset asset, Supplier<Assetted> assetted) {
+    public VanillaSubscriptionKeyValueStore(RequestContext context, Asset asset, ThrowingSupplier<Assetted, AssetNotFoundException> assetted) throws AssetNotFoundException {
         this(asset, (KeyValueStore<K, MV, V>) assetted.get(),
                 asset.acquireView(SubscriptionKVSCollection.class, context));
     }
