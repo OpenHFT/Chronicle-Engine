@@ -1,20 +1,22 @@
 package net.openhft.chronicle.engine.pubsub;
 
 import net.openhft.chronicle.engine.api.*;
+import net.openhft.chronicle.engine.api.map.ValueReader;
 
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.function.Supplier;
 
 /**
  * Created by peter on 29/05/15.
  */
 public class SimpleSubscription<E> implements Subscription {
     private final Set<Subscriber<E>> subscribers = new CopyOnWriteArraySet<>();
-    private final Supplier<E> currentValue;
+    private final Reference<E> currentValue;
+    private final ValueReader<Object, E> valueReader;
 
-    public SimpleSubscription(Supplier<E> currentValue) {
-        this.currentValue = currentValue;
+    public SimpleSubscription(Reference<E> reference, ValueReader<Object, E> valueReader) {
+        this.currentValue = reference;
+        this.valueReader = valueReader;
     }
 
     @Override
@@ -48,8 +50,8 @@ public class SimpleSubscription<E> implements Subscription {
         throw new UnsupportedOperationException("todo");
     }
 
-    public void notifyMessage(E e) {
-        SubscriptionConsumer.notifyEachSubscriber(subscribers, s -> s.onMessage(e));
+    public void notifyMessage(Object e) {
+        SubscriptionConsumer.notifyEachSubscriber(subscribers, s -> s.onMessage(valueReader.readFrom(e, null)));
     }
 
     @Override

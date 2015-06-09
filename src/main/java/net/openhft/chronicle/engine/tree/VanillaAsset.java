@@ -31,22 +31,22 @@ public class VanillaAsset implements Asset, Closeable {
     private static final String LAST = "{last}";
 
     private final Asset parent;
-    private final String uri;
+    private final String name;
 
     private final Map<Class, Map<String, Function<RequestContext, ViewLayer>>> classifierMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
     final Map<Class, View> viewMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
     private final Map<Class, ViewFactory> factoryMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
     private Boolean keyedAsset;
 
-    public VanillaAsset(Asset asset, String uri) {
+    public VanillaAsset(Asset asset, String name) {
         this.parent = asset;
-        this.uri = uri;
+        this.name = name;
 
-        if ("".equals(uri)) {
+        if ("".equals(name)) {
             assert parent == null;
         } else {
             assert parent != null;
-            assert uri != null;
+            assert name != null;
         }
     }
 
@@ -148,7 +148,7 @@ public class VanillaAsset implements Asset, Closeable {
 
     @Override
     public String name() {
-        return uri;
+        return name;
     }
 
     @Override
@@ -268,33 +268,33 @@ public class VanillaAsset implements Asset, Closeable {
 
     @NotNull
     @Override
-    public Asset acquireAsset(String uri) throws AssetNotFoundException {
+    public Asset acquireAsset(RequestContext context, String fullName) throws AssetNotFoundException {
         if (keyedAsset != Boolean.TRUE) {
-            int pos = uri.indexOf("/");
+            int pos = fullName.indexOf("/");
             if (pos >= 0) {
-                String name1 = uri.substring(0, pos);
-                String name2 = uri.substring(pos + 1);
-                return getAssetOrANFE(name1).acquireAsset(name2);
+                String name1 = fullName.substring(0, pos);
+                String name2 = fullName.substring(pos + 1);
+                return getAssetOrANFE(context, name1).acquireAsset(context, name2);
             }
         }
-        return getAssetOrANFE(uri);
+        return getAssetOrANFE(context, fullName);
     }
 
-    private Asset getAssetOrANFE(String uri) throws AssetNotFoundException {
-        Asset asset = children.get(uri);
+    private Asset getAssetOrANFE(RequestContext context, String name) throws AssetNotFoundException {
+        Asset asset = children.get(name);
         if (asset == null) {
-            asset = createAsset(uri);
+            asset = createAsset(context, name);
             if (asset == null)
-                throw new AssetNotFoundException(uri);
+                throw new AssetNotFoundException(name);
         }
         return asset;
     }
 
     @Nullable
-    protected Asset createAsset(String uri) {
-        return children.computeIfAbsent(uri, keyedAsset != Boolean.TRUE
-                ? n -> new VanillaAsset(this, uri)
-                : n -> new VanillaSubAsset(this, uri));
+    protected Asset createAsset(RequestContext context, String name) {
+        return children.computeIfAbsent(name, keyedAsset != Boolean.TRUE
+                ? n -> new VanillaAsset(this, name)
+                : n -> new VanillaSubAsset(context, this, name));
     }
 
     @Override

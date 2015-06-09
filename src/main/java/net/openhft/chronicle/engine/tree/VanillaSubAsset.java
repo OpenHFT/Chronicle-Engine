@@ -4,6 +4,7 @@ import net.openhft.chronicle.core.util.Closeable;
 import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.map.SubAsset;
+import net.openhft.chronicle.engine.api.map.ValueReader;
 import net.openhft.chronicle.engine.pubsub.SimpleSubscription;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,16 +16,18 @@ import static net.openhft.chronicle.engine.api.RequestContext.requestContext;
 /**
  * Created by peter on 22/05/15.
  */
-public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscriber<String, E>, Supplier<E> {
+public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscriber<String, E> {
     private final Asset parent;
     private final String name;
     private final SimpleSubscription<E> subscription;
     private Reference<E> reference;
 
-    VanillaSubAsset(Asset parent, String name) {
+    VanillaSubAsset(RequestContext rc, Asset parent, String name) {
         this.parent = parent;
         this.name = name;
-        subscription = new SimpleSubscription<>(this);
+        reference = (Reference<E>) acquireViewFor(Reference.class, rc);
+        ValueReader valueReader = parent.acquireView(ValueReader.class, rc);
+        subscription = new SimpleSubscription<>(reference, valueReader == null ? ValueReader.PASS : valueReader);
     }
 
     @Override
@@ -59,8 +62,6 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     @Override
     public <V> V acquireView(Class<V> viewType, RequestContext rc) {
         if (viewType == Reference.class || viewType == Supplier.class) {
-            if (reference == null)
-                reference = (Reference<E>) acquireViewFor(viewType, rc);
             return (V) reference;
         }
         if (viewType == Publisher.class) {
@@ -68,13 +69,14 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
                 return (V) acquireViewFor(viewType, rc);
             return (V) reference;
         }
-        if (viewType == Subscription.class)
+        if (viewType == Subscription.class) {
             return (V) subscription;
+        }
         throw new UnsupportedOperationException("todo vClass: " + viewType + ", rc: " + rc);
     }
 
     private <V> V acquireViewFor(Class<V> viewType, RequestContext rc) {
-        return parent.acquireFactory(viewType).create(requestContext().type(rc.type()).fullUri(name), this, () ->
+        return parent.acquireFactory(viewType).create(requestContext().type(rc.type()).fullName(name), this, () ->
                 parent.getView(MapView.class));
     }
 
@@ -110,12 +112,12 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
 
     @NotNull
     @Override
-    public Asset acquireAsset(String uri) throws AssetNotFoundException {
+    public Asset acquireAsset(RequestContext context, String fullName) throws AssetNotFoundException {
         throw new UnsupportedOperationException("todo");
     }
 
     @Override
-    public Asset getAsset(String name) {
+    public Asset getAsset(String fullName) {
         throw new UnsupportedOperationException("todo");
     }
 
@@ -152,12 +154,5 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     @Override
     public boolean keyedView() {
         return false;
-    }
-
-    @Override
-    public E get() {
-        if (reference == null)
-            reference = acquireView(Reference.class, requestContext());
-        return reference.get();
     }
 }

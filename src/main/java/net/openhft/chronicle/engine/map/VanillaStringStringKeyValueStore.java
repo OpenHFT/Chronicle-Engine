@@ -38,6 +38,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     public VanillaStringStringKeyValueStore(RequestContext context, Asset asset, Supplier<Assetted> kvStore) {
         this.asset = asset;
         this.kvStore = (SubscriptionKeyValueStore<String, Bytes, BytesStore>) kvStore.get();
+        asset.registerView(ValueReader.class, (ValueReader<BytesStore, String>) (bs, s) -> bs.toString());
     }
 
     static <T> BiFunction<T, Bytes, Bytes> toBytes(RequestContext context, Class type) {

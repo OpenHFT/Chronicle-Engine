@@ -25,15 +25,15 @@ public interface Asset {
     Asset parent();
 
     @NotNull
-    Asset acquireAsset(String uri) throws AssetNotFoundException;
+    Asset acquireAsset(RequestContext context, String fullName) throws AssetNotFoundException;
 
     @Nullable
-    default Asset getAsset(String name) {
-        if (name.isEmpty()) return this;
-        int pos = name.indexOf("/");
+    default Asset getAsset(String fullName) {
+        if (fullName.isEmpty()) return this;
+        int pos = fullName.indexOf("/");
         if (pos >= 0) {
-            String name1 = name.substring(0, pos);
-            String name2 = name.substring(pos + 1);
+            String name1 = fullName.substring(0, pos);
+            String name2 = fullName.substring(pos + 1);
             Asset asset = getChild(name1);
             if (asset == null) {
                 return null;
@@ -42,7 +42,7 @@ public interface Asset {
                 return asset.getAsset(name2);
             }
         }
-        return getChild(name);
+        return getChild(fullName);
     }
 
     Asset getChild(String name);
