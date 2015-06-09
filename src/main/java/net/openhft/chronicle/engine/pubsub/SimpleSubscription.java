@@ -51,7 +51,12 @@ public class SimpleSubscription<E> implements Subscription {
     }
 
     public void notifyMessage(Object e) {
-        SubscriptionConsumer.notifyEachSubscriber(subscribers, s -> s.onMessage(valueReader.readFrom(e, null)));
+        try {
+            SubscriptionConsumer.notifyEachSubscriber(subscribers, s -> s.onMessage(valueReader.readFrom(e, null)));
+        } catch (ClassCastException e1) {
+            System.err.println("Is " + valueReader + " the correct ValueReader?");
+            throw e1;
+        }
     }
 
     @Override
