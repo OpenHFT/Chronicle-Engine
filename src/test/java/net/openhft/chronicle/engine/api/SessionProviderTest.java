@@ -8,7 +8,7 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
 public class SessionProviderTest {
-    @Ignore("JIRA - https://higherfrequencytrading.atlassian.net/browse/CE-64")
+
     @Test
     public void testAcquireSessionProvider() {
         SessionProvider sessionProvider = Chassis.getAsset("").getView(SessionProvider.class);
