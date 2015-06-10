@@ -21,13 +21,13 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
+import net.openhft.chronicle.engine.api.Subscription;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -50,7 +50,6 @@ import static org.junit.Assert.assertEquals;
  * @author Rob Austin.
  */
 @RunWith(value = Parameterized.class)
-
 public class MapClientTest extends ThreadMonitoringTest {
 
 
@@ -88,6 +87,26 @@ public class MapClientTest extends ThreadMonitoringTest {
             }
         });
     }
+
+    @Test(timeout = 50000)
+    public void testSubscriptionTest() throws IOException, InterruptedException {
+        yamlLoggger(() -> {
+            try {
+                supplyMap(Integer.class, String.class, mapProxy -> {
+
+                    mapProxy.put(1, "hello");
+                    assertEquals("hello", mapProxy.get(1));
+                    assertEquals(1, mapProxy.size());
+
+                    Assert.assertEquals("{1=hello}", mapProxy.toString());
+
+                });
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
 
     @Test(timeout = 50000)
     public void testEntrySetIsEmpty() throws IOException, InterruptedException {
@@ -299,6 +318,30 @@ public class MapClientTest extends ThreadMonitoringTest {
 
     }
 
+
+    public static class LocalSubscriptionSupplier<K, V> implements CloseableSupplier<ConcurrentMap<K, V>> {
+
+        @NotNull
+        private final ConcurrentMap<K, V> map;
+
+        public LocalSubscription() throws IOException {
+            map = Chassis.ac("test" + i++, kClass, vClass);
+        }
+
+        @Override
+        public void close() throws IOException {
+            if (map instanceof Closeable)
+                ((Closeable) map).close();
+        }
+
+        @NotNull
+        @Override
+        public ConcurrentMap<K, V> get() {
+            return map;
+        }
+
+    }
+
     /**
      * supplies a map and closes it once the tests are finished
      */
@@ -326,6 +369,38 @@ public class MapClientTest extends ThreadMonitoringTest {
             result.close();
         }
 
+    }
+
+
+    private <K, V>
+    void supplyMapEventListener(@NotNull Class<K> kClass, @NotNull Class<V> vClass, @NotNull Consumer<Subscription> c)
+            throws IOException {
+
+        CloseableSupplier<Subscription> result;
+        if (LocalMapEventListenerSupplier.class.equals(supplier)) {
+            result = new LocalMapEventListenerSupplier<K, V>(kClass, vClass);
+
+        } else if (RemoteMapEventListenerSupplier.class.equals(supplier)) {
+            result = new LocalMapEventListenerSupplier<K, V>(kClass, vClass, TextWire::new);
+
+        } else {
+            throw new IllegalStateException("unsuported type");
+        }
+
+        final ConcurrentMap<K, V> kvMap = result.get();
+        try {
+            c.accept(result.get());
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            result.close();
+        }
+
+    }
+
+    private class LocalMapEventListenerSupplier<K, V> implements CloseableSupplier<Subscription> {
+        public LocalMapEventListenerSupplier(Class<> kClass, Class<> vClass, Object aNew) {
+        }
     }
 }
 
