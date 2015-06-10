@@ -1,6 +1,6 @@
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.core.annotation.NotNull;
+
 import net.openhft.chronicle.core.util.ThrowingSupplier;
 import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
@@ -10,6 +10,7 @@ import net.openhft.chronicle.engine.collection.ClientWiredStatelessChronicleSet;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.TcpConnectionHub;
 import net.openhft.chronicle.wire.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -29,16 +30,16 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
     private final Class<K> kClass;
     private final Class<V> vClass;
     private final Map<Long, String> cidToCsp = new HashMap<>();
-    @org.jetbrains.annotations.NotNull
+    @NotNull
     private final RequestContext context;
 
     @SuppressWarnings("unchecked")
-    public RemoteAuthenticatedKeyValueStore(@org.jetbrains.annotations.NotNull RequestContext context, @org.jetbrains.annotations.NotNull Asset asset, ThrowingSupplier<Assetted, AssetNotFoundException> underlying) throws AssetNotFoundException {
+    public RemoteAuthenticatedKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset, ThrowingSupplier<Assetted, AssetNotFoundException> underlying) throws AssetNotFoundException {
         this(context, hub(context, asset));
     }
 
-    private RemoteAuthenticatedKeyValueStore(@org.jetbrains.annotations.NotNull @NotNull final RequestContext context,
-                                             @org.jetbrains.annotations.NotNull @NotNull final TcpConnectionHub hub) {
+    private RemoteAuthenticatedKeyValueStore(@NotNull final RequestContext context,
+                                             @NotNull final TcpConnectionHub hub) {
         super(hub, (long) 0, toUri(context));
         this.kClass = context.keyType();
         this.vClass = context.valueType();
@@ -46,12 +47,12 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
 
     }
 
-    private static TcpConnectionHub hub(final RequestContext context, @org.jetbrains.annotations.NotNull final Asset asset) throws AssetNotFoundException {
+    private static TcpConnectionHub hub(final RequestContext context, @NotNull final Asset asset) throws AssetNotFoundException {
         return asset.acquireView(TcpConnectionHub.class, context);
     }
 
-    @org.jetbrains.annotations.NotNull
-    private static String toUri(@org.jetbrains.annotations.NotNull final @NotNull RequestContext context) {
+    @NotNull
+    private static String toUri(@NotNull final RequestContext context) {
         return "/" + context.name()
                 + "?view=" + "map&keyType=" + context.keyType().getSimpleName() + "&valueType=" + context.valueType()
                 .getSimpleName();
@@ -62,7 +63,6 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
 
     }
 
-    @org.jetbrains.annotations.NotNull
     @NotNull
     public File file() {
         throw new UnsupportedOperationException();
@@ -145,8 +145,8 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
         return proxyReturnInt(hashCode);
     }
 
-    @org.jetbrains.annotations.NotNull
     @NotNull
+
     public String toString() {
         final Iterator<Map.Entry<K, V>> entries = entrySet().iterator();
         if (!entries.hasNext())
@@ -268,7 +268,6 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
         );
     }
 
-    @org.jetbrains.annotations.NotNull
     @NotNull
     public Set<Map.Entry<K, V>> entrySet() {
 
@@ -305,7 +304,7 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
                             return v;
                         }
 
-                        @org.jetbrains.annotations.NotNull
+                        @NotNull
                         @Override
                         public V setValue(Object value) {
                             throw new UnsupportedOperationException();
@@ -318,14 +317,13 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
         return new ClientWiredStatelessChronicleSet<>(hub, csp.toString(), cid, conumer);
     }
 
-    @org.jetbrains.annotations.NotNull
+    @NotNull
     @Override
     public Iterator<Map.Entry<K, V>> entrySetIterator() {
         return entrySet().iterator();
     }
 
     @Nullable
-    @NotNull
     public Set<K> keySet() {
 
         final StringBuilder csp = Wires.acquireStringBuilder();
@@ -348,25 +346,25 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
     }
 
     @SuppressWarnings("SameParameterValue")
-    private boolean proxyReturnBoolean(@org.jetbrains.annotations.NotNull @NotNull final EventId eventId,
+    private boolean proxyReturnBoolean(@NotNull final EventId eventId,
                                        @Nullable final Consumer<ValueOut> consumer) {
         final long startTime = System.currentTimeMillis();
         return readBoolean(sendEvent(startTime, eventId, consumer), startTime);
     }
 
     @SuppressWarnings("SameParameterValue")
-    private int proxyReturnInt(@org.jetbrains.annotations.NotNull @NotNull final EventId eventId) {
+    private int proxyReturnInt(@NotNull final EventId eventId) {
         final long startTime = System.currentTimeMillis();
         return readInt(sendEvent(startTime, eventId, VOID_PARAMETERS), startTime);
     }
 
-    @org.jetbrains.annotations.NotNull
+    @NotNull
     @Override
     public Asset asset() {
         throw new UnsupportedOperationException();
     }
 
-    @org.jetbrains.annotations.NotNull
+    @NotNull
     @Override
     public KeyValueStore<K, V, V> underlying() {
         throw new UnsupportedOperationException();
@@ -376,7 +374,7 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
     private final SubscriptionKVSCollection<K, V, V> subscriptions = new
             VanillaSubscriptionKVSCollection<>(this);
 
-    @org.jetbrains.annotations.NotNull
+    @NotNull
     @Override
     public SubscriptionKVSCollection<K, V, V> subscription(final boolean createIfAbsent) {
         return subscriptions;
@@ -429,7 +427,6 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
                     (value == null ? 0 : value.hashCode());
         }
 
-        @org.jetbrains.annotations.NotNull
         @NotNull
         public final String toString() {
             return getKey() + "=" + getValue();
