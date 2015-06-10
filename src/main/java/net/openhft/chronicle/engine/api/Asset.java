@@ -1,8 +1,9 @@
 package net.openhft.chronicle.engine.api;
 
-import net.openhft.chronicle.core.util.ThrowingFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.BiPredicate;
 
 /**
  * Created by peter on 22/05/15.
@@ -62,27 +63,24 @@ public interface Asset {
 
     <I> void registerView(Class<I> iClass, I interceptor);
 
-    @Nullable
-    <I> ViewFactory<I> getFactory(Class<I> iClass);
+    <W, U> void addWrappingRule(Class<W> iClass, String description, BiPredicate<RequestContext, Asset> predicate, WrappingViewFactory<W, U> factory, Class<U> underlyingType);
 
-    <I> ViewFactory<I> acquireFactory(Class<I> iClass) throws AssetNotFoundException;
+    <W, U> void addWrappingRule(Class<W> iClass, String description, WrappingViewFactory<W, U> factory, Class<U> underlyingType);
 
-    <I> void registerFactory(Class<I> iClass, ViewFactory<I> factory);
+    <L> void addLeafRule(Class<L> iClass, String description, LeafViewFactory<L> factory);
 
-    <V> void addClassifier(Class<V> assetType, String name, ThrowingFunction<RequestContext, ViewLayer, AssetNotFoundException> viewBuilderFactory);
+    <I, U> I createWrappingView(Class viewType, RequestContext rc, Asset asset, U underling) throws AssetNotFoundException;
 
-    ViewLayer classify(Class viewType, RequestContext rc) throws AssetNotFoundException;
+    <I> I createWrappingLeaf(Class viewType, RequestContext rc, Asset asset) throws AssetNotFoundException;
 
+    <V> V addView(Class<V> viewType, V v);
 
     boolean isSubAsset();
-
-    default void viewTypeLayersOn(Class viewType, String description, Class underlyingType) {
-        addClassifier(viewType, description, rc -> (rc2, asset) ->
-                (View) asset.acquireFactory(viewType).create(rc2, asset, () -> (Assetted) asset.acquireView(underlyingType, rc2)));
-    }
 
     @NotNull
     default Asset root() {
         return parent() == null ? this : parent().root();
     }
+
+    boolean hasChildren();
 }

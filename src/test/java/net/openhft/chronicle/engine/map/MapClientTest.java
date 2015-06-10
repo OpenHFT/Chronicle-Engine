@@ -30,6 +30,7 @@ import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -61,7 +62,6 @@ public class MapClientTest extends ThreadMonitoringTest {
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() throws IOException {
-
         return Arrays.asList(new Class[][]{
                 {LocalMapSupplier.class},
                // {RemoteMapSupplier.class}
@@ -70,6 +70,11 @@ public class MapClientTest extends ThreadMonitoringTest {
 
     public MapClientTest(Class<? extends CloseableSupplier> supplier) {
         this.supplier = supplier;
+    }
+
+    @Before
+    public void setUp() {
+        Chassis.resetChassis();
     }
 
     @Test(timeout = 50000)
@@ -96,7 +101,7 @@ public class MapClientTest extends ThreadMonitoringTest {
     public void testSubscriptionTest() throws IOException, InterruptedException {
         yamlLoggger(() -> {
             try {
-                    supplyMap(Integer.class, String.class, map -> {
+                supplyMap(Integer.class, String.class, map -> {
                     try {
                         supplyMapEventListener(Integer.class, String.class, mapEventListener -> {
                             Chassis.registerSubscriber("test", MapEvent.class, e -> e.apply(mapEventListener));
@@ -105,8 +110,7 @@ public class MapClientTest extends ThreadMonitoringTest {
 
                         });
 
-                    }
-                    catch(IOException e){
+                    } catch (IOException e) {
                         Jvm.rethrow(e);
                     }
                 });

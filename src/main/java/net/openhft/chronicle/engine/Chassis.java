@@ -88,17 +88,17 @@ public enum Chassis {
         assetTree.unregisterTopicSubscriber(name, tClass, eClass, subscriber);
     }
 
-    public static <E> void registerFactory(String name, Class<E> eClass, ViewFactory<E> factory) {
-        assetTree.registerFactory(name, eClass, factory);
+    public static <W, U> void addWrappingRule(Class<W> wClass, String description, WrappingViewFactory<W, U> factory, Class<U> uClass) {
+        assetTree.root().addWrappingRule(wClass, description, factory, uClass);
     }
 
-    public static void viewTypeLayersOn(Class viewType, String description, Class underlyingType) {
-        ((VanillaAssetTree) assetTree).viewTypeLayersOn(viewType, description, underlyingType);
+    public static <L> void addLeafRule(Class<L> viewType, String description, LeafViewFactory<L> factory) {
+        assetTree.root().addLeafRule(viewType, description, factory);
     }
 
     // TODO can we hide this.
     public static void enableTranslatingValuesToBytesStore() {
-        ((VanillaAsset) assetTree.getAsset("")).enableTranslatingValuesToBytesStore();
+        ((VanillaAsset) assetTree.root()).enableTranslatingValuesToBytesStore();
     }
 
     @Nullable

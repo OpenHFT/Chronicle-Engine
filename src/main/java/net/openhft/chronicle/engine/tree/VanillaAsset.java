@@ -1,12 +1,11 @@
 package net.openhft.chronicle.engine.tree;
 
 import net.openhft.chronicle.core.util.Closeable;
-import net.openhft.chronicle.core.util.ThrowingFunction;
 import net.openhft.chronicle.engine.api.*;
-import net.openhft.chronicle.engine.api.collection.ValuesCollection;
-import net.openhft.chronicle.engine.api.map.*;
+import net.openhft.chronicle.engine.api.map.KeyValueStore;
+import net.openhft.chronicle.engine.api.map.MapView;
+import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
-import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.map.*;
 import net.openhft.chronicle.engine.pubsub.VanillaReference;
 import net.openhft.chronicle.engine.session.VanillaSessionProvider;
@@ -18,8 +17,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.Map;
+import java.util.SortedMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.function.BiPredicate;
 
 import static net.openhft.chronicle.engine.api.RequestContext.requestContext;
 
@@ -29,14 +30,16 @@ import static net.openhft.chronicle.engine.api.RequestContext.requestContext;
 public class VanillaAsset implements Asset, Closeable {
     public static final Comparator<Class> CLASS_COMPARATOR = Comparator.comparing(Class::getName);
     private static final String LAST = "{last}";
-
+    private static final BiPredicate<RequestContext, Asset> ALWAYS = (rc, asset) -> true;
+    final Map<Class, View> viewMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
+    final ConcurrentMap<String, Asset> children = new ConcurrentSkipListMap<>();
     private final Asset parent;
     @NotNull
     private final String name;
+    private final Map<Class, SortedMap<String, WrappingViewRecord>> wrappingViewFactoryMap =
+            new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
+    private final Map<Class, LeafViewFactory> leafViewFactoryMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
 
-    private final Map<Class, Map<String, ThrowingFunction<RequestContext, ViewLayer, AssetNotFoundException>>> classifierMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
-    final Map<Class, View> viewMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
-    private final Map<Class, ViewFactory> factoryMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
     private Boolean keyedAsset;
 
     public VanillaAsset(Asset asset, @NotNull String name) {
@@ -52,60 +55,49 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     public void standardStack() {
-        viewTypeLayersOn(TopicPublisher.class, LAST + " topic publisher", MapView.class);
-        registerFactory(TopicPublisher.class, VanillaTopicPublisher::new);
+        addWrappingRule(TopicPublisher.class, LAST + " topic publisher", VanillaTopicPublisher::new, MapView.class);
 
-        viewTypeLayersOn(Reference.class, LAST + "reference", MapView.class);
-        registerFactory(Reference.class, VanillaReference::new);
-
-        viewTypeLayersOn(Publisher.class, LAST + "publisher", MapView.class);
-        registerFactory(Publisher.class, VanillaReference::new);
-
-        viewTypeLayersOn(EntrySetView.class, LAST + " entrySet", MapView.class);
-        registerFactory(EntrySetView.class, VanillaEntrySetView::new);
+        addWrappingRule(Reference.class, LAST + "reference", VanillaReference::new, MapView.class);
+        addWrappingRule(Publisher.class, LAST + "publisher", VanillaReference::new, MapView.class);
+        addWrappingRule(EntrySetView.class, LAST + " entrySet", VanillaEntrySetView::new, MapView.class);
 
         // todo CE-54  registerFactory(MapEventSubscriber.class,VanillaMapEventSubscriber::new);
-        viewTypeLayersOn(ValuesCollection.class, LAST + " values", MapView.class);
+//        viewTypeLayersOn(ValuesCollection.class, LAST + " values", MapView.class);
 
-        viewTypeLayersOn(MapEventSubscriber.class, LAST + " MapEvent subscriber", Subscription.class);
+//        viewTypeLayersOn(MapEventSubscriber.class, LAST + " MapEvent subscriber", Subscription.class);
 // todo CE-54      registerFactory(MapEventSubscriber.class, VanillaMapEventSubscriber::new);
 
-        viewTypeLayersOn(KeySubscriber.class, LAST + " keySet subscriber", Subscription.class);
+//        viewTypeLayersOn(KeySubscriber.class, LAST + " keySet subscriber", Subscription.class);
 // todo CE-54      registerFactory(KeySubscriber.class, VanillaKeySubscriber::new);
 
-        viewTypeLayersOn(EntrySetSubscriber.class, LAST + " entrySet subscriber", Subscription.class);
+//        viewTypeLayersOn(EntrySetSubscriber.class, LAST + " entrySet subscriber", Subscription.class);
 // todo  CE-54     registerFactory(EntrySetView.class, VanillaEntrySetSubscriber::new);
 
-        viewTypeLayersOn(KeySetView.class, LAST + " keySet", MapView.class);
+//        viewTypeLayersOn(KeySetView.class, LAST + " keySet", MapView.class);
 // todo  CE-54     registerFactory(KeySetView.class, VanillaKeySetView::new);
 
-        viewTypeLayersOn(TopicSubscriber.class, LAST + " key,value topic subscriber", Subscription.class);
+//        viewTypeLayersOn(TopicSubscriber.class, LAST + " key,value topic subscriber", Subscription.class);
 // todo   CE-54    registerFactory(TopicSubscriber.class, VanillaTopicSubscriber::new);
 
-        addClassifier(Subscriber.class, LAST + " generic subscriber", rc ->
-                        rc.elementType() == MapEvent.class ? (rc2, asset) -> asset.acquireFactory(MapEventSubscriber.class).create(rc2, asset, () -> (Assetted) asset.acquireView(Subscription.class, rc2))
-                      : rc.elementType() == Map.Entry.class ? (rc2, asset) -> asset.acquireFactory(EntrySetSubscriber.class).create(rc2, asset, () -> (Assetted) asset.acquireView(Subscription.class, rc2))
-                                : (rc2, asset) -> asset.acquireFactory(KeySubscriber.class).create(rc2, asset, () -> (Assetted) asset.acquireView(Subscription.class, rc2))
-        );
-
-        viewTypeLayersOn(MapView.class, LAST + " string key maps", AuthenticatedKeyValueStore.class);
-        registerFactory(MapView.class, VanillaMapView::new);
-
-        registerFactory(SubscriptionKVSCollection.class, VanillaSubscriptionKVSCollection::new);
+        addWrappingRule(MapView.class, LAST + " string key maps", VanillaMapView::new, ObjectKeyValueStore.class);
     }
 
     public void forTesting() {
         standardStack();
 
-        viewTypeLayersOn(AuthenticatedKeyValueStore.class, LAST + " string -> marshallable", KeyValueStore.class);
-        registerFactory(AuthenticatedKeyValueStore.class, VanillaSubscriptionKeyValueStore::new);
+        addWrappingRule(ObjectKeyValueStore.class, LAST + " authenticated",
+                VanillaSubscriptionKeyValueStore::new, KeyValueStore.class);
 
-        viewTypeLayersOn(SubscriptionKeyValueStore.class, LAST + " sub -> foundation", KeyValueStore.class);
-        registerFactory(SubscriptionKeyValueStore.class, VanillaSubscriptionKeyValueStore::new);
+        addWrappingRule(AuthenticatedKeyValueStore.class, LAST + " authenticated",
+                VanillaSubscriptionKeyValueStore::new, KeyValueStore.class);
 
-        registerFactory(KeyValueStore.class, VanillaKeyValueStore::new);
+        addWrappingRule(SubscriptionKeyValueStore.class, LAST + " sub -> foundation",
+                VanillaSubscriptionKeyValueStore::new, KeyValueStore.class);
 
-        registerFactory(Subscription.class, VanillaSubscriptionKVSCollection::new);
+        addLeafRule(KeyValueStore.class, LAST + " vanilla", VanillaKeyValueStore::new);
+
+        addLeafRule(SubscriptionKVSCollection.class, LAST + " vanilla",
+                VanillaSubscriptionKVSCollection::new);
 
         addView(SessionProvider.class, new VanillaSessionProvider());
     }
@@ -113,50 +105,70 @@ public class VanillaAsset implements Asset, Closeable {
     public void forRemoteAccess() {
         standardStack();
 
-        //addView((ClientWiredStatelessTcpConnectionHub));
-        registerFactory(TcpConnectionHub.class, TcpConnectionHub::new);
-        registerFactory(AuthenticatedKeyValueStore.class, RemoteAuthenticatedKeyValueStore::new);
-        registerFactory(Subscription.class, RemoteSubscriptionKVSCollection::new);
-    }
-
-    @Override
-    public <V> void addClassifier(Class<V> assetType, String name, ThrowingFunction<RequestContext, ViewLayer, AssetNotFoundException> viewBuilderFactory) {
-        Map<String, ThrowingFunction<RequestContext, ViewLayer, AssetNotFoundException>> stringFunctionMap = classifierMap.computeIfAbsent(assetType, k -> new ConcurrentSkipListMap<>());
-        stringFunctionMap.put(name, viewBuilderFactory);
+        addLeafRule(TcpConnectionHub.class, LAST + " hub", TcpConnectionHub::new);
+        addWrappingRule(ObjectKeyValueStore.class, LAST + " remote AKVS",
+                RemoteKeyValueStore::new, TcpConnectionHub.class);
     }
 
     public void enableTranslatingValuesToBytesStore() {
-        addClassifier(MapView.class, "{Marshalling} string key maps", rc ->
-                        rc.keyType() == String.class
-                                ? rc.valueType() == String.class ? (rc2, asset) -> asset.acquireFactory(MapView.class).create(rc2, asset, () -> asset.acquireView(StringStringKeyValueStore.class, rc2))
-                                : Marshallable.class.isAssignableFrom(rc.valueType()) ? (rc2, asset) -> asset.acquireFactory(MapView.class).create(rc2, asset, () -> asset.acquireView(StringMarshallableKeyValueStore.class, rc2))
-                                : null
-                                : null
-        );
-        viewTypeLayersOn(StringStringKeyValueStore.class, "{Marshalling} string -> string", AuthenticatedKeyValueStore.class);
-        viewTypeLayersOn(StringMarshallableKeyValueStore.class, "{Marshalling} string -> marshallable", AuthenticatedKeyValueStore.class);
-
-        registerFactory(StringMarshallableKeyValueStore.class, VanillaStringMarshallableKeyValueStore::new);
-        registerFactory(StringStringKeyValueStore.class, VanillaStringStringKeyValueStore::new);
+        addWrappingRule(ObjectKeyValueStore.class, "{Marshalling} string,string map",
+                (rc, asset) -> rc.keyType() == String.class && rc.valueType() == String.class,
+                VanillaStringStringKeyValueStore::new, AuthenticatedKeyValueStore.class);
+        addWrappingRule(ObjectKeyValueStore.class, "{Marshalling} string,marshallable map",
+                (rc, asset) -> rc.keyType() == String.class && Marshallable.class.isAssignableFrom(rc.valueType()),
+                VanillaStringMarshallableKeyValueStore::new, AuthenticatedKeyValueStore.class);
     }
 
-    public ViewLayer classify(Class viewType, RequestContext rc) throws AssetNotFoundException {
-        Map<String, ThrowingFunction<RequestContext, ViewLayer, AssetNotFoundException>> stringFunctionMap = classifierMap.get(viewType);
-        if (stringFunctionMap != null) {
-            for (ThrowingFunction<RequestContext, ViewLayer, AssetNotFoundException> function : stringFunctionMap.values()) {
-                ViewLayer apply = function.apply(rc);
-                if (apply != null)
-                    return apply;
+    @Override
+    public <W, U> void addWrappingRule(Class<W> iClass, String description, BiPredicate<RequestContext, Asset> predicate, WrappingViewFactory<W, U> factory, Class<U> underlyingType) {
+        SortedMap<String, WrappingViewRecord> smap = wrappingViewFactoryMap.computeIfAbsent(iClass, k -> new ConcurrentSkipListMap<>());
+        smap.put(description, new WrappingViewRecord(predicate, factory, underlyingType));
+    }
+
+    @Override
+    public <W, U> void addWrappingRule(Class<W> iClass, String description, WrappingViewFactory<W, U> factory, Class<U> underlyingType) {
+        addWrappingRule(iClass, description, ALWAYS, factory, underlyingType);
+    }
+
+    @Override
+    public <L> void addLeafRule(Class<L> iClass, String description, LeafViewFactory<L> factory) {
+        leafViewFactoryMap.put(iClass, factory);
+    }
+
+    @Override
+    public <I, U> I createWrappingView(Class viewType, RequestContext rc, Asset asset, U underling) throws AssetNotFoundException {
+        SortedMap<String, WrappingViewRecord> smap = wrappingViewFactoryMap.get(viewType);
+        if (smap != null)
+            for (WrappingViewRecord wvRecord : smap.values()) {
+                if (wvRecord.predicate.test(rc, asset)) {
+                    if (underling == null)
+                        underling = (U) asset.acquireView(wvRecord.underlyingType, rc);
+                    return (I) wvRecord.factory.create(rc, asset, underling);
+                }
             }
-        }
         if (parent == null)
-            throw new AssetNotFoundException("Unable to classify " + viewType + ", rc: " + rc);
-        return parent.classify(viewType, rc);
+            return null;
+        return parent.createWrappingView(viewType, rc, asset, underling);
+    }
+
+    @Override
+    public <I> I createWrappingLeaf(Class viewType, RequestContext rc, Asset asset) throws AssetNotFoundException {
+        LeafViewFactory lvFactory = leafViewFactoryMap.get(viewType);
+        if (lvFactory != null)
+            return (I) lvFactory.create(rc, asset);
+        if (parent == null)
+            throw new AssetNotFoundException("Unable to classify view=" + viewType.getName() + " context=" + rc);
+        return parent.createWrappingLeaf(viewType, rc, asset);
     }
 
     @Override
     public boolean isSubAsset() {
         return false;
+    }
+
+    @Override
+    public boolean hasChildren() {
+        return !children.isEmpty();
     }
 
     @Nullable
@@ -186,77 +198,27 @@ public class VanillaAsset implements Asset, Closeable {
             if (view != null) {
                 return (V) view;
             }
-            ViewLayer classify;
-            try {
-                classify = classify(viewType, rc);
-
-            } catch (AssetNotFoundException e) {
-                ViewFactory<V> factory = getFactory(viewType);
-                if (factory == null)
-                    throw e;
-                view = (V) factory.create(rc, this, null);
-                addView(viewType, view);
-                return view;
-            }
-            view = (V) classify.create(rc, this);
-            addView(viewType, view);
-            return view;
+            V wrappingView = createWrappingView(viewType, rc, this, null);
+            if (wrappingView != null)
+                return addView(viewType, wrappingView);
+            return addView(viewType, createWrappingLeaf(viewType, rc, this));
         }
     }
 
-    public <V> void addView(Class<V> viewType, V v) {
+    @Override
+    public <V> V addView(Class<V> viewType, V v) {
         View view = (View) v;
         if (view.keyedView()) {
-            assert children.isEmpty();
             keyedAsset = true;
         }
         viewMap.put(viewType, view);
         if (v instanceof SubscriptionKeyValueStore)
             topSubscription(((SubscriptionKeyValueStore) v));
+        return v;
     }
 
     private void topSubscription(@NotNull SubscriptionKeyValueStore skvStore) {
         viewMap.put(Subscription.class, skvStore.subscription(true));
-    }
-
-
-    @Nullable
-    public <I> ViewFactory<I> getFactory(Class<I> iClass) {
-        ViewFactory<I> factory = factoryMap.get(iClass);
-        if (factory != null)
-            return factory;
-
-        if (parent == null) {
-            return null;
-        }
-        return parent.getFactory(iClass);
-    }
-
-    @Override
-    public <I> ViewFactory<I> acquireFactory(Class<I> iClass) throws AssetNotFoundException {
-        ViewFactory<I> factory = factoryMap.get(iClass);
-        if (factory != null)
-            return factory;
-        try {
-            if (parent == null) {
-                throw new AssetNotFoundException("Cannot find or build an factory for " + iClass);
-            }
-            return parent.acquireFactory(iClass);
-        } catch (AssetNotFoundException e) {
-            if (iClass != View.class) {
-                ViewFactory<ViewFactory> factoryFactory = factoryMap.get(ViewFactory.class);
-                if (factoryFactory != null) {
-                    factory = factoryFactory.create(requestContext(), this, () -> {
-                        throw new UnsupportedOperationException();
-                    });
-                    if (factory != null) {
-                        factoryMap.put(iClass, factory);
-                        return factory;
-                    }
-                }
-            }
-            throw e;
-        }
     }
 
     @Override
@@ -287,8 +249,6 @@ public class VanillaAsset implements Asset, Closeable {
     public Asset parent() {
         return parent;
     }
-
-    final ConcurrentMap<String, Asset> children = new ConcurrentSkipListMap<>();
 
     @NotNull
     @Override
@@ -332,14 +292,22 @@ public class VanillaAsset implements Asset, Closeable {
         throw new UnsupportedOperationException("todo");
     }
 
-    @Override
-    public <I> void registerFactory(Class<I> iClass, ViewFactory<I> factory) {
-        factoryMap.put(iClass, factory);
-    }
 
     @NotNull
     @Override
     public String toString() {
         return fullName();
+    }
+
+    static class WrappingViewRecord<W, U> {
+        final BiPredicate<RequestContext, Asset> predicate;
+        final WrappingViewFactory<W, U> factory;
+        final Class<U> underlyingType;
+
+        WrappingViewRecord(BiPredicate<RequestContext, Asset> predicate, WrappingViewFactory<W, U> factory, Class<U> underlyingType) {
+            this.predicate = predicate;
+            this.factory = factory;
+            this.underlyingType = underlyingType;
+        }
     }
 }

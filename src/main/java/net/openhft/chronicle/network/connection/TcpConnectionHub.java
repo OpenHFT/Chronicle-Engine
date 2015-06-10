@@ -23,7 +23,6 @@ import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.util.CloseablesManager;
-import net.openhft.chronicle.core.util.ThrowingSupplier;
 import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.network.event.EventGroup;
@@ -85,8 +84,7 @@ public class TcpConnectionHub implements View, Closeable {
     private long startTime;
 
     public TcpConnectionHub(@NotNull final RequestContext requestContext,
-                            final Asset asset,
-                            final ThrowingSupplier<Assetted, AssetNotFoundException> assettedSupplier) {
+                            final Asset asset) {
 
         this.tcpBufferSize = requestContext.tcpBufferSize();
         this.remoteAddress = new InetSocketAddress(requestContext.host(), requestContext.port());

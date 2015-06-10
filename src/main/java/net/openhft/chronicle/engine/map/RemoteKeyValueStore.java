@@ -1,8 +1,10 @@
 package net.openhft.chronicle.engine.map;
 
-
-import net.openhft.chronicle.core.util.ThrowingSupplier;
-import net.openhft.chronicle.engine.api.*;
+import net.openhft.chronicle.core.annotation.NotNull;
+import net.openhft.chronicle.engine.api.Asset;
+import net.openhft.chronicle.engine.api.InvalidSubscriberException;
+import net.openhft.chronicle.engine.api.RequestContext;
+import net.openhft.chronicle.engine.api.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapReplicationEvent;
 import net.openhft.chronicle.engine.collection.ClientWiredStatelessChronicleCollection;
@@ -10,7 +12,6 @@ import net.openhft.chronicle.engine.collection.ClientWiredStatelessChronicleSet;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.TcpConnectionHub;
 import net.openhft.chronicle.wire.*;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -22,8 +23,8 @@ import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventI
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.*;
 import static net.openhft.chronicle.wire.CoreFields.stringEvent;
 
-public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
-        implements Cloneable, AuthenticatedKeyValueStore<K, V, V> {
+public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
+        implements Cloneable, ObjectKeyValueStore<K, V, V> {
 
     public static final Consumer<ValueOut> VOID_PARAMETERS = out -> out.marshallable(WriteMarshallable.EMPTY);
 
@@ -32,25 +33,24 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
     private final Map<Long, String> cidToCsp = new HashMap<>();
     @NotNull
     private final RequestContext context;
+    @org.jetbrains.annotations.NotNull
     private final Asset asset;
-    SubscriptionKVSCollection subscriptions;
 
-    @SuppressWarnings("unchecked")
-    public RemoteAuthenticatedKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset,
-                                            ThrowingSupplier<Assetted, AssetNotFoundException> underlying)
-            throws AssetNotFoundException {
-
-        super(TcpConnectionHub.hub(context, asset), (long) 0, toUri(context));
+    public RemoteKeyValueStore(@NotNull final RequestContext context,
+                               @NotNull Asset asset,
+                               @NotNull final TcpConnectionHub hub) {
+        super(hub, (long) 0, toUri(context));
         this.asset = asset;
-        this.context = context;
         this.kClass = context.keyType();
         this.vClass = context.valueType();
-        subscriptions = (SubscriptionKVSCollection)asset.acquireView(Subscription.class, context);
+        this.context = context;
+
+        subscriptions = asset.acquireView(SubscriptionKVSCollection.class, context);
+        subscriptions.setKvStore(this);
     }
 
-
-    @NotNull
-    private static String toUri(@NotNull final RequestContext context) {
+    @org.jetbrains.annotations.NotNull
+    private static String toUri(@org.jetbrains.annotations.NotNull final @NotNull RequestContext context) {
         return "/" + context.name()
                 + "?view=" + "map&keyType=" + context.keyType().getSimpleName() + "&valueType=" + context.valueType()
                 .getName();
@@ -359,7 +359,7 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
     @NotNull
     @Override
     public Asset asset() {
-        throw new UnsupportedOperationException();
+        return asset;
     }
 
     @NotNull
@@ -368,6 +368,10 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
         throw new UnsupportedOperationException();
     }
 
+    // todo
+    private final SubscriptionKVSCollection<K, V, V> subscriptions;
+
+    @org.jetbrains.annotations.NotNull
     @Override
     public SubscriptionKVSCollection<K, V, V> subscription(boolean createIfAbsent) {
         return subscriptions;
@@ -396,7 +400,7 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
 
         public final V setValue(V newValue) {
             V oldValue = value;
-            RemoteAuthenticatedKeyValueStore.this.put(getKey(), newValue);
+            RemoteKeyValueStore.this.put(getKey(), newValue);
             return oldValue;
         }
 

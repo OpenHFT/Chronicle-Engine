@@ -3,7 +3,6 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.ClassLocal;
-import net.openhft.chronicle.core.util.ThrowingSupplier;
 import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.api.map.*;
 import net.openhft.chronicle.wire.Marshallable;
@@ -32,13 +31,14 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     private final BiFunction<V, Bytes, Bytes> valueToBytes;
     private final BiFunction<BytesStore, V, V> bytesToValue;
     private SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore;
-    private final SubscriptionKVSCollection<String, V, V> subscriptions = new TranslatingSubscriptionKVSCollection();
+    private final SubscriptionKVSCollection<String, V, V> subscriptions;
     private Asset asset;
     private final Class type2;
     private final Function<Bytes, Wire> wireType;
 
-    public VanillaStringMarshallableKeyValueStore(RequestContext context, Asset asset, ThrowingSupplier<Assetted, AssetNotFoundException> kvStore) throws AssetNotFoundException {
-        this(asset, context.type2(), (SubscriptionKeyValueStore<String, Bytes, BytesStore>) kvStore.get(), context.wireType());
+    public VanillaStringMarshallableKeyValueStore(RequestContext context, Asset asset,
+                                                  SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore) throws AssetNotFoundException {
+        this(asset, context.type2(), kvStore, context.wireType());
     }
 
     VanillaStringMarshallableKeyValueStore(Asset asset, Class type2, SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore,
@@ -50,6 +50,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
         bytesToValue = fromBytes(type2, wireType);
         this.kvStore = kvStore;
         asset.registerView(ValueReader.class, (ValueReader<BytesStore, V>) (bs, v) -> bytesToValue.apply(bs, null));
+        subscriptions = new TranslatingSubscriptionKVSCollection(asset);
     }
 
     static <T> BiFunction<T, Bytes, Bytes> toBytes(Class type, Function<Bytes, Wire> wireType) {
@@ -179,6 +180,9 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     }
 
     class TranslatingSubscriptionKVSCollection implements SubscriptionKVSCollection<String, V, V> {
+        public TranslatingSubscriptionKVSCollection(Asset asset) {
+        }
+
         @Override
         public void registerSubscriber(RequestContext rc, Subscriber subscriber) {
             Class eClass = rc.type();

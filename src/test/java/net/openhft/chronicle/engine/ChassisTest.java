@@ -8,7 +8,6 @@ import net.openhft.chronicle.engine.map.RemovedEvent;
 import net.openhft.chronicle.engine.map.UpdatedEvent;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -106,7 +105,6 @@ public class ChassisTest {
                         .collect(Collectors.joining(", ")));
     }
 
-    @Ignore("fix JIRA https://higherfrequencytrading.atlassian.net/browse/CE-71")
     @Test
     public void keySubscription() throws InvalidSubscriberException {
         ConcurrentMap<String, String> map = acquireMap("map-name?putReturnsNull=true", String.class, String.class);
@@ -275,10 +273,13 @@ todo fix this test
         assertEquals("group2/sub-group", group2.fullName());
     }
 
-    @Ignore("JIRA https://higherfrequencytrading.atlassian.net/browse/CE-62")
-    @Test(expected = AssetNotFoundException.class)
+    @Test()
     public void noAsset() {
-        registerTopicSubscriber("map-name", String.class, String.class, (t, e) -> System.out.println("{ key: " + t + ", event: " + e + " }"));
+        registerTopicSubscriber("topic-name", String.class, String.class, (t, e) -> System.out.println("{ key: " + t + ", event: " + e + " }"));
+        TopicPublisher<String, String> publisher = acquireTopicPublisher("topic-name", String.class, String.class);
+        publisher.publish("hi", "there");
+
+        // TODO should send a message.
     }
 
     @Test(expected = AssetNotFoundException.class)
@@ -292,7 +293,7 @@ todo fix this test
     public void generateInterceptor() {
         Asset asset = acquireAsset("", null, null, null);
 
-        asset.registerFactory(MyInterceptor.class, (context, asset2, underlyingSupplier) -> {
+        asset.addLeafRule(MyInterceptor.class, "test", (context, asset2) -> {
             assertEquals(MyInterceptor.class, context.viewType());
             return new MyInterceptor();
         });

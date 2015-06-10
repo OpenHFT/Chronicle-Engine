@@ -3,15 +3,11 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.BytesUtil;
-import net.openhft.chronicle.bytes.StreamingDataInput;
-import net.openhft.chronicle.core.ClassLocal;
-import net.openhft.chronicle.core.util.ThrowingSupplier;
 import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.api.map.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Constructor;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.function.Function;
@@ -22,36 +18,19 @@ import static net.openhft.chronicle.engine.map.Buffers.BUFFERS;
  * Created by peter on 25/05/15.
  */
 public class VanillaStringStringKeyValueStore implements StringStringKeyValueStore {
-    private static final ClassLocal<Constructor> CONSTRUCTORS = ClassLocal.withInitial(c -> {
-        try {
-            Constructor con = c.getDeclaredConstructor();
-            con.setAccessible(true);
-            return con;
-        } catch (NoSuchMethodException e) {
-            throw new AssertionError(e);
-        }
-    });
-    public static final Function<BytesStore, String> BYTES_STORE_STRING_FUNCTION = v -> BytesUtil.to8bitString((StreamingDataInput) v);
-    private final SubscriptionKVSCollection<String, StringBuilder, String> subscriptions = new TranslatingSubscriptionKVSCollection();
+    public static final Function<BytesStore, String> BYTES_STORE_STRING_FUNCTION = v -> BytesUtil.to8bitString(v);
+    private final SubscriptionKVSCollection<String, StringBuilder, String> subscriptions;
     private SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore;
     private Asset asset;
 
-
-    public VanillaStringStringKeyValueStore(RequestContext context, @NotNull Asset asset, @NotNull ThrowingSupplier<Assetted, AssetNotFoundException> kvStore) throws AssetNotFoundException {
+    public VanillaStringStringKeyValueStore(RequestContext context, @NotNull Asset asset,
+                                            @NotNull SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore) throws AssetNotFoundException {
         this.asset = asset;
-        this.kvStore = (SubscriptionKeyValueStore<String, Bytes, BytesStore>) kvStore.get();
-        asset.registerView(ValueReader.class, (ValueReader<BytesStore, String>) (bs, s) -> BytesUtil.to8bitString((StreamingDataInput) bs));
-    }
-
-    @Nullable
-    static <T> T acquireInstance(@NotNull Class type, @Nullable T t) {
-        if (t == null)
-            try {
-                t = (T) CONSTRUCTORS.get(type).newInstance();
-            } catch (Exception e) {
-                throw new AssertionError(e);
-            }
-        return t;
+        this.kvStore = kvStore;
+        asset.registerView(ValueReader.class, (ValueReader<BytesStore, String>) (bs, s) -> BytesUtil.to8bitString(bs));
+        SubscriptionKVSCollection subscriptions0 = asset.acquireView(SubscriptionKVSCollection.class, context);
+        subscriptions0.setKvStore(this);
+        subscriptions = new TranslatingSubscriptionKVSCollection(subscriptions0);
     }
 
     @NotNull
@@ -152,7 +131,11 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
 
     class TranslatingSubscriptionKVSCollection implements SubscriptionKVSCollection<String, StringBuilder, String> {
         @NotNull
-        SubscriptionKVSCollection<String, StringBuilder, String> subscriptions = new VanillaSubscriptionKVSCollection<>(VanillaStringStringKeyValueStore.this);
+        SubscriptionKVSCollection<String, StringBuilder, String> subscriptions;
+
+        public TranslatingSubscriptionKVSCollection(SubscriptionKVSCollection subscriptions) {
+            this.subscriptions = subscriptions;
+        }
 
         @Override
         public  void registerSubscriber(@NotNull RequestContext rc, Subscriber subscriber) {
@@ -173,7 +156,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         @Override
         public <T, E> void registerTopicSubscriber(RequestContext rc, @NotNull TopicSubscriber <T, E>  subscriber) {
             kvStore.subscription(true).registerTopicSubscriber(rc, (T topic, E message) -> {
-                subscriber.onMessage(topic, (E) BytesUtil.to8bitString((StreamingDataInput) message));
+                subscriber.onMessage(topic, (E) BytesUtil.to8bitString((BytesStore) message));
             });
             subscriptions.registerTopicSubscriber(rc, subscriber);
         }

@@ -1,7 +1,9 @@
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.core.util.ThrowingSupplier;
-import net.openhft.chronicle.engine.api.*;
+import net.openhft.chronicle.engine.api.Asset;
+import net.openhft.chronicle.engine.api.InvalidSubscriberException;
+import net.openhft.chronicle.engine.api.RequestContext;
+import net.openhft.chronicle.engine.api.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapReplicationEvent;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +21,7 @@ public class VanillaKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> {
     private final ConcurrentMap<K, V> map = new ConcurrentHashMap<>();
     private Asset asset;
 
-    public VanillaKeyValueStore(RequestContext context, Asset asset, ThrowingSupplier<Assetted, AssetNotFoundException> assetted) {
+    public VanillaKeyValueStore(RequestContext context, Asset asset) {
         this(asset);
     }
 

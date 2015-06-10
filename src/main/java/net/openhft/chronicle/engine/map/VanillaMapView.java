@@ -1,8 +1,9 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.annotation.NotNull;
-import net.openhft.chronicle.core.util.ThrowingSupplier;
-import net.openhft.chronicle.engine.api.*;
+import net.openhft.chronicle.engine.api.Asset;
+import net.openhft.chronicle.engine.api.RequestContext;
+import net.openhft.chronicle.engine.api.TopicSubscriber;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
@@ -24,8 +25,8 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
     private Asset asset;
     private KeyValueStore<K, MV, V> kvStore;
 
-    public VanillaMapView(@org.jetbrains.annotations.NotNull RequestContext context, Asset asset, @org.jetbrains.annotations.NotNull ThrowingSupplier<Assetted, AssetNotFoundException> kvsSupplier) throws AssetNotFoundException {
-        this(context.keyType(), context.valueType(), asset, (KeyValueStore<K, MV, V>) kvsSupplier.get(), context.putReturnsNull() != Boolean.FALSE, context.removeReturnsNull() != Boolean.FALSE);
+    public VanillaMapView(RequestContext context, Asset asset, KeyValueStore<K, MV, V> kvStore) {
+        this(context.keyType(), context.valueType(), asset, kvStore, context.putReturnsNull() != Boolean.FALSE, context.removeReturnsNull() != Boolean.FALSE);
     }
 
     public VanillaMapView(Class keyClass, Class valueType, Asset asset, KeyValueStore<K, MV, V> kvStore, boolean putReturnsNull, boolean removeReturnsNull) {

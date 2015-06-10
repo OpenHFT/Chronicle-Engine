@@ -43,11 +43,12 @@ public class VanillaAssetTree implements AssetTree {
     }
 
     @Override
-    public void close() {
-        root.close();
+    public Asset root() {
+        return root;
     }
 
-    public void viewTypeLayersOn(Class viewType, String description, Class underlyingType) {
-        root.viewTypeLayersOn(viewType, description, underlyingType);
+    @Override
+    public void close() {
+        root.close();
     }
 }
