@@ -79,6 +79,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private RequestContext requestContext;
     private Class viewType;
     private SessionProvider sessionProvider;
+    private Wire publish;
 
     public EngineWireHandler(@NotNull final Map<Long, String> cidToCsp,
                              @NotNull final Function<Bytes, Wire> byteToWire,
@@ -94,18 +95,16 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
         this.valuesHandler = new CollectionWireHandlerProcessor<>();
         this.metaDataConsumer = wireInConsumer();
         this.sessionProvider = assetTree.getAsset("").getView(SessionProvider.class);
+        this.publish = byteToWire.apply(Bytes.elasticByteBuffer());
     }
 
     private final List<WireHandler> handlers = new ArrayList<>();
 
     protected void publish(Wire out) {
-        if (!handlers.isEmpty()) {
-            final WireHandler remove = handlers.remove(handlers.size() - 1);
-
-            try {
-                remove.process(null, out);
-            } catch (StreamCorruptedException e) {
-                throw new RuntimeException(e);
+        synchronized (publish){
+            if (publish.bytes().position() > 0) {
+                publish.bytes().flip();
+                out.bytes().write(publish.bytes());
             }
         }
     }
@@ -217,7 +216,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                 if (mh != null) {
 
                     if (viewType == MapView.class) {
-                        mapWireHandler.process(in, out, (MapView) view, tid, mh, requestContext);
+                        mapWireHandler.process(in, out, (MapView) view, tid, mh, requestContext, publish);
                         return;
                     }
 

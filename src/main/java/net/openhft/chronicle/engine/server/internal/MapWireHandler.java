@@ -25,7 +25,11 @@ package net.openhft.chronicle.engine.server.internal;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.StringBuilderPool;
+import net.openhft.chronicle.engine.Chassis;
+import net.openhft.chronicle.engine.api.Asset;
 import net.openhft.chronicle.engine.api.RequestContext;
+import net.openhft.chronicle.engine.api.map.MapEvent;
+import net.openhft.chronicle.engine.api.map.MapEventListener;
 import net.openhft.chronicle.engine.collection.CollectionWireHandlerProcessor;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.wire.*;
@@ -43,6 +47,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static net.openhft.chronicle.engine.Chassis.getAsset;
+import static net.openhft.chronicle.engine.Chassis.registerSubscriber;
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.*;
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.Params.*;
 import static net.openhft.chronicle.wire.CoreFields.reply;
@@ -60,14 +66,17 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
     private Function<ValueIn, K> wireToK;
     private Function<ValueIn, V> wireToV;
     private RequestContext requestContext;
+    private Wire publish;
 
     public void process(@NotNull final Wire in,
                         @NotNull final Wire out,
                         @NotNull Map<K, V> map,
                         long tid,
                         @NotNull final MapHandler<K, V> mapHandler,
-                        @NotNull final RequestContext requestContext) throws
+                        @NotNull final RequestContext requestContext,
+                        final Wire publish) throws
             StreamCorruptedException {
+        this.publish = publish;
 
         this.vToWire = mapHandler.valueToWire();
         this.wireToK = mapHandler.wireToKey();
@@ -121,7 +130,8 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
         keyBuilder,
         valueBuilder,
         remoteIdentifier,
-        numberOfSegments;
+        numberOfSegments,
+        subscribe;
 
         private final WireKey[] params;
 
@@ -198,6 +208,38 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                         nullCheck(value);
                         map.put(key, value);
                     });
+                    return;
+                }
+
+                if (subscribe.contentEquals(eventName)) {
+
+                    MapEventListener<K, V> listener = new MapEventListener<K, V>() {
+                        @Override
+                        public void update(K key, V oldValue, V newValue) {
+                            if(LOG.isDebugEnabled()){
+                                LOG.debug("Updated { key: " + key + ", oldValue: " + oldValue + ", value: " + newValue + " }");
+                            }
+                            synchronized (publish) {
+                                publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(tid));
+                                publish.writeDocument(false, wire -> vToWire.accept(wire.writeEventName(reply), newValue));
+                            }
+                        }
+
+                        @Override
+                        public void insert(K key, V value) {
+                            System.out.println("Inserted { key: " + key + ", value: " + value + " }");
+
+                        }
+
+                        @Override
+                        public void remove(K key, V oldValue) {
+                            System.out.println("Removed { key: " + key + ", value: " + oldValue + " }");
+                        }
+                    };
+
+                    registerSubscriber(requestContext.name(), MapEvent.class,  e -> e.apply(listener));
+
+
                     return;
                 }
 

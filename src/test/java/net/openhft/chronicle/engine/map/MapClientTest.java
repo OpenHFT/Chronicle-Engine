@@ -28,6 +28,7 @@ import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -88,6 +89,7 @@ public class MapClientTest extends ThreadMonitoringTest {
         });
     }
 
+    @Ignore
     @Test(timeout = 50000)
     public void testSubscriptionTest() throws IOException, InterruptedException {
         yamlLoggger(() -> {

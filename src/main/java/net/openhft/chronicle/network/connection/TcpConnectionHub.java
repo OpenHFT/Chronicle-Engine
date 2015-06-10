@@ -699,4 +699,8 @@ public class TcpConnectionHub implements View, Closeable {
     public void startTime(long startTime) {
         this.startTime = startTime;
     }
+
+    public static TcpConnectionHub hub(final RequestContext context, @NotNull final Asset asset) throws AssetNotFoundException {
+        return asset.acquireView(TcpConnectionHub.class, context);
+    }
 }

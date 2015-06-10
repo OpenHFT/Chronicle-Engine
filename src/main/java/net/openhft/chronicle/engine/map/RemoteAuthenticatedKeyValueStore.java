@@ -32,24 +32,23 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
     private final Map<Long, String> cidToCsp = new HashMap<>();
     @NotNull
     private final RequestContext context;
+    private final Asset asset;
+    SubscriptionKVSCollection subscriptions;
 
     @SuppressWarnings("unchecked")
-    public RemoteAuthenticatedKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset, ThrowingSupplier<Assetted, AssetNotFoundException> underlying) throws AssetNotFoundException {
-        this(context, hub(context, asset));
-    }
+    public RemoteAuthenticatedKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset,
+                                            ThrowingSupplier<Assetted, AssetNotFoundException> underlying)
+            throws AssetNotFoundException {
 
-    private RemoteAuthenticatedKeyValueStore(@NotNull final RequestContext context,
-                                             @NotNull final TcpConnectionHub hub) {
-        super(hub, (long) 0, toUri(context));
+        super(TcpConnectionHub.hub(context, asset), (long) 0, toUri(context));
+        this.asset = asset;
+        this.context = context;
         this.kClass = context.keyType();
         this.vClass = context.valueType();
-        this.context = context;
-
+        subscriptions = new
+                RemoteSubscriptionKVSCollection<K,V,V>(this, context, asset);
     }
 
-    private static TcpConnectionHub hub(final RequestContext context, @NotNull final Asset asset) throws AssetNotFoundException {
-        return asset.acquireView(TcpConnectionHub.class, context);
-    }
 
     @NotNull
     private static String toUri(@NotNull final RequestContext context) {
@@ -370,13 +369,8 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
         throw new UnsupportedOperationException();
     }
 
-    // todo
-    private final SubscriptionKVSCollection<K, V, V> subscriptions = new
-            VanillaSubscriptionKVSCollection<>(this);
-
-    @NotNull
     @Override
-    public SubscriptionKVSCollection<K, V, V> subscription(final boolean createIfAbsent) {
+    public SubscriptionKVSCollection<K, V, V> subscription(boolean createIfAbsent) {
         return subscriptions;
     }
 
