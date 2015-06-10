@@ -45,8 +45,7 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
         this.context = context;
         this.kClass = context.keyType();
         this.vClass = context.valueType();
-        subscriptions = new
-                RemoteSubscriptionKVSCollection<K,V,V>(this, context, asset);
+        subscriptions = (SubscriptionKVSCollection)asset.acquireView(Subscription.class, context);
     }
 
 
@@ -54,7 +53,7 @@ public class RemoteAuthenticatedKeyValueStore<K, V> extends AbstractStatelessCli
     private static String toUri(@NotNull final RequestContext context) {
         return "/" + context.name()
                 + "?view=" + "map&keyType=" + context.keyType().getSimpleName() + "&valueType=" + context.valueType()
-                .getSimpleName();
+                .getName();
     }
 
     @Override

@@ -1,14 +1,16 @@
 package net.openhft.chronicle.engine;
 
-import net.openhft.lang.io.Bytes;
-import net.openhft.lang.io.serialization.BytesMarshallable;
+import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.wire.Marshallable;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 
 
-public class Factor implements BytesMarshallable {
+public class Factor implements Marshallable {
 
     private byte openPDFlag;
     private byte openUCFlag;
@@ -115,7 +117,9 @@ public class Factor implements BytesMarshallable {
     }
 
     @Override
-    public void readMarshallable(@NotNull Bytes bytes) throws IllegalStateException {
+    public void readMarshallable(@NotNull WireIn wireIn) throws IllegalStateException {
+        Bytes bytes = wireIn.bytes();
+
         openPDFlag = bytes.readByte();
         openUCFlag = bytes.readByte();
         openActiveEMFlag = bytes.readByte();
@@ -131,7 +135,9 @@ public class Factor implements BytesMarshallable {
 
 
     @Override
-    public void writeMarshallable(@NotNull Bytes bytes) {
+    public void writeMarshallable(@NotNull WireOut wireOut) {
+        Bytes bytes = wireOut.bytes();
+
         bytes.writeByte(openPDFlag);
         bytes.writeByte(openUCFlag);
         bytes.writeByte(openActiveEMFlag);

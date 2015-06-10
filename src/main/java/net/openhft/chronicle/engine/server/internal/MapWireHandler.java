@@ -25,6 +25,7 @@ package net.openhft.chronicle.engine.server.internal;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.StringBuilderPool;
+import net.openhft.chronicle.engine.api.AssetTree;
 import net.openhft.chronicle.engine.api.RequestContext;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
@@ -49,6 +50,8 @@ import java.util.function.Function;
 import static net.openhft.chronicle.engine.Chassis.registerSubscriber;
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.*;
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.Params.*;
+import static net.openhft.chronicle.engine.server.internal.MapWireHandler.Params.newValue;
+import static net.openhft.chronicle.engine.server.internal.MapWireHandler.Params.oldValue;
 import static net.openhft.chronicle.wire.CoreFields.reply;
 import static net.openhft.chronicle.wire.WriteMarshallable.EMPTY;
 
@@ -60,11 +63,13 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
 
     private static final StringBuilderPool SBP = new StringBuilderPool();
 
+    private BiConsumer<ValueOut, K> kToWire = null;
     private BiConsumer<ValueOut, V> vToWire;
     private Function<ValueIn, K> wireToK;
     private Function<ValueIn, V> wireToV;
     private RequestContext requestContext;
     private Queue<Consumer<Wire>> publisher;
+    private AssetTree assetTree;
 
     /**
      * @param in             the data the has come in from network
@@ -74,6 +79,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
      * @param wireAdapter    adapts keys and values to and from wire
      * @param requestContext the uri of the event
      * @param publisher      used to publish events to
+     * @param assetTree
      * @throws StreamCorruptedException
      */
     public void process(@NotNull final Wire in,
@@ -82,7 +88,8 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                         long tid,
                         @NotNull final WireAdapter<K, V> wireAdapter,
                         @NotNull final RequestContext requestContext,
-                        Queue<Consumer<Wire>> publisher) throws
+                        @NotNull final Queue<Consumer<Wire>> publisher,
+                        @NotNull final AssetTree assetTree) throws
             StreamCorruptedException {
 
         this.vToWire = wireAdapter.valueToWire();
@@ -90,6 +97,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
         this.wireToV = wireAdapter.wireToValue();
         this.requestContext = requestContext;
         this.publisher = publisher;
+        this.assetTree = assetTree;
 
         try {
             this.inWire = in;
@@ -104,7 +112,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
         }
     }
 
-    enum Params implements WireKey {
+    public enum Params implements WireKey {
         key,
         value,
         oldValue,
@@ -234,7 +242,11 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                                 @Override
                                 public void accept(Wire publish) {
                                     publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(tid));
-                                    publish.writeDocument(false, wire -> vToWire.accept(wire.writeEventName(reply), newValue));
+                                    publish.writeDocument(false, wire -> wire.write(reply).marshallable(m -> {
+                                        kToWire.accept(m.write(Params.key), key);
+                                        vToWire.accept(m.write(Params.oldValue), newValue);
+                                        vToWire.accept(m.write(Params.newValue), newValue);
+                                    }));
                                 }
                             });
 
@@ -251,8 +263,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                             System.out.println("Removed { key: " + key + ", value: " + oldValue + " }");
                         }
                     };
-
-                    registerSubscriber(requestContext.name(), MapEvent.class, e -> e.apply(listener));
+                    assetTree.registerSubscriber(requestContext.name(), MapEvent.class, e -> e.apply(listener));
 
 
                     return;

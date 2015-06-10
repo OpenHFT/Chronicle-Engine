@@ -180,7 +180,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
 
     class TranslatingSubscriptionKVSCollection implements SubscriptionKVSCollection<String, V, V> {
         @Override
-        public <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber) {
+        public void registerSubscriber(RequestContext rc, Subscriber subscriber) {
             Class eClass = rc.type();
             if (eClass == MapEvent.class) {
                 Subscriber<MapEvent<String, V>> sub = (Subscriber<MapEvent<String, V>>) subscriber;
@@ -194,8 +194,10 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
             }
         }
 
+
+
         @Override
-        public <T, E> void registerTopicSubscriber(RequestContext rc, TopicSubscriber<T, E> subscriber) {
+        public <T, E> void registerTopicSubscriber(RequestContext rc, TopicSubscriber <T, E>  subscriber) {
             kvStore.subscription(true).registerTopicSubscriber(rc, (T topic, BytesStore message) -> {
                 subscriber.onMessage(topic, (E) bytesToValue.apply(message, null));
             });

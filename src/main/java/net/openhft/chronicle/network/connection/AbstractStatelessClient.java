@@ -24,7 +24,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
 
     /**
      * @param hub
-     * @param cid         used by proxies such as the entry-set
+     * @param cid used by proxies such as the entry-set
      * @param csp
      */
     public AbstractStatelessClient(@NotNull final TcpConnectionHub hub,
@@ -195,11 +195,24 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
         }
     }
 
-    <R> R readReply(@NotNull WireIn wireIn, @NotNull WireKey replyId, @NotNull Function<ValueIn, R> function) {
+    protected <R> R readReply(@NotNull WireIn wireIn, @NotNull WireKey replyId, @NotNull Function<ValueIn, R> function) {
         final ValueIn event = wireIn.read(eventName);
 
         if (replyId.contentEquals(eventName))
             return function.apply(event);
+
+        if (CoreFields.exception.contentEquals(eventName)) {
+            throw Jvm.rethrow(event.throwable(true));
+        }
+
+        throw new UnsupportedOperationException("unknown event=" + eventName);
+    }
+
+    protected <R> R readReplyConsumer(@NotNull WireIn wireIn, @NotNull WireKey replyId, @NotNull Consumer<ValueIn> consumer) {
+        final ValueIn event = wireIn.read(eventName);
+
+        if (replyId.contentEquals(eventName))
+            consumer.accept(event);
 
         if (CoreFields.exception.contentEquals(eventName)) {
             throw Jvm.rethrow(event.throwable(true));

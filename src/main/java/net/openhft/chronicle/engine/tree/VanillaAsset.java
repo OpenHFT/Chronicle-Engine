@@ -90,6 +90,8 @@ public class VanillaAsset implements Asset, Closeable {
 
         viewTypeLayersOn(MapView.class, LAST + " string key maps", AuthenticatedKeyValueStore.class);
         registerFactory(MapView.class, VanillaMapView::new);
+
+        registerFactory(SubscriptionKVSCollection.class, VanillaSubscriptionKVSCollection::new);
     }
 
     public void forTesting() {
@@ -103,7 +105,6 @@ public class VanillaAsset implements Asset, Closeable {
 
         registerFactory(KeyValueStore.class, VanillaKeyValueStore::new);
 
-        registerFactory(SubscriptionKVSCollection.class, VanillaSubscriptionKVSCollection::new);
         registerFactory(Subscription.class, VanillaSubscriptionKVSCollection::new);
 
         addView(SessionProvider.class, new VanillaSessionProvider());
@@ -115,6 +116,7 @@ public class VanillaAsset implements Asset, Closeable {
         //addView((ClientWiredStatelessTcpConnectionHub));
         registerFactory(TcpConnectionHub.class, TcpConnectionHub::new);
         registerFactory(AuthenticatedKeyValueStore.class, RemoteAuthenticatedKeyValueStore::new);
+        registerFactory(Subscription.class, RemoteSubscriptionKVSCollection::new);
     }
 
     @Override

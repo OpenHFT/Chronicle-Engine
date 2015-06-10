@@ -4,7 +4,7 @@ package net.openhft.chronicle.engine.api;
  * Created by peter on 22/05/15.
  */
 public interface Subscription extends View {
-    <E> void registerSubscriber(RequestContext rc, Subscriber<E> subscriber);
+    void registerSubscriber(RequestContext rc, Subscriber subscriber);
 
     <T, E> void registerTopicSubscriber(RequestContext rc, TopicSubscriber<T, E> subscriber);
 

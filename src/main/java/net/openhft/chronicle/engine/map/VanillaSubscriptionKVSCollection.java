@@ -80,7 +80,7 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements SubscriptionK
     }
 
     @Override
-    public <E> void registerSubscriber(@NotNull RequestContext rc, Subscriber<E> subscriber) {
+    public void registerSubscriber(@NotNull RequestContext rc, Subscriber subscriber) {
         Boolean bootstrap = rc.bootstrap();
         Class eClass = rc.type();
         if (eClass == KeyValueStore.Entry.class || eClass == MapEvent.class) {
@@ -110,13 +110,13 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements SubscriptionK
     }
 
     @Override
-    public <T, E> void registerTopicSubscriber(@NotNull RequestContext rc, @NotNull TopicSubscriber<T, E> subscriber) {
+    public void registerTopicSubscriber(@NotNull RequestContext rc, @NotNull TopicSubscriber subscriber) {
         Boolean bootstrap = rc.bootstrap();
         topicSubscribers.add((TopicSubscriber<K, V>) subscriber);
         if (bootstrap != Boolean.FALSE && kvStore != null) {
             try {
                 for (int i = 0; i < kvStore.segments(); i++)
-                    kvStore.entriesFor(i, e -> subscriber.onMessage((T) e.key(), (E) e.value()));
+                    kvStore.entriesFor(i, e -> subscriber.onMessage(e.key(), e.value()));
             } catch (InvalidSubscriberException dontAdd) {
                 topicSubscribers.remove(subscriber);
             }
@@ -134,6 +134,7 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements SubscriptionK
         downstream.remove(subscription);
         updateHasSubscribers();
     }
+
 
     @Override
     public void unregisterSubscriber(RequestContext rc, Subscriber subscriber) {

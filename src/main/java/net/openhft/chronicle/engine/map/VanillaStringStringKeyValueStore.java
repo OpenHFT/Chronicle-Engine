@@ -155,7 +155,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         SubscriptionKVSCollection<String, StringBuilder, String> subscriptions = new VanillaSubscriptionKVSCollection<>(VanillaStringStringKeyValueStore.this);
 
         @Override
-        public <E> void registerSubscriber(@NotNull RequestContext rc, Subscriber<E> subscriber) {
+        public  void registerSubscriber(@NotNull RequestContext rc, Subscriber subscriber) {
             Class eClass = rc.type();
             if (eClass == MapEvent.class) {
                 Subscriber<MapReplicationEvent<String, String>> sub = (Subscriber) subscriber;
@@ -168,8 +168,10 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
             }
         }
 
+
+
         @Override
-        public <T, E> void registerTopicSubscriber(RequestContext rc, @NotNull TopicSubscriber<T, E> subscriber) {
+        public <T, E> void registerTopicSubscriber(RequestContext rc, @NotNull TopicSubscriber <T, E>  subscriber) {
             kvStore.subscription(true).registerTopicSubscriber(rc, (T topic, E message) -> {
                 subscriber.onMessage(topic, (E) BytesUtil.to8bitString((StreamingDataInput) message));
             });
