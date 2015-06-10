@@ -92,13 +92,9 @@ public class MapClientTest extends ThreadMonitoringTest {
     public void testSubscriptionTest() throws IOException, InterruptedException {
         yamlLoggger(() -> {
             try {
-                supplyMap(Integer.class, String.class, mapProxy -> {
+                supplyMapEventListener(Integer.class, String.class, mapEventListener -> {
 
-                    mapProxy.put(1, "hello");
-                    assertEquals("hello", mapProxy.get(1));
-                    assertEquals(1, mapProxy.size());
-
-                    Assert.assertEquals("{1=hello}", mapProxy.toString());
+                 // todo add test
 
                 });
             } catch (IOException e) {
