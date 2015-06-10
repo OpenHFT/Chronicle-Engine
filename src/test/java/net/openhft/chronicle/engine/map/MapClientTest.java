@@ -133,14 +133,14 @@ public class MapClientTest extends ThreadMonitoringTest {
         });
     }
 
-    @Ignore("JIRA https://higherfrequencytrading.atlassian.net/browse/CE-60")
+
     @Test
     public void testMapsAsValues() throws IOException, InterruptedException {
 
         supplyMap(Integer.class, Map.class, map -> {
 
-            final Map value = new HashMap<String, String>();
             {
+                final Map value = new HashMap<String, String>();
                 value.put("k1", "v1");
                 value.put("k2", "v2");
 
@@ -148,6 +148,7 @@ public class MapClientTest extends ThreadMonitoringTest {
             }
 
             {
+                final Map value = new HashMap<String, String>();
                 value.put("k3", "v3");
                 value.put("k4", "v4");
 
