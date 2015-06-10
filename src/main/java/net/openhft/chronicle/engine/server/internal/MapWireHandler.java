@@ -25,8 +25,6 @@ package net.openhft.chronicle.engine.server.internal;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.StringBuilderPool;
-import net.openhft.chronicle.engine.Chassis;
-import net.openhft.chronicle.engine.api.Asset;
 import net.openhft.chronicle.engine.api.RequestContext;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
@@ -42,12 +40,12 @@ import java.io.IOException;
 import java.io.StreamCorruptedException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static net.openhft.chronicle.engine.Chassis.getAsset;
 import static net.openhft.chronicle.engine.Chassis.registerSubscriber;
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.*;
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.Params.*;
@@ -66,22 +64,32 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
     private Function<ValueIn, K> wireToK;
     private Function<ValueIn, V> wireToV;
     private RequestContext requestContext;
-    private Wire publish;
+    private Queue<Consumer<Wire>> publisher;
 
+    /**
+     * @param in             the data the has come in from network
+     * @param out            the data that is going out to network
+     * @param map            the map that is being processed
+     * @param tid            the transaction id of the event
+     * @param wireAdapter    adapts keys and values to and from wire
+     * @param requestContext the uri of the event
+     * @param publisher      used to publish events to
+     * @throws StreamCorruptedException
+     */
     public void process(@NotNull final Wire in,
                         @NotNull final Wire out,
                         @NotNull Map<K, V> map,
                         long tid,
-                        @NotNull final MapHandler<K, V> mapHandler,
+                        @NotNull final WireAdapter<K, V> wireAdapter,
                         @NotNull final RequestContext requestContext,
-                        final Wire publish) throws
+                        Queue<Consumer<Wire>> publisher) throws
             StreamCorruptedException {
-        this.publish = publish;
 
-        this.vToWire = mapHandler.valueToWire();
-        this.wireToK = mapHandler.wireToKey();
-        this.wireToV = mapHandler.wireToValue();
+        this.vToWire = wireAdapter.valueToWire();
+        this.wireToK = wireAdapter.wireToKey();
+        this.wireToV = wireAdapter.wireToValue();
         this.requestContext = requestContext;
+        this.publisher = publisher;
 
         try {
             this.inWire = in;
@@ -211,18 +219,25 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                     return;
                 }
 
+
                 if (subscribe.contentEquals(eventName)) {
 
                     MapEventListener<K, V> listener = new MapEventListener<K, V>() {
                         @Override
                         public void update(K key, V oldValue, V newValue) {
-                            if(LOG.isDebugEnabled()){
+                            if (LOG.isDebugEnabled()) {
                                 LOG.debug("Updated { key: " + key + ", oldValue: " + oldValue + ", value: " + newValue + " }");
                             }
-                            synchronized (publish) {
-                                publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(tid));
-                                publish.writeDocument(false, wire -> vToWire.accept(wire.writeEventName(reply), newValue));
-                            }
+
+                            publisher.add(new Consumer<Wire>() {
+
+                                @Override
+                                public void accept(Wire publish) {
+                                    publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(tid));
+                                    publish.writeDocument(false, wire -> vToWire.accept(wire.writeEventName(reply), newValue));
+                                }
+                            });
+
                         }
 
                         @Override
@@ -237,7 +252,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                         }
                     };
 
-                    registerSubscriber(requestContext.name(), MapEvent.class,  e -> e.apply(listener));
+                    registerSubscriber(requestContext.name(), MapEvent.class, e -> e.apply(listener));
 
 
                     return;

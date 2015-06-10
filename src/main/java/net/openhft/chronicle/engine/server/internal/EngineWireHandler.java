@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.io.StreamCorruptedException;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.LinkedTransferQueue;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -75,11 +76,12 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private final StringBuilder lastCsp = new StringBuilder();
     private final StringBuilder eventName = new StringBuilder();
 
-    private MapHandler mh;
+    private WireAdapter mh;
     private RequestContext requestContext;
     private Class viewType;
     private SessionProvider sessionProvider;
-    private Wire publish;
+    private Queue<Consumer<Wire>> publisher = new LinkedTransferQueue<>();
+
 
     public EngineWireHandler(@NotNull final Map<Long, String> cidToCsp,
                              @NotNull final Function<Bytes, Wire> byteToWire,
@@ -95,23 +97,21 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
         this.valuesHandler = new CollectionWireHandlerProcessor<>();
         this.metaDataConsumer = wireInConsumer();
         this.sessionProvider = assetTree.getAsset("").getView(SessionProvider.class);
-        this.publish = byteToWire.apply(Bytes.elasticByteBuffer());
+
     }
 
     private final List<WireHandler> handlers = new ArrayList<>();
 
     protected void publish(Wire out) {
-        synchronized (publish){
-            if (publish.bytes().position() > 0) {
-                publish.bytes().flip();
-                out.bytes().write(publish.bytes());
-            }
-        }
+        final Consumer<Wire> wireConsumer = publisher.poll();
+
+        if (wireConsumer != null)
+            wireConsumer.accept(out);
+
     }
 
 
     private long tid;
-
 
 
     Object view;
@@ -156,9 +156,8 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                         final Class vClass = requestContext.valueType() == null ? String.class
                                 : requestContext.valueType();
 
-                        mh = new GenericMapHandler(kClass, vClass);
-                    }
-                    else
+                        mh = new GenericWireAdapter(kClass, vClass);
+                    } else
                         throw new UnsupportedOperationException("unsupported view type");
 
 
@@ -216,7 +215,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                 if (mh != null) {
 
                     if (viewType == MapView.class) {
-                        mapWireHandler.process(in, out, (MapView) view, tid, mh, requestContext, publish);
+                        mapWireHandler.process(in, out, (MapView) view, tid, mh, requestContext, publisher);
                         return;
                     }
 

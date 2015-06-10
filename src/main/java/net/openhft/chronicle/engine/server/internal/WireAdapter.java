@@ -26,7 +26,7 @@ import java.util.Map.Entry;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-public interface MapHandler<K, V> {
+public interface WireAdapter<K, V> {
 
     BiConsumer<ValueOut, K> keyToWire();
 

@@ -9,7 +9,7 @@ import java.util.Map.Entry;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-class GenericMapHandler<K, V> implements MapHandler<K, V> {
+class GenericWireAdapter<K, V> implements WireAdapter<K, V> {
 
     private final BiConsumer<ValueOut, K> keyToWire = ValueOut::object;
     @Nullable
@@ -20,7 +20,7 @@ class GenericMapHandler<K, V> implements MapHandler<K, V> {
     @NotNull
     private final Function<ValueIn, Entry<K, V>> wireToEntry;
 
-    GenericMapHandler(@NotNull final Class<K> kClass, @NotNull final Class<V> vClass) {
+    GenericWireAdapter(@NotNull final Class<K> kClass, @NotNull final Class<V> vClass) {
 
         wireToKey = (valueIn) -> valueIn.object(kClass);
         wireToValue = in -> in.object(vClass);
