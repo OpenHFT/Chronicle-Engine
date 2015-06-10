@@ -238,8 +238,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     /**
      * keySet.toArray returns contains all keys
      */
-    @Ignore("JIRA https://higherfrequencytrading.atlassian.net/browse/CE-65")
-    @Test(timeout = 50000)
+     @Test(timeout = 50000)
     public void testKeySetToArray() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
             final Map map = supplier.get();
