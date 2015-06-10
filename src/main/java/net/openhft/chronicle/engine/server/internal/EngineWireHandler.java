@@ -92,7 +92,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
         this.cidToCsp = cidToCsp;
         this.entrySetHandler = new CollectionWireHandlerProcessor<>();
         this.valuesHandler = new CollectionWireHandlerProcessor<>();
-        this.metaDataConsumer = wireInConsumer();
+        this.metaDataConsumer = metaDataConsumer();
         this.sessionProvider = assetTree.getAsset("").getView(SessionProvider.class);
     }
 
@@ -118,7 +118,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     Object view;
 
     @NotNull
-    private Consumer<WireIn> wireInConsumer() throws IOException {
+    private Consumer<WireIn> metaDataConsumer() throws IOException {
         return (wire) -> {
 
             // if true the next data message will be a system message
