@@ -19,8 +19,10 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
+import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.wire.TextWire;
@@ -28,6 +30,7 @@ import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -59,15 +62,19 @@ public class MapClientTest extends ThreadMonitoringTest {
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() throws IOException {
-
         return Arrays.asList(new Class[][]{
                 {LocalMapSupplier.class},
-                {RemoteMapSupplier.class}
+               // {RemoteMapSupplier.class}
         });
     }
 
     public MapClientTest(Class<? extends CloseableSupplier> supplier) {
         this.supplier = supplier;
+    }
+
+    @Before
+    public void setUp() {
+        Chassis.resetChassis();
     }
 
     @Test(timeout = 50000)
@@ -94,11 +101,20 @@ public class MapClientTest extends ThreadMonitoringTest {
     public void testSubscriptionTest() throws IOException, InterruptedException {
         yamlLoggger(() -> {
             try {
-                supplyMapEventListener(Integer.class, String.class, mapEventListener -> {
+                supplyMap(Integer.class, String.class, map -> {
+                    try {
+                        supplyMapEventListener(Integer.class, String.class, mapEventListener -> {
+                            Chassis.registerSubscriber("test", MapEvent.class, e -> e.apply(mapEventListener));
 
-                    // todo add test
+                            map.put(i, "one");
 
+                        });
+
+                    } catch (IOException e) {
+                        Jvm.rethrow(e);
+                    }
                 });
+
             } catch (IOException e) {
                 e.printStackTrace();
             }

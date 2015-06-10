@@ -19,7 +19,6 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
-import net.openhft.chronicle.wire.BinaryWire;
 import net.openhft.chronicle.wire.TextWire;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
@@ -44,6 +43,7 @@ import static org.junit.Assert.*;
  * Pat Fisher, Mike Judd.
  */
 
+@Ignore("Waiting for merge")
 public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
 
     @NotNull

@@ -2,15 +2,19 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.api.Asset;
+import net.openhft.chronicle.engine.api.Assetted;
 import net.openhft.chronicle.engine.api.RequestContext;
-import net.openhft.chronicle.engine.api.map.*;
+import net.openhft.chronicle.engine.api.map.KeyValueStore;
+import net.openhft.chronicle.engine.api.map.MapEvent;
+import net.openhft.chronicle.engine.api.map.MapEventListener;
+import net.openhft.chronicle.engine.api.map.StringBytesStoreKeyValueStore;
 import net.openhft.chronicle.engine.map.FilePerKeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.map.VanillaStringMarshallableKeyValueStore;
+import net.openhft.chronicle.engine.map.VanillaSubscriptionKeyValueStore;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -28,8 +32,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * JUnit test class to support
  */
-@Ignore("todo fix test, getting more events on Windows - JIRA https://higherfrequencytrading" +
-        ".atlassian.net/browse/CE-63")
+//@Ignore("todo fix test, getting more events on Windows - JIRA https://higherfrequencytrading.atlassian.net/browse/CE-63")
 public class FilePerKeyValueStoreTest {
     public static final String NAME = "fileperkvstoretests";
     private static Map<String, TestMarshallable> map;
@@ -43,13 +46,14 @@ public class FilePerKeyValueStoreTest {
         Function<Bytes, Wire> writeType = TextWire::new;
         enableTranslatingValuesToBytesStore();
 
-        viewTypeLayersOn(StringMarshallableKeyValueStore.class, "string -> marshallable", KeyValueStore.class);
-        registerFactory("", KeyValueStore.class, (context, asset, underlyingSupplier) -> new FilePerKeyValueStore(context.basePath(TMP).wireType(writeType), asset));
+        addLeafRule(KeyValueStore.class, "FilePer Key",
+                (context, asset) -> new FilePerKeyValueStore(context.basePath(TMP).wireType(writeType), asset));
 
         map = acquireMap(NAME, String.class, TestMarshallable.class);
         KeyValueStore mapU = ((VanillaMapView) map).underlying();
         assertEquals(VanillaStringMarshallableKeyValueStore.class, mapU.getClass());
-        assertEquals(FilePerKeyValueStore.class, mapU.underlying().getClass());
+        assertEquals(VanillaSubscriptionKeyValueStore.class, mapU.underlying().getClass());
+        assertEquals(FilePerKeyValueStore.class, ((Assetted) mapU.underlying()).underlying().getClass());
 
         //just in case it hasn't been cleared up last time
         map.clear();
@@ -108,15 +112,6 @@ public class FilePerKeyValueStoreTest {
 
     static class TestMarshallable implements Marshallable {
         private String s1, s2;
-
-        public Nested getNested() {
-            return nested;
-        }
-
-        public void setNested(Nested nested) {
-            this.nested = nested;
-        }
-
         private Nested nested;
 
         public TestMarshallable() {
@@ -126,6 +121,14 @@ public class FilePerKeyValueStoreTest {
         public TestMarshallable(String s1, String s2, Nested nested) {
             this.s1 = s1;
             this.s2 = s2;
+            this.nested = nested;
+        }
+
+        public Nested getNested() {
+            return nested;
+        }
+
+        public void setNested(Nested nested) {
             this.nested = nested;
         }
 
@@ -159,10 +162,6 @@ public class FilePerKeyValueStoreTest {
             wireOut.write(TestKey.nested).marshallable(nested);
         }
 
-        private enum TestKey implements WireKey {
-            S1, S2, nested
-        }
-
         @NotNull
         @Override
         public String toString() {
@@ -171,6 +170,10 @@ public class FilePerKeyValueStoreTest {
                     ", s2='" + s2 + '\'' +
                     ", nested=" + nested +
                     '}';
+        }
+
+        private enum TestKey implements WireKey {
+            S1, S2, nested
         }
     }
 
@@ -210,16 +213,16 @@ public class FilePerKeyValueStoreTest {
             );
         }
 
-        private enum TestKey implements WireKey {
-            listDouble;
-        }
-
         @NotNull
         @Override
         public String toString() {
             return "Nested{" +
                     "listDouble=" + listDouble +
                     '}';
+        }
+
+        private enum TestKey implements WireKey {
+            listDouble;
         }
     }
 }

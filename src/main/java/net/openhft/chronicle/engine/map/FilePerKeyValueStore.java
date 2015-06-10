@@ -3,6 +3,7 @@ package net.openhft.chronicle.engine.map;
 import com.sun.nio.file.SensitivityWatchEventModifier;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
+import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.Asset;
@@ -14,6 +15,8 @@ import net.openhft.chronicle.engine.api.map.MapReplicationEvent;
 import net.openhft.chronicle.engine.api.map.StringBytesStoreKeyValueStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -44,22 +47,25 @@ import java.util.stream.Stream;
  * between the event and the event being triggered.
  */
 public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Closeable {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(FilePerKeyValueStore.class);
     private final Path dirPath;
     //Use BytesStore so that it can be shared safely between threads
     private final Map<File, FileRecord<BytesStore>> lastFileRecordMap = new ConcurrentHashMap<>();
 
     @NotNull
     private final Thread fileFpmWatcher;
-    private final VanillaSubscriptionKVSCollection<String, Bytes, BytesStore> subscriptions = new VanillaSubscriptionKVSCollection<>(this);
+    private final SubscriptionKVSCollection<String, Bytes, BytesStore> subscriptions;
+    private final Asset asset;
     private volatile boolean closed = false;
-    private Asset asset;
 
     public FilePerKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset) throws IORuntimeException {
-        this(context.type(), context.basePath(), context.name());
+        this(context, asset, context.type(), context.basePath(), context.name());
         asset.registerView(StringBytesStoreKeyValueStore.class, this);
     }
 
-    FilePerKeyValueStore(Class type, String basePath, String name) {
+    FilePerKeyValueStore(RequestContext context, Asset asset, Class type, String basePath, String name) {
+        this.asset = asset;
         assert type == String.class;
 
         String first = basePath;
@@ -82,6 +88,8 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         fileFpmWatcher = new Thread(new FPMWatcher(watcher), dirName + "-watcher");
         fileFpmWatcher.setDaemon(true);
         fileFpmWatcher.start();
+        subscriptions = asset.acquireView(SubscriptionKVSCollection.class, context);
+        subscriptions.setKvStore(this);
     }
 
     @NotNull
@@ -134,7 +142,9 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         getFiles().map(p -> EntryEvent.of(p.getFileName().toString(), getFileContents(p, null), 0, p.toFile().lastModified()))
                 .forEach(e -> {
                     try {
-                        kvConsumer.accept(e);
+                        // in case the file has been deleted in the meantime.
+                        if (e != null)
+                            kvConsumer.accept(e);
                     } catch (InvalidSubscriberException ise) {
                         throw Jvm.rethrow(ise);
                     }
@@ -204,7 +214,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
                 deleteFile(path);
             } catch (Exception e) {
                 count.incrementAndGet();
-                // ignored at afirst.
+                // ignored at first.
             }
         });
         if (count.intValue() > 0) {
@@ -234,21 +244,33 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
 
     @Nullable
     BytesStore getFileContents(@NotNull Path path, Bytes using) {
-        try {
-            File file = path.toFile();
-            FileRecord<BytesStore> lastFileRecord = lastFileRecordMap.get(file);
-            if (lastFileRecord != null && lastFileRecord.valid
-                    && file.lastModified() == lastFileRecord.timestamp) {
-                return lastFileRecord.contents.bytes();
-            }
-            return getFileContentsFromDisk(path, using);
-        } catch (IOException ioe) {
-            throw new IllegalStateException(ioe);
+        File file = path.toFile();
+        FileRecord<BytesStore> lastFileRecord = lastFileRecordMap.get(file);
+        if (lastFileRecord != null && lastFileRecord.valid
+                && file.lastModified() == lastFileRecord.timestamp) {
+            return lastFileRecord.contents.bytes();
         }
+        return getFileContentsFromDisk(path, using);
     }
 
     @Nullable
-    Bytes getFileContentsFromDisk(@NotNull Path path, Bytes using) throws IOException {
+    Bytes getFileContentsFromDisk(@NotNull Path path, Bytes using) {
+        for (int i = 1; i <= 5; i++) {
+            try {
+                return getFileContentsFromDisk0(path, using);
+            } catch (IOException e) {
+//                System.out.println(e);
+                try {
+                    Thread.sleep(i * i * 2);
+                } catch (InterruptedException e1) {
+                    throw new AssertionError(e1);
+                }
+            }
+        }
+        return null;
+    }
+
+    private Bytes getFileContentsFromDisk0(@NotNull Path path, Bytes using) throws IOException {
         if (!Files.exists(path)) return null;
         File file = path.toFile();
 
@@ -283,7 +305,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         }
 
         File file = path.toFile();
-        File tmpFile = new File(file.getParentFile(), "." + file.getName());
+        File tmpFile = new File(file.getParentFile(), "." + file.getName() + "." + System.nanoTime());
         try (FileChannel fc = new FileOutputStream(tmpFile).getChannel()) {
             ByteBuffer byteBuffer = writingBytes.underlyingObject();
             byteBuffer.position(0);
@@ -292,10 +314,23 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         } catch (IOException e) {
             throw new AssertionError(e);
         }
-        try {
-            Files.move(tmpFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
+        for (int i = 1; i < 5; i++) {
+            try {
+                Files.move(tmpFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+                break;
+
+            } catch (FileSystemException fse) {
+                if (LOGGER.isDebugEnabled())
+                    LOGGER.debug("Unable to rename file " + fse);
+                try {
+                    Thread.sleep(i * i * 2);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
         }
     }
 
@@ -364,26 +399,38 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
                 WatchEvent<Path> ev = (WatchEvent<Path>) event;
                 Path fileName = ev.context();
                 String mapKey = fileName.toString();
-
                 if (mapKey.startsWith(".")) {
                     //this avoids temporary files being added to the map
                     continue;
                 }
+//                System.out.println("file: "+mapKey+" kind: "+kind);
 
                 if (kind == StandardWatchEventKinds.ENTRY_CREATE || kind == StandardWatchEventKinds.ENTRY_MODIFY) {
                     Path p = dirPath.resolve(fileName);
-                    try {
-                        Bytes mapVal = getFileContentsFromDisk(p, null);
+                    Bytes mapVal = getFileContentsFromDisk(p, null);
 
-                        FileRecord<BytesStore> prev = mapVal == null ? lastFileRecordMap.get(p.toFile())
-                                : lastFileRecordMap.put(p.toFile(), new FileRecord<>(p.toFile().lastModified(), mapVal.copy()));
-                        if (prev == null) {
-                            subscriptions.notifyEvent(InsertedEvent.of(p.toFile().getName(), mapVal, 0, p.toFile().lastModified()));
-                        } else {
-                            subscriptions.notifyEvent(UpdatedEvent.of(p.toFile().getName(), prev.contents.bytes(), mapVal, 0, p.toFile().lastModified()));
-                            prev.contents.release();
-                        }
-                    } catch (FileNotFoundException ignored) {
+                    FileRecord<BytesStore> prev = lastFileRecordMap.get(p.toFile());
+//                    if (mapVal == null) {
+//                            System.out.println("Unable to read "+mapKey+", exists: "+p.toFile().exists());
+//                    }
+                    if (prev != null && BytesUtil.contentEqual(mapVal, prev.contents.bytes())) {
+//                            System.out.println("... key: "+mapKey+" equal, last.keys: "+new TreeSet<>(lastFileRecordMap.keySet()));
+                        continue;
+                    }
+
+                    if (mapVal == null) {
+                        // todo this shouldn't happen.
+                        if (prev != null)
+                            mapVal = prev.contents.bytes();
+                    } else {
+//                            System.out.println("adding "+mapKey);
+                        lastFileRecordMap.put(p.toFile(), new FileRecord<>(p.toFile().lastModified(), mapVal.copy()));
+                    }
+                    if (prev == null) {
+                        subscriptions.notifyEvent(InsertedEvent.of(p.toFile().getName(), mapVal, 0, p.toFile().lastModified()));
+                    } else {
+                        subscriptions.notifyEvent(UpdatedEvent.of(p.toFile().getName(), prev.contents.bytes(), mapVal, 0, p.toFile().lastModified()));
+                        prev.contents.release();
                     }
 
                 } else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {

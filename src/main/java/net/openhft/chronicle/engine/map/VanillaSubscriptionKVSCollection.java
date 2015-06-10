@@ -1,11 +1,10 @@
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.core.util.ThrowingSupplier;
 import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapReplicationEvent;
-import net.openhft.chronicle.engine.tree.VanillaAsset;
+import net.openhft.chronicle.engine.pubsub.SimpleSubscription;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -18,28 +17,27 @@ import static net.openhft.chronicle.engine.api.SubscriptionConsumer.notifyEachSu
  */
 // todo review thread safety
 public class VanillaSubscriptionKVSCollection<K, MV, V> implements SubscriptionKVSCollection<K, MV, V> {
-    final Set<TopicSubscriber<K, V>> topicSubscribers = new CopyOnWriteArraySet<>();
-    final Set<Subscriber<KeyValueStore.Entry<K, V>>> subscribers = new CopyOnWriteArraySet<>();
-    final Set<Subscriber<K>> keySubscribers = new CopyOnWriteArraySet<>();
-    final Set<SubscriptionKVSCollection<K, MV, V>> downstream = new CopyOnWriteArraySet<>();
-
-
-    KeyValueStore<K, MV, V> kvStore;
-
-    boolean hasSubscribers = false;
+    private final Set<TopicSubscriber<K, V>> topicSubscribers = new CopyOnWriteArraySet<>();
+    private final Set<Subscriber<KeyValueStore.Entry<K, V>>> subscribers = new CopyOnWriteArraySet<>();
+    private final Set<Subscriber<K>> keySubscribers = new CopyOnWriteArraySet<>();
+    private final Set<SubscriptionKVSCollection<K, MV, V>> downstream = new CopyOnWriteArraySet<>();
+    private final Asset asset;
+    private KeyValueStore<K, MV, V> kvStore;
+    private boolean hasSubscribers = false;
 
     @Override
     public boolean keyedView() {
         return kvStore!=null;
     }
 
-    public VanillaSubscriptionKVSCollection(KeyValueStore<K, MV, V> kvStore) {
-        this.kvStore = kvStore;
+    public VanillaSubscriptionKVSCollection(RequestContext requestContext, Asset asset) {
+        this(asset);
     }
 
-    public VanillaSubscriptionKVSCollection(RequestContext requestContext, @NotNull Asset asset, ThrowingSupplier<Assetted, AssetNotFoundException> assettedSupplier) {
-        ((VanillaAsset) asset).addView(Subscription.class, this);
-        ((VanillaAsset) asset).addView(SubscriptionKVSCollection.class, this);
+    public VanillaSubscriptionKVSCollection(Asset asset) {
+        this.asset = asset;
+        asset.addView(Subscription.class, this);
+        asset.addView(SubscriptionKVSCollection.class, this);
     }
 
     @Override
@@ -47,12 +45,14 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements SubscriptionK
         this.kvStore = kvStore;
     }
 
-
-
     @Override
     public void notifyEvent(@NotNull MapReplicationEvent<K, V> mpe) throws InvalidSubscriberException {
-        if (hasSubscribers)
+        if (hasSubscribers())
             notifyEvent0(mpe);
+    }
+
+    private boolean hasSubscribers() {
+        return hasSubscribers || asset.hasChildren();
     }
 
     private void notifyEvent0(@NotNull MapReplicationEvent<K, V> mpe) {
@@ -71,6 +71,17 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements SubscriptionK
         if (!downstream.isEmpty()) {
             notifyEachSubscriber(downstream, d -> d.notifyEvent(mpe));
         }
+        if (asset.hasChildren() && key instanceof CharSequence) {
+            String keyStr = key.toString();
+            Asset child = asset.getChild(keyStr);
+            if (child != null) {
+                Subscription subscription = child.subscription(false);
+                if (subscription instanceof SimpleSubscription) {
+//                    System.out.println(mpe.toString().substring(0, 100));
+                    ((SimpleSubscription) subscription).notifyMessage(mpe.value());
+                }
+            }
+        }
     }
 
     @Override
@@ -80,7 +91,7 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements SubscriptionK
     }
 
     @Override
-    public <E> void registerSubscriber(@NotNull RequestContext rc, Subscriber<E> subscriber) {
+    public void registerSubscriber(@NotNull RequestContext rc, Subscriber subscriber) {
         Boolean bootstrap = rc.bootstrap();
         Class eClass = rc.type();
         if (eClass == KeyValueStore.Entry.class || eClass == MapEvent.class) {
@@ -110,13 +121,13 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements SubscriptionK
     }
 
     @Override
-    public <T, E> void registerTopicSubscriber(@NotNull RequestContext rc, @NotNull TopicSubscriber<T, E> subscriber) {
+    public void registerTopicSubscriber(@NotNull RequestContext rc, @NotNull TopicSubscriber subscriber) {
         Boolean bootstrap = rc.bootstrap();
         topicSubscribers.add((TopicSubscriber<K, V>) subscriber);
         if (bootstrap != Boolean.FALSE && kvStore != null) {
             try {
                 for (int i = 0; i < kvStore.segments(); i++)
-                    kvStore.entriesFor(i, e -> subscriber.onMessage((T) e.key(), (E) e.value()));
+                    kvStore.entriesFor(i, e -> subscriber.onMessage(e.key(), e.value()));
             } catch (InvalidSubscriberException dontAdd) {
                 topicSubscribers.remove(subscriber);
             }
@@ -134,6 +145,7 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements SubscriptionK
         downstream.remove(subscription);
         updateHasSubscribers();
     }
+
 
     @Override
     public void unregisterSubscriber(RequestContext rc, Subscriber subscriber) {

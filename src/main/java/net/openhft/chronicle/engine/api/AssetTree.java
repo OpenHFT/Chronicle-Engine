@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine.api;
 
 import net.openhft.chronicle.core.util.Closeable;
+import net.openhft.chronicle.engine.map.SubscriptionKVSCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,8 @@ public interface AssetTree extends Closeable {
 
     @Nullable
     Asset getAsset(String fullName);
+
+    Asset root();
 
     @NotNull
     default <E> Set<E> acquireSet(String name, Class<E> eClass) throws AssetNotFoundException {
@@ -71,7 +74,7 @@ public interface AssetTree extends Closeable {
     default <T, E> void registerTopicSubscriber(String name, Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
         RequestContext rc = requestContext(name).viewType(Subscription.class).type(tClass).type2(eClass);
         Asset asset = acquireAsset(rc.viewType(), rc);
-        Subscription subscription = asset.acquireView(Subscription.class, rc);
+        Subscription subscription = asset.acquireView(SubscriptionKVSCollection.class, rc);
         subscription.registerTopicSubscriber(rc, subscriber);
     }
 
@@ -83,12 +86,6 @@ public interface AssetTree extends Closeable {
             if (subscription != null)
                 subscription.unregisterSubscriber(rc, subscriber);
         }
-    }
-
-    default <E> void registerFactory(String name, Class<E> eClass, ViewFactory<E> factory) throws AssetNotFoundException {
-        RequestContext rc = requestContext(name).viewType(Subscriber.class).type(eClass);
-        Asset asset = getAsset(rc.fullName());
-        asset.registerFactory(rc.type(), factory);
     }
 
     default <T, E> void unregisterTopicSubscriber(String name, Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {

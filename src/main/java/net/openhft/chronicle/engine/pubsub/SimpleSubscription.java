@@ -21,20 +21,21 @@ public class SimpleSubscription<E> implements Subscription {
     }
 
     @Override
-    public <E> void registerSubscriber(@NotNull RequestContext rc, @NotNull Subscriber<E> subscriber) {
+    public void registerSubscriber(@NotNull RequestContext rc, @NotNull Subscriber subscriber) {
         subscribers.add((Subscriber) subscriber);
         if (rc.bootstrap() != Boolean.FALSE)
             try {
-                subscriber.onMessage((E) currentValue.get());
+                subscriber.onMessage(currentValue.get());
             } catch (InvalidSubscriberException e) {
                 subscribers.remove(subscriber);
             }
     }
 
     @Override
-    public <T, E> void registerTopicSubscriber(RequestContext rc, TopicSubscriber<T, E> subscriber) {
+    public void registerTopicSubscriber(RequestContext rc, TopicSubscriber subscriber) {
         throw new UnsupportedOperationException("todo");
     }
+
 
     @Override
     public void unregisterSubscriber(RequestContext rc, Subscriber subscriber) {

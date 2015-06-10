@@ -43,6 +43,7 @@ import static org.junit.Assert.*;
  * Pat Fisher, Mike Judd.
  */
 
+@Ignore("Waiting for merge")
 public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
 
     @NotNull

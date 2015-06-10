@@ -3,7 +3,6 @@ package net.openhft.chronicle.engine;
 import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -16,7 +15,6 @@ import static org.junit.Assert.assertEquals;
 /**
  * Created by peter on 22/05/15.
  */
-@Ignore("fix JIRA https://higherfrequencytrading.atlassian.net/browse/CE-70")
 public class ChassisRFCTest {
 
     @Before
@@ -82,7 +80,9 @@ public class ChassisRFCTest {
         Map<String, String> map = acquireMap("group", String.class, String.class);
         Publisher<String> publisher = acquirePublisher("group/topic", String.class);
         List<String> values = new ArrayList<>();
-        Subscriber<String> subscriber = values::add;
+        Subscriber<String> subscriber = (String e) -> {
+            values.add(e);
+        };
         registerSubscriber("group/topic?bootstrap=false", String.class, subscriber);
 
         publisher.publish("Message-1");

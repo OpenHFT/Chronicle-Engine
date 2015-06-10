@@ -21,7 +21,6 @@ package net.openhft.chronicle.engine;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.NativeBytes;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
-import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +37,6 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import static net.openhft.chronicle.engine.Utils.methodName;
-import static net.openhft.chronicle.engine.Utils.yamlLoggger;
 
 public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
@@ -158,6 +156,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
 
     @Test
+    @Ignore("Waiting for merge")
     public void test2MBEntries() throws Exception {
 
         // server

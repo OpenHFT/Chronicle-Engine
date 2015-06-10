@@ -215,7 +215,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                 if (mh != null) {
 
                     if (viewType == MapView.class) {
-                        mapWireHandler.process(in, out, (MapView) view, tid, mh, requestContext, publisher);
+                        mapWireHandler.process(in, out, (MapView) view, tid, mh, requestContext, publisher,assetTree);
                         return;
                     }
 

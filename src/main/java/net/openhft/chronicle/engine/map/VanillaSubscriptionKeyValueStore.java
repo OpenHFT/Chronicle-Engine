@@ -1,31 +1,26 @@
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.core.util.ThrowingSupplier;
-import net.openhft.chronicle.engine.api.*;
+import net.openhft.chronicle.engine.api.Asset;
+import net.openhft.chronicle.engine.api.InvalidSubscriberException;
+import net.openhft.chronicle.engine.api.RequestContext;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
-import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
-import net.openhft.chronicle.engine.pubsub.SimpleSubscription;
-
-import java.util.Optional;
 
 /**
  * Created by peter on 22/05/15.
  */
-public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValueStore<K, MV, V> implements SubscriptionKeyValueStore<K, MV, V>, AuthenticatedKeyValueStore<K, MV, V> {
+public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValueStore<K, MV, V> implements ObjectKeyValueStore<K, MV, V>, AuthenticatedKeyValueStore<K, MV, V> {
     final SubscriptionKVSCollection<K, MV, V> subscriptions;
     private final Asset asset;
 
-    public VanillaSubscriptionKeyValueStore(RequestContext context, Asset asset, ThrowingSupplier<Assetted, AssetNotFoundException> assetted) throws AssetNotFoundException {
-        this(asset, (KeyValueStore<K, MV, V>) assetted.get(),
-                asset.acquireView(SubscriptionKVSCollection.class, context));
-    }
-
-    VanillaSubscriptionKeyValueStore(Asset asset, KeyValueStore<K, MV, V> item,
-                                     SubscriptionKVSCollection<K, MV, V> subscriptions) {
+    VanillaSubscriptionKeyValueStore(Asset asset, KeyValueStore<K, MV, V> item) {
         super(item);
         this.asset = asset;
-        this.subscriptions = subscriptions;
+        this.subscriptions = new VanillaSubscriptionKVSCollection<K, MV, V>(asset);
         subscriptions.setKvStore(this);
+    }
+
+    public <U> VanillaSubscriptionKeyValueStore(RequestContext context, Asset asset, KeyValueStore<K, MV, V> kvStore) {
+        this(asset, kvStore);
     }
 
     @Override
@@ -42,7 +37,6 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
             } catch (InvalidSubscriberException e) {
                 throw new AssertionError(e);
             }
-            publishValueToChild(key, value);
         }
         return oldValue;
     }
@@ -60,7 +54,6 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
         } catch (InvalidSubscriberException e) {
             throw new AssertionError(e);
         }
-        publishValueToChild(key, value);
         return replaced;
 
     }
@@ -76,7 +69,6 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
             } catch (InvalidSubscriberException e) {
                 throw new AssertionError(e);
             }
-            publishValueToChild(key, null);
             return true;
         }
         return false;
@@ -87,7 +79,6 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
         if (kvStore.replaceIfEqual(key, oldValue, newValue)) {
             try {
                 subscriptions.notifyEvent(UpdatedEvent.of(key, oldValue, newValue, 0, System.currentTimeMillis()));
-                publishValueToChild(key, newValue);
             } catch (InvalidSubscriberException e) {
                 throw new AssertionError(e);
             }
@@ -104,7 +95,6 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
             } catch (InvalidSubscriberException e) {
                 throw new AssertionError(e);
             }
-            publishValueToChild(key, null);
             return true;
         }
         return false;
@@ -116,7 +106,6 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
         if (ret == null)
             try {
                 subscriptions.notifyEvent(InsertedEvent.of(key, value, 0, System.currentTimeMillis()));
-                publishValueToChild(key, value);
             } catch (InvalidSubscriberException e) {
                 throw new AssertionError(e);
             }
@@ -133,7 +122,6 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
         } catch (InvalidSubscriberException e) {
             throw new AssertionError(e);
         }
-        publishValueToChild(key, value);
         return oldValue;
     }
 
@@ -146,17 +134,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
             } catch (InvalidSubscriberException e) {
                 throw new AssertionError(e);
             }
-            publishValueToChild(key, null);
         }
         return oldValue;
-    }
-
-    private void publishValueToChild(K key, V value) {
-        Optional.of(key)
-                .filter(k -> k instanceof CharSequence)
-                .map(Object::toString)
-                .map(asset::getChild)
-                .map(c -> c.getView(SimpleSubscription.class))
-                .ifPresent(v -> v.notifyMessage(value));
     }
 }

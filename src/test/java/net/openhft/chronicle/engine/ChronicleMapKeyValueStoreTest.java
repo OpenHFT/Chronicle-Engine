@@ -14,10 +14,8 @@ import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -45,9 +43,9 @@ public class ChronicleMapKeyValueStoreTest {
         resetChassis();
         Function<Bytes, Wire> writeType = TextWire::new;
 
-        viewTypeLayersOn(MapView.class, "map directly to KeyValueStore", KeyValueStore.class);
+        addWrappingRule(MapView.class, "map directly to KeyValueStore", VanillaMapView::new, KeyValueStore.class);
 
-        registerFactory("", KeyValueStore.class, (context, asset, underlyingSupplier) ->
+        addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
                 new ChronicleMapKeyValueStore(context.wireType(writeType).basePath(OS.TMP), asset));
 
         map = acquireMap(NAME, String.class, Factor.class);
@@ -60,12 +58,12 @@ public class ChronicleMapKeyValueStoreTest {
     }
 
     @AfterClass
-    public static void tearDown() throws Exception{
+    public static void tearDown() throws Exception {
         mapU.close();
     }
 
     @Test
-    public void test() throws Exception{
+    public void test() throws Exception {
         AtomicInteger success = new AtomicInteger();
         MapEventListener<String, Factor> listener = new MapEventListener<String, Factor>() {
             @Override

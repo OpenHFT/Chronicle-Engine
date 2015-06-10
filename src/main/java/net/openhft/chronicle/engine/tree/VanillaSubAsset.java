@@ -1,34 +1,32 @@
 package net.openhft.chronicle.engine.tree;
 
 import net.openhft.chronicle.core.util.Closeable;
-import net.openhft.chronicle.core.util.ThrowingFunction;
 import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.map.SubAsset;
 import net.openhft.chronicle.engine.api.map.ValueReader;
 import net.openhft.chronicle.engine.pubsub.SimpleSubscription;
+import net.openhft.chronicle.engine.pubsub.VanillaReference;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.util.function.BiPredicate;
 import java.util.function.Supplier;
-
-import static net.openhft.chronicle.engine.api.RequestContext.requestContext;
 
 /**
  * Created by peter on 22/05/15.
  */
 public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscriber<String, E> {
     @NotNull
-    private final Asset parent;
+    private final VanillaAsset parent;
     private final String name;
     @NotNull
     private final SimpleSubscription<E> subscription;
     private Reference<E> reference;
 
-    VanillaSubAsset(@NotNull RequestContext rc, @NotNull Asset parent, String name) throws AssetNotFoundException {
+    VanillaSubAsset(@NotNull RequestContext rc, @NotNull VanillaAsset parent, String name) throws AssetNotFoundException {
         this.parent = parent;
         this.name = name;
-        reference = (Reference<E>) acquireViewFor(Reference.class, rc);
+        reference = new VanillaReference<E>(rc, this, parent.getView(MapView.class));
         ValueReader valueReader;
         try {
             valueReader = parent.acquireView(ValueReader.class, rc);
@@ -42,11 +40,6 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     @Override
     public Subscription subscription(boolean createIfAbsent) {
         return subscription;
-    }
-
-    @Override
-    public <V> void addClassifier(Class<V> assetType, String name, ThrowingFunction<RequestContext, ViewLayer, AssetNotFoundException> viewBuilderFactory) {
-        throw new UnsupportedOperationException("todo");
     }
 
     @NotNull
@@ -88,14 +81,12 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
 
     @NotNull
     private <V> V acquireViewFor(Class<V> viewType, @NotNull RequestContext rc) throws AssetNotFoundException {
-        return parent.acquireFactory(viewType).create(requestContext().type(rc.type()).fullName(name), this, () ->
-                parent.getView(MapView.class));
+        return (V) parent.getView(viewType);
     }
 
-    @NotNull
     @Override
-    public ViewLayer classify(Class viewType, RequestContext rc) {
-        throw new UnsupportedOperationException("todo");
+    public <V> V addView(Class<V> viewType, V v) {
+        return v;
     }
 
     @Override
@@ -103,14 +94,38 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
         return true;
     }
 
-    @Nullable
     @Override
-    public <I> ViewFactory<I> getFactory(Class<I> iClass) {
-        return parent.getFactory(iClass);
+    public boolean hasChildren() {
+        return false;
     }
 
     @Override
     public <I> void registerView(Class<I> iClass, I interceptor) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public <W, U> void addWrappingRule(Class<W> iClass, String description, BiPredicate<RequestContext, Asset> predicate, WrappingViewFactory<W, U> factory, Class<U> underlyingType) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public <W, U> void addWrappingRule(Class<W> iClass, String description, WrappingViewFactory<W, U> factory, Class<U> underlyingType) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public <L> void addLeafRule(Class<L> iClass, String description, LeafViewFactory<L> factory) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public <I, U> I createWrappingView(Class viewType, RequestContext rc, Asset asset, U underling) throws AssetNotFoundException {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public <I> I createWrappingLeaf(Class viewType, RequestContext rc, Asset asset) throws AssetNotFoundException {
         throw new UnsupportedOperationException("todo");
     }
 
@@ -155,17 +170,6 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     public void onMessage(@NotNull String name, E e) {
         if (name.equals(this.name))
             subscription.notifyMessage(e);
-    }
-
-    @NotNull
-    @Override
-    public <I> ViewFactory<I> acquireFactory(Class<I> iClass) throws AssetNotFoundException {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
-    public <I> void registerFactory(Class<I> iClass, ViewFactory<I> factory) {
-        throw new UnsupportedOperationException("todo");
     }
 
     @Override

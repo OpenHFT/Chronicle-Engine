@@ -8,4 +8,5 @@ import net.openhft.chronicle.engine.api.map.MapReplicationEvent;
  */
 public interface EventConsumer<K, V> {
     void notifyEvent(MapReplicationEvent<K, V> mpe) throws InvalidSubscriberException;
+
 }
