@@ -99,9 +99,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
             map = Chassis.acquireMap("TEST", String.class, Factor.class);
             Chassis.registerSubscriber("TEST", MapEvent.class, e -> e.apply(listener));
         }
-
     }
-
     @Test(timeout = 50000)
     public void testSubscriptionTest() throws IOException, InterruptedException {
         yamlLoggger(() -> {

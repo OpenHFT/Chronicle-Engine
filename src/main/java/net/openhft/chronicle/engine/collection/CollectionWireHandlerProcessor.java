@@ -172,7 +172,6 @@ public class CollectionWireHandlerProcessor<U, C extends Collection<U>> implemen
                     }
                 }
             }
-
         }
     };
 

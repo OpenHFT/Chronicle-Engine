@@ -83,5 +83,4 @@ class GenericWireAdapter<K, V> implements WireAdapter<K, V> {
     public Function<ValueIn, Entry<K, V>> wireToEntry() {
         return wireToEntry;
     }
-
 }

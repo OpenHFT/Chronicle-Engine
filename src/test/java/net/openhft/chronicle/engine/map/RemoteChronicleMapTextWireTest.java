@@ -76,7 +76,6 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
                 remoteMapSupplier.close();
             }
         };
-        
 
     }
 

@@ -152,9 +152,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
                     }*/
             }
         }
-
     }
-
     @Test
     @Ignore("Waiting for merge")
     public void test2MBEntries() throws Exception {

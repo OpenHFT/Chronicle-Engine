@@ -76,7 +76,6 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
                 remoteMapSupplier.close();
             }
         };
-        
 
     }
 

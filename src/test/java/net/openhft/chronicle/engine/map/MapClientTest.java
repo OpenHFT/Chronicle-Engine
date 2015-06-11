@@ -276,9 +276,7 @@ public class MapClientTest extends ThreadMonitoringTest {
         } finally {
             result.close();
         }
-
     }
-
     private <K, V>
     void supplyMapEventListener(@NotNull Class<K> kClass, @NotNull Class<V> vClass, @NotNull Consumer<MapEventListener<K, V>> c)
             throws IOException {
@@ -301,9 +299,7 @@ public class MapClientTest extends ThreadMonitoringTest {
         } finally {
             result.close();
         }
-
     }
-
     public interface CloseableSupplier<X> extends Closeable, Supplier<X> {
     }
 
@@ -354,9 +350,7 @@ public class MapClientTest extends ThreadMonitoringTest {
         public ConcurrentMap<K, V> get() {
             return map;
         }
-
     }
-
     public static class LocalMapSupplier<K, V> implements CloseableSupplier<ConcurrentMap<K, V>> {
 
         @NotNull
@@ -377,9 +371,7 @@ public class MapClientTest extends ThreadMonitoringTest {
         public ConcurrentMap<K, V> get() {
             return map;
         }
-
     }
-
     public static class LocalMapEventListenerSupplier<K, V> implements CloseableSupplier<MapEventListener<K, V>> {
 
         @NotNull
@@ -400,9 +392,7 @@ public class MapClientTest extends ThreadMonitoringTest {
         public MapEventListener<K, V> get() {
             return listener;
         }
-
     }
-
     public static class RemoteMapEventListenerSupplier<K, V> implements CloseableSupplier<MapEventListener<K, V>> {
 
         @NotNull
@@ -422,7 +412,6 @@ public class MapClientTest extends ThreadMonitoringTest {
         public MapEventListener<K, V> get() {
             return listener;
         }
-
     }
 }
 

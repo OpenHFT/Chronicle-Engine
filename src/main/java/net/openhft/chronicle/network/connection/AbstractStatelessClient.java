@@ -304,5 +304,4 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
             hub.inBytesLock().unlock();
         }
     }
-
 }

@@ -15,7 +15,6 @@ map.putAll(m);
 map.entrySet();
 ```
 
-
 --------------------------------------------
 client writes:
 ```

@@ -179,9 +179,7 @@ public class TcpConnectionHub implements View, Closeable {
                 throw e;
             }
         }
-
     }
-
     private void doHandShaking() {
         outBytesLock().lock();
         try {

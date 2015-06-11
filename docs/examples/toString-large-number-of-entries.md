@@ -6,14 +6,11 @@ toString()
 
 like this :
 
-
 ```
 {96=hello 96, 33=hello 33, 97=hello 97, 35=hello 35, 3=hello 3, 4=hello 4, 103=hello 103,
 105=hello 105, 15=hello 15, 16=hello 16, 80=hello 80, 81=hello 81, 49=hello 49, 52=hello
 52, 85=hello 85, 22=hello 22, 24=hello 24, 59=hello 59, 60=hello 60, 62=hello 62, ...
 ```
-
-
 
 ```
  ChronicleMap<Integer, String> map = createMap();

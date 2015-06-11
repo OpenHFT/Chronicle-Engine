@@ -154,5 +154,4 @@ public class ChassisRFCTest {
         assertEquals(null, map.get("topic-1"));
         assertEquals("[{name: topic-1, message: Message-1}, {name: topic-1, message: null}]", values.toString());
     }
-
 }

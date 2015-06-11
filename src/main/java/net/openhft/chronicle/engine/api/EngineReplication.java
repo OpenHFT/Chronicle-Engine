@@ -18,7 +18,6 @@
 
 package net.openhft.chronicle.engine.api;
 
-
 import net.openhft.chronicle.bytes.Bytes;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +27,6 @@ import java.io.Closeable;
  * @author Rob Austin.
  */
 interface EngineReplication extends Closeable {
-
 
     /**
      * inserts or updates the entry
@@ -88,7 +86,6 @@ interface EngineReplication extends Closeable {
      * @see #identifier()
      */
     long lastModificationTime(byte remoteIdentifier);
-
 
     void setLastModificationTime(byte identifier, long timestamp);
 
@@ -150,7 +147,6 @@ interface EngineReplication extends Closeable {
         void setModificationNotifier(@NotNull final ModificationNotifier modificationNotifier);
     }
 
-
     /**
      * Implemented typically by a replicator, This interface provides the event, which will get
      * called whenever a put() or remove() has occurred to the map
@@ -177,7 +173,4 @@ interface EngineReplication extends Closeable {
                                         byte identifier,
                                         long bootStrapTimeStamp);
     }
-
-
 }
-

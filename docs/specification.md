@@ -13,13 +13,9 @@ This page covers the specification of the initial hand shaking and header for Ch
 |entrySet<key>  | chunked - when the server buffer full  |[link](https://github.com/OpenHFT/Chronicle-Engine/blob/master/docs/examples/entrySet-buffer-full.md)      |
 |entrySet<key>  | the whole entry set in a single message  | [link](https://github.com/OpenHFT/Chronicle-Engine/blob/master/docs/examples/entrySet.md )    |
 
-
-
-
 ## Header
 All messages that are sent from a client to a Chronicle Engine via TCP contain a header, below is
  the specification for this header.
-
 
 #### Type: <see table below >
 
@@ -28,7 +24,6 @@ All messages that are sent from a client to a Chronicle Engine via TCP contain a
 |Map    | denotes that we wish to bind to a map instance.                                          |
 |Queue  | denotes that we wish to bind to a queue instance. |
 |Core   | denotes that we wish to carry out general tasks,for example, changing the wire format.                              |
-
 
 #### Transaction Id: < a long number >
 The transaction id must be a unique number of this request, it must be unique per server
@@ -75,7 +70,6 @@ The client can handle a number of simultaneous requests ( each on a different th
 
 5. Data chunking, certain methods like map.put(), map.entry(), map.keySet() map.values() can cause large messages to be sent. Although large messages are often the most efficient way to send a lot of data this can be detrimental to other services ( especially services running on the same client machine, but large messages can even effect other services on your network. As such, it makes sense to chunk large messages ( and throttle them where appropriate ). Chronicle Engine Map, supports either sending all the entries as a single message or chunking them down to even individual entries, this chunk size is determined by your preferred TCP buffer size, when the buffer is about 50% full the code will opt to send the rest of the data in another chunk.
 
-
 ## Example message :
 
 client writes:
@@ -86,7 +80,6 @@ timeStamp: 1426504502494
 ```
 
 the server notifies that it relieved this message by reflecting the transaction id back
-
 
 server writes:
 ```
@@ -156,7 +149,6 @@ result: 3.0.0-alpha-SNAPSHOT
 If the version number differ
 - A warning is logged.
 - Data can only be exchanged using text wire, NOT binary wire.
-
 
 # Service API
 
@@ -343,5 +335,4 @@ given that this is a new map, the map was empty when put added data to it, hence
 old value will return null.
 
 resultIsNull: true
-
 
