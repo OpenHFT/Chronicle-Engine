@@ -45,7 +45,6 @@ import static org.junit.Assert.*;
  * Pat Fisher, Mike Judd.
  */
 
-@Ignore("Waiting for merge")
 public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
 
     private AssetTree assetTree = new VanillaAssetTree().forTesting();
@@ -59,9 +58,9 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     }
 
     @NotNull
-    ClosableMapSupplier newIntString() throws IOException {
+    ClosableMapSupplier newIntString(String name) throws IOException {
         final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(Integer.class, String
-                .class, TextWire::new, assetTree);
+                .class, TextWire::new, assetTree, name);
 
         return new ClosableMapSupplier() {
 
@@ -105,7 +104,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
      */
     @NotNull
     private ClosableMapSupplier<Integer, String> map5() throws IOException {
-        ClosableMapSupplier<Integer, String> supplier = newIntString();
+        ClosableMapSupplier<Integer, String> supplier = newIntString("test");
         final Map<Integer, String> map = supplier.get();
         assertTrue(map.isEmpty());
         map.put(one, "A");
@@ -199,7 +198,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
      */
     @Test(timeout = 50000)
     public void testIsEmpty() throws IOException {
-        try (ClosableMapSupplier<Integer, String> emptySupplier = newIntString()) {
+        try (ClosableMapSupplier<Integer, String> emptySupplier = newIntString("testEmpty")) {
             final Map empty = emptySupplier.get();
             try (ClosableMapSupplier<Integer, String> supplier = map5()) {
 
@@ -357,7 +356,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     @Test(timeout = 50000)
     public void testPutAll() throws IOException {
         int port = s_port++;
-        try (ClosableMapSupplier<Integer, String> emptySupplier = newIntString()) {
+        try (ClosableMapSupplier<Integer, String> emptySupplier = newIntString("test")) {
             final Map<Integer, String> empty = emptySupplier.get();
             try (ClosableMapSupplier<Integer, String> supplier = map5()) {
                 final Map map = supplier.get();
@@ -487,7 +486,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     public void testSize() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
             final Map map = supplier.get();
-            try (ClosableMapSupplier<Integer, String> supplier0 = newIntString()) {
+            try (ClosableMapSupplier<Integer, String> supplier0 = newIntString("testEmpty")) {
                 final Map empty = supplier0.get();
                 writeMessage = "size on an empty map";
                 yamlLoggger(() -> assertEquals(0, empty.size()));
@@ -504,7 +503,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     public void testSize2() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
             final Map map = supplier.get();
-            try (ClosableMapSupplier<Integer, String> supplier0 = newIntString()) {
+            try (ClosableMapSupplier<Integer, String> supplier0 = newIntString("testEmpty")) {
                 final Map empty = supplier0.get();
                 assertEquals(0, empty.size());
                 assertEquals(5, map.size());
@@ -519,7 +518,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     public void testSize3() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
             final Map map = supplier.get();
-            try (ClosableMapSupplier<Integer, String> supplier0 = newIntString()) {
+            try (ClosableMapSupplier<Integer, String> supplier0 = newIntString("testEmpty")) {
                 final Map empty = supplier0.get();
                 assertEquals(0, empty.size());
                 assertEquals(5, map.size());
@@ -533,7 +532,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     @Test(timeout = 50000, expected = NullPointerException.class)
     public void testGet_NullPointerException() throws IOException {
 
-        try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
+        try (ClosableMapSupplier<Integer, String> supplier = newIntString("test")) {
             Map<Integer, String> c = supplier.get();
             writeMessage = "get(null) returns a NullPointerException";
             yamlLoggger(() -> c.get(null));
@@ -545,7 +544,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
      */
     @Test(timeout = 50000, expected = NullPointerException.class)
     public void testContainsKey_NullPointerException() throws IOException {
-        try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
+        try (ClosableMapSupplier<Integer, String> supplier = newIntString("test")) {
             Map<Integer, String> c = supplier.get();
             writeMessage = "c.containsKey(null) will throw a NullPointerException";
             yamlLoggger(() -> c.containsKey(null));
@@ -557,7 +556,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
      */
     @Test(timeout = 50000, expected = NullPointerException.class)
     public void testPut1_NullPointerException() throws IOException {
-        try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
+        try (ClosableMapSupplier<Integer, String> supplier = newIntString("test")) {
             Map<Integer, String> c = supplier.get();
             writeMessage = "put(null) will throw a NullPointerException";
             yamlLoggger(() -> c.put(null, "whatever"));
@@ -569,7 +568,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
      */
     @Test(timeout = 50000, expected = NullPointerException.class)
     public void testPut2_NullPointerException() throws IOException {
-        try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
+        try (ClosableMapSupplier<Integer, String> supplier = newIntString("test")) {
             Map<Integer, String> c = supplier.get();
             writeMessage = "put(notPresent,null) will throw a NullPointerException";
             yamlLoggger(() -> c.put(notPresent, null));
@@ -581,7 +580,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
      */
     @Test(timeout = 50000, expected = NullPointerException.class)
     public void testPutIfAbsent1_NullPointerException() throws IOException {
-        try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
+        try (ClosableMapSupplier<Integer, String> supplier = newIntString("test")) {
             Map<Integer, String> c = supplier.get();
             writeMessage = "put(null, \"whatever\") will throw a NullPointerException";
             yamlLoggger(() -> c.putIfAbsent(null, "whatever"));
@@ -593,7 +592,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
      */
     @Test(timeout = 50000, expected = NullPointerException.class)
     public void testReplace_NullPointerException() throws IOException {
-        try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
+        try (ClosableMapSupplier<Integer, String> supplier = newIntString("test")) {
             Map<Integer, String> c = supplier.get();
             c.replace(null, "whatever");
         }
@@ -604,7 +603,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
      */
     @Test(timeout = 50000, expected = NullPointerException.class)
     public void testReplaceValue_NullPointerException() throws IOException {
-        try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
+        try (ClosableMapSupplier<Integer, String> supplier = newIntString("test")) {
             Map<Integer, String> c = supplier.get();
             c.replace(null, "A", "whatever");
         }
@@ -615,7 +614,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
      */
     @Test(timeout = 50000, expected = NullPointerException.class)
     public void testPutIfAbsent2_NullPointerException() throws IOException {
-        try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
+        try (ClosableMapSupplier<Integer, String> supplier = newIntString("test")) {
             Map<Integer, String> c = supplier.get();
             c.putIfAbsent(notPresent, null);
         }
@@ -626,7 +625,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
      */
     @Test(timeout = 50000, expected = NullPointerException.class)
     public void testReplace2_NullPointerException() throws IOException {
-        try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
+        try (ClosableMapSupplier<Integer, String> supplier = newIntString("test")) {
             Map<Integer, String> c = supplier.get();
             writeMessage = "replace(notPresent,null) will throw a NullPointerException";
             yamlLoggger(() -> c.replace(notPresent, null));
@@ -638,7 +637,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
      */
     @Test(timeout = 50000, expected = NullPointerException.class)
     public void testReplaceValue2_NullPointerException() throws IOException {
-        try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
+        try (ClosableMapSupplier<Integer, String> supplier = newIntString("test")) {
             Map<Integer, String> c = supplier.get();
             c.replace(notPresent, null, "A");
         }
@@ -649,7 +648,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
      */
     @Test(timeout = 50000, expected = NullPointerException.class)
     public void testReplaceValue3_NullPointerException() throws IOException {
-        try (ClosableMapSupplier<Integer, String> supplier = newIntString()) {
+        try (ClosableMapSupplier<Integer, String> supplier = newIntString("test")) {
             Map<Integer, String> c = supplier.get();
             writeMessage = "replace(notPresent, \"A\", null will throw a NullPointerException";
             yamlLoggger(() -> c.replace(notPresent, "A", null));

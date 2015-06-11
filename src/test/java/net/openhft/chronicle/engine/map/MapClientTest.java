@@ -94,31 +94,6 @@ public class MapClientTest extends ThreadMonitoringTest {
         });
     }
 
-    @Ignore
-    @Test(timeout = 50000)
-    public void testSubscriptionTest() throws IOException, InterruptedException {
-        yamlLoggger(() -> {
-            try {
-                supplyMap(Integer.class, String.class, map -> {
-                    try {
-                        supplyMapEventListener(Integer.class, String.class, mapEventListener -> {
-                            Chassis.registerSubscriber("test", MapEvent.class, e -> e.apply(mapEventListener));
-
-                            map.put(i, "one");
-
-                        });
-
-                    } catch (IOException e) {
-                        Jvm.rethrow(e);
-                    }
-                });
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
-    }
-
     @Test(timeout = 50000)
     public void testEntrySetIsEmpty() throws IOException, InterruptedException {
 
@@ -277,29 +252,7 @@ public class MapClientTest extends ThreadMonitoringTest {
             result.close();
         }
     }
-    private <K, V>
-    void supplyMapEventListener(@NotNull Class<K> kClass, @NotNull Class<V> vClass, @NotNull Consumer<MapEventListener<K, V>> c)
-            throws IOException {
 
-        CloseableSupplier<MapEventListener<K, V>> result;
-        if (LocalMapEventListenerSupplier.class.equals(supplier)) {
-            result = new LocalMapEventListenerSupplier<K, V>(kClass, vClass, TextWire::new);
-
-        } else if (RemoteMapEventListenerSupplier.class.equals(supplier)) {
-            result = new RemoteMapEventListenerSupplier<K, V>(kClass, vClass, TextWire::new);
-
-        } else {
-            throw new IllegalStateException("unsuported type");
-        }
-
-        try {
-            c.accept(result.get());
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            result.close();
-        }
-    }
     public interface CloseableSupplier<X> extends Closeable, Supplier<X> {
     }
 
@@ -377,47 +330,6 @@ public class MapClientTest extends ThreadMonitoringTest {
         @Override
         public ConcurrentMap<K, V> get() {
             return map;
-        }
-    }
-    public static class LocalMapEventListenerSupplier<K, V> implements CloseableSupplier<MapEventListener<K, V>> {
-
-        @NotNull
-        private final MapEventListener<K, V> listener;
-
-        public LocalMapEventListenerSupplier(Class<K> kClass, Class<V> vClass, Function<Bytes, Wire> wireType) throws IOException {
-            throw new UnsupportedOperationException("todo");
-        }
-
-        @Override
-        public void close() throws IOException {
-            // todo unregiser
-            throw new UnsupportedOperationException("todo");
-        }
-
-        @NotNull
-        @Override
-        public MapEventListener<K, V> get() {
-            return listener;
-        }
-    }
-    public static class RemoteMapEventListenerSupplier<K, V> implements CloseableSupplier<MapEventListener<K, V>> {
-
-        @NotNull
-        private final MapEventListener<K, V> listener;
-
-        public RemoteMapEventListenerSupplier(Class<K> kClass, Class<V> vClass, Function<Bytes, Wire> wireType) throws IOException {
-            throw new UnsupportedOperationException("todo");
-        }
-
-        @Override
-        public void close() throws IOException {
-            throw new UnsupportedOperationException("todo");
-        }
-
-        @NotNull
-        @Override
-        public MapEventListener<K, V> get() {
-            return listener;
         }
     }
 }
