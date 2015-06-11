@@ -9,5 +9,6 @@ net.openhft.chronicle.engine.pubsub
 net.openhft.chronicle.engine.server
 net.openhft.chronicle.engine.server.internal
 net.openhft.chronicle.engine.session
+net.openhft.chronicle.engine.set
 net.openhft.chronicle.engine.tree
 net.openhft.chronicle.network.connection
