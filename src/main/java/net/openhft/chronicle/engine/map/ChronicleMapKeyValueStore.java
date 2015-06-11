@@ -123,6 +123,11 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
     }
 
     @Override
+    public Iterator<K> keySetIterator() {
+        return chronicleMap.keySet().iterator();
+    }
+
+    @Override
     public void clear() {
         chronicleMap.clear();
     }

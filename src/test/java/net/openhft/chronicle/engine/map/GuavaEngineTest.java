@@ -33,7 +33,6 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.TextWire;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.junit.runners.AllTests;
 
@@ -47,7 +46,6 @@ import static com.google.common.collect.testing.features.MapFeature.*;
 @SuppressWarnings("all")
 
 @RunWith(AllTests.class)
-@Ignore
 public class GuavaEngineTest   {
 
     @NotNull
@@ -71,11 +69,10 @@ public class GuavaEngineTest   {
 
         TestSuite tests = new TestSuite();
    //     tests.addTest(remoteMapTests);
-       // tests.addTest(localMapTests);
+        tests.addTest(localMapTests);
         return tests;
     }
 
-    @Ignore
     static abstract class TestGenerator
             implements TestMapGenerator<CharSequence, CharSequence> {
 

@@ -7,9 +7,7 @@ import net.openhft.chronicle.engine.api.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.View;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * @param <K>  key type
@@ -74,7 +72,29 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
 
     void entriesFor(int segment, SubscriptionConsumer<MapEvent<K, V>> kvConsumer) throws InvalidSubscriberException;
 
-    Iterator<Map.Entry<K, V>> entrySetIterator();
+    default Iterator<Map.Entry<K, V>> entrySetIterator() {
+        // todo optimise
+        List<Map.Entry<K, V>> entries = new ArrayList<>();
+        try {
+            for (int i = 0, seg = segments(); i < seg; i++)
+                entriesFor(i, e -> entries.add(new AbstractMap.SimpleEntry<>(e.key(), e.value())));
+        } catch (InvalidSubscriberException e) {
+            throw new AssertionError(e);
+        }
+        return entries.iterator();
+    }
+
+    default Iterator<K> keySetIterator() {
+        // todo optimise
+        List<K> keys = new ArrayList<>();
+        try {
+            for (int i = 0, seg = segments(); i < seg; i++)
+                keysFor(i, k -> keys.add(k));
+        } catch (InvalidSubscriberException e) {
+            throw new AssertionError(e);
+        }
+        return keys.iterator();
+    }
 
     void clear();
 

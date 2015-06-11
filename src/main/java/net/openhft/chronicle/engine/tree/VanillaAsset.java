@@ -6,9 +6,11 @@ import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
+import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.map.*;
 import net.openhft.chronicle.engine.pubsub.VanillaReference;
 import net.openhft.chronicle.engine.session.VanillaSessionProvider;
+import net.openhft.chronicle.engine.set.VanillaKeySetView;
 import net.openhft.chronicle.network.connection.TcpConnectionHub;
 import net.openhft.chronicle.wire.Marshallable;
 import org.jetbrains.annotations.NotNull;
@@ -61,20 +63,17 @@ public class VanillaAsset implements Asset, Closeable {
         addWrappingRule(Publisher.class, LAST + "publisher", VanillaReference::new, MapView.class);
         addWrappingRule(EntrySetView.class, LAST + " entrySet", VanillaEntrySetView::new, MapView.class);
 
-        // todo CE-54  registerFactory(MapEventSubscriber.class,VanillaMapEventSubscriber::new);
 //        viewTypeLayersOn(ValuesCollection.class, LAST + " values", MapView.class);
 
 //        viewTypeLayersOn(MapEventSubscriber.class, LAST + " MapEvent subscriber", Subscription.class);
-// todo CE-54      registerFactory(MapEventSubscriber.class, VanillaMapEventSubscriber::new);
 
-//        viewTypeLayersOn(KeySubscriber.class, LAST + " keySet subscriber", Subscription.class);
+//        addWrappingRule(KeySubscriber.class, LAST + " keySet subscriber", Subscription.class);
 // todo CE-54      registerFactory(KeySubscriber.class, VanillaKeySubscriber::new);
 
 //        viewTypeLayersOn(EntrySetSubscriber.class, LAST + " entrySet subscriber", Subscription.class);
 // todo  CE-54     registerFactory(EntrySetView.class, VanillaEntrySetSubscriber::new);
 
-//        viewTypeLayersOn(KeySetView.class, LAST + " keySet", MapView.class);
-// todo  CE-54     registerFactory(KeySetView.class, VanillaKeySetView::new);
+        addWrappingRule(KeySetView.class, LAST + " keySet", VanillaKeySetView::new, MapView.class);
 
 //        viewTypeLayersOn(TopicSubscriber.class, LAST + " key,value topic subscriber", Subscription.class);
 // todo   CE-54    registerFactory(TopicSubscriber.class, VanillaTopicSubscriber::new);

@@ -154,6 +154,11 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     }
 
     @Override
+    public Iterator<String> keySetIterator() {
+        return getFiles().map(p -> p.getFileName().toString()).iterator();
+    }
+
+    @Override
     public Iterator<Map.Entry<String, BytesStore>> entrySetIterator() {
         return getEntryStream().iterator();
     }

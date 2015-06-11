@@ -66,6 +66,11 @@ public class VanillaKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> {
     }
 
     @Override
+    public Iterator<K> keySetIterator() {
+        return map.keySet().iterator();
+    }
+
+    @Override
     public void clear() {
         try {
             for (int i = 0, segs = segments(); i < segs; i++)

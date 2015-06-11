@@ -144,4 +144,9 @@ public class AbstractKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> 
     public boolean keyedView() {
         return kvStore.keyedView();
     }
+
+    @Override
+    public Iterator<K> keySetIterator() {
+        return kvStore.keySetIterator();
+    }
 }

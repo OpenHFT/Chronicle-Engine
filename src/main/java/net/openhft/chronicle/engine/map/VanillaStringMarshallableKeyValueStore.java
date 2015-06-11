@@ -153,10 +153,24 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
 
     @Override
     public Iterator<Map.Entry<String, V>> entrySetIterator() {
+        // todo optimise
         List<Map.Entry<String, V>> entries = new ArrayList<>();
         try {
             for (int i = 0, seg = segments(); i < seg; i++)
                 entriesFor(i, e -> entries.add(new AbstractMap.SimpleEntry<>(e.key(), e.value())));
+        } catch (InvalidSubscriberException e) {
+            throw new AssertionError(e);
+        }
+        return entries.iterator();
+    }
+
+    @Override
+    public Iterator<String> keySetIterator() {
+        // todo optimise
+        List<String> entries = new ArrayList<>();
+        try {
+            for (int i = 0, seg = segments(); i < seg; i++)
+                keysFor(i, k -> entries.add(k));
         } catch (InvalidSubscriberException e) {
             throw new AssertionError(e);
         }
