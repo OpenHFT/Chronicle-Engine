@@ -23,7 +23,7 @@ import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.AssetTree;
-import net.openhft.chronicle.engine.api.map.MapEvent;
+import net.openhft.chronicle.engine.api.map.ChangeEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
@@ -102,7 +102,7 @@ public class MapClientTest extends ThreadMonitoringTest {
                 supplyMap(Integer.class, String.class, map -> {
                     try {
                         supplyMapEventListener(Integer.class, String.class, mapEventListener -> {
-                            Chassis.registerSubscriber("test", MapEvent.class, e -> e.apply(mapEventListener));
+                            Chassis.registerSubscriber("test", ChangeEvent.class, e -> e.apply(mapEventListener));
 
                             map.put(i, "one");
 

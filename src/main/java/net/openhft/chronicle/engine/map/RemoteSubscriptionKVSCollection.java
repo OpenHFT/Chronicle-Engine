@@ -1,8 +1,8 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.engine.api.*;
+import net.openhft.chronicle.engine.api.map.ChangeEvent;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
-import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
 import net.openhft.chronicle.engine.server.internal.MapWireHandler;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
@@ -48,7 +48,12 @@ public class RemoteSubscriptionKVSCollection<K, MV, V> extends AbstractStateless
     }
 
     @Override
-    public void notifyEvent(MapEvent<K, V> mpe) throws InvalidSubscriberException {
+    public void notifyEvent(ChangeEvent<K, V> mpe) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public <K1, V1> void notifyChildUpdate(Asset asset, ChangeEvent<K1, V1> changeEvent) {
         throw new UnsupportedOperationException("todo");
     }
 
@@ -118,13 +123,13 @@ public class RemoteSubscriptionKVSCollection<K, MV, V> extends AbstractStateless
                 .getName();
     }
 
-    private void onEvent(WireIn r, Subscriber<MapEvent<K, V>> subscriber) {
+    private void onEvent(WireIn r, Subscriber<ChangeEvent<K, V>> subscriber) {
         byte eventType = r.read().int8();
         K key = r.read(MapWireHandler.Params.key).object(keyType);
 
 
         try {
-            subscriber.onMessage(new MapEvent<K,V>() {
+            subscriber.onMessage(new ChangeEvent<K, V>() {
                 @Override
                 public K key() {
                     return key;
@@ -158,12 +163,17 @@ public class RemoteSubscriptionKVSCollection<K, MV, V> extends AbstractStateless
                 }
 
                 @Override
-                public MapEvent translate(BiFunction keyFunction, BiFunction valueFunction) {
+                public ChangeEvent translate(BiFunction keyFunction, BiFunction valueFunction) {
                     throw new UnsupportedOperationException("todo");
                 }
 
                 @Override
-                public MapEvent<K, V> translate(Function keyFunction, Function valueFunction) {
+                public ChangeEvent<K, V> translate(Function keyFunction, Function valueFunction) {
+                    throw new UnsupportedOperationException("todo");
+                }
+
+                @Override
+                public <K2> ChangeEvent<K2, K> pushKey(K2 name) {
                     throw new UnsupportedOperationException("todo");
                 }
             });

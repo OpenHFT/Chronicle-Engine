@@ -6,10 +6,9 @@ import net.openhft.chronicle.engine.api.Asset;
 import net.openhft.chronicle.engine.api.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.RequestContext;
 import net.openhft.chronicle.engine.api.SubscriptionConsumer;
+import net.openhft.chronicle.engine.api.map.ChangeEvent;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
-import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
-import net.openhft.chronicle.engine.pubsub.SimpleSubscription;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.MapEventListener;
@@ -21,7 +20,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Optional;
 
 import static net.openhft.chronicle.engine.api.SubscriptionConsumer.notifyEachEvent;
 
@@ -29,7 +27,7 @@ import static net.openhft.chronicle.engine.api.SubscriptionConsumer.notifyEachEv
  * Created by daniel on 27/05/15.
  */
 public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValueStore<K, MV, V>, Closeable {
-    private final ChronicleMap<K,V> chronicleMap;
+    private final ChronicleMap<K, V> chronicleMap;
     private final ObjectSubscription<K, MV, V> subscriptions;
     private Asset asset;
 
@@ -48,13 +46,13 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         if (context.putReturnsNull() != Boolean.FALSE) {
             builder.putReturnsNull(true);
         }
-        if(context.getAverageValueSize()!=0){
+        if (context.getAverageValueSize() != 0) {
             builder.averageValueSize(context.getAverageValueSize());
         }
-        if(context.getEntries()!=0){
+        if (context.getEntries() != 0) {
             builder.entries(context.getEntries());
         }
-        if(basePath!=null) {
+        if (basePath != null) {
             String pathname = basePath + "/" + context.name();
             new File(basePath).mkdirs();
             try {
@@ -89,7 +87,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
 
     @Override
     public V getUsing(K key, @Nullable MV value) {
-        if(value != null)throw new UnsupportedOperationException("Mutable values not supported");
+        if (value != null) throw new UnsupportedOperationException("Mutable values not supported");
         return chronicleMap.getUsing(key, (V) value);
     }
 
@@ -105,7 +103,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
     }
 
     @Override
-    public void entriesFor(int segment, @NotNull SubscriptionConsumer<MapEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
+    public void entriesFor(int segment, @NotNull SubscriptionConsumer<ChangeEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
         //Ignore the segments and return entriesFor the whole map
         chronicleMap.entrySet().stream().map(e -> InsertedEvent.of(e.getKey(), e.getValue())).forEach(e -> {
             try {
@@ -148,43 +146,19 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         chronicleMap.close();
     }
 
-    class PublishingOperations extends MapEventListener<K,V> {
+    class PublishingOperations extends MapEventListener<K, V> {
         @Override
         public void onRemove(@NotNull K key, V value, boolean replicationEven) {
-            try {
-                int identifier = 0; // todo
-                long timeStampMS = 0; // todo
-                subscriptions.notifyEvent(RemovedEvent.of(key, value));
-                publishValueToChild(key, null);
-            } catch (InvalidSubscriberException e) {
-                // todo
-                throw new AssertionError(e);
-            }
+            subscriptions.notifyEvent(RemovedEvent.of(key, value));
         }
+
         @Override
         public void onPut(@NotNull K key, V newValue, @Nullable V replacedValue, boolean replicationEvent) {
-            try {
-                int identifier = 0; // todo
-                long timeStampMS = 0; // todo
-                if(replacedValue!=null) {
-                    subscriptions.notifyEvent(UpdatedEvent.of(key, replacedValue, newValue));
-                }else{
-                    subscriptions.notifyEvent(InsertedEvent.of(key, newValue));
-                }
-                publishValueToChild(key, newValue);
-            } catch (InvalidSubscriberException e) {
-                // todo
-                throw new AssertionError(e);
+            if (replacedValue != null) {
+                subscriptions.notifyEvent(UpdatedEvent.of(key, replacedValue, newValue));
+            } else {
+                subscriptions.notifyEvent(InsertedEvent.of(key, newValue));
             }
         }
-    }
-
-    private void publishValueToChild(@NotNull K key, V value) {
-        Optional.of(key)
-                .filter(k -> k instanceof CharSequence)
-                .map(Object::toString)
-                .map(asset::getChild)
-                .map(c -> c.getView(SimpleSubscription.class))
-                .ifPresent(v -> v.notifyMessage(value));
     }
 }

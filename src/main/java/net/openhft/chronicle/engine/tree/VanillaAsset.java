@@ -56,6 +56,11 @@ public class VanillaAsset implements Asset, Closeable {
             assert parent != null;
             assert name != null;
         }
+        if (parent != null) {
+            ObjectSubscription parentSubs = parent.getView(ObjectSubscription.class);
+            if (parentSubs != null)
+                parentSubs.notifyEvent(InsertedEvent.of(parent.name(), name));
+        }
     }
 
     public void standardStack() {

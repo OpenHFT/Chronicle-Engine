@@ -2,8 +2,8 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.engine.api.map.ChangeEvent;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
-import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.map.AuthenticatedKeyValueStore;
 import net.openhft.chronicle.engine.map.FilePerKeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
@@ -63,8 +63,8 @@ public class MarshallableFilePerKeyValueStoreTest {
         TestMarshallable tm = new TestMarshallable("testing1", "testing2",
                 new Nested(Arrays.asList(2.3, 4.5, 6.7, 8.9)));
 
-        List<MapEvent<String, TestMarshallable>> events = new ArrayList<>();
-        registerSubscriber(NAME, MapEvent.class, events::add);
+        List<ChangeEvent<String, TestMarshallable>> events = new ArrayList<>();
+        registerSubscriber(NAME, ChangeEvent.class, events::add);
 
         map.put("testA", tm);
         map.put("testB", tm);
@@ -83,7 +83,7 @@ public class MarshallableFilePerKeyValueStoreTest {
         assertEquals(3, events.size());
     }
 
-    private void waitFor(List<MapEvent<String, TestMarshallable>> events, int count) throws InterruptedException {
+    private void waitFor(List<ChangeEvent<String, TestMarshallable>> events, int count) throws InterruptedException {
         for (int i = 1; i <= 10; i++) {
             if (events.size() >= count)
                 break;

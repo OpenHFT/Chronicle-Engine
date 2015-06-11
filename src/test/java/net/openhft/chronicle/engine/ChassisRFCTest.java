@@ -1,7 +1,7 @@
 package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.engine.api.*;
-import net.openhft.chronicle.engine.api.map.MapEvent;
+import net.openhft.chronicle.engine.api.map.ChangeEvent;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -63,9 +63,9 @@ public class ChassisRFCTest {
 
         map.put("Key-1", "Value-1");
 
-        List<MapEvent> values = new ArrayList<>();
-        Subscriber<MapEvent> subscriber = values::add;
-        registerSubscriber("group-A?view=map&bootstrap=true", MapEvent.class, subscriber);
+        List<ChangeEvent> values = new ArrayList<>();
+        Subscriber<ChangeEvent> subscriber = values::add;
+        registerSubscriber("group-A?view=map&bootstrap=true", ChangeEvent.class, subscriber);
 
         map.put("Key-1", "Value-2");
         map.remove("Key-1");

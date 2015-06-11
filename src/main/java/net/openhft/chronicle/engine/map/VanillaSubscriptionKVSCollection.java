@@ -1,8 +1,8 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.engine.api.*;
+import net.openhft.chronicle.engine.api.map.ChangeEvent;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
-import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.pubsub.SimpleSubscription;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,6 +21,7 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements ObjectSubscri
     private final Set<Subscriber<K>> keySubscribers = new CopyOnWriteArraySet<>();
     private final Set<EventConsumer<K, V>> downstream = new CopyOnWriteArraySet<>();
     private final Asset asset;
+    private final boolean notifyParent;
     private KeyValueStore<K, MV, V> kvStore;
     private boolean hasSubscribers = false;
 
@@ -32,6 +33,7 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements ObjectSubscri
         this.asset = asset;
         if (viewType != null)
         asset.addView(viewType, this);
+        notifyParent = viewType == ObjectSubscription.class;
     }
 
     @Override
@@ -45,39 +47,60 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements ObjectSubscri
     }
 
     @Override
-    public void notifyEvent(@NotNull MapEvent<K, V> mpe) throws InvalidSubscriberException {
+    public void notifyEvent(@NotNull ChangeEvent<K, V> changeEvent) {
         if (hasSubscribers())
-            notifyEvent0(mpe);
+            notifyEvent0(changeEvent);
+        if (notifyParent && asset.parent() != null) {
+            ObjectSubscription parentSubs = asset.parent().getView(ObjectSubscription.class);
+            if (parentSubs != null)
+                parentSubs.notifyChildUpdate(asset, changeEvent);
+        }
+    }
+
+    @Override
+    public void notifyChildUpdate(Asset asset, ChangeEvent changeEvent) {
+        if (hasSubscribers()) {
+            notifyEvent1(changeEvent.pushKey(asset.name()));
+        }
     }
 
     private boolean hasSubscribers() {
         return hasSubscribers || asset.hasChildren();
     }
 
-    private void notifyEvent0(@NotNull MapEvent<K, V> mpe) {
-        K key = mpe.key();
+    private void notifyEvent0(@NotNull ChangeEvent<K, V> changeEvent) {
+        notifyEvent1(changeEvent);
+        notifyEventToChild(changeEvent);
+    }
+
+    private void notifyEvent1(@NotNull ChangeEvent<K, V> changeEvent) {
+        K key = changeEvent.key();
 
         if (!topicSubscribers.isEmpty()) {
-            V value = mpe.value();
+            V value = changeEvent.value();
             notifyEachSubscriber(topicSubscribers, ts -> ts.onMessage(key, value));
         }
         if (!subscribers.isEmpty()) {
-            notifyEachSubscriber(subscribers, s -> s.onMessage(mpe));
+            notifyEachSubscriber(subscribers, s -> s.onMessage(changeEvent));
         }
         if (!keySubscribers.isEmpty()) {
             notifyEachSubscriber(keySubscribers, s -> s.onMessage(key));
         }
         if (!downstream.isEmpty()) {
-            notifyEachSubscriber(downstream, d -> d.notifyEvent(mpe));
+            notifyEachSubscriber(downstream, d -> d.notifyEvent(changeEvent));
         }
+    }
+
+    private void notifyEventToChild(@NotNull ChangeEvent<K, V> changeEvent) {
+        K key = changeEvent.key();
         if (asset.hasChildren() && key instanceof CharSequence) {
             String keyStr = key.toString();
             Asset child = asset.getChild(keyStr);
             if (child != null) {
                 Subscription subscription = child.subscription(false);
                 if (subscription instanceof SimpleSubscription) {
-//                    System.out.println(mpe.toString().substring(0, 100));
-                    ((SimpleSubscription) subscription).notifyMessage(mpe.value());
+//                    System.out.println(changeEvent.toString().substring(0, 100));
+                    ((SimpleSubscription) subscription).notifyMessage(changeEvent.value());
                 }
             }
         }
@@ -93,10 +116,10 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements ObjectSubscri
     public void registerSubscriber(@NotNull RequestContext rc, Subscriber subscriber) {
         Boolean bootstrap = rc.bootstrap();
         Class eClass = rc.type();
-        if (eClass == KeyValueStore.Entry.class || eClass == MapEvent.class || eClass == MapEvent.class) {
+        if (eClass == KeyValueStore.Entry.class || eClass == ChangeEvent.class || eClass == ChangeEvent.class) {
             subscribers.add((Subscriber) subscriber);
             if (bootstrap != Boolean.FALSE && kvStore != null) {
-                Subscriber<MapEvent<K, V>> sub = (Subscriber<MapEvent<K, V>>) subscriber;
+                Subscriber<ChangeEvent<K, V>> sub = (Subscriber<ChangeEvent<K, V>>) subscriber;
                 try {
                     for (int i = 0; i < kvStore.segments(); i++)
                         kvStore.entriesFor(i, sub::onMessage);

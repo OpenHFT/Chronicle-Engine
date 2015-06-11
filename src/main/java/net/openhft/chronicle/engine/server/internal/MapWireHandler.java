@@ -27,7 +27,7 @@ import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.pool.StringBuilderPool;
 import net.openhft.chronicle.engine.api.AssetTree;
 import net.openhft.chronicle.engine.api.RequestContext;
-import net.openhft.chronicle.engine.api.map.MapEvent;
+import net.openhft.chronicle.engine.api.map.ChangeEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
 import net.openhft.chronicle.engine.collection.CollectionWireHandlerProcessor;
 import net.openhft.chronicle.map.ChronicleMap;
@@ -279,7 +279,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                             });
                         }
                     };
-                    assetTree.registerSubscriber(requestContext.name(), MapEvent.class, e -> e.apply(listener));
+                    assetTree.registerSubscriber(requestContext.name(), ChangeEvent.class, e -> e.apply(listener));
 
                     return;
                 }

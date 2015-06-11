@@ -10,8 +10,8 @@ import net.openhft.chronicle.engine.api.Asset;
 import net.openhft.chronicle.engine.api.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.RequestContext;
 import net.openhft.chronicle.engine.api.SubscriptionConsumer;
+import net.openhft.chronicle.engine.api.map.ChangeEvent;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
-import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.StringBytesStoreKeyValueStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -132,7 +132,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     }
 
     @Override
-    public void entriesFor(int segment, @NotNull SubscriptionConsumer<MapEvent<String, BytesStore>> kvConsumer) throws InvalidSubscriberException {
+    public void entriesFor(int segment, @NotNull SubscriptionConsumer<ChangeEvent<String, BytesStore>> kvConsumer) throws InvalidSubscriberException {
         try {
             entriesFor0(kvConsumer);
         } catch (InvalidSubscriberException ise) {
@@ -140,7 +140,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         }
     }
 
-    void entriesFor0(@NotNull SubscriptionConsumer<MapEvent<String, BytesStore>> kvConsumer) throws InvalidSubscriberException {
+    void entriesFor0(@NotNull SubscriptionConsumer<ChangeEvent<String, BytesStore>> kvConsumer) throws InvalidSubscriberException {
         getFiles().map(p -> InsertedEvent.of(p.getFileName().toString(), getFileContents(p, null)))
                 .forEach(e -> {
                     try {

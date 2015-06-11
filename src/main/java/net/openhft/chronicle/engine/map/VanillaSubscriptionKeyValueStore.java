@@ -1,7 +1,6 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.engine.api.Asset;
-import net.openhft.chronicle.engine.api.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.RequestContext;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 
@@ -26,11 +25,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     public V replace(K key, V value) {
         V oldValue = kvStore.replace(key, value);
         if (oldValue != null) {
-            try {
-                subscriptions.notifyEvent(UpdatedEvent.of(key, oldValue, value));
-            } catch (InvalidSubscriberException e) {
-                throw new AssertionError(e);
-            }
+            subscriptions.notifyEvent(UpdatedEvent.of(key, oldValue, value));
         }
         return oldValue;
     }
@@ -41,13 +36,9 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
             return getAndPut(key, value) != null;
         }
         boolean replaced = kvStore.put(key, value);
-        try {
             subscriptions.notifyEvent(replaced
                     ? InsertedEvent.of(key, value)
                     : UpdatedEvent.of(key, null, value));
-        } catch (InvalidSubscriberException e) {
-            throw new AssertionError(e);
-        }
         return replaced;
 
     }
@@ -58,11 +49,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
             return getAndRemove(key) != null;
         }
         if (kvStore.remove(key)) {
-            try {
                 subscriptions.notifyEvent(RemovedEvent.of(key, null));
-            } catch (InvalidSubscriberException e) {
-                throw new AssertionError(e);
-            }
             return true;
         }
         return false;
@@ -71,11 +58,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     @Override
     public boolean replaceIfEqual(K key, V oldValue, V newValue) {
         if (kvStore.replaceIfEqual(key, oldValue, newValue)) {
-            try {
                 subscriptions.notifyEvent(UpdatedEvent.of(key, oldValue, newValue));
-            } catch (InvalidSubscriberException e) {
-                throw new AssertionError(e);
-            }
             return true;
         }
         return false;
@@ -84,11 +67,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     @Override
     public boolean removeIfEqual(K key, V value) {
         if (kvStore.removeIfEqual(key, value)) {
-            try {
                 subscriptions.notifyEvent(RemovedEvent.of(key, value));
-            } catch (InvalidSubscriberException e) {
-                throw new AssertionError(e);
-            }
             return true;
         }
         return false;
@@ -98,37 +77,25 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     public V putIfAbsent(K key, V value) {
         V ret = kvStore.putIfAbsent(key, value);
         if (ret == null)
-            try {
                 subscriptions.notifyEvent(InsertedEvent.of(key, value));
-            } catch (InvalidSubscriberException e) {
-                throw new AssertionError(e);
-            }
         return ret;
     }
 
     @Override
     public V getAndPut(K key, V value) {
         V oldValue = kvStore.getAndPut(key, value);
-        try {
+
             subscriptions.notifyEvent(oldValue == null
                     ? InsertedEvent.of(key, value)
                     : UpdatedEvent.of(key, oldValue, value));
-        } catch (InvalidSubscriberException e) {
-            throw new AssertionError(e);
-        }
         return oldValue;
     }
 
     @Override
     public V getAndRemove(K key) {
         V oldValue = kvStore.getAndRemove(key);
-        if (oldValue != null) {
-            try {
+        if (oldValue != null)
                 subscriptions.notifyEvent(RemovedEvent.of(key, oldValue));
-            } catch (InvalidSubscriberException e) {
-                throw new AssertionError(e);
-            }
-        }
         return oldValue;
     }
 }

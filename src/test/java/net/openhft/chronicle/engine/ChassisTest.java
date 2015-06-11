@@ -1,7 +1,7 @@
 package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.engine.api.*;
-import net.openhft.chronicle.engine.api.map.MapEvent;
+import net.openhft.chronicle.engine.api.map.ChangeEvent;
 import net.openhft.chronicle.engine.map.InsertedEvent;
 import net.openhft.chronicle.engine.map.RemovedEvent;
 import net.openhft.chronicle.engine.map.UpdatedEvent;
@@ -218,11 +218,11 @@ todo fix this test
         assertEquals(2, map.size());
 
         // test the bootstrap finds old keys
-        Subscriber<MapEvent<String, String>> subscriber = createMock(Subscriber.class);
+        Subscriber<ChangeEvent<String, String>> subscriber = createMock(Subscriber.class);
         subscriber.onMessage(InsertedEvent.of("Key-1", "Value-1"));
         subscriber.onMessage(InsertedEvent.of("Key-2", "Value-2"));
         replay(subscriber);
-        registerSubscriber("map-name?bootstrap=true", MapEvent.class, (Subscriber) subscriber);
+        registerSubscriber("map-name?bootstrap=true", ChangeEvent.class, (Subscriber) subscriber);
         verify(subscriber);
         reset(subscriber);
 

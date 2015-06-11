@@ -21,7 +21,7 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.engine.Factor;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
-import net.openhft.chronicle.engine.api.map.MapEvent;
+import net.openhft.chronicle.engine.api.map.ChangeEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.wire.TextWire;
@@ -92,11 +92,11 @@ public class SubscriptionTest extends ThreadMonitoringTest {
             port = serverEndpoint.getPort();
             Chassis.forRemoteAccess();
             map = Chassis.acquireMap(toUri(port, "localhost"), String.class, Factor.class);
-            Chassis.registerSubscriber(toUri(port, "localhost"), MapEvent.class, e -> e.apply(listener));
+            Chassis.registerSubscriber(toUri(port, "localhost"), ChangeEvent.class, e -> e.apply(listener));
         } else {
             Chassis.resetChassis();
             map = Chassis.acquireMap("TEST", String.class, Factor.class);
-            Chassis.registerSubscriber("TEST", MapEvent.class, e -> e.apply(listener));
+            Chassis.registerSubscriber("TEST", ChangeEvent.class, e -> e.apply(listener));
         }
     }
 

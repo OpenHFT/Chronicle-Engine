@@ -70,7 +70,7 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
 
     void keysFor(int segment, SubscriptionConsumer<K> kConsumer) throws InvalidSubscriberException;
 
-    void entriesFor(int segment, SubscriptionConsumer<MapEvent<K, V>> kvConsumer) throws InvalidSubscriberException;
+    void entriesFor(int segment, SubscriptionConsumer<ChangeEvent<K, V>> kvConsumer) throws InvalidSubscriberException;
 
     default Iterator<Map.Entry<K, V>> entrySetIterator() {
         // todo optimise

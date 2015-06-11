@@ -2,6 +2,7 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.engine.api.ISubscriber;
 import net.openhft.chronicle.engine.api.Subscription;
+import net.openhft.chronicle.engine.api.map.ChangeEvent;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 
 /**
@@ -16,4 +17,6 @@ public interface SubscriptionKVSCollection<K, MV, V> extends Subscription<K, V>,
     boolean needsPrevious();
 
     void setKvStore(KeyValueStore<K,MV,V> store);
+
+    void notifyEvent(ChangeEvent<K, V> changeEvent);
 }
