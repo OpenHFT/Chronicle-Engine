@@ -19,7 +19,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":6,"i1":6};
+var methods = {"i0":6,"i1":6,"i2":6,"i3":6};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -105,12 +105,8 @@ var activeTableTab = "activeTableTab";
 <dd><a href="../../../../../../net/openhft/chronicle/engine/api/map/KeyValueStore.Entry.html" title="interface in net.openhft.chronicle.engine.api.map">KeyValueStore.Entry</a>&lt;K,V&gt;</dd>
 </dl>
 <dl>
-<dt>All Known Subinterfaces:</dt>
-<dd><a href="../../../../../../net/openhft/chronicle/engine/api/map/MapReplicationEvent.html" title="interface in net.openhft.chronicle.engine.api.map">MapReplicationEvent</a>&lt;K,V&gt;</dd>
-</dl>
-<dl>
 <dt>All Known Implementing Classes:</dt>
-<dd><a href="../../../../../../net/openhft/chronicle/engine/map/BatchCompletionEvent.html" title="class in net.openhft.chronicle.engine.map">BatchCompletionEvent</a>, <a href="../../../../../../net/openhft/chronicle/engine/map/EntryEvent.html" title="class in net.openhft.chronicle.engine.map">EntryEvent</a>, <a href="../../../../../../net/openhft/chronicle/engine/map/InsertedEvent.html" title="class in net.openhft.chronicle.engine.map">InsertedEvent</a>, <a href="../../../../../../net/openhft/chronicle/engine/map/RemovedEvent.html" title="class in net.openhft.chronicle.engine.map">RemovedEvent</a>, <a href="../../../../../../net/openhft/chronicle/engine/map/UpdatedEvent.html" title="class in net.openhft.chronicle.engine.map">UpdatedEvent</a></dd>
+<dd><a href="../../../../../../net/openhft/chronicle/engine/map/InsertedEvent.html" title="class in net.openhft.chronicle.engine.map">InsertedEvent</a>, <a href="../../../../../../net/openhft/chronicle/engine/map/RemovedEvent.html" title="class in net.openhft.chronicle.engine.map">RemovedEvent</a>, <a href="../../../../../../net/openhft/chronicle/engine/map/UpdatedEvent.html" title="class in net.openhft.chronicle.engine.map">UpdatedEvent</a></dd>
 </dl>
 <hr>
 <br>
@@ -140,6 +136,15 @@ extends <a href="../../../../../../net/openhft/chronicle/engine/api/map/KeyValue
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../net/openhft/chronicle/engine/api/map/MapEvent.html#apply-net.openhft.chronicle.engine.api.map.MapEventListener-">apply</a></span>(<a href="../../../../../../net/openhft/chronicle/engine/api/map/MapEventListener.html" title="interface in net.openhft.chronicle.engine.api.map">MapEventListener</a>&lt;<a href="../../../../../../net/openhft/chronicle/engine/api/map/MapEvent.html" title="type parameter in MapEvent">K</a>,<a href="../../../../../../net/openhft/chronicle/engine/api/map/MapEvent.html" title="type parameter in MapEvent">V</a>&gt;&nbsp;listener)</code>&nbsp;</td>
 </tr>
 <tr id="i1" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../../net/openhft/chronicle/engine/api/map/MapEvent.html" title="type parameter in MapEvent">V</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../net/openhft/chronicle/engine/api/map/MapEvent.html#oldValue--">oldValue</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i2" class="altColor">
+<td class="colFirst"><code>&lt;K2,V2&gt;&nbsp;<a href="../../../../../../net/openhft/chronicle/engine/api/map/MapEvent.html" title="interface in net.openhft.chronicle.engine.api.map">MapEvent</a>&lt;K2,V2&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../net/openhft/chronicle/engine/api/map/MapEvent.html#translate-java.util.function.BiFunction-java.util.function.BiFunction-">translate</a></span>(<a href="http://docs.oracle.com/javase/7/docs/api/java/util/function.BiFunction.html?is-external=true" title="class or interface in java.util">java.util.function.BiFunction</a>&lt;<a href="../../../../../../net/openhft/chronicle/engine/api/map/MapEvent.html" title="type parameter in MapEvent">K</a>,K2,K2&gt;&nbsp;keyFunction,
+         <a href="http://docs.oracle.com/javase/7/docs/api/java/util/function.BiFunction.html?is-external=true" title="class or interface in java.util">java.util.function.BiFunction</a>&lt;<a href="../../../../../../net/openhft/chronicle/engine/api/map/MapEvent.html" title="type parameter in MapEvent">V</a>,V2,V2&gt;&nbsp;valueFunction)</code>&nbsp;</td>
+</tr>
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code>&lt;K2,V2&gt;&nbsp;<a href="../../../../../../net/openhft/chronicle/engine/api/map/MapEvent.html" title="interface in net.openhft.chronicle.engine.api.map">MapEvent</a>&lt;K2,V2&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../net/openhft/chronicle/engine/api/map/MapEvent.html#translate-java.util.function.Function-java.util.function.Function-">translate</a></span>(<a href="http://docs.oracle.com/javase/7/docs/api/java/util/function.Function.html?is-external=true" title="class or interface in java.util">java.util.function.Function</a>&lt;<a href="../../../../../../net/openhft/chronicle/engine/api/map/MapEvent.html" title="type parameter in MapEvent">K</a>,K2&gt;&nbsp;keyFunction,
          <a href="http://docs.oracle.com/javase/7/docs/api/java/util/function.Function.html?is-external=true" title="class or interface in java.util">java.util.function.Function</a>&lt;<a href="../../../../../../net/openhft/chronicle/engine/api/map/MapEvent.html" title="type parameter in MapEvent">V</a>,V2&gt;&nbsp;valueFunction)</code>&nbsp;</td>
@@ -166,6 +171,15 @@ extends <a href="../../../../../../net/openhft/chronicle/engine/api/map/KeyValue
 <!--   -->
 </a>
 <h3>Method Detail</h3>
+<a name="oldValue--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>oldValue</h4>
+<pre><a href="../../../../../../net/openhft/chronicle/engine/api/map/MapEvent.html" title="type parameter in MapEvent">V</a>&nbsp;oldValue()</pre>
+</li>
+</ul>
 <a name="apply-net.openhft.chronicle.engine.api.map.MapEventListener-">
 <!--   -->
 </a>
@@ -178,11 +192,21 @@ extends <a href="../../../../../../net/openhft/chronicle/engine/api/map/KeyValue
 <a name="translate-java.util.function.Function-java.util.function.Function-">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>translate</h4>
 <pre>&lt;K2,V2&gt;&nbsp;<a href="../../../../../../net/openhft/chronicle/engine/api/map/MapEvent.html" title="interface in net.openhft.chronicle.engine.api.map">MapEvent</a>&lt;K2,V2&gt;&nbsp;translate(<a href="http://docs.oracle.com/javase/7/docs/api/java/util/function.Function.html?is-external=true" title="class or interface in java.util">java.util.function.Function</a>&lt;<a href="../../../../../../net/openhft/chronicle/engine/api/map/MapEvent.html" title="type parameter in MapEvent">K</a>,K2&gt;&nbsp;keyFunction,
                                   <a href="http://docs.oracle.com/javase/7/docs/api/java/util/function.Function.html?is-external=true" title="class or interface in java.util">java.util.function.Function</a>&lt;<a href="../../../../../../net/openhft/chronicle/engine/api/map/MapEvent.html" title="type parameter in MapEvent">V</a>,V2&gt;&nbsp;valueFunction)</pre>
+</li>
+</ul>
+<a name="translate-java.util.function.BiFunction-java.util.function.BiFunction-">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>translate</h4>
+<pre>&lt;K2,V2&gt;&nbsp;<a href="../../../../../../net/openhft/chronicle/engine/api/map/MapEvent.html" title="interface in net.openhft.chronicle.engine.api.map">MapEvent</a>&lt;K2,V2&gt;&nbsp;translate(<a href="http://docs.oracle.com/javase/7/docs/api/java/util/function.BiFunction.html?is-external=true" title="class or interface in java.util">java.util.function.BiFunction</a>&lt;<a href="../../../../../../net/openhft/chronicle/engine/api/map/MapEvent.html" title="type parameter in MapEvent">K</a>,K2,K2&gt;&nbsp;keyFunction,
+                                  <a href="http://docs.oracle.com/javase/7/docs/api/java/util/function.BiFunction.html?is-external=true" title="class or interface in java.util">java.util.function.BiFunction</a>&lt;<a href="../../../../../../net/openhft/chronicle/engine/api/map/MapEvent.html" title="type parameter in MapEvent">V</a>,V2,V2&gt;&nbsp;valueFunction)</pre>
 </li>
 </ul>
 </li>
