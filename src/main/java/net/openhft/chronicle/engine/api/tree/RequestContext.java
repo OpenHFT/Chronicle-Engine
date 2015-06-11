@@ -60,7 +60,7 @@ public class RequestContext {
         addAlias(Reference.class, "Reference, Ref");
         addAlias(String.class, "String");
         addAlias(CharSequence.class, "CharSequence");
-        addAlias(Bytes.class, "Byte, int8");
+        addAlias(Byte.class, "Byte, int8");
         addAlias(Character.class, "Character, Char");
         addAlias(Integer.class, "Integer, int32");
         addAlias(Long.class, "Long, Int, int64");
