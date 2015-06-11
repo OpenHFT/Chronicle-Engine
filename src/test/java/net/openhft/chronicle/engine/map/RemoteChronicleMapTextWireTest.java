@@ -241,7 +241,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     /**
      * keySet.toArray returns contains all keys
      */
-    @Ignore ("fix https://higherfrequencytrading.atlassian.net/browse/CE-67")
+
     @Test(timeout = 50000)
     public void testKeySetToArray() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
@@ -258,7 +258,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     /**
      * Values.toArray contains all values
      */
-    @Ignore("JIRA https://higherfrequencytrading.atlassian.net/browse/CE-66")
+
     @Test(timeout = 50000)
     public void testValuesToArray() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {

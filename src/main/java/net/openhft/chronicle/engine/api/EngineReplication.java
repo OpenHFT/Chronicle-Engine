@@ -45,7 +45,7 @@ interface EngineReplication extends Closeable {
      * @param remoteIdentifier the identifier of the remote server
      * @param timestamp        the timestamp send from the remote server, this time stamp was the time the entry was removed
      */
-    void remove(Bytes key, Bytes remoteIdentifier, long timestamp);
+    void remove(Bytes key, byte remoteIdentifier, long timestamp);
 
     /**
      * Provides the unique Identifier associated with this instance. <p> An identifier is used
@@ -151,7 +151,7 @@ interface EngineReplication extends Closeable {
      * Implemented typically by a replicator, This interface provides the event, which will get
      * called whenever a put() or remove() has occurred to the map
      */
-    abstract class EntryCallback {
+    interface EntryCallback {
 
         /**
          * Called whenever a put() or remove() has occurred to a replicating map.
@@ -167,10 +167,7 @@ interface EngineReplication extends Closeable {
          * source node is not from one of our changes, WARNING even though we check the identifier
          * in the ModificationIterator the entry may have been updated.
          */
-        public abstract boolean onEntry(@NotNull Bytes key,
-                                        @NotNull Bytes value,
-                                        long timestamp,
-                                        byte identifier,
-                                        long bootStrapTimeStamp);
+        boolean onEntry(@NotNull Bytes key, @NotNull Bytes value, long timestamp,
+                        byte identifier, long bootStrapTimeStamp);
     }
 }
