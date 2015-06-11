@@ -18,7 +18,9 @@
 
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.engine.api.AssetTree;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
+import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.BinaryWire;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
@@ -50,14 +52,16 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     @Rule
     public TestName name = new TestName();
 
+    private AssetTree assetTree = new VanillaAssetTree().forTesting();
+
     @Before
     public void before() {
         methodName(name.getMethodName());
     }
 
     @NotNull
-    static ClosableMapSupplier newIntString() throws IOException {
-        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(Integer.class, String.class, BinaryWire::new);
+    ClosableMapSupplier newIntString() throws IOException {
+        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(Integer.class, String.class, BinaryWire::new, assetTree);
 
         return new ClosableMapSupplier() {
 
@@ -77,10 +81,10 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     }
 
     @NotNull
-    static ClosableMapSupplier<CharSequence, CharSequence> newStrStrMap() throws
+    ClosableMapSupplier<CharSequence, CharSequence> newStrStrMap() throws
             IOException {
 
-        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(CharSequence.class, CharSequence.class, BinaryWire::new);
+        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(CharSequence.class, CharSequence.class, BinaryWire::new, assetTree);
 
         return new ClosableMapSupplier() {
 
@@ -96,7 +100,6 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
             }
         };
     }
-
 
     /**
      * Returns a new map from Integers 1-5 to Strings "A"-"E".

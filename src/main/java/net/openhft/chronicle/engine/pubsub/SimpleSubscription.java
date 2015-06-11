@@ -36,7 +36,6 @@ public class SimpleSubscription<E> implements Subscription {
         throw new UnsupportedOperationException("todo");
     }
 
-
     @Override
     public void unregisterSubscriber(RequestContext rc, Subscriber subscriber) {
         subscribers.remove(subscriber);

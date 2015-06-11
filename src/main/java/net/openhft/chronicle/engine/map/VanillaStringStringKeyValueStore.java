@@ -151,8 +151,6 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
             }
         }
 
-
-
         @Override
         public <T, E> void registerTopicSubscriber(RequestContext rc, @NotNull TopicSubscriber <T, E>  subscriber) {
             kvStore.subscription(true).registerTopicSubscriber(rc, (T topic, E message) -> {

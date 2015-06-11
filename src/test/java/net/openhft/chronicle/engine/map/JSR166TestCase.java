@@ -710,7 +710,6 @@ public class JSR166TestCase extends ThreadMonitoringTest {
         };
     }
 
-
     void assertSerialEquals(Object x, Object y) {
         Assert.assertTrue(Arrays.equals(serialBytes(x), serialBytes(y)));
     }

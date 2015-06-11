@@ -147,7 +147,6 @@ public class ChassisRFCTest {
         TopicSubscriber<String, String> subscriber = (topic, message) -> values.add("{name: " + topic + ", message: " + message + "}");
         registerTopicSubscriber("group", String.class, String.class, subscriber);
 
-
         map.put("topic-1", "Message-1");
         assertEquals("Message-1", map.get("topic-1"));
 

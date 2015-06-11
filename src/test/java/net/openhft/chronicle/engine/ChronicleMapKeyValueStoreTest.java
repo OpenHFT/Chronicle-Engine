@@ -97,7 +97,6 @@ public class ChronicleMapKeyValueStoreTest {
         assertEquals(1, map.size());
         assertEquals("xyz", map.get("testA").getAccountNumber());
 
-
         expectedSuccess(success, 1);
         success.set(0);
 

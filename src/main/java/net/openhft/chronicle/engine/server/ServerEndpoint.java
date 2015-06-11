@@ -17,7 +17,6 @@
  */
 package net.openhft.chronicle.engine.server;
 
-import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.engine.api.AssetTree;
 import net.openhft.chronicle.engine.api.WireType;
 import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
@@ -41,23 +40,20 @@ public class ServerEndpoint implements Closeable {
 
     private static final Logger LOG = LoggerFactory.getLogger(ServerEndpoint.class);
 
-
     @NotNull
-    private EventGroup eg = new EventGroup();
+    private EventGroup eg;
 
     @Nullable
     private AcceptorEventHandler eah;
 
-    public ServerEndpoint() throws
+    public ServerEndpoint(AssetTree assetTree) throws
             IOException {
-        this(0);
+        this(0, true, assetTree);
     }
 
-    public ServerEndpoint(int port) throws IOException {
-
-
-        Chassis.resetChassis();
-        start(port, Chassis.defaultSession());
+    public ServerEndpoint(int port, boolean daemon, AssetTree assetTree) throws IOException {
+        eg = new EventGroup(daemon);
+        start(port, assetTree);
     }
 
     @Nullable

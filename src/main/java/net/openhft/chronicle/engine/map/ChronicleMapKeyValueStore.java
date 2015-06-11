@@ -87,7 +87,6 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         return chronicleMap.remove(key);
     }
 
-
     @Override
     public V getUsing(K key, @Nullable MV value) {
         if(value != null)throw new UnsupportedOperationException("Mutable values not supported");

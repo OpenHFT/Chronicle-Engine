@@ -146,7 +146,6 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements SubscriptionK
         updateHasSubscribers();
     }
 
-
     @Override
     public void unregisterSubscriber(RequestContext rc, Subscriber subscriber) {
         subscribers.remove(subscriber);

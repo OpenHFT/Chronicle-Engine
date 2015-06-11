@@ -322,7 +322,6 @@ public class RequestContext {
         return host.toString();
     }
 
-
     public int tcpBufferSize() {
         return tcpBufferSize;
     }

@@ -20,7 +20,9 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.NativeBytes;
+import net.openhft.chronicle.engine.api.AssetTree;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
+import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +45,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     @NotNull
     @Rule
     public TestName name = new TestName();
+    private AssetTree assetTree = new VanillaAssetTree().forTesting();
 
     @Before
     public void before() {
@@ -108,7 +111,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
         try (final RemoteMapSupplier<CharSequence, CharSequence> remote = new
                 RemoteMapSupplier<>(CharSequence.class,
                 CharSequence.class,
-                BinaryWire::new)) {
+                BinaryWire::new, assetTree)) {
 
             ConcurrentMap test = remote.get();
 
@@ -152,9 +155,6 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
     }
 
-
-
-
     @Test
     @Ignore("Waiting for merge")
     public void test2MBEntries() throws Exception {
@@ -163,7 +163,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
         try (final RemoteMapSupplier<String, String> remote = new
                 RemoteMapSupplier<>(String.class,
                 String.class,
-                BinaryWire::new)) {
+                BinaryWire::new, assetTree)) {
 
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < 50_000; i++) {

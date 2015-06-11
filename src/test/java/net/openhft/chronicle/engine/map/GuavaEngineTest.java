@@ -26,8 +26,10 @@ import com.google.common.collect.testing.features.CollectionSize;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import net.openhft.chronicle.bytes.IORuntimeException;
+import net.openhft.chronicle.engine.api.AssetTree;
 import net.openhft.chronicle.engine.map.MapClientTest.LocalMapSupplier;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
+import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.TextWire;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +44,6 @@ import java.util.concurrent.ConcurrentMap;
 
 import static com.google.common.collect.testing.features.MapFeature.*;
 
-
 @SuppressWarnings("all")
 
 @RunWith(AllTests.class)
@@ -51,7 +52,8 @@ public class GuavaEngineTest   {
 
     @NotNull
     public static Test suite() {
-        TestSuite remoteMapTests = MapTestSuiteBuilder.using(new RemoteTestGenerator())
+        AssetTree assetTree = new VanillaAssetTree().forTesting();
+        TestSuite remoteMapTests = MapTestSuiteBuilder.using(new RemoteTestGenerator(assetTree))
                 .named("Chronicle RemoteEngine Guava tests")
                 .withFeatures(GENERAL_PURPOSE)
                 .withFeatures(CollectionSize.ANY)
@@ -139,10 +141,16 @@ public class GuavaEngineTest   {
     }
 
     static class RemoteTestGenerator extends CHMTestGenerator {
+        private final AssetTree assetTree;
+
+        public RemoteTestGenerator(AssetTree assetTree) {
+            this.assetTree = assetTree;
+        }
+
         @NotNull
         @Override
         Map<CharSequence, CharSequence> newMap() {
-            return newStrStrRemoteMap();
+            return newStrStrRemoteMap(assetTree);
         }
     }
 
@@ -155,12 +163,11 @@ public class GuavaEngineTest   {
     }
 
     @NotNull
-    static ConcurrentMap<CharSequence, CharSequence> newStrStrRemoteMap() {
-
+    static ConcurrentMap<CharSequence, CharSequence> newStrStrRemoteMap(AssetTree assetTree) {
 
         try {
             return new RemoteMapSupplier<>(CharSequence.class, CharSequence.class,
-                    TextWire::new).get();
+                    TextWire::new, assetTree).get();
         } catch (IOException e) {
             throw new IORuntimeException(e);
         }
@@ -168,7 +175,6 @@ public class GuavaEngineTest   {
 
     @NotNull
     static ConcurrentMap<CharSequence, CharSequence> newStrStrLocalMap() {
-
 
         try {
             return new LocalMapSupplier(CharSequence.class, CharSequence.class).get();

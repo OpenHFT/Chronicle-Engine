@@ -35,7 +35,6 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
         this.hub = hub;
     }
 
-
     @Nullable
     protected <R> R proxyReturnTypedObject(
             @NotNull final E eventId,

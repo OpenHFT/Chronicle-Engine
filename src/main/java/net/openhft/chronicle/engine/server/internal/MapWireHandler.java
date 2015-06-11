@@ -47,11 +47,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static net.openhft.chronicle.engine.Chassis.registerSubscriber;
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.*;
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.Params.*;
-import static net.openhft.chronicle.engine.server.internal.MapWireHandler.Params.newValue;
-import static net.openhft.chronicle.engine.server.internal.MapWireHandler.Params.oldValue;
 import static net.openhft.chronicle.wire.CoreFields.reply;
 import static net.openhft.chronicle.wire.WriteMarshallable.EMPTY;
 
@@ -59,7 +56,6 @@ import static net.openhft.chronicle.wire.WriteMarshallable.EMPTY;
  * @author Rob Austin.
  */
 public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
-
 
     private static final StringBuilderPool SBP = new StringBuilderPool();
 
@@ -227,7 +223,6 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                     return;
                 }
 
-
                 if (subscribe.contentEquals(eventName)) {
 
                     MapEventListener<K, V> listener = new MapEventListener<K, V>() {
@@ -264,7 +259,6 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                         }
                     };
                     assetTree.registerSubscriber(requestContext.name(), MapEvent.class, e -> e.apply(listener));
-
 
                     return;
                 }
@@ -440,7 +434,6 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                         return;
                     }
 
-
                     throw new IllegalStateException("unsupported event=" + eventName);
                 });
             } catch (Exception e) {
@@ -473,7 +466,6 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
     private void createProxy(final String type) {
         outWire.writeEventName(reply).type("set-proxy").writeValue()
                 .marshallable(w -> {
-
 
                     cpsBuff.setLength(0);
                     cpsBuff.append("/").append(requestContext.name());
@@ -516,7 +508,6 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
             }
         });
     }
-
 
 }
 

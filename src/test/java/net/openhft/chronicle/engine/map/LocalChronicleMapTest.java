@@ -72,7 +72,6 @@ public class LocalChronicleMapTest extends JSR166TestCase {
             }
         };
 
-
     }
 
     @NotNull
@@ -95,7 +94,6 @@ public class LocalChronicleMapTest extends JSR166TestCase {
             }
         };
     }
-
 
     /**
      * Returns a new map from Integers 1-5 to Strings "A"-"E".

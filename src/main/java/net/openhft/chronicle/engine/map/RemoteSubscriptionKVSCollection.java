@@ -9,7 +9,10 @@ import net.openhft.chronicle.engine.api.map.MapReplicationEvent;
 import net.openhft.chronicle.engine.server.internal.MapWireHandler;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.TcpConnectionHub;
-import net.openhft.chronicle.wire.*;
+import net.openhft.chronicle.wire.CoreFields;
+import net.openhft.chronicle.wire.ValueIn;
+import net.openhft.chronicle.wire.Wire;
+import net.openhft.chronicle.wire.WireIn;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Executor;
@@ -58,7 +61,6 @@ public class RemoteSubscriptionKVSCollection<K, MV, V> extends AbstractStateless
 
         if (hub.outBytesLock().isHeldByCurrentThread())
             throw new IllegalStateException("Cannot view map while debugging");
-
 
         hub.outBytesLock().lock();
         try {
@@ -114,7 +116,6 @@ public class RemoteSubscriptionKVSCollection<K, MV, V> extends AbstractStateless
                 + "?view=" + "map&keyType=" + context.keyType().getName() + "&valueType=" + context.valueType()
                 .getName();
     }
-
 
     private void onEvent(WireIn r, Subscriber<MapEvent<K, V>> subscriber) {
         K key = r.read(MapWireHandler.Params.key).object(keyType);

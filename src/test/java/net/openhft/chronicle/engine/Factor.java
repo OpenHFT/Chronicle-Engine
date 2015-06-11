@@ -9,7 +9,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 
-
 public class Factor implements Marshallable {
 
     private byte openPDFlag;
@@ -133,7 +132,6 @@ public class Factor implements Marshallable {
         firm = bytes.readUTFΔ();
     }
 
-
     @Override
     public void writeMarshallable(@NotNull WireOut wireOut) {
         Bytes bytes = wireOut.bytes();
@@ -169,6 +167,5 @@ public class Factor implements Marshallable {
                 ", firm='" + firm + '\'' +
                 '}';
     }
-
 
 }

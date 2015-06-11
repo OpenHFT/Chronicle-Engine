@@ -292,7 +292,6 @@ public class VanillaAsset implements Asset, Closeable {
         throw new UnsupportedOperationException("todo");
     }
 
-
     @NotNull
     @Override
     public String toString() {

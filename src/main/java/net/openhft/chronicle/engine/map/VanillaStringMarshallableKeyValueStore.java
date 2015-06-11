@@ -198,8 +198,6 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
             }
         }
 
-
-
         @Override
         public <T, E> void registerTopicSubscriber(RequestContext rc, TopicSubscriber <T, E>  subscriber) {
             kvStore.subscription(true).registerTopicSubscriber(rc, (T topic, BytesStore message) -> {

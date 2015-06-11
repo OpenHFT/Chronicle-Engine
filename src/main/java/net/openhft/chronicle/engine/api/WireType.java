@@ -9,8 +9,10 @@ import java.util.function.Function;
 /**
  * Created by Rob Austin
  */
+@Deprecated
 public class WireType {
 
     // todo to be removed
+    @Deprecated
     public static Function<Bytes, Wire> wire = BinaryWire::new;
 }

@@ -26,7 +26,6 @@ import net.openhft.chronicle.engine.api.map.MapEventListener;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.wire.TextWire;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -89,7 +88,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
             Chassis.resetChassis();
             wire = TextWire::new;
 
-            ServerEndpoint serverEndpoint = new ServerEndpoint();
+            ServerEndpoint serverEndpoint = new ServerEndpoint(Chassis.defaultSession());
             port = serverEndpoint.getPort();
             Chassis.forRemoteAccess();
             map = Chassis.acquireMap(toUri(port, "localhost"), String.class, Factor.class);
@@ -100,7 +99,6 @@ public class SubscriptionTest extends ThreadMonitoringTest {
             map = Chassis.acquireMap("TEST", String.class, Factor.class);
             Chassis.registerSubscriber("TEST", MapEvent.class, e -> e.apply(listener));
         }
-
 
     }
 
@@ -128,8 +126,6 @@ public class SubscriptionTest extends ThreadMonitoringTest {
                 success.set(0);
         });
     }
-
-
 
     private void expectedSuccess(@NotNull AtomicInteger success, int expected) {
         for (int i = 0; i < 20; i++) {

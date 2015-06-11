@@ -82,7 +82,6 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private SessionProvider sessionProvider;
     private Queue<Consumer<Wire>> publisher = new LinkedTransferQueue<>();
 
-
     public EngineWireHandler(@NotNull final Map<Long, String> cidToCsp,
                              @NotNull final Function<Bytes, Wire> byteToWire,
                              @NotNull final AssetTree assetTree) throws IOException {
@@ -110,9 +109,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
     }
 
-
     private long tid;
-
 
     Object view;
 
@@ -159,7 +156,6 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                         mh = new GenericWireAdapter(kClass, vClass);
                     } else
                         throw new UnsupportedOperationException("unsupported view type");
-
 
                 }
             } catch (Exception e) {
