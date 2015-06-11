@@ -313,8 +313,8 @@ public class MapClientTest extends ThreadMonitoringTest {
         public RemoteMapSupplier(@NotNull final Class<K> kClass,
                                  @NotNull final Class<V> vClass,
                                  @NotNull final Function<Bytes, Wire> wireType,
-                                 AssetTree assetTree) throws IOException {
-
+                                 AssetTree assetTree,
+                                 String name) throws IOException {
             wire = wireType;
 
             serverEndpoint = new ServerEndpoint(assetTree);
@@ -325,14 +325,21 @@ public class MapClientTest extends ThreadMonitoringTest {
             Chassis.forRemoteAccess();
 
             map = assetTree.acquireMap(
-                    toUri(serverPort, hostname),
+                    toUri(name,serverPort, hostname),
                     kClass,
                     vClass);
         }
 
+        public RemoteMapSupplier(@NotNull final Class<K> kClass,
+                                 @NotNull final Class<V> vClass,
+                                 @NotNull final Function<Bytes, Wire> wireType,
+                                 AssetTree assetTree) throws IOException {
+            this(kClass,vClass,wireType,assetTree,"test");
+        }
+
         @NotNull
-        public static String toUri(final long serverPort, final String hostname) {
-            return "test?port=" + serverPort +
+        public static String toUri(final String name, final long serverPort, final String hostname) {
+            return name + "?port=" + serverPort +
                     "&host=" + hostname +
                     "&timeout=1000";
         }

@@ -91,8 +91,8 @@ public class SubscriptionTest extends ThreadMonitoringTest {
             ServerEndpoint serverEndpoint = new ServerEndpoint(Chassis.defaultSession());
             port = serverEndpoint.getPort();
             Chassis.forRemoteAccess();
-            map = Chassis.acquireMap(toUri(port, "localhost"), String.class, Factor.class);
-            Chassis.registerSubscriber(toUri(port, "localhost"), MapEvent.class, e -> e.apply(listener));
+            map = Chassis.acquireMap(toUri("test", port, "localhost"), String.class, Factor.class);
+            Chassis.registerSubscriber(toUri("test", port, "localhost"), MapEvent.class, e -> e.apply(listener));
         } else {
             Chassis.resetChassis();
             map = Chassis.acquireMap("TEST", String.class, Factor.class);
