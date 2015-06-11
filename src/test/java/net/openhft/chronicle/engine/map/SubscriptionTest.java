@@ -57,7 +57,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
     public static Collection<Object[]> data() throws IOException {
 
         return Arrays.asList(new Boolean[][]{
-//                {true},
+                {true},
                 {false}
         });
     }
@@ -102,27 +102,29 @@ public class SubscriptionTest extends ThreadMonitoringTest {
     }
     @Test(timeout = 50000)
     public void testSubscriptionTest() throws IOException, InterruptedException {
-        yamlLoggger(() -> {
+//        yamlLoggger(() -> {
                 Factor factor = new Factor();
                 factor.setAccountNumber("xyz");
                 map.put("testA", factor);
                 assertEquals(1, map.size());
                 assertEquals("xyz", map.get("testA").getAccountNumber());
 
+                Thread.sleep(1000);
                 expectedSuccess(success, 1);
-                success.set(0);
 
-                factor.setAccountNumber("abc");
-                map.put("testA", factor);
+//                factor.setAccountNumber("abc");
+//                map.put("testB", factor);
+//                assertEquals("abc", map.get("testB").getAccountNumber());
+//
+//                //expectedSuccess(success, 2);
+//                success.set(0);
+//
+//                map.remove("testA");
+//
+//                expectedSuccess(success, -100);
+//                success.set(0);
+//        });
 
-                expectedSuccess(success, -1000);
-                success.set(0);
-
-                map.remove("testA");
-
-                expectedSuccess(success, -100);
-                success.set(0);
-        });
     }
 
     private void expectedSuccess(@NotNull AtomicInteger success, int expected) {

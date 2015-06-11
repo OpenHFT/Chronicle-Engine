@@ -207,11 +207,13 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
         throw new UnsupportedOperationException("unknown event=" + eventName);
     }
 
-    protected <R> R readReplyConsumer(@NotNull WireIn wireIn, @NotNull WireKey replyId, @NotNull Consumer<ValueIn> consumer) {
+    protected void readReplyConsumer(@NotNull WireIn wireIn, @NotNull WireKey replyId, @NotNull Consumer<ValueIn> consumer) {
         final ValueIn event = wireIn.read(eventName);
 
-        if (replyId.contentEquals(eventName))
+        if (replyId.contentEquals(eventName)) {
             consumer.accept(event);
+            return;
+        }
 
         if (CoreFields.exception.contentEquals(eventName)) {
             throw Jvm.rethrow(event.throwable(true));

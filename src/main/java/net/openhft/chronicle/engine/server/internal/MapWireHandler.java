@@ -59,7 +59,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
 
     private static final StringBuilderPool SBP = new StringBuilderPool();
 
-    private BiConsumer<ValueOut, K> kToWire = null;
+    private BiConsumer<ValueOut, K> kToWire;
     private BiConsumer<ValueOut, V> vToWire;
     private Function<ValueIn, K> wireToK;
     private Function<ValueIn, V> wireToV;
@@ -87,7 +87,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                         @NotNull final Queue<Consumer<Wire>> publisher,
                         @NotNull final AssetTree assetTree) throws
             StreamCorruptedException {
-
+        this.kToWire = wireAdapter.keyToWire();
         this.vToWire = wireAdapter.valueToWire();
         this.wireToK = wireAdapter.wireToKey();
         this.wireToV = wireAdapter.wireToValue();
@@ -102,7 +102,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
             charSequenceValue = map instanceof ChronicleMap && CharSequence.class == ((ChronicleMap) map).valueClass();
 
             this.tid = tid;
-            dataConsumer.accept(in);
+            dataConsumer.accept(in, tid);
         } catch (Exception e) {
             LOG.error("", e);
         }
@@ -204,9 +204,9 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
 
     final StringBuilder eventName = new StringBuilder();
 
-    private final Consumer<WireIn> dataConsumer = new Consumer<WireIn>() {
+    private final BiConsumer<WireIn, Long> dataConsumer = new BiConsumer<WireIn, Long>() {
         @Override
-        public void accept(WireIn wireIn) {
+        public void accept(WireIn wireIn, Long inputTid) {
             try {
                 eventName.setLength(0);
                 final ValueIn valueIn = inWire.readEventName(eventName);
@@ -226,6 +226,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                 if (subscribe.contentEquals(eventName)) {
 
                     MapEventListener<K, V> listener = new MapEventListener<K, V>() {
+                        private long subscriberTid = inputTid;
                         @Override
                         public void update(K key, V oldValue, V newValue) {
                             if (LOG.isDebugEnabled()) {
@@ -236,7 +237,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
 
                                 @Override
                                 public void accept(Wire publish) {
-                                    publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(tid));
+                                    publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(subscriberTid));
                                     publish.writeDocument(false, wire -> wire.write(reply).marshallable(m -> {
                                         kToWire.accept(m.write(Params.key), key);
                                         vToWire.accept(m.write(Params.oldValue), newValue);
@@ -249,8 +250,22 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
 
                         @Override
                         public void insert(K key, V value) {
-                            System.out.println("Inserted { key: " + key + ", value: " + value + " }");
+                            if (LOG.isDebugEnabled()) {
+                                LOG.debug("Inserted MWH { key: " + key + ", oldValue: " + value + " }");
+                            }
 
+                            publisher.add(new Consumer<Wire>() {
+
+                                @Override
+                                public void accept(Wire publish) {
+                                    publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(subscriberTid));
+                                    System.out.println("MWH tid:" + tid);
+                                    publish.writeDocument(false, wire -> wire.write(reply).marshallable(m -> {
+                                        kToWire.accept(m.write(Params.key), key);
+                                        vToWire.accept(m.write(Params.newValue), value);
+                                    }));
+                                }
+                            });
                         }
 
                         @Override
@@ -474,12 +489,10 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
 
                     final Class keyType = requestContext.keyType();
                     if (keyType != null)
-                        cpsBuff.append("&keyType=").append(keyType.getSimpleName
-                                ());
+                        cpsBuff.append("&keyType=").append(keyType.getName());
                     final Class valueType = requestContext.valueType();
                     if (valueType != null)
-                        cpsBuff.append("&valueType=").append(valueType.getSimpleName
-                                ());
+                        cpsBuff.append("&valueType=").append(valueType.getName());
 
                     // todo add more fields
 

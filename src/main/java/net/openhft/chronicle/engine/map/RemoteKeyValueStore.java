@@ -52,7 +52,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     @org.jetbrains.annotations.NotNull
     private static String toUri(@org.jetbrains.annotations.NotNull final @NotNull RequestContext context) {
         return "/" + context.name()
-                + "?view=" + "map&keyType=" + context.keyType().getSimpleName() + "&valueType=" + context.valueType()
+                + "?view=" + "map&keyType=" + context.keyType().getName() + "&valueType=" + context.valueType()
                 .getName();
     }
 

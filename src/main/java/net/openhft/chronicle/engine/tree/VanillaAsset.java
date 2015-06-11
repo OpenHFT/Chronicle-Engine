@@ -93,6 +93,8 @@ public class VanillaAsset implements Asset, Closeable {
     public void forRemoteAccess() {
         standardStack();
 
+        addLeafRule(ObjectSubscription.class, LAST + " remote",
+                RemoteSubscriptionKVSCollection::new);
         addLeafRule(TcpConnectionHub.class, LAST + " hub", TcpConnectionHub::new);
         addWrappingRule(ObjectKeyValueStore.class, LAST + " remote AKVS",
                 RemoteKeyValueStore::new, TcpConnectionHub.class);

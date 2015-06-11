@@ -1,6 +1,5 @@
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.core.util.ThrowingSupplier;
 import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
@@ -30,9 +29,9 @@ public class RemoteSubscriptionKVSCollection<K, MV, V> extends AbstractStateless
     private final Class<V> valueType;
     private final Executor eventLoop = Executors.newSingleThreadExecutor();
     private final Class<K> keyType;
+    private KeyValueStore<K, MV, V> kvStore;
 
-    public RemoteSubscriptionKVSCollection(RequestContext context, Asset asset,
-                                           ThrowingSupplier<Assetted, AssetNotFoundException> supplier) {
+    public RemoteSubscriptionKVSCollection(RequestContext context, Asset asset) {
         super(TcpConnectionHub.hub(context, asset), (long) 0, toUri(context));
         valueType = context.valueType();
         keyType = context.keyType();
@@ -45,7 +44,7 @@ public class RemoteSubscriptionKVSCollection<K, MV, V> extends AbstractStateless
 
     @Override
     public void setKvStore(KeyValueStore<K, MV, V> store) {
-        throw new UnsupportedOperationException("todo");
+        this.kvStore = store;
     }
 
     @Override
@@ -65,6 +64,7 @@ public class RemoteSubscriptionKVSCollection<K, MV, V> extends AbstractStateless
         hub.outBytesLock().lock();
         try {
             tid1 = writeMetaData(startTime);
+            System.err.println(Thread.currentThread().getName() + ":reg subscriber tid:" + tid1);
             hub.outWire().writeDocument(false, wireOut -> {
                 wireOut.writeEventName(subscribe);
             });
@@ -120,7 +120,7 @@ public class RemoteSubscriptionKVSCollection<K, MV, V> extends AbstractStateless
     private void onEvent(WireIn r, Subscriber<MapEvent<K, V>> subscriber) {
         K key = r.read(MapWireHandler.Params.key).object(keyType);
         V newValue = r.read(MapWireHandler.Params.newValue).object(valueType);
-        V oldValue = r.read(MapWireHandler.Params.oldValue).object(valueType);
+//        V oldValue = r.read(MapWireHandler.Params.oldValue).object(valueType);
 
         try {
             subscriber.onMessage(new MapEvent() {
@@ -141,7 +141,7 @@ public class RemoteSubscriptionKVSCollection<K, MV, V> extends AbstractStateless
 
                 @Override
                 public void apply(MapEventListener listener) {
-                    listener.update(key, oldValue, newValue);
+                    listener.insert(key, newValue);
                 }
 
                 @Override

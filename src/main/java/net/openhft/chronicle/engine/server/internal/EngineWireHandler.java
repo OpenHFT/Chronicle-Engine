@@ -104,8 +104,10 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     protected void publish(Wire out) {
         final Consumer<Wire> wireConsumer = publisher.poll();
 
-        if (wireConsumer != null)
+        if (wireConsumer != null) {
+            System.out.println("EngineWireHandler.publish()");
             wireConsumer.accept(out);
+        }
 
     }
 
