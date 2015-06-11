@@ -2,7 +2,6 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.api.map.MapEvent;
-import net.openhft.chronicle.engine.map.EntryEvent;
 import net.openhft.chronicle.engine.map.InsertedEvent;
 import net.openhft.chronicle.engine.map.RemovedEvent;
 import net.openhft.chronicle.engine.map.UpdatedEvent;
@@ -220,8 +219,8 @@ todo fix this test
 
         // test the bootstrap finds old keys
         Subscriber<MapEvent<String, String>> subscriber = createMock(Subscriber.class);
-        subscriber.onMessage(EntryEvent.of("Key-1", "Value-1", 0, 0));
-        subscriber.onMessage(EntryEvent.of("Key-2", "Value-2", 0, 0));
+        subscriber.onMessage(InsertedEvent.of("Key-1", "Value-1"));
+        subscriber.onMessage(InsertedEvent.of("Key-2", "Value-2"));
         replay(subscriber);
         registerSubscriber("map-name?bootstrap=true", MapEvent.class, (Subscriber) subscriber);
         verify(subscriber);
@@ -230,8 +229,8 @@ todo fix this test
         assertEquals(2, map.size());
 
         // test the topic publish triggers events
-        subscriber.onMessage(UpdatedEvent.of("Key-1", "Value-1", "Message-1", 0, 0));
-        subscriber.onMessage(InsertedEvent.of("Topic-1", "Message-1", 0, 0));
+        subscriber.onMessage(UpdatedEvent.of("Key-1", "Value-1", "Message-1"));
+        subscriber.onMessage(InsertedEvent.of("Topic-1", "Message-1"));
         replay(subscriber);
 
         TopicPublisher<String, String> publisher = acquireTopicPublisher("map-name", String.class, String.class);
@@ -241,9 +240,9 @@ todo fix this test
         reset(subscriber);
         assertEquals(3, map.size());
 
-        subscriber.onMessage(InsertedEvent.of("Hello", "World", 0, 0));
-        subscriber.onMessage(InsertedEvent.of("Bye", "soon", 0, 0));
-        subscriber.onMessage(RemovedEvent.of("Key-1", "Message-1", 0, 0));
+        subscriber.onMessage(InsertedEvent.of("Hello", "World"));
+        subscriber.onMessage(InsertedEvent.of("Bye", "soon"));
+        subscriber.onMessage(RemovedEvent.of("Key-1", "Message-1"));
         replay(subscriber);
 
         // test plain puts trigger events

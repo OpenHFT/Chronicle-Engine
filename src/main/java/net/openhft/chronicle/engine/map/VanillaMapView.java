@@ -7,6 +7,7 @@ import net.openhft.chronicle.engine.api.TopicSubscriber;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
+import net.openhft.chronicle.engine.api.set.KeySetView;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.AbstractMap;
@@ -36,6 +37,11 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
         this.kvStore = kvStore;
         this.putReturnsNull = putReturnsNull;
         this.removeReturnsNull = removeReturnsNull;
+    }
+
+    @Override
+    public Set<K> keySet() {
+        return asset.acquireView(KeySetView.class, null);
     }
 
     @Override
@@ -102,7 +108,7 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
 
     @Override
     public int size() {
-        return (int) Math.min(Integer.MAX_VALUE, kvStore.size());
+        return (int) Math.min(Integer.MAX_VALUE, kvStore.longSize());
     }
 
     @org.jetbrains.annotations.NotNull

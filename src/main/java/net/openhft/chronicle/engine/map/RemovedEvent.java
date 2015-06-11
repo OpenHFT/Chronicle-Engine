@@ -1,39 +1,41 @@
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
-import net.openhft.chronicle.engine.api.map.MapReplicationEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
  * Created by peter on 22/05/15.
  */
-public class RemovedEvent<K, V> implements MapReplicationEvent<K, V> {
+public class RemovedEvent<K, V> implements MapEvent<K, V> {
     private final K key;
     private final V value;
-    private final int identifier;
-    private final long timeStampMS;
 
-    private RemovedEvent(K key, V value, int identifier, long timeStampMS) {
+    private RemovedEvent(K key, V value) {
         this.key = key;
         this.value = value;
-        this.identifier = identifier;
-        this.timeStampMS = timeStampMS;
     }
 
     @NotNull
-    public static <K, V> RemovedEvent<K, V> of(K key, V value, int identifier, long timeStampMS) {
-        return new RemovedEvent<>(key, value, identifier, timeStampMS);
+    public static <K, V> RemovedEvent<K, V> of(K key, V value) {
+        return new RemovedEvent<>(key, value);
     }
 
     @NotNull
     @Override
-    public <K2, V2> MapReplicationEvent<K2, V2> translate(@NotNull Function<K, K2> keyFunction, @NotNull Function<V, V2> valueFunction) {
-        return new RemovedEvent<>(keyFunction.apply(key), valueFunction.apply(value), identifier, timeStampMS);
+    public <K2, V2> MapEvent<K2, V2> translate(@NotNull Function<K, K2> keyFunction, @NotNull Function<V, V2> valueFunction) {
+        return new RemovedEvent<>(keyFunction.apply(key), valueFunction.apply(value));
+    }
+
+    @Override
+    public <K2, V2> MapEvent<K2, V2> translate(BiFunction<K, K2, K2> keyFunction, BiFunction<V, V2, V2> valueFunction) {
+        return new RemovedEvent<>(keyFunction.apply(key, null), valueFunction.apply(value, null));
     }
 
     public K key() {
@@ -49,27 +51,6 @@ public class RemovedEvent<K, V> implements MapReplicationEvent<K, V> {
     public V value() {
         return null;
     }
-
-    @Override
-    public boolean isDeleted() {
-        return true;
-    }
-
-    @Override
-    public int identifier() {
-        return identifier;
-    }
-
-    @Override
-    public long timeStampMS() {
-        return timeStampMS;
-    }
-
-    @Override
-    public long dataUpToTimeStampMS() {
-        return 0L;
-    }
-
     @Override
     public void apply(@NotNull MapEventListener<K, V> listener) {
         listener.remove(key, value);

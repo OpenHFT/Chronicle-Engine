@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static net.openhft.chronicle.core.Jvm.pause;
+
 /**
  * Created by Rob Austin
  */
@@ -16,23 +18,9 @@ public class ThreadMonitoringTest {
 
     Set<Thread> threads;
 
-    @Before
-    public void sampleThreads() {
-        threads = Thread.getAllStackTraces().keySet();
-    }
-
-    @After
-    public void checkThreadsShutdown() {
-        checkThreadsShutdown(threads);
-    }
-
     public static void checkThreadsShutdown(@NotNull Set<Thread> threads) {
         // give them a change to stop if there were killed.
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        pause(100);
         Map<Thread, StackTraceElement[]> threadMap = Thread.getAllStackTraces();
         threadMap.keySet().removeAll(threads);
         threadMap.keySet().removeAll(
@@ -62,5 +50,15 @@ public class ThreadMonitoringTest {
                 e.printStackTrace();
             }
         }
+    }
+
+    @Before
+    public void sampleThreads() {
+        threads = Thread.getAllStackTraces().keySet();
+    }
+
+    @After
+    public void checkThreadsShutdown() {
+        checkThreadsShutdown(threads);
     }
 }

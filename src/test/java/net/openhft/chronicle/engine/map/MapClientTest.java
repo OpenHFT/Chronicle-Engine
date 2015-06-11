@@ -357,7 +357,7 @@ public class MapClientTest extends ThreadMonitoringTest {
         private final ConcurrentMap<K, V> map;
 
         public LocalMapSupplier(Class<K> kClass, Class<V> vClass) throws IOException {
-            map = Chassis.acquireMap("test" + i++, kClass, vClass);
+            map = Chassis.acquireMap("test" + i++ + "?putReturnsNull=false&removeReturnsNull=false", kClass, vClass);
         }
 
         @Override

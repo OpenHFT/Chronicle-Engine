@@ -4,7 +4,7 @@ import net.openhft.chronicle.engine.api.Asset;
 import net.openhft.chronicle.engine.api.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
-import net.openhft.chronicle.engine.api.map.MapReplicationEvent;
+import net.openhft.chronicle.engine.api.map.MapEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,8 +49,8 @@ public class AbstractKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> 
     }
 
     @Override
-    public long size() {
-        return kvStore.size();
+    public long longSize() {
+        return kvStore.longSize();
     }
 
     @Override
@@ -59,7 +59,7 @@ public class AbstractKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> 
     }
 
     @Override
-    public void entriesFor(int segment, SubscriptionConsumer<MapReplicationEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
+    public void entriesFor(int segment, SubscriptionConsumer<MapEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
         kvStore.entriesFor(segment, kvConsumer);
     }
 
@@ -143,5 +143,10 @@ public class AbstractKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> 
     @Override
     public boolean keyedView() {
         return kvStore.keyedView();
+    }
+
+    @Override
+    public Iterator<K> keySetIterator() {
+        return kvStore.keySetIterator();
     }
 }

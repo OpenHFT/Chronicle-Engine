@@ -3,7 +3,6 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
-import net.openhft.chronicle.engine.api.map.MapReplicationEvent;
 import net.openhft.chronicle.engine.pubsub.SimpleSubscription;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,6 +30,7 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements ObjectSubscri
 
     public VanillaSubscriptionKVSCollection(Class viewType, Asset asset) {
         this.asset = asset;
+        if (viewType != null)
         asset.addView(viewType, this);
     }
 
@@ -45,7 +45,7 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements ObjectSubscri
     }
 
     @Override
-    public void notifyEvent(@NotNull MapReplicationEvent<K, V> mpe) throws InvalidSubscriberException {
+    public void notifyEvent(@NotNull MapEvent<K, V> mpe) throws InvalidSubscriberException {
         if (hasSubscribers())
             notifyEvent0(mpe);
     }
@@ -54,7 +54,7 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements ObjectSubscri
         return hasSubscribers || asset.hasChildren();
     }
 
-    private void notifyEvent0(@NotNull MapReplicationEvent<K, V> mpe) {
+    private void notifyEvent0(@NotNull MapEvent<K, V> mpe) {
         K key = mpe.key();
 
         if (!topicSubscribers.isEmpty()) {
@@ -93,10 +93,10 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements ObjectSubscri
     public void registerSubscriber(@NotNull RequestContext rc, Subscriber subscriber) {
         Boolean bootstrap = rc.bootstrap();
         Class eClass = rc.type();
-        if (eClass == KeyValueStore.Entry.class || eClass == MapEvent.class || eClass == MapReplicationEvent.class) {
+        if (eClass == KeyValueStore.Entry.class || eClass == MapEvent.class || eClass == MapEvent.class) {
             subscribers.add((Subscriber) subscriber);
             if (bootstrap != Boolean.FALSE && kvStore != null) {
-                Subscriber<MapReplicationEvent<K, V>> sub = (Subscriber<MapReplicationEvent<K, V>>) subscriber;
+                Subscriber<MapEvent<K, V>> sub = (Subscriber<MapEvent<K, V>>) subscriber;
                 try {
                     for (int i = 0; i < kvStore.segments(); i++)
                         kvStore.entriesFor(i, sub::onMessage);

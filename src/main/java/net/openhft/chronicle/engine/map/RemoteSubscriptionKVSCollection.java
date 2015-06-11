@@ -4,7 +4,6 @@ import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
-import net.openhft.chronicle.engine.api.map.MapReplicationEvent;
 import net.openhft.chronicle.engine.server.internal.MapWireHandler;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.TcpConnectionHub;
@@ -16,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -48,7 +48,7 @@ public class RemoteSubscriptionKVSCollection<K, MV, V> extends AbstractStateless
     }
 
     @Override
-    public void notifyEvent(MapReplicationEvent<K, V> mpe) throws InvalidSubscriberException {
+    public void notifyEvent(MapEvent<K, V> mpe) throws InvalidSubscriberException {
         throw new UnsupportedOperationException("todo");
     }
 
@@ -135,8 +135,18 @@ public class RemoteSubscriptionKVSCollection<K, MV, V> extends AbstractStateless
                 }
 
                 @Override
+                public Object oldValue() {
+                    throw new UnsupportedOperationException("todo");
+                }
+
+                @Override
                 public void apply(MapEventListener listener) {
                     listener.insert(key, newValue);
+                }
+
+                @Override
+                public MapEvent translate(BiFunction keyFunction, BiFunction valueFunction) {
+                    throw new UnsupportedOperationException("todo");
                 }
 
                 @Override
