@@ -93,8 +93,8 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     }
 
     @Override
-    public long size() {
-        return kvStore.size();
+    public long longSize() {
+        return kvStore.longSize();
     }
 
     @Override

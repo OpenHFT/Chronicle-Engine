@@ -58,7 +58,7 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
         return false;
     }
 
-    long size();
+    long longSize();
 
     default int segments() {
         return 1;
@@ -136,6 +136,18 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
 
     default boolean keyedView() {
         return true;
+    }
+
+    default Iterator<V> valuesIterator() {
+        // todo optimise
+        List<V> entries = new ArrayList<>();
+        try {
+            for (int i = 0, seg = segments(); i < seg; i++)
+                entriesFor(i, e -> entries.add(e.value()));
+        } catch (InvalidSubscriberException e) {
+            throw new AssertionError(e);
+        }
+        return entries.iterator();
     }
 
     interface Entry<K, V> {

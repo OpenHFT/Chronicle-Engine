@@ -136,8 +136,8 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     }
 
     @Override
-    public long size() {
-        return kvStore.size();
+    public long longSize() {
+        return kvStore.longSize();
     }
 
     @Override

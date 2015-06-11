@@ -2,11 +2,13 @@ package net.openhft.chronicle.engine.tree;
 
 import net.openhft.chronicle.core.util.Closeable;
 import net.openhft.chronicle.engine.api.*;
+import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
+import net.openhft.chronicle.engine.collection.VanillaValuesCollection;
 import net.openhft.chronicle.engine.map.*;
 import net.openhft.chronicle.engine.pubsub.VanillaReference;
 import net.openhft.chronicle.engine.session.VanillaSessionProvider;
@@ -62,21 +64,8 @@ public class VanillaAsset implements Asset, Closeable {
         addWrappingRule(Reference.class, LAST + "reference", VanillaReference::new, MapView.class);
         addWrappingRule(Publisher.class, LAST + "publisher", VanillaReference::new, MapView.class);
         addWrappingRule(EntrySetView.class, LAST + " entrySet", VanillaEntrySetView::new, MapView.class);
-
-//        viewTypeLayersOn(ValuesCollection.class, LAST + " values", MapView.class);
-
-//        viewTypeLayersOn(MapEventSubscriber.class, LAST + " MapEvent subscriber", Subscription.class);
-
-//        addWrappingRule(KeySubscriber.class, LAST + " keySet subscriber", Subscription.class);
-// todo CE-54      registerFactory(KeySubscriber.class, VanillaKeySubscriber::new);
-
-//        viewTypeLayersOn(EntrySetSubscriber.class, LAST + " entrySet subscriber", Subscription.class);
-// todo  CE-54     registerFactory(EntrySetView.class, VanillaEntrySetSubscriber::new);
-
         addWrappingRule(KeySetView.class, LAST + " keySet", VanillaKeySetView::new, MapView.class);
-
-//        viewTypeLayersOn(TopicSubscriber.class, LAST + " key,value topic subscriber", Subscription.class);
-// todo   CE-54    registerFactory(TopicSubscriber.class, VanillaTopicSubscriber::new);
+        addWrappingRule(ValuesCollection.class, LAST + " values", VanillaValuesCollection::new, MapView.class);
 
         addWrappingRule(MapView.class, LAST + " string key maps", VanillaMapView::new, ObjectKeyValueStore.class);
     }

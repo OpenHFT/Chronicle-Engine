@@ -131,7 +131,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
 
         final Map<? extends K, ? extends V> that = (Map<? extends K, ? extends V>) object;
 
-        if (that.size() != size())
+        if (that.size() != longSize())
             return false;
 
         final Set<Map.Entry<K, V>> entries = entrySet();
@@ -169,7 +169,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     }
 
     public boolean isEmpty() {
-        return size() == 0;
+        return longSize() == 0;
     }
 
     public boolean containsKey(Object key) {
@@ -202,7 +202,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
         return v;
     }
 
-    public long size() {
+    public long longSize() {
         return proxyReturnLong(size);
     }
 

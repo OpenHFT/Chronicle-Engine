@@ -108,7 +108,7 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
 
     @Override
     public int size() {
-        return (int) Math.min(Integer.MAX_VALUE, kvStore.size());
+        return (int) Math.min(Integer.MAX_VALUE, kvStore.longSize());
     }
 
     @org.jetbrains.annotations.NotNull

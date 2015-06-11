@@ -45,7 +45,7 @@ public class VanillaKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> {
     }
 
     @Override
-    public long size() {
+    public long longSize() {
         return map.size();
     }
 

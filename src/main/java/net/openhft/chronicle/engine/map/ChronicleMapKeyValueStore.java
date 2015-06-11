@@ -94,7 +94,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
     }
 
     @Override
-    public long size() {
+    public long longSize() {
         return chronicleMap.size();
     }
 

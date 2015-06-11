@@ -101,7 +101,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     }
 
     @Override
-    public long size() {
+    public long longSize() {
         return getFiles().count();
     }
 
