@@ -1,40 +1,42 @@
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
-import net.openhft.chronicle.engine.api.map.MapReplicationEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
  * Created by peter on 22/05/15.
  */
-public class UpdatedEvent<K, V> implements MapReplicationEvent<K, V> {
+public class UpdatedEvent<K, V> implements MapEvent<K, V> {
     private final K key;
     private final V oldValue;
     private final V value;
-    private final int identifier;
-    private final long timeStampMS;
 
-    private UpdatedEvent(K key, V oldValue, V value, int identifier, long timeStampMS) {
+    private UpdatedEvent(K key, V oldValue, V value) {
         this.key = key;
         this.oldValue = oldValue;
         this.value = value;
-        this.identifier = identifier;
-        this.timeStampMS = timeStampMS;
     }
 
     @NotNull
-    public static <K, V> UpdatedEvent<K, V> of(K key, V oldValue, V value, int identifier, long timeStampMS) {
-        return new UpdatedEvent<>(key, oldValue, value, identifier, timeStampMS);
+    public static <K, V> UpdatedEvent<K, V> of(K key, V oldValue, V value) {
+        return new UpdatedEvent<>(key, oldValue, value);
     }
 
     @NotNull
     @Override
-    public <K2, V2> MapReplicationEvent<K2, V2> translate(@NotNull Function<K, K2> keyFunction, @NotNull Function<V, V2> valueFunction) {
-        return new UpdatedEvent<>(keyFunction.apply(key), valueFunction.apply(oldValue), valueFunction.apply(value), identifier, timeStampMS);
+    public <K2, V2> MapEvent<K2, V2> translate(@NotNull Function<K, K2> keyFunction, @NotNull Function<V, V2> valueFunction) {
+        return new UpdatedEvent<>(keyFunction.apply(key), valueFunction.apply(oldValue), valueFunction.apply(value));
+    }
+
+    @Override
+    public <K2, V2> MapEvent<K2, V2> translate(BiFunction<K, K2, K2> keyFunction, BiFunction<V, V2, V2> valueFunction) {
+        return new UpdatedEvent<>(keyFunction.apply(key, null), valueFunction.apply(oldValue, null), valueFunction.apply(value, null));
     }
 
     public K key() {
@@ -48,26 +50,6 @@ public class UpdatedEvent<K, V> implements MapReplicationEvent<K, V> {
 
     public V value() {
         return value;
-    }
-
-    @Override
-    public boolean isDeleted() {
-        return false;
-    }
-
-    @Override
-    public int identifier() {
-        return identifier;
-    }
-
-    @Override
-    public long timeStampMS() {
-        return timeStampMS;
-    }
-
-    @Override
-    public long dataUpToTimeStampMS() {
-        return 0L;
     }
 
     @Override

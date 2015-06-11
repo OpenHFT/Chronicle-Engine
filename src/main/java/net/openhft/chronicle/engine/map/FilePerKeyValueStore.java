@@ -11,7 +11,7 @@ import net.openhft.chronicle.engine.api.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.RequestContext;
 import net.openhft.chronicle.engine.api.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
-import net.openhft.chronicle.engine.api.map.MapReplicationEvent;
+import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.StringBytesStoreKeyValueStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +28,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
+
+import static net.openhft.chronicle.core.Jvm.pause;
 
 /**
  * A {@link Map} implementation that stores each entry as a file in a
@@ -130,7 +132,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     }
 
     @Override
-    public void entriesFor(int segment, @NotNull SubscriptionConsumer<MapReplicationEvent<String, BytesStore>> kvConsumer) throws InvalidSubscriberException {
+    public void entriesFor(int segment, @NotNull SubscriptionConsumer<MapEvent<String, BytesStore>> kvConsumer) throws InvalidSubscriberException {
         try {
             entriesFor0(kvConsumer);
         } catch (InvalidSubscriberException ise) {
@@ -138,8 +140,8 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         }
     }
 
-    void entriesFor0(@NotNull SubscriptionConsumer<MapReplicationEvent<String, BytesStore>> kvConsumer) throws InvalidSubscriberException {
-        getFiles().map(p -> EntryEvent.of(p.getFileName().toString(), getFileContents(p, null), 0, p.toFile().lastModified()))
+    void entriesFor0(@NotNull SubscriptionConsumer<MapEvent<String, BytesStore>> kvConsumer) throws InvalidSubscriberException {
+        getFiles().map(p -> InsertedEvent.of(p.getFileName().toString(), getFileContents(p, null)))
                 .forEach(e -> {
                     try {
                         // in case the file has been deleted in the meantime.
@@ -218,11 +220,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
             }
         });
         if (count.intValue() > 0) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                Thread.currentThread().isInterrupted();
-            }
+            pause(100);
             getFiles().forEach(this::deleteFile);
         }
     }
@@ -259,12 +257,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
             try {
                 return getFileContentsFromDisk0(path, using);
             } catch (IOException e) {
-//                System.out.println(e);
-                try {
-                    Thread.sleep(i * i * 2);
-                } catch (InterruptedException e1) {
-                    throw new AssertionError(e1);
-                }
+                pause(i * i * 2);
             }
         }
         return null;
@@ -427,9 +420,9 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
                         lastFileRecordMap.put(p.toFile(), new FileRecord<>(p.toFile().lastModified(), mapVal.copy()));
                     }
                     if (prev == null) {
-                        subscriptions.notifyEvent(InsertedEvent.of(p.toFile().getName(), mapVal, 0, p.toFile().lastModified()));
+                        subscriptions.notifyEvent(InsertedEvent.of(p.toFile().getName(), mapVal));
                     } else {
-                        subscriptions.notifyEvent(UpdatedEvent.of(p.toFile().getName(), prev.contents.bytes(), mapVal, 0, p.toFile().lastModified()));
+                        subscriptions.notifyEvent(UpdatedEvent.of(p.toFile().getName(), prev.contents.bytes(), mapVal));
                         prev.contents.release();
                     }
 
@@ -438,7 +431,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
 
                     FileRecord<BytesStore> prev = lastFileRecordMap.remove(p.toFile());
                     BytesStore lastVal = prev == null ? null : prev.contents;
-                    subscriptions.notifyEvent(RemovedEvent.of(p.toFile().getName(), lastVal, 0, p.toFile().lastModified()));
+                    subscriptions.notifyEvent(RemovedEvent.of(p.toFile().getName(), lastVal));
                     if (prev != null)
                         prev.contents.release();
                 }

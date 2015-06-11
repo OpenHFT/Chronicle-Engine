@@ -5,7 +5,7 @@ import net.openhft.chronicle.engine.api.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.RequestContext;
 import net.openhft.chronicle.engine.api.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
-import net.openhft.chronicle.engine.api.map.MapReplicationEvent;
+import net.openhft.chronicle.engine.api.map.MapEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,8 +55,8 @@ public class VanillaKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> {
     }
 
     @Override
-    public void entriesFor(int segment, @NotNull SubscriptionConsumer<MapReplicationEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
-        SubscriptionConsumer.notifyEachEvent(map.entrySet(), e -> kvConsumer.accept(EntryEvent.of(e.getKey(), e.getValue(), 0, System.currentTimeMillis())));
+    public void entriesFor(int segment, @NotNull SubscriptionConsumer<MapEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
+        SubscriptionConsumer.notifyEachEvent(map.entrySet(), e -> kvConsumer.accept(InsertedEvent.of(e.getKey(), e.getValue())));
     }
 
     @NotNull

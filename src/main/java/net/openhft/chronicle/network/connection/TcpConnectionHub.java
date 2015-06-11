@@ -158,11 +158,7 @@ public class TcpConnectionHub implements View, Closeable {
 
                 clientChannel = openSocketChannel(closeables);
                 if (clientChannel == null || !clientChannel.connect(remoteAddress)) {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
+                    Jvm.pause(100);
                     continue;
                 }
 

@@ -70,7 +70,7 @@ public class ChassisRFCTest {
         map.put("Key-1", "Value-2");
         map.remove("Key-1");
 
-        assertEquals("[BootstrapEvent{key=Key-1, value=Value-1}, " +
+        assertEquals("[InsertedEvent{key=Key-1, value=Value-1}, " +
                 "UpdatedEvent{key=Key-1, oldValue=Value-1, value=Value-2}, " +
                 "RemovedEvent{key=Key-1, value=Value-2}]", values.toString());
     }

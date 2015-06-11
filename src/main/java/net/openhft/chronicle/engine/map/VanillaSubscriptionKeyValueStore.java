@@ -27,7 +27,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
         V oldValue = kvStore.replace(key, value);
         if (oldValue != null) {
             try {
-                subscriptions.notifyEvent(UpdatedEvent.of(key, oldValue, value, 0, System.currentTimeMillis()));
+                subscriptions.notifyEvent(UpdatedEvent.of(key, oldValue, value));
             } catch (InvalidSubscriberException e) {
                 throw new AssertionError(e);
             }
@@ -43,8 +43,8 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
         boolean replaced = kvStore.put(key, value);
         try {
             subscriptions.notifyEvent(replaced
-                    ? InsertedEvent.of(key, value, 0, System.currentTimeMillis())
-                    : UpdatedEvent.of(key, null, value, 0, System.currentTimeMillis()));
+                    ? InsertedEvent.of(key, value)
+                    : UpdatedEvent.of(key, null, value));
         } catch (InvalidSubscriberException e) {
             throw new AssertionError(e);
         }
@@ -59,7 +59,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
         }
         if (kvStore.remove(key)) {
             try {
-                subscriptions.notifyEvent(RemovedEvent.of(key, null, 0, System.currentTimeMillis()));
+                subscriptions.notifyEvent(RemovedEvent.of(key, null));
             } catch (InvalidSubscriberException e) {
                 throw new AssertionError(e);
             }
@@ -72,7 +72,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     public boolean replaceIfEqual(K key, V oldValue, V newValue) {
         if (kvStore.replaceIfEqual(key, oldValue, newValue)) {
             try {
-                subscriptions.notifyEvent(UpdatedEvent.of(key, oldValue, newValue, 0, System.currentTimeMillis()));
+                subscriptions.notifyEvent(UpdatedEvent.of(key, oldValue, newValue));
             } catch (InvalidSubscriberException e) {
                 throw new AssertionError(e);
             }
@@ -85,7 +85,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     public boolean removeIfEqual(K key, V value) {
         if (kvStore.removeIfEqual(key, value)) {
             try {
-                subscriptions.notifyEvent(RemovedEvent.of(key, value, 0, System.currentTimeMillis()));
+                subscriptions.notifyEvent(RemovedEvent.of(key, value));
             } catch (InvalidSubscriberException e) {
                 throw new AssertionError(e);
             }
@@ -99,7 +99,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
         V ret = kvStore.putIfAbsent(key, value);
         if (ret == null)
             try {
-                subscriptions.notifyEvent(InsertedEvent.of(key, value, 0, System.currentTimeMillis()));
+                subscriptions.notifyEvent(InsertedEvent.of(key, value));
             } catch (InvalidSubscriberException e) {
                 throw new AssertionError(e);
             }
@@ -111,8 +111,8 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
         V oldValue = kvStore.getAndPut(key, value);
         try {
             subscriptions.notifyEvent(oldValue == null
-                    ? InsertedEvent.of(key, value, 0, System.currentTimeMillis())
-                    : UpdatedEvent.of(key, oldValue, value, 0, System.currentTimeMillis()));
+                    ? InsertedEvent.of(key, value)
+                    : UpdatedEvent.of(key, oldValue, value));
         } catch (InvalidSubscriberException e) {
             throw new AssertionError(e);
         }
@@ -124,7 +124,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
         V oldValue = kvStore.getAndRemove(key);
         if (oldValue != null) {
             try {
-                subscriptions.notifyEvent(RemovedEvent.of(key, oldValue, 0, System.currentTimeMillis()));
+                subscriptions.notifyEvent(RemovedEvent.of(key, oldValue));
             } catch (InvalidSubscriberException e) {
                 throw new AssertionError(e);
             }

@@ -7,7 +7,7 @@ import net.openhft.chronicle.engine.api.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.RequestContext;
 import net.openhft.chronicle.engine.api.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
-import net.openhft.chronicle.engine.api.map.MapReplicationEvent;
+import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
 import net.openhft.chronicle.engine.pubsub.SimpleSubscription;
 import net.openhft.chronicle.map.ChronicleMap;
@@ -105,9 +105,9 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
     }
 
     @Override
-    public void entriesFor(int segment, @NotNull SubscriptionConsumer<MapReplicationEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
+    public void entriesFor(int segment, @NotNull SubscriptionConsumer<MapEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
         //Ignore the segments and return entriesFor the whole map
-        chronicleMap.entrySet().stream().map(e -> EntryEvent.of(e.getKey(), e.getValue(), 0, 0L)).forEach(e -> {
+        chronicleMap.entrySet().stream().map(e -> InsertedEvent.of(e.getKey(), e.getValue())).forEach(e -> {
             try {
                 kvConsumer.accept(e);
             } catch (InvalidSubscriberException t) {
@@ -149,7 +149,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
             try {
                 int identifier = 0; // todo
                 long timeStampMS = 0; // todo
-                subscriptions.notifyEvent(RemovedEvent.of(key, value, identifier, timeStampMS));
+                subscriptions.notifyEvent(RemovedEvent.of(key, value));
                 publishValueToChild(key, null);
             } catch (InvalidSubscriberException e) {
                 // todo
@@ -162,9 +162,9 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
                 int identifier = 0; // todo
                 long timeStampMS = 0; // todo
                 if(replacedValue!=null) {
-                    subscriptions.notifyEvent(UpdatedEvent.of(key, replacedValue, newValue, identifier, timeStampMS));
+                    subscriptions.notifyEvent(UpdatedEvent.of(key, replacedValue, newValue));
                 }else{
-                    subscriptions.notifyEvent(InsertedEvent.of(key, newValue, identifier, timeStampMS));
+                    subscriptions.notifyEvent(InsertedEvent.of(key, newValue));
                 }
                 publishValueToChild(key, newValue);
             } catch (InvalidSubscriberException e) {

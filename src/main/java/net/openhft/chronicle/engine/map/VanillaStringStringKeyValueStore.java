@@ -20,18 +20,28 @@ import static net.openhft.chronicle.engine.map.Buffers.BUFFERS;
 public class VanillaStringStringKeyValueStore implements StringStringKeyValueStore {
     public static final Function<BytesStore, String> BYTES_STORE_STRING_FUNCTION = v -> BytesUtil.to8bitString(v);
     private final ObjectSubscription<String, StringBuilder, String> subscriptions;
+    private final Function<BytesStore, String> bytesToValue;
     private SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore;
     private Asset asset;
 
     public VanillaStringStringKeyValueStore(RequestContext context, @NotNull Asset asset,
                                             @NotNull SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore) throws AssetNotFoundException {
+        this(asset.acquireView(ObjectSubscription.class, context), asset, kvStore);
+    }
+
+    VanillaStringStringKeyValueStore(ObjectSubscription<String, StringBuilder, String> subscriptions,
+                                     @NotNull Asset asset,
+                                     @NotNull SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore) throws AssetNotFoundException {
         this.asset = asset;
         this.kvStore = kvStore;
-        asset.registerView(ValueReader.class, (ValueReader<BytesStore, String>) (bs, s) -> BytesUtil.to8bitString(bs));
-        RawSubscription<String, Bytes, BytesStore> subscriptions0 = asset.acquireView(RawSubscription.class, context);
-//        subscriptions = new TranslatingSubscriptionKVSCollection(subscriptions0);
-//        asset.registerView(ObjectSubscription.class, subscriptions);
-        if (true) throw new UnsupportedOperationException();
+        bytesToValue = b -> b == null ? null : b.toString();
+        asset.registerView(ValueReader.class, (ValueReader<BytesStore, String>) (bs, v) ->
+                bytesToValue.apply(bs));
+        RawSubscription<String, Bytes, BytesStore> rawSubscription =
+                (RawSubscription<String, Bytes, BytesStore>) kvStore.subscription(true);
+        this.subscriptions = subscriptions;
+        rawSubscription.registerDownstream(mpe ->
+                subscriptions.notifyEvent(mpe.translate(s -> s, bytesToValue)));
     }
 
     @NotNull
@@ -93,7 +103,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     }
 
     @Override
-    public void entriesFor(int segment, @NotNull SubscriptionConsumer<MapReplicationEvent<String, String>> kvConsumer) throws InvalidSubscriberException {
+    public void entriesFor(int segment, @NotNull SubscriptionConsumer<MapEvent<String, String>> kvConsumer) throws InvalidSubscriberException {
         kvStore.entriesFor(segment, e -> kvConsumer.accept(e.translate(k -> k, BYTES_STORE_STRING_FUNCTION)));
     }
 
