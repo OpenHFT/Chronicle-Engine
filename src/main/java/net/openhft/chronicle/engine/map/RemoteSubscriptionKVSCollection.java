@@ -25,7 +25,7 @@ import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventI
 /**
  * Created by daniel on 10/06/15.
  */
-public class RemoteSubscriptionKVSCollection<K, MV, V> extends AbstractStatelessClient implements SubscriptionKVSCollection<K, MV, V> {
+public class RemoteSubscriptionKVSCollection<K, MV, V> extends AbstractStatelessClient implements ObjectSubscription<K, MV, V> {
 
     private final Class<V> valueType;
     private final Executor eventLoop = Executors.newSingleThreadExecutor();
@@ -106,7 +106,7 @@ public class RemoteSubscriptionKVSCollection<K, MV, V> extends AbstractStateless
     }
 
     @Override
-    public void registerDownstream(Subscription subscription) {
+    public void registerDownstream(EventConsumer<K, V> subscription) {
         throw new UnsupportedOperationException("todo");
     }
 

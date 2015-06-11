@@ -19,7 +19,7 @@ import static net.openhft.chronicle.engine.map.Buffers.BUFFERS;
  */
 public class VanillaStringStringKeyValueStore implements StringStringKeyValueStore {
     public static final Function<BytesStore, String> BYTES_STORE_STRING_FUNCTION = v -> BytesUtil.to8bitString(v);
-    private final SubscriptionKVSCollection<String, StringBuilder, String> subscriptions;
+    private final ObjectSubscription<String, StringBuilder, String> subscriptions;
     private SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore;
     private Asset asset;
 
@@ -28,14 +28,15 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         this.asset = asset;
         this.kvStore = kvStore;
         asset.registerView(ValueReader.class, (ValueReader<BytesStore, String>) (bs, s) -> BytesUtil.to8bitString(bs));
-        SubscriptionKVSCollection subscriptions0 = asset.acquireView(SubscriptionKVSCollection.class, context);
-        subscriptions0.setKvStore(this);
-        subscriptions = new TranslatingSubscriptionKVSCollection(subscriptions0);
+        RawSubscription<String, Bytes, BytesStore> subscriptions0 = asset.acquireView(RawSubscription.class, context);
+//        subscriptions = new TranslatingSubscriptionKVSCollection(subscriptions0);
+//        asset.registerView(ObjectSubscription.class, subscriptions);
+        if (true) throw new UnsupportedOperationException();
     }
 
     @NotNull
     @Override
-    public SubscriptionKVSCollection<String, StringBuilder, String> subscription(boolean createIfAbsent) {
+    public ObjectSubscription<String, StringBuilder, String> subscription(boolean createIfAbsent) {
         return subscriptions;
     }
 
@@ -127,67 +128,5 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     @Override
     public void close() {
         kvStore.close();
-    }
-
-    class TranslatingSubscriptionKVSCollection implements SubscriptionKVSCollection<String, StringBuilder, String> {
-        @NotNull
-        SubscriptionKVSCollection<String, StringBuilder, String> subscriptions;
-
-        public TranslatingSubscriptionKVSCollection(SubscriptionKVSCollection subscriptions) {
-            this.subscriptions = subscriptions;
-        }
-
-        @Override
-        public  void registerSubscriber(@NotNull RequestContext rc, Subscriber subscriber) {
-            Class eClass = rc.type();
-            if (eClass == MapEvent.class) {
-                Subscriber<MapReplicationEvent<String, String>> sub = (Subscriber) subscriber;
-
-                Subscriber<MapReplicationEvent<String, BytesStore>> sub2 = e ->
-                        sub.onMessage(e.translate(k -> k, BYTES_STORE_STRING_FUNCTION));
-                kvStore.subscription(true).registerSubscriber(rc, sub2);
-            } else {
-                subscriptions.registerSubscriber(rc, subscriber);
-            }
-        }
-
-        @Override
-        public <T, E> void registerTopicSubscriber(RequestContext rc, @NotNull TopicSubscriber <T, E>  subscriber) {
-            kvStore.subscription(true).registerTopicSubscriber(rc, (T topic, E message) -> {
-                subscriber.onMessage(topic, (E) BytesUtil.to8bitString((BytesStore) message));
-            });
-            subscriptions.registerTopicSubscriber(rc, subscriber);
-        }
-
-        @Override
-        public void notifyEvent(MapReplicationEvent<String, String> mpe) throws InvalidSubscriberException {
-            throw new UnsupportedOperationException("todo");
-        }
-
-        @Override
-        public void unregisterSubscriber(RequestContext rc, Subscriber subscriber) {
-            throw new UnsupportedOperationException("todo");
-        }
-
-        @Override
-        public void unregisterTopicSubscriber(RequestContext rc, TopicSubscriber subscriber) {
-            throw new UnsupportedOperationException("todo");
-        }
-
-        @Override
-        public void registerDownstream(Subscription subscription) {
-            throw new UnsupportedOperationException("todo");
-        }
-
-        @Override
-        public boolean needsPrevious() {
-            SubscriptionKVSCollection<String, Bytes, BytesStore> subs = kvStore.subscription(false);
-            return subs != null && subs.needsPrevious();
-        }
-
-        @Override
-        public void setKvStore(KeyValueStore<String, StringBuilder, String> store) {
-            throw new UnsupportedOperationException("todo");
-        }
     }
 }

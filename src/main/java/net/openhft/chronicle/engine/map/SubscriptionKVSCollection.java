@@ -7,7 +7,7 @@ import net.openhft.chronicle.engine.api.map.KeyValueStore;
 /**
  * Created by peter on 29/05/15.
  */
-public interface SubscriptionKVSCollection<K, MV, V> extends Subscription, ISubscriber, EventConsumer<K, V> {
+public interface SubscriptionKVSCollection<K, MV, V> extends Subscription<K, V>, ISubscriber, EventConsumer<K, V> {
 
     default boolean keyedView() {
         return true;

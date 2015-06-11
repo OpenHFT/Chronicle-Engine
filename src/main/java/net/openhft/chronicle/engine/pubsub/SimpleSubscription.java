@@ -2,6 +2,7 @@ package net.openhft.chronicle.engine.pubsub;
 
 import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.api.map.ValueReader;
+import net.openhft.chronicle.engine.map.EventConsumer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -46,11 +47,6 @@ public class SimpleSubscription<E> implements Subscription {
         throw new UnsupportedOperationException("todo");
     }
 
-    @Override
-    public void registerDownstream(Subscription subscription) {
-        throw new UnsupportedOperationException("todo");
-    }
-
     public void notifyMessage(Object e) {
         try {
             SubscriptionConsumer.notifyEachSubscriber(subscribers, s -> s.onMessage(valueReader.readFrom(e, null)));
@@ -63,5 +59,10 @@ public class SimpleSubscription<E> implements Subscription {
     @Override
     public boolean keyedView() {
         return false;
+    }
+
+    @Override
+    public void registerDownstream(EventConsumer subscription) {
+        throw new UnsupportedOperationException("todo");
     }
 }

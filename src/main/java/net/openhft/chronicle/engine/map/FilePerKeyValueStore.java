@@ -55,7 +55,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
 
     @NotNull
     private final Thread fileFpmWatcher;
-    private final SubscriptionKVSCollection<String, Bytes, BytesStore> subscriptions;
+    private final RawSubscription<String, Bytes, BytesStore> subscriptions;
     private final Asset asset;
     private volatile boolean closed = false;
 
@@ -88,13 +88,13 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         fileFpmWatcher = new Thread(new FPMWatcher(watcher), dirName + "-watcher");
         fileFpmWatcher.setDaemon(true);
         fileFpmWatcher.start();
-        subscriptions = asset.acquireView(SubscriptionKVSCollection.class, context);
+        subscriptions = asset.acquireView(RawSubscription.class, context);
         subscriptions.setKvStore(this);
     }
 
     @NotNull
     @Override
-    public SubscriptionKVSCollection<String, Bytes, BytesStore> subscription(boolean createIfAbsent) {
+    public RawSubscription<String, Bytes, BytesStore> subscription(boolean createIfAbsent) {
         return subscriptions;
     }
 

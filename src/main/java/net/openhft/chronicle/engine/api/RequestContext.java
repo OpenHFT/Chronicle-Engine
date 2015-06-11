@@ -167,7 +167,7 @@ public class RequestContext {
     }
 
     public Class elementType() {
-        return type;
+        return type2 == null ? type : type2;
     }
 
     public Class keyType() {

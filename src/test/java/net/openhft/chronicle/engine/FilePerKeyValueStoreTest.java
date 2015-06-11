@@ -1,17 +1,13 @@
 package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.engine.api.Asset;
-import net.openhft.chronicle.engine.api.Assetted;
-import net.openhft.chronicle.engine.api.RequestContext;
+import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
-import net.openhft.chronicle.engine.api.map.MapEvent;
-import net.openhft.chronicle.engine.api.map.MapEventListener;
-import net.openhft.chronicle.engine.api.map.StringBytesStoreKeyValueStore;
+import net.openhft.chronicle.engine.api.map.MapReplicationEvent;
+import net.openhft.chronicle.engine.map.AuthenticatedKeyValueStore;
 import net.openhft.chronicle.engine.map.FilePerKeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.map.VanillaStringMarshallableKeyValueStore;
-import net.openhft.chronicle.engine.map.VanillaSubscriptionKeyValueStore;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.junit.BeforeClass;
@@ -23,7 +19,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.Chassis.*;
@@ -39,21 +34,17 @@ public class FilePerKeyValueStoreTest {
 
     @BeforeClass
     public static void createMap() throws IOException {
-        //String TMP = "/tmp";
-        String TMP = System.getProperty("java.io.tmpdir");
-
         resetChassis();
         Function<Bytes, Wire> writeType = TextWire::new;
         enableTranslatingValuesToBytesStore();
 
-        addLeafRule(KeyValueStore.class, "FilePer Key",
-                (context, asset) -> new FilePerKeyValueStore(context.basePath(TMP).wireType(writeType), asset));
+        addLeafRule(AuthenticatedKeyValueStore.class, "FilePer Key",
+                (context, asset) -> new FilePerKeyValueStore(context.basePath(OS.TMP).wireType(writeType), asset));
 
         map = acquireMap(NAME, String.class, TestMarshallable.class);
         KeyValueStore mapU = ((VanillaMapView) map).underlying();
         assertEquals(VanillaStringMarshallableKeyValueStore.class, mapU.getClass());
-        assertEquals(VanillaSubscriptionKeyValueStore.class, mapU.underlying().getClass());
-        assertEquals(FilePerKeyValueStore.class, ((Assetted) mapU.underlying()).underlying().getClass());
+        assertEquals(FilePerKeyValueStore.class, mapU.underlying().getClass());
 
         //just in case it hasn't been cleared up last time
         map.clear();
@@ -64,50 +55,32 @@ public class FilePerKeyValueStoreTest {
         TestMarshallable tm = new TestMarshallable("testing1", "testing2",
                 new Nested(Arrays.asList(2.3, 4.5, 6.7, 8.9)));
 
-        AtomicInteger success = new AtomicInteger();
-        MapEventListener<String, TestMarshallable> listener = new MapEventListener<String, TestMarshallable>() {
-            @Override
-            public void update(@NotNull String key, @NotNull TestMarshallable oldValue, @NotNull TestMarshallable newValue) {
-                assert key != null;
-                assert oldValue != null;
-                assert newValue != null;
-                System.out.println("Updated { key: " + key + ", oldValue: " + oldValue + ", value: " + newValue + " }");
-                success.set(-1000);
-            }
-
-            @Override
-            public void insert(@NotNull String key, @NotNull TestMarshallable value) {
-                assert key != null;
-                assert value != null;
-                System.out.println("Inserted { key: " + key + ", value: " + value + " }");
-                success.incrementAndGet();
-            }
-
-            @Override
-            public void remove(@NotNull String key, TestMarshallable oldValue) {
-                assert key != null;
-                System.out.println("Removed { key: " + key + ", value: " + oldValue + " }");
-                success.set(-100);
-            }
-        };
-        Asset asset = getAsset(NAME);
-        registerSubscriber(NAME, MapEvent.class, e -> e.apply(listener));
-        StringBytesStoreKeyValueStore sbskvStore = asset.getView(StringBytesStoreKeyValueStore.class);
-        sbskvStore.subscription(true).registerSubscriber(RequestContext.requestContext("").type(MapEvent.class), System.out::println);
+        List<MapReplicationEvent<String, TestMarshallable>> events = new ArrayList<>();
+        registerSubscriber(NAME, MapReplicationEvent.class, events::add);
 
         map.put("testA", tm);
+        map.put("testB", tm);
+        waitFor(events, 2);
+        tm.setS1("hello");
+        map.put("testB", tm);
 
-        assertEquals(1, map.size());
+        assertEquals(2, map.size());
         assertEquals("testing1", map.get("testA").getS1());
         assertEquals(4.5, map.get("testA").getNested().getListDouble().get(1), 0);
 
-        for (int i = 0; i < 20; i++) {
-            if (success.get() == 1)
+        waitFor(events, 3);
+        TimeUnit.MILLISECONDS.sleep(100);
+        if (events.size() != 3)
+            events.forEach(System.out::println);
+        assertEquals(3, events.size());
+    }
+
+    private void waitFor(List<MapReplicationEvent<String, TestMarshallable>> events, int count) throws InterruptedException {
+        for (int i = 1; i <= 10; i++) {
+            if (events.size() >= count)
                 break;
-            TimeUnit.MILLISECONDS.sleep(200);
+            TimeUnit.MILLISECONDS.sleep(i * i);
         }
-        TimeUnit.MILLISECONDS.sleep(200);
-        assertEquals(1, success.get());
     }
 
     static class TestMarshallable implements Marshallable {

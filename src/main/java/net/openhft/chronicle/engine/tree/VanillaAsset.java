@@ -96,7 +96,7 @@ public class VanillaAsset implements Asset, Closeable {
 
         addLeafRule(KeyValueStore.class, LAST + " vanilla", VanillaKeyValueStore::new);
 
-        addLeafRule(SubscriptionKVSCollection.class, LAST + " vanilla",
+        addLeafRule(ObjectSubscription.class, LAST + " vanilla",
                 VanillaSubscriptionKVSCollection::new);
 
         addView(SessionProvider.class, new VanillaSessionProvider());
@@ -117,6 +117,9 @@ public class VanillaAsset implements Asset, Closeable {
         addWrappingRule(ObjectKeyValueStore.class, "{Marshalling} string,marshallable map",
                 (rc, asset) -> rc.keyType() == String.class && Marshallable.class.isAssignableFrom(rc.valueType()),
                 VanillaStringMarshallableKeyValueStore::new, AuthenticatedKeyValueStore.class);
+
+        addLeafRule(RawSubscription.class, LAST + " vanilla",
+                VanillaSubscriptionKVSCollection::new);
     }
 
     @Override
@@ -152,13 +155,13 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Override
-    public <I> I createWrappingLeaf(Class viewType, RequestContext rc, Asset asset) throws AssetNotFoundException {
+    public <I> I createLeafView(Class viewType, RequestContext rc, Asset asset) throws AssetNotFoundException {
         LeafViewFactory lvFactory = leafViewFactoryMap.get(viewType);
         if (lvFactory != null)
             return (I) lvFactory.create(rc, asset);
         if (parent == null)
-            throw new AssetNotFoundException("Unable to classify view=" + viewType.getName() + " context=" + rc);
-        return parent.createWrappingLeaf(viewType, rc, asset);
+            return null;
+        return parent.createLeafView(viewType, rc, asset);
     }
 
     @Override
@@ -198,10 +201,13 @@ public class VanillaAsset implements Asset, Closeable {
             if (view != null) {
                 return (V) view;
             }
+            V leafView = createLeafView(viewType, rc, this);
+            if (leafView != null)
+                return addView(viewType, leafView);
             V wrappingView = createWrappingView(viewType, rc, this, null);
-            if (wrappingView != null)
-                return addView(viewType, wrappingView);
-            return addView(viewType, createWrappingLeaf(viewType, rc, this));
+            if (wrappingView == null)
+                throw new AssetNotFoundException("Unable to classify " + viewType.getName() + " context: " + rc);
+            return addView(viewType, wrappingView);
         }
     }
 
@@ -212,13 +218,7 @@ public class VanillaAsset implements Asset, Closeable {
             keyedAsset = true;
         }
         viewMap.put(viewType, view);
-        if (v instanceof SubscriptionKeyValueStore)
-            topSubscription(((SubscriptionKeyValueStore) v));
         return v;
-    }
-
-    private void topSubscription(@NotNull SubscriptionKeyValueStore skvStore) {
-        viewMap.put(Subscription.class, skvStore.subscription(true));
     }
 
     @Override
@@ -229,7 +229,7 @@ public class VanillaAsset implements Asset, Closeable {
     @NotNull
     @Override
     public Subscription subscription(boolean createIfAbsent) throws AssetNotFoundException {
-        return createIfAbsent ? acquireView(Subscription.class, requestContext()) : getView(Subscription.class);
+        return createIfAbsent ? acquireView(ObjectSubscription.class, requestContext()) : getView(ObjectSubscription.class);
     }
 
     @Override

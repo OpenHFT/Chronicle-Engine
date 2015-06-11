@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.BytesMarshallable;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
@@ -9,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 
-public class Factor implements Marshallable {
+public class Factor implements Marshallable, BytesMarshallable, net.openhft.lang.io.serialization.BytesMarshallable {
 
     private byte openPDFlag;
     private byte openUCFlag;
@@ -116,37 +117,73 @@ public class Factor implements Marshallable {
     }
 
     @Override
-    public void readMarshallable(@NotNull WireIn wireIn) throws IllegalStateException {
-        Bytes bytes = wireIn.bytes();
+    public void readMarshallable(@NotNull net.openhft.lang.io.Bytes in) throws IllegalStateException {
+        openPDFlag = in.readByte();
+        openUCFlag = in.readByte();
+        openActiveEMFlag = in.readByte();
+        openPastDueEMFlag = in.readByte();
+        accountCloseFlag = in.readByte();
+        missingPaperFlag = in.readByte();
+        rMLAgreementCodeFlag = in.readByte();
+        nMEAccountFlag = in.readByte();
+        accountClassificationTypeValue = in.readByte();
+        accountNumber = in.readUTFΔ();
+        firm = in.readUTFΔ();
+    }
 
-        openPDFlag = bytes.readByte();
-        openUCFlag = bytes.readByte();
-        openActiveEMFlag = bytes.readByte();
-        openPastDueEMFlag = bytes.readByte();
-        accountCloseFlag = bytes.readByte();
-        missingPaperFlag = bytes.readByte();
-        rMLAgreementCodeFlag = bytes.readByte();
-        nMEAccountFlag = bytes.readByte();
-        accountClassificationTypeValue = bytes.readByte();
-        accountNumber = bytes.readUTFΔ();
-        firm = bytes.readUTFΔ();
+    @Override
+    public void readMarshallable(Bytes in) throws IllegalStateException {
+        openPDFlag = in.readByte();
+        openUCFlag = in.readByte();
+        openActiveEMFlag = in.readByte();
+        openPastDueEMFlag = in.readByte();
+        accountCloseFlag = in.readByte();
+        missingPaperFlag = in.readByte();
+        rMLAgreementCodeFlag = in.readByte();
+        nMEAccountFlag = in.readByte();
+        accountClassificationTypeValue = in.readByte();
+        accountNumber = in.readUTFΔ();
+        firm = in.readUTFΔ();
+    }
+
+    @Override
+    public void readMarshallable(@NotNull WireIn wireIn) throws IllegalStateException {
+        readMarshallable(wireIn.bytes());
+    }
+
+    @Override
+    public void writeMarshallable(Bytes out) {
+        out.writeByte(openPDFlag);
+        out.writeByte(openUCFlag);
+        out.writeByte(openActiveEMFlag);
+        out.writeByte(openPastDueEMFlag);
+        out.writeByte(accountCloseFlag);
+        out.writeByte(missingPaperFlag);
+        out.writeByte(rMLAgreementCodeFlag);
+        out.writeByte(nMEAccountFlag);
+        out.writeByte(accountClassificationTypeValue);
+        out.writeUTFΔ(accountNumber);
+        out.writeUTFΔ(firm);
+    }
+
+    @Override
+    public void writeMarshallable(@NotNull net.openhft.lang.io.Bytes out) {
+        out.writeByte(openPDFlag);
+        out.writeByte(openUCFlag);
+        out.writeByte(openActiveEMFlag);
+        out.writeByte(openPastDueEMFlag);
+        out.writeByte(accountCloseFlag);
+        out.writeByte(missingPaperFlag);
+        out.writeByte(rMLAgreementCodeFlag);
+        out.writeByte(nMEAccountFlag);
+        out.writeByte(accountClassificationTypeValue);
+        out.writeUTFΔ(accountNumber);
+        out.writeUTFΔ(firm);
     }
 
     @Override
     public void writeMarshallable(@NotNull WireOut wireOut) {
-        Bytes bytes = wireOut.bytes();
-
-        bytes.writeByte(openPDFlag);
-        bytes.writeByte(openUCFlag);
-        bytes.writeByte(openActiveEMFlag);
-        bytes.writeByte(openPastDueEMFlag);
-        bytes.writeByte(accountCloseFlag);
-        bytes.writeByte(missingPaperFlag);
-        bytes.writeByte(rMLAgreementCodeFlag);
-        bytes.writeByte(nMEAccountFlag);
-        bytes.writeByte(accountClassificationTypeValue);
-        bytes.writeUTFΔ(accountNumber);
-        bytes.writeUTFΔ(firm);
+        writeMarshallable(wireOut.bytes());
     }
 
     @NotNull

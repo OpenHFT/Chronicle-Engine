@@ -5,6 +5,7 @@ import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.map.SubAsset;
 import net.openhft.chronicle.engine.api.map.ValueReader;
+import net.openhft.chronicle.engine.map.ObjectSubscription;
 import net.openhft.chronicle.engine.pubsub.SimpleSubscription;
 import net.openhft.chronicle.engine.pubsub.VanillaReference;
 import org.jetbrains.annotations.NotNull;
@@ -73,7 +74,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
                 return (V) acquireViewFor(viewType, rc);
             return (V) reference;
         }
-        if (viewType == Subscription.class) {
+        if (viewType == SimpleSubscription.class || viewType == ObjectSubscription.class) {
             return (V) subscription;
         }
         throw new UnsupportedOperationException("todo vClass: " + viewType + ", rc: " + rc);
@@ -125,7 +126,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     }
 
     @Override
-    public <I> I createWrappingLeaf(Class viewType, RequestContext rc, Asset asset) throws AssetNotFoundException {
+    public <I> I createLeafView(Class viewType, RequestContext rc, Asset asset) throws AssetNotFoundException {
         throw new UnsupportedOperationException("todo");
     }
 

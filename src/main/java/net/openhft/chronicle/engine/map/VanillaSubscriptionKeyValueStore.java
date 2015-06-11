@@ -9,18 +9,12 @@ import net.openhft.chronicle.engine.api.map.KeyValueStore;
  * Created by peter on 22/05/15.
  */
 public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValueStore<K, MV, V> implements ObjectKeyValueStore<K, MV, V>, AuthenticatedKeyValueStore<K, MV, V> {
-    final SubscriptionKVSCollection<K, MV, V> subscriptions;
-    private final Asset asset;
+    private final SubscriptionKVSCollection<K, MV, V> subscriptions;
 
-    VanillaSubscriptionKeyValueStore(Asset asset, KeyValueStore<K, MV, V> item) {
+    public VanillaSubscriptionKeyValueStore(RequestContext context, Asset asset, KeyValueStore<K, MV, V> item) {
         super(item);
-        this.asset = asset;
-        this.subscriptions = new VanillaSubscriptionKVSCollection<K, MV, V>(asset);
+        this.subscriptions = new VanillaSubscriptionKVSCollection<>(ObjectSubscription.class, asset);
         subscriptions.setKvStore(this);
-    }
-
-    public <U> VanillaSubscriptionKeyValueStore(RequestContext context, Asset asset, KeyValueStore<K, MV, V> kvStore) {
-        this(asset, kvStore);
     }
 
     @Override

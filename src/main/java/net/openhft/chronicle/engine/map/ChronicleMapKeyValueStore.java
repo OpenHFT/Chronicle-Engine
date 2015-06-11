@@ -30,7 +30,7 @@ import static net.openhft.chronicle.engine.api.SubscriptionConsumer.notifyEachEv
  */
 public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValueStore<K, MV, V>, Closeable {
     private final ChronicleMap<K,V> chronicleMap;
-    private final SubscriptionKVSCollection<K, MV, V> subscriptions;
+    private final ObjectSubscription<K, MV, V> subscriptions;
     private Asset asset;
 
     public ChronicleMapKeyValueStore(@NotNull RequestContext context, Asset asset) {
@@ -67,7 +67,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         }
 
         chronicleMap = builder.create();
-        subscriptions = asset.acquireView(SubscriptionKVSCollection.class, context);
+        subscriptions = asset.acquireView(ObjectSubscription.class, context);
         subscriptions.setKvStore(this);
     }
 

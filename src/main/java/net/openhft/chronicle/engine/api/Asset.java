@@ -71,7 +71,7 @@ public interface Asset {
 
     <I, U> I createWrappingView(Class viewType, RequestContext rc, Asset asset, U underling) throws AssetNotFoundException;
 
-    <I> I createWrappingLeaf(Class viewType, RequestContext rc, Asset asset) throws AssetNotFoundException;
+    <I> I createLeafView(Class viewType, RequestContext rc, Asset asset) throws AssetNotFoundException;
 
     <V> V addView(Class<V> viewType, V v);
 

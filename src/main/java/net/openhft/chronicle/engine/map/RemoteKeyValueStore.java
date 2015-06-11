@@ -45,7 +45,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
         this.vClass = context.valueType();
         this.context = context;
 
-        subscriptions = asset.acquireView(SubscriptionKVSCollection.class, context);
+        subscriptions = asset.acquireView(ObjectSubscription.class, context);
         subscriptions.setKvStore(this);
     }
 
@@ -369,11 +369,11 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     }
 
     // todo
-    private final SubscriptionKVSCollection<K, V, V> subscriptions;
+    private final ObjectSubscription<K, V, V> subscriptions;
 
     @org.jetbrains.annotations.NotNull
     @Override
-    public SubscriptionKVSCollection<K, V, V> subscription(boolean createIfAbsent) {
+    public ObjectSubscription<K, V, V> subscription(boolean createIfAbsent) {
         return subscriptions;
     }
 

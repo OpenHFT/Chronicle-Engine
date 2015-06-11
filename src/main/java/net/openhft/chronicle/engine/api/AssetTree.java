@@ -1,7 +1,9 @@
 package net.openhft.chronicle.engine.api;
 
+import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.util.Closeable;
-import net.openhft.chronicle.engine.map.SubscriptionKVSCollection;
+import net.openhft.chronicle.engine.map.ObjectSubscription;
+import net.openhft.chronicle.engine.map.RawSubscription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,37 +67,47 @@ public interface AssetTree extends Closeable {
     }
 
     default <E> void registerSubscriber(String name, Class<E> eClass, Subscriber<E> subscriber) throws AssetNotFoundException {
-        RequestContext rc = requestContext(name).viewType(Subscription.class).type(eClass);
-        Asset asset = acquireAsset(rc.viewType(), rc);
-        Subscription subscription = asset.acquireView(Subscription.class, rc);
-        subscription.registerSubscriber(rc, subscriber);
+        RequestContext rc = requestContext(name).type(eClass);
+        acquireSubscription(rc).registerSubscriber(rc, subscriber);
     }
 
     default <T, E> void registerTopicSubscriber(String name, Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
-        RequestContext rc = requestContext(name).viewType(Subscription.class).type(tClass).type2(eClass);
-        Asset asset = acquireAsset(rc.viewType(), rc);
-        Subscription subscription = asset.acquireView(SubscriptionKVSCollection.class, rc);
-        subscription.registerTopicSubscriber(rc, subscriber);
+        RequestContext rc = requestContext(name).type(tClass).type2(eClass);
+        acquireSubscription(rc).registerTopicSubscriber(rc, subscriber);
+    }
+
+    default Subscription acquireSubscription(RequestContext rc) {
+        Class<Subscription> subscriptionType = getSubscriptionType(rc);
+        rc.viewType(subscriptionType);
+        Asset asset = acquireAsset(subscriptionType, rc);
+        return asset.acquireView(subscriptionType, rc);
+    }
+
+    default Subscription getSubscription(RequestContext rc) {
+        Class<Subscription> subscriptionType = getSubscriptionType(rc);
+        rc.viewType(subscriptionType);
+        Asset asset = getAsset(rc.fullName());
+        return asset == null ? null : asset.getView(subscriptionType);
+    }
+
+    static Class<Subscription> getSubscriptionType(RequestContext rc) {
+        return (Class) (
+                rc.elementType() == BytesStore.class
+                        ? RawSubscription.class
+                        : ObjectSubscription.class);
     }
 
     default <E> void unregisterSubscriber(String name, Class<E> eClass, Subscriber<E> subscriber) throws AssetNotFoundException {
-        RequestContext rc = requestContext(name).viewType(Subscription.class).type(eClass);
-        Asset asset = getAsset(rc.fullName());
-        if (asset != null) {
-            Subscription subscription = asset.subscription(false);
-            if (subscription != null)
-                subscription.unregisterSubscriber(rc, subscriber);
-        }
+        RequestContext rc = requestContext(name).type(eClass);
+        Subscription subscription = getSubscription(rc);
+        if (subscription != null)
+            subscription.unregisterSubscriber(rc, subscriber);
     }
 
     default <T, E> void unregisterTopicSubscriber(String name, Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
         RequestContext rc = requestContext(name).viewType(Subscriber.class).type(tClass).type2(eClass);
-        Asset asset = getAsset(rc.fullName());
-        if (asset != null) {
-            Subscription subscription = asset.subscription(false);
-            if (subscription != null)
-                subscription.unregisterTopicSubscriber(rc, subscriber);
-        }
+        Subscription subscription = getSubscription(rc);
+        if (subscription != null)
+            subscription.unregisterTopicSubscriber(rc, subscriber);
     }
-
 }

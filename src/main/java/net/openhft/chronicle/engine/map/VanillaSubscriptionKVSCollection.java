@@ -16,28 +16,27 @@ import static net.openhft.chronicle.engine.api.SubscriptionConsumer.notifyEachSu
  * Created by peter on 22/05/15.
  */
 // todo review thread safety
-public class VanillaSubscriptionKVSCollection<K, MV, V> implements SubscriptionKVSCollection<K, MV, V> {
+public class VanillaSubscriptionKVSCollection<K, MV, V> implements ObjectSubscription<K, MV, V>, RawSubscription<K, MV, V> {
     private final Set<TopicSubscriber<K, V>> topicSubscribers = new CopyOnWriteArraySet<>();
     private final Set<Subscriber<KeyValueStore.Entry<K, V>>> subscribers = new CopyOnWriteArraySet<>();
     private final Set<Subscriber<K>> keySubscribers = new CopyOnWriteArraySet<>();
-    private final Set<SubscriptionKVSCollection<K, MV, V>> downstream = new CopyOnWriteArraySet<>();
+    private final Set<EventConsumer<K, V>> downstream = new CopyOnWriteArraySet<>();
     private final Asset asset;
     private KeyValueStore<K, MV, V> kvStore;
     private boolean hasSubscribers = false;
 
+    public VanillaSubscriptionKVSCollection(RequestContext requestContext, Asset asset) {
+        this(requestContext.viewType(), asset);
+    }
+
+    public VanillaSubscriptionKVSCollection(Class viewType, Asset asset) {
+        this.asset = asset;
+        asset.addView(viewType, this);
+    }
+
     @Override
     public boolean keyedView() {
-        return kvStore!=null;
-    }
-
-    public VanillaSubscriptionKVSCollection(RequestContext requestContext, Asset asset) {
-        this(asset);
-    }
-
-    public VanillaSubscriptionKVSCollection(Asset asset) {
-        this.asset = asset;
-        asset.addView(Subscription.class, this);
-        asset.addView(SubscriptionKVSCollection.class, this);
+        return kvStore != null;
     }
 
     @Override
@@ -94,7 +93,7 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements SubscriptionK
     public void registerSubscriber(@NotNull RequestContext rc, Subscriber subscriber) {
         Boolean bootstrap = rc.bootstrap();
         Class eClass = rc.type();
-        if (eClass == KeyValueStore.Entry.class || eClass == MapEvent.class) {
+        if (eClass == KeyValueStore.Entry.class || eClass == MapEvent.class || eClass == MapReplicationEvent.class) {
             subscribers.add((Subscriber) subscriber);
             if (bootstrap != Boolean.FALSE && kvStore != null) {
                 Subscriber<MapReplicationEvent<K, V>> sub = (Subscriber<MapReplicationEvent<K, V>>) subscriber;
@@ -136,12 +135,12 @@ public class VanillaSubscriptionKVSCollection<K, MV, V> implements SubscriptionK
     }
 
     @Override
-    public void registerDownstream(Subscription subscription) {
-        downstream.add((SubscriptionKVSCollection<K, MV, V>) subscription);
+    public void registerDownstream(EventConsumer<K, V> subscription) {
+        downstream.add(subscription);
         hasSubscribers = true;
     }
 
-    public void unregisterDownstream(Subscription subscription) {
+    public void unregisterDownstream(EventConsumer<K, V> subscription) {
         downstream.remove(subscription);
         updateHasSubscribers();
     }

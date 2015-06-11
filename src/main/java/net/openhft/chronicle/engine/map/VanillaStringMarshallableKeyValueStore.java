@@ -30,18 +30,19 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     });
     private final BiFunction<V, Bytes, Bytes> valueToBytes;
     private final BiFunction<BytesStore, V, V> bytesToValue;
-    private SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore;
-    private final SubscriptionKVSCollection<String, V, V> subscriptions;
-    private Asset asset;
+    private final ObjectSubscription<String, V, V> subscriptions;
     private final Class type2;
     private final Function<Bytes, Wire> wireType;
+    private SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore;
+    private Asset asset;
 
     public VanillaStringMarshallableKeyValueStore(RequestContext context, Asset asset,
                                                   SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore) throws AssetNotFoundException {
-        this(asset, context.type2(), kvStore, context.wireType());
+        this(asset.acquireView(ObjectSubscription.class, context), asset, context.type2(), kvStore, context.wireType());
     }
 
-    VanillaStringMarshallableKeyValueStore(Asset asset, Class type2, SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore,
+    VanillaStringMarshallableKeyValueStore(ObjectSubscription<String, V, V> subscriptions, Asset asset, Class type2,
+                                           SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore,
                                            Function<Bytes, Wire> wireType) {
         this.asset = asset;
         this.type2 = type2;
@@ -49,8 +50,13 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
         valueToBytes = toBytes(type2, wireType);
         bytesToValue = fromBytes(type2, wireType);
         this.kvStore = kvStore;
-        asset.registerView(ValueReader.class, (ValueReader<BytesStore, V>) (bs, v) -> bytesToValue.apply(bs, null));
-        subscriptions = new TranslatingSubscriptionKVSCollection(asset);
+        asset.registerView(ValueReader.class, (ValueReader<BytesStore, V>) (bs, v) ->
+                bytesToValue.apply(bs, null));
+        RawSubscription<String, Bytes, BytesStore> rawSubscription =
+                (RawSubscription<String, Bytes, BytesStore>) kvStore.subscription(true);
+        this.subscriptions = subscriptions;
+        rawSubscription.registerDownstream(mpe ->
+                subscriptions.notifyEvent(mpe.translate(s -> s, b -> bytesToValue.apply(b, null))));
     }
 
     static <T> BiFunction<T, Bytes, Bytes> toBytes(Class type, Function<Bytes, Wire> wireType) {
@@ -94,7 +100,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     }
 
     @Override
-    public SubscriptionKVSCollection<String, V, V> subscription(boolean createIfAbsent) {
+    public ObjectSubscription<String, V, V> subscription(boolean createIfAbsent) {
         return subscriptions;
     }
 
@@ -177,64 +183,5 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     @Override
     public void close() {
         kvStore.close();
-    }
-
-    class TranslatingSubscriptionKVSCollection implements SubscriptionKVSCollection<String, V, V> {
-        public TranslatingSubscriptionKVSCollection(Asset asset) {
-        }
-
-        @Override
-        public void registerSubscriber(RequestContext rc, Subscriber subscriber) {
-            Class eClass = rc.type();
-            if (eClass == MapEvent.class) {
-                Subscriber<MapEvent<String, V>> sub = (Subscriber<MapEvent<String, V>>) subscriber;
-
-                Subscriber<MapEvent<String, BytesStore>> sub2 = e ->
-                        sub.onMessage(e.translate(k -> k,
-                                v -> bytesToValue.apply(v, null)));
-                kvStore.subscription(true).registerSubscriber(rc, sub2);
-            } else {
-                kvStore.subscription(true).registerSubscriber(rc, subscriber);
-            }
-        }
-
-        @Override
-        public <T, E> void registerTopicSubscriber(RequestContext rc, TopicSubscriber <T, E>  subscriber) {
-            kvStore.subscription(true).registerTopicSubscriber(rc, (T topic, BytesStore message) -> {
-                subscriber.onMessage(topic, (E) bytesToValue.apply(message, null));
-            });
-            subscriptions.registerTopicSubscriber(rc, subscriber);
-        }
-
-        @Override
-        public void notifyEvent(MapReplicationEvent<String, V> mpe) throws InvalidSubscriberException {
-            throw new UnsupportedOperationException("todo");
-        }
-
-        @Override
-        public void unregisterSubscriber(RequestContext rc, Subscriber subscriber) {
-            throw new UnsupportedOperationException("todo");
-        }
-
-        @Override
-        public void unregisterTopicSubscriber(RequestContext rc, TopicSubscriber subscriber) {
-            throw new UnsupportedOperationException("todo");
-        }
-
-        @Override
-        public void registerDownstream(Subscription subscription) {
-            throw new UnsupportedOperationException("todo");
-        }
-
-        @Override
-        public boolean needsPrevious() {
-            SubscriptionKVSCollection<String, Bytes, BytesStore> subs = kvStore.subscription(false);
-            return subs != null && subs.needsPrevious();
-        }
-
-        @Override
-        public void setKvStore(KeyValueStore<String, V, V> store) {
-            throw new UnsupportedOperationException("todo");
-        }
     }
 }
