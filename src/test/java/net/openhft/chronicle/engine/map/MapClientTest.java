@@ -19,12 +19,9 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.AssetTree;
-import net.openhft.chronicle.engine.api.map.ChangeEvent;
-import net.openhft.chronicle.engine.api.map.MapEventListener;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.TextWire;
@@ -32,7 +29,6 @@ import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -94,7 +90,7 @@ public class MapClientTest extends ThreadMonitoringTest {
         });
     }
 
-    @Test(timeout = 50000)
+/*    @Test(timeout = 50000)
     public void testSubscriptionTest() throws IOException, InterruptedException {
         yamlLoggger(() -> {
             try {
@@ -116,7 +112,7 @@ public class MapClientTest extends ThreadMonitoringTest {
                 e.printStackTrace();
             }
         });
-    }
+    }*/
 
     @Test(timeout = 50000)
     public void testEntrySetIsEmpty() throws IOException, InterruptedException {
