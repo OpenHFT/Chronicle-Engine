@@ -94,7 +94,6 @@ public class MapClientTest extends ThreadMonitoringTest {
         });
     }
 
-    @Ignore
     @Test(timeout = 50000)
     public void testSubscriptionTest() throws IOException, InterruptedException {
         yamlLoggger(() -> {
@@ -277,29 +276,7 @@ public class MapClientTest extends ThreadMonitoringTest {
             result.close();
         }
     }
-    private <K, V>
-    void supplyMapEventListener(@NotNull Class<K> kClass, @NotNull Class<V> vClass, @NotNull Consumer<MapEventListener<K, V>> c)
-            throws IOException {
 
-        CloseableSupplier<MapEventListener<K, V>> result;
-        if (LocalMapEventListenerSupplier.class.equals(supplier)) {
-            result = new LocalMapEventListenerSupplier<K, V>(kClass, vClass, TextWire::new);
-
-        } else if (RemoteMapEventListenerSupplier.class.equals(supplier)) {
-            result = new RemoteMapEventListenerSupplier<K, V>(kClass, vClass, TextWire::new);
-
-        } else {
-            throw new IllegalStateException("unsuported type");
-        }
-
-        try {
-            c.accept(result.get());
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            result.close();
-        }
-    }
     public interface CloseableSupplier<X> extends Closeable, Supplier<X> {
     }
 
@@ -313,8 +290,8 @@ public class MapClientTest extends ThreadMonitoringTest {
         public RemoteMapSupplier(@NotNull final Class<K> kClass,
                                  @NotNull final Class<V> vClass,
                                  @NotNull final Function<Bytes, Wire> wireType,
-                                 AssetTree assetTree) throws IOException {
-
+                                 AssetTree assetTree,
+                                 String name) throws IOException {
             wire = wireType;
 
             serverEndpoint = new ServerEndpoint(assetTree);
@@ -325,14 +302,21 @@ public class MapClientTest extends ThreadMonitoringTest {
             Chassis.forRemoteAccess();
 
             map = assetTree.acquireMap(
-                    toUri(serverPort, hostname),
+                    toUri(name,serverPort, hostname),
                     kClass,
                     vClass);
         }
 
+        public RemoteMapSupplier(@NotNull final Class<K> kClass,
+                                 @NotNull final Class<V> vClass,
+                                 @NotNull final Function<Bytes, Wire> wireType,
+                                 AssetTree assetTree) throws IOException {
+            this(kClass,vClass,wireType,assetTree,"test");
+        }
+
         @NotNull
-        public static String toUri(final long serverPort, final String hostname) {
-            return "test?port=" + serverPort +
+        public static String toUri(final String name, final long serverPort, final String hostname) {
+            return name + "?port=" + serverPort +
                     "&host=" + hostname +
                     "&timeout=1000";
         }
@@ -370,47 +354,6 @@ public class MapClientTest extends ThreadMonitoringTest {
         @Override
         public ConcurrentMap<K, V> get() {
             return map;
-        }
-    }
-    public static class LocalMapEventListenerSupplier<K, V> implements CloseableSupplier<MapEventListener<K, V>> {
-
-        @NotNull
-        private final MapEventListener<K, V> listener;
-
-        public LocalMapEventListenerSupplier(Class<K> kClass, Class<V> vClass, Function<Bytes, Wire> wireType) throws IOException {
-            throw new UnsupportedOperationException("todo");
-        }
-
-        @Override
-        public void close() throws IOException {
-            // todo unregiser
-            throw new UnsupportedOperationException("todo");
-        }
-
-        @NotNull
-        @Override
-        public MapEventListener<K, V> get() {
-            return listener;
-        }
-    }
-    public static class RemoteMapEventListenerSupplier<K, V> implements CloseableSupplier<MapEventListener<K, V>> {
-
-        @NotNull
-        private final MapEventListener<K, V> listener;
-
-        public RemoteMapEventListenerSupplier(Class<K> kClass, Class<V> vClass, Function<Bytes, Wire> wireType) throws IOException {
-            throw new UnsupportedOperationException("todo");
-        }
-
-        @Override
-        public void close() throws IOException {
-            throw new UnsupportedOperationException("todo");
-        }
-
-        @NotNull
-        @Override
-        public MapEventListener<K, V> get() {
-            return listener;
         }
     }
 }
