@@ -1,9 +1,9 @@
 package net.openhft.chronicle.engine.tree;
 
-import net.openhft.chronicle.engine.api.Asset;
-import net.openhft.chronicle.engine.api.AssetNotFoundException;
-import net.openhft.chronicle.engine.api.AssetTree;
-import net.openhft.chronicle.engine.api.RequestContext;
+import net.openhft.chronicle.engine.api.tree.Asset;
+import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
+import net.openhft.chronicle.engine.api.tree.AssetTree;
+import net.openhft.chronicle.engine.api.tree.RequestContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,13 +33,17 @@ public class VanillaAssetTree implements AssetTree {
     @Override
     public <A> Asset acquireAsset(Class<A> assetClass, @NotNull RequestContext context) throws AssetNotFoundException {
         String fullName = context.fullName();
-        return fullName.isEmpty() || fullName.equals("/") ? root : root.acquireAsset(context, fullName);
+        if (fullName.startsWith("/"))
+            fullName = fullName.substring(1);
+        return fullName.isEmpty() ? root : root.acquireAsset(context, fullName);
     }
 
     @Nullable
     @Override
     public Asset getAsset(@NotNull String fullName) {
-        return fullName.isEmpty() || fullName.equals("/") ? root : root.getAsset(fullName);
+        if (fullName.startsWith("/"))
+            fullName = fullName.substring(1);
+        return fullName.isEmpty() ? root : root.getAsset(fullName);
     }
 
     @Override

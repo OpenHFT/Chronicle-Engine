@@ -1,6 +1,6 @@
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.engine.api.map.ChangeEvent;
+import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,34 +13,31 @@ import java.util.function.Function;
 /**
  * Created by peter on 22/05/15.
  */
-public class InsertedEvent<K, V> implements ChangeEvent<K, V> {
+public class InsertedEvent<K, V> implements MapEvent<K, V> {
+    private final String assetName;
     private final K key;
     private final V value;
 
-    private InsertedEvent(K key, V value) {
+    private InsertedEvent(String assetName, K key, V value) {
+        this.assetName = assetName;
         this.key = key;
         this.value = value;
     }
 
     @NotNull
-    public static <K, V> InsertedEvent<K, V> of(K key, V value) {
-        return new InsertedEvent<>(key, value);
+    public static <K, V> InsertedEvent<K, V> of(String assetName, K key, V value) {
+        return new InsertedEvent<>(assetName, key, value);
     }
 
     @NotNull
     @Override
-    public <K2, V2> ChangeEvent<K2, V2> translate(@NotNull Function<K, K2> keyFunction, @NotNull Function<V, V2> valueFunction) {
-        return new InsertedEvent<>(keyFunction.apply(key), valueFunction.apply(value));
+    public <K2, V2> MapEvent<K2, V2> translate(@NotNull Function<K, K2> keyFunction, @NotNull Function<V, V2> valueFunction) {
+        return new InsertedEvent<>(assetName, keyFunction.apply(key), valueFunction.apply(value));
     }
 
     @Override
-    public <K2, V2> ChangeEvent<K2, V2> translate(BiFunction<K, K2, K2> keyFunction, BiFunction<V, V2, V2> valueFunction) {
-        return new InsertedEvent<>(keyFunction.apply(key, null), valueFunction.apply(value, null));
-    }
-
-    @Override
-    public <K2> ChangeEvent<K2, K> pushKey(K2 name) {
-        return new InsertedEvent<>(name, key);
+    public <K2, V2> MapEvent<K2, V2> translate(BiFunction<K, K2, K2> keyFunction, BiFunction<V, V2, V2> valueFunction) {
+        return new InsertedEvent<>(assetName, keyFunction.apply(key, null), valueFunction.apply(value, null));
     }
 
     public K key() {
@@ -64,7 +61,7 @@ public class InsertedEvent<K, V> implements ChangeEvent<K, V> {
 
     @Override
     public int hashCode() {
-        return Objects.hash("insert", key, value);
+        return Objects.hash("inserted", key, value);
     }
 
     @Override
@@ -72,19 +69,23 @@ public class InsertedEvent<K, V> implements ChangeEvent<K, V> {
         return Optional.ofNullable(obj)
                 .filter(o -> o instanceof InsertedEvent)
                 .map(o -> (InsertedEvent<K, V>) o)
-               // .filter(e -> timeStampMS == e.timeStampMS)
-               // .filter(e -> identifier == e.identifier)
+                .filter(e -> Objects.equals(assetName, e.assetName))
                 .filter(e -> Objects.equals(key, e.key))
                 .filter(e -> Objects.equals(value, e.value))
                 .isPresent();
     }
 
-    @NotNull
     @Override
     public String toString() {
         return "InsertedEvent{" +
-                "key=" + key +
+                "assetName='" + assetName + '\'' +
+                ", key=" + key +
                 ", value=" + value +
                 '}';
+    }
+
+    @Override
+    public String assetName() {
+        return assetName;
     }
 }

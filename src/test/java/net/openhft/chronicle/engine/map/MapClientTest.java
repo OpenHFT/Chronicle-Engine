@@ -21,7 +21,7 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
-import net.openhft.chronicle.engine.api.AssetTree;
+import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.TextWire;
@@ -42,7 +42,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
-import static net.openhft.chronicle.engine.api.WireType.wire;
+import static net.openhft.chronicle.engine.server.WireType.wire;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -97,7 +97,7 @@ public class MapClientTest extends ThreadMonitoringTest {
                 supplyMap(Integer.class, String.class, map -> {
                     try {
                         supplyMapEventListener(Integer.class, String.class, mapEventListener -> {
-                            Chassis.registerSubscriber("test", ChangeEvent.class, e -> e.apply(mapEventListener));
+                            Chassis.registerSubscriber("test", MapEvent.class, e -> e.apply(mapEventListener));
 
                             map.put(i, "one");
 

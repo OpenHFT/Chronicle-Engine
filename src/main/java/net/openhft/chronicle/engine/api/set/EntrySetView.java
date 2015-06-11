@@ -1,8 +1,8 @@
 package net.openhft.chronicle.engine.api.set;
 
-import net.openhft.chronicle.engine.api.Assetted;
-import net.openhft.chronicle.engine.api.View;
 import net.openhft.chronicle.engine.api.map.MapView;
+import net.openhft.chronicle.engine.api.tree.Assetted;
+import net.openhft.chronicle.engine.api.tree.View;
 
 import java.util.Map;
 import java.util.Set;

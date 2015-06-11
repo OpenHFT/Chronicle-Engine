@@ -25,10 +25,10 @@ package net.openhft.chronicle.engine.server.internal;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.pool.StringBuilderPool;
-import net.openhft.chronicle.engine.api.AssetTree;
-import net.openhft.chronicle.engine.api.RequestContext;
-import net.openhft.chronicle.engine.api.map.ChangeEvent;
+import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
+import net.openhft.chronicle.engine.api.tree.AssetTree;
+import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.collection.CollectionWireHandlerProcessor;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.wire.*;
@@ -279,7 +279,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                             });
                         }
                     };
-                    assetTree.registerSubscriber(requestContext.name(), ChangeEvent.class, e -> e.apply(listener));
+                    assetTree.registerSubscriber(requestContext.name(), MapEvent.class, e -> e.apply(listener));
 
                     return;
                 }

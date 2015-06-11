@@ -2,13 +2,13 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.Jvm;
-import net.openhft.chronicle.engine.api.Asset;
-import net.openhft.chronicle.engine.api.InvalidSubscriberException;
-import net.openhft.chronicle.engine.api.RequestContext;
-import net.openhft.chronicle.engine.api.SubscriptionConsumer;
-import net.openhft.chronicle.engine.api.map.ChangeEvent;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
+import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
+import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
+import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
+import net.openhft.chronicle.engine.api.tree.Asset;
+import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.MapEventListener;
@@ -21,14 +21,14 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
 
-import static net.openhft.chronicle.engine.api.SubscriptionConsumer.notifyEachEvent;
+import static net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer.notifyEachEvent;
 
 /**
  * Created by daniel on 27/05/15.
  */
 public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValueStore<K, MV, V>, Closeable {
     private final ChronicleMap<K, V> chronicleMap;
-    private final ObjectSubscription<K, MV, V> subscriptions;
+    private final ObjectKVSSubscription<K, MV, V> subscriptions;
     private Asset asset;
 
     public ChronicleMapKeyValueStore(@NotNull RequestContext context, Asset asset) {
@@ -65,13 +65,13 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         }
 
         chronicleMap = builder.create();
-        subscriptions = asset.acquireView(ObjectSubscription.class, context);
+        subscriptions = asset.acquireView(ObjectKVSSubscription.class, context);
         subscriptions.setKvStore(this);
     }
 
     @NotNull
     @Override
-    public SubscriptionKVSCollection<K, MV, V> subscription(boolean createIfAbsent) {
+    public KVSSubscription<K, MV, V> subscription(boolean createIfAbsent) {
         return subscriptions;
     }
 
@@ -103,9 +103,9 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
     }
 
     @Override
-    public void entriesFor(int segment, @NotNull SubscriptionConsumer<ChangeEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
+    public void entriesFor(int segment, @NotNull SubscriptionConsumer<MapEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
         //Ignore the segments and return entriesFor the whole map
-        chronicleMap.entrySet().stream().map(e -> InsertedEvent.of(e.getKey(), e.getValue())).forEach(e -> {
+        chronicleMap.entrySet().stream().map(e -> InsertedEvent.of(asset.fullName(), e.getKey(), e.getValue())).forEach(e -> {
             try {
                 kvConsumer.accept(e);
             } catch (InvalidSubscriberException t) {
@@ -149,15 +149,15 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
     class PublishingOperations extends MapEventListener<K, V> {
         @Override
         public void onRemove(@NotNull K key, V value, boolean replicationEven) {
-            subscriptions.notifyEvent(RemovedEvent.of(key, value));
+            subscriptions.notifyEvent(RemovedEvent.of(asset.fullName(), key, value));
         }
 
         @Override
         public void onPut(@NotNull K key, V newValue, @Nullable V replacedValue, boolean replicationEvent) {
             if (replacedValue != null) {
-                subscriptions.notifyEvent(UpdatedEvent.of(key, replacedValue, newValue));
+                subscriptions.notifyEvent(UpdatedEvent.of(asset.fullName(), key, replacedValue, newValue));
             } else {
-                subscriptions.notifyEvent(InsertedEvent.of(key, newValue));
+                subscriptions.notifyEvent(InsertedEvent.of(asset.fullName(), key, newValue));
             }
         }
     }

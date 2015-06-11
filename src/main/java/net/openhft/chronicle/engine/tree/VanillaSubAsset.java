@@ -1,11 +1,13 @@
 package net.openhft.chronicle.engine.tree;
 
 import net.openhft.chronicle.core.util.Closeable;
-import net.openhft.chronicle.engine.api.*;
+import net.openhft.chronicle.core.util.ThrowingAcceptor;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.map.SubAsset;
 import net.openhft.chronicle.engine.api.map.ValueReader;
-import net.openhft.chronicle.engine.map.ObjectSubscription;
+import net.openhft.chronicle.engine.api.pubsub.*;
+import net.openhft.chronicle.engine.api.tree.*;
+import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
 import net.openhft.chronicle.engine.pubsub.SimpleSubscription;
 import net.openhft.chronicle.engine.pubsub.VanillaReference;
 import org.jetbrains.annotations.NotNull;
@@ -74,7 +76,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
                 return (V) acquireViewFor(viewType, rc);
             return (V) reference;
         }
-        if (viewType == SimpleSubscription.class || viewType == ObjectSubscription.class) {
+        if (viewType == SimpleSubscription.class || viewType == ObjectKVSSubscription.class) {
             return (V) subscription;
         }
         throw new UnsupportedOperationException("todo vClass: " + viewType + ", rc: " + rc);
@@ -176,5 +178,9 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     @Override
     public boolean keyedView() {
         return false;
+    }
+
+    @Override
+    public void forEachChild(ThrowingAcceptor<Asset, InvalidSubscriberException> child) throws InvalidSubscriberException {
     }
 }

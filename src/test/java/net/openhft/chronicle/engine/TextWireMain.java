@@ -1,6 +1,6 @@
 package net.openhft.chronicle.engine;
 
-import net.openhft.chronicle.engine.api.WireType;
+import net.openhft.chronicle.engine.server.WireType;
 import net.openhft.chronicle.wire.TextWire;
 
 import java.io.IOException;

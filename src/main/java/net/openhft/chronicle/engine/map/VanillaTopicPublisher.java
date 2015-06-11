@@ -1,7 +1,11 @@
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.engine.api.*;
 import net.openhft.chronicle.engine.api.map.MapView;
+import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
+import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
+import net.openhft.chronicle.engine.api.tree.Asset;
+import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
+import net.openhft.chronicle.engine.api.tree.RequestContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -41,6 +45,7 @@ public class VanillaTopicPublisher<T, M> implements TopicPublisher<T, M> {
 
     @Override
     public void registerTopicSubscriber(TopicSubscriber<T, M> topicSubscriber) throws AssetNotFoundException {
-        asset.subscription(true).registerTopicSubscriber(RequestContext.requestContext().bootstrap(true).type(tClass).type2(mClass), topicSubscriber);
+        KVSSubscription<T, M, M> subscription = (KVSSubscription) asset.subscription(true);
+        subscription.registerTopicSubscriber(RequestContext.requestContext().bootstrap(true).type(tClass).type2(mClass), topicSubscriber);
     }
 }

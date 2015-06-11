@@ -1,23 +1,23 @@
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.engine.api.Asset;
-import net.openhft.chronicle.engine.api.RequestContext;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
+import net.openhft.chronicle.engine.api.tree.Asset;
+import net.openhft.chronicle.engine.api.tree.RequestContext;
 
 /**
  * Created by peter on 22/05/15.
  */
 public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValueStore<K, MV, V> implements ObjectKeyValueStore<K, MV, V>, AuthenticatedKeyValueStore<K, MV, V> {
-    private final SubscriptionKVSCollection<K, MV, V> subscriptions;
+    private final KVSSubscription<K, MV, V> subscriptions;
 
     public VanillaSubscriptionKeyValueStore(RequestContext context, Asset asset, KeyValueStore<K, MV, V> item) {
-        super(item);
-        this.subscriptions = new VanillaSubscriptionKVSCollection<>(ObjectSubscription.class, asset);
+        super(asset, item);
+        this.subscriptions = new VanillaKVSSubscription<>(ObjectKVSSubscription.class, asset);
         subscriptions.setKvStore(this);
     }
 
     @Override
-    public SubscriptionKVSCollection<K, MV, V> subscription(boolean createIfAbsent) {
+    public KVSSubscription<K, MV, V> subscription(boolean createIfAbsent) {
         return subscriptions;
     }
 
@@ -25,7 +25,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     public V replace(K key, V value) {
         V oldValue = kvStore.replace(key, value);
         if (oldValue != null) {
-            subscriptions.notifyEvent(UpdatedEvent.of(key, oldValue, value));
+            subscriptions.notifyEvent(UpdatedEvent.of(asset.fullName(), key, oldValue, value));
         }
         return oldValue;
     }
@@ -37,8 +37,8 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
         }
         boolean replaced = kvStore.put(key, value);
             subscriptions.notifyEvent(replaced
-                    ? InsertedEvent.of(key, value)
-                    : UpdatedEvent.of(key, null, value));
+                    ? InsertedEvent.of(asset.fullName(), key, value)
+                    : UpdatedEvent.of(asset.fullName(), key, null, value));
         return replaced;
 
     }
@@ -49,7 +49,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
             return getAndRemove(key) != null;
         }
         if (kvStore.remove(key)) {
-                subscriptions.notifyEvent(RemovedEvent.of(key, null));
+            subscriptions.notifyEvent(RemovedEvent.of(asset.fullName(), key, null));
             return true;
         }
         return false;
@@ -58,7 +58,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     @Override
     public boolean replaceIfEqual(K key, V oldValue, V newValue) {
         if (kvStore.replaceIfEqual(key, oldValue, newValue)) {
-                subscriptions.notifyEvent(UpdatedEvent.of(key, oldValue, newValue));
+            subscriptions.notifyEvent(UpdatedEvent.of(asset.fullName(), key, oldValue, newValue));
             return true;
         }
         return false;
@@ -67,7 +67,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     @Override
     public boolean removeIfEqual(K key, V value) {
         if (kvStore.removeIfEqual(key, value)) {
-                subscriptions.notifyEvent(RemovedEvent.of(key, value));
+            subscriptions.notifyEvent(RemovedEvent.of(asset.fullName(), key, value));
             return true;
         }
         return false;
@@ -77,7 +77,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     public V putIfAbsent(K key, V value) {
         V ret = kvStore.putIfAbsent(key, value);
         if (ret == null)
-                subscriptions.notifyEvent(InsertedEvent.of(key, value));
+            subscriptions.notifyEvent(InsertedEvent.of(asset.fullName(), key, value));
         return ret;
     }
 
@@ -86,8 +86,8 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
         V oldValue = kvStore.getAndPut(key, value);
 
             subscriptions.notifyEvent(oldValue == null
-                    ? InsertedEvent.of(key, value)
-                    : UpdatedEvent.of(key, oldValue, value));
+                    ? InsertedEvent.of(asset.fullName(), key, value)
+                    : UpdatedEvent.of(asset.fullName(), key, oldValue, value));
         return oldValue;
     }
 
@@ -95,7 +95,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     public V getAndRemove(K key) {
         V oldValue = kvStore.getAndRemove(key);
         if (oldValue != null)
-                subscriptions.notifyEvent(RemovedEvent.of(key, oldValue));
+            subscriptions.notifyEvent(RemovedEvent.of(asset.fullName(), key, oldValue));
         return oldValue;
     }
 }

@@ -1,6 +1,6 @@
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.engine.api.map.ChangeEvent;
+import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,34 +13,36 @@ import java.util.function.Function;
 /**
  * Created by peter on 22/05/15.
  */
-public class RemovedEvent<K, V> implements ChangeEvent<K, V> {
+public class RemovedEvent<K, V> implements MapEvent<K, V> {
+    private final String assetName;
     private final K key;
     private final V value;
 
-    private RemovedEvent(K key, V value) {
+    private RemovedEvent(String assetName, K key, V value) {
+        this.assetName = assetName;
         this.key = key;
         this.value = value;
     }
 
-    @NotNull
-    public static <K, V> RemovedEvent<K, V> of(K key, V value) {
-        return new RemovedEvent<>(key, value);
+    @Override
+    public String assetName() {
+        return assetName;
     }
 
     @NotNull
+    public static <K, V> RemovedEvent<K, V> of(String assetName, K key, V value) {
+        return new RemovedEvent<>(assetName, key, value);
+    }
+
+    @NotNull
     @Override
-    public <K2, V2> ChangeEvent<K2, V2> translate(@NotNull Function<K, K2> keyFunction, @NotNull Function<V, V2> valueFunction) {
-        return new RemovedEvent<>(keyFunction.apply(key), valueFunction.apply(value));
+    public <K2, V2> MapEvent<K2, V2> translate(@NotNull Function<K, K2> keyFunction, @NotNull Function<V, V2> valueFunction) {
+        return new RemovedEvent<>(assetName, keyFunction.apply(key), valueFunction.apply(value));
     }
 
     @Override
-    public <K2, V2> ChangeEvent<K2, V2> translate(BiFunction<K, K2, K2> keyFunction, BiFunction<V, V2, V2> valueFunction) {
-        return new RemovedEvent<>(keyFunction.apply(key, null), valueFunction.apply(value, null));
-    }
-
-    @Override
-    public <K2> ChangeEvent<K2, K> pushKey(K2 name) {
-        return new RemovedEvent<>(name, key);
+    public <K2, V2> MapEvent<K2, V2> translate(BiFunction<K, K2, K2> keyFunction, BiFunction<V, V2, V2> valueFunction) {
+        return new RemovedEvent<>(assetName, keyFunction.apply(key, null), valueFunction.apply(value, null));
     }
 
     public K key() {
@@ -71,18 +73,17 @@ public class RemovedEvent<K, V> implements ChangeEvent<K, V> {
         return Optional.ofNullable(obj)
                 .filter(o -> o instanceof RemovedEvent)
                 .map(o -> (RemovedEvent<K, V>) o)
-                //.filter(e -> timeStampMS == e.timeStampMS)
-                //.filter(e -> identifier == e.identifier)
+                .filter(e -> Objects.equals(assetName, e.assetName))
                 .filter(e -> Objects.equals(key, e.key))
                 .filter(e -> Objects.equals(value, e.value))
                 .isPresent();
     }
 
-    @NotNull
     @Override
     public String toString() {
         return "RemovedEvent{" +
-                "key=" + key +
+                "assetName='" + assetName + '\'' +
+                ", key=" + key +
                 ", value=" + value +
                 '}';
     }

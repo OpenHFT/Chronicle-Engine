@@ -24,7 +24,9 @@ import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.util.CloseablesManager;
 import net.openhft.chronicle.engine.Chassis;
-import net.openhft.chronicle.engine.api.*;
+import net.openhft.chronicle.engine.api.SessionDetails;
+import net.openhft.chronicle.engine.api.session.SessionProvider;
+import net.openhft.chronicle.engine.api.tree.*;
 import net.openhft.chronicle.network.event.EventGroup;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +42,7 @@ import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static net.openhft.chronicle.engine.api.WireType.wire;
+import static net.openhft.chronicle.engine.server.WireType.wire;
 import static net.openhft.chronicle.wire.CoreFields.reply;
 
 /**

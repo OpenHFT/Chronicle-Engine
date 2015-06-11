@@ -1,7 +1,13 @@
 package net.openhft.chronicle.engine;
 
-import net.openhft.chronicle.engine.api.*;
-import net.openhft.chronicle.engine.api.map.ChangeEvent;
+import net.openhft.chronicle.engine.api.map.MapEvent;
+import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
+import net.openhft.chronicle.engine.api.pubsub.Subscriber;
+import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
+import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
+import net.openhft.chronicle.engine.api.tree.Asset;
+import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
+import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.engine.map.InsertedEvent;
 import net.openhft.chronicle.engine.map.RemovedEvent;
 import net.openhft.chronicle.engine.map.UpdatedEvent;
@@ -14,7 +20,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 import static net.openhft.chronicle.engine.Chassis.*;
-import static net.openhft.chronicle.engine.api.RequestContext.requestContext;
+import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
 
@@ -218,19 +224,19 @@ todo fix this test
         assertEquals(2, map.size());
 
         // test the bootstrap finds old keys
-        Subscriber<ChangeEvent<String, String>> subscriber = createMock(Subscriber.class);
-        subscriber.onMessage(InsertedEvent.of("Key-1", "Value-1"));
-        subscriber.onMessage(InsertedEvent.of("Key-2", "Value-2"));
+        Subscriber<MapEvent<String, String>> subscriber = createMock(Subscriber.class);
+        subscriber.onMessage(InsertedEvent.of("/map-name", "Key-1", "Value-1"));
+        subscriber.onMessage(InsertedEvent.of("/map-name", "Key-2", "Value-2"));
         replay(subscriber);
-        registerSubscriber("map-name?bootstrap=true", ChangeEvent.class, (Subscriber) subscriber);
+        registerSubscriber("map-name?bootstrap=true", MapEvent.class, (Subscriber) subscriber);
         verify(subscriber);
         reset(subscriber);
 
         assertEquals(2, map.size());
 
         // test the topic publish triggers events
-        subscriber.onMessage(UpdatedEvent.of("Key-1", "Value-1", "Message-1"));
-        subscriber.onMessage(InsertedEvent.of("Topic-1", "Message-1"));
+        subscriber.onMessage(UpdatedEvent.of("/map-name", "Key-1", "Value-1", "Message-1"));
+        subscriber.onMessage(InsertedEvent.of("/map-name", "Topic-1", "Message-1"));
         replay(subscriber);
 
         TopicPublisher<String, String> publisher = acquireTopicPublisher("map-name", String.class, String.class);
@@ -240,9 +246,9 @@ todo fix this test
         reset(subscriber);
         assertEquals(3, map.size());
 
-        subscriber.onMessage(InsertedEvent.of("Hello", "World"));
-        subscriber.onMessage(InsertedEvent.of("Bye", "soon"));
-        subscriber.onMessage(RemovedEvent.of("Key-1", "Message-1"));
+        subscriber.onMessage(InsertedEvent.of("/map-name", "Hello", "World"));
+        subscriber.onMessage(InsertedEvent.of("/map-name", "Bye", "soon"));
+        subscriber.onMessage(RemovedEvent.of("/map-name", "Key-1", "Message-1"));
         replay(subscriber);
 
         // test plain puts trigger events
@@ -266,10 +272,10 @@ todo fix this test
     public void newNode() {
         Asset group = acquireAsset("group", Void.class, null, null);
         Asset subgroup = acquireAsset("group/sub-group?option=unknown", Void.class, null, null);
-        assertEquals("group/sub-group", subgroup.fullName());
+        assertEquals("/group/sub-group", subgroup.fullName());
 
         Asset group2 = acquireAsset("group2/sub-group?who=knows", Void.class, null, null);
-        assertEquals("group2/sub-group", group2.fullName());
+        assertEquals("/group2/sub-group", group2.fullName());
     }
 
     @Test()

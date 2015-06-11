@@ -18,13 +18,12 @@
 
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.engine.api.AssetTree;
+import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.TextWire;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;

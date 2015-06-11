@@ -26,7 +26,7 @@ import com.google.common.collect.testing.features.CollectionSize;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import net.openhft.chronicle.bytes.IORuntimeException;
-import net.openhft.chronicle.engine.api.AssetTree;
+import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.MapClientTest.LocalMapSupplier;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;

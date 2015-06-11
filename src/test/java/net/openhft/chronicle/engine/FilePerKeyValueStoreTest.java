@@ -2,8 +2,8 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.OS;
-import net.openhft.chronicle.engine.api.map.ChangeEvent;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
+import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.map.AuthenticatedKeyValueStore;
 import net.openhft.chronicle.engine.map.FilePerKeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
@@ -59,8 +59,8 @@ public class FilePerKeyValueStoreTest {
 
     @Test
     public void test() throws InterruptedException {
-        List<ChangeEvent<String, String>> events = new ArrayList<>();
-        registerSubscriber(NAME, ChangeEvent.class, events::add);
+        List<MapEvent<String, String>> events = new ArrayList<>();
+        registerSubscriber(NAME, MapEvent.class, events::add);
 
         map.put("testA", "One");
         map.put("testB", "Two");
@@ -78,7 +78,7 @@ public class FilePerKeyValueStoreTest {
         assertEquals(3, events.size());
     }
 
-    private void waitFor(List<ChangeEvent<String, String>> events, int count) throws InterruptedException {
+    private void waitFor(List<MapEvent<String, String>> events, int count) throws InterruptedException {
         for (int i = 1; i <= 10; i++) {
             if (events.size() >= count)
                 break;

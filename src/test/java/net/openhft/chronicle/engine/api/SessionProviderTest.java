@@ -1,8 +1,9 @@
 package net.openhft.chronicle.engine.api;
 
 import net.openhft.chronicle.engine.Chassis;
+import net.openhft.chronicle.engine.api.session.SessionProvider;
+import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.session.VanillaSessionDetails;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

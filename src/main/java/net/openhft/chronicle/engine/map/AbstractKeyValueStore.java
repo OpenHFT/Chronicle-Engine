@@ -1,10 +1,10 @@
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.engine.api.Asset;
-import net.openhft.chronicle.engine.api.InvalidSubscriberException;
-import net.openhft.chronicle.engine.api.SubscriptionConsumer;
-import net.openhft.chronicle.engine.api.map.ChangeEvent;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
+import net.openhft.chronicle.engine.api.map.MapEvent;
+import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
+import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
+import net.openhft.chronicle.engine.api.tree.Asset;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,11 +15,14 @@ import java.util.Map;
  * Created by peter on 22/05/15.
  */
 public class AbstractKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> {
-    protected KeyValueStore<K, MV, V> kvStore;
+    protected final Asset asset;
+    protected final KeyValueStore<K, MV, V> kvStore;
 
-    protected AbstractKeyValueStore(@NotNull KeyValueStore<K, MV, V> kvStore) {
-        this.kvStore = kvStore;
+    protected AbstractKeyValueStore(Asset asset, @NotNull KeyValueStore<K, MV, V> kvStore) {
+        assert asset != null;
         assert kvStore != null;
+        this.asset = asset;
+        this.kvStore = kvStore;
     }
 
     @Override
@@ -59,7 +62,7 @@ public class AbstractKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> 
     }
 
     @Override
-    public void entriesFor(int segment, SubscriptionConsumer<ChangeEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
+    public void entriesFor(int segment, SubscriptionConsumer<MapEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
         kvStore.entriesFor(segment, kvConsumer);
     }
 

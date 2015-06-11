@@ -1,13 +1,16 @@
 package net.openhft.chronicle.engine.tree;
 
 import net.openhft.chronicle.core.util.Closeable;
-import net.openhft.chronicle.engine.api.*;
+import net.openhft.chronicle.core.util.ThrowingAcceptor;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
+import net.openhft.chronicle.engine.api.pubsub.*;
+import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
+import net.openhft.chronicle.engine.api.tree.*;
 import net.openhft.chronicle.engine.collection.VanillaValuesCollection;
 import net.openhft.chronicle.engine.map.*;
 import net.openhft.chronicle.engine.pubsub.VanillaReference;
@@ -26,7 +29,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.BiPredicate;
 
-import static net.openhft.chronicle.engine.api.RequestContext.requestContext;
+import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
 
 /**
  * Created by peter on 22/05/15.
@@ -57,9 +60,9 @@ public class VanillaAsset implements Asset, Closeable {
             assert name != null;
         }
         if (parent != null) {
-            ObjectSubscription parentSubs = parent.getView(ObjectSubscription.class);
+            TopologySubscription parentSubs = parent.getView(TopologySubscription.class);
             if (parentSubs != null)
-                parentSubs.notifyEvent(InsertedEvent.of(parent.name(), name));
+                parentSubs.notifyEvent(AddedAssetEvent.of(parent.fullName(), name));
         }
     }
 
@@ -73,6 +76,9 @@ public class VanillaAsset implements Asset, Closeable {
         addWrappingRule(ValuesCollection.class, LAST + " values", VanillaValuesCollection::new, MapView.class);
 
         addWrappingRule(MapView.class, LAST + " string key maps", VanillaMapView::new, ObjectKeyValueStore.class);
+
+        addLeafRule(TopologySubscription.class, LAST + " vanilla",
+                VanillaTopologySubscription::new);
     }
 
     public void forTesting() {
@@ -89,8 +95,8 @@ public class VanillaAsset implements Asset, Closeable {
 
         addLeafRule(KeyValueStore.class, LAST + " vanilla", VanillaKeyValueStore::new);
 
-        addLeafRule(ObjectSubscription.class, LAST + " vanilla",
-                VanillaSubscriptionKVSCollection::new);
+        addLeafRule(ObjectKVSSubscription.class, LAST + " vanilla",
+                VanillaKVSSubscription::new);
 
         addView(SessionProvider.class, new VanillaSessionProvider());
     }
@@ -98,8 +104,8 @@ public class VanillaAsset implements Asset, Closeable {
     public void forRemoteAccess() {
         standardStack();
 
-        addLeafRule(ObjectSubscription.class, LAST + " remote",
-                RemoteSubscriptionKVSCollection::new);
+        addLeafRule(ObjectKVSSubscription.class, LAST + " remote",
+                RemoteKVSSubscription::new);
         addLeafRule(TcpConnectionHub.class, LAST + " hub", TcpConnectionHub::new);
         addWrappingRule(ObjectKeyValueStore.class, LAST + " remote AKVS",
                 RemoteKeyValueStore::new, TcpConnectionHub.class);
@@ -113,8 +119,8 @@ public class VanillaAsset implements Asset, Closeable {
                 (rc, asset) -> rc.keyType() == String.class && Marshallable.class.isAssignableFrom(rc.valueType()),
                 VanillaStringMarshallableKeyValueStore::new, AuthenticatedKeyValueStore.class);
 
-        addLeafRule(RawSubscription.class, LAST + " vanilla",
-                VanillaSubscriptionKVSCollection::new);
+        addLeafRule(RawKVSSubscription.class, LAST + " vanilla",
+                VanillaKVSSubscription::new);
     }
 
     @Override
@@ -167,6 +173,12 @@ public class VanillaAsset implements Asset, Closeable {
     @Override
     public boolean hasChildren() {
         return !children.isEmpty();
+    }
+
+    @Override
+    public void forEachChild(ThrowingAcceptor<Asset, InvalidSubscriberException> consumer) throws InvalidSubscriberException {
+        for (Asset child : children.values())
+            consumer.accept(child);
     }
 
     @Nullable
@@ -224,7 +236,7 @@ public class VanillaAsset implements Asset, Closeable {
     @NotNull
     @Override
     public Subscription subscription(boolean createIfAbsent) throws AssetNotFoundException {
-        return createIfAbsent ? acquireView(ObjectSubscription.class, requestContext()) : getView(ObjectSubscription.class);
+        return createIfAbsent ? acquireView(ObjectKVSSubscription.class, requestContext()) : getView(ObjectKVSSubscription.class);
     }
 
     @Override
@@ -272,6 +284,7 @@ public class VanillaAsset implements Asset, Closeable {
 
     @Nullable
     protected Asset createAsset(RequestContext context, @NotNull String name) {
+        assert name.length() > 0;
         return children.computeIfAbsent(name, keyedAsset != Boolean.TRUE
                 ? n -> new VanillaAsset(this, name)
                 : n -> new VanillaSubAsset(context, this, name));
@@ -284,7 +297,15 @@ public class VanillaAsset implements Asset, Closeable {
 
     @Override
     public void removeChild(String name) {
-        throw new UnsupportedOperationException("todo");
+        Asset removed = children.remove(name);
+        if (removed == null) return;
+        RemovedAssetEvent event = RemovedAssetEvent.of(fullName(), name);
+        TopologySubscription topologySubscription2 = removed.getView(TopologySubscription.class);
+        if (topologySubscription2 != null)
+            topologySubscription2.notifyEvent(event);
+        TopologySubscription topologySubscription1 = getView(TopologySubscription.class);
+        if (topologySubscription1 != null)
+            topologySubscription1.notifyEvent(event);
     }
 
     @NotNull

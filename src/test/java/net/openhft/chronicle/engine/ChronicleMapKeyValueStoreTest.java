@@ -2,11 +2,11 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.OS;
-import net.openhft.chronicle.engine.api.Asset;
-import net.openhft.chronicle.engine.api.map.ChangeEvent;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
+import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
 import net.openhft.chronicle.engine.api.map.MapView;
+import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.wire.TextWire;
@@ -86,9 +86,9 @@ public class ChronicleMapKeyValueStoreTest {
         };
 
         Asset asset = getAsset(NAME);
-        registerSubscriber(NAME, ChangeEvent.class, e -> e.apply(listener));
+        registerSubscriber(NAME, MapEvent.class, e -> e.apply(listener));
         //ChronicleMapKeyValueStore sbskvStore = asset.acquireView(ChronicleMapKeyValueStore.class);
-        //sbskvStore.registerSubscriber(ChangeEvent.class, (x) ->
+        //sbskvStore.registerSubscriber(MapEvent.class, (x) ->
         //        System.out.println(x), "");
 
         Factor factor = new Factor();

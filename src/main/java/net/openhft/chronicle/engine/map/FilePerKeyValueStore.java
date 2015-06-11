@@ -6,13 +6,13 @@ import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.Jvm;
-import net.openhft.chronicle.engine.api.Asset;
-import net.openhft.chronicle.engine.api.InvalidSubscriberException;
-import net.openhft.chronicle.engine.api.RequestContext;
-import net.openhft.chronicle.engine.api.SubscriptionConsumer;
-import net.openhft.chronicle.engine.api.map.ChangeEvent;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
+import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.StringBytesStoreKeyValueStore;
+import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
+import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
+import net.openhft.chronicle.engine.api.tree.Asset;
+import net.openhft.chronicle.engine.api.tree.RequestContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -57,7 +57,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
 
     @NotNull
     private final Thread fileFpmWatcher;
-    private final RawSubscription<String, Bytes, BytesStore> subscriptions;
+    private final RawKVSSubscription<String, Bytes, BytesStore> subscriptions;
     private final Asset asset;
     private volatile boolean closed = false;
 
@@ -90,13 +90,13 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         fileFpmWatcher = new Thread(new FPMWatcher(watcher), dirName + "-watcher");
         fileFpmWatcher.setDaemon(true);
         fileFpmWatcher.start();
-        subscriptions = asset.acquireView(RawSubscription.class, context);
+        subscriptions = asset.acquireView(RawKVSSubscription.class, context);
         subscriptions.setKvStore(this);
     }
 
     @NotNull
     @Override
-    public RawSubscription<String, Bytes, BytesStore> subscription(boolean createIfAbsent) {
+    public RawKVSSubscription<String, Bytes, BytesStore> subscription(boolean createIfAbsent) {
         return subscriptions;
     }
 
@@ -132,7 +132,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     }
 
     @Override
-    public void entriesFor(int segment, @NotNull SubscriptionConsumer<ChangeEvent<String, BytesStore>> kvConsumer) throws InvalidSubscriberException {
+    public void entriesFor(int segment, @NotNull SubscriptionConsumer<MapEvent<String, BytesStore>> kvConsumer) throws InvalidSubscriberException {
         try {
             entriesFor0(kvConsumer);
         } catch (InvalidSubscriberException ise) {
@@ -140,8 +140,8 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         }
     }
 
-    void entriesFor0(@NotNull SubscriptionConsumer<ChangeEvent<String, BytesStore>> kvConsumer) throws InvalidSubscriberException {
-        getFiles().map(p -> InsertedEvent.of(p.getFileName().toString(), getFileContents(p, null)))
+    void entriesFor0(@NotNull SubscriptionConsumer<MapEvent<String, BytesStore>> kvConsumer) throws InvalidSubscriberException {
+        getFiles().map(p -> InsertedEvent.of(asset.fullName(), p.getFileName().toString(), getFileContents(p, null)))
                 .forEach(e -> {
                     try {
                         // in case the file has been deleted in the meantime.
@@ -425,9 +425,9 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
                         lastFileRecordMap.put(p.toFile(), new FileRecord<>(p.toFile().lastModified(), mapVal.copy()));
                     }
                     if (prev == null) {
-                        subscriptions.notifyEvent(InsertedEvent.of(p.toFile().getName(), mapVal));
+                        subscriptions.notifyEvent(InsertedEvent.of(asset.fullName(), p.toFile().getName(), mapVal));
                     } else {
-                        subscriptions.notifyEvent(UpdatedEvent.of(p.toFile().getName(), prev.contents.bytes(), mapVal));
+                        subscriptions.notifyEvent(UpdatedEvent.of(asset.fullName(), p.toFile().getName(), prev.contents.bytes(), mapVal));
                         prev.contents.release();
                     }
 
@@ -436,7 +436,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
 
                     FileRecord<BytesStore> prev = lastFileRecordMap.remove(p.toFile());
                     BytesStore lastVal = prev == null ? null : prev.contents;
-                    subscriptions.notifyEvent(RemovedEvent.of(p.toFile().getName(), lastVal));
+                    subscriptions.notifyEvent(RemovedEvent.of(asset.fullName(), p.toFile().getName(), lastVal));
                     if (prev != null)
                         prev.contents.release();
                 }

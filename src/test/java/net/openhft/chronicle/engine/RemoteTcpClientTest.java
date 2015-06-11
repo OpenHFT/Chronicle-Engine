@@ -20,7 +20,7 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.NativeBytes;
-import net.openhft.chronicle.engine.api.AssetTree;
+import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.*;

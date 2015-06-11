@@ -21,7 +21,7 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.engine.Factor;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
-import net.openhft.chronicle.engine.api.map.ChangeEvent;
+import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.wire.TextWire;
@@ -38,8 +38,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
-import static net.openhft.chronicle.engine.api.WireType.wire;
 import static net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier.toUri;
+import static net.openhft.chronicle.engine.server.WireType.wire;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -92,11 +92,11 @@ public class SubscriptionTest extends ThreadMonitoringTest {
             port = serverEndpoint.getPort();
             Chassis.forRemoteAccess();
             map = Chassis.acquireMap(toUri("test", port, "localhost"), String.class, Factor.class);
-            Chassis.registerSubscriber(toUri("test", port, "localhost"), ChangeEvent.class, e -> e.apply(listener));
+            Chassis.registerSubscriber(toUri("test", port, "localhost"), MapEvent.class, e -> e.apply(listener));
         } else {
             Chassis.resetChassis();
             map = Chassis.acquireMap("TEST", String.class, Factor.class);
-            Chassis.registerSubscriber("TEST", ChangeEvent.class, e -> e.apply(listener));
+            Chassis.registerSubscriber("TEST", MapEvent.class, e -> e.apply(listener));
         }
     }
 

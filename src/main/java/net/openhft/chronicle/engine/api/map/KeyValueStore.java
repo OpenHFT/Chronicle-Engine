@@ -1,10 +1,10 @@
 package net.openhft.chronicle.engine.api.map;
 
 import net.openhft.chronicle.core.util.Closeable;
-import net.openhft.chronicle.engine.api.Assetted;
-import net.openhft.chronicle.engine.api.InvalidSubscriberException;
-import net.openhft.chronicle.engine.api.SubscriptionConsumer;
-import net.openhft.chronicle.engine.api.View;
+import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
+import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
+import net.openhft.chronicle.engine.api.tree.Assetted;
+import net.openhft.chronicle.engine.api.tree.View;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -70,7 +70,7 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
 
     void keysFor(int segment, SubscriptionConsumer<K> kConsumer) throws InvalidSubscriberException;
 
-    void entriesFor(int segment, SubscriptionConsumer<ChangeEvent<K, V>> kvConsumer) throws InvalidSubscriberException;
+    void entriesFor(int segment, SubscriptionConsumer<MapEvent<K, V>> kvConsumer) throws InvalidSubscriberException;
 
     default Iterator<Map.Entry<K, V>> entrySetIterator() {
         // todo optimise

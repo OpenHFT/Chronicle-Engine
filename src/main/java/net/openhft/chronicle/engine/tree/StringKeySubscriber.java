@@ -1,6 +1,6 @@
 package net.openhft.chronicle.engine.tree;
 
-import net.openhft.chronicle.engine.api.Subscriber;
+import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 
 /**
  * Created by peter.lawrey on 10/06/2015.
