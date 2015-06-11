@@ -23,7 +23,7 @@ package net.openhft.chronicle.engine.server.internal;
  */
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.pool.StringBuilderPool;
 import net.openhft.chronicle.engine.api.AssetTree;
 import net.openhft.chronicle.engine.api.RequestContext;
@@ -454,7 +454,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
             } catch (Exception e) {
                 LOG.error("", e);
             } finally {
-                if (OS.isDebug() && YamlLogging.showServerWrites) {
+                if (Jvm.isDebug() && YamlLogging.showServerWrites) {
                     final Bytes<?> outBytes = outWire.bytes();
                     long len = outBytes.position() - CollectionWireHandlerProcessor.SIZE_OF_SIZE;
                     if (len == 0) {
