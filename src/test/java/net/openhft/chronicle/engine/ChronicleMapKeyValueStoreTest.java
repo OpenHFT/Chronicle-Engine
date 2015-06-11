@@ -38,7 +38,7 @@ public class ChronicleMapKeyValueStoreTest {
     @BeforeClass
     public static void createMap() throws IOException {
         //Delete any files from the last run
-        Files.deleteIfExists(Paths.get(OS.TMP, NAME));
+        Files.deleteIfExists(Paths.get(OS.TARGET, NAME));
 
         resetChassis();
         Function<Bytes, Wire> writeType = TextWire::new;
@@ -46,7 +46,7 @@ public class ChronicleMapKeyValueStoreTest {
         addWrappingRule(MapView.class, "map directly to KeyValueStore", VanillaMapView::new, KeyValueStore.class);
 
         addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
-                new ChronicleMapKeyValueStore(context.wireType(writeType).basePath(OS.TMP), asset));
+                new ChronicleMapKeyValueStore(context.wireType(writeType).basePath(OS.TARGET), asset));
 
         map = acquireMap(NAME, String.class, Factor.class);
         mapU = ((VanillaMapView) map).underlying();
