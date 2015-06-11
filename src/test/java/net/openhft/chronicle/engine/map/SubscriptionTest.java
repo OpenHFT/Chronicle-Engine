@@ -100,7 +100,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
             Chassis.registerSubscriber("TEST", MapEvent.class, e -> e.apply(listener));
         }
     }
-    @Test(timeout = 50000)
+    @Test
     public void testSubscriptionTest() throws IOException, InterruptedException {
 //        yamlLoggger(() -> {
                 Factor factor = new Factor();
@@ -109,22 +109,22 @@ public class SubscriptionTest extends ThreadMonitoringTest {
                 assertEquals(1, map.size());
                 assertEquals("xyz", map.get("testA").getAccountNumber());
 
-                Thread.sleep(1000);
+
                 expectedSuccess(success, 1);
 
-//                factor.setAccountNumber("abc");
-//                map.put("testB", factor);
-//                assertEquals("abc", map.get("testB").getAccountNumber());
-//
-//                //expectedSuccess(success, 2);
-//                success.set(0);
+                factor.setAccountNumber("abc");
+                map.put("testB", factor);
+                assertEquals("abc", map.get("testB").getAccountNumber());
+
+                expectedSuccess(success, 2);
+                success.set(0);
 //
 //                map.remove("testA");
 //
 //                expectedSuccess(success, -100);
 //                success.set(0);
 //        });
-
+//        Thread.sleep(100000);
     }
 
     private void expectedSuccess(@NotNull AtomicInteger success, int expected) {

@@ -259,7 +259,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                                 @Override
                                 public void accept(Wire publish) {
                                     publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(subscriberTid));
-                                    System.out.println("MWH tid:" + tid);
+                                    System.out.println(Thread.currentThread().getName() + ":SERVER GENERATED:" + subscriberTid);
                                     publish.writeDocument(false, wire -> wire.write(reply).marshallable(m -> {
                                         kToWire.accept(m.write(Params.key), key);
                                         vToWire.accept(m.write(Params.newValue), value);

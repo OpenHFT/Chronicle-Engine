@@ -64,7 +64,7 @@ public class RemoteSubscriptionKVSCollection<K, MV, V> extends AbstractStateless
         hub.outBytesLock().lock();
         try {
             tid1 = writeMetaData(startTime);
-            System.err.println(Thread.currentThread().getName() + ":reg subscriber tid:" + tid1);
+            System.out.println(Thread.currentThread().getName() + ":CLIENT GENERATED TID:" + tid1);
             hub.outWire().writeDocument(false, wireOut -> {
                 wireOut.writeEventName(subscribe);
             });
@@ -79,13 +79,15 @@ public class RemoteSubscriptionKVSCollection<K, MV, V> extends AbstractStateless
 
         eventLoop.execute(() -> {
             // receive
-            hub.inBytesLock().lock();
-            try {
-                final Wire wire = hub.proxyReply(timeoutTime, tid1);
-                checkIsData(wire);
-                readReplyConsumer(wire, CoreFields.reply, (Consumer<ValueIn>) valueIn -> valueIn.marshallable(r -> onEvent(r, subscriber)));
-            } finally {
-                hub.inBytesLock().unlock();
+            while(true) {
+                hub.inBytesLock().lock();
+                try {
+                    final Wire wire = hub.proxyReply(timeoutTime, tid1);
+                    checkIsData(wire);
+                    readReplyConsumer(wire, CoreFields.reply, (Consumer<ValueIn>) valueIn -> valueIn.marshallable(r -> onEvent(r, subscriber)));
+                } finally {
+                    hub.inBytesLock().unlock();
+                }
             }
         });
     }
