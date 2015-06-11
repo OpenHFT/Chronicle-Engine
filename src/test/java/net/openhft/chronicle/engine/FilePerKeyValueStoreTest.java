@@ -39,7 +39,7 @@ public class FilePerKeyValueStoreTest {
         enableTranslatingValuesToBytesStore();
 
         addLeafRule(AuthenticatedKeyValueStore.class, "FilePer Key",
-                (context, asset) -> new FilePerKeyValueStore(context.basePath(OS.TMP).wireType(writeType), asset));
+                (context, asset) -> new FilePerKeyValueStore(context.basePath(OS.TARGET).wireType(writeType), asset));
 
         map = acquireMap(NAME, String.class, String.class);
         KeyValueStore mapU = ((VanillaMapView) map).underlying();

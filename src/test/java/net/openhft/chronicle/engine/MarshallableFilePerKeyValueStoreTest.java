@@ -40,7 +40,7 @@ public class MarshallableFilePerKeyValueStoreTest {
         enableTranslatingValuesToBytesStore();
 
         addLeafRule(AuthenticatedKeyValueStore.class, "FilePer Key",
-                (context, asset) -> new FilePerKeyValueStore(context.basePath(OS.TMP).wireType(writeType), asset));
+                (context, asset) -> new FilePerKeyValueStore(context.basePath(OS.TARGET).wireType(writeType), asset));
 
         map = acquireMap(NAME, String.class, TestMarshallable.class);
         KeyValueStore mapU = ((VanillaMapView) map).underlying();
