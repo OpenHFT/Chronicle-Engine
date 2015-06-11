@@ -93,38 +93,44 @@ public class SubscriptionTest extends ThreadMonitoringTest {
             Chassis.forRemoteAccess();
             map = Chassis.acquireMap(toUri(port, "localhost"), String.class, Factor.class);
             Chassis.registerSubscriber(toUri(port, "localhost"), MapEvent.class, e -> e.apply(listener));
-        }
-        else{
+        } else {
             Chassis.resetChassis();
             map = Chassis.acquireMap("TEST", String.class, Factor.class);
             Chassis.registerSubscriber("TEST", MapEvent.class, e -> e.apply(listener));
         }
     }
-    @Test(timeout = 50000)
+
+    @Test
     public void testSubscriptionTest() throws IOException, InterruptedException {
-//        yamlLoggger(() -> {
-                Factor factor = new Factor();
-                factor.setAccountNumber("xyz");
-                map.put("testA", factor);
-                assertEquals(1, map.size());
-                assertEquals("xyz", map.get("testA").getAccountNumber());
+        yamlLoggger(() -> {
+            Factor factor = new Factor();
+            factor.setAccountNumber("xyz");
+            map.put("testA", factor);
+            assertEquals(1, map.size());
+            assertEquals("xyz", map.get("testA").getAccountNumber());
 
-                Thread.sleep(1000);
-                expectedSuccess(success, 1);
+            expectedSuccess(success, 1);
 
-//                factor.setAccountNumber("abc");
-//                map.put("testB", factor);
-//                assertEquals("abc", map.get("testB").getAccountNumber());
-//
-//                //expectedSuccess(success, 2);
-//                success.set(0);
-//
-//                map.remove("testA");
-//
-//                expectedSuccess(success, -100);
-//                success.set(0);
-//        });
+            factor = new Factor();
+            factor.setAccountNumber("abc");
+            map.put("testB", factor);
+            assertEquals("abc", map.get("testB").getAccountNumber());
 
+            expectedSuccess(success, 2);
+            success.set(0);
+
+            //Changing factor account name from xyz to abc
+            factor = new Factor();
+            factor.setAccountNumber("ddd");
+            map.put("testA", factor);
+            assertEquals("ddd", map.get("testA").getAccountNumber());
+
+            expectedSuccess(success, -1000);
+            success.set(0);
+
+            map.remove("testA");
+            expectedSuccess(success, -100);
+        });
     }
 
     private void expectedSuccess(@NotNull AtomicInteger success, int expected) {

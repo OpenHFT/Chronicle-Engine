@@ -311,7 +311,6 @@ public class TcpConnectionHub implements View, Closeable {
     }
 
     private Wire proxyReplyThrowable(long timeoutTime, long tid) throws IOException {
-        System.out.println(Thread.currentThread().getName() + ":WAITING FOR: " + tid);
         for (; ; ) {
             assert inBytesLock().isHeldByCurrentThread();
 
@@ -320,7 +319,6 @@ public class TcpConnectionHub implements View, Closeable {
             inWireClear();
 
             readSocket(SIZE_OF_SIZE, timeoutTime);
-            System.out.println("reading new message from server");
             final int header = bytes.readVolatileInt(bytes.position());
             final long messageSize = Wires.lengthOf(header);
 
@@ -332,7 +330,6 @@ public class TcpConnectionHub implements View, Closeable {
 
                 inWire.readDocument((WireIn w) -> {
                     parkedTransactionId = CoreFields.tid(w);
-                    System.out.println(Thread.currentThread().getName() + ":server return tid " + parkedTransactionId);
                     if (parkedTransactionId != tid) {
                         // if the transaction id is not for this thread, park it
                         // and allow another thread to pick it up
@@ -344,7 +341,6 @@ public class TcpConnectionHub implements View, Closeable {
                 continue;
             }
 
-            System.out.println("parkedTransactionId:" + parkedTransactionId + " tid:" + tid);
             if (parkedTransactionId == tid) {
                 // the data is for this thread so process it
                 readSocket((int) messageSize, timeoutTime);
