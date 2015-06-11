@@ -64,7 +64,6 @@ public class RemoteSubscriptionKVSCollection<K, MV, V> extends AbstractStateless
         hub.outBytesLock().lock();
         try {
             tid1 = writeMetaData(startTime);
-            System.out.println(Thread.currentThread().getName() + ":CLIENT GENERATED TID:" + tid1);
             hub.outWire().writeDocument(false, wireOut -> {
                 wireOut.writeEventName(subscribe);
             });
@@ -120,30 +119,42 @@ public class RemoteSubscriptionKVSCollection<K, MV, V> extends AbstractStateless
     }
 
     private void onEvent(WireIn r, Subscriber<MapEvent<K, V>> subscriber) {
+        byte eventType = r.read().int8();
         K key = r.read(MapWireHandler.Params.key).object(keyType);
-        V newValue = r.read(MapWireHandler.Params.newValue).object(valueType);
-//        V oldValue = r.read(MapWireHandler.Params.oldValue).object(valueType);
+
 
         try {
-            subscriber.onMessage(new MapEvent() {
+            subscriber.onMessage(new MapEvent<K,V>() {
                 @Override
-                public Object key() {
+                public K key() {
                     return key;
                 }
 
                 @Override
-                public Object value() {
-                    return newValue;
+                public V value() {
+                    throw new UnsupportedOperationException("todo");
                 }
 
                 @Override
-                public Object oldValue() {
+                public V oldValue() {
                     throw new UnsupportedOperationException("todo");
                 }
 
                 @Override
                 public void apply(MapEventListener listener) {
-                    listener.insert(key, newValue);
+                    if(eventType==1) {
+                        V newValue = r.read(MapWireHandler.Params.newValue).object(valueType);
+                        listener.insert(key, newValue);
+                    }else if(eventType==2){
+                        V oldValue = r.read(MapWireHandler.Params.oldValue).object(valueType);
+                        V newValue = r.read(MapWireHandler.Params.newValue).object(valueType);
+                        listener.update(key, oldValue, newValue);
+                    }else if(eventType==3){
+                        V oldValue = r.read(MapWireHandler.Params.oldValue).object(valueType);
+                        listener.remove(key, oldValue);
+                    }else{
+                        throw new AssertionError("Event type " + eventType + " not supported");
+                    }
                 }
 
                 @Override

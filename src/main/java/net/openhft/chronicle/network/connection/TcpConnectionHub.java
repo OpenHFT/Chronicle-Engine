@@ -311,7 +311,6 @@ public class TcpConnectionHub implements View, Closeable {
     }
 
     private Wire proxyReplyThrowable(long timeoutTime, long tid) throws IOException {
-        System.out.println(Thread.currentThread().getName() + ":WAITING FOR: " + tid);
         for (; ; ) {
             assert inBytesLock().isHeldByCurrentThread();
 
@@ -331,7 +330,6 @@ public class TcpConnectionHub implements View, Closeable {
 
                 inWire.readDocument((WireIn w) -> {
                     parkedTransactionId = CoreFields.tid(w);
-                    System.out.println(Thread.currentThread().getName() + ":SERVER RETURNED TID " + parkedTransactionId);
                     if (parkedTransactionId != tid) {
                         // if the transaction id is not for this thread, park it
                         // and allow another thread to pick it up

@@ -112,7 +112,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
         key,
         value,
         oldValue,
-        newValue
+        eventType, newValue
     }
 
     public enum EventId implements ParameterizeWireKey {
@@ -229,9 +229,6 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                         private long subscriberTid = inputTid;
                         @Override
                         public void update(K key, V oldValue, V newValue) {
-                            if (LOG.isDebugEnabled()) {
-                                LOG.debug("Updated { key: " + key + ", oldValue: " + oldValue + ", value: " + newValue + " }");
-                            }
 
                             publisher.add(new Consumer<Wire>() {
 
@@ -239,8 +236,9 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                                 public void accept(Wire publish) {
                                     publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(subscriberTid));
                                     publish.writeDocument(false, wire -> wire.write(reply).marshallable(m -> {
+                                        m.write(Params.eventType).int8(2);
                                         kToWire.accept(m.write(Params.key), key);
-                                        vToWire.accept(m.write(Params.oldValue), newValue);
+                                        vToWire.accept(m.write(Params.oldValue), oldValue);
                                         vToWire.accept(m.write(Params.newValue), newValue);
                                     }));
                                 }
@@ -250,17 +248,14 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
 
                         @Override
                         public void insert(K key, V value) {
-                            if (LOG.isDebugEnabled()) {
-                                LOG.debug("Inserted MWH { key: " + key + ", oldValue: " + value + " }");
-                            }
 
                             publisher.add(new Consumer<Wire>() {
 
                                 @Override
                                 public void accept(Wire publish) {
                                     publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(subscriberTid));
-                                    System.out.println(Thread.currentThread().getName() + ":SERVER GENERATED:" + subscriberTid);
                                     publish.writeDocument(false, wire -> wire.write(reply).marshallable(m -> {
+                                        m.write(Params.eventType).int8(1);
                                         kToWire.accept(m.write(Params.key), key);
                                         vToWire.accept(m.write(Params.newValue), value);
                                     }));
@@ -270,7 +265,18 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
 
                         @Override
                         public void remove(K key, V oldValue) {
-                            System.out.println("Removed { key: " + key + ", value: " + oldValue + " }");
+                            publisher.add(new Consumer<Wire>() {
+
+                                @Override
+                                public void accept(Wire publish) {
+                                    publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(subscriberTid));
+                                    publish.writeDocument(false, wire -> wire.write(reply).marshallable(m -> {
+                                        m.write(Params.eventType).int8(3);
+                                        kToWire.accept(m.write(Params.key), key);
+                                        vToWire.accept(m.write(Params.oldValue), oldValue);
+                                    }));
+                                }
+                            });
                         }
                     };
                     assetTree.registerSubscriber(requestContext.name(), MapEvent.class, e -> e.apply(listener));
