@@ -14,6 +14,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 import static java.nio.ByteBuffer.allocateDirect;
+import static net.openhft.chronicle.bytes.NativeBytesStore.wrap;
 import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplication.builder;
 
 /**
@@ -34,7 +35,6 @@ public class EngineReplicatorTest {
                 replication(builder().engineReplication(replicator).createWithId((byte) 2)).create();
 
         final ModificationIterator modificationIterator = replicator.acquireModificationIterator((byte) 1);
-
         map.put("hello", "world");
 
         Assert.assertTrue(modificationIterator.hasNext());
@@ -68,7 +68,7 @@ public class EngineReplicatorTest {
                 replication(builder().engineReplication(replicator).createWithId((byte) 2)).create();
 
         final Bytes<ByteBuffer> key = NativeBytesStore.wrap(allocateDirect(1024)).bytes();
-        final Bytes<ByteBuffer> value = NativeBytesStore.wrap(allocateDirect(1024)).bytes();
+        final Bytes<ByteBuffer> value = wrap(allocateDirect(1024)).bytes();
 
         key.write("hello".getBytes());
         value.write("world".getBytes());
