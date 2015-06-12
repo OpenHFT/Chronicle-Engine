@@ -69,7 +69,7 @@ public class GuavaEngineTest   {
 
         TestSuite tests = new TestSuite();
    //     tests.addTest(remoteMapTests);
-        tests.addTest(localMapTests);
+        // tests.addTest(localMapTests);
         return tests;
     }
 

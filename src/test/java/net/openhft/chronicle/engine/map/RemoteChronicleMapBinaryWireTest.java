@@ -61,6 +61,9 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
 
     @NotNull
     ClosableMapSupplier newIntString(String name) throws IOException {
+
+
+
         final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(Integer.class, 
                 String.class, BinaryWire::new, assetTree,name);
 
