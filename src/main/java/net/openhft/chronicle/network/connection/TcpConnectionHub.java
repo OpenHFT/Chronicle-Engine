@@ -23,10 +23,12 @@ import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.util.CloseablesManager;
-import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.engine.api.SessionDetails;
 import net.openhft.chronicle.engine.api.session.SessionProvider;
-import net.openhft.chronicle.engine.api.tree.*;
+import net.openhft.chronicle.engine.api.tree.Asset;
+import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
+import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.network.event.EventGroup;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
@@ -64,6 +66,7 @@ public class TcpConnectionHub implements View, Closeable {
 
     @NotNull
     private final AtomicLong transactionID = new AtomicLong(0);
+    private final SessionProvider view;
 
     @Nullable
     protected CloseablesManager closeables;
@@ -96,6 +99,7 @@ public class TcpConnectionHub implements View, Closeable {
         this.timeoutMs = requestContext.timeout();
 
         attemptConnect(remoteAddress);
+        view = asset.root().getView(SessionProvider.class);
     }
 
     private synchronized void attemptConnect(final InetSocketAddress remoteAddress) {
@@ -199,11 +203,6 @@ public class TcpConnectionHub implements View, Closeable {
     }
 
     private SessionDetails sessionDetails() {
-        final AssetTree assetTree = Chassis.defaultSession();
-        final Asset asset = assetTree.getAsset("");
-        if (asset == null)
-            return null;
-        final SessionProvider view = asset.getView(SessionProvider.class);
         if (view == null)
             return null;
         return view.get();

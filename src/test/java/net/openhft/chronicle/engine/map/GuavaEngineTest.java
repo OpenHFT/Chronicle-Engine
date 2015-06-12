@@ -176,7 +176,7 @@ public class GuavaEngineTest   {
     static ConcurrentMap<CharSequence, CharSequence> newStrStrLocalMap() {
 
         try {
-            return new LocalMapSupplier(CharSequence.class, CharSequence.class).get();
+            return new LocalMapSupplier(CharSequence.class, CharSequence.class, new VanillaAssetTree().forTesting()).get();
         } catch (IOException e) {
             throw new IORuntimeException(e);
         }

@@ -18,8 +18,8 @@
 
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.engine.map.MapClientTest.LocalMapSupplier;
+import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Rule;
@@ -49,14 +49,13 @@ public class LocalChronicleMapTest extends JSR166TestCase {
 
     @Before
     public void before() {
-        Chassis.resetChassis();
         methodName(name.getMethodName());
     }
 
     @NotNull
     static ClosableMapSupplier<Integer, String> newIntString() throws IOException {
         final LocalMapSupplier supplier = new LocalMapSupplier<>(Integer
-                .class, String.class);
+                .class, String.class, new VanillaAssetTree().forTesting());
 
         return new ClosableMapSupplier() {
 
@@ -78,7 +77,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     static ClosableMapSupplier<CharSequence, CharSequence> newStrStrMap() throws
             IOException {
 
-        final MapClientTest.LocalMapSupplier supplier = new MapClientTest.LocalMapSupplier<>(CharSequence.class, CharSequence.class);
+        final MapClientTest.LocalMapSupplier supplier = new MapClientTest.LocalMapSupplier<>(CharSequence.class, CharSequence.class, new VanillaAssetTree().forTesting());
 
         return new ClosableMapSupplier() {
 

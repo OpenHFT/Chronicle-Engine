@@ -18,15 +18,14 @@
 
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.engine.Factor;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
+import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.TextWire;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -70,10 +69,6 @@ public class SubscriptionTest extends ThreadMonitoringTest {
         this.isRemote = isRemote;
     }
 
-    @Before
-    public void before(){
-        Chassis.resetChassis();
-    }
 
     @Test
     public void testSubscriptionTest() throws IOException, InterruptedException {
@@ -97,18 +92,20 @@ public class SubscriptionTest extends ThreadMonitoringTest {
             }
         };
 
+        VanillaAssetTree serverAssetTree = new VanillaAssetTree().forTesting();
+        VanillaAssetTree clientAssetTree = new VanillaAssetTree().forRemoteAccess();
         ServerEndpoint serverEndpoint = null;
         if (isRemote) {
             wire = TextWire::new;
 
-            serverEndpoint = new ServerEndpoint(Chassis.defaultSession());
+            serverEndpoint = new ServerEndpoint(serverAssetTree);
             port = serverEndpoint.getPort();
-            Chassis.forRemoteAccess();
-            map = Chassis.acquireMap(toUri(NAME, port, "localhost"), String.class, Factor.class);
-            Chassis.registerSubscriber(toUri(NAME, port, "localhost"), MapEvent.class, e -> e.apply(listener));
+
+            map = clientAssetTree.acquireMap(toUri(NAME, port, "localhost"), String.class, Factor.class);
+            clientAssetTree.registerSubscriber(toUri(NAME, port, "localhost"), MapEvent.class, e -> e.apply(listener));
         } else {
-            map = Chassis.acquireMap(NAME, String.class, Factor.class);
-            Chassis.registerSubscriber(NAME, MapEvent.class, e -> e.apply(listener));
+            map = serverAssetTree.acquireMap(NAME, String.class, Factor.class);
+            serverAssetTree.registerSubscriber(NAME, MapEvent.class, e -> e.apply(listener));
         }
 
         yamlLoggger(() -> {
@@ -146,9 +143,9 @@ public class SubscriptionTest extends ThreadMonitoringTest {
 
             success.set(0);
             if(!isRemote) {
-                Chassis.unregisterSubscriber(NAME, MapEvent.class, e -> e.apply(listener));
+                clientAssetTree.unregisterSubscriber(NAME, MapEvent.class, e -> e.apply(listener));
             }else{
-                Chassis.unregisterSubscriber(toUri(NAME, port, "localhost"), MapEvent.class, e -> e.apply(listener));
+                serverAssetTree.unregisterSubscriber(toUri(NAME, port, "localhost"), MapEvent.class, e -> e.apply(listener));
             }
             try {
                 TimeUnit.SECONDS.sleep(1);
@@ -161,7 +158,8 @@ public class SubscriptionTest extends ThreadMonitoringTest {
         });
 
         if(serverEndpoint != null)serverEndpoint.close();
-        Chassis.close();
+        serverAssetTree.close();
+        clientAssetTree.close();
     }
 
     private void expectedSuccess(@NotNull AtomicInteger success, int expected) {

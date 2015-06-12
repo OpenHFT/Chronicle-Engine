@@ -19,7 +19,6 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
@@ -255,7 +254,7 @@ public class MapClientTest extends ThreadMonitoringTest {
 
         CloseableSupplier<ConcurrentMap<K, V>> result;
         if (LocalMapSupplier.class.equals(supplier)) {
-            result = new LocalMapSupplier<K, V>(kClass, vClass);
+            result = new LocalMapSupplier<K, V>(kClass, vClass, assetTree);
 
         } else if (RemoteMapSupplier.class.equals(supplier)) {
             result = new RemoteMapSupplier<K, V>(kClass, vClass, TextWire::new, assetTree);
@@ -282,12 +281,14 @@ public class MapClientTest extends ThreadMonitoringTest {
         final ServerEndpoint serverEndpoint;
         @NotNull
         private final ConcurrentMap<K, V> map;
+        private final AssetTree assetTree;
 
         public RemoteMapSupplier(@NotNull final Class<K> kClass,
                                  @NotNull final Class<V> vClass,
                                  @NotNull final Function<Bytes, Wire> wireType,
                                  AssetTree assetTree,
                                  String name) throws IOException {
+            this.assetTree = assetTree;
             wire = wireType;
 
             serverEndpoint = new ServerEndpoint(assetTree);
@@ -295,7 +296,7 @@ public class MapClientTest extends ThreadMonitoringTest {
 
             final String hostname = "localhost";
 
-            Chassis.forRemoteAccess();
+            ((VanillaAssetTree) assetTree).forRemoteAccess();
 
             map = assetTree.acquireMap(
                     toUri(name,serverPort, hostname),
@@ -321,7 +322,7 @@ public class MapClientTest extends ThreadMonitoringTest {
         public void close() throws IOException {
             if (map instanceof Closeable)
                 ((Closeable) map).close();
-            Chassis.close();
+            assetTree.close();
             serverEndpoint.close();
         }
 
@@ -336,8 +337,8 @@ public class MapClientTest extends ThreadMonitoringTest {
         @NotNull
         private final ConcurrentMap<K, V> map;
 
-        public LocalMapSupplier(Class<K> kClass, Class<V> vClass) throws IOException {
-            map = Chassis.acquireMap("test" + i++ + "?putReturnsNull=false&removeReturnsNull=false", kClass, vClass);
+        public LocalMapSupplier(Class<K> kClass, Class<V> vClass, AssetTree assetTree) throws IOException {
+            map = assetTree.acquireMap("test" + i++ + "?putReturnsNull=false&removeReturnsNull=false", kClass, vClass);
         }
 
         @Override
