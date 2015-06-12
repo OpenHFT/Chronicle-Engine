@@ -8,16 +8,16 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
  * Created by peter on 22/05/15.
  */
 public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValueStore<K, MV, V> implements ObjectKeyValueStore<K, MV, V>, AuthenticatedKeyValueStore<K, MV, V> {
-    private final KVSSubscription<K, MV, V> subscriptions;
+    private final ObjectKVSSubscription<K, MV, V> subscriptions;
 
     public VanillaSubscriptionKeyValueStore(RequestContext context, Asset asset, KeyValueStore<K, MV, V> item) {
         super(asset, item);
-        this.subscriptions = new VanillaKVSSubscription<>(ObjectKVSSubscription.class, asset);
+        this.subscriptions = asset.acquireView(ObjectKVSSubscription.class, context);
         subscriptions.setKvStore(this);
     }
 
     @Override
-    public KVSSubscription<K, MV, V> subscription(boolean createIfAbsent) {
+    public ObjectKVSSubscription<K, MV, V> subscription(boolean createIfAbsent) {
         return subscriptions;
     }
 

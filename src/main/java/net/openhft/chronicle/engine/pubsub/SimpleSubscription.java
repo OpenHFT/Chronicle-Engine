@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.pubsub;
 
+import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.engine.api.map.ValueReader;
 import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
@@ -39,7 +40,8 @@ public class SimpleSubscription<E> implements Subscription<E> {
 
     public void notifyMessage(Object e) {
         try {
-            SubscriptionConsumer.notifyEachSubscriber(subscribers, s -> s.onMessage(valueReader.readFrom(e, null)));
+            E ee = e instanceof BytesStore ? (E) valueReader.readFrom(e, null) : (E) e;
+            SubscriptionConsumer.notifyEachSubscriber(subscribers, s -> s.onMessage(ee));
         } catch (ClassCastException e1) {
             System.err.println("Is " + valueReader + " the correct ValueReader?");
             throw e1;

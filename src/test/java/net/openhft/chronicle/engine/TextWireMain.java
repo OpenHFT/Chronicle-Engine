@@ -1,7 +1,6 @@
 package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.engine.server.WireType;
-import net.openhft.chronicle.wire.TextWire;
 
 import java.io.IOException;
 
@@ -11,7 +10,7 @@ import java.io.IOException;
 public class TextWireMain {
     public static void main(String[] args) throws IOException, InterruptedException {
 
-        WireType.wire = TextWire::new;
+        WireType.wire = WireType.TEXT;
 
         // the default is BinaryWire
         BinaryWireMain.main(args);

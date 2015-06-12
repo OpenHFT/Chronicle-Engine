@@ -22,8 +22,12 @@ import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContex
 public interface AssetTree extends Closeable {
 
     @NotNull
-    <A> Asset acquireAsset(Class<A> assetClass, RequestContext context) throws
+    Asset acquireAsset(Class assetClass, RequestContext context) throws
             AssetNotFoundException;
+
+    default Asset acquireAsset(RequestContext context) throws AssetNotFoundException {
+        return acquireAsset(context.viewType(), context);
+    }
 
     @Nullable
     Asset getAsset(String fullName);
@@ -32,42 +36,32 @@ public interface AssetTree extends Closeable {
 
     @NotNull
     default <E> Set<E> acquireSet(String name, Class<E> eClass) throws AssetNotFoundException {
-        RequestContext rc = requestContext(name).view("set").type(eClass);
-        //noinspection unchecked
-        Asset asset = acquireAsset(rc.viewType(), rc);
-        return asset.acquireView(rc);
+        return acquireView(requestContext(name).view("set").type(eClass));
+    }
+
+    @NotNull
+    default <E> E acquireView(RequestContext rc) {
+        return acquireAsset(rc).acquireView(rc);
     }
 
     @NotNull
     default <K, V> ConcurrentMap<K, V> acquireMap(String name, Class<K> kClass, Class<V> vClass) throws AssetNotFoundException {
-        RequestContext rc = requestContext(name).view("map").type(kClass).type2(vClass);
-        //noinspection unchecked
-        Asset asset = acquireAsset(rc.viewType(), rc);
-        return asset.acquireView(rc);
+        return acquireView(requestContext(name).view("map").type(kClass).type2(vClass));
     }
 
     @NotNull
     default <E> Publisher<E> acquirePublisher(String name, Class<E> eClass) throws AssetNotFoundException {
-        RequestContext rc = requestContext(name).view("pub").type(eClass);
-        //noinspection unchecked
-        Asset asset = acquireAsset(rc.viewType(), rc);
-        return asset.acquireView(rc);
+        return acquireView(requestContext(name).view("pub").type(eClass));
     }
 
     @NotNull
     default <E> Reference<E> acquireReference(String name, Class<E> eClass) throws AssetNotFoundException {
-        RequestContext rc = requestContext(name).view("ref").type(eClass);
-        //noinspection unchecked
-        Asset asset = acquireAsset(rc.viewType(), rc);
-        return asset.acquireView(rc);
+        return acquireView(requestContext(name).view("ref").type(eClass));
     }
 
     @NotNull
     default <T, E> TopicPublisher<T, E> acquireTopicPublisher(String name, Class<T> tClass, Class<E> eClass) throws AssetNotFoundException {
-        RequestContext rc = requestContext(name).view("topicPub").type(tClass).type2(eClass);
-        //noinspection unchecked
-        Asset asset = acquireAsset(rc.viewType(), rc);
-        return asset.acquireView(rc);
+        return acquireView(requestContext(name).view("topicPub").type(tClass).type2(eClass));
     }
 
     default <E> void registerSubscriber(String name, Class<E> eClass, Subscriber<E> subscriber) throws AssetNotFoundException {

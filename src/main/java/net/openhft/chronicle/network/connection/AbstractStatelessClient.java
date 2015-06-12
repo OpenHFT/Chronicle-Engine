@@ -159,7 +159,6 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
     /**
      * Useful for when you know the tid
      * @param tid the tid transaction
-     * @return the translation id ( which is sent to the server )
      */
     protected void writeMetaDataForKnownTID(long tid) {
         hub.writeMetaDataForKnownTID(tid, hub.outWire(), csp, cid);

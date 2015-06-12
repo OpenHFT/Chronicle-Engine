@@ -31,7 +31,7 @@ public class VanillaAssetTree implements AssetTree {
 
     @NotNull
     @Override
-    public <A> Asset acquireAsset(Class<A> assetClass, @NotNull RequestContext context) throws AssetNotFoundException {
+    public Asset acquireAsset(Class assetClass, @NotNull RequestContext context) throws AssetNotFoundException {
         String fullName = context.fullName();
         if (fullName.startsWith("/"))
             fullName = fullName.substring(1);

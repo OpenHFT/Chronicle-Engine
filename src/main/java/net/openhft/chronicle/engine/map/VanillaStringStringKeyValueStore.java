@@ -22,9 +22,8 @@ import static net.openhft.chronicle.engine.map.Buffers.BUFFERS;
  * Created by peter on 25/05/15.
  */
 public class VanillaStringStringKeyValueStore implements StringStringKeyValueStore {
-    public static final Function<BytesStore, String> BYTES_STORE_STRING_FUNCTION = v -> BytesUtil.to8bitString(v);
     private final ObjectKVSSubscription<String, StringBuilder, String> subscriptions;
-    private final Function<BytesStore, String> bytesToValue;
+
     private SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore;
     private Asset asset;
 
@@ -38,14 +37,31 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
                                      @NotNull SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore) throws AssetNotFoundException {
         this.asset = asset;
         this.kvStore = kvStore;
-        bytesToValue = b -> b == null ? null : b.toString();
-        asset.registerView(ValueReader.class, (ValueReader<BytesStore, String>) (bs, v) ->
-                bytesToValue.apply(bs));
+        asset.registerView(ValueReader.class, StringValueReader.BYTES_STORE_TO_STRING);
         RawKVSSubscription<String, Bytes, BytesStore> rawSubscription =
                 (RawKVSSubscription<String, Bytes, BytesStore>) kvStore.subscription(true);
         this.subscriptions = subscriptions;
         rawSubscription.registerDownstream(mpe ->
-                subscriptions.notifyEvent(mpe.translate(s -> s, bytesToValue)));
+                subscriptions.notifyEvent(mpe.translate(s -> s, BytesStoreToString.BYTES_STORE_TO_STRING)));
+    }
+
+    enum BytesStoreToString implements Function<BytesStore, String> {
+        BYTES_STORE_TO_STRING;
+
+        @Override
+        public String apply(BytesStore bs) {
+            return bs == null ? null : BytesUtil.to8bitString(bs);
+        }
+    }
+
+    enum StringValueReader implements ValueReader<BytesStore, String> {
+        BYTES_STORE_TO_STRING;
+
+        @NotNull
+        @Override
+        public String readFrom(BytesStore bs, String usingValue) {
+            return bs == null ? null : BytesUtil.to8bitString(bs);
+        }
     }
 
     @NotNull
@@ -108,7 +124,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
 
     @Override
     public void entriesFor(int segment, @NotNull SubscriptionConsumer<MapEvent<String, String>> kvConsumer) throws InvalidSubscriberException {
-        kvStore.entriesFor(segment, e -> kvConsumer.accept(e.translate(k -> k, BYTES_STORE_STRING_FUNCTION)));
+        kvStore.entriesFor(segment, e -> kvConsumer.accept(e.translate(k -> k, BytesStoreToString.BYTES_STORE_TO_STRING)));
     }
 
     @NotNull
