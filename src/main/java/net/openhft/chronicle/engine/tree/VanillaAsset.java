@@ -241,7 +241,6 @@ public class VanillaAsset implements Asset, Closeable {
 
     @Override
     public void close() {
-
         // do nothing
         viewMap.values().stream().filter(v -> v instanceof Closeable).forEach(v -> {
             try {

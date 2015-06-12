@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.api.tree;
 
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.util.ThrowingAcceptor;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscription;
@@ -11,7 +12,7 @@ import java.util.function.BiPredicate;
 /**
  * Created by peter on 22/05/15.
  */
-public interface Asset {
+public interface Asset extends Closeable {
     String name();
 
     Subscription subscription(boolean createIfAbsent) throws AssetNotFoundException;
