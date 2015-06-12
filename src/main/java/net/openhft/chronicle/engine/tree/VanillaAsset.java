@@ -1,6 +1,6 @@
 package net.openhft.chronicle.engine.tree;
 
-import net.openhft.chronicle.core.util.Closeable;
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.util.ThrowingAcceptor;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;

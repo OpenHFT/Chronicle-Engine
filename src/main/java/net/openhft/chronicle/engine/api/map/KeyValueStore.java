@@ -1,6 +1,6 @@
 package net.openhft.chronicle.engine.api.map;
 
-import net.openhft.chronicle.core.util.Closeable;
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.tree.Assetted;

@@ -1,7 +1,7 @@
 package net.openhft.chronicle.engine.api.tree;
 
 import net.openhft.chronicle.bytes.BytesStore;
-import net.openhft.chronicle.core.util.Closeable;
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.map.KVSSubscription;
 import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
