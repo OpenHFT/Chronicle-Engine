@@ -20,13 +20,14 @@ package net.openhft.chronicle.engine.api;
 
 import net.openhft.chronicle.bytes.Bytes;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
 
 /**
  * @author Rob Austin.
  */
-interface EngineReplication extends Closeable {
+public interface EngineReplication extends Closeable {
 
     /**
      * inserts or updates the entry
@@ -158,16 +159,16 @@ interface EngineReplication extends Closeable {
          *
          * @param key
          * @param value
-         * @param bootStrapTimeStamp sent to the client on every update this is the timestamp
+         * @param isDeleted
+         *@param bootStrapTimeStamp sent to the client on every update this is the timestamp
          *                           that the remote client should bootstrap from when there has
          *                           been a disconnection, this time maybe later than the message
          *                           time as event are not send in chronological order from the
-         *                           bit set.
-         * @return {@code false} if this entry should be ignored because the identifier of the
+         *                           bit set.  @return {@code false} if this entry should be ignored because the identifier of the
          * source node is not from one of our changes, WARNING even though we check the identifier
          * in the ModificationIterator the entry may have been updated.
          */
-        boolean onEntry(@NotNull Bytes key, @NotNull Bytes value, long timestamp,
-                        byte identifier, long bootStrapTimeStamp);
+        boolean onEntry(@NotNull Bytes key, @Nullable Bytes value, long timestamp,
+                        byte identifier, final boolean isDeleted, long bootStrapTimeStamp);
     }
 }

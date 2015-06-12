@@ -9,6 +9,7 @@ import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.MapEventListener;
@@ -40,7 +41,13 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
 
         String basePath = context.basePath();
 
-        ChronicleMapBuilder builder = ChronicleMapBuilder.of(kClass, vClass)
+        final EngineReplicator engineReplicator
+                = new EngineReplicator(context);
+
+        ChronicleMapBuilder<K, V> builder = ChronicleMapBuilder.of(kClass, vClass)
+                .replication(SingleChronicleHashReplication.builder().
+                        engineReplication(engineReplicator).
+                        createWithId((byte) 2))
                 .eventListener(publishingOperations);
 
         if (context.putReturnsNull() != Boolean.FALSE) {
@@ -161,4 +168,5 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
             }
         }
     }
+
 }
