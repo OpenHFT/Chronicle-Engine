@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
@@ -20,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.BiFunction;
@@ -33,7 +33,7 @@ import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventI
 /**
  * Created by daniel on 10/06/15.
  */
-public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient implements ObjectKVSSubscription<K, MV, V> {
+public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient implements ObjectKVSSubscription<K, MV, V>, Closeable {
 
     private final Class<V> valueType;
     private final ExecutorService eventLoop = Executors.newSingleThreadExecutor(new NamedThreadFactory("RemoteKVSSubscription"));
@@ -103,9 +103,9 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
                 if(!closed && !hub.isClosed()){
                     t.printStackTrace();
                 }
-
             }
         });
+
     }
 
     @Override
@@ -218,6 +218,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
         }
     }
 
+    @Override
     public void close(){
         closed = true;
         eventLoop.shutdown();
