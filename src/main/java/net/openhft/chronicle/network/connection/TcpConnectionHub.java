@@ -698,6 +698,6 @@ public class TcpConnectionHub implements View, Closeable {
     }
 
     public static TcpConnectionHub hub(final RequestContext context, @NotNull final Asset asset) throws AssetNotFoundException {
-        return asset.acquireView(TcpConnectionHub.class, context);
+        return asset.root().acquireView(TcpConnectionHub.class, context);
     }
 }

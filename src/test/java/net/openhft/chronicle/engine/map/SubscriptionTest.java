@@ -160,9 +160,9 @@ public class SubscriptionTest extends ThreadMonitoringTest {
             expectedSuccess(success, 0);
         });
 
+        clientAssetTree.close();
         if(serverEndpoint != null)serverEndpoint.close();
         serverAssetTree.close();
-        clientAssetTree.close();
     }
 
     private void expectedSuccess(@NotNull AtomicInteger success, int expected) {
