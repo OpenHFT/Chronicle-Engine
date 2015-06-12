@@ -409,12 +409,8 @@ public class TcpConnectionHub implements View, Closeable {
         while (buffer.position() - start < requiredNumberOfBytes) {
             assert clientChannel != null;
 
-            if (clientChannel.read(buffer) == -1) {
-                if(!closed)
-                    throw new IORuntimeException("Disconnection to server");
-                else
-                    return;
-            }
+            if (clientChannel.read(buffer) == -1)
+                throw new IORuntimeException("Disconnection to server");
 
             checkTimeout(timeoutTime);
         }
