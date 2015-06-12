@@ -2,6 +2,7 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
+import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.Factor;
 import net.openhft.chronicle.wire.BinaryWire;
 import net.openhft.chronicle.wire.TextWire;
@@ -14,13 +15,17 @@ import static org.junit.Assert.assertEquals;
  * Created by peter on 12/06/15.
  */
 public class InsertedEventTest {
+    static {
+        ClassAliasPool.CLASS_ALIASES.addAlias(InsertedEvent.class, Factor.class);
+    }
 
     @Test
     public void testMarshalling() {
         Bytes bytes = Bytes.elasticByteBuffer();
         InsertedEvent<String, String> insertedEvent = InsertedEvent.of("asset", "key", "name");
         TextWire textWire = new TextWire(bytes);
-        textWire.write(() -> "reply").typedMarshallable(insertedEvent);
+        textWire.write(() -> "reply")
+                .typedMarshallable(insertedEvent);
         bytes.flip();
         System.out.println("text: " + bytes);
         InsertedEvent ie = (InsertedEvent) textWire.read(() -> "reply").typedMarshallable();
