@@ -22,11 +22,13 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.Jvm;
-import net.openhft.chronicle.core.util.CloseablesManager;
-import net.openhft.chronicle.engine.Chassis;
+import net.openhft.chronicle.core.io.CloseablesManager;
 import net.openhft.chronicle.engine.api.SessionDetails;
 import net.openhft.chronicle.engine.api.session.SessionProvider;
-import net.openhft.chronicle.engine.api.tree.*;
+import net.openhft.chronicle.engine.api.tree.Asset;
+import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
+import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.network.event.EventGroup;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
@@ -64,6 +66,7 @@ public class TcpConnectionHub implements View, Closeable {
 
     @NotNull
     private final AtomicLong transactionID = new AtomicLong(0);
+    private final SessionProvider view;
 
     @Nullable
     protected CloseablesManager closeables;
@@ -96,6 +99,7 @@ public class TcpConnectionHub implements View, Closeable {
         this.timeoutMs = requestContext.timeout();
 
         attemptConnect(remoteAddress);
+        view = asset.root().getView(SessionProvider.class);
     }
 
     private synchronized void attemptConnect(final InetSocketAddress remoteAddress) {
@@ -199,11 +203,6 @@ public class TcpConnectionHub implements View, Closeable {
     }
 
     private SessionDetails sessionDetails() {
-        final AssetTree assetTree = Chassis.defaultSession();
-        final Asset asset = assetTree.getAsset("");
-        if (asset == null)
-            return null;
-        final SessionProvider view = asset.getView(SessionProvider.class);
         if (view == null)
             return null;
         return view.get();
@@ -597,7 +596,7 @@ public class TcpConnectionHub implements View, Closeable {
         // send
         outBytesLock().lock();
         try {
-            long tid = writeMetaData(startTime, wire, csp, cid);
+            long tid = writeMetaDataStartTime(startTime, wire, csp, cid);
             wire.writeDocument(false, wireOut -> {
                 wireOut.writeEventName(eventName);
                 wireOut.writeValue().marshallable(w -> {
@@ -654,10 +653,18 @@ public class TcpConnectionHub implements View, Closeable {
         return outWire;
     }
 
-    public long writeMetaData(long startTime, @NotNull Wire wire, String csp, long cid) {
+    public long writeMetaDataStartTime(long startTime, @NotNull Wire wire, String csp, long cid) {
         assert outBytesLock().isHeldByCurrentThread();
         startTime(startTime);
         long tid = nextUniqueTransaction(startTime);
+
+        writeMetaDataForKnownTID(tid, wire, csp, cid);
+
+        return tid;
+    }
+
+    public void writeMetaDataForKnownTID(long tid, @NotNull Wire wire, String csp, long cid) {
+        assert outBytesLock().isHeldByCurrentThread();
 
         wire.writeDocument(true, wireOut -> {
             if (cid == 0)
@@ -666,8 +673,6 @@ public class TcpConnectionHub implements View, Closeable {
                 wireOut.writeEventName(CoreFields.cid).int64(cid);
             wireOut.writeEventName(CoreFields.tid).int64(tid);
         });
-
-        return tid;
     }
 
     /**

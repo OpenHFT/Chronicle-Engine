@@ -8,15 +8,15 @@ import net.openhft.chronicle.engine.api.pubsub.Reference;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
+import net.openhft.chronicle.engine.server.WireType;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
+import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
 
 /**
  * Created by peter on 24/05/15.
@@ -26,7 +26,7 @@ public class RequestContext {
     private String name;
     private Class viewType, type, type2;
     private String basePath;
-    private Function<Bytes, Wire> wireType = TextWire::new;
+    private Function<Bytes, Wire> wireType = WireType.TEXT;
     @Nullable
     private Boolean putReturnsNull = null,
             removeReturnsNull = null,
@@ -35,18 +35,14 @@ public class RequestContext {
     private long entries;
     private int tcpBufferSize = 1024;
 
-    private static final Map<String, Class> classAliases = new ConcurrentHashMap<>();
     private int port;
     @NotNull
     private StringBuilder host = new StringBuilder();
     private long timeout = 1000; // in ms
+    private Boolean recurse;
 
     private static void addAlias(Class type, @NotNull String aliases) {
-        for (String alias : aliases.split(", ?")) {
-            classAliases.put(alias, type);
-            classAliases.put(Character.toLowerCase(alias.charAt(0)) + alias.substring(1), type);
-            classAliases.put(alias.toLowerCase(), type);
-        }
+        CLASS_ALIASES.addAlias(type, aliases);
     }
 
     static {
@@ -54,18 +50,10 @@ public class RequestContext {
         addAlias(EntrySetView.class, "EntrySet");
         addAlias(KeySetView.class, "KeySet");
         addAlias(ValuesCollection.class, "Values");
-        addAlias(Set.class, "Set");
+
         addAlias(Publisher.class, "Publisher, Pub");
         addAlias(TopicPublisher.class, "TopicPublisher, TopicPub");
         addAlias(Reference.class, "Reference, Ref");
-        addAlias(String.class, "String");
-        addAlias(CharSequence.class, "CharSequence");
-        addAlias(Byte.class, "Byte, int8");
-        addAlias(Character.class, "Character, Char");
-        addAlias(Integer.class, "Integer, int32");
-        addAlias(Long.class, "Long, Int, int64");
-        addAlias(Float.class, "Float, Float32");
-        addAlias(Double.class, "Double, Float64");
     }
 
     private RequestContext() {
@@ -140,17 +128,7 @@ public class RequestContext {
     }
 
     Class lookupType(@NotNull CharSequence typeName) throws IllegalArgumentException {
-        String typeNameStr = typeName.toString();
-        Class clazz = classAliases.get(typeNameStr);
-        if (clazz != null)
-            return clazz;
-        try {
-            clazz = Class.forName(typeNameStr);
-            classAliases.put(typeNameStr, clazz);
-            return clazz;
-        } catch (ClassNotFoundException e) {
-            throw new IllegalArgumentException("Unknown class name:" + typeNameStr);
-        }
+        return CLASS_ALIASES.forName(typeName);
     }
 
     @NotNull
@@ -296,7 +274,6 @@ public class RequestContext {
         return this;
     }
 
-    @NotNull
     @Override
     public String toString() {
         return "RequestContext{" +
@@ -310,9 +287,13 @@ public class RequestContext {
                 ", putReturnsNull=" + putReturnsNull +
                 ", removeReturnsNull=" + removeReturnsNull +
                 ", bootstrap=" + bootstrap +
+                ", averageValueSize=" + averageValueSize +
+                ", entries=" + entries +
+                ", tcpBufferSize=" + tcpBufferSize +
                 ", port=" + port +
                 ", host=" + host +
                 ", timeout=" + timeout +
+                ", recurse=" + recurse +
                 '}';
     }
 
@@ -331,5 +312,14 @@ public class RequestContext {
 
     public long timeout() {
         return timeout;
+    }
+
+    public Boolean recurse() {
+        return recurse;
+    }
+
+    public RequestContext recurse(Boolean recurse) {
+        this.recurse = recurse;
+        return this;
     }
 }

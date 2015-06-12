@@ -105,7 +105,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
             throw new IllegalStateException("Cannot view map while debugging");
         hub.outBytesLock().lock();
         try {
-            tid = writeMetaData(startTime);
+            tid = writeMetaDataStartTime(startTime);
             hub.outWire().writeDocument(false, wireOut -> {
 
                 final ValueOut valueOut = wireOut.writeEventName(eventId);
@@ -152,8 +152,16 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
      * @param startTime the start time of this transaction
      * @return the translation id ( which is sent to the server )
      */
-    protected long writeMetaData(long startTime) {
-        return hub.writeMetaData(startTime, hub.outWire(), csp, cid);
+    protected long writeMetaDataStartTime(long startTime) {
+        return hub.writeMetaDataStartTime(startTime, hub.outWire(), csp, cid);
+    }
+
+    /**
+     * Useful for when you know the tid
+     * @param tid the tid transaction
+     */
+    protected void writeMetaDataForKnownTID(long tid) {
+        hub.writeMetaDataForKnownTID(tid, hub.outWire(), csp, cid);
     }
 
     /**

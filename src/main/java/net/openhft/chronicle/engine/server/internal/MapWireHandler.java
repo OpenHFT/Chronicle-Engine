@@ -42,6 +42,7 @@ import java.io.StreamCorruptedException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -66,6 +67,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
     private RequestContext requestContext;
     private Queue<Consumer<Wire>> publisher;
     private AssetTree assetTree;
+    private final Map<Long, MapEventListener> tidToListener = new ConcurrentHashMap<>();
 
     /**
      * @param in             the data the has come in from network
@@ -143,7 +145,8 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
         valueBuilder,
         remoteIdentifier,
         numberOfSegments,
-        subscribe;
+        subscribe,
+        unSubscribe;
 
         private final WireKey[] params;
 
@@ -279,8 +282,19 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                             });
                         }
                     };
+                    tidToListener.put(inputTid, listener);
                     assetTree.registerSubscriber(requestContext.name(), MapEvent.class, e -> e.apply(listener));
 
+                    return;
+                }
+
+                if (unSubscribe.contentEquals(eventName)){
+                    MapEventListener listener = tidToListener.get(inputTid);
+                    if(listener==null){
+                        LOG.warn("No subscriber to present to unsubscribe (" + inputTid +")");
+                        return;
+                    }
+                    assetTree.unregisterSubscriber(requestContext.name(), MapEvent.class, e -> e.apply(listener));
                     return;
                 }
 

@@ -70,7 +70,7 @@ public enum Chassis {
 
     @NotNull
     public static Asset acquireAsset(@NotNull RequestContext context) throws AssetNotFoundException {
-        return assetTree.acquireAsset(context.viewType(), context);
+        return assetTree.acquireAsset(context);
     }
 
     public static <E> void registerSubscriber(String name, Class<E> eClass, Subscriber<E> subscriber) throws AssetNotFoundException {

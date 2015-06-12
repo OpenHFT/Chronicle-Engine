@@ -16,6 +16,8 @@ import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireIn;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -24,6 +26,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.subscribe;
+import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.unSubscribe;
 
 /**
  * Created by daniel on 10/06/15.
@@ -34,6 +37,8 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
     private final Executor eventLoop = Executors.newSingleThreadExecutor();
     private final Class<K> keyType;
     private KeyValueStore<K, MV, V> kvStore;
+    private long subscriberTID = -1;
+    private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
 
     public RemoteKVSSubscription(RequestContext context, Asset asset) {
         super(TcpConnectionHub.hub(context, asset), (long) 0, toUri(context));
@@ -58,16 +63,14 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
 
     @Override
     public void registerSubscriber(RequestContext rc, Subscriber<MapEvent<K, V>> subscriber) {
-
         final long startTime = System.currentTimeMillis();
-        long tid1;
 
         if (hub.outBytesLock().isHeldByCurrentThread())
             throw new IllegalStateException("Cannot view map while debugging");
 
         hub.outBytesLock().lock();
         try {
-            tid1 = writeMetaData(startTime);
+            subscriberTID = writeMetaDataStartTime(startTime);
             hub.outWire().writeDocument(false, wireOut -> {
                 wireOut.writeEventName(subscribe);
             });
@@ -85,7 +88,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
             while(true) {
                 hub.inBytesLock().lock();
                 try {
-                    final Wire wire = hub.proxyReply(timeoutTime, tid1);
+                    final Wire wire = hub.proxyReply(timeoutTime, subscriberTID);
                     checkIsData(wire);
                     readReplyConsumer(wire, CoreFields.reply, (Consumer<ValueIn>) valueIn -> valueIn.marshallable(r -> onEvent(r, subscriber)));
                 } finally {
@@ -122,7 +125,21 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
 
     @Override
     public void unregisterSubscriber(Subscriber<MapEvent<K, V>> subscriber) {
-        throw new UnsupportedOperationException("todo");
+        if(subscriberTID==-1){
+            LOG.warn("There is subscription to unsubscribe");
+        }
+
+        hub.outBytesLock().lock();
+        try {
+            writeMetaDataForKnownTID(subscriberTID);
+            hub.outWire().writeDocument(false, wireOut -> {
+                wireOut.writeEventName(unSubscribe);
+            });
+
+            hub.writeSocket(hub.outWire());
+        } finally {
+            hub.outBytesLock().unlock();
+        }
     }
 
     @NotNull

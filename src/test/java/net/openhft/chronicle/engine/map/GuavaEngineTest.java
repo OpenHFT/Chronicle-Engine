@@ -51,6 +51,7 @@ public class GuavaEngineTest   {
     @NotNull
     public static Test suite() {
         AssetTree assetTree = new VanillaAssetTree().forTesting();
+/*
         TestSuite remoteMapTests = MapTestSuiteBuilder.using(new RemoteTestGenerator(assetTree))
                 .named("Chronicle RemoteEngine Guava tests")
                 .withFeatures(GENERAL_PURPOSE)
@@ -58,6 +59,7 @@ public class GuavaEngineTest   {
                 .withFeatures(CollectionFeature.REMOVE_OPERATIONS)
                 .withFeatures(RESTRICTS_KEYS, RESTRICTS_VALUES)
                 .createTestSuite();
+*/
 
         TestSuite localMapTests = MapTestSuiteBuilder.using(new LocalTestGenerator())
                 .named("Chronicle LocalEngine Guava tests")
@@ -174,7 +176,7 @@ public class GuavaEngineTest   {
     static ConcurrentMap<CharSequence, CharSequence> newStrStrLocalMap() {
 
         try {
-            return new LocalMapSupplier(CharSequence.class, CharSequence.class).get();
+            return new LocalMapSupplier(CharSequence.class, CharSequence.class, new VanillaAssetTree().forTesting()).get();
         } catch (IOException e) {
             throw new IORuntimeException(e);
         }

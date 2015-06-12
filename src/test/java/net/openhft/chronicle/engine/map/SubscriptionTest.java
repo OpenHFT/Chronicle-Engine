@@ -18,12 +18,12 @@
 
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.engine.Factor;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
+import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.TextWire;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -49,9 +49,12 @@ import static org.junit.Assert.assertEquals;
  */
 @RunWith(value = Parameterized.class)
 public class SubscriptionTest extends ThreadMonitoringTest {
-    private final AtomicInteger success = new AtomicInteger();
-    private int port;
-    private ConcurrentMap<String, Factor> map;
+    private static AtomicInteger success = new AtomicInteger();
+    private static int port;
+    private static ConcurrentMap<String, Factor> map;
+    private static final String NAME = "test";
+    private static MapEventListener<String, Factor> listener;
+    private static Boolean isRemote;
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() throws IOException {
@@ -62,9 +65,14 @@ public class SubscriptionTest extends ThreadMonitoringTest {
         });
     }
 
-    public SubscriptionTest(Boolean isRemote) throws IOException {
+    public SubscriptionTest(Boolean isRemote){
+        this.isRemote = isRemote;
+    }
 
-        MapEventListener<String, Factor> listener = new MapEventListener<String, Factor>() {
+
+    @Test
+    public void testSubscriptionTest() throws IOException, InterruptedException {
+        listener = new MapEventListener<String, Factor>() {
             @Override
             public void update(String key, Factor oldValue, Factor newValue) {
                 System.out.println("Updated { key: " + key + ", oldValue: " + oldValue + ", value: " + newValue + " }");
@@ -84,24 +92,22 @@ public class SubscriptionTest extends ThreadMonitoringTest {
             }
         };
 
+        VanillaAssetTree serverAssetTree = new VanillaAssetTree().forTesting();
+        VanillaAssetTree clientAssetTree = new VanillaAssetTree().forRemoteAccess();
+        ServerEndpoint serverEndpoint = null;
         if (isRemote) {
-            Chassis.resetChassis();
             wire = TextWire::new;
 
-            ServerEndpoint serverEndpoint = new ServerEndpoint(Chassis.defaultSession());
+            serverEndpoint = new ServerEndpoint(serverAssetTree);
             port = serverEndpoint.getPort();
-            Chassis.forRemoteAccess();
-            map = Chassis.acquireMap(toUri("test", port, "localhost"), String.class, Factor.class);
-            Chassis.registerSubscriber(toUri("test", port, "localhost"), MapEvent.class, e -> e.apply(listener));
-        } else {
-            Chassis.resetChassis();
-            map = Chassis.acquireMap("TEST", String.class, Factor.class);
-            Chassis.registerSubscriber("TEST", MapEvent.class, e -> e.apply(listener));
-        }
-    }
 
-    @Test
-    public void testSubscriptionTest() throws IOException, InterruptedException {
+            map = clientAssetTree.acquireMap(toUri(NAME, port, "localhost"), String.class, Factor.class);
+            clientAssetTree.registerSubscriber(toUri(NAME, port, "localhost"), MapEvent.class, e -> e.apply(listener));
+        } else {
+            map = serverAssetTree.acquireMap(NAME, String.class, Factor.class);
+            serverAssetTree.registerSubscriber(NAME, MapEvent.class, e -> e.apply(listener));
+        }
+
         yamlLoggger(() -> {
             Factor factor = new Factor();
             factor.setAccountNumber("xyz");
@@ -109,6 +115,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
             assertEquals(1, map.size());
             assertEquals("xyz", map.get("testA").getAccountNumber());
 
+            //Test the insert was received
             expectedSuccess(success, 1);
 
             factor = new Factor();
@@ -116,6 +123,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
             map.put("testB", factor);
             assertEquals("abc", map.get("testB").getAccountNumber());
 
+            //Test that a second insert was received
             expectedSuccess(success, 2);
             success.set(0);
 
@@ -125,12 +133,33 @@ public class SubscriptionTest extends ThreadMonitoringTest {
             map.put("testA", factor);
             assertEquals("ddd", map.get("testA").getAccountNumber());
 
+            //Test that an update was received
             expectedSuccess(success, -1000);
             success.set(0);
 
+            //Test that a remove was received
             map.remove("testA");
             expectedSuccess(success, -100);
+
+            success.set(0);
+            if(!isRemote) {
+                clientAssetTree.unregisterSubscriber(NAME, MapEvent.class, e -> e.apply(listener));
+            }else{
+                serverAssetTree.unregisterSubscriber(toUri(NAME, port, "localhost"), MapEvent.class, e -> e.apply(listener));
+            }
+            try {
+                TimeUnit.SECONDS.sleep(1);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            map.put("testC", factor);
+            //Test that after unregister we don't get events
+            expectedSuccess(success, 0);
         });
+
+        if(serverEndpoint != null)serverEndpoint.close();
+        serverAssetTree.close();
+        clientAssetTree.close();
     }
 
     private void expectedSuccess(@NotNull AtomicInteger success, int expected) {
