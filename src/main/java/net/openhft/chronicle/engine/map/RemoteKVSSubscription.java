@@ -39,6 +39,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
     private KeyValueStore<K, MV, V> kvStore;
     private long subscriberTID = -1;
     private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
+    private volatile boolean closed;
 
     public RemoteKVSSubscription(RequestContext context, Asset asset) {
         super(TcpConnectionHub.hub(context, asset), (long) 0, toUri(context));
@@ -85,15 +86,22 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
 
         eventLoop.execute(() -> {
             // receive
-            while(true) {
-                hub.inBytesLock().lock();
-                try {
-                    final Wire wire = hub.proxyReply(timeoutTime, subscriberTID);
-                    checkIsData(wire);
-                    readReplyConsumer(wire, CoreFields.reply, (Consumer<ValueIn>) valueIn -> valueIn.marshallable(r -> onEvent(r, subscriber)));
-                } finally {
-                    hub.inBytesLock().unlock();
+            try {
+                while (!closed) {
+                    hub.inBytesLock().lock();
+                    try {
+                        final Wire wire = hub.proxyReply(timeoutTime, subscriberTID);
+                        checkIsData(wire);
+                        readReplyConsumer(wire, CoreFields.reply, (Consumer<ValueIn>) valueIn -> valueIn.marshallable(r -> onEvent(r, subscriber)));
+                    } finally {
+                        hub.inBytesLock().unlock();
+                    }
                 }
+            }catch(Throwable t){
+                if(!closed){
+                    t.printStackTrace();
+                }
+
             }
         });
     }
@@ -206,6 +214,10 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
         } catch (InvalidSubscriberException e) {
             e.printStackTrace();
         }
+    }
+
+    public void close(){
+        closed = true;
     }
 }
 

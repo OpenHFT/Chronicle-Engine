@@ -249,6 +249,12 @@ public class VanillaAsset implements Asset, Closeable {
                 // do nothing
             }
         });
+
+        try {
+            forEachChild(Closeable::close);
+        } catch (InvalidSubscriberException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

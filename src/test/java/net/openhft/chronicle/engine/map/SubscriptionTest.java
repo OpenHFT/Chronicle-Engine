@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.Factor;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.map.MapEvent;
@@ -142,7 +143,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
             expectedSuccess(success, -100);
 
             success.set(0);
-            if(!isRemote) {
+            if(isRemote) {
                 clientAssetTree.unregisterSubscriber(NAME, MapEvent.class, e -> e.apply(listener));
             }else{
                 serverAssetTree.unregisterSubscriber(toUri(NAME, port, "localhost"), MapEvent.class, e -> e.apply(listener));
@@ -166,11 +167,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
         for (int i = 0; i < 20; i++) {
             if (success.get() == expected)
                 break;
-            try {
-                TimeUnit.MILLISECONDS.sleep(1);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            Jvm.pause(i*i);
         }
         assertEquals(expected, success.get());
     }
