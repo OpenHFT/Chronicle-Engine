@@ -597,7 +597,7 @@ public class TcpConnectionHub implements View, Closeable {
         // send
         outBytesLock().lock();
         try {
-            long tid = writeMetaData(startTime, wire, csp, cid);
+            long tid = writeMetaDataStartTime(startTime, wire, csp, cid);
             wire.writeDocument(false, wireOut -> {
                 wireOut.writeEventName(eventName);
                 wireOut.writeValue().marshallable(w -> {
@@ -654,10 +654,18 @@ public class TcpConnectionHub implements View, Closeable {
         return outWire;
     }
 
-    public long writeMetaData(long startTime, @NotNull Wire wire, String csp, long cid) {
+    public long writeMetaDataStartTime(long startTime, @NotNull Wire wire, String csp, long cid) {
         assert outBytesLock().isHeldByCurrentThread();
         startTime(startTime);
         long tid = nextUniqueTransaction(startTime);
+
+        writeMetaDataForKnownTID(tid, wire, csp, cid);
+
+        return tid;
+    }
+
+    public void writeMetaDataForKnownTID(long tid, @NotNull Wire wire, String csp, long cid) {
+        assert outBytesLock().isHeldByCurrentThread();
 
         wire.writeDocument(true, wireOut -> {
             if (cid == 0)
@@ -666,8 +674,6 @@ public class TcpConnectionHub implements View, Closeable {
                 wireOut.writeEventName(CoreFields.cid).int64(cid);
             wireOut.writeEventName(CoreFields.tid).int64(tid);
         });
-
-        return tid;
     }
 
     /**
