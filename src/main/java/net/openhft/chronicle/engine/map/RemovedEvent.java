@@ -2,6 +2,8 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,14 +16,14 @@ import java.util.function.Function;
  * Created by peter on 22/05/15.
  */
 public class RemovedEvent<K, V> implements MapEvent<K, V> {
-    private final String assetName;
-    private final K key;
-    private final V value;
+    private String assetName;
+    private K key;
+    private V oldValue;
 
-    private RemovedEvent(String assetName, K key, V value) {
+    private RemovedEvent(String assetName, K key, V oldValue) {
         this.assetName = assetName;
         this.key = key;
-        this.value = value;
+        this.oldValue = oldValue;
     }
 
     @Override
@@ -37,12 +39,12 @@ public class RemovedEvent<K, V> implements MapEvent<K, V> {
     @NotNull
     @Override
     public <K2, V2> MapEvent<K2, V2> translate(@NotNull Function<K, K2> keyFunction, @NotNull Function<V, V2> valueFunction) {
-        return new RemovedEvent<>(assetName, keyFunction.apply(key), valueFunction.apply(value));
+        return new RemovedEvent<>(assetName, keyFunction.apply(key), valueFunction.apply(oldValue));
     }
 
     @Override
     public <K2, V2> MapEvent<K2, V2> translate(BiFunction<K, K2, K2> keyFunction, BiFunction<V, V2, V2> valueFunction) {
-        return new RemovedEvent<>(assetName, keyFunction.apply(key, null), valueFunction.apply(value, null));
+        return new RemovedEvent<>(assetName, keyFunction.apply(key, null), valueFunction.apply(oldValue, null));
     }
 
     public K key() {
@@ -51,21 +53,22 @@ public class RemovedEvent<K, V> implements MapEvent<K, V> {
 
     @Override
     public V oldValue() {
-        return value;
+        return oldValue;
     }
 
     @Nullable
     public V value() {
         return null;
     }
+
     @Override
     public void apply(@NotNull MapEventListener<K, V> listener) {
-        listener.remove(key, value);
+        listener.remove(key, oldValue);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash("removed", key, value);
+        return Objects.hash("removed", key, oldValue);
     }
 
     @Override
@@ -75,7 +78,7 @@ public class RemovedEvent<K, V> implements MapEvent<K, V> {
                 .map(o -> (RemovedEvent<K, V>) o)
                 .filter(e -> Objects.equals(assetName, e.assetName))
                 .filter(e -> Objects.equals(key, e.key))
-                .filter(e -> Objects.equals(value, e.value))
+                .filter(e -> Objects.equals(oldValue, e.oldValue))
                 .isPresent();
     }
 
@@ -84,7 +87,22 @@ public class RemovedEvent<K, V> implements MapEvent<K, V> {
         return "RemovedEvent{" +
                 "assetName='" + assetName + '\'' +
                 ", key=" + key +
-                ", value=" + value +
+                ", oldValue=" + oldValue +
                 '}';
+    }
+
+
+    @Override
+    public void readMarshallable(WireIn wire) throws IllegalStateException {
+        wire.read(MapEventFields.assetName).text(s -> assetName = s);
+        key = (K) wire.read(MapEventFields.key).object(Object.class);
+        oldValue = (V) wire.read(MapEventFields.oldValue).object(Object.class);
+    }
+
+    @Override
+    public void writeMarshallable(WireOut wire) {
+        wire.write(MapEventFields.assetName).text(assetName);
+        wire.write(MapEventFields.key).object(key);
+        wire.write(MapEventFields.oldValue).object(oldValue);
     }
 }

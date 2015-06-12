@@ -13,10 +13,7 @@ import net.openhft.chronicle.engine.server.internal.MapWireHandler;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.TcpConnectionHub;
 import net.openhft.chronicle.threads.NamedThreadFactory;
-import net.openhft.chronicle.wire.CoreFields;
-import net.openhft.chronicle.wire.ValueIn;
-import net.openhft.chronicle.wire.Wire;
-import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +35,6 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
     private final Class<V> valueType;
     private final ExecutorService eventLoop = Executors.newSingleThreadExecutor(new NamedThreadFactory("RemoteKVSSubscription"));
     private final Class<K> keyType;
-    private KeyValueStore<K, MV, V> kvStore;
     private long subscriberTID = -1;
     private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
     private volatile boolean closed;
@@ -56,7 +52,6 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
 
     @Override
     public void setKvStore(KeyValueStore<K, MV, V> store) {
-        this.kvStore = store;
     }
 
     @Override
@@ -166,6 +161,16 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
 
         try {
             subscriber.onMessage(new MapEvent<K, V>() {
+                @Override
+                public void writeMarshallable(WireOut wire) {
+                    throw new UnsupportedOperationException("todo");
+                }
+
+                @Override
+                public void readMarshallable(WireIn wire) throws IllegalStateException {
+                    throw new UnsupportedOperationException("todo");
+                }
+
                 @Override
                 public String assetName() {
                     throw new UnsupportedOperationException("todo");

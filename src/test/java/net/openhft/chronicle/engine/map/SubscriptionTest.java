@@ -61,18 +61,14 @@ public class SubscriptionTest extends ThreadMonitoringTest {
     public static Collection<Object[]> data() throws IOException {
 
         return Arrays.asList(new Boolean[][]{
-
-                // commented out because failing on TC
-                //     {true},
-                //   {false}
+                {false},
+                {true}
         });
     }
 
     public SubscriptionTest(Boolean isRemote){
         this.isRemote = isRemote;
     }
-
-
 
     @Test
     public void testSubscriptionTest() throws IOException, InterruptedException {
@@ -161,9 +157,9 @@ public class SubscriptionTest extends ThreadMonitoringTest {
             expectedSuccess(success, 0);
         });
 
+        clientAssetTree.close();
         if(serverEndpoint != null)serverEndpoint.close();
         serverAssetTree.close();
-        clientAssetTree.close();
     }
 
     private void expectedSuccess(@NotNull AtomicInteger success, int expected) {

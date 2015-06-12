@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine.api.map;
 
 import net.openhft.chronicle.engine.api.tree.ChangeEvent;
+import net.openhft.chronicle.wire.WireKey;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -16,4 +17,8 @@ public interface MapEvent<K, V> extends KeyValueStore.Entry<K, V>, ChangeEvent {
     <K2, V2> MapEvent<K2, V2> translate(Function<K, K2> keyFunction, Function<V, V2> valueFunction);
 
     <K2, V2> MapEvent<K2, V2> translate(BiFunction<K, K2, K2> keyFunction, BiFunction<V, V2, V2> valueFunction);
+
+    enum MapEventFields implements WireKey {
+        assetName, key, oldValue, value
+    }
 }

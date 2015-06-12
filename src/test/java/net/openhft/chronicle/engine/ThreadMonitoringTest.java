@@ -1,6 +1,6 @@
 package net.openhft.chronicle.engine;
 
-import net.openhft.lang.Jvm;
+import net.openhft.chronicle.core.Jvm;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
@@ -19,6 +19,7 @@ public class ThreadMonitoringTest {
     Set<Thread> threads;
 
     public static void checkThreadsShutdown(@NotNull Set<Thread> threads) {
+        Thread.interrupted();
         // give them a change to stop if there were killed.
         pause(100);
         Map<Thread, StackTraceElement[]> threadMap = Thread.getAllStackTraces();
@@ -28,26 +29,28 @@ public class ThreadMonitoringTest {
                         .filter(t -> t.getName()
                                 .startsWith("ForkJoinPool.commonPool-worker"))
                         .collect(Collectors.toList()));
-        if (!threadMap.isEmpty()) {
-            System.out.println("### threads still running after the test ###");
-            for (Map.Entry<Thread, StackTraceElement[]> entry : threadMap.entrySet()) {
-                StringBuilder sb = new StringBuilder(entry.getKey().toString());
-                Jvm.trimStackTrace(sb, entry.getValue());
-                System.out.println(sb);
-            }
-            try {
-                for (Thread thread : threadMap.keySet()) {
-                    if (thread.isAlive()) {
-                        System.out.println("Waiting for " + thread);
-                        thread.join(1000);
-                        if (thread.isAlive()) {
-                            System.out.println("Forcing " + thread + " to die");
-                            thread.stop();
-                        }
-                    }
+        if (threadMap.isEmpty()) {
+            return;
+        }
+        System.out.println("### threads still running after the test ###");
+        for (Map.Entry<Thread, StackTraceElement[]> entry : threadMap.entrySet()) {
+            StringBuilder sb = new StringBuilder(entry.getKey().toString());
+            Jvm.trimStackTrace(sb, entry.getValue());
+            System.out.println(sb);
+        }
+
+        for (Thread thread : threadMap.keySet()) {
+            if (thread.isAlive()) {
+                System.out.println("Waiting for " + thread);
+                try {
+                    thread.join(1000);
+                } catch (InterruptedException e) {
+                    throw new AssertionError(e);
                 }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+                if (thread.isAlive()) {
+                    System.out.println("Forcing " + thread + " to die");
+                    thread.stop();
+                }
             }
         }
     }

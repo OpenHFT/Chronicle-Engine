@@ -2,6 +2,8 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -13,10 +15,10 @@ import java.util.function.Function;
  * Created by peter on 22/05/15.
  */
 public class UpdatedEvent<K, V> implements MapEvent<K, V> {
-    private final String assetName;
-    private final K key;
-    private final V oldValue;
-    private final V value;
+    private String assetName;
+    private K key;
+    private V oldValue;
+    private V value;
 
     private UpdatedEvent(String assetName, K key, V oldValue, V value) {
         this.assetName = assetName;
@@ -89,5 +91,21 @@ public class UpdatedEvent<K, V> implements MapEvent<K, V> {
                 ", oldValue=" + oldValue +
                 ", value=" + value +
                 '}';
+    }
+
+    @Override
+    public void readMarshallable(WireIn wire) throws IllegalStateException {
+        wire.read(MapEventFields.assetName).text(s -> assetName = s);
+        key = (K) wire.read(MapEventFields.key).object(Object.class);
+        oldValue = (V) wire.read(MapEventFields.oldValue).object(Object.class);
+        value = (V) wire.read(MapEventFields.value).object(Object.class);
+    }
+
+    @Override
+    public void writeMarshallable(WireOut wire) {
+        wire.write(MapEventFields.assetName).text(assetName);
+        wire.write(MapEventFields.key).object(key);
+        wire.write(MapEventFields.oldValue).object(oldValue);
+        wire.write(MapEventFields.value).object(value);
     }
 }

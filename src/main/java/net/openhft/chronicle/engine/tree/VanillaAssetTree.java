@@ -4,14 +4,28 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.map.InsertedEvent;
+import net.openhft.chronicle.engine.map.RemovedEvent;
+import net.openhft.chronicle.engine.map.UpdatedEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
 
 /**
  * Created by peter on 22/05/15.
  */
 public class VanillaAssetTree implements AssetTree {
     final VanillaAsset root = new VanillaAsset(null, "");
+
+    static {
+        CLASS_ALIASES.addAlias(AddedAssetEvent.class,
+                ExistingAssetEvent.class,
+                RemovedAssetEvent.class,
+                InsertedEvent.class,
+                UpdatedEvent.class,
+                RemovedEvent.class);
+    }
 
     public VanillaAssetTree() {
 

@@ -2,6 +2,8 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,9 +16,9 @@ import java.util.function.Function;
  * Created by peter on 22/05/15.
  */
 public class InsertedEvent<K, V> implements MapEvent<K, V> {
-    private final String assetName;
-    private final K key;
-    private final V value;
+    private String assetName;
+    private K key;
+    private V value;
 
     private InsertedEvent(String assetName, K key, V value) {
         this.assetName = assetName;
@@ -87,5 +89,19 @@ public class InsertedEvent<K, V> implements MapEvent<K, V> {
     @Override
     public String assetName() {
         return assetName;
+    }
+
+    @Override
+    public void readMarshallable(WireIn wire) throws IllegalStateException {
+        wire.read(MapEventFields.assetName).text(s -> assetName = s);
+        key = (K) wire.read(MapEventFields.key).object(Object.class);
+        value = (V) wire.read(MapEventFields.value).object(Object.class);
+    }
+
+    @Override
+    public void writeMarshallable(WireOut wire) {
+        wire.write(MapEventFields.assetName).text(assetName);
+        wire.write(MapEventFields.key).object(key);
+        wire.write(MapEventFields.value).object(value);
     }
 }
