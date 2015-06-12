@@ -3,7 +3,6 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
-import net.openhft.chronicle.engine.api.map.MapEventListener;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
@@ -13,16 +12,16 @@ import net.openhft.chronicle.engine.server.internal.MapWireHandler;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.TcpConnectionHub;
 import net.openhft.chronicle.threads.NamedThreadFactory;
-import net.openhft.chronicle.wire.*;
+import net.openhft.chronicle.wire.CoreFields;
+import net.openhft.chronicle.wire.ValueIn;
+import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.subscribe;
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.unSubscribe;
@@ -89,7 +88,8 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
                     try {
                         final Wire wire = hub.proxyReply(timeoutTime, subscriberTID);
                         checkIsData(wire);
-                        readReplyConsumer(wire, CoreFields.reply, (Consumer<ValueIn>) valueIn -> valueIn.marshallable(r -> onEvent(r, subscriber)));
+                        readReplyConsumer(wire, CoreFields.reply, (Consumer<ValueIn>)
+                                valueIn -> onEvent((MapEvent) valueIn.typedMarshallable(), subscriber));
                     } finally {
                         hub.inBytesLock().unlock();
                     }
@@ -154,72 +154,15 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
                 .getName();
     }
 
-    private void onEvent(WireIn r, Subscriber<MapEvent<K, V>> subscriber) {
-        byte eventType = r.read().int8();
-        K key = r.read(MapWireHandler.Params.key).object(keyType);
-
-
+    private void onEvent(MapEvent me, Subscriber<MapEvent<K, V>> subscriber) {
         try {
-            subscriber.onMessage(new MapEvent<K, V>() {
-                @Override
-                public void writeMarshallable(WireOut wire) {
-                    throw new UnsupportedOperationException("todo");
-                }
-
-                @Override
-                public void readMarshallable(WireIn wire) throws IllegalStateException {
-                    throw new UnsupportedOperationException("todo");
-                }
-
-                @Override
-                public String assetName() {
-                    throw new UnsupportedOperationException("todo");
-                }
-
-                @Override
-                public K key() {
-                    return key;
-                }
-
-                @Override
-                public V value() {
-                    throw new UnsupportedOperationException("todo");
-                }
-
-                @Override
-                public V oldValue() {
-                    throw new UnsupportedOperationException("todo");
-                }
-
-                @Override
-                public void apply(MapEventListener listener) {
-                    if(eventType==1) {
-                        V newValue = r.read(MapWireHandler.Params.newValue).object(valueType);
-                        listener.insert(key, newValue);
-                    }else if(eventType==2){
-                        V oldValue = r.read(MapWireHandler.Params.oldValue).object(valueType);
-                        V newValue = r.read(MapWireHandler.Params.newValue).object(valueType);
-                        listener.update(key, oldValue, newValue);
-                    }else if(eventType==3){
-                        V oldValue = r.read(MapWireHandler.Params.oldValue).object(valueType);
-                        listener.remove(key, oldValue);
-                    }else{
-                        throw new AssertionError("Event type " + eventType + " not supported");
-                    }
-                }
-
-                @Override
-                public MapEvent translate(BiFunction keyFunction, BiFunction valueFunction) {
-                    throw new UnsupportedOperationException("todo");
-                }
-
-                @Override
-                public MapEvent<K, V> translate(Function keyFunction, Function valueFunction) {
-                    throw new UnsupportedOperationException("todo");
-                }
-            });
-        } catch (InvalidSubscriberException e) {
-            e.printStackTrace();
+            if (me == null) {
+                // todo remove subscriber.
+            } else {
+                subscriber.onMessage(me);
+            }
+        } catch (InvalidSubscriberException noLongerValid) {
+            unregisterSubscriber(subscriber);
         }
     }
 

@@ -72,7 +72,7 @@ public class ChassisRFCTest {
 
         assertEquals("[InsertedEvent{assetName='/group-A', key=Key-1, value=Value-1}, " +
                 "UpdatedEvent{assetName='/group-A', key=Key-1, oldValue=Value-1, value=Value-2}, " +
-                "RemovedEvent{assetName='/group-A', key=Key-1, value=Value-2}]", values.toString());
+                "RemovedEvent{assetName='/group-A', key=Key-1, oldValue=Value-2}]", values.toString());
     }
 
     @Test

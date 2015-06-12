@@ -148,7 +148,18 @@ public class Factor implements Marshallable, BytesMarshallable, net.openhft.lang
 
     @Override
     public void readMarshallable(@NotNull WireIn wireIn) throws IllegalStateException {
-        readMarshallable(wireIn.bytes());
+        wireIn.read(() -> "openPDFlag").int8(b -> openPDFlag = b);
+        wireIn.read(() -> "openUCFlag").int8(b -> openUCFlag = b);
+        wireIn.read(() -> "openActiveEMFlag").int8(b -> openActiveEMFlag = b);
+        wireIn.read(() -> "openPastDueEMFlag").int8(b -> openPastDueEMFlag = b);
+        wireIn.read(() -> "accountCloseFlag").int8(b -> accountCloseFlag = b);
+        wireIn.read(() -> "missingPaperFlag").int8(b -> missingPaperFlag = b);
+        wireIn.read(() -> "rMLAgreementCodeFlag").int8(b -> rMLAgreementCodeFlag = b);
+        wireIn.read(() -> "nMEAccountFlag").int8(b -> nMEAccountFlag = b);
+        wireIn.read(() -> "accountClassificationTypeValue").int8(b -> accountClassificationTypeValue = b);
+        wireIn.read(() -> "accountNumber")
+                .text(b -> accountNumber = b);
+        wireIn.read(() -> "firm").text(b -> firm = b);
     }
 
     @Override
@@ -183,7 +194,18 @@ public class Factor implements Marshallable, BytesMarshallable, net.openhft.lang
 
     @Override
     public void writeMarshallable(@NotNull WireOut wireOut) {
-        writeMarshallable(wireOut.bytes());
+        wireOut.write(() -> "openPDFlag").int8(openPDFlag);
+        wireOut.write(() -> "openUCFlag").int8(openUCFlag);
+        wireOut.write(() -> "openActiveEMFlag").int8(openActiveEMFlag);
+        wireOut.write(() -> "openPastDueEMFlag").int8(openPastDueEMFlag);
+        wireOut.write(() -> "accountCloseFlag").int8(accountCloseFlag);
+        wireOut.write(() -> "missingPaperFlag").int8(missingPaperFlag);
+        wireOut.write(() -> "rMLAgreementCodeFlag").int8(rMLAgreementCodeFlag);
+        wireOut.write(() -> "nMEAccountFlag").int8(nMEAccountFlag);
+        wireOut.write(() -> "accountClassificationTypeValue").int8(accountClassificationTypeValue);
+        wireOut.write(() -> "accountNumber")
+                .text(accountNumber);
+        wireOut.write(() -> "firm").text(firm);
     }
 
     @NotNull
@@ -205,4 +227,43 @@ public class Factor implements Marshallable, BytesMarshallable, net.openhft.lang
                 '}';
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Factor factor = (Factor) o;
+
+        if (openPDFlag != factor.openPDFlag) return false;
+        if (openUCFlag != factor.openUCFlag) return false;
+        if (openActiveEMFlag != factor.openActiveEMFlag) return false;
+        if (openPastDueEMFlag != factor.openPastDueEMFlag) return false;
+        if (accountCloseFlag != factor.accountCloseFlag) return false;
+        if (missingPaperFlag != factor.missingPaperFlag) return false;
+        if (rMLAgreementCodeFlag != factor.rMLAgreementCodeFlag) return false;
+        if (nMEAccountFlag != factor.nMEAccountFlag) return false;
+        if (accountClassificationTypeValue != factor.accountClassificationTypeValue) return false;
+        if (accountNumber != null ? !accountNumber.equals(factor.accountNumber) : factor.accountNumber != null)
+            return false;
+        if (processDate != null ? !processDate.equals(factor.processDate) : factor.processDate != null) return false;
+        return !(firm != null ? !firm.equals(factor.firm) : factor.firm != null);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = (int) openPDFlag;
+        result = 31 * result + (int) openUCFlag;
+        result = 31 * result + (int) openActiveEMFlag;
+        result = 31 * result + (int) openPastDueEMFlag;
+        result = 31 * result + (int) accountCloseFlag;
+        result = 31 * result + (int) missingPaperFlag;
+        result = 31 * result + (int) rMLAgreementCodeFlag;
+        result = 31 * result + (int) nMEAccountFlag;
+        result = 31 * result + (int) accountClassificationTypeValue;
+        result = 31 * result + (accountNumber != null ? accountNumber.hashCode() : 0);
+        result = 31 * result + (processDate != null ? processDate.hashCode() : 0);
+        result = 31 * result + (firm != null ? firm.hashCode() : 0);
+        return result;
+    }
 }

@@ -26,7 +26,7 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.pool.StringBuilderPool;
 import net.openhft.chronicle.engine.api.map.MapEvent;
-import net.openhft.chronicle.engine.api.map.MapEventListener;
+import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.collection.CollectionWireHandlerProcessor;
@@ -67,7 +67,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
     private RequestContext requestContext;
     private Queue<Consumer<Wire>> publisher;
     private AssetTree assetTree;
-    private final Map<Long, MapEventListener> tidToListener = new ConcurrentHashMap<>();
+    private final Map<Long, Subscriber<MapEvent>> tidToListener = new ConcurrentHashMap<>();
 
     /**
      * @param in             the data the has come in from network
@@ -228,73 +228,29 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
 
                 if (subscribe.contentEquals(eventName)) {
 
-                    MapEventListener<K, V> listener = new MapEventListener<K, V>() {
-                        private long subscriberTid = inputTid;
-                        @Override
-                        public void update(K key, V oldValue, V newValue) {
-
-                            publisher.add(new Consumer<Wire>() {
-
-                                @Override
-                                public void accept(Wire publish) {
-                                    publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(subscriberTid));
-                                    publish.writeDocument(false, wire -> wire.write(reply).marshallable(m -> {
-                                        m.write(Params.eventType).int8(2);
-                                        kToWire.accept(m.write(Params.key), key);
-                                        vToWire.accept(m.write(Params.oldValue), oldValue);
-                                        vToWire.accept(m.write(Params.newValue), newValue);
-                                    }));
-                                }
-                            });
-
-                        }
-
-                        @Override
-                        public void insert(K key, V value) {
-
-                            publisher.add(new Consumer<Wire>() {
-
-                                @Override
-                                public void accept(Wire publish) {
-                                    publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(subscriberTid));
-                                    publish.writeDocument(false, wire -> wire.write(reply).marshallable(m -> {
-                                        m.write(Params.eventType).int8(1);
-                                        kToWire.accept(m.write(Params.key), key);
-                                        vToWire.accept(m.write(Params.newValue), value);
-                                    }));
-                                }
-                            });
-                        }
-
-                        @Override
-                        public void remove(K key, V oldValue) {
-                            publisher.add(new Consumer<Wire>() {
-
-                                @Override
-                                public void accept(Wire publish) {
-                                    publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(subscriberTid));
-                                    publish.writeDocument(false, wire -> wire.write(reply).marshallable(m -> {
-                                        m.write(Params.eventType).int8(3);
-                                        kToWire.accept(m.write(Params.key), key);
-                                        vToWire.accept(m.write(Params.oldValue), oldValue);
-                                    }));
-                                }
-                            });
-                        }
+                    Subscriber<MapEvent> listener = e -> {
+                        publisher.add(publish -> {
+                            publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
+                            publish.writeNotReadyDocument(false, wire -> wire.write(reply).typedMarshallable(e));
+                        });
                     };
                     tidToListener.put(inputTid, listener);
-                    assetTree.registerSubscriber(requestContext.name(), MapEvent.class, e -> e.apply(listener));
+                    assetTree.registerSubscriber(requestContext.name(), MapEvent.class, listener);
 
                     return;
                 }
-
                 if (unSubscribe.contentEquals(eventName)){
-                    MapEventListener listener = tidToListener.get(inputTid);
+                    Subscriber<MapEvent> listener = tidToListener.get(inputTid);
                     if(listener==null){
                         LOG.warn("No subscriber to present to unsubscribe (" + inputTid +")");
                         return;
                     }
-                    assetTree.unregisterSubscriber(requestContext.name(), MapEvent.class, e -> e.apply(listener));
+                    assetTree.unregisterSubscriber(requestContext.name(), MapEvent.class, listener);
+                    // no more data.
+                    publisher.add(publish -> {
+                        publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
+                        publish.writeDocument(false, wire -> wire.write(reply).typedMarshallable(null));
+                    });
                     return;
                 }
 
