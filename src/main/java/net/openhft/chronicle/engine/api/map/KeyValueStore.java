@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.api.map;
 
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
@@ -149,6 +150,12 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
         }
         return entries.iterator();
     }
+
+    boolean containsValue(MV value);
+
+    void replicatedPut(Bytes key, Bytes value, byte remoteIdentifer, long timestamp);
+
+    void replicatedRemove(Bytes key, byte identifier, long timestamp);
 
     interface Entry<K, V> {
         K key();

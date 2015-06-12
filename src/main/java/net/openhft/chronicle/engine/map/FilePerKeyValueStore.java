@@ -230,6 +230,21 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         }
     }
 
+    @Override
+    public boolean containsValue(final Bytes value) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public void replicatedPut(final Bytes key, final Bytes value, final byte remoteIdentifer, final long timestamp) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public void replicatedRemove(final Bytes key, final byte identifier, final long timestamp) {
+        throw new UnsupportedOperationException("todo");
+    }
+
     private Stream<Path> getFiles() {
         try {
             return Files
