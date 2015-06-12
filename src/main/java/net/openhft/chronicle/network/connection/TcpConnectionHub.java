@@ -87,6 +87,7 @@ public class TcpConnectionHub implements View, Closeable {
 
     // set up in the header
     private long startTime;
+    private transient boolean closed;
 
     public TcpConnectionHub(@NotNull final RequestContext requestContext,
                             final Asset asset) {
@@ -236,6 +237,7 @@ public class TcpConnectionHub implements View, Closeable {
     }
 
     public synchronized void close() {
+        closed = true;
         if (closeables != null)
             closeables.closeQuietly();
         closeables = null;
@@ -407,8 +409,12 @@ public class TcpConnectionHub implements View, Closeable {
         while (buffer.position() - start < requiredNumberOfBytes) {
             assert clientChannel != null;
 
-            if (clientChannel.read(buffer) == -1)
-                throw new IORuntimeException("Disconnection to server");
+            if (clientChannel.read(buffer) == -1) {
+                if(!closed)
+                    throw new IORuntimeException("Disconnection to server");
+                else
+                    return;
+            }
 
             checkTimeout(timeoutTime);
         }
@@ -698,6 +704,10 @@ public class TcpConnectionHub implements View, Closeable {
     }
 
     public static TcpConnectionHub hub(final RequestContext context, @NotNull final Asset asset) throws AssetNotFoundException {
-        return asset.acquireView(TcpConnectionHub.class, context);
+        return asset.root().acquireView(TcpConnectionHub.class, context);
+    }
+
+    public boolean isClosed(){
+        return closed;
     }
 }

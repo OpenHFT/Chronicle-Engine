@@ -11,6 +11,7 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.server.internal.MapWireHandler;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.TcpConnectionHub;
+import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.wire.CoreFields;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.Wire;
@@ -20,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -34,7 +36,7 @@ import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventI
 public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient implements ObjectKVSSubscription<K, MV, V> {
 
     private final Class<V> valueType;
-    private final Executor eventLoop = Executors.newSingleThreadExecutor();
+    private final ExecutorService eventLoop = Executors.newSingleThreadExecutor(new NamedThreadFactory("RemoteKVSSubscription"));
     private final Class<K> keyType;
     private KeyValueStore<K, MV, V> kvStore;
     private long subscriberTID = -1;
@@ -98,7 +100,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
                     }
                 }
             }catch(Throwable t){
-                if(!closed){
+                if(!closed && !hub.isClosed()){
                     t.printStackTrace();
                 }
 
@@ -218,6 +220,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
 
     public void close(){
         closed = true;
+        eventLoop.shutdown();
     }
 }
 
