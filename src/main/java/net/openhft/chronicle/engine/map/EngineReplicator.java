@@ -18,7 +18,8 @@ import static net.openhft.lang.io.NativeBytes.wrap;
 /**
  * Created by Rob Austin
  */
-public class EngineReplicator implements EngineReplication, EngineReplicationLangBytesConsumer {
+public class EngineReplicator implements EngineReplication,
+        EngineReplicationLangBytesConsumer {
 
     private final RequestContext context;
     private EngineReplicationLangBytes engineReplicationLang;
@@ -39,8 +40,11 @@ public class EngineReplicator implements EngineReplication, EngineReplicationLan
     }
 
     @Override
-    public void put(final Bytes key, final Bytes value, final byte remoteIdentifier, final long timestamp) {
-        engineReplicationLang.put(toLangBytes(key), toLangBytes(value), remoteIdentifier, timestamp);
+    public void put(final Bytes key, final Bytes value,
+                    final byte remoteIdentifier,
+                    final long timestamp) {
+        engineReplicationLang.put(toLangBytes(key), toLangBytes(value), remoteIdentifier,
+                timestamp);
     }
 
     @Override

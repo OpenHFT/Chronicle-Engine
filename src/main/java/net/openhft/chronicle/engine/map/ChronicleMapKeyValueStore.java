@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
@@ -31,6 +32,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
     private final ChronicleMap<K, V> chronicleMap;
     private final ObjectKVSSubscription<K, MV, V> subscriptions;
     private Asset asset;
+    private final EngineReplicator engineReplicator;
 
     public ChronicleMapKeyValueStore(@NotNull RequestContext context, Asset asset) {
         this.asset = asset;
@@ -41,8 +43,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
 
         String basePath = context.basePath();
 
-        final EngineReplicator engineReplicator
-                = new EngineReplicator(context);
+        engineReplicator = new EngineReplicator(context);
 
         ChronicleMapBuilder<K, V> builder = ChronicleMapBuilder.of(kClass, vClass)
                 .replication(SingleChronicleHashReplication.builder().
@@ -74,6 +75,21 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         chronicleMap = builder.create();
         subscriptions = asset.acquireView(ObjectKVSSubscription.class, context);
         subscriptions.setKvStore(this);
+    }
+
+    @Override
+    public void replicatedRemove(final Bytes key,
+                                 final byte remoteIdentifier,
+                                 final long timestamp) {
+        engineReplicator.remove(key, remoteIdentifier, timestamp);
+    }
+
+    @Override
+    public void replicatedPut(final Bytes key,
+                              final Bytes value,
+                              final byte remoteIdentifier,
+                              final long timestamp) {
+        engineReplicator.put(key, value, remoteIdentifier, timestamp);
     }
 
     @NotNull
@@ -135,6 +151,11 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
     @Override
     public void clear() {
         chronicleMap.clear();
+    }
+
+    @Override
+    public boolean containsValue(final MV value) {
+        throw new UnsupportedOperationException("todo");
     }
 
     @Override

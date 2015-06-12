@@ -187,6 +187,21 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     }
 
     @Override
+    public boolean containsValue(final V value) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public void replicatedPut(final Bytes key, final Bytes value, final byte remoteIdentifer, final long timestamp) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public void replicatedRemove(final Bytes key, final byte identifier, final long timestamp) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
     public Asset asset() {
         return asset;
     }

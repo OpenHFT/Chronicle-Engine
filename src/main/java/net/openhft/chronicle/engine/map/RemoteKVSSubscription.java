@@ -78,6 +78,8 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
         }
 
         assert !hub.outBytesLock().isHeldByCurrentThread();
+
+        // todo a hack - should be fixed !!
         final long timeoutTime = Long.MAX_VALUE;
 
         eventLoop.execute(() -> {

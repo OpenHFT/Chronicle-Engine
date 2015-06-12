@@ -25,6 +25,7 @@ package net.openhft.chronicle.engine.server.internal;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.pool.StringBuilderPool;
+import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
@@ -82,7 +83,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
      */
     public void process(@NotNull final Wire in,
                         @NotNull final Wire out,
-                        @NotNull Map<K, V> map,
+                        @NotNull KeyValueStore<K, V, V> map,
                         long tid,
                         @NotNull final WireAdapter<K, V> wireAdapter,
                         @NotNull final RequestContext requestContext,
@@ -114,7 +115,10 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
         key,
         value,
         oldValue,
-        eventType, newValue
+        eventType,
+        newValue,
+        timestamp,
+        identifier;
     }
 
     public enum EventId implements ParameterizeWireKey {
@@ -146,7 +150,9 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
         remoteIdentifier,
         numberOfSegments,
         subscribe,
-        unSubscribe;
+        unSubscribe,
+        replicatedPut(key, value, timestamp, identifier),
+        replicatedRemove(key, timestamp, identifier);
 
         private final WireKey[] params;
 
@@ -173,7 +179,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
     @Nullable
     private Wire outWire = null;
 
-    private Map<K, V> map;
+    private KeyValueStore<K, V, V> map;
     private boolean charSequenceValue;
 
     public MapWireHandler(@NotNull final Map<Long, String> cidToCsp) throws IOException {
@@ -186,6 +192,10 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
 
     private long tid;
     private final AtomicLong cid = new AtomicLong();
+
+    private final Bytes keyBytes = Bytes.elasticByteBuffer();
+    private final Bytes valueBytes = Bytes.elasticByteBuffer();
+
 
     /**
      * create a new cid if one does not already exist for this csp
@@ -261,6 +271,29 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                     return;
                 }
 
+                if (replicatedPut.contentEquals(eventName)) {
+
+                    keyBytes.clear();
+                    valueBytes.clear();
+
+                    wireIn.read(Params.key).bytes(keyBytes);
+                    wireIn.read(Params.value).bytes(valueBytes);
+
+                    final long timestamp = wireIn.read(Params.timestamp).int64();
+                    final byte identifier = wireIn.read(Params.identifier).int8();
+                    map.replicatedPut(keyBytes, keyBytes, identifier, timestamp);
+                    return;
+                }
+
+                if (replicatedRemove.contentEquals(eventName)) {
+                    keyBytes.clear();
+                    wireIn.read(Params.key).bytes(keyBytes);
+                    final long timestamp = wireIn.read(Params.timestamp).int64();
+                    final byte identifier = wireIn.read(Params.identifier).int8();
+                    map.replicatedRemove(keyBytes, identifier, timestamp);
+                    return;
+                }
+
                 outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
 
                 writeData(out -> {
@@ -296,7 +329,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                     }
 
                     if (size.contentEquals(eventName)) {
-                        outWire.writeEventName(reply).int64(map.size());
+                        outWire.writeEventName(reply).int64(map.longSize());
                         return;
                     }
 
@@ -304,11 +337,6 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                             values.contentEquals(eventName) ||
                             entrySet.contentEquals(eventName)) {
                         createProxy(eventName.toString());
-                        return;
-                    }
-
-                    if (size.contentEquals(eventName)) {
-                        outWire.writeEventName(reply).int64(map.size());
                         return;
                     }
 
@@ -354,7 +382,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                             nullCheck(value);
 
                             vToWire.accept(outWire.writeEventName(reply),
-                                    map.put(key, value));
+                                    map.getAndPut(key, value));
                         });
                         return;
                     }
@@ -362,7 +390,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                     if (getAndRemove.contentEquals(eventName)) {
                         final K key = wireToK.apply(valueIn);
                         nullCheck(key);
-                        vToWire.accept(outWire.writeEventName(reply), map.remove(key));
+                        vToWire.accept(outWire.writeEventName(reply), map.getAndRemove(key));
                         return;
                     }
 
@@ -390,7 +418,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                             nullCheck(key);
                             nullCheck(oldValue);
                             nullCheck(newValue);
-                            outWire.writeEventName(reply).bool(map.replace(key, oldValue, newValue));
+                            outWire.writeEventName(reply).bool(map.replaceIfEqual(key, oldValue, newValue));
                         });
                         return;
                     }
@@ -416,7 +444,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                             final V value = wireToV.apply(wire.read(params[1]));
                             nullCheck(key);
                             nullCheck(value);
-                            outWire.writeEventName(reply).bool(map.remove(key, value));
+                            outWire.writeEventName(reply).bool(map.removeIfEqual(key, value));
                         });
                     }
 
