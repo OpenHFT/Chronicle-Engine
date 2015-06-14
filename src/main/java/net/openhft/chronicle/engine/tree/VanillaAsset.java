@@ -75,7 +75,7 @@ public class VanillaAsset implements Asset, Closeable {
         addWrappingRule(KeySetView.class, LAST + " keySet", VanillaKeySetView::new, MapView.class);
         addWrappingRule(ValuesCollection.class, LAST + " values", VanillaValuesCollection::new, MapView.class);
 
-        addWrappingRule(MapView.class, LAST + " string key maps", VanillaMapView::new, ObjectKeyValueStore.class);
+        addWrappingRule(MapView.class, LAST + " string key maps", VanillaMapView::new, AuthenticatedKeyValueStore.class);
 
         addLeafRule(TopologySubscription.class, LAST + " vanilla",
                 VanillaTopologySubscription::new);
@@ -84,10 +84,10 @@ public class VanillaAsset implements Asset, Closeable {
     public void forTesting() {
         standardStack();
 
-        addWrappingRule(ObjectKeyValueStore.class, LAST + " authenticated",
+        addWrappingRule(AuthenticatedKeyValueStore.class, LAST + " authenticated",
                 VanillaSubscriptionKeyValueStore::new, KeyValueStore.class);
 
-        addWrappingRule(AuthenticatedKeyValueStore.class, LAST + " authenticated",
+        addWrappingRule(ObjectKeyValueStore.class, LAST + " authenticated",
                 VanillaSubscriptionKeyValueStore::new, KeyValueStore.class);
 
         addWrappingRule(SubscriptionKeyValueStore.class, LAST + " sub -> foundation",
