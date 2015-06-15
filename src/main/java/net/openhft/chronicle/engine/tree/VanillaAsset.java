@@ -104,10 +104,10 @@ public class VanillaAsset implements Asset, Closeable {
     public void forRemoteAccess() {
         standardStack();
 
-        addLeafRule(ObjectKVSSubscription.class, LAST + " remote",
+        addLeafRule(ObjectKVSSubscription.class, LAST + " Remote",
                 RemoteKVSSubscription::new);
-        addLeafRule(TcpConnectionHub.class, LAST + " hub", TcpConnectionHub::new);
-        addWrappingRule(ObjectKeyValueStore.class, LAST + " remote AKVS",
+        addLeafRule(TcpConnectionHub.class, LAST + " Hub", TcpConnectionHub::new);
+        addWrappingRule(ObjectKeyValueStore.class, LAST + " Remote AKVS",
                 RemoteKeyValueStore::new, TcpConnectionHub.class);
     }
 
@@ -328,6 +328,11 @@ public class VanillaAsset implements Asset, Closeable {
             this.predicate = predicate;
             this.factory = factory;
             this.underlyingType = underlyingType;
+        }
+
+        @Override
+        public String toString() {
+            return "wraps " + underlyingType;
         }
     }
 }
