@@ -449,9 +449,8 @@ public class TcpConnectionHub implements View, Closeable {
         // if we have other threads waiting to send and the buffer is not full,
         // let the other threads write to the buffer
         if (outBytesLock().hasQueuedThreads() &&
-                outBytesPosition + largestChunkSoFar <= tcpBufferSize) {
+                outBytesPosition + largestChunkSoFar <= tcpBufferSize)
             return;
-        }
 
         final ByteBuffer outBuffer = (ByteBuffer) bytes.underlyingObject();
         outBuffer.limit((int) bytes.position());
