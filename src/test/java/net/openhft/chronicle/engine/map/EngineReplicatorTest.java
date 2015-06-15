@@ -87,25 +87,6 @@ public class EngineReplicatorTest {
 
     }
 
-    private class Entry {
-        String key;
-        String value;
-        byte identifer;
-        boolean isDeleted;
-        long timestamp;
-        long bootStrapTimeStamp;
 
-        Entry(final String key,
-              final String value, final long timestamp,
-              final byte identifer, final boolean
-                      isDeleted, final long bootStrapTimeStamp) {
-            this.key = key;
-            this.value = value;
-            this.identifer = identifer;
-            this.isDeleted = isDeleted;
-            this.timestamp = timestamp;
-            this.bootStrapTimeStamp = bootStrapTimeStamp;
-        }
-    }
 
 }

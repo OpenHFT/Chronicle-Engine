@@ -9,6 +9,9 @@ import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.hash.replication.EngineReplicationLangBytesConsumer;
 import net.openhft.chronicle.map.EngineReplicationLangBytes;
 import net.openhft.chronicle.map.EngineReplicationLangBytes.EngineModificationIterator;
+import net.openhft.chronicle.wire.Marshallable;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,7 +81,7 @@ public class EngineReplicator implements EngineReplication,
             put(entry);
     }
 
-    public interface ReplicatedEntry {
+    public interface ReplicatedEntry extends Marshallable {
         Bytes key();
 
         Bytes value();
@@ -101,6 +104,18 @@ public class EngineReplicator implements EngineReplication,
         static ReplicatedEntry newRemoveEvent(Bytes key, byte remoteIdentifier, long timestamp) {
             return new VanillaReplicatedEntry(key, null, timestamp, remoteIdentifier, true, 0);
         }
+
+        @Override
+        default void readMarshallable(final WireIn wire) throws IllegalStateException {
+            throw new UnsupportedOperationException("todo");
+        }
+
+        @Override
+        default void writeMarshallable(final WireOut wire) {
+            throw new UnsupportedOperationException("todo");
+        }
+
+
     }
 
     public static class VanillaReplicatedEntry implements ReplicatedEntry {

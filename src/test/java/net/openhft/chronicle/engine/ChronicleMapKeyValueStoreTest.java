@@ -3,18 +3,18 @@ package net.openhft.chronicle.engine;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.engine.api.EngineReplication;
+import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
-import net.openhft.chronicle.engine.api.map.MapEvent;
-import net.openhft.chronicle.engine.api.map.MapEventListener;
 import net.openhft.chronicle.engine.api.map.MapView;
-import net.openhft.chronicle.engine.api.tree.Asset;
+import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.engine.map.EngineReplicator;
 import net.openhft.chronicle.engine.map.VanillaMapView;
+import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
-import org.jetbrains.annotations.NotNull;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -22,119 +22,117 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 
-import static net.openhft.chronicle.engine.Chassis.*;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 /**
  * Created by daniel on 28/05/15.
  */
 public class ChronicleMapKeyValueStoreTest {
-    public static final String NAME = "chronmapkvstoretests";
-    private static Map<String, Factor> map;
-    private static KeyValueStore mapU;
-    private static EngineReplication replicator;
+    public static final String NAME = "chronmapkvstoretests2";
+
+    private static AssetTree tree1;
+    private static AssetTree tree2;
+    private static AssetTree tree3;
 
     @BeforeClass
-    public static void createMap() throws IOException {
+    public static void before() throws IOException {
         //Delete any files from the last run
         Files.deleteIfExists(Paths.get(OS.TARGET, NAME));
-
-        resetChassis();
-        Function<Bytes, Wire> writeType = TextWire::new;
-
-        addWrappingRule(MapView.class, "map directly to KeyValueStore", VanillaMapView::new, KeyValueStore.class);
-        addLeafRule(EngineReplication.class, "Engine replication holder", EngineReplicator::new);
-        addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
-                new ChronicleMapKeyValueStore(context.wireType(writeType).basePath(OS.TARGET), asset));
-
-        map = acquireMap(NAME, String.class, Factor.class);
-        mapU = ((VanillaMapView) map).underlying();
-        assertEquals(ChronicleMapKeyValueStore.class, mapU.getClass());
-
-        //just in case it hasn't been cleared up last time
-        map.clear();
-
-        replicator = acquireService(NAME, EngineReplication.class);
-        assertNotNull(replicator);
+        tree1 = create("1");
+        tree2 = create("2");
+        tree3 = create("3");
     }
 
     @AfterClass
-    public static void tearDown() throws Exception {
-        mapU.close();
+    public static void after() {
+        tree1.close();
+        tree2.close();
+        tree3.close();
+    }
+
+    private static AssetTree create(final String node) {
+        Function<Bytes, Wire> writeType = TextWire::new;
+        AssetTree tree1 = new VanillaAssetTree().forTesting();
+        tree1.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
+                VanillaMapView::new,
+                KeyValueStore.class);
+        tree1.root().addLeafRule(EngineReplication.class, "Engine replication holder",
+                EngineReplicator::new);
+        tree1.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
+                new ChronicleMapKeyValueStore(context.wireType(writeType).basePath(OS
+                        .TARGET + "/" + node),
+                        asset));
+
+        return tree1;
     }
 
     @Test
     public void test() throws Exception {
-//        EngineReplication.ModificationIterator iter = replicator.acquireModificationIterator((byte) 1);
-        // todo replace from here
-        AtomicInteger success = new AtomicInteger();
-        MapEventListener<String, Factor> listener = new MapEventListener<String, Factor>() {
-            @Override
-            public void update(String key, Factor oldValue, Factor newValue) {
-                System.out.println("Updated { key: " + key + ", oldValue: " + oldValue + ", value: " + newValue + " }");
-                success.set(-1000);
-            }
 
-            @Override
-            public void insert(String key, Factor value) {
-                System.out.println("Inserted { key: " + key + ", value: " + value + " }");
-                success.incrementAndGet();
-            }
+        final EngineReplication replicator1 = tree1.acquireService(NAME, EngineReplication.class);
+        assertNotNull(replicator1);
 
-            @Override
-            public void remove(String key, Factor oldValue) {
-                System.out.println("Removed { key: " + key + ", value: " + oldValue + " }");
-                success.set(-100);
-            }
-        };
+        final EngineReplication replicator2 = tree2.acquireService(NAME, EngineReplication.class);
+        assertNotNull(replicator2);
 
-        Asset asset = getAsset(NAME);
-        registerSubscriber(NAME, MapEvent.class, e -> e.apply(listener));
-        //ChronicleMapKeyValueStore sbskvStore = asset.acquireView(ChronicleMapKeyValueStore.class);
-        //sbskvStore.registerSubscriber(MapEvent.class, (x) ->
-        //        System.out.println(x), "");
-        // todo to here with code to iterate over the events.
-        // todo move to after the events happen.
+        final EngineReplication replicator3 = tree3.acquireService(NAME, EngineReplication.class);
+        assertNotNull(replicator3);
 
-        Factor factor = new Factor();
-        factor.setAccountNumber("xyz");
-        map.put("testA", factor);
-        assertEquals(1, map.size());
-        assertEquals("xyz", map.get("testA").getAccountNumber());
+        final ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME, String.class, String
+                .class);
+        assertNotNull(map1);
 
-        // todo replace this with an iterate over events to see this event
-        expectedSuccess(success, 1);
-        success.set(0);
+        final ConcurrentMap<String, String> map2 = tree1.acquireMap(NAME, String.class, String
+                .class);
+        assertNotNull(map2);
 
-        factor.setAccountNumber("abc");
-        map.put("testA", factor);
+        final ConcurrentMap<String, String> map3 = tree1.acquireMap(NAME, String.class, String
+                .class);
+        assertNotNull(map3);
 
-        // todo replace this with an iterate over events to see this event
-        expectedSuccess(success, -1000);
-        success.set(0);
+        final ModificationIterator iterator1for2 = replicator1.acquireModificationIterator
+                (replicator2.identifier());
 
-        map.remove("testA");
+        final ModificationIterator iterator1for3 = replicator1.acquireModificationIterator
+                (replicator3.identifier());
 
-        // todo replace this with an iterate over events to see this event
-        expectedSuccess(success, -100);
-        success.set(0);
-    }
+        final ModificationIterator iterator2for1 = replicator2.acquireModificationIterator
+                (replicator1.identifier());
 
-    private void expectedSuccess(@NotNull AtomicInteger success, int expected) {
-        for (int i = 0; i < 20; i++) {
-            if (success.get() == expected)
-                break;
-            try {
-                TimeUnit.MILLISECONDS.sleep(1);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+        final ModificationIterator iterator2for3 = replicator2.acquireModificationIterator
+                (replicator3.identifier());
+
+        final ModificationIterator iterator3for1 = replicator3.acquireModificationIterator
+                (replicator1.identifier());
+
+        final ModificationIterator iterator3for2 = replicator3.acquireModificationIterator
+                (replicator2.identifier());
+
+        map1.put("hello1", "world1");
+        map2.put("hello2", "world2");
+        map3.put("hello3", "world3");
+
+        iterator1for2.forEach(replicator2.identifier(), replicator2::onEntry);
+        iterator1for3.forEach(replicator3.identifier(), replicator3::onEntry);
+
+        iterator2for1.forEach(replicator1.identifier(), replicator1::onEntry);
+        iterator2for3.forEach(replicator3.identifier(), replicator3::onEntry);
+
+        iterator3for1.forEach(replicator1.identifier(), replicator1::onEntry);
+        iterator3for2.forEach(replicator2.identifier(), replicator2::onEntry);
+
+        for (Map m : new Map[]{map1, map2, map3}) {
+            Assert.assertEquals("world1", m.get("hello1"));
+            Assert.assertEquals("world2", m.get("hello2"));
+            Assert.assertEquals("world3", m.get("hello3"));
+            Assert.assertEquals(3, m.size());
         }
-        assertEquals(expected, success.get());
+
+
+
     }
+
 }

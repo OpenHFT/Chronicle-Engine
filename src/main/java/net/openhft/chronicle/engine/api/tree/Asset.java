@@ -90,4 +90,6 @@ public interface Asset extends Closeable {
     boolean hasChildren();
 
     void forEachChild(ThrowingAcceptor<Asset, InvalidSubscriberException> child) throws InvalidSubscriberException;
+
+
 }

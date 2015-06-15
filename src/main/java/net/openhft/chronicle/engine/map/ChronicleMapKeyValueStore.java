@@ -3,7 +3,6 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.Jvm;
-import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
@@ -11,8 +10,6 @@ import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
-import net.openhft.chronicle.hash.replication.EngineReplicationLangBytesConsumer;
-import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.MapEventListener;
@@ -28,6 +25,7 @@ import java.util.Map;
 import static net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer.notifyEachEvent;
 import static net.openhft.chronicle.engine.map.EngineReplicator.ReplicatedEntry.newPutEvent;
 import static net.openhft.chronicle.engine.map.EngineReplicator.ReplicatedEntry.newRemoveEvent;
+import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplication.builder;
 
 /**
  * Created by daniel on 27/05/15.
@@ -35,8 +33,9 @@ import static net.openhft.chronicle.engine.map.EngineReplicator.ReplicatedEntry.
 public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValueStore<K, MV, V>, Closeable {
     private final ChronicleMap<K, V> chronicleMap;
     private final ObjectKVSSubscription<K, MV, V> subscriptions;
-    private final EngineReplication engineReplicator;
+
     private Asset asset;
+    private final EngineReplicator engineReplicator;
 
     public ChronicleMapKeyValueStore(@NotNull RequestContext context, Asset asset) {
         this.asset = asset;
@@ -47,13 +46,20 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
 
         String basePath = context.basePath();
 
-        engineReplicator = asset.acquireView(EngineReplication.class, context);
+        // todo may something like below
+        //engineReplicator = asset.acquireView(EngineReplication.class, context);
 
-        ChronicleMapBuilder<K, V> builder = ChronicleMapBuilder.of(kClass, vClass)
-                .replication(SingleChronicleHashReplication.builder().
-                        engineReplication((EngineReplicationLangBytesConsumer) engineReplicator).
-                        createWithId((byte) 2))
-                .eventListener(publishingOperations);
+        engineReplicator = new EngineReplicator(context);
+
+        // todo fix this
+        Byte localIdentifier = (byte) 1;
+
+        ChronicleMapBuilder<K, V> builder = ChronicleMapBuilder.of(kClass, vClass).
+                replication(builder().engineReplication(engineReplicator).createWithId(localIdentifier));
+
+
+
+
 
         if (context.putReturnsNull() != Boolean.FALSE) {
             builder.putReturnsNull(true);
@@ -87,7 +93,6 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
                                  final long timestamp) {
         engineReplicator.onEntry(newRemoveEvent(key, remoteIdentifier, timestamp));
     }
-
 
 
     @NotNull

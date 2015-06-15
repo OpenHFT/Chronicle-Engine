@@ -41,6 +41,8 @@ public class RequestContext {
     private long timeout = 1000; // in ms
     private Boolean recurse;
 
+    private byte[] remoteIdentifiers;
+
     private static void addAlias(Class type, @NotNull String aliases) {
         CLASS_ALIASES.addAlias(type, aliases);
     }
@@ -321,5 +323,10 @@ public class RequestContext {
     public RequestContext recurse(Boolean recurse) {
         this.recurse = recurse;
         return this;
+    }
+
+    byte[] remoteIdentifier() {
+        throw new UnsupportedOperationException("todo");
+        // return this.remoteIdentifiers;
     }
 }
