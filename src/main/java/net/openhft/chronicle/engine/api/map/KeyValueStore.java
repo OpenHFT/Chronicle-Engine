@@ -153,10 +153,7 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
 
     boolean containsValue(MV value);
 
-    // todo change these to K, V types.
-    void replicatedPut(Bytes key, Bytes value, byte remoteIdentifer, long timestamp);
-
-    // todo change these to K, V types.
+    void replicatedPut(Bytes key, Bytes value, byte remoteIdentifier, long timestamp);
     void replicatedRemove(Bytes key, byte identifier, long timestamp);
 
     interface Entry<K, V> {

@@ -87,7 +87,7 @@ public class VanillaKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> {
     }
 
     @Override
-    public void replicatedPut(final Bytes key, final Bytes value, final byte remoteIdentifer, final long timestamp) {
+    public void replicatedPut(final Bytes key, final Bytes value, final byte remoteIdentifier, final long timestamp) {
         throw new UnsupportedOperationException("todo");
     }
 

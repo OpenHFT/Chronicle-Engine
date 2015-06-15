@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.function.Consumer;
 
 import static java.lang.ThreadLocal.withInitial;
 import static net.openhft.lang.io.NativeBytes.wrap;
@@ -45,7 +46,6 @@ public class EngineReplicator implements EngineReplication,
         return wrap(b.bytes().address(), b.remaining());
     }
 
-    @Override
     public void put(final Bytes key, final Bytes value,
                     final byte remoteIdentifier,
                     final long timestamp) {
@@ -53,8 +53,7 @@ public class EngineReplicator implements EngineReplication,
                 timestamp);
     }
 
-    @Override
-    public void remove(final Bytes key, final byte remoteIdentifier, final long timestamp) {
+    private void remove(final Bytes key, final byte remoteIdentifier, final long timestamp) {
         engineReplicationLang.remove(toLangBytes(key), remoteIdentifier, timestamp);
     }
 
@@ -63,12 +62,139 @@ public class EngineReplicator implements EngineReplication,
         return engineReplicationLang.identifier();
     }
 
+    private void put(@NotNull final ReplicatedEntry entry) {
+        put(entry.key(), entry.value(), entry.identifier(), entry.timestamp());
+    }
+
+    private void remove(@NotNull final ReplicatedEntry entry) {
+        remove(entry.key(), entry.identifier(), entry.timestamp());
+    }
+
+    @Override
+    public void onEntry(@NotNull final ReplicatedEntry entry) {
+        if (entry.isDeleted())
+            remove(entry);
+        else
+            put(entry);
+    }
+
+    public interface ReplicatedEntry {
+        Bytes key();
+
+        Bytes value();
+
+        long timestamp();
+
+        byte identifier();
+
+        boolean isDeleted();
+
+        long bootStrapTimeStamp();
+
+        static ReplicatedEntry newPutEvent(final Bytes key,
+                                           final Bytes value,
+                                           final long timestamp,
+                                           final byte identifier) {
+            return new VanillaReplicatedEntry(key, value, timestamp, identifier, true, 0);
+        }
+
+        static ReplicatedEntry newRemoveEvent(Bytes key, byte remoteIdentifier, long timestamp) {
+            return new VanillaReplicatedEntry(key, null, timestamp, remoteIdentifier, true, 0);
+        }
+    }
+
+    public static class VanillaReplicatedEntry implements ReplicatedEntry {
+
+        private final Bytes key;
+        private final Bytes value;
+        private final long timestamp;
+        private final byte identifier;
+        private final boolean isDeleted;
+        private final long bootStrapTimeStamp;
+
+        /**
+         * @param key                the key of the entry
+         * @param value              the value of the entry
+         * @param identifier         the identifier of the remote server
+         * @param timestamp          the timestamp send from the remote server, this time stamp was
+         *                           the time the entry was removed
+         * @param bootStrapTimeStamp sent to the client on every update this is the timestamp that
+         *                           the remote client should bootstrap from when there has been a
+         *                           disconnection, this time maybe later than the message time as
+         *                           event are not send in chronological order from the bit set.
+         */
+        VanillaReplicatedEntry(final Bytes key,
+                               final Bytes value,
+                               final long timestamp,
+                               final byte identifier,
+                               final boolean isDeleted,
+                               final long bootStrapTimeStamp) {
+            this.key = key;
+            this.value = value;
+            this.timestamp = timestamp;
+            this.identifier = identifier;
+            this.isDeleted = isDeleted;
+            this.bootStrapTimeStamp = bootStrapTimeStamp;
+        }
+
+        @Override
+        public Bytes key() {
+            return key;
+        }
+
+        @Override
+        public Bytes value() {
+            return value;
+        }
+
+        @Override
+        public long timestamp() {
+            return timestamp;
+        }
+
+        @Override
+        public byte identifier() {
+            return identifier;
+        }
+
+        @Override
+        public boolean isDeleted() {
+            return isDeleted;
+        }
+
+        @Override
+        public long bootStrapTimeStamp() {
+            return bootStrapTimeStamp;
+        }
+
+    }
+
+    @Override
+    public void forEach(byte id, @NotNull Consumer<ReplicatedEntry> consumer) throws InterruptedException {
+        acquireModificationIterator(id).forEach(id, consumer);
+    }
+
     @Override
     public ModificationIterator acquireModificationIterator(final byte remoteIdentifier) {
         final EngineModificationIterator instance = engineReplicationLang
                 .acquireEngineModificationIterator(remoteIdentifier);
 
         return new ModificationIterator() {
+
+            @Override
+            public void forEach(byte id, @NotNull Consumer<ReplicatedEntry> consumer) throws InterruptedException {
+
+                while (hasNext()) {
+
+                    nextEntry(entry -> {
+                        consumer.accept(entry);
+                        return true;
+                    });
+
+                }
+
+            }
+
 
             @Override
             public boolean hasNext() {
@@ -80,8 +206,14 @@ public class EngineReplicator implements EngineReplication,
                 return instance.nextEntry((key, value, timestamp,
                                            identifier, isDeleted,
                                            bootStrapTimeStamp) ->
-                        callback.onEntry(toKey(key), toValue(value), timestamp,
-                                identifier, isDeleted, bootStrapTimeStamp));
+
+                        callback.onEntry(new VanillaReplicatedEntry(
+                                toKey(key),
+                                toValue(value),
+                                timestamp,
+                                identifier,
+                                isDeleted,
+                                bootStrapTimeStamp)));
             }
 
             private Bytes<Void> toKey(final @NotNull net.openhft.lang.io.Bytes key) {

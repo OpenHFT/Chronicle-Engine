@@ -3,6 +3,7 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.NativeBytesStore;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
+import net.openhft.chronicle.engine.map.EngineReplicator.ReplicatedEntry;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.wire.TextWire;
@@ -39,20 +40,21 @@ public class EngineReplicatorTest {
 
         Assert.assertTrue(modificationIterator.hasNext());
 
-        BlockingQueue<Entry> q = new ArrayBlockingQueue<>(1);
-        modificationIterator.nextEntry((k, v, timestamp, identifier, isDeleted, bootStrapTimeStamp) -> {
-
-            final String k0 = new TextWire(k.bytes()).getValueIn().text();
-            final String v0 = (v == null) ? null : new TextWire(v.bytes()).getValueIn().text();
-            q.add(new Entry(k0, v0, timestamp, identifier, isDeleted, bootStrapTimeStamp));
+        BlockingQueue<ReplicatedEntry> q = new ArrayBlockingQueue<>(1);
+        modificationIterator.nextEntry(entry -> {
+            q.add(entry);
             return true;
         });
 
-        final Entry take = q.take();
 
-        Assert.assertEquals("hello", take.key);
-        Assert.assertEquals("world", take.value);
-        Assert.assertEquals(2, take.identifer);
+        final ReplicatedEntry entry = q.take();
+
+        Assert.assertEquals("hello", new TextWire(entry.key().bytes()).getValueIn().text());
+
+        final Bytes value = entry.value();
+        Assert.assertEquals("world", (value == null) ? null : new TextWire(value).getValueIn().text());
+
+        Assert.assertEquals(2, entry.identifier());
 
     }
 
