@@ -70,6 +70,8 @@ public class ChronicleMapKeyValueStoreTest {
 
     @Test
     public void test() throws Exception {
+//        EngineReplication.ModificationIterator iter = replicator.acquireModificationIterator((byte) 1);
+        // todo replace from here
         AtomicInteger success = new AtomicInteger();
         MapEventListener<String, Factor> listener = new MapEventListener<String, Factor>() {
             @Override
@@ -96,6 +98,8 @@ public class ChronicleMapKeyValueStoreTest {
         //ChronicleMapKeyValueStore sbskvStore = asset.acquireView(ChronicleMapKeyValueStore.class);
         //sbskvStore.registerSubscriber(MapEvent.class, (x) ->
         //        System.out.println(x), "");
+        // todo to here with code to iterate over the events.
+        // todo move to after the events happen.
 
         Factor factor = new Factor();
         factor.setAccountNumber("xyz");
@@ -103,17 +107,20 @@ public class ChronicleMapKeyValueStoreTest {
         assertEquals(1, map.size());
         assertEquals("xyz", map.get("testA").getAccountNumber());
 
+        // todo replace this with an iterate over events to see this event
         expectedSuccess(success, 1);
         success.set(0);
 
         factor.setAccountNumber("abc");
         map.put("testA", factor);
 
+        // todo replace this with an iterate over events to see this event
         expectedSuccess(success, -1000);
         success.set(0);
 
         map.remove("testA");
 
+        // todo replace this with an iterate over events to see this event
         expectedSuccess(success, -100);
         success.set(0);
     }

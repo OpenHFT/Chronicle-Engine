@@ -3,7 +3,9 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.PointerBytesStore;
 import net.openhft.chronicle.engine.api.EngineReplication;
+import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.hash.replication.EngineReplicationLangBytesConsumer;
 import net.openhft.chronicle.map.EngineReplicationLangBytes;
 import net.openhft.chronicle.map.EngineReplicationLangBytes.EngineModificationIterator;
@@ -19,12 +21,16 @@ import static net.openhft.lang.io.NativeBytes.wrap;
  * Created by Rob Austin
  */
 public class EngineReplicator implements EngineReplication,
-        EngineReplicationLangBytesConsumer {
+        EngineReplicationLangBytesConsumer, View {
 
     private final RequestContext context;
     private EngineReplicationLangBytes engineReplicationLang;
     private final ThreadLocal<PointerBytesStore> keyLocal = withInitial(PointerBytesStore::new);
     private final ThreadLocal<PointerBytesStore> valueLocal = withInitial(PointerBytesStore::new);
+
+    public EngineReplicator(RequestContext requestContext, Asset asset) {
+        this(requestContext);
+    }
 
     @Override
     public void set(final EngineReplicationLangBytes engineReplicationLangBytes) {

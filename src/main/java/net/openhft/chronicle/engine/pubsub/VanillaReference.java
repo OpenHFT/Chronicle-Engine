@@ -6,11 +6,12 @@ import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.api.tree.View;
 import org.jetbrains.annotations.NotNull;
 
 import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
 
-public class VanillaReference<E> implements Reference<E> {
+public class VanillaReference<E> implements Reference<E>, View {
     private final String name;
     private final Class<E> eClass;
     private final MapView<String, E, E> underlyingMap;
