@@ -11,6 +11,7 @@ import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.hash.replication.EngineReplicationLangBytesConsumer;
 import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.map.ChronicleMap;
@@ -26,8 +27,6 @@ import java.util.Iterator;
 import java.util.Map;
 
 import static net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer.notifyEachEvent;
-import static net.openhft.chronicle.engine.map.EngineReplicator.ReplicatedEntry.newPutEvent;
-import static net.openhft.chronicle.engine.map.EngineReplicator.ReplicatedEntry.newRemoveEvent;
 
 /**
  * Created by daniel on 27/05/15.
@@ -48,11 +47,11 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         String basePath = context.basePath();
 
         engineReplicator = asset.acquireView(EngineReplication.class, context);
-
+        HostIdentifier hostIdentifier = asset.acquireView(HostIdentifier.class, context);
         ChronicleMapBuilder<K, V> builder = ChronicleMapBuilder.of(kClass, vClass)
                 .replication(SingleChronicleHashReplication.builder().
                         engineReplication((EngineReplicationLangBytesConsumer) engineReplicator).
-                        createWithId((byte) 2))
+                        createWithId((byte) hostIdentifier.hostId()))
                 .eventListener(publishingOperations);
 
         if (context.putReturnsNull() != Boolean.FALSE) {
@@ -85,10 +84,16 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
     public void replicatedRemove(final Bytes key,
                                  final byte remoteIdentifier,
                                  final long timestamp) {
-        engineReplicator.onEntry(newRemoveEvent(key, remoteIdentifier, timestamp));
+        engineReplicator.remove(key, remoteIdentifier, timestamp);
     }
 
-
+    @Override
+    public void replicatedPut(final Bytes key,
+                              final Bytes value,
+                              final byte remoteIdentifier,
+                              final long timestamp) {
+        engineReplicator.put(key, value, remoteIdentifier, timestamp);
+    }
 
     @NotNull
     @Override
@@ -154,13 +159,6 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
     @Override
     public boolean containsValue(final MV value) {
         throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
-    public void replicatedPut(final Bytes key, final Bytes value, final byte remoteIdentifier, final long timestamp) {
-
-        engineReplicator.onEntry(newPutEvent(key, value, timestamp, remoteIdentifier));
-
     }
 
     @Override
