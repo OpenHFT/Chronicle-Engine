@@ -21,6 +21,7 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
+import net.openhft.chronicle.wire.BinaryWire;
 import net.openhft.chronicle.wire.TextWire;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
@@ -45,7 +46,8 @@ import static org.junit.Assert.*;
  * Pat Fisher, Mike Judd.
  */
 
-public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
+
+public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
 
     private AssetTree assetTree = new VanillaAssetTree().forTesting();
     @NotNull
@@ -60,7 +62,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     @NotNull
     ClosableMapSupplier newIntString(String name) throws IOException {
         final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(Integer.class, String
-                .class, TextWire::new, assetTree, name);
+                .class, BinaryWire::new, assetTree, name);
 
         return new ClosableMapSupplier() {
 
@@ -82,7 +84,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     ClosableMapSupplier<CharSequence, CharSequence> newStrStrMap() throws
             IOException {
 
-        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(CharSequence.class, CharSequence.class, TextWire::new, assetTree);
+        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(CharSequence.class, CharSequence.class, BinaryWire::new, assetTree);
 
         return new ClosableMapSupplier() {
 

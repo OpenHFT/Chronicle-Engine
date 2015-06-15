@@ -21,6 +21,7 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
+import net.openhft.chronicle.engine.api.tree.Assetted;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.TextWire;
@@ -286,8 +287,8 @@ public class MapClientTest extends ThreadMonitoringTest {
         public RemoteMapSupplier(@NotNull final Class<K> kClass,
                                  @NotNull final Class<V> vClass,
                                  @NotNull final Function<Bytes, Wire> wireType,
-                                 AssetTree assetTree,
-                                 String name) throws IOException {
+                                 @NotNull final AssetTree assetTree,
+                                 @NotNull final String name) throws IOException {
             this.assetTree = assetTree;
             wire = wireType;
 
@@ -302,6 +303,11 @@ public class MapClientTest extends ThreadMonitoringTest {
                     toUri(name,serverPort, hostname),
                     kClass,
                     vClass);
+
+            if (!(((Assetted) map).underlying() instanceof RemoteKeyValueStore)) {
+                throw new IllegalStateException();
+            }
+
         }
 
         public RemoteMapSupplier(@NotNull final Class<K> kClass,
