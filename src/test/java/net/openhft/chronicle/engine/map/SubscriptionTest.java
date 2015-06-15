@@ -18,7 +18,6 @@
 
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.Factor;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.map.MapEvent;
@@ -26,7 +25,7 @@ import net.openhft.chronicle.engine.api.map.MapEventListener;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.TextWire;
-import org.jetbrains.annotations.NotNull;
+import org.easymock.EasyMock;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -36,7 +35,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
 import static net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier.toUri;
@@ -50,7 +48,6 @@ import static org.junit.Assert.assertEquals;
  */
 @RunWith(value = Parameterized.class)
 public class SubscriptionTest extends ThreadMonitoringTest {
-    private static AtomicInteger success = new AtomicInteger();
     private static int port;
     private static ConcurrentMap<String, Factor> map;
     private static final String NAME = "test";
@@ -72,25 +69,22 @@ public class SubscriptionTest extends ThreadMonitoringTest {
 
     @Test
     public void testSubscriptionTest() throws IOException, InterruptedException {
-        listener = new MapEventListener<String, Factor>() {
-            @Override
-            public void update(String key, Factor oldValue, Factor newValue) {
-                System.out.println("Updated { key: " + key + ", oldValue: " + oldValue + ", value: " + newValue + " }");
-                success.set(-1000);
-            }
+        Factor factorXYZ = new Factor();
+        factorXYZ.setAccountNumber("xyz");
 
-            @Override
-            public void insert(String key, Factor value) {
-                System.out.println("Inserted { key: " + key + ", value: " + value + " }");
-                success.incrementAndGet();
-            }
+        Factor factorABC = new Factor();
+        factorABC.setAccountNumber("abc");
 
-            @Override
-            public void remove(String key, Factor oldValue) {
-                System.out.println("Removed { key: " + key + ", value: " + oldValue + " }");
-                success.set(-100);
-            }
-        };
+        Factor factorDDD = new Factor();
+        factorDDD.setAccountNumber("ddd");
+
+        listener = EasyMock.createMock(MapEventListener.class);
+        listener.insert("testA", factorXYZ);
+        listener.insert("testB", factorABC);
+        listener.update("testA", factorXYZ, factorDDD);
+        listener.remove("testA", factorDDD);
+
+        EasyMock.replay(listener);
 
         VanillaAssetTree serverAssetTree = new VanillaAssetTree().forTesting();
         VanillaAssetTree clientAssetTree = new VanillaAssetTree().forRemoteAccess();
@@ -109,39 +103,22 @@ public class SubscriptionTest extends ThreadMonitoringTest {
         }
 
         yamlLoggger(() -> {
-            Factor factor = new Factor();
-            factor.setAccountNumber("xyz");
-            map.put("testA", factor);
+            //test an insert
+            map.put("testA", factorXYZ);
             assertEquals(1, map.size());
             assertEquals("xyz", map.get("testA").getAccountNumber());
 
-            //Test the insert was received
-            expectedSuccess(success, 1);
-
-            factor = new Factor();
-            factor.setAccountNumber("abc");
-            map.put("testB", factor);
+            //test another insert
+            map.put("testB", factorABC);
             assertEquals("abc", map.get("testB").getAccountNumber());
 
-            //Test that a second insert was received
-            expectedSuccess(success, 2);
-            success.set(0);
-
-            //Changing factor account name from xyz to abc
-            factor = new Factor();
-            factor.setAccountNumber("ddd");
-            map.put("testA", factor);
+            //Test an update
+            map.put("testA", factorDDD);
             assertEquals("ddd", map.get("testA").getAccountNumber());
 
-            //Test that an update was received
-            expectedSuccess(success, -1000);
-            success.set(0);
-
-            //Test that a remove was received
+            //Test a remove
             map.remove("testA");
-            expectedSuccess(success, -100);
 
-            success.set(0);
             if(isRemote) {
                 clientAssetTree.unregisterSubscriber(NAME, MapEvent.class, e -> e.apply(listener));
             }else{
@@ -152,23 +129,20 @@ public class SubscriptionTest extends ThreadMonitoringTest {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            map.put("testC", factor);
             //Test that after unregister we don't get events
-            expectedSuccess(success, 0);
+            map.put("testC", factorXYZ);
         });
 
         clientAssetTree.close();
         if(serverEndpoint != null)serverEndpoint.close();
         serverAssetTree.close();
+
+        EasyMock.verify(listener);
     }
 
-    private void expectedSuccess(@NotNull AtomicInteger success, int expected) {
-        for (int i = 0; i < 20; i++) {
-            if (success.get() == expected)
-                break;
-            Jvm.pause(i*i);
-        }
-        assertEquals(expected, success.get());
+    @Test
+    public void testKeySubscriber(){
+
     }
 }
 

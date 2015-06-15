@@ -61,7 +61,6 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
 
     private static final StringBuilderPool SBP = new StringBuilderPool();
 
-    private BiConsumer<ValueOut, K> kToWire;
     private BiConsumer<ValueOut, V> vToWire;
     private Function<ValueIn, K> wireToK;
     private Function<ValueIn, V> wireToV;
@@ -90,7 +89,6 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                         @NotNull final Queue<Consumer<Wire>> publisher,
                         @NotNull final AssetTree assetTree) throws
             StreamCorruptedException {
-        this.kToWire = wireAdapter.keyToWire();
         this.vToWire = wireAdapter.valueToWire();
         this.wireToK = wireAdapter.wireToKey();
         this.wireToV = wireAdapter.wireToValue();
