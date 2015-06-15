@@ -3,6 +3,7 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
@@ -10,6 +11,9 @@ import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.tree.HostIdentifier;
+import net.openhft.chronicle.hash.replication.EngineReplicationLangBytesConsumer;
+import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.MapEventListener;
@@ -33,9 +37,8 @@ import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplicat
 public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValueStore<K, MV, V>, Closeable {
     private final ChronicleMap<K, V> chronicleMap;
     private final ObjectKVSSubscription<K, MV, V> subscriptions;
-
+    private final EngineReplication engineReplicator;
     private Asset asset;
-    private final EngineReplicator engineReplicator;
 
     public ChronicleMapKeyValueStore(@NotNull RequestContext context, Asset asset) {
         this.asset = asset;
@@ -46,10 +49,13 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
 
         String basePath = context.basePath();
 
-        // todo may something like below
-        //engineReplicator = asset.acquireView(EngineReplication.class, context);
-
-        engineReplicator = new EngineReplicator(context);
+        engineReplicator = asset.acquireView(EngineReplication.class, context);
+        HostIdentifier hostIdentifier = asset.acquireView(HostIdentifier.class, context);
+        ChronicleMapBuilder<K, V> builder = ChronicleMapBuilder.of(kClass, vClass)
+                .replication(SingleChronicleHashReplication.builder().
+                        engineReplication((EngineReplicationLangBytesConsumer) engineReplicator).
+                        createWithId((byte) hostIdentifier.hostId()))
+                .eventListener(publishingOperations);
 
         // todo fix this
         Byte localIdentifier = (byte) 1;
@@ -87,14 +93,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         subscriptions.setKvStore(this);
     }
 
-    @Override
-    public void replicatedRemove(final Bytes key,
-                                 final byte remoteIdentifier,
-                                 final long timestamp) {
-        engineReplicator.onEntry(newRemoveEvent(key, remoteIdentifier, timestamp));
-    }
-
-
+ 
     @NotNull
     @Override
     public KVSSubscription<K, MV, V> subscription(boolean createIfAbsent) {
@@ -161,13 +160,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         throw new UnsupportedOperationException("todo");
     }
 
-    @Override
-    public void replicatedPut(final Bytes key, final Bytes value, final byte remoteIdentifier, final long timestamp) {
-
-        engineReplicator.onEntry(newPutEvent(key, value, timestamp, remoteIdentifier));
-
-    }
-
+  
     @Override
     public Asset asset() {
         return asset;
