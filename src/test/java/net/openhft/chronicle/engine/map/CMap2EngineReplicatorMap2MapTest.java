@@ -83,5 +83,62 @@ public class CMap2EngineReplicatorMap2MapTest {
 
     }
 
+
+    /**
+     * tests that the updates from one map are replicated to the other and visa versa
+     */
+    @Test
+    public void testLocalPutBootstrap() throws Exception {
+
+        map1.put("hello1", "world1");
+        map2.put("hello2", "world2");
+        map3.put("hello3", "world3");
+
+        final ModificationIterator iterator1for2 = replicator1.acquireModificationIterator
+                (replicator2.identifier());
+
+        final ModificationIterator iterator1for3 = replicator1.acquireModificationIterator
+                (replicator3.identifier());
+
+        final ModificationIterator iterator2for1 = replicator2.acquireModificationIterator
+                (replicator1.identifier());
+
+        final ModificationIterator iterator2for3 = replicator2.acquireModificationIterator
+                (replicator3.identifier());
+
+        final ModificationIterator iterator3for1 = replicator3.acquireModificationIterator
+                (replicator1.identifier());
+
+        final ModificationIterator iterator3for2 = replicator3.acquireModificationIterator
+                (replicator2.identifier());
+
+        iterator1for2.dirtyEntries(0);
+        iterator1for2.forEach(replicator2.identifier(), replicator2::applyReplication);
+
+        iterator1for3.dirtyEntries(0);
+        iterator1for3.forEach(replicator3.identifier(), replicator3::applyReplication);
+
+        iterator2for1.dirtyEntries(0);
+        iterator2for1.forEach(replicator1.identifier(), replicator1::applyReplication);
+
+        iterator2for3.dirtyEntries(0);
+        iterator2for3.forEach(replicator3.identifier(), replicator3::applyReplication);
+
+        iterator3for1.dirtyEntries(0);
+        iterator3for1.forEach(replicator1.identifier(), replicator1::applyReplication);
+
+        iterator3for2.dirtyEntries(0);
+        iterator3for2.forEach(replicator2.identifier(), replicator2::applyReplication);
+
+        for (Map m : new Map[]{map1, map2, map3}) {
+            Assert.assertEquals("world1", m.get("hello1"));
+            Assert.assertEquals("world2", m.get("hello2"));
+            Assert.assertEquals("world3", m.get("hello3"));
+            Assert.assertEquals(3, m.size());
+        }
+
+    }
+
+
 }
 
