@@ -6,6 +6,8 @@ import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import org.junit.Test;
 
+import java.util.concurrent.ConcurrentMap;
+
 /**
  * Created by Rob Austin
  */
@@ -14,28 +16,29 @@ public class ReplicationTest {
     @Test
     public void testName() throws Exception {
 
-        class MyEvent {
+        class ReplicationEvent {
             String message;
 
-            MyEvent(final String message) {
+            ReplicationEvent(final String message) {
                 this.message = message;
             }
         }
 
         final VanillaAssetTree assetTree = new VanillaAssetTree().forTesting();
 
-        assetTree.registerSubscriber("rob", MyEvent.class, new Subscriber<MyEvent>() {
+        final ConcurrentMap<String, String> rob = assetTree.acquireMap("rob", String.class, String.class);
+
+        assetTree.registerSubscriber("rob", ReplicationEvent.class, new Subscriber<ReplicationEvent>() {
 
             @Override
-            public void onMessage(final MyEvent myEvent) throws InvalidSubscriberException {
+            public void onMessage(final ReplicationEvent myEvent) throws InvalidSubscriberException {
                 System.out.println(myEvent.message);
             }
 
         });
 
-        final Publisher<MyEvent> publisher = assetTree.acquirePublisher("rob", MyEvent.class);
-
-        publisher.publish(new MyEvent("hello"));
+        final Publisher<ReplicationEvent> publisher = assetTree.acquirePublisher("rob", ReplicationEvent.class);
+        publisher.publish(new ReplicationEvent("hello"));
 
     }
 }

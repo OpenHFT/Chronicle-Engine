@@ -18,11 +18,11 @@
 
 package net.openhft.chronicle.engine.api;
 
-import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.engine.map.EngineReplicator.ReplicatedEntry;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
+import java.util.function.Consumer;
 
 /**
  * @author Rob Austin.
@@ -30,23 +30,9 @@ import java.io.Closeable;
 public interface EngineReplication extends Closeable {
 
     /**
-     * inserts or updates the entry
-     *
-     * @param key              the key of the entry
-     * @param value            the value of the entry
-     * @param remoteIdentifier the identifier of the remote server
-     * @param timestamp        the timestamp send from the remote server, this time stamp was the time the entry was removed
+     * removes or puts the entry into the map
      */
-    void put(Bytes key, Bytes value, byte remoteIdentifier, long timestamp);
-
-    /**
-     * marks the entry as removed
-     *
-     * @param key              the key of the entry
-     * @param remoteIdentifier the identifier of the remote server
-     * @param timestamp        the timestamp send from the remote server, this time stamp was the time the entry was removed
-     */
-    void remove(Bytes key, byte remoteIdentifier, long timestamp);
+    void onEntry(@NotNull ReplicatedEntry replicatedEntry);
 
     /**
      * Provides the unique Identifier associated with this instance. <p> An identifier is used
@@ -64,6 +50,9 @@ public interface EngineReplication extends Closeable {
      * @return the unique Identifier associated with this map instance
      */
     byte identifier();
+
+    void forEach(byte remoteIdentifier, @NotNull Consumer<ReplicatedEntry> consumer) throws
+            InterruptedException;
 
     /**
      * Gets (if it does not exist, creates) an instance of ModificationIterator associated with a
@@ -113,6 +102,8 @@ public interface EngineReplication extends Closeable {
      */
     interface ModificationIterator {
 
+        void forEach(byte id, @NotNull Consumer<ReplicatedEntry> consumer) throws InterruptedException;
+
         /**
          * @return {@code true} if the is another entry to be received via {@link
          * ModificationIterator#nextEntry(net.openhft.chronicle.engine.api.EngineReplication.EntryCallback)}
@@ -156,19 +147,7 @@ public interface EngineReplication extends Closeable {
 
         /**
          * Called whenever a put() or remove() has occurred to a replicating map.
-         *
-         * @param key
-         * @param value
-         * @param isDeleted
-         *@param bootStrapTimeStamp sent to the client on every update this is the timestamp
-         *                           that the remote client should bootstrap from when there has
-         *                           been a disconnection, this time maybe later than the message
-         *                           time as event are not send in chronological order from the
-         *                           bit set.  @return {@code false} if this entry should be ignored because the identifier of the
-         * source node is not from one of our changes, WARNING even though we check the identifier
-         * in the ModificationIterator the entry may have been updated.
          */
-        boolean onEntry(@NotNull Bytes key, @Nullable Bytes value, long timestamp,
-                        byte identifier, final boolean isDeleted, long bootStrapTimeStamp);
+        boolean onEntry(@NotNull ReplicatedEntry entry);
     }
 }
