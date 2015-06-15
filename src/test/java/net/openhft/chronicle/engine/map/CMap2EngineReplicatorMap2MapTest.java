@@ -5,9 +5,11 @@ import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplication.builder;
 
@@ -131,6 +133,67 @@ public class CMap2EngineReplicatorMap2MapTest {
         iterator3for2.forEach(replicator2.identifier(), replicator2::applyReplication);
 
         for (Map m : new Map[]{map1, map2, map3}) {
+            Assert.assertEquals("world1", m.get("hello1"));
+            Assert.assertEquals("world2", m.get("hello2"));
+            Assert.assertEquals("world3", m.get("hello3"));
+            Assert.assertEquals(3, m.size());
+        }
+
+    }
+
+    /**
+     * only resends the update that have occurred while its been disconnected ( plus the updates
+     * that occurred in the last milliseconds while it was connected )
+     *
+     * @throws Exception
+     */
+    @Ignore
+    @Test
+    public void testBootstrapFromKnownTime() throws Exception {
+
+        final ModificationIterator iterator1for2 = replicator1.acquireModificationIterator
+                (replicator2.identifier());
+
+        map1.put("hello1", "world1");
+
+        Thread.sleep(1);
+
+        map1.put("hello2", "world2"); //this is the last update before the disconnection, so will
+        // be sent again as its in the last known milliseconds
+
+        iterator1for2.forEach(replicator2.identifier(), (entry) -> {
+            // record the last time the entry was updated
+            replicator2.applyReplication(entry);
+        });
+
+        Thread.sleep(1);
+        // !---------------- simulate a disconnection ---------------------
+        // we do this by requesting by dirtying the entries form the last know timestamp
+        final long timeSendInBootStrapMessage = replicator1.lastModificationTime(replicator2.identifier());
+
+        assert timeSendInBootStrapMessage != 0;
+
+        map1.put("hello3", "world3");
+        Thread.sleep(1);
+
+        // this is where the bootstrap occurs
+        iterator1for2.dirtyEntries(timeSendInBootStrapMessage);
+        AtomicInteger updates = new AtomicInteger();
+
+        iterator1for2.forEach(replicator2.identifier(), (entry) -> {
+            // record the last time the entry was updated
+            updates.incrementAndGet();
+            replicator2.applyReplication(entry);
+
+        });
+
+        // ensure that the bootstap only sends updates upto and including all the updates in the
+        // last millisecond that it was connected. in otherwords where
+        // key=="hello2",
+        // rather than all the updates
+        Assert.assertEquals(2, updates.get());
+
+        for (Map m : new Map[]{map1, map2}) {
             Assert.assertEquals("world1", m.get("hello1"));
             Assert.assertEquals("world2", m.get("hello2"));
             Assert.assertEquals("world3", m.get("hello3"));

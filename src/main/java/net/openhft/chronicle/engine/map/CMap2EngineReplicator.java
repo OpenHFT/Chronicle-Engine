@@ -9,10 +9,6 @@ import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.hash.replication.EngineReplicationLangBytesConsumer;
 import net.openhft.chronicle.map.EngineReplicationLangBytes;
 import net.openhft.chronicle.map.EngineReplicationLangBytes.EngineModificationIterator;
-import net.openhft.chronicle.network.connection.TcpConnectionHub;
-import net.openhft.chronicle.wire.Marshallable;
-import net.openhft.chronicle.wire.WireIn;
-import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,8 +79,6 @@ public class CMap2EngineReplicator implements EngineReplication,
         else
             put(entry);
     }
-
-
 
     public static class VanillaReplicatedEntry implements ReplicationEntry {
 
@@ -241,4 +235,13 @@ public class CMap2EngineReplicator implements EngineReplication,
         engineReplicationLang.close();
     }
 
+    @Override
+    public String toString() {
+        return "CMap2EngineReplicator{" +
+                "context=" + context +
+                ", identifier=" + engineReplicationLang.identifier() +
+                ", keyLocal=" + keyLocal +
+                ", valueLocal=" + valueLocal +
+                '}';
+    }
 }
