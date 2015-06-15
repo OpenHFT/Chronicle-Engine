@@ -44,6 +44,10 @@ public interface AssetTree extends Closeable {
         return acquireAsset(rc).acquireView(rc);
     }
 
+    default <S> S acquireService(String uri, Class<S> service) {
+        return acquireView(requestContext(uri).viewType(service));
+    }
+
     @NotNull
     default <K, V> ConcurrentMap<K, V> acquireMap(String name, Class<K> kClass, Class<V> vClass) throws AssetNotFoundException {
         return acquireView(requestContext(name).view("map").type(kClass).type2(vClass));

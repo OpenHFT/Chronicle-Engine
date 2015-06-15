@@ -2,12 +2,14 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
+import net.openhft.chronicle.engine.map.EngineReplicator;
 import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
@@ -26,6 +28,7 @@ import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.Chassis.*;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * Created by daniel on 28/05/15.
@@ -34,6 +37,7 @@ public class ChronicleMapKeyValueStoreTest {
     public static final String NAME = "chronmapkvstoretests";
     private static Map<String, Factor> map;
     private static KeyValueStore mapU;
+    private static EngineReplication replicator;
 
     @BeforeClass
     public static void createMap() throws IOException {
@@ -44,7 +48,7 @@ public class ChronicleMapKeyValueStoreTest {
         Function<Bytes, Wire> writeType = TextWire::new;
 
         addWrappingRule(MapView.class, "map directly to KeyValueStore", VanillaMapView::new, KeyValueStore.class);
-
+        addLeafRule(EngineReplication.class, "Engine replication holder", EngineReplicator::new);
         addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
                 new ChronicleMapKeyValueStore(context.wireType(writeType).basePath(OS.TARGET), asset));
 
@@ -55,6 +59,8 @@ public class ChronicleMapKeyValueStoreTest {
         //just in case it hasn't been cleared up last time
         map.clear();
 
+        replicator = acquireService(NAME, EngineReplication.class);
+        assertNotNull(replicator);
     }
 
     @AfterClass

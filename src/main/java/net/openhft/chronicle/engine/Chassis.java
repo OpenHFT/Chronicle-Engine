@@ -42,6 +42,9 @@ public enum Chassis {
         return assetTree.acquireSet(name, eClass);
     }
 
+    public static <S> S acquireService(String uri, Class<S> serviceClass) {
+        return assetTree.acquireService(uri, serviceClass);
+    }
     @NotNull
     public static <K, V> ConcurrentMap<K, V> acquireMap(String name, Class<K> kClass, Class<V> vClass) throws AssetNotFoundException {
         return assetTree.acquireMap(name, kClass, vClass);
