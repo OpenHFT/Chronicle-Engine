@@ -46,7 +46,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
 
     @Override
     public boolean needsPrevious() {
-        throw new UnsupportedOperationException("todo");
+        return true;
     }
 
     @Override
@@ -55,7 +55,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
 
     @Override
     public void notifyEvent(MapEvent<K, V> mpe) {
-        throw new UnsupportedOperationException("todo");
+        //todo This should be implemented
     }
 
     @Override

@@ -248,7 +248,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                     return;
                 }
                 if (unSubscribe.contentEquals(eventName)){
-                    Subscriber<MapEvent> listener = tidToListener.get(inputTid);
+                    Subscriber<MapEvent> listener = tidToListener.remove(inputTid);
                     if(listener==null){
                         LOG.warn("No subscriber to present to unsubscribe (" + inputTid +")");
                         return;
@@ -259,6 +259,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                         publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
                         publish.writeDocument(false, wire -> wire.write(reply).typedMarshallable(null));
                     });
+
                     return;
                 }
 

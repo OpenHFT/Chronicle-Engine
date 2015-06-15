@@ -141,7 +141,76 @@ public class SubscriptionTest extends ThreadMonitoringTest {
     }
 
     @Test
-    public void testKeySubscriber(){
+    public void testKeySubscriber() throws IOException{
+        Factor factorXYZ = new Factor();
+        factorXYZ.setAccountNumber("xyz");
+
+        Factor factorABC = new Factor();
+        factorABC.setAccountNumber("abc");
+
+        Factor factorDDD = new Factor();
+        factorDDD.setAccountNumber("ddd");
+
+        listener = EasyMock.createMock(MapEventListener.class);
+        listener.insert("testA", factorXYZ);
+        listener.insert("testB", factorABC);
+        listener.update("testA", factorXYZ, factorDDD);
+        listener.remove("testA", factorDDD);
+
+        EasyMock.replay(listener);
+
+        VanillaAssetTree serverAssetTree = new VanillaAssetTree().forTesting();
+        VanillaAssetTree clientAssetTree = new VanillaAssetTree().forRemoteAccess();
+        ServerEndpoint serverEndpoint = null;
+        if (isRemote) {
+            wire = TextWire::new;
+
+            serverEndpoint = new ServerEndpoint(serverAssetTree);
+            port = serverEndpoint.getPort();
+
+            map = clientAssetTree.acquireMap(toUri(NAME, port, "localhost"), String.class, Factor.class);
+           // clientAssetTree.registerKeySubscriber(toUri(NAME, port, "localhost"), MapEvent.class, e -> e.apply(listener));
+        } else {
+            map = serverAssetTree.acquireMap(NAME, String.class, Factor.class);
+            serverAssetTree.registerSubscriber(NAME, MapEvent.class, e -> e.apply(listener));
+        }
+
+        yamlLoggger(() -> {
+            //test an insert
+            map.put("testA", factorXYZ);
+            assertEquals(1, map.size());
+            assertEquals("xyz", map.get("testA").getAccountNumber());
+
+            //test another insert
+            map.put("testB", factorABC);
+            assertEquals("abc", map.get("testB").getAccountNumber());
+
+            //Test an update
+            map.put("testA", factorDDD);
+            assertEquals("ddd", map.get("testA").getAccountNumber());
+
+            //Test a remove
+            map.remove("testA");
+
+            if(isRemote) {
+                clientAssetTree.unregisterSubscriber(NAME, MapEvent.class, e -> e.apply(listener));
+            }else{
+                serverAssetTree.unregisterSubscriber(toUri(NAME, port, "localhost"), MapEvent.class, e -> e.apply(listener));
+            }
+            try {
+                TimeUnit.SECONDS.sleep(1);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            //Test that after unregister we don't get events
+            map.put("testC", factorXYZ);
+        });
+
+        clientAssetTree.close();
+        if(serverEndpoint != null)serverEndpoint.close();
+        serverAssetTree.close();
+
+        EasyMock.verify(listener);
 
     }
 }
