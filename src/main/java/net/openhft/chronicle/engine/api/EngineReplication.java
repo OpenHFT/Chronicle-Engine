@@ -30,7 +30,7 @@ import java.util.function.Consumer;
 public interface EngineReplication extends Closeable {
 
     /**
-     * removes or puts the entry
+     * removes or puts the entry into the map
      */
     void onEntry(@NotNull ReplicatedEntry replicatedEntry);
 
