@@ -22,7 +22,8 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.*;
-import java.util.AbstractMap;
+import java.nio.file.WatchEvent.Kind;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,6 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import static net.openhft.chronicle.core.Jvm.pause;
+import static net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 
 /**
  * A {@link Map} implementation that stores each entry as a file in a
@@ -77,7 +79,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         try {
             Files.createDirectories(dirPath);
             watcher = FileSystems.getDefault().newWatchService();
-            dirPath.register(watcher, new WatchEvent.Kind[]{
+            dirPath.register(watcher, new Kind[]{
                             StandardWatchEventKinds.ENTRY_CREATE,
                             StandardWatchEventKinds.ENTRY_DELETE,
                             StandardWatchEventKinds.ENTRY_MODIFY},
@@ -165,7 +167,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
 
     public Stream<Map.Entry<String, BytesStore>> getEntryStream() {
         return getFiles()
-                .map(p -> (Map.Entry<String, BytesStore>) new AbstractMap.SimpleEntry<>(p.getFileName().toString(), getFileContents(p, null)));
+                .map(p -> (Map.Entry<String, BytesStore>) new SimpleEntry<>(p.getFileName().toString(), getFileContents(p, null)));
     }
 
     @Override
@@ -236,12 +238,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     }
 
     @Override
-    public void replicatedPut(final Bytes key, final Bytes value, final byte remoteIdentifier, final long timestamp) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
-    public void replicatedRemove(final Bytes key, final byte identifier, final long timestamp) {
+    public void apply(@NotNull final ReplicationEntry entry) {
         throw new UnsupportedOperationException("todo");
     }
 
@@ -401,7 +398,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         private WatchKey processKey() throws InterruptedException, IOException, InvalidSubscriberException {
             WatchKey key = watcher.take();
             for (WatchEvent<?> event : key.pollEvents()) {
-                WatchEvent.Kind<?> kind = event.kind();
+                Kind<?> kind = event.kind();
 
                 if (kind == StandardWatchEventKinds.OVERFLOW) {
                     // todo log a warning.

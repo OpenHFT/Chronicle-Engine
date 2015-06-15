@@ -2,6 +2,7 @@ package net.openhft.chronicle.engine.tree;
 
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.util.ThrowingAcceptor;
+import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -107,8 +108,10 @@ public class VanillaAsset implements Asset, Closeable {
         addLeafRule(ObjectKVSSubscription.class, LAST + " Remote",
                 RemoteKVSSubscription::new);
         addLeafRule(TcpConnectionHub.class, LAST + " Hub", TcpConnectionHub::new);
+
         addWrappingRule(ObjectKeyValueStore.class, LAST + " Remote AKVS",
                 RemoteKeyValueStore::new, TcpConnectionHub.class);
+
     }
 
     public void enableTranslatingValuesToBytesStore() {

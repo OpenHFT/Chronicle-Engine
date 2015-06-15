@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.engine.api.EngineReplication;
+import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
@@ -155,12 +156,7 @@ public class AbstractKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> 
     }
 
     @Override
-    public void replicatedPut(final Bytes key, final Bytes value, final byte remoteIdentifier, final long timestamp) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
-    public void replicatedRemove(final Bytes key, final byte identifier, final long timestamp) {
+    public void apply(@NotNull final ReplicationEntry entry) {
         throw new UnsupportedOperationException("todo");
     }
 

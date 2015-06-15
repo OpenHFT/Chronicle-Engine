@@ -3,7 +3,7 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.NativeBytesStore;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
-import net.openhft.chronicle.engine.map.EngineReplicator.ReplicatedEntry;
+import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.wire.TextWire;
@@ -22,7 +22,7 @@ import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplicat
  * Created by Rob Austin
  */
 
-public class EngineReplicatorTest {
+public class CMap2EngineReplicatorTest {
 
     /**
      * tests when the put has come locally from the server map
@@ -30,7 +30,7 @@ public class EngineReplicatorTest {
     @Test
     public void testLocalPut() throws Exception {
 
-        final EngineReplicator replicator = new EngineReplicator(null);
+        final CMap2EngineReplicator replicator = new CMap2EngineReplicator(null);
 
         ChronicleMap<String, String> map = ChronicleMapBuilder.of(String.class, String.class).
                 replication(builder().engineReplication(replicator).createWithId((byte) 2)).create();
@@ -40,14 +40,13 @@ public class EngineReplicatorTest {
 
         Assert.assertTrue(modificationIterator.hasNext());
 
-        BlockingQueue<ReplicatedEntry> q = new ArrayBlockingQueue<>(1);
+        BlockingQueue<ReplicationEntry> q = new ArrayBlockingQueue<>(1);
         modificationIterator.nextEntry(entry -> {
             q.add(entry);
             return true;
         });
 
-
-        final ReplicatedEntry entry = q.take();
+        final ReplicationEntry entry = q.take();
 
         Assert.assertEquals("hello", new TextWire(entry.key().bytes()).getValueIn().text());
 
@@ -64,7 +63,7 @@ public class EngineReplicatorTest {
     @Test
     public void testRemotePut() throws Exception {
 
-        final EngineReplicator replicator = new EngineReplicator(null);
+        final CMap2EngineReplicator replicator = new CMap2EngineReplicator(null);
 
         ChronicleMap map = ChronicleMapBuilder.of(String.class, String.class).
                 replication(builder().engineReplication(replicator).createWithId((byte) 2)).create();

@@ -18,7 +18,10 @@
 
 package net.openhft.chronicle.engine.api;
 
-import net.openhft.chronicle.engine.map.EngineReplicator.ReplicatedEntry;
+import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.wire.Marshallable;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
@@ -32,7 +35,8 @@ public interface EngineReplication extends Closeable {
     /**
      * removes or puts the entry into the map
      */
-    void onEntry(@NotNull ReplicatedEntry replicatedEntry);
+    void applyReplication(@NotNull ReplicationEntry replicatedEntry);
+
 
     /**
      * Provides the unique Identifier associated with this instance. <p> An identifier is used
@@ -51,7 +55,7 @@ public interface EngineReplication extends Closeable {
      */
     byte identifier();
 
-    void forEach(byte remoteIdentifier, @NotNull Consumer<ReplicatedEntry> consumer) throws
+    void forEach(byte remoteIdentifier, @NotNull Consumer<ReplicationEntry> consumer) throws
             InterruptedException;
 
     /**
@@ -102,7 +106,7 @@ public interface EngineReplication extends Closeable {
      */
     interface ModificationIterator {
 
-        void forEach(byte id, @NotNull Consumer<ReplicatedEntry> consumer) throws InterruptedException;
+        void forEach(byte id, @NotNull Consumer<ReplicationEntry> consumer) throws InterruptedException;
 
         /**
          * @return {@code true} if the is another entry to be received via {@link
@@ -148,6 +152,33 @@ public interface EngineReplication extends Closeable {
         /**
          * Called whenever a put() or remove() has occurred to a replicating map.
          */
-        boolean onEntry(@NotNull ReplicatedEntry entry);
+        boolean onEntry(@NotNull ReplicationEntry entry);
+    }
+
+    interface ReplicationEntry extends Marshallable {
+        Bytes key();
+
+        Bytes value();
+
+        long timestamp();
+
+        byte identifier();
+
+        boolean isDeleted();
+
+        long bootStrapTimeStamp();
+
+
+
+        @Override
+        default void readMarshallable(final WireIn wire) throws IllegalStateException {
+            throw new UnsupportedOperationException("todo");
+        }
+
+        @Override
+        default void writeMarshallable(final WireOut wire) {
+            throw new UnsupportedOperationException("todo");
+        }
+
     }
 }

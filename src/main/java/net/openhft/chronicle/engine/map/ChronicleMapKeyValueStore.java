@@ -1,9 +1,9 @@
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.EngineReplication;
+import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
@@ -13,7 +13,6 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.hash.replication.EngineReplicationLangBytesConsumer;
-import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.MapEventListener;
@@ -27,13 +26,10 @@ import java.util.Iterator;
 import java.util.Map;
 
 import static net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer.notifyEachEvent;
-import static net.openhft.chronicle.engine.map.EngineReplicator.ReplicatedEntry.newPutEvent;
-import static net.openhft.chronicle.engine.map.EngineReplicator.ReplicatedEntry.newRemoveEvent;
+import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
 import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplication.builder;
 
-/**
- * Created by daniel on 27/05/15.
- */
+
 public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValueStore<K, MV, V>, Closeable {
     private final ChronicleMap<K, V> chronicleMap;
     private final ObjectKVSSubscription<K, MV, V> subscriptions;
@@ -46,25 +42,18 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
 
         Class kClass = context.type();
         Class vClass = context.type2();
-
         String basePath = context.basePath();
 
-        engineReplicator = asset.acquireView(EngineReplication.class, context);
         HostIdentifier hostIdentifier = asset.acquireView(HostIdentifier.class, context);
-        ChronicleMapBuilder<K, V> builder = ChronicleMapBuilder.of(kClass, vClass)
-                .replication(SingleChronicleHashReplication.builder().
-                        engineReplication((EngineReplicationLangBytesConsumer) engineReplicator).
-                        createWithId((byte) hostIdentifier.hostId()))
-                .eventListener(publishingOperations);
 
-        // todo fix this
-        Byte localIdentifier = (byte) 1;
+        this.engineReplicator = asset.acquireView(requestContext(context.name()).viewType
+                (EngineReplication.class));
 
-        ChronicleMapBuilder<K, V> builder = ChronicleMapBuilder.of(kClass, vClass).
-                replication(builder().engineReplication(engineReplicator).createWithId(localIdentifier));
-
-
-
+        ChronicleMapBuilder<K, V> builder = ChronicleMapBuilder.<K, V>of(kClass, vClass).
+                replication(builder().engineReplication(
+                        (EngineReplicationLangBytesConsumer) engineReplicator).
+                        createWithId((byte) hostIdentifier.hostId())).
+                eventListener(publishingOperations);
 
 
         if (context.putReturnsNull() != Boolean.FALSE) {
@@ -76,7 +65,9 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         if (context.getEntries() != 0) {
             builder.entries(context.getEntries());
         }
-        if (basePath != null) {
+        if (basePath == null)
+            builder.create();
+        else {
             String pathname = basePath + "/" + context.name();
             new File(basePath).mkdirs();
             try {
@@ -160,7 +151,11 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         throw new UnsupportedOperationException("todo");
     }
 
-  
+    @Override
+    public void apply(@NotNull final ReplicationEntry entry) {
+        engineReplicator.applyReplication(entry);
+    }
+
     @Override
     public Asset asset() {
         return asset;

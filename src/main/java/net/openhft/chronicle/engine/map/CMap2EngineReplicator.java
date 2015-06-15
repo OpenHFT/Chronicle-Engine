@@ -9,6 +9,7 @@ import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.hash.replication.EngineReplicationLangBytesConsumer;
 import net.openhft.chronicle.map.EngineReplicationLangBytes;
 import net.openhft.chronicle.map.EngineReplicationLangBytes.EngineModificationIterator;
+import net.openhft.chronicle.network.connection.TcpConnectionHub;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
@@ -24,7 +25,7 @@ import static net.openhft.lang.io.NativeBytes.wrap;
 /**
  * Created by Rob Austin
  */
-public class EngineReplicator implements EngineReplication,
+public class CMap2EngineReplicator implements EngineReplication,
         EngineReplicationLangBytesConsumer, View {
 
     private final RequestContext context;
@@ -32,7 +33,7 @@ public class EngineReplicator implements EngineReplication,
     private final ThreadLocal<PointerBytesStore> keyLocal = withInitial(PointerBytesStore::new);
     private final ThreadLocal<PointerBytesStore> valueLocal = withInitial(PointerBytesStore::new);
 
-    public EngineReplicator(RequestContext requestContext, Asset asset) {
+    public CMap2EngineReplicator(RequestContext requestContext, Asset asset) {
         this(requestContext);
     }
 
@@ -41,7 +42,8 @@ public class EngineReplicator implements EngineReplication,
         this.engineReplicationLang = engineReplicationLangBytes;
     }
 
-    public EngineReplicator(final RequestContext context) {
+
+    public CMap2EngineReplicator(final RequestContext context) {
         this.context = context;
     }
 
@@ -62,63 +64,29 @@ public class EngineReplicator implements EngineReplication,
 
     @Override
     public byte identifier() {
+
         return engineReplicationLang.identifier();
     }
 
-    private void put(@NotNull final ReplicatedEntry entry) {
+    private void put(@NotNull final ReplicationEntry entry) {
         put(entry.key(), entry.value(), entry.identifier(), entry.timestamp());
     }
 
-    private void remove(@NotNull final ReplicatedEntry entry) {
+    private void remove(@NotNull final ReplicationEntry entry) {
         remove(entry.key(), entry.identifier(), entry.timestamp());
     }
 
     @Override
-    public void onEntry(@NotNull final ReplicatedEntry entry) {
+    public void applyReplication(@NotNull final ReplicationEntry entry) {
         if (entry.isDeleted())
             remove(entry);
         else
             put(entry);
     }
 
-    public interface ReplicatedEntry extends Marshallable {
-        Bytes key();
-
-        Bytes value();
-
-        long timestamp();
-
-        byte identifier();
-
-        boolean isDeleted();
-
-        long bootStrapTimeStamp();
-
-        static ReplicatedEntry newPutEvent(final Bytes key,
-                                           final Bytes value,
-                                           final long timestamp,
-                                           final byte identifier) {
-            return new VanillaReplicatedEntry(key, value, timestamp, identifier, true, 0);
-        }
-
-        static ReplicatedEntry newRemoveEvent(Bytes key, byte remoteIdentifier, long timestamp) {
-            return new VanillaReplicatedEntry(key, null, timestamp, remoteIdentifier, true, 0);
-        }
-
-        @Override
-        default void readMarshallable(final WireIn wire) throws IllegalStateException {
-            throw new UnsupportedOperationException("todo");
-        }
-
-        @Override
-        default void writeMarshallable(final WireOut wire) {
-            throw new UnsupportedOperationException("todo");
-        }
 
 
-    }
-
-    public static class VanillaReplicatedEntry implements ReplicatedEntry {
+    public static class VanillaReplicatedEntry implements ReplicationEntry {
 
         private final Bytes key;
         private final Bytes value;
@@ -185,7 +153,7 @@ public class EngineReplicator implements EngineReplication,
     }
 
     @Override
-    public void forEach(byte id, @NotNull Consumer<ReplicatedEntry> consumer) throws InterruptedException {
+    public void forEach(byte id, @NotNull Consumer<ReplicationEntry> consumer) throws InterruptedException {
         acquireModificationIterator(id).forEach(id, consumer);
     }
 
@@ -197,7 +165,7 @@ public class EngineReplicator implements EngineReplication,
         return new ModificationIterator() {
 
             @Override
-            public void forEach(byte id, @NotNull Consumer<ReplicatedEntry> consumer) throws InterruptedException {
+            public void forEach(byte id, @NotNull Consumer<ReplicationEntry> consumer) throws InterruptedException {
 
                 while (hasNext()) {
 

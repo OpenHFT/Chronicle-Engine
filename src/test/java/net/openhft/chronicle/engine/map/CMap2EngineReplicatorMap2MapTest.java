@@ -15,20 +15,20 @@ import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplicat
  * Created by Rob Austin
  */
 
-public class EngineReplicatorMap2MapTest {
+public class CMap2EngineReplicatorMap2MapTest {
 
-    final EngineReplicator replicator1 = new EngineReplicator(null);
+    final CMap2EngineReplicator replicator1 = new CMap2EngineReplicator(null);
     final ChronicleMap<String, String> map1 = newMap(1, replicator1, String.class, String.class);
 
-    final EngineReplicator replicator2 = new EngineReplicator(null);
+    final CMap2EngineReplicator replicator2 = new CMap2EngineReplicator(null);
     final ChronicleMap<String, String> map2 = newMap(2, replicator2, String.class, String.class);
 
-    final EngineReplicator replicator3 = new EngineReplicator(null);
+    final CMap2EngineReplicator replicator3 = new CMap2EngineReplicator(null);
     final ChronicleMap<String, String> map3 = newMap(3, replicator3, String.class, String.class);
 
 
     public <K, V> ChronicleMap<K, V> newMap(int localIdentifier,
-                                            final EngineReplicator replicator,
+                                            final CMap2EngineReplicator replicator,
                                             @NotNull final Class<K> keyClass,
                                             @NotNull final Class<V> valueClass) {
         return ChronicleMapBuilder.of(keyClass, valueClass).
@@ -65,14 +65,14 @@ public class EngineReplicatorMap2MapTest {
         map2.put("hello2", "world2");
         map3.put("hello3", "world3");
 
-        iterator1for2.forEach(replicator2.identifier(), replicator2::onEntry);
-        iterator1for3.forEach(replicator3.identifier(), replicator3::onEntry);
+        iterator1for2.forEach(replicator2.identifier(), replicator2::applyReplication);
+        iterator1for3.forEach(replicator3.identifier(), replicator3::applyReplication);
 
-        iterator2for1.forEach(replicator1.identifier(), replicator1::onEntry);
-        iterator2for3.forEach(replicator3.identifier(), replicator3::onEntry);
+        iterator2for1.forEach(replicator1.identifier(), replicator1::applyReplication);
+        iterator2for3.forEach(replicator3.identifier(), replicator3::applyReplication);
 
-        iterator3for1.forEach(replicator1.identifier(), replicator1::onEntry);
-        iterator3for2.forEach(replicator2.identifier(), replicator2::onEntry);
+        iterator3for1.forEach(replicator1.identifier(), replicator1::applyReplication);
+        iterator3for2.forEach(replicator2.identifier(), replicator2::applyReplication);
 
         for (Map m : new Map[]{map1, map2, map3}) {
             Assert.assertEquals("world1", m.get("hello1"));

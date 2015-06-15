@@ -25,6 +25,7 @@ package net.openhft.chronicle.engine.server.internal;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.pool.StringBuilderPool;
+import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
@@ -115,7 +116,8 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
         eventType,
         newValue,
         timestamp,
-        identifier;
+        identifier,
+        entry;
     }
 
     public enum EventId implements ParameterizeWireKey {
@@ -269,26 +271,16 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                     return;
                 }
 
-                if (replicatedPut.contentEquals(eventName)) {
+                if (replicatedPut.contentEquals(eventName) ||
+                        replicatedRemove.contentEquals(eventName)) {
 
                     keyBytes.clear();
                     valueBytes.clear();
 
-                    wireIn.read(Params.key).bytes(keyBytes);
-                    wireIn.read(Params.value).bytes(valueBytes);
+                    final ReplicationEntry entry = wireIn.
+                            read(Params.entry).typedMarshallable();
 
-                    final long timestamp = wireIn.read(Params.timestamp).int64();
-                    final byte identifier = wireIn.read(Params.identifier).int8();
-                    map.replicatedPut(keyBytes, keyBytes, identifier, timestamp);
-                    return;
-                }
-
-                if (replicatedRemove.contentEquals(eventName)) {
-                    keyBytes.clear();
-                    wireIn.read(Params.key).bytes(keyBytes);
-                    final long timestamp = wireIn.read(Params.timestamp).int64();
-                    final byte identifier = wireIn.read(Params.identifier).int8();
-                    map.replicatedRemove(keyBytes, identifier, timestamp);
+                    map.apply(entry);
                     return;
                 }
 

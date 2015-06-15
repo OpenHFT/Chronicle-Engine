@@ -1,12 +1,13 @@
 package net.openhft.chronicle.engine.api.map;
 
-import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.io.Closeable;
+import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.tree.Assetted;
 import net.openhft.chronicle.engine.api.tree.View;
-import org.jetbrains.annotations.Nullable;
+import net.openhft.lang.model.constraints.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -153,8 +154,7 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
 
     boolean containsValue(MV value);
 
-    void replicatedPut(Bytes key, Bytes value, byte remoteIdentifier, long timestamp);
-    void replicatedRemove(Bytes key, byte identifier, long timestamp);
+    void apply(@NotNull ReplicationEntry entry);
 
     interface Entry<K, V> {
         K key();

@@ -1,7 +1,6 @@
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.core.annotation.NotNull;
+import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
@@ -13,6 +12,7 @@ import net.openhft.chronicle.engine.collection.ClientWiredStatelessChronicleSet;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.TcpConnectionHub;
 import net.openhft.chronicle.wire.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -34,7 +34,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     private final Map<Long, String> cidToCsp = new HashMap<>();
     @NotNull
     private final RequestContext context;
-    @org.jetbrains.annotations.NotNull
+    @NotNull
     private final Asset asset;
 
     public RemoteKeyValueStore(@NotNull final RequestContext context,
@@ -50,8 +50,8 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
         subscriptions.setKvStore(this);
     }
 
-    @org.jetbrains.annotations.NotNull
-    private static String toUri(@org.jetbrains.annotations.NotNull final @NotNull RequestContext context) {
+    @NotNull
+    private static String toUri(@NotNull final RequestContext context) {
         return "/" + context.name()
                 + "?view=" + "map&keyType=" + context.keyType().getName() + "&valueType=" + context.valueType()
                 .getName();
@@ -81,12 +81,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     }
 
     @Override
-    public void replicatedPut(final Bytes key, final Bytes value, final byte remoteIdentifier, final long timestamp) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
-    public void replicatedRemove(final Bytes key, final byte identifier, final long timestamp) {
+    public void apply(@NotNull final EngineReplication.ReplicationEntry entry) {
         throw new UnsupportedOperationException("todo");
     }
 
@@ -387,7 +382,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     // todo
     private final ObjectKVSSubscription<K, V, V> subscriptions;
 
-    @org.jetbrains.annotations.NotNull
+    @NotNull
     @Override
     public ObjectKVSSubscription<K, V, V> subscription(boolean createIfAbsent) {
         return subscriptions;

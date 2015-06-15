@@ -3,6 +3,7 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.ClassLocal;
+import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.map.*;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
@@ -11,9 +12,14 @@ import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.Wire;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Constructor;
-import java.util.*;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -161,7 +167,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
         List<Map.Entry<String, V>> entries = new ArrayList<>();
         try {
             for (int i = 0, seg = segments(); i < seg; i++)
-                entriesFor(i, e -> entries.add(new AbstractMap.SimpleEntry<>(e.key(), e.value())));
+                entriesFor(i, e -> entries.add(new SimpleEntry<>(e.key(), e.value())));
         } catch (InvalidSubscriberException e) {
             throw new AssertionError(e);
         }
@@ -192,12 +198,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     }
 
     @Override
-    public void replicatedPut(final Bytes key, final Bytes value, final byte remoteIdentifier, final long timestamp) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
-    public void replicatedRemove(final Bytes key, final byte identifier, final long timestamp) {
+    public void apply(@NotNull final ReplicationEntry entry) {
         throw new UnsupportedOperationException("todo");
     }
 
