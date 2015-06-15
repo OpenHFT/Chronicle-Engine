@@ -77,16 +77,16 @@ public enum Chassis {
         assetTree.registerSubscriber(name, eClass, subscriber);
     }
 
-    public static <E> void unregisterSubscriber(String name, Class<E> eClass, Subscriber<E> subscriber) {
-        assetTree.unregisterSubscriber(name, eClass, subscriber);
+    public static <E> void unregisterSubscriber(String name, Subscriber<E> subscriber) {
+        assetTree.unregisterSubscriber(name, subscriber);
     }
 
     public static <T, E> void registerTopicSubscriber(String name, Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
         assetTree.registerTopicSubscriber(name, tClass, eClass, subscriber);
     }
 
-    public static <T, E> void unregisterTopicSubscriber(String name, Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber) {
-        assetTree.unregisterTopicSubscriber(name, tClass, eClass, subscriber);
+    public static <T, E> void unregisterTopicSubscriber(String name, TopicSubscriber<T, E> subscriber) {
+        assetTree.unregisterTopicSubscriber(name, subscriber);
     }
 
     public static <W, U> void addWrappingRule(Class<W> wClass, String description, WrappingViewFactory<W, U> factory, Class<U> uClass) {

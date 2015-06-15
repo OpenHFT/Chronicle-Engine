@@ -74,11 +74,6 @@ public interface AssetTree extends Closeable {
         ((KVSSubscription) acquireSubscription(rc)).registerTopicSubscriber(rc, subscriber);
     }
 
-    default <T, E> void registerKeySubscriber(String name, Class<T> tClass, Class<E> eClass, Subscriber<E> subscriber) throws AssetNotFoundException {
-        RequestContext rc = requestContext(name).type(tClass).type2(eClass);
-        ((KVSSubscription) acquireSubscription(rc)).registerKeySubscriber(rc, subscriber);
-    }
-
     default Subscription acquireSubscription(RequestContext rc) {
         Class<Subscription> subscriptionType = getSubscriptionType(rc);
         rc.viewType(subscriptionType);
@@ -102,24 +97,17 @@ public interface AssetTree extends Closeable {
                 : (Class) ObjectKVSSubscription.class;
     }
 
-    default <E> void unregisterSubscriber(String name, Class<E> eClass, Subscriber<E> subscriber) throws AssetNotFoundException {
-        RequestContext rc = requestContext(name).type(eClass);
+    default <E> void unregisterSubscriber(String name, Subscriber<E> subscriber) throws AssetNotFoundException {
+        RequestContext rc = requestContext(name);
         Subscription subscription = getSubscription(rc);
         if (subscription != null)
             subscription.unregisterSubscriber(subscriber);
     }
 
-    default <T, E> void unregisterTopicSubscriber(String name, Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
-        RequestContext rc = requestContext(name).viewType(Subscriber.class).type(tClass).type2(eClass);
+    default <T, E> void unregisterTopicSubscriber(String name, TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
+        RequestContext rc = requestContext(name).viewType(Subscriber.class);
         Subscription subscription = getSubscription(rc);
         if (subscription instanceof KVSSubscription)
             ((KVSSubscription) acquireSubscription(rc)).unregisterTopicSubscriber(subscriber);
-    }
-
-    default <T, E> void unregisterKeySubscriber(String name, Class<T> tClass, Class<E> eClass, Subscriber<E> subscriber) throws AssetNotFoundException {
-        RequestContext rc = requestContext(name).viewType(Subscriber.class).type(tClass).type2(eClass);
-        Subscription subscription = getSubscription(rc);
-        if (subscription instanceof KVSSubscription)
-            ((KVSSubscription) acquireSubscription(rc)).unregisterKeySubscriber(subscriber);
     }
 }

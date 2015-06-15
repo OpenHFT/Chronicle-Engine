@@ -26,7 +26,6 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.pool.StringBuilderPool;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
-import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
@@ -67,7 +66,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
     private RequestContext requestContext;
     private Queue<Consumer<Wire>> publisher;
     private AssetTree assetTree;
-    private final Map<Long, Subscriber<MapEvent>> tidToListener = new ConcurrentHashMap<>();
+    private final Map<Long, Subscriber<Object>> tidToListener = new ConcurrentHashMap<>();
 
     /**
      * @param in             the data the has come in from network
@@ -235,25 +234,25 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                 }
 
                 if (subscribe.contentEquals(eventName)) {
-
-                    Subscriber<MapEvent> listener = e -> {
+                    Class eventClass = valueIn.typeLiteral();
+                    Subscriber<Object> listener = e -> {
                         publisher.add(publish -> {
                             publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
-                            publish.writeNotReadyDocument(false, wire -> wire.write(reply).typedMarshallable(e));
+                            publish.writeNotReadyDocument(false, wire -> wire.write(reply).object(e));
                         });
                     };
                     tidToListener.put(inputTid, listener);
-                    assetTree.registerSubscriber(requestContext.name(), MapEvent.class, listener);
+                    assetTree.registerSubscriber(requestContext.name(), eventClass, listener);
 
                     return;
                 }
                 if (unSubscribe.contentEquals(eventName)){
-                    Subscriber<MapEvent> listener = tidToListener.remove(inputTid);
+                    Subscriber<Object> listener = tidToListener.remove(inputTid);
                     if(listener==null){
                         LOG.warn("No subscriber to present to unsubscribe (" + inputTid +")");
                         return;
                     }
-                    assetTree.unregisterSubscriber(requestContext.name(), MapEvent.class, listener);
+                    assetTree.unregisterSubscriber(requestContext.name(), listener);
                     // no more data.
                     publisher.add(publish -> {
                         publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));

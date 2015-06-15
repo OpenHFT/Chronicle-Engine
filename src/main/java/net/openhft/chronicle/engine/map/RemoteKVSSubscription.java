@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.io.Closeable;
+import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
@@ -68,8 +69,9 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
         hub.outBytesLock().lock();
         try {
             subscriberTID = writeMetaDataStartTime(startTime);
+
             hub.outWire().writeDocument(false, wireOut -> {
-                wireOut.writeEventName(subscribe);
+                wireOut.writeEventName(subscribe).typeLiteral(ClassAliasPool.CLASS_ALIASES.nameFor(rc.elementType()));
             });
 
             hub.writeSocket(hub.outWire());
@@ -91,7 +93,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
                         final Wire wire = hub.proxyReply(timeoutTime, subscriberTID);
                         checkIsData(wire);
                         readReplyConsumer(wire, CoreFields.reply, (Consumer<ValueIn>)
-                                valueIn -> onEvent((MapEvent) valueIn.typedMarshallable(), subscriber));
+                                valueIn -> onEvent(valueIn.object(Object.class), subscriber));
                     } finally {
                         hub.inBytesLock().unlock();
                     }
@@ -140,7 +142,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
         try {
             writeMetaDataForKnownTID(subscriberTID);
             hub.outWire().writeDocument(false, wireOut -> {
-                wireOut.writeEventName(unSubscribe);
+                wireOut.writeEventName(unSubscribe).text("");
             });
 
             hub.writeSocket(hub.outWire());
@@ -156,7 +158,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
                 .getName();
     }
 
-    private void onEvent(MapEvent me, Subscriber<MapEvent<K, V>> subscriber) {
+    private void onEvent(Object me, Subscriber subscriber) {
         try {
             if (me == null) {
                 // todo remove subscriber.
