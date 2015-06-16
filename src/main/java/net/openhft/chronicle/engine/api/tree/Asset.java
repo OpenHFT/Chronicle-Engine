@@ -33,6 +33,12 @@ public interface Asset extends Closeable {
     @NotNull
     Asset acquireAsset(RequestContext context, String fullName) throws AssetNotFoundException;
 
+    /**
+     * Navigate down the tree to find an asset.
+     *
+     * @param fullName with names seperated by /
+     * @return the Asset found or null
+     */
     @Nullable
     default Asset getAsset(@NotNull String fullName) {
         if (fullName.isEmpty()) return this;
@@ -49,6 +55,34 @@ public interface Asset extends Closeable {
             }
         }
         return getChild(fullName);
+    }
+
+    /**
+     * Search a tree to find the first Asset with the name given.
+     *
+     * @param name partial name of asset to find.
+     * @return the Asset found or null.
+     */
+    default Asset findAsset(@NotNull String name) {
+        Asset asset = getAsset(name);
+        Asset parent = parent();
+        if (asset == null && parent != null)
+            asset = parent.findAsset(name);
+        return asset;
+    }
+
+    /**
+     * Search for a view up the tree.
+     *
+     * @param viewType the class pf the view
+     * @return the View found or null.
+     */
+    default <V> V findView(@NotNull Class<V> viewType) {
+        V v = getView(viewType);
+        Asset parent = parent();
+        if (v == null && parent != null)
+            v = parent.findView(viewType);
+        return v;
     }
 
     Asset getChild(String name);
@@ -90,6 +124,4 @@ public interface Asset extends Closeable {
     boolean hasChildren();
 
     void forEachChild(ThrowingAcceptor<Asset, InvalidSubscriberException> child) throws InvalidSubscriberException;
-
-
 }

@@ -100,7 +100,7 @@ public class TcpConnectionHub implements View, Closeable {
         this.timeoutMs = requestContext.timeout();
 
         attemptConnect(remoteAddress);
-        view = asset.root().getView(SessionProvider.class);
+        view = asset.findView(SessionProvider.class);
     }
 
     private synchronized void attemptConnect(final InetSocketAddress remoteAddress) {
