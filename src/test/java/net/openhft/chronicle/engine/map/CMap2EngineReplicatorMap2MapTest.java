@@ -166,6 +166,11 @@ public class CMap2EngineReplicatorMap2MapTest {
             replicator2.applyReplication(entry);
         });
 
+        iterator1for2.forEach(e -> {
+            // do nothing
+        });
+
+
         Thread.sleep(1);
         // !---------------- simulate a disconnection ---------------------
         // we do this by requesting by dirtying the entries form the last know timestamp

@@ -137,7 +137,14 @@ public class TcpConnectionHub implements View, Closeable {
         return outBytesLock;
     }
 
+    /**
+     * @param timeoutTime throws a RemoteCallTimeoutException if the timeout has passed, ignored if
+     *                    timeout is zero
+     */
     private void checkTimeout(long timeoutTime) {
+        if (timeoutTime == 0)
+            return;
+
         if (timeoutTime < System.currentTimeMillis() && !Jvm.isDebug())
             throw new RemoteCallTimeoutException("timeout=" + timeoutTime + "ms");
     }
@@ -182,6 +189,7 @@ public class TcpConnectionHub implements View, Closeable {
             }
         }
     }
+
     private void doHandShaking() {
         outBytesLock().lock();
         try {
@@ -312,6 +320,13 @@ public class TcpConnectionHub implements View, Closeable {
         }
     }
 
+    /**
+     *
+     * @param timeoutTime if set to zero, will return null if unable to get data
+     * @param tid
+     * @return
+     * @throws IOException
+     */
     private Wire proxyReplyThrowable(long timeoutTime, long tid) throws IOException {
         for (; ; ) {
             assert inBytesLock().isHeldByCurrentThread();
@@ -349,14 +364,18 @@ public class TcpConnectionHub implements View, Closeable {
                 logToStandardOutMessageReceived(inWire);
                 return inWire;
 
-            } else if (System.currentTimeMillis() - timeoutTime > parkedTransactionTimeStamp)
+            } else {
+                if (timeoutTime == 0)
+                    return null;
+                else if (System.currentTimeMillis() - timeoutTime > parkedTransactionTimeStamp)
 
-                throw new IllegalStateException("Skipped Message with " +
-                        "transaction-id=" +
-                        parkedTransactionTimeStamp +
-                        ", this can occur when you have another thread which has called the " +
-                        "stateless client and terminated abruptly before the message has been " +
-                        "returned from the server and hence consumed by the other thread.");
+                    throw new IllegalStateException("Skipped Message with " +
+                            "transaction-id=" +
+                            parkedTransactionTimeStamp +
+                            ", this can occur when you have another thread which has called the " +
+                            "stateless client and terminated abruptly before the message has been " +
+                            "returned from the server and hence consumed by the other thread.");
+            }
         }
     }
 
@@ -701,7 +720,7 @@ public class TcpConnectionHub implements View, Closeable {
         return asset.root().acquireView(TcpConnectionHub.class, context);
     }
 
-    public boolean isClosed(){
+    public boolean isClosed() {
         return closed;
     }
 
