@@ -81,6 +81,7 @@ public class TcpConnectionHub implements View, Closeable {
 
     // this is a transaction id and size that has been read by another thread.
     private volatile long parkedTransactionId;
+    private volatile long lastTransactionId;
     private volatile long parkedTransactionTimeStamp;
 
     private long limitOfLast = 0;
@@ -88,6 +89,7 @@ public class TcpConnectionHub implements View, Closeable {
     // set up in the header
     private long startTime;
     private transient boolean closed;
+    private long messageSize;
 
     public TcpConnectionHub(@NotNull final RequestContext requestContext, final Asset asset) {
 
@@ -320,6 +322,7 @@ public class TcpConnectionHub implements View, Closeable {
         }
     }
 
+
     /**
      *
      * @param timeoutTime if set to zero, will return null if unable to get data
@@ -362,6 +365,67 @@ public class TcpConnectionHub implements View, Closeable {
                 // the data is for this thread so process it
                 readSocket((int) messageSize, timeoutTime);
                 logToStandardOutMessageReceived(inWire);
+                return inWire;
+
+            } else {
+                if (timeoutTime == 0)
+                    return null;
+                else if (System.currentTimeMillis() - timeoutTime > parkedTransactionTimeStamp)
+
+                    throw new IllegalStateException("Skipped Message with " +
+                            "transaction-id=" +
+                            parkedTransactionTimeStamp +
+                            ", this can occur when you have another thread which has called the " +
+                            "stateless client and terminated abruptly before the message has been " +
+                            "returned from the server and hence consumed by the other thread.");
+            }
+        }
+    }
+
+
+    private Wire proxyReplyThrowable2(long timeoutTime, long tid) throws IOException {
+
+        assert inBytesLock().isHeldByCurrentThread();
+
+        for (; ; ) {
+
+            // read next message
+            if (parkedTransactionId == 0 || lastTransactionId == tid) {
+
+                // if we have processed all the bytes that we have read in
+                final Bytes<?> bytes = inWire.bytes();
+                inWireClear();
+
+                readSocket(SIZE_OF_SIZE, timeoutTime);
+                final int header = bytes.readVolatileInt(bytes.position());
+                messageSize = Wires.lengthOf(header);
+
+                assert messageSize > 0 : "Invalid message size " + messageSize;
+                assert messageSize < 1 << 30 : "Invalid message size " + messageSize;
+
+                if (!Wires.isData(header)) {
+                    readSocket((int) messageSize, timeoutTime);
+
+                    inWire.readDocument((WireIn w) -> {
+                        parkedTransactionId = CoreFields.tid(w);
+                        if (parkedTransactionId != tid) {
+                            // if the transaction id is not for this thread, park it
+                            // and allow another thread to pick it up
+                            parkedTransactionTimeStamp = System.currentTimeMillis();
+                            pause();
+                        }
+
+                    }, null);
+                    continue;
+                }
+            }
+
+            if (parkedTransactionId == tid) {
+                // the data is for this thread so process it
+                readSocket((int) messageSize, timeoutTime);
+                logToStandardOutMessageReceived(inWire);
+                parkedTransactionId = 0;
+                lastTransactionId = tid;
                 return inWire;
 
             } else {

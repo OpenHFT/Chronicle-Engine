@@ -29,9 +29,11 @@ import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
+import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.collection.CollectionWireHandlerProcessor;
+import net.openhft.chronicle.engine.map.RemoteKeyValueStore;
 import net.openhft.chronicle.engine.map.replication.Bootstrap;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.map.ChronicleMap;
@@ -99,14 +101,20 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
         this.requestContext = requestContext;
         this.publisher = publisher;
         this.assetTree = assetTree;
-        this.hostId = assetTree.root().acquireView(HostIdentifier.class, requestContext);
+
+        try {
+            this.hostId = assetTree.root().acquireView(HostIdentifier.class, requestContext);
+        } catch (AssetNotFoundException e) {
+            this.hostId = null;
+        }
 
         try {
             this.inWire = in;
             this.outWire = out;
             this.map = map;
             charSequenceValue = map instanceof ChronicleMap && CharSequence.class == ((ChronicleMap) map).valueClass();
-
+            assert !(map instanceof RemoteKeyValueStore) : "the server should not sure a remove " +
+                    "map";
             this.tid = tid;
             dataConsumer.accept(in, tid);
         } catch (Exception e) {

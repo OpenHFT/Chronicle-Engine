@@ -22,9 +22,10 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.TextWire;
+import net.openhft.chronicle.wire.WireType;
+import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -38,7 +39,7 @@ import static net.openhft.chronicle.wire.YamlLogging.writeMessage;
 import static org.junit.Assert.*;
 
 
-@Ignore("todo fix")
+
 public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
 
     private AssetTree assetTree = new VanillaAssetTree().forTesting();

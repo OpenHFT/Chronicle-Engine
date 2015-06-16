@@ -292,7 +292,7 @@ public class MapClientTest extends ThreadMonitoringTest {
             this.assetTree = assetTree;
             wire = wireType;
 
-            serverEndpoint = new ServerEndpoint(assetTree);
+            serverEndpoint = new ServerEndpoint(new VanillaAssetTree().forTesting());
             int serverPort = serverEndpoint.getPort();
 
             final String hostname = "localhost";
