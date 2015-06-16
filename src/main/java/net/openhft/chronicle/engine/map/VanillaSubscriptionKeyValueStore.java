@@ -11,7 +11,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     private final ObjectKVSSubscription<K, MV, V> subscriptions;
 
     public VanillaSubscriptionKeyValueStore(RequestContext context, Asset asset, KeyValueStore<K, MV, V> item) {
-        super(asset, item);
+        super(context, asset, item);
         this.subscriptions = asset.acquireView(ObjectKVSSubscription.class, context);
         subscriptions.setKvStore(this);
     }

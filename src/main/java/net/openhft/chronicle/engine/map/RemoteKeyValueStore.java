@@ -388,6 +388,16 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
         return subscriptions;
     }
 
+    @Override
+    public Class<K> keyType() {
+        return kClass;
+    }
+
+    @Override
+    public Class<V> valueType() {
+        return vClass;
+    }
+
     class Entry implements Map.Entry<K, V> {
 
         final K key;

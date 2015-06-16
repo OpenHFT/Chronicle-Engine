@@ -2,6 +2,7 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
 import net.openhft.chronicle.engine.api.tree.Asset;
+import net.openhft.chronicle.engine.api.tree.RequestContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -9,8 +10,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class AbstractSubscriptionKeyValueStore<K, MV,V> extends AbstractKeyValueStore<K, MV,V>
         implements SubscriptionKeyValueStore<K, MV,V> {
-    protected AbstractSubscriptionKeyValueStore(Asset asset, @NotNull SubscriptionKeyValueStore<K, MV, V> kvStore) {
-        super(asset, kvStore);
+    protected AbstractSubscriptionKeyValueStore(RequestContext rc, Asset asset, @NotNull SubscriptionKeyValueStore<K, MV, V> kvStore) {
+        super(rc, asset, kvStore);
     }
 
     @Override

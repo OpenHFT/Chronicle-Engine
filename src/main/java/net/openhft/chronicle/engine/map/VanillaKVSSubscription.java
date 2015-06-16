@@ -55,6 +55,21 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
             notifyEvent0(changeEvent);
     }
 
+    @Override
+    public int keySubscriberCount() {
+        return keySubscribers.size();
+    }
+
+    @Override
+    public int entrySubscriberCount() {
+        return subscribers.size();
+    }
+
+    @Override
+    public int topicSubscriberCount() {
+        return topicSubscribers.size();
+    }
+
     private boolean hasSubscribers() {
         return hasSubscribers || asset.hasChildren();
     }

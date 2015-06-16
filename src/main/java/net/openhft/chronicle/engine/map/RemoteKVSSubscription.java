@@ -32,9 +32,9 @@ import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventI
  */
 public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient implements ObjectKVSSubscription<K, MV, V>, Closeable {
 
+    private final Class<K> keyType;
     private final Class<V> valueType;
     private final ExecutorService eventLoop = Executors.newSingleThreadExecutor(new NamedThreadFactory("RemoteKVSSubscription"));
-    private final Class<K> keyType;
     private long subscriberTID = -1;
     private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
     private volatile boolean closed;
@@ -57,6 +57,21 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
     @Override
     public void notifyEvent(MapEvent<K, V> mpe) {
         //todo This should be implemented
+    }
+
+    @Override
+    public int keySubscriberCount() {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public int entrySubscriberCount() {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public int topicSubscriberCount() {
+        throw new UnsupportedOperationException("todo");
     }
 
     @Override

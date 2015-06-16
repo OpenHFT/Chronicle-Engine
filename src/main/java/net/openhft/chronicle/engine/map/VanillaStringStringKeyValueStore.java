@@ -14,8 +14,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
-import java.util.*;
 import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.map.Buffers.BUFFERS;
@@ -45,6 +48,16 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         this.subscriptions = subscriptions;
         rawSubscription.registerDownstream(mpe ->
                 subscriptions.notifyEvent(mpe.translate(s -> s, BytesStoreToString.BYTES_STORE_TO_STRING)));
+    }
+
+    @Override
+    public Class<String> keyType() {
+        return String.class;
+    }
+
+    @Override
+    public Class<String> valueType() {
+        return String.class;
     }
 
     enum BytesStoreToString implements Function<BytesStore, String> {

@@ -43,19 +43,21 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     private final ObjectKVSSubscription<String, V, V> subscriptions;
     private SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore;
     private Asset asset;
+    private Class<V> valueType;
 
     public VanillaStringMarshallableKeyValueStore(RequestContext context, Asset asset,
                                                   SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore) throws AssetNotFoundException {
-        this(asset.acquireView(ObjectKVSSubscription.class, context), asset, context.type2(),
+        this(asset.acquireView(ObjectKVSSubscription.class, context), asset, context.valueType(),
                 kvStore, context.wireType());
     }
 
-    VanillaStringMarshallableKeyValueStore(ObjectKVSSubscription<String, V, V> subscriptions, Asset asset, Class type2,
+    VanillaStringMarshallableKeyValueStore(ObjectKVSSubscription<String, V, V> subscriptions, Asset asset, Class valueType,
                                            SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore,
                                            Function<Bytes, Wire> wireType) {
         this.asset = asset;
-        valueToBytes = toBytes(type2, wireType);
-        bytesToValue = fromBytes(type2, wireType);
+        this.valueType = valueType;
+        valueToBytes = toBytes(valueType, wireType);
+        bytesToValue = fromBytes(valueType, wireType);
         this.kvStore = kvStore;
         asset.registerView(ValueReader.class, (ValueReader<BytesStore, V>) (bs, v) ->
                 bytesToValue.apply(bs, null));
@@ -215,5 +217,15 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     @Override
     public void close() {
         kvStore.close();
+    }
+
+    @Override
+    public Class<String> keyType() {
+        return String.class;
+    }
+
+    @Override
+    public Class<V> valueType() {
+        return valueType;
     }
 }
