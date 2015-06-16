@@ -25,12 +25,15 @@ package net.openhft.chronicle.engine.server.internal;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.pool.StringBuilderPool;
-import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
+import net.openhft.chronicle.engine.api.EngineReplication;
+import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.collection.CollectionWireHandlerProcessor;
+import net.openhft.chronicle.engine.map.replication.Bootstrap;
+import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
@@ -68,6 +71,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
     private Queue<Consumer<Wire>> publisher;
     private AssetTree assetTree;
     private final Map<Long, Subscriber<Object>> tidToListener = new ConcurrentHashMap<>();
+    private HostIdentifier hostId;
 
     /**
      * @param in             the data the has come in from network
@@ -95,6 +99,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
         this.requestContext = requestContext;
         this.publisher = publisher;
         this.assetTree = assetTree;
+        this.hostId = assetTree.root().acquireView(HostIdentifier.class, requestContext);
 
         try {
             this.inWire = in;
@@ -150,8 +155,8 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
         numberOfSegments,
         subscribe,
         unSubscribe,
-        replicatedPut(key, value, timestamp, identifier),
-        replicatedRemove(key, timestamp, identifier);
+        replicationEvent,
+        bootstap;
 
         private final WireKey[] params;
 
@@ -195,7 +200,6 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
     private final Bytes keyBytes = Bytes.elasticByteBuffer();
     private final Bytes valueBytes = Bytes.elasticByteBuffer();
 
-
     /**
      * create a new cid if one does not already exist for this csp
      *
@@ -217,6 +221,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
     final StringBuilder eventName = new StringBuilder();
 
     private final BiConsumer<WireIn, Long> dataConsumer = new BiConsumer<WireIn, Long>() {
+
         @Override
         public void accept(WireIn wireIn, Long inputTid) {
             try {
@@ -248,10 +253,10 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
 
                     return;
                 }
-                if (unSubscribe.contentEquals(eventName)){
+                if (unSubscribe.contentEquals(eventName)) {
                     Subscriber<Object> listener = tidToListener.remove(inputTid);
-                    if(listener==null){
-                        LOG.warn("No subscriber to present to unsubscribe (" + inputTid +")");
+                    if (listener == null) {
+                        LOG.warn("No subscriber to present to unsubscribe (" + inputTid + ")");
                         return;
                     }
                     assetTree.unregisterSubscriber(requestContext.name(), listener);
@@ -271,22 +276,52 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                     return;
                 }
 
-                if (replicatedPut.contentEquals(eventName) ||
-                        replicatedRemove.contentEquals(eventName)) {
-
-                    keyBytes.clear();
-                    valueBytes.clear();
-
-                    final ReplicationEntry entry = wireIn.
-                            read(Params.entry).typedMarshallable();
-
-                    map.apply(entry);
+                // receives replication events
+                if (replicationEvent.contentEquals(eventName)) {
+                    map.apply(wireIn.read(Params.entry).typedMarshallable());
                     return;
                 }
 
                 outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
 
                 writeData(out -> {
+
+                    if (bootstap.contentEquals(eventName)) {
+
+                        final EngineReplication replication = assetTree.root()
+                                .acquireView(EngineReplication.class, requestContext);
+
+                        // receive bootstrap
+                        final Bootstrap inBootstrap = wireIn.read(bootstap).typedMarshallable();
+                        final byte id = inBootstrap.identifier();
+                        final ModificationIterator mi = replication.acquireModificationIterator(id);
+
+                        // sends replication events back to the remote client
+                        mi.setModificationNotifier(() -> {
+                            try {
+                                mi.forEach(e -> publisher.add(publish -> {
+
+                                    publish.writeDocument(true,
+                                            wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
+
+                                    publish.writeDocument(false,
+                                            wire -> wire.write(reply).typedMarshallable(null));
+
+                                }));
+                            } catch (InterruptedException e) {
+                                Jvm.rethrow(e);
+                            }
+
+                        });
+
+                        // send bootstrap
+                        final Bootstrap outBootstrap = new Bootstrap();
+                        outBootstrap.identifier(hostId.hostId());
+                        outBootstrap.lastUpdatedTime(replication.lastModificationTime(id));
+                        outWire.write(bootstap).typedMarshallable(outBootstrap);
+                        return;
+                    }
+
                     if (clear.contentEquals(eventName)) {
                         map.clear();
                         return;
@@ -320,6 +355,11 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
 
                     if (size.contentEquals(eventName)) {
                         outWire.writeEventName(reply).int64(map.longSize());
+                        return;
+                    }
+
+                    if (identifier.contentEquals(eventName)) {
+                        outWire.writeEventName(reply).int8(hostId.hostId());
                         return;
                     }
 

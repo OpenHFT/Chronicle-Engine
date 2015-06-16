@@ -10,6 +10,7 @@ import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.tree.Asset;
+import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.hash.replication.EngineReplicationLangBytesConsumer;
@@ -47,26 +48,26 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         Class vClass = context.type2();
         String basePath = context.basePath();
 
-
+        HostIdentifier hostIdentifier = null;
         ChronicleMapBuilder<K, V> builder = ChronicleMapBuilder.<K, V>of(kClass, vClass);
         EngineReplication engineReplicator = null;
         try {
             engineReplicator = asset.acquireView(requestContext(context.name()).viewType
                     (EngineReplication.class));
 
-            EngineReplicationLangBytesConsumer langBytesConsumer = asset.acquireView(requestContext(context.name())
-                    .viewType
-                            (EngineReplicationLangBytesConsumer.class));
+            final EngineReplicationLangBytesConsumer langBytesConsumer = asset.acquireView
+                    (requestContext(context.name()).viewType(EngineReplicationLangBytesConsumer.class));
 
-            
-            HostIdentifier hostIdentifier = asset.acquireView(HostIdentifier.class, context);
+            hostIdentifier = asset.acquireView(HostIdentifier.class, context);
 
             builder.replication(builder().engineReplication( langBytesConsumer)
-                    .createWithId((byte) hostIdentifier.hostId()));
+                    .createWithId(hostIdentifier.hostId()));
+
         } catch (AssetNotFoundException anfe) {
             if (LOGGER.isDebugEnabled())
                 LOGGER.debug("replication not enabled " + anfe.getMessage());
         }
+
         this.engineReplicator = engineReplicator;
         builder.eventListener(publishingOperations);
 
@@ -97,6 +98,21 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         chronicleMap = builder.create();
         subscriptions = asset.acquireView(ObjectKVSSubscription.class, context);
         subscriptions.setKvStore(this);
+
+        // todo peter to improve
+/*
+        if (hostIdentifier != null) {
+
+            for (InetAddress address : hostIdentifier.remoteAddresses()) {
+                ReplicationHub replicationHub = asset.acquireView
+                        (requestContext(context.name() + "&" + address).viewType(ReplicationHub.class));
+
+                replicationHub.bootstrap(engineReplicator, eventLoop, hostIdentifier.hostId());
+            }
+        }*/
+
+
+
     }
 
  

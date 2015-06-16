@@ -61,6 +61,7 @@ public interface CollectionWireHandler<U, C extends Collection<U>> {
         remove(key),
         numberOfSegments,
         contains(key),
+        identifier,
         iterator(segment);
 
         private final WireKey[] params;

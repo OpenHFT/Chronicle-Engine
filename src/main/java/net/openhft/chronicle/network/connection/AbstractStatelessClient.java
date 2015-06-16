@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.LongConsumer;
 
 import static net.openhft.chronicle.wire.CoreFields.reply;
 
@@ -64,6 +65,10 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
         return proxyReturnWireConsumer(eventId, f -> f.int32());
     }
 
+    protected byte proxyReturnByte(@NotNull final WireKey eventId) {
+        return proxyReturnWireConsumer(eventId, f -> f.int8());
+    }
+
     protected int proxyReturnUint16(@NotNull final WireKey eventId) {
         return proxyReturnWireConsumer(eventId, f -> f.uint16());
     }
@@ -83,6 +88,19 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
         long tid = sendEvent(startTime, eventId, consumerOut);
         return readWire(tid, startTime, reply, consumerIn);
     }
+
+    public <T> T proxyReturnWireConsumerInOut(@NotNull final WireKey eventId,
+                                              @NotNull final CoreFields reply,
+                                              @Nullable final Consumer<ValueOut> consumerOut,
+                                              @NotNull final Function<ValueIn, T> consumerIn,
+                                              @Nullable final LongConsumer tidConsumer) {
+        final long startTime = System.currentTimeMillis();
+        long tid = sendEvent(startTime, eventId, consumerOut);
+        tidConsumer.accept(tid);
+        return readWire(tid, startTime, reply, consumerIn);
+    }
+
+
 
     @SuppressWarnings("SameParameterValue")
     protected void proxyReturnVoid(@NotNull final WireKey eventId,

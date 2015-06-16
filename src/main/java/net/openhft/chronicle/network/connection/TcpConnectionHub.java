@@ -89,8 +89,7 @@ public class TcpConnectionHub implements View, Closeable {
     private long startTime;
     private transient boolean closed;
 
-    public TcpConnectionHub(@NotNull final RequestContext requestContext,
-                            final Asset asset) {
+    public TcpConnectionHub(@NotNull final RequestContext requestContext, final Asset asset) {
 
         this.tcpBufferSize = requestContext.tcpBufferSize();
         this.remoteAddress = new InetSocketAddress(requestContext.host(), requestContext.port());
@@ -705,4 +704,5 @@ public class TcpConnectionHub implements View, Closeable {
     public boolean isClosed(){
         return closed;
     }
+
 }

@@ -52,7 +52,7 @@ public class ChronicleMapKeyValueStoreTest {
 
     private static AssetTree create(final String node) {
         Function<Bytes, Wire> writeType = TextWire::new;
-        AssetTree tree1 = new VanillaAssetTree(1).forTesting();
+        AssetTree tree1 = new VanillaAssetTree((byte) 1).forTesting();
 
         tree1.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
                 VanillaMapView::new,
