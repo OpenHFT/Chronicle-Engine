@@ -70,8 +70,6 @@ public class ChronicleMapKeyValueStoreTest {
     @Test
     public void test() throws Exception {
 
-
-
         final ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME, String.class, String
                 .class);
         assertNotNull(map1);
@@ -116,14 +114,14 @@ public class ChronicleMapKeyValueStoreTest {
         map2.put("hello2", "world2");
         map3.put("hello3", "world3");
 
-        iterator1for2.forEach(replicator2.identifier(), replicator2::applyReplication);
-        iterator1for3.forEach(replicator3.identifier(), replicator3::applyReplication);
+        iterator1for2.forEach(replicator2::applyReplication);
+        iterator1for3.forEach(replicator3::applyReplication);
 
-        iterator2for1.forEach(replicator1.identifier(), replicator1::applyReplication);
-        iterator2for3.forEach(replicator3.identifier(), replicator3::applyReplication);
+        iterator2for1.forEach(replicator1::applyReplication);
+        iterator2for3.forEach(replicator3::applyReplication);
 
-        iterator3for1.forEach(replicator1.identifier(), replicator1::applyReplication);
-        iterator3for2.forEach(replicator2.identifier(), replicator2::applyReplication);
+        iterator3for1.forEach(replicator1::applyReplication);
+        iterator3for2.forEach(replicator2::applyReplication);
 
         for (Map m : new Map[]{map1, map2, map3}) {
             Assert.assertEquals("world1", m.get("hello1"));

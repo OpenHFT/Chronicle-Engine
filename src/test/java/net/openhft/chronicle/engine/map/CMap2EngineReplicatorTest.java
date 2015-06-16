@@ -38,12 +38,9 @@ public class CMap2EngineReplicatorTest {
         final ModificationIterator modificationIterator = replicator.acquireModificationIterator((byte) 1);
         map.put("hello", "world");
 
-        Assert.assertTrue(modificationIterator.hasNext());
-
         BlockingQueue<ReplicationEntry> q = new ArrayBlockingQueue<>(1);
-        modificationIterator.nextEntry(entry -> {
-            q.add(entry);
-            return true;
+        modificationIterator.forEach(e -> {
+            q.add(e);
         });
 
         final ReplicationEntry entry = q.take();

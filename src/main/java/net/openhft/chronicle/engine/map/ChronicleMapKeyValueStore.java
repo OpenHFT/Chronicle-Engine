@@ -49,9 +49,13 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         this.engineReplicator = asset.acquireView(requestContext(context.name()).viewType
                 (EngineReplication.class));
 
+        EngineReplicationLangBytesConsumer langBytesConsumer = asset.acquireView(requestContext(context.name())
+                .viewType
+                (EngineReplicationLangBytesConsumer.class));
+
         ChronicleMapBuilder<K, V> builder = ChronicleMapBuilder.<K, V>of(kClass, vClass).
                 replication(builder().engineReplication(
-                        (EngineReplicationLangBytesConsumer) engineReplicator).
+                   langBytesConsumer).
                         createWithId((byte) hostIdentifier.hostId())).
                 eventListener(publishingOperations);
 
