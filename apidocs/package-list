@@ -1,6 +1,7 @@
 net.openhft.chronicle.engine
 net.openhft.chronicle.engine.api
 net.openhft.chronicle.engine.api.collection
+net.openhft.chronicle.engine.api.management
 net.openhft.chronicle.engine.api.map
 net.openhft.chronicle.engine.api.pubsub
 net.openhft.chronicle.engine.api.session
