@@ -1,6 +1,7 @@
 net.openhft.chronicle.engine
 net.openhft.chronicle.engine.api
 net.openhft.chronicle.engine.api.collection
+net.openhft.chronicle.engine.api.management
 net.openhft.chronicle.engine.api.map
 net.openhft.chronicle.engine.api.pubsub
 net.openhft.chronicle.engine.api.session
@@ -8,6 +9,7 @@ net.openhft.chronicle.engine.api.set
 net.openhft.chronicle.engine.api.tree
 net.openhft.chronicle.engine.collection
 net.openhft.chronicle.engine.map
+net.openhft.chronicle.engine.map.replication
 net.openhft.chronicle.engine.pubsub
 net.openhft.chronicle.engine.server
 net.openhft.chronicle.engine.server.internal
