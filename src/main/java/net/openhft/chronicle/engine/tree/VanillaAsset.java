@@ -306,7 +306,7 @@ public class VanillaAsset implements Asset, Closeable {
     public void removeChild(String name) {
         Asset removed = children.remove(name);
         if (removed == null) return;
-        TopologySubscription topologySubscription = findView(TopologySubscription.class);
+        TopologySubscription topologySubscription = removed.findView(TopologySubscription.class);
         if (topologySubscription != null)
             topologySubscription.notifyEvent(RemovedAssetEvent.of(fullName(), name));
     }

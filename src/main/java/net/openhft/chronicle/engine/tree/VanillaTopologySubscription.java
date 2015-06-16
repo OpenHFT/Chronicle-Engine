@@ -56,5 +56,11 @@ public class VanillaTopologySubscription implements TopologySubscription {
                 subscribers.remove(sub);
             }
         }
+        Asset parent = asset.parent();
+        if (parent != null) {
+            TopologySubscription topologySubscription = parent.findView(TopologySubscription.class);
+            if (topologySubscription != null)
+                topologySubscription.notifyEvent(event);
+        }
     }
 }
