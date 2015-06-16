@@ -26,7 +26,7 @@ public class RemovedAssetEvent implements TopologicalEvent {
 
     @Override
     public boolean added() {
-        return true;
+        return false;
     }
 
     @Override

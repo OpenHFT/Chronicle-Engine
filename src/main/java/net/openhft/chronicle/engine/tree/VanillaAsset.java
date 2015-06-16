@@ -2,7 +2,6 @@ package net.openhft.chronicle.engine.tree;
 
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.util.ThrowingAcceptor;
-import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -61,7 +60,7 @@ public class VanillaAsset implements Asset, Closeable {
             assert name != null;
         }
         if (parent != null) {
-            TopologySubscription parentSubs = parent.getView(TopologySubscription.class);
+            TopologySubscription parentSubs = parent.findView(TopologySubscription.class);
             if (parentSubs != null)
                 parentSubs.notifyEvent(AddedAssetEvent.of(parent.fullName(), name));
         }
@@ -307,13 +306,9 @@ public class VanillaAsset implements Asset, Closeable {
     public void removeChild(String name) {
         Asset removed = children.remove(name);
         if (removed == null) return;
-        RemovedAssetEvent event = RemovedAssetEvent.of(fullName(), name);
-        TopologySubscription topologySubscription2 = removed.getView(TopologySubscription.class);
-        if (topologySubscription2 != null)
-            topologySubscription2.notifyEvent(event);
-        TopologySubscription topologySubscription1 = getView(TopologySubscription.class);
-        if (topologySubscription1 != null)
-            topologySubscription1.notifyEvent(event);
+        TopologySubscription topologySubscription = removed.findView(TopologySubscription.class);
+        if (topologySubscription != null)
+            topologySubscription.notifyEvent(RemovedAssetEvent.of(fullName(), name));
     }
 
     @NotNull

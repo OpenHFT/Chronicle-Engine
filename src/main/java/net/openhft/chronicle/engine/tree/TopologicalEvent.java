@@ -11,6 +11,13 @@ public interface TopologicalEvent extends ChangeEvent {
 
     boolean added();
 
+    default String fullName() {
+        String parent = assetName();
+        return parent == null ? "/"
+                : (parent.isEmpty() || parent.equals("/")) ? "/" + name()
+                : parent + "/" + name();
+    }
+
     enum TopologicalFields implements WireKey {
         assetName, name
     }

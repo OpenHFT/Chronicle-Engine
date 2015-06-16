@@ -18,6 +18,8 @@ import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.MapEventListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.File;
@@ -31,6 +33,7 @@ import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplicat
 
 
 public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValueStore<K, MV, V>, Closeable {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ChronicleMapKeyValueStore.class);
     private final ChronicleMap<K, V> chronicleMap;
     private final ObjectKVSSubscription<K, MV, V> subscriptions;
     private final EngineReplication engineReplicator;
@@ -44,20 +47,28 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         Class vClass = context.type2();
         String basePath = context.basePath();
 
-        HostIdentifier hostIdentifier = asset.acquireView(HostIdentifier.class, context);
 
-        this.engineReplicator = asset.acquireView(requestContext(context.name()).viewType
-                (EngineReplication.class));
+        ChronicleMapBuilder<K, V> builder = ChronicleMapBuilder.<K, V>of(kClass, vClass);
+        EngineReplication engineReplicator = null;
+        try {
+            engineReplicator = asset.acquireView(requestContext(context.name()).viewType
+                    (EngineReplication.class));
 
-        EngineReplicationLangBytesConsumer langBytesConsumer = asset.acquireView(requestContext(context.name())
-                .viewType
-                (EngineReplicationLangBytesConsumer.class));
+            EngineReplicationLangBytesConsumer langBytesConsumer = asset.acquireView(requestContext(context.name())
+                    .viewType
+                            (EngineReplicationLangBytesConsumer.class));
 
-        ChronicleMapBuilder<K, V> builder = ChronicleMapBuilder.<K, V>of(kClass, vClass).
-                replication(builder().engineReplication(
-                   langBytesConsumer).
-                        createWithId((byte) hostIdentifier.hostId())).
-                eventListener(publishingOperations);
+            
+            HostIdentifier hostIdentifier = asset.acquireView(HostIdentifier.class, context);
+
+            builder.replication(builder().engineReplication( langBytesConsumer)
+                    .createWithId((byte) hostIdentifier.hostId()));
+        } catch (AssetNotFoundException anfe) {
+            if (LOGGER.isDebugEnabled())
+                LOGGER.debug("replication not enabled " + anfe.getMessage());
+        }
+        this.engineReplicator = engineReplicator;
+        builder.eventListener(publishingOperations);
 
 
         if (context.putReturnsNull() != Boolean.FALSE) {

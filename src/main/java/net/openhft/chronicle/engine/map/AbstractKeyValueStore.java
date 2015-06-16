@@ -1,12 +1,12 @@
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.tree.Asset;
+import net.openhft.chronicle.engine.api.tree.RequestContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,10 +19,14 @@ import java.util.Map;
 public class AbstractKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> {
     protected final Asset asset;
     protected final KeyValueStore<K, MV, V> kvStore;
+    protected final Class<K> keyType;
+    protected final Class<V> valueType;
 
-    protected AbstractKeyValueStore(Asset asset, @NotNull KeyValueStore<K, MV, V> kvStore) {
+    protected AbstractKeyValueStore(RequestContext rc, Asset asset, @NotNull KeyValueStore<K, MV, V> kvStore) {
         assert asset != null;
         assert kvStore != null;
+        keyType = rc.keyType();
+        valueType = rc.valueType();
         this.asset = asset;
         this.kvStore = kvStore;
     }
@@ -163,5 +167,13 @@ public class AbstractKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> 
     @Override
     public Iterator<K> keySetIterator() {
         return kvStore.keySetIterator();
+    }
+
+    public Class<K> keyType() {
+        return keyType;
+    }
+
+    public Class<V> valueType() {
+        return valueType;
     }
 }

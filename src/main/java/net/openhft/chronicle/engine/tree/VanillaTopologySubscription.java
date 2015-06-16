@@ -19,12 +19,23 @@ public class VanillaTopologySubscription implements TopologySubscription {
         this.asset = asset;
     }
 
+    void bootstrapTree(Asset asset, Subscriber<TopologicalEvent> subscriber) throws InvalidSubscriberException {
+        asset.forEachChild(c -> {
+            subscriber.onMessage(ExistingAssetEvent.of(asset.fullName(), c.name()));
+            bootstrapTree(c, subscriber);
+        });
+    }
+
     @Override
     public void registerSubscriber(RequestContext rc, Subscriber<TopologicalEvent> subscriber) {
         try {
-            if (rc.bootstrap() != Boolean.FALSE)
-                asset.forEachChild(c ->
-                        subscriber.onMessage(ExistingAssetEvent.of(asset.fullName(), c.name())));
+            if (rc.bootstrap() != Boolean.FALSE) {
+                // root node.
+                Asset parent = asset.parent();
+                String assetName = parent == null ? null : parent.fullName();
+                subscriber.onMessage(ExistingAssetEvent.of(assetName, asset.name()));
+                bootstrapTree(asset, subscriber);
+            }
             subscribers.add(subscriber);
         } catch (InvalidSubscriberException e) {
             // ignored
@@ -44,6 +55,12 @@ public class VanillaTopologySubscription implements TopologySubscription {
             } catch (InvalidSubscriberException expected) {
                 subscribers.remove(sub);
             }
+        }
+        Asset parent = asset.parent();
+        if (parent != null) {
+            TopologySubscription topologySubscription = parent.findView(TopologySubscription.class);
+            if (topologySubscription != null)
+                topologySubscription.notifyEvent(event);
         }
     }
 }
