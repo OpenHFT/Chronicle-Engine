@@ -112,7 +112,8 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
             this.inWire = in;
             this.outWire = out;
             this.map = map;
-            charSequenceValue = map instanceof ChronicleMap && CharSequence.class == ((ChronicleMap) map).valueClass();
+            charSequenceValue = map instanceof ChronicleMap &&
+                    CharSequence.class == ((ChronicleMap) map).valueClass();
             assert !(map instanceof RemoteKeyValueStore) : "the server should not sure a remove " +
                     "map";
             this.tid = tid;
@@ -496,7 +497,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
             } catch (Exception e) {
                 LOG.error("", e);
             } finally {
-                if (Jvm.isDebug() && YamlLogging.showServerWrites) {
+               /* if (Jvm.isDebug() && YamlLogging.showServerWrites) {
                     final Bytes<?> outBytes = outWire.bytes();
                     long len = outBytes.position() - CollectionWireHandlerProcessor.SIZE_OF_SIZE;
                     if (len == 0) {
@@ -508,7 +509,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                                 "server writes:\n\n" +
                                 Wires.fromSizePrefixedBlobs(outBytes, CollectionWireHandlerProcessor.SIZE_OF_SIZE, len));
                     }
-                }
+                }*/
             }
         }
     };
@@ -551,6 +552,8 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
 
             final long position = outWire.bytes().position();
             try {
+
+
                 c.accept(outWire);
             } catch (Exception exception) {
                 outWire.bytes().position(position);
@@ -562,5 +565,15 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                 outWire.writeEventName(reply).marshallable(EMPTY);
             }
         });
+        if (YamlLogging.showServerWrites)
+            try {
+                System.out.println("server-writes:\n" +
+                        Wires.fromSizePrefixedBlobs(outWire.bytes(), 0, outWire.bytes().position()));
+            } catch (Exception e) {
+                System.out.println("server-writes:\n" +
+                        outWire.bytes().toHexString(0, outWire.bytes().position()));
+                System.out.println("server-writes:\n" +
+                        Bytes.toDebugString(outWire.bytes(), 0, outWire.bytes().position()));
+            }
     }
 }
