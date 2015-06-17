@@ -1,0 +1,57 @@
+package net.openhft.chronicle.engine.fs;
+
+import net.openhft.chronicle.engine.api.tree.AssetTree;
+import net.openhft.chronicle.engine.api.tree.View;
+import net.openhft.chronicle.wire.Marshallable;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentSkipListMap;
+
+/**
+ * Created by peter.lawrey on 17/06/2015.
+ */
+public class Clusters implements Marshallable, View {
+    private final Map<String, Map<String, HostDetails>> clusterMap =
+            new ConcurrentSkipListMap<>();
+
+    @Override
+    public void readMarshallable(WireIn wire) throws IllegalStateException {
+        StringBuilder clusterName = new StringBuilder();
+        StringBuilder hostDescription = new StringBuilder();
+        while (wire.hasMore()) {
+            wire.readEventName(clusterName).marshallable(host -> {
+                Map<String, HostDetails> hdMap = clusterMap.computeIfAbsent(clusterName.toString(), k -> new ConcurrentSkipListMap<>());
+                host.readEventName(hostDescription).marshallable(details -> {
+                    HostDetails hd = new HostDetails();
+                    hd.readMarshallable(details);
+                    hdMap.put(hostDescription.toString(), hd);
+                });
+            });
+        }
+    }
+
+    @Override
+    public void writeMarshallable(WireOut wire) {
+        for (Map.Entry<String, Map<String, HostDetails>> entry : clusterMap.entrySet()) {
+            wire.writeEventName(entry::getKey).marshallable(host -> {
+                for (Map.Entry<String, HostDetails> entry2 : entry.getValue().entrySet()) {
+                    wire.writeEventName(entry2::getKey).marshallable(entry2.getValue());
+                }
+            });
+        }
+    }
+
+    public void install(AssetTree assetTree) {
+        assetTree.root().addView(Clusters.class, this);
+    }
+
+    public Map<String, HostDetails> get(String cluster) {
+        return clusterMap.get(cluster);
+    }
+
+    public void put(String cluster, Map<String, HostDetails> hostDetailsMap) {
+        clusterMap.put(cluster, hostDetailsMap);
+    }
+}

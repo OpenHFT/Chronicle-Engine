@@ -2,7 +2,6 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
-import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.map.replication.Bootstrap;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.TcpConnectionHub;
@@ -29,17 +28,9 @@ import static net.openhft.chronicle.wire.CoreFields.reply;
 public class ReplicationHub extends AbstractStatelessClient {
     private static final Logger LOG = LoggerFactory.getLogger(ChronicleMapKeyValueStore.class);
 
-    private final RequestContext requestContext;
-
-    /**
-     * @param hub
-     * @param cid used by proxies such as the entry-set
-     * @param csp
-     */
-    public ReplicationHub(@NotNull final TcpConnectionHub hub, final long cid,
-                          @NotNull final String csp, RequestContext requestContext) {
-        super(hub, cid, csp);
-        this.requestContext = requestContext;
+    public ReplicationHub(@NotNull final TcpConnectionHub hub,
+                          @NotNull final String csp) {
+        super(hub, 0, csp);
     }
 
     public void bootstrap(EngineReplication replication, Executor eventLoop, byte localIdentifier)

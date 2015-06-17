@@ -93,16 +93,23 @@ public class TcpConnectionHub implements View, Closeable {
     private long messageSize;
 
     public TcpConnectionHub(@NotNull final RequestContext requestContext, final Asset asset) {
+        this(requestContext.tcpBufferSize(),
+                new InetSocketAddress(requestContext.host(), requestContext.port()),
+                requestContext.timeout(),
+                asset.findView(SessionProvider.class));
+    }
 
-        this.tcpBufferSize = requestContext.tcpBufferSize();
-        this.remoteAddress = new InetSocketAddress(requestContext.host(), requestContext.port());
+    public TcpConnectionHub(int tcpBufferSize, InetSocketAddress remoteAddress,
+                            long timeoutMs, SessionProvider sessionProvider) {
+        this.tcpBufferSize = tcpBufferSize;
+        this.remoteAddress = remoteAddress;
         this.outWire = wire.apply(Bytes.elasticByteBuffer());
         this.inWire = wire.apply(Bytes.elasticByteBuffer());
-        this.name = " connected to " + remoteAddress.toString();
-        this.timeoutMs = requestContext.timeout();
+        this.name = " connected to " + remoteAddress;
+        this.timeoutMs = timeoutMs;
 
         attemptConnect(remoteAddress);
-        view = asset.findView(SessionProvider.class);
+        view = sessionProvider;
     }
 
     private synchronized void attemptConnect(final InetSocketAddress remoteAddress) {
