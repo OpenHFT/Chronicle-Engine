@@ -8,6 +8,7 @@ net.openhft.chronicle.engine.api.session
 net.openhft.chronicle.engine.api.set
 net.openhft.chronicle.engine.api.tree
 net.openhft.chronicle.engine.collection
+net.openhft.chronicle.engine.fs
 net.openhft.chronicle.engine.map
 net.openhft.chronicle.engine.map.replication
 net.openhft.chronicle.engine.pubsub
