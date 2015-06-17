@@ -4,6 +4,7 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.fs.ConfigurationFS;
 import net.openhft.chronicle.engine.map.InsertedEvent;
 import net.openhft.chronicle.engine.map.RemovedEvent;
 import net.openhft.chronicle.engine.map.UpdatedEvent;
@@ -72,5 +73,10 @@ public class VanillaAssetTree implements AssetTree {
     @Override
     public void close() {
         root.close();
+    }
+
+    public AssetTree withConfig(String etcDir, String baseDir) {
+        new ConfigurationFS("/etc", etcDir, baseDir).install(baseDir, this);
+        return this;
     }
 }

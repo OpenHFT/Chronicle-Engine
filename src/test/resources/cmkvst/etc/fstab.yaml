@@ -1,0 +1,9 @@
+ChronMaps: !ChronicleMapGroupFS {
+     spec: ChMaps,
+     name: /ChMaps,
+     cluster: cluster,
+     maxEntries: 10000,
+     averageValueSize: 10000,
+     putReturnsNull: true,
+     removeReturnsNull: true
+  }

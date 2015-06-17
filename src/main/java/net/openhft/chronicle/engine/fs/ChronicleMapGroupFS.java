@@ -1,6 +1,5 @@
 package net.openhft.chronicle.engine.fs;
 
-import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.tree.*;
 import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
@@ -19,6 +18,7 @@ public class ChronicleMapGroupFS implements Marshallable, MountPoint, LeafViewFa
     int averageValueSize;
     Boolean putReturnsNull, removeReturnsNull;
     private long maxEntries;
+    private String baseDir;
 
     @Override
     public String spec() {
@@ -53,8 +53,9 @@ public class ChronicleMapGroupFS implements Marshallable, MountPoint, LeafViewFa
     }
 
     @Override
-    public void install(AssetTree assetTree) {
-        RequestContext context = RequestContext.requestContext(name).basePath(spec);
+    public void install(String baseDir, AssetTree assetTree) {
+        this.baseDir = baseDir;
+        RequestContext context = RequestContext.requestContext(name).basePath(baseDir + "/" + spec);
         Asset asset = assetTree.acquireAsset(context);
         ((VanillaAsset) asset).enableTranslatingValuesToBytesStore();
         asset.addLeafRule(KeyValueStore.class, "use Chronicle Map", this);
@@ -64,12 +65,8 @@ public class ChronicleMapGroupFS implements Marshallable, MountPoint, LeafViewFa
     @Override
     public KeyValueStore create(RequestContext context, Asset asset) throws AssetNotFoundException {
         return new ChronicleMapKeyValueStore(context.keyType(), context.valueType(),
-                replace(spec), context.name(), cluster, putReturnsNull, removeReturnsNull, averageValueSize,
-                maxEntries, asset, asset.acquireView(ObjectKVSSubscription.class, null));
-    }
-
-    private String replace(String spec) {
-        return spec.replaceAll("\\$TARGET", OS.TARGET)
-                .replaceAll("\\$TMP", OS.TMP);
+                baseDir + "/" + spec, context.name(), cluster,
+                putReturnsNull, removeReturnsNull, averageValueSize,
+                maxEntries, asset, asset.acquireView(ObjectKVSSubscription.class, context));
     }
 }

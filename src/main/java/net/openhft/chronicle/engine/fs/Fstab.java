@@ -5,33 +5,32 @@ import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 /**
  * Created by peter on 12/06/15.
  */
 public class Fstab implements Marshallable {
-    private List<MountPoint> mounts = new ArrayList<>();
+    private Map<String, MountPoint> mounts = new ConcurrentSkipListMap<>();
 
     @Override
     public void readMarshallable(WireIn wire) throws IllegalStateException {
-        wire.read(() -> "mounts").sequence(valueIn -> {
-            while (valueIn.hasNextSequenceItem())
-                mounts.add((MountPoint) valueIn.typedMarshallable());
-        });
+        StringBuilder mountDesc = new StringBuilder();
+
+        while (wire.hasMore()) {
+            MountPoint mp = wire.readEventName(mountDesc).typedMarshallable();
+            mounts.put(mountDesc.toString(), mp);
+        }
     }
 
     @Override
     public void writeMarshallable(WireOut wire) {
-        wire.write(() -> "mounts").sequence(valueOut -> {
-            for (MountPoint mount : mounts) {
-                valueOut.typedMarshallable(mount);
-            }
-        });
+        for (Map.Entry<String, MountPoint> entry : mounts.entrySet())
+            wire.writeEventName(entry::getKey).typedMarshallable(entry.getValue());
     }
 
-    public void install(AssetTree assetTree) {
-        mounts.forEach(mp -> mp.install(assetTree));
+    public void install(String baseDir, AssetTree assetTree) {
+        mounts.values().forEach(mp -> mp.install(baseDir, assetTree));
     }
 }

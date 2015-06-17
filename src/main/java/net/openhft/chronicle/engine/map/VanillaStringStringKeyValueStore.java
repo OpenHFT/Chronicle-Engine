@@ -46,6 +46,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         RawKVSSubscription<String, Bytes, BytesStore> rawSubscription =
                 (RawKVSSubscription<String, Bytes, BytesStore>) kvStore.subscription(true);
         this.subscriptions = subscriptions;
+        subscriptions.setKvStore(this);
         rawSubscription.registerDownstream(mpe ->
                 subscriptions.notifyEvent(mpe.translate(s -> s, BytesStoreToString.BYTES_STORE_TO_STRING)));
     }

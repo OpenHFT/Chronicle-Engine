@@ -12,5 +12,5 @@ public interface MountPoint extends Marshallable, View {
 
     String name();
 
-    void install(AssetTree assetTree);
+    void install(String baseDir, AssetTree assetTree);
 }
