@@ -41,8 +41,11 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import java.util.concurrent.TimeoutException;
+import java.util.Queue;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static net.openhft.chronicle.engine.server.WireType.wire;
@@ -92,24 +95,18 @@ public class TcpConnectionHub implements View, Closeable {
     private transient boolean closed;
     private long messageSize;
 
-    public TcpConnectionHub(@NotNull final RequestContext requestContext, final Asset asset) {
-        this(requestContext.tcpBufferSize(),
-                new InetSocketAddress(requestContext.host(), requestContext.port()),
-                requestContext.timeout(),
-                asset.findView(SessionProvider.class));
-    }
 
-    public TcpConnectionHub(int tcpBufferSize, InetSocketAddress remoteAddress,
-                            long timeoutMs, SessionProvider sessionProvider) {
-        this.tcpBufferSize = tcpBufferSize;
-        this.remoteAddress = remoteAddress;
+    public TcpConnectionHub(@NotNull final RequestContext requestContext, final Asset asset) {
+
+        this.tcpBufferSize = requestContext.tcpBufferSize();
+        this.remoteAddress = new InetSocketAddress(requestContext.host(), requestContext.port());
         this.outWire = wire.apply(Bytes.elasticByteBuffer());
         this.inWire = wire.apply(Bytes.elasticByteBuffer());
-        this.name = " connected to " + remoteAddress;
-        this.timeoutMs = timeoutMs;
+        this.name = " connected to " + remoteAddress.toString();
+        this.timeoutMs = requestContext.timeout();
 
         attemptConnect(remoteAddress);
-        view = sessionProvider;
+        view = asset.findView(SessionProvider.class);
     }
 
     private synchronized void attemptConnect(final InetSocketAddress remoteAddress) {
@@ -332,6 +329,7 @@ public class TcpConnectionHub implements View, Closeable {
         }
     }
 
+
     //means that we have a message that we have not yet processed
     private volatile boolean hasMessage = false;
 
@@ -345,20 +343,25 @@ public class TcpConnectionHub implements View, Closeable {
 
         for (; ; ) {
 
+            assert inBytesLock().isHeldByCurrentThread();
+
             // hasMessage - means that we have a message that we have not yet processed
             if (!hasMessage) {
-                inWireCompact((int) inWire.bytes().position());
+
+                compact();
+
+                // store the position and limit incase of timeout, they will get reset back
                 long position = inWire.bytes().position();
                 long limit = inWire.bytes().limit();
 
                 try {
-                    assert inBytesLock().isHeldByCurrentThread();
 
                     // if we have processed all the bytes that we have read in
                     final Bytes<?> bytes = inWire.bytes();
 
-                    long numberOfBytes = SIZE_OF_SIZE - inWireByteBuffer().position();
-                    boolean success = readSocket(numberOfBytes, timeoutTime);
+                    // the number bytes ( still required  ) to read the size
+                    long positionToReadUpTo = numberOfBytes(SIZE_OF_SIZE);
+                    boolean success = blockingReadSocketUpTo(positionToReadUpTo, timeoutTime);
                     if (!success)
                         return null;
 
@@ -368,11 +371,7 @@ public class TcpConnectionHub implements View, Closeable {
                     assert messageSize > 0 : "Invalid message size " + messageSize;
                     assert messageSize < 1 << 30 : "Invalid message size " + messageSize;
 
-                    // read the document
-                    numberOfBytes = SIZE_OF_SIZE + messageSize - inWireByteBuffer().position();
-                    boolean successs1 = readSocket(numberOfBytes, timeoutTime);
-                    if (!successs1)
-                        return null;
+
 
                     logToStandardOutMessageReceived(inWire);
 
@@ -426,11 +425,18 @@ public class TcpConnectionHub implements View, Closeable {
 
     }
 
+    private int numberOfBytes(long requiredNumberOfBytes) {
+        int result = (int) requiredNumberOfBytes - inWireByteBuffer().position();
+        return (result < 0) ? 0 : result;
+    }
+
 
     /**
-     * clears the wire and its underlying byte buffer
+     * compacts the wire and its underline byte buffer
      */
-    private void inWireCompact(int pos) {
+    private void compact() {
+        int pos = (int) inWire.bytes().position();
+
         if (pos == 0)
             return;
         final ByteBuffer byteBuffer = inWireByteBuffer();
@@ -453,22 +459,23 @@ public class TcpConnectionHub implements View, Closeable {
     }
 
     /**
-     * reads up to the number of byte in {@code requiredNumberOfBytes} from the socket
+     * ensures that the {@code readUpTo} are read into the byteBuffer
      *
-     * @param requiredNumberOfBytes the number of bytes to read, if the number of bytes is negative
-     *                              then this method imediatly returns without doing anything
-     * @param timeoutTime           timeout in milliseconds
+     * @param readUpTo    the number of bytes to read, if the number of bytes is negative
+     *                    then this method imediatly returns without doing anything
+     * @param timeoutTime timeout in milliseconds
      * @throws java.io.IOException socket failed to read data
      */
 
-    private boolean readSocket(long requiredNumberOfBytes, long timeoutTime) throws IOException {
-        assert requiredNumberOfBytes < Integer.MAX_VALUE;
+    private boolean blockingReadSocketUpTo(long readUpTo, long timeoutTime)
+            throws IOException {
+        assert readUpTo < Integer.MAX_VALUE;
         assert inBytesLock().isHeldByCurrentThread();
 
-        if (requiredNumberOfBytes <= 0)
+        if (readUpTo <= 0)
             return false;
 
-        int numberOfBytes = (int) requiredNumberOfBytes;
+        int numberOfBytes = (int) readUpTo;
         ByteBuffer buffer = inWireByteBuffer();
         int position = buffer.position();
 
@@ -615,7 +622,7 @@ public class TcpConnectionHub implements View, Closeable {
         }
     }
 
-    private void logToStandardOutMessageReceived(@NotNull Wire wire) {
+    static void logToStandardOutMessageReceived(@NotNull Wire wire) {
         Bytes<?> bytes = wire.bytes();
 
         if (!YamlLogging.clientReads || !Jvm.isDebug())
