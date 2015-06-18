@@ -62,7 +62,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
     public static Collection<Object[]> data() throws IOException {
 
         return Arrays.asList(new Boolean[][]{
-              //  {false},
+                {false},
                 {true}
         });
     }
@@ -144,9 +144,6 @@ public class SubscriptionTest extends ThreadMonitoringTest {
             //Test that after unregister we don't get events
             map.put("testC", factorXYZ);
         });
-
-
-        Thread.sleep(10000);
 
         clientAssetTree.close();
         if(serverEndpoint != null)serverEndpoint.close();

@@ -13,6 +13,8 @@ import net.openhft.chronicle.engine.server.internal.MapWireHandler;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.AsyncTcpConsumer;
 import net.openhft.chronicle.network.connection.TcpConnectionHub;
+import net.openhft.chronicle.wire.ReadMarshallable;
+import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -94,7 +96,13 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
         tcpConsumer.apply(tid, w -> {
             System.out.println("received for subscription !!! :\n" +
                     Wires.fromSizePrefixedBlobs(w.bytes()));
-            this.onEvent(w.read(reply).object(Object.class), subscriber);
+
+            w.readDocument(null, d -> {
+                ValueIn read = d.read(reply);
+                final ReadMarshallable marshallable = read.typedMarshallable();
+                this.onEvent(marshallable, subscriber);
+            });
+
         });
     }
 

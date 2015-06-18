@@ -115,7 +115,9 @@ public class AsyncTcpConsumer implements Closeable {
                 } catch (IOException e) {
                     if (!Thread.currentThread().isInterrupted())
                         this.clientChannel = provider.reConnect();
-                } catch (Exception e) {
+                } catch (Throwable e) {
+                    if (Thread.currentThread().isInterrupted())
+                        return;
                     LOG.error("", e);
                 } finally {
                     if (inBytesLock != null)
@@ -144,6 +146,7 @@ public class AsyncTcpConsumer implements Closeable {
         } catch (Exception e) {
             LOG.error("", e);
         }
+
     }
 
     /**
