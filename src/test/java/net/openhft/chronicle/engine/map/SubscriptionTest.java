@@ -25,12 +25,17 @@ import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
+import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.TextWire;
+import net.openhft.chronicle.wire.YamlLogging;
 import org.easymock.EasyMock;
-import org.junit.Ignore;
+import org.jetbrains.annotations.NotNull;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
@@ -41,6 +46,7 @@ import java.util.Collection;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
+import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
 import static net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier.toUri;
 import static net.openhft.chronicle.engine.server.WireType.wire;
@@ -59,11 +65,22 @@ public class SubscriptionTest extends ThreadMonitoringTest {
 
     private static Boolean isRemote;
 
+    private AssetTree assetTree = new VanillaAssetTree().forTesting();
+    @NotNull
+    @Rule
+    public TestName name = new TestName();
+
+    @Before
+    public void before() {
+        methodName(name.getMethodName());
+    }
+
+
     @Parameters
     public static Collection<Object[]> data() throws IOException {
 
         return Arrays.asList(new Boolean[][]{
-                {false},
+             //   {false},
                 {true}
         });
     }
@@ -106,7 +123,11 @@ public class SubscriptionTest extends ThreadMonitoringTest {
             port = serverEndpoint.getPort();
 
             map = clientAssetTree.acquireMap(toUri(NAME, port, "localhost"), String.class, Factor.class);
-            clientAssetTree.registerSubscriber(toUri(NAME, port, "localhost"), MapEvent.class, mapEventSubscriber);
+            yamlLoggger(() -> {
+                System.out.print(":\n");
+                YamlLogging.writeMessage = "this is how to create a subscription";
+                clientAssetTree.registerSubscriber(toUri(NAME, port, "localhost"), MapEvent.class, mapEventSubscriber);
+            });
         } else {
             map = serverAssetTree.acquireMap(NAME, String.class, Factor.class);
             serverAssetTree.registerSubscriber(NAME, MapEvent.class, mapEventSubscriber);

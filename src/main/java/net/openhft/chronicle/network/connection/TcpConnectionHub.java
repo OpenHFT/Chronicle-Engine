@@ -50,7 +50,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.server.WireType.wire;
-import static net.openhft.chronicle.wire.CoreFields.reply;
 
 /**
  * Created by Rob Austin
@@ -420,7 +419,7 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
     }
 
     private Wire proxyReply0(long timeoutTimeMs, long tid) throws Exception {
-        tcpSocketConsumer.syncBlockingReadSocket(timeoutTimeMs, tid, inWire.bytes());
+        tcpSocketConsumer.syncBlockingReadSocket(timeoutTimeMs, tid, inWire);
         return inWire;
     }
 
@@ -844,45 +843,6 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
         }
     }
 
- /*   @SuppressWarnings("SameParameterValue")
-    @Nullable
-    public String proxyReturnString(@NotNull final WireKey messageId, String csp, long cid) {
-        return proxyReturnString(messageId, outWire, csp, cid);
-    }*/
-
-    @SuppressWarnings("SameParameterValue")
-    @Nullable
-    String proxyReturnString(@NotNull final WireKey eventId, @NotNull Wire outWire,
-                             @NotNull String csp, long cid) {
-        final long startTime = System.currentTimeMillis();
-        long tid;
-
-        outBytesLock().lock();
-        try {
-            tid = proxySend(eventId, startTime, outWire, csp, cid);
-        } finally {
-            outBytesLock().unlock();
-        }
-
-        long timeoutTime = startTime + this.timeoutMs;
-
-        // receive
-        inBytesLock().lock();
-        try {
-            final Wire wire = proxyReply(timeoutTime, tid);
-
-            int datalen = wire.bytes().readVolatileInt();
-
-            assert Wires.isData(datalen);
-
-            return wire.read(reply).text();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            inBytesLock().unlock();
-        }
-    }
-
     public Wire outWire() {
         assert outBytesLock().isHeldByCurrentThread();
         return outWire;
@@ -978,19 +938,21 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
          *
          * @param timeoutTimeMs the amount of time to wait before a time out exceptions
          * @param tid           the {@code tid} of the message that we are waiting for
-         * @param usingBytes    the bytes that will be written to
-         * @return
+         * @param usingWire    the wire that will be written to ( this wire must be backed by a
+         *                     byte buffer )
          * @throws InterruptedException
          */
         public void syncBlockingReadSocket(final long timeoutTimeMs, long tid,
-                                           @NotNull Bytes<?> usingBytes) throws
+                                           @NotNull Wire usingWire) throws
                 InterruptedException, TimeoutException {
             long start = System.currentTimeMillis();
+            Bytes<?> usingBytes = usingWire.bytes();
             //noinspection SynchronizationOnLocalVariableOrMethodParameter
             synchronized (usingBytes) {
                 map.put(tid, usingBytes);
                 usingBytes.wait(timeoutTimeMs);
             }
+            logToStandardOutMessageReceived(usingWire);
             if (System.currentTimeMillis() - start >= timeoutTimeMs) {
                 throw new TimeoutException("timeoutTimeMs=" + timeoutTimeMs);
             }
@@ -1089,6 +1051,7 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
             if (o instanceof Consumer) {
                 final Consumer<Wire> consumer = (Consumer<Wire>) o;
                 blockingRead(inWire, messageSize);
+                logToStandardOutMessageReceived(inWire);
                 consumer.accept(inWire);
             } else {
 

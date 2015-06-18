@@ -89,17 +89,11 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
         }
 
         assert !hub.outBytesLock().isHeldByCurrentThread();
-        hub.asyncReadSocket(tid, w -> {
-            System.out.println("received for subscription !!! :\n" +
-                    Wires.fromSizePrefixedBlobs(w.bytes()));
-
-            w.readDocument(null, d -> {
-                ValueIn read = d.read(reply);
-                final ReadMarshallable marshallable = read.typedMarshallable();
-                this.onEvent(marshallable, subscriber);
-            });
-
-        });
+        hub.asyncReadSocket(tid, w -> w.readDocument(null, d -> {
+            ValueIn read = d.read(reply);
+            final ReadMarshallable marshallable = read.typedMarshallable();
+            this.onEvent(marshallable, subscriber);
+        }));
     }
 
     @Override
