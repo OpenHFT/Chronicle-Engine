@@ -64,12 +64,12 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         HostIdentifier hostIdentifier = null;
         EngineReplication engineReplicator = null;
         try {
-            engineReplicator = asset.acquireView(EngineReplication.class, null);
+            engineReplicator = asset.acquireView(EngineReplication.class, RequestContext.requestContext());
 
             final EngineReplicationLangBytesConsumer langBytesConsumer = asset.acquireView
                     (EngineReplicationLangBytesConsumer.class, null);
 
-            hostIdentifier = asset.acquireView(HostIdentifier.class, null);
+            hostIdentifier = asset.acquireView(HostIdentifier.class, RequestContext.requestContext());
 
             builder.replication(builder().engineReplication(langBytesConsumer)
                     .createWithId(hostIdentifier.hostId()));

@@ -1,6 +1,9 @@
 package net.openhft.chronicle.engine.fs;
 
+import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
+import net.openhft.chronicle.engine.VanillaAssetTreeEgMain;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
@@ -21,7 +24,7 @@ public class ConfigurationFSTest {
         at.registerSubscriber("", TopologicalEvent.class, System.out::println);
         at.registerSubscriber("/Data", TopologicalEvent.class, System.out::println);
 
-        new ConfigurationFS("/etc", null).subscribeTo(at);
+        new ConfigurationFS("/etc", null, OS.TARGET + "/confstest").subscribeTo(at);
         Map<String, String> etc = at.acquireMap("/etc", String.class, String.class);
         etc.put(ConfigurationFS.CLUSTERS, "cluster1: {\n" +
                 "  host1: {\n" +
@@ -47,8 +50,7 @@ public class ConfigurationFSTest {
                 "  }\n" +
                 "}\n");
         etc.put(ConfigurationFS.FSTAB, "# mount points\n" +
-                "mounts: [\n" +
-                "    !ChronicleMapGroupFS {\n" +
+                "ChronMaps: !ChronicleMapGroupFS {\n" +
                 "     spec:  $TARGET/ChMaps,\n" +
                 "     name: /ChMaps,\n" +
                 "     cluster: cluster1,\n" +
@@ -56,25 +58,27 @@ public class ConfigurationFSTest {
                 "     averageValueSize: 10000,\n" +
                 "     putReturnsNull: true,\n" +
                 "     removeReturnsNull: true\n" +
-                "  },\n" +
-                "  !FilePerKeyGroupFS {\n" +
+                "  }\n" +
+                "One: !FilePerKeyGroupFS {\n" +
                 "    spec: One,\n" +
                 "    name: /Data/One,\n" +
                 "    valueType: !type String,\n" +
                 "    recurse: false\n" +
-                "  },\n" +
-                "  !FilePerKeyGroupFS {\n" +
+                "  }\n" +
+                "Two: !FilePerKeyGroupFS {\n" +
                 "    spec: Two,\n" +
                 "    name: /Data/Two,\n" +
                 "    valueType: !type String,\n" +
                 "    recurse: false\n" +
-                "  },\n" +
-                "  !FilePerKeyGroupFS {\n" +
+                "  }\n" +
+                "Three: !FilePerKeyGroupFS {\n" +
                 "    spec: Three,\n" +
                 "    name: /Data/Three,\n" +
                 "    valueType: !type String,\n" +
                 "    recurse: true\n" +
-                "  }\n" +
-                "]");
+                "  }\n");
+
+        VanillaAssetTreeEgMain.registerTextViewofTree("ConfigFS", at);
+        Jvm.pause(200);
     }
 }

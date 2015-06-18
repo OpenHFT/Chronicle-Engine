@@ -38,7 +38,7 @@ public class VanillaAssetTreeEgMain {
         map3.put("keyC", "value1");
         tree.registerSubscriber("group2/subgroup/map3", String.class, (String s) -> System.out.println(s));
 
-        registerTextViewofTree(tree);
+        registerTextViewofTree("tree", tree);
 
         // added group2/subgroup/map4
         ConcurrentMap<String, String> map4 = tree.acquireMap("group2/subgroup/map4", String.class, String.class);
@@ -58,20 +58,21 @@ public class VanillaAssetTreeEgMain {
 
     }
 
-    private static void registerTextViewofTree(AssetTree tree) {
-        ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor(
-                new NamedThreadFactory("tree-watcher", true));
+    static final ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor(
+            new NamedThreadFactory("tree-watcher", true));
+
+    public static void registerTextViewofTree(String desc, AssetTree tree) {
         tree.registerSubscriber("", TopologicalEvent.class, e ->
                         // give the collection time to be setup.
-                        ses.schedule(() -> handleTreeUpdate(tree, e), 50, TimeUnit.MILLISECONDS)
+                        ses.schedule(() -> handleTreeUpdate(desc, tree, e), 50, TimeUnit.MILLISECONDS)
         );
     }
 
-    static void handleTreeUpdate(AssetTree tree, TopologicalEvent e) {
+    static void handleTreeUpdate(String desc, AssetTree tree, TopologicalEvent e) {
         try {
-            System.out.println("handle " + e);
+            System.out.println(desc + " handle " + e);
             if (e.added()) {
-                System.out.println("Added a " + e.name() + " under " + e.assetName());
+                System.out.println(desc + " Added a " + e.name() + " under " + e.assetName());
                 String assetFullName = e.fullName();
                 Asset asset = tree.getAsset(assetFullName);
                 if (asset == null) {
@@ -98,7 +99,7 @@ public class VanillaAssetTreeEgMain {
                     System.out.printf("\t%-20s %s%n", "topicSubscriberCount", topicSubscriberCount);
                 }
             } else {
-                System.out.println("Removed a " + e.name() + " under " + e.assetName());
+                System.out.println(desc + " Removed a " + e.name() + " under " + e.assetName());
             }
         } catch (Throwable t) {
             t.printStackTrace();

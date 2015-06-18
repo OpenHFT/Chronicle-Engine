@@ -21,7 +21,7 @@ import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
 /**
  * Created by peter on 24/05/15.
  */
-public class RequestContext {
+public class RequestContext implements Cloneable {
     private String pathName;
     private String name;
     private Class viewType, type, type2;
@@ -328,5 +328,13 @@ public class RequestContext {
     byte[] remoteIdentifier() {
         throw new UnsupportedOperationException("todo");
         // return this.remoteIdentifiers;
+    }
+
+    public RequestContext clone() {
+        try {
+            return (RequestContext) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError(e);
+        }
     }
 }

@@ -2,11 +2,13 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
+import net.openhft.chronicle.engine.fs.ChronicleMapGroupFS;
 import net.openhft.chronicle.engine.map.CMap2EngineReplicator;
 import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
@@ -15,6 +17,7 @@ import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
 import org.junit.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -28,7 +31,7 @@ import static org.junit.Assert.assertNotNull;
  * Created by daniel on 28/05/15.
  */
 public class ChronicleMapKeyValueStoreTest {
-    public static final String NAME = "chronmapkvstoretests3";
+    public static final String NAME = "/ChMaps/test";
 
     private static AssetTree tree1;
     private static AssetTree tree2;
@@ -36,11 +39,12 @@ public class ChronicleMapKeyValueStoreTest {
 
     @BeforeClass
     public static void before() throws IOException {
+        ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
         //Delete any files from the last run
         Files.deleteIfExists(Paths.get(OS.TARGET, NAME));
-        tree1 = create("1");
-        tree2 = create("2");
-        tree3 = create("3");
+        tree1 = create(1);
+        tree2 = create(2);
+        tree3 = create(3);
     }
 
     @AfterClass
@@ -50,20 +54,24 @@ public class ChronicleMapKeyValueStoreTest {
         tree3.close();
     }
 
-    private static AssetTree create(final String node) {
+    private static AssetTree create(final int hostId) {
         Function<Bytes, Wire> writeType = TextWire::new;
-        AssetTree tree1 = new VanillaAssetTree((byte) 1).forTesting();
+        AssetTree tree = new VanillaAssetTree((byte) hostId)
+                .forTesting()
+                .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);
 
-        tree1.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
+        tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
                 VanillaMapView::new,
                 KeyValueStore.class);
-        tree1.root().addLeafRule(EngineReplication.class, "Engine replication holder",
+        tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
                 CMap2EngineReplicator::new);
-        tree1.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
+        tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
                 new ChronicleMapKeyValueStore(context.wireType(writeType),
                         asset));
 
-        return tree1;
+        VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
+
+        return tree;
     }
 
     @Ignore("todo fix")
@@ -74,11 +82,11 @@ public class ChronicleMapKeyValueStoreTest {
                 .class);
         assertNotNull(map1);
 
-        final ConcurrentMap<String, String> map2 = tree1.acquireMap(NAME, String.class, String
+        final ConcurrentMap<String, String> map2 = tree2.acquireMap(NAME, String.class, String
                 .class);
         assertNotNull(map2);
 
-        final ConcurrentMap<String, String> map3 = tree1.acquireMap(NAME, String.class, String
+        final ConcurrentMap<String, String> map3 = tree3.acquireMap(NAME, String.class, String
                 .class);
         assertNotNull(map3);
 
@@ -129,9 +137,13 @@ public class ChronicleMapKeyValueStoreTest {
             Assert.assertEquals("world3", m.get("hello3"));
             Assert.assertEquals(3, m.size());
         }
-
-
-
     }
 
+    public static String resourcesDir() {
+        String path = ChronicleMapKeyValueStoreTest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        if (path == null)
+            return ".";
+        String resources = new File(path).getParentFile().getParentFile() + "/src/test/resources";
+        return resources;
+    }
 }

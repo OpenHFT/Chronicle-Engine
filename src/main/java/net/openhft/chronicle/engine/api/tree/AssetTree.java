@@ -71,7 +71,8 @@ public interface AssetTree extends Closeable {
 
     default <E> void registerSubscriber(String name, Class<E> eClass, Subscriber<E> subscriber) throws AssetNotFoundException {
         RequestContext rc = requestContext(name).type(eClass);
-        acquireSubscription(rc).registerSubscriber(rc, subscriber);
+        acquireSubscription(rc)
+                .registerSubscriber(rc, subscriber);
     }
 
     default <T, E> void registerTopicSubscriber(String name, Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
