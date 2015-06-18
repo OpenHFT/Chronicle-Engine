@@ -8,10 +8,8 @@ import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
-import net.openhft.chronicle.engine.server.WireType;
 import net.openhft.chronicle.engine.server.internal.MapWireHandler;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
-import net.openhft.chronicle.network.connection.AsyncTcpConsumer;
 import net.openhft.chronicle.network.connection.TcpConnectionHub;
 import net.openhft.chronicle.wire.ReadMarshallable;
 import net.openhft.chronicle.wire.ValueIn;
@@ -19,8 +17,6 @@ import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
 
 import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.subscribe;
@@ -35,13 +31,13 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
     private long tid = -1;
     private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
 
-    private final AsyncTcpConsumer tcpConsumer;
+
 
     public RemoteKVSSubscription(RequestContext context, Asset asset) {
         super(TcpConnectionHub.hub(context, asset), (long) 0, toUri(context));
 
         // todo move this into the asset tree
-        tcpConsumer = new AsyncTcpConsumer(WireType.wire, hub, hub.inBytesLock());
+        //   tcpConsumer = new AsyncTcpConsumer(WireType.wire, hub, hub.inBytesLock());
     }
 
     @Override
@@ -93,7 +89,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
         }
 
         assert !hub.outBytesLock().isHeldByCurrentThread();
-        tcpConsumer.apply(tid, w -> {
+        hub.asyncReadSocket(tid, w -> {
             System.out.println("received for subscription !!! :\n" +
                     Wires.fromSizePrefixedBlobs(w.bytes()));
 
@@ -171,11 +167,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
 
     @Override
     public void close() {
-        try {
-            tcpConsumer.close();
-        } catch (IOException e) {
-            // do nothing
-        }
+        hub.close();
     }
 }
 

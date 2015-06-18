@@ -33,6 +33,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -58,7 +59,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
 
     private static Boolean isRemote;
 
-    @Parameterized.Parameters
+    @Parameters
     public static Collection<Object[]> data() throws IOException {
 
         return Arrays.asList(new Boolean[][]{
@@ -71,7 +72,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
         this.isRemote = isRemote;
     }
 
-    //@Ignore("todo fix failing test ")
+
     @Test
     public void testSubscriptionTest() throws IOException, InterruptedException {
         MapEventListener<String, Factor> listener;
@@ -153,7 +154,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
         EasyMock.verify(listener);
     }
 
-    @Ignore //todo when run together these tests fail - they work individually
+
     @Test
     public void testSubscriptionKey() throws IOException, InvalidSubscriberException {
         Factor factorXYZ = new Factor();
