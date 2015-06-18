@@ -32,7 +32,6 @@ import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
-import net.openhft.chronicle.engine.collection.CollectionWireHandlerProcessor;
 import net.openhft.chronicle.engine.map.RemoteKeyValueStore;
 import net.openhft.chronicle.engine.map.replication.Bootstrap;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
@@ -570,8 +569,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                 System.out.println("server-writes:\n" +
                         Wires.fromSizePrefixedBlobs(outWire.bytes(), 0, outWire.bytes().position()));
             } catch (Exception e) {
-                System.out.println("server-writes:\n" +
-                        outWire.bytes().toHexString(0, outWire.bytes().position()));
+
                 System.out.println("server-writes:\n" +
                         Bytes.toDebugString(outWire.bytes(), 0, outWire.bytes().position()));
             }

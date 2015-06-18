@@ -41,11 +41,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import java.util.Queue;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static net.openhft.chronicle.engine.server.WireType.wire;
@@ -54,7 +50,7 @@ import static net.openhft.chronicle.wire.CoreFields.reply;
 /**
  * Created by Rob Austin
  */
-public class TcpConnectionHub implements View, Closeable {
+public class TcpConnectionHub implements View, Closeable, SocketConnectionProvider {
 
     private static final Logger LOG = LoggerFactory.getLogger(TcpConnectionHub.class);
     public static final int SIZE_OF_SIZE = 4;
@@ -65,6 +61,7 @@ public class TcpConnectionHub implements View, Closeable {
     protected final InetSocketAddress remoteAddress;
     public final long timeoutMs;
     protected final int tcpBufferSize;
+
     private final ReentrantLock inBytesLock = new ReentrantLock(true);
     private final ReentrantLock outBytesLock = new ReentrantLock();
 
@@ -85,16 +82,15 @@ public class TcpConnectionHub implements View, Closeable {
 
     // this is a transaction id and size that has been read by another thread.
     private volatile long tid;
-    private volatile long lastTransactionId;
-    private volatile long parkedTransactionTimeStamp;
 
+    private volatile long parkedTransactionTimeStamp;
     private long limitOfLast = 0;
 
     // set up in the header
     private long startTime;
-    private transient boolean closed;
-    private long messageSize;
 
+    private transient boolean closed;
+    private volatile long parkedTransactionId;
 
     public TcpConnectionHub(@NotNull final RequestContext requestContext, final Asset asset) {
 
@@ -139,6 +135,13 @@ public class TcpConnectionHub implements View, Closeable {
         return inBytesLock;
     }
 
+    @Nullable
+    public SocketChannel clientChannel() {
+        if (clientChannel == null)
+            lazyConnect(timeoutMs, remoteAddress);
+        return clientChannel;
+    }
+
     @NotNull
     public ReentrantLock outBytesLock() {
         return outBytesLock;
@@ -157,10 +160,23 @@ public class TcpConnectionHub implements View, Closeable {
         return true;
     }
 
-    protected synchronized void lazyConnect(final long timeoutMs,
-                                            final InetSocketAddress remoteAddress) {
+    @Override
+    public SocketChannel lazyConnect() {
+        lazyConnect(timeoutMs, remoteAddress);
+        return clientChannel;
+    }
+
+    @Override
+    public synchronized SocketChannel reConnect() {
+        close();
+        lazyConnect(timeoutMs, remoteAddress);
+        return clientChannel;
+    }
+
+    public synchronized SocketChannel lazyConnect(final long timeoutMs,
+                                                  final InetSocketAddress remoteAddress) {
         if (clientChannel != null)
-            return;
+            return clientChannel;
 
         if (LOG.isDebugEnabled())
             LOG.debug("attempting to connect to " + remoteAddress + " ,name=" + name);
@@ -196,6 +212,7 @@ public class TcpConnectionHub implements View, Closeable {
                 throw e;
             }
         }
+        return clientChannel;
     }
 
     private void doHandShaking() {
@@ -334,12 +351,109 @@ public class TcpConnectionHub implements View, Closeable {
     private volatile boolean hasMessage = false;
 
     /**
+     * clears the wire and its underlying byte buffer
+     */
+    private void inWireClear() {
+        inWireByteBuffer().clear();
+        final Bytes<?> bytes = inWire.bytes();
+        bytes.clear();
+    }
+
+    /**
+     * reads up to the number of byte in {@code requiredNumberOfBytes} from the socket
+     *
+     * @param requiredNumberOfBytes the number of bytes to read
+     * @param timeoutTime           timeout in milliseconds
+     * @throws java.io.IOException socket failed to read data
+     */
+
+    private void readSocket(int requiredNumberOfBytes, long timeoutTime) throws IOException {
+
+        assert inBytesLock().isHeldByCurrentThread();
+
+        ByteBuffer buffer = inWireByteBuffer();
+        int position = buffer.position();
+
+        try {
+            buffer.limit(position + requiredNumberOfBytes);
+        } catch (IllegalArgumentException e) {
+            buffer = inWireByteBuffer(position + requiredNumberOfBytes);
+            buffer.limit(position + requiredNumberOfBytes);
+            buffer.position(position);
+        }
+
+        long start = buffer.position();
+
+        while (buffer.position() - start < requiredNumberOfBytes) {
+            assert clientChannel != null;
+
+            if (clientChannel.read(buffer) == -1)
+                throw new IORuntimeException("Disconnection to server");
+
+            checkTimeout(timeoutTime);
+        }
+
+        final Bytes<?> bytes = inWire.bytes();
+        bytes.limit(position + requiredNumberOfBytes);
+    }
+
+    private Wire proxyReplyThrowable(long timeoutTime, long tid) throws IOException {
+        for (; ; ) {
+            assert inBytesLock().isHeldByCurrentThread();
+
+            // if we have processed all the bytes that we have read in
+            final Bytes<?> bytes = inWire.bytes();
+            inWireClear();
+
+            readSocket(SIZE_OF_SIZE, timeoutTime);
+            final int header = bytes.readVolatileInt(bytes.position());
+            final long messageSize = Wires.lengthOf(header);
+
+            assert messageSize > 0 : "Invalid message size " + messageSize;
+            assert messageSize < 1 << 30 : "Invalid message size " + messageSize;
+
+            if (!Wires.isData(header)) {
+                readSocket((int) messageSize, timeoutTime);
+
+                inWire.readDocument((WireIn w) -> {
+                    parkedTransactionId = CoreFields.tid(w);
+                    if (parkedTransactionId != tid) {
+                        // if the transaction id is not for this thread, park it
+                        // and allow another thread to pick it up
+                        parkedTransactionTimeStamp = System.currentTimeMillis();
+                        pause();
+                    }
+
+                }, null);
+                continue;
+            }
+
+            if (parkedTransactionId == tid) {
+                // the data is for this thread so process it
+                readSocket((int) messageSize, timeoutTime);
+                logToStandardOutMessageReceived(inWire);
+                return inWire;
+
+            } else if (System.currentTimeMillis() - timeoutTime > parkedTransactionTimeStamp)
+
+                throw new IllegalStateException("Skipped Message with " +
+                        "transaction-id=" +
+                        parkedTransactionTimeStamp +
+                        ", this can occur when you have another thread which has called the " +
+                        "stateless client and terminated abruptly before the message has been " +
+                        "returned from the server and hence consumed by the other thread.");
+        }
+    }
+
+
+
+    /**
      * @param timeoutTime if set to zero, will return null if unable to get data
      * @param tid
      * @return returns null, if unsuccessful and timeout is set to zero
      * @throws IOException
      */
-    private Wire proxyReplyThrowable(long timeoutTime, long tid) throws IOException {
+    private Wire proxyReplyThrowable2(long timeoutTime, long tid) throws IOException {
 
         for (; ; ) {
 
