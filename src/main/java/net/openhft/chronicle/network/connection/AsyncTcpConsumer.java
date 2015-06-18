@@ -85,7 +85,7 @@ public class AsyncTcpConsumer implements Closeable {
             Wire inWire = wireFunction.apply(Bytes.elasticByteBuffer());
             assert inWire != null;
 
-            while (Thread.currentThread().isInterrupted()) {
+            while (!Thread.currentThread().isInterrupted()) {
 
                 if (inBytesLock != null)
                     inBytesLock.lock();
@@ -97,7 +97,7 @@ public class AsyncTcpConsumer implements Closeable {
                     // the number bytes ( still required  ) to read the size
                     blockingRead(inWire, SIZE_OF_SIZE);
 
-                    final int header = bytes.readVolatileInt();
+                    final int header = bytes.readVolatileInt(0);
                     final long messageSize = size(header);
 
                     // read the document
@@ -110,10 +110,11 @@ public class AsyncTcpConsumer implements Closeable {
                     else
                         inWire.readDocument((WireIn w) -> this.tid = CoreFields.tid(w), null);
 
-                    inWire.clear();
+                    clear(inWire);
 
                 } catch (IOException e) {
-                    this.clientChannel = provider.reConnect();
+                    if (!Thread.currentThread().isInterrupted())
+                        this.clientChannel = provider.reConnect();
                 } catch (Exception e) {
                     LOG.error("", e);
                 } finally {
@@ -122,6 +123,11 @@ public class AsyncTcpConsumer implements Closeable {
                 }
             }
         });
+    }
+
+    private void clear(final Wire inWire) {
+        inWire.clear();
+        ((ByteBuffer) inWire.bytes().underlyingObject()).clear();
     }
 
     private long size(int header) {
@@ -133,14 +139,18 @@ public class AsyncTcpConsumer implements Closeable {
 
     private void processData(final long tid, @NotNull final Wire wire, boolean isReady) {
         final Consumer<Wire> wireConsumer = isReady ? map.remove(tid) : map.get(tid);
-        wireConsumer.accept(wire);
+        try {
+            wireConsumer.accept(wire);
+        } catch (Exception e) {
+            LOG.error("", e);
+        }
     }
 
     /**
      * blocks indefinitely until the number of expected bytes is received
      *
-     * @param wire          the wire that the data will be written into,
-     *                      this wire must contain an underlying ByteBuffer
+     * @param wire          the wire that the data will be written into, this wire must contain an
+     *                      underlying ByteBuffer
      * @param numberOfBytes the size of the data to read
      * @throws IOException if anything bad happens to the socket connection
      */
@@ -150,15 +160,16 @@ public class AsyncTcpConsumer implements Closeable {
         final ByteBuffer buffer = (ByteBuffer) wire.bytes().underlyingObject();
         final long start = buffer.position();
 
-        buffer.limit((int) (wire.bytes().position() + numberOfBytes));
-        buffer.position((int) wire.bytes().position());
+        buffer.limit((int) (start + numberOfBytes));
 
-        while (buffer.position() - start < numberOfBytes) {
+        while (buffer.remaining() > 0) {
             assert clientChannel != null;
 
             if (clientChannel.read(buffer) == -1)
                 throw new IORuntimeException("Disconnection to server");
         }
+
+        wire.bytes().limit(buffer.position());
 
     }
 

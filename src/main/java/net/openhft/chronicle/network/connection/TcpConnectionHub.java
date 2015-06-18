@@ -758,13 +758,18 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
                 net.openhft.chronicle.wire.YamlLogging.title = "";
                 net.openhft.chronicle.wire.YamlLogging.writeMessage = "";
             } catch (Exception e) {
-                System.out.println(Bytes.toDebugString(bytes));
+
+                String x = Bytes.toDebugString(bytes);
+                System.out.println(x);
+                LOG.error("",e);
             }
         } finally {
             bytes.limit(limit);
             bytes.position(position);
         }
     }
+
+
 
     /**
      * calculates the size of each chunk
