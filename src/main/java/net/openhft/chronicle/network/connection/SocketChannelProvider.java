@@ -5,7 +5,7 @@ import java.nio.channels.SocketChannel;
 /**
  * Created by Rob Austin
  */
-public interface SocketConnectionProvider {
+interface SocketChannelProvider {
     SocketChannel lazyConnect();
 
     SocketChannel reConnect();
