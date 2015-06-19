@@ -10,7 +10,7 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.collection.ClientWiredStatelessChronicleCollection;
 import net.openhft.chronicle.engine.collection.ClientWiredStatelessChronicleSet;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
-import net.openhft.chronicle.network.connection.TcpConnectionHub;
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +39,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
 
     public RemoteKeyValueStore(@NotNull final RequestContext context,
                                @NotNull Asset asset,
-                               @NotNull final TcpConnectionHub hub) {
+                               @NotNull final TcpChannelHub hub) {
         super(hub, (long) 0, toUri(context));
         this.asset = asset;
         this.kClass = context.keyType();

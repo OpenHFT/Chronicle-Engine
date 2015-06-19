@@ -19,7 +19,7 @@ import static net.openhft.chronicle.wire.CoreFields.reply;
 public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
 
     @NotNull
-    protected final TcpConnectionHub hub;
+    protected final TcpChannelHub hub;
     private final long cid;
     protected String csp;
 
@@ -28,7 +28,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
      * @param cid used by proxies such as the entry-set
      * @param csp
      */
-    public AbstractStatelessClient(@NotNull final TcpConnectionHub hub,
+    public AbstractStatelessClient(@NotNull final TcpChannelHub hub,
                                    long cid,
                                    @NotNull final String csp) {
         this.cid = cid;

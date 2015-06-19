@@ -16,7 +16,7 @@ import net.openhft.chronicle.engine.map.*;
 import net.openhft.chronicle.engine.pubsub.VanillaReference;
 import net.openhft.chronicle.engine.session.VanillaSessionProvider;
 import net.openhft.chronicle.engine.set.VanillaKeySetView;
-import net.openhft.chronicle.network.connection.TcpConnectionHub;
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.Marshallable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -106,10 +106,10 @@ public class VanillaAsset implements Asset, Closeable {
 
         addLeafRule(ObjectKVSSubscription.class, LAST + " Remote",
                 RemoteKVSSubscription::new);
-        addLeafRule(TcpConnectionHub.class, LAST + " Hub", TcpConnectionHub::new);
+        addLeafRule(TcpChannelHub.class, LAST + " Hub", TcpChannelHub::new);
 
         addWrappingRule(ObjectKeyValueStore.class, LAST + " Remote AKVS",
-                RemoteKeyValueStore::new, TcpConnectionHub.class);
+                RemoteKeyValueStore::new, TcpChannelHub.class);
 
     }
 
