@@ -26,9 +26,10 @@ import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
+import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.server.WireType;
-import net.openhft.chronicle.engine.tree.VanillaAssetTree;
+import net.openhft.chronicle.engine.tree.*;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
@@ -166,6 +167,45 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                 map.put("Hello", "World");
 
                 assetTree.unregisterTopicSubscriber(NAME, subscriber);
+
+            } catch (Exception e) {
+                throw Jvm.rethrow(e);
+            }
+        });
+        waitFor(subscriber);
+    }
+
+    @Test
+    @Ignore("TODO")
+    public void testTopologicalEvents() throws InvalidSubscriberException {
+
+        Subscriber<TopologicalEvent> subscriber = createMock(Subscriber.class);
+        subscriber.onMessage(ExistingAssetEvent.of("/", NAME));
+        subscriber.onMessage(AddedAssetEvent.of("/", "group"));
+        subscriber.onMessage(AddedAssetEvent.of("/group", NAME));
+        subscriber.onMessage(AddedAssetEvent.of("/group", NAME + 2));
+        subscriber.onMessage(RemovedAssetEvent.of("/group", NAME));
+        subscriber.onEndOfSubscription();
+        replay(subscriber);
+
+        yamlLoggger(() -> {
+            try {
+                YamlLogging.writeMessage = "Sets up a subscription to listen to map events. And " +
+                        "subsequently puts and entry into the map, notice that the InsertedEvent is " +
+                        "received from the server";
+
+                assetTree.registerSubscriber(NAME, TopologicalEvent.class, subscriber);
+
+                YamlLogging.writeMessage = "puts an entry into the map so that an event will be " +
+                        "triggered";
+
+                assetTree.acquireMap("/group/" + NAME, String.class, String.class);
+                assetTree.acquireMap("/group/" + NAME + 2, String.class, String.class);
+                Jvm.pause(100);
+                // the client cannot remove maps yet.
+                serverAssetTree.acquireAsset(RequestContext.requestContext("/group")).removeChild(NAME);
+
+                assetTree.unregisterSubscriber(NAME, subscriber);
 
             } catch (Exception e) {
                 throw Jvm.rethrow(e);
