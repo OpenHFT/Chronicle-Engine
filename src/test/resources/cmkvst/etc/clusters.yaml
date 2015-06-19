@@ -1,0 +1,23 @@
+cluster: {
+  host1: {
+     hostId: 1
+     tcpBufferSize: 65536,
+     hostname: localhost,
+     port: 8078,
+     timeoutMs: 1000,
+  },
+  host2: {
+     hostId: 2
+     tcpBufferSize: 65536,
+     hostname: localhost,
+     port: 8088,
+     timeoutMs: 1000,
+  },
+  host3: {
+     hostId: 3
+     tcpBufferSize: 65536,
+     hostname: localhost,
+     port: 8098,
+     timeoutMs: 1000,
+  }
+}

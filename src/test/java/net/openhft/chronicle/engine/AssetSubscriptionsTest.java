@@ -58,6 +58,7 @@ public class AssetSubscriptionsTest {
         verify(rootTopoSubscriber1, rootMapSubscriber1, rootNameSubscriber1, rootTopicSubscriber1);
 
         Subscriber<TopologicalEvent> rootTopoSubscriber0 = createMock("sub0", Subscriber.class);
+        rootTopoSubscriber0.onMessage(ExistingAssetEvent.of(null, ""));
         rootTopoSubscriber0.onMessage(ExistingAssetEvent.of("/", "one"));
         replay(rootTopoSubscriber0);
         tree.registerSubscriber("", TopologicalEvent.class, rootTopoSubscriber0);

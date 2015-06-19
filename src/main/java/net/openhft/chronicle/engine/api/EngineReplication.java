@@ -94,8 +94,7 @@ public interface EngineReplication extends Closeable {
         };
 
         /**
-         * called when ever there is a change applied to the modification iterator, in otherwords when
-         * {@link net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator#hasNext()} will return true
+         * called when ever there is a change applied to the modification iterator
          */
         void onChange();
     }
@@ -106,23 +105,7 @@ public interface EngineReplication extends Closeable {
      */
     interface ModificationIterator {
 
-        void forEach(byte id, @NotNull Consumer<ReplicationEntry> consumer) throws InterruptedException;
-
-        /**
-         * @return {@code true} if the is another entry to be received via {@link
-         * ModificationIterator#nextEntry(net.openhft.chronicle.engine.api.EngineReplication.EntryCallback)}
-         */
-        boolean hasNext();
-
-        /**
-         * A non-blocking call that provides the entry that has changed to {@code
-         * callback.onEntry()}.
-         *
-         * @param callback a callback which will be called when a new entry becomes available.
-         * @return {@code true} if the entry was accepted by the {@code callback.onEntry()} method,
-         * {@code false} if the entry was not accepted or was not available
-         */
-        boolean nextEntry(@NotNull final EntryCallback callback) throws InterruptedException;
+        void forEach(@NotNull Consumer<ReplicationEntry> consumer) throws InterruptedException;
 
         /**
          * Dirties all entries with a modification time equal to {@code fromTimeStamp} or newer. It

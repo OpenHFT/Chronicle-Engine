@@ -67,14 +67,14 @@ public class CMap2EngineReplicatorMap2MapTest {
         map2.put("hello2", "world2");
         map3.put("hello3", "world3");
 
-        iterator1for2.forEach(replicator2.identifier(), replicator2::applyReplication);
-        iterator1for3.forEach(replicator3.identifier(), replicator3::applyReplication);
+        iterator1for2.forEach(replicator2::applyReplication);
+        iterator1for3.forEach(replicator3::applyReplication);
 
-        iterator2for1.forEach(replicator1.identifier(), replicator1::applyReplication);
-        iterator2for3.forEach(replicator3.identifier(), replicator3::applyReplication);
+        iterator2for1.forEach(replicator1::applyReplication);
+        iterator2for3.forEach(replicator3::applyReplication);
 
-        iterator3for1.forEach(replicator1.identifier(), replicator1::applyReplication);
-        iterator3for2.forEach(replicator2.identifier(), replicator2::applyReplication);
+        iterator3for1.forEach(replicator1::applyReplication);
+        iterator3for2.forEach(replicator2::applyReplication);
 
         for (Map m : new Map[]{map1, map2, map3}) {
             Assert.assertEquals("world1", m.get("hello1"));
@@ -115,22 +115,22 @@ public class CMap2EngineReplicatorMap2MapTest {
                 (replicator2.identifier());
 
         iterator1for2.dirtyEntries(0);
-        iterator1for2.forEach(replicator2.identifier(), replicator2::applyReplication);
+        iterator1for2.forEach(replicator2::applyReplication);
 
         iterator1for3.dirtyEntries(0);
-        iterator1for3.forEach(replicator3.identifier(), replicator3::applyReplication);
+        iterator1for3.forEach(replicator3::applyReplication);
 
         iterator2for1.dirtyEntries(0);
-        iterator2for1.forEach(replicator1.identifier(), replicator1::applyReplication);
+        iterator2for1.forEach(replicator1::applyReplication);
 
         iterator2for3.dirtyEntries(0);
-        iterator2for3.forEach(replicator3.identifier(), replicator3::applyReplication);
+        iterator2for3.forEach(replicator3::applyReplication);
 
         iterator3for1.dirtyEntries(0);
-        iterator3for1.forEach(replicator1.identifier(), replicator1::applyReplication);
+        iterator3for1.forEach(replicator1::applyReplication);
 
         iterator3for2.dirtyEntries(0);
-        iterator3for2.forEach(replicator2.identifier(), replicator2::applyReplication);
+        iterator3for2.forEach(replicator2::applyReplication);
 
         for (Map m : new Map[]{map1, map2, map3}) {
             Assert.assertEquals("world1", m.get("hello1"));
@@ -161,10 +161,15 @@ public class CMap2EngineReplicatorMap2MapTest {
         map1.put("hello2", "world2"); //this is the last update before the disconnection, so will
         // be sent again as its in the last known milliseconds
 
-        iterator1for2.forEach(replicator2.identifier(), (entry) -> {
+        iterator1for2.forEach((entry) -> {
             // record the last time the entry was updated
             replicator2.applyReplication(entry);
         });
+
+        iterator1for2.forEach(e -> {
+            // do nothing
+        });
+
 
         Thread.sleep(1);
         // !---------------- simulate a disconnection ---------------------
@@ -180,7 +185,7 @@ public class CMap2EngineReplicatorMap2MapTest {
         iterator1for2.dirtyEntries(timeSendInBootStrapMessage);
         AtomicInteger updates = new AtomicInteger();
 
-        iterator1for2.forEach(replicator2.identifier(), (entry) -> {
+        iterator1for2.forEach((entry) -> {
             // record the last time the entry was updated
             updates.incrementAndGet();
             replicator2.applyReplication(entry);

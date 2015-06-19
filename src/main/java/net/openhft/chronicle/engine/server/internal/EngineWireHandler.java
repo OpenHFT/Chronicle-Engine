@@ -140,8 +140,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
                     requestContext = RequestContext.requestContext(cspText);
                     viewType = requestContext.viewType();
-                    if (viewType == null)
-                        System.out.println(requestContext.toString());
+
                     final Asset asset = this.assetTree.acquireAsset(viewType, requestContext);
                     view = asset.acquireView(requestContext);
 

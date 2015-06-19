@@ -31,6 +31,7 @@ public class CMap2EngineReplicator implements EngineReplication,
 
     public CMap2EngineReplicator(RequestContext requestContext, Asset asset) {
         this(requestContext);
+        asset.addView(EngineReplicationLangBytesConsumer.class, this);
     }
 
     @Override
@@ -60,7 +61,6 @@ public class CMap2EngineReplicator implements EngineReplication,
 
     @Override
     public byte identifier() {
-
         return engineReplicationLang.identifier();
     }
 
@@ -78,6 +78,8 @@ public class CMap2EngineReplicator implements EngineReplication,
             remove(entry);
         else
             put(entry);
+
+        setLastModificationTime(entry.identifier(), entry.bootStrapTimeStamp());
     }
 
     public static class VanillaReplicatedEntry implements ReplicationEntry {
@@ -148,7 +150,7 @@ public class CMap2EngineReplicator implements EngineReplication,
 
     @Override
     public void forEach(byte id, @NotNull Consumer<ReplicationEntry> consumer) throws InterruptedException {
-        acquireModificationIterator(id).forEach(id, consumer);
+        acquireModificationIterator(id).forEach(consumer);
     }
 
     @Override
@@ -159,7 +161,7 @@ public class CMap2EngineReplicator implements EngineReplication,
         return new ModificationIterator() {
 
             @Override
-            public void forEach(byte id, @NotNull Consumer<ReplicationEntry> consumer) throws InterruptedException {
+            public void forEach(@NotNull Consumer<ReplicationEntry> consumer) throws InterruptedException {
 
                 while (hasNext()) {
 
@@ -172,14 +174,11 @@ public class CMap2EngineReplicator implements EngineReplication,
 
             }
 
-
-            @Override
-            public boolean hasNext() {
+            private boolean hasNext() {
                 return instance.hasNext();
             }
 
-            @Override
-            public boolean nextEntry(@NotNull final EntryCallback callback) throws InterruptedException {
+            private boolean nextEntry(@NotNull final EntryCallback callback) throws InterruptedException {
                 return instance.nextEntry((key, value, timestamp,
                                            identifier, isDeleted,
                                            bootStrapTimeStamp) ->

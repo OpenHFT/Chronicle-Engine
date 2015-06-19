@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.LongConsumer;
 
 import static net.openhft.chronicle.wire.CoreFields.reply;
 
@@ -64,6 +65,10 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
         return proxyReturnWireConsumer(eventId, f -> f.int32());
     }
 
+    protected byte proxyReturnByte(@NotNull final WireKey eventId) {
+        return proxyReturnWireConsumer(eventId, f -> f.int8());
+    }
+
     protected int proxyReturnUint16(@NotNull final WireKey eventId) {
         return proxyReturnWireConsumer(eventId, f -> f.uint16());
     }
@@ -81,6 +86,17 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
                                               @NotNull final Function<ValueIn, T> consumerIn) {
         final long startTime = System.currentTimeMillis();
         long tid = sendEvent(startTime, eventId, consumerOut);
+        return readWire(tid, startTime, reply, consumerIn);
+    }
+
+    public <T> T proxyReturnWireConsumerInOut(@NotNull final WireKey eventId,
+                                              @NotNull final CoreFields reply,
+                                              @Nullable final Consumer<ValueOut> consumerOut,
+                                              @NotNull final Function<ValueIn, T> consumerIn,
+                                              @Nullable final LongConsumer tidConsumer) {
+        final long startTime = System.currentTimeMillis();
+        long tid = sendEvent(startTime, eventId, consumerOut);
+        tidConsumer.accept(tid);
         return readWire(tid, startTime, reply, consumerIn);
     }
 
@@ -158,6 +174,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
 
     /**
      * Useful for when you know the tid
+     *
      * @param tid the tid transaction
      */
     protected void writeMetaDataForKnownTID(long tid) {
@@ -191,15 +208,12 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
         long timeoutTime = startTime + hub.timeoutMs;
 
         // receive
-        hub.inBytesLock().lock();
-        try {
-            final Wire wireIn = hub.proxyReply(timeoutTime, tid);
-            checkIsData(wireIn);
 
-            return readReply(wireIn, CoreFields.reply, v -> v.bool());
-        } finally {
-            hub.inBytesLock().unlock();
-        }
+        final Wire wireIn = hub.proxyReply(timeoutTime, tid);
+        checkIsData(wireIn);
+
+        return readReply(wireIn, CoreFields.reply, v -> v.bool());
+
     }
 
     protected <R> R readReply(@NotNull WireIn wireIn, @NotNull WireKey replyId, @NotNull Function<ValueIn, R> function) {
@@ -261,14 +275,11 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
         final long timeoutTime = startTime + hub.timeoutMs;
 
         // receive
-        hub.inBytesLock().lock();
-        try {
-            final Wire wire = hub.proxyReply(timeoutTime, tid);
-            checkIsData(wire);
-            return readReply(wire, reply, c);
-        } finally {
-            hub.inBytesLock().unlock();
-        }
+
+        final Wire wire = hub.proxyReply(timeoutTime, tid);
+        checkIsData(wire);
+        return readReply(wire, reply, c);
+
     }
 
     public static <E extends ParameterizeWireKey>
@@ -304,14 +315,9 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
 
         long timeoutTime = startTime + hub.timeoutMs;
 
-        // receive
-        hub.inBytesLock().lock();
-        try {
-            final Wire wireIn = hub.proxyReply(timeoutTime, tid);
-            checkIsData(wireIn);
-            return wireIn.read(reply).int32();
-        } finally {
-            hub.inBytesLock().unlock();
-        }
+        final Wire wireIn = hub.proxyReply(timeoutTime, tid);
+        checkIsData(wireIn);
+        return wireIn.read(reply).int32();
+
     }
 }

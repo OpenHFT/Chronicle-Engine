@@ -156,6 +156,8 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
 
     void apply(@NotNull ReplicationEntry entry);
 
+
+
     interface Entry<K, V> {
         K key();
 

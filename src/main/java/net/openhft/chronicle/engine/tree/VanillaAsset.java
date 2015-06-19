@@ -161,7 +161,7 @@ public class VanillaAsset implements Asset, Closeable {
     public <I> I createLeafView(Class viewType, RequestContext rc, Asset asset) throws AssetNotFoundException {
         LeafViewFactory lvFactory = leafViewFactoryMap.get(viewType);
         if (lvFactory != null)
-            return (I) lvFactory.create(rc, asset);
+            return (I) lvFactory.create(rc.clone().viewType(viewType), asset);
         if (parent == null)
             return null;
         return parent.createLeafView(viewType, rc, asset);
@@ -306,7 +306,7 @@ public class VanillaAsset implements Asset, Closeable {
     public void removeChild(String name) {
         Asset removed = children.remove(name);
         if (removed == null) return;
-        TopologySubscription topologySubscription = findView(TopologySubscription.class);
+        TopologySubscription topologySubscription = removed.findView(TopologySubscription.class);
         if (topologySubscription != null)
             topologySubscription.notifyEvent(RemovedAssetEvent.of(fullName(), name));
     }
