@@ -48,7 +48,6 @@ import java.util.function.Function;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
-import static net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier.toUri;
 import static net.openhft.chronicle.engine.server.WireType.wire;
 
 /**
@@ -84,13 +83,11 @@ public class SubscriptionTestEvents extends ThreadMonitoringTest {
             } catch (IOException e) {
                 Jvm.rethrow(e);
             }
-            assetTree = new VanillaAssetTree().forRemoteAccess();
+            assetTree = new VanillaAssetTree().forRemoteAccess("localhost", port);
         } else
             assetTree = serverAssetTree;
 
-        map = (isRemote) ?
-                assetTree.acquireMap(toUri(NAME, port, "localhost"), String.class, String.class) :
-                assetTree.acquireMap(NAME, String.class, String.class);
+        map = assetTree.acquireMap(NAME, String.class, String.class);
     }
 
     @After
@@ -189,8 +186,8 @@ public class SubscriptionTestEvents extends ThreadMonitoringTest {
 
                 YamlLogging.writeMessage = "puts an entry into the map so that an event will be " +
                         "triggered";
-                String expected = "World";
-                map.put("Hello", expected);
+                String expected = "Hello";
+                map.put("Hello", "World");
 
                 Object object = eventsQueue.take();
                 Assert.assertTrue(object instanceof String);
