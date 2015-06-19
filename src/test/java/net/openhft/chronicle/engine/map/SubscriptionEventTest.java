@@ -22,7 +22,9 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.map.MapEvent;
+import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
+import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.server.WireType;
@@ -43,12 +45,14 @@ import java.util.Collection;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Function;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
 import static net.openhft.chronicle.engine.server.WireType.wire;
+import static org.easymock.EasyMock.*;
 
 /**
  * test using the listener both remotely or locally via the engine
@@ -56,8 +60,7 @@ import static net.openhft.chronicle.engine.server.WireType.wire;
  * @author Rob Austin.
  */
 @RunWith(value = Parameterized.class)
-public class SubscriptionTestEvents extends ThreadMonitoringTest {
-    private static int port;
+public class SubscriptionEventTest extends ThreadMonitoringTest {
     private static ConcurrentMap<String, String> map;
     private static final String NAME = "test";
 
@@ -68,23 +71,19 @@ public class SubscriptionTestEvents extends ThreadMonitoringTest {
     @Rule
     public TestName name = new TestName();
     private VanillaAssetTree serverAssetTree;
+    private ServerEndpoint serverEndpoint;
 
     @Before
-    public void before() {
+    public void before() throws IOException {
         serverAssetTree = new VanillaAssetTree().forTesting();
 
         if (isRemote) {
 
             methodName(name.getMethodName());
 
-            ServerEndpoint serverEndpoint = null;
-            try {
-                serverEndpoint = new ServerEndpoint(serverAssetTree);
-                port = serverEndpoint.getPort();
-            } catch (IOException e) {
-                Jvm.rethrow(e);
-            }
-            assetTree = new VanillaAssetTree().forRemoteAccess("localhost", port);
+            serverEndpoint = new ServerEndpoint(serverAssetTree);
+
+            assetTree = new VanillaAssetTree().forRemoteAccess("localhost", serverEndpoint.getPort());
         } else
             assetTree = serverAssetTree;
 
@@ -93,9 +92,11 @@ public class SubscriptionTestEvents extends ThreadMonitoringTest {
 
     @After
     public void after() throws IOException {
-        serverAssetTree.close();
         assetTree.close();
-        if (map instanceof net.openhft.chronicle.core.io.Closeable)
+        if (serverEndpoint != null)
+            serverEndpoint.close();
+        serverAssetTree.close();
+        if (map instanceof Closeable)
             ((Closeable) map).close();
     }
 
@@ -109,7 +110,7 @@ public class SubscriptionTestEvents extends ThreadMonitoringTest {
         );
     }
 
-    public SubscriptionTestEvents(Object isRemote, Object wireType) {
+    public SubscriptionEventTest(Object isRemote, Object wireType) {
         this.isRemote = (Boolean) isRemote;
 
         wire = (Function<Bytes, Wire>) wireType;
@@ -118,7 +119,7 @@ public class SubscriptionTestEvents extends ThreadMonitoringTest {
     @Test
     public void testSubscribeToChangesToTheMap() throws IOException, InterruptedException {
 
-        final BlockingQueue<Object> eventsQueue = new ArrayBlockingQueue<Object>(1024);
+        final BlockingQueue<MapEvent> eventsQueue = new LinkedBlockingQueue<>();
 
         yamlLoggger(() -> {
             try {
@@ -126,7 +127,8 @@ public class SubscriptionTestEvents extends ThreadMonitoringTest {
                         "subsequently puts and entry into the map, notice that the InsertedEvent is " +
                         "received from the server";
 
-                assetTree.registerSubscriber(NAME, MapEvent.class, eventsQueue::add);
+                Subscriber<MapEvent> add = eventsQueue::add;
+                assetTree.registerSubscriber(NAME, MapEvent.class, add);
 
                 YamlLogging.writeMessage = "puts an entry into the map so that an event will be " +
                         "triggered";
@@ -134,18 +136,60 @@ public class SubscriptionTestEvents extends ThreadMonitoringTest {
 
                 Object object = eventsQueue.take();
                 Assert.assertTrue(object instanceof InsertedEvent);
+
+                assetTree.unregisterSubscriber(NAME, add);
             } catch (Exception e) {
                 throw Jvm.rethrow(e);
             }
-
         });
+    }
 
+    @Test
+    @Ignore("TODO")
+    public void testTopicSubscribeToChangesToTheMap() throws InvalidSubscriberException {
+
+        TopicSubscriber<String, String> subscriber = createMock(TopicSubscriber.class);
+        subscriber.onMessage("Hello", "World");
+        subscriber.onEndOfSubscription();
+        replay(subscriber);
+
+        yamlLoggger(() -> {
+            try {
+                YamlLogging.writeMessage = "Sets up a subscription to listen to map events. And " +
+                        "subsequently puts and entry into the map, notice that the InsertedEvent is " +
+                        "received from the server";
+
+                assetTree.registerTopicSubscriber(NAME, String.class, String.class, subscriber);
+
+                YamlLogging.writeMessage = "puts an entry into the map so that an event will be " +
+                        "triggered";
+                map.put("Hello", "World");
+
+                assetTree.unregisterTopicSubscriber(NAME, subscriber);
+
+            } catch (Exception e) {
+                throw Jvm.rethrow(e);
+            }
+        });
+        waitFor(subscriber);
+    }
+
+    static void waitFor(Object subscriber) {
+        for (int i = 1; i < 10; i++) {
+            Jvm.pause(i);
+            try {
+                verify(subscriber);
+            } catch (AssertionError e) {
+                // retry
+            }
+        }
+        verify(subscriber);
     }
 
     @Test
     public void testUnsubscribeToMapEvents() throws IOException, InterruptedException {
 
-        final BlockingQueue eventsQueue = new ArrayBlockingQueue(1024);
+        final BlockingQueue<MapEvent> eventsQueue = new LinkedBlockingQueue<>();
 
         yamlLoggger(() -> {
             try {
@@ -168,45 +212,40 @@ public class SubscriptionTestEvents extends ThreadMonitoringTest {
             } catch (Exception e) {
                 throw Jvm.rethrow(e);
             }
-
         });
-
     }
 
     @Test
-    public void testSubscribeToKeyEvents() throws IOException, InterruptedException {
+    @Ignore("TODO")
+    public void testSubscribeToKeyEvents() throws IOException, InterruptedException, InvalidSubscriberException {
 
-        final BlockingQueue<Object> eventsQueue = new ArrayBlockingQueue<Object>(1024);
+        Subscriber<String> subscriber = createMock(Subscriber.class);
+        subscriber.onMessage("Hello");
+        subscriber.onEndOfSubscription();
+        replay(subscriber);
 
         yamlLoggger(() -> {
-            try {
-                YamlLogging.writeMessage = "Sets up a subscription to listen to key events. And " +
-                        "subsequently puts and entry into the map, notice that the InsertedEvent is " +
-                        "received from the server";
 
-                assetTree.registerSubscriber(NAME, String.class, eventsQueue::add);
+            YamlLogging.writeMessage = "Sets up a subscription to listen to key events. And " +
+                    "subsequently puts and entry into the map, notice that the InsertedEvent is " +
+                    "received from the server";
 
-                YamlLogging.writeMessage = "puts an entry into the map so that an event will be " +
-                        "triggered";
-                String expected = "Hello";
-                map.put("Hello", "World");
+            assetTree.registerSubscriber(NAME, String.class, subscriber);
 
-                Object object = eventsQueue.take();
-                Assert.assertTrue(object instanceof String);
-                Assert.assertEquals(expected, object);
+            YamlLogging.writeMessage = "puts an entry into the map so that an event will be " +
+                    "triggered";
+            map.put("Hello", "World");
 
-            } catch (Exception e) {
-                throw Jvm.rethrow(e);
-            }
+            assetTree.unregisterSubscriber(NAME, subscriber);
 
         });
-
+        waitFor(subscriber);
     }
 
     @Test
     public void testUnSubscribeToKeyEvents() throws IOException, InterruptedException {
 
-        final BlockingQueue<Object> eventsQueue = new ArrayBlockingQueue<Object>(1024);
+        final BlockingQueue<String> eventsQueue = new LinkedBlockingQueue<>();
 
         yamlLoggger(() -> {
             try {
@@ -214,29 +253,29 @@ public class SubscriptionTestEvents extends ThreadMonitoringTest {
                         "unsubscribes and puts and entry into the map, no subsequent event should" +
                         " be received from the server";
 
-                assetTree.registerSubscriber(NAME, String.class, eventsQueue::add);
-                assetTree.unregisterSubscriber(NAME, eventsQueue::add);
+                Subscriber<String> add = eventsQueue::add;
+                assetTree.registerSubscriber(NAME, String.class, add);
+                // need to unsubscribe the same object which was subscribed to.
+                assetTree.unregisterSubscriber(NAME, add);
 
                 YamlLogging.writeMessage = "puts an entry into the map so that an event will be " +
                         "triggered";
                 String expected = "World";
                 map.put("Hello", expected);
 
-                Object object = eventsQueue.take();
+                Object object = eventsQueue.poll(2, SECONDS);
                 Assert.assertNull(object);
 
-            } catch (Exception e) {
+            } catch (InterruptedException e) {
                 throw Jvm.rethrow(e);
             }
-
         });
-
     }
 
     @Test
     public void testSubscribeToKeyEventsAndRemoveKey() throws IOException, InterruptedException {
 
-        final BlockingQueue<Object> eventsQueue = new ArrayBlockingQueue<Object>(1024);
+        final BlockingQueue<String> eventsQueue = new ArrayBlockingQueue<>(1024);
 
         yamlLoggger(() -> {
             try {
@@ -254,23 +293,21 @@ public class SubscriptionTestEvents extends ThreadMonitoringTest {
                 map.put("Hello", expected);
                 map.remove("Hello");
 
-                Object putEvent = eventsQueue.take();
-                Object removeEvent = eventsQueue.take();
+                String putEvent = eventsQueue.poll(2, SECONDS);
+                String removeEvent = eventsQueue.poll(2, SECONDS);
                 Assert.assertTrue(putEvent instanceof String);
                 Assert.assertTrue(removeEvent instanceof String);
 
-            } catch (Exception e) {
+            } catch (InterruptedException e) {
                 throw Jvm.rethrow(e);
             }
-
         });
-
     }
 
     @Test
     public void testSubscribeToMapEventsAndRemoveKey() throws IOException, InterruptedException {
 
-        final BlockingQueue<Object> eventsQueue = new ArrayBlockingQueue<Object>(1024);
+        final BlockingQueue<MapEvent> eventsQueue = new LinkedBlockingQueue<>();
 
         yamlLoggger(() -> {
             try {
@@ -290,19 +327,16 @@ public class SubscriptionTestEvents extends ThreadMonitoringTest {
                 Thread.sleep(1);
                 map.remove("Hello");
 
-                Object putEvent = eventsQueue.take();
-                Object removeEvent = eventsQueue.take();
+                Object putEvent = eventsQueue.poll(2, SECONDS);
+                Object removeEvent = eventsQueue.poll(2, SECONDS);
                 Assert.assertTrue(putEvent instanceof InsertedEvent);
                 Assert.assertTrue(removeEvent instanceof RemovedEvent);
 
-            } catch (Exception e) {
+            } catch (InterruptedException e) {
                 throw Jvm.rethrow(e);
             }
-
         });
-
     }
-
 }
 
 
