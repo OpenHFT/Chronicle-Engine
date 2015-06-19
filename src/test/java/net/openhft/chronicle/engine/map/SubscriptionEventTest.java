@@ -156,6 +156,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
         yamlLoggger(() -> {
             try {
+                // todo fix the text
                 YamlLogging.writeMessage = "Sets up a subscription to listen to map events. And " +
                         "subsequently puts and entry into the map, notice that the InsertedEvent is " +
                         "received from the server";
@@ -166,6 +167,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                         "triggered";
                 map.put("Hello", "World");
 
+                // todo fix the text for the unsubscribe.
                 assetTree.unregisterTopicSubscriber(NAME, subscriber);
 
             } catch (Exception e) {
@@ -190,6 +192,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
         yamlLoggger(() -> {
             try {
+                // todo fix the text
                 YamlLogging.writeMessage = "Sets up a subscription to listen to map events. And " +
                         "subsequently puts and entry into the map, notice that the InsertedEvent is " +
                         "received from the server";
@@ -276,6 +279,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                     "triggered";
             map.put("Hello", "World");
 
+            // todo fix the text for the unsubscribe.
             assetTree.unregisterSubscriber(NAME, subscriber);
 
         });
