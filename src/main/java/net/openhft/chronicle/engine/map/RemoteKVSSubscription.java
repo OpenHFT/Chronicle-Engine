@@ -109,16 +109,6 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
     }
 
     @Override
-    public void registerKeySubscriber(RequestContext rc, Subscriber<K> kSubscriber) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
-    public void unregisterKeySubscriber(Subscriber<K> kSubscriber) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
     public void registerTopicSubscriber(RequestContext rc, TopicSubscriber<K, V> subscriber) {
         throw new UnsupportedOperationException("todo");
     }

@@ -222,16 +222,6 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
     }
 
     @Override
-    public void registerKeySubscriber(RequestContext rc, Subscriber<K> kSubscriber) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
-    public void unregisterKeySubscriber(Subscriber<K> kSubscriber) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
     public void unregisterTopicSubscriber(TopicSubscriber subscriber) {
         topicSubscribers.remove(subscriber);
         updateHasSubscribers();
