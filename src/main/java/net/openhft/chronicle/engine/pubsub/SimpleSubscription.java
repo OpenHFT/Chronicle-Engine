@@ -68,4 +68,15 @@ public class SimpleSubscription<E> implements Subscription<E> {
     public boolean keyedView() {
         return false;
     }
+
+    @Override
+    public void close() {
+        for (Subscriber<E> subscriber : subscribers) {
+            try {
+                subscriber.onEndOfSubscription();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }

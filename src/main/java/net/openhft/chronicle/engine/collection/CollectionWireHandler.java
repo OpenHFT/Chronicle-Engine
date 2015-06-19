@@ -31,6 +31,7 @@ import static net.openhft.chronicle.engine.collection.CollectionWireHandler.Para
 /**
  * @param <U> the type of each element in that collection
  */
+@FunctionalInterface
 public interface CollectionWireHandler<U, C extends Collection<U>> {
 
     void process(Wire in,

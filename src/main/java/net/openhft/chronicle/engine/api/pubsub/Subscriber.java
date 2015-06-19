@@ -19,6 +19,7 @@ package net.openhft.chronicle.engine.api.pubsub;
 /**
  * Created by peter on 22/05/15.
  */
+@FunctionalInterface
 public interface Subscriber<E> extends ISubscriber {
     void onMessage(E e) throws InvalidSubscriberException;
 }

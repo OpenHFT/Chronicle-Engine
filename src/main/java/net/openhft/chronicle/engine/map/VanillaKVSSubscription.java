@@ -18,10 +18,7 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
-import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
-import net.openhft.chronicle.engine.api.pubsub.Subscriber;
-import net.openhft.chronicle.engine.api.pubsub.Subscription;
-import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
+import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.pubsub.SimpleSubscription;
@@ -53,6 +50,33 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
         this.asset = asset;
         if (viewType != null)
         asset.addView(viewType, this);
+    }
+
+    @Override
+    public void close() {
+        notifyEndOfSubscription(topicSubscribers);
+        notifyEndOfSubscription(subscribers);
+        notifyEndOfSubscription(keySubscribers);
+        notifyEndOfSubscription(downstream);
+    }
+
+    @Override
+    public void onEndOfSubscription() {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    private void notifyEndOfSubscription(Set<? extends ISubscriber> subscribers) {
+        for (ISubscriber subscriber : subscribers) {
+            notifyEndOfSubscription(subscriber);
+        }
+    }
+
+    private void notifyEndOfSubscription(ISubscriber subscriber) {
+        try {
+            subscriber.onEndOfSubscription();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -194,6 +218,7 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
     public void unregisterSubscriber(Subscriber subscriber) {
         subscribers.remove(subscriber);
         updateHasSubscribers();
+
     }
 
     @Override

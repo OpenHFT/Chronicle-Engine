@@ -36,6 +36,13 @@ public interface SubscriptionConsumer<T> {
                 accept(s);
             } catch (InvalidSubscriberException ise) {
                 subs.remove(s);
+                if (s instanceof ISubscriber) {
+                    try {
+                        ((ISubscriber) s).onEndOfSubscription();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
             }
         });
     }

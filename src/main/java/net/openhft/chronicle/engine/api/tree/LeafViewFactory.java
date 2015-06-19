@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Created by peter on 22/05/15.
  */
+@FunctionalInterface
 public interface LeafViewFactory<I> {
     @NotNull
     I create(RequestContext context, Asset asset) throws AssetNotFoundException;

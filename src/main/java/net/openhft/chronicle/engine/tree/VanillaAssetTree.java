@@ -48,8 +48,8 @@ public class VanillaAssetTree implements AssetTree {
 
     }
 
-    public VanillaAssetTree(byte hostId) {
-        root.addLeafRule(HostIdentifier.class, "host id holder", (rc, context) -> new HostIdentifier(hostId));
+    public VanillaAssetTree(int hostId) {
+        root.addLeafRule(HostIdentifier.class, "host id holder", (rc, context) -> new HostIdentifier((byte) hostId));
     }
 
     @NotNull

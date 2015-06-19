@@ -23,5 +23,6 @@ import java.util.Map;
 /**
  * Created by peter.lawrey on 10/06/2015.
  */
+@FunctionalInterface
 public interface MapEntrySubscriber<K, V> extends Subscriber<Map.Entry<K, V>> {
 }

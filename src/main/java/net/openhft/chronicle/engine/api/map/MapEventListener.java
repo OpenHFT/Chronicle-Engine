@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.api.map;
 
+@FunctionalInterface
 public interface MapEventListener<K, V> {
     void update(K key, V oldValue, V newValue);
 

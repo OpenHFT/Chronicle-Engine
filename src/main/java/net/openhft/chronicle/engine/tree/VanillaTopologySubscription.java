@@ -79,4 +79,15 @@ public class VanillaTopologySubscription implements TopologySubscription {
                 topologySubscription.notifyEvent(event);
         }
     }
+
+    @Override
+    public void close() {
+        for (Subscriber<TopologicalEvent> subscriber : subscribers) {
+            try {
+                subscriber.onEndOfSubscription();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }

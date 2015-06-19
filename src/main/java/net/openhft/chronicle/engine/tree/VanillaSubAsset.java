@@ -150,7 +150,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
 
     @Override
     public void close() {
-        throw new UnsupportedOperationException("todo");
+        subscription.close();
     }
 
     @Override

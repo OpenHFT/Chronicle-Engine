@@ -84,6 +84,7 @@ public interface EngineReplication extends Closeable {
     /**
      * notifies when there is a changed to the modification iterator
      */
+    @FunctionalInterface
     interface ModificationNotifier {
         ModificationNotifier NOP = new ModificationNotifier() {
             @Override
@@ -128,6 +129,7 @@ public interface EngineReplication extends Closeable {
      * Implemented typically by a replicator, This interface provides the event, which will get
      * called whenever a put() or remove() has occurred to the map
      */
+    @FunctionalInterface
     interface EntryCallback {
 
         /**
