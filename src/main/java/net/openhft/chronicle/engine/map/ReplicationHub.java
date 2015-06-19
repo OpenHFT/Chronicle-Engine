@@ -20,7 +20,7 @@ import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.engine.map.replication.Bootstrap;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
-import net.openhft.chronicle.network.connection.TcpConnectionHub;
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.ValueOut;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +43,7 @@ import static net.openhft.chronicle.wire.CoreFields.reply;
 public class ReplicationHub extends AbstractStatelessClient {
     private static final Logger LOG = LoggerFactory.getLogger(ChronicleMapKeyValueStore.class);
 
-    public ReplicationHub(@NotNull final TcpConnectionHub hub,
+    public ReplicationHub(@NotNull final TcpChannelHub hub,
                           @NotNull final String csp) {
         super(hub, 0, csp);
     }

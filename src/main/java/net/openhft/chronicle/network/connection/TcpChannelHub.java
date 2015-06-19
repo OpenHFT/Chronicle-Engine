@@ -53,9 +53,9 @@ import static net.openhft.chronicle.engine.server.WireType.wire;
 /**
  * Created by Rob Austin
  */
-public class TcpConnectionHub implements View, Closeable, SocketConnectionProvider {
+public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TcpConnectionHub.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TcpChannelHub.class);
     public static final int SIZE_OF_SIZE = 4;
 
     @NotNull
@@ -83,20 +83,12 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
     @Nullable
     private SocketChannel clientChannel;
 
-    // this is a transaction id and size that has been read by another thread.
-    private volatile long tid;
-
-    private volatile long parkedTransactionTimeStamp;
     private long limitOfLast = 0;
 
     // set up in the header
     private long startTime;
 
-    private volatile boolean closed;
-    private volatile long parkedTransactionId;
-
-    public TcpConnectionHub(@NotNull final RequestContext requestContext, final Asset asset) {
-
+    public TcpChannelHub(@NotNull final RequestContext requestContext, final Asset asset) {
         this.tcpBufferSize = requestContext.tcpBufferSize();
         this.remoteAddress = new InetSocketAddress(requestContext.host(), requestContext.port());
         this.outWire = wire.apply(Bytes.elasticByteBuffer());
@@ -106,18 +98,17 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
 
         attemptConnect(remoteAddress);
         view = asset.findView(SessionProvider.class);
-
-        tcpSocketConsumer = new TcpSocketConsumer(wire, this);
+        tcpSocketConsumer = new TcpSocketConsumer(wire, this, this.remoteAddress.toString());
     }
 
     /**
-     * the response comes back on this thread
+     * the response comes back on the executorService thread as any work done on the consumer is
+     * blocking any further work, for reading the socket.
      *
-     * @param tid
-     * @return
-     * @throws InterruptedException
+     * @param tid      the tid of the message to be read from the socket
+     * @param consumer its important that this is a short running task
      */
-    public void asyncReadSocket(long tid, Consumer<Wire> consumer) {
+    public void asyncReadSocket(long tid, @NotNull final Consumer<Wire> consumer) {
         tcpSocketConsumer.asyncReadSocket(tid, consumer);
     }
 
@@ -144,13 +135,6 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
             if (closeables != null) closeables.closeQuietly();
             clientChannel = null;
         }
-    }
-
-    @Nullable
-    public SocketChannel clientChannel() {
-        if (clientChannel == null)
-            lazyConnect(timeoutMs, remoteAddress);
-        return clientChannel;
     }
 
     @NotNull
@@ -281,7 +265,6 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
     }
 
     public synchronized void close() {
-        closed = true;
         tcpSocketConsumer.close();
 
         if (closeables != null)
@@ -351,72 +334,6 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
             LOG.error("name=" + name, e);
             throw e;
         }
-    }
-
-    /**
-     * clears the wire and its underlying byte buffer
-     */
-    private void inWireClear() {
-        inWireByteBuffer().clear();
-        final Bytes<?> bytes = inWire.bytes();
-        bytes.clear();
-    }
-
-    /**
-     * reads up to the number of byte in {@code requiredNumberOfBytes} from the socket
-     *
-     * @param requiredNumberOfBytes the number of bytes to read
-     * @param timeoutTime           timeout in milliseconds
-     * @throws IOException socket failed to read data
-     */
-
-    private void readSocket(int requiredNumberOfBytes, long timeoutTime) throws IOException {
-
-        ByteBuffer buffer = inWireByteBuffer();
-        int position = buffer.position();
-
-        try {
-            buffer.limit(position + requiredNumberOfBytes);
-        } catch (IllegalArgumentException e) {
-            buffer = inWireByteBuffer(position + requiredNumberOfBytes);
-            buffer.limit(position + requiredNumberOfBytes);
-            buffer.position(position);
-        }
-
-        long start = buffer.position();
-
-        while (buffer.position() - start < requiredNumberOfBytes) {
-            assert clientChannel != null;
-
-            if (clientChannel.read(buffer) == -1)
-                throw new IORuntimeException("Disconnection to server");
-
-            checkTimeout(timeoutTime);
-        }
-
-        final Bytes<?> bytes = inWire.bytes();
-        bytes.limit(position + requiredNumberOfBytes);
-    }
-
-    private Wire proxyReply0(long timeoutTimeMs, long tid) throws Exception {
-        return tcpSocketConsumer.syncBlockingReadSocket(timeoutTimeMs, tid);
-    }
-
-    private int numberOfBytes(long requiredNumberOfBytes) {
-        int result = (int) requiredNumberOfBytes - inWireByteBuffer().position();
-        return (result < 0) ? 0 : result;
-    }
-
-    @NotNull
-    private ByteBuffer inWireByteBuffer() {
-        return (ByteBuffer) inWire.bytes().underlyingObject();
-    }
-
-    @NotNull
-    private ByteBuffer inWireByteBuffer(long requiredCapacity) {
-        final Bytes<?> bytes = inWire.bytes();
-        bytes.ensureCapacity(requiredCapacity);
-        return (ByteBuffer) bytes.underlyingObject();
     }
 
     /**
@@ -506,13 +423,11 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
                             ((wire instanceof TextWire) ?
                                     Wires.fromSizePrefixedBlobs(bytes) :
                                     BytesUtil.toHexString(bytes, bytes.position(), bytes.remaining())) +
-
                             "```");
                     YamlLogging.title = "";
                     YamlLogging.writeMessage = "";
                 } catch (Exception e) {
-                    System.out.println(
-                            Bytes.toDebugString(bytes));
+                    LOG.error(Bytes.toDebugString(bytes), e);
                 }
             }
 
@@ -617,9 +532,9 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
         this.startTime = startTime;
     }
 
-    public static TcpConnectionHub hub(final RequestContext context, @NotNull final Asset asset)
+    public static TcpChannelHub hub(final RequestContext context, @NotNull final Asset asset)
             throws AssetNotFoundException {
-        return asset.root().acquireView(TcpConnectionHub.class, context);
+        return asset.root().acquireView(TcpChannelHub.class, context);
     }
 
     /**
@@ -631,7 +546,7 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
 
         private volatile boolean closeSocketConsumer;
         private Function<Bytes, Wire> wireFunction;
-        private final SocketConnectionProvider provider;
+        private final SocketChannelProvider provider;
         @Nullable
         private SocketChannel clientChannel;
         private long tid;
@@ -641,21 +556,23 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
         /**
          * @param wireFunction converts bytes into wire, ie TextWire or BinaryWire
          * @param provider     used to re-establish a socket connection when/if the socket
-         *                     connection is dropped
+         * @param name         the name of the uri of the request that the TcpSocketConsumer is
+         *                     running for.
          */
-        public TcpSocketConsumer(
+        private TcpSocketConsumer(
                 @NotNull final Function<Bytes, Wire> wireFunction,
-                @NotNull final SocketConnectionProvider provider) {
+                @NotNull final SocketChannelProvider provider,
+                @NotNull final String name) {
             this.wireFunction = wireFunction;
             this.provider = provider;
             this.clientChannel = provider.lazyConnect();
             executorService = Executors.newSingleThreadExecutor(
-                    new NamedThreadFactory("TcpConnectionHub", true));
+                    new NamedThreadFactory("TcpSocketConsumer-" + name, true));
 
             start();
         }
 
-        ThreadLocal<Wire> syncInWireThreadLocal = ThreadLocal.withInitial(() -> wire.apply(Bytes
+        private ThreadLocal<Wire> syncInWireThreadLocal = ThreadLocal.withInitial(() -> wire.apply(Bytes
                 .elasticByteBuffer()));
 
         /**
@@ -665,7 +582,7 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
          * @param tid           the {@code tid} of the message that we are waiting for
          * @throws InterruptedException
          */
-        public Wire syncBlockingReadSocket(final long timeoutTimeMs, long tid) throws
+        private Wire syncBlockingReadSocket(final long timeoutTimeMs, long tid) throws
                 InterruptedException, TimeoutException {
             long start = System.currentTimeMillis();
 
@@ -695,7 +612,7 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
          * @param tid      the tid of the message to be read from the socket
          * @param consumer its important that this is a short running task
          */
-        public void asyncReadSocket(long tid, Consumer<Wire> consumer) {
+        private void asyncReadSocket(long tid, @NotNull final Consumer<Wire> consumer) {
             map.put(tid, consumer);
         }
 
@@ -839,7 +756,7 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
             closeSocketConsumer = true;
             executorService.shutdown();
             try {
-                if (!executorService.awaitTermination(1, TimeUnit.SECONDS)) {
+                if (!executorService.awaitTermination(10, TimeUnit.MILLISECONDS)) {
                     executorService.shutdownNow();
                 }
             } catch (InterruptedException e) {
@@ -849,7 +766,7 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
                 if (clientChannel != null)
                     clientChannel.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                LOG.error("", e);
             }
 
         }
