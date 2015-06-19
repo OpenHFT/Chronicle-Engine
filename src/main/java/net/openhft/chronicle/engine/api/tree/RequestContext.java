@@ -49,15 +49,8 @@ public class RequestContext implements Cloneable {
             bootstrap = null;
     private double averageValueSize;
     private long entries;
-    private int tcpBufferSize = 1024;
 
-    private int port;
-    @NotNull
-    private StringBuilder host = new StringBuilder();
-    private long timeout = 1000; // in ms
     private Boolean recurse;
-
-    private byte[] remoteIdentifiers;
 
     private static void addAlias(Class type, @NotNull String aliases) {
         CLASS_ALIASES.addAlias(type, aliases);
@@ -123,9 +116,6 @@ public class RequestContext implements Cloneable {
         parser.register(() -> "keyType", v -> v.typeLiteral(this::lookupType, x -> this.type = x));
         parser.register(() -> "valueType", v -> v.typeLiteral(this::lookupType, x -> this.type2 = x));
         parser.register(() -> "elementType", v -> v.typeLiteral(this::lookupType, x -> this.type = x));
-        parser.register(() -> "port", v -> v.int32(x -> this.port = x));
-        parser.register(() -> "host", v -> v.textTo(this.host));
-        parser.register(() -> "timeout", v -> v.int32(x -> this.timeout = x));
         parser.register(WireParser.DEFAULT, ValueIn.DISCARD);
         Bytes bytes = Bytes.from(queryString);
         QueryWire wire = new QueryWire(bytes);
@@ -307,29 +297,8 @@ public class RequestContext implements Cloneable {
                 ", bootstrap=" + bootstrap +
                 ", averageValueSize=" + averageValueSize +
                 ", entries=" + entries +
-                ", tcpBufferSize=" + tcpBufferSize +
-                ", port=" + port +
-                ", host=" + host +
-                ", timeout=" + timeout +
                 ", recurse=" + recurse +
                 '}';
-    }
-
-    public int port() {
-        return port;
-    }
-
-    @NotNull
-    public String host() {
-        return host.toString();
-    }
-
-    public int tcpBufferSize() {
-        return tcpBufferSize;
-    }
-
-    public long timeout() {
-        return timeout;
     }
 
     public Boolean recurse() {

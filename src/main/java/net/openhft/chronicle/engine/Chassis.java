@@ -41,14 +41,6 @@ public enum Chassis {
         assetTree = new VanillaAssetTree().forTesting();
     }
 
-    public static void forRemoteAccess() {
-        assetTree = new VanillaAssetTree().forRemoteAccess();
-    }
-
-    public static void defaultSession(AssetTree assetTree) {
-        Chassis.assetTree = assetTree;
-    }
-
     public static AssetTree defaultSession() {
         return assetTree;
     }

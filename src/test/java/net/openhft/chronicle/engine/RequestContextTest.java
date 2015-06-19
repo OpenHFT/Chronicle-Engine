@@ -50,10 +50,6 @@ public class RequestContextTest {
                 "bootstrap=true,\n" +
                 "averageValueSize=0.0,\n" +
                 "entries=0,\n" +
-                "tcpBufferSize=1024,\n" +
-                "port=0,\n" +
-                "host=,\n" +
-                "timeout=1000,\n" +
                 "recurse=null}", rc.toString().replaceAll(", ", ",\n"));
         assertEquals(Boolean.TRUE, rc.putReturnsNull());
         assertEquals(Boolean.FALSE, rc.removeReturnsNull());

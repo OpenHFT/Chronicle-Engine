@@ -23,9 +23,6 @@ import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.CloseablesManager;
 import net.openhft.chronicle.engine.api.SessionDetails;
 import net.openhft.chronicle.engine.api.session.SessionProvider;
-import net.openhft.chronicle.engine.api.tree.Asset;
-import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
-import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.network.event.EventGroup;
 import net.openhft.chronicle.threads.NamedThreadFactory;
@@ -69,7 +66,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
     @NotNull
     private final AtomicLong transactionID = new AtomicLong(0);
-    private final SessionProvider view;
+    private final SessionProvider sessionProvider;
     private final TcpSocketConsumer tcpSocketConsumer;
 
     @Nullable
@@ -88,17 +85,17 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
     // set up in the header
     private long startTime;
 
-    public TcpChannelHub(@NotNull final RequestContext requestContext, final Asset asset) {
-        this.tcpBufferSize = requestContext.tcpBufferSize();
-        this.remoteAddress = new InetSocketAddress(requestContext.host(), requestContext.port());
+    public TcpChannelHub(SessionProvider sessionProvider, String hostname, int port) {
+        this.tcpBufferSize = 64 << 10;
+        this.remoteAddress = new InetSocketAddress(hostname, port);
         this.outWire = wire.apply(Bytes.elasticByteBuffer());
         this.inWire = wire.apply(Bytes.elasticByteBuffer());
         this.name = " connected to " + remoteAddress.toString();
-        this.timeoutMs = requestContext.timeout();
+        this.timeoutMs = 10_000;
 
         attemptConnect(remoteAddress);
-        view = asset.findView(SessionProvider.class);
         tcpSocketConsumer = new TcpSocketConsumer(wire, this, this.remoteAddress.toString());
+        this.sessionProvider = sessionProvider;
     }
 
     /**
@@ -131,7 +128,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
                 doHandShaking();
             }
         } catch (IOException e) {
-            LOG.error("", e);
+            LOG.error("Failed to connect to " + remoteAddress, e);
             if (closeables != null) closeables.closeQuietly();
             clientChannel = null;
         }
@@ -231,9 +228,9 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
     }
 
     private SessionDetails sessionDetails() {
-        if (view == null)
+        if (sessionProvider == null)
             return null;
-        return view.get();
+        return sessionProvider.get();
     }
 
     @Nullable
@@ -532,11 +529,6 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
         this.startTime = startTime;
     }
 
-    public static TcpChannelHub hub(final RequestContext context, @NotNull final Asset asset)
-            throws AssetNotFoundException {
-        return asset.root().acquireView(TcpChannelHub.class, context);
-    }
-
     /**
      * uses a single read thread, to process messages to waiting threads based on their {@code tid}
      */
@@ -732,12 +724,15 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
         private void blockingRead(@NotNull final Wire wire, final long numberOfBytes)
                 throws IOException {
 
-            final ByteBuffer buffer = (ByteBuffer) wire.bytes().underlyingObject();
+            Bytes<?> bytes = wire.bytes();
+            bytes.ensureCapacity(bytes.position() + numberOfBytes);
+
+            final ByteBuffer buffer = (ByteBuffer) bytes.underlyingObject();
             final long start = buffer.position();
 
             buffer.limit((int) (start + numberOfBytes));
             readBuffer(buffer);
-            wire.bytes().limit(buffer.position());
+            bytes.limit(buffer.position());
 
         }
 

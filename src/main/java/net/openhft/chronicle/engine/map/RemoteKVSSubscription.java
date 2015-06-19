@@ -45,10 +45,8 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
     private long tid = -1;
     private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
 
-
-
     public RemoteKVSSubscription(RequestContext context, Asset asset) {
-        super(TcpChannelHub.hub(context, asset), (long) 0, toUri(context));
+        super(asset.findView(TcpChannelHub.class), (long) 0, toUri(context));
 
         // todo move this into the asset tree
         //   tcpConsumer = new AsyncTcpConsumer(WireType.wire, hub, hub.inBytesLock());

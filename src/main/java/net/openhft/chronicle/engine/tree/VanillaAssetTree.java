@@ -59,8 +59,8 @@ public class VanillaAssetTree implements AssetTree {
     }
 
     @NotNull
-    public VanillaAssetTree forRemoteAccess() {
-        root.forRemoteAccess();
+    public VanillaAssetTree forRemoteAccess(String hostname, int port) {
+        root.forRemoteAccess(hostname, port);
         return this;
     }
 

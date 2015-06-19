@@ -295,10 +295,10 @@ public class MapClientTest extends ThreadMonitoringTest {
 
             final String hostname = "localhost";
 
-            ((VanillaAssetTree) assetTree).forRemoteAccess();
+            ((VanillaAssetTree) assetTree).forRemoteAccess(hostname, serverPort);
 
             map = assetTree.acquireMap(
-                    toUri(name,serverPort, hostname),
+                    name,
                     kClass,
                     vClass);
 
@@ -313,13 +313,6 @@ public class MapClientTest extends ThreadMonitoringTest {
                                  @NotNull final Function<Bytes, Wire> wireType,
                                  AssetTree assetTree) throws IOException {
             this(kClass,vClass,wireType,assetTree,"test");
-        }
-
-        @NotNull
-        public static String toUri(final String name, final long serverPort, final String hostname) {
-            return name + "?port=" + serverPort +
-                    "&host=" + hostname +
-                    "&timeout=1000";
         }
 
         @Override

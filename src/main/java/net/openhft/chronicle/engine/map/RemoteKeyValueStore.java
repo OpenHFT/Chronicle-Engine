@@ -66,6 +66,10 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
         subscriptions.setKvStore(this);
     }
 
+    public RemoteKeyValueStore(RequestContext requestContext, Asset asset) {
+        this(requestContext, asset, asset.findView(TcpChannelHub.class));
+    }
+
     @NotNull
     private static String toUri(@NotNull final RequestContext context) {
         return "/" + context.name()
