@@ -103,8 +103,15 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
         assert !hub.outBytesLock().isHeldByCurrentThread();
         hub.asyncReadSocket(tid, w -> w.readDocument(null, d -> {
             ValueIn read = d.read(reply);
-            final Object marshallable = read.object(Object.class);
-            this.onEvent(marshallable, subscriber);
+
+            final Class aClass = rc.elementType();
+
+            final Object object = (MapEvent.class.isAssignableFrom(aClass)) ? read
+                    .typedMarshallable()
+                    : read.object(rc.elementType());
+
+            this.onEvent(object, subscriber);
+
         }));
     }
 

@@ -23,10 +23,12 @@ import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
+import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.YamlLogging;
+import org.easymock.EasyMock;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Rule;
@@ -56,6 +58,7 @@ import static org.junit.Assert.assertEquals;
 @RunWith(value = Parameterized.class)
 public class SubscriptionTest extends ThreadMonitoringTest {
     private static int port;
+    private static ConcurrentMap<String, Factor> map;
     private static final String NAME = "test";
 
     private boolean isRemote;
@@ -73,7 +76,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
     public static Collection<Object[]> data() throws IOException {
 
         return Arrays.asList(new Boolean[][]{
-//                {false},
+                {false},
                 {true}
         });
     }
@@ -168,74 +171,6 @@ public class SubscriptionTest extends ThreadMonitoringTest {
     }
 
 
-    @Test
-    public void testSubscriptionKey() throws IOException, InvalidSubscriberException {
-        Factor factorXYZ = new Factor();
-        factorXYZ.setAccountNumber("xyz");
 
-        Factor factorABC = new Factor();
-        factorABC.setAccountNumber("abc");
-
-        Factor factorDDD = new Factor();
-        factorDDD.setAccountNumber("ddd");
-
-        Subscriber<String> listener = createMock(Subscriber.class);
-        listener.onMessage("testA");
-        listener.onMessage("testB");
-        listener.onMessage("testA");
-        listener.onMessage("testB");
-
-        replay(listener);
-
-        VanillaAssetTree serverAssetTree = new VanillaAssetTree().forTesting();
-        VanillaAssetTree assetTree;
-        ServerEndpoint serverEndpoint = null;
-
-        if (isRemote) {
-            wire = TextWire::new;
-
-            serverEndpoint = new ServerEndpoint(serverAssetTree);
-            port = serverEndpoint.getPort();
-            assetTree = new VanillaAssetTree().forRemoteAccess("localhost", port);
-        } else {
-            assetTree = serverAssetTree;
-        }
-        ConcurrentMap<String, Factor> map = assetTree.acquireMap(NAME, String.class, Factor.class);
-        assetTree.registerSubscriber(NAME, String.class, listener);
-
-        yamlLoggger(() -> {
-            //test an insert
-            map.put("testA", factorXYZ);
-            assertEquals(1, map.size());
-            assertEquals("xyz", map.get("testA").getAccountNumber());
-
-            //test another insert
-            map.put("testB", factorABC);
-            assertEquals("abc", map.get("testB").getAccountNumber());
-
-            //Test an update
-            map.put("testA", factorDDD);
-            assertEquals("ddd", map.get("testA").getAccountNumber());
-
-            //Test a remove
-            map.remove("testB");
-            Jvm.pause(100);
-
-            assetTree.unregisterSubscriber(NAME, listener);
-
-            Jvm.pause(100);
-
-            //Test that after unregister we don't get events
-            map.put("testC", factorXYZ);
-        });
-
-        assetTree.close();
-        if (serverEndpoint != null) {
-            serverEndpoint.close();
-            serverAssetTree.close();
-        }
-
-        verify(listener);
-    }
 }
 
