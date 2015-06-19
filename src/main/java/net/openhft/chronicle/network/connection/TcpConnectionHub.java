@@ -30,6 +30,7 @@ import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.network.event.EventGroup;
+import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,7 +67,6 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
     public final long timeoutMs;
     protected final int tcpBufferSize;
 
-    private final ReentrantLock inBytesLock = new ReentrantLock(true);
     private final ReentrantLock outBytesLock = new ReentrantLock();
 
     @NotNull
@@ -123,8 +123,6 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
         tcpSocketConsumer.asyncReadSocket(tid, consumer);
     }
 
-
-
     private synchronized void attemptConnect(final InetSocketAddress remoteAddress) {
 
         // ensures that the excising connection are closed
@@ -148,11 +146,6 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
             if (closeables != null) closeables.closeQuietly();
             clientChannel = null;
         }
-    }
-
-    @NotNull
-    public ReentrantLock inBytesLock() {
-        return inBytesLock;
     }
 
     @Nullable
@@ -323,7 +316,6 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
      */
     public void writeSocket(@NotNull final Wire wire) {
         assert outBytesLock().isHeldByCurrentThread();
-        assert !inBytesLock().isHeldByCurrentThread();
 
         final long timeoutTime = startTime + this.timeoutMs;
         try {
@@ -349,27 +341,19 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
     }
 
     public Wire proxyReply(long timeoutTime, final long tid) {
-        assert inBytesLock().isHeldByCurrentThread();
-
         try {
-            return proxyReply0(timeoutTime, tid);
-        } catch (IOException e) {
-            close();
-            throw new IORuntimeException(e);
+            return tcpSocketConsumer.syncBlockingReadSocket(timeoutTime, tid);
         } catch (RuntimeException e) {
             close();
             throw e;
         } catch (Exception e) {
             close();
-            throw new RuntimeException(e);
+            throw Jvm.rethrow(e);
         } catch (AssertionError e) {
             LOG.error("name=" + name, e);
             throw e;
         }
     }
-
-    //means that we have a message that we have not yet processed
-    private volatile boolean hasMessage = false;
 
     /**
      * clears the wire and its underlying byte buffer
@@ -389,8 +373,6 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
      */
 
     private void readSocket(int requiredNumberOfBytes, long timeoutTime) throws IOException {
-
-        assert inBytesLock().isHeldByCurrentThread();
 
         ByteBuffer buffer = inWireByteBuffer();
         int position = buffer.position();
@@ -419,231 +401,12 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
     }
 
     private Wire proxyReply0(long timeoutTimeMs, long tid) throws Exception {
-        tcpSocketConsumer.syncBlockingReadSocket(timeoutTimeMs, tid, inWire);
-        return inWire;
-    }
-
-    private Wire proxyReplyThrowable3(long timeoutTime, long tid) throws IOException {
-        for (; ; ) {
-            assert inBytesLock().isHeldByCurrentThread();
-
-            // if we have processed all the bytes that we have read in
-            final Bytes<?> bytes = inWire.bytes();
-            inWireClear();
-
-            readSocket(SIZE_OF_SIZE, timeoutTime);
-            final int header = bytes.readVolatileInt(bytes.position());
-            final long messageSize = Wires.lengthOf(header);
-
-            assert messageSize > 0 : "Invalid message size " + messageSize;
-            assert messageSize < 1 << 30 : "Invalid message size " + messageSize;
-
-            if (!Wires.isData(header)) {
-                readSocket((int) messageSize, timeoutTime);
-
-                inWire.readDocument((WireIn w) -> {
-                    parkedTransactionId = CoreFields.tid(w);
-                    if (parkedTransactionId != tid) {
-                        // if the transaction id is not for this thread, park it
-                        // and allow another thread to pick it up
-                        parkedTransactionTimeStamp = System.currentTimeMillis();
-                        pause();
-                    }
-
-                }, null);
-                continue;
-            }
-
-            if (parkedTransactionId == tid) {
-                // the data is for this thread so process it
-                readSocket((int) messageSize, timeoutTime);
-                logToStandardOutMessageReceived(inWire);
-                return inWire;
-
-            } else if (System.currentTimeMillis() - timeoutTime > parkedTransactionTimeStamp)
-
-                throw new IllegalStateException("Skipped Message with " +
-                        "transaction-id=" +
-                        parkedTransactionTimeStamp +
-                        ", this can occur when you have another thread which has called the " +
-                        "stateless client and terminated abruptly before the message has been " +
-                        "returned from the server and hence consumed by the other thread.");
-        }
-    }
-
-
-
-    /**
-     * @param timeoutTime if set to zero, will return null if unable to get data
-     * @param tid
-     * @return returns null, if unsuccessful and timeout is set to zero
-     * @throws IOException
-     */
-    private Wire proxyReplyThrowable2(long timeoutTime, long tid) throws IOException {
-
-        for (; ; ) {
-
-            assert inBytesLock().isHeldByCurrentThread();
-
-            // hasMessage - means that we have a message that we have not yet processed
-            if (!hasMessage) {
-
-                compact();
-
-                // store the position and limit incase of timeout, they will get reset back
-                long position = inWire.bytes().position();
-                long limit = inWire.bytes().limit();
-
-                try {
-
-                    // if we have processed all the bytes that we have read in
-                    final Bytes<?> bytes = inWire.bytes();
-
-                    // the number bytes ( still required  ) to read the size
-                    long positionToReadUpTo = numberOfBytes(SIZE_OF_SIZE);
-                    boolean success = blockingReadSocketUpTo(positionToReadUpTo, timeoutTime);
-                    if (!success)
-                        return null;
-
-                    final int header = bytes.readVolatileInt(0);
-                    final long messageSize = Wires.lengthOf(header);
-
-                    assert messageSize > 0 : "Invalid message size " + messageSize;
-                    assert messageSize < 1 << 30 : "Invalid message size " + messageSize;
-
-
-
-                    logToStandardOutMessageReceived(inWire);
-
-                    // read the meta data and get the tid
-                    if (!Wires.isData(header)) {
-                        inWire.readDocument((WireIn w) -> {
-                            this.tid = CoreFields.tid(w);
-
-                            System.out.println("change to this.tid=" + this.tid);
-
-                            if (this.tid != tid)
-                                // if the transaction id is not for this thread, park it
-                                // and allow another thread to pick it up
-                                parkedTransactionTimeStamp = System.currentTimeMillis();
-
-                        }, null);
-
-                        continue;
-                    } else {
-                        hasMessage = true;
-                    }
-                } catch (RemoteCallTimeoutException e) {
-                    inWire.bytes().position(position);
-                    inWire.bytes().limit(limit);
-                    throw e;
-                }
-
-                for (; ; ) {
-                    if (this.tid == tid) {
-                        hasMessage = false;
-                        return inWire;
-                    } else
-                        pause();
-
-                    if (timeoutTime == 0)
-                        return null;
-
-                    if (System.currentTimeMillis() - timeoutTime > parkedTransactionTimeStamp) {
-                        hasMessage = false;
-                        throw new IllegalStateException("Skipped Message with " +
-                                "transaction-id=" +
-                                tid +
-                                ", this can occur when you have another thread which has called the " +
-                                "stateless client and terminated abruptly before the message has been " +
-                                "returned from the server and hence consumed by the other thread.");
-
-                    }
-                }
-            }
-        }
-
+        return tcpSocketConsumer.syncBlockingReadSocket(timeoutTimeMs, tid);
     }
 
     private int numberOfBytes(long requiredNumberOfBytes) {
         int result = (int) requiredNumberOfBytes - inWireByteBuffer().position();
         return (result < 0) ? 0 : result;
-    }
-
-
-    /**
-     * compacts the wire and its underline byte buffer
-     */
-    private void compact() {
-        int pos = (int) inWire.bytes().position();
-
-        if (pos == 0)
-            return;
-        final ByteBuffer byteBuffer = inWireByteBuffer();
-        byteBuffer.position(pos);
-        byteBuffer.compact();
-        inWire.bytes().position(0);
-        byteBuffer.position(0);
-
-    }
-
-    private void pause() {
-        assert !outBytesLock().isHeldByCurrentThread();
-        assert inBytesLock().isHeldByCurrentThread();
-
-        /// don't call inBytesLock.isHeldByCurrentThread() as it not atomic
-        inBytesLock().unlock();
-        Jvm.pause(1);
-        // allows another thread to enter here
-        inBytesLock().lock();
-    }
-
-    /**
-     * ensures that the {@code readUpTo} are read into the byteBuffer
-     *
-     * @param readUpTo    the number of bytes to read, if the number of bytes is negative
-     *                    then this method imediatly returns without doing anything
-     * @param timeoutTime timeout in milliseconds
-     * @throws IOException socket failed to read data
-     */
-
-    private boolean blockingReadSocketUpTo(long readUpTo, long timeoutTime)
-            throws IOException {
-        assert readUpTo < Integer.MAX_VALUE;
-        assert inBytesLock().isHeldByCurrentThread();
-
-        if (readUpTo <= 0)
-            return false;
-
-        int numberOfBytes = (int) readUpTo;
-        ByteBuffer buffer = inWireByteBuffer();
-        int position = buffer.position();
-
-        try {
-            buffer.limit(position + numberOfBytes);
-        } catch (IllegalArgumentException e) {
-            buffer = inWireByteBuffer(position + numberOfBytes);
-            buffer.limit(position + numberOfBytes);
-            buffer.position(position);
-        }
-
-        long start = buffer.position();
-
-        while (buffer.position() - start < numberOfBytes) {
-            assert clientChannel != null;
-
-            if (clientChannel.read(buffer) == -1)
-                throw new IORuntimeException("Disconnection to server");
-
-            boolean success = checkTimeout(timeoutTime);
-
-            if (!success)
-                return false;
-        }
-
-        final Bytes<?> bytes = inWire.bytes();
-        bytes.limit(inWireByteBuffer().position());
-        return true;
     }
 
     @NotNull
@@ -668,7 +431,6 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
     private void writeSocket(@NotNull Wire outWire, long timeoutTime) throws IOException {
 
         assert outBytesLock().isHeldByCurrentThread();
-        assert !inBytesLock().isHeldByCurrentThread();
 
         final Bytes<?> bytes = outWire.bytes();
         long outBytesPosition = bytes.position();
@@ -787,15 +549,13 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
 
                 String x = Bytes.toDebugString(bytes);
                 System.out.println(x);
-                LOG.error("",e);
+                LOG.error("", e);
             }
         } finally {
             bytes.limit(limit);
             bytes.position(position);
         }
     }
-
-
 
     /**
      * calculates the size of each chunk
@@ -808,39 +568,6 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
             largestChunkSoFar = sizeOfThisChunk;
 
         limitOfLast = outBuffer.limit();
-    }
-
-    /**
-     * @param eventName the event name
-     * @param startTime the time the message was sent
-     * @param wire
-     * @param csp       the csp describing this nammed channel
-     * @param cid       if the cid != 0 the cid will be used instead of the csp
-     * @return the tid
-     */
-    private long proxySend(@NotNull final WireKey eventName,
-                           final long startTime,
-                           @NotNull final Wire wire,
-                           @NotNull final String csp,
-                           long cid) {
-        assert outBytesLock().isHeldByCurrentThread();
-        assert !inBytesLock().isHeldByCurrentThread();
-
-        // send
-        outBytesLock().lock();
-        try {
-            long tid = writeMetaDataStartTime(startTime, wire, csp, cid);
-            wire.writeDocument(false, wireOut -> {
-                wireOut.writeEventName(eventName);
-                wireOut.writeValue().marshallable(w -> {
-                });
-            });
-
-            writeSocket(wire);
-            return tid;
-        } finally {
-            outBytesLock().unlock();
-        }
     }
 
     public Wire outWire() {
@@ -897,10 +624,6 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
         return asset.root().acquireView(TcpConnectionHub.class, context);
     }
 
-    public boolean isClosed() {
-        return closed;
-    }
-
     /**
      * uses a single read thread, to process messages to waiting threads based on their {@code tid}
      */
@@ -928,34 +651,42 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
             this.wireFunction = wireFunction;
             this.provider = provider;
             this.clientChannel = provider.lazyConnect();
-            executorService = Executors.newSingleThreadExecutor(r -> new Thread(r, "TcpConnectionHub"));
+            executorService = Executors.newSingleThreadExecutor(
+                    new NamedThreadFactory("TcpConnectionHub", true));
 
             start();
         }
+
+        ThreadLocal<Wire> syncInWireThreadLocal = ThreadLocal.withInitial(() -> wire.apply(Bytes
+                .elasticByteBuffer()));
 
         /**
          * blocks this thread until a response is received from the socket
          *
          * @param timeoutTimeMs the amount of time to wait before a time out exceptions
          * @param tid           the {@code tid} of the message that we are waiting for
-         * @param usingWire    the wire that will be written to ( this wire must be backed by a
-         *                     byte buffer )
          * @throws InterruptedException
          */
-        public void syncBlockingReadSocket(final long timeoutTimeMs, long tid,
-                                           @NotNull Wire usingWire) throws
+        public Wire syncBlockingReadSocket(final long timeoutTimeMs, long tid) throws
                 InterruptedException, TimeoutException {
             long start = System.currentTimeMillis();
-            Bytes<?> usingBytes = usingWire.bytes();
+
+            final Wire wire = syncInWireThreadLocal.get();
+            wire.clear();
+
+            Bytes<?> bytes = wire.bytes();
+            ((ByteBuffer) bytes.underlyingObject()).clear();
+
             //noinspection SynchronizationOnLocalVariableOrMethodParameter
-            synchronized (usingBytes) {
-                map.put(tid, usingBytes);
-                usingBytes.wait(timeoutTimeMs);
+            synchronized (bytes) {
+                map.put(tid, bytes);
+                bytes.wait(timeoutTimeMs);
             }
-            logToStandardOutMessageReceived(usingWire);
+            logToStandardOutMessageReceived(wire);
             if (System.currentTimeMillis() - start >= timeoutTimeMs) {
                 throw new TimeoutException("timeoutTimeMs=" + timeoutTimeMs);
             }
+            return wire;
 
         }
 
@@ -1108,7 +839,6 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
         @Override
         public void close() {
             closeSocketConsumer = true;
-
             executorService.shutdown();
             try {
                 if (!executorService.awaitTermination(1, TimeUnit.SECONDS)) {
@@ -1116,6 +846,12 @@ public class TcpConnectionHub implements View, Closeable, SocketConnectionProvid
                 }
             } catch (InterruptedException e) {
                 LOG.error("", e);
+            }
+            try {
+                if (clientChannel != null)
+                    clientChannel.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
 
         }

@@ -144,6 +144,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     /**
      * containsKey returns true for contained key
      */
+
     @Test(timeout = 50000)
     public void testContainsKey() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
