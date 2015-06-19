@@ -67,10 +67,11 @@ public class SubscriptionTestEvents extends ThreadMonitoringTest {
     @NotNull
     @Rule
     public TestName name = new TestName();
+    private VanillaAssetTree serverAssetTree;
 
     @Before
     public void before() {
-        VanillaAssetTree serverAssetTree = new VanillaAssetTree().forTesting();
+        serverAssetTree = new VanillaAssetTree().forTesting();
 
         if (isRemote) {
 
@@ -92,6 +93,7 @@ public class SubscriptionTestEvents extends ThreadMonitoringTest {
 
     @After
     public void after() throws IOException {
+        serverAssetTree.close();
         assetTree.close();
         if (map instanceof net.openhft.chronicle.core.io.Closeable)
             ((Closeable) map).close();
