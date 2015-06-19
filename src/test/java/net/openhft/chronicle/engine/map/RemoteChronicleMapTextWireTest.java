@@ -234,7 +234,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
      * keySet.toArray returns contains all keys
      */
     @Test(timeout = 50000)
-    @Ignore("TODO")
+    @Ignore("TODO CE-61")
     public void testKeySetToArray() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
             final Map map = supplier.get();
@@ -270,7 +270,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     /**
      * entrySet.toArray contains all entries
      */
-    @Ignore
+    @Ignore("TODO CE-61")
     @Test(timeout = 50000)
     public void testEntrySetToArray() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
@@ -321,18 +321,16 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     @Test
     public void testEntrySet() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
-            final Map map = supplier.get();
+            final Map<Integer, String> map = supplier.get();
             writeMessage = "example of getting and entry set itterator";
             yamlLoggger(() -> {
-                Set entrySet = map.entrySet();
+                Set<Map.Entry<Integer, String>> entrySet = map.entrySet();
                 entrySet.iterator();
             });
 
-            Set s = map.entrySet();
+            Set<Map.Entry<Integer, String>> s = map.entrySet();
             assertEquals(5, s.size());
-            Iterator it = s.iterator();
-            while (it.hasNext()) {
-                Map.Entry e = (Map.Entry) it.next();
+            for (Map.Entry e : s) {
                 assertTrue(
                         (e.getKey().equals(one) && e.getValue().equals("A")) ||
                                 (e.getKey().equals(two) && e.getValue().equals("B")) ||

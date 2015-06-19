@@ -27,7 +27,6 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.server.internal.MapWireHandler;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
-import net.openhft.chronicle.wire.ReadMarshallable;
 import net.openhft.chronicle.wire.ValueIn;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -46,10 +45,8 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
     private long tid = -1;
     private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
 
-
-
     public RemoteKVSSubscription(RequestContext context, Asset asset) {
-        super(TcpChannelHub.hub(context, asset), (long) 0, toUri(context));
+        super(asset.findView(TcpChannelHub.class), (long) 0, toUri(context));
 
         // todo move this into the asset tree
         //   tcpConsumer = new AsyncTcpConsumer(WireType.wire, hub, hub.inBytesLock());
@@ -106,7 +103,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
         assert !hub.outBytesLock().isHeldByCurrentThread();
         hub.asyncReadSocket(tid, w -> w.readDocument(null, d -> {
             ValueIn read = d.read(reply);
-            final ReadMarshallable marshallable = read.typedMarshallable();
+            final Object marshallable = read.object(Object.class);
             this.onEvent(marshallable, subscriber);
         }));
     }

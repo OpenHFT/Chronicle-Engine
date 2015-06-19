@@ -30,6 +30,7 @@ import net.openhft.chronicle.engine.api.tree.*;
 import net.openhft.chronicle.engine.collection.VanillaValuesCollection;
 import net.openhft.chronicle.engine.map.*;
 import net.openhft.chronicle.engine.pubsub.VanillaReference;
+import net.openhft.chronicle.engine.session.VanillaSessionDetails;
 import net.openhft.chronicle.engine.session.VanillaSessionProvider;
 import net.openhft.chronicle.engine.set.VanillaKeySetView;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
@@ -95,6 +96,8 @@ public class VanillaAsset implements Asset, Closeable {
 
         addLeafRule(TopologySubscription.class, LAST + " vanilla",
                 VanillaTopologySubscription::new);
+
+        addView(SessionProvider.class, new VanillaSessionProvider());
     }
 
     public void forTesting() {
@@ -113,20 +116,22 @@ public class VanillaAsset implements Asset, Closeable {
 
         addLeafRule(ObjectKVSSubscription.class, LAST + " vanilla",
                 VanillaKVSSubscription::new);
-
-        addView(SessionProvider.class, new VanillaSessionProvider());
     }
 
-    public void forRemoteAccess() {
+    public void forRemoteAccess(String hostname, int port) {
         standardStack();
 
         addLeafRule(ObjectKVSSubscription.class, LAST + " Remote",
                 RemoteKVSSubscription::new);
-        addLeafRule(TcpChannelHub.class, LAST + " Hub", TcpChannelHub::new);
 
-        addWrappingRule(ObjectKeyValueStore.class, LAST + " Remote AKVS",
-                RemoteKeyValueStore::new, TcpChannelHub.class);
+        addLeafRule(ObjectKeyValueStore.class, LAST + " Remote AKVS",
+                RemoteKeyValueStore::new);
 
+        SessionProvider sessionProvider = getView(SessionProvider.class);
+        VanillaSessionDetails sessionDetails = new VanillaSessionDetails();
+        sessionDetails.setUserId(System.getProperty("user.name"));
+        sessionProvider.set(sessionDetails);
+        addView(TcpChannelHub.class, new TcpChannelHub(sessionProvider, hostname, port));
     }
 
     public void enableTranslatingValuesToBytesStore() {

@@ -23,12 +23,10 @@ import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
-import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.YamlLogging;
-import org.easymock.EasyMock;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Rule;
@@ -46,8 +44,8 @@ import java.util.concurrent.TimeUnit;
 
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
-import static net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier.toUri;
 import static net.openhft.chronicle.engine.server.WireType.wire;
+import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -58,12 +56,9 @@ import static org.junit.Assert.assertEquals;
 @RunWith(value = Parameterized.class)
 public class SubscriptionTest extends ThreadMonitoringTest {
     private static int port;
-    private static ConcurrentMap<String, Factor> map;
     private static final String NAME = "test";
 
-    private static Boolean isRemote;
-
-    private AssetTree assetTree = new VanillaAssetTree().forTesting();
+    private boolean isRemote;
     @NotNull
     @Rule
     public TestName name = new TestName();
@@ -78,12 +73,12 @@ public class SubscriptionTest extends ThreadMonitoringTest {
     public static Collection<Object[]> data() throws IOException {
 
         return Arrays.asList(new Boolean[][]{
-             //   {false},
+//                {false},
                 {true}
         });
     }
 
-    public SubscriptionTest(Boolean isRemote){
+    public SubscriptionTest(Boolean isRemote) {
         this.isRemote = isRemote;
     }
 
@@ -101,35 +96,37 @@ public class SubscriptionTest extends ThreadMonitoringTest {
         Factor factorDDD = new Factor();
         factorDDD.setAccountNumber("ddd");
 
-        listener = EasyMock.createMock(MapEventListener.class);
+        listener = createMock(MapEventListener.class);
         listener.insert("testA", factorXYZ);
         listener.insert("testB", factorABC);
         listener.update("testA", factorXYZ, factorDDD);
         listener.remove("testA", factorDDD);
         listener.remove("testB", factorABC);
 
-        EasyMock.replay(listener);
+        replay(listener);
 
         VanillaAssetTree serverAssetTree = new VanillaAssetTree().forTesting();
-        VanillaAssetTree clientAssetTree = new VanillaAssetTree().forRemoteAccess();
         ServerEndpoint serverEndpoint = null;
         Subscriber<MapEvent> mapEventSubscriber = e -> e.apply(listener);
+        VanillaAssetTree assetTree;
         if (isRemote) {
             wire = TextWire::new;
 
             serverEndpoint = new ServerEndpoint(serverAssetTree);
             port = serverEndpoint.getPort();
 
-            map = clientAssetTree.acquireMap(toUri(NAME, port, "localhost"), String.class, Factor.class);
-            yamlLoggger(() -> {
-                System.out.print(":\n");
-                YamlLogging.writeMessage = "this is how to create a subscription";
-                clientAssetTree.registerSubscriber(toUri(NAME, port, "localhost"), MapEvent.class, mapEventSubscriber);
-            });
+            assetTree = new VanillaAssetTree().forRemoteAccess("localhost", port);
         } else {
-            map = serverAssetTree.acquireMap(NAME, String.class, Factor.class);
-            serverAssetTree.registerSubscriber(NAME, MapEvent.class, mapEventSubscriber);
+            assetTree = serverAssetTree;
         }
+        ConcurrentMap<String, Factor> map = assetTree.acquireMap(NAME, String.class, Factor.class);
+
+        yamlLoggger(() -> {
+            System.out.print(":\n");
+            YamlLogging.writeMessage = "this is how to create a subscription";
+            assetTree.registerSubscriber(NAME, MapEvent.class, mapEventSubscriber);
+        });
+
 
         yamlLoggger(() -> {
             //test an insert
@@ -151,11 +148,8 @@ public class SubscriptionTest extends ThreadMonitoringTest {
 
             Jvm.pause(100);
 
-            if(isRemote) {
-                clientAssetTree.unregisterSubscriber(NAME, mapEventSubscriber);
-            }else{
-                serverAssetTree.unregisterSubscriber(toUri(NAME, port, "localhost"), mapEventSubscriber);
-            }
+            assetTree.unregisterSubscriber(NAME, mapEventSubscriber);
+
             try {
                 TimeUnit.SECONDS.sleep(1);
             } catch (InterruptedException e) {
@@ -165,12 +159,12 @@ public class SubscriptionTest extends ThreadMonitoringTest {
             map.put("testC", factorXYZ);
         });
 
-        clientAssetTree.close();
-        if(serverEndpoint != null)serverEndpoint.close();
+        assetTree.close();
+        if (serverEndpoint != null) serverEndpoint.close();
         serverAssetTree.close();
 
 
-        EasyMock.verify(listener);
+        verify(listener);
     }
 
 
@@ -185,16 +179,16 @@ public class SubscriptionTest extends ThreadMonitoringTest {
         Factor factorDDD = new Factor();
         factorDDD.setAccountNumber("ddd");
 
-        Subscriber<String> listener = EasyMock.createMock(Subscriber.class);
+        Subscriber<String> listener = createMock(Subscriber.class);
         listener.onMessage("testA");
         listener.onMessage("testB");
         listener.onMessage("testA");
         listener.onMessage("testB");
 
-        EasyMock.replay(listener);
+        replay(listener);
 
         VanillaAssetTree serverAssetTree = new VanillaAssetTree().forTesting();
-        VanillaAssetTree clientAssetTree = new VanillaAssetTree().forRemoteAccess();
+        VanillaAssetTree assetTree;
         ServerEndpoint serverEndpoint = null;
 
         if (isRemote) {
@@ -202,13 +196,12 @@ public class SubscriptionTest extends ThreadMonitoringTest {
 
             serverEndpoint = new ServerEndpoint(serverAssetTree);
             port = serverEndpoint.getPort();
-
-            map = clientAssetTree.acquireMap(toUri(NAME, port, "localhost"), String.class, Factor.class);
-            clientAssetTree.registerSubscriber(toUri(NAME, port, "localhost"), String.class, listener);
+            assetTree = new VanillaAssetTree().forRemoteAccess("localhost", port);
         } else {
-            map = serverAssetTree.acquireMap(NAME, String.class, Factor.class);
-            serverAssetTree.registerSubscriber(NAME, String.class, listener);
+            assetTree = serverAssetTree;
         }
+        ConcurrentMap<String, Factor> map = assetTree.acquireMap(NAME, String.class, Factor.class);
+        assetTree.registerSubscriber(NAME, String.class, listener);
 
         yamlLoggger(() -> {
             //test an insert
@@ -227,26 +220,22 @@ public class SubscriptionTest extends ThreadMonitoringTest {
             //Test a remove
             map.remove("testB");
             Jvm.pause(100);
-            if(isRemote) {
-                clientAssetTree.unregisterSubscriber(NAME, listener);
-            }else{
-                serverAssetTree.unregisterSubscriber(toUri(NAME, port, "localhost"), listener);
-            }
-            try {
-                TimeUnit.SECONDS.sleep(1);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+
+            assetTree.unregisterSubscriber(NAME, listener);
+
+            Jvm.pause(100);
+
             //Test that after unregister we don't get events
             map.put("testC", factorXYZ);
         });
 
-        clientAssetTree.close();
-        if(serverEndpoint != null)serverEndpoint.close();
-        serverAssetTree.close();
+        assetTree.close();
+        if (serverEndpoint != null) {
+            serverEndpoint.close();
+            serverAssetTree.close();
+        }
 
-        EasyMock.verify(listener);
-
+        verify(listener);
     }
 }
 
