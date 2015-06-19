@@ -78,7 +78,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
     public static Collection<Object[]> data() throws IOException {
 
         return Arrays.asList(new Boolean[][]{
-             //   {false},
+                {false},
                 {true}
         });
     }
