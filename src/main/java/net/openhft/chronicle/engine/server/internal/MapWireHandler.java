@@ -567,8 +567,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
                 System.out.println("server-writes:\n" +
                         Wires.fromSizePrefixedBlobs(outWire.bytes(), 0, outWire.bytes().position()));
             } catch (Exception e) {
-                System.out.println("server-writes:\n" +
-                        outWire.bytes().toHexString(0, outWire.bytes().position()));
+
                 System.out.println("server-writes:\n" +
                         Bytes.toDebugString(outWire.bytes(), 0, outWire.bytes().position()));
             }

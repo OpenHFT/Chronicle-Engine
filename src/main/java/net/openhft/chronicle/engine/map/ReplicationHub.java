@@ -23,7 +23,6 @@ import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.TcpConnectionHub;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.ValueOut;
-import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,16 +63,12 @@ public class ReplicationHub extends AbstractStatelessClient {
         final AtomicLong tid = new AtomicLong();
 
         final Function<ValueIn, Bootstrap> typedMarshallable = ValueIn::typedMarshallable;
-
         final Consumer<ValueOut> valueOutConsumer = o -> o.typedMarshallable(bootstrap);
 
-        Bootstrap inBootstrap = (Bootstrap) proxyReturnWireConsumerInOut(bootstap,
-                reply, valueOutConsumer, typedMarshallable, tid::set);
+        final Bootstrap inBootstrap = (Bootstrap) proxyReturnWireConsumerInOut(
+                bootstap, reply, valueOutConsumer, typedMarshallable, tid::set);
 
         mi.dirtyEntries(inBootstrap.lastUpdatedTime());
-
-        // todo a hack - should be fixed !!
-        final long timeoutTime = Long.MAX_VALUE;
 
         eventLoop.execute(() -> {
 
@@ -89,14 +84,9 @@ public class ReplicationHub extends AbstractStatelessClient {
                 }
 
                 // receives replication events
-                hub.inBytesLock().lock();
-                try {
-                    final Wire wire = hub.proxyReply(timeoutTime, tid.get());
-                    wire.readDocument(null, w -> replication.applyReplication(
-                            w.read(reply).typedMarshallable()));
-                } finally {
-                    hub.inBytesLock().unlock();
-                }
+                hub.asyncReadSocket(tid.get(), d ->
+                        d.readDocument(null, w -> replication.applyReplication(
+                                w.read(reply).typedMarshallable())));
 
             } catch (Throwable t) {
                 LOG.error("", t);

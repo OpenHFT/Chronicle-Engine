@@ -142,6 +142,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     /**
      * containsKey returns true for contained key
      */
+
     @Test(timeout = 50000)
     public void testContainsKey() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
@@ -169,7 +170,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
      * get returns the correct element at the given key, or null if not present
      */
     @Test
-    public void testGet() throws IOException {
+    public void testGetObjectNotPresent() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
             final Map map = supplier.get();
             assertEquals("A", map.get(one));
@@ -232,7 +233,6 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     /**
      * keySet.toArray returns contains all keys
      */
-
     @Test(timeout = 50000)
     @Ignore("TODO")
     public void testKeySetToArray() throws IOException {
@@ -270,6 +270,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     /**
      * entrySet.toArray contains all entries
      */
+    @Ignore
     @Test(timeout = 50000)
     public void testEntrySetToArray() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {

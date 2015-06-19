@@ -116,8 +116,6 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
         return readWire(tid, startTime, reply, consumerIn);
     }
 
-
-
     @SuppressWarnings("SameParameterValue")
     protected void proxyReturnVoid(@NotNull final WireKey eventId,
                                    @Nullable final Consumer<ValueOut> consumer) {
@@ -192,6 +190,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
 
     /**
      * Useful for when you know the tid
+     *
      * @param tid the tid transaction
      */
     protected void writeMetaDataForKnownTID(long tid) {
@@ -225,15 +224,12 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
         long timeoutTime = startTime + hub.timeoutMs;
 
         // receive
-        hub.inBytesLock().lock();
-        try {
-            final Wire wireIn = hub.proxyReply(timeoutTime, tid);
-            checkIsData(wireIn);
 
-            return readReply(wireIn, CoreFields.reply, v -> v.bool());
-        } finally {
-            hub.inBytesLock().unlock();
-        }
+        final Wire wireIn = hub.proxyReply(timeoutTime, tid);
+        checkIsData(wireIn);
+
+        return readReply(wireIn, CoreFields.reply, v -> v.bool());
+
     }
 
     protected <R> R readReply(@NotNull WireIn wireIn, @NotNull WireKey replyId, @NotNull Function<ValueIn, R> function) {
@@ -295,14 +291,11 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
         final long timeoutTime = startTime + hub.timeoutMs;
 
         // receive
-        hub.inBytesLock().lock();
-        try {
-            final Wire wire = hub.proxyReply(timeoutTime, tid);
-            checkIsData(wire);
-            return readReply(wire, reply, c);
-        } finally {
-            hub.inBytesLock().unlock();
-        }
+
+        final Wire wire = hub.proxyReply(timeoutTime, tid);
+        checkIsData(wire);
+        return readReply(wire, reply, c);
+
     }
 
     public static <E extends ParameterizeWireKey>
@@ -338,14 +331,9 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
 
         long timeoutTime = startTime + hub.timeoutMs;
 
-        // receive
-        hub.inBytesLock().lock();
-        try {
-            final Wire wireIn = hub.proxyReply(timeoutTime, tid);
-            checkIsData(wireIn);
-            return wireIn.read(reply).int32();
-        } finally {
-            hub.inBytesLock().unlock();
-        }
+        final Wire wireIn = hub.proxyReply(timeoutTime, tid);
+        checkIsData(wireIn);
+        return wireIn.read(reply).int32();
+
     }
 }
