@@ -136,4 +136,8 @@ public interface AssetTree extends Closeable {
     default void enableManagement() {
         ManagementTools.enableManagement(this);
     }
+
+    default void disableManagement(){
+        ManagementTools.disableManagement(this);
+    }
 }
