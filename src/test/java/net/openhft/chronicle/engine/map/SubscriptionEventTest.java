@@ -147,7 +147,58 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
     @Test
     @Ignore("TODO")
-    public void testTopicSubscribeToChangesToTheMap() throws InvalidSubscriberException {
+    public void testTopicSubscribe() throws InvalidSubscriberException {
+
+        class TopicDetails<T, M> {
+            private final M message;
+            private final T topic;
+
+            public TopicDetails(final T topic, final M message) {
+                this.topic = topic;
+                this.message = message;
+            }
+
+            @Override
+            public String toString() {
+                return "TopicDetails{" +
+                        "message=" + message +
+                        ", topic=" + topic +
+                        '}';
+            }
+        }
+
+        final BlockingQueue<TopicDetails> eventsQueue = new LinkedBlockingQueue<>();
+
+        yamlLoggger(() -> {
+            try {
+                // todo fix the text
+                YamlLogging.writeMessage = "Sets up a subscription to listen to map events. And " +
+                        "subsequently puts and entry into the map, notice that the InsertedEvent is " +
+                        "received from the server";
+
+                assetTree.registerTopicSubscriber(NAME, String.class, String.class,
+                        (topic, message) -> eventsQueue.add(new TopicDetails(topic, message)));
+
+                YamlLogging.writeMessage = "puts an entry into the map so that an event will be " +
+                        "triggered";
+                map.put("Hello", "World");
+
+                TopicDetails take = eventsQueue.take();
+                System.out.println(take);
+
+                // todo fix the text for the unsubscribe.
+                //  assetTree.unregisterTopicSubscriber(NAME, subscriber);
+
+            } catch (Exception e) {
+                throw Jvm.rethrow(e);
+            }
+        });
+        //  waitFor(subscriber);
+    }
+
+    @Test
+    @Ignore("TODO")
+    public void testTopicSubscribeToChangesToTheMapMock() throws InvalidSubscriberException {
 
         TopicSubscriber<String, String> subscriber = createMock(TopicSubscriber.class);
         subscriber.onMessage("Hello", "World");
@@ -179,7 +230,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
     @Test
     @Ignore("TODO")
-    public void testTopologicalEvents() throws InvalidSubscriberException {
+    public void testTopologicalEventsMock() throws InvalidSubscriberException {
 
         Subscriber<TopologicalEvent> subscriber = createMock(Subscriber.class);
         subscriber.onMessage(ExistingAssetEvent.of("/", NAME));

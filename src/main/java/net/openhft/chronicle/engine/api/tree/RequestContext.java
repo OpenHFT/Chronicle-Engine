@@ -21,6 +21,7 @@ import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
 import net.openhft.chronicle.engine.api.pubsub.Reference;
+import net.openhft.chronicle.engine.api.pubsub.Subscription;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
@@ -61,7 +62,7 @@ public class RequestContext implements Cloneable {
         addAlias(EntrySetView.class, "EntrySet");
         addAlias(KeySetView.class, "KeySet");
         addAlias(ValuesCollection.class, "Values");
-
+        addAlias(Subscription.class, "Subscription");
         addAlias(Publisher.class, "Publisher, Pub");
         addAlias(TopicPublisher.class, "TopicPublisher, TopicPub");
         addAlias(Reference.class, "Reference, Ref");

@@ -21,6 +21,7 @@ import net.openhft.chronicle.engine.api.SessionDetailsProvider;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
+import net.openhft.chronicle.engine.api.pubsub.Subscription;
 import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
@@ -71,6 +72,10 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private final CollectionWireHandler<Entry<byte[], byte[]>, Set<Entry<byte[], byte[]>>> entrySetHandler;
     @NotNull
     private final CollectionWireHandler<byte[], Collection<byte[]>> valuesHandler;
+
+
+    SubscriptionHandlerProcessor subscriptionHandler;
+
     @NotNull
     private final AssetTree assetTree;
     @NotNull
@@ -79,7 +84,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private final StringBuilder lastCsp = new StringBuilder();
     private final StringBuilder eventName = new StringBuilder();
 
-    private WireAdapter mh;
+    private WireAdapter wireAdapter;
     private RequestContext requestContext;
     private Class viewType;
     private SessionProvider sessionProvider;
@@ -99,6 +104,9 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
         this.valuesHandler = new CollectionWireHandlerProcessor<>();
         this.metaDataConsumer = wireInConsumer();
         this.sessionProvider = assetTree.getAsset("").getView(SessionProvider.class);
+
+        this.subscriptionHandler = new SubscriptionHandlerProcessor();
+
 
     }
 
@@ -156,7 +164,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                         final Class vClass = requestContext.valueType() == null ? String.class
                                 : requestContext.valueType();
 
-                        mh = new GenericWireAdapter(kClass, vClass);
+                        wireAdapter = new GenericWireAdapter(kClass, vClass);
                     } else
                         throw new UnsupportedOperationException("unsupported view type");
 
@@ -211,34 +219,41 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                     return;
                 }
 
-                if (mh != null) {
+                if (wireAdapter != null) {
 
                     if (viewType == MapView.class) {
-                        mapWireHandler.process(in, out, (KeyValueStore) ((MapView) view).underlying(), tid, mh,
+                        mapWireHandler.process(in, out, (KeyValueStore) ((MapView) view).underlying(), tid, wireAdapter,
                                 requestContext, publisher, assetTree);
                         return;
                     }
 
                     if (viewType == EntrySetView.class) {
                         entrySetHandler.process(in, out, (EntrySetView) view, cspText,
-                                mh.entryToWire(),
-                                mh.wireToEntry(), HashSet::new, tid);
+                                wireAdapter.entryToWire(),
+                                wireAdapter.wireToEntry(), HashSet::new, tid);
                         return;
                     }
 
                     if (viewType == KeySetView.class) {
                         keySetHandler.process(in, out, (KeySetView) view, cspText,
-                                mh.keyToWire(),
-                                mh.wireToKey(), HashSet::new, tid);
+                                wireAdapter.keyToWire(),
+                                wireAdapter.wireToKey(), HashSet::new, tid);
                         return;
                     }
 
                     if (viewType == ValuesCollection.class) {
                         valuesHandler.process(in, out, (ValuesCollection) view, cspText,
-                                mh.keyToWire(),
-                                mh.wireToKey(), ArrayList::new, tid);
+                                wireAdapter.keyToWire(),
+                                wireAdapter.wireToKey(), ArrayList::new, tid);
                         return;
                     }
+
+                    if (viewType == Subscription.class) {
+                        subscriptionHandler.process(in,
+                                requestContext, publisher, assetTree, tid, outWire);
+                        return;
+                    }
+
                 }
 
                 if (endsWith(cspText, "?view=queue") && queueWireHandler != null) {

@@ -184,9 +184,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
     @NotNull
     private final Map<String, Long> cspToCid = new HashMap<>();
 
-    @Nullable
     private Wire inWire = null;
-    @Nullable
     private Wire outWire = null;
 
     private KeyValueStore<K, V, V> map;
@@ -202,9 +200,6 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
 
     private long tid;
     private final AtomicLong cid = new AtomicLong();
-
-    private final Bytes keyBytes = Bytes.elasticByteBuffer();
-    private final Bytes valueBytes = Bytes.elasticByteBuffer();
 
     /**
      * create a new cid if one does not already exist for this csp
@@ -519,6 +514,7 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
     final StringBuilder cpsBuff = new StringBuilder();
 
     private void createProxy(final String type) {
+
         outWire.writeEventName(reply).type("set-proxy").writeValue()
                 .marshallable(w -> {
 
