@@ -16,7 +16,7 @@
 
 package net.openhft.chronicle.engine.api.session;
 
-import net.openhft.chronicle.engine.api.SessionDetails;
+import net.openhft.chronicle.network.api.session.SessionDetails;
 
 /**
  * Created by peter on 01/06/15.

@@ -17,9 +17,9 @@ package net.openhft.chronicle.engine.server;
 
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
-import net.openhft.chronicle.engine.session.VanillaSessionDetails;
 import net.openhft.chronicle.network.AcceptorEventHandler;
-import net.openhft.chronicle.network.event.EventGroup;
+import net.openhft.chronicle.network.VanillaSessionDetails;
+import net.openhft.chronicle.threads.EventGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;

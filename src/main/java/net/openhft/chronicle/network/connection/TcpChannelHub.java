@@ -21,10 +21,9 @@ import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.CloseablesManager;
-import net.openhft.chronicle.engine.api.SessionDetails;
 import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.api.tree.View;
-import net.openhft.chronicle.network.event.EventGroup;
+import net.openhft.chronicle.network.api.session.SessionDetails;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
@@ -358,7 +357,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
         outBuffer.position(0);
 
-        if (EventGroup.IS_DEBUG)
+        if (Jvm.IS_DEBUG)
             logToStandardOutMessageSent(outWire, outBuffer);
 
         upateLargestChunkSoFarSize(outBuffer);
