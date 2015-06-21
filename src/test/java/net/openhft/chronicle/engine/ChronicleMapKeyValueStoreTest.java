@@ -43,6 +43,7 @@ import java.util.function.Function;
 
 import static org.junit.Assert.assertNotNull;
 
+
 /**
  * Created by daniel on 28/05/15.
  */
