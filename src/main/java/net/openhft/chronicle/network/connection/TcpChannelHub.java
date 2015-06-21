@@ -556,6 +556,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
         private long tid;
 
         private final Map<Long, Object> map = new ConcurrentHashMap<>();
+        private final Map<Long, Object> omap = Jvm.IS_DEBUG ? new ConcurrentHashMap<>() : null;
 
         /**
          * @param wireFunction converts bytes into wire, ie TextWire or BinaryWire
@@ -690,7 +691,22 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
         private void processData(final long tid, final boolean isReady, final int
                 header, final int messageSize, Wire inWire) throws IOException {
-            final Object o = isReady ? map.remove(tid) : map.get(tid);
+            Object o = isReady ? map.remove(tid) : map.get(tid);
+            if (o == null) {
+                if (omap != null && omap.containsValue(tid)) {
+                    LOG.warn("Found tid in the old map tid=" + tid);
+                    o = omap.get(tid);
+                } else {
+                    Jvm.pause(10);
+                    o = isReady ? map.remove(tid) : map.get(tid);
+                    if (o != null)
+                        LOG.warn("Found tid after a pause tid=" + tid);
+                }
+            } else {
+                if (omap != null) {
+                    omap.put(tid, o);
+                }
+            }
 
             if (o == null) {
                 LOG.info("unable to respond to tid=" + tid);

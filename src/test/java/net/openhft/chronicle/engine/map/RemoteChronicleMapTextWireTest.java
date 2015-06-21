@@ -44,7 +44,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
 
     @Before
     public void before() {
-        System.out.println("Method " + name.getMethodName());
+        System.out.println("\t... test " + name.getMethodName());
         methodName(name.getMethodName());
     }
 
