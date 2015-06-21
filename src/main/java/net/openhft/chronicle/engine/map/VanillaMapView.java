@@ -63,7 +63,7 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
     @Override
     public boolean containsKey(final Object key) {
         checkKey(key);
-        return super.containsKey(key);
+        return keyClass.isInstance(key) && kvStore.containsKey((K) key);
     }
 
     private void checkKey(@Nullable final Object key) {
@@ -89,6 +89,7 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
     @Nullable
     @Override
     public V get(Object key) {
+        checkKey(key);
         return kvStore.isKeyType(key) ? kvStore.getUsing((K) key, null) : null;
     }
 
@@ -109,6 +110,7 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
     @Nullable
     @Override
     public V remove(Object key) {
+        checkKey(key);
         if (!kvStore.isKeyType(key)) {
             return null;
         }

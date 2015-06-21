@@ -35,7 +35,6 @@ import static net.openhft.chronicle.wire.YamlLogging.writeMessage;
 import static org.junit.Assert.*;
 
 
-
 public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
 
     private AssetTree assetTree = new VanillaAssetTree().forTesting();
@@ -45,16 +44,16 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
 
     @Before
     public void before() {
+        System.out.println("Method " + name.getMethodName());
         methodName(name.getMethodName());
     }
 
     @NotNull
     ClosableMapSupplier newIntString(String name) throws IOException {
-        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(Integer.class, String
-                .class, TextWire::new, assetTree, name);
+        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(
+                Integer.class, String.class, TextWire::new, assetTree, name);
 
         return new ClosableMapSupplier() {
-
             @NotNull
             @Override
             public Object get() {
@@ -66,17 +65,16 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
                 remoteMapSupplier.close();
             }
         };
-
     }
 
     @NotNull
     ClosableMapSupplier<CharSequence, CharSequence> newStrStrMap() throws
             IOException {
 
-        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(CharSequence.class, CharSequence.class, TextWire::new, assetTree);
+        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(
+                CharSequence.class, CharSequence.class, TextWire::new, assetTree);
 
         return new ClosableMapSupplier() {
-
             @NotNull
             @Override
             public Object get() {
@@ -117,7 +115,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     public void testClear() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
             final Map map = supplier.get();
-       
+
             yamlLoggger(() -> map.clear());
             assertEquals(0, map.size());
         }
@@ -130,7 +128,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     public void testContains() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
             final Map map = supplier.get();
-     
+
             writeMessage = "when the key exists";
             yamlLoggger(() -> assertTrue(map.containsValue("A")));
             writeMessage = "when it doesnt exist";

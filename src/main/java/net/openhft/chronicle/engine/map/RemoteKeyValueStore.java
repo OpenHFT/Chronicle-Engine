@@ -83,6 +83,11 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
 
     }
 
+    @Override
+    public boolean isKeyType(Object key) {
+        return kClass.isInstance(key);
+    }
+
     @NotNull
     public File file() {
         throw new UnsupportedOperationException();

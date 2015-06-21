@@ -15,6 +15,7 @@
  */
 package net.openhft.chronicle.engine.server;
 
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
 import net.openhft.chronicle.network.AcceptorEventHandler;
@@ -22,23 +23,17 @@ import net.openhft.chronicle.network.VanillaSessionDetails;
 import net.openhft.chronicle.threads.EventGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
 import java.io.IOException;
+
+import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
 
 /**
  * Created by Rob Austin
  */
 public class ServerEndpoint implements Closeable {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ServerEndpoint.class);
-
-    @NotNull
     private EventGroup eg;
-
-    @Nullable
     private AcceptorEventHandler eah;
 
     public ServerEndpoint(AssetTree assetTree) throws
@@ -71,10 +66,12 @@ public class ServerEndpoint implements Closeable {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         stop();
-        eg.close();
-        eah.close();
+        closeQuietly(eg);
+        eg = null;
+        closeQuietly(eah);
+        eah = null;
 
     }
 }

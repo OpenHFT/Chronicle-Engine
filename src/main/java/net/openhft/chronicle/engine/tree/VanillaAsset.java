@@ -131,7 +131,8 @@ public class VanillaAsset implements Asset, Closeable {
         VanillaSessionDetails sessionDetails = new VanillaSessionDetails();
         sessionDetails.setUserId(System.getProperty("user.name"));
         sessionProvider.set(sessionDetails);
-        addView(TcpChannelHub.class, new TcpChannelHub(sessionProvider, hostname, port));
+        if (getView(TcpChannelHub.class) == null)
+            addView(TcpChannelHub.class, new TcpChannelHub(sessionProvider, hostname, port));
     }
 
     public void enableTranslatingValuesToBytesStore() {

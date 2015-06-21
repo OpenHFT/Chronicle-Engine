@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * Created by pct25 on 6/18/2015.
  */
+@Ignore("Long running test")
 public class AssetTreeJMXTest {
 
     @Test

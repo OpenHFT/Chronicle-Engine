@@ -83,6 +83,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
     // set up in the header
     private long startTime;
+    private volatile boolean closed;
 
     public TcpChannelHub(SessionProvider sessionProvider, String hostname, int port) {
         this.tcpBufferSize = 64 << 10;
@@ -175,6 +176,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
         long timeoutAt = System.currentTimeMillis() + timeoutMs;
 
         while (clientChannel == null) {
+            checkClosed();
             checkTimeout(timeoutAt);
 
             // ensures that the excising connection are closed
@@ -261,6 +263,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
     }
 
     public synchronized void close() {
+        closed = true;
         tcpSocketConsumer.close();
 
         if (closeables != null)
@@ -293,6 +296,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
      */
     public void writeSocket(@NotNull final Wire wire) {
         assert outBytesLock().isHeldByCurrentThread();
+        checkClosed();
 
         final long timeoutTime = startTime + this.timeoutMs;
         try {
@@ -318,6 +322,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
     }
 
     public Wire proxyReply(long timeoutTime, final long tid) {
+        checkClosed();
         try {
             return tcpSocketConsumer.syncBlockingReadSocket(timeoutTime, tid);
         } catch (RuntimeException e) {
@@ -363,6 +368,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
         upateLargestChunkSoFarSize(outBuffer);
 
         while (outBuffer.remaining() > 0) {
+            checkClosed();
             int len = clientChannel.write(outBuffer);
 
             if (len == -1)
@@ -486,6 +492,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
     public long writeMetaDataStartTime(long startTime, @NotNull Wire wire, String csp, long cid) {
         assert outBytesLock().isHeldByCurrentThread();
+        checkClosed();
         startTime(startTime);
         long tid = nextUniqueTransaction(startTime);
 
@@ -496,6 +503,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
     public void writeMetaDataForKnownTID(long tid, @NotNull Wire wire, String csp, long cid) {
         assert outBytesLock().isHeldByCurrentThread();
+        checkClosed();
 
         wire.writeDocument(true, wireOut -> {
             if (cid == 0)
@@ -515,7 +523,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
      */
     public void writeAsyncHeader(@NotNull Wire wire, String csp, long cid) {
         assert outBytesLock().isHeldByCurrentThread();
-
+        checkClosed();
         wire.writeDocument(true, wireOut -> {
             if (cid == 0)
                 wireOut.writeEventName(CoreFields.csp).text(csp);
@@ -526,6 +534,11 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
     public void startTime(long startTime) {
         this.startTime = startTime;
+    }
+
+    void checkClosed() {
+        if (closed)
+            throw new IllegalStateException("Closed");
     }
 
     /**
@@ -573,7 +586,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
          * @param tid           the {@code tid} of the message that we are waiting for
          * @throws InterruptedException
          */
-        private Wire syncBlockingReadSocket(final long timeoutTimeMs, long tid) throws
+        Wire syncBlockingReadSocket(final long timeoutTimeMs, long tid) throws
                 InterruptedException, TimeoutException {
             long start = System.currentTimeMillis();
 
@@ -614,49 +627,49 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
         private void start() {
 
             executorService.submit(() -> {
-
-                Wire inWire = wireFunction.apply(Bytes.elasticByteBuffer());
-                assert inWire != null;
-
-                while (!isClosed()) {
-
-                    try {
-                        // if we have processed all the bytes that we have read in
-                        final Bytes<?> bytes = inWire.bytes();
-
-                        // the number bytes ( still required  ) to read the size
-                        blockingRead(inWire, SIZE_OF_SIZE);
-
-                        final int header = bytes.readVolatileInt(0);
-                        final long messageSize = size(header);
-
-                        // read the meta processData and get the tid
-                        if (Wires.isData(header)) {
-                            assert messageSize < Integer.MAX_VALUE;
-                            processData(tid, Wires.isReady(header), header, (int) messageSize, inWire);
-                        } else {
-                            // read the document
-                            blockingRead(inWire, messageSize);
-                            logToStandardOutMessageReceived(inWire);
-                            inWire.readDocument((WireIn w) -> this.tid = CoreFields.tid(w), null);
-                        }
-
-                    } catch (IOException e) {
-                        if (!isClosed())
-                            this.clientChannel = provider.reConnect();
-                        else
-                            return;
-                    } catch (Throwable e) {
-                        if (!isClosed())
-                            LOG.error("", e);
-                        else
-                            return;
-                    } finally {
-                        clear(inWire);
-                    }
+                try {
+                    running();
+                } catch (Throwable e) {
+                    if (!isClosed())
+                        LOG.error("", e);
                 }
             });
 
+        }
+
+        private void running() {
+            Wire inWire = wireFunction.apply(Bytes.elasticByteBuffer());
+            assert inWire != null;
+
+            while (!isClosed()) {
+                try {
+                    // if we have processed all the bytes that we have read in
+                    final Bytes<?> bytes = inWire.bytes();
+
+                    // the number bytes ( still required  ) to read the size
+                    blockingRead(inWire, SIZE_OF_SIZE);
+
+                    final int header = bytes.readVolatileInt(0);
+                    final long messageSize = size(header);
+
+                    // read the meta processData and get the tid
+                    if (Wires.isData(header)) {
+                        assert messageSize < Integer.MAX_VALUE;
+                        processData(tid, Wires.isReady(header), header, (int) messageSize, inWire);
+                    } else {
+                        // read the document
+                        blockingRead(inWire, messageSize);
+                        logToStandardOutMessageReceived(inWire);
+                        inWire.readDocument((WireIn w) -> this.tid = CoreFields.tid(w), null);
+                    }
+
+                } catch (IOException e) {
+                    if (!isClosed())
+                        this.clientChannel = provider.reConnect();
+                } finally {
+                    clear(inWire);
+                }
+            }
         }
 
         private boolean isClosed() {
