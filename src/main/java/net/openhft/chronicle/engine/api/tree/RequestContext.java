@@ -38,24 +38,6 @@ import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
  * Created by peter on 24/05/15.
  */
 public class RequestContext implements Cloneable {
-    private String pathName;
-    private String name;
-    private Class viewType, type, type2;
-    private String basePath;
-    private Function<Bytes, Wire> wireType = WireType.TEXT;
-    @Nullable
-    private Boolean putReturnsNull = null,
-            removeReturnsNull = null,
-            bootstrap = null;
-    private double averageValueSize;
-    private long entries;
-
-    private Boolean recurse;
-
-    private static void addAlias(Class type, @NotNull String aliases) {
-        CLASS_ALIASES.addAlias(type, aliases);
-    }
-
     static {
         addAlias(MapView.class, "Map");
         addAlias(EntrySetView.class, "EntrySet");
@@ -67,12 +49,29 @@ public class RequestContext implements Cloneable {
         addAlias(Reference.class, "Reference, Ref");
     }
 
+    private String pathName;
+    private String name;
+    private Class viewType, type, type2;
+    private String basePath;
+    private Function<Bytes, Wire> wireType = WireType.TEXT;
+    @Nullable
+    private Boolean putReturnsNull = null,
+            removeReturnsNull = null,
+            bootstrap = null;
+    private double averageValueSize;
+    private long entries;
+    private Boolean recurse;
+
     private RequestContext() {
     }
 
     public RequestContext(String pathName, String name) {
         this.pathName = pathName;
         this.name = name;
+    }
+
+    private static void addAlias(Class type, @NotNull String aliases) {
+        CLASS_ALIASES.addAlias(type, aliases);
     }
 
     @NotNull
@@ -119,7 +118,7 @@ public class RequestContext implements Cloneable {
         parser.register(WireParser.DEFAULT, ValueIn.DISCARD);
         Bytes bytes = Bytes.from(queryString);
         QueryWire wire = new QueryWire(bytes);
-        while (bytes.remaining() > 0)
+        while (bytes.readRemaining() > 0)
             parser.parse(wire);
         return this;
     }

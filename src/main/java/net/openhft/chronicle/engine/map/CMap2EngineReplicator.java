@@ -41,13 +41,17 @@ public class CMap2EngineReplicator implements EngineReplication,
         EngineReplicationLangBytesConsumer, View {
 
     private final RequestContext context;
-    private EngineReplicationLangBytes engineReplicationLang;
     private final ThreadLocal<PointerBytesStore> keyLocal = withInitial(PointerBytesStore::new);
     private final ThreadLocal<PointerBytesStore> valueLocal = withInitial(PointerBytesStore::new);
+    private EngineReplicationLangBytes engineReplicationLang;
 
     public CMap2EngineReplicator(RequestContext requestContext, Asset asset) {
         this(requestContext);
         asset.addView(EngineReplicationLangBytesConsumer.class, this);
+    }
+
+    public CMap2EngineReplicator(final RequestContext context) {
+        this.context = context;
     }
 
     @Override
@@ -55,13 +59,8 @@ public class CMap2EngineReplicator implements EngineReplication,
         this.engineReplicationLang = engineReplicationLangBytes;
     }
 
-
-    public CMap2EngineReplicator(final RequestContext context) {
-        this.context = context;
-    }
-
     net.openhft.lang.io.Bytes toLangBytes(Bytes b) {
-        return wrap(b.bytes().address(), b.remaining());
+        return wrap(b.bytes().address(), b.readRemaining());
     }
 
     public void put(final Bytes key, final Bytes value,
@@ -96,72 +95,6 @@ public class CMap2EngineReplicator implements EngineReplication,
             put(entry);
 
         setLastModificationTime(entry.identifier(), entry.bootStrapTimeStamp());
-    }
-
-    public static class VanillaReplicatedEntry implements ReplicationEntry {
-
-        private final Bytes key;
-        private final Bytes value;
-        private final long timestamp;
-        private final byte identifier;
-        private final boolean isDeleted;
-        private final long bootStrapTimeStamp;
-
-        /**
-         * @param key                the key of the entry
-         * @param value              the value of the entry
-         * @param identifier         the identifier of the remote server
-         * @param timestamp          the timestamp send from the remote server, this time stamp was
-         *                           the time the entry was removed
-         * @param bootStrapTimeStamp sent to the client on every update this is the timestamp that
-         *                           the remote client should bootstrap from when there has been a
-         *                           disconnection, this time maybe later than the message time as
-         *                           event are not send in chronological order from the bit set.
-         */
-        VanillaReplicatedEntry(final Bytes key,
-                               final Bytes value,
-                               final long timestamp,
-                               final byte identifier,
-                               final boolean isDeleted,
-                               final long bootStrapTimeStamp) {
-            this.key = key;
-            this.value = value;
-            this.timestamp = timestamp;
-            this.identifier = identifier;
-            this.isDeleted = isDeleted;
-            this.bootStrapTimeStamp = bootStrapTimeStamp;
-        }
-
-        @Override
-        public Bytes key() {
-            return key;
-        }
-
-        @Override
-        public Bytes value() {
-            return value;
-        }
-
-        @Override
-        public long timestamp() {
-            return timestamp;
-        }
-
-        @Override
-        public byte identifier() {
-            return identifier;
-        }
-
-        @Override
-        public boolean isDeleted() {
-            return isDeleted;
-        }
-
-        @Override
-        public long bootStrapTimeStamp() {
-            return bootStrapTimeStamp;
-        }
-
     }
 
     @Override
@@ -258,5 +191,71 @@ public class CMap2EngineReplicator implements EngineReplication,
                 ", keyLocal=" + keyLocal +
                 ", valueLocal=" + valueLocal +
                 '}';
+    }
+
+    public static class VanillaReplicatedEntry implements ReplicationEntry {
+
+        private final Bytes key;
+        private final Bytes value;
+        private final long timestamp;
+        private final byte identifier;
+        private final boolean isDeleted;
+        private final long bootStrapTimeStamp;
+
+        /**
+         * @param key                the key of the entry
+         * @param value              the value of the entry
+         * @param identifier         the identifier of the remote server
+         * @param timestamp          the timestamp send from the remote server, this time stamp was
+         *                           the time the entry was removed
+         * @param bootStrapTimeStamp sent to the client on every update this is the timestamp that
+         *                           the remote client should bootstrap from when there has been a
+         *                           disconnection, this time maybe later than the message time as
+         *                           event are not send in chronological order from the bit set.
+         */
+        VanillaReplicatedEntry(final Bytes key,
+                               final Bytes value,
+                               final long timestamp,
+                               final byte identifier,
+                               final boolean isDeleted,
+                               final long bootStrapTimeStamp) {
+            this.key = key;
+            this.value = value;
+            this.timestamp = timestamp;
+            this.identifier = identifier;
+            this.isDeleted = isDeleted;
+            this.bootStrapTimeStamp = bootStrapTimeStamp;
+        }
+
+        @Override
+        public Bytes key() {
+            return key;
+        }
+
+        @Override
+        public Bytes value() {
+            return value;
+        }
+
+        @Override
+        public long timestamp() {
+            return timestamp;
+        }
+
+        @Override
+        public byte identifier() {
+            return identifier;
+        }
+
+        @Override
+        public boolean isDeleted() {
+            return isDeleted;
+        }
+
+        @Override
+        public long bootStrapTimeStamp() {
+            return bootStrapTimeStamp;
+        }
+
     }
 }

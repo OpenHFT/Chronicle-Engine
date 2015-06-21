@@ -51,29 +51,23 @@ import static net.openhft.chronicle.engine.server.WireType.wire;
  */
 public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TcpChannelHub.class);
     public static final int SIZE_OF_SIZE = 4;
-
+    private static final Logger LOG = LoggerFactory.getLogger(TcpChannelHub.class);
+    public final long timeoutMs;
     @NotNull
     protected final String name;
     @NotNull
     protected final InetSocketAddress remoteAddress;
-    public final long timeoutMs;
     protected final int tcpBufferSize;
-
+    final Wire outWire;
+    final Wire inWire;
     private final ReentrantLock outBytesLock = new ReentrantLock();
-
     @NotNull
     private final AtomicLong transactionID = new AtomicLong(0);
     private final SessionProvider sessionProvider;
     private final TcpSocketConsumer tcpSocketConsumer;
-
     @Nullable
     protected CloseablesManager closeables;
-
-    final Wire outWire;
-    final Wire inWire;
-
     private long largestChunkSoFar = 0;
 
     @Nullable
@@ -96,6 +90,57 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
         attemptConnect(remoteAddress);
         tcpSocketConsumer = new TcpSocketConsumer(wire, this, this.remoteAddress.toString());
         this.sessionProvider = sessionProvider;
+    }
+
+    @Nullable
+    static SocketChannel openSocketChannel(@NotNull final CloseablesManager closeables)
+            throws IOException {
+        SocketChannel result = null;
+        try {
+            result = SocketChannel.open();
+            result.socket().setTcpNoDelay(true);
+        } finally {
+            if (result != null)
+                try {
+                    closeables.add(result);
+                } catch (IllegalStateException e) {
+                    // already closed
+                }
+        }
+        return result;
+    }
+
+    static void logToStandardOutMessageReceived(@NotNull Wire wire) {
+        Bytes<?> bytes = wire.bytes();
+
+        if (!YamlLogging.clientReads || !Jvm.isDebug())
+            return;
+
+        final long position = bytes.writePosition();
+        final long limit = bytes.writeLimit();
+        try {
+            try {
+                System.out.println("\nreceives:\n\n" +
+                        "```yaml\n" +
+
+                        ((wire instanceof TextWire) ?
+                                Wires.fromSizePrefixedBlobs(bytes) :
+                                BytesUtil.toHexString(bytes, bytes.writePosition(), bytes.writeRemaining())
+
+                        ) +
+                        "```\n\n");
+                YamlLogging.title = "";
+                YamlLogging.writeMessage = "";
+            } catch (Exception e) {
+
+                String x = Bytes.toString(bytes);
+                System.out.println(x);
+                LOG.error("", e);
+            }
+        } finally {
+            bytes.writeLimit(limit);
+            bytes.writePosition(position);
+        }
     }
 
     /**
@@ -234,24 +279,6 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
         return sessionProvider.get();
     }
 
-    @Nullable
-    static SocketChannel openSocketChannel(@NotNull final CloseablesManager closeables)
-            throws IOException {
-        SocketChannel result = null;
-        try {
-            result = SocketChannel.open();
-            result.socket().setTcpNoDelay(true);
-        } finally {
-            if (result != null)
-                try {
-                    closeables.add(result);
-                } catch (IllegalStateException e) {
-                    // already closed
-                }
-        }
-        return result;
-    }
-
     /**
      * closes the existing connections and establishes a new closeables
      */
@@ -349,7 +376,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
         assert outBytesLock().isHeldByCurrentThread();
 
         final Bytes<?> bytes = outWire.bytes();
-        long outBytesPosition = bytes.position();
+        long outBytesPosition = bytes.writePosition();
 
         // if we have other threads waiting to send and the buffer is not full,
         // let the other threads write to the buffer
@@ -358,7 +385,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
             return;
 
         final ByteBuffer outBuffer = (ByteBuffer) bytes.underlyingObject();
-        outBuffer.limit((int) bytes.position());
+        outBuffer.limit((int) bytes.writePosition());
 
         outBuffer.position(0);
 
@@ -388,8 +415,8 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
                     LOG.debug("continuing -  without all the data being written to the buffer as " +
                             "it will be written by the next thread");
                 outBuffer.compact();
-                bytes.limit(outBuffer.limit());
-                bytes.position(outBuffer.position());
+                bytes.writeLimit(outBuffer.limit());
+                bytes.writePosition(outBuffer.position());
                 return;
             }
 
@@ -406,16 +433,15 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
         Bytes<?> bytes = wire.bytes();
 
-        final long position = bytes.position();
-        final long limit = bytes.limit();
+        final long position = bytes.writePosition();
+        final long limit = bytes.writeLimit();
         try {
 
-            bytes.limit(outBuffer.limit());
-            bytes.position(outBuffer.position());
+            bytes.writeLimit(outBuffer.limit());
+            bytes.writePosition(outBuffer.position());
 
             if (YamlLogging.clientWrites) {
                 try {
-
                     System.out.println(((!YamlLogging.title.isEmpty()) ? "### " + YamlLogging
                             .title + "\n" : "") + "" +
                             YamlLogging.writeMessage + (YamlLogging.writeMessage.isEmpty() ?
@@ -424,7 +450,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
                             "```yaml\n" +
                             ((wire instanceof TextWire) ?
                                     Wires.fromSizePrefixedBlobs(bytes) :
-                                    BytesUtil.toHexString(bytes, bytes.position(), bytes.remaining())) +
+                                    BytesUtil.toHexString(bytes, bytes.writePosition(), bytes.writeRemaining())) +
                             "```");
                     YamlLogging.title = "";
                     YamlLogging.writeMessage = "";
@@ -434,41 +460,8 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
             }
 
         } finally {
-            bytes.limit(limit);
-            bytes.position(position);
-        }
-    }
-
-    static void logToStandardOutMessageReceived(@NotNull Wire wire) {
-        Bytes<?> bytes = wire.bytes();
-
-        if (!YamlLogging.clientReads || !Jvm.isDebug())
-            return;
-
-        final long position = bytes.position();
-        final long limit = bytes.limit();
-        try {
-            try {
-                System.out.println("\nreceives:\n\n" +
-                        "```yaml\n" +
-
-                        ((wire instanceof TextWire) ?
-                                Wires.fromSizePrefixedBlobs(bytes) :
-                                BytesUtil.toHexString(bytes, bytes.position(), bytes.remaining())
-
-                        ) +
-                        "```\n\n");
-                YamlLogging.title = "";
-                YamlLogging.writeMessage = "";
-            } catch (Exception e) {
-
-                String x = Bytes.toString(bytes);
-                System.out.println(x);
-                LOG.error("", e);
-            }
-        } finally {
-            bytes.limit(limit);
-            bytes.position(position);
+            bytes.writeLimit(limit);
+            bytes.writePosition(position);
         }
     }
 
@@ -547,16 +540,16 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
     private static class TcpSocketConsumer implements Closeable {
 
         private final ExecutorService executorService;
-
+        private final SocketChannelProvider provider;
+        private final Map<Long, Object> map = new ConcurrentHashMap<>();
+        private final Map<Long, Object> omap = Jvm.IS_DEBUG ? new ConcurrentHashMap<>() : null;
         private volatile boolean closeSocketConsumer;
         private Function<Bytes, Wire> wireFunction;
-        private final SocketChannelProvider provider;
         @Nullable
         private SocketChannel clientChannel;
         private long tid;
-
-        private final Map<Long, Object> map = new ConcurrentHashMap<>();
-        private final Map<Long, Object> omap = Jvm.IS_DEBUG ? new ConcurrentHashMap<>() : null;
+        private ThreadLocal<Wire> syncInWireThreadLocal = ThreadLocal.withInitial(() -> wire.apply(Bytes
+                .elasticByteBuffer()));
 
         /**
          * @param wireFunction converts bytes into wire, ie TextWire or BinaryWire
@@ -576,9 +569,6 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
             start();
         }
-
-        private ThreadLocal<Wire> syncInWireThreadLocal = ThreadLocal.withInitial(() -> wire.apply(Bytes
-                .elasticByteBuffer()));
 
         /**
          * blocks this thread until a response is received from the socket
@@ -734,7 +724,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
                     byteBuffer.limit(SIZE_OF_SIZE + messageSize);
                     readBuffer(byteBuffer);
 
-                    bytes.limit(byteBuffer.position());
+                    bytes.readLimit(byteBuffer.position());
                     bytes.notifyAll();
                 }
             }
@@ -753,14 +743,14 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
                 throws IOException {
 
             Bytes<?> bytes = wire.bytes();
-            bytes.ensureCapacity(bytes.position() + numberOfBytes);
+            bytes.ensureCapacity(bytes.readPosition() + numberOfBytes);
 
             final ByteBuffer buffer = (ByteBuffer) bytes.underlyingObject();
             final long start = buffer.position();
 
             buffer.limit((int) (start + numberOfBytes));
             readBuffer(buffer);
-            bytes.limit(buffer.position());
+            bytes.readLimit(buffer.position());
 
         }
 

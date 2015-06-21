@@ -470,29 +470,29 @@ public class MapWireHandler<K, V> {
     void writeData(@NotNull Consumer<WireOut> c) {
         outWire.writeDocument(false, out -> {
 
-            final long position = outWire.bytes().position();
+            final long position = outWire.bytes().writePosition();
             try {
 
 
                 c.accept(outWire);
             } catch (Exception exception) {
-                outWire.bytes().position(position);
+                outWire.bytes().writePosition(position);
                 outWire.writeEventName(() -> "exception").throwable(exception);
             }
 
             // write 'reply : {} ' if no data was sent
-            if (position == outWire.bytes().position()) {
+            if (position == outWire.bytes().writePosition()) {
                 outWire.writeEventName(reply).marshallable(EMPTY);
             }
         });
         if (YamlLogging.showServerWrites)
             try {
                 System.out.println("server-writes:\n" +
-                        Wires.fromSizePrefixedBlobs(outWire.bytes(), 0, outWire.bytes().position()));
+                        Wires.fromSizePrefixedBlobs(outWire.bytes(), 0, outWire.bytes().writePosition()));
             } catch (Exception e) {
 
                 System.out.println("server-writes:\n" +
-                        Bytes.toString(outWire.bytes(), 0, outWire.bytes().position()));
+                        Bytes.toString(outWire.bytes(), 0, outWire.bytes().writePosition()));
             }
     }
 

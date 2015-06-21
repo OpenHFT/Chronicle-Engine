@@ -87,9 +87,6 @@ public class CMap2EngineReplicatorTest {
         key.write("hello".getBytes());
         value.write("world".getBytes());
 
-        key.flip();
-        value.flip();
-
         final Bytes<ByteBuffer> keyBytes = key.bytes();
         final Bytes<ByteBuffer> valueBytes = value.bytes();
 

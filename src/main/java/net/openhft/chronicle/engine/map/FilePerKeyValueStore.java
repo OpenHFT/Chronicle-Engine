@@ -310,8 +310,8 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
 
             fc.read(dst);
 
-            readingBytes.position(0);
-            readingBytes.limit(dst.position());
+            readingBytes.readPosition(0);
+            readingBytes.readLimit(dst.position());
             dst.flip();
         }
         return readingBytes;
@@ -326,7 +326,6 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
             Bytes<ByteBuffer> valueBuffer = b.valueBuffer;
             valueBuffer.clear();
             valueBuffer.write(value);
-            valueBuffer.flip();
             writingBytes = valueBuffer;
         }
 
@@ -335,7 +334,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         try (FileChannel fc = new FileOutputStream(tmpFile).getChannel()) {
             ByteBuffer byteBuffer = writingBytes.underlyingObject();
             byteBuffer.position(0);
-            byteBuffer.limit((int) writingBytes.limit());
+            byteBuffer.limit((int) writingBytes.readLimit());
             fc.write(byteBuffer);
         } catch (IOException e) {
             throw new AssertionError(e);

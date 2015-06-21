@@ -114,7 +114,7 @@ public class EngineWireHandler extends WireTcpHandler {
         return (wire) -> {
 
             // if true the next data message will be a system message
-            isSystemMessage = wire.bytes().remaining() == 0;
+            isSystemMessage = wire.bytes().readRemaining() == 0;
             if (isSystemMessage) {
                 if (LOG.isDebugEnabled()) LOG.debug("received system-meta-data");
                 return;

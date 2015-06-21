@@ -38,6 +38,8 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
     protected final TcpChannelHub hub;
     private final long cid;
     protected String csp;
+    @NotNull
+    StringBuilder eventName = new StringBuilder();
 
     /**
      * @param hub
@@ -50,6 +52,34 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
         this.cid = cid;
         this.csp = csp;
         this.hub = hub;
+    }
+
+    public static <E extends ParameterizeWireKey>
+    Consumer<ValueOut> toParameters(@NotNull final E eventId,
+                                    @Nullable final Object... args) {
+        return out -> {
+            final WireKey[] paramNames = eventId.params();
+
+            assert args != null;
+            assert args.length == paramNames.length :
+                    "methodName=" + eventId +
+                            ", args.length=" + args.length +
+                            ", paramNames.length=" + paramNames.length;
+
+            if (paramNames.length == 1) {
+                out.object(args[0]);
+                return;
+            }
+
+            out.marshallable(m -> {
+
+                for (int i = 0; i < paramNames.length; i++) {
+                    final ValueOut vo = m.write(paramNames[i]);
+                    vo.object(args[i]);
+                }
+
+            });
+        };
     }
 
     @Nullable
@@ -212,11 +242,8 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
 
         if (!Wires.isData(datalen))
             throw new IllegalStateException("expecting a data blob, from ->" + Bytes.toString
-                    (wireIn.bytes(), 0, wireIn.bytes().limit()));
+                    (wireIn.bytes(), 0, wireIn.bytes().readLimit()));
     }
-
-    @NotNull
-    StringBuilder eventName = new StringBuilder();
 
     protected boolean readBoolean(long tid, long startTime) {
         assert !hub.outBytesLock().isHeldByCurrentThread();
@@ -296,34 +323,6 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
         checkIsData(wire);
         return readReply(wire, reply, c);
 
-    }
-
-    public static <E extends ParameterizeWireKey>
-    Consumer<ValueOut> toParameters(@NotNull final E eventId,
-                                    @Nullable final Object... args) {
-        return out -> {
-            final WireKey[] paramNames = eventId.params();
-
-            assert args != null;
-            assert args.length == paramNames.length :
-                    "methodName=" + eventId +
-                            ", args.length=" + args.length +
-                            ", paramNames.length=" + paramNames.length;
-
-            if (paramNames.length == 1) {
-                out.object(args[0]);
-                return;
-            }
-
-            out.marshallable(m -> {
-
-                for (int i = 0; i < paramNames.length; i++) {
-                    final ValueOut vo = m.write(paramNames[i]);
-                    vo.object(args[i]);
-                }
-
-            });
-        };
     }
 
     protected int readInt(long tid, long startTime) {
