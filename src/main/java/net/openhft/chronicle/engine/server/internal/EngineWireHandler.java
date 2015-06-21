@@ -26,6 +26,7 @@ import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.engine.collection.CollectionWireHandler;
 import net.openhft.chronicle.engine.collection.CollectionWireHandlerProcessor;
 import net.openhft.chronicle.network.WireTcpHandler;
@@ -36,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.io.StreamCorruptedException;
 import java.util.*;
 import java.util.Map.Entry;
@@ -52,7 +52,7 @@ import static net.openhft.chronicle.wire.CoreFields.csp;
 /**
  * Created by Rob Austin
  */
-public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
+public class EngineWireHandler extends WireTcpHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(EngineWireHandler.class);
 
@@ -64,8 +64,6 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private final WireHandler queueWireHandler;
 
     @NotNull
-    private final Map<Long, String> cidToCsp;
-    @NotNull
     private final MapWireHandler mapWireHandler;
     @NotNull
     private final CollectionWireHandler<Entry<byte[], byte[]>, Set<Entry<byte[], byte[]>>> entrySetHandler;
@@ -75,34 +73,32 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
     private final AssetTree assetTree;
     @NotNull
     private final Consumer<WireIn> metaDataConsumer;
-    private boolean isSystemMessage = true;
     private final StringBuilder lastCsp = new StringBuilder();
     private final StringBuilder eventName = new StringBuilder();
 
+    private View view;
+    private boolean isSystemMessage = true;
     private WireAdapter mh;
     private RequestContext requestContext;
     private Class viewType;
     private SessionProvider sessionProvider;
     private Queue<Consumer<Wire>> publisher = new LinkedTransferQueue<>();
+    private long tid;
 
-    public EngineWireHandler(@NotNull final Map<Long, String> cidToCsp,
-                             @NotNull final Function<Bytes, Wire> byteToWire,
-                             @NotNull final AssetTree assetTree) throws IOException {
+    public EngineWireHandler(@NotNull final Function<Bytes, Wire> byteToWire,
+                             @NotNull final AssetTree assetTree) {
         super(byteToWire);
 
         this.assetTree = assetTree;
-        this.mapWireHandler = new MapWireHandler<>(cidToCsp);
+        this.mapWireHandler = new MapWireHandler<>();
         this.keySetHandler = new CollectionWireHandlerProcessor<>();
         this.queueWireHandler = null;
-        this.cidToCsp = cidToCsp;
         this.entrySetHandler = new CollectionWireHandlerProcessor<>();
         this.valuesHandler = new CollectionWireHandlerProcessor<>();
         this.metaDataConsumer = wireInConsumer();
-        this.sessionProvider = assetTree.getAsset("").getView(SessionProvider.class);
+        this.sessionProvider = assetTree.root().getView(SessionProvider.class);
 
     }
-
-    private final List<WireHandler> handlers = new ArrayList<>();
 
     protected void publish(Wire out) {
         final Consumer<Wire> wireConsumer = publisher.poll();
@@ -113,12 +109,8 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
     }
 
-    private long tid;
-
-    Object view;
-
     @NotNull
-    private Consumer<WireIn> wireInConsumer() throws IOException {
+    private Consumer<WireIn> wireInConsumer() {
         return (wire) -> {
 
             // if true the next data message will be a system message
@@ -261,7 +253,7 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
                         Wires.fromSizePrefixedBlobs(in.bytes()));
             } catch (Exception e) {
                 LOG.info("\n\n" +
-                        Bytes.toDebugString(in.bytes()));
+                        Bytes.toString(in.bytes()));
             }
         }
     }
@@ -279,13 +271,8 @@ public class EngineWireHandler extends WireTcpHandler implements WireHandlers {
 
         } else if (cid.contentEquals(keyName)) {
             final long cid = read.int64();
-            final CharSequence s = cidToCsp.get(cid);
+            final CharSequence s = mapWireHandler.getCspForCid(cid);
             cspText.append(s);
         }
-    }
-
-    @Override
-    public void add(WireHandler handler) {
-        handlers.add(handler);
     }
 }

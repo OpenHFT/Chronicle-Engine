@@ -44,7 +44,7 @@ public class InsertedEventTest {
                 .typedMarshallable(insertedEvent);
         bytes.flip();
         System.out.println("text: " + bytes);
-        InsertedEvent ie = (InsertedEvent) textWire.read(() -> "reply").typedMarshallable();
+        InsertedEvent ie = textWire.read(() -> "reply").typedMarshallable();
         assertEquals(insertedEvent, ie);
     }
 
@@ -57,7 +57,7 @@ public class InsertedEventTest {
                 .typedMarshallable(insertedEvent);
         bytes.flip();
         System.out.println("text: " + bytes);
-        InsertedEvent ie = (InsertedEvent) textWire.read(() -> "reply").typedMarshallable();
+        InsertedEvent ie = textWire.read(() -> "reply").typedMarshallable();
         assertEquals(insertedEvent, ie);
     }
 
@@ -72,7 +72,7 @@ public class InsertedEventTest {
                 .typedMarshallable(insertedEvent);
         bytes.flip();
         System.out.println("text: " + bytes);
-        InsertedEvent ie = (InsertedEvent) textWire.read(() -> "reply").typedMarshallable();
+        InsertedEvent ie = textWire.read(() -> "reply").typedMarshallable();
         assertEquals(insertedEvent, ie);
     }
 
@@ -86,7 +86,7 @@ public class InsertedEventTest {
                 .typedMarshallable(insertedEvent);
         bytes.flip();
         System.out.println("text: " + bytes);
-        InsertedEvent ie = (InsertedEvent) textWire.read(() -> "reply").typedMarshallable();
+        InsertedEvent ie = textWire.read(() -> "reply").typedMarshallable();
         assertEquals(insertedEvent, ie);
     }
 
@@ -98,7 +98,7 @@ public class InsertedEventTest {
         binaryWire.write(() -> "reply").typedMarshallable(insertedEvent);
         bytes.flip();
         System.out.println("text: " + bytes);
-        InsertedEvent ie = (InsertedEvent) binaryWire.read(() -> "reply").typedMarshallable();
+        InsertedEvent ie = binaryWire.read(() -> "reply").typedMarshallable();
         assertEquals(insertedEvent, ie);
     }
 
@@ -111,7 +111,7 @@ public class InsertedEventTest {
                 .typedMarshallable(insertedEvent);
         bytes.flip();
         System.out.println("text: " + bytes);
-        InsertedEvent ie = (InsertedEvent) binaryWire.read(() -> "reply").typedMarshallable();
+        InsertedEvent ie = binaryWire.read(() -> "reply").typedMarshallable();
         assertEquals(insertedEvent, ie);
     }
 
@@ -125,7 +125,7 @@ public class InsertedEventTest {
                 .typedMarshallable(insertedEvent);
         bytes.flip();
         System.out.println("text: " + bytes);
-        InsertedEvent ie = (InsertedEvent) binaryWire.read(() -> "reply").typedMarshallable();
+        InsertedEvent ie = binaryWire.read(() -> "reply").typedMarshallable();
         assertEquals(insertedEvent, ie);
     }
 }

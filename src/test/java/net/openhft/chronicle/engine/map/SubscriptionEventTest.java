@@ -112,7 +112,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     }
 
     public SubscriptionEventTest(Object isRemote, Object wireType) {
-        this.isRemote = (Boolean) isRemote;
+        SubscriptionEventTest.isRemote = (Boolean) isRemote;
 
         wire = (Function<Bytes, Wire>) wireType;
     }

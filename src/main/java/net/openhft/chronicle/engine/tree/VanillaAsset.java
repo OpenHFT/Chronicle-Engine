@@ -229,7 +229,7 @@ public class VanillaAsset implements Asset, Closeable {
         synchronized (viewMap) {
             V view = getView(viewType);
             if (view != null) {
-                return (V) view;
+                return view;
             }
             V leafView = createLeafView(viewType, rc, this);
             if (leafView != null)

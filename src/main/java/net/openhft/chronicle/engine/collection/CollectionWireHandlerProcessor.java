@@ -40,8 +40,7 @@ import static net.openhft.chronicle.wire.Wires.acquireStringBuilder;
  * @author Rob Austin.
  */
 public class CollectionWireHandlerProcessor<U, C extends Collection<U>> implements
-        CollectionWireHandler<U, C>,
-        Consumer<WireHandlers> {
+        CollectionWireHandler<U, C> {
 
     private static final Logger LOG = LoggerFactory.getLogger(CollectionWireHandlerProcessor.class);
     public static final int SIZE_OF_SIZE = 4;
@@ -205,10 +204,6 @@ public class CollectionWireHandlerProcessor<U, C extends Collection<U>> implemen
         } catch (Exception e) {
             LOG.error("", e);
         }
-    }
-
-    @Override
-    public void accept(@NotNull final WireHandlers wireHandlers) {
     }
 }
 

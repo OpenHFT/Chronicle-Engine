@@ -27,8 +27,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Created by Rob Austin
@@ -57,17 +55,7 @@ public class ServerEndpoint implements Closeable {
     public AcceptorEventHandler start(int port, @NotNull final AssetTree asset) throws IOException {
         eg.start();
 
-        AcceptorEventHandler eah = new AcceptorEventHandler(port, () -> {
-
-            final Map<Long, String> cidToCsp = new HashMap<>();
-
-            try {
-                return new EngineWireHandler(cidToCsp, WireType.wire, asset);
-            } catch (IOException e) {
-                LOG.error("", e);
-            }
-            return null;
-        }, VanillaSessionDetails::new);
+        AcceptorEventHandler eah = new AcceptorEventHandler(port, () -> new EngineWireHandler(WireType.wire, asset), VanillaSessionDetails::new);
 
         eg.addHandler(eah);
         this.eah = eah;

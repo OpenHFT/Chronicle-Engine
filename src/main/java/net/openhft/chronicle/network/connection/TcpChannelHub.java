@@ -423,7 +423,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
                     YamlLogging.title = "";
                     YamlLogging.writeMessage = "";
                 } catch (Exception e) {
-                    LOG.error(Bytes.toDebugString(bytes), e);
+                    LOG.error(Bytes.toString(bytes), e);
                 }
             }
 
@@ -456,7 +456,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
                 YamlLogging.writeMessage = "";
             } catch (Exception e) {
 
-                String x = Bytes.toDebugString(bytes);
+                String x = Bytes.toString(bytes);
                 System.out.println(x);
                 LOG.error("", e);
             }

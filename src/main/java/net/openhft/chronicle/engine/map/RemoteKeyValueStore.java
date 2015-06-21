@@ -117,7 +117,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
             return false;
         checkValue(value);
 
-        return proxyReturnBooleanWithArgs(removeWithValue, (K) key, (V) value);
+        return proxyReturnBooleanWithArgs(removeWithValue, key, value);
     }
 
     @SuppressWarnings("NullableProblems")

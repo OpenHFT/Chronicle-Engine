@@ -221,7 +221,7 @@ public class MarshallableFilePerKeyValueStoreTest {
         }
 
         private enum TestKey implements WireKey {
-            listDouble;
+            listDouble
         }
     }
 }

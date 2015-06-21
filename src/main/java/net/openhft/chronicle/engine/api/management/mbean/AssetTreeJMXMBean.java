@@ -5,17 +5,24 @@ package net.openhft.chronicle.engine.api.management.mbean;
  */
 public interface AssetTreeJMXMBean {
 
-    public void setSize(long size);
+    void setSize(long size);
 
     /*public String getElements();*/
-    public long getSize();
-    public String getKeyType();
-    public String getValueType();
-    public int getTopicSubscriberCount();
-    public int getKeySubscriberCount();
-    public int getEntrySubscriberCount();
-    public String getPath();
-    public String getKeyStoreValue();
+    long getSize();
 
-    public void notifyMe(String key, String value);
+    String getKeyType();
+
+    String getValueType();
+
+    int getTopicSubscriberCount();
+
+    int getKeySubscriberCount();
+
+    int getEntrySubscriberCount();
+
+    String getPath();
+
+    String getKeyStoreValue();
+
+    void notifyMe(String key, String value);
 }
