@@ -15,32 +15,25 @@
  */
 package net.openhft.chronicle.engine.server;
 
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
-import net.openhft.chronicle.engine.session.VanillaSessionDetails;
 import net.openhft.chronicle.network.AcceptorEventHandler;
-import net.openhft.chronicle.network.event.EventGroup;
+import net.openhft.chronicle.network.VanillaSessionDetails;
+import net.openhft.chronicle.threads.EventGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+
+import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
 
 /**
  * Created by Rob Austin
  */
 public class ServerEndpoint implements Closeable {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ServerEndpoint.class);
-
-    @NotNull
     private EventGroup eg;
-
-    @Nullable
     private AcceptorEventHandler eah;
 
     public ServerEndpoint(AssetTree assetTree) throws
@@ -57,17 +50,7 @@ public class ServerEndpoint implements Closeable {
     public AcceptorEventHandler start(int port, @NotNull final AssetTree asset) throws IOException {
         eg.start();
 
-        AcceptorEventHandler eah = new AcceptorEventHandler(port, () -> {
-
-            final Map<Long, String> cidToCsp = new HashMap<>();
-
-            try {
-                return new EngineWireHandler(cidToCsp, WireType.wire, asset);
-            } catch (IOException e) {
-                LOG.error("", e);
-            }
-            return null;
-        }, VanillaSessionDetails::new);
+        AcceptorEventHandler eah = new AcceptorEventHandler(port, () -> new EngineWireHandler(WireType.wire, asset), VanillaSessionDetails::new);
 
         eg.addHandler(eah);
         this.eah = eah;
@@ -83,10 +66,12 @@ public class ServerEndpoint implements Closeable {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         stop();
-        eg.close();
-        eah.close();
+        closeQuietly(eg);
+        eg = null;
+        closeQuietly(eah);
+        eah = null;
 
     }
 }

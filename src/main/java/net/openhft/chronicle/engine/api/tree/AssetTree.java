@@ -37,7 +37,6 @@ import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContex
  * Created by peter on 22/05/15.
  */
 public interface AssetTree extends Closeable {
-
     @NotNull
     Asset acquireAsset(Class assetClass, RequestContext context) throws
             AssetNotFoundException;

@@ -164,7 +164,7 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
         Boolean bootstrap = rc.bootstrap();
         Class eClass = rc.type();
         if (eClass == KeyValueStore.Entry.class || eClass == MapEvent.class || eClass == MapEvent.class) {
-            subscribers.add((Subscriber) subscriber);
+            subscribers.add(subscriber);
             if (bootstrap != Boolean.FALSE && kvStore != null) {
                 Subscriber<MapEvent<K, V>> sub = (Subscriber<MapEvent<K, V>>) subscriber;
                 try {

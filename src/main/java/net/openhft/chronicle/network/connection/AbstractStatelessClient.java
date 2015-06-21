@@ -212,7 +212,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
         int datalen = wireIn.bytes().readVolatileInt();
 
         if (!Wires.isData(datalen))
-            throw new IllegalStateException("expecting a data blob, from ->" + Bytes.toDebugString
+            throw new IllegalStateException("expecting a data blob, from ->" + Bytes.toString
                     (wireIn.bytes(), 0, wireIn.bytes().limit()));
     }
 

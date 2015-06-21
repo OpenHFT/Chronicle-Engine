@@ -16,9 +16,9 @@
 
 package net.openhft.chronicle.engine.session;
 
-import net.openhft.chronicle.engine.api.SessionDetails;
 import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.api.tree.View;
+import net.openhft.chronicle.network.api.session.SessionDetails;
 import org.jetbrains.annotations.NotNull;
 
 /**

@@ -16,10 +16,10 @@
 
 package net.openhft.chronicle.engine.api.management;
 
+import net.openhft.chronicle.engine.api.management.mbean.AssetTreeJMX;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
-import net.openhft.chronicle.engine.api.management.mbean.AssetTreeJMX;
 import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
 import net.openhft.chronicle.engine.map.ObjectKeyValueStore;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
@@ -91,7 +91,6 @@ public enum ManagementTools {
      * It will create a object of MBeanServer and register AssetTree.
      *
      * @param assetTree the object of AssetTree type for enable management
-     * @return void
      */
     public static void enableManagement(AssetTree assetTree) {
         try{

@@ -40,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.io.StreamCorruptedException;
 import java.util.HashMap;
 import java.util.Map;
@@ -59,9 +58,18 @@ import static net.openhft.chronicle.wire.WriteMarshallable.EMPTY;
 /**
  * @author Rob Austin.
  */
-public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
+public class MapWireHandler<K, V> {
 
     private static final StringBuilderPool SBP = new StringBuilderPool();
+    private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
+    final StringBuilder eventName = new StringBuilder();
+    final StringBuilder cpsBuff = new StringBuilder();
+    private final Map<Long, Subscriber<Object>> tidToListener = new ConcurrentHashMap<>();
+    @NotNull
+    private final Map<Long, String> cidToCsp = new HashMap<>();
+    @NotNull
+    private final Map<String, Long> cspToCid = new HashMap<>();
+    private final AtomicLong cid = new AtomicLong();
 
     private BiConsumer<ValueOut, V> vToWire;
     private Function<ValueIn, K> wireToK;
@@ -69,158 +77,14 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
     private RequestContext requestContext;
     private Queue<Consumer<Wire>> publisher;
     private AssetTree assetTree;
-    private final Map<Long, Subscriber<Object>> tidToListener = new ConcurrentHashMap<>();
     private HostIdentifier hostId;
-
-    /**
-     * @param in             the data the has come in from network
-     * @param out            the data that is going out to network
-     * @param map            the map that is being processed
-     * @param tid            the transaction id of the event
-     * @param wireAdapter    adapts keys and values to and from wire
-     * @param requestContext the uri of the event
-     * @param publisher      used to publish events to
-     * @param assetTree
-     * @throws StreamCorruptedException
-     */
-    public void process(@NotNull final Wire in,
-                        @NotNull final Wire out,
-                        @NotNull KeyValueStore<K, V, V> map,
-                        long tid,
-                        @NotNull final WireAdapter<K, V> wireAdapter,
-                        @NotNull final RequestContext requestContext,
-                        @NotNull final Queue<Consumer<Wire>> publisher,
-                        @NotNull final AssetTree assetTree) throws
-            StreamCorruptedException {
-        this.vToWire = wireAdapter.valueToWire();
-        this.wireToK = wireAdapter.wireToKey();
-        this.wireToV = wireAdapter.wireToValue();
-        this.requestContext = requestContext;
-        this.publisher = publisher;
-        this.assetTree = assetTree;
-
-        try {
-            this.hostId = assetTree.root().acquireView(HostIdentifier.class, requestContext);
-        } catch (AssetNotFoundException e) {
-            this.hostId = null;
-        }
-
-        try {
-            this.inWire = in;
-            this.outWire = out;
-            this.map = map;
-            charSequenceValue = map instanceof ChronicleMap &&
-                    CharSequence.class == ((ChronicleMap) map).valueClass();
-            assert !(map instanceof RemoteKeyValueStore) : "the server should not sure a remove " +
-                    "map";
-            this.tid = tid;
-            dataConsumer.accept(in, tid);
-        } catch (Exception e) {
-            LOG.error("", e);
-        }
-    }
-
-    public enum Params implements WireKey {
-        key,
-        value,
-        oldValue,
-        eventType,
-        newValue,
-        timestamp,
-        identifier,
-        entry;
-    }
-
-    public enum EventId implements ParameterizeWireKey {
-        size,
-        containsKey(key),
-        containsValue(value),
-        get(key),
-        getAndPut(key, value),
-        put(key, value),
-        getAndRemove(key),
-        remove(key),
-        clear,
-        keySet,
-        values,
-        entrySet,
-        replace(key, value),
-        replaceForOld(key, oldValue, newValue),
-        putIfAbsent(key, value),
-        removeWithValue(key, value),
-        toString,
-        putAll,
-        hashCode,
-        createChannel,
-        entrySetRestricted,
-        mapForKey,
-        putMapped,
-        keyBuilder,
-        valueBuilder,
-        remoteIdentifier,
-        numberOfSegments,
-        subscribe,
-        unSubscribe,
-        replicationEvent,
-        bootstap;
-
-        private final WireKey[] params;
-
-        <P extends WireKey> EventId(P... params) {
-            this.params = params;
-        }
-
-        @NotNull
-        public <P extends WireKey> P[] params() {
-            return (P[]) this.params;
-        }
-    }
-
-    private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
-
-    @NotNull
-    private final Map<Long, String> cidToCsp;
-
-    @NotNull
-    private final Map<String, Long> cspToCid = new HashMap<>();
-
+    @Nullable
     private Wire inWire = null;
+    @Nullable
     private Wire outWire = null;
-
     private KeyValueStore<K, V, V> map;
     private boolean charSequenceValue;
-
-    public MapWireHandler(@NotNull final Map<Long, String> cidToCsp) throws IOException {
-        this.cidToCsp = cidToCsp;
-    }
-
-    @Override
-    public void accept(@NotNull final WireHandlers wireHandlers) {
-    }
-
     private long tid;
-    private final AtomicLong cid = new AtomicLong();
-
-    /**
-     * create a new cid if one does not already exist for this csp
-     *
-     * @param csp the csp we wish to check for a cid
-     * @return the cid for this csp
-     */
-    private long createCid(@NotNull CharSequence csp) {
-        final long newCid = cid.incrementAndGet();
-        String cspStr = csp.toString();
-        final Long aLong = cspToCid.putIfAbsent(cspStr, newCid);
-
-        if (aLong != null)
-            return aLong;
-
-        cidToCsp.put(newCid, cspStr);
-        return newCid;
-    }
-
-    final StringBuilder eventName = new StringBuilder();
-
     private final BiConsumer<WireIn, Long> dataConsumer = new BiConsumer<WireIn, Long>() {
 
         @Override
@@ -506,15 +370,78 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
         }
     };
 
+    /**
+     * @param in             the data the has come in from network
+     * @param out            the data that is going out to network
+     * @param map            the map that is being processed
+     * @param tid            the transaction id of the event
+     * @param wireAdapter    adapts keys and values to and from wire
+     * @param requestContext the uri of the event
+     * @param publisher      used to publish events to
+     * @param assetTree
+     * @throws StreamCorruptedException
+     */
+    public void process(@NotNull final Wire in,
+                        @NotNull final Wire out,
+                        @NotNull KeyValueStore<K, V, V> map,
+                        long tid,
+                        @NotNull final WireAdapter<K, V> wireAdapter,
+                        @NotNull final RequestContext requestContext,
+                        @NotNull final Queue<Consumer<Wire>> publisher,
+                        @NotNull final AssetTree assetTree) throws
+            StreamCorruptedException {
+        this.vToWire = wireAdapter.valueToWire();
+        this.wireToK = wireAdapter.wireToKey();
+        this.wireToV = wireAdapter.wireToValue();
+        this.requestContext = requestContext;
+        this.publisher = publisher;
+        this.assetTree = assetTree;
+
+        try {
+            this.hostId = assetTree.root().acquireView(HostIdentifier.class, requestContext);
+        } catch (AssetNotFoundException e) {
+            this.hostId = null;
+        }
+
+        try {
+            this.inWire = in;
+            this.outWire = out;
+            this.map = map;
+            charSequenceValue = map instanceof ChronicleMap &&
+                    CharSequence.class == ((ChronicleMap) map).valueClass();
+            assert !(map instanceof RemoteKeyValueStore) : "the server should not sure a remove " +
+                    "map";
+            this.tid = tid;
+            dataConsumer.accept(in, tid);
+        } catch (Exception e) {
+            LOG.error("", e);
+        }
+    }
+
+    /**
+     * create a new cid if one does not already exist for this csp
+     *
+     * @param csp the csp we wish to check for a cid
+     * @return the cid for this csp
+     */
+    private long createCid(@NotNull CharSequence csp) {
+        final long newCid = cid.incrementAndGet();
+        String cspStr = csp.toString();
+        final Long aLong = cspToCid.putIfAbsent(cspStr, newCid);
+
+        if (aLong != null)
+            return aLong;
+
+        cidToCsp.put(newCid, cspStr);
+        return newCid;
+    }
+
     void nullCheck(@Nullable Object o) {
         if (o == null)
             throw new NullPointerException();
     }
 
-    final StringBuilder cpsBuff = new StringBuilder();
-
     private void createProxy(final String type) {
-
         outWire.writeEventName(reply).type("set-proxy").writeValue()
                 .marshallable(w -> {
 
@@ -565,7 +492,67 @@ public class MapWireHandler<K, V> implements Consumer<WireHandlers> {
             } catch (Exception e) {
 
                 System.out.println("server-writes:\n" +
-                        Bytes.toDebugString(outWire.bytes(), 0, outWire.bytes().position()));
+                        Bytes.toString(outWire.bytes(), 0, outWire.bytes().position()));
             }
+    }
+
+    public CharSequence getCspForCid(long cid) {
+        return cidToCsp.get(cid);
+    }
+
+    public enum Params implements WireKey {
+        key,
+        value,
+        oldValue,
+        eventType,
+        newValue,
+        timestamp,
+        identifier,
+        entry
+    }
+
+    public enum EventId implements ParameterizeWireKey {
+        size,
+        containsKey(key),
+        containsValue(value),
+        get(key),
+        getAndPut(key, value),
+        put(key, value),
+        getAndRemove(key),
+        remove(key),
+        clear,
+        keySet,
+        values,
+        entrySet,
+        replace(key, value),
+        replaceForOld(key, oldValue, newValue),
+        putIfAbsent(key, value),
+        removeWithValue(key, value),
+        toString,
+        putAll,
+        hashCode,
+        createChannel,
+        entrySetRestricted,
+        mapForKey,
+        putMapped,
+        keyBuilder,
+        valueBuilder,
+        remoteIdentifier,
+        numberOfSegments,
+        subscribe,
+        unSubscribe,
+        replicationEvent,
+        bootstap;
+
+        private final WireKey[] params;
+
+        <P extends WireKey> EventId(P... params) {
+            this.params = params;
+        }
+
+        @NotNull
+        public <P extends WireKey> P[] params() {
+            return (P[]) this.params;
+        }
     }
 }

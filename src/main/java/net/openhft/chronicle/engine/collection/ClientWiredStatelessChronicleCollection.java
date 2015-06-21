@@ -85,9 +85,8 @@ public class ClientWiredStatelessChronicleCollection<U, E extends Collection<U>>
         return proxyReturnWireConsumerInOut(iterator, reply, valueOut -> valueOut.uint16(segment),
                 read -> {
                     read.sequence(s -> {
-                        do {
+                        while (read.hasNextSequenceItem())
                             e.add(consumer.apply(read));
-                        } while (read.hasNextSequenceItem());
                     });
                     return e;
                 });

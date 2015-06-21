@@ -56,7 +56,7 @@ public class SimpleSubscription<E> implements Subscription<E> {
 
     public void notifyMessage(Object e) {
         try {
-            E ee = e instanceof BytesStore ? (E) valueReader.readFrom(e, null) : (E) e;
+            E ee = e instanceof BytesStore ? valueReader.readFrom(e, null) : (E) e;
             SubscriptionConsumer.notifyEachSubscriber(subscribers, s -> s.onMessage(ee));
         } catch (ClassCastException e1) {
             System.err.println("Is " + valueReader + " the correct ValueReader?");

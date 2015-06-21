@@ -22,7 +22,6 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.TextWire;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -36,7 +35,6 @@ import static net.openhft.chronicle.wire.YamlLogging.writeMessage;
 import static org.junit.Assert.*;
 
 
-
 public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
 
     private AssetTree assetTree = new VanillaAssetTree().forTesting();
@@ -46,16 +44,16 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
 
     @Before
     public void before() {
+        System.out.println("\t... test " + name.getMethodName());
         methodName(name.getMethodName());
     }
 
     @NotNull
     ClosableMapSupplier newIntString(String name) throws IOException {
-        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(Integer.class, String
-                .class, TextWire::new, assetTree, name);
+        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(
+                Integer.class, String.class, TextWire::new, assetTree, name);
 
         return new ClosableMapSupplier() {
-
             @NotNull
             @Override
             public Object get() {
@@ -67,17 +65,16 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
                 remoteMapSupplier.close();
             }
         };
-
     }
 
     @NotNull
     ClosableMapSupplier<CharSequence, CharSequence> newStrStrMap() throws
             IOException {
 
-        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(CharSequence.class, CharSequence.class, TextWire::new, assetTree);
+        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(
+                CharSequence.class, CharSequence.class, TextWire::new, assetTree);
 
         return new ClosableMapSupplier() {
-
             @NotNull
             @Override
             public Object get() {
@@ -99,11 +96,11 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
         ClosableMapSupplier<Integer, String> supplier = newIntString("test");
         final Map<Integer, String> map = supplier.get();
         assertTrue(map.isEmpty());
-        map.put(one, "A");
-        map.put(two, "B");
-        map.put(three, "C");
-        map.put(four, "D");
-        map.put(five, "E");
+        map.put(1, "A");
+        map.put(2, "B");
+        map.put(3, "C");
+        map.put(4, "D");
+        map.put(5, "E");
         assertFalse(map.isEmpty());
         assertEquals(5, map.size());
         return supplier;
@@ -118,7 +115,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     public void testClear() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
             final Map map = supplier.get();
-       
+
             yamlLoggger(() -> map.clear());
             assertEquals(0, map.size());
         }
@@ -131,7 +128,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     public void testContains() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
             final Map map = supplier.get();
-     
+
             writeMessage = "when the key exists";
             yamlLoggger(() -> assertTrue(map.containsValue("A")));
             writeMessage = "when it doesnt exist";
@@ -234,7 +231,6 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
      * keySet.toArray returns contains all keys
      */
     @Test(timeout = 50000)
-    @Ignore("TODO CE-61")
     public void testKeySetToArray() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
             final Map map = supplier.get();
@@ -270,7 +266,6 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     /**
      * entrySet.toArray contains all entries
      */
-    @Ignore("TODO CE-61")
     @Test(timeout = 50000)
     public void testEntrySetToArray() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {

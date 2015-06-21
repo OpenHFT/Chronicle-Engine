@@ -30,9 +30,9 @@ import net.openhft.chronicle.engine.api.tree.*;
 import net.openhft.chronicle.engine.collection.VanillaValuesCollection;
 import net.openhft.chronicle.engine.map.*;
 import net.openhft.chronicle.engine.pubsub.VanillaReference;
-import net.openhft.chronicle.engine.session.VanillaSessionDetails;
 import net.openhft.chronicle.engine.session.VanillaSessionProvider;
 import net.openhft.chronicle.engine.set.VanillaKeySetView;
+import net.openhft.chronicle.network.VanillaSessionDetails;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.Marshallable;
 import org.jetbrains.annotations.NotNull;
@@ -131,7 +131,8 @@ public class VanillaAsset implements Asset, Closeable {
         VanillaSessionDetails sessionDetails = new VanillaSessionDetails();
         sessionDetails.setUserId(System.getProperty("user.name"));
         sessionProvider.set(sessionDetails);
-        addView(TcpChannelHub.class, new TcpChannelHub(sessionProvider, hostname, port));
+        if (getView(TcpChannelHub.class) == null)
+            addView(TcpChannelHub.class, new TcpChannelHub(sessionProvider, hostname, port));
     }
 
     public void enableTranslatingValuesToBytesStore() {
@@ -229,7 +230,7 @@ public class VanillaAsset implements Asset, Closeable {
         synchronized (viewMap) {
             V view = getView(viewType);
             if (view != null) {
-                return (V) view;
+                return view;
             }
             V leafView = createLeafView(viewType, rc, this);
             if (leafView != null)

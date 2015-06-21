@@ -89,7 +89,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
         }
         if (viewType == Publisher.class) {
             if (reference == null)
-                return (V) acquireViewFor(viewType, rc);
+                return acquireViewFor(viewType, rc);
             return (V) reference;
         }
         if (viewType == SimpleSubscription.class || viewType == ObjectKVSSubscription.class) {
@@ -100,7 +100,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
 
     @NotNull
     private <V> V acquireViewFor(Class<V> viewType, @NotNull RequestContext rc) throws AssetNotFoundException {
-        return (V) parent.getView(viewType);
+        return parent.getView(viewType);
     }
 
     @Override

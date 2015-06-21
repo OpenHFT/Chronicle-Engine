@@ -49,7 +49,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Function;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
 import static net.openhft.chronicle.engine.server.WireType.wire;
@@ -112,7 +112,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     }
 
     public SubscriptionEventTest(Object isRemote, Object wireType) {
-        this.isRemote = (Boolean) isRemote;
+        SubscriptionEventTest.isRemote = (Boolean) isRemote;
 
         wire = (Function<Bytes, Wire>) wireType;
     }
@@ -255,7 +255,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
                 assetTree.acquireMap("/group/" + NAME, String.class, String.class);
                 assetTree.acquireMap("/group/" + NAME + 2, String.class, String.class);
-                Jvm.pause(100);
+                Jvm.pause(50);
                 // the client cannot remove maps yet.
                 serverAssetTree.acquireAsset(RequestContext.requestContext("/group")).removeChild(NAME);
 
@@ -300,7 +300,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                         "unsubscribed no event should be send form the server to the client";
                 map.put("Hello", "World");
 
-                Object object = eventsQueue.poll(1, SECONDS);
+                Object object = eventsQueue.poll(100, MILLISECONDS);
                 Assert.assertNull(object);
 
             } catch (Exception e) {
@@ -358,7 +358,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                 String expected = "World";
                 map.put("Hello", expected);
 
-                Object object = eventsQueue.poll(2, SECONDS);
+                Object object = eventsQueue.poll(100, MILLISECONDS);
                 Assert.assertNull(object);
 
             } catch (InterruptedException e) {
@@ -388,8 +388,8 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                 map.put("Hello", expected);
                 map.remove("Hello");
 
-                String putEvent = eventsQueue.poll(2, SECONDS);
-                String removeEvent = eventsQueue.poll(2, SECONDS);
+                String putEvent = eventsQueue.poll(100, MILLISECONDS);
+                String removeEvent = eventsQueue.poll(100, MILLISECONDS);
                 Assert.assertTrue(putEvent instanceof String);
                 Assert.assertTrue(removeEvent instanceof String);
 
@@ -422,8 +422,8 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                 Thread.sleep(1);
                 map.remove("Hello");
 
-                Object putEvent = eventsQueue.poll(2, SECONDS);
-                Object removeEvent = eventsQueue.poll(2, SECONDS);
+                Object putEvent = eventsQueue.poll(100, MILLISECONDS);
+                Object removeEvent = eventsQueue.poll(100, MILLISECONDS);
                 Assert.assertTrue(putEvent instanceof InsertedEvent);
                 Assert.assertTrue(removeEvent instanceof RemovedEvent);
 

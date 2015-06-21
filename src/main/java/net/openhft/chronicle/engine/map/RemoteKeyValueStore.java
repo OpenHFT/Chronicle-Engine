@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
@@ -82,6 +83,11 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
 
     }
 
+    @Override
+    public boolean isKeyType(Object key) {
+        return kClass.isInstance(key);
+    }
+
     @NotNull
     public File file() {
         throw new UnsupportedOperationException();
@@ -116,7 +122,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
             return false;
         checkValue(value);
 
-        return proxyReturnBooleanWithArgs(removeWithValue, (K) key, (V) value);
+        return proxyReturnBooleanWithArgs(removeWithValue, key, value);
     }
 
     @SuppressWarnings("NullableProblems")
@@ -137,12 +143,25 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
 
     @Override
     public void keysFor(final int segment, final SubscriptionConsumer<K> kConsumer) throws InvalidSubscriberException {
-        throw new UnsupportedOperationException("todo");
+        keySet().forEach(k -> {
+            try {
+                kConsumer.accept(k);
+            } catch (InvalidSubscriberException e) {
+                throw Jvm.rethrow(e);
+            }
+        });
     }
 
     @Override
     public void entriesFor(final int segment, final SubscriptionConsumer<MapEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
-        throw new UnsupportedOperationException("todo");
+        String assetName = asset.fullName();
+        entrySet().forEach(entry -> {
+            try {
+                kvConsumer.accept(InsertedEvent.of(assetName, entry.getKey(), entry.getValue()));
+            } catch (InvalidSubscriberException e) {
+                throw Jvm.rethrow(e);
+            }
+        });
     }
 
     /**

@@ -22,7 +22,7 @@ package net.openhft.chronicle.engine.api;
 public class PermissionDeniedException extends RuntimeException {
     private Failure failure;
 
-    public enum Failure {INCORRECT_TOKEN, INCORRECT_USER};
+    public enum Failure {INCORRECT_TOKEN, INCORRECT_USER}
 
     public PermissionDeniedException() {
         super();
