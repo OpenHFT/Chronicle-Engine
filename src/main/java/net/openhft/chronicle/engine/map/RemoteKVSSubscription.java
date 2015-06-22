@@ -27,7 +27,6 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.server.internal.MapWireHandler;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
-import net.openhft.chronicle.wire.ReadMarshallable;
 import net.openhft.chronicle.wire.ValueIn;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -65,21 +64,23 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
         if (hub.outBytesLock().isHeldByCurrentThread())
             throw new IllegalStateException("Cannot view map while debugging");
 
+        Class<K> kClass = rc.keyType();
+        Class<V> vClass = rc.valueType();
         hub.outBytesLock().lock();
         try {
             tid = writeMetaDataStartTime(startTime);
             subscribersToTid.put(subscriber, tid);
             hub.outWire().writeDocument(false, wireOut ->
                     wireOut.writeEventName(registerTopicSubscriber).marshallable(m -> {
-                        m.write(() -> "keyType").typeLiteral(rc.keyType());
-                        m.write(() -> "valueType").typeLiteral(rc.valueType());
+                        m.write(() -> "keyType").typeLiteral(kClass);
+                        m.write(() -> "valueType").typeLiteral(vClass);
 
                     }));
             hub.asyncReadSocket(tid, w -> w.readDocument(null, d -> {
                 ValueIn valueIn = d.read(reply);
                 valueIn.marshallable(m -> {
-                    final String topic = m.read(() -> "topic").text();
-                    final ReadMarshallable message = m.read(() -> "message").typedMarshallable();
+                    final K topic = m.read(() -> "topic").object(kClass);
+                    final V message = m.read(() -> "message").object(vClass);
                     this.onEvent(topic, message, subscriber);
                 });
             }));
@@ -88,6 +89,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
             hub.outBytesLock().unlock();
         }
 
+        assert !hub.outBytesLock().isHeldByCurrentThread();
     }
 
     private void onEvent(Object topic, Object message, TopicSubscriber subscriber) {
