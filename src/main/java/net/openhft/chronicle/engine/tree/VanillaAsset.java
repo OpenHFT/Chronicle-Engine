@@ -104,14 +104,10 @@ public class VanillaAsset implements Asset, Closeable {
         standardStack();
 
         addWrappingRule(ObjectKeyValueStore.class, LAST + " authenticated",
-                VanillaSubscriptionKeyValueStore::new, KeyValueStore.class);
+                VanillaSubscriptionKeyValueStore::new, AuthenticatedKeyValueStore.class);
 
-        addWrappingRule(AuthenticatedKeyValueStore.class, LAST + " authenticated",
-                VanillaSubscriptionKeyValueStore::new, KeyValueStore.class);
-
-        addWrappingRule(SubscriptionKeyValueStore.class, LAST + " sub -> foundation",
-                VanillaSubscriptionKeyValueStore::new, KeyValueStore.class);
-
+        addLeafRule(AuthenticatedKeyValueStore.class, LAST + " vanilla", VanillaKeyValueStore::new);
+        addLeafRule(SubscriptionKeyValueStore.class, LAST + " vanilla", VanillaKeyValueStore::new);
         addLeafRule(KeyValueStore.class, LAST + " vanilla", VanillaKeyValueStore::new);
 
         addLeafRule(ObjectKVSSubscription.class, LAST + " vanilla",
@@ -156,6 +152,7 @@ public class VanillaAsset implements Asset, Closeable {
     @Override
     public <W, U> void addWrappingRule(Class<W> iClass, String description, WrappingViewFactory<W, U> factory, Class<U> underlyingType) {
         addWrappingRule(iClass, description, ALWAYS, factory, underlyingType);
+        leafViewFactoryMap.remove(iClass);
     }
 
     @Override

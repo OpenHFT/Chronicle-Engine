@@ -34,7 +34,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * Created by peter on 22/05/15.
  */
-public class VanillaKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> {
+public class VanillaKeyValueStore<K, MV, V> implements AuthenticatedKeyValueStore<K, MV, V> {
     private final ConcurrentMap<K, V> map = new ConcurrentHashMap<>();
     private Asset asset;
 
@@ -121,5 +121,10 @@ public class VanillaKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> {
     @Override
     public void close() {
 
+    }
+
+    @Override
+    public KVSSubscription<K, MV, V> subscription(boolean createIfAbsent) {
+        throw new UnsupportedOperationException("todo");
     }
 }
