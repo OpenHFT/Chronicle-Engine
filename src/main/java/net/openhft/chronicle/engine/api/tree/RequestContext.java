@@ -21,6 +21,7 @@ import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
 import net.openhft.chronicle.engine.api.pubsub.Reference;
+import net.openhft.chronicle.engine.api.pubsub.Subscription;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
@@ -61,6 +62,9 @@ public class RequestContext implements Cloneable {
     private double averageValueSize;
     private long entries;
     private Boolean recurse;
+    private static void addAlias(Class type, @NotNull String aliases) {
+        CLASS_ALIASES.addAlias(type, aliases);
+    }
 
     private RequestContext() {
     }

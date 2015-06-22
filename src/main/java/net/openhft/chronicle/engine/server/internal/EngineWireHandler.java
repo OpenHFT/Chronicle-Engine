@@ -17,9 +17,11 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.engine.api.SessionDetailsProvider;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
+import net.openhft.chronicle.engine.api.pubsub.Subscription;
 import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
@@ -37,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.StreamCorruptedException;
 import java.util.*;
 import java.util.Map.Entry;
@@ -63,19 +66,26 @@ public class EngineWireHandler extends WireTcpHandler {
     @Nullable
     private final WireHandler queueWireHandler;
 
+  
     @NotNull
     private final MapWireHandler mapWireHandler;
     @NotNull
     private final CollectionWireHandler<Entry<byte[], byte[]>, Set<Entry<byte[], byte[]>>> entrySetHandler;
     @NotNull
     private final CollectionWireHandler<byte[], Collection<byte[]>> valuesHandler;
+
+
+    SubscriptionHandlerProcessor subscriptionHandler;
+
     @NotNull
     private final AssetTree assetTree;
     @NotNull
     private final Consumer<WireIn> metaDataConsumer;
+    private boolean isSystemMessage = true;
     private final StringBuilder lastCsp = new StringBuilder();
     private final StringBuilder eventName = new StringBuilder();
 
+    private WireAdapter wireAdapter;
     private View view;
     private boolean isSystemMessage = true;
     private WireAdapter mh;
@@ -97,6 +107,9 @@ public class EngineWireHandler extends WireTcpHandler {
         this.valuesHandler = new CollectionWireHandlerProcessor<>();
         this.metaDataConsumer = wireInConsumer();
         this.sessionProvider = assetTree.root().getView(SessionProvider.class);
+
+        this.subscriptionHandler = new SubscriptionHandlerProcessor();
+
 
     }
 
@@ -148,7 +161,7 @@ public class EngineWireHandler extends WireTcpHandler {
                         final Class vClass = requestContext.valueType() == null ? String.class
                                 : requestContext.valueType();
 
-                        mh = new GenericWireAdapter(kClass, vClass);
+                        wireAdapter = new GenericWireAdapter(kClass, vClass);
                     } else
                         throw new UnsupportedOperationException("unsupported view type");
 
@@ -203,34 +216,41 @@ public class EngineWireHandler extends WireTcpHandler {
                     return;
                 }
 
-                if (mh != null) {
+                if (wireAdapter != null) {
 
                     if (viewType == MapView.class) {
-                        mapWireHandler.process(in, out, (KeyValueStore) ((MapView) view).underlying(), tid, mh,
+                        mapWireHandler.process(in, out, (KeyValueStore) ((MapView) view).underlying(), tid, wireAdapter,
                                 requestContext, publisher, assetTree);
                         return;
                     }
 
                     if (viewType == EntrySetView.class) {
                         entrySetHandler.process(in, out, (EntrySetView) view, cspText,
-                                mh.entryToWire(),
-                                mh.wireToEntry(), HashSet::new, tid);
+                                wireAdapter.entryToWire(),
+                                wireAdapter.wireToEntry(), HashSet::new, tid);
                         return;
                     }
 
                     if (viewType == KeySetView.class) {
                         keySetHandler.process(in, out, (KeySetView) view, cspText,
-                                mh.keyToWire(),
-                                mh.wireToKey(), HashSet::new, tid);
+                                wireAdapter.keyToWire(),
+                                wireAdapter.wireToKey(), HashSet::new, tid);
                         return;
                     }
 
                     if (viewType == ValuesCollection.class) {
                         valuesHandler.process(in, out, (ValuesCollection) view, cspText,
-                                mh.keyToWire(),
-                                mh.wireToKey(), ArrayList::new, tid);
+                                wireAdapter.keyToWire(),
+                                wireAdapter.wireToKey(), ArrayList::new, tid);
                         return;
                     }
+
+                    if (viewType == Subscription.class) {
+                        subscriptionHandler.process(in,
+                                requestContext, publisher, assetTree, tid, outWire);
+                        return;
+                    }
+
                 }
 
                 if (endsWith(cspText, "?view=queue") && queueWireHandler != null) {
@@ -274,5 +294,10 @@ public class EngineWireHandler extends WireTcpHandler {
             final CharSequence s = mapWireHandler.getCspForCid(cid);
             cspText.append(s);
         }
+    }
+
+    @Override
+    public void add(WireHandler handler) {
+        handlers.add(handler);
     }
 }
