@@ -75,21 +75,19 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
                         m.write(() -> "valueType").typeLiteral(rc.valueType());
 
                     }));
-
+            hub.asyncReadSocket(tid, w -> w.readDocument(null, d -> {
+                ValueIn valueIn = d.read(reply);
+                valueIn.marshallable(m -> {
+                    final String topic = m.read(() -> "topic").text();
+                    final ReadMarshallable message = m.read(() -> "message").typedMarshallable();
+                    this.onEvent(topic, message, subscriber);
+                });
+            }));
             hub.writeSocket(hub.outWire());
         } finally {
             hub.outBytesLock().unlock();
         }
 
-        assert !hub.outBytesLock().isHeldByCurrentThread();
-        hub.asyncReadSocket(tid, w -> w.readDocument(null, d -> {
-            ValueIn valueIn = d.read(reply);
-            valueIn.marshallable(m -> {
-                final String topic = m.read(() -> "topic").text();
-                final ReadMarshallable message = m.read(() -> "message").typedMarshallable();
-                this.onEvent(topic, message, subscriber);
-            });
-        }));
     }
 
     private void onEvent(Object topic, Object message, TopicSubscriber subscriber) {
@@ -162,25 +160,25 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
             hub.outWire().writeDocument(false, wireOut ->
                     wireOut.writeEventName(subscribe).
                             typeLiteral(CLASS_ALIASES.nameFor(rc.elementType())));
+            hub.asyncReadSocket(tid, w -> w.readDocument(null, d -> {
+                ValueIn read = d.read(reply);
 
+                final Class aClass = rc.elementType();
+
+                final Object object = (MapEvent.class.isAssignableFrom(aClass)) ? read
+                        .typedMarshallable()
+                        : read.object(rc.elementType());
+
+                this.onEvent(object, subscriber);
+
+            }));
             hub.writeSocket(hub.outWire());
         } finally {
             hub.outBytesLock().unlock();
         }
 
         assert !hub.outBytesLock().isHeldByCurrentThread();
-        hub.asyncReadSocket(tid, w -> w.readDocument(null, d -> {
-            ValueIn read = d.read(reply);
 
-            final Class aClass = rc.elementType();
-
-            final Object object = (MapEvent.class.isAssignableFrom(aClass)) ? read
-                    .typedMarshallable()
-                    : read.object(rc.elementType());
-
-            this.onEvent(object, subscriber);
-
-        }));
     }
 
     private void onEvent(Object message, Subscriber subscriber) {
