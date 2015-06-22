@@ -115,7 +115,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
                     return null;
 
                 t = acquireInstance(type, t);
-                ((Marshallable) t).readMarshallable(wireType.apply(bytes.bytes()));
+                ((Marshallable) t).readMarshallable(wireType.apply(bytes.bytesForRead()));
                 return t;
             };
         throw new UnsupportedOperationException("todo");

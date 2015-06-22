@@ -17,7 +17,6 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.bytes.NativeBytesStore;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.map.ChronicleMap;
@@ -61,7 +60,7 @@ public class CMap2EngineReplicatorTest {
 
         final ReplicationEntry entry = q.take();
 
-        Assert.assertEquals("hello", new TextWire(entry.key().bytes()).getValueIn().text());
+        Assert.assertEquals("hello", new TextWire(entry.key().bytesForRead()).getValueIn().text());
 
         final Bytes value = entry.value();
         Assert.assertEquals("world", (value == null) ? null : new TextWire(value).getValueIn().text());
@@ -81,16 +80,13 @@ public class CMap2EngineReplicatorTest {
         ChronicleMap map = ChronicleMapBuilder.of(String.class, String.class).
                 replication(builder().engineReplication(replicator).createWithId((byte) 2)).create();
 
-        final Bytes<ByteBuffer> key = NativeBytesStore.wrap(allocateDirect(1024)).bytes();
-        final Bytes<ByteBuffer> value = wrap(allocateDirect(1024)).bytes();
+        final Bytes<ByteBuffer> key = wrap(allocateDirect(1024)).bytesForWrite();
+        final Bytes<ByteBuffer> value = wrap(allocateDirect(1024)).bytesForWrite();
 
         key.write("hello".getBytes());
         value.write("world".getBytes());
 
-        final Bytes<ByteBuffer> keyBytes = key.bytes();
-        final Bytes<ByteBuffer> valueBytes = value.bytes();
-
-        replicator.put(keyBytes, valueBytes, (byte) 1, System.currentTimeMillis());
+        replicator.put(key, value, (byte) 1, System.currentTimeMillis());
 
         Assert.assertEquals("world", map.get("hello"));
 

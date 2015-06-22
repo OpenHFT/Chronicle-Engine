@@ -79,7 +79,6 @@ public class EngineWireHandler extends WireTcpHandler {
     private final AssetTree assetTree;
     @NotNull
     private final Consumer<WireIn> metaDataConsumer;
-
     private final StringBuilder lastCsp = new StringBuilder();
     private final StringBuilder eventName = new StringBuilder();
 
@@ -302,6 +301,4 @@ public class EngineWireHandler extends WireTcpHandler {
             cspText.append(s);
         }
     }
-
-
 }

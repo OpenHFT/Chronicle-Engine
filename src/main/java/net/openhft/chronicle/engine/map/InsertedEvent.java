@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
 import net.openhft.chronicle.wire.WireIn;
@@ -88,8 +89,8 @@ public class InsertedEvent<K, V> implements MapEvent<K, V> {
                 .filter(o -> o instanceof InsertedEvent)
                 .map(o -> (InsertedEvent<K, V>) o)
                 .filter(e -> Objects.equals(assetName, e.assetName))
-                .filter(e -> Objects.equals(key, e.key))
-                .filter(e -> Objects.equals(value, e.value))
+                .filter(e -> BytesUtil.equals(key, e.key))
+                .filter(e -> BytesUtil.equals(value, e.value))
                 .isPresent();
     }
 

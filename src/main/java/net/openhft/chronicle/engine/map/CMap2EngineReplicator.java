@@ -60,7 +60,7 @@ public class CMap2EngineReplicator implements EngineReplication,
     }
 
     net.openhft.lang.io.Bytes toLangBytes(Bytes b) {
-        return wrap(b.bytes().address(), b.readRemaining());
+        return wrap(b.address(), b.readRemaining());
     }
 
     public void put(final Bytes key, final Bytes value,
@@ -108,19 +108,14 @@ public class CMap2EngineReplicator implements EngineReplication,
                 .acquireEngineModificationIterator(remoteIdentifier);
 
         return new ModificationIterator() {
-
             @Override
             public void forEach(@NotNull Consumer<ReplicationEntry> consumer) throws InterruptedException {
-
                 while (hasNext()) {
-
                     nextEntry(entry -> {
                         consumer.accept(entry);
                         return true;
                     });
-
                 }
-
             }
 
             private boolean hasNext() {
@@ -144,7 +139,8 @@ public class CMap2EngineReplicator implements EngineReplication,
             private Bytes<Void> toKey(final @NotNull net.openhft.lang.io.Bytes key) {
                 final PointerBytesStore result = keyLocal.get();
                 result.set(key.address(), key.capacity());
-                return result.bytes();
+                Bytes<Void> voidBytes = result.bytesForRead();
+                return voidBytes;
             }
 
             private Bytes<Void> toValue(final @Nullable net.openhft.lang.io.Bytes value) {
@@ -152,7 +148,8 @@ public class CMap2EngineReplicator implements EngineReplication,
                     return null;
                 final PointerBytesStore result = valueLocal.get();
                 result.set(value.address(), value.capacity());
-                return result.bytes();
+                Bytes<Void> voidBytes = result.bytesForRead();
+                return voidBytes;
             }
 
             @Override
@@ -165,7 +162,6 @@ public class CMap2EngineReplicator implements EngineReplication,
                 instance.setModificationNotifier(modificationNotifier::onChange);
             }
         };
-
     }
 
     @Override

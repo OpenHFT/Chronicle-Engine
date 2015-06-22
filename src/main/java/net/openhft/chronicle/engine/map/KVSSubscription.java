@@ -19,6 +19,7 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.pubsub.ISubscriber;
+import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.Subscription;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
@@ -27,6 +28,10 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
  * Created by peter on 29/05/15.
  */
 public interface KVSSubscription<K, MV, V> extends Subscription<MapEvent<K, V>>, ISubscriber, EventConsumer<K, V> {
+
+    void registerKeySubscriber(RequestContext rc, Subscriber<K> subscriber);
+
+    void unregisterKeySubscriber(Subscriber<K> subscriber);
 
     void registerTopicSubscriber(RequestContext rc, TopicSubscriber<K, V> subscriber);
 
