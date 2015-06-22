@@ -25,6 +25,7 @@ import net.openhft.chronicle.engine.api.pubsub.Subscription;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
+import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
 import net.openhft.chronicle.engine.server.WireType;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
@@ -62,6 +63,7 @@ public class RequestContext implements Cloneable {
     private double averageValueSize;
     private long entries;
     private Boolean recurse;
+    
     private static void addAlias(Class type, @NotNull String aliases) {
         CLASS_ALIASES.addAlias(type, aliases);
     }
@@ -72,10 +74,6 @@ public class RequestContext implements Cloneable {
     public RequestContext(String pathName, String name) {
         this.pathName = pathName;
         this.name = name;
-    }
-
-    private static void addAlias(Class type, @NotNull String aliases) {
-        CLASS_ALIASES.addAlias(type, aliases);
     }
 
     @NotNull

@@ -105,35 +105,6 @@ public class MapWireHandler<K, V> {
                     return;
                 }
 
-                if (subscribe.contentEquals(eventName)) {
-                    Class eventClass = valueIn.typeLiteral();
-                    Subscriber<Object> listener = e -> {
-                        publisher.add(publish -> {
-                            publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
-                            publish.writeNotReadyDocument(false, wire -> wire.write(reply).object(e));
-                        });
-                    };
-                    tidToListener.put(inputTid, listener);
-                    assetTree.registerSubscriber(requestContext.name(), eventClass, listener);
-
-                    return;
-                }
-                if (unSubscribe.contentEquals(eventName)) {
-                    Subscriber<Object> listener = tidToListener.remove(inputTid);
-                    if (listener == null) {
-                        LOG.warn("No subscriber to present to unsubscribe (" + inputTid + ")");
-                        return;
-                    }
-                    assetTree.unregisterSubscriber(requestContext.name(), listener);
-                    // no more data.
-                    publisher.add(publish -> {
-                        publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
-                        publish.writeDocument(false, wire -> wire.write(reply).typedMarshallable(null));
-                    });
-
-                    return;
-                }
-
                 if (remove.contentEquals(eventName)) {
                     final K key = wireToK.apply(valueIn);
                     nullCheck(key);
