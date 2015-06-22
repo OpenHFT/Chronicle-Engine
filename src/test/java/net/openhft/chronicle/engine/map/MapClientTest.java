@@ -311,7 +311,7 @@ public class MapClientTest extends ThreadMonitoringTest {
         public RemoteMapSupplier(@NotNull final Class<K> kClass,
                                  @NotNull final Class<V> vClass,
                                  @NotNull final Function<Bytes, Wire> wireType,
-                                 AssetTree assetTree) throws IOException {
+                                 @NotNull final AssetTree assetTree) throws IOException {
             this(kClass,vClass,wireType,assetTree,"test");
         }
 
