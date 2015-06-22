@@ -18,7 +18,9 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.annotation.NotNull;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
+import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
+import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
@@ -176,5 +178,17 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
     public void registerTopicSubscriber(TopicSubscriber<K, V> topicSubscriber) {
         KVSSubscription<K, V, V> subscription = (KVSSubscription) asset.subscription(true);
         subscription.registerTopicSubscriber(RequestContext.requestContext().bootstrap(true).type(keyClass).type2(valueType), topicSubscriber);
+    }
+
+    @Override
+    public void registerKeySubscriber(Subscriber<K> subscriber) {
+        KVSSubscription<K, V, V> subscription = (KVSSubscription) asset.subscription(true);
+        subscription.registerKeySubscriber(RequestContext.requestContext().bootstrap(true).type(keyClass), subscriber);
+    }
+
+    @Override
+    public void registerSubscriber(Subscriber<MapEvent<K, V>> subscriber) {
+        KVSSubscription<K, V, V> subscription = (KVSSubscription) asset.subscription(true);
+        subscription.registerSubscriber(RequestContext.requestContext().bootstrap(true).type(MapEvent.class), subscriber);
     }
 }

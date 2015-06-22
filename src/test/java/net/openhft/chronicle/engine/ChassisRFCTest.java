@@ -17,6 +17,7 @@
 package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.engine.api.map.MapEvent;
+import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.*;
 import org.junit.Before;
 import org.junit.Test;
@@ -177,7 +178,7 @@ public class ChassisRFCTest {
 
     @Test
     public void updateTheMapView() {
-        Map<String, String> map = acquireMap("group", String.class, String.class);
+        MapView<String, String, String> map = acquireMap("group", String.class, String.class);
         List<String> values = new ArrayList<>();
         TopicSubscriber<String, String> subscriber = (topic, message) -> values.add("{name: " + topic + ", message: " + message + "}");
         registerTopicSubscriber("group", String.class, String.class, subscriber);
@@ -185,8 +186,18 @@ public class ChassisRFCTest {
         map.put("topic-1", "Message-1");
         assertEquals("Message-1", map.get("topic-1"));
 
+        assertEquals(1, map.apply(Map::size), 0);
+
         map.remove("topic-1");
         assertEquals(null, map.get("topic-1"));
         assertEquals("[{name: topic-1, message: Message-1}, {name: topic-1, message: null}]", values.toString());
+
+        map.asyncUpdate(m -> map.put("topic-2", "Message-2"));
+        assertEquals("Message-2", map.get("topic-2"));
+        assertEquals("[{name: topic-1, message: Message-1}, {name: topic-1, message: null}, {name: topic-2, message: Message-2}]", values.toString());
+
+        assertEquals(0, map.syncUpdate(m -> m.remove("topic-2"), Map::size), 0);
+        assertEquals(null, map.get("topic-2"));
+        assertEquals("[{name: topic-1, message: Message-1}, {name: topic-1, message: null}, {name: topic-2, message: Message-2}, {name: topic-2, message: null}]", values.toString());
     }
 }

@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine;
 
+import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.tree.*;
 import net.openhft.chronicle.engine.tree.VanillaAsset;
@@ -24,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * Created by peter on 22/05/15.
@@ -54,7 +54,7 @@ public enum Chassis {
         return assetTree.acquireService(uri, serviceClass);
     }
     @NotNull
-    public static <K, V> ConcurrentMap<K, V> acquireMap(String name, Class<K> kClass, Class<V> vClass) throws AssetNotFoundException {
+    public static <K, V> MapView<K, V, V> acquireMap(String name, Class<K> kClass, Class<V> vClass) throws AssetNotFoundException {
         return assetTree.acquireMap(name, kClass, vClass);
     }
 

@@ -19,6 +19,7 @@ package net.openhft.chronicle.engine.api.tree;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.management.ManagementTools;
+import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.map.KVSSubscription;
 import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
@@ -29,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
 
 import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
 
@@ -37,6 +37,15 @@ import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContex
  * Created by peter on 22/05/15.
  */
 public interface AssetTree extends Closeable {
+    static Class<Subscription> getSubscriptionType(RequestContext rc) {
+        Class elementType = rc.elementType();
+        return elementType == TopologicalEvent.class
+                ? (Class) TopologySubscription.class
+                : elementType == BytesStore.class
+                ? (Class) RawKVSSubscription.class
+                : (Class) ObjectKVSSubscription.class;
+    }
+
     @NotNull
     Asset acquireAsset(Class assetClass, RequestContext context) throws
             AssetNotFoundException;
@@ -65,7 +74,7 @@ public interface AssetTree extends Closeable {
     }
 
     @NotNull
-    default <K, V> ConcurrentMap<K, V> acquireMap(String name, Class<K> kClass, Class<V> vClass) throws AssetNotFoundException {
+    default <K, V> MapView<K, V, V> acquireMap(String name, Class<K> kClass, Class<V> vClass) throws AssetNotFoundException {
         return acquireView(requestContext(name).view("map").type(kClass).type2(vClass));
     }
 
@@ -107,15 +116,6 @@ public interface AssetTree extends Closeable {
         rc.viewType(subscriptionType);
         Asset asset = getAsset(rc.fullName());
         return asset == null ? null : asset.getView(subscriptionType);
-    }
-
-    static Class<Subscription> getSubscriptionType(RequestContext rc) {
-        Class elementType = rc.elementType();
-        return elementType == TopologicalEvent.class
-                ? (Class) TopologySubscription.class
-                : elementType == BytesStore.class
-                ? (Class) RawKVSSubscription.class
-                : (Class) ObjectKVSSubscription.class;
     }
 
     default <E> void unregisterSubscriber(String name, Subscriber<E> subscriber) throws AssetNotFoundException {
