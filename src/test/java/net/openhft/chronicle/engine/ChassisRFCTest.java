@@ -132,6 +132,25 @@ public class ChassisRFCTest {
         assertEquals("Message-2", map.get("topic"));
         assertEquals("[Message-1, Message-2]", values.toString());
         assertEquals("[null, Message-1, Message-2]", values2.toString());
+
+        reference.set("Message-3");
+        assertEquals("Message-3", reference.get());
+        assertEquals("Message-3", map.get("topic"));
+        assertEquals("[Message-1, Message-2, Message-3]", values.toString());
+        assertEquals("[null, Message-1, Message-2, Message-3]", values2.toString());
+
+        assertEquals("Message-3".length(), reference.apply(String::length), 0);
+        reference.asyncUpdate(String::toUpperCase);
+        assertEquals("MESSAGE-3", reference.get());
+        assertEquals("MESSAGE-3", map.get("topic"));
+        assertEquals("[Message-1, Message-2, Message-3, MESSAGE-3]", values.toString());
+        assertEquals("[null, Message-1, Message-2, Message-3, MESSAGE-3]", values2.toString());
+
+        assertEquals("Message-3A".length(), reference.syncUpdate(s -> s.concat("A"), String::length), 0);
+        assertEquals("MESSAGE-3A", reference.get());
+        assertEquals("MESSAGE-3A", map.get("topic"));
+        assertEquals("[Message-1, Message-2, Message-3, MESSAGE-3, MESSAGE-3A]", values.toString());
+        assertEquals("[null, Message-1, Message-2, Message-3, MESSAGE-3, MESSAGE-3A]", values2.toString());
     }
 
     @Test

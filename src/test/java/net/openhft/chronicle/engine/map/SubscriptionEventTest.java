@@ -157,7 +157,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     }
 
     @Test
-    @Ignore
+    @Ignore("TODO FIX")
     public void testTopologicalEventsMock() throws InvalidSubscriberException {
 
         Subscriber<TopologicalEvent> subscriber = createMock(Subscriber.class);
@@ -197,7 +197,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     }
 
     @Test
-    @Ignore
+    @Ignore("Fix BinaryWire")
     public void testTopicSubscribe() throws InvalidSubscriberException {
 
         class TopicDetails<T, M> {
@@ -229,7 +229,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
                 TopicPublisher<String, String> topicPublisher = assetTree.acquireTopicPublisher(NAME, String.class, String.class);
 
-                TopicSubscriber<String, String> subscriber = (topic, message) -> eventsQueue.add(new TopicDetails(topic, message));
+                TopicSubscriber<String, String> subscriber = (topic, message) -> eventsQueue.add(new TopicDetails<>(topic, message));
                 assetTree.registerTopicSubscriber(NAME, String.class, String.class,
                         subscriber);
 
@@ -361,7 +361,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
                 String putEvent = eventsQueue.poll(500, MILLISECONDS);
                 String removeEvent = eventsQueue.poll(500, MILLISECONDS);
-              
+
                 Assert.assertTrue(putEvent instanceof String );
                 Assert.assertTrue(removeEvent instanceof String);
 
