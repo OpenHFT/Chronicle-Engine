@@ -16,9 +16,12 @@
 
 package net.openhft.chronicle.engine.api.pubsub;
 
+import net.openhft.chronicle.engine.api.Visitable;
+
+import java.util.function.Function;
 import java.util.function.Supplier;
 
-public interface Reference<E> extends Publisher<E>, Supplier<E> {
+public interface Reference<E> extends Publisher<E>, Supplier<E>, Visitable<E> {
     E get();
 
     default E getAndSet(E e) {
@@ -39,5 +42,22 @@ public interface Reference<E> extends Publisher<E>, Supplier<E> {
 
     default void publish(E e) {
         set(e);
+    }
+
+    @Override
+    default <R> R apply(Function<E, R> function) {
+        return function.apply(get());
+    }
+
+    @Override
+    default void asyncUpdate(Function<E, E> updateFunction) {
+        set(updateFunction.apply(get()));
+    }
+
+    @Override
+    default <R> R syncUpdate(Function<E, E> updateFunction, Function<E, R> returnFunction) {
+        E e = updateFunction.apply(get());
+        set(e);
+        return returnFunction.apply(e);
     }
 }
