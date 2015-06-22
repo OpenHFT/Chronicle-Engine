@@ -20,6 +20,8 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
+import net.openhft.chronicle.engine.api.pubsub.Publisher;
+import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
@@ -72,8 +74,9 @@ public class EngineWireHandler extends WireTcpHandler {
     private final CollectionWireHandler<Entry<byte[], byte[]>, Set<Entry<byte[], byte[]>>> entrySetHandler;
     @NotNull
     private final CollectionWireHandler<byte[], Collection<byte[]>> valuesHandler;
-
     private final SubscriptionHandlerProcessor subscriptionHandler;
+    private final TopicPublisherHandler topicPublisherHandler;
+    private final PublisherHandler publisherHandler;
 
     @NotNull
     private final AssetTree assetTree;
@@ -95,18 +98,18 @@ public class EngineWireHandler extends WireTcpHandler {
                              @NotNull final AssetTree assetTree) {
         super(byteToWire);
 
+        this.sessionProvider = assetTree.root().getView(SessionProvider.class);
         this.assetTree = assetTree;
         this.mapWireHandler = new MapWireHandler<>();
-        this.keySetHandler = new CollectionWireHandlerProcessor<>();
         this.queueWireHandler = null;
+        this.metaDataConsumer = wireInConsumer();
+
+        this.keySetHandler = new CollectionWireHandlerProcessor<>();
         this.entrySetHandler = new CollectionWireHandlerProcessor<>();
         this.valuesHandler = new CollectionWireHandlerProcessor<>();
-        this.metaDataConsumer = wireInConsumer();
-        this.sessionProvider = assetTree.root().getView(SessionProvider.class);
-
         this.subscriptionHandler = new SubscriptionHandlerProcessor();
-
-
+        this.topicPublisherHandler = new TopicPublisherHandler();
+        this.publisherHandler = new PublisherHandler();
     }
 
     protected void publish(Wire out) {
@@ -149,16 +152,19 @@ public class EngineWireHandler extends WireTcpHandler {
                             viewType == EntrySetView.class ||
                             viewType == ValuesCollection.class ||
                             viewType == KeySetView.class ||
-                            viewType == ObjectKVSSubscription.class) {
+                            viewType == ObjectKVSSubscription.class ||
+                            viewType == ObjectKVSSubscription.class ||
+                            viewType == TopicPublisher.class ||
+                            viewType == Publisher.class) {
 
                         // default to string type if not provided
-                        final Class kClass = requestContext.keyType() == null ? String.class
+                        final Class type = requestContext.type() == null ? String.class
                                 : requestContext.keyType();
 
-                        final Class vClass = requestContext.valueType() == null ? String.class
+                        final Class type2 = requestContext.type2() == null ? String.class
                                 : requestContext.valueType();
 
-                        wireAdapter = new GenericWireAdapter(kClass, vClass);
+                        wireAdapter = new GenericWireAdapter(type, type2);
                     } else
                         throw new UnsupportedOperationException("unsupported view type");
 
@@ -246,6 +252,19 @@ public class EngineWireHandler extends WireTcpHandler {
                         subscriptionHandler.process(in,
                                 requestContext, publisher, assetTree, tid,
                                 outWire, (KVSSubscription) view);
+                        return;
+                    }
+
+                    if (viewType == TopicPublisher.class) {
+                        topicPublisherHandler.process(in, publisher, tid, outWire,
+                                (TopicPublisher) view, wireAdapter);
+                        return;
+                    }
+
+                    if (viewType == Publisher.class) {
+                        publisherHandler.process(in,
+                                publisher, tid,
+                                (Publisher) view, outWire, wireAdapter);
                         return;
                     }
 

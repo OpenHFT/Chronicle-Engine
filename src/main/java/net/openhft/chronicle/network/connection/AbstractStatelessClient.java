@@ -23,6 +23,7 @@ import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Closeable;
 import java.util.Collection;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -33,7 +34,7 @@ import static net.openhft.chronicle.wire.CoreFields.reply;
 /**
  * Created by Rob Austin
  */
-public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
+public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> implements Closeable {
 
     @NotNull
     protected final TcpChannelHub hub;
@@ -337,5 +338,9 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> {
 
     }
 
+    @Override
+    public void close() {
+        hub.close();
+    }
 
 }

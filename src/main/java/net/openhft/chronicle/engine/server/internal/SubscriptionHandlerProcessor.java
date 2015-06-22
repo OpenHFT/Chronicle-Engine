@@ -22,12 +22,11 @@ import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventI
 import static net.openhft.chronicle.engine.server.internal.SubscriptionHandlerProcessor.EventId.*;
 import static net.openhft.chronicle.wire.CoreFields.reply;
 import static net.openhft.chronicle.wire.CoreFields.tid;
-import static net.openhft.chronicle.wire.WriteMarshallable.EMPTY;
 
 /**
  * Created by Rob Austin
  */
-public class SubscriptionHandlerProcessor {
+public class SubscriptionHandlerProcessor extends AbstractHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(SubscriptionHandlerProcessor.class);
     final StringBuilder eventName = new StringBuilder();
@@ -148,42 +147,14 @@ public class SubscriptionHandlerProcessor {
                  final Queue<Consumer<Wire>> publisher,
                  final AssetTree assetTree, final long tid,
                  final Wire outWire, final KVSSubscription subscription) {
+        setOutWire(outWire);
         this.outWire = outWire;
         this.subscription = subscription;
         this.requestContext = requestContext;
         this.publisher = publisher;
         this.assetTree = assetTree;
         dataConsumer.accept(inWire, tid);
-    }
 
-    /**
-     * write and exceptions and rolls back if no data was written
-     */
-    void writeData(@NotNull Consumer<WireOut> c) {
-        outWire.writeDocument(false, out -> {
-
-            final long position = outWire.bytes().writePosition();
-            try {
-
-                c.accept(outWire);
-            } catch (Exception exception) {
-                outWire.bytes().writePosition(position);
-                outWire.writeEventName(() -> "exception").throwable(exception);
-            }
-
-            // write 'reply : {} ' if no data was sent
-            if (position == outWire.bytes().writePosition()) {
-                outWire.writeEventName(reply).marshallable(EMPTY);
-            }
-        });
-        if (YamlLogging.showServerWrites)
-            try {
-                System.out.println("server-writes:\n" +
-                        Wires.fromSizePrefixedBlobs(outWire.bytes(), 0, outWire.bytes().writePosition()));
-            } catch (Exception e) {
-                System.out.println("server-writes:\n" +
-                        outWire.bytes().toDebugString());
-            }
     }
 
     public enum EventId implements ParameterizeWireKey {

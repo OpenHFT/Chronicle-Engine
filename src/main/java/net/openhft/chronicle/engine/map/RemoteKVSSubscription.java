@@ -42,18 +42,20 @@ import static net.openhft.chronicle.engine.server.internal.SubscriptionHandlerPr
 import static net.openhft.chronicle.wire.CoreFields.reply;
 
 public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient implements
-        ObjectKVSSubscription<K, MV, V>,
-        Closeable {
+        ObjectKVSSubscription<K, MV, V>, Closeable {
 
     private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
     private final Map<Object, Long> subscribersToTid = new ConcurrentHashMap<>();
-    private long tid = -1;
+    private final Class<K> kClass;
+    private final Class<V> vClass;
 
     public RemoteKVSSubscription(RequestContext context, Asset asset) {
-        super(asset.findView(TcpChannelHub.class), (long) 0, toSubscriptionUri(context));
+        super(asset.findView(TcpChannelHub.class), (long) 0, toUri(context));
+        kClass = context.keyType();
+        vClass = context.valueType();
     }
 
-    private static String toSubscriptionUri(@NotNull final RequestContext context) {
+    private static String toUri(@NotNull final RequestContext context) {
         return "/" + context.name() + "?view=subscription";
     }
 
@@ -64,11 +66,9 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
         if (hub.outBytesLock().isHeldByCurrentThread())
             throw new IllegalStateException("Cannot view map while debugging");
 
-        Class<K> kClass = rc.keyType();
-        Class<V> vClass = rc.valueType();
         hub.outBytesLock().lock();
         try {
-            tid = writeMetaDataStartTime(startTime);
+            long tid = writeMetaDataStartTime(startTime);
             subscribersToTid.put(subscriber, tid);
             hub.outWire().writeDocument(false, wireOut ->
                     wireOut.writeEventName(registerTopicSubscriber).marshallable(m -> {
@@ -89,10 +89,9 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
             hub.outBytesLock().unlock();
         }
 
-        assert !hub.outBytesLock().isHeldByCurrentThread();
     }
 
-    private void onEvent(Object topic, Object message, TopicSubscriber subscriber) {
+    private void onEvent(K topic, V message, TopicSubscriber<K, V> subscriber) {
         try {
             if (message == null)
                 unregisterTopicSubscriber(subscriber);
@@ -157,7 +156,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
 
         hub.outBytesLock().lock();
         try {
-            tid = writeMetaDataStartTime(startTime);
+            long tid = writeMetaDataStartTime(startTime);
             subscribersToTid.put(subscriber, tid);
             hub.outWire().writeDocument(false, wireOut ->
                     wireOut.writeEventName(subscribe).
@@ -207,8 +206,9 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
 
     void unregisterSubscriber0(Subscriber subscriber) {
         Long tid = subscribersToTid.get(subscriber);
-        if (tid == -1) {
+        if (tid == null) {
             LOG.warn("There is subscription to unsubscribe");
+            return;
         }
 
         hub.outBytesLock().lock();
@@ -242,11 +242,6 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
     @Override
     public void registerDownstream(EventConsumer<K, V> subscription) {
         throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
-    public void close() {
-        hub.close();
     }
 
 }

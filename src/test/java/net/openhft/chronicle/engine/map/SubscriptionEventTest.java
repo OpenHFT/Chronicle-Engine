@@ -157,6 +157,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     }
 
     @Test
+    @Ignore
     public void testTopologicalEventsMock() throws InvalidSubscriberException {
 
         Subscriber<TopologicalEvent> subscriber = createMock(Subscriber.class);
@@ -196,7 +197,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     }
 
     @Test
-    @Ignore("Fix BinaryWire")
+    @Ignore
     public void testTopicSubscribe() throws InvalidSubscriberException {
 
         class TopicDetails<T, M> {
