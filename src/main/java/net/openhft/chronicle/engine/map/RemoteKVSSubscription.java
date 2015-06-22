@@ -42,193 +42,171 @@ import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventI
 import static net.openhft.chronicle.engine.server.internal.SubscriptionHandlerProcessor.EventId.*;
 import static net.openhft.chronicle.wire.CoreFields.reply;
 
-public class RemoteKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K, MV, V>,
+public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient implements
+        ObjectKVSSubscription<K, MV, V>,
         Closeable {
 
-    private final MapSubscriptionHandler mapSubscriptionHandler;
-    private final SubscriptionHandler subscriptionHandler;
-    private final TcpChannelHub hub;
+    private final Map<Object, Long> subscribersToTid = new ConcurrentHashMap<>();
 
-    private class MapSubscriptionHandler extends AbstractStatelessClient {
-        Map<Subscriber<MapEvent<K, V>>, Long> topicSubscribersToTid = new ConcurrentHashMap<>();
-
-        public MapSubscriptionHandler(RequestContext context, TcpChannelHub view) {
-            super(view, (long) 0, toMapUri(context));
-        }
-
-        private void registerSubscriber(RequestContext rc, Subscriber<MapEvent<K, V>> subscriber) {
-            final long startTime = System.currentTimeMillis();
-
-            if (hub.outBytesLock().isHeldByCurrentThread())
-                throw new IllegalStateException("Cannot view map while debugging");
-
-            hub.outBytesLock().lock();
-            try {
-                tid = writeMetaDataStartTime(startTime);
-                topicSubscribersToTid.put(subscriber, tid);
-                hub.outWire().writeDocument(false, wireOut ->
-                        wireOut.writeEventName(subscribe).
-                                typeLiteral(CLASS_ALIASES.nameFor(rc.elementType())));
-
-                hub.writeSocket(hub.outWire());
-            } finally {
-                hub.outBytesLock().unlock();
-            }
-
-            assert !hub.outBytesLock().isHeldByCurrentThread();
-            hub.asyncReadSocket(tid, w -> w.readDocument(null, d -> {
-                ValueIn read = d.read(reply);
-
-                final Class aClass = rc.elementType();
-
-                final Object object = (MapEvent.class.isAssignableFrom(aClass)) ? read
-                        .typedMarshallable()
-                        : read.object(rc.elementType());
-
-                this.onEvent(object, subscriber);
-
-            }));
-        }
-
-        private void onEvent(Object message, Subscriber subscriber) {
-            try {
-                if (message == null) {
-                    // todo remove subscriber.
-                } else {
-                    subscriber.onMessage(message);
-                }
-            } catch (InvalidSubscriberException noLongerValid) {
-                unregisterSubscriber(subscriber);
-            }
-        }
-
-        private void unregisterSubscriber(Subscriber<MapEvent<K, V>> subscriber) {
-            Long tid = topicSubscribersToTid.get(subscriber);
-            if (tid == -1) {
-                LOG.warn("There is subscription to unsubscribe");
-            }
-
-            hub.outBytesLock().lock();
-            try {
-                writeMetaDataForKnownTID(tid);
-                hub.outWire().writeDocument(false, wireOut -> {
-                    wireOut.writeEventName(unSubscribe).text("");
-                });
-
-                hub.writeSocket(hub.outWire());
-            } finally {
-                hub.outBytesLock().unlock();
-            }
-        }
-
+    public RemoteKVSSubscription(RequestContext context, Asset asset) {
+        super(asset.findView(TcpChannelHub.class), (long) 0, toSubscriptionUri(context));
     }
 
-    private class SubscriptionHandler extends AbstractStatelessClient {
+    @Override
+    public void registerTopicSubscriber(RequestContext rc, TopicSubscriber<K, V> subscriber) {
+        final long startTime = System.currentTimeMillis();
 
-        public SubscriptionHandler(RequestContext context, TcpChannelHub view) {
-            super(view, (long) 0, toSubscriptionUri(context));
+        if (hub.outBytesLock().isHeldByCurrentThread())
+            throw new IllegalStateException("Cannot view map while debugging");
+
+        hub.outBytesLock().lock();
+        try {
+            tid = writeMetaDataStartTime(startTime);
+            subscribersToTid.put(subscriber, tid);
+            hub.outWire().writeDocument(false, wireOut ->
+                    wireOut.writeEventName(registerTopicSubscriber).marshallable(m -> {
+                        m.write(() -> "keyType").typeLiteral(rc.keyType());
+                        m.write(() -> "valueType").typeLiteral(rc.valueType());
+
+                    }));
+
+            hub.writeSocket(hub.outWire());
+        } finally {
+            hub.outBytesLock().unlock();
         }
 
-        Map<TopicSubscriber, Long> topicSubscribersToTid = new ConcurrentHashMap<>();
+        assert !hub.outBytesLock().isHeldByCurrentThread();
+        hub.asyncReadSocket(tid, w -> w.readDocument(null, d -> {
+            ValueIn valueIn = d.read(reply);
+            valueIn.marshallable(m -> {
+                final String topic = m.read(() -> "topic").text();
+                final ReadMarshallable message = m.read(() -> "message").typedMarshallable();
+                this.onEvent(topic, message, subscriber);
+            });
+        }));
+    }
 
-        private void registerTopicSubscriber(RequestContext rc, TopicSubscriber<K, V> subscriber) {
-            final long startTime = System.currentTimeMillis();
-
-            if (hub.outBytesLock().isHeldByCurrentThread())
-                throw new IllegalStateException("Cannot view map while debugging");
-
-            hub.outBytesLock().lock();
-            try {
-                tid = writeMetaDataStartTime(startTime);
-                topicSubscribersToTid.put(subscriber, tid);
-                hub.outWire().writeDocument(false, wireOut ->
-                        wireOut.writeEventName(registerTopicSubscriber).marshallable(m -> {
-                            m.write(() -> "keyType").typeLiteral(rc.keyType());
-                            m.write(() -> "valueType").typeLiteral(rc.valueType());
-
-                        }));
-
-                hub.writeSocket(hub.outWire());
-            } finally {
-                hub.outBytesLock().unlock();
-            }
-
-            assert !hub.outBytesLock().isHeldByCurrentThread();
-            hub.asyncReadSocket(tid, w -> w.readDocument(null, d -> {
-                ValueIn valueIn = d.read(reply);
-                valueIn.marshallable(m -> {
-                    final String topic = m.read(() -> "topic").text();
-                    final ReadMarshallable message = m.read(() -> "message").typedMarshallable();
-                    this.onEvent(topic, message, subscriber);
-                });
-            }));
-        }
-
-        private void onEvent(Object topic, Object message, TopicSubscriber subscriber) {
-            try {
-                if (message == null)
-                    unregisterTopicSubscriber(subscriber);
-                else
-                    subscriber.onMessage(topic, message);
-            } catch (InvalidSubscriberException noLongerValid) {
+    private void onEvent(Object topic, Object message, TopicSubscriber subscriber) {
+        try {
+            if (message == null)
                 unregisterTopicSubscriber(subscriber);
-            }
+            else
+                subscriber.onMessage(topic, message);
+        } catch (InvalidSubscriberException noLongerValid) {
+            unregisterTopicSubscriber(subscriber);
         }
-
-        private int topicSubscriberCount() {
-            return proxyReturnInt(topicSubscriberCount);
-        }
-
-        private int keySubscriberCount() {
-            return proxyReturnInt(keySubscriberCount);
-        }
-
-        private int entrySubscriberCount() {
-            return proxyReturnInt(entrySubscriberCount);
-        }
-
-        private void unregisterTopicSubscriber(final TopicSubscriber subscriber) {
-            Long tid = topicSubscribersToTid.get(subscriber);
-            if (tid == null) {
-                LOG.warn("There is no subscription to unsubscribe");
-                return;
-            }
-
-            hub.outBytesLock().lock();
-
-            try {
-                writeMetaDataForKnownTID(tid);
-                hub.outWire().writeDocument(false, wireOut -> {
-                    wireOut.writeEventName(unregisterTopicSubscriber).text("");
-                });
-
-                hub.writeSocket(hub.outWire());
-            } finally {
-                hub.outBytesLock().unlock();
-            }
-        }
-
     }
 
-    @NotNull
-    private String toMapUri(@NotNull final RequestContext context) {
-        return "/" + context.name()
-                + "?view=" + "map&keyType=" + context.keyType().getName() + "&valueType=" + context.valueType()
-                .getName();
+    @Override
+    public int topicSubscriberCount() {
+        return proxyReturnInt(topicSubscriberCount);
     }
 
-    private String toSubscriptionUri(@NotNull final RequestContext context) {
+    @Override
+    public int keySubscriberCount() {
+        return proxyReturnInt(keySubscriberCount);
+    }
+
+    @Override
+    public int entrySubscriberCount() {
+        return proxyReturnInt(entrySubscriberCount);
+    }
+
+    @Override
+    public void unregisterTopicSubscriber(final TopicSubscriber subscriber) {
+        Long tid = subscribersToTid.get(subscriber);
+        if (tid == null) {
+            LOG.warn("There is no subscription to unsubscribe");
+            return;
+        }
+
+        hub.outBytesLock().lock();
+
+        try {
+            writeMetaDataForKnownTID(tid);
+            hub.outWire().writeDocument(false, wireOut -> {
+                wireOut.writeEventName(unregisterTopicSubscriber).text("");
+            });
+
+            hub.writeSocket(hub.outWire());
+        } finally {
+            hub.outBytesLock().unlock();
+        }
+    }
+
+    @Override
+    public void registerSubscriber(RequestContext rc, Subscriber<MapEvent<K, V>> subscriber) {
+        final long startTime = System.currentTimeMillis();
+
+        if (hub.outBytesLock().isHeldByCurrentThread())
+            throw new IllegalStateException("Cannot view map while debugging");
+
+        hub.outBytesLock().lock();
+        try {
+            tid = writeMetaDataStartTime(startTime);
+            subscribersToTid.put(subscriber, tid);
+            hub.outWire().writeDocument(false, wireOut ->
+                    wireOut.writeEventName(subscribe).
+                            typeLiteral(CLASS_ALIASES.nameFor(rc.elementType())));
+
+            hub.writeSocket(hub.outWire());
+        } finally {
+            hub.outBytesLock().unlock();
+        }
+
+        assert !hub.outBytesLock().isHeldByCurrentThread();
+        hub.asyncReadSocket(tid, w -> w.readDocument(null, d -> {
+            ValueIn read = d.read(reply);
+
+            final Class aClass = rc.elementType();
+
+            final Object object = (MapEvent.class.isAssignableFrom(aClass)) ? read
+                    .typedMarshallable()
+                    : read.object(rc.elementType());
+
+            this.onEvent(object, subscriber);
+
+        }));
+    }
+
+    private void onEvent(Object message, Subscriber subscriber) {
+        try {
+            if (message == null) {
+                // todo remove subscriber.
+            } else {
+                subscriber.onMessage(message);
+            }
+        } catch (InvalidSubscriberException noLongerValid) {
+            unregisterSubscriber(subscriber);
+        }
+    }
+
+    @Override
+    public void unregisterSubscriber(Subscriber<MapEvent<K, V>> subscriber) {
+        Long tid = subscribersToTid.get(subscriber);
+        if (tid == -1) {
+            LOG.warn("There is subscription to unsubscribe");
+        }
+
+        hub.outBytesLock().lock();
+        try {
+            writeMetaDataForKnownTID(tid);
+            hub.outWire().writeDocument(false, wireOut -> {
+                wireOut.writeEventName(unSubscribe).text("");
+            });
+
+            hub.writeSocket(hub.outWire());
+        } finally {
+            hub.outBytesLock().unlock();
+        }
+    }
+
+    private static String toSubscriptionUri(@NotNull final RequestContext context) {
         return "/" + context.name() + "?view=subscription";
     }
 
     private long tid = -1;
     private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
-
-    public RemoteKVSSubscription(RequestContext context, Asset asset) {
-        hub = asset.findView(TcpChannelHub.class);
-        mapSubscriptionHandler = new MapSubscriptionHandler(context, hub);
-        subscriptionHandler = new SubscriptionHandler(context, hub);
-    }
 
     @Override
     public boolean needsPrevious() {
@@ -242,32 +220,7 @@ public class RemoteKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K,
 
     @Override
     public void notifyEvent(MapEvent<K, V> mpe) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
-    public int keySubscriberCount() {
-        return subscriptionHandler.keySubscriberCount();
-    }
-
-    @Override
-    public int entrySubscriberCount() {
-        return subscriptionHandler.entrySubscriberCount();
-    }
-
-    @Override
-    public int topicSubscriberCount() {
-        return subscriptionHandler.topicSubscriberCount();
-    }
-
-    @Override
-    public void registerTopicSubscriber(final RequestContext rc, final TopicSubscriber<K, V> subscriber) {
-        subscriptionHandler.registerTopicSubscriber(rc, subscriber);
-    }
-
-    @Override
-    public void unregisterTopicSubscriber(TopicSubscriber subscriber) {
-        subscriptionHandler.unregisterTopicSubscriber(subscriber);
+        throw new UnsupportedOperationException("");
     }
 
     @Override
@@ -276,18 +229,9 @@ public class RemoteKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K,
     }
 
     @Override
-    public void registerSubscriber(final RequestContext rc, final Subscriber<MapEvent<K, V>> subscriber) {
-        mapSubscriptionHandler.registerSubscriber(rc, subscriber);
-    }
-
-    @Override
-    public void unregisterSubscriber(final Subscriber<MapEvent<K, V>> subscriber) {
-        mapSubscriptionHandler.unregisterSubscriber(subscriber);
-    }
-
-    @Override
     public void close() {
         hub.close();
     }
+
 }
 

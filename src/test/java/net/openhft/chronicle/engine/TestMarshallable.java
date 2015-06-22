@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
  * Created by daniel on 08/04/15.
  */
 public class TestMarshallable implements Marshallable {
+
     private StringBuilder name = new StringBuilder();
     private int count;
 
