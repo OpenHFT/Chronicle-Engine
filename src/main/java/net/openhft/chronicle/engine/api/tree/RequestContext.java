@@ -114,8 +114,10 @@ public class RequestContext implements Cloneable {
         parser.register(() -> "removeReturnsNull", v -> v.bool(b -> this.removeReturnsNull = b));
         parser.register(() -> "basePath", v -> v.text((Consumer<String>) x -> this.basePath = x));
         parser.register(() -> "viewType", v -> v.typeLiteral(this::lookupType, x -> this.viewType = x));
+        parser.register(() -> "topicType", v -> v.typeLiteral(this::lookupType, x -> this.type = x));
         parser.register(() -> "keyType", v -> v.typeLiteral(this::lookupType, x -> this.type = x));
         parser.register(() -> "valueType", v -> v.typeLiteral(this::lookupType, x -> this.type2 = x));
+        parser.register(() -> "messageType", v -> v.typeLiteral(this::lookupType, x -> this.type2 = x));
         parser.register(() -> "elementType", v -> v.typeLiteral(this::lookupType, x -> this.type = x));
         parser.register(WireParser.DEFAULT, ValueIn.DISCARD);
         Bytes bytes = Bytes.from(queryString);
@@ -165,6 +167,14 @@ public class RequestContext implements Cloneable {
     }
 
     public Class valueType() {
+        return type2;
+    }
+
+    public Class topicType() {
+        return type;
+    }
+
+    public Class messageType() {
         return type2;
     }
 

@@ -542,7 +542,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
         private final ExecutorService executorService;
         private final SocketChannelProvider provider;
         private final Map<Long, Object> map = new ConcurrentHashMap<>();
-        private final Map<Long, Object> omap = Jvm.IS_DEBUG ? new ConcurrentHashMap<>() : null;
+
         private volatile boolean closeSocketConsumer;
         private Function<Bytes, Wire> wireFunction;
         @Nullable

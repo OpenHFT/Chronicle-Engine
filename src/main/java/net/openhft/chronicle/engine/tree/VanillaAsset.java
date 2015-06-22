@@ -84,10 +84,9 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     public void standardStack() {
-        addWrappingRule(TopicPublisher.class, LAST + " topic publisher", VanillaTopicPublisher::new, MapView.class);
 
-        addWrappingRule(Reference.class, LAST + " reference", VanillaReference::new, MapView.class);
-        addWrappingRule(Publisher.class, LAST + " publisher", VanillaReference::new, MapView.class);
+        addWrappingRule(Reference.class, LAST + "reference", VanillaReference::new, MapView.class);
+        addWrappingRule(Publisher.class, LAST + "publisher", VanillaReference::new, MapView.class);
         addWrappingRule(EntrySetView.class, LAST + " entrySet", VanillaEntrySetView::new, MapView.class);
         addWrappingRule(KeySetView.class, LAST + " keySet", VanillaKeySetView::new, MapView.class);
         addWrappingRule(ValuesCollection.class, LAST + " values", VanillaValuesCollection::new, MapView.class);
@@ -102,7 +101,8 @@ public class VanillaAsset implements Asset, Closeable {
 
     public void forTesting() {
         standardStack();
-
+        addWrappingRule(TopicPublisher.class, LAST + " topic publisher", VanillaTopicPublisher::new, MapView.class);
+        addWrappingRule(Publisher.class, LAST + "publisher", VanillaReference::new, MapView.class);
         addWrappingRule(ObjectKeyValueStore.class, LAST + " authenticated",
                 VanillaSubscriptionKeyValueStore::new, AuthenticatedKeyValueStore.class);
 
@@ -122,6 +122,10 @@ public class VanillaAsset implements Asset, Closeable {
 
         addLeafRule(ObjectKeyValueStore.class, LAST + " Remote AKVS",
                 RemoteKeyValueStore::new);
+        addWrappingRule(Publisher.class, LAST + "publisher", RemotePublisher::new, MapView.class);
+        addWrappingRule(TopicPublisher.class, LAST + " topic publisher", RemoteTopicPublisher::new,
+                MapView.class);
+
 
         SessionProvider sessionProvider = getView(SessionProvider.class);
         VanillaSessionDetails sessionDetails = new VanillaSessionDetails();

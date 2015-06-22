@@ -20,7 +20,6 @@ package net.openhft.chronicle.engine.server.internal;
  * Created by Rob Austin
  */
 
-import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.pool.StringBuilderPool;
 import net.openhft.chronicle.engine.api.EngineReplication;
@@ -53,18 +52,17 @@ import java.util.function.Function;
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.*;
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.Params.*;
 import static net.openhft.chronicle.wire.CoreFields.reply;
-import static net.openhft.chronicle.wire.WriteMarshallable.EMPTY;
 
 /**
  * @author Rob Austin.
  */
-public class MapWireHandler<K, V> {
+public class MapWireHandler<K, V> extends AbstractHandler {
 
     private static final StringBuilderPool SBP = new StringBuilderPool();
     private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
     final StringBuilder eventName = new StringBuilder();
     final StringBuilder cpsBuff = new StringBuilder();
-    private final Map<Long, Subscriber<Object>> tidToListener = new ConcurrentHashMap<>();
+
     @NotNull
     private final Map<Long, String> cidToCsp = new HashMap<>();
     @NotNull
@@ -81,7 +79,6 @@ public class MapWireHandler<K, V> {
     @Nullable
     private Wire inWire = null;
     @Nullable
-    private Wire outWire = null;
     private KeyValueStore<K, V, V> map;
     private boolean charSequenceValue;
     private long tid;
@@ -368,6 +365,8 @@ public class MapWireHandler<K, V> {
         this.publisher = publisher;
         this.assetTree = assetTree;
 
+        setOutWire(outWire);
+
         try {
             this.hostId = assetTree.root().acquireView(HostIdentifier.class, requestContext);
         } catch (AssetNotFoundException e) {
@@ -408,7 +407,7 @@ public class MapWireHandler<K, V> {
         return newCid;
     }
 
-    void nullCheck(@Nullable Object o) {
+    public static void nullCheck(@Nullable Object o) {
         if (o == null)
             throw new NullPointerException();
     }
@@ -436,37 +435,6 @@ public class MapWireHandler<K, V> {
                 });
     }
 
-    /**
-     * write and exceptions and rolls back if no data was written
-     */
-    void writeData(@NotNull Consumer<WireOut> c) {
-        outWire.writeDocument(false, out -> {
-
-            final long position = outWire.bytes().writePosition();
-            try {
-
-
-                c.accept(outWire);
-            } catch (Exception exception) {
-                outWire.bytes().writePosition(position);
-                outWire.writeEventName(() -> "exception").throwable(exception);
-            }
-
-            // write 'reply : {} ' if no data was sent
-            if (position == outWire.bytes().writePosition()) {
-                outWire.writeEventName(reply).marshallable(EMPTY);
-            }
-        });
-        if (YamlLogging.showServerWrites)
-            try {
-                System.out.println("server-writes:\n" +
-                        Wires.fromSizePrefixedBlobs(outWire.bytes(), 0, outWire.bytes().writePosition()));
-            } catch (Exception e) {
-
-                System.out.println("server-writes:\n" +
-                        Bytes.toString(outWire.bytes(), 0, outWire.bytes().writePosition()));
-            }
-    }
 
     public CharSequence getCspForCid(long cid) {
         return cidToCsp.get(cid);

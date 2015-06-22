@@ -71,16 +71,19 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
         this(requestContext, asset, asset.findView(TcpChannelHub.class));
     }
 
-    @NotNull
-    private static String toUri(@NotNull final RequestContext context) {
-        return "/" + context.name()
-                + "?view=" + "map&keyType=" + context.keyType().getName() + "&valueType=" + context.valueType()
-                .getName();
-    }
 
-    @Override
-    public void close() {
 
+    private static String toUri(final RequestContext context) {
+        StringBuilder uri = new StringBuilder("/" + context.name()
+                + "?view=" + "map");
+
+        if (context.keyType() != String.class)
+            uri.append("&keyType=").append(context.keyType().getName());
+
+        if (context.valueType() != String.class)
+            uri.append("&valueType=").append(context.valueType().getName());
+
+        return uri.toString();
     }
 
     @Override
@@ -227,18 +230,6 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
         return proxyReturnBoolean(containsKey, out -> out.object(key));
     }
 
-    /*public boolean containsValue(Object value) {
-        checkValue(value);
-        return proxyReturnBoolean(containsValue, out -> out.object(value));
-    }
-
-    public void putAll0(@NotNull Map<? extends K, ? extends V> map) {
-        proxyReturnVoid(putAll, v ->
-                        v.sequence(out -> map.entrySet().forEach(
-                                e -> toParameters(put, e.getKey(), e.getValue()).accept(out)))
-        );
-    }*/
-
     @Nullable
     public V get(Object key) {
         checkKey(key);
@@ -293,8 +284,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
         proxyReturnVoid(clear);
     }
 
-    @Nullable
-    @NotNull
+
     public Collection<V> values() {
         final StringBuilder csp = Wires.acquireStringBuilder();
         long cid = proxyReturnWireConsumer(values, read -> {
@@ -310,9 +300,9 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
             });
         });
 
-        final Function<ValueIn, V> conumer = valueIn -> valueIn.object(vClass);
+        final Function<ValueIn, V> consumer = valueIn -> valueIn.object(vClass);
 
-        return new ClientWiredStatelessChronicleCollection<>(hub, ArrayList::new, conumer, "/" + context.name() + "?view=" + "values", cid
+        return new ClientWiredStatelessChronicleCollection<>(hub, ArrayList::new, consumer, "/" + context.name() + "?view=" + "values", cid
         );
     }
 
