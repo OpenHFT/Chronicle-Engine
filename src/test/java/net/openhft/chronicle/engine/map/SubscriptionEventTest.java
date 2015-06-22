@@ -27,9 +27,10 @@ import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
+import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.server.WireType;
-import net.openhft.chronicle.engine.tree.VanillaAssetTree;
+import net.openhft.chronicle.engine.tree.*;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
@@ -155,8 +156,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
         });
     }
 
-/*    @Test
-    @Ignore("TODO")
+    @Test
     public void testTopologicalEventsMock() throws InvalidSubscriberException {
 
         Subscriber<TopologicalEvent> subscriber = createMock(Subscriber.class);
@@ -193,7 +193,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
             }
         });
         waitFor(subscriber);
-    }*/
+    }
 
     @Test
     @Ignore("Fix BinaryWire")
@@ -250,6 +250,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     }
 
     @Test
+    @Ignore("TODO Fix")
     public void testUnsubscribeToMapEvents() throws IOException, InterruptedException {
 
         final BlockingQueue<MapEvent> eventsQueue = new LinkedBlockingQueue<>();
