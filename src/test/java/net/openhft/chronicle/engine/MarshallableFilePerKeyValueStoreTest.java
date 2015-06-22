@@ -53,7 +53,7 @@ public class MarshallableFilePerKeyValueStoreTest {
     @BeforeClass
     public static void createMap() throws IOException {
         resetChassis();
-        Function<Bytes, Wire> writeType = TextWire::new;
+        Function<Bytes, Wire> writeType = WireType.TEXT;
         enableTranslatingValuesToBytesStore();
 
         addLeafRule(AuthenticatedKeyValueStore.class, "FilePer Key",

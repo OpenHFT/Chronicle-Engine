@@ -22,8 +22,8 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.Assetted;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
-import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
+import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -256,7 +256,7 @@ public class MapClientTest extends ThreadMonitoringTest {
             result = new LocalMapSupplier<K, V>(kClass, vClass, assetTree);
 
         } else if (RemoteMapSupplier.class.equals(supplier)) {
-            result = new RemoteMapSupplier<K, V>(kClass, vClass, TextWire::new, assetTree);
+            result = new RemoteMapSupplier<K, V>(kClass, vClass, WireType.TEXT, assetTree);
 
         } else {
             throw new IllegalStateException("unsuported type");

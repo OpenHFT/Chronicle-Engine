@@ -29,8 +29,8 @@ import net.openhft.chronicle.engine.map.CMap2EngineReplicator;
 import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
-import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
+import net.openhft.chronicle.wire.WireType;
 import org.junit.*;
 
 import java.io.File;
@@ -72,7 +72,7 @@ public class ChronicleMapKeyValueStoreTest {
     }
 
     private static AssetTree create(final int hostId) {
-        Function<Bytes, Wire> writeType = TextWire::new;
+        Function<Bytes, Wire> writeType = WireType.TEXT;
         AssetTree tree = new VanillaAssetTree((byte) hostId)
                 .forTesting()
                 .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);
@@ -89,6 +89,14 @@ public class ChronicleMapKeyValueStoreTest {
         VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
 
         return tree;
+    }
+
+    public static String resourcesDir() {
+        String path = ChronicleMapKeyValueStoreTest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        if (path == null)
+            return ".";
+        String resources = new File(path).getParentFile().getParentFile() + "/src/test/resources";
+        return resources;
     }
 
     @Ignore("todo fix")
@@ -154,13 +162,5 @@ public class ChronicleMapKeyValueStoreTest {
             Assert.assertEquals("world3", m.get("hello3"));
             Assert.assertEquals(3, m.size());
         }
-    }
-
-    public static String resourcesDir() {
-        String path = ChronicleMapKeyValueStoreTest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-        if (path == null)
-            return ".";
-        String resources = new File(path).getParentFile().getParentFile() + "/src/test/resources";
-        return resources;
     }
 }

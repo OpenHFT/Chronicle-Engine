@@ -54,14 +54,14 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     @Ignore("performance test")
     public void testLargeStringTextWire() throws Exception {
         final int MB = 1 << 20;
-        testStrings(50, 2 * MB, TextWire::new);
+        testStrings(50, 2 * MB, WireType.TEXT);
     }
 
     @Test(timeout = 100000)
     @Ignore("performance test")
     public void testLargeStringBinaryWire() throws Exception {
         final int MB = 1 << 20;
-        testStrings(50, 2 * MB, BinaryWire::new);
+        testStrings(50, 2 * MB, WireType.BINARY);
     }
 
     private void testStrings(int noPutsAndGets, int valueLength, Function<Bytes, Wire> wireType) throws IOException {
@@ -69,7 +69,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
         try (final RemoteMapSupplier<CharSequence, CharSequence> remote = new
                 RemoteMapSupplier<>(CharSequence.class,
                 CharSequence.class,
-                BinaryWire::new, assetTree)) {
+                WireType.BINARY, assetTree)) {
 
             ConcurrentMap test = remote.get();
 
@@ -119,7 +119,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
         try (final RemoteMapSupplier<String, String> remote = new
                 RemoteMapSupplier<>(String.class,
                 String.class,
-                BinaryWire::new, assetTree)) {
+                WireType.BINARY, assetTree)) {
 
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < 50_000; i++) {

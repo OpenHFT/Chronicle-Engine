@@ -21,14 +21,11 @@ import net.openhft.chronicle.engine.Factor;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
-import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
-import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
-import net.openhft.chronicle.wire.TextWire;
+import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
-import org.easymock.EasyMock;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Rule;
@@ -57,20 +54,17 @@ import static org.junit.Assert.assertEquals;
  */
 @RunWith(value = Parameterized.class)
 public class SubscriptionTest extends ThreadMonitoringTest {
+    private static final String NAME = "test";
     private static int port;
     private static ConcurrentMap<String, Factor> map;
-    private static final String NAME = "test";
-
-    private boolean isRemote;
     @NotNull
     @Rule
     public TestName name = new TestName();
+    private boolean isRemote;
 
-    @Before
-    public void before() {
-        methodName(name.getMethodName());
+    public SubscriptionTest(Boolean isRemote) {
+        this.isRemote = isRemote;
     }
-
 
     @Parameters
     public static Collection<Object[]> data() throws IOException {
@@ -81,10 +75,10 @@ public class SubscriptionTest extends ThreadMonitoringTest {
         });
     }
 
-    public SubscriptionTest(Boolean isRemote) {
-        this.isRemote = isRemote;
+    @Before
+    public void before() {
+        methodName(name.getMethodName());
     }
-
 
     @Test
     public void testSubscriptionTest() throws IOException, InterruptedException {
@@ -113,7 +107,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
         Subscriber<MapEvent> mapEventSubscriber = e -> e.apply(listener);
         VanillaAssetTree assetTree;
         if (isRemote) {
-            wire = TextWire::new;
+            wire = WireType.TEXT;
 
             serverEndpoint = new ServerEndpoint(serverAssetTree);
             port = serverEndpoint.getPort();

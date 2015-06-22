@@ -24,8 +24,8 @@ import net.openhft.chronicle.engine.map.AuthenticatedKeyValueStore;
 import net.openhft.chronicle.engine.map.FilePerKeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.map.VanillaStringStringKeyValueStore;
-import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
+import net.openhft.chronicle.wire.WireType;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -52,7 +52,7 @@ public class FilePerKeyValueStoreTest {
     @BeforeClass
     public static void createMap() throws IOException {
         resetChassis();
-        Function<Bytes, Wire> writeType = TextWire::new;
+        Function<Bytes, Wire> writeType = WireType.TEXT;
         enableTranslatingValuesToBytesStore();
 
         addLeafRule(AuthenticatedKeyValueStore.class, "FilePer Key",

@@ -19,7 +19,7 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
-import net.openhft.chronicle.wire.BinaryWire;
+import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -46,10 +46,11 @@ import static org.junit.Assert.*;
 @Ignore("todo fix")
 public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
 
-    private AssetTree assetTree = new VanillaAssetTree().forTesting();
+    static int s_port = 11050;
     @NotNull
     @Rule
     public TestName name = new TestName();
+    private AssetTree assetTree = new VanillaAssetTree().forTesting();
 
     @Before
     public void before() {
@@ -58,8 +59,8 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
 
     @NotNull
     ClosableMapSupplier newIntString(String name) throws IOException {
-        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(Integer.class, String
-                .class, BinaryWire::new, assetTree, name);
+        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(
+                Integer.class, String.class, WireType.BINARY, assetTree, name);
 
         return new ClosableMapSupplier() {
 
@@ -74,14 +75,13 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
                 remoteMapSupplier.close();
             }
         };
-
     }
 
     @NotNull
     ClosableMapSupplier<CharSequence, CharSequence> newStrStrMap() throws
             IOException {
 
-        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(CharSequence.class, CharSequence.class, BinaryWire::new, assetTree);
+        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(CharSequence.class, CharSequence.class, WireType.BINARY, assetTree);
 
         return new ClosableMapSupplier() {
 
@@ -116,8 +116,6 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
         return supplier;
     }
 
-    static int s_port = 11050;
-
     /**
      * clear removes all pairs
      */
@@ -125,7 +123,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     public void testClear() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
             final Map map = supplier.get();
-       
+
             yamlLoggger(() -> map.clear());
             assertEquals(0, map.size());
         }
@@ -138,7 +136,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     public void testContains() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
             final Map map = supplier.get();
-     
+
             writeMessage = "when the key exists";
             yamlLoggger(() -> assertTrue(map.containsValue("A")));
             writeMessage = "when it doesnt exist";

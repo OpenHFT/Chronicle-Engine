@@ -30,7 +30,7 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.MapClientTest.LocalMapSupplier;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
-import net.openhft.chronicle.wire.TextWire;
+import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.runner.RunWith;
@@ -87,7 +87,7 @@ public class GuavaEngineTest   {
 
         try {
             return new RemoteMapSupplier<>(CharSequence.class, CharSequence.class,
-                    TextWire::new, assetTree).get();
+                    WireType.TEXT, assetTree).get();
         } catch (IOException e) {
             throw new IORuntimeException(e);
         }
