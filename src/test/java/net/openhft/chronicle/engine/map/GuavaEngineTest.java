@@ -83,26 +83,7 @@ public class GuavaEngineTest   {
         return tests;
     }
 
-    @NotNull
-    static ConcurrentMap<CharSequence, CharSequence> newStrStrRemoteMap(AssetTree assetTree) {
 
-        try {
-            return new RemoteMapSupplier<>(CharSequence.class, CharSequence.class,
-                    TextWire::new, assetTree).get();
-        } catch (IOException e) {
-            throw new IORuntimeException(e);
-        }
-    }
-
-    @NotNull
-    static ConcurrentMap<CharSequence, CharSequence> newStrStrLocalMap() {
-
-        try {
-            return new LocalMapSupplier(CharSequence.class, CharSequence.class, new VanillaAssetTree().forTesting()).get();
-        } catch (IOException e) {
-            throw new IORuntimeException(e);
-        }
-    }
 
     static abstract class TestGenerator
             implements TestMapGenerator<CharSequence, CharSequence> {
