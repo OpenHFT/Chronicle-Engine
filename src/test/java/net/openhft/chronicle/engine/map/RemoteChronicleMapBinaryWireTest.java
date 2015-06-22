@@ -22,7 +22,6 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -43,7 +42,6 @@ import static org.junit.Assert.*;
  * Pat Fisher, Mike Judd.
  */
 
-@Ignore("todo fix")
 public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
 
     static int s_port = 11050;
