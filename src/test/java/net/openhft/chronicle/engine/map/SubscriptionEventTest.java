@@ -300,7 +300,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                         "unsubscribed no event should be send form the server to the client";
                 map.put("Hello", "World");
 
-                Object object = eventsQueue.poll(100, MILLISECONDS);
+                Object object = eventsQueue.poll(500, MILLISECONDS);
                 Assert.assertNull(object);
 
             } catch (Exception e) {
@@ -358,7 +358,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                 String expected = "World";
                 map.put("Hello", expected);
 
-                Object object = eventsQueue.poll(100, MILLISECONDS);
+                Object object = eventsQueue.poll(500, MILLISECONDS);
                 Assert.assertNull(object);
 
             } catch (InterruptedException e) {
@@ -388,9 +388,10 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                 map.put("Hello", expected);
                 map.remove("Hello");
 
-                String putEvent = eventsQueue.poll(100, MILLISECONDS);
-                String removeEvent = eventsQueue.poll(100, MILLISECONDS);
-                Assert.assertTrue(putEvent instanceof String);
+                String putEvent = eventsQueue.poll(500, MILLISECONDS);
+                String removeEvent = eventsQueue.poll(500, MILLISECONDS);
+              
+                Assert.assertTrue(putEvent instanceof String );
                 Assert.assertTrue(removeEvent instanceof String);
 
             } catch (InterruptedException e) {
@@ -422,8 +423,8 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                 Thread.sleep(1);
                 map.remove("Hello");
 
-                Object putEvent = eventsQueue.poll(100, MILLISECONDS);
-                Object removeEvent = eventsQueue.poll(100, MILLISECONDS);
+                Object putEvent = eventsQueue.poll(500, MILLISECONDS);
+                Object removeEvent = eventsQueue.poll(500, MILLISECONDS);
                 Assert.assertTrue(putEvent instanceof InsertedEvent);
                 Assert.assertTrue(removeEvent instanceof RemovedEvent);
 
