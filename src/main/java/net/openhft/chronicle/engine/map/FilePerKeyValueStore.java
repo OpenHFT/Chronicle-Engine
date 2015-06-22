@@ -205,7 +205,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         BytesStore existingValue = getFileContents(path, null);
         writeToFile(path, value);
         if (fr != null) fr.valid = false;
-        return existingValue == null ? null : existingValue.bytes();
+        return existingValue == null ? null : existingValue;
     }
 
     @Nullable
@@ -279,7 +279,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         FileRecord<BytesStore> lastFileRecord = lastFileRecordMap.get(file);
         if (lastFileRecord != null && lastFileRecord.valid
                 && file.lastModified() == lastFileRecord.timestamp) {
-            return lastFileRecord.contents.bytes();
+            return lastFileRecord.contents;
         }
         return getFileContentsFromDisk(path, using);
     }
@@ -310,8 +310,8 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
 
             fc.read(dst);
 
-            readingBytes.position(0);
-            readingBytes.limit(dst.position());
+            readingBytes.readPosition(0);
+            readingBytes.readLimit(dst.position());
             dst.flip();
         }
         return readingBytes;
@@ -326,7 +326,6 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
             Bytes<ByteBuffer> valueBuffer = b.valueBuffer;
             valueBuffer.clear();
             valueBuffer.write(value);
-            valueBuffer.flip();
             writingBytes = valueBuffer;
         }
 
@@ -335,7 +334,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         try (FileChannel fc = new FileOutputStream(tmpFile).getChannel()) {
             ByteBuffer byteBuffer = writingBytes.underlyingObject();
             byteBuffer.position(0);
-            byteBuffer.limit((int) writingBytes.limit());
+            byteBuffer.limit((int) writingBytes.readLimit());
             fc.write(byteBuffer);
         } catch (IOException e) {
             throw new AssertionError(e);
@@ -433,13 +432,13 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
 
                 if (kind == StandardWatchEventKinds.ENTRY_CREATE || kind == StandardWatchEventKinds.ENTRY_MODIFY) {
                     Path p = dirPath.resolve(fileName);
-                    Bytes mapVal = getFileContentsFromDisk(p, null);
+                    BytesStore mapVal = getFileContentsFromDisk(p, null);
 
                     FileRecord<BytesStore> prev = lastFileRecordMap.get(p.toFile());
 //                    if (mapVal == null) {
 //                            System.out.println("Unable to read "+mapKey+", exists: "+p.toFile().exists());
 //                    }
-                    if (prev != null && BytesUtil.contentEqual(mapVal, prev.contents.bytes())) {
+                    if (prev != null && BytesUtil.contentEqual(mapVal, prev.contents)) {
 //                            System.out.println("... key: "+mapKey+" equal, last.keys: "+new TreeSet<>(lastFileRecordMap.keySet()));
                         continue;
                     }
@@ -447,7 +446,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
                     if (mapVal == null) {
                         // todo this shouldn't happen.
                         if (prev != null)
-                            mapVal = prev.contents.bytes();
+                            mapVal = prev.contents;
                     } else {
 //                            System.out.println("adding "+mapKey);
                         lastFileRecordMap.put(p.toFile(), new FileRecord<>(p.toFile().lastModified(), mapVal.copy()));
@@ -455,7 +454,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
                     if (prev == null) {
                         subscriptions.notifyEvent(InsertedEvent.of(asset.fullName(), p.toFile().getName(), mapVal));
                     } else {
-                        subscriptions.notifyEvent(UpdatedEvent.of(asset.fullName(), p.toFile().getName(), prev.contents.bytes(), mapVal));
+                        subscriptions.notifyEvent(UpdatedEvent.of(asset.fullName(), p.toFile().getName(), prev.contents, mapVal));
                         prev.contents.release();
                     }
 

@@ -42,9 +42,8 @@ import static net.openhft.chronicle.wire.Wires.acquireStringBuilder;
 public class CollectionWireHandlerProcessor<U, C extends Collection<U>> implements
         CollectionWireHandler<U, C> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CollectionWireHandlerProcessor.class);
     public static final int SIZE_OF_SIZE = 4;
-
+    private static final Logger LOG = LoggerFactory.getLogger(CollectionWireHandlerProcessor.class);
     private Function<ValueIn, U> fromWire;
     private BiConsumer<ValueOut, U> toWire;
 
@@ -155,7 +154,7 @@ public class CollectionWireHandlerProcessor<U, C extends Collection<U>> implemen
             } finally {
 
                 if (YamlLogging.showServerWrites) {
-                    long len = outBytes.position() - SIZE_OF_SIZE;
+                    long len = outBytes.writePosition() - SIZE_OF_SIZE;
                     if (len == 0) {
                         LOG.info(
                                 "\n\nserver writes:\n\n<EMPTY>");

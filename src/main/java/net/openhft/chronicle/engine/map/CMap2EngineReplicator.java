@@ -41,13 +41,17 @@ public class CMap2EngineReplicator implements EngineReplication,
         EngineReplicationLangBytesConsumer, View {
 
     private final RequestContext context;
-    private EngineReplicationLangBytes engineReplicationLang;
     private final ThreadLocal<PointerBytesStore> keyLocal = withInitial(PointerBytesStore::new);
     private final ThreadLocal<PointerBytesStore> valueLocal = withInitial(PointerBytesStore::new);
+    private EngineReplicationLangBytes engineReplicationLang;
 
     public CMap2EngineReplicator(RequestContext requestContext, Asset asset) {
         this(requestContext);
         asset.addView(EngineReplicationLangBytesConsumer.class, this);
+    }
+
+    public CMap2EngineReplicator(final RequestContext context) {
+        this.context = context;
     }
 
     @Override
@@ -55,13 +59,8 @@ public class CMap2EngineReplicator implements EngineReplication,
         this.engineReplicationLang = engineReplicationLangBytes;
     }
 
-
-    public CMap2EngineReplicator(final RequestContext context) {
-        this.context = context;
-    }
-
     net.openhft.lang.io.Bytes toLangBytes(Bytes b) {
-        return wrap(b.bytes().address(), b.remaining());
+        return wrap(b.address(), b.readRemaining());
     }
 
     public void put(final Bytes key, final Bytes value,
@@ -96,6 +95,98 @@ public class CMap2EngineReplicator implements EngineReplication,
             put(entry);
 
         setLastModificationTime(entry.identifier(), entry.bootStrapTimeStamp());
+    }
+
+    @Override
+    public void forEach(byte id, @NotNull Consumer<ReplicationEntry> consumer) throws InterruptedException {
+        acquireModificationIterator(id).forEach(consumer);
+    }
+
+    @Override
+    public ModificationIterator acquireModificationIterator(final byte remoteIdentifier) {
+        final EngineModificationIterator instance = engineReplicationLang
+                .acquireEngineModificationIterator(remoteIdentifier);
+
+        return new ModificationIterator() {
+            @Override
+            public void forEach(@NotNull Consumer<ReplicationEntry> consumer) throws InterruptedException {
+                while (hasNext()) {
+                    nextEntry(entry -> {
+                        consumer.accept(entry);
+                        return true;
+                    });
+                }
+            }
+
+            private boolean hasNext() {
+                return instance.hasNext();
+            }
+
+            private boolean nextEntry(@NotNull final EntryCallback callback) throws InterruptedException {
+                return instance.nextEntry((key, value, timestamp,
+                                           identifier, isDeleted,
+                                           bootStrapTimeStamp) ->
+
+                        callback.onEntry(new VanillaReplicatedEntry(
+                                toKey(key),
+                                toValue(value),
+                                timestamp,
+                                identifier,
+                                isDeleted,
+                                bootStrapTimeStamp)));
+            }
+
+            private Bytes<Void> toKey(final @NotNull net.openhft.lang.io.Bytes key) {
+                final PointerBytesStore result = keyLocal.get();
+                result.set(key.address(), key.capacity());
+                Bytes<Void> voidBytes = result.bytesForRead();
+                return voidBytes;
+            }
+
+            private Bytes<Void> toValue(final @Nullable net.openhft.lang.io.Bytes value) {
+                if (value == null)
+                    return null;
+                final PointerBytesStore result = valueLocal.get();
+                result.set(value.address(), value.capacity());
+                Bytes<Void> voidBytes = result.bytesForRead();
+                return voidBytes;
+            }
+
+            @Override
+            public void dirtyEntries(final long fromTimeStamp) throws InterruptedException {
+                instance.dirtyEntries(fromTimeStamp);
+            }
+
+            @Override
+            public void setModificationNotifier(@NotNull final ModificationNotifier modificationNotifier) {
+                instance.setModificationNotifier(modificationNotifier::onChange);
+            }
+        };
+    }
+
+    @Override
+    public long lastModificationTime(final byte remoteIdentifier) {
+        return engineReplicationLang.lastModificationTime(remoteIdentifier);
+    }
+
+    @Override
+    public void setLastModificationTime(final byte identifier, final long timestamp) {
+        engineReplicationLang.setLastModificationTime(identifier, timestamp);
+    }
+
+    @Override
+    public void close() throws IOException {
+        engineReplicationLang.close();
+    }
+
+    @Override
+    public String toString() {
+        return "CMap2EngineReplicator{" +
+                "context=" + context +
+                ", identifier=" + engineReplicationLang.identifier() +
+                ", keyLocal=" + keyLocal +
+                ", valueLocal=" + valueLocal +
+                '}';
     }
 
     public static class VanillaReplicatedEntry implements ReplicationEntry {
@@ -162,101 +253,5 @@ public class CMap2EngineReplicator implements EngineReplication,
             return bootStrapTimeStamp;
         }
 
-    }
-
-    @Override
-    public void forEach(byte id, @NotNull Consumer<ReplicationEntry> consumer) throws InterruptedException {
-        acquireModificationIterator(id).forEach(consumer);
-    }
-
-    @Override
-    public ModificationIterator acquireModificationIterator(final byte remoteIdentifier) {
-        final EngineModificationIterator instance = engineReplicationLang
-                .acquireEngineModificationIterator(remoteIdentifier);
-
-        return new ModificationIterator() {
-
-            @Override
-            public void forEach(@NotNull Consumer<ReplicationEntry> consumer) throws InterruptedException {
-
-                while (hasNext()) {
-
-                    nextEntry(entry -> {
-                        consumer.accept(entry);
-                        return true;
-                    });
-
-                }
-
-            }
-
-            private boolean hasNext() {
-                return instance.hasNext();
-            }
-
-            private boolean nextEntry(@NotNull final EntryCallback callback) throws InterruptedException {
-                return instance.nextEntry((key, value, timestamp,
-                                           identifier, isDeleted,
-                                           bootStrapTimeStamp) ->
-
-                        callback.onEntry(new VanillaReplicatedEntry(
-                                toKey(key),
-                                toValue(value),
-                                timestamp,
-                                identifier,
-                                isDeleted,
-                                bootStrapTimeStamp)));
-            }
-
-            private Bytes<Void> toKey(final @NotNull net.openhft.lang.io.Bytes key) {
-                final PointerBytesStore result = keyLocal.get();
-                result.set(key.address(), key.capacity());
-                return result.bytes();
-            }
-
-            private Bytes<Void> toValue(final @Nullable net.openhft.lang.io.Bytes value) {
-                if (value == null)
-                    return null;
-                final PointerBytesStore result = valueLocal.get();
-                result.set(value.address(), value.capacity());
-                return result.bytes();
-            }
-
-            @Override
-            public void dirtyEntries(final long fromTimeStamp) throws InterruptedException {
-                instance.dirtyEntries(fromTimeStamp);
-            }
-
-            @Override
-            public void setModificationNotifier(@NotNull final ModificationNotifier modificationNotifier) {
-                instance.setModificationNotifier(modificationNotifier::onChange);
-            }
-        };
-
-    }
-
-    @Override
-    public long lastModificationTime(final byte remoteIdentifier) {
-        return engineReplicationLang.lastModificationTime(remoteIdentifier);
-    }
-
-    @Override
-    public void setLastModificationTime(final byte identifier, final long timestamp) {
-        engineReplicationLang.setLastModificationTime(identifier, timestamp);
-    }
-
-    @Override
-    public void close() throws IOException {
-        engineReplicationLang.close();
-    }
-
-    @Override
-    public String toString() {
-        return "CMap2EngineReplicator{" +
-                "context=" + context +
-                ", identifier=" + engineReplicationLang.identifier() +
-                ", keyLocal=" + keyLocal +
-                ", valueLocal=" + valueLocal +
-                '}';
     }
 }

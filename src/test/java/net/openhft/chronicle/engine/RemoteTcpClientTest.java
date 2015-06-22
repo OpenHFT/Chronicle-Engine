@@ -50,6 +50,93 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
         methodName(name.getMethodName());
     }
 
+    @Test(timeout = 100000)
+    @Ignore("performance test")
+    public void testLargeStringTextWire() throws Exception {
+        final int MB = 1 << 20;
+        testStrings(50, 2 * MB, TextWire::new);
+    }
+
+    @Test(timeout = 100000)
+    @Ignore("performance test")
+    public void testLargeStringBinaryWire() throws Exception {
+        final int MB = 1 << 20;
+        testStrings(50, 2 * MB, BinaryWire::new);
+    }
+
+    private void testStrings(int noPutsAndGets, int valueLength, Function<Bytes, Wire> wireType) throws IOException {
+
+        try (final RemoteMapSupplier<CharSequence, CharSequence> remote = new
+                RemoteMapSupplier<>(CharSequence.class,
+                CharSequence.class,
+                BinaryWire::new, assetTree)) {
+
+            ConcurrentMap test = remote.get();
+
+            Bytes bytes = NativeBytes.nativeBytes(valueLength);
+            while (bytes.readPosition() < valueLength)
+                bytes.append('x');
+
+            // warm up
+            for (int j = -1; j < 30; j++) {
+                long start1 = System.currentTimeMillis();
+                // TODO adding .parallel() should work.
+                IntStream.range(0, noPutsAndGets).parallel().forEach(i -> {
+//                    IntStream.range(0, noPutsAndGets).forEach(i -> {
+                    test.put("key" + i, bytes);
+                    if (i % 10 == 5)
+                        System.out.println("put key" + i);
+                });
+                long duration1 = System.currentTimeMillis() - start1;
+                   /* if (j >= 0)*/
+                {
+                    System.out.printf("Took %.3f seconds to perform %,d puts%n", duration1 / 1e3, noPutsAndGets);
+//                        Assert.assertTrue("This should take 1 second but took " + duration1 / 1e3 + " seconds. ", duration1 < 1000);
+                }
+
+/*                    long start2 = System.currentTimeMillis();
+
+//                    IntStream.range(0, noPutsAndGets).parallel().forEach(i -> {
+                    IntStream.range(0, noPutsAndGets).forEach(i -> {
+                        test.getUsing("key" + i, Wires.acquireStringBuilder());
+                        if (i % 10 == 5)
+                            System.out.println("get key" + i);
+                    });
+                    long duration2 = System.currentTimeMillis() - start2;
+                    if (j >= 0) {
+                        System.out.printf("Took %.3f seconds to perform %,d puts%n", duration2 / 1e3, noPutsAndGets);
+                        Assert.assertTrue("This should take 1 second but took " + duration2 / 1e3 + " seconds. ", duration2 < 1000);
+                    }*/
+            }
+        }
+    }
+
+    @Test
+    @Ignore("Waiting for merge")
+    public void test2MBEntries() throws Exception {
+
+        // server
+        try (final RemoteMapSupplier<String, String> remote = new
+                RemoteMapSupplier<>(String.class,
+                String.class,
+                BinaryWire::new, assetTree)) {
+
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < 50_000; i++) {
+                sb.append('x');
+            }
+
+            String value = sb.toString();
+            long time = System.currentTimeMillis();
+            final ConcurrentMap<String, String> map = remote.get();
+            for (int i = 0; i < 2_000; i++) {
+                map.put("largeEntry", value);
+            }
+
+            System.out.format("Time for 100MB %,dms%n", (System.currentTimeMillis() - time));
+        }
+    }
+
     class MyMarshallable implements Marshallable {
 
         String someData;
@@ -87,93 +174,6 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
         @Override
         public String toString() {
             return "MyMarshable{" + "someData='" + someData + '\'' + '}';
-        }
-    }
-
-    @Test(timeout = 100000)
-    @Ignore("performance test")
-    public void testLargeStringTextWire() throws Exception {
-        final int MB = 1 << 20;
-        testStrings(50, 2 * MB, TextWire::new);
-    }
-
-    @Test(timeout = 100000)
-    @Ignore("performance test")
-    public void testLargeStringBinaryWire() throws Exception {
-        final int MB = 1 << 20;
-        testStrings(50, 2 * MB, BinaryWire::new);
-    }
-
-    private void testStrings(int noPutsAndGets, int valueLength, Function<Bytes, Wire> wireType) throws IOException {
-
-        try (final RemoteMapSupplier<CharSequence, CharSequence> remote = new
-                RemoteMapSupplier<>(CharSequence.class,
-                CharSequence.class,
-                BinaryWire::new, assetTree)) {
-
-            ConcurrentMap test = remote.get();
-
-            Bytes bytes = NativeBytes.nativeBytes(valueLength);
-            while (bytes.position() < valueLength)
-                bytes.append('x');
-            bytes.flip();
-
-            // warm up
-            for (int j = -1; j < 30; j++) {
-                long start1 = System.currentTimeMillis();
-                // TODO adding .parallel() should work.
-                IntStream.range(0, noPutsAndGets).parallel().forEach(i -> {
-//                    IntStream.range(0, noPutsAndGets).forEach(i -> {
-                    test.put("key" + i, bytes);
-                    if (i % 10 == 5)
-                        System.out.println("put key" + i);
-                });
-                long duration1 = System.currentTimeMillis() - start1;
-                   /* if (j >= 0)*/
-                {
-                    System.out.printf("Took %.3f seconds to perform %,d puts%n", duration1 / 1e3, noPutsAndGets);
-//                        Assert.assertTrue("This should take 1 second but took " + duration1 / 1e3 + " seconds. ", duration1 < 1000);
-                }
-
-/*                    long start2 = System.currentTimeMillis();
-
-//                    IntStream.range(0, noPutsAndGets).parallel().forEach(i -> {
-                    IntStream.range(0, noPutsAndGets).forEach(i -> {
-                        test.getUsing("key" + i, Wires.acquireStringBuilder());
-                        if (i % 10 == 5)
-                            System.out.println("get key" + i);
-                    });
-                    long duration2 = System.currentTimeMillis() - start2;
-                    if (j >= 0) {
-                        System.out.printf("Took %.3f seconds to perform %,d puts%n", duration2 / 1e3, noPutsAndGets);
-                        Assert.assertTrue("This should take 1 second but took " + duration2 / 1e3 + " seconds. ", duration2 < 1000);
-                    }*/
-            }
-        }
-    }
-    @Test
-    @Ignore("Waiting for merge")
-    public void test2MBEntries() throws Exception {
-
-        // server
-        try (final RemoteMapSupplier<String, String> remote = new
-                RemoteMapSupplier<>(String.class,
-                String.class,
-                BinaryWire::new, assetTree)) {
-
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < 50_000; i++) {
-                sb.append('x');
-            }
-
-            String value = sb.toString();
-            long time = System.currentTimeMillis();
-            final ConcurrentMap<String, String> map = remote.get();
-            for (int i = 0; i < 2_000; i++) {
-                map.put("largeEntry", value);
-            }
-
-            System.out.format("Time for 100MB %,dms%n", (System.currentTimeMillis() - time));
         }
     }
 }

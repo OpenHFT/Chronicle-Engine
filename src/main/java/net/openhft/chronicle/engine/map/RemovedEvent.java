@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
 import net.openhft.chronicle.wire.WireIn;
@@ -42,14 +43,14 @@ public class RemovedEvent<K, V> implements MapEvent<K, V> {
         this.oldValue = oldValue;
     }
 
-    @Override
-    public String assetName() {
-        return assetName;
-    }
-
     @NotNull
     public static <K, V> RemovedEvent<K, V> of(String assetName, K key, V value) {
         return new RemovedEvent<>(assetName, key, value);
+    }
+
+    @Override
+    public String assetName() {
+        return assetName;
     }
 
     @NotNull
@@ -93,8 +94,8 @@ public class RemovedEvent<K, V> implements MapEvent<K, V> {
                 .filter(o -> o instanceof RemovedEvent)
                 .map(o -> (RemovedEvent<K, V>) o)
                 .filter(e -> Objects.equals(assetName, e.assetName))
-                .filter(e -> Objects.equals(key, e.key))
-                .filter(e -> Objects.equals(oldValue, e.oldValue))
+                .filter(e -> BytesUtil.equals(key, e.key))
+                .filter(e -> BytesUtil.equals(oldValue, e.oldValue))
                 .isPresent();
     }
 

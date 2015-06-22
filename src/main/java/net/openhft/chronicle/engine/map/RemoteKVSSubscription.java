@@ -46,10 +46,16 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
         ObjectKVSSubscription<K, MV, V>,
         Closeable {
 
+    private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
     private final Map<Object, Long> subscribersToTid = new ConcurrentHashMap<>();
+    private long tid = -1;
 
     public RemoteKVSSubscription(RequestContext context, Asset asset) {
         super(asset.findView(TcpChannelHub.class), (long) 0, toSubscriptionUri(context));
+    }
+
+    private static String toSubscriptionUri(@NotNull final RequestContext context) {
+        return "/" + context.name() + "?view=subscription";
     }
 
     @Override
@@ -121,7 +127,6 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
         }
 
         hub.outBytesLock().lock();
-
         try {
             writeMetaDataForKnownTID(tid);
             hub.outWire().writeDocument(false, wireOut -> {
@@ -136,6 +141,15 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
 
     @Override
     public void registerSubscriber(RequestContext rc, Subscriber<MapEvent<K, V>> subscriber) {
+        registerSubscriber0(rc, subscriber);
+    }
+
+    @Override
+    public void registerKeySubscriber(RequestContext rc, Subscriber<K> subscriber) {
+        registerSubscriber0(rc, subscriber);
+    }
+
+    void registerSubscriber0(RequestContext rc, Subscriber subscriber) {
         final long startTime = System.currentTimeMillis();
 
         if (hub.outBytesLock().isHeldByCurrentThread())
@@ -182,7 +196,16 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
     }
 
     @Override
+    public void unregisterKeySubscriber(Subscriber<K> subscriber) {
+        unregisterSubscriber0(subscriber);
+    }
+
+    @Override
     public void unregisterSubscriber(Subscriber<MapEvent<K, V>> subscriber) {
+        unregisterSubscriber0(subscriber);
+    }
+
+    void unregisterSubscriber0(Subscriber subscriber) {
         Long tid = subscribersToTid.get(subscriber);
         if (tid == -1) {
             LOG.warn("There is subscription to unsubscribe");
@@ -200,13 +223,6 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
             hub.outBytesLock().unlock();
         }
     }
-
-    private static String toSubscriptionUri(@NotNull final RequestContext context) {
-        return "/" + context.name() + "?view=subscription";
-    }
-
-    private long tid = -1;
-    private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
 
     @Override
     public boolean needsPrevious() {

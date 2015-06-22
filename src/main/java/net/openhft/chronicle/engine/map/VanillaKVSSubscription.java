@@ -35,7 +35,7 @@ import static net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer.notif
 // todo review thread safety
 public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K, MV, V>, RawKVSSubscription<K, MV, V> {
     private final Set<TopicSubscriber<K, V>> topicSubscribers = new CopyOnWriteArraySet<>();
-    private final Set<Subscriber<KeyValueStore.Entry<K, V>>> subscribers = new CopyOnWriteArraySet<>();
+    private final Set<Subscriber<MapEvent<K, V>>> subscribers = new CopyOnWriteArraySet<>();
     private final Set<Subscriber<K>> keySubscribers = new CopyOnWriteArraySet<>();
     private final Set<EventConsumer<K, V>> downstream = new CopyOnWriteArraySet<>();
     private final Asset asset;
@@ -49,7 +49,7 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
     public VanillaKVSSubscription(Class viewType, Asset asset) {
         this.asset = asset;
         if (viewType != null)
-        asset.addView(viewType, this);
+            asset.addView(viewType, this);
     }
 
     @Override
@@ -190,6 +190,22 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
     }
 
     @Override
+    public void registerKeySubscriber(RequestContext rc, Subscriber<K> subscriber) {
+        Boolean bootstrap = rc.bootstrap();
+
+        keySubscribers.add(subscriber);
+        if (bootstrap != Boolean.FALSE && kvStore != null) {
+            try {
+                for (int i = 0; i < kvStore.segments(); i++)
+                    kvStore.keysFor(i, subscriber::onMessage);
+            } catch (InvalidSubscriberException e) {
+                keySubscribers.remove(subscriber);
+            }
+        }
+        hasSubscribers = true;
+    }
+
+    @Override
     public void registerTopicSubscriber(@NotNull RequestContext rc, @NotNull TopicSubscriber subscriber) {
         Boolean bootstrap = rc.bootstrap();
         topicSubscribers.add((TopicSubscriber<K, V>) subscriber);
@@ -216,10 +232,15 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
     }
 
     @Override
-    public void unregisterSubscriber(Subscriber subscriber) {
+    public void unregisterKeySubscriber(Subscriber<K> subscriber) {
+        keySubscribers.remove(subscriber);
+        updateHasSubscribers();
+    }
+
+    @Override
+    public void unregisterSubscriber(Subscriber<MapEvent<K, V>> subscriber) {
         subscribers.remove(subscriber);
         updateHasSubscribers();
-
     }
 
     @Override
@@ -229,6 +250,7 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
     }
 
     private void updateHasSubscribers() {
-        hasSubscribers = !topicSubscribers.isEmpty() && !subscribers.isEmpty() && !downstream.isEmpty();
+        hasSubscribers = !topicSubscribers.isEmpty() && !subscribers.isEmpty()
+                && !keySubscribers.isEmpty() && !downstream.isEmpty();
     }
 }

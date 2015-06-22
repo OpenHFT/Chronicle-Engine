@@ -1,6 +1,5 @@
 package net.openhft.chronicle.engine.server.internal;
 
-import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
@@ -30,29 +29,14 @@ import static net.openhft.chronicle.wire.WriteMarshallable.EMPTY;
  */
 public class SubscriptionHandlerProcessor {
 
+    private static final Logger LOG = LoggerFactory.getLogger(SubscriptionHandlerProcessor.class);
+    final StringBuilder eventName = new StringBuilder();
+    private final Map<Long, Object> tidToListener = new ConcurrentHashMap<>();
     private RequestContext requestContext;
     private Queue<Consumer<Wire>> publisher;
     private AssetTree assetTree;
-    final StringBuilder eventName = new StringBuilder();
-
-    private final Map<Long, Object> tidToListener = new ConcurrentHashMap<>();
-    private static final Logger LOG = LoggerFactory.getLogger(SubscriptionHandlerProcessor.class);
     private Wire outWire;
     private KVSSubscription subscription;
-
-    void process(final Wire inWire,
-                 final RequestContext requestContext,
-                 final Queue<Consumer<Wire>> publisher,
-                 final AssetTree assetTree, final long tid,
-                 final Wire outWire, final KVSSubscription subscription) {
-        this.outWire = outWire;
-        this.subscription = subscription;
-        this.requestContext = requestContext;
-        this.publisher = publisher;
-        this.assetTree = assetTree;
-        dataConsumer.accept(inWire, tid);
-    }
-
     private final BiConsumer<WireIn, Long> dataConsumer = new BiConsumer<WireIn, Long>() {
 
         @Override
@@ -159,34 +143,46 @@ public class SubscriptionHandlerProcessor {
         }
     };
 
+    void process(final Wire inWire,
+                 final RequestContext requestContext,
+                 final Queue<Consumer<Wire>> publisher,
+                 final AssetTree assetTree, final long tid,
+                 final Wire outWire, final KVSSubscription subscription) {
+        this.outWire = outWire;
+        this.subscription = subscription;
+        this.requestContext = requestContext;
+        this.publisher = publisher;
+        this.assetTree = assetTree;
+        dataConsumer.accept(inWire, tid);
+    }
+
     /**
      * write and exceptions and rolls back if no data was written
      */
     void writeData(@NotNull Consumer<WireOut> c) {
         outWire.writeDocument(false, out -> {
 
-            final long position = outWire.bytes().position();
+            final long position = outWire.bytes().writePosition();
             try {
 
                 c.accept(outWire);
             } catch (Exception exception) {
-                outWire.bytes().position(position);
+                outWire.bytes().writePosition(position);
                 outWire.writeEventName(() -> "exception").throwable(exception);
             }
 
             // write 'reply : {} ' if no data was sent
-            if (position == outWire.bytes().position()) {
+            if (position == outWire.bytes().writePosition()) {
                 outWire.writeEventName(reply).marshallable(EMPTY);
             }
         });
         if (YamlLogging.showServerWrites)
             try {
                 System.out.println("server-writes:\n" +
-                        Wires.fromSizePrefixedBlobs(outWire.bytes(), 0, outWire.bytes().position()));
+                        Wires.fromSizePrefixedBlobs(outWire.bytes(), 0, outWire.bytes().writePosition()));
             } catch (Exception e) {
-
                 System.out.println("server-writes:\n" +
-                        Bytes.toString(outWire.bytes(), 0, outWire.bytes().position()));
+                        outWire.bytes().toDebugString());
             }
     }
 

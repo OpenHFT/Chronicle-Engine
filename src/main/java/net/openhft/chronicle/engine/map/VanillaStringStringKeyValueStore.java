@@ -77,25 +77,6 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         return String.class;
     }
 
-    enum BytesStoreToString implements Function<BytesStore, String> {
-        BYTES_STORE_TO_STRING;
-
-        @Override
-        public String apply(BytesStore bs) {
-            return bs == null ? null : BytesUtil.to8bitString(bs);
-        }
-    }
-
-    enum StringValueReader implements ValueReader<BytesStore, String> {
-        BYTES_STORE_TO_STRING;
-
-        @NotNull
-        @Override
-        public String readFrom(BytesStore bs, String usingValue) {
-            return bs == null ? null : BytesUtil.to8bitString(bs);
-        }
-    }
-
     @NotNull
     @Override
     public ObjectKVSSubscription<String, StringBuilder, String> subscription(boolean createIfAbsent) {
@@ -108,7 +89,6 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         Bytes<ByteBuffer> bytes = b.valueBuffer;
         bytes.clear();
         bytes.append8bit(value);
-        bytes.flip();
         return kvStore.put(key, bytes);
     }
 
@@ -119,7 +99,6 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         Bytes<ByteBuffer> bytes = b.valueBuffer;
         bytes.clear();
         bytes.append(value);
-        bytes.flip();
         BytesStore retBytes = kvStore.getAndPut(key, bytes);
         return retBytes == null ? null : retBytes.toString();
     }
@@ -200,5 +179,24 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     @Override
     public void close() {
         kvStore.close();
+    }
+
+    enum BytesStoreToString implements Function<BytesStore, String> {
+        BYTES_STORE_TO_STRING;
+
+        @Override
+        public String apply(BytesStore bs) {
+            return bs == null ? null : BytesUtil.to8bitString(bs);
+        }
+    }
+
+    enum StringValueReader implements ValueReader<BytesStore, String> {
+        BYTES_STORE_TO_STRING;
+
+        @NotNull
+        @Override
+        public String readFrom(BytesStore bs, String usingValue) {
+            return bs == null ? null : BytesUtil.to8bitString(bs);
+        }
     }
 }

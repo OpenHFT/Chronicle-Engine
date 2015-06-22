@@ -21,7 +21,6 @@ import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
 import net.openhft.chronicle.engine.api.pubsub.Reference;
-import net.openhft.chronicle.engine.api.pubsub.Subscription;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
@@ -40,6 +39,18 @@ import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
  * Created by peter on 24/05/15.
  */
 public class RequestContext implements Cloneable {
+    static {
+        addAlias(MapView.class, "Map");
+        addAlias(EntrySetView.class, "EntrySet");
+        addAlias(KeySetView.class, "KeySet");
+        addAlias(ValuesCollection.class, "Values");
+
+        addAlias(Publisher.class, "Publisher, Pub");
+        addAlias(TopicPublisher.class, "TopicPublisher, TopicPub");
+        addAlias(ObjectKVSSubscription.class, "Subscription");
+        addAlias(Reference.class, "Reference, Ref");
+    }
+
     private String pathName;
     private String name;
     private Class viewType, type, type2;
@@ -51,23 +62,7 @@ public class RequestContext implements Cloneable {
             bootstrap = null;
     private double averageValueSize;
     private long entries;
-
     private Boolean recurse;
-
-    private static void addAlias(Class type, @NotNull String aliases) {
-        CLASS_ALIASES.addAlias(type, aliases);
-    }
-
-    static {
-        addAlias(MapView.class, "Map");
-        addAlias(EntrySetView.class, "EntrySet");
-        addAlias(KeySetView.class, "KeySet");
-        addAlias(ValuesCollection.class, "Values");
-        addAlias(ObjectKVSSubscription.class, "Subscription");
-        addAlias(Publisher.class, "Publisher, Pub");
-        addAlias(TopicPublisher.class, "TopicPublisher, TopicPub");
-        addAlias(Reference.class, "Reference, Ref");
-    }
 
     private RequestContext() {
     }
@@ -75,6 +70,10 @@ public class RequestContext implements Cloneable {
     public RequestContext(String pathName, String name) {
         this.pathName = pathName;
         this.name = name;
+    }
+
+    private static void addAlias(Class type, @NotNull String aliases) {
+        CLASS_ALIASES.addAlias(type, aliases);
     }
 
     @NotNull
@@ -95,8 +94,8 @@ public class RequestContext implements Cloneable {
         String fullName = queryPos >= 0 ? uri.substring(0, queryPos) : uri;
         String query = queryPos >= 0 ? uri.substring(queryPos + 1) : "";
         int lastForwardSlash = fullName.lastIndexOf('/');
-        if(lastForwardSlash >0 && fullName.length()==lastForwardSlash+1){
-            fullName=fullName.substring(0, fullName.length()-1);
+        if (lastForwardSlash > 0 && fullName.length() == lastForwardSlash + 1) {
+            fullName = fullName.substring(0, fullName.length() - 1);
             lastForwardSlash = fullName.lastIndexOf('/');
         }
         String pathName = lastForwardSlash >= 0 ? fullName.substring(0, lastForwardSlash) : "";
@@ -121,7 +120,7 @@ public class RequestContext implements Cloneable {
         parser.register(WireParser.DEFAULT, ValueIn.DISCARD);
         Bytes bytes = Bytes.from(queryString);
         QueryWire wire = new QueryWire(bytes);
-        while (bytes.remaining() > 0)
+        while (bytes.readRemaining() > 0)
             parser.parse(wire);
         return this;
     }
