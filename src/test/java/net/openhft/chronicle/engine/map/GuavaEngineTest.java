@@ -29,6 +29,7 @@ import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.MapClientTest.LocalMapSupplier;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
+import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.TextWire;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.runner.RunWith;
 import org.junit.runners.AllTests;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -49,18 +51,23 @@ import static com.google.common.collect.testing.features.MapFeature.*;
 public class GuavaEngineTest   {
 
     @NotNull
-    public static Test suite() {
-        AssetTree assetTree = new VanillaAssetTree().forTesting();
+    public static Test suite() throws IOException {
 
-/* TODO needs to close the server the machine will be overloaded.
-        TestSuite remoteMapTests = MapTestSuiteBuilder.using(new RemoteTestGenerator(assetTree))
-                .named("Chronicle RemoteEngine Guava tests")
+        MapTestSuiteBuilder using = MapTestSuiteBuilder.using(new RemoteTestGenerator(new
+                VanillaAssetTree().forTesting()));
+
+        TestSuite remoteMapTests = using.named("Chronicle RemoteEngine Guava tests")
                 .withFeatures(GENERAL_PURPOSE)
                 .withFeatures(CollectionSize.ANY)
                 .withFeatures(CollectionFeature.REMOVE_OPERATIONS)
                 .withFeatures(RESTRICTS_KEYS, RESTRICTS_VALUES)
-                .createTestSuite();
-*/
+                .withTearDown(() -> {
+                    try {
+                        ((RemoteTestGenerator) using.getSubjectGenerator()).close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }).createTestSuite();
 
         TestSuite localMapTests = MapTestSuiteBuilder.using(new LocalTestGenerator())
                 .named("Chronicle LocalEngine Guava tests")
@@ -70,8 +77,10 @@ public class GuavaEngineTest   {
                 .withFeatures(RESTRICTS_KEYS, RESTRICTS_VALUES)
                 .createTestSuite();
 
+
+
         TestSuite tests = new TestSuite();
-//        tests.addTest(remoteMapTests);
+        //  tests.addTest(remoteMapTests);
         tests.addTest(localMapTests);
         return tests;
     }
@@ -141,17 +150,29 @@ public class GuavaEngineTest   {
         }
     }
 
-    static class RemoteTestGenerator extends CHMTestGenerator {
+    static class RemoteTestGenerator extends CHMTestGenerator implements Closeable {
+        private final AssetTree remoteAssetTree;
         private final AssetTree assetTree;
 
-        public RemoteTestGenerator(AssetTree assetTree) {
+        public RemoteTestGenerator(AssetTree assetTree) throws IOException {
             this.assetTree = assetTree;
+            final ServerEndpoint serverEndpoint = new ServerEndpoint(assetTree);
+            int serverPort = serverEndpoint.getPort();
+
+            final String hostname = "localhost";
+            this.remoteAssetTree = ((VanillaAssetTree) assetTree).forRemoteAccess(hostname, serverPort);
         }
 
         @NotNull
         @Override
         Map<CharSequence, CharSequence> newMap() {
-            return newStrStrRemoteMap(assetTree);
+            return newStrStrRemoteMap(remoteAssetTree);
+        }
+
+        @Override
+        public void close() throws IOException {
+            assetTree.close();
+            remoteAssetTree.close();
         }
     }
 

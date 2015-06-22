@@ -380,7 +380,8 @@ public class MapWireHandler<K, V> {
             this.map = map;
             charSequenceValue = map instanceof ChronicleMap &&
                     CharSequence.class == ((ChronicleMap) map).valueClass();
-            assert !(map instanceof RemoteKeyValueStore) : "the server should not sure a remove " +
+            assert !(map instanceof RemoteKeyValueStore) : "the server should not be a " +
+                    "remove " +
                     "map";
             this.tid = tid;
             dataConsumer.accept(in, tid);
