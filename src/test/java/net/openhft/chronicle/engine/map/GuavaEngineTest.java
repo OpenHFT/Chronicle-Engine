@@ -51,7 +51,7 @@ public class GuavaEngineTest   {
 
     @NotNull
     public static Test suite() {
-        final AtomicReference<AssetTree> assetTree = new AtomicReference<>(new VanillaAssetTree().forTesting());
+/*        final AtomicReference<AssetTree> assetTree = new AtomicReference<>();
 
         TestSuite remoteMapTests = MapTestSuiteBuilder.using(new RemoteTestGenerator(assetTree))
                 .named("Chronicle RemoteEngine Guava tests")
@@ -59,11 +59,14 @@ public class GuavaEngineTest   {
                 .withFeatures(CollectionSize.ANY)
                 .withFeatures(CollectionFeature.REMOVE_OPERATIONS)
                 .withFeatures(RESTRICTS_KEYS, RESTRICTS_VALUES)
+                .withSetUp(() -> {
+                    assetTree.set(new VanillaAssetTree());
+                })
                 .withTearDown(() -> {
                     assetTree.get().close();
                     assetTree.set(null);
                 })
-                .createTestSuite();
+                .createTestSuite();*/
 
         TestSuite localMapTests = MapTestSuiteBuilder.using(new LocalTestGenerator())
                 .named("Chronicle LocalEngine Guava tests")
