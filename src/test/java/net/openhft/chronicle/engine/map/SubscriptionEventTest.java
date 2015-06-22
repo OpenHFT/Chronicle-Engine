@@ -228,7 +228,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
         waitFor(subscriber);
     }
 
-    @Test
+/*    @Test
     @Ignore("TODO")
     public void testTopologicalEventsMock() throws InvalidSubscriberException {
 
@@ -266,7 +266,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
             }
         });
         waitFor(subscriber);
-    }
+    }*/
 
     static void waitFor(Object subscriber) {
         for (int i = 1; i < 10; i++) {

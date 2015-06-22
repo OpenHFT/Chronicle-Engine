@@ -449,7 +449,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
                             "sends:\n\n" +
                             "```yaml\n" +
                             ((wire instanceof TextWire) ?
-                                    Wires.fromSizePrefixedBlobs(bytes) :
+                                    Wires.fromSizePrefixedBlobs(bytes, bytes.writePosition(),bytes.writeLimit()) :
                                     BytesUtil.toHexString(bytes, bytes.writePosition(), bytes.writeRemaining())) +
                             "```");
                     YamlLogging.title = "";
@@ -681,27 +681,30 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
         private void processData(final long tid, final boolean isReady, final int
                 header, final int messageSize, Wire inWire) throws IOException {
-            Object o = isReady ? map.remove(tid) : map.get(tid);
-            if (o == null) {
-                if (omap != null && omap.containsValue(tid)) {
-                    LOG.warn("Found tid in the old map tid=" + tid);
-                    o = omap.get(tid);
-                } else {
-                    Jvm.pause(10);
-                    o = isReady ? map.remove(tid) : map.get(tid);
-                    if (o != null)
-                        LOG.warn("Found tid after a pause tid=" + tid);
+
+            long startTime = 0;
+            Object o;
+
+            for (; ; ) {
+                o = isReady ? map.remove(tid) : map.get(tid);
+                if (o != null)
+                    break;
+
+                // this can occur if the server returns the response before we have started to
+                // listen to it
+
+                if (startTime == 0)
+                    startTime = System.currentTimeMillis();
+
+                if (System.currentTimeMillis() - startTime > 1000) {
+                    LOG.error("unable to respond to tid=" + tid);
+                    blockingRead(inWire, messageSize);
+                    return;
                 }
-            } else {
-                if (omap != null) {
-                    omap.put(tid, o);
-                }
+
             }
 
-            if (o == null) {
-                LOG.info("unable to respond to tid=" + tid);
-                return;
-            }
+
 
             // for async
             if (o instanceof Consumer) {
