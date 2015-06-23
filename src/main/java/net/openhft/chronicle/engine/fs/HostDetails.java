@@ -16,10 +16,16 @@
 
 package net.openhft.chronicle.engine.fs;
 
-import net.openhft.chronicle.engine.map.ReplicationHub;
+import net.openhft.chronicle.engine.api.session.SessionProvider;
+import net.openhft.chronicle.engine.session.VanillaSessionProvider;
+import net.openhft.chronicle.network.VanillaSessionDetails;
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by peter.lawrey on 17/06/2015.
@@ -27,9 +33,10 @@ import net.openhft.chronicle.wire.WireOut;
 public class HostDetails implements Marshallable {
     public int hostId;
     int tcpBufferSize;
-    String hostname;
-    int port;
+    public String hostname;
+    public int port;
     int timeoutMs;
+
 
     @Override
     public void readMarshallable(WireIn wire) throws IllegalStateException {
@@ -49,9 +56,49 @@ public class HostDetails implements Marshallable {
                 .write(() -> "timeoutMs").int32(timeoutMs);
     }
 
-    public ReplicationHub acquireReplicationHub() {
-//        asset.acquireView
-//                (requestContext(context.name() + "&" + address).viewType(ReplicationHub.class));
-        throw new UnsupportedOperationException("todo");
+    public TcpChannelHub acquireTcpChannelHub() {
+        final HostPort key = new HostPort(hostname, port);
+
+        return tcpChannelHubs.computeIfAbsent(key, hostPort ->
+                new TcpChannelHub(sessionProvider(), hostPort.host, hostPort.port));
+    }
+
+    private SessionProvider sessionProvider() {
+        SessionProvider sessionProvider = new VanillaSessionProvider();
+        VanillaSessionDetails sessionDetails = new VanillaSessionDetails();
+        sessionDetails.setUserId(System.getProperty("user.name"));
+        sessionProvider.set(sessionDetails);
+        return sessionProvider;
+    }
+
+    private static Map<HostPort, TcpChannelHub> tcpChannelHubs = new ConcurrentHashMap<>();
+
+    class HostPort {
+        String host;
+        int port;
+
+        HostPort(final String host, final int port) {
+            this.host = host;
+            this.port = port;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            final HostPort hostPort = (HostPort) o;
+
+            if (port != hostPort.port) return false;
+            return host.equals(hostPort.host);
+
+        }
+
+        @Override
+        public int hashCode() {
+            int result = host.hashCode();
+            result = 31 * result + port;
+            return result;
+        }
     }
 }

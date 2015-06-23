@@ -35,6 +35,7 @@ import net.openhft.chronicle.hash.replication.EngineReplicationLangBytesConsumer
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.MapEventListener;
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -51,6 +52,7 @@ import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplicat
 
 
 public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValueStore<K, MV, V>, Closeable {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ChronicleMapKeyValueStore.class);
     private final ChronicleMap<K, V> chronicleMap;
     private final ObjectKVSSubscription<K, MV, V> subscriptions;
@@ -59,27 +61,21 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
     private final String assetFullName;
 
     public ChronicleMapKeyValueStore(@NotNull RequestContext context, Asset asset) {
-        this(context.keyType(), context.valueType(), context.basePath(), context.name(),
-                "cluster", context.putReturnsNull(), context.removeReturnsNull(), context.getAverageValueSize(),
-                context.getEntries(), asset, asset.acquireView(ObjectKVSSubscription.class, context));
-    }
-
-    public ChronicleMapKeyValueStore(Class<K> keyType, Class<V> valueType, String basePath, String name,
-                                     String cluster,
-                                     Boolean putReturnsNull, Boolean removeReturnsNull, double averageValueSize,
-                                     long maxEntries, Asset asset, ObjectKVSSubscription subscriptions) {
+        String basePath = context.basePath();
+        double averageValueSize = context.getAverageValueSize();
+        long maxEntries = context.getEntries();
         this.asset = asset;
         this.assetFullName = asset.fullName();
-        this.subscriptions = subscriptions;
+        this.subscriptions = asset.acquireView(ObjectKVSSubscription.class, context);
         this.subscriptions.setKvStore(this);
 
         PublishingOperations publishingOperations = new PublishingOperations();
 
-        ChronicleMapBuilder<K, V> builder = ChronicleMapBuilder.of(keyType, valueType);
+        ChronicleMapBuilder<K, V> builder = ChronicleMapBuilder.of(context.keyType(), context.valueType());
         HostIdentifier hostIdentifier = null;
-        EngineReplication engineReplicator = null;
+        EngineReplication engineReplicator1 = null;
         try {
-            engineReplicator = asset.acquireView(EngineReplication.class, RequestContext.requestContext());
+            engineReplicator1 = asset.acquireView(EngineReplication.class, RequestContext.requestContext());
 
             final EngineReplicationLangBytesConsumer langBytesConsumer = asset.acquireView
                     (EngineReplicationLangBytesConsumer.class, null);
@@ -94,12 +90,12 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
                 LOGGER.debug("replication not enabled " + anfe.getMessage());
         }
 
-        this.engineReplicator = engineReplicator;
+        this.engineReplicator = engineReplicator1;
         builder.eventListener(publishingOperations);
 
-        if (putReturnsNull != Boolean.FALSE)
+        if (context.putReturnsNull() != Boolean.FALSE)
             builder.putReturnsNull(true);
-        if (removeReturnsNull != Boolean.FALSE)
+        if (context.removeReturnsNull() != Boolean.FALSE)
             builder.removeReturnsNull(true);
         if (averageValueSize > 0)
             builder.averageValueSize(averageValueSize);
@@ -109,7 +105,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
         if (basePath == null)
             builder.create();
         else {
-            String pathname = basePath + "/" + name;
+            String pathname = basePath + "/" + context.name();
             new File(basePath).mkdirs();
             try {
                 builder.createPersistedTo(new File(pathname));
@@ -124,20 +120,23 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
 
         if (hostIdentifier != null) {
             Clusters clusters = asset.findView(Clusters.class);
-            Map<String, HostDetails> hdMap = clusters.get(cluster);
+            Map<String, HostDetails> hdMap = clusters.get("cluster");
             int hostId = hostIdentifier.hostId();
             for (HostDetails hostDetails : hdMap.values()) {
                 if (hostDetails.hostId == hostId)
                     continue;
-               final ReplicationHub replicationHub = asset.findView(ReplicationHub.class);
+
+                TcpChannelHub tcpChannelHub = hostDetails.acquireTcpChannelHub();
+                ReplicationHub replicationHub = new ReplicationHub(context, tcpChannelHub);
 
                 try {
-                    replicationHub.bootstrap(engineReplicator, hostIdentifier.hostId());
+                    replicationHub.bootstrap(engineReplicator1, hostDetails.hostId);
                 } catch (InterruptedException e) {
                     throw new AssertionError(e);
                 }
             }
         }
+
     }
 
     @NotNull

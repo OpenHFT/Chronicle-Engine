@@ -19,7 +19,6 @@ package net.openhft.chronicle.engine.fs;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.tree.*;
 import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
-import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
 import net.openhft.chronicle.engine.tree.VanillaAsset;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
@@ -77,12 +76,19 @@ public class ChronicleMapGroupFS implements Marshallable, MountPoint, LeafViewFa
         asset.addLeafRule(KeyValueStore.class, "use Chronicle Map", this);
     }
 
+    // todo check this
     @NotNull
+    @Override
+    public KeyValueStore create(final RequestContext context, final Asset asset) throws AssetNotFoundException {
+        return new ChronicleMapKeyValueStore(context, asset);
+    }
+
+    /*@NotNull
     @Override
     public KeyValueStore create(RequestContext context, Asset asset) throws AssetNotFoundException {
         return new ChronicleMapKeyValueStore(context.keyType(), context.valueType(),
                 baseDir + "/" + spec, context.name(), cluster,
                 putReturnsNull, removeReturnsNull, averageValueSize,
-                maxEntries, asset, asset.acquireView(ObjectKVSSubscription.class, context));
-    }
+                maxEntries, asset, asset.acquireView(ObjectKVSSubscription.class, context));*/
+
 }

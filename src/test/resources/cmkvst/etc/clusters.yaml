@@ -3,21 +3,21 @@ cluster: {
      hostId: 1
      tcpBufferSize: 65536,
      hostname: localhost,
-     port: 0,
+     port: 8080,
      timeoutMs: 1000,
   },
   host2: {
      hostId: 2
      tcpBufferSize: 65536,
      hostname: localhost,
-     port: 0,
+     port: 8081,
      timeoutMs: 1000,
   },
   host3: {
      hostId: 3
      tcpBufferSize: 65536,
      hostname: localhost,
-     port: 0,
+     port: 8082,
      timeoutMs: 1000,
   }
 }
@@ -26,21 +26,21 @@ clusterTwo: {
      hostId: 1
      tcpBufferSize: 65536,
      hostname: localhost,
-     port: 0,
+     port: 8083,
      timeoutMs: 1000,
   },
   host2: {
      hostId: 2
      tcpBufferSize: 65536,
      hostname: localhost,
-     port: 0,
+     port: 8084,
      timeoutMs: 1000,
   },
   host3: {
      hostId: 3
      tcpBufferSize: 65536,
      hostname: localhost,
-     port: 0,
+     port: 8085,
      timeoutMs: 1000,
   }
 }

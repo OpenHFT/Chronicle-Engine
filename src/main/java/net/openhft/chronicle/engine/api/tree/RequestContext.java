@@ -322,10 +322,6 @@ public class RequestContext implements Cloneable {
         return this;
     }
 
-    byte[] remoteIdentifier() {
-        throw new UnsupportedOperationException("todo");
-        // return this.remoteIdentifiers;
-    }
 
     public RequestContext clone() {
         try {
