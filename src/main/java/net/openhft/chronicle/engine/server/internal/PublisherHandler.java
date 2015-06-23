@@ -15,8 +15,8 @@ import static net.openhft.chronicle.engine.server.internal.MapWireHandler.nullCh
 import static net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId.publish;
 import static net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId.registerTopicSubscriber;
 import static net.openhft.chronicle.engine.server.internal.PublisherHandler.Params.message;
-import static net.openhft.chronicle.wire.CoreFields.reply;
-import static net.openhft.chronicle.wire.CoreFields.tid;
+import static net.openhft.chronicle.network.connection.CoreFields.reply;
+import static net.openhft.chronicle.network.connection.CoreFields.tid;
 
 /**
  * Created by Rob Austin

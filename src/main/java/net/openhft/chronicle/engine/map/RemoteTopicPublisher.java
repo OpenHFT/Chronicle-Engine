@@ -7,20 +7,19 @@ import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
-import net.openhft.chronicle.engine.server.internal.PublisherHandler;
 import net.openhft.chronicle.engine.server.internal.TopicPublisherHandler.EventId;
 import net.openhft.chronicle.engine.server.internal.TopicPublisherHandler.Params;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
+import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
-import net.openhft.chronicle.wire.CoreFields;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId.registerTopicSubscriber;
-import static net.openhft.chronicle.engine.server.internal.TopicPublisherHandler.EventId.*;
-import static net.openhft.chronicle.wire.CoreFields.reply;
+import static net.openhft.chronicle.engine.server.internal.TopicPublisherHandler.EventId.onEndOfSubscription;
+import static net.openhft.chronicle.engine.server.internal.TopicPublisherHandler.EventId.publish;
 
 /**
  * Created by Rob Austin
