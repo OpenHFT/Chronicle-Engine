@@ -17,10 +17,13 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.engine.api.EngineReplication;
+import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
+import net.openhft.chronicle.engine.api.pubsub.Replication;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
@@ -33,6 +36,7 @@ import net.openhft.chronicle.engine.collection.CollectionWireHandler;
 import net.openhft.chronicle.engine.collection.CollectionWireHandlerProcessor;
 import net.openhft.chronicle.engine.map.KVSSubscription;
 import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
+import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.network.WireTcpHandler;
 import net.openhft.chronicle.network.api.session.SessionDetailsProvider;
 import net.openhft.chronicle.network.connection.CoreFields;
@@ -78,6 +82,7 @@ public class EngineWireHandler extends WireTcpHandler {
     private final SubscriptionHandlerProcessor subscriptionHandler;
     private final TopicPublisherHandler topicPublisherHandler;
     private final PublisherHandler publisherHandler;
+    private final ReplicationHandler replicationHandler;
 
     @NotNull
     private final AssetTree assetTree;
@@ -94,6 +99,8 @@ public class EngineWireHandler extends WireTcpHandler {
     private SessionProvider sessionProvider;
     private Queue<Consumer<Wire>> publisher = new LinkedTransferQueue<>();
     private long tid;
+    private HostIdentifier hostIdentifier;
+    private Asset mapView;
 
     public EngineWireHandler(@NotNull final Function<Bytes, Wire> byteToWire,
                              @NotNull final AssetTree assetTree) {
@@ -111,6 +118,7 @@ public class EngineWireHandler extends WireTcpHandler {
         this.subscriptionHandler = new SubscriptionHandlerProcessor();
         this.topicPublisherHandler = new TopicPublisherHandler();
         this.publisherHandler = new PublisherHandler();
+        this.replicationHandler = new ReplicationHandler();
     }
 
     protected void publish(Wire out) {
@@ -146,6 +154,10 @@ public class EngineWireHandler extends WireTcpHandler {
 
                     final Asset asset = this.assetTree.acquireAsset(viewType, requestContext);
                     view = asset.acquireView(requestContext);
+
+                    // todo improve this
+                    hostIdentifier = asset.findView(HostIdentifier.class);
+                    mapView = this.assetTree.acquireAsset(MapView.class, requestContext);
 
                     requestContext.keyType();
 
@@ -269,13 +281,14 @@ public class EngineWireHandler extends WireTcpHandler {
                         return;
                     }
 
-                    // todo
-                 /*   if (viewType ==  RawKVSSubscription.class) {
-                        rawKVSSubscription.process(in,
-                                requestContext, publisher, assetTree, tid,
-                                outWire, (KVSSubscription) view);
+                    if (viewType == Replication.class) {
+
+                        replicationHandler.process(in,
+                                publisher, tid, outWire,
+                                (EngineReplication) view, hostIdentifier,
+                                (Consumer<ReplicationEntry>) ((MapView) view).underlying());
                         return;
-                    }*/
+                    }
 
                 }
 

@@ -74,7 +74,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
     private RequestContext requestContext;
     private Queue<Consumer<Wire>> publisher;
     private AssetTree assetTree;
-    private HostIdentifier hostId;
+
     @Nullable
     private Wire inWire = null;
     @Nullable
@@ -108,51 +108,11 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                     return;
                 }
 
-                // receives replication events
-                if (replicationEvent.contentEquals(eventName)) {
-                    map.apply(wireIn.read(Params.entry).typedMarshallable());
-                    return;
-                }
+
 
                 outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
 
                 writeData(out -> {
-
-                    if (bootstap.contentEquals(eventName)) {
-
-                        final EngineReplication replication = assetTree.root()
-                                .acquireView(EngineReplication.class, requestContext);
-
-                        // receive bootstrap
-                        final Bootstrap inBootstrap = wireIn.read(bootstap).typedMarshallable();
-                        final byte id = inBootstrap.identifier();
-                        final ModificationIterator mi = replication.acquireModificationIterator(id);
-
-                        // sends replication events back to the remote client
-                        mi.setModificationNotifier(() -> {
-                            try {
-                                mi.forEach(e -> publisher.add(publish -> {
-
-                                    publish.writeDocument(true,
-                                            wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
-
-                                    publish.writeDocument(false,
-                                            wire -> wire.write(reply).typedMarshallable(null));
-
-                                }));
-                            } catch (InterruptedException e) {
-                                Jvm.rethrow(e);
-                            }
-
-                        });
-
-                        // send bootstrap
-                        final Bootstrap outBootstrap = new Bootstrap();
-                        outBootstrap.identifier(hostId.hostId());
-                        outBootstrap.lastUpdatedTime(replication.lastModificationTime(id));
-                        outWire.write(bootstap).typedMarshallable(outBootstrap);
-                        return;
-                    }
 
                     if (clear.contentEquals(eventName)) {
                         map.clear();
@@ -190,10 +150,6 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                         return;
                     }
 
-                    if (identifier.contentEquals(eventName)) {
-                        outWire.writeEventName(reply).int8(hostId.hostId());
-                        return;
-                    }
 
                     if (keySet.contentEquals(eventName) ||
                             values.contentEquals(eventName) ||
@@ -371,11 +327,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
 
         setOutWire(outWire);
 
-        try {
-            this.hostId = assetTree.root().acquireView(HostIdentifier.class, requestContext);
-        } catch (AssetNotFoundException e) {
-            this.hostId = null;
-        }
+
 
         try {
             this.inWire = in;

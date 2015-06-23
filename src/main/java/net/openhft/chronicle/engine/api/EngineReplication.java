@@ -17,6 +17,7 @@
 package net.openhft.chronicle.engine.api;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.engine.api.pubsub.Replication;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
@@ -28,12 +29,7 @@ import java.util.function.Consumer;
 /**
  * @author Rob Austin.
  */
-public interface EngineReplication extends Closeable {
-
-    /**
-     * removes or puts the entry into the map
-     */
-    void applyReplication(@NotNull ReplicationEntry replicatedEntry);
+public interface EngineReplication extends Closeable, Replication  {
 
 
     /**

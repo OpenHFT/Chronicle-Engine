@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
@@ -176,11 +177,6 @@ public class AbstractKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> 
     }
 
     @Override
-    public void apply(@NotNull final ReplicationEntry entry) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
     public Iterator<K> keySetIterator() {
         return kvStore.keySetIterator();
     }
@@ -191,5 +187,10 @@ public class AbstractKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> 
 
     public Class<V> valueType() {
         return valueType;
+    }
+
+    @Override
+    public void accept(final ReplicationEntry replicationEntry) {
+        throw new UnsupportedOperationException("todo");
     }
 }

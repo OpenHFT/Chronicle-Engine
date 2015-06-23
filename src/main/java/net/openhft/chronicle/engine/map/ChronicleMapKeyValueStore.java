@@ -45,7 +45,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.Executor;
 
 import static net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer.notifyEachEvent;
 import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplication.builder;
@@ -130,12 +129,10 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
             for (HostDetails hostDetails : hdMap.values()) {
                 if (hostDetails.hostId == hostId)
                     continue;
-                ReplicationHub replicationHub = hostDetails.acquireReplicationHub();
+               final ReplicationHub replicationHub = asset.findView(ReplicationHub.class);
 
-                // todo
-                Executor eventLoop = null;
                 try {
-                    replicationHub.bootstrap(engineReplicator, eventLoop, hostIdentifier.hostId());
+                    replicationHub.bootstrap(engineReplicator, hostIdentifier.hostId());
                 } catch (InterruptedException e) {
                     throw new AssertionError(e);
                 }
@@ -210,11 +207,6 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
     }
 
     @Override
-    public void apply(@NotNull final ReplicationEntry entry) {
-        engineReplicator.applyReplication(entry);
-    }
-
-    @Override
     public Asset asset() {
         return asset;
     }
@@ -228,6 +220,11 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValue
     @Override
     public void close() {
         chronicleMap.close();
+    }
+
+    @Override
+    public void accept(final ReplicationEntry replicationEntry) {
+        engineReplicator.applyReplication(replicationEntry);
     }
 
     class PublishingOperations extends MapEventListener<K, V> {

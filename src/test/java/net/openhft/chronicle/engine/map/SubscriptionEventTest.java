@@ -166,7 +166,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
         subscriber.onMessage(AddedAssetEvent.of("/group", NAME));
         subscriber.onMessage(AddedAssetEvent.of("/group", NAME + 2));
         subscriber.onMessage(RemovedAssetEvent.of("/group", NAME));
-        subscriber.onEndOfSubscription();
+    //    subscriber.onEndOfSubscription();
         replay(subscriber);
 
         yamlLoggger(() -> {

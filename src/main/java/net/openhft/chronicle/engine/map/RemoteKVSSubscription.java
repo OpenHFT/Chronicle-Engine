@@ -77,7 +77,6 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
                     wireOut.writeEventName(registerTopicSubscriber).marshallable(m -> {
                         m.write(() -> "keyType").typeLiteral(kClass);
                         m.write(() -> "valueType").typeLiteral(vClass);
-
                     }));
             hub.asyncReadSocket(tid, w -> w.readDocument(null, d -> {
                 ValueIn valueIn = d.read(reply);
