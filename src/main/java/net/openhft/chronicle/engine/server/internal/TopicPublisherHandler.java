@@ -49,37 +49,42 @@ public class TopicPublisherHandler<T, M> extends AbstractHandler {
                         publisher.add(publish -> {
                             publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
                                     (inputTid));
-                            publish.writeNotReadyDocument(false, wire -> wire.write(reply)
+                            publish.writeNotReadyDocument(false, wire -> wire.writeEventName(reply)
                                     .marshallable(m -> {
                                         m.write(() -> "topic").object(topic);
                                         m.write(() -> "message").object(message);
                                     }));
                         });
                     }
+
+                    public void onEndOfSubscription() {
+                        publisher.add(publish -> {
+                            publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
+                                    (inputTid));
+                            publish.writeNotReadyDocument(false, wire -> wire.writeEventName
+                                    (EventId.onEndOfSubscription).text(""));
+
+                        });
+                    }
+
                 };
 
                 valueIn.marshallable(m -> view.registerTopicSubscriber(listener));
                 return;
             }
 
-            outWire.writeDocument(true, wire -> outWire.writeEventName(tid).int64(inputTid));
+            if (publish.contentEquals(eventName)) {
 
-            writeData(out -> {
+                valueIn.marshallable(wire -> {
+                    final Params[] params = publish.params();
+                    final T topic = wireToT.apply(wire.read(params[0]));
+                    final M message = wireToM.apply(wire.read(params[1]));
+                    nullCheck(topic);
+                    nullCheck(message);
+                    view.publish(topic, message);
+                });
 
-                if (publish.contentEquals(eventName)) {
-
-                    valueIn.marshallable(wire -> {
-                        final Params[] params = publish.params();
-                        final T topic = wireToT.apply(wire.read(params[0]));
-                        final M message = wireToM.apply(wire.read(params[1]));
-                        nullCheck(topic);
-                        nullCheck(message);
-                        view.publish(topic, message);
-                    });
-
-                }
-
-            });
+            }
         }
     };
 
@@ -97,7 +102,6 @@ public class TopicPublisherHandler<T, M> extends AbstractHandler {
         this.wireToT = wireAdapter.wireToKey();
         this.wireToM = wireAdapter.wireToValue();
         dataConsumer.accept(inWire, tid);
-
     }
 
     public enum Params implements WireKey {
@@ -106,7 +110,8 @@ public class TopicPublisherHandler<T, M> extends AbstractHandler {
     }
 
     public enum EventId implements ParameterizeWireKey {
-        publish,
+        publish(topic, message),
+        onEndOfSubscription,
         registerTopicSubscriber(topic, message);
 
         private final WireKey[] params;

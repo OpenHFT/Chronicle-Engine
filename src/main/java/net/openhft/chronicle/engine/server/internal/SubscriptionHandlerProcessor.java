@@ -62,6 +62,16 @@ public class SubscriptionHandlerProcessor extends AbstractHandler {
                                     }));
                         });
                     }
+
+                    public void onEndOfSubscription() {
+                        publisher.add(publish -> {
+                            publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
+                                    (inputTid));
+                            publish.writeNotReadyDocument(false, wire -> wire.writeEventName
+                                    (EventId.onEndOfSubscription).text(""));
+
+                        });
+                    }
                 };
 
                 valueIn.marshallable(m -> {
@@ -165,7 +175,8 @@ public class SubscriptionHandlerProcessor extends AbstractHandler {
         unregisterTopicSubscriber,
         entrySubscriberCount,
         topicSubscriberCount,
-        keySubscriberCount;
+        keySubscriberCount,
+        onEndOfSubscription;
 
         private final WireKey[] params;
 
