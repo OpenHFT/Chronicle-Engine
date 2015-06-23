@@ -52,7 +52,7 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
 
     private static String toUri(final RequestContext context) {
         final StringBuilder uri = new StringBuilder("/" + context.name()
-                + "?view=" + "map");
+                + "?view=" + "Replication");
 
         if (context.keyType() != String.class)
             uri.append("&keyType=").append(context.keyType().getName());

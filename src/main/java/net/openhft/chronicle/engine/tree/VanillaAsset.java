@@ -86,6 +86,8 @@ public class VanillaAsset implements Asset, Closeable {
     public void standardStack() {
 
         addWrappingRule(Reference.class, LAST + "reference", VanillaReference::new, MapView.class);
+        addWrappingRule(Replication.class, LAST + "replication", VanillaReplication::new, MapView
+                .class);
         addWrappingRule(Publisher.class, LAST + "publisher", VanillaReference::new, MapView.class);
         addWrappingRule(EntrySetView.class, LAST + " entrySet", VanillaEntrySetView::new, MapView.class);
         addWrappingRule(KeySetView.class, LAST + " keySet", VanillaKeySetView::new, MapView.class);

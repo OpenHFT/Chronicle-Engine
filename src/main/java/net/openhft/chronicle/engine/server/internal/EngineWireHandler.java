@@ -17,8 +17,6 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.engine.api.EngineReplication;
-import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -101,6 +99,7 @@ public class EngineWireHandler extends WireTcpHandler {
     private long tid;
     private HostIdentifier hostIdentifier;
     private Asset mapView;
+    private Asset asset;
 
     public EngineWireHandler(@NotNull final Function<Bytes, Wire> byteToWire,
                              @NotNull final AssetTree assetTree) {
@@ -152,11 +151,11 @@ public class EngineWireHandler extends WireTcpHandler {
                     requestContext = RequestContext.requestContext(cspText);
                     viewType = requestContext.viewType();
 
-                    final Asset asset = this.assetTree.acquireAsset(viewType, requestContext);
+                    asset = this.assetTree.acquireAsset(viewType, requestContext);
                     view = asset.acquireView(requestContext);
 
-                    // todo improve this
-                    hostIdentifier = asset.findView(HostIdentifier.class);
+
+
                     mapView = this.assetTree.acquireAsset(MapView.class, requestContext);
 
                     requestContext.keyType();
@@ -168,7 +167,8 @@ public class EngineWireHandler extends WireTcpHandler {
                             viewType == ObjectKVSSubscription.class ||
                             viewType == ObjectKVSSubscription.class ||
                             viewType == TopicPublisher.class ||
-                            viewType == Publisher.class) {
+                            viewType == Publisher.class ||
+                            viewType == Replication.class) {
 
                         // default to string type if not provided
                         final Class type = requestContext.type() == null ? String.class
@@ -282,11 +282,11 @@ public class EngineWireHandler extends WireTcpHandler {
                     }
 
                     if (viewType == Replication.class) {
-
+                        hostIdentifier = asset.acquireView(HostIdentifier.class, RequestContext.requestContext());
                         replicationHandler.process(in,
                                 publisher, tid, outWire,
-                                (EngineReplication) view, hostIdentifier,
-                                (Consumer<ReplicationEntry>) ((MapView) view).underlying());
+                                hostIdentifier,
+                                (Replication)view);
                         return;
                     }
 

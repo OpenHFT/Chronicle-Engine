@@ -48,10 +48,14 @@ public class Bootstrap implements Marshallable {
     @Override
     public void writeMarshallable(final WireOut wire) {
         wire.write(() -> "id").int8(identifier);
+        wire.write(() -> "lastUpdatedTime").int64(lastUpdatedTime);
+
     }
 
     @Override
     public void readMarshallable(final WireIn wire) throws IllegalStateException {
-        wire.read(() -> "id").int8();
+        identifier = wire.read(() -> "id").int8();
+        lastUpdatedTime = wire.read(() -> "lastUpdatedTime").int64();
     }
 }
+

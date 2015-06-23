@@ -2,7 +2,7 @@ package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.EngineReplication;
-import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
+import net.openhft.chronicle.engine.api.pubsub.Replication;
 import net.openhft.chronicle.engine.map.replication.Bootstrap;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.wire.*;
@@ -14,6 +14,7 @@ import java.util.function.Consumer;
 
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.bootstap;
 import static net.openhft.chronicle.engine.server.internal.PublisherHandler.Params.message;
+import static net.openhft.chronicle.engine.server.internal.ReplicationHandler.EventId.*;
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
 
 /**
@@ -21,22 +22,21 @@ import static net.openhft.chronicle.network.connection.CoreFields.reply;
  */
 public class ReplicationHandler<E> extends AbstractHandler {
     private final StringBuilder eventName = new StringBuilder();
-    private EngineReplication replication;
+    private Replication replication;
     private Queue<Consumer<Wire>> publisher;
 
     private HostIdentifier hostId;
     private long tid;
-    private Consumer<ReplicationEntry> consumer;
+
 
     void process(final Wire inWire,
                  final Queue<Consumer<Wire>> publisher,
                  final long tid,
                  final Wire outWire,
-                 EngineReplication replication,
                  HostIdentifier hostId,
-                 Consumer<ReplicationEntry> consumer) {
+                 Replication replication) {
         setOutWire(outWire);
-        this.consumer = consumer;
+
         this.hostId = hostId;
         this.publisher = publisher;
         this.replication = replication;
@@ -54,7 +54,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
         onEndOfSubscription,
         apply,
         replicationEvent,
-        registerTopicSubscriber(message);
+        identifier;
 
         private final WireKey[] params;
 
@@ -80,16 +80,21 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
             writeData(out -> {
 
+                if (identifier.contentEquals(eventName)) {
+                    outWire.writeEventName(reply).int8(hostId.hostId());
+                    return;
+                }
+
                 // receives replication events
-                if (EventId.replicationEvent.contentEquals(eventName)) {
-                    consumer.accept(inWire.read(Params.entry).typedMarshallable());
+                if (replicationEvent.contentEquals(eventName)) {
+                    replication.applyReplication(inWire.read(Params.entry).typedMarshallable());
                     return;
                 }
 
                 if (bootstap.contentEquals(eventName)) {
 
                     // receive bootstrap
-                    final Bootstrap inBootstrap = inWire.read(bootstap).typedMarshallable();
+                    final Bootstrap inBootstrap = valueIn.typedMarshallable();
                     final byte id = inBootstrap.identifier();
                     final EngineReplication.ModificationIterator mi = replication.acquireModificationIterator(id);
 
@@ -115,7 +120,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
                     final Bootstrap outBootstrap = new Bootstrap();
                     outBootstrap.identifier(hostId.hostId());
                     outBootstrap.lastUpdatedTime(replication.lastModificationTime(id));
-                    outWire.write(bootstap).typedMarshallable(outBootstrap);
+                    outWire.write(reply).typedMarshallable(outBootstrap);
                     return;
                 }
             });

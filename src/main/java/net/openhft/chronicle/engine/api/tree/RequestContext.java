@@ -156,6 +156,9 @@ public class RequestContext implements Cloneable {
     }
 
     public Class type() {
+
+        if (type == null)
+            return String.class;
         return type;
     }
 
@@ -164,18 +167,28 @@ public class RequestContext implements Cloneable {
     }
 
     public Class keyType() {
+        if (type == null)
+            return String.class;
         return type;
     }
 
     public Class valueType() {
+        if (type2 == null)
+            return String.class;
         return type2;
     }
 
     public Class topicType() {
+
+        if (type == null)
+            return String.class;
         return type;
     }
 
     public Class messageType() {
+
+        if (type2 == null)
+            return String.class;
         return type2;
     }
 
@@ -192,6 +205,8 @@ public class RequestContext implements Cloneable {
     }
 
     public Class type2() {
+        if (type == null)
+            return String.class;
         return type2;
     }
 
