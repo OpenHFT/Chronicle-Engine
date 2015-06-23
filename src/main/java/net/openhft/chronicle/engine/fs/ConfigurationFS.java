@@ -50,11 +50,13 @@ public class ConfigurationFS implements MountPoint {
         RequestContext context = RequestContext.requestContext(assetName)
                 .keyType(String.class).valueType(String.class);
         Asset asset = assetTree.acquireAsset(context);
+
         if (asset.getView(MapView.class) == null) {
             ((VanillaAsset) asset).enableTranslatingValuesToBytesStore();
             asset.registerView(AuthenticatedKeyValueStore.class, new FilePerKeyValueStore(context.basePath(etcDir), asset));
             asset.acquireView(MapView.class, context);
         }
+
         subscribeTo(assetTree);
     }
 
@@ -65,7 +67,6 @@ public class ConfigurationFS implements MountPoint {
     }
 
     public void onFile(MapEvent<String, String> mapEvent) {
-        System.out.println(mapEvent);
         switch (mapEvent.key()) {
             case FSTAB:
                 processFstab(mapEvent.value());
