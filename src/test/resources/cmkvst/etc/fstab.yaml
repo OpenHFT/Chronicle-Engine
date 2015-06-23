@@ -7,3 +7,18 @@ ChronMaps: !ChronicleMapGroupFS {
      putReturnsNull: true,
      removeReturnsNull: true
   }
+ChronMaps: !ChronicleMapGroupFS {
+     spec: ChMaps2,
+     name: /ChMaps2,
+     cluster: cluster,
+     maxEntries: 20000,
+     averageValueSize: 2000,
+     putReturnsNull: true,
+     removeReturnsNull: true
+  }
+DFCurves: !FilePerKeyGroupFS {
+    spec: DFCurves,
+    name: /Data/Published/Realtime/Curves/DFCurves,
+    valueType: !type String,
+    recurse: false
+  }
