@@ -16,15 +16,15 @@
 
 package net.openhft.chronicle.engine.api;
 
-import java.util.function.Function;
+import net.openhft.chronicle.core.util.SerializableFunction;
 
 /**
  * Created by peter on 22/06/15.
  */
 public interface KeyedVisitable<K, E> {
-    <R> R apply(K key, Function<E, R> function);
+    <R> R apply(K key, SerializableFunction<E, R> function);
 
-    void asyncUpdate(K key, Function<E, E> updateFunction);
+    void asyncUpdate(K key, SerializableFunction<E, E> updateFunction);
 
-    <R> R syncUpdate(K key, Function<E, E> updateFunction, Function<E, R> returnFunction);
+    <R> R syncUpdate(K key, SerializableFunction<E, E> updateFunction, SerializableFunction<E, R> returnFunction);
 }

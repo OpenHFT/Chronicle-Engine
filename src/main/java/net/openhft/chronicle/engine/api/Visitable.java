@@ -16,15 +16,15 @@
 
 package net.openhft.chronicle.engine.api;
 
-import java.util.function.Function;
+import net.openhft.chronicle.core.util.SerializableFunction;
 
 /**
  * Created by peter on 22/06/15.
  */
 public interface Visitable<E> {
-    <R> R apply(Function<E, R> function);
+    <R> R apply(SerializableFunction<E, R> function);
 
-    void asyncUpdate(Function<E, E> updateFunction);
+    void asyncUpdate(SerializableFunction<E, E> updateFunction);
 
-    <R> R syncUpdate(Function<E, E> updateFunction, Function<E, R> returnFunction);
+    <R> R syncUpdate(SerializableFunction<E, E> updateFunction, SerializableFunction<E, R> returnFunction);
 }

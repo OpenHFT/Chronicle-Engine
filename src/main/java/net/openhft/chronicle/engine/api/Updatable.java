@@ -16,22 +16,22 @@
 
 package net.openhft.chronicle.engine.api;
 
-import java.util.function.Consumer;
-import java.util.function.Function;
+import net.openhft.chronicle.core.util.SerializableFunction;
+import net.openhft.chronicle.core.util.SerializableUpdater;
 
 /**
  * Created by peter on 22/06/15.
  */
 public interface Updatable<E> {
-    default <R> R apply(Function<E, R> function) {
+    default <R> R apply(SerializableFunction<E, R> function) {
         return function.apply((E) this);
     }
 
-    default void asyncUpdate(Consumer<E> updateFunction) {
+    default void asyncUpdate(SerializableUpdater<E> updateFunction) {
         updateFunction.accept((E) this);
     }
 
-    default <R> R syncUpdate(Consumer<E> updateFunction, Function<E, R> returnFunction) {
+    default <R> R syncUpdate(SerializableUpdater<E> updateFunction, SerializableFunction<E, R> returnFunction) {
         updateFunction.accept((E) this);
         return returnFunction.apply((E) this);
     }
