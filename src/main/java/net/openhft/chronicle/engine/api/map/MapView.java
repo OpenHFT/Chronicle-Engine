@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.api.map;
 
+import net.openhft.chronicle.core.util.SerializableFunction;
 import net.openhft.chronicle.engine.api.KeyedVisitable;
 import net.openhft.chronicle.engine.api.Updatable;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
@@ -24,7 +25,6 @@ import net.openhft.chronicle.engine.api.tree.Assetted;
 import net.openhft.chronicle.engine.api.tree.View;
 
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.Function;
 
 /**
  * Created by peter on 22/05/15.
@@ -45,17 +45,17 @@ public interface MapView<K, MV, V> extends ConcurrentMap<K, V>,
     void registerSubscriber(Subscriber<MapEvent<K, V>> subscriber);
 
     @Override
-    default <R> R apply(K key, Function<V, R> function) {
+    default <R> R apply(K key, SerializableFunction<V, R> function) {
         return function.apply(get(key));
     }
 
     @Override
-    default void asyncUpdate(K key, Function<V, V> updateFunction) {
+    default void asyncUpdate(K key, SerializableFunction<V, V> updateFunction) {
         put(key, updateFunction.apply(get(key)));
     }
 
     @Override
-    default <R> R syncUpdate(K key, Function<V, V> updateFunction, Function<V, R> returnFunction) {
+    default <R> R syncUpdate(K key, SerializableFunction<V, V> updateFunction, SerializableFunction<V, R> returnFunction) {
         V apply = updateFunction.apply(get(key));
         put(key, apply);
         return returnFunction.apply(apply);
