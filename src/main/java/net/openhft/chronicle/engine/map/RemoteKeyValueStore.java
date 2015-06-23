@@ -27,8 +27,12 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.collection.ClientWiredStatelessChronicleCollection;
 import net.openhft.chronicle.engine.collection.ClientWiredStatelessChronicleSet;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
+import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
-import net.openhft.chronicle.wire.*;
+import net.openhft.chronicle.wire.ValueIn;
+import net.openhft.chronicle.wire.ValueOut;
+import net.openhft.chronicle.wire.Wires;
+import net.openhft.chronicle.wire.WriteMarshallable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +43,7 @@ import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId;
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.*;
-import static net.openhft.chronicle.wire.CoreFields.stringEvent;
+import static net.openhft.chronicle.network.connection.CoreFields.stringEvent;
 
 public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
         implements Cloneable, ObjectKeyValueStore<K, V, V> {
@@ -53,6 +57,8 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     private final RequestContext context;
     @NotNull
     private final Asset asset;
+    // todo
+    private final ObjectKVSSubscription<K, V, V> subscriptions;
 
     public RemoteKeyValueStore(@NotNull final RequestContext context,
                                @NotNull Asset asset,
@@ -67,11 +73,10 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
         subscriptions.setKvStore(this);
     }
 
+
     public RemoteKeyValueStore(RequestContext requestContext, Asset asset) {
         this(requestContext, asset, asset.findView(TcpChannelHub.class));
     }
-
-
 
     private static String toUri(final RequestContext context) {
         StringBuilder uri = new StringBuilder("/" + context.name()
@@ -284,7 +289,6 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
         proxyReturnVoid(clear);
     }
 
-
     public Collection<V> values() {
         final StringBuilder csp = Wires.acquireStringBuilder();
         long cid = proxyReturnWireConsumer(values, read -> {
@@ -407,9 +411,6 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     public KeyValueStore<K, V, V> underlying() {
         throw new UnsupportedOperationException();
     }
-
-    // todo
-    private final ObjectKVSSubscription<K, V, V> subscriptions;
 
     @NotNull
     @Override

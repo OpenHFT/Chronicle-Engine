@@ -28,7 +28,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static net.openhft.chronicle.engine.collection.CollectionWireHandler.SetEventId.*;
-import static net.openhft.chronicle.wire.CoreFields.reply;
+import static net.openhft.chronicle.network.connection.CoreFields.reply;
 
 public class ClientWiredStatelessChronicleCollection<U, E extends Collection<U>> extends
         AbstractStatelessClient<SetEventId> implements Collection<U> {

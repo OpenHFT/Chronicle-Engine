@@ -15,9 +15,8 @@ import static net.openhft.chronicle.engine.server.internal.MapWireHandler.nullCh
 import static net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId.publish;
 import static net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId.registerTopicSubscriber;
 import static net.openhft.chronicle.engine.server.internal.PublisherHandler.Params.message;
-import static net.openhft.chronicle.wire.CoreFields.reply;
-import static net.openhft.chronicle.wire.CoreFields.tid;
-import static net.openhft.chronicle.wire.WriteMarshallable.EMPTY;
+import static net.openhft.chronicle.network.connection.CoreFields.reply;
+import static net.openhft.chronicle.network.connection.CoreFields.tid;
 
 /**
  * Created by Rob Austin
@@ -27,7 +26,7 @@ public class PublisherHandler<E> extends AbstractHandler {
 
     private Queue<Consumer<Wire>> publisher;
     private Publisher<E> view;
-
+    private Function<ValueIn, E> wireToE;
     private final BiConsumer<WireIn, Long> dataConsumer = new BiConsumer<WireIn, Long>() {
 
         @Override
@@ -76,8 +75,6 @@ public class PublisherHandler<E> extends AbstractHandler {
             });
         }
     };
-
-    private Function<ValueIn, E> wireToE;
 
     void process(final Wire inWire,
                  final Queue<Consumer<Wire>> publisher,

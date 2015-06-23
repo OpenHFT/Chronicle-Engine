@@ -6,6 +6,7 @@ import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.map.KVSSubscription;
+import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -20,8 +21,8 @@ import java.util.function.Consumer;
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.subscribe;
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.unSubscribe;
 import static net.openhft.chronicle.engine.server.internal.SubscriptionHandlerProcessor.EventId.*;
-import static net.openhft.chronicle.wire.CoreFields.reply;
-import static net.openhft.chronicle.wire.CoreFields.tid;
+import static net.openhft.chronicle.network.connection.CoreFields.reply;
+import static net.openhft.chronicle.network.connection.CoreFields.tid;
 
 /**
  * Created by Rob Austin

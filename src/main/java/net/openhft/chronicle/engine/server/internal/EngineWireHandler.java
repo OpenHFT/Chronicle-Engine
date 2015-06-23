@@ -35,6 +35,7 @@ import net.openhft.chronicle.engine.map.KVSSubscription;
 import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
 import net.openhft.chronicle.network.WireTcpHandler;
 import net.openhft.chronicle.network.api.session.SessionDetailsProvider;
+import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,8 +51,8 @@ import java.util.function.Function;
 
 import static net.openhft.chronicle.core.Jvm.rethrow;
 import static net.openhft.chronicle.core.util.StringUtils.endsWith;
-import static net.openhft.chronicle.wire.CoreFields.cid;
-import static net.openhft.chronicle.wire.CoreFields.csp;
+import static net.openhft.chronicle.network.connection.CoreFields.cid;
+import static net.openhft.chronicle.network.connection.CoreFields.csp;
 
 /**
  * Created by Rob Austin

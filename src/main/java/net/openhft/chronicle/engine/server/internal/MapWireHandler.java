@@ -25,7 +25,6 @@ import net.openhft.chronicle.core.pool.StringBuilderPool;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
-import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
@@ -33,6 +32,7 @@ import net.openhft.chronicle.engine.map.RemoteKeyValueStore;
 import net.openhft.chronicle.engine.map.replication.Bootstrap;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +43,6 @@ import java.io.StreamCorruptedException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -51,7 +50,7 @@ import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.*;
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.Params.*;
-import static net.openhft.chronicle.wire.CoreFields.reply;
+import static net.openhft.chronicle.network.connection.CoreFields.reply;
 
 /**
  * @author Rob Austin.
@@ -338,6 +337,11 @@ public class MapWireHandler<K, V> extends AbstractHandler {
         }
     };
 
+    public static void nullCheck(@Nullable Object o) {
+        if (o == null)
+            throw new NullPointerException();
+    }
+
     /**
      * @param in             the data the has come in from network
      * @param out            the data that is going out to network
@@ -405,11 +409,6 @@ public class MapWireHandler<K, V> extends AbstractHandler {
 
         cidToCsp.put(newCid, cspStr);
         return newCid;
-    }
-
-    public static void nullCheck(@Nullable Object o) {
-        if (o == null)
-            throw new NullPointerException();
     }
 
     private void createProxy(final String type) {

@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId.registerTopicSubscriber;
-import static net.openhft.chronicle.wire.CoreFields.reply;
+import static net.openhft.chronicle.network.connection.CoreFields.reply;
 
 /**
  * Created by Rob Austin
@@ -27,9 +27,9 @@ public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId>
     private final MapView<T, M, M> underlying;
     @NotNull
     private final RequestContext context;
-    private Asset asset;
     private final Class<T> topicClass;
     private final Class<M> messageClass;
+    private Asset asset;
 
 
     public RemoteTopicPublisher(@NotNull RequestContext context, Asset asset, MapView<T, M, M> underlying)

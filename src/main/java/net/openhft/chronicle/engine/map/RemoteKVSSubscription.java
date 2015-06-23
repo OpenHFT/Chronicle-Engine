@@ -39,7 +39,7 @@ import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.subscribe;
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.unSubscribe;
 import static net.openhft.chronicle.engine.server.internal.SubscriptionHandlerProcessor.EventId.*;
-import static net.openhft.chronicle.wire.CoreFields.reply;
+import static net.openhft.chronicle.network.connection.CoreFields.reply;
 
 public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient implements
         ObjectKVSSubscription<K, MV, V>, Closeable {

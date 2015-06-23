@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
 
-import static net.openhft.chronicle.wire.CoreFields.reply;
+import static net.openhft.chronicle.network.connection.CoreFields.reply;
 import static net.openhft.chronicle.wire.WriteMarshallable.EMPTY;
 
 /**

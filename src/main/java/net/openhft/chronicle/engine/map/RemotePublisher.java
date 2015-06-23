@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId.registerTopicSubscriber;
-import static net.openhft.chronicle.wire.CoreFields.reply;
+import static net.openhft.chronicle.network.connection.CoreFields.reply;
 
 /**
  * Created by Rob Austin

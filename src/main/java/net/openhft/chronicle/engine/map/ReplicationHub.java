@@ -35,7 +35,7 @@ import java.util.function.Function;
 import static net.openhft.chronicle.engine.collection.CollectionWireHandler.SetEventId.identifier;
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.bootstap;
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.replicationEvent;
-import static net.openhft.chronicle.wire.CoreFields.reply;
+import static net.openhft.chronicle.network.connection.CoreFields.reply;
 
 /**
  * Created by Rob Austin

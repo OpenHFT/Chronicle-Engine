@@ -18,7 +18,6 @@ package net.openhft.chronicle.network.connection;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.Jvm;
-import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +28,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.LongConsumer;
 
-import static net.openhft.chronicle.wire.CoreFields.reply;
+import static net.openhft.chronicle.network.connection.CoreFields.reply;
 
 /**
  * Created by Rob Austin

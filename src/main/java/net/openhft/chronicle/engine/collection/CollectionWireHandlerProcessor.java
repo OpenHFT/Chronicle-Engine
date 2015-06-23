@@ -21,6 +21,7 @@ package net.openhft.chronicle.engine.collection;
  */
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
