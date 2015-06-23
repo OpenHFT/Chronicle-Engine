@@ -51,7 +51,9 @@ import static net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer.notif
 import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplication.builder;
 
 
-public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValueStore<K, MV, V>, Closeable {
+public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValueStore<K, MV, V>, Closeable {
+//public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValueStore<K, MV, V>,
+  //          Closeable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ChronicleMapKeyValueStore.class);
     private final ChronicleMap<K, V> chronicleMap;

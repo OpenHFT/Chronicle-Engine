@@ -21,11 +21,11 @@ import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
-import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.fs.ChronicleMapGroupFS;
 import net.openhft.chronicle.engine.fs.FilePerKeyGroupFS;
+import net.openhft.chronicle.engine.map.AuthenticatedKeyValueStore;
 import net.openhft.chronicle.engine.map.CMap2EngineReplicator;
 import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
@@ -81,10 +81,10 @@ public class ChronicleMapKeyValueStoreTest {
 
         tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
                 VanillaMapView::new,
-                KeyValueStore.class);
+                AuthenticatedKeyValueStore.class);
         tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
                 CMap2EngineReplicator::new);
-        tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
+        tree.root().addLeafRule(AuthenticatedKeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
                 new ChronicleMapKeyValueStore(context.wireType(writeType),
                         asset));
 
