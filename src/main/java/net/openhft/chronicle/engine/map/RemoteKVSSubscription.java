@@ -25,9 +25,12 @@ import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.server.internal.MapWireHandler;
+import net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
+import net.openhft.chronicle.wire.CoreFields;
 import net.openhft.chronicle.wire.ValueIn;
+import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -162,16 +165,20 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
                     wireOut.writeEventName(subscribe).
                             typeLiteral(CLASS_ALIASES.nameFor(rc.elementType())));
             hub.asyncReadSocket(tid, w -> w.readDocument(null, d -> {
-                ValueIn read = d.read(reply);
+                final StringBuilder eventname = Wires.acquireStringBuilder();
+                final ValueIn valueIn = d.readEventName(eventname);
 
-                final Class aClass = rc.elementType();
+                if (EventId.onEndOfSubscription.contentEquals(eventname))
+                    subscriber.onEndOfSubscription();
+                else if (CoreFields.reply.contentEquals(eventname)) {
+                    final Class aClass = rc.elementType();
 
-                final Object object = (MapEvent.class.isAssignableFrom(aClass)) ? read
-                        .typedMarshallable()
-                        : read.object(rc.elementType());
+                    final Object object = (MapEvent.class.isAssignableFrom(aClass)) ? valueIn
+                            .typedMarshallable()
+                            : valueIn.object(rc.elementType());
 
-                this.onEvent(object, subscriber);
-
+                    this.onEvent(object, subscriber);
+                }
             }));
             hub.writeSocket(hub.outWire());
         } finally {

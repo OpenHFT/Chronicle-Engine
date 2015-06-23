@@ -9,24 +9,27 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
+import net.openhft.chronicle.wire.CoreFields;
 import net.openhft.chronicle.wire.ValueIn;
+import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId.registerTopicSubscriber;
-import static net.openhft.chronicle.wire.CoreFields.reply;
 
 /**
  * Created by Rob Austin
  */
 public class RemotePublisher<E> extends AbstractStatelessClient<EventId> implements Publisher<E> {
 
-    private final RequestContext context;
+
+    private final Class<E> messageClass;
 
     public RemotePublisher(@NotNull RequestContext context, Asset asset, Object underlying)
             throws AssetNotFoundException {
         super(asset.findView(TcpChannelHub.class), (long) 0, toUri(context));
-        this.context = context;
+
+        messageClass = context.messageType();
     }
 
     private static String toUri(final RequestContext context) {
@@ -60,11 +63,18 @@ public class RemotePublisher<E> extends AbstractStatelessClient<EventId> impleme
                     wireOut.writeEventName(registerTopicSubscriber).text(""));
 
             hub.asyncReadSocket(tid, w -> w.readDocument(null, d -> {
-                ValueIn valueIn = d.read(reply);
-                valueIn.marshallable(m -> {
-                    final E message = (E) m.read(() -> "message").object(context.messageType());
-                    this.onEvent(message, subscriber);
-                });
+
+                final StringBuilder eventname = Wires.acquireStringBuilder();
+                final ValueIn valueIn = d.readEventName(eventname);
+
+                if (EventId.onEndOfSubscription.contentEquals(eventname))
+                    subscriber.onEndOfSubscription();
+                else if (CoreFields.reply.contentEquals(eventname)) {
+                    valueIn.marshallable(m -> {
+                        final E message =  m.read(() -> "message").object(messageClass);
+                        this.onEvent(message, subscriber);
+                    });
+                }
             }));
             hub.writeSocket(hub.outWire());
         } finally {

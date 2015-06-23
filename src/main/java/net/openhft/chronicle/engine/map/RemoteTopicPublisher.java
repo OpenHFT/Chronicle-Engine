@@ -7,15 +7,19 @@ import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.server.internal.PublisherHandler;
 import net.openhft.chronicle.engine.server.internal.TopicPublisherHandler.EventId;
 import net.openhft.chronicle.engine.server.internal.TopicPublisherHandler.Params;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
+import net.openhft.chronicle.wire.CoreFields;
 import net.openhft.chronicle.wire.ValueIn;
+import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId.registerTopicSubscriber;
+import static net.openhft.chronicle.engine.server.internal.TopicPublisherHandler.EventId.*;
 import static net.openhft.chronicle.wire.CoreFields.reply;
 
 /**
@@ -60,7 +64,7 @@ public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId>
     public void publish(final T topic, final M message) {
         checkTopic(topic);
         checkMessage(message);
-        sendEventAsync(EventId.publish, valueOut -> valueOut.marshallable(m -> {
+        sendEventAsync(publish, valueOut -> valueOut.marshallable(m -> {
             m.write(Params.topic).object(topic);
             m.write(Params.message).object(message);
         }));
@@ -93,13 +97,19 @@ public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId>
                     wireOut.writeEventName(registerTopicSubscriber).text(""));
 
             hub.asyncReadSocket(tid, w -> w.readDocument(null, d -> {
-                ValueIn valueIn = d.read(reply);
-                valueIn.marshallable(m -> {
 
-                    final T topic = (T) m.read(() -> "message").object(topicClass);
-                    final M message = (M) m.read(() -> "message").object(messageClass);
-                    this.onEvent(topic, message, topicSubscriber);
-                });
+                final StringBuilder eventname = Wires.acquireStringBuilder();
+                final ValueIn valueIn = d.readEventName(eventname);
+
+                if (onEndOfSubscription.contentEquals(eventname))
+                    topicSubscriber.onEndOfSubscription();
+                else if (CoreFields.reply.contentEquals(eventname)) {
+                    valueIn.marshallable(m -> {
+                        final T topic =  m.read(() -> "message").object(topicClass);
+                        final M message = m.read(() -> "message").object(messageClass);
+                        this.onEvent(topic, message, topicSubscriber);
+                    });
+                }
             }));
             hub.writeSocket(hub.outWire());
         } finally {

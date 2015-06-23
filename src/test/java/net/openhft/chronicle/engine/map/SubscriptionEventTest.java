@@ -157,7 +157,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     }
 
     @Test
-    @Ignore("TODO FIX")
+    @Ignore
     public void testTopologicalEventsMock() throws InvalidSubscriberException {
 
         Subscriber<TopologicalEvent> subscriber = createMock(Subscriber.class);
@@ -197,7 +197,6 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     }
 
     @Test
-    @Ignore("Fix BinaryWire")
     public void testTopicSubscribe() throws InvalidSubscriberException {
 
         class TopicDetails<T, M> {
@@ -247,11 +246,10 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                 throw Jvm.rethrow(e);
             }
         });
-        //  waitFor(subscriber);
+
     }
 
     @Test
-    @Ignore("TODO Fix")
     public void testUnsubscribeToMapEvents() throws IOException, InterruptedException {
 
         final BlockingQueue<MapEvent> eventsQueue = new LinkedBlockingQueue<>();
@@ -281,31 +279,37 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     }
 
     @Test
-    @Ignore("TODO")
+
     public void testSubscribeToKeyEvents() throws IOException, InterruptedException, InvalidSubscriberException {
 
-        Subscriber<String> subscriber = createMock(Subscriber.class);
-        subscriber.onMessage("Hello");
-        subscriber.onEndOfSubscription();
-        replay(subscriber);
+        final BlockingQueue<String> eventsQueue = new LinkedBlockingQueue<>();
 
         yamlLoggger(() -> {
+            try {
 
-            YamlLogging.writeMessage = "Sets up a subscription to listen to key events. And " +
-                    "subsequently puts and entry into the map, notice that the InsertedEvent is " +
-                    "received from the server";
+                YamlLogging.writeMessage = "Sets up a subscription to listen to key events. And " +
+                        "subsequently puts and entry into the map, notice that the InsertedEvent is " +
+                        "received from the server";
 
-            assetTree.registerSubscriber(NAME, String.class, subscriber);
+                Subscriber<String> subscriber = eventsQueue::add;
+                assetTree.registerSubscriber(NAME, String.class, subscriber);
 
-            YamlLogging.writeMessage = "puts an entry into the map so that an event will be " +
-                    "triggered";
-            map.put("Hello", "World");
+                YamlLogging.writeMessage = "puts an entry into the map so that an event will be " +
+                        "triggered";
+                map.put("Hello", "World");
 
-            // todo fix the text for the unsubscribe.
-            assetTree.unregisterSubscriber(NAME, subscriber);
+                Object object = eventsQueue.poll(500, MILLISECONDS);
+
+                Assert.assertEquals("Hello", object);
+
+                // todo fix the text for the unsubscribe.
+                assetTree.unregisterSubscriber(NAME, subscriber);
+            } catch (InterruptedException e) {
+                throw Jvm.rethrow(e);
+            }
 
         });
-        waitFor(subscriber);
+
     }
 
     @Test
@@ -362,7 +366,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                 String putEvent = eventsQueue.poll(500, MILLISECONDS);
                 String removeEvent = eventsQueue.poll(500, MILLISECONDS);
 
-                Assert.assertTrue(putEvent instanceof String );
+                Assert.assertTrue(putEvent instanceof String);
                 Assert.assertTrue(removeEvent instanceof String);
 
             } catch (InterruptedException e) {

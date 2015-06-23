@@ -17,7 +17,6 @@ import static net.openhft.chronicle.engine.server.internal.PublisherHandler.Even
 import static net.openhft.chronicle.engine.server.internal.PublisherHandler.Params.message;
 import static net.openhft.chronicle.wire.CoreFields.reply;
 import static net.openhft.chronicle.wire.CoreFields.tid;
-import static net.openhft.chronicle.wire.WriteMarshallable.EMPTY;
 
 /**
  * Created by Rob Austin
@@ -45,10 +44,12 @@ public class PublisherHandler<E> extends AbstractHandler {
                         publisher.add(publish -> {
                             publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
                                     (inputTid));
-                            publish.writeNotReadyDocument(false, wire -> wire.write(reply)
+                            publish.writeNotReadyDocument(false, wire -> wire.writeEventName(reply)
                                     .marshallable(m -> m.write(Params.message).object(message)));
                         });
                     }
+
+
 
                 };
 
@@ -100,6 +101,7 @@ public class PublisherHandler<E> extends AbstractHandler {
 
     public enum EventId implements ParameterizeWireKey {
         publish,
+        onEndOfSubscription,
         registerTopicSubscriber(message);
 
         private final WireKey[] params;
