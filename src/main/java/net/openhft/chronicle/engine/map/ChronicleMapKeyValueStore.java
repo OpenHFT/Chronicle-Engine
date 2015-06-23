@@ -22,7 +22,6 @@ import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
-import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.tree.Asset;
@@ -51,7 +50,7 @@ import static net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer.notif
 import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplication.builder;
 
 
-public class ChronicleMapKeyValueStore<K, MV, V> implements SubscriptionKeyValueStore<K, MV, V>, Closeable {
+public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValueStore<K, MV, V>, Closeable {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChronicleMapKeyValueStore.class);
     private final ChronicleMap<K, V> chronicleMap;
     private final ObjectKVSSubscription<K, MV, V> subscriptions;
