@@ -19,6 +19,7 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.ClassLocal;
+import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.map.*;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
@@ -212,11 +213,6 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     }
 
     @Override
-    public void apply(@NotNull final ReplicationEntry entry) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
     public Asset asset() {
         return asset;
     }
@@ -239,5 +235,10 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     @Override
     public Class<V> valueType() {
         return valueType;
+    }
+
+    @Override
+    public void accept(final ReplicationEntry replicationEntry) {
+        throw new UnsupportedOperationException("todo");
     }
 }

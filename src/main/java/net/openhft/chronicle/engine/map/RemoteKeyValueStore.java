@@ -114,10 +114,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
         throw new UnsupportedOperationException("todo");
     }
 
-    @Override
-    public void apply(@NotNull final EngineReplication.ReplicationEntry entry) {
-        throw new UnsupportedOperationException("todo");
-    }
+
 
     private void checkValue(@Nullable Object value) {
         if (value == null)
@@ -426,6 +423,11 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     @Override
     public Class<V> valueType() {
         return vClass;
+    }
+
+    @Override
+    public void accept(final EngineReplication.ReplicationEntry replicationEntry) {
+        throw new UnsupportedOperationException("todo");
     }
 
     class Entry implements Map.Entry<K, V> {

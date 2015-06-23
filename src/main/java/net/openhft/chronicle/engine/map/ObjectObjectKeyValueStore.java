@@ -18,6 +18,7 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
+import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
@@ -139,11 +140,6 @@ public class ObjectObjectKeyValueStore<K, MV extends V, V> implements KeyValueSt
     }
 
     @Override
-    public void apply(@NotNull final ReplicationEntry entry) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
     public Asset asset() {
         return asset;
     }
@@ -156,5 +152,10 @@ public class ObjectObjectKeyValueStore<K, MV extends V, V> implements KeyValueSt
     @Override
     public void close() {
         kvStore.close();
+    }
+
+    @Override
+    public void accept(final ReplicationEntry replicationEntry) {
+        throw new UnsupportedOperationException("todo");
     }
 }

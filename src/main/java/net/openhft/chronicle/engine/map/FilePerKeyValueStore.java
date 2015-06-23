@@ -22,6 +22,7 @@ import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.StringBytesStoreKeyValueStore;
@@ -253,10 +254,6 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         throw new UnsupportedOperationException("todo");
     }
 
-    @Override
-    public void apply(@NotNull final ReplicationEntry entry) {
-        throw new UnsupportedOperationException("todo");
-    }
 
     private Stream<Path> getFiles() {
         try {
@@ -381,6 +378,11 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     @Override
     public KeyValueStore<String, Bytes, BytesStore> underlying() {
         return null;
+    }
+
+    @Override
+    public void accept(final ReplicationEntry replicationEntry) {
+        throw new UnsupportedOperationException("todo");
     }
 
     private class FPMWatcher implements Runnable {

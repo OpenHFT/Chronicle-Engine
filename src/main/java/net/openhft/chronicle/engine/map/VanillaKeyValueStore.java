@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
@@ -103,11 +104,6 @@ public class VanillaKeyValueStore<K, MV, V> implements AuthenticatedKeyValueStor
     }
 
     @Override
-    public void apply(@NotNull final ReplicationEntry entry) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @Override
     public Asset asset() {
         return asset;
     }
@@ -125,6 +121,11 @@ public class VanillaKeyValueStore<K, MV, V> implements AuthenticatedKeyValueStor
 
     @Override
     public KVSSubscription<K, MV, V> subscription(boolean createIfAbsent) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public void accept(final ReplicationEntry replicationEntry) {
         throw new UnsupportedOperationException("todo");
     }
 }
