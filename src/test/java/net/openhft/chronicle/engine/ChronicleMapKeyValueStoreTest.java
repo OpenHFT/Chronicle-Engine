@@ -25,6 +25,7 @@ import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.fs.ChronicleMapGroupFS;
+import net.openhft.chronicle.engine.fs.FilePerKeyGroupFS;
 import net.openhft.chronicle.engine.map.CMap2EngineReplicator;
 import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
@@ -57,6 +58,7 @@ public class ChronicleMapKeyValueStoreTest {
     @BeforeClass
     public static void before() throws IOException {
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
+        ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
         //Delete any files from the last run
         Files.deleteIfExists(Paths.get(OS.TARGET, NAME));
         tree1 = create(1);
@@ -99,8 +101,8 @@ public class ChronicleMapKeyValueStoreTest {
         return resources;
     }
 
-    @Ignore("todo fix")
     @Test
+    @Ignore
     public void test() throws Exception {
 
         final ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME, String.class, String

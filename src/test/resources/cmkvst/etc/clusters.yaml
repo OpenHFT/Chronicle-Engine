@@ -3,21 +3,44 @@ cluster: {
      hostId: 1
      tcpBufferSize: 65536,
      hostname: localhost,
-     port: 8078,
+     port: 0,
      timeoutMs: 1000,
   },
   host2: {
      hostId: 2
      tcpBufferSize: 65536,
      hostname: localhost,
-     port: 8088,
+     port: 0,
      timeoutMs: 1000,
   },
   host3: {
      hostId: 3
      tcpBufferSize: 65536,
      hostname: localhost,
-     port: 8098,
+     port: 0,
+     timeoutMs: 1000,
+  }
+}
+clusterTwo: {
+  host1: {
+     hostId: 1
+     tcpBufferSize: 65536,
+     hostname: localhost,
+     port: 0,
+     timeoutMs: 1000,
+  },
+  host2: {
+     hostId: 2
+     tcpBufferSize: 65536,
+     hostname: localhost,
+     port: 0,
+     timeoutMs: 1000,
+  },
+  host3: {
+     hostId: 3
+     tcpBufferSize: 65536,
+     hostname: localhost,
+     port: 0,
      timeoutMs: 1000,
   }
 }
