@@ -154,7 +154,13 @@ public class CMap2EngineReplicator implements EngineReplication,
 
             @Override
             public void setModificationNotifier(@NotNull final ModificationNotifier modificationNotifier) {
-                instance.setModificationNotifier(modificationNotifier::onChange);
+                instance.setModificationNotifier(new EngineReplicationLangBytes.EngineReplicationModificationNotifier() {
+
+                    @Override
+                    public void onChange() {
+                        modificationNotifier.onChange();
+                    }
+                } );
             }
         };
     }

@@ -124,6 +124,8 @@ public class ReplicationTest {
         map2.put("hello2", "world2");
 //        map3.put("hello3", "world3");
 
+
+        // give time for the data to replicate
         Thread.sleep(1000);
 
         for (Map m : new Map[]{map1, map2/*, map3*/}) {

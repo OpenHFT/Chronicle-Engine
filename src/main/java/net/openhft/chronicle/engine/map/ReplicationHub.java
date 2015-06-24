@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
@@ -48,7 +49,6 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
         super(hub, (long) 0, toUri(context));
     }
 
-
     private static String toUri(final RequestContext context) {
         final StringBuilder uri = new StringBuilder("/" + context.name()
                 + "?view=" + "Replication");
@@ -73,16 +73,27 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
         bootstrap.identifier((byte) localIdentifer);
 
         final AtomicLong tid = new AtomicLong();
-
         final Function<ValueIn, Bootstrap> typedMarshallable = ValueIn::typedMarshallable;
         final Consumer<ValueOut> valueOutConsumer = o -> o.typedMarshallable(bootstrap);
-
         final Bootstrap b = (Bootstrap) proxyReturnWireConsumerInOut(
                 bootstap, reply, valueOutConsumer, typedMarshallable, tid::set);
 
-        mi.dirtyEntries(b.lastUpdatedTime());
-
         try {
+
+            mi.setModificationNotifier(() -> {
+                this.hub.outBytesLock().lock();
+                try {
+                    mi.forEach(e -> {
+                        this.hub.outWire().writeDocument(false, wireOut ->
+                                wireOut.writeEventName(replicationEvent).marshallable(e));
+                    });
+                    this.hub.writeSocket(this.hub.outWire());
+                } catch (InterruptedException e) {
+                    throw Jvm.rethrow(e);
+                } finally {
+                    this.hub.outBytesLock().unlock();
+                }
+            });
 
             // send replication events
             this.hub.outBytesLock().lock();
@@ -90,15 +101,18 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
                 mi.forEach(e -> this.hub.outWire().writeDocument(false, wireOut ->
                         wireOut.writeEventName(replicationEvent).marshallable(e)));
 
-            // receives replication events
-            this.hub.asyncReadSocket(tid.get(), d ->
+                // receives replication events
+                this.hub.asyncReadSocket(tid.get(), d -> {
                     d.readDocument(null, w -> replication.applyReplication(
-                            w.read(reply).typedMarshallable())));
+                            w.read(reply).typedMarshallable()));
+                });
 
-            this.hub.writeSocket(this.hub.outWire());
+                this.hub.writeSocket(this.hub.outWire());
             } finally {
                 this.hub.outBytesLock().unlock();
             }
+
+            mi.dirtyEntries(b.lastUpdatedTime());
 
         } catch (Throwable t) {
             LOG.error("", t);
