@@ -14,7 +14,8 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
- */
+ *//*
+
 
 package net.openhft.chronicle.engine.map;
 
@@ -412,11 +413,13 @@ public class ChronicleMapBackedEngineReplication<Store> implements EngineReplica
         }
 
 
-        /**
+        */
+/**
          * @return the timestamp  that the remote client should bootstrap from when there has been a
          * disconnection, this time maybe later than the message time as event are not send in
          * chronological order from the bit set.
-         */
+         *//*
+
         @Override
         public long bootStrapTimeStamp() {
             return bootstrapTimestamp(identifier);
@@ -428,3 +431,4 @@ public class ChronicleMapBackedEngineReplication<Store> implements EngineReplica
         map.close();
     }
 }
+*/

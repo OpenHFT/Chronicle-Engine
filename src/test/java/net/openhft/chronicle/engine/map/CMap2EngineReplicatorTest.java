@@ -17,6 +17,7 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.map.ChronicleMap;
@@ -62,8 +63,8 @@ public class CMap2EngineReplicatorTest {
 
         Assert.assertEquals("hello", new TextWire(entry.key().bytesForRead()).getValueIn().text());
 
-        final Bytes value = entry.value();
-        Assert.assertEquals("world", (value == null) ? null : new TextWire(value).getValueIn().text());
+        final BytesStore value = entry.value();
+        Assert.assertEquals("world", (value == null) ? null : new TextWire(value.bytesForRead()).getValueIn().text());
 
         Assert.assertEquals(2, entry.identifier());
     }

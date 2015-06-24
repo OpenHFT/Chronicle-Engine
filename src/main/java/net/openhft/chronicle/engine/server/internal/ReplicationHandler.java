@@ -87,7 +87,8 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
                 // receives replication events
                 if (replicationEvent.contentEquals(eventName)) {
-                    replication.applyReplication(inWire.read(Params.entry).typedMarshallable());
+                    EngineReplication.ReplicationEntry replicatedEntry = valueIn.typedMarshallable();
+                    replication.applyReplication(replicatedEntry);
                     return;
                 }
 
@@ -107,7 +108,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
                                         wire -> wire.writeEventName(net.openhft.chronicle.network.connection.CoreFields.tid).int64(inputTid));
 
                                 publish.writeDocument(false,
-                                        wire -> wire.write(reply).typedMarshallable(null));
+                                        wire -> wire.write(reply).typedMarshallable(e));
 
                             }));
                         } catch (InterruptedException e) {

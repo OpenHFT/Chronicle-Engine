@@ -24,12 +24,19 @@ import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.engine.map.replication.Bootstrap;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
+import net.openhft.chronicle.threads.LightPauser;
+import net.openhft.chronicle.threads.NamedThreadFactory;
+import net.openhft.chronicle.threads.Pauser;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.ValueOut;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Executable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -44,9 +51,13 @@ import static net.openhft.chronicle.network.connection.CoreFields.reply;
  */
 public class ReplicationHub extends AbstractStatelessClient implements View {
     private static final Logger LOG = LoggerFactory.getLogger(ChronicleMapKeyValueStore.class);
+    private final ExecutorService executorService;
+    private final Pauser pauser = new LightPauser(100_000_000, 0);
 
     public ReplicationHub(RequestContext context, @NotNull final TcpChannelHub hub) {
         super(hub, (long) 0, toUri(context));
+
+        executorService = Executors.newSingleThreadExecutor(new NamedThreadFactory("ReplicationHubOnChange"));
     }
 
     private static String toUri(final RequestContext context) {
@@ -80,26 +91,13 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
 
         try {
 
-            mi.setModificationNotifier(() -> {
-                this.hub.outBytesLock().lock();
-                try {
-                    mi.forEach(e -> {
-                        this.hub.outWire().writeDocument(false, wireOut ->
-                                wireOut.writeEventName(replicationEvent).marshallable(e));
-                    });
-                    this.hub.writeSocket(this.hub.outWire());
-                } catch (InterruptedException e) {
-                    throw Jvm.rethrow(e);
-                } finally {
-                    this.hub.outBytesLock().unlock();
-                }
-            });
+            mi.setModificationNotifier(() -> pauser.unpause());
 
             // send replication events
             this.hub.outBytesLock().lock();
             try {
                 mi.forEach(e -> this.hub.outWire().writeDocument(false, wireOut ->
-                        wireOut.writeEventName(replicationEvent).marshallable(e)));
+                        wireOut.writeEventName(replicationEvent).typedMarshallable(e)));
 
                 // receives replication events
                 this.hub.asyncReadSocket(tid.get(), d -> {
@@ -113,6 +111,34 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
             }
 
             mi.dirtyEntries(b.lastUpdatedTime());
+
+            executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    for (; !Thread.currentThread().isInterrupted(); ) {
+
+                        pauser.pause();
+
+                        TcpChannelHub hub = ReplicationHub.this.hub;
+                        hub.outBytesLock().lock();
+                        try {
+                            writeMetaDataForKnownTID(tid.get());
+
+                            mi.forEach(e -> {
+                                hub.outWire().writeDocument(false, wireOut ->
+                                        wireOut.writeEventName(replicationEvent).typedMarshallable(e));
+                            });
+                            hub.writeSocket(hub.outWire());
+                        } catch (InterruptedException e) {
+                            throw Jvm.rethrow(e);
+                        } finally {
+                            hub.outBytesLock().unlock();
+                        }
+
+
+                    }
+                }
+            });
 
         } catch (Throwable t) {
             LOG.error("", t);

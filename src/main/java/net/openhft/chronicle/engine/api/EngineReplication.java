@@ -17,6 +17,7 @@
 package net.openhft.chronicle.engine.api;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.engine.api.pubsub.Replication;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
@@ -29,7 +30,7 @@ import java.util.function.Consumer;
 /**
  * @author Rob Austin.
  */
-public interface EngineReplication extends Closeable, Replication  {
+public interface EngineReplication extends Closeable, Replication {
 
 
     /**
@@ -137,9 +138,9 @@ public interface EngineReplication extends Closeable, Replication  {
     }
 
     interface ReplicationEntry extends Marshallable {
-        Bytes key();
+        BytesStore key();
 
-        Bytes value();
+        BytesStore value();
 
         long timestamp();
 
@@ -149,18 +150,38 @@ public interface EngineReplication extends Closeable, Replication  {
 
         long bootStrapTimeStamp();
 
+        void key(BytesStore key);
+
+        void value(BytesStore key);
+
+        void timestamp(long timestamp);
+
+        void identifier(byte identifier);
+
+        void isDeleted(boolean isDeleted);
+
+        void bootStrapTimeStamp(long bootStrapTimeStamp);
 
 
         @Override
         default void readMarshallable(final WireIn wire) throws IllegalStateException {
-
-
-            throw new UnsupportedOperationException("todo");
+            key(wire.read(() -> "key").bytesStore());
+            value(wire.read(() -> "value").bytesStore());
+            timestamp(wire.read(() -> "timestamp").int64());
+            identifier(wire.read(() -> "identifier").int8());
+            isDeleted(wire.read(() -> "isDeleted").bool());
+            bootStrapTimeStamp(wire.read(() -> "bootStrapTimeStamp").int64());
         }
+
 
         @Override
         default void writeMarshallable(final WireOut wire) {
-            throw new UnsupportedOperationException("todo");
+            wire.write(() -> "key").bytes(key());
+            wire.write(() -> "value").bytes(value());
+            wire.write(() -> "timestamp").int64(timestamp());
+            wire.write(() -> "identifier").int8(identifier());
+            wire.write(() -> "isDeleted").bool(isDeleted());
+            wire.write(() -> "bootStrapTimeStamp").int64(bootStrapTimeStamp());
         }
 
     }

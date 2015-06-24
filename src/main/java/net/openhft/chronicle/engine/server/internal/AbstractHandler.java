@@ -1,11 +1,14 @@
 package net.openhft.chronicle.engine.server.internal;
 
+import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireOut;
 import net.openhft.chronicle.wire.Wires;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.function.Consumer;
 
@@ -16,7 +19,7 @@ import static net.openhft.chronicle.wire.WriteMarshallable.EMPTY;
  * Created by Rob Austin
  */
 public class AbstractHandler {
-
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractHandler.class);
     Wire outWire = null;
 
     void setOutWire(final Wire outWire) {
@@ -33,6 +36,7 @@ public class AbstractHandler {
             try {
                 c.accept(outWire);
             } catch (Exception exception) {
+                LOG.error("", exception);
                 outWire.bytes().writePosition(position);
                 outWire.writeEventName(() -> "exception").throwable(exception);
             }

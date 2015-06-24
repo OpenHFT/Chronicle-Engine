@@ -17,6 +17,7 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.PointerBytesStore;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.tree.Asset;
@@ -59,18 +60,18 @@ public class CMap2EngineReplicator implements EngineReplication,
         this.engineReplicationLang = engineReplicationLangBytes;
     }
 
-    net.openhft.lang.io.Bytes toLangBytes(Bytes b) {
+    net.openhft.lang.io.Bytes toLangBytes(BytesStore b) {
         return wrap(b.address(), b.readRemaining());
     }
 
-    public void put(final Bytes key, final Bytes value,
+    public void put(final BytesStore key, final BytesStore value,
                     final byte remoteIdentifier,
                     final long timestamp) {
         engineReplicationLang.put(toLangBytes(key), toLangBytes(value), remoteIdentifier,
                 timestamp);
     }
 
-    private void remove(final Bytes key, final byte remoteIdentifier, final long timestamp) {
+    private void remove(final BytesStore key, final byte remoteIdentifier, final long timestamp) {
         engineReplicationLang.remove(toLangBytes(key), remoteIdentifier, timestamp);
     }
 
@@ -160,7 +161,7 @@ public class CMap2EngineReplicator implements EngineReplication,
                     public void onChange() {
                         modificationNotifier.onChange();
                     }
-                } );
+                });
             }
         };
     }
@@ -192,12 +193,12 @@ public class CMap2EngineReplicator implements EngineReplication,
 
     public static class VanillaReplicatedEntry implements ReplicationEntry {
 
-        private final Bytes key;
-        private final Bytes value;
-        private final long timestamp;
-        private final byte identifier;
-        private final boolean isDeleted;
-        private final long bootStrapTimeStamp;
+        private BytesStore key;
+        private BytesStore value;
+        private long timestamp;
+        private byte identifier;
+        private boolean isDeleted;
+        private long bootStrapTimeStamp;
 
         /**
          * @param key                the key of the entry
@@ -210,8 +211,8 @@ public class CMap2EngineReplicator implements EngineReplication,
          *                           disconnection, this time maybe later than the message time as
          *                           event are not send in chronological order from the bit set.
          */
-        VanillaReplicatedEntry(final Bytes key,
-                               final Bytes value,
+        VanillaReplicatedEntry(final BytesStore key,
+                               final BytesStore value,
                                final long timestamp,
                                final byte identifier,
                                final boolean isDeleted,
@@ -225,12 +226,12 @@ public class CMap2EngineReplicator implements EngineReplication,
         }
 
         @Override
-        public Bytes key() {
+        public BytesStore key() {
             return key;
         }
 
         @Override
-        public Bytes value() {
+        public BytesStore value() {
             return value;
         }
 
@@ -252,6 +253,36 @@ public class CMap2EngineReplicator implements EngineReplication,
         @Override
         public long bootStrapTimeStamp() {
             return bootStrapTimeStamp;
+        }
+
+        @Override
+        public void key(BytesStore key) {
+            this.key = key;
+        }
+
+        @Override
+        public void value(BytesStore value) {
+            this.value = value;
+        }
+
+        @Override
+        public void timestamp(long timestamp) {
+            this.timestamp = timestamp;
+        }
+
+        @Override
+        public void identifier(byte identifier) {
+            this.identifier = identifier;
+        }
+
+        @Override
+        public void isDeleted(boolean isDeleted) {
+            this.isDeleted = isDeleted;
+        }
+
+        @Override
+        public void bootStrapTimeStamp(long bootStrapTimeStamp) {
+            this.bootStrapTimeStamp = bootStrapTimeStamp;
         }
 
     }
