@@ -5,6 +5,7 @@ import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.pubsub.Replication;
 import net.openhft.chronicle.engine.map.replication.Bootstrap;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
+import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,6 +14,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.bootstap;
+import static net.openhft.chronicle.engine.server.internal.ReplicationHandler.EventId.*;
 import static net.openhft.chronicle.engine.server.internal.ReplicationHandler.EventId.identifier;
 import static net.openhft.chronicle.engine.server.internal.ReplicationHandler.EventId.replicationEvent;
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
@@ -54,6 +56,9 @@ public class ReplicationHandler<E> extends AbstractHandler {
         onEndOfSubscription,
         apply,
         replicationEvent,
+        replicactionReply,
+        bootstrapReply,
+        identifierReply,
         identifier;
 
         private final WireKey[] params;
@@ -81,7 +86,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
             writeData(inWire.bytes(), out -> {
 
                 if (identifier.contentEquals(eventName)) {
-                    outWire.writeEventName(reply).int8(hostId.hostId());
+                    outWire.write(identifierReply).int8(hostId.hostId());
                     return;
                 }
 
@@ -105,10 +110,10 @@ public class ReplicationHandler<E> extends AbstractHandler {
                             mi.forEach(e -> publisher.add(publish -> {
 
                                 publish.writeDocument(true,
-                                        wire -> wire.writeEventName(net.openhft.chronicle.network.connection.CoreFields.tid).int64(inputTid));
+                                        wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
 
                                 publish.writeDocument(false,
-                                        wire -> wire.write(reply).typedMarshallable(e));
+                                        wire -> wire.write(replicactionReply).typedMarshallable(e));
 
                             }));
                         } catch (InterruptedException e) {
@@ -121,7 +126,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
                     final Bootstrap outBootstrap = new Bootstrap();
                     outBootstrap.identifier(hostId.hostId());
                     outBootstrap.lastUpdatedTime(replication.lastModificationTime(id));
-                    outWire.write(reply).typedMarshallable(outBootstrap);
+                    outWire.write(bootstrapReply).typedMarshallable(outBootstrap);
                     return;
                 }
             });

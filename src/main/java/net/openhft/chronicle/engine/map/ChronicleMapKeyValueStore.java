@@ -35,30 +35,39 @@ import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.MapEventListener;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
+import net.openhft.chronicle.threads.EventGroup;
+import net.openhft.lang.thread.NamedThreadFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.nio.ch.IOUtil;
 
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
+import static net.openhft.chronicle.core.io.Closeable.*;
 import static net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer.notifyEachEvent;
 import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplication.builder;
 
 
 public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValueStore<K, MV, V>,
-        Closeable,Supplier<EngineReplication> {
+        Closeable, Supplier<EngineReplication> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChronicleMapKeyValueStore.class);
     private final ChronicleMap<K, V> chronicleMap;
     private final ObjectKVSSubscription<K, MV, V> subscriptions;
     private final EngineReplication engineReplicator;
     private final Asset asset;
     private final String assetFullName;
+    private final EventGroup eventGroup;
+    private final AtomicBoolean isClosed = new AtomicBoolean();
 
     public ChronicleMapKeyValueStore(@NotNull RequestContext context, Asset asset) {
         String basePath = context.basePath();
@@ -68,6 +77,8 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
         this.assetFullName = asset.fullName();
         this.subscriptions = asset.acquireView(ObjectKVSSubscription.class, context);
         this.subscriptions.setKvStore(this);
+        this.eventGroup = new EventGroup(true);
+        eventGroup.start();
 
         PublishingOperations publishingOperations = new PublishingOperations();
 
@@ -127,7 +138,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
                     continue;
 
                 TcpChannelHub tcpChannelHub = hostDetails.acquireTcpChannelHub();
-                ReplicationHub replicationHub = new ReplicationHub(context, tcpChannelHub);
+                ReplicationHub replicationHub = new ReplicationHub(context, tcpChannelHub, eventGroup, isClosed);
 
                 try {
                     replicationHub.bootstrap(engineReplicator1, hostId);
@@ -147,12 +158,21 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
 
     @Override
     public V getAndPut(K key, V value) {
-        return chronicleMap.put(key, value);
+        if (!isClosed.get())
+            return chronicleMap.put(key, value);
+        else
+            return null;
+
     }
 
     @Override
     public V getAndRemove(K key) {
-        return chronicleMap.remove(key);
+
+        if (!isClosed.get())
+            return chronicleMap.remove(key);
+        else
+            return null;
+
     }
 
     @Override
@@ -218,12 +238,19 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
 
     @Override
     public void close() {
+        isClosed.set(true);
+        eventGroup.stop();
+        closeQuietly(asset.findView(TcpChannelHub.class));
+        Jvm.pause(1000);
         chronicleMap.close();
     }
 
     @Override
     public void accept(final ReplicationEntry replicationEntry) {
-        engineReplicator.applyReplication(replicationEntry);
+        if (!isClosed.get())
+            engineReplicator.applyReplication(replicationEntry);
+        else
+            LOGGER.warn("message skipped as closed replicationEntry=" + replicationEntry);
     }
 
     @Override
@@ -243,8 +270,8 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
                 subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, replacedValue, newValue));
             } else {
                 subscriptions.notifyEvent(InsertedEvent.of(assetFullName, key, newValue));
+            }
         }
-    }
     }
 
 }

@@ -103,6 +103,7 @@ public class ReplicationTest {
         return new File(path).getParentFile().getParentFile() + "/src/test/resources";
     }
 
+    @Ignore
     @Test
     public void test() throws Exception {
 

@@ -409,7 +409,6 @@ public class MapWireHandler<K, V> extends AbstractHandler {
         numberOfSegments,
         subscribe,
         unSubscribe,
-        replicationEvent,
         bootstap;
 
         private final WireKey[] params;

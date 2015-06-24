@@ -30,7 +30,7 @@ import java.util.function.Consumer;
 /**
  * @author Rob Austin.
  */
-public interface EngineReplication extends Closeable, Replication {
+public interface EngineReplication extends Replication {
 
 
     /**
@@ -183,6 +183,7 @@ public interface EngineReplication extends Closeable, Replication {
             wire.write(() -> "isDeleted").bool(isDeleted());
             wire.write(() -> "bootStrapTimeStamp").int64(bootStrapTimeStamp());
         }
+
 
     }
 }

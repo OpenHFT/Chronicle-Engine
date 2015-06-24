@@ -24,40 +24,42 @@ import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.engine.map.replication.Bootstrap;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
-import net.openhft.chronicle.threads.LightPauser;
-import net.openhft.chronicle.threads.NamedThreadFactory;
-import net.openhft.chronicle.threads.Pauser;
+import net.openhft.chronicle.threads.*;
+import net.openhft.chronicle.threads.api.EventHandler;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.ValueOut;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Executable;
+import java.io.Closeable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.collection.CollectionWireHandler.SetEventId.identifier;
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.bootstap;
-import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.replicationEvent;
-import static net.openhft.chronicle.network.connection.CoreFields.reply;
+
+import static net.openhft.chronicle.engine.server.internal.ReplicationHandler.EventId.*;
 
 /**
  * Created by Rob Austin
  */
 public class ReplicationHub extends AbstractStatelessClient implements View {
     private static final Logger LOG = LoggerFactory.getLogger(ChronicleMapKeyValueStore.class);
-    private final ExecutorService executorService;
+    private final EventGroup eventGroup;
+    private final AtomicBoolean isClosed;
     private final Pauser pauser = new LightPauser(100_000_000, 0);
 
-    public ReplicationHub(RequestContext context, @NotNull final TcpChannelHub hub) {
+    public ReplicationHub(RequestContext context, @NotNull final TcpChannelHub hub, EventGroup eventGroup, AtomicBoolean isClosed) {
         super(hub, (long) 0, toUri(context));
 
-        executorService = Executors.newSingleThreadExecutor(new NamedThreadFactory("ReplicationHubOnChange"));
+        this.eventGroup = eventGroup;
+        this.isClosed = isClosed;
     }
 
     private static String toUri(final RequestContext context) {
@@ -75,7 +77,7 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
 
     public void bootstrap(EngineReplication replication, int localIdentifer) throws InterruptedException {
 
-        final byte remoteIdentifier = proxyReturnByte(identifier);
+        final byte remoteIdentifier = proxyReturnByte(identifierReply, identifier);
         final ModificationIterator mi = replication.acquireModificationIterator(remoteIdentifier);
         final long lastModificationTime = replication.lastModificationTime(remoteIdentifier);
 
@@ -87,22 +89,29 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
         final Function<ValueIn, Bootstrap> typedMarshallable = ValueIn::typedMarshallable;
         final Consumer<ValueOut> valueOutConsumer = o -> o.typedMarshallable(bootstrap);
         final Bootstrap b = (Bootstrap) proxyReturnWireConsumerInOut(
-                bootstap, reply, valueOutConsumer, typedMarshallable, tid::set);
+                bootstap, bootstrapReply, valueOutConsumer, typedMarshallable, tid::set);
 
         try {
 
-            mi.setModificationNotifier(() -> pauser.unpause());
+            mi.setModificationNotifier(() -> {
+
+                // todo call event eventGroup.unpause();
+            });
+
+            AtomicLong tid0 = new AtomicLong();
 
             // send replication events
             this.hub.outBytesLock().lock();
             try {
+                tid0.set(writeMetaDataStartTime(System.currentTimeMillis()));
+
                 mi.forEach(e -> this.hub.outWire().writeDocument(false, wireOut ->
                         wireOut.writeEventName(replicationEvent).typedMarshallable(e)));
 
                 // receives replication events
                 this.hub.asyncReadSocket(tid.get(), d -> {
                     d.readDocument(null, w -> replication.applyReplication(
-                            w.read(reply).typedMarshallable()));
+                            w.read(replicactionReply).typedMarshallable()));
                 });
 
                 this.hub.writeSocket(this.hub.outWire());
@@ -112,31 +121,31 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
 
             mi.dirtyEntries(b.lastUpdatedTime());
 
-            executorService.submit(new Runnable() {
+            eventGroup.addHandler(new EventHandler() {
                 @Override
-                public void run() {
-                    for (; !Thread.currentThread().isInterrupted(); ) {
+                public boolean runOnce() {
 
-                        pauser.pause();
+                    TcpChannelHub hub = ReplicationHub.this.hub;
+                    hub.outBytesLock().lock();
+                    try {
+                        ReplicationHub.this.writeMetaDataForKnownTID(tid0.get());
 
-                        TcpChannelHub hub = ReplicationHub.this.hub;
-                        hub.outBytesLock().lock();
-                        try {
-                            writeMetaDataForKnownTID(tid.get());
-
-                            mi.forEach(e -> {
-                                hub.outWire().writeDocument(false, wireOut ->
-                                        wireOut.writeEventName(replicationEvent).typedMarshallable(e));
-                            });
-                            hub.writeSocket(hub.outWire());
-                        } catch (InterruptedException e) {
-                            throw Jvm.rethrow(e);
-                        } finally {
-                            hub.outBytesLock().unlock();
-                        }
-
-
+                        mi.forEach(e -> hub.outWire().writeDocument(false, wireOut ->
+                                wireOut.writeEventName(replicationEvent).typedMarshallable(e)));
+                        hub.writeSocket(hub.outWire());
+                    } catch (InterruptedException e) {
+                        throw Jvm.rethrow(e);
+                    } finally {
+                        hub.outBytesLock().unlock();
                     }
+
+                    return !isClosed.get();
+
+                }
+
+                @Override
+                public HandlerPriority priority() {
+                    return HandlerPriority.MEDIUM;
                 }
             });
 
@@ -145,5 +154,6 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
         }
 
     }
+
 
 }

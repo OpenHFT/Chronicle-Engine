@@ -67,8 +67,7 @@ public class CMap2EngineReplicator implements EngineReplication,
     public void put(final BytesStore key, final BytesStore value,
                     final byte remoteIdentifier,
                     final long timestamp) {
-        engineReplicationLang.put(toLangBytes(key), toLangBytes(value), remoteIdentifier,
-                timestamp);
+        engineReplicationLang.put(toLangBytes(key), toLangBytes(value), remoteIdentifier, timestamp);
     }
 
     private void remove(final BytesStore key, final byte remoteIdentifier, final long timestamp) {
@@ -176,10 +175,7 @@ public class CMap2EngineReplicator implements EngineReplication,
         engineReplicationLang.setLastModificationTime(identifier, timestamp);
     }
 
-    @Override
-    public void close() throws IOException {
-        engineReplicationLang.close();
-    }
+
 
     @Override
     public String toString() {

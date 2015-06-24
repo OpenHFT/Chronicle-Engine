@@ -150,14 +150,9 @@ public class EngineWireHandler extends WireTcpHandler {
 
                     requestContext = RequestContext.requestContext(cspText);
                     viewType = requestContext.viewType();
-
                     asset = this.assetTree.acquireAsset(viewType, requestContext);
                     view = asset.acquireView(requestContext);
-
-
-
                     mapView = this.assetTree.acquireAsset(MapView.class, requestContext);
-
                     requestContext.keyType();
 
                     if (viewType == MapView.class ||

@@ -21,9 +21,7 @@ public class VanillaReplication implements Replication {
     private final Asset asset;
     private final MapView mapView;
 
-    public VanillaReplication(final RequestContext requestContext, final Asset asset, final
-    MapView mapView) {
-
+    public VanillaReplication(final RequestContext requestContext, final Asset asset, final MapView mapView) {
         this.requestContext = requestContext;
         this.asset = asset;
         this.mapView = mapView;

@@ -116,6 +116,10 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
         return proxyReturnWireConsumer(eventId, f -> f.int8());
     }
 
+    protected byte proxyReturnByte(WireKey reply, @NotNull final WireKey eventId) {
+        return proxyReturnWireConsumerInOut(eventId, reply, null, f -> f.int8());
+    }
+
     protected int proxyReturnUint16(@NotNull final WireKey eventId) {
         return proxyReturnWireConsumer(eventId, f -> f.uint16());
     }
@@ -128,7 +132,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
     }
 
     public <T> T proxyReturnWireConsumerInOut(@NotNull final WireKey eventId,
-                                              @NotNull final CoreFields reply,
+                                              @NotNull final WireKey reply,
                                               @Nullable final Consumer<ValueOut> consumerOut,
                                               @NotNull final Function<ValueIn, T> consumerIn) {
         final long startTime = System.currentTimeMillis();
@@ -137,7 +141,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
     }
 
     public <T> T proxyReturnWireConsumerInOut(@NotNull final WireKey eventId,
-                                              @NotNull final CoreFields reply,
+                                              @NotNull final WireKey reply,
                                               @Nullable final Consumer<ValueOut> consumerOut,
                                               @NotNull final Function<ValueIn, T> consumerIn,
                                               @Nullable final LongConsumer tidConsumer) {
