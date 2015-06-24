@@ -20,17 +20,10 @@ package net.openhft.chronicle.engine.server.internal;
  * Created by Rob Austin
  */
 
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.pool.StringBuilderPool;
-import net.openhft.chronicle.engine.api.EngineReplication;
-import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
-import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
-import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.map.RemoteKeyValueStore;
-import net.openhft.chronicle.engine.map.replication.Bootstrap;
-import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.wire.*;
@@ -42,10 +35,8 @@ import org.slf4j.LoggerFactory;
 import java.io.StreamCorruptedException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Queue;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.*;
@@ -111,7 +102,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
 
                 outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
 
-                writeData(out -> {
+                writeData(inWire.bytes(), out -> {
 
                     if (clear.contentEquals(eventName)) {
                         map.clear();
