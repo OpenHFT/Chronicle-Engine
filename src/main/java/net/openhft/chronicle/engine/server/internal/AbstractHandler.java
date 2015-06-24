@@ -5,6 +5,7 @@ import net.openhft.chronicle.wire.WireOut;
 import net.openhft.chronicle.wire.Wires;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 
@@ -50,5 +51,10 @@ public class AbstractHandler {
                 System.out.println("server-writes:\n" +
                         outWire.bytes().toDebugString());
             }
+    }
+
+    public static void nullCheck(@Nullable Object o) {
+        if (o == null)
+            throw new NullPointerException();
     }
 }

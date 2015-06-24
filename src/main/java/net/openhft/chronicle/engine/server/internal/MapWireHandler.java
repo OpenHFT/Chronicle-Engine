@@ -72,8 +72,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
     private Function<ValueIn, K> wireToK;
     private Function<ValueIn, V> wireToV;
     private RequestContext requestContext;
-    private Queue<Consumer<Wire>> publisher;
-    private AssetTree assetTree;
+
 
     @Nullable
     private Wire inWire = null;
@@ -293,10 +292,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
         }
     };
 
-    public static void nullCheck(@Nullable Object o) {
-        if (o == null)
-            throw new NullPointerException();
-    }
+
 
     /**
      * @param in             the data the has come in from network
@@ -305,8 +301,6 @@ public class MapWireHandler<K, V> extends AbstractHandler {
      * @param tid            the transaction id of the event
      * @param wireAdapter    adapts keys and values to and from wire
      * @param requestContext the uri of the event
-     * @param publisher      used to publish events to
-     * @param assetTree
      * @throws StreamCorruptedException
      */
     public void process(@NotNull final Wire in,
@@ -314,20 +308,14 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                         @NotNull KeyValueStore<K, V, V> map,
                         long tid,
                         @NotNull final WireAdapter<K, V> wireAdapter,
-                        @NotNull final RequestContext requestContext,
-                        @NotNull final Queue<Consumer<Wire>> publisher,
-                        @NotNull final AssetTree assetTree) throws
+                        @NotNull final RequestContext requestContext) throws
             StreamCorruptedException {
         this.vToWire = wireAdapter.valueToWire();
         this.wireToK = wireAdapter.wireToKey();
         this.wireToV = wireAdapter.wireToValue();
         this.requestContext = requestContext;
-        this.publisher = publisher;
-        this.assetTree = assetTree;
 
         setOutWire(outWire);
-
-
 
         try {
             this.inWire = in;
@@ -378,8 +366,6 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                     final Class valueType = requestContext.valueType();
                     if (valueType != null)
                         cpsBuff.append("&valueType=").append(valueType.getName());
-
-                    // todo add more fields
 
                     w.writeEventName(CoreFields.csp).text(cpsBuff);
                     w.writeEventName(CoreFields.cid).int64(createCid(cpsBuff));
