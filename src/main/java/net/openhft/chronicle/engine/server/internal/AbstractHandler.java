@@ -1,6 +1,6 @@
 package net.openhft.chronicle.engine.server.internal;
 
-import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireOut;
 import net.openhft.chronicle.wire.Wires;
@@ -19,6 +19,7 @@ import static net.openhft.chronicle.wire.WriteMarshallable.EMPTY;
  * Created by Rob Austin
  */
 public class AbstractHandler {
+
     private static final Logger LOG = LoggerFactory.getLogger(AbstractHandler.class);
     Wire outWire = null;
 
@@ -29,16 +30,17 @@ public class AbstractHandler {
     /**
      * write and exceptions and rolls back if no data was written
      */
-    void writeData(@NotNull Consumer<WireOut> c) {
+    void writeData(Bytes inBytes, @NotNull Consumer<WireOut> c) {
         outWire.writeDocument(false, out -> {
-
+            final long readPosition = inBytes.readPosition();
             final long position = outWire.bytes().writePosition();
             try {
                 c.accept(outWire);
-            } catch (Exception exception) {
-                LOG.error("", exception);
+            } catch (Throwable t) {
+                inBytes.readPosition(readPosition);
+                LOG.info("While reading " + inBytes.toDebugString(), " processing wire " + c, t);
                 outWire.bytes().writePosition(position);
-                outWire.writeEventName(() -> "exception").throwable(exception);
+                outWire.writeEventName(() -> "exception").throwable(t);
             }
 
             // write 'reply : {} ' if no data was sent
