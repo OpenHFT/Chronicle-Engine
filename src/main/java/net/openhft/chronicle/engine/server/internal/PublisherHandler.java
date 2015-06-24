@@ -11,7 +11,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static net.openhft.chronicle.engine.server.internal.MapWireHandler.nullCheck;
 import static net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId.publish;
 import static net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId.registerTopicSubscriber;
 import static net.openhft.chronicle.engine.server.internal.PublisherHandler.Params.message;
@@ -59,7 +58,7 @@ public class PublisherHandler<E> extends AbstractHandler {
 
             outWire.writeDocument(true, wire -> outWire.writeEventName(tid).int64(inputTid));
 
-            writeData(out -> {
+            writeData(inWire.bytes(), out -> {
 
                 if (publish.contentEquals(eventName)) {
 

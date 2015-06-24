@@ -133,7 +133,7 @@ public class SubscriptionHandlerProcessor extends AbstractHandler {
 
             outWire.writeDocument(true, wire -> outWire.writeEventName(tid).int64(inputTid));
 
-            writeData(out -> {
+            writeData(inWire.bytes(), out -> {
 
                 if (topicSubscriberCount.contentEquals(eventName)) {
                     outWire.writeEventName(reply).int8(subscription.topicSubscriberCount());

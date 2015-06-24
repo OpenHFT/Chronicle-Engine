@@ -13,8 +13,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.bootstap;
-import static net.openhft.chronicle.engine.server.internal.PublisherHandler.Params.message;
-import static net.openhft.chronicle.engine.server.internal.ReplicationHandler.EventId.*;
+import static net.openhft.chronicle.engine.server.internal.ReplicationHandler.EventId.identifier;
+import static net.openhft.chronicle.engine.server.internal.ReplicationHandler.EventId.replicationEvent;
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
 
 /**
@@ -78,7 +78,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
             outWire.writeDocument(true, wire -> outWire.writeEventName(net.openhft.chronicle.network.connection.CoreFields.tid).int64(tid));
 
-            writeData(out -> {
+            writeData(inWire.bytes(), out -> {
 
                 if (identifier.contentEquals(eventName)) {
                     outWire.writeEventName(reply).int8(hostId.hostId());
