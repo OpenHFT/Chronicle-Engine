@@ -67,7 +67,9 @@ import static net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntr
  * very few events if they are done quickly and there is a significant delay
  * between the event and the event being triggered.
  */
-public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Closeable {
+public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Closeable,
+        ChronicleMapBackedEngineReplication.ChangeApplier<FilePerKeyValueStore>,
+        ChronicleMapBackedEngineReplication.GetValue<FilePerKeyValueStore> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FilePerKeyValueStore.class);
     private final Path dirPath;
@@ -472,6 +474,29 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
             }
             return key;
         }
+    }
+
+    private static String bytesToString(Bytes bytes) {
+        long pos = bytes.readPosition();
+        try {
+            return bytes.readUTFΔ();
+        } finally {
+            bytes.readPosition(pos);
+        }
+    }
+
+    @Override
+    public void applyChange(FilePerKeyValueStore store, ReplicationEntry remoteEntry) {
+        if (remoteEntry.isDeleted()) {
+            store.remove(bytesToString(remoteEntry.key()));
+        } else {
+            store.put(bytesToString(remoteEntry.key()), remoteEntry.value());
+        }
+    }
+
+    @Override
+    public Bytes getValue(FilePerKeyValueStore filePerKeyValueStore, Bytes key) {
+        return get(bytesToString(key)).bytesForRead();
     }
 }
 

@@ -98,11 +98,6 @@ public class CMap2EngineReplicator implements EngineReplication,
     }
 
     @Override
-    public void forEach(byte id, @NotNull Consumer<ReplicationEntry> consumer) throws InterruptedException {
-        acquireModificationIterator(id).forEach(consumer);
-    }
-
-    @Override
     public ModificationIterator acquireModificationIterator(final byte remoteIdentifier) {
         final EngineModificationIterator instance = engineReplicationLang
                 .acquireEngineModificationIterator(remoteIdentifier);
