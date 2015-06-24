@@ -18,7 +18,6 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
-import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.engine.map.replication.Bootstrap;
@@ -90,9 +89,6 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
             try {
                 mi.forEach(e -> this.hub.outWire().writeDocument(false, wireOut ->
                         wireOut.writeEventName(replicationEvent).marshallable(e)));
-            } finally {
-                this.hub.outBytesLock().unlock();
-            }
 
             // receives replication events
             this.hub.asyncReadSocket(tid.get(), d ->
@@ -100,6 +96,9 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
                             w.read(reply).typedMarshallable())));
 
             this.hub.writeSocket(this.hub.outWire());
+            } finally {
+                this.hub.outBytesLock().unlock();
+            }
 
         } catch (Throwable t) {
             LOG.error("", t);

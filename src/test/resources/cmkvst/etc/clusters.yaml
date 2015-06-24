@@ -13,13 +13,13 @@ cluster: {
      port: 8081,
      timeoutMs: 1000,
   },
-  host3: {
-     hostId: 3,
-     tcpBufferSize: 65536,
-     hostname: localhost,
-     port: 8082,
-     timeoutMs: 1000,
-  }
+#  host3: {
+#     hostId: 3,
+#     tcpBufferSize: 65536,
+#     hostname: localhost,
+#     port: 8082,
+#     timeoutMs: 1000,
+#  }
 }
 clusterTwo: {
   host1: {

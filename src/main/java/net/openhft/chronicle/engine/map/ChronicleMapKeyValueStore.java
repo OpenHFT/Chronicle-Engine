@@ -130,7 +130,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
                 ReplicationHub replicationHub = new ReplicationHub(context, tcpChannelHub);
 
                 try {
-                    replicationHub.bootstrap(engineReplicator1, hostDetails.hostId);
+                    replicationHub.bootstrap(engineReplicator1, hostId);
                 } catch (InterruptedException e) {
                     throw new AssertionError(e);
                 }
