@@ -49,8 +49,10 @@ public interface EngineReplication extends Closeable, Replication  {
      */
     byte identifier();
 
-    void forEach(byte remoteIdentifier, @NotNull Consumer<ReplicationEntry> consumer) throws
-            InterruptedException;
+    default void forEach(byte remoteIdentifier, @NotNull Consumer<ReplicationEntry> consumer) throws
+            InterruptedException {
+        acquireModificationIterator(remoteIdentifier).forEach(consumer);
+    }
 
     /**
      * Gets (if it does not exist, creates) an instance of ModificationIterator associated with a

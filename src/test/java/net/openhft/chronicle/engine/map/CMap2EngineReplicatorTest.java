@@ -66,11 +66,10 @@ public class CMap2EngineReplicatorTest {
         Assert.assertEquals("world", (value == null) ? null : new TextWire(value).getValueIn().text());
 
         Assert.assertEquals(2, entry.identifier());
-
     }
 
     /**
-     * tests when the put has come locally from another map with a remote identifer
+     * tests when the put has come locally from another map with a remote identifier
      */
     @Test
     public void testRemotePut() throws Exception {
@@ -91,7 +90,5 @@ public class CMap2EngineReplicatorTest {
         Assert.assertEquals("world", map.get("hello"));
 
     }
-
-
 
 }
