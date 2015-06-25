@@ -116,14 +116,17 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
         eventLoop.addHandler(new EventHandler() {
             @Override
             public boolean action() throws InvalidEventHandlerException {
-                boolean busy = false;
+                
+                if (!mi.hasNext())
+                     return false;
+                 
                 if (isClosed.get())
                     throw new InvalidEventHandlerException();
 
                 hub.lock(() -> mi.forEach(e -> sendEventAsyncWithoutLock(replicationEvent,
                         (Consumer<ValueOut>) v -> v.typedMarshallable(e))));
 
-                return busy;
+                return true;
             }
 
             @Override

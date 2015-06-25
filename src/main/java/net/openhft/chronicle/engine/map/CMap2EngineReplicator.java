@@ -113,7 +113,7 @@ public class CMap2EngineReplicator implements EngineReplication,
                 }
             }
 
-            private boolean hasNext() {
+            public boolean hasNext() {
                 return instance.hasNext();
             }
 

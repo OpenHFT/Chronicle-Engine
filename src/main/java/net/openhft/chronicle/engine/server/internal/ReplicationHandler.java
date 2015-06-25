@@ -120,9 +120,12 @@ public class ReplicationHandler<E> extends AbstractHandler {
                 eventLoop.addHandler(new EventHandler() {
                     @Override
                     public boolean action() throws InvalidEventHandlerException {
-                        boolean busy = false;
+
                         if (isClosed.get())
                             throw new InvalidEventHandlerException();
+
+                        if (!mi.hasNext())
+                            return false;
 
                         try {
                             mi.forEach(e -> publisher.add(publish -> {
@@ -138,7 +141,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
                             Jvm.rethrow(e);
                         }
 
-                        return busy;
+                        return true;
 
                     }
 

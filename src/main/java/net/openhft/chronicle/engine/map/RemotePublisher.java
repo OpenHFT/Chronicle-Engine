@@ -33,7 +33,7 @@ public class RemotePublisher<E> extends AbstractStatelessClient<EventId> impleme
     }
 
     private static String toUri(final RequestContext context) {
-        StringBuilder uri = new StringBuilder(  context.fullName()
+        StringBuilder uri = new StringBuilder( "/" + context.fullName()
                 + "?view=" + "publisher");
 
         if (context.valueType() != String.class)

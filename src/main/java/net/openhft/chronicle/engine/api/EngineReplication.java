@@ -105,6 +105,7 @@ public interface EngineReplication extends Replication {
 
         void forEach(@NotNull Consumer<ReplicationEntry> consumer) throws InterruptedException;
 
+        boolean hasNext();
         /**
          * Dirties all entries with a modification time equal to {@code fromTimeStamp} or newer. It
          * means all these entries will be considered as "new" by this ModificationIterator and
