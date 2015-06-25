@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.tree;
 
+import net.openhft.chronicle.core.annotation.ForceInline;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.util.ThrowingAcceptor;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
@@ -232,6 +233,7 @@ public class VanillaAsset implements Asset, Closeable {
 
     @Nullable
     @Override
+    @ForceInline
     public <V> V getView(@NotNull Class<V> vClass) {
         @SuppressWarnings("unchecked")
         V view = (V) viewMap.get(vClass);
@@ -240,6 +242,7 @@ public class VanillaAsset implements Asset, Closeable {
 
     @NotNull
     @Override
+    @ForceInline
     public String name() {
         return name;
     }
@@ -309,6 +312,7 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Override
+    @ForceInline
     public Asset parent() {
         return parent;
     }

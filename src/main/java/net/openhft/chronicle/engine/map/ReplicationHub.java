@@ -117,7 +117,7 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
 
             eventLoop.addHandler(new EventHandler() {
                 @Override
-                public boolean runOnce() {
+                public boolean action() {
 
                     TcpChannelHub hub = ReplicationHub.this.hub;
                     hub.outBytesLock().lock();
