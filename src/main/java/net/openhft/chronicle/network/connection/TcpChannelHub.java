@@ -534,6 +534,23 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
             throw new IllegalStateException("Closed");
     }
 
+    public void lock(Task r) {
+
+        outBytesLock().lock();
+        try {
+            r.run();
+        } catch (Exception e) {
+            throw Jvm.rethrow(e);
+        } finally {
+            outBytesLock().unlock();
+        }
+
+    }
+
+    public interface Task {
+        void run() throws Exception;
+    }
+
     /**
      * uses a single read thread, to process messages to waiting threads based on their {@code tid}
      */

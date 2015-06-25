@@ -64,10 +64,14 @@ public class ReplicationTest {
 
     @AfterClass
     public static void after() {
+        if (serverEndpoint1 != null)
         serverEndpoint1.close();
+        if (serverEndpoint2 != null)
         serverEndpoint2.close();
 //        serverEndpoint3.close();
+        if (tree1 != null)
         tree1.close();
+        if (tree2 != null)
         tree2.close();
 //        tree3.close();
     }

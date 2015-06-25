@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
@@ -86,40 +85,11 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
 
         try {
 
-            // receives the replication events
-            startSubscription(replication, localIdentifer);
+            // subscribes to updates - receives the replication events
+            subscribe(replication, localIdentifer);
 
-            mi.setModificationNotifier(() -> {
-                eventLoop.unpause();
-            });
-
-            eventLoop.addHandler(new EventHandler() {
-                @Override
-                public boolean runOnce() {
-
-                    TcpChannelHub hub = ReplicationHub.this.hub;
-                    hub.outBytesLock().lock();
-                    try {
-                        mi.forEach(e -> {
-                            sendEventAsyncWithoutLock(replicationEvent, (Consumer<ValueOut>) (v ->
-                                    v.typedMarshallable(e)));
-                        });
-                    } catch (InterruptedException e) {
-                        throw Jvm.rethrow(e);
-                    } finally {
-                        hub.outBytesLock().unlock();
-                    }
-
-                    return !isClosed.get();
-
-                }
-
-                @Override
-                public HandlerPriority priority() {
-                    return HandlerPriority.MEDIUM;
-                }
-            });
-            mi.dirtyEntries(b.lastUpdatedTime());
+            // publishes changes - pushes the replication events
+            publish(mi, b);
 
         } catch (Throwable t) {
             LOG.error("", t);
@@ -128,10 +98,47 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
     }
 
     /**
+     * publishes changes - pushes the replication events
+     *
+     * @param mi     the modification iterator that notifies us of changes
+     * @param remote details about the remote connection
+     * @throws InterruptedException
+     */
+    private void publish(final ModificationIterator mi, final Bootstrap remote) throws InterruptedException {
+
+        final TcpChannelHub hub = this.hub;
+
+        mi.setModificationNotifier(() -> {
+            eventLoop.unpause();
+        });
+
+        eventLoop.addHandler(new EventHandler() {
+            @Override
+            public boolean runOnce() {
+
+                hub.lock(() -> mi.forEach(e -> sendEventAsyncWithoutLock(replicationEvent,
+                        (Consumer<ValueOut>) v -> v.typedMarshallable(e))));
+
+                return !isClosed.get();
+            }
+
+            @Override
+            public HandlerPriority priority() {
+                return HandlerPriority.MEDIUM;
+            }
+        });
+
+        mi.dirtyEntries(remote.lastUpdatedTime());
+    }
+
+
+
+    /**
+     * subscribes to updates
      * @param replication    the event will be applied to the EngineReplication
      * @param localIdentifer our local identifier
      */
-    private void startSubscription(final EngineReplication replication, final int localIdentifer) {
+    private void subscribe(final EngineReplication replication, final int localIdentifer) {
         this.hub.outBytesLock().lock();
         try {
 
