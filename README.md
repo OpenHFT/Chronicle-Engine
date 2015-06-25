@@ -162,7 +162,7 @@ Chronicle Enterprise can trigger the compilation of methods from a previous run 
 ```java
 // load the methods compiled previously.
 Warmup warmup = Warmup.compileFromFile(new File("print-compilation.txt")));
-// print out the methods which will be compiled.
+// print out the methods which will be compiled and to which level.
 warmup.dump((m, l) -> System.out.println(m + " => " + l));
 // start enqueuing the methods to be compiled in the background.
 warmup.start();

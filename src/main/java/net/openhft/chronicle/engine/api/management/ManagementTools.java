@@ -22,7 +22,9 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
 import net.openhft.chronicle.engine.map.ObjectKeyValueStore;
+import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
+import net.openhft.chronicle.threads.Threads;
 import net.openhft.lang.thread.NamedThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,12 +58,12 @@ public enum ManagementTools {
     //number of AssetTree enabled for management.
     private static int count = 0;
 
-    public static int getCount(){
+    public static int getCount() {
         return count;
     }
 
     private static void startJMXRemoteService() throws IOException {
-        if(jmxServer==null) {
+        if (jmxServer == null) {
             mbs = ManagementFactory.getPlatformMBeanServer();
 
             // Create the RMI registry on port 9000
@@ -69,7 +71,7 @@ public enum ManagementTools {
 
             // Build a URL which tells the RMIConnectorServer to bind to the RMIRegistry running on port 9000
             JMXServiceURL url = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://localhost:9000/jmxrmi");
-            Map<String,String> env = new HashMap<String, String>();
+            Map<String, String> env = new HashMap<String, String>();
             env.put("com.sun.management.jmxremote", "true");
             env.put("com.sun.management.jmxremote.ssl", "false");
             env.put("com.sun.management.jmxremote.authenticate", "false");
@@ -80,7 +82,7 @@ public enum ManagementTools {
     }
 
     private static void stopJMXRemoteService() throws IOException {
-        if(jmxServer!=null) {
+        if (jmxServer != null) {
             mbs = null;
             jmxServer.stop();
         }
@@ -93,11 +95,11 @@ public enum ManagementTools {
      * @param assetTree the object of AssetTree type for enable management
      */
     public static void enableManagement(AssetTree assetTree) {
-        try{
+        try {
             startJMXRemoteService();
             count++;
-        }catch (IOException ie){
-            LOGGER.error("Error while enable management",ie);
+        } catch (IOException ie) {
+            LOGGER.error("Error while enable management", ie);
         }
         registerViewofTree(assetTree);
     }
@@ -107,7 +109,7 @@ public enum ManagementTools {
         count--;
 
         try {
-            if(count==0) {
+            if (count == 0) {
                 stopJMXRemoteService();
             }
         } catch (IOException e) {
@@ -116,16 +118,21 @@ public enum ManagementTools {
     }
 
     private static void registerViewofTree(AssetTree tree) {
-        ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor(
-                new NamedThreadFactory("tree-watcher", true));
-        tree.registerSubscriber("", TopologicalEvent.class, e ->
-                        // give the collection time to be setup.
-                        ses.schedule(() -> handleTreeUpdate(tree, e, ses), 50, TimeUnit.MILLISECONDS)
-        );
+        Threads.withThreadGroup(tree.root().getView(ThreadGroup.class), () -> {
+            ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor(
+                    new NamedThreadFactory("JMX-tree-watcher", true));
+            tree.registerSubscriber("", TopologicalEvent.class, e ->
+                            // give the collection time to be setup.
+                            ses.schedule(() -> handleTreeUpdate(tree, e, ses), 50, TimeUnit.MILLISECONDS)
+            );
+            return null;
+        });
     }
 
     private static void handleTreeUpdate(AssetTree tree, TopologicalEvent e, ScheduledExecutorService ses) {
         try {
+            HostIdentifier hostIdentifier = tree.root().getView(HostIdentifier.class);
+            int hostId = hostIdentifier == null ? 0 : hostIdentifier.hostId();
             String treeName = tree.toString();
             if (e.added()) {
                 String assetFullName = e.fullName();
@@ -141,17 +148,17 @@ public enum ManagementTools {
 
                     ObjectKVSSubscription objectKVSSubscription = asset.getView(ObjectKVSSubscription.class);
 
-                    ObjectName atName = new ObjectName(createObjectNameUri(e.assetName(),e.name(),treeName));
+                    ObjectName atName = new ObjectName(createObjectNameUri(hostId, e.assetName(), e.name(), treeName));
 
                     tree.registerSubscriber(e.fullName(), MapEvent.class, (MapEvent me) ->
-                            ses.schedule(() -> handleAssetUpdate(view,atName,objectKVSSubscription), 100, TimeUnit.MILLISECONDS));
+                            ses.schedule(() -> handleAssetUpdate(view, atName, objectKVSSubscription), 100, TimeUnit.MILLISECONDS));
 
-                    AssetTreeJMX atBean = new AssetTreeJMX(view,objectKVSSubscription,e.assetName() + "-" + e.name());
+                    AssetTreeJMX atBean = new AssetTreeJMX(view, objectKVSSubscription, e.assetName() + "-" + e.name());
 
                     registerTreeWithMBean(atBean, atName);
                 }
             } else {
-                ObjectName atName = new ObjectName(createObjectNameUri(e.assetName(),e.name(),treeName));
+                ObjectName atName = new ObjectName(createObjectNameUri(hostId, e.assetName(), e.name(), treeName));
                 unregisterTreeWithMBean(atName);
             }
         } catch (Throwable t) {
@@ -159,19 +166,19 @@ public enum ManagementTools {
         }
     }
 
-    private static void handleAssetUpdate(ObjectKeyValueStore view, ObjectName atName, ObjectKVSSubscription objectKVSSubscription){
+    private static void handleAssetUpdate(ObjectKeyValueStore view, ObjectName atName, ObjectKVSSubscription objectKVSSubscription) {
         try {
-            if(mbs.isRegistered(atName)){
+            if (mbs.isRegistered(atName)) {
 
                 AttributeList list = new AttributeList();
-                list.add(new Attribute("Size",view.longSize()));
-                list.add(new Attribute("KeyType",view.keyType().getName()));
-                list.add(new Attribute("ValueType",view.valueType().getName()));
-                list.add(new Attribute("TopicSubscriberCount",objectKVSSubscription.topicSubscriberCount()));
-                list.add(new Attribute("EntrySubscriberCount",objectKVSSubscription.entrySubscriberCount()));
-                list.add(new Attribute("KeySubscriberCount",objectKVSSubscription.keySubscriberCount()));
+                list.add(new Attribute("Size", view.longSize()));
+                list.add(new Attribute("KeyType", view.keyType().getName()));
+                list.add(new Attribute("ValueType", view.valueType().getName()));
+                list.add(new Attribute("TopicSubscriberCount", objectKVSSubscription.topicSubscriberCount()));
+                list.add(new Attribute("EntrySubscriberCount", objectKVSSubscription.entrySubscriberCount()));
+                list.add(new Attribute("KeySubscriberCount", objectKVSSubscription.keySubscriberCount()));
 
-                mbs.setAttributes(atName,list);
+                mbs.setAttributes(atName, list);
 
             }
         } catch (Throwable t) {
@@ -179,13 +186,13 @@ public enum ManagementTools {
         }
     }
 
-    private static String createObjectNameUri(String assetName, String eventName, String treeName){
+    private static String createObjectNameUri(int hostId, String assetName, String eventName, String treeName) {
         System.out.println(treeName);
         StringBuilder sb = new StringBuilder(256);
-        sb.append("net.openhft.chronicle.engine.tree");
-        sb.append(":type=");
-        sb.append(treeName.substring(treeName.lastIndexOf(".")+1));
-        //sb.append("net.openhft.chronicle.engine.api.tree:type=AssetTree");
+        sb.append("net.openhft.chronicle.engine:tree=");
+        sb.append(hostId);
+        sb.append(",type=");
+        sb.append(treeName.substring(treeName.lastIndexOf(".") + 1));
 
         String[] names = assetName.split("/");
         for (int i = 1; i < names.length; i++) {
@@ -196,7 +203,7 @@ public enum ManagementTools {
         return sb.toString();
     }
 
-    private static void registerTreeWithMBean(AssetTreeJMX atBean,ObjectName atName){
+    private static void registerTreeWithMBean(AssetTreeJMX atBean, ObjectName atName) {
         try {
             mbs.registerMBean(atBean, atName);
         } catch (InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException e) {
@@ -204,11 +211,11 @@ public enum ManagementTools {
         }
     }
 
-    private static void unregisterTreeWithMBean(ObjectName atName){
+    private static void unregisterTreeWithMBean(ObjectName atName) {
         try {
             mbs.unregisterMBean(atName);
         } catch (InstanceNotFoundException | MBeanRegistrationException e) {
-            LOGGER.error("Error unreigster AssetTree with MBean",e);
+            LOGGER.error("Error unreigster AssetTree with MBean", e);
         }
     }
 }

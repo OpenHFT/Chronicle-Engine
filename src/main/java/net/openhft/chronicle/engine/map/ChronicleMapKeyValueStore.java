@@ -35,25 +35,21 @@ import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.MapEventListener;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
-import net.openhft.chronicle.threads.EventGroup;
-import net.openhft.lang.thread.NamedThreadFactory;
+import net.openhft.chronicle.threads.api.EventLoop;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.nio.ch.IOUtil;
 
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
-import static net.openhft.chronicle.core.io.Closeable.*;
+import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
 import static net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer.notifyEachEvent;
 import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplication.builder;
 
@@ -66,7 +62,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
     private final EngineReplication engineReplicator;
     private final Asset asset;
     private final String assetFullName;
-    private final EventGroup eventGroup;
+    private final EventLoop eventLoop;
     private final AtomicBoolean isClosed = new AtomicBoolean();
 
     public ChronicleMapKeyValueStore(@NotNull RequestContext context, Asset asset) {
@@ -77,8 +73,8 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
         this.assetFullName = asset.fullName();
         this.subscriptions = asset.acquireView(ObjectKVSSubscription.class, context);
         this.subscriptions.setKvStore(this);
-        this.eventGroup = new EventGroup(true);
-        eventGroup.start();
+        this.eventLoop = asset.findOrCreateView(EventLoop.class);
+        eventLoop.start();
 
         PublishingOperations publishingOperations = new PublishingOperations();
 
@@ -138,7 +134,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
                     continue;
 
                 TcpChannelHub tcpChannelHub = hostDetails.acquireTcpChannelHub();
-                ReplicationHub replicationHub = new ReplicationHub(context, tcpChannelHub, eventGroup, isClosed);
+                ReplicationHub replicationHub = new ReplicationHub(context, tcpChannelHub, eventLoop, isClosed);
 
                 try {
                     replicationHub.bootstrap(engineReplicator1, hostId);
@@ -239,7 +235,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
     @Override
     public void close() {
         isClosed.set(true);
-        eventGroup.stop();
+        eventLoop.stop();
         closeQuietly(asset.findView(TcpChannelHub.class));
         Jvm.pause(1000);
         chronicleMap.close();

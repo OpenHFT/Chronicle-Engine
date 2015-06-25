@@ -22,7 +22,6 @@ import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.Jvm;
-import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.StringBytesStoreKeyValueStore;
@@ -30,6 +29,7 @@ import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.threads.Threads;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -106,7 +106,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
             throw new IORuntimeException(e);
         }
 
-        fileFpmWatcher = new Thread(new FPMWatcher(watcher), dirName + "-watcher");
+        fileFpmWatcher = new Thread(new FPMWatcher(watcher), Threads.threadGroupPrefix() + " watcher for " + dirName);
         fileFpmWatcher.setDaemon(true);
         fileFpmWatcher.start();
         subscriptions = asset.acquireView(RawKVSSubscription.class, context);

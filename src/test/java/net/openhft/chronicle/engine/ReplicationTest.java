@@ -35,13 +35,11 @@ import static org.junit.Assert.assertNotNull;
 public class ReplicationTest {
 
     public static final String NAME = "/ChMaps/test";
-
-    private static AssetTree tree1;
-    private static AssetTree tree2;
-//    private static AssetTree tree3;
-
     public static ServerEndpoint serverEndpoint1;
     public static ServerEndpoint serverEndpoint2;
+    //    private static AssetTree tree3;
+    private static AssetTree tree1;
+    private static AssetTree tree2;
 //    public static ServerEndpoint serverEndpoint3;
 
     @BeforeClass
@@ -55,9 +53,9 @@ public class ReplicationTest {
         tree2 = create(2);
 //        tree3 = create(3);
 
-        serverEndpoint1 = new ServerEndpoint(8080, true, tree1);
-        serverEndpoint2 = new ServerEndpoint(8081, true, tree2);
-//        serverEndpoint3 = new ServerEndpoint(8082, true, tree3);
+        serverEndpoint1 = new ServerEndpoint(8080, tree1);
+        serverEndpoint2 = new ServerEndpoint(8081, tree2);
+//        serverEndpoint3 = new ServerEndpoint(8082,  tree3);
 
     }
 
@@ -86,7 +84,7 @@ public class ReplicationTest {
                 new ChronicleMapKeyValueStore(context.wireType(writeType),
                         asset));
 
-        VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
+//        VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
 
         // tree.root().addView(HostIdentifier.class);
 

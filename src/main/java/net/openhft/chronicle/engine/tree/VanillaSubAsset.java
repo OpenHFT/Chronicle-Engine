@@ -161,28 +161,22 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     @NotNull
     @Override
     public Asset acquireAsset(RequestContext context, String fullName) throws AssetNotFoundException {
-        throw new UnsupportedOperationException("todo");
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public Asset getAsset(String fullName) {
-        throw new UnsupportedOperationException("todo");
+    public <V> boolean hasFactoryFor(Class<V> viewType) {
+        return false;
     }
 
     @NotNull
     @Override
     public Asset getChild(String name) {
-        throw new UnsupportedOperationException();
+        return null;
     }
 
     @Override
     public void removeChild(String name) {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @NotNull
-    public Asset add(String name, Assetted resource) {
-        throw new UnsupportedOperationException("todo");
     }
 
     @Override

@@ -31,4 +31,11 @@ public class HostIdentifier implements View {
     public byte hostId() {
         return hostId;
     }
+
+    @Override
+    public String toString() {
+        return "HostIdentifier{" +
+                "hostId=" + hostId +
+                '}';
+    }
 }

@@ -35,6 +35,9 @@ import java.util.concurrent.TimeUnit;
  * Created by peter.lawrey on 16/06/2015.
  */
 public class VanillaAssetTreeEgMain {
+    static final ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor(
+            new NamedThreadFactory("all-trees-watcher", true));
+
     public static void main(String[] args) {
         AssetTree tree = new VanillaAssetTree().forTesting();
         tree.enableManagement();
@@ -73,9 +76,6 @@ public class VanillaAssetTreeEgMain {
         Jvm.pause(200);
 
     }
-
-    static final ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor(
-            new NamedThreadFactory("tree-watcher", true));
 
     public static void registerTextViewofTree(String desc, AssetTree tree) {
         tree.registerSubscriber("", TopologicalEvent.class, e ->

@@ -24,18 +24,15 @@ import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.engine.map.replication.Bootstrap;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
-import net.openhft.chronicle.threads.*;
+import net.openhft.chronicle.threads.HandlerPriority;
 import net.openhft.chronicle.threads.api.EventHandler;
+import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.ValueOut;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -43,7 +40,6 @@ import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.collection.CollectionWireHandler.SetEventId.identifier;
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.bootstap;
-
 import static net.openhft.chronicle.engine.server.internal.ReplicationHandler.EventId.*;
 
 /**
@@ -51,14 +47,13 @@ import static net.openhft.chronicle.engine.server.internal.ReplicationHandler.Ev
  */
 public class ReplicationHub extends AbstractStatelessClient implements View {
     private static final Logger LOG = LoggerFactory.getLogger(ChronicleMapKeyValueStore.class);
-    private final EventGroup eventGroup;
+    private final EventLoop eventLoop;
     private final AtomicBoolean isClosed;
-    private final Pauser pauser = new LightPauser(100_000_000, 0);
 
-    public ReplicationHub(RequestContext context, @NotNull final TcpChannelHub hub, EventGroup eventGroup, AtomicBoolean isClosed) {
+    public ReplicationHub(RequestContext context, @NotNull final TcpChannelHub hub, EventLoop eventLoop, AtomicBoolean isClosed) {
         super(hub, (long) 0, toUri(context));
 
-        this.eventGroup = eventGroup;
+        this.eventLoop = eventLoop;
         this.isClosed = isClosed;
     }
 
@@ -94,8 +89,7 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
         try {
 
             mi.setModificationNotifier(() -> {
-
-                // todo call event eventGroup.unpause();
+                eventLoop.unpause();
             });
 
             AtomicLong tid0 = new AtomicLong();
@@ -121,7 +115,7 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
 
             mi.dirtyEntries(b.lastUpdatedTime());
 
-            eventGroup.addHandler(new EventHandler() {
+            eventLoop.addHandler(new EventHandler() {
                 @Override
                 public boolean runOnce() {
 

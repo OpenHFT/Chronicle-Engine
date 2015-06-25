@@ -17,10 +17,12 @@ package net.openhft.chronicle.engine.server;
 
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
+import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
 import net.openhft.chronicle.network.AcceptorEventHandler;
 import net.openhft.chronicle.network.VanillaSessionDetails;
-import net.openhft.chronicle.threads.EventGroup;
+import net.openhft.chronicle.threads.Threads;
+import net.openhft.chronicle.threads.api.EventLoop;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,17 +35,20 @@ import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
  */
 public class ServerEndpoint implements Closeable {
 
-    private EventGroup eg;
+    private EventLoop eg;
     private AcceptorEventHandler eah;
 
     public ServerEndpoint(AssetTree assetTree) throws
             IOException {
-        this(0, true, assetTree);
+        this(0, assetTree);
     }
 
-    public ServerEndpoint(int port, boolean daemon, AssetTree assetTree) throws IOException {
-        eg = new EventGroup(daemon);
-        start(port, assetTree);
+    public ServerEndpoint(int port, AssetTree assetTree) throws IOException {
+        eg = assetTree.root().acquireView(EventLoop.class, RequestContext.requestContext());
+        Threads.withThreadGroup(assetTree.root().getView(ThreadGroup.class), () -> {
+            start(port, assetTree);
+            return null;
+        });
     }
 
     @Nullable

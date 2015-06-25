@@ -101,6 +101,20 @@ public interface Asset extends Closeable {
         return v;
     }
 
+    default <V> V findOrCreateView(@NotNull Class<V> viewType) {
+        V v = getView(viewType);
+        if (v == null) {
+            if (hasFactoryFor(viewType))
+                return acquireView(viewType, RequestContext.requestContext());
+            Asset parent = parent();
+            if (parent != null)
+                v = parent.findOrCreateView(viewType);
+        }
+        return v;
+    }
+
+    <V> boolean hasFactoryFor(Class<V> viewType);
+
     Asset getChild(String name);
 
     void removeChild(String name);

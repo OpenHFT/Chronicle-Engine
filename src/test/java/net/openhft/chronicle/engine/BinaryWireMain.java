@@ -27,8 +27,8 @@ import java.io.IOException;
 public class BinaryWireMain {
     public static void main(String[] args) throws IOException, InterruptedException {
         int port = 8088;
-        boolean daemon = false;
-        final ServerEndpoint serverEndpoint = new ServerEndpoint(port, daemon, new VanillaAssetTree().forTesting());
+        VanillaAssetTree assetTree = new VanillaAssetTree().forTesting(false);
+        final ServerEndpoint serverEndpoint = new ServerEndpoint(port, assetTree);
 
         System.out.println("Server port seems to be " + serverEndpoint.getPort());
     }

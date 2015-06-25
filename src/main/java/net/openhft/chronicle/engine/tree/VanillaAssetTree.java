@@ -24,8 +24,11 @@ import net.openhft.chronicle.engine.fs.ConfigurationFS;
 import net.openhft.chronicle.engine.map.InsertedEvent;
 import net.openhft.chronicle.engine.map.RemovedEvent;
 import net.openhft.chronicle.engine.map.UpdatedEvent;
+import net.openhft.chronicle.threads.Threads;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Optional;
 
 import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
 
@@ -33,8 +36,6 @@ import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
  * Created by peter on 22/05/15.
  */
 public class VanillaAssetTree implements AssetTree {
-    final VanillaAsset root = new VanillaAsset(null, "");
-
     static {
         CLASS_ALIASES.addAlias(AddedAssetEvent.class,
                 ExistingAssetEvent.class,
@@ -44,17 +45,24 @@ public class VanillaAssetTree implements AssetTree {
                 RemovedEvent.class);
     }
 
+    final VanillaAsset root = new VanillaAsset(null, "");
+
     public VanillaAssetTree() {
 
     }
 
     public VanillaAssetTree(int hostId) {
-        root.addLeafRule(HostIdentifier.class, "host id holder", (rc, context) -> new HostIdentifier((byte) hostId));
+        root.addView(HostIdentifier.class, new HostIdentifier((byte) hostId));
     }
 
     @NotNull
     public VanillaAssetTree forTesting() {
-        root.forTesting();
+        return forTesting(true);
+    }
+
+    @NotNull
+    public VanillaAssetTree forTesting(boolean daemon) {
+        root.forTesting(daemon);
         return this;
     }
 
@@ -92,7 +100,15 @@ public class VanillaAssetTree implements AssetTree {
     }
 
     public AssetTree withConfig(String etcDir, String baseDir) {
-        new ConfigurationFS("/etc", etcDir, baseDir).install(baseDir, this);
+        Threads.withThreadGroup(root.getView(ThreadGroup.class), () -> {
+            new ConfigurationFS("/etc", etcDir, baseDir).install(baseDir, this);
+            return null;
+        });
         return this;
+    }
+
+    @Override
+    public String toString() {
+        return "tree-" + Optional.ofNullable(root.getView(HostIdentifier.class)).map(hi -> hi.hostId()).orElseGet(() -> (byte) 0);
     }
 }

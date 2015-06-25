@@ -34,6 +34,9 @@ import net.openhft.chronicle.engine.session.VanillaSessionProvider;
 import net.openhft.chronicle.engine.set.VanillaKeySetView;
 import net.openhft.chronicle.network.VanillaSessionDetails;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
+import net.openhft.chronicle.threads.EventGroup;
+import net.openhft.chronicle.threads.Threads;
+import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.wire.Marshallable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +58,7 @@ public class VanillaAsset implements Asset, Closeable {
     public static final Comparator<Class> CLASS_COMPARATOR = Comparator.comparing(Class::getName);
     private static final String LAST = "{last}";
     private static final BiPredicate<RequestContext, Asset> ALWAYS = (rc, asset) -> true;
-    final Map<Class, View> viewMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
+    final Map<Class, Object> viewMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
     final ConcurrentMap<String, Asset> children = new ConcurrentSkipListMap<>();
     private final Asset parent;
     @NotNull
@@ -83,11 +86,10 @@ public class VanillaAsset implements Asset, Closeable {
         }
     }
 
-    public void standardStack() {
+    public void standardStack(boolean daemon) {
 
         addWrappingRule(Reference.class, LAST + "reference", VanillaReference::new, MapView.class);
-        addWrappingRule(Replication.class, LAST + "replication", VanillaReplication::new, MapView
-                .class);
+        addWrappingRule(Replication.class, LAST + "replication", VanillaReplication::new, MapView.class);
         addWrappingRule(Publisher.class, LAST + "publisher", VanillaReference::new, MapView.class);
         addWrappingRule(EntrySetView.class, LAST + " entrySet", VanillaEntrySetView::new, MapView.class);
         addWrappingRule(KeySetView.class, LAST + " keySet", VanillaKeySetView::new, MapView.class);
@@ -98,11 +100,28 @@ public class VanillaAsset implements Asset, Closeable {
         addLeafRule(TopologySubscription.class, LAST + " vanilla",
                 VanillaTopologySubscription::new);
 
+        String fullName = fullName();
+        HostIdentifier hostIdentifier = findView(HostIdentifier.class);
+        if (hostIdentifier != null)
+            fullName = "tree-" + hostIdentifier.hostId() + fullName;
+
+        ThreadGroup threadGroup = new ThreadGroup(fullName);
+        addView(ThreadGroup.class, threadGroup);
+        addLeafRule(EventLoop.class, LAST + " event group", (rc, asset) ->
+                Threads.withThreadGroup(threadGroup, () -> {
+                    EventLoop eg = new EventGroup(daemon);
+                    eg.start();
+                    return eg;
+                }));
         addView(SessionProvider.class, new VanillaSessionProvider());
     }
 
     public void forTesting() {
-        standardStack();
+        forTesting(true);
+    }
+
+    public void forTesting(boolean daemon) {
+        standardStack(daemon);
         addWrappingRule(TopicPublisher.class, LAST + " topic publisher", VanillaTopicPublisher::new, MapView.class);
         addWrappingRule(Publisher.class, LAST + "publisher", VanillaReference::new, MapView.class);
         addWrappingRule(ObjectKeyValueStore.class, LAST + " authenticated",
@@ -117,7 +136,7 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     public void forRemoteAccess(String hostname, int port) {
-        standardStack();
+        standardStack(true);
 
         addLeafRule(ObjectKVSSubscription.class, LAST + " Remote",
                 RemoteKVSSubscription::new);
@@ -133,8 +152,11 @@ public class VanillaAsset implements Asset, Closeable {
         VanillaSessionDetails sessionDetails = new VanillaSessionDetails();
         sessionDetails.setUserId(System.getProperty("user.name"));
         sessionProvider.set(sessionDetails);
-        if (getView(TcpChannelHub.class) == null)
-            addView(TcpChannelHub.class, new TcpChannelHub(sessionProvider, hostname, port));
+        if (getView(TcpChannelHub.class) == null) {
+            addView(TcpChannelHub.class,
+                    Threads.withThreadGroup(findView(ThreadGroup.class),
+                            () -> new TcpChannelHub(sessionProvider, hostname, port)));
+        }
     }
 
     public void enableTranslatingValuesToBytesStore() {
@@ -211,8 +233,9 @@ public class VanillaAsset implements Asset, Closeable {
     @Nullable
     @Override
     public <V> V getView(@NotNull Class<V> vClass) {
-        View view = viewMap.get(vClass);
-        return (V) view;
+        @SuppressWarnings("unchecked")
+        V view = (V) viewMap.get(vClass);
+        return view;
     }
 
     @NotNull
@@ -235,24 +258,25 @@ public class VanillaAsset implements Asset, Closeable {
             if (view != null) {
                 return view;
             }
-            V leafView = createLeafView(viewType, rc, this);
-            if (leafView != null)
-                return addView(viewType, leafView);
-            V wrappingView = createWrappingView(viewType, rc, this, null);
-            if (wrappingView == null)
-                throw new AssetNotFoundException("Unable to classify " + viewType.getName() + " context: " + rc);
-            return addView(viewType, wrappingView);
+            return Threads.withThreadGroup(findView(ThreadGroup.class), () -> {
+                V leafView = createLeafView(viewType, rc, this);
+                if (leafView != null)
+                    return addView(viewType, leafView);
+                V wrappingView = createWrappingView(viewType, rc, this, null);
+                if (wrappingView == null)
+                    throw new AssetNotFoundException("Unable to classify " + viewType.getName() + " context: " + rc);
+                return addView(viewType, wrappingView);
+            });
         }
     }
 
     @Override
-    public <V> V addView(Class<V> viewType, V v) {
-        View view = (View) v;
-        if (view.keyedView()) {
+    public <V> V addView(Class<V> viewType, V view) {
+        if (view instanceof View && ((View) view).keyedView()) {
             keyedAsset = true;
         }
         viewMap.put(viewType, view);
-        return v;
+        return view;
     }
 
     @Override
@@ -301,6 +325,11 @@ public class VanillaAsset implements Asset, Closeable {
             }
         }
         return getAssetOrANFE(context, fullName);
+    }
+
+    @Override
+    public <V> boolean hasFactoryFor(Class<V> viewType) {
+        return leafViewFactoryMap.containsKey(viewType) || wrappingViewFactoryMap.containsKey(viewType);
     }
 
     @Nullable
