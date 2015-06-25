@@ -170,6 +170,20 @@ warmup.start();
 warmup.waitFor();
 ```
 
+If you have an object to navigate such as an AssetTree you can compile everything it uses and everything that uses etc.
+```java
+AssetTree tree = // tree of objects.
+
+// load the methods compiled previously.
+Warmup warmup = new Warmup();
+// print out the methods which will be compiled and to which level.
+warmup.compileForInstance(tree);
+// start enqueuing the methods to be compiled in the background.
+warmup.start();
+// wait for those methods to be compiled.
+warmup.waitFor();
+```
+
 # More details to come.
 
 
