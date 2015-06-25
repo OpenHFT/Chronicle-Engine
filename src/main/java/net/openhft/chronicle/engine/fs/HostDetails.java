@@ -23,6 +23,7 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -32,10 +33,10 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class HostDetails implements Marshallable {
     public int hostId;
-    int tcpBufferSize;
+    public int tcpBufferSize;
     public String hostname;
     public int port;
-    int timeoutMs;
+    public int timeoutMs;
 
 
     @Override
@@ -77,7 +78,7 @@ public class HostDetails implements Marshallable {
         String host;
         int port;
 
-        HostPort(final String host, final int port) {
+        HostPort(@NotNull final String host, final int port) {
             this.host = host;
             this.port = port;
         }

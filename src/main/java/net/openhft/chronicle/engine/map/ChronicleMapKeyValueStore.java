@@ -87,7 +87,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
             final EngineReplicationLangBytesConsumer langBytesConsumer = asset.acquireView
                     (EngineReplicationLangBytesConsumer.class, null);
 
-            hostIdentifier = asset.acquireView(HostIdentifier.class, RequestContext.requestContext());
+            hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
 
             builder.replication(builder().engineReplication(langBytesConsumer)
                     .createWithId(hostIdentifier.hostId()));
@@ -128,16 +128,18 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
         if (hostIdentifier != null) {
             Clusters clusters = asset.findView(Clusters.class);
             Map<String, HostDetails> hdMap = clusters.get("cluster");
-            int hostId = hostIdentifier.hostId();
+            int localIdentifer = hostIdentifier.hostId();
             for (HostDetails hostDetails : hdMap.values()) {
-                if (hostDetails.hostId == hostId)
+
+                // its the identifer with the larger values that will establish the conneciton
+                if (hostDetails.hostId <= localIdentifer)
                     continue;
 
                 TcpChannelHub tcpChannelHub = hostDetails.acquireTcpChannelHub();
                 ReplicationHub replicationHub = new ReplicationHub(context, tcpChannelHub, eventLoop, isClosed);
 
                 try {
-                    replicationHub.bootstrap(engineReplicator1, hostId);
+                    replicationHub.bootstrap(engineReplicator1, localIdentifer);
                 } catch (InterruptedException e) {
                     throw new AssertionError(e);
                 }

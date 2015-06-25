@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
@@ -34,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -58,7 +56,7 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
     }
 
     private static String toUri(final RequestContext context) {
-        final StringBuilder uri = new StringBuilder("/" + context.name()
+        final StringBuilder uri = new StringBuilder(context.fullName()
                 + "?view=" + "Replication");
 
         if (context.keyType() != String.class)
@@ -80,68 +78,18 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
         bootstrap.lastUpdatedTime(lastModificationTime);
         bootstrap.identifier((byte) localIdentifer);
 
-        final AtomicLong tid = new AtomicLong();
         final Function<ValueIn, Bootstrap> typedMarshallable = ValueIn::typedMarshallable;
         final Consumer<ValueOut> valueOutConsumer = o -> o.typedMarshallable(bootstrap);
         final Bootstrap b = (Bootstrap) proxyReturnWireConsumerInOut(
-                bootstap, bootstrapReply, valueOutConsumer, typedMarshallable, tid::set);
+                bootstap, bootstrapReply, valueOutConsumer, typedMarshallable);
 
         try {
 
-            mi.setModificationNotifier(() -> {
-                eventLoop.unpause();
-            });
+            // subscribes to updates - receives the replication events
+            subscribe(replication, localIdentifer);
 
-            AtomicLong tid0 = new AtomicLong();
-
-            // send replication events
-            this.hub.outBytesLock().lock();
-            try {
-                tid0.set(writeMetaDataStartTime(System.currentTimeMillis()));
-
-                mi.forEach(e -> this.hub.outWire().writeDocument(false, wireOut ->
-                        wireOut.writeEventName(replicationEvent).typedMarshallable(e)));
-
-                // receives replication events
-                this.hub.asyncReadSocket(tid.get(), d -> {
-                    d.readDocument(null, w -> replication.applyReplication(
-                            w.read(replicactionReply).typedMarshallable()));
-                });
-
-                this.hub.writeSocket(this.hub.outWire());
-            } finally {
-                this.hub.outBytesLock().unlock();
-            }
-
-            mi.dirtyEntries(b.lastUpdatedTime());
-
-            eventLoop.addHandler(new EventHandler() {
-                @Override
-                public boolean action() {
-
-                    TcpChannelHub hub = ReplicationHub.this.hub;
-                    hub.outBytesLock().lock();
-                    try {
-                        ReplicationHub.this.writeMetaDataForKnownTID(tid0.get());
-
-                        mi.forEach(e -> hub.outWire().writeDocument(false, wireOut ->
-                                wireOut.writeEventName(replicationEvent).typedMarshallable(e)));
-                        hub.writeSocket(hub.outWire());
-                    } catch (InterruptedException e) {
-                        throw Jvm.rethrow(e);
-                    } finally {
-                        hub.outBytesLock().unlock();
-                    }
-
-                    return !isClosed.get();
-
-                }
-
-                @Override
-                public HandlerPriority priority() {
-                    return HandlerPriority.MEDIUM;
-                }
-            });
+            // publishes changes - pushes the replication events
+            publish(mi, b);
 
         } catch (Throwable t) {
             LOG.error("", t);
@@ -149,5 +97,68 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
 
     }
 
+    /**
+     * publishes changes - pushes the replication events
+     *
+     * @param mi     the modification iterator that notifies us of changes
+     * @param remote details about the remote connection
+     * @throws InterruptedException
+     */
+    private void publish(final ModificationIterator mi, final Bootstrap remote) throws InterruptedException {
+
+        final TcpChannelHub hub = this.hub;
+
+        mi.setModificationNotifier(() -> {
+            eventLoop.unpause();
+        });
+
+        eventLoop.addHandler(new EventHandler() {
+            @Override
+            public boolean runOnce() {
+
+                hub.lock(() -> mi.forEach(e -> sendEventAsyncWithoutLock(replicationEvent,
+                        (Consumer<ValueOut>) v -> v.typedMarshallable(e))));
+
+                return !isClosed.get();
+            }
+
+            @Override
+            public HandlerPriority priority() {
+                return HandlerPriority.MEDIUM;
+            }
+        });
+
+        mi.dirtyEntries(remote.lastUpdatedTime());
+    }
+
+
+
+    /**
+     * subscribes to updates
+     * @param replication    the event will be applied to the EngineReplication
+     * @param localIdentifer our local identifier
+     */
+    private void subscribe(final EngineReplication replication, final int localIdentifer) {
+        this.hub.outBytesLock().lock();
+        try {
+
+            long tid = writeMetaDataStartTime(System.currentTimeMillis());
+
+            // tells the server the tid the the events shoudl come back on and the
+            // also sends out localIdentifier
+            hub.outWire().writeDocument(false, wireOut ->
+                    wireOut.writeEventName(replicationSubscribe).int8(localIdentifer));
+
+            // receives replication events
+            this.hub.asyncReadSocket(tid, d -> {
+                d.readDocument(null, w -> replication.applyReplication(
+                        w.read(replicactionReply).typedMarshallable()));
+            });
+
+            this.hub.writeSocket(this.hub.outWire());
+        } finally {
+            this.hub.outBytesLock().unlock();
+        }
+    }
 
 }

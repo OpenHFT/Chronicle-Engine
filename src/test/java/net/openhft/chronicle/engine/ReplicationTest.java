@@ -16,7 +16,10 @@ import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,16 +34,16 @@ import static org.junit.Assert.assertNotNull;
 /**
  * Created by Rob Austin
  */
-@Ignore
+
 public class ReplicationTest {
 
     public static final String NAME = "/ChMaps/test";
     public static ServerEndpoint serverEndpoint1;
     public static ServerEndpoint serverEndpoint2;
-    //    private static AssetTree tree3;
+    private static AssetTree tree3;
     private static AssetTree tree1;
     private static AssetTree tree2;
-//    public static ServerEndpoint serverEndpoint3;
+    public static ServerEndpoint serverEndpoint3;
 
     @BeforeClass
     public static void before() throws IOException {
@@ -51,22 +54,26 @@ public class ReplicationTest {
 
         tree1 = create(1);
         tree2 = create(2);
-//        tree3 = create(3);
+        tree3 = create(3);
 
         serverEndpoint1 = new ServerEndpoint(8080, tree1);
         serverEndpoint2 = new ServerEndpoint(8081, tree2);
-//        serverEndpoint3 = new ServerEndpoint(8082,  tree3);
+        serverEndpoint3 = new ServerEndpoint(8082, tree3);
 
     }
 
     @AfterClass
     public static void after() {
+        if (serverEndpoint1 != null)
         serverEndpoint1.close();
+        if (serverEndpoint2 != null)
         serverEndpoint2.close();
-//        serverEndpoint3.close();
+        serverEndpoint3.close();
+        if (tree1 != null)
         tree1.close();
+        if (tree2 != null)
         tree2.close();
-//        tree3.close();
+        tree3.close();
     }
 
     private static AssetTree create(final int hostId) {
@@ -84,12 +91,7 @@ public class ReplicationTest {
                 new ChronicleMapKeyValueStore(context.wireType(writeType),
                         asset));
 
-//        VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
-
-        // tree.root().addView(HostIdentifier.class);
-
-        System.out.println(tree.toString());
-        //System.out.println(host);
+        VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
 
         return tree;
     }
@@ -101,7 +103,7 @@ public class ReplicationTest {
         return new File(path).getParentFile().getParentFile() + "/src/test/resources";
     }
 
-    @Ignore
+
     @Test
     public void test() throws Exception {
 
@@ -113,26 +115,24 @@ public class ReplicationTest {
                 .class);
         assertNotNull(map2);
 
-/*
         final ConcurrentMap<String, String> map3 = tree3.acquireMap(NAME, String.class, String
                 .class);
         assertNotNull(map3);
-*/
 
         map1.put("hello1", "world1");
+
         map2.put("hello2", "world2");
-//        map3.put("hello3", "world3");
+        map3.put("hello3", "world3");
 
+        Thread.sleep(2000);
 
-        // give time for the data to replicate
-        Thread.sleep(1000);
-
-        for (Map m : new Map[]{map1, map2/*, map3*/}) {
+        for (Map m : new Map[]{map1, map2, map3}) {
             Assert.assertEquals("world1", m.get("hello1"));
             Assert.assertEquals("world2", m.get("hello2"));
-//            Assert.assertEquals("world3", m.get("hello3"));
-            Assert.assertEquals(2, m.size());
+            Assert.assertEquals("world3", m.get("hello3"));
+            Assert.assertEquals(3, m.size());
         }
+
     }
 
 }

@@ -26,7 +26,6 @@ import java.io.Closeable;
 import java.util.Collection;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.LongConsumer;
 
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
 
@@ -140,17 +139,6 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
         return readWire(tid, startTime, reply, consumerIn);
     }
 
-    public <T> T proxyReturnWireConsumerInOut(@NotNull final WireKey eventId,
-                                              @NotNull final WireKey reply,
-                                              @Nullable final Consumer<ValueOut> consumerOut,
-                                              @NotNull final Function<ValueIn, T> consumerIn,
-                                              @Nullable final LongConsumer tidConsumer) {
-        final long startTime = System.currentTimeMillis();
-        long tid = sendEvent(startTime, eventId, consumerOut);
-        tidConsumer.accept(tid);
-        return readWire(tid, startTime, reply, consumerIn);
-    }
-
     @SuppressWarnings("SameParameterValue")
     protected void proxyReturnVoid(@NotNull final WireKey eventId,
                                    @Nullable final Consumer<ValueOut> consumer) {
@@ -197,22 +185,28 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
 
         hub.outBytesLock().lock();
         try {
-
-            writeAsyncMetaData(System.currentTimeMillis());
-            hub.outWire().writeDocument(false, wireOut -> {
-
-                final ValueOut valueOut = wireOut.writeEventName(eventId);
-
-                if (consumer == null)
-                    valueOut.marshallable(WriteMarshallable.EMPTY);
-                else
-                    consumer.accept(valueOut);
-            });
-
-            hub.writeSocket(hub.outWire());
+            sendEventAsyncWithoutLock(eventId, consumer);
         } finally {
             hub.outBytesLock().unlock();
         }
+    }
+
+    protected void sendEventAsyncWithoutLock(@NotNull final WireKey eventId,
+                                             @Nullable final Consumer<ValueOut> consumer) {
+
+        writeAsyncMetaData(System.currentTimeMillis());
+        hub.outWire().writeDocument(false, wireOut -> {
+
+            final ValueOut valueOut = wireOut.writeEventName(eventId);
+
+            if (consumer == null)
+                valueOut.marshallable(WriteMarshallable.EMPTY);
+            else
+                consumer.accept(valueOut);
+        });
+
+        hub.writeSocket(hub.outWire());
+
     }
 
     /**

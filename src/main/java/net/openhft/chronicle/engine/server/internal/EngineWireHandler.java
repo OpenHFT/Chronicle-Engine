@@ -38,6 +38,7 @@ import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.network.WireTcpHandler;
 import net.openhft.chronicle.network.api.session.SessionDetailsProvider;
 import net.openhft.chronicle.network.connection.CoreFields;
+import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,6 +49,7 @@ import java.io.StreamCorruptedException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.LinkedTransferQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -98,14 +100,19 @@ public class EngineWireHandler extends WireTcpHandler {
     private Queue<Consumer<Wire>> publisher = new LinkedTransferQueue<>();
     private long tid;
     private HostIdentifier hostIdentifier;
-    private Asset mapView;
+
     private Asset asset;
+    private EventLoop eventLoop;
+    private AtomicBoolean isClosed;
 
     public EngineWireHandler(@NotNull final Function<Bytes, Wire> byteToWire,
-                             @NotNull final AssetTree assetTree) {
+                             @NotNull final AssetTree assetTree,
+                             @NotNull final AtomicBoolean isClosed) {
         super(byteToWire);
 
         this.sessionProvider = assetTree.root().getView(SessionProvider.class);
+        this.eventLoop = assetTree.root().findOrCreateView(EventLoop.class);
+        this.hostIdentifier = assetTree.root().findOrCreateView(HostIdentifier.class);
         this.assetTree = assetTree;
         this.mapWireHandler = new MapWireHandler<>();
         this.queueWireHandler = null;
@@ -118,6 +125,9 @@ public class EngineWireHandler extends WireTcpHandler {
         this.topicPublisherHandler = new TopicPublisherHandler();
         this.publisherHandler = new PublisherHandler();
         this.replicationHandler = new ReplicationHandler();
+        this.isClosed = isClosed;
+
+        eventLoop.start();
     }
 
     protected void publish(Wire out) {
@@ -152,7 +162,7 @@ public class EngineWireHandler extends WireTcpHandler {
                     viewType = requestContext.viewType();
                     asset = this.assetTree.acquireAsset(viewType, requestContext);
                     view = asset.acquireView(requestContext);
-                    mapView = this.assetTree.acquireAsset(MapView.class, requestContext);
+
                     requestContext.keyType();
 
                     if (viewType == MapView.class ||
@@ -277,11 +287,10 @@ public class EngineWireHandler extends WireTcpHandler {
                     }
 
                     if (viewType == Replication.class) {
-                        hostIdentifier = asset.acquireView(HostIdentifier.class, RequestContext.requestContext());
                         replicationHandler.process(in,
                                 publisher, tid, outWire,
                                 hostIdentifier,
-                                (Replication)view);
+                                (Replication) view, isClosed, eventLoop);
                         return;
                     }
 
