@@ -59,7 +59,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
     }
 
     private static String toUri(@NotNull final RequestContext context) {
-        return "/" + context.name() + "?view=subscription";
+        return   context.fullName() + "?view=subscription";
     }
 
     @Override

@@ -47,7 +47,7 @@ public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId>
     }
 
     private static String toUri(final RequestContext context) {
-        StringBuilder uri = new StringBuilder("/" + context.name()
+        final StringBuilder uri = new StringBuilder(context.fullName()
                 + "?view=" + "topicPublisher");
 
         if (context.keyType() != String.class)
