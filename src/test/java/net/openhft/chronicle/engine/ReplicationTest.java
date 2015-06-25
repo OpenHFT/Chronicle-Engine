@@ -16,7 +16,10 @@ import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,7 +34,7 @@ import static org.junit.Assert.assertNotNull;
 /**
  * Created by Rob Austin
  */
-@Ignore
+
 public class ReplicationTest {
 
     public static final String NAME = "/ChMaps/test";
@@ -84,9 +87,9 @@ public class ReplicationTest {
                 new ChronicleMapKeyValueStore(context.wireType(writeType),
                         asset));
 
-//        VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
+        VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
 
-        // tree.root().addView(HostIdentifier.class);
+        //  tree.root().addView(HostIdentifier.class);
 
         System.out.println(tree.toString());
         //System.out.println(host);
@@ -101,7 +104,7 @@ public class ReplicationTest {
         return new File(path).getParentFile().getParentFile() + "/src/test/resources";
     }
 
-    @Ignore
+
     @Test
     public void test() throws Exception {
 
@@ -118,14 +121,15 @@ public class ReplicationTest {
                 .class);
         assertNotNull(map3);
 */
-
+        Thread.sleep(1000);
         map1.put("hello1", "world1");
+        Thread.sleep(1000);
         map2.put("hello2", "world2");
 //        map3.put("hello3", "world3");
 
 
         // give time for the data to replicate
-        Thread.sleep(1000);
+        Thread.sleep(5000);
 
         for (Map m : new Map[]{map1, map2/*, map3*/}) {
             Assert.assertEquals("world1", m.get("hello1"));
@@ -133,6 +137,8 @@ public class ReplicationTest {
 //            Assert.assertEquals("world3", m.get("hello3"));
             Assert.assertEquals(2, m.size());
         }
+
+        Thread.sleep(10_000_000);
     }
 
 }

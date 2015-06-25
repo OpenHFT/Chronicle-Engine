@@ -34,7 +34,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -58,7 +57,7 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
     }
 
     private static String toUri(final RequestContext context) {
-        final StringBuilder uri = new StringBuilder("/" + context.name()
+        final StringBuilder uri = new StringBuilder(context.fullName()
                 + "?view=" + "Replication");
 
         if (context.keyType() != String.class)
@@ -80,40 +79,19 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
         bootstrap.lastUpdatedTime(lastModificationTime);
         bootstrap.identifier((byte) localIdentifer);
 
-        final AtomicLong tid = new AtomicLong();
         final Function<ValueIn, Bootstrap> typedMarshallable = ValueIn::typedMarshallable;
         final Consumer<ValueOut> valueOutConsumer = o -> o.typedMarshallable(bootstrap);
         final Bootstrap b = (Bootstrap) proxyReturnWireConsumerInOut(
-                bootstap, bootstrapReply, valueOutConsumer, typedMarshallable, tid::set);
+                bootstap, bootstrapReply, valueOutConsumer, typedMarshallable);
 
         try {
+
+            // receives the replication events
+            startSubscription(replication, localIdentifer);
 
             mi.setModificationNotifier(() -> {
                 eventLoop.unpause();
             });
-
-            AtomicLong tid0 = new AtomicLong();
-
-            // send replication events
-            this.hub.outBytesLock().lock();
-            try {
-                tid0.set(writeMetaDataStartTime(System.currentTimeMillis()));
-
-                mi.forEach(e -> this.hub.outWire().writeDocument(false, wireOut ->
-                        wireOut.writeEventName(replicationEvent).typedMarshallable(e)));
-
-                // receives replication events
-                this.hub.asyncReadSocket(tid.get(), d -> {
-                    d.readDocument(null, w -> replication.applyReplication(
-                            w.read(replicactionReply).typedMarshallable()));
-                });
-
-                this.hub.writeSocket(this.hub.outWire());
-            } finally {
-                this.hub.outBytesLock().unlock();
-            }
-
-            mi.dirtyEntries(b.lastUpdatedTime());
 
             eventLoop.addHandler(new EventHandler() {
                 @Override
@@ -122,11 +100,10 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
                     TcpChannelHub hub = ReplicationHub.this.hub;
                     hub.outBytesLock().lock();
                     try {
-                        ReplicationHub.this.writeMetaDataForKnownTID(tid0.get());
-
-                        mi.forEach(e -> hub.outWire().writeDocument(false, wireOut ->
-                                wireOut.writeEventName(replicationEvent).typedMarshallable(e)));
-                        hub.writeSocket(hub.outWire());
+                        mi.forEach(e -> {
+                            sendEventAsyncWithoutLock(replicationEvent, (Consumer<ValueOut>) (v ->
+                                    v.typedMarshallable(e)));
+                        });
                     } catch (InterruptedException e) {
                         throw Jvm.rethrow(e);
                     } finally {
@@ -142,6 +119,7 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
                     return HandlerPriority.MEDIUM;
                 }
             });
+            mi.dirtyEntries(b.lastUpdatedTime());
 
         } catch (Throwable t) {
             LOG.error("", t);
@@ -149,5 +127,31 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
 
     }
 
+    /**
+     * @param replication    the event will be applied to the EngineReplication
+     * @param localIdentifer our local identifier
+     */
+    private void startSubscription(final EngineReplication replication, final int localIdentifer) {
+        this.hub.outBytesLock().lock();
+        try {
+
+            long tid = writeMetaDataStartTime(System.currentTimeMillis());
+
+            // tells the server the tid the the events shoudl come back on and the
+            // also sends out localIdentifier
+            hub.outWire().writeDocument(false, wireOut ->
+                    wireOut.writeEventName(replicationSubscribe).int8(localIdentifer));
+
+            // receives replication events
+            this.hub.asyncReadSocket(tid, d -> {
+                d.readDocument(null, w -> replication.applyReplication(
+                        w.read(replicactionReply).typedMarshallable()));
+            });
+
+            this.hub.writeSocket(this.hub.outWire());
+        } finally {
+            this.hub.outBytesLock().unlock();
+        }
+    }
 
 }

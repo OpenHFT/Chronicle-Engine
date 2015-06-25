@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
 
@@ -37,6 +38,7 @@ public class ServerEndpoint implements Closeable {
 
     private EventLoop eg;
     private AcceptorEventHandler eah;
+    private AtomicBoolean isClosed = new AtomicBoolean();
 
     public ServerEndpoint(AssetTree assetTree) throws
             IOException {
@@ -55,7 +57,8 @@ public class ServerEndpoint implements Closeable {
     public AcceptorEventHandler start(int port, @NotNull final AssetTree asset) throws IOException {
         eg.start();
 
-        AcceptorEventHandler eah = new AcceptorEventHandler(port, () -> new EngineWireHandler(WireType.wire, asset), VanillaSessionDetails::new);
+        AcceptorEventHandler eah = new AcceptorEventHandler(port, () -> new EngineWireHandler
+                (WireType.wire, asset, isClosed), VanillaSessionDetails::new);
 
         eg.addHandler(eah);
         this.eah = eah;
@@ -72,6 +75,7 @@ public class ServerEndpoint implements Closeable {
 
     @Override
     public void close() {
+        isClosed.set(true);
         stop();
         closeQuietly(eg);
         eg = null;
