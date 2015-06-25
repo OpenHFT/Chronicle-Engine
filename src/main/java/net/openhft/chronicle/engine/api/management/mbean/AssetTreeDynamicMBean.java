@@ -22,12 +22,12 @@ import javax.management.MBeanInfo;
 import javax.management.MBeanOperationInfo;
 import javax.management.ReflectionException;
 
-public class MyDynamicMBean implements DynamicMBean {
+public class AssetTreeDynamicMBean implements DynamicMBean {
 
     private final Properties properties;
     private final Map attributelist;
 
-    public MyDynamicMBean(Map attributelist) throws IOException {
+    public AssetTreeDynamicMBean(Map attributelist) throws IOException {
         this.properties = new Properties();
         this.attributelist = attributelist;
         load();

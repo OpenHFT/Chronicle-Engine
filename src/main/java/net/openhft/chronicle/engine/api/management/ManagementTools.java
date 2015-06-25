@@ -16,7 +16,7 @@
 
 package net.openhft.chronicle.engine.api.management;
 
-import net.openhft.chronicle.engine.api.management.mbean.MyDynamicMBean;
+import net.openhft.chronicle.engine.api.management.mbean.AssetTreeDynamicMBean;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
@@ -55,7 +55,7 @@ public enum ManagementTools {
     //MBeanServer for register MBeans
     private static MBeanServer mbs = null;
 
-    private static MyDynamicMBean dynamicMBean;
+    private static AssetTreeDynamicMBean dynamicMBean;
 
     //number of AssetTree enabled for management.
     private static int count = 0;
@@ -176,7 +176,7 @@ public enum ManagementTools {
                         else
                             m.put("~" + entry.getKey().toString(), entry.getValue().toString());
                     }
-                    dynamicMBean = new MyDynamicMBean(m);
+                    dynamicMBean = new AssetTreeDynamicMBean(m);
                     ObjectName atName = new ObjectName(createObjectNameUri(e.assetName(),e.name(),treeName));
                     registerTreeWithMBean(dynamicMBean, atName);
                     //end Dynamic MBeans Code
@@ -231,7 +231,7 @@ public enum ManagementTools {
                     else
                         m.put("~" + entry.getKey().toString(), entry.getValue().toString());
                 }
-                dynamicMBean = new MyDynamicMBean(m);
+                dynamicMBean = new AssetTreeDynamicMBean(m);
                 unregisterTreeWithMBean(atName);
                 registerTreeWithMBean(dynamicMBean, atName);
                 //end Dynamic MBeans Code
@@ -256,7 +256,7 @@ public enum ManagementTools {
         return sb.toString();
     }
 
-    private static void registerTreeWithMBean(MyDynamicMBean atBean,ObjectName atName){
+    private static void registerTreeWithMBean(AssetTreeDynamicMBean atBean,ObjectName atName){
         try {
             if(!mbs.isRegistered(atName)){
                 mbs.registerMBean(atBean, atName);
