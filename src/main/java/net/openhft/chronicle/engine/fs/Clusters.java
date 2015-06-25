@@ -39,11 +39,13 @@ public class Clusters implements Marshallable, View {
         while (wire.hasMore()) {
             wire.readEventName(clusterName).marshallable(host -> {
                 Map<String, HostDetails> hdMap = clusterMap.computeIfAbsent(clusterName.toString(), k -> new ConcurrentSkipListMap<>());
-                host.readEventName(hostDescription).marshallable(details -> {
-                    HostDetails hd = new HostDetails();
-                    hd.readMarshallable(details);
-                    hdMap.put(hostDescription.toString(), hd);
-                });
+                while (wire.hasMore()) {
+                    host.readEventName(hostDescription).marshallable(details -> {
+                        HostDetails hd = new HostDetails();
+                        hd.readMarshallable(details);
+                        hdMap.put(hostDescription.toString(), hd);
+                    });
+                }
             });
         }
     }
