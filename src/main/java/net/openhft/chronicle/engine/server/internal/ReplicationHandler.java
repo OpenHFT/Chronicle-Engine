@@ -118,7 +118,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
                 eventLoop.addHandler(new EventHandler() {
                     @Override
-                    public boolean runOnce() {
+                    public boolean action() {
 
                         try {
                             mi.forEach(e -> publisher.add(publish -> {
