@@ -44,7 +44,7 @@ public class VanillaReference<E> implements Reference<E>, View {
 
     @Override
     public void set(E event) {
-        underlyingMap.put(name, event);
+        underlyingMap.set(name, event);
     }
 
     @Override

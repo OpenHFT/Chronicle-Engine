@@ -109,6 +109,13 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
         }
     }
 
+    @Override
+    public void set(K key, V value) {
+        checkKey(key);
+        checkValue(value);
+        kvStore.put(key, value);
+    }
+
     @Nullable
     @Override
     public V remove(Object key) {
