@@ -1,13 +1,18 @@
 package net.openhft.chronicle.engine.api.management;
 
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.Marshallable;
+import net.openhft.chronicle.wire.TextWire;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.concurrent.ConcurrentMap;
+
+import static net.openhft.chronicle.bytes.NativeBytes.nativeBytes;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Created by pct25 on 6/18/2015.
@@ -93,7 +98,19 @@ public class AssetTreeJMXTest {
     public void addMarshallableValuesMapIntoTree(){
         AssetTree tree = new VanillaAssetTree().forTesting();
         tree.enableManagement();
+
+        Marshallable m = new MyTypes();
+
+        Bytes bytes = nativeBytes();
+        assertTrue(bytes.isElastic());
+        TextWire wire = new TextWire(bytes);
+        m.writeMarshallable(wire);
+        m.readMarshallable(wire);
+
         ConcurrentMap<String, Marshallable> map = tree.acquireMap("group/map", String.class, Marshallable.class);
+        map.put("1",m);
+        map.put("2",m);
+        map.put("3",m);
         Jvm.pause(20000);
     }
 
