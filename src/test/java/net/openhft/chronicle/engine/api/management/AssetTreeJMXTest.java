@@ -3,6 +3,7 @@ package net.openhft.chronicle.engine.api.management;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
+import net.openhft.chronicle.wire.Marshallable;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -51,6 +52,50 @@ public class AssetTreeJMXTest {
         addMapIntoTree(1000000);
     }
 
+    @Test
+    public void addStringValuesMapIntoTree(){
+        AssetTree tree = new VanillaAssetTree().forTesting();
+        tree.enableManagement();
+        ConcurrentMap<String, String> map = tree.acquireMap("group/map", String.class, String.class);
+        map.put("key1", "value1");
+        map.put("key2", "value2");
+        map.put("key3", "value3");
+        map.put("key4", "ABCDEGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz0132456789ABCDEGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz0132456789");
+        Jvm.pause(100000);
+    }
+
+    @Test
+    public void addDoubleValuesMapIntoTree(){
+        AssetTree tree = new VanillaAssetTree().forTesting();
+        tree.enableManagement();
+        ConcurrentMap<Double, Double> map = tree.acquireMap("group/map", Double.class, Double.class);
+        map.put(1.1, 1.1);
+        map.put(1.01, 1.01);
+        map.put(1.001, 1.001);
+        map.put(1.0001, 1.0001);
+        Jvm.pause(20000);
+    }
+
+    @Test
+    public void addIntegerValuesMapIntoTree(){
+        AssetTree tree = new VanillaAssetTree().forTesting();
+        tree.enableManagement();
+        ConcurrentMap<Integer, Integer> map = tree.acquireMap("group/map", Integer.class, Integer.class);
+        map.put(1, 1);
+        map.put(2, 2);
+        map.put(3, 3);
+        map.put(4, 4);
+        Jvm.pause(20000);
+    }
+
+    @Ignore("todo")
+    @Test
+    public void addMarshallableValuesMapIntoTree(){
+        AssetTree tree = new VanillaAssetTree().forTesting();
+        tree.enableManagement();
+        ConcurrentMap<String, Marshallable> map = tree.acquireMap("group/map", String.class, Marshallable.class);
+        Jvm.pause(20000);
+    }
 
     /**
      * Provide the test case for add numbers of map into AssetTree

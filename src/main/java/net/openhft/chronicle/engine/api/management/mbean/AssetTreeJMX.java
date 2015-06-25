@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.api.management.mbean;
 
+import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
 import net.openhft.chronicle.engine.map.ObjectKeyValueStore;
 
@@ -9,6 +10,7 @@ import net.openhft.chronicle.engine.map.ObjectKeyValueStore;
 public class AssetTreeJMX implements AssetTreeJMXMBean {
 
     private long size;
+    private String entries;
     private String keyType;
     private Class keyTypeClass;
     private String valueType;
@@ -23,8 +25,9 @@ public class AssetTreeJMX implements AssetTreeJMXMBean {
 
     }
 
-    public AssetTreeJMX(ObjectKeyValueStore view,ObjectKVSSubscription objectKVSSubscription,String path) {
+    public AssetTreeJMX(ObjectKeyValueStore view,ObjectKVSSubscription objectKVSSubscription,String path,String entries) {
         this.size = view.longSize();
+        this.entries = entries;
         this.keyTypeClass = view.keyType();
         this.keyType = keyTypeClass.getName();
         this.valueTypeClass = view.valueType();
@@ -41,8 +44,8 @@ public class AssetTreeJMX implements AssetTreeJMXMBean {
         this.size = size;
     }
 
-   /* @Override
-    public String getElements() {return null;}*/
+    @Override
+    public String getEntries() {return entries;}
 
     @Override
     public long getSize() {
