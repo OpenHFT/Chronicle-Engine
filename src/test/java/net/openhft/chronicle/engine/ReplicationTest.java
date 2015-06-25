@@ -120,7 +120,6 @@ public class ReplicationTest {
         assertNotNull(map3);
 
         map1.put("hello1", "world1");
-
         map2.put("hello2", "world2");
         map3.put("hello3", "world3");
 
