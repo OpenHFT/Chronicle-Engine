@@ -10,6 +10,7 @@ import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.threads.HandlerPriority;
 import net.openhft.chronicle.threads.api.EventHandler;
 import net.openhft.chronicle.threads.api.EventLoop;
+import net.openhft.chronicle.threads.api.InvalidEventHandlerException;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -118,7 +119,10 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
                 eventLoop.addHandler(new EventHandler() {
                     @Override
-                    public boolean action() {
+                    public boolean action() throws InvalidEventHandlerException {
+                        boolean busy = false;
+                        if (isClosed.get())
+                            throw new InvalidEventHandlerException();
 
                         try {
                             mi.forEach(e -> publisher.add(publish -> {
@@ -134,7 +138,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
                             Jvm.rethrow(e);
                         }
 
-                        return !isClosed.get();
+                        return busy;
 
                     }
 

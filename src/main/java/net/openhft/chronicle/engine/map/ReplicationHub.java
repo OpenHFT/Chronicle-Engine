@@ -26,6 +26,7 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.HandlerPriority;
 import net.openhft.chronicle.threads.api.EventHandler;
 import net.openhft.chronicle.threads.api.EventLoop;
+import net.openhft.chronicle.threads.api.InvalidEventHandlerException;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.ValueOut;
 import org.jetbrains.annotations.NotNull;
@@ -114,12 +115,15 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
 
         eventLoop.addHandler(new EventHandler() {
             @Override
-            public boolean action() {
+            public boolean action() throws InvalidEventHandlerException {
+                boolean busy = false;
+                if (isClosed.get())
+                    throw new InvalidEventHandlerException();
 
                 hub.lock(() -> mi.forEach(e -> sendEventAsyncWithoutLock(replicationEvent,
                         (Consumer<ValueOut>) v -> v.typedMarshallable(e))));
 
-                return !isClosed.get();
+                return busy;
             }
 
             @Override
