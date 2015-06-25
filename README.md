@@ -154,6 +154,22 @@ Chronicle Engine which be design and tested to support sub-milli-second response
 
 Chronicle Enterprise will be tested to a higher spec and will have more heavily optimised components.  A single client should be able to achieve 100K requests per second with 99% of requests being under 100 micro-seconds.
 
+### Code warmup on startup.
+Chronicle Engine makes it easy to create a dummy engine to assist in warming up the code you will need in production.
+
+Chronicle Enterprise can trigger the compilation of methods from a previous run e.g. in UAT.  Capture the output of -XX:+PrintCompilation, edit to taste, and use this file to trigger the compilation of these methods on start up.  This works for standard OpenJDK and Oracle JVMs.
+
+```java
+// load the methods compiled previously.
+Warmup warmup = Warmup.compileFromFile(new File("print-compilation.txt")));
+// print out the methods which will be compiled.
+warmup.dump((m, l) -> System.out.println(m + " => " + l));
+// start enqueuing the methods to be compiled in the background.
+warmup.start();
+// wait for those methods to be compiled.
+warmup.waitFor();
+```
+
 # More details to come.
 
 
