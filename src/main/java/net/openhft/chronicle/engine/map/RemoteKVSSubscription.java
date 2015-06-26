@@ -26,10 +26,13 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.server.internal.MapWireHandler;
 import net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId;
+import net.openhft.chronicle.network.connection.AbstractAsyncSubscription;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.ValueIn;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
 import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -69,27 +72,33 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
         if (hub.outBytesLock().isHeldByCurrentThread())
             throw new IllegalStateException("Cannot view map while debugging");
 
-        hub.outBytesLock().lock();
-        try {
-            long tid = writeMetaDataStartTime(startTime);
-            subscribersToTid.put(subscriber, tid);
-            hub.outWire().writeDocument(false, wireOut ->
-                    wireOut.writeEventName(registerTopicSubscriber).marshallable(m -> {
-                        m.write(() -> "keyType").typeLiteral(kClass);
-                        m.write(() -> "valueType").typeLiteral(vClass);
-                    }));
-            hub.asyncReadSocket(tid, w -> w.readDocument(null, d -> {
-                ValueIn valueIn = d.read(reply);
-                valueIn.marshallable(m -> {
-                    final K topic = m.read(() -> "topic").object(kClass);
-                    final V message = m.read(() -> "message").object(vClass);
-                    this.onEvent(topic, message, subscriber);
+        hub.subscribe(new AbstractAsyncSubscription(hub, csp) {
+            @Override
+            public void onSubsribe(final WireOut wireOut) {
+                wireOut.writeEventName(registerTopicSubscriber).marshallable(m -> {
+                    m.write(() -> "keyType").typeLiteral(kClass);
+                    m.write(() -> "valueType").typeLiteral(vClass);
                 });
-            }));
-            hub.writeSocket(hub.outWire());
-        } finally {
-            hub.outBytesLock().unlock();
-        }
+            }
+
+            @Override
+            public void onConsumer(final WireIn inWire) {
+                inWire.readDocument(null, d -> {
+                    ValueIn valueIn = d.read(reply);
+                    valueIn.marshallable(m -> {
+                        final K topic = m.read(() -> "topic").object(kClass);
+                        final V message = m.read(() -> "message").object(vClass);
+                        RemoteKVSSubscription.this.onEvent(topic, message, subscriber);
+                    });
+                });
+            }
+
+            @Override
+            public void onClose() {
+                //
+            }
+        });
+
 
     }
 
@@ -151,40 +160,49 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
     }
 
     void registerSubscriber0(RequestContext rc, Subscriber subscriber) {
-        final long startTime = System.currentTimeMillis();
+
 
         if (hub.outBytesLock().isHeldByCurrentThread())
             throw new IllegalStateException("Cannot view map while debugging");
 
-        hub.outBytesLock().lock();
-        try {
-            long tid = writeMetaDataStartTime(startTime);
-            subscribersToTid.put(subscriber, tid);
-            hub.outWire().writeDocument(false, wireOut ->
-                    wireOut.writeEventName(subscribe).
-                            typeLiteral(CLASS_ALIASES.nameFor(rc.elementType())));
-            hub.asyncReadSocket(tid, w -> w.readDocument(null, d -> {
-                final StringBuilder eventname = Wires.acquireStringBuilder();
-                final ValueIn valueIn = d.readEventName(eventname);
+        hub.subscribe(new AbstractAsyncSubscription(hub, csp) {
+            {
+                subscribersToTid.put(subscriber, tid());
+            }
 
-                if (EventId.onEndOfSubscription.contentEquals(eventname))
-                    subscriber.onEndOfSubscription();
-                else if (CoreFields.reply.contentEquals(eventname)) {
-                    final Class aClass = rc.elementType();
+            @Override
+            public void onSubsribe(final WireOut wireOut) {
+                wireOut.writeEventName(subscribe).
+                        typeLiteral(CLASS_ALIASES.nameFor(rc.elementType()));
+            }
 
-                    final Object object = (MapEvent.class.isAssignableFrom(aClass)) ? valueIn
-                            .typedMarshallable()
-                            : valueIn.object(rc.elementType());
+            @Override
+            public void onConsumer(final WireIn inWire) {
+                inWire.readDocument(null, d -> {
+                    final StringBuilder eventname = Wires.acquireStringBuilder();
+                    final ValueIn valueIn = d.readEventName(eventname);
 
-                    this.onEvent(object, subscriber);
-                }
-            }));
-            hub.writeSocket(hub.outWire());
-        } finally {
-            hub.outBytesLock().unlock();
-        }
+                    if (EventId.onEndOfSubscription.contentEquals(eventname)) {
+                        subscriber.onEndOfSubscription();
+                        hub.unsubscribe(tid());
+                    }else if (CoreFields.reply.contentEquals(eventname)) {
+                        final Class aClass = rc.elementType();
 
-        assert !hub.outBytesLock().isHeldByCurrentThread();
+                        final Object object = (MapEvent.class.isAssignableFrom(aClass)) ? valueIn
+                                .typedMarshallable()
+                                : valueIn.object(rc.elementType());
+
+                        RemoteKVSSubscription.this.onEvent(object, subscriber);
+                    }
+                });
+            }
+
+            @Override
+            public void onClose() {
+                //
+            }
+        });
+
 
     }
 

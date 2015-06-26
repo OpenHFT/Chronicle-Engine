@@ -21,6 +21,7 @@ import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.engine.map.replication.Bootstrap;
+import net.openhft.chronicle.network.connection.AbstractAsyncSubscription;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.HandlerPriority;
@@ -29,6 +30,8 @@ import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.threads.api.InvalidEventHandlerException;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.ValueOut;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -146,26 +149,25 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
      * @param localIdentifer our local identifier
      */
     private void subscribe(final EngineReplication replication, final int localIdentifer) {
-        this.hub.outBytesLock().lock();
-        try {
 
-            long tid = writeMetaDataStartTime(System.currentTimeMillis());
+        hub.subscribe(new AbstractAsyncSubscription(hub,csp) {
+            @Override
+            public void onSubsribe(final WireOut wireOut) {
+                wireOut.writeEventName(replicationSubscribe).int8(localIdentifer);
+            }
 
-            // tells the server the tid the the events shoudl come back on and the
-            // also sends out localIdentifier
-            hub.outWire().writeDocument(false, wireOut ->
-                    wireOut.writeEventName(replicationSubscribe).int8(localIdentifer));
-
-            // receives replication events
-            this.hub.asyncReadSocket(tid, d -> {
+            @Override
+            public void onConsumer(final WireIn d) {
                 d.readDocument(null, w -> replication.applyReplication(
                         w.read(replicactionReply).typedMarshallable()));
-            });
+            }
 
-            this.hub.writeSocket(this.hub.outWire());
-        } finally {
-            this.hub.outBytesLock().unlock();
-        }
+            @Override
+            public void onClose() {
+                throw new UnsupportedOperationException("todo");
+            }
+        });
+
     }
 
 }

@@ -9,10 +9,13 @@ import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.server.internal.TopicPublisherHandler.EventId;
 import net.openhft.chronicle.engine.server.internal.TopicPublisherHandler.Params;
+import net.openhft.chronicle.network.connection.AbstractAsyncSubscription;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.ValueIn;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
 import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,37 +86,42 @@ public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId>
     @Override
     public void registerTopicSubscriber(final TopicSubscriber<T, M> topicSubscriber) throws
             AssetNotFoundException {
-        final long startTime = System.currentTimeMillis();
 
         if (hub.outBytesLock().isHeldByCurrentThread())
             throw new IllegalStateException("Cannot view map while debugging");
 
-        hub.outBytesLock().lock();
-        try {
-            long tid = writeMetaDataStartTime(startTime);
+        hub.subscribe(new AbstractAsyncSubscription(hub, csp) {
 
-            hub.outWire().writeDocument(false, wireOut ->
-                    wireOut.writeEventName(registerTopicSubscriber).text(""));
+            @Override
+            public void onSubsribe(final WireOut wireOut) {
+                wireOut.writeEventName(registerTopicSubscriber).text("");
+            }
 
-            hub.asyncReadSocket(tid, w -> w.readDocument(null, d -> {
+            @Override
+            public void onConsumer(final WireIn w) {
+                w.readDocument(null, d -> {
 
-                final StringBuilder eventname = Wires.acquireStringBuilder();
-                final ValueIn valueIn = d.readEventName(eventname);
+                    final StringBuilder eventname = Wires.acquireStringBuilder();
+                    final ValueIn valueIn = d.readEventName(eventname);
 
-                if (onEndOfSubscription.contentEquals(eventname))
-                    topicSubscriber.onEndOfSubscription();
-                else if (CoreFields.reply.contentEquals(eventname)) {
-                    valueIn.marshallable(m -> {
-                        final T topic =  m.read(() -> "message").object(topicClass);
-                        final M message = m.read(() -> "message").object(messageClass);
-                        this.onEvent(topic, message, topicSubscriber);
-                    });
-                }
-            }));
-            hub.writeSocket(hub.outWire());
-        } finally {
-            hub.outBytesLock().unlock();
-        }
+                    if (onEndOfSubscription.contentEquals(eventname)) {
+                        topicSubscriber.onEndOfSubscription();
+                        hub.unsubscribe(tid());
+                    } else if (CoreFields.reply.contentEquals(eventname)) {
+                        valueIn.marshallable(m -> {
+                            final T topic = m.read(() -> "message").object(topicClass);
+                            final M message = m.read(() -> "message").object(messageClass);
+                            RemoteTopicPublisher.this.onEvent(topic, message, topicSubscriber);
+                        });
+                    }
+                });
+            }
+
+            @Override
+            public void onClose() {
+                //
+            }
+        });
 
     }
 

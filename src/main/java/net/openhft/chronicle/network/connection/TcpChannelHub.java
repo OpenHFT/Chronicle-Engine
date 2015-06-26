@@ -144,14 +144,24 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
     }
 
     /**
-     * the response comes back on the executorService thread as any work done on the consumer is
-     * blocking any further work, for reading the socket.
-     *
-     * @param tid      the tid of the message to be read from the socket
-     * @param consumer its important that this is a short running task
+     * sets up subscriptions with the server, even if the socket connection is down, the
+     * subsubscription will be re-establish with the server automatically once it comes back up.
+     * To end the subscription with the server call
+     * {@code net.openhft.chronicle.network.connection.TcpChannelHub#unsubscribe(long)}
+     * @param asyncSubscription detail of the subscription that you wish to hold with the server
      */
-    public void asyncReadSocket(long tid, @NotNull final Consumer<Wire> consumer) {
-        tcpSocketConsumer.asyncReadSocket(tid, consumer);
+    public void subscribe(@NotNull final AsyncSubscription asyncSubscription) {
+        tcpSocketConsumer.subscribe(asyncSubscription);
+    }
+
+    /**
+     * closes a subscription established by {@code net.openhft.chronicle.network.connection.TcpChannelHub#
+     * subscribe(net.openhft.chronicle.network.connection.AsyncSubscription)}
+     *
+     * @param tid the unique id of this subscription
+     */
+    public void unsubscribe(final long tid) {
+        tcpSocketConsumer.unsubscribe(tid);
     }
 
     private synchronized void attemptConnect(final InetSocketAddress remoteAddress) {
@@ -551,6 +561,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
     }
 
+
     public interface Task {
         void run() throws Exception;
     }
@@ -651,7 +662,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
             map.put(tid, consumer);
         }
 
-        public void subscribe(@NotNull final AsyncSubscription asyncSubscription) {
+        private void subscribe(@NotNull final AsyncSubscription asyncSubscription) {
             map.put(asyncSubscription.tid(), asyncSubscription);
 
             asyncSubscription.applySubscribe();

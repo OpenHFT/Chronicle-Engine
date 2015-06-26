@@ -131,7 +131,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
             int localIdentifer = hostIdentifier.hostId();
             for (HostDetails hostDetails : hdMap.values()) {
 
-                // its the identifer with the larger values that will establish the conneciton
+                // its the identifier with the larger values that will establish the conneciton
                 if (hostDetails.hostId <= localIdentifer)
                     continue;
 

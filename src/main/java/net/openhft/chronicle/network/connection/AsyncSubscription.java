@@ -1,8 +1,9 @@
 package net.openhft.chronicle.network.connection;
 
 import net.openhft.chronicle.wire.Wire;
+import net.openhft.chronicle.wire.WireIn;
 
-interface AsyncSubscription {
+public interface AsyncSubscription {
 
     /**
      * returns the unique tid that will be used in the subscription, this tid must be unique per
@@ -21,7 +22,7 @@ interface AsyncSubscription {
      * you should consumer you subscription here
      * @param inWire
      */
-    void onConsumer(final Wire inWire);
+    void onConsumer(final WireIn inWire);
 
     /**
      * called when the socket connection is closed
