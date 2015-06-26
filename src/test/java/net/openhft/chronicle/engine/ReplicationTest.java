@@ -129,7 +129,7 @@ public class ReplicationTest {
         while (map1.size() != 3 || map1.size() != 3 || map1.size() != 3) {
             Thread.sleep(1);
             if (System.currentTimeMillis() - startTime > TimeUnit.SECONDS.toMillis(10))
-                throw new TimeoutException("failed to replicated");
+                throw new TimeoutException("failed to reconsize");
         }
 
 
