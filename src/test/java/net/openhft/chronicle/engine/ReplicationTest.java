@@ -130,7 +130,6 @@ public class ReplicationTest {
             Jvm.pause(i * i);
         }
 
-
         for (Map m : new Map[]{map1, map2, map3}) {
             Assert.assertEquals("world1", m.get("hello1"));
             Assert.assertEquals("world2", m.get("hello2"));
