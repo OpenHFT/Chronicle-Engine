@@ -35,6 +35,7 @@ import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,18 +56,19 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
     private final Class<K> kClass;
     private final Class<V> vClass;
 
-    public RemoteKVSSubscription(RequestContext context, Asset asset) {
+    public RemoteKVSSubscription(@NotNull RequestContext context, @NotNull Asset asset) {
         super(asset.findView(TcpChannelHub.class), (long) 0, toUri(context));
         kClass = context.keyType();
         vClass = context.valueType();
     }
 
+    @NotNull
     private static String toUri(@NotNull final RequestContext context) {
         return  "/" + context.fullName() + "?view=subscription";
     }
 
     @Override
-    public void registerTopicSubscriber(RequestContext rc, TopicSubscriber<K, V> subscriber) {
+    public void registerTopicSubscriber(RequestContext rc, @NotNull TopicSubscriber<K, V> subscriber) {
         final long startTime = System.currentTimeMillis();
 
         if (hub.outBytesLock().isHeldByCurrentThread())
@@ -74,7 +76,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
 
         hub.subscribe(new AbstractAsyncSubscription(hub, csp) {
             @Override
-            public void onSubsribe(final WireOut wireOut) {
+            public void onSubsribe(@NotNull final WireOut wireOut) {
                 wireOut.writeEventName(registerTopicSubscriber).marshallable(m -> {
                     m.write(() -> "keyType").typeLiteral(kClass);
                     m.write(() -> "valueType").typeLiteral(vClass);
@@ -82,7 +84,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
             }
 
             @Override
-            public void onConsumer(final WireIn inWire) {
+            public void onConsumer(@NotNull final WireIn inWire) {
                 inWire.readDocument(null, d -> {
                     ValueIn valueIn = d.read(reply);
                     valueIn.marshallable(m -> {
@@ -99,7 +101,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
 
     }
 
-    private void onEvent(K topic, V message, TopicSubscriber<K, V> subscriber) {
+    private void onEvent(K topic, @Nullable V message, @NotNull TopicSubscriber<K, V> subscriber) {
         try {
             if (message == null)
                 unregisterTopicSubscriber(subscriber);
@@ -147,16 +149,16 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
     }
 
     @Override
-    public void registerSubscriber(RequestContext rc, Subscriber<MapEvent<K, V>> subscriber) {
+    public void registerSubscriber(@NotNull RequestContext rc, @NotNull Subscriber<MapEvent<K, V>> subscriber) {
         registerSubscriber0(rc, subscriber);
     }
 
     @Override
-    public void registerKeySubscriber(RequestContext rc, Subscriber<K> subscriber) {
+    public void registerKeySubscriber(@NotNull RequestContext rc, @NotNull Subscriber<K> subscriber) {
         registerSubscriber0(rc, subscriber);
     }
 
-    void registerSubscriber0(RequestContext rc, Subscriber subscriber) {
+    void registerSubscriber0(@NotNull RequestContext rc, @NotNull Subscriber subscriber) {
 
 
         if (hub.outBytesLock().isHeldByCurrentThread())
@@ -168,13 +170,13 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
             }
 
             @Override
-            public void onSubsribe(final WireOut wireOut) {
+            public void onSubsribe(@NotNull final WireOut wireOut) {
                 wireOut.writeEventName(subscribe).
                         typeLiteral(CLASS_ALIASES.nameFor(rc.elementType()));
             }
 
             @Override
-            public void onConsumer(final WireIn inWire) {
+            public void onConsumer(@NotNull final WireIn inWire) {
                 inWire.readDocument(null, d -> {
                     final StringBuilder eventname = Wires.acquireStringBuilder();
                     final ValueIn valueIn = d.readEventName(eventname);
@@ -200,7 +202,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
 
     }
 
-    private void onEvent(Object message, Subscriber subscriber) {
+    private void onEvent(@Nullable Object message, @NotNull Subscriber subscriber) {
         try {
             if (message == null) {
                 // todo remove subscriber.

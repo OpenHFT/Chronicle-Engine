@@ -48,7 +48,7 @@ public class CMap2EngineReplicator implements EngineReplication,
     private final ThreadLocal<PointerBytesStore> valueLocal = withInitial(PointerBytesStore::new);
     private EngineReplicationLangBytes engineReplicationLang;
 
-    public CMap2EngineReplicator(RequestContext requestContext, Asset asset) {
+    public CMap2EngineReplicator(RequestContext requestContext, @NotNull Asset asset) {
         this(requestContext);
         asset.addView(EngineReplicationLangBytesConsumer.class, this);
     }
@@ -62,7 +62,8 @@ public class CMap2EngineReplicator implements EngineReplication,
         this.engineReplicationLang = engineReplicationLangBytes;
     }
 
-    net.openhft.lang.io.Bytes toLangBytes(BytesStore b) {
+    @NotNull
+    net.openhft.lang.io.Bytes toLangBytes(@NotNull BytesStore b) {
         if (b.underlyingObject() == null)
             return wrap(b.address(), b.readRemaining());
         else {
@@ -73,13 +74,13 @@ public class CMap2EngineReplicator implements EngineReplication,
         }
     }
 
-    public void put(final BytesStore key, final BytesStore value,
+    public void put(@NotNull final BytesStore key, @NotNull final BytesStore value,
                     final byte remoteIdentifier,
                     final long timestamp) {
         engineReplicationLang.put(toLangBytes(key), toLangBytes(value), remoteIdentifier, timestamp);
     }
 
-    private void remove(final BytesStore key, final byte remoteIdentifier, final long timestamp) {
+    private void remove(@NotNull final BytesStore key, final byte remoteIdentifier, final long timestamp) {
         engineReplicationLang.remove(toLangBytes(key), remoteIdentifier, timestamp);
     }
 
@@ -106,6 +107,7 @@ public class CMap2EngineReplicator implements EngineReplication,
         setLastModificationTime(entry.identifier(), entry.bootStrapTimeStamp());
     }
 
+    @Nullable
     @Override
     public ModificationIterator acquireModificationIterator(final byte remoteIdentifier) {
         final EngineModificationIterator instance = engineReplicationLang
@@ -147,6 +149,7 @@ public class CMap2EngineReplicator implements EngineReplication,
                 return voidBytes;
             }
 
+            @Nullable
             private Bytes<Void> toValue(final @Nullable net.openhft.lang.io.Bytes value) {
                 if (value == null)
                     return null;
@@ -186,6 +189,7 @@ public class CMap2EngineReplicator implements EngineReplication,
 
 
 
+    @NotNull
     @Override
     public String toString() {
         return "CMap2EngineReplicator{" +
@@ -216,8 +220,8 @@ public class CMap2EngineReplicator implements EngineReplication,
          *                           disconnection, this time maybe later than the message time as
          *                           event are not send in chronological order from the bit set.
          */
-        VanillaReplicatedEntry(final BytesStore key,
-                               final BytesStore value,
+        VanillaReplicatedEntry(@NotNull final BytesStore key,
+                               @NotNull final BytesStore value,
                                final long timestamp,
                                final byte identifier,
                                final boolean isDeleted,

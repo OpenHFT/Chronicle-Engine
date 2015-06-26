@@ -309,6 +309,7 @@ public class RequestContext implements Cloneable {
         return this;
     }
 
+    @NotNull
     @Override
     public String toString() {
         return "RequestContext{" +
@@ -332,12 +333,14 @@ public class RequestContext implements Cloneable {
         return recurse;
     }
 
+    @NotNull
     public RequestContext recurse(Boolean recurse) {
         this.recurse = recurse;
         return this;
     }
 
 
+    @NotNull
     public RequestContext clone() {
         try {
             return (RequestContext) super.clone();

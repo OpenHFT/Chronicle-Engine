@@ -31,6 +31,7 @@ import java.util.function.BiPredicate;
 public interface Asset extends Closeable {
     String name();
 
+    @NotNull
     Subscription subscription(boolean createIfAbsent) throws AssetNotFoundException;
 
     @NotNull
@@ -79,6 +80,7 @@ public interface Asset extends Closeable {
      * @param name partial name of asset to find.
      * @return the Asset found or null.
      */
+    @Nullable
     default Asset findAsset(@NotNull String name) {
         Asset asset = getAsset(name);
         Asset parent = parent();
@@ -93,6 +95,7 @@ public interface Asset extends Closeable {
      * @param viewType the class pf the view
      * @return the View found or null.
      */
+    @Nullable
     default <V> V findView(@NotNull Class<V> viewType) {
         V v = getView(viewType);
         Asset parent = parent();
@@ -101,6 +104,7 @@ public interface Asset extends Closeable {
         return v;
     }
 
+    @Nullable
     default <V> V findOrCreateView(@NotNull Class<V> viewType) {
         V v = getView(viewType);
         if (v == null) {
@@ -126,8 +130,10 @@ public interface Asset extends Closeable {
         return (V) acquireView(rc.viewType(), rc);
     }
 
+    @NotNull
     <V> V acquireView(Class<V> viewType, RequestContext rc) throws AssetNotFoundException;
 
+    @Nullable
     <V> V getView(Class<V> vClass);
 
     <I> void registerView(Class<I> iClass, I interceptor);

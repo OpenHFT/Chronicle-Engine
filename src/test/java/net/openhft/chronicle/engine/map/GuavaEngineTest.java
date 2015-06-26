@@ -84,7 +84,7 @@ public class GuavaEngineTest   {
     }
 
     @NotNull
-    static ConcurrentMap<CharSequence, CharSequence> newStrStrRemoteMap(AssetTree assetTree) {
+    static ConcurrentMap<CharSequence, CharSequence> newStrStrRemoteMap(@NotNull AssetTree assetTree) {
 
         try {
             return new RemoteMapSupplier<>(CharSequence.class, CharSequence.class,
@@ -170,10 +170,12 @@ public class GuavaEngineTest   {
     }
 
     static class RemoteTestGenerator extends CHMTestGenerator implements Closeable {
+        @NotNull
         private final AssetTree remoteAssetTree;
+        @NotNull
         private final AssetTree assetTree;
 
-        public RemoteTestGenerator(AssetTree assetTree) throws IOException {
+        public RemoteTestGenerator(@NotNull AssetTree assetTree) throws IOException {
             this.assetTree = assetTree;
             final ServerEndpoint serverEndpoint = new ServerEndpoint(assetTree);
             int serverPort = serverEndpoint.getPort();

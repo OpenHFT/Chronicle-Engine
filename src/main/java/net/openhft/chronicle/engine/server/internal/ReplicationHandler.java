@@ -13,6 +13,7 @@ import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.threads.api.InvalidEventHandlerException;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -35,7 +36,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
     private AtomicBoolean isClosed;
     private EventLoop eventLoop;
 
-    void process(final Wire inWire,
+    void process(@NotNull final Wire inWire,
                  final Queue<Consumer<Wire>> publisher,
                  final long tid,
                  final Wire outWire,
@@ -78,10 +79,11 @@ public class ReplicationHandler<E> extends AbstractHandler {
         }
     }
 
+    @Nullable
     private final BiConsumer<WireIn, Long> dataConsumer = new BiConsumer<WireIn, Long>() {
 
         @Override
-        public void accept(final WireIn inWire, Long inputTid) {
+        public void accept(@NotNull final WireIn inWire, Long inputTid) {
 
             eventName.setLength(0);
             final ValueIn valueIn = inWire.readEventName(eventName);
@@ -145,6 +147,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
                     }
 
+                    @NotNull
                     @Override
                     public HandlerPriority priority() {
                         return HandlerPriority.MEDIUM;

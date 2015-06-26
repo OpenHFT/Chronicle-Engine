@@ -23,6 +23,7 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.pubsub.SimpleSubscription;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -38,15 +39,16 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
     private final Set<Subscriber<MapEvent<K, V>>> subscribers = new CopyOnWriteArraySet<>();
     private final Set<Subscriber<K>> keySubscribers = new CopyOnWriteArraySet<>();
     private final Set<EventConsumer<K, V>> downstream = new CopyOnWriteArraySet<>();
+    @NotNull
     private final Asset asset;
     private KeyValueStore<K, MV, V> kvStore;
     private boolean hasSubscribers = false;
 
-    public VanillaKVSSubscription(RequestContext requestContext, Asset asset) {
+    public VanillaKVSSubscription(@NotNull RequestContext requestContext, @NotNull Asset asset) {
         this(requestContext.viewType(), asset);
     }
 
-    public VanillaKVSSubscription(Class viewType, Asset asset) {
+    public VanillaKVSSubscription(@Nullable Class viewType, @NotNull Asset asset) {
         this.asset = asset;
         if (viewType != null)
             asset.addView(viewType, this);
@@ -65,14 +67,14 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
         throw new UnsupportedOperationException("todo");
     }
 
-    private void notifyEndOfSubscription(Set<? extends ISubscriber> subscribers) {
+    private void notifyEndOfSubscription(@NotNull Set<? extends ISubscriber> subscribers) {
         for (ISubscriber subscriber : subscribers) {
             notifyEndOfSubscription(subscriber);
         }
         subscribers.clear();
     }
 
-    private void notifyEndOfSubscription(ISubscriber subscriber) {
+    private void notifyEndOfSubscription(@NotNull ISubscriber subscriber) {
         try {
             subscriber.onEndOfSubscription();
         } catch (Exception e) {
@@ -190,7 +192,7 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
     }
 
     @Override
-    public void registerKeySubscriber(RequestContext rc, Subscriber<K> subscriber) {
+    public void registerKeySubscriber(@NotNull RequestContext rc, @NotNull Subscriber<K> subscriber) {
         Boolean bootstrap = rc.bootstrap();
 
         keySubscribers.add(subscriber);

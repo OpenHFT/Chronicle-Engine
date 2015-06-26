@@ -27,6 +27,7 @@ import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
 import net.openhft.chronicle.engine.pubsub.SimpleSubscription;
 import net.openhft.chronicle.engine.pubsub.VanillaReference;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiPredicate;
 import java.util.function.Supplier;
@@ -40,6 +41,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     private final String name;
     @NotNull
     private final SimpleSubscription<E> subscription;
+    @Nullable
     private Reference<E> reference;
 
     VanillaSubAsset(@NotNull RequestContext rc, @NotNull VanillaAsset parent, String name) throws AssetNotFoundException {
@@ -83,7 +85,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
 
     @NotNull
     @Override
-    public <V> V acquireView(Class<V> viewType, @NotNull RequestContext rc) throws AssetNotFoundException {
+    public <V> V acquireView(@NotNull Class<V> viewType, @NotNull RequestContext rc) throws AssetNotFoundException {
         if (viewType == Reference.class || viewType == Supplier.class) {
             return (V) reference;
         }
@@ -99,7 +101,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     }
 
     @NotNull
-    private <V> V acquireViewFor(Class<V> viewType, @NotNull RequestContext rc) throws AssetNotFoundException {
+    private <V> V acquireViewFor(@NotNull Class<V> viewType, @NotNull RequestContext rc) throws AssetNotFoundException {
         return parent.getView(viewType);
     }
 
@@ -138,11 +140,13 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
         throw new UnsupportedOperationException("todo");
     }
 
+    @NotNull
     @Override
     public <I, U> I createWrappingView(Class viewType, RequestContext rc, Asset asset, U underling) throws AssetNotFoundException {
         throw new UnsupportedOperationException("todo");
     }
 
+    @NotNull
     @Override
     public <I> I createLeafView(Class viewType, RequestContext rc, Asset asset) throws AssetNotFoundException {
         throw new UnsupportedOperationException("todo");

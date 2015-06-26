@@ -21,6 +21,7 @@ import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -33,7 +34,7 @@ public class Clusters implements Marshallable, View {
             new ConcurrentSkipListMap<>();
 
     @Override
-    public void readMarshallable(WireIn wire) throws IllegalStateException {
+    public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         StringBuilder clusterName = new StringBuilder();
         StringBuilder hostDescription = new StringBuilder();
         while (wire.hasMore()) {
@@ -51,7 +52,7 @@ public class Clusters implements Marshallable, View {
     }
 
     @Override
-    public void writeMarshallable(WireOut wire) {
+    public void writeMarshallable(@NotNull WireOut wire) {
         for (Map.Entry<String, Map<String, HostDetails>> entry : clusterMap.entrySet()) {
             wire.writeEventName(entry::getKey).marshallable(host -> {
                 for (Map.Entry<String, HostDetails> entry2 : entry.getValue().entrySet()) {
@@ -61,7 +62,7 @@ public class Clusters implements Marshallable, View {
         }
     }
 
-    public void install(AssetTree assetTree) {
+    public void install(@NotNull AssetTree assetTree) {
         assetTree.root().addView(Clusters.class, this);
     }
 

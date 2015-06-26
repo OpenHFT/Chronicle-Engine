@@ -17,6 +17,7 @@ import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
+import org.jetbrains.annotations.NotNull;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -77,6 +78,7 @@ public class ReplicationTest {
         tree3.close();
     }
 
+    @NotNull
     private static AssetTree create(final int hostId) {
         Function<Bytes, Wire> writeType = WireType.TEXT;
         AssetTree tree = new VanillaAssetTree((byte) hostId)
@@ -97,6 +99,7 @@ public class ReplicationTest {
         return tree;
     }
 
+    @NotNull
     public static String resourcesDir() {
         String path = ChronicleMapKeyValueStoreTest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
         if (path == null)

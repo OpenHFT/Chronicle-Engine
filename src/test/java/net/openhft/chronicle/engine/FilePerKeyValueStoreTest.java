@@ -26,6 +26,7 @@ import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.map.VanillaStringStringKeyValueStore;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
+import org.jetbrains.annotations.NotNull;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -96,7 +97,7 @@ public class FilePerKeyValueStoreTest {
         assertEquals(3, events.size());
     }
 
-    private void waitFor(List<MapEvent<String, String>> events, int count) throws InterruptedException {
+    private void waitFor(@NotNull List<MapEvent<String, String>> events, int count) throws InterruptedException {
         for (int i = 1; i <= 10; i++) {
             if (events.size() >= count)
                 break;

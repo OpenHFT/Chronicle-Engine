@@ -83,6 +83,7 @@ public class VanillaKeyValueStore<K, MV, V> implements AuthenticatedKeyValueStor
         return map.entrySet().iterator();
     }
 
+    @NotNull
     @Override
     public Iterator<K> keySetIterator() {
         return map.keySet().iterator();
@@ -119,6 +120,7 @@ public class VanillaKeyValueStore<K, MV, V> implements AuthenticatedKeyValueStor
 
     }
 
+    @NotNull
     @Override
     public KVSSubscription<K, MV, V> subscription(boolean createIfAbsent) {
         throw new UnsupportedOperationException("todo");

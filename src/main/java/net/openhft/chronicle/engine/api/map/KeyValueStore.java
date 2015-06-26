@@ -23,6 +23,7 @@ import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.tree.Assetted;
 import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.lang.model.constraints.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -47,6 +48,7 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
         return getAndPut(key, value) != null;
     }
 
+    @org.jetbrains.annotations.Nullable
     V getAndPut(K key, V value);
 
     /**
@@ -59,13 +61,16 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
         return getAndRemove(key) != null;
     }
 
+    @org.jetbrains.annotations.Nullable
     V getAndRemove(K key);
 
+    @org.jetbrains.annotations.Nullable
     @Nullable
     default V get(K key) {
         return getUsing(key, null);
     }
 
+    @org.jetbrains.annotations.Nullable
     @Nullable
     V getUsing(K key, MV value);
 
@@ -117,6 +122,7 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
 
     void clear();
 
+    @org.jetbrains.annotations.Nullable
     @Nullable
     default V replace(K key, V value) {
         if (containsKey(key)) {
@@ -148,6 +154,7 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
         return true;
     }
 
+    @org.jetbrains.annotations.Nullable
     default V putIfAbsent(K key, V value) {
         V value2 = get(key);
         return value2 == null ? getAndPut(key, value) : value2;
@@ -157,6 +164,7 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
         return true;
     }
 
+    @NotNull
     default Iterator<V> valuesIterator() {
         // todo optimise
         List<V> entries = new ArrayList<>();
@@ -174,6 +182,7 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
     interface Entry<K, V> {
         K key();
 
+        @org.jetbrains.annotations.Nullable
         V value();
     }
 }

@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class AbstractSubscriptionKeyValueStore<K, MV,V> extends AbstractKeyValueStore<K, MV,V>
         implements SubscriptionKeyValueStore<K, MV,V> {
-    protected AbstractSubscriptionKeyValueStore(RequestContext rc, Asset asset, @NotNull SubscriptionKeyValueStore<K, MV, V> kvStore) {
+    protected AbstractSubscriptionKeyValueStore(@NotNull RequestContext rc, @NotNull Asset asset, @NotNull SubscriptionKeyValueStore<K, MV, V> kvStore) {
         super(rc, asset, kvStore);
     }
 

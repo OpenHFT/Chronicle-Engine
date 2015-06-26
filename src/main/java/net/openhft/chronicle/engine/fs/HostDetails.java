@@ -24,6 +24,7 @@ import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,7 +41,7 @@ public class HostDetails implements Marshallable {
 
 
     @Override
-    public void readMarshallable(WireIn wire) throws IllegalStateException {
+    public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         wire.read(() -> "hostId").int32(i -> hostId = i)
                 .read(() -> "tcpBufferSize").int32(i -> tcpBufferSize = i)
                 .read(() -> "hostname").text(i -> hostname = i)
@@ -49,7 +50,7 @@ public class HostDetails implements Marshallable {
     }
 
     @Override
-    public void writeMarshallable(WireOut wire) {
+    public void writeMarshallable(@NotNull WireOut wire) {
         wire.write(() -> "hostId").int32(hostId)
                 .write(() -> "tcpBufferSize").int32(tcpBufferSize)
                 .write(() -> "hostname").text(hostname)
@@ -64,6 +65,7 @@ public class HostDetails implements Marshallable {
                 new TcpChannelHub(sessionProvider(), hostPort.host, hostPort.port));
     }
 
+    @NotNull
     private SessionProvider sessionProvider() {
         SessionProvider sessionProvider = new VanillaSessionProvider();
         VanillaSessionDetails sessionDetails = new VanillaSessionDetails();
@@ -72,6 +74,7 @@ public class HostDetails implements Marshallable {
         return sessionProvider;
     }
 
+    @NotNull
     private static Map<HostPort, TcpChannelHub> tcpChannelHubs = new ConcurrentHashMap<>();
 
     class HostPort {
@@ -84,7 +87,7 @@ public class HostDetails implements Marshallable {
         }
 
         @Override
-        public boolean equals(final Object o) {
+        public boolean equals(@Nullable final Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 

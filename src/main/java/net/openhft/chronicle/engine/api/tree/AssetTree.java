@@ -37,7 +37,8 @@ import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContex
  * Created by peter on 22/05/15.
  */
 public interface AssetTree extends Closeable {
-    static Class<Subscription> getSubscriptionType(RequestContext rc) {
+    @NotNull
+    static Class<Subscription> getSubscriptionType(@NotNull RequestContext rc) {
         Class elementType = rc.elementType();
         return elementType == TopologicalEvent.class
                 ? (Class) TopologySubscription.class
@@ -50,7 +51,8 @@ public interface AssetTree extends Closeable {
     Asset acquireAsset(Class assetClass, RequestContext context) throws
             AssetNotFoundException;
 
-    default Asset acquireAsset(RequestContext context) throws AssetNotFoundException {
+    @NotNull
+    default Asset acquireAsset(@NotNull RequestContext context) throws AssetNotFoundException {
         return acquireAsset(context.viewType(), context);
     }
 
@@ -60,72 +62,75 @@ public interface AssetTree extends Closeable {
     Asset root();
 
     @NotNull
-    default <E> Set<E> acquireSet(String name, Class<E> eClass) throws AssetNotFoundException {
+    default <E> Set<E> acquireSet(@NotNull String name, Class<E> eClass) throws AssetNotFoundException {
         return acquireView(requestContext(name).view("set").type(eClass));
     }
 
     @NotNull
-    default <E> E acquireView(RequestContext rc) {
+    default <E> E acquireView(@NotNull RequestContext rc) {
         return acquireAsset(rc).acquireView(rc);
     }
 
-    default <S> S acquireService(String uri, Class<S> service) {
+    @NotNull
+    default <S> S acquireService(@NotNull String uri, Class<S> service) {
         return acquireView(requestContext(uri).viewType(service));
     }
 
     @NotNull
-    default <K, V> MapView<K, V, V> acquireMap(String name, Class<K> kClass, Class<V> vClass) throws AssetNotFoundException {
+    default <K, V> MapView<K, V, V> acquireMap(@NotNull String name, Class<K> kClass, Class<V> vClass) throws AssetNotFoundException {
         return acquireView(requestContext(name).view("map").type(kClass).type2(vClass));
     }
 
     @NotNull
-    default <E> Publisher<E> acquirePublisher(String name, Class<E> eClass) throws AssetNotFoundException {
+    default <E> Publisher<E> acquirePublisher(@NotNull String name, Class<E> eClass) throws AssetNotFoundException {
         return acquireView(requestContext(name).view("pub").type(eClass));
     }
 
     @NotNull
-    default <E> Reference<E> acquireReference(String name, Class<E> eClass) throws AssetNotFoundException {
+    default <E> Reference<E> acquireReference(@NotNull String name, Class<E> eClass) throws AssetNotFoundException {
         return acquireView(requestContext(name).view("ref").type(eClass));
     }
 
     @NotNull
-    default <T, E> TopicPublisher<T, E> acquireTopicPublisher(String name, Class<T> tClass, Class<E> eClass) throws AssetNotFoundException {
+    default <T, E> TopicPublisher<T, E> acquireTopicPublisher(@NotNull String name, Class<T> tClass, Class<E> eClass) throws AssetNotFoundException {
         return acquireView(requestContext(name).view("topicPub").type(tClass).type2(eClass));
     }
 
-    default <E> void registerSubscriber(String name, Class<E> eClass, Subscriber<E> subscriber) throws AssetNotFoundException {
+    default <E> void registerSubscriber(@NotNull String name, Class<E> eClass, Subscriber<E> subscriber) throws AssetNotFoundException {
         RequestContext rc = requestContext(name).type(eClass);
         acquireSubscription(rc)
                 .registerSubscriber(rc, subscriber);
     }
 
-    default <T, E> void registerTopicSubscriber(String name, Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
+    default <T, E> void registerTopicSubscriber(@NotNull String name, Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
         RequestContext rc = requestContext(name).type(tClass).type2(eClass);
         ((KVSSubscription) acquireSubscription(rc)).registerTopicSubscriber(rc, subscriber);
     }
 
-    default Subscription acquireSubscription(RequestContext rc) {
+    @NotNull
+    default Subscription acquireSubscription(@NotNull RequestContext rc) {
         Class<Subscription> subscriptionType = getSubscriptionType(rc);
         rc.viewType(subscriptionType);
         Asset asset = acquireAsset(subscriptionType, rc);
         return asset.acquireView(subscriptionType, rc);
     }
 
-    default Subscription getSubscription(RequestContext rc) {
+    @Nullable
+    default Subscription getSubscription(@NotNull RequestContext rc) {
         Class<Subscription> subscriptionType = getSubscriptionType(rc);
         rc.viewType(subscriptionType);
         Asset asset = getAsset(rc.fullName());
         return asset == null ? null : asset.getView(subscriptionType);
     }
 
-    default <E> void unregisterSubscriber(String name, Subscriber<E> subscriber) throws AssetNotFoundException {
+    default <E> void unregisterSubscriber(@NotNull String name, Subscriber<E> subscriber) throws AssetNotFoundException {
         RequestContext rc = requestContext(name);
         Subscription subscription = getSubscription(rc);
         if (subscription != null)
             subscription.unregisterSubscriber(subscriber);
     }
 
-    default <T, E> void unregisterTopicSubscriber(String name, TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
+    default <T, E> void unregisterTopicSubscriber(@NotNull String name, TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
         RequestContext rc = requestContext(name).viewType(Subscriber.class);
         Subscription subscription = getSubscription(rc);
         if (subscription instanceof KVSSubscription)

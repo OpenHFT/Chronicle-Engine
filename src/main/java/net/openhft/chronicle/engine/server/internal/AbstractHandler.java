@@ -21,6 +21,7 @@ import static net.openhft.chronicle.wire.WriteMarshallable.EMPTY;
 public class AbstractHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractHandler.class);
+    @Nullable
     Wire outWire = null;
 
     void setOutWire(final Wire outWire) {
@@ -30,7 +31,7 @@ public class AbstractHandler {
     /**
      * write and exceptions and rolls back if no data was written
      */
-    void writeData(Bytes inBytes, @NotNull Consumer<WireOut> c) {
+    void writeData(@NotNull Bytes inBytes, @NotNull Consumer<WireOut> c) {
         outWire.writeDocument(false, out -> {
             final long readPosition = inBytes.readPosition();
             final long position = outWire.bytes().writePosition();

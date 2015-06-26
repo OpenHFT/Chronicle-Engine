@@ -28,14 +28,14 @@ public class RemotePublisher<E> extends AbstractStatelessClient<EventId> impleme
 
     private final Class<E> messageClass;
 
-    public RemotePublisher(@NotNull RequestContext context, Asset asset, Object underlying)
+    public RemotePublisher(@NotNull RequestContext context, @NotNull Asset asset, Object underlying)
             throws AssetNotFoundException {
         super(asset.findView(TcpChannelHub.class), (long) 0, toUri(context));
 
         messageClass = context.messageType();
     }
 
-    private static String toUri(final RequestContext context) {
+    private static String toUri(@NotNull final RequestContext context) {
         StringBuilder uri = new StringBuilder( "/" + context.fullName()
                 + "?view=" + "publisher");
 
@@ -52,7 +52,7 @@ public class RemotePublisher<E> extends AbstractStatelessClient<EventId> impleme
     }
 
     @Override
-    public void registerSubscriber(final Subscriber subscriber) throws AssetNotFoundException {
+    public void registerSubscriber(@NotNull final Subscriber subscriber) throws AssetNotFoundException {
 
         if (hub.outBytesLock().isHeldByCurrentThread())
             throw new IllegalStateException("Cannot view map while debugging");
@@ -60,12 +60,12 @@ public class RemotePublisher<E> extends AbstractStatelessClient<EventId> impleme
         final AbstractAsyncSubscription asyncSubscription = new AbstractAsyncSubscription(hub, csp) {
 
             @Override
-            public void onSubsribe(final WireOut wireOut) {
+            public void onSubsribe(@NotNull final WireOut wireOut) {
                 wireOut.writeEventName(registerTopicSubscriber).text("");
             }
 
             @Override
-            public void onConsumer(final WireIn w) {
+            public void onConsumer(@NotNull final WireIn w) {
                 w.readDocument(null, d -> {
                     final StringBuilder eventname = Wires.acquireStringBuilder();
                     final ValueIn valueIn = d.readEventName(eventname);
@@ -88,7 +88,7 @@ public class RemotePublisher<E> extends AbstractStatelessClient<EventId> impleme
         hub.subscribe(asyncSubscription);
     }
 
-    private void onEvent(E message, Subscriber<E> subscriber) {
+    private void onEvent(@Nullable E message, @NotNull Subscriber<E> subscriber) {
         try {
             if (message == null) {
                 // todo

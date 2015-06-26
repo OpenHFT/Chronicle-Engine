@@ -20,6 +20,7 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.wire.BinaryWire;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
 
@@ -29,11 +30,13 @@ import java.util.function.Function;
 @Deprecated
 public enum WireType implements Function<Bytes, Wire> {
     TEXT {
+        @NotNull
         @Override
         public Wire apply(Bytes bytes) {
             return new TextWire(bytes);
         }
     }, BINARY {
+        @NotNull
         @Override
         public Wire apply(Bytes bytes) {
             return new BinaryWire(bytes);
@@ -41,6 +44,7 @@ public enum WireType implements Function<Bytes, Wire> {
     };
 
     // todo to be removed
+    @NotNull
     @Deprecated
     public static Function<Bytes, Wire> wire = BINARY;
 }

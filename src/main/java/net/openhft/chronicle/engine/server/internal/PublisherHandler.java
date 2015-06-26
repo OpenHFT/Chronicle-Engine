@@ -5,6 +5,7 @@ import net.openhft.chronicle.engine.api.pubsub.Publisher;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Queue;
 import java.util.function.BiConsumer;
@@ -25,11 +26,12 @@ public class PublisherHandler<E> extends AbstractHandler {
 
     private Queue<Consumer<Wire>> publisher;
     private Publisher<E> view;
+    @Nullable
     private Function<ValueIn, E> wireToE;
     private final BiConsumer<WireIn, Long> dataConsumer = new BiConsumer<WireIn, Long>() {
 
         @Override
-        public void accept(final WireIn inWire, Long inputTid) {
+        public void accept(@NotNull final WireIn inWire, Long inputTid) {
 
             eventName.setLength(0);
             final ValueIn valueIn = inWire.readEventName(eventName);
@@ -77,7 +79,7 @@ public class PublisherHandler<E> extends AbstractHandler {
         }
     };
 
-    void process(final Wire inWire,
+    void process(@NotNull final Wire inWire,
                  final Queue<Consumer<Wire>> publisher,
                  final long tid,
                  Publisher<E> view, final Wire outWire,

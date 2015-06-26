@@ -1,6 +1,7 @@
 package net.openhft.chronicle.network.connection;
 
 import net.openhft.chronicle.wire.WireOut;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by Rob Austin
@@ -8,10 +9,11 @@ import net.openhft.chronicle.wire.WireOut;
 public abstract class AbstractAsyncSubscription implements AsyncSubscription {
 
     private final long tid;
+    @NotNull
     private final TcpChannelHub hub;
     private String csp;
 
-    public AbstractAsyncSubscription(final TcpChannelHub hub, String csp) {
+    public AbstractAsyncSubscription(@NotNull final TcpChannelHub hub, String csp) {
         tid = hub.nextUniqueTransaction(System.currentTimeMillis());
         this.hub = hub;
         this.csp = csp;

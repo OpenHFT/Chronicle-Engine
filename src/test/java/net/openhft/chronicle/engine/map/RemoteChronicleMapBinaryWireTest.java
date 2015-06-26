@@ -48,6 +48,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     @NotNull
     @Rule
     public TestName name = new TestName();
+    @NotNull
     private AssetTree assetTree = new VanillaAssetTree().forTesting();
 
     @Before
@@ -56,7 +57,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     }
 
     @NotNull
-    ClosableMapSupplier newIntString(String name) throws IOException {
+    ClosableMapSupplier newIntString(@NotNull String name) throws IOException {
         final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(
                 Integer.class, String.class, WireType.BINARY, assetTree, name);
 

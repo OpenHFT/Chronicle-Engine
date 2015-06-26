@@ -61,7 +61,9 @@ public class MapWireHandler<K, V> extends AbstractHandler {
     private final AtomicLong cid = new AtomicLong();
 
     private BiConsumer<ValueOut, V> vToWire;
+    @Nullable
     private Function<ValueIn, K> wireToK;
+    @Nullable
     private Function<ValueIn, V> wireToV;
     private RequestContext requestContext;
 

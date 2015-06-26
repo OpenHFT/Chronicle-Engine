@@ -9,6 +9,7 @@ import net.openhft.chronicle.engine.map.KVSSubscription;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,10 +38,11 @@ public class SubscriptionHandlerProcessor extends AbstractHandler {
     private AssetTree assetTree;
     private Wire outWire;
     private KVSSubscription subscription;
+    @Nullable
     private final BiConsumer<WireIn, Long> dataConsumer = new BiConsumer<WireIn, Long>() {
 
         @Override
-        public void accept(final WireIn inWire, Long inputTid) {
+        public void accept(@NotNull final WireIn inWire, Long inputTid) {
 
             eventName.setLength(0);
             final ValueIn valueIn = inWire.readEventName(eventName);
@@ -153,7 +155,7 @@ public class SubscriptionHandlerProcessor extends AbstractHandler {
         }
     };
 
-    void process(final Wire inWire,
+    void process(@NotNull final Wire inWire,
                  final RequestContext requestContext,
                  final Queue<Consumer<Wire>> publisher,
                  final AssetTree assetTree, final long tid,

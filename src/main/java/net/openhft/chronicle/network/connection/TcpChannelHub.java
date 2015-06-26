@@ -64,6 +64,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
     @NotNull
     private final AtomicLong transactionID = new AtomicLong(0);
     private final SessionProvider sessionProvider;
+    @NotNull
     private final TcpSocketConsumer tcpSocketConsumer;
     @Nullable
     protected CloseablesManager closeables;
@@ -78,7 +79,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
     private long startTime;
     private volatile boolean closed;
 
-    public TcpChannelHub(SessionProvider sessionProvider, String hostname, int port) {
+    public TcpChannelHub(SessionProvider sessionProvider, @NotNull String hostname, int port) {
         this.tcpBufferSize = 64 << 10;
         this.remoteAddress = new InetSocketAddress(hostname, port);
         this.outWire = wire.apply(Bytes.elasticByteBuffer());
@@ -206,12 +207,14 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
         return true;
     }
 
+    @Nullable
     @Override
     public SocketChannel lazyConnect() {
         lazyConnect(timeoutMs, remoteAddress);
         return clientChannel;
     }
 
+    @Nullable
     @Override
     public synchronized SocketChannel reConnect() {
         close();
@@ -219,6 +222,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
         return clientChannel;
     }
 
+    @Nullable
     public synchronized SocketChannel lazyConnect(final long timeoutMs,
                                                   final InetSocketAddress remoteAddress) {
         if (clientChannel != null)
@@ -549,7 +553,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
             throw new IllegalStateException("Closed");
     }
 
-    public void lock(Task r) {
+    public void lock(@NotNull Task r) {
 
         outBytesLock().lock();
         try {
@@ -572,7 +576,9 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
      */
     private static class TcpSocketConsumer implements Closeable {
 
+        @NotNull
         private final ExecutorService executorService;
+        @NotNull
         private final SocketChannelProvider provider;
         private final Map<Long, Object> map = new ConcurrentHashMap<>();
 
@@ -581,6 +587,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
         @Nullable
         private SocketChannel clientChannel;
         private long tid;
+        @NotNull
         private ThreadLocal<Wire> syncInWireThreadLocal = ThreadLocal.withInitial(() -> wire.apply(Bytes
                 .elasticByteBuffer()));
 
@@ -721,7 +728,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
             return closeSocketConsumer || Thread.currentThread().isInterrupted();
         }
 
-        private void clear(final Wire inWire) {
+        private void clear(@NotNull final Wire inWire) {
             inWire.clear();
             ((ByteBuffer) inWire.bytes().underlyingObject()).clear();
         }
@@ -734,7 +741,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
         }
 
         private void processData(final long tid, final boolean isReady, final int
-                header, final int messageSize, Wire inWire) throws IOException {
+                header, final int messageSize, @NotNull Wire inWire) throws IOException {
 
             long startTime = 0;
             Object o;
@@ -810,7 +817,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
         }
 
-        private void readBuffer(final ByteBuffer buffer) throws IOException {
+        private void readBuffer(@NotNull final ByteBuffer buffer) throws IOException {
             while (buffer.remaining() > 0) {
                 if (clientChannel == null || clientChannel.read(buffer) == -1)
                     throw new IORuntimeException("Disconnection to server");

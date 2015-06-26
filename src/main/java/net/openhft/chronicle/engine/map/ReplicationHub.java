@@ -52,14 +52,14 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
     private final EventLoop eventLoop;
     private final AtomicBoolean isClosed;
 
-    public ReplicationHub(RequestContext context, @NotNull final TcpChannelHub hub, EventLoop eventLoop, AtomicBoolean isClosed) {
+    public ReplicationHub(@NotNull RequestContext context, @NotNull final TcpChannelHub hub, EventLoop eventLoop, AtomicBoolean isClosed) {
         super(hub, (long) 0, toUri(context));
 
         this.eventLoop = eventLoop;
         this.isClosed = isClosed;
     }
 
-    private static String toUri(final RequestContext context) {
+    private static String toUri(@NotNull final RequestContext context) {
         final StringBuilder uri = new StringBuilder(context.fullName()
                 + "?view=" + "Replication");
 
@@ -72,7 +72,7 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
         return uri.toString();
     }
 
-    public void bootstrap(EngineReplication replication, int localIdentifer) throws InterruptedException {
+    public void bootstrap(@NotNull EngineReplication replication, int localIdentifer) throws InterruptedException {
 
         final byte remoteIdentifier = proxyReturnByte(identifierReply, identifier);
         final ModificationIterator mi = replication.acquireModificationIterator(remoteIdentifier);
@@ -108,7 +108,7 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
      * @param remote details about the remote connection
      * @throws InterruptedException
      */
-    private void publish(final ModificationIterator mi, final Bootstrap remote) throws InterruptedException {
+    private void publish(@NotNull final ModificationIterator mi, @NotNull final Bootstrap remote) throws InterruptedException {
 
         final TcpChannelHub hub = this.hub;
 
@@ -132,6 +132,7 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
                 return true;
             }
 
+            @NotNull
             @Override
             public HandlerPriority priority() {
                 return HandlerPriority.MEDIUM;
@@ -148,16 +149,16 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
      * @param replication    the event will be applied to the EngineReplication
      * @param localIdentifer our local identifier
      */
-    private void subscribe(final EngineReplication replication, final int localIdentifer) {
+    private void subscribe(@NotNull final EngineReplication replication, final int localIdentifer) {
 
         hub.subscribe(new AbstractAsyncSubscription(hub,csp) {
             @Override
-            public void onSubsribe(final WireOut wireOut) {
+            public void onSubsribe(@NotNull final WireOut wireOut) {
                 wireOut.writeEventName(replicationSubscribe).int8(localIdentifer);
             }
 
             @Override
-            public void onConsumer(final WireIn d) {
+            public void onConsumer(@NotNull final WireIn d) {
                 d.readDocument(null, w -> replication.applyReplication(
                         w.read(replicactionReply).typedMarshallable()));
             }

@@ -20,6 +20,7 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -28,10 +29,11 @@ import java.util.concurrent.ConcurrentSkipListMap;
  * Created by peter on 12/06/15.
  */
 public class Fstab implements Marshallable {
+    @NotNull
     private Map<String, MountPoint> mounts = new ConcurrentSkipListMap<>();
 
     @Override
-    public void readMarshallable(WireIn wire) throws IllegalStateException {
+    public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         StringBuilder mountDesc = new StringBuilder();
 
         while (wire.hasMore()) {
@@ -41,7 +43,7 @@ public class Fstab implements Marshallable {
     }
 
     @Override
-    public void writeMarshallable(WireOut wire) {
+    public void writeMarshallable(@NotNull WireOut wire) {
         for (Map.Entry<String, MountPoint> entry : mounts.entrySet())
             wire.writeEventName(entry::getKey).typedMarshallable(entry.getValue());
     }

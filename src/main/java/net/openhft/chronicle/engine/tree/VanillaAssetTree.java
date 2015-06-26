@@ -89,6 +89,7 @@ public class VanillaAssetTree implements AssetTree {
         return fullName.isEmpty() ? root : root.getAsset(fullName);
     }
 
+    @NotNull
     @Override
     public Asset root() {
         return root;
@@ -99,6 +100,7 @@ public class VanillaAssetTree implements AssetTree {
         root.close();
     }
 
+    @NotNull
     public AssetTree withConfig(String etcDir, String baseDir) {
         Threads.withThreadGroup(root.getView(ThreadGroup.class), () -> {
             new ConfigurationFS("/etc", etcDir, baseDir).install(baseDir, this);
@@ -107,6 +109,7 @@ public class VanillaAssetTree implements AssetTree {
         return this;
     }
 
+    @NotNull
     @Override
     public String toString() {
         return "tree-" + Optional.ofNullable(root.getView(HostIdentifier.class)).map(hi -> hi.hostId()).orElseGet(() -> (byte) 0);

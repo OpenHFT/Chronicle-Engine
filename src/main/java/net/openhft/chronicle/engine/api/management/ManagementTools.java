@@ -26,6 +26,8 @@ import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.threads.Threads;
 import net.openhft.lang.thread.NamedThreadFactory;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +55,7 @@ public enum ManagementTools {
     private static JMXConnectorServer jmxServer;
 
     //MBeanServer for register MBeans
+    @Nullable
     private static MBeanServer mbs = null;
 
     //number of AssetTree enabled for management.
@@ -94,7 +97,7 @@ public enum ManagementTools {
      *
      * @param assetTree the object of AssetTree type for enable management
      */
-    public static void enableManagement(AssetTree assetTree) {
+    public static void enableManagement(@NotNull AssetTree assetTree) {
         try {
             startJMXRemoteService();
             count++;
@@ -117,7 +120,7 @@ public enum ManagementTools {
         }
     }
 
-    private static void registerViewofTree(AssetTree tree) {
+    private static void registerViewofTree(@NotNull AssetTree tree) {
         Threads.withThreadGroup(tree.root().getView(ThreadGroup.class), () -> {
             ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor(
                     new NamedThreadFactory("JMX-tree-watcher", true));
@@ -129,7 +132,7 @@ public enum ManagementTools {
         });
     }
 
-    private static void handleTreeUpdate(AssetTree tree, TopologicalEvent e, ScheduledExecutorService ses) {
+    private static void handleTreeUpdate(@NotNull AssetTree tree, @NotNull TopologicalEvent e, @NotNull ScheduledExecutorService ses) {
         try {
             HostIdentifier hostIdentifier = tree.root().getView(HostIdentifier.class);
             int hostId = hostIdentifier == null ? 0 : hostIdentifier.hostId();
@@ -166,7 +169,7 @@ public enum ManagementTools {
         }
     }
 
-    private static void handleAssetUpdate(ObjectKeyValueStore view, ObjectName atName, ObjectKVSSubscription objectKVSSubscription) {
+    private static void handleAssetUpdate(@NotNull ObjectKeyValueStore view, ObjectName atName, @NotNull ObjectKVSSubscription objectKVSSubscription) {
         try {
             if (mbs.isRegistered(atName)) {
 
@@ -186,7 +189,7 @@ public enum ManagementTools {
         }
     }
 
-    private static String createObjectNameUri(int hostId, String assetName, String eventName, String treeName) {
+    private static String createObjectNameUri(int hostId, @NotNull String assetName, String eventName, @NotNull String treeName) {
         System.out.println(treeName);
         StringBuilder sb = new StringBuilder(256);
         sb.append("net.openhft.chronicle.engine:tree=");
@@ -206,7 +209,7 @@ public enum ManagementTools {
     private static void registerTreeWithMBean(AssetTreeJMX atBean, ObjectName atName) {
         try {
             mbs.registerMBean(atBean, atName);
-        } catch (InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException e) {
+        } catch (@NotNull InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException e) {
             LOGGER.error("Error reigster AssetTree with MBean", e);
         }
     }
@@ -214,7 +217,7 @@ public enum ManagementTools {
     private static void unregisterTreeWithMBean(ObjectName atName) {
         try {
             mbs.unregisterMBean(atName);
-        } catch (InstanceNotFoundException | MBeanRegistrationException e) {
+        } catch (@NotNull InstanceNotFoundException | MBeanRegistrationException e) {
             LOGGER.error("Error unreigster AssetTree with MBean", e);
         }
     }

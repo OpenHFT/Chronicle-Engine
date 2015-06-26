@@ -79,9 +79,13 @@ public class EngineWireHandler extends WireTcpHandler {
     private final CollectionWireHandler<Entry<byte[], byte[]>, Set<Entry<byte[], byte[]>>> entrySetHandler;
     @NotNull
     private final CollectionWireHandler<byte[], Collection<byte[]>> valuesHandler;
+    @NotNull
     private final SubscriptionHandlerProcessor subscriptionHandler;
+    @NotNull
     private final TopicPublisherHandler topicPublisherHandler;
+    @NotNull
     private final PublisherHandler publisherHandler;
+    @NotNull
     private final ReplicationHandler replicationHandler;
 
     @NotNull
@@ -95,13 +99,18 @@ public class EngineWireHandler extends WireTcpHandler {
     private View view;
     private boolean isSystemMessage = true;
     private RequestContext requestContext;
+    @Nullable
     private Class viewType;
+    @Nullable
     private SessionProvider sessionProvider;
+    @NotNull
     private Queue<Consumer<Wire>> publisher = new LinkedTransferQueue<>();
     private long tid;
+    @Nullable
     private HostIdentifier hostIdentifier;
 
     private Asset asset;
+    @Nullable
     private EventLoop eventLoop;
     private AtomicBoolean isClosed;
 

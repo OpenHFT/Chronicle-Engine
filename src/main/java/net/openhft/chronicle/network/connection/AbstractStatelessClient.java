@@ -115,7 +115,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
         return proxyReturnWireConsumer(eventId, f -> f.int8());
     }
 
-    protected byte proxyReturnByte(WireKey reply, @NotNull final WireKey eventId) {
+    protected byte proxyReturnByte(@NotNull WireKey reply, @NotNull final WireKey eventId) {
         return proxyReturnWireConsumerInOut(eventId, reply, null, f -> f.int8());
     }
 

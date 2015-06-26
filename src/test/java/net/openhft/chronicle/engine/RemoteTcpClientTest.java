@@ -43,6 +43,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     @NotNull
     @Rule
     public TestName name = new TestName();
+    @NotNull
     private AssetTree assetTree = new VanillaAssetTree().forTesting();
 
     @Before
@@ -139,6 +140,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
     class MyMarshallable implements Marshallable {
 
+        @Nullable
         String someData;
 
         public MyMarshallable(String someData) {

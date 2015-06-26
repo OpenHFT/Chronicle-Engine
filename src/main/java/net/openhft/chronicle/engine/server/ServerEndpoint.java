@@ -36,16 +36,19 @@ import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
  */
 public class ServerEndpoint implements Closeable {
 
+    @Nullable
     private EventLoop eg;
+    @Nullable
     private AcceptorEventHandler eah;
+    @NotNull
     private AtomicBoolean isClosed = new AtomicBoolean();
 
-    public ServerEndpoint(AssetTree assetTree) throws
+    public ServerEndpoint(@NotNull AssetTree assetTree) throws
             IOException {
         this(0, assetTree);
     }
 
-    public ServerEndpoint(int port, AssetTree assetTree) throws IOException {
+    public ServerEndpoint(int port, @NotNull AssetTree assetTree) throws IOException {
         eg = assetTree.root().acquireView(EventLoop.class, RequestContext.requestContext());
         Threads.withThreadGroup(assetTree.root().getView(ThreadGroup.class), () -> {
             start(port, assetTree);

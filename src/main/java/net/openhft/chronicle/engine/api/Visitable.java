@@ -18,6 +18,7 @@ package net.openhft.chronicle.engine.api;
 
 import net.openhft.chronicle.core.util.SerializableBiFunction;
 import net.openhft.chronicle.core.util.SerializableFunction;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by peter on 22/06/15.
@@ -27,29 +28,29 @@ public interface Visitable<E> {
 
     void set(E e);
 
-    default <R> R apply(SerializableFunction<E, R> function) {
+    default <R> R apply(@NotNull SerializableFunction<E, R> function) {
         return function.apply(get());
     }
 
-    default void asyncUpdate(SerializableFunction<E, E> updateFunction) {
+    default void asyncUpdate(@NotNull SerializableFunction<E, E> updateFunction) {
         set(updateFunction.apply(get()));
     }
 
-    default <R> R syncUpdate(SerializableFunction<E, E> updateFunction, SerializableFunction<E, R> returnFunction) {
+    default <R> R syncUpdate(@NotNull SerializableFunction<E, E> updateFunction, @NotNull SerializableFunction<E, R> returnFunction) {
         E e = updateFunction.apply(get());
         set(e);
         return returnFunction.apply(e);
     }
 
-    default <T, R> R apply(SerializableBiFunction<E, T, R> function, T argument) {
+    default <T, R> R apply(@NotNull SerializableBiFunction<E, T, R> function, T argument) {
         return function.apply(get(), argument);
     }
 
-    default <T> void asyncUpdate(SerializableBiFunction<E, T, E> updateFunction, T argument) {
+    default <T> void asyncUpdate(@NotNull SerializableBiFunction<E, T, E> updateFunction, T argument) {
         set(updateFunction.apply(get(), argument));
     }
 
-    default <T, RT, R> R syncUpdate(SerializableBiFunction<E, T, E> updateFunction, T updateArgument, SerializableBiFunction<E, RT, R> returnFunction, RT returnArgument) {
+    default <T, RT, R> R syncUpdate(@NotNull SerializableBiFunction<E, T, E> updateFunction, T updateArgument, @NotNull SerializableBiFunction<E, RT, R> returnFunction, RT returnArgument) {
         E e = updateFunction.apply(get(), updateArgument);
         set(e);
         return returnFunction.apply(e, returnArgument);

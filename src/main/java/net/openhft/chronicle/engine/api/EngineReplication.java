@@ -165,7 +165,7 @@ public interface EngineReplication extends Replication {
 
 
         @Override
-        default void readMarshallable(final WireIn wire) throws IllegalStateException {
+        default void readMarshallable(@NotNull final WireIn wire) throws IllegalStateException {
             key(wire.read(() -> "key").bytesStore());
             value(wire.read(() -> "value").bytesStore());
             timestamp(wire.read(() -> "timestamp").int64());
@@ -176,7 +176,7 @@ public interface EngineReplication extends Replication {
 
 
         @Override
-        default void writeMarshallable(final WireOut wire) {
+        default void writeMarshallable(@NotNull final WireOut wire) {
             wire.write(() -> "key").bytes(key());
             wire.write(() -> "value").bytes(value());
             wire.write(() -> "timestamp").int64(timestamp());

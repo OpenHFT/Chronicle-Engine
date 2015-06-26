@@ -76,7 +76,9 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
 
     @NotNull
     private final Thread fileFpmWatcher;
+    @NotNull
     private final RawKVSSubscription<String, Bytes, BytesStore> subscriptions;
+    @NotNull
     private final Asset asset;
     private volatile boolean closed = false;
 
@@ -85,7 +87,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         asset.registerView(StringBytesStoreKeyValueStore.class, this);
     }
 
-    FilePerKeyValueStore(RequestContext context, Asset asset, Class type, String basePath, String name) {
+    FilePerKeyValueStore(RequestContext context, @NotNull Asset asset, Class type, String basePath, String name) {
         this.asset = asset;
         assert type == String.class;
 
@@ -369,6 +371,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         fileFpmWatcher.interrupt();
     }
 
+    @NotNull
     @Override
     public Asset asset() {
         return asset;

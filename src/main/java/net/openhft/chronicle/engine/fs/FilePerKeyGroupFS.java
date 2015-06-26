@@ -25,6 +25,7 @@ import net.openhft.chronicle.engine.tree.VanillaAsset;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
+import org.jetbrains.annotations.NotNull;
 
 import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
 
@@ -47,7 +48,7 @@ public class FilePerKeyGroupFS implements Marshallable, MountPoint {
     }
 
     @Override
-    public void readMarshallable(WireIn wire) throws IllegalStateException {
+    public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         wire.read(() -> "spec").text(s -> spec = s)
                 .read(() -> "name").text(s -> name = s)
                 .read(() -> "valueType").typeLiteral(CLASS_ALIASES::forName, c -> valueType = c)
@@ -55,7 +56,7 @@ public class FilePerKeyGroupFS implements Marshallable, MountPoint {
     }
 
     @Override
-    public void writeMarshallable(WireOut wire) {
+    public void writeMarshallable(@NotNull WireOut wire) {
         wire.write(() -> "spec").text(spec)
                 .write(() -> "name").text(name)
                 .write(() -> "valueType").typeLiteral(CLASS_ALIASES.nameFor(valueType))
@@ -63,7 +64,7 @@ public class FilePerKeyGroupFS implements Marshallable, MountPoint {
     }
 
     @Override
-    public void install(String baseDir, AssetTree assetTree) {
+    public void install(String baseDir, @NotNull AssetTree assetTree) {
         RequestContext context = RequestContext.requestContext(name).basePath(baseDir + "/" + spec).recurse(this.recurse).keyType(String.class);
         Asset asset = assetTree.acquireAsset(context);
         ((VanillaAsset) asset).enableTranslatingValuesToBytesStore();

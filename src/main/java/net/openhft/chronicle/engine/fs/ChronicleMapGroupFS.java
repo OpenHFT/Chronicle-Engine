@@ -46,7 +46,7 @@ public class ChronicleMapGroupFS implements Marshallable, MountPoint, LeafViewFa
     }
 
     @Override
-    public void readMarshallable(WireIn wire) throws IllegalStateException {
+    public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         wire.read(() -> "spec").text(s -> spec = s)
                 .read(() -> "name").text(s -> name = s)
                 .read(() -> "cluster").text(s -> cluster = s)
@@ -57,7 +57,7 @@ public class ChronicleMapGroupFS implements Marshallable, MountPoint, LeafViewFa
     }
 
     @Override
-    public void writeMarshallable(WireOut wire) {
+    public void writeMarshallable(@NotNull WireOut wire) {
         wire.write(() -> "spec").text(spec)
                 .write(() -> "name").text(name)
                 .write(() -> "cluster").text(cluster)
@@ -68,7 +68,7 @@ public class ChronicleMapGroupFS implements Marshallable, MountPoint, LeafViewFa
     }
 
     @Override
-    public void install(String baseDir, AssetTree assetTree) {
+    public void install(String baseDir, @NotNull AssetTree assetTree) {
         this.baseDir = baseDir;
         RequestContext context = RequestContext.requestContext(name).basePath(baseDir + "/" + spec);
         Asset asset = assetTree.acquireAsset(context);
@@ -79,7 +79,7 @@ public class ChronicleMapGroupFS implements Marshallable, MountPoint, LeafViewFa
     // todo check this
     @NotNull
     @Override
-    public KeyValueStore create(final RequestContext context, final Asset asset) throws AssetNotFoundException {
+    public KeyValueStore create(@NotNull final RequestContext context, final Asset asset) throws AssetNotFoundException {
         return new ChronicleMapKeyValueStore(context, asset);
     }
 

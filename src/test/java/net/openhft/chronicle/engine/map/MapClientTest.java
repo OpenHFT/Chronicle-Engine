@@ -53,6 +53,7 @@ public class MapClientTest extends ThreadMonitoringTest {
 
     public static int i;
     // server has it's own asset tree, to the client.
+    @NotNull
     private AssetTree assetTree = new VanillaAssetTree().forTesting();
     @Nullable
     private Class<? extends CloseableSupplier> supplier = null;
@@ -280,6 +281,7 @@ public class MapClientTest extends ThreadMonitoringTest {
         final ServerEndpoint serverEndpoint;
         @NotNull
         private final ConcurrentMap<K, V> map;
+        @NotNull
         private final AssetTree assetTree;
 
         public RemoteMapSupplier(@NotNull final Class<K> kClass,
@@ -334,7 +336,7 @@ public class MapClientTest extends ThreadMonitoringTest {
         @NotNull
         private final ConcurrentMap<K, V> map;
 
-        public LocalMapSupplier(Class<K> kClass, Class<V> vClass, AssetTree assetTree) throws IOException {
+        public LocalMapSupplier(Class<K> kClass, Class<V> vClass, @NotNull AssetTree assetTree) throws IOException {
             map = assetTree.acquireMap("test" + i++ + "?putReturnsNull=false&removeReturnsNull=false", kClass, vClass);
         }
 

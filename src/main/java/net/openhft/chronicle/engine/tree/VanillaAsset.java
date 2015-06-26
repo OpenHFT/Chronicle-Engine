@@ -189,8 +189,9 @@ public class VanillaAsset implements Asset, Closeable {
         leafViewFactoryMap.put(iClass, factory);
     }
 
+    @Nullable
     @Override
-    public <I, U> I createWrappingView(Class viewType, RequestContext rc, Asset asset, U underling) throws AssetNotFoundException {
+    public <I, U> I createWrappingView(Class viewType, RequestContext rc, @NotNull Asset asset, @Nullable U underling) throws AssetNotFoundException {
         SortedMap<String, WrappingViewRecord> smap = wrappingViewFactoryMap.get(viewType);
         if (smap != null)
             for (WrappingViewRecord wvRecord : smap.values()) {
@@ -205,8 +206,10 @@ public class VanillaAsset implements Asset, Closeable {
         return parent.createWrappingView(viewType, rc, asset, underling);
     }
 
+    @Nullable
     @Override
-    public <I> I createLeafView(Class viewType, RequestContext rc, Asset asset) throws AssetNotFoundException {
+    public <I> I createLeafView(Class viewType, RequestContext rc, Asset asset) throws
+            AssetNotFoundException {
         LeafViewFactory lvFactory = leafViewFactoryMap.get(viewType);
         if (lvFactory != null)
             return (I) lvFactory.create(rc.clone().viewType(viewType), asset);
@@ -226,7 +229,7 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Override
-    public void forEachChild(ThrowingAcceptor<Asset, InvalidSubscriberException> consumer) throws InvalidSubscriberException {
+    public void forEachChild(@NotNull ThrowingAcceptor<Asset, InvalidSubscriberException> consumer) throws InvalidSubscriberException {
         for (Asset child : children.values())
             consumer.accept(child);
     }
@@ -319,7 +322,7 @@ public class VanillaAsset implements Asset, Closeable {
 
     @NotNull
     @Override
-    public Asset acquireAsset(RequestContext context, @NotNull String fullName) throws AssetNotFoundException {
+    public Asset acquireAsset(@NotNull RequestContext context, @NotNull String fullName) throws AssetNotFoundException {
         if (keyedAsset != Boolean.TRUE) {
             int pos = fullName.indexOf("/");
             if (pos >= 0) {
@@ -337,7 +340,7 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Nullable
-    private Asset getAssetOrANFE(RequestContext context, @NotNull String name) throws AssetNotFoundException {
+    private Asset getAssetOrANFE(@NotNull RequestContext context, @NotNull String name) throws AssetNotFoundException {
         Asset asset = children.get(name);
         if (asset == null) {
             asset = createAsset(context, name);
@@ -348,7 +351,7 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Nullable
-    protected Asset createAsset(RequestContext context, @NotNull String name) {
+    protected Asset createAsset(@NotNull RequestContext context, @NotNull String name) {
         assert name.length() > 0;
         return children.computeIfAbsent(name, keyedAsset != Boolean.TRUE
                 ? n -> new VanillaAsset(this, name)
@@ -386,6 +389,7 @@ public class VanillaAsset implements Asset, Closeable {
             this.underlyingType = underlyingType;
         }
 
+        @NotNull
         @Override
         public String toString() {
             return "wraps " + underlyingType;

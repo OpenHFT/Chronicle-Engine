@@ -20,6 +20,7 @@ import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -35,7 +36,7 @@ public class VanillaTopologySubscription implements TopologySubscription {
         this.asset = asset;
     }
 
-    void bootstrapTree(Asset asset, Subscriber<TopologicalEvent> subscriber) throws InvalidSubscriberException {
+    void bootstrapTree(@NotNull Asset asset, @NotNull Subscriber<TopologicalEvent> subscriber) throws InvalidSubscriberException {
         asset.forEachChild(c -> {
             subscriber.onMessage(ExistingAssetEvent.of(asset.fullName(), c.name()));
             bootstrapTree(c, subscriber);
@@ -43,7 +44,7 @@ public class VanillaTopologySubscription implements TopologySubscription {
     }
 
     @Override
-    public void registerSubscriber(RequestContext rc, Subscriber<TopologicalEvent> subscriber) {
+    public void registerSubscriber(@NotNull RequestContext rc, @NotNull Subscriber<TopologicalEvent> subscriber) {
         try {
             if (rc.bootstrap() != Boolean.FALSE) {
                 // root node.

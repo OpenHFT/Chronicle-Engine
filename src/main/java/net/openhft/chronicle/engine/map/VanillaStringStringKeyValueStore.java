@@ -44,6 +44,7 @@ import static net.openhft.chronicle.engine.map.Buffers.BUFFERS;
  * Created by peter on 25/05/15.
  */
 public class VanillaStringStringKeyValueStore implements StringStringKeyValueStore {
+    @NotNull
     private final ObjectKVSSubscription<String, StringBuilder, String> subscriptions;
 
     private SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore;
@@ -54,7 +55,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         this(asset.acquireView(ObjectKVSSubscription.class, context), asset, kvStore);
     }
 
-    VanillaStringStringKeyValueStore(ObjectKVSSubscription<String, StringBuilder, String> subscriptions,
+    VanillaStringStringKeyValueStore(@NotNull ObjectKVSSubscription<String, StringBuilder, String> subscriptions,
                                      @NotNull Asset asset,
                                      @NotNull SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore) throws AssetNotFoundException {
         this.asset = asset;
@@ -68,11 +69,13 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
                 subscriptions.notifyEvent(mpe.translate(s -> s, BytesStoreToString.BYTES_STORE_TO_STRING)));
     }
 
+    @NotNull
     @Override
     public Class<String> keyType() {
         return String.class;
     }
 
+    @NotNull
     @Override
     public Class<String> valueType() {
         return String.class;
@@ -85,7 +88,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     }
 
     @Override
-    public boolean put(String key, String value) {
+    public boolean put(String key, @NotNull String value) {
         Buffers b = BUFFERS.get();
         Bytes<ByteBuffer> bytes = b.valueBuffer;
         bytes.clear();
@@ -95,7 +98,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
 
     @Nullable
     @Override
-    public String getAndPut(String key, String value) {
+    public String getAndPut(String key, @NotNull String value) {
         Buffers b = BUFFERS.get();
         Bytes<ByteBuffer> bytes = b.valueBuffer;
         bytes.clear();
@@ -187,8 +190,9 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     enum BytesStoreToString implements Function<BytesStore, String> {
         BYTES_STORE_TO_STRING;
 
+        @Nullable
         @Override
-        public String apply(BytesStore bs) {
+        public String apply(@Nullable BytesStore bs) {
             return bs == null ? null : BytesUtil.to8bitString(bs);
         }
     }
@@ -198,7 +202,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
 
         @NotNull
         @Override
-        public String readFrom(BytesStore bs, String usingValue) {
+        public String readFrom(@Nullable BytesStore bs, String usingValue) {
             return bs == null ? null : BytesUtil.to8bitString(bs);
         }
     }

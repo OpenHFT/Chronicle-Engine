@@ -208,6 +208,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                 this.message = message;
             }
 
+            @NotNull
             @Override
             public String toString() {
                 return "TopicDetails{" +

@@ -58,14 +58,19 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
         Closeable, Supplier<EngineReplication> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChronicleMapKeyValueStore.class);
     private final ChronicleMap<K, V> chronicleMap;
+    @NotNull
     private final ObjectKVSSubscription<K, MV, V> subscriptions;
+    @Nullable
     private final EngineReplication engineReplicator;
+    @NotNull
     private final Asset asset;
+    @NotNull
     private final String assetFullName;
+    @Nullable
     private final EventLoop eventLoop;
     private final AtomicBoolean isClosed = new AtomicBoolean();
 
-    public ChronicleMapKeyValueStore(@NotNull RequestContext context, Asset asset) {
+    public ChronicleMapKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset) {
         String basePath = context.basePath();
         double averageValueSize = context.getAverageValueSize();
         long maxEntries = context.getEntries();
@@ -84,8 +89,8 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
         try {
             engineReplicator1 = asset.acquireView(EngineReplication.class, RequestContext.requestContext());
 
-            final EngineReplicationLangBytesConsumer langBytesConsumer = asset.acquireView
-                    (EngineReplicationLangBytesConsumer.class, null);
+            final EngineReplicationLangBytesConsumer langBytesConsumer = asset.findView
+                    (EngineReplicationLangBytesConsumer.class);
 
             hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
 
@@ -154,6 +159,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
         return subscriptions;
     }
 
+    @Nullable
     @Override
     public V getAndPut(K key, V value) {
         if (!isClosed.get())
@@ -163,6 +169,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
 
     }
 
+    @Nullable
     @Override
     public V getAndRemove(K key) {
 
@@ -208,6 +215,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
         return chronicleMap.entrySet().iterator();
     }
 
+    @NotNull
     @Override
     public Iterator<K> keySetIterator() {
         return chronicleMap.keySet().iterator();
@@ -223,6 +231,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
         throw new UnsupportedOperationException("todo");
     }
 
+    @NotNull
     @Override
     public Asset asset() {
         return asset;
@@ -244,13 +253,14 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
     }
 
     @Override
-    public void accept(final ReplicationEntry replicationEntry) {
+    public void accept(@NotNull final ReplicationEntry replicationEntry) {
         if (!isClosed.get())
             engineReplicator.applyReplication(replicationEntry);
         else
             LOGGER.warn("message skipped as closed replicationEntry=" + replicationEntry);
     }
 
+    @Nullable
     @Override
     public EngineReplication get() {
         return engineReplicator;

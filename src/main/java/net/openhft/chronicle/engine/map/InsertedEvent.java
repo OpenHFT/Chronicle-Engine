@@ -34,7 +34,9 @@ import java.util.function.Function;
  */
 public class InsertedEvent<K, V> implements MapEvent<K, V> {
     private String assetName;
+    @Nullable
     private K key;
+    @Nullable
     private V value;
 
     private InsertedEvent(String assetName, K key, V value) {
@@ -54,11 +56,13 @@ public class InsertedEvent<K, V> implements MapEvent<K, V> {
         return new InsertedEvent<>(assetName, keyFunction.apply(key), valueFunction.apply(value));
     }
 
+    @NotNull
     @Override
-    public <K2, V2> MapEvent<K2, V2> translate(BiFunction<K, K2, K2> keyFunction, BiFunction<V, V2, V2> valueFunction) {
+    public <K2, V2> MapEvent<K2, V2> translate(@NotNull BiFunction<K, K2, K2> keyFunction, @NotNull BiFunction<V, V2, V2> valueFunction) {
         return new InsertedEvent<>(assetName, keyFunction.apply(key, null), valueFunction.apply(value, null));
     }
 
+    @Nullable
     public K key() {
         return key;
     }
@@ -69,6 +73,7 @@ public class InsertedEvent<K, V> implements MapEvent<K, V> {
         return null;
     }
 
+    @Nullable
     public V value() {
         return value;
     }
@@ -94,6 +99,7 @@ public class InsertedEvent<K, V> implements MapEvent<K, V> {
                 .isPresent();
     }
 
+    @NotNull
     @Override
     public String toString() {
         return "InsertedEvent{" +
@@ -109,14 +115,14 @@ public class InsertedEvent<K, V> implements MapEvent<K, V> {
     }
 
     @Override
-    public void readMarshallable(WireIn wire) throws IllegalStateException {
+    public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         wire.read(MapEventFields.assetName).text(s -> assetName = s);
         key = (K) wire.read(MapEventFields.key).object(Object.class);
         value = (V) wire.read(MapEventFields.value).object(Object.class);
     }
 
     @Override
-    public void writeMarshallable(WireOut wire) {
+    public void writeMarshallable(@NotNull WireOut wire) {
         wire.write(MapEventFields.assetName).text(assetName);
         wire.write(MapEventFields.key).object(key);
         wire.write(MapEventFields.value).object(value);

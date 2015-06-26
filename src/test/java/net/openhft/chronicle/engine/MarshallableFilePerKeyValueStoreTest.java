@@ -101,7 +101,7 @@ public class MarshallableFilePerKeyValueStoreTest {
         assertEquals(3, events.size());
     }
 
-    private void waitFor(List<MapEvent<String, TestMarshallable>> events, int count) throws InterruptedException {
+    private void waitFor(@NotNull List<MapEvent<String, TestMarshallable>> events, int count) throws InterruptedException {
         for (int i = 1; i <= 10; i++) {
             if (events.size() >= count)
                 break;

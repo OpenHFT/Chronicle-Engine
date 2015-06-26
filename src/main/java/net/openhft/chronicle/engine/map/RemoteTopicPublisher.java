@@ -38,7 +38,7 @@ public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId>
     private Asset asset;
 
 
-    public RemoteTopicPublisher(@NotNull RequestContext context, Asset asset, MapView<T, M, M> underlying)
+    public RemoteTopicPublisher(@NotNull RequestContext context, @NotNull Asset asset, MapView<T, M, M> underlying)
             throws AssetNotFoundException {
         super(asset.findView(TcpChannelHub.class), (long) 0, toUri(context));
         this.context = context;
@@ -49,7 +49,7 @@ public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId>
 
     }
 
-    private static String toUri(final RequestContext context) {
+    private static String toUri(@NotNull final RequestContext context) {
         final StringBuilder uri = new StringBuilder("/" +context.fullName()
                 + "?view=" + "topicPublisher");
 
@@ -84,7 +84,7 @@ public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId>
     }
 
     @Override
-    public void registerTopicSubscriber(final TopicSubscriber<T, M> topicSubscriber) throws
+    public void registerTopicSubscriber(@NotNull final TopicSubscriber<T, M> topicSubscriber) throws
             AssetNotFoundException {
 
         if (hub.outBytesLock().isHeldByCurrentThread())
@@ -93,12 +93,12 @@ public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId>
         hub.subscribe(new AbstractAsyncSubscription(hub, csp) {
 
             @Override
-            public void onSubsribe(final WireOut wireOut) {
+            public void onSubsribe(@NotNull final WireOut wireOut) {
                 wireOut.writeEventName(registerTopicSubscriber).text("");
             }
 
             @Override
-            public void onConsumer(final WireIn w) {
+            public void onConsumer(@NotNull final WireIn w) {
                 w.readDocument(null, d -> {
 
                     final StringBuilder eventname = Wires.acquireStringBuilder();
@@ -122,7 +122,7 @@ public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId>
 
     }
 
-    private void onEvent(T topic, M message, TopicSubscriber<T, M> topicSubscriber) {
+    private void onEvent(T topic, @Nullable M message, @NotNull TopicSubscriber<T, M> topicSubscriber) {
         try {
             if (message == null) {
                 // todo

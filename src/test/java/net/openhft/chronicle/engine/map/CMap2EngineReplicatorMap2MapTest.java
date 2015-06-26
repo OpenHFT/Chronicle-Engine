@@ -20,6 +20,7 @@ import net.openhft.chronicle.core.annotation.NotNull;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -35,20 +36,23 @@ import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplicat
 
 public class CMap2EngineReplicatorMap2MapTest {
 
+    @Nullable
     final CMap2EngineReplicator replicator1 = new CMap2EngineReplicator(null);
     final ChronicleMap<String, String> map1 = newMap(1, replicator1, String.class, String.class);
 
+    @Nullable
     final CMap2EngineReplicator replicator2 = new CMap2EngineReplicator(null);
     final ChronicleMap<String, String> map2 = newMap(2, replicator2, String.class, String.class);
 
+    @Nullable
     final CMap2EngineReplicator replicator3 = new CMap2EngineReplicator(null);
     final ChronicleMap<String, String> map3 = newMap(3, replicator3, String.class, String.class);
 
 
     public <K, V> ChronicleMap<K, V> newMap(int localIdentifier,
                                             final CMap2EngineReplicator replicator,
-                                            @NotNull final Class<K> keyClass,
-                                            @NotNull final Class<V> valueClass) {
+                                            @org.jetbrains.annotations.NotNull @NotNull final Class<K> keyClass,
+                                            @org.jetbrains.annotations.NotNull @NotNull final Class<V> valueClass) {
         return ChronicleMapBuilder.of(keyClass, valueClass).
                 replication(builder().engineReplication(replicator).createWithId((byte) localIdentifier))
                 .create();

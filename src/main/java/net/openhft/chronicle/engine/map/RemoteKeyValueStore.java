@@ -58,6 +58,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     @NotNull
     private final Asset asset;
     // todo
+    @NotNull
     private final ObjectKVSSubscription<K, V, V> subscriptions;
 
     public RemoteKeyValueStore(@NotNull final RequestContext context,
@@ -74,11 +75,11 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     }
 
 
-    public RemoteKeyValueStore(RequestContext requestContext, Asset asset) {
+    public RemoteKeyValueStore(@NotNull RequestContext requestContext, @NotNull Asset asset) {
         this(requestContext, asset, asset.findView(TcpChannelHub.class));
     }
 
-    private static String toUri(final RequestContext context) {
+    private static String toUri(@NotNull final RequestContext context) {
         StringBuilder uri = new StringBuilder("/" + context.fullName()
                 + "?view=" + "map");
 
@@ -147,7 +148,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     }
 
     @Override
-    public void keysFor(final int segment, final SubscriptionConsumer<K> kConsumer) throws InvalidSubscriberException {
+    public void keysFor(final int segment, @NotNull final SubscriptionConsumer<K> kConsumer) throws InvalidSubscriberException {
         keySet().forEach(k -> {
             try {
                 kConsumer.accept(k);
@@ -158,7 +159,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     }
 
     @Override
-    public void entriesFor(final int segment, final SubscriptionConsumer<MapEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
+    public void entriesFor(final int segment, @NotNull final SubscriptionConsumer<MapEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
         String assetName = asset.fullName();
         entrySet().forEach(entry -> {
             try {
@@ -288,6 +289,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
         proxyReturnVoid(clear);
     }
 
+    @Nullable
     public Collection<V> values() {
         final StringBuilder csp = Wires.acquireStringBuilder();
         long cid = proxyReturnWireConsumer(values, read -> {

@@ -20,6 +20,7 @@ import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.AbstractCollection;
 import java.util.Collection;
@@ -41,6 +42,7 @@ public class VanillaValuesCollection<K, V> extends AbstractCollection<V> impleme
         return mapView.containsValue(o);
     }
 
+    @NotNull
     @Override
     public Iterator<V> iterator() {
         return mapView.underlying().valuesIterator();

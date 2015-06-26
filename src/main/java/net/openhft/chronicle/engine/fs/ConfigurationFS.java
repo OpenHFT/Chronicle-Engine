@@ -28,6 +28,7 @@ import net.openhft.chronicle.engine.tree.VanillaAsset;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by peter on 12/06/15.
@@ -46,7 +47,7 @@ public class ConfigurationFS implements MountPoint {
         this.baseDir = baseDir;
     }
 
-    public void install(String baseDir, AssetTree assetTree) {
+    public void install(String baseDir, @NotNull AssetTree assetTree) {
         RequestContext context = RequestContext.requestContext(assetName)
                 .keyType(String.class).valueType(String.class);
         Asset asset = assetTree.acquireAsset(context);
@@ -60,13 +61,13 @@ public class ConfigurationFS implements MountPoint {
         subscribeTo(assetTree);
     }
 
-    public void subscribeTo(AssetTree assetTree) {
+    public void subscribeTo(@NotNull AssetTree assetTree) {
         this.assetTree = assetTree;
         Subscriber<MapEvent> eventSub = this::onFile;
         assetTree.registerSubscriber(assetName, MapEvent.class, eventSub);
     }
 
-    public void onFile(MapEvent<String, String> mapEvent) {
+    public void onFile(@NotNull MapEvent<String, String> mapEvent) {
         switch (mapEvent.key()) {
             case FSTAB:
                 processFstab(mapEvent.value());
@@ -77,13 +78,13 @@ public class ConfigurationFS implements MountPoint {
         }
     }
 
-    private void processClusters(String value) {
+    private void processClusters(@NotNull String value) {
         Clusters clusters = new Clusters();
         clusters.readMarshallable(TextWire.from(value));
         clusters.install(assetTree);
     }
 
-    private void processFstab(String value) {
+    private void processFstab(@NotNull String value) {
         Fstab fstab = new Fstab();
         fstab.readMarshallable(TextWire.from(value));
         fstab.install(baseDir, assetTree);
