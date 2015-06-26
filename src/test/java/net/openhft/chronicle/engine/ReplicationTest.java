@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.api.EngineReplication;
@@ -27,8 +28,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
 import static org.junit.Assert.assertNotNull;
@@ -42,10 +41,10 @@ public class ReplicationTest {
     public static final String NAME = "/ChMaps/test";
     public static ServerEndpoint serverEndpoint1;
     public static ServerEndpoint serverEndpoint2;
+    public static ServerEndpoint serverEndpoint3;
     private static AssetTree tree3;
     private static AssetTree tree1;
     private static AssetTree tree2;
-    public static ServerEndpoint serverEndpoint3;
 
     @BeforeClass
     public static void before() throws IOException {
@@ -67,14 +66,14 @@ public class ReplicationTest {
     @AfterClass
     public static void after() {
         if (serverEndpoint1 != null)
-        serverEndpoint1.close();
+            serverEndpoint1.close();
         if (serverEndpoint2 != null)
-        serverEndpoint2.close();
+            serverEndpoint2.close();
         serverEndpoint3.close();
         if (tree1 != null)
-        tree1.close();
+            tree1.close();
         if (tree2 != null)
-        tree2.close();
+            tree2.close();
         tree3.close();
     }
 
@@ -125,11 +124,10 @@ public class ReplicationTest {
         map2.put("hello2", "world2");
         map3.put("hello3", "world3");
 
-        long startTime = System.currentTimeMillis();
-        while (map1.size() != 3 || map1.size() != 3 || map1.size() != 3) {
-            Thread.sleep(1);
-            if (System.currentTimeMillis() - startTime > TimeUnit.SECONDS.toMillis(10))
-                throw new TimeoutException("failed to reconsize");
+        for (int i = 1; i <= 30; i++) {
+            if (map1.size() == 3 && map2.size() == 3 && map3.size() == 3)
+                break;
+            Jvm.pause(i * i);
         }
 
 
