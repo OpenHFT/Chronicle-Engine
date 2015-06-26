@@ -126,12 +126,11 @@ public class ReplicationTest {
         map3.put("hello3", "world3");
 
         long startTime = System.currentTimeMillis();
-        while (map1.size() != 3 || map1.size() != 3 || map1.size() != 3) {
+        while (map1.size() != 3 && map1.size() != 3 && map1.size() != 3) {
             Thread.sleep(1);
             if (System.currentTimeMillis() - startTime > TimeUnit.SECONDS.toMillis(10))
                 throw new TimeoutException("failed to reconsize");
         }
-
 
         for (Map m : new Map[]{map1, map2, map3}) {
             Assert.assertEquals("world1", m.get("hello1"));
