@@ -22,6 +22,7 @@ import org.junit.After;
 import org.junit.Before;
 
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -49,7 +50,7 @@ public class ThreadMonitoringTest {
             return;
         }
         System.out.println("### threads still running after the test ###");
-        for (Map.Entry<Thread, StackTraceElement[]> entry : threadMap.entrySet()) {
+        for (Entry<Thread, StackTraceElement[]> entry : threadMap.entrySet()) {
             StringBuilder sb = new StringBuilder(entry.getKey().toString());
             Jvm.trimStackTrace(sb, entry.getValue());
             System.out.println(sb);

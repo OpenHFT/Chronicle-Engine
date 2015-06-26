@@ -93,7 +93,7 @@ public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId>
         hub.subscribe(new AbstractAsyncSubscription(hub, csp) {
 
             @Override
-            public void onSubsribe(@NotNull final WireOut wireOut) {
+            public void onSubscribe(@NotNull final WireOut wireOut) {
                 wireOut.writeEventName(registerTopicSubscriber).text("");
             }
 

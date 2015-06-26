@@ -26,6 +26,7 @@ import org.junit.rules.TestName;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.Map.Entry;
 
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
@@ -75,7 +76,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     static ClosableMapSupplier<CharSequence, CharSequence> newStrStrMap() throws
             IOException {
 
-        final MapClientTest.LocalMapSupplier supplier = new MapClientTest.LocalMapSupplier<>(CharSequence.class, CharSequence.class, new VanillaAssetTree().forTesting());
+        final LocalMapSupplier supplier = new LocalMapSupplier<>(CharSequence.class, CharSequence.class, new VanillaAssetTree().forTesting());
 
         return new ClosableMapSupplier() {
 
@@ -284,8 +285,8 @@ public class LocalChronicleMapTest extends JSR166TestCase {
             Object[] ar = s.toArray();
             assertEquals(5, ar.length);
             for (int i = 0; i < 5; ++i) {
-                assertTrue(map.containsKey(((Map.Entry) (ar[i])).getKey()));
-                assertTrue(map.containsValue(((Map.Entry) (ar[i])).getValue()));
+                assertTrue(map.containsKey(((Entry) (ar[i])).getKey()));
+                assertTrue(map.containsValue(((Entry) (ar[i])).getValue()));
             }
         }
     }
@@ -330,7 +331,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
             assertEquals(5, s.size());
             Iterator it = s.iterator();
             while (it.hasNext()) {
-                Map.Entry e = (Map.Entry) it.next();
+                Entry e = (Entry) it.next();
                 assertTrue(
                         (e.getKey().equals(one) && e.getValue().equals("A")) ||
                                 (e.getKey().equals(two) && e.getValue().equals("B")) ||

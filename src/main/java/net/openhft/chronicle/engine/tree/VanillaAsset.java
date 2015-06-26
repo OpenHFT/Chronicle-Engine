@@ -287,7 +287,7 @@ public class VanillaAsset implements Asset, Closeable {
 
     @Override
     public <I> void registerView(Class<I> viewType, I view) {
-        viewMap.put(viewType, (View) view);
+        viewMap.put(viewType, view);
     }
 
     @NotNull

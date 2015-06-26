@@ -24,6 +24,7 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 /**
@@ -53,9 +54,9 @@ public class Clusters implements Marshallable, View {
 
     @Override
     public void writeMarshallable(@NotNull WireOut wire) {
-        for (Map.Entry<String, Map<String, HostDetails>> entry : clusterMap.entrySet()) {
+        for (Entry<String, Map<String, HostDetails>> entry : clusterMap.entrySet()) {
             wire.writeEventName(entry::getKey).marshallable(host -> {
-                for (Map.Entry<String, HostDetails> entry2 : entry.getValue().entrySet()) {
+                for (Entry<String, HostDetails> entry2 : entry.getValue().entrySet()) {
                     wire.writeEventName(entry2::getKey).marshallable(entry2.getValue());
                 }
             });

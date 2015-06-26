@@ -23,6 +23,7 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 /**
@@ -44,7 +45,7 @@ public class Fstab implements Marshallable {
 
     @Override
     public void writeMarshallable(@NotNull WireOut wire) {
-        for (Map.Entry<String, MountPoint> entry : mounts.entrySet())
+        for (Entry<String, MountPoint> entry : mounts.entrySet())
             wire.writeEventName(entry::getKey).typedMarshallable(entry.getValue());
     }
 

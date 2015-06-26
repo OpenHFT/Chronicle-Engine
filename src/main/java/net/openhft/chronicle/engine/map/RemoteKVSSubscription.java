@@ -76,7 +76,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
 
         hub.subscribe(new AbstractAsyncSubscription(hub, csp) {
             @Override
-            public void onSubsribe(@NotNull final WireOut wireOut) {
+            public void onSubscribe(@NotNull final WireOut wireOut) {
                 wireOut.writeEventName(registerTopicSubscriber).marshallable(m -> {
                     m.write(() -> "keyType").typeLiteral(kClass);
                     m.write(() -> "valueType").typeLiteral(vClass);
@@ -170,7 +170,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
             }
 
             @Override
-            public void onSubsribe(@NotNull final WireOut wireOut) {
+            public void onSubscribe(@NotNull final WireOut wireOut) {
                 wireOut.writeEventName(subscribe).
                         typeLiteral(CLASS_ALIASES.nameFor(rc.elementType()));
             }

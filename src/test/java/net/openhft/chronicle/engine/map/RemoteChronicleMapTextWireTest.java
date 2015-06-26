@@ -28,6 +28,7 @@ import org.junit.rules.TestName;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.Map.Entry;
 
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
@@ -281,8 +282,8 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
             Object[] ar = s.toArray();
             assertEquals(5, ar.length);
             for (int i = 0; i < 5; ++i) {
-                assertTrue(map.containsKey(((Map.Entry) (ar[i])).getKey()));
-                assertTrue(map.containsValue(((Map.Entry) (ar[i])).getValue()));
+                assertTrue(map.containsKey(((Entry) (ar[i])).getKey()));
+                assertTrue(map.containsValue(((Entry) (ar[i])).getValue()));
             }
         }
     }
@@ -319,13 +320,13 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
             final Map<Integer, String> map = supplier.get();
             writeMessage = "example of getting and entry set itterator";
             yamlLoggger(() -> {
-                Set<Map.Entry<Integer, String>> entrySet = map.entrySet();
+                Set<Entry<Integer, String>> entrySet = map.entrySet();
                 entrySet.iterator();
             });
 
-            Set<Map.Entry<Integer, String>> s = map.entrySet();
+            Set<Entry<Integer, String>> s = map.entrySet();
             assertEquals(5, s.size());
-            for (Map.Entry e : s) {
+            for (Entry e : s) {
                 assertTrue(
                         (e.getKey().equals(one) && e.getValue().equals("A")) ||
                                 (e.getKey().equals(two) && e.getValue().equals("B")) ||

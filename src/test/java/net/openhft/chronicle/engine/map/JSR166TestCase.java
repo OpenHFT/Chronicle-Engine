@@ -26,8 +26,10 @@ import org.junit.Before;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.FilePermission;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.lang.Thread.State;
 import java.security.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -184,7 +186,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
                         // Permissions needed by the junit test harness
                         new RuntimePermission("accessDeclaredMembers"),
                         new PropertyPermission("*", "read"),
-                        new java.io.FilePermission("<<ALL FILES>>", "read"));
+                        new FilePermission("<<ALL FILES>>", "read"));
     }
 
     @NotNull
@@ -585,12 +587,12 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     protected void waitForThreadToEnterWaitState(@NotNull Thread thread, long timeoutMillis) {
         long startTime = System.nanoTime();
         for (; ; ) {
-            Thread.State s = thread.getState();
-            if (s == Thread.State.BLOCKED ||
-                    s == Thread.State.WAITING ||
-                    s == Thread.State.TIMED_WAITING)
+            State s = thread.getState();
+            if (s == State.BLOCKED ||
+                    s == State.WAITING ||
+                    s == State.TIMED_WAITING)
                 return;
-            else if (s == Thread.State.TERMINATED)
+            else if (s == State.TERMINATED)
                 Assert.fail("Unexpected thread termination");
             else if (millisElapsedSince(startTime) > timeoutMillis) {
                 threadAssertTrue(thread.isAlive());
@@ -639,7 +641,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
         } catch (InterruptedException ie) {
             threadUnexpectedException(ie);
         } finally {
-            if (t.getState() != Thread.State.TERMINATED) {
+            if (t.getState() != State.TERMINATED) {
                 t.interrupt();
                 Assert.fail("Test timed out");
             }

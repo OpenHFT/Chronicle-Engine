@@ -30,10 +30,12 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -62,7 +64,7 @@ public class MapClientTest extends ThreadMonitoringTest {
         this.supplier = supplier;
     }
 
-    @Parameterized.Parameters
+    @Parameters
     public static Collection<Object[]> data() throws IOException {
         return Arrays.asList(new Class[][]{
                 {LocalMapSupplier.class},
@@ -127,7 +129,7 @@ public class MapClientTest extends ThreadMonitoringTest {
         supplyMap(Integer.class, String.class, mapProxy -> {
 
             yamlLoggger(() -> {
-                final Set<Map.Entry<Integer, String>> entries = mapProxy.entrySet();
+                final Set<Entry<Integer, String>> entries = mapProxy.entrySet();
 
                 assertEquals(0, entries.size());
                 assertEquals(true, entries.isEmpty());
@@ -137,9 +139,9 @@ public class MapClientTest extends ThreadMonitoringTest {
                 data.put(2, "world");
                 mapProxy.putAll(data);
 
-                final Set<Map.Entry<Integer, String>> e = mapProxy.entrySet();
-                final Iterator<Map.Entry<Integer, String>> iterator = e.iterator();
-                Map.Entry<Integer, String> entry = iterator.next();
+                final Set<Entry<Integer, String>> e = mapProxy.entrySet();
+                final Iterator<Entry<Integer, String>> iterator = e.iterator();
+                Entry<Integer, String> entry = iterator.next();
 
                 if (entry.getKey() == 1) {
                     assertEquals("hello", entry.getValue());

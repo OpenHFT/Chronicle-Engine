@@ -95,7 +95,7 @@ public class PublisherHandler<E> extends AbstractHandler {
 
 
     public enum Params implements WireKey {
-        message;
+        message
     }
 
     public enum EventId implements ParameterizeWireKey {

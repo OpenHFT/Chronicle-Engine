@@ -111,10 +111,7 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
     private void publish(@NotNull final ModificationIterator mi, @NotNull final Bootstrap remote) throws InterruptedException {
 
         final TcpChannelHub hub = this.hub;
-
-        mi.setModificationNotifier(() -> {
-            eventLoop.unpause();
-        });
+        mi.setModificationNotifier(() -> eventLoop.unpause());
 
         eventLoop.addHandler(new EventHandler() {
             @Override
@@ -147,14 +144,14 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
     /**
      * subscribes to updates
      * @param replication    the event will be applied to the EngineReplication
-     * @param localIdentifer our local identifier
+     * @param localIdentifier our local identifier
      */
-    private void subscribe(@NotNull final EngineReplication replication, final int localIdentifer) {
+    private void subscribe(@NotNull final EngineReplication replication, final int localIdentifier) {
 
         hub.subscribe(new AbstractAsyncSubscription(hub,csp) {
             @Override
-            public void onSubsribe(@NotNull final WireOut wireOut) {
-                wireOut.writeEventName(replicationSubscribe).int8(localIdentifer);
+            public void onSubscribe(@NotNull final WireOut wireOut) {
+                wireOut.writeEventName(replicationSubscribe).int8(localIdentifier);
             }
 
             @Override

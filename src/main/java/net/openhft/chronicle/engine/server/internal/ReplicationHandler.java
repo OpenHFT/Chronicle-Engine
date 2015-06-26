@@ -169,7 +169,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
                 return;
             }
 
-            outWire.writeDocument(true, wire -> outWire.writeEventName(net.openhft.chronicle.network.connection.CoreFields.tid).int64(tid));
+            outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
 
             writeData(inWire.bytes(), out -> {
 

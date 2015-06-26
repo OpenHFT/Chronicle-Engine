@@ -37,6 +37,7 @@ import javax.management.remote.JMXConnectorServerFactory;
 import javax.management.remote.JMXServiceURL;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.rmi.registry.LocateRegistry;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -70,7 +71,7 @@ public enum ManagementTools {
             mbs = ManagementFactory.getPlatformMBeanServer();
 
             // Create the RMI registry on port 9000
-            java.rmi.registry.LocateRegistry.createRegistry(9000);
+            LocateRegistry.createRegistry(9000);
 
             // Build a URL which tells the RMIConnectorServer to bind to the RMIRegistry running on port 9000
             JMXServiceURL url = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://localhost:9000/jmxrmi");

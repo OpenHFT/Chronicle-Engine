@@ -60,7 +60,7 @@ public class RemotePublisher<E> extends AbstractStatelessClient<EventId> impleme
         final AbstractAsyncSubscription asyncSubscription = new AbstractAsyncSubscription(hub, csp) {
 
             @Override
-            public void onSubsribe(@NotNull final WireOut wireOut) {
+            public void onSubscribe(@NotNull final WireOut wireOut) {
                 wireOut.writeEventName(registerTopicSubscriber).text("");
             }
 

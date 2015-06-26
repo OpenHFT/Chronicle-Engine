@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.api.map;
 
+import net.openhft.chronicle.engine.api.map.KeyValueStore.Entry;
 import net.openhft.chronicle.engine.api.tree.ChangeEvent;
 import net.openhft.chronicle.wire.WireKey;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,7 @@ import java.util.function.Function;
 /**
  * Created by peter on 22/05/15.
  */
-public interface MapEvent<K, V> extends KeyValueStore.Entry<K, V>, ChangeEvent {
+public interface MapEvent<K, V> extends Entry<K, V>, ChangeEvent {
     @Nullable
     V oldValue();
 

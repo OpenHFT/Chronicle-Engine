@@ -26,6 +26,7 @@ import net.openhft.lang.model.constraints.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.function.Consumer;
 
 /**
@@ -101,7 +102,7 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
         List<Map.Entry<K, V>> entries = new ArrayList<>();
         try {
             for (int i = 0, seg = segments(); i < seg; i++)
-                entriesFor(i, e -> entries.add(new AbstractMap.SimpleEntry<>(e.key(), e.value())));
+                entriesFor(i, e -> entries.add(new SimpleEntry<>(e.key(), e.value())));
         } catch (InvalidSubscriberException e) {
             throw new AssertionError(e);
         }

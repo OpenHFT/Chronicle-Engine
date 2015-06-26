@@ -30,7 +30,7 @@ public abstract class AbstractAsyncSubscription implements AsyncSubscription {
         try {
 
             hub.writeMetaDataForKnownTID(tid(), hub.outWire(), csp, 0);
-            hub.outWire().writeDocument(false, this::onSubsribe);
+            hub.outWire().writeDocument(false, this::onSubscribe);
 
             hub.writeSocket(hub.outWire());
         } finally {
@@ -43,7 +43,7 @@ public abstract class AbstractAsyncSubscription implements AsyncSubscription {
      *
      * @param wireOut the wire to write the subscription to
      */
-    public abstract void onSubsribe(WireOut wireOut);
+    public abstract void onSubscribe(WireOut wireOut);
 
     /**
      * called whenever the connection to the server has been dropped
