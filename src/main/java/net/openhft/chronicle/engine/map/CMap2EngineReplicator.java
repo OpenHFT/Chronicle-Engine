@@ -29,7 +29,6 @@ import net.openhft.chronicle.map.EngineReplicationLangBytes.EngineModificationIt
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.function.Consumer;
 
 import static java.lang.ThreadLocal.withInitial;
@@ -214,7 +213,11 @@ public class CMap2EngineReplicator implements EngineReplication,
                                final boolean isDeleted,
                                final long bootStrapTimeStamp) {
             this.key = key;
+            // must be native
+            key.address();
             this.value = value;
+            // must be native
+            value.address();
             this.timestamp = timestamp;
             this.identifier = identifier;
             this.isDeleted = isDeleted;
