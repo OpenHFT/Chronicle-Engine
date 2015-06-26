@@ -114,7 +114,7 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
         List<K> keys = new ArrayList<>();
         try {
             for (int i = 0, seg = segments(); i < seg; i++)
-                keysFor(i, k -> keys.add(k));
+                keysFor(i, keys::add);
         } catch (InvalidSubscriberException e) {
             throw new AssertionError(e);
         }

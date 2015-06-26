@@ -112,6 +112,6 @@ public class VanillaAssetTree implements AssetTree {
     @NotNull
     @Override
     public String toString() {
-        return "tree-" + Optional.ofNullable(root.getView(HostIdentifier.class)).map(hi -> hi.hostId()).orElseGet(() -> (byte) 0);
+        return "tree-" + Optional.ofNullable(root.getView(HostIdentifier.class)).map(HostIdentifier::hostId).orElseGet(() -> (byte) 0);
     }
 }

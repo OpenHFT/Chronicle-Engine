@@ -42,9 +42,9 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
     StringBuilder eventName = new StringBuilder();
 
     /**
-     * @param hub
+     * @param hub for this connection
      * @param cid used by proxies such as the entry-set
-     * @param csp
+     * @param csp the uri of the request
      */
     public AbstractStatelessClient(@NotNull final TcpChannelHub hub,
                                    long cid,
@@ -103,24 +103,24 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
 
     @SuppressWarnings("SameParameterValue")
     protected long proxyReturnLong(@NotNull final WireKey eventId) {
-        return proxyReturnWireConsumer(eventId, f -> f.int64());
+        return proxyReturnWireConsumer(eventId, ValueIn::int64);
     }
 
     @SuppressWarnings("SameParameterValue")
     protected int proxyReturnInt(@NotNull final WireKey eventId) {
-        return proxyReturnWireConsumer(eventId, f -> f.int32());
+        return proxyReturnWireConsumer(eventId, ValueIn::int32);
     }
 
     protected byte proxyReturnByte(@NotNull final WireKey eventId) {
-        return proxyReturnWireConsumer(eventId, f -> f.int8());
+        return proxyReturnWireConsumer(eventId, ValueIn::int8);
     }
 
     protected byte proxyReturnByte(@NotNull WireKey reply, @NotNull final WireKey eventId) {
-        return proxyReturnWireConsumerInOut(eventId, reply, null, f -> f.int8());
+        return proxyReturnWireConsumerInOut(eventId, reply, null, ValueIn::int8);
     }
 
     protected int proxyReturnUint16(@NotNull final WireKey eventId) {
-        return proxyReturnWireConsumer(eventId, f -> f.uint16());
+        return proxyReturnWireConsumer(eventId, ValueIn::uint16);
     }
 
     public <T> T proxyReturnWireConsumer(@NotNull final WireKey eventId,
@@ -254,7 +254,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
         final Wire wireIn = hub.proxyReply(timeoutTime, tid);
         checkIsData(wireIn);
 
-        return readReply(wireIn, CoreFields.reply, v -> v.bool());
+        return readReply(wireIn, CoreFields.reply, ValueIn::bool);
 
     }
 

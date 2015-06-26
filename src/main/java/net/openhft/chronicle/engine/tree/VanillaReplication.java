@@ -17,13 +17,11 @@ import java.util.function.Supplier;
  */
 public class VanillaReplication implements Replication {
 
-    private final RequestContext requestContext;
-    private final Asset asset;
     private final MapView mapView;
 
     public VanillaReplication(final RequestContext requestContext, final Asset asset, final MapView mapView) {
-        this.requestContext = requestContext;
-        this.asset = asset;
+        final RequestContext requestContext1 = requestContext;
+        final Asset asset1 = asset;
         this.mapView = mapView;
     }
 

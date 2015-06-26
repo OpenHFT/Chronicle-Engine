@@ -111,7 +111,7 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
     private void publish(@NotNull final ModificationIterator mi, @NotNull final Bootstrap remote) throws InterruptedException {
 
         final TcpChannelHub hub = this.hub;
-        mi.setModificationNotifier(() -> eventLoop.unpause());
+        mi.setModificationNotifier(eventLoop::unpause);
 
         eventLoop.addHandler(new EventHandler() {
             @Override

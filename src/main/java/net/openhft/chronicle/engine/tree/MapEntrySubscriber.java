@@ -18,7 +18,6 @@ package net.openhft.chronicle.engine.tree;
 
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 
-import java.util.Map;
 import java.util.Map.Entry;
 
 /**

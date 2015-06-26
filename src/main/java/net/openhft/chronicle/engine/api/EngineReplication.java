@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.engine.api;
 
-import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.engine.api.pubsub.Replication;
 import net.openhft.chronicle.wire.Marshallable;
@@ -24,7 +23,6 @@ import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Closeable;
 import java.util.function.Consumer;
 
 /**
@@ -85,10 +83,7 @@ public interface EngineReplication extends Replication {
      */
     @FunctionalInterface
     interface ModificationNotifier {
-        ModificationNotifier NOP = new ModificationNotifier() {
-            @Override
-            public void onChange() {
-            }
+        ModificationNotifier NOP = () -> {
         };
 
         /**

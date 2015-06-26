@@ -69,9 +69,7 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
     }
 
     private void notifyEndOfSubscription(@NotNull Set<? extends ISubscriber> subscribers) {
-        for (ISubscriber subscriber : subscribers) {
-            notifyEndOfSubscription(subscriber);
-        }
+        subscribers.forEach(this::notifyEndOfSubscription);
         subscribers.clear();
     }
 

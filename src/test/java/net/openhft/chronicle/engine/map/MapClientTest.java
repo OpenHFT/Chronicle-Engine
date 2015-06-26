@@ -256,10 +256,10 @@ public class MapClientTest extends ThreadMonitoringTest {
 
         CloseableSupplier<ConcurrentMap<K, V>> result;
         if (LocalMapSupplier.class.equals(supplier)) {
-            result = new LocalMapSupplier<K, V>(kClass, vClass, assetTree);
+            result = new LocalMapSupplier<>(kClass, vClass, assetTree);
 
         } else if (RemoteMapSupplier.class.equals(supplier)) {
-            result = new RemoteMapSupplier<K, V>(kClass, vClass, WireType.TEXT, assetTree);
+            result = new RemoteMapSupplier<>(kClass, vClass, WireType.TEXT, assetTree);
 
         } else {
             throw new IllegalStateException("unsuported type");

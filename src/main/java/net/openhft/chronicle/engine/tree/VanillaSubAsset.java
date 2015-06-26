@@ -47,7 +47,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     VanillaSubAsset(@NotNull RequestContext rc, @NotNull VanillaAsset parent, String name) throws AssetNotFoundException {
         this.parent = parent;
         this.name = name;
-        reference = new VanillaReference<E>(rc, this, parent.getView(MapView.class));
+        reference = new VanillaReference<>(rc, this, parent.getView(MapView.class));
         ValueReader valueReader;
         try {
             valueReader = parent.acquireView(ValueReader.class, rc);

@@ -56,7 +56,7 @@ public class VanillaAssetTreeEgMain {
         map3.put("keyA", "value1");
         map3.put("keyB", "value1");
         map3.put("keyC", "value1");
-        tree.registerSubscriber("group2/subgroup/map3", String.class, (String s) -> System.out.println(s));
+        tree.registerSubscriber("group2/subgroup/map3", String.class, System.out::println);
 
         registerTextViewofTree("tree", tree);
 

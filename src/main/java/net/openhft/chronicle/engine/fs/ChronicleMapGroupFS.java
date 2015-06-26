@@ -33,7 +33,6 @@ public class ChronicleMapGroupFS implements Marshallable, MountPoint, LeafViewFa
     int averageValueSize;
     Boolean putReturnsNull, removeReturnsNull;
     private long maxEntries;
-    private String baseDir;
 
     @Override
     public String spec() {
@@ -69,7 +68,7 @@ public class ChronicleMapGroupFS implements Marshallable, MountPoint, LeafViewFa
 
     @Override
     public void install(String baseDir, @NotNull AssetTree assetTree) {
-        this.baseDir = baseDir;
+        final String baseDir1 = baseDir;
         RequestContext context = RequestContext.requestContext(name).basePath(baseDir + "/" + spec);
         Asset asset = assetTree.acquireAsset(context);
         ((VanillaAsset) asset).enableTranslatingValuesToBytesStore();

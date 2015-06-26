@@ -117,7 +117,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
             final Map map = supplier.get();
 
-            yamlLoggger(() -> map.clear());
+            yamlLoggger(map::clear);
             assertEquals(0, map.size());
         }
     }

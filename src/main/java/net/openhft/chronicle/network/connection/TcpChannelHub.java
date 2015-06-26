@@ -487,7 +487,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
     /**
      * calculates the size of each chunk
      *
-     * @param outBuffer
+     * @param outBuffer   the outbound buffer
      */
     private void upateLargestChunkSoFarSize(@NotNull ByteBuffer outBuffer) {
         int sizeOfThisChunk = (int) (outBuffer.limit() - limitOfLast);
@@ -776,6 +776,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
                 final Bytes bytes = (Bytes) o;
                 // for sync
+                //noinspection SynchronizationOnLocalVariableOrMethodParameter
                 synchronized (bytes) {
                     bytes.clear();
                     final ByteBuffer byteBuffer = (ByteBuffer) bytes.underlyingObject();

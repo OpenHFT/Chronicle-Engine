@@ -55,7 +55,6 @@ import static org.junit.Assert.assertEquals;
 @RunWith(value = Parameterized.class)
 public class SubscriptionTest extends ThreadMonitoringTest {
     private static final String NAME = "test";
-    private static int port;
     private static ConcurrentMap<String, Factor> map;
     @NotNull
     @Rule
@@ -110,7 +109,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
             wire = WireType.TEXT;
 
             serverEndpoint = new ServerEndpoint(serverAssetTree);
-            port = serverEndpoint.getPort();
+            final int port = serverEndpoint.getPort();
 
             assetTree = new VanillaAssetTree().forRemoteAccess("localhost", port);
         } else {

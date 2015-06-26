@@ -19,7 +19,6 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.ClassLocal;
-import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.map.*;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
@@ -29,7 +28,6 @@ import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.Wire;
-import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Constructor;
 import java.util.AbstractMap.SimpleEntry;
@@ -195,7 +193,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
         List<String> entries = new ArrayList<>();
         try {
             for (int i = 0, seg = segments(); i < seg; i++)
-                keysFor(i, k -> entries.add(k));
+                keysFor(i, entries::add);
         } catch (InvalidSubscriberException e) {
             throw new AssertionError(e);
         }

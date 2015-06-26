@@ -28,7 +28,6 @@ public class TopicPublisherHandler<T, M> extends AbstractHandler {
     private final StringBuilder eventName = new StringBuilder();
 
     private Queue<Consumer<Wire>> publisher;
-    private Wire outWire;
     private TopicPublisher<T, M> view;
     @Nullable
     private Function<ValueIn, T> wireToT;
@@ -99,7 +98,7 @@ public class TopicPublisherHandler<T, M> extends AbstractHandler {
                  final @NotNull WireAdapter<T, M> wireAdapter) {
 
         setOutWire(outWire);
-        this.outWire = outWire;
+        final Wire outWire1 = outWire;
         this.view = view;
         this.publisher = publisher;
         this.wireToT = wireAdapter.wireToKey();

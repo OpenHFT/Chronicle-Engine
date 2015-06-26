@@ -146,7 +146,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
      */
     @Nullable
     private final AtomicReference<Throwable> threadFailure
-            = new AtomicReference<Throwable>(null);
+            = new AtomicReference<>(null);
 
     /**
      * Delays, via Thread.sleep, for the given millisecond delay, but
@@ -813,7 +813,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
 
         @NotNull
         public String toString() {
-            List<Permission> ps = new ArrayList<Permission>();
+            List<Permission> ps = new ArrayList<>();
             for (Enumeration<Permission> e = perms.elements(); e.hasMoreElements(); )
                 ps.add(e.nextElement());
             return "AdjustablePolicy with permissions " + ps;

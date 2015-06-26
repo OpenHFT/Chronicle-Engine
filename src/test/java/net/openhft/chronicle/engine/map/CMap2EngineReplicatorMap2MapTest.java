@@ -181,10 +181,7 @@ public class CMap2EngineReplicatorMap2MapTest {
         map1.put("hello2", "world2"); //this is the last update before the disconnection, so will
         // be sent again as its in the last known milliseconds
 
-        iterator1for2.forEach((entry) -> {
-            // record the last time the entry was updated
-            replicator2.applyReplication(entry);
-        });
+        iterator1for2.forEach(replicator2::applyReplication);
 
         iterator1for2.forEach(e -> {
             // do nothing

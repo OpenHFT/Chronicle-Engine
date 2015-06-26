@@ -115,9 +115,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
                 });
 
-                mi.setModificationNotifier(() -> {
-                    eventLoop.unpause();
-                });
+                mi.setModificationNotifier(eventLoop::unpause);
 
                 eventLoop.addHandler(new EventHandler() {
                     @Override
@@ -189,7 +187,6 @@ public class ReplicationHandler<E> extends AbstractHandler {
                     outBootstrap.identifier(hostId.hostId());
                     outBootstrap.lastUpdatedTime(replication.lastModificationTime(id));
                     outWire.write(bootstrapReply).typedMarshallable(outBootstrap);
-                    return;
                 }
             });
         }

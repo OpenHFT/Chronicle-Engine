@@ -122,7 +122,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
             final Map map = supplier.get();
 
-            yamlLoggger(() -> map.clear());
+            yamlLoggger(map::clear);
             assertEquals(0, map.size());
         }
     }
@@ -329,9 +329,8 @@ public class LocalChronicleMapTest extends JSR166TestCase {
 
             Set s = map.entrySet();
             assertEquals(5, s.size());
-            Iterator it = s.iterator();
-            while (it.hasNext()) {
-                Entry e = (Entry) it.next();
+            for (final Object value : s) {
+                Entry e = (Entry) value;
                 assertTrue(
                         (e.getKey().equals(one) && e.getValue().equals("A")) ||
                                 (e.getKey().equals(two) && e.getValue().equals("B")) ||
