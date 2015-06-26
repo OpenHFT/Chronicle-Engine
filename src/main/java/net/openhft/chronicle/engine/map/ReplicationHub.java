@@ -162,10 +162,6 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
                         w.read(replicactionReply).typedMarshallable()));
             }
 
-            @Override
-            public void onClose() {
-                throw new UnsupportedOperationException("todo");
-            }
         });
 
     }

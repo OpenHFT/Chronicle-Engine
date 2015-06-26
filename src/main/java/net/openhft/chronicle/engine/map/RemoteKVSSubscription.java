@@ -93,10 +93,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
                 });
             }
 
-            @Override
-            public void onClose() {
-                //
-            }
+
         });
 
 
@@ -197,10 +194,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
                 });
             }
 
-            @Override
-            public void onClose() {
-                //
-            }
+
         });
 
 

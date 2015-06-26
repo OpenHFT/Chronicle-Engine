@@ -117,10 +117,7 @@ public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId>
                 });
             }
 
-            @Override
-            public void onClose() {
-                //
-            }
+
         });
 
     }

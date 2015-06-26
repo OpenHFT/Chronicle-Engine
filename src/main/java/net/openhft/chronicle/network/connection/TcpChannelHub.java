@@ -41,7 +41,6 @@ import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.server.WireType.wire;
@@ -281,6 +280,8 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
         } finally {
             outBytesLock().unlock();
         }
+
+        // re-established all the subscription
         if (tcpSocketConsumer != null)
             tcpSocketConsumer.onReconnect();
     }
@@ -583,7 +584,12 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
         private ThreadLocal<Wire> syncInWireThreadLocal = ThreadLocal.withInitial(() -> wire.apply(Bytes
                 .elasticByteBuffer()));
 
-        public void onReconnect() {
+        /**
+         * re-establish all the subscriptions to the server, this method calls the
+         * {@code net.openhft.chronicle.network.connection.AsyncSubscription#applySubscribe()}
+         * for each subscription, this could should establish a subscriotuib with the server.
+         */
+        private void onReconnect() {
 
             map.values().forEach(v -> {
                 if (v instanceof AsyncSubscription) {
@@ -647,19 +653,6 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
             }
             return wire;
 
-        }
-
-        /**
-         * the response comes back on the executorService thread as any work done on the consumer is
-         * blocking any further work, for reading the socket.
-         *
-         * @param tid      the tid of the message to be read from the socket
-         * @param consumer its important that this is a short running task
-         * @deprecated net.openhft.chronicle.network.connection.TcpChannelHub.TcpSocketConsumer#subscribe(net.openhft.chronicle.network.connection.AsyncSubscription)
-         */
-        @Deprecated
-        private void asyncReadSocket(long tid, @NotNull final Consumer<Wire> consumer) {
-            map.put(tid, consumer);
         }
 
         private void subscribe(@NotNull final AsyncSubscription asyncSubscription) {
@@ -770,14 +763,8 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
                 blockingRead(inWire, messageSize);
                 logToStandardOutMessageReceived(inWire);
                 ((AsyncSubscription) o).onConsumer(inWire);
-            }
 
-            // for async
-            else if (o instanceof Consumer) {
-                final Consumer<Wire> consumer = (Consumer<Wire>) o;
-                blockingRead(inWire, messageSize);
-                logToStandardOutMessageReceived(inWire);
-                consumer.accept(inWire);
+                // for async
             } else {
 
                 final Bytes bytes = (Bytes) o;

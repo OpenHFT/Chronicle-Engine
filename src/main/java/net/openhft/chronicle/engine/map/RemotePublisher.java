@@ -83,11 +83,6 @@ public class RemotePublisher<E> extends AbstractStatelessClient<EventId> impleme
                 });
             }
 
-            @Override
-            public void onClose() {
-                throw new UnsupportedOperationException("todo");
-            }
-
         };
 
         hub.subscribe(asyncSubscription);

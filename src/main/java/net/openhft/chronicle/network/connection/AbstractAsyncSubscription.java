@@ -37,10 +37,17 @@ public abstract class AbstractAsyncSubscription implements AsyncSubscription {
     }
 
     /**
-     * called when the TcpChannelHub is ready to make a subscription
+     * called when ever the  TcpChannelHub is ready to make a subscription
      *
-     * @param wireOut the wire that you must write the subscription into
+     * @param wireOut the wire to write the subscription to
      */
     public abstract void onSubsribe(WireOut wireOut);
 
+    /**
+     * called whenever the connection to the server has been dropped
+     */
+    @Override
+    public void onClose() {
+
+    }
 }

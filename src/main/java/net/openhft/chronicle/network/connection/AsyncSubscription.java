@@ -1,6 +1,5 @@
 package net.openhft.chronicle.network.connection;
 
-import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireIn;
 
 public interface AsyncSubscription {
@@ -14,13 +13,13 @@ public interface AsyncSubscription {
     long tid();
 
     /**
-     * create you subscription here
+     * Implement this to establish a subscription with the server
      */
     void applySubscribe();
 
     /**
-     * you should consumer you subscription here
-     * @param inWire
+     * Implement this to consume the subscription
+     * @param inWire the wire to write the subscription to
      */
     void onConsumer(final WireIn inWire);
 
