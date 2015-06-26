@@ -271,6 +271,8 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
         } finally {
             outBytesLock().unlock();
         }
+        if (tcpSocketConsumer != null)
+            tcpSocketConsumer.onReconnect();
     }
 
     private SessionDetails sessionDetails() {
@@ -287,6 +289,8 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
         if (closeables != null)
             closeables.closeQuietly();
         closeables = null;
+        if (tcpSocketConsumer != null)
+            tcpSocketConsumer.onConnectionClosed();
     }
 
     public synchronized void close() {
@@ -568,6 +572,23 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
         private ThreadLocal<Wire> syncInWireThreadLocal = ThreadLocal.withInitial(() -> wire.apply(Bytes
                 .elasticByteBuffer()));
 
+        public void onReconnect() {
+
+            map.values().forEach(v -> {
+                if (v instanceof AsyncSubscription) {
+                    ((AsyncSubscription) v).applySubscribe();
+                }
+            });
+        }
+
+        public void onConnectionClosed() {
+            map.values().forEach(v -> {
+                if (v instanceof AsyncSubscription) {
+                    ((AsyncSubscription) v).onClose();
+                }
+            });
+        }
+
         /**
          * @param wireFunction converts bytes into wire, ie TextWire or BinaryWire
          * @param provider     used to re-establish a socket connection when/if the socket
@@ -623,9 +644,21 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
          *
          * @param tid      the tid of the message to be read from the socket
          * @param consumer its important that this is a short running task
+         * @deprecated net.openhft.chronicle.network.connection.TcpChannelHub.TcpSocketConsumer#subscribe(net.openhft.chronicle.network.connection.AsyncSubscription)
          */
+        @Deprecated
         private void asyncReadSocket(long tid, @NotNull final Consumer<Wire> consumer) {
             map.put(tid, consumer);
+        }
+
+        public void subscribe(@NotNull final AsyncSubscription asyncSubscription) {
+            map.put(asyncSubscription.tid(), asyncSubscription);
+
+            asyncSubscription.applySubscribe();
+        }
+
+        public void unsubscribe(long tid) {
+            map.remove(tid);
         }
 
         /**
@@ -721,10 +754,15 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
             }
 
-
+            // for async
+            if (o instanceof AsyncSubscription) {
+                blockingRead(inWire, messageSize);
+                logToStandardOutMessageReceived(inWire);
+                ((AsyncSubscription) o).onConsumer(inWire);
+            }
 
             // for async
-            if (o instanceof Consumer) {
+            else if (o instanceof Consumer) {
                 final Consumer<Wire> consumer = (Consumer<Wire>) o;
                 blockingRead(inWire, messageSize);
                 logToStandardOutMessageReceived(inWire);
@@ -776,11 +814,10 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
         private void readBuffer(final ByteBuffer buffer) throws IOException {
             while (buffer.remaining() > 0) {
-                assert clientChannel != null;
+                if (clientChannel == null || clientChannel.read(buffer) == -1)
+                    throw new IORuntimeException("Disconnection to server");
                 if (closeSocketConsumer)
                     throw new ClosedChannelException();
-                if (clientChannel.read(buffer) == -1)
-                    throw new IORuntimeException("Disconnection to server");
             }
         }
 
