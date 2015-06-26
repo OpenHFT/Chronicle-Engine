@@ -20,6 +20,7 @@ package net.openhft.chronicle.engine.server.internal;
  * Created by Rob Austin
  */
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.pool.StringBuilderPool;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
@@ -75,6 +76,8 @@ public class MapWireHandler<K, V> extends AbstractHandler {
 
         @Override
         public void accept(WireIn wireIn, Long inputTid) {
+            if (Jvm.isDebug())
+                System.out.println("mwh " + wireIn);
             try {
                 eventName.setLength(0);
                 final ValueIn valueIn = inWire.readEventName(eventName);

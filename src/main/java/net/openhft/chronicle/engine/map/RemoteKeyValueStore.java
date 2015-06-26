@@ -201,6 +201,8 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     @NotNull
 
     public String toString() {
+        if (Jvm.isDebug()) return "toString() not available while debugging";
+
         final Iterator<Map.Entry<K, V>> entries = entrySet().iterator();
         if (!entries.hasNext())
             return "{}";
