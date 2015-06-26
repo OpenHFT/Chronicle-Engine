@@ -27,6 +27,7 @@ import net.openhft.chronicle.hash.replication.EngineReplicationLangBytesConsumer
 import net.openhft.chronicle.map.EngineReplicationLangBytes;
 import net.openhft.chronicle.map.EngineReplicationLangBytes.EngineModificationIterator;
 import net.openhft.lang.io.ByteBufferBytes;
+import net.openhft.lang.io.IByteBufferBytes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,9 +63,14 @@ public class CMap2EngineReplicator implements EngineReplication,
     }
 
     net.openhft.lang.io.Bytes toLangBytes(BytesStore b) {
-        return b.underlyingObject() == null
-                ? wrap(b.address(), b.readRemaining())
-                : ByteBufferBytes.wrap((ByteBuffer) b.underlyingObject());
+        if (b.underlyingObject() == null)
+            return wrap(b.address(), b.readRemaining());
+        else {
+            ByteBuffer buffer = (ByteBuffer) b.underlyingObject();
+            IByteBufferBytes wrap = ByteBufferBytes.wrap(buffer);
+            wrap.limit((int) b.readLimit());
+            return wrap;
+        }
     }
 
     public void put(final BytesStore key, final BytesStore value,
