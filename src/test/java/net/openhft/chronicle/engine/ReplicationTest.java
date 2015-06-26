@@ -16,7 +16,10 @@ import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,6 +27,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
 import static org.junit.Assert.assertNotNull;
@@ -100,7 +105,7 @@ public class ReplicationTest {
         return new File(path).getParentFile().getParentFile() + "/src/test/resources";
     }
 
-   @Ignore
+
     @Test
     public void test() throws Exception {
 
@@ -120,7 +125,13 @@ public class ReplicationTest {
         map2.put("hello2", "world2");
         map3.put("hello3", "world3");
 
-        Thread.sleep(2000);
+        long startTime = System.currentTimeMillis();
+        while (map1.size() != 3 || map1.size() != 3 || map1.size() != 3) {
+            Thread.sleep(1);
+            if (System.currentTimeMillis() - startTime > TimeUnit.SECONDS.toMillis(10))
+                throw new TimeoutException("failed to replicated");
+        }
+
 
         for (Map m : new Map[]{map1, map2, map3}) {
             Assert.assertEquals("world1", m.get("hello1"));
