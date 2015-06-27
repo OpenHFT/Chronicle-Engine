@@ -18,6 +18,7 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
+import net.openhft.chronicle.wire.YamlLogging;
 
 import java.io.IOException;
 
@@ -30,6 +31,12 @@ public class BinaryWireMain {
         VanillaAssetTree assetTree = new VanillaAssetTree().forTesting(false);
         final ServerEndpoint serverEndpoint = new ServerEndpoint(port, assetTree);
 
+        if (args.length == 1 && args[0].compareTo("-debug") == 0)
+        {
+            System.out.println("Enabling message logging");
+            YamlLogging.showServerReads = true;
+            YamlLogging.showServerWrites = true;
+        }
         System.out.println("Server port seems to be " + serverEndpoint.getPort());
     }
 }
