@@ -54,6 +54,11 @@ public class SimpleSubscription<E> implements Subscription<E> {
         subscribers.remove(subscriber);
     }
 
+    @Override
+    public int subscriberCount() {
+        return subscribers.size();
+    }
+
     public void notifyMessage(Object e) {
         try {
             E ee = e instanceof BytesStore ? valueReader.readFrom(e, null) : (E) e;

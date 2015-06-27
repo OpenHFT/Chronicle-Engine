@@ -54,4 +54,9 @@ public interface KVSSubscription<K, MV, V> extends Subscription<MapEvent<K, V>>,
     int entrySubscriberCount();
 
     int topicSubscriberCount();
+
+    @Override
+    default int subscriberCount() {
+        return keySubscriberCount() + entrySubscriberCount() + topicSubscriberCount();
+    }
 }

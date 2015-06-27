@@ -65,6 +65,11 @@ public class VanillaTopologySubscription implements TopologySubscription {
     }
 
     @Override
+    public int subscriberCount() {
+        return subscribers.size();
+    }
+
+    @Override
     public void notifyEvent(TopologicalEvent event) {
         for (Subscriber<TopologicalEvent> sub : subscribers) {
             try {

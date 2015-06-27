@@ -159,8 +159,6 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
     }
 
     void registerSubscriber0(@NotNull RequestContext rc, @NotNull Subscriber subscriber) {
-
-
         if (hub.outBytesLock().isHeldByCurrentThread())
             throw new IllegalStateException("Cannot view map while debugging");
 

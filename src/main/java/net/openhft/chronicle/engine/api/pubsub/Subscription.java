@@ -28,4 +28,8 @@ public interface Subscription<E> extends View, Closeable {
 
     void unregisterSubscriber(Subscriber<E> subscriber);
 
+    /**
+     * @return total subscriber count.
+     */
+    int subscriberCount();
 }

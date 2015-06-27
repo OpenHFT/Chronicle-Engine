@@ -810,7 +810,8 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
             bytes.ensureCapacity(bytes.readPosition() + numberOfBytes);
 
             final ByteBuffer buffer = (ByteBuffer) bytes.underlyingObject();
-            final long start = buffer.position();
+            final int start = (int) bytes.writePosition();
+            buffer.position(start);
 
             buffer.limit((int) (start + numberOfBytes));
             readBuffer(buffer);
