@@ -48,15 +48,4 @@ public interface KVSSubscription<K, MV, V> extends Subscription<MapEvent<K, V>>,
     void setKvStore(KeyValueStore<K, MV, V> store);
 
     void notifyEvent(MapEvent<K, V> changeEvent);
-
-    int keySubscriberCount();
-
-    int entrySubscriberCount();
-
-    int topicSubscriberCount();
-
-    @Override
-    default int subscriberCount() {
-        return keySubscriberCount() + entrySubscriberCount() + topicSubscriberCount();
-    }
 }

@@ -65,6 +65,21 @@ public class VanillaTopologySubscription implements TopologySubscription {
     }
 
     @Override
+    public int keySubscriberCount() {
+        return 0;
+    }
+
+    @Override
+    public int entrySubscriberCount() {
+        return subscriberCount();
+    }
+
+    @Override
+    public int topicSubscriberCount() {
+        return 0;
+    }
+
+    @Override
     public int subscriberCount() {
         return subscribers.size();
     }

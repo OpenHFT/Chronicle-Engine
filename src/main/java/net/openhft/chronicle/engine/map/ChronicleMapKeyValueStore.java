@@ -269,16 +269,18 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
     class PublishingOperations extends MapEventListener<K, V> {
         @Override
         public void onRemove(@NotNull K key, V value, boolean replicationEven) {
-            subscriptions.notifyEvent(RemovedEvent.of(assetFullName, key, value));
+            if (subscriptions.subscriberCount() > 0)
+                subscriptions.notifyEvent(RemovedEvent.of(assetFullName, key, value));
         }
 
         @Override
         public void onPut(@NotNull K key, V newValue, @Nullable V replacedValue, boolean replicationEvent) {
-            if (replacedValue != null) {
-                subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, replacedValue, newValue));
-            } else {
-                subscriptions.notifyEvent(InsertedEvent.of(assetFullName, key, newValue));
-            }
+            if (subscriptions.subscriberCount() > 0)
+                if (replacedValue == null) {
+                    subscriptions.notifyEvent(InsertedEvent.of(assetFullName, key, newValue));
+                } else {
+                    subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, replacedValue, newValue));
+                }
         }
     }
 

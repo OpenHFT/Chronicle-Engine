@@ -113,22 +113,24 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
     static void logToStandardOutMessageReceived(@NotNull Wire wire) {
         Bytes<?> bytes = wire.bytes();
 
-        if (!YamlLogging.clientReads || !Jvm.isDebug())
+        if (!YamlLogging.clientReads)
             return;
 
         final long position = bytes.writePosition();
         final long limit = bytes.writeLimit();
         try {
             try {
-                System.out.println("\nreceives:\n\n" +
-                        "```yaml\n" +
+                System.out.println("\nreceives:\n" +
 
                         ((wire instanceof TextWire) ?
-                                Wires.fromSizePrefixedBlobs(bytes) :
-                                BytesUtil.toHexString(bytes, bytes.writePosition(), bytes.writeRemaining())
+                                "```yaml\n" +
+                                        Wires.fromSizePrefixedBlobs(bytes) :
+                                "```\n" +
+//                                        Wires.fromSizePrefixedBlobs(bytes)
+                                        BytesUtil.toHexString(bytes, bytes.readPosition(), bytes.readRemaining())
 
                         ) +
-                        "```\n\n");
+                        "```\n");
                 YamlLogging.title = "";
                 YamlLogging.writeMessage = "";
             } catch (Exception e) {
@@ -148,6 +150,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
      * subsubscription will be re-establish with the server automatically once it comes back up.
      * To end the subscription with the server call
      * {@code net.openhft.chronicle.network.connection.TcpChannelHub#unsubscribe(long)}
+     *
      * @param asyncSubscription detail of the subscription that you wish to hold with the server
      */
     public void subscribe(@NotNull final AsyncSubscription asyncSubscription) {
@@ -447,7 +450,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
     }
 
     private void logToStandardOutMessageSent(@NotNull Wire wire, @NotNull ByteBuffer outBuffer) {
-        if (!YamlLogging.clientWrites || !Jvm.isDebug())
+        if (!YamlLogging.clientWrites)
             return;
 
         Bytes<?> bytes = wire.bytes();
@@ -459,23 +462,21 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
             bytes.writeLimit(outBuffer.limit());
             bytes.writePosition(outBuffer.position());
 
-            if (YamlLogging.clientWrites) {
-                try {
-                    System.out.println(((!YamlLogging.title.isEmpty()) ? "### " + YamlLogging
-                            .title + "\n" : "") + "" +
-                            YamlLogging.writeMessage + (YamlLogging.writeMessage.isEmpty() ?
-                            "" : "\n\n") +
-                            "sends:\n\n" +
-                            "```yaml\n" +
-                            ((wire instanceof TextWire) ?
-                                    Wires.fromSizePrefixedBlobs(bytes, bytes.writePosition(),bytes.writeLimit()) :
-                                    BytesUtil.toHexString(bytes, bytes.writePosition(), bytes.writeRemaining())) +
-                            "```");
-                    YamlLogging.title = "";
-                    YamlLogging.writeMessage = "";
-                } catch (Exception e) {
-                    LOG.error(Bytes.toString(bytes), e);
-                }
+            try {
+                System.out.println(((!YamlLogging.title.isEmpty()) ? "### " + YamlLogging
+                        .title + "\n" : "") + "" +
+                        YamlLogging.writeMessage + (YamlLogging.writeMessage.isEmpty() ?
+                        "" : "\n\n") +
+                        "sends:\n\n" +
+                        "```yaml\n" +
+                        ((wire instanceof TextWire) ?
+                                Wires.fromSizePrefixedBlobs(bytes, bytes.writePosition(), bytes.writeLimit()) :
+                                BytesUtil.toHexString(bytes, bytes.writePosition(), bytes.writeRemaining())) +
+                        "```");
+                YamlLogging.title = "";
+                YamlLogging.writeMessage = "";
+            } catch (Exception e) {
+                LOG.error(Bytes.toString(bytes), e);
             }
 
         } finally {
@@ -487,7 +488,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
     /**
      * calculates the size of each chunk
      *
-     * @param outBuffer   the outbound buffer
+     * @param outBuffer the outbound buffer
      */
     private void upateLargestChunkSoFarSize(@NotNull ByteBuffer outBuffer) {
         int sizeOfThisChunk = (int) (outBuffer.limit() - limitOfLast);

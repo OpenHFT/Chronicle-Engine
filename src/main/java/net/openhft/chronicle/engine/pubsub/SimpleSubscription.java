@@ -55,6 +55,21 @@ public class SimpleSubscription<E> implements Subscription<E> {
     }
 
     @Override
+    public int keySubscriberCount() {
+        return subscriberCount();
+    }
+
+    @Override
+    public int entrySubscriberCount() {
+        return 0;
+    }
+
+    @Override
+    public int topicSubscriberCount() {
+        return 0;
+    }
+
+    @Override
     public int subscriberCount() {
         return subscribers.size();
     }

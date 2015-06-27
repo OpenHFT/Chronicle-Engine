@@ -22,6 +22,7 @@ import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
 import net.openhft.chronicle.engine.api.pubsub.Replication;
+import net.openhft.chronicle.engine.api.pubsub.Subscription;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
@@ -32,7 +33,6 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.engine.collection.CollectionWireHandler;
 import net.openhft.chronicle.engine.collection.CollectionWireHandlerProcessor;
-import net.openhft.chronicle.engine.map.KVSSubscription;
 import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.network.WireTcpHandler;
@@ -69,10 +69,6 @@ public class EngineWireHandler extends WireTcpHandler {
     @NotNull
     private final CollectionWireHandler<byte[], Set<byte[]>> keySetHandler;
 
-    @Nullable
-    private final WireHandler queueWireHandler;
-
-  
     @NotNull
     private final MapWireHandler mapWireHandler;
     @NotNull
@@ -124,7 +120,6 @@ public class EngineWireHandler extends WireTcpHandler {
         this.hostIdentifier = assetTree.root().findOrCreateView(HostIdentifier.class);
         this.assetTree = assetTree;
         this.mapWireHandler = new MapWireHandler<>();
-        this.queueWireHandler = null;
         this.metaDataConsumer = wireInConsumer();
 
         this.keySetHandler = new CollectionWireHandlerProcessor<>();
@@ -278,7 +273,7 @@ public class EngineWireHandler extends WireTcpHandler {
                     if (viewType == ObjectKVSSubscription.class) {
                         subscriptionHandler.process(in,
                                 requestContext, publisher, assetTree, tid,
-                                outWire, (KVSSubscription) view);
+                                outWire, (Subscription) view);
                         return;
                     }
 
@@ -305,8 +300,8 @@ public class EngineWireHandler extends WireTcpHandler {
 
                 }
 
-                if (endsWith(cspText, "?view=queue") && queueWireHandler != null) {
-                    queueWireHandler.process(in, out);
+                if (endsWith(cspText, "?view=queue")) {
+                    // TODO
                 }
 
             } catch (Exception e) {

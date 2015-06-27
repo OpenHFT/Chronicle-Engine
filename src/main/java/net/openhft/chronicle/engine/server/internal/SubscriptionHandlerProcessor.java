@@ -2,10 +2,10 @@ package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
+import net.openhft.chronicle.engine.api.pubsub.Subscription;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
-import net.openhft.chronicle.engine.map.KVSSubscription;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +37,7 @@ public class SubscriptionHandlerProcessor extends AbstractHandler {
     private Queue<Consumer<Wire>> publisher;
     private AssetTree assetTree;
     private Wire outWire;
-    private KVSSubscription subscription;
+    private Subscription subscription;
     @Nullable
     private final BiConsumer<WireIn, Long> dataConsumer = new BiConsumer<WireIn, Long>() {
 
@@ -105,7 +105,7 @@ public class SubscriptionHandlerProcessor extends AbstractHandler {
             }
 
             if (subscribe.contentEquals(eventName)) {
-                Class eventClass = valueIn.typeLiteral();
+                Class subscriptionType = valueIn.typeLiteral();
                 Subscriber<Object> listener = e -> {
                     publisher.add(publish -> {
                         publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
@@ -113,7 +113,9 @@ public class SubscriptionHandlerProcessor extends AbstractHandler {
                     });
                 };
                 tidToListener.put(inputTid, listener);
-                assetTree.registerSubscriber(requestContext.name(), eventClass, listener);
+                RequestContext rc = requestContext.type(subscriptionType);
+                assetTree.acquireSubscription(rc)
+                        .registerSubscriber(rc, listener);
 
                 return;
             }
@@ -159,7 +161,7 @@ public class SubscriptionHandlerProcessor extends AbstractHandler {
                  final RequestContext requestContext,
                  final Queue<Consumer<Wire>> publisher,
                  final AssetTree assetTree, final long tid,
-                 final Wire outWire, final KVSSubscription subscription) {
+                 final Wire outWire, final Subscription subscription) {
         setOutWire(outWire);
         this.outWire = outWire;
         this.subscription = subscription;

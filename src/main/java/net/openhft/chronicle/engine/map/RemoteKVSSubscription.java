@@ -64,7 +64,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
 
     @NotNull
     private static String toUri(@NotNull final RequestContext context) {
-        return  "/" + context.fullName() + "?view=subscription";
+        return "/" + context.fullName() + "?view=subscription";
     }
 
     @Override
@@ -162,6 +162,11 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
         if (hub.outBytesLock().isHeldByCurrentThread())
             throw new IllegalStateException("Cannot view map while debugging");
 
+        Boolean bootstrap = rc.bootstrap();
+        String csp = this.csp;
+        if (bootstrap != null)
+            csp = csp + "&bootstrap=" + bootstrap;
+
         hub.subscribe(new AbstractAsyncSubscription(hub, csp) {
             {
                 subscribersToTid.put(subscriber, tid());
@@ -182,7 +187,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractStatelessClient imp
                     if (EventId.onEndOfSubscription.contentEquals(eventname)) {
                         subscriber.onEndOfSubscription();
                         hub.unsubscribe(tid());
-                    }else if (CoreFields.reply.contentEquals(eventname)) {
+                    } else if (CoreFields.reply.contentEquals(eventname)) {
                         final Class aClass = rc.elementType();
 
                         final Object object = (MapEvent.class.isAssignableFrom(aClass)) ? valueIn

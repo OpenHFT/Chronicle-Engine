@@ -18,6 +18,7 @@ package net.openhft.chronicle.engine.api.tree;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
+import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
 import net.openhft.chronicle.engine.api.pubsub.Reference;
@@ -42,6 +43,7 @@ import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
 public class RequestContext implements Cloneable {
     static {
         addAlias(MapView.class, "Map");
+        addAlias(MapEvent.class, "MapEvent");
         addAlias(EntrySetView.class, "EntrySet");
         addAlias(KeySetView.class, "KeySet");
         addAlias(ValuesCollection.class, "Values");
