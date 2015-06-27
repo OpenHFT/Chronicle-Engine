@@ -35,6 +35,7 @@ import net.openhft.chronicle.engine.collection.CollectionWireHandler;
 import net.openhft.chronicle.engine.collection.CollectionWireHandlerProcessor;
 import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
+import net.openhft.chronicle.engine.tree.TopologySubscription;
 import net.openhft.chronicle.network.WireTcpHandler;
 import net.openhft.chronicle.network.api.session.SessionDetailsProvider;
 import net.openhft.chronicle.network.connection.CoreFields;
@@ -81,6 +82,10 @@ public class EngineWireHandler extends WireTcpHandler {
     private final TopicPublisherHandler topicPublisherHandler;
     @NotNull
     private final PublisherHandler publisherHandler;
+
+  //  @NotNull
+  //  private final TopologyHandler topologyHandler;
+
     @NotNull
     private final ReplicationHandler replicationHandler;
 
@@ -297,6 +302,15 @@ public class EngineWireHandler extends WireTcpHandler {
                                 (Replication) view, isClosed, eventLoop);
                         return;
                     }
+
+
+                   /* if (viewType == TopologySubscription.class) {
+                        topologyHandler.process(in,
+                                publisher, tid, outWire,
+                                hostIdentifier,
+                                (Replication) view, isClosed, eventLoop);
+                        return;
+                    }*/
 
                 }
 

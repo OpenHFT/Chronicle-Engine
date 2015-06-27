@@ -98,8 +98,7 @@ public class VanillaAsset implements Asset, Closeable {
 
         addWrappingRule(MapView.class, LAST + " string key maps", VanillaMapView::new, ObjectKeyValueStore.class);
 
-        addLeafRule(TopologySubscription.class, LAST + " vanilla",
-                VanillaTopologySubscription::new);
+
 
         String fullName = fullName();
         HostIdentifier hostIdentifier = findView(HostIdentifier.class);
@@ -134,6 +133,9 @@ public class VanillaAsset implements Asset, Closeable {
 
         addLeafRule(ObjectKVSSubscription.class, LAST + " vanilla",
                 VanillaKVSSubscription::new);
+
+        addLeafRule(TopologySubscription.class, LAST + " vanilla",
+                VanillaTopologySubscription::new);
     }
 
     public void forRemoteAccess(String hostname, int port) {
@@ -147,7 +149,8 @@ public class VanillaAsset implements Asset, Closeable {
         addWrappingRule(Publisher.class, LAST + "publisher", RemotePublisher::new, MapView.class);
         addWrappingRule(TopicPublisher.class, LAST + " topic publisher", RemoteTopicPublisher::new,
                 MapView.class);
-
+        addLeafRule(TopologySubscription.class, LAST + " vanilla",
+                RemoteTopologySubscription::new);
 
         SessionProvider sessionProvider = getView(SessionProvider.class);
         VanillaSessionDetails sessionDetails = new VanillaSessionDetails();
