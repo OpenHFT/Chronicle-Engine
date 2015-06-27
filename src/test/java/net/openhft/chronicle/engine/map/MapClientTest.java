@@ -16,10 +16,8 @@
 
 package net.openhft.chronicle.engine.map;
 
-import jdk.nashorn.internal.ir.annotations.Ignore;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
-import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.Assetted;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
@@ -56,10 +54,10 @@ import static org.junit.Assert.assertEquals;
 @RunWith(value = Parameterized.class)
 public class MapClientTest extends ThreadMonitoringTest {
 
-    public static int i;
+    private static int i;
     // server has it's own asset tree, to the client.
     @NotNull
-    private AssetTree assetTree = new VanillaAssetTree().forTesting();
+    private final AssetTree assetTree = new VanillaAssetTree().forTesting();
     @Nullable
     private Class<? extends CloseableSupplier> supplier = null;
 
@@ -121,45 +119,40 @@ public class MapClientTest extends ThreadMonitoringTest {
     @Test(timeout = 50000)
     public void testEntrySetIsEmpty() throws IOException, InterruptedException {
 
-        supplyMap(Integer.class, String.class, mapProxy -> {
-            assertEquals(true, mapProxy.isEmpty());
-        });
+        supplyMap(Integer.class, String.class, mapProxy -> assertEquals(true, mapProxy.isEmpty()));
     }
 
     @Test
     public void testPutAll() throws IOException, InterruptedException {
 
-        supplyMap(Integer.class, String.class, mapProxy -> {
+        supplyMap(Integer.class, String.class, mapProxy -> yamlLoggger(() -> {
+            final Set<Entry<Integer, String>> entries = mapProxy.entrySet();
 
-            yamlLoggger(() -> {
-                final Set<Entry<Integer, String>> entries = mapProxy.entrySet();
+            assertEquals(0, entries.size());
+            assertEquals(true, entries.isEmpty());
 
-                assertEquals(0, entries.size());
-                assertEquals(true, entries.isEmpty());
+            Map<Integer, String> data = new HashMap<>();
+            data.put(1, "hello");
+            data.put(2, "world");
+            mapProxy.putAll(data);
 
-                Map<Integer, String> data = new HashMap<>();
-                data.put(1, "hello");
-                data.put(2, "world");
-                mapProxy.putAll(data);
+            final Set<Entry<Integer, String>> e = mapProxy.entrySet();
+            final Iterator<Entry<Integer, String>> iterator = e.iterator();
+            Entry<Integer, String> entry = iterator.next();
 
-                final Set<Entry<Integer, String>> e = mapProxy.entrySet();
-                final Iterator<Entry<Integer, String>> iterator = e.iterator();
-                Entry<Integer, String> entry = iterator.next();
+            if (entry.getKey() == 1) {
+                assertEquals("hello", entry.getValue());
+                entry = iterator.next();
+                assertEquals("world", entry.getValue());
 
-                if (entry.getKey() == 1) {
-                    assertEquals("hello", entry.getValue());
-                    entry = iterator.next();
-                    assertEquals("world", entry.getValue());
+            } else if (entry.getKey() == 2) {
+                assertEquals("world", entry.getValue());
+                entry = iterator.next();
+                assertEquals("hello", entry.getValue());
+            }
 
-                } else if (entry.getKey() == 2) {
-                    assertEquals("world", entry.getValue());
-                    entry = iterator.next();
-                    assertEquals("hello", entry.getValue());
-                }
-
-                assertEquals(2, mapProxy.size());
-            });
-        });
+            assertEquals(2, mapProxy.size());
+        }));
     }
 
     @Test
@@ -198,7 +191,7 @@ public class MapClientTest extends ThreadMonitoringTest {
 
     @Test
     public void testValuesCollection() throws IOException, InterruptedException {
-        HashMap<String, String> data = new HashMap<String, String>();
+        HashMap<String, String> data = new HashMap<>();
         data.put("test1", "value1");
         data.put("test1", "value1");
         supplyMap(String.class, String.class, mapProxy -> {
@@ -207,7 +200,7 @@ public class MapClientTest extends ThreadMonitoringTest {
             assertEquals(data.size(), mapProxy.values().size());
 
             Iterator<String> it = mapProxy.values().iterator();
-            ArrayList<String> values = new ArrayList<String>();
+            ArrayList<String> values = new ArrayList<>();
             while (it.hasNext())
             {
                 values.add(it.next());
@@ -315,7 +308,7 @@ public class MapClientTest extends ThreadMonitoringTest {
         }
     }
 
-    public interface CloseableSupplier<X> extends Closeable, Supplier<X> {
+    private interface CloseableSupplier<X> extends Closeable, Supplier<X> {
     }
 
     public static class RemoteMapSupplier<K, V> implements CloseableSupplier<ConcurrentMap<K, V>> {

@@ -52,7 +52,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     }
 
     @NotNull
-    static ClosableMapSupplier<Integer, String> newIntString() throws IOException {
+    private static ClosableMapSupplier<Integer, String> newIntString() throws IOException {
         final LocalMapSupplier supplier = new LocalMapSupplier<>(Integer
                 .class, String.class, new VanillaAssetTree().forTesting());
 
@@ -73,7 +73,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     }
 
     @NotNull
-    static ClosableMapSupplier<CharSequence, CharSequence> newStrStrMap() throws
+    private static ClosableMapSupplier<CharSequence, CharSequence> newStrStrMap() throws
             IOException {
 
         final LocalMapSupplier supplier = new LocalMapSupplier<>(CharSequence.class, CharSequence.class, new VanillaAssetTree().forTesting());
@@ -112,7 +112,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
         return supplier;
     }
 
-    static int s_port = 11050;
+    private static int s_port = 11050;
 
     /**
      * clear removes all pairs
@@ -708,13 +708,13 @@ public class LocalChronicleMapTest extends JSR166TestCase {
         }
     }
 
-    static class CI extends BI {
+    private static class CI extends BI {
         CI(int value) {
             super(value);
         }
     }
 
-    static class DI extends BI {
+    private static class DI extends BI {
         DI(int value) {
             super(value);
         }

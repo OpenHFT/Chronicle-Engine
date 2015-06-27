@@ -37,22 +37,22 @@ import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplicat
 public class CMap2EngineReplicatorMap2MapTest {
 
     @Nullable
-    final CMap2EngineReplicator replicator1 = new CMap2EngineReplicator(null);
-    final ChronicleMap<String, String> map1 = newMap(1, replicator1, String.class, String.class);
+    private final CMap2EngineReplicator replicator1 = new CMap2EngineReplicator(null);
+    private final ChronicleMap<String, String> map1 = newMap(1, replicator1, String.class, String.class);
 
     @Nullable
-    final CMap2EngineReplicator replicator2 = new CMap2EngineReplicator(null);
-    final ChronicleMap<String, String> map2 = newMap(2, replicator2, String.class, String.class);
+    private final CMap2EngineReplicator replicator2 = new CMap2EngineReplicator(null);
+    private final ChronicleMap<String, String> map2 = newMap(2, replicator2, String.class, String.class);
 
     @Nullable
-    final CMap2EngineReplicator replicator3 = new CMap2EngineReplicator(null);
-    final ChronicleMap<String, String> map3 = newMap(3, replicator3, String.class, String.class);
+    private final CMap2EngineReplicator replicator3 = new CMap2EngineReplicator(null);
+    private final ChronicleMap<String, String> map3 = newMap(3, replicator3, String.class, String.class);
 
 
-    public <K, V> ChronicleMap<K, V> newMap(int localIdentifier,
-                                            final CMap2EngineReplicator replicator,
-                                            @org.jetbrains.annotations.NotNull @NotNull final Class<K> keyClass,
-                                            @org.jetbrains.annotations.NotNull @NotNull final Class<V> valueClass) {
+    private <K, V> ChronicleMap<K, V> newMap(int localIdentifier,
+                                             final CMap2EngineReplicator replicator,
+                                             @org.jetbrains.annotations.NotNull @NotNull final Class<K> keyClass,
+                                             @org.jetbrains.annotations.NotNull @NotNull final Class<V> valueClass) {
         return ChronicleMapBuilder.of(keyClass, valueClass).
                 replication(builder().engineReplication(replicator).createWithId((byte) localIdentifier))
                 .create();
@@ -209,7 +209,7 @@ public class CMap2EngineReplicatorMap2MapTest {
 
         });
 
-        // ensure that the bootstap only sends updates upto and including all the updates in the
+        // ensure that the bootstrap only sends updates upto and including all the updates in the
         // last millisecond that it was connected. in otherwords where
         // key=="hello2",
         // rather than all the updates

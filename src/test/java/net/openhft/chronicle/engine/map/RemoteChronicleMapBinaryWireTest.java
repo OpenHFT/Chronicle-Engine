@@ -45,12 +45,12 @@ import static org.junit.Assert.*;
 
 public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
 
-    static int s_port = 11050;
+    private static int s_port = 11050;
     @NotNull
     @Rule
     public TestName name = new TestName();
     @NotNull
-    private AssetTree assetTree = new VanillaAssetTree().forTesting();
+    private final AssetTree assetTree = new VanillaAssetTree().forTesting();
 
     @Before
     public void before() {
@@ -58,7 +58,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     }
 
     @NotNull
-    ClosableMapSupplier newIntString(@NotNull String name) throws IOException {
+    private ClosableMapSupplier newIntString(@NotNull String name) throws IOException {
         final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(
                 Integer.class, String.class, WireType.BINARY, assetTree, name);
 
@@ -78,7 +78,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     }
 
     @NotNull
-    ClosableMapSupplier<CharSequence, CharSequence> newStrStrMap() throws
+    private ClosableMapSupplier<CharSequence, CharSequence> newStrStrMap() throws
             IOException {
 
         final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(CharSequence.class, CharSequence.class, WireType.BINARY, assetTree);
@@ -333,9 +333,8 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
 
             Set s = map.entrySet();
             assertEquals(5, s.size());
-            Iterator it = s.iterator();
-            while (it.hasNext()) {
-                Entry e = (Entry) it.next();
+            for (Object value : s) {
+                Entry e = (Entry) value;
                 assertTrue(
                         (e.getKey().equals(one) && e.getValue().equals("A")) ||
                                 (e.getKey().equals(two) && e.getValue().equals("B")) ||
@@ -713,13 +712,13 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
         }
     }
 
-    static class CI extends BI {
+    private static class CI extends BI {
         CI(int value) {
             super(value);
         }
     }
 
-    static class DI extends BI {
+    private static class DI extends BI {
         DI(int value) {
             super(value);
         }

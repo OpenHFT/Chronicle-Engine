@@ -27,7 +27,6 @@ import java.util.function.Function;
 /**
  * Created by Rob Austin
  */
-@Deprecated
 public enum WireType implements Function<Bytes, Wire> {
     TEXT {
         @NotNull
@@ -45,6 +44,5 @@ public enum WireType implements Function<Bytes, Wire> {
 
     // todo to be removed
     @NotNull
-    @Deprecated
     public static Function<Bytes, Wire> wire = BINARY;
 }

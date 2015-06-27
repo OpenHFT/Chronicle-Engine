@@ -38,12 +38,12 @@ import static org.junit.Assert.*;
 
 public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
 
-    static int s_port = 11050;
+    private static int s_port = 11050;
     @NotNull
     @Rule
     public TestName name = new TestName();
     @NotNull
-    private AssetTree assetTree = new VanillaAssetTree().forTesting();
+    private final AssetTree assetTree = new VanillaAssetTree().forTesting();
 
     @Before
     public void before() {
@@ -52,7 +52,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     }
 
     @NotNull
-    ClosableMapSupplier newIntString(@NotNull String name) throws IOException {
+    private ClosableMapSupplier newIntString(@NotNull String name) throws IOException {
         final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(
                 Integer.class, String.class, WireType.TEXT, assetTree, name);
 
@@ -71,7 +71,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     }
 
     @NotNull
-    ClosableMapSupplier<CharSequence, CharSequence> newStrStrMap() throws
+    private ClosableMapSupplier<CharSequence, CharSequence> newStrStrMap() throws
             IOException {
 
         final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(
@@ -704,13 +704,13 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
         }
     }
 
-    static class CI extends BI {
+    private static class CI extends BI {
         CI(int value) {
             super(value);
         }
     }
 
-    static class DI extends BI {
+    private static class DI extends BI {
         DI(int value) {
             super(value);
         }

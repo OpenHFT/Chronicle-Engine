@@ -59,7 +59,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
     @NotNull
     @Rule
     public TestName name = new TestName();
-    private boolean isRemote;
+    private final boolean isRemote;
 
     public SubscriptionTest(Boolean isRemote) {
         this.isRemote = isRemote;

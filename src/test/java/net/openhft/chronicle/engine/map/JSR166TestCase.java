@@ -117,30 +117,30 @@ public class JSR166TestCase extends ThreadMonitoringTest {
      * The number of elements to place in collections, arrays, etc.
      */
     public static final int SIZE = 20;
-    public static final Integer zero = new Integer(0);
-    public static final Integer one = new Integer(1);
-    public static final Integer two = new Integer(2);
-    public static final Integer three = new Integer(3);
-    public static final Integer four = new Integer(4);
-    public static final Integer five = new Integer(5);
-    public static final Integer six = new Integer(6);
-    public static final Integer seven = new Integer(7);
-    public static final Integer eight = new Integer(8);
-    public static final Integer nine = new Integer(9);
-    public static final Integer m1 = new Integer(-1);
-    public static final Integer m2 = new Integer(-2);
-    public static final Integer m3 = new Integer(-3);
-    public static final Integer m4 = new Integer(-4);
-    public static final Integer m5 = new Integer(-5);
-    public static final Integer m6 = new Integer(-6);
-    public static final Integer m10 = new Integer(-10);
-    public static final Integer notPresent = 42;
-    public static final String TEST_STRING = "a test string";
+    static final Integer zero = 0;
+    static final Integer one = 1;
+    static final Integer two = 2;
+    static final Integer three = 3;
+    static final Integer four = 4;
+    static final Integer five = 5;
+    static final Integer six = 6;
+    public static final Integer seven = 7;
+    public static final Integer eight = 8;
+    public static final Integer nine = 9;
+    public static final Integer m1 = -1;
+    public static final Integer m2 = -2;
+    public static final Integer m3 = -3;
+    public static final Integer m4 = -4;
+    public static final Integer m5 = -5;
+    public static final Integer m6 = -6;
+    static final Integer m10 = -10;
+    static final Integer notPresent = 42;
+    private static final String TEST_STRING = "a test string";
     protected static final boolean expensiveTests = false;
-    public static long SHORT_DELAY_MS;
-    public static long SMALL_DELAY_MS;
-    public static long MEDIUM_DELAY_MS;
-    public static long LONG_DELAY_MS;
+    private static long SHORT_DELAY_MS;
+    private static long SMALL_DELAY_MS;
+    private static long MEDIUM_DELAY_MS;
+    private static long LONG_DELAY_MS;
     /**
      * The first exception encountered if any threadAssertXXX method Assert.fails.
      */
@@ -153,7 +153,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
      * if the sleep is shorter than specified, may re-sleep or yield
      * until time elapses.
      */
-    static void delay(long millis) throws InterruptedException {
+    private static void delay(long millis) throws InterruptedException {
         long startTime = System.nanoTime();
         long ns = millis * 1000 * 1000;
         for (; ; ) {
@@ -212,14 +212,14 @@ public class JSR166TestCase extends ThreadMonitoringTest {
      * Returns the shortest timed delay. This could
      * be reimplemented to use for example a Property.
      */
-    protected long getShortDelay() {
+    private long getShortDelay() {
         return 50;
     }
 
     /**
      * Sets delays as multiples of SHORT_DELAY.
      */
-    protected void setDelays() {
+    private void setDelays() {
         SHORT_DELAY_MS = getShortDelay();
         SMALL_DELAY_MS = SHORT_DELAY_MS * 5;
         MEDIUM_DELAY_MS = SHORT_DELAY_MS * 10;
@@ -230,7 +230,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
      * Returns a timeout in milliseconds to be used in tests that
      * verify that operations block or time out.
      */
-    protected long timeoutMillis() {
+    private long timeoutMillis() {
         return SHORT_DELAY_MS / 4;
     }
 
@@ -249,7 +249,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
      * Assert.failure is recorded; subsequent calls to this method from within
      * the same test have no effect.
      */
-    public void threadRecordFailure(Throwable t) {
+    private void threadRecordFailure(Throwable t) {
         threadFailure.compareAndSet(null, t);
     }
 
@@ -297,7 +297,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     /**
      * Find missing try { ... } finally { joinPool(e); }
      */
-    void checkForkJoinPoolThreadLeaks() throws InterruptedException {
+    private void checkForkJoinPoolThreadLeaks() throws InterruptedException {
         Thread[] survivors = new Thread[5];
         int count = Thread.enumerate(survivors);
         for (int i = 0; i < count; i++) {
@@ -320,7 +320,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
      * threadRecordFailure) any AssertionFailedError thrown, so that
      * the current testcase will Assert.fail.
      */
-    public void threadFail(String reason) {
+    private void threadFail(String reason) {
         try {
             Assert.fail(reason);
         } catch (AssertionFailedError t) {
@@ -334,7 +334,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
      * threadRecordFailure) any AssertionFailedError thrown, so that
      * the current testcase will Assert.fail.
      */
-    public void threadAssertTrue(boolean b) {
+    private void threadAssertTrue(boolean b) {
         try {
             Assert.assertTrue(b);
         } catch (AssertionFailedError t) {
@@ -348,7 +348,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
      * threadRecordFailure) any AssertionFailedError thrown, so that
      * the current testcase will Assert.fail.
      */
-    public void threadAssertFalse(boolean b) {
+    private void threadAssertFalse(boolean b) {
         try {
             Assert.assertFalse(b);
         } catch (AssertionFailedError t) {
@@ -425,7 +425,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     /**
      * Calls threadFail with message "should throw" + exceptionName.
      */
-    public void threadShouldThrow(String exceptionName) {
+    private void threadShouldThrow(String exceptionName) {
         threadFail("should throw " + exceptionName);
     }
 
@@ -434,7 +434,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
      * then rethrows the exception, wrapping it in an
      * AssertionFailedError if necessary.
      */
-    public void threadUnexpectedException(@NotNull Throwable t) {
+    private void threadUnexpectedException(@NotNull Throwable t) {
         threadRecordFailure(t);
         t.printStackTrace();
         if (t instanceof RuntimeException)
@@ -475,7 +475,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     /**
      * Checks that thread does not terminate within the given millisecond delay.
      */
-    void assertThreadStaysAlive(@NotNull Thread thread, long millis) {
+    private void assertThreadStaysAlive(@NotNull Thread thread, long millis) {
         try {
             // No need to optimize the Assert.failing case via Thread.join.
             delay(millis);
@@ -496,7 +496,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     /**
      * Checks that the threads do not terminate within the given millisecond delay.
      */
-    void assertThreadsStayAlive(long millis, @NotNull Thread... threads) {
+    private void assertThreadsStayAlive(long millis, @NotNull Thread... threads) {
         try {
             // No need to optimize the Assert.failing case via Thread.join.
             delay(millis);
@@ -518,7 +518,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     /**
      * Checks that future.get times out, with the given millisecond timeout.
      */
-    void assertFutureTimesOut(@NotNull Future future, long timeoutMillis) {
+    private void assertFutureTimesOut(@NotNull Future future, long timeoutMillis) {
         long startTime = System.nanoTime();
         try {
             future.get(timeoutMillis, MILLISECONDS);
@@ -535,7 +535,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     /**
      * Fails with message "should throw " + exceptionName.
      */
-    public void shouldThrow(String exceptionName) {
+    private void shouldThrow(String exceptionName) {
         Assert.fail("Should throw " + exceptionName);
     }
 
@@ -544,7 +544,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
      * Android does not use a SecurityManager. This will simply execute
      * the runnable ingoring permisions.
      */
-    public void runWithPermissions(@NotNull Runnable r, Permission... permissions) {
+    private void runWithPermissions(@NotNull Runnable r, Permission... permissions) {
         r.run();
     }
 
@@ -584,7 +584,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
      * Spin-waits up to the specified number of milliseconds for the given
      * thread to enter a wait state: BLOCKED, WAITING, or TIMED_WAITING.
      */
-    protected void waitForThreadToEnterWaitState(@NotNull Thread thread, long timeoutMillis) {
+    private void waitForThreadToEnterWaitState(@NotNull Thread thread, long timeoutMillis) {
         long startTime = System.nanoTime();
         for (; ; ) {
             State s = thread.getState();
@@ -615,7 +615,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
      * startNanoTime, which must have been previously returned from a
      * call to.
      */
-    protected long millisElapsedSince(long startNanoTime) {
+    private long millisElapsedSince(long startNanoTime) {
         return NANOSECONDS.toMillis(System.nanoTime() - startNanoTime);
     }
 
@@ -635,7 +635,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
      * to terminate (using {@link Thread#join(long)}), else interrupts
      * the thread (in the hope that it may terminate later) and Assert.fails.
      */
-    protected void awaitTermination(@NotNull Thread t, long timeoutMillis) {
+    private void awaitTermination(@NotNull Thread t, long timeoutMillis) {
         try {
             t.join(timeoutMillis);
         } catch (InterruptedException ie) {
@@ -682,7 +682,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
         };
     }
 
-    public void await(@NotNull CountDownLatch latch) {
+    private void await(@NotNull CountDownLatch latch) {
         try {
             Assert.assertTrue(latch.await(LONG_DELAY_MS, MILLISECONDS));
         } catch (Throwable t) {
@@ -718,7 +718,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
         Assert.assertFalse(Arrays.equals(serialBytes(x), serialBytes(y)));
     }
 
-    byte[] serialBytes(Object o) {
+    private byte[] serialBytes(Object o) {
         try {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(bos);
@@ -839,32 +839,32 @@ public class JSR166TestCase extends ThreadMonitoringTest {
 //         }
 //     }
 
-    public static class NoOpRunnable implements Runnable {
+    private static class NoOpRunnable implements Runnable {
         public void run() {
         }
     }
 
-    public static class NoOpCallable implements Callable {
+    private static class NoOpCallable implements Callable {
         public Object call() {
             return Boolean.TRUE;
         }
     }
 
-    public static class StringTask implements Callable<String> {
+    private static class StringTask implements Callable<String> {
         @NotNull
         public String call() {
             return TEST_STRING;
         }
     }
 
-    public static class NPETask implements Callable<String> {
+    private static class NPETask implements Callable<String> {
         @NotNull
         public String call() {
             throw new NullPointerException();
         }
     }
 
-    public static class CallableOne implements Callable<Integer> {
+    private static class CallableOne implements Callable<Integer> {
         @NotNull
         public Integer call() {
             return one;
@@ -874,7 +874,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     /**
      * For use as ThreadFactory in constructors
      */
-    public static class SimpleThreadFactory implements ThreadFactory {
+    private static class SimpleThreadFactory implements ThreadFactory {
         @NotNull
         public Thread newThread(Runnable r) {
             return new Thread(r);
@@ -953,7 +953,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     /**
      * For use as RejectedExecutionHandler in constructors
      */
-    public static class NoOpREHandler implements RejectedExecutionHandler {
+    private static class NoOpREHandler implements RejectedExecutionHandler {
         public void rejectedExecution(Runnable r,
                                       ThreadPoolExecutor executor) {
         }
@@ -1058,25 +1058,25 @@ public class JSR166TestCase extends ThreadMonitoringTest {
         }
     }
 
-    public class ShortRunnable extends CheckedRunnable {
+    protected class ShortRunnable extends CheckedRunnable {
         protected void realRun() throws Throwable {
             delay(SHORT_DELAY_MS);
         }
     }
 
-    public class ShortInterruptedRunnable extends CheckedInterruptedRunnable {
+    protected class ShortInterruptedRunnable extends CheckedInterruptedRunnable {
         protected void realRun() throws InterruptedException {
             delay(SHORT_DELAY_MS);
         }
     }
 
-    public class SmallRunnable extends CheckedRunnable {
+    protected class SmallRunnable extends CheckedRunnable {
         protected void realRun() throws Throwable {
             delay(SMALL_DELAY_MS);
         }
     }
 
-    public class SmallPossiblyInterruptedRunnable extends CheckedRunnable {
+    protected class SmallPossiblyInterruptedRunnable extends CheckedRunnable {
         protected void realRun() {
             try {
                 delay(SMALL_DELAY_MS);
@@ -1085,26 +1085,26 @@ public class JSR166TestCase extends ThreadMonitoringTest {
         }
     }
 
-    public class SmallCallable extends CheckedCallable {
+    protected class SmallCallable extends CheckedCallable {
         protected Object realCall() throws InterruptedException {
             delay(SMALL_DELAY_MS);
             return Boolean.TRUE;
         }
     }
 
-    public class MediumRunnable extends CheckedRunnable {
+    protected class MediumRunnable extends CheckedRunnable {
         protected void realRun() throws Throwable {
             delay(MEDIUM_DELAY_MS);
         }
     }
 
-    public class MediumInterruptedRunnable extends CheckedInterruptedRunnable {
+    protected class MediumInterruptedRunnable extends CheckedInterruptedRunnable {
         protected void realRun() throws InterruptedException {
             delay(MEDIUM_DELAY_MS);
         }
     }
 
-    public class MediumPossiblyInterruptedRunnable extends CheckedRunnable {
+    protected class MediumPossiblyInterruptedRunnable extends CheckedRunnable {
         protected void realRun() {
             try {
                 delay(MEDIUM_DELAY_MS);
@@ -1113,7 +1113,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
         }
     }
 
-    public class LongPossiblyInterruptedRunnable extends CheckedRunnable {
+    protected class LongPossiblyInterruptedRunnable extends CheckedRunnable {
         protected void realRun() {
             try {
                 delay(LONG_DELAY_MS);
@@ -1160,7 +1160,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
      * A CyclicBarrier that uses timed await and Assert.fails with
      * AssertionFailedErrors instead of throwing checked exceptions.
      */
-    public class CheckedBarrier extends CyclicBarrier {
+    private class CheckedBarrier extends CyclicBarrier {
         public CheckedBarrier(int parties) {
             super(parties);
         }

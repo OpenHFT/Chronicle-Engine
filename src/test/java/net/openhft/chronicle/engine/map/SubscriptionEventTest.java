@@ -89,7 +89,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
         );
     }
 
-    static void waitFor(Object subscriber) {
+    private static void waitFor(Object subscriber) {
         for (int i = 1; i < 10; i++) {
             Jvm.pause(i);
             try {
