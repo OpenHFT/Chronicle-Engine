@@ -16,8 +16,10 @@
 
 package net.openhft.chronicle.engine.map;
 
+import jdk.nashorn.internal.ir.annotations.Ignore;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
+import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.Assetted;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
@@ -43,6 +45,7 @@ import java.util.function.Supplier;
 
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
 import static net.openhft.chronicle.engine.server.WireType.wire;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -194,16 +197,41 @@ public class MapClientTest extends ThreadMonitoringTest {
     }
 
     @Test
+    public void testValuesCollection() throws IOException, InterruptedException {
+        HashMap<String, String> data = new HashMap<String, String>();
+        data.put("test1", "value1");
+        data.put("test1", "value1");
+        supplyMap(String.class, String.class, mapProxy -> {
+            mapProxy.putAll(data);
+            assertEquals(data.size(), mapProxy.size());
+            assertEquals(data.size(), mapProxy.values().size());
+
+            Iterator<String> it = mapProxy.values().iterator();
+            ArrayList<String> values = new ArrayList<String>();
+            while (it.hasNext())
+            {
+                values.add(it.next());
+            }
+            Collections.sort(values);
+            Object[] dataValues = data.values().toArray();
+            Arrays.sort(dataValues);
+            assertArrayEquals(dataValues, values.toArray());
+        });
+    }
+
+    @Test
     public void testDoubleValues() throws IOException, InterruptedException {
 
         supplyMap(Double.class, Double.class, mapProxy -> {
 
             mapProxy.put(1.0, 1.0);
             mapProxy.put(2.0, 2.0);
+            mapProxy.put(3.0, 0.0);
             assertEquals(1.0, mapProxy.get(1.0), 0);
             assertEquals(2.0, mapProxy.get(2.0), 0);
+            assertEquals(0.0, mapProxy.get(3.0), 0);
 
-            assertEquals(2, mapProxy.size());
+            assertEquals(3, mapProxy.size());
         });
     }
 
@@ -214,10 +242,23 @@ public class MapClientTest extends ThreadMonitoringTest {
 
             mapProxy.put(1.0f, 1.0f);
             mapProxy.put(2.0f, 2.0f);
+            mapProxy.put(3.0f, 0.0f);
             assertEquals(1.0f, mapProxy.get(1.0f), 0);
             assertEquals(2.0f, mapProxy.get(2.0f), 0);
+            assertEquals(0.0f, mapProxy.get(3.0f), 0);
 
-            assertEquals(2, mapProxy.size());
+            assertEquals(3, mapProxy.size());
+        });
+    }
+
+    @org.junit.Ignore("Will be very slow, of course")
+    @Test
+    public void testLargeUpdates() throws IOException, InterruptedException {
+        String val = new String(new char[1024*1024]).replace("\0", "X");
+        supplyMap(String.class, String.class, mapProxy -> {
+            for (int j = 0; j < 30*1000; j++) {
+                mapProxy.put("key", val);
+            }
         });
     }
 
