@@ -184,6 +184,7 @@ public class EngineWireHandler extends WireTcpHandler {
                             viewType == ObjectKVSSubscription.class ||
                             viewType == TopicPublisher.class ||
                             viewType == Publisher.class ||
+                            viewType == TopologySubscription.class ||
                             viewType == Replication.class) {
 
                         // default to string type if not provided

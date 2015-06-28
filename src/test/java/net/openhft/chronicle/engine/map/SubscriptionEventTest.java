@@ -44,13 +44,11 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
 import java.util.function.Function;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
 import static net.openhft.chronicle.engine.server.WireType.wire;
@@ -82,10 +80,10 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     @Parameters
     public static Collection<Object[]> data() throws IOException {
         return Arrays.asList(
-                new Object[]{Boolean.TRUE, WireType.TEXT}
-                , new Object[]{Boolean.TRUE, WireType.BINARY}
-                , new Object[]{Boolean.FALSE, WireType.TEXT}
+                new Object[]{Boolean.FALSE, WireType.TEXT}
                 , new Object[]{Boolean.FALSE, WireType.BINARY}
+                , new Object[]{Boolean.TRUE, WireType.TEXT}
+                , new Object[]{Boolean.TRUE, WireType.BINARY}
         );
     }
 
@@ -156,45 +154,51 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
         });
     }
 
-    @Test
-    @Ignore
-    public void testTopologicalEventsMock() throws InvalidSubscriberException {
 
-        Subscriber<TopologicalEvent> subscriber = createMock(Subscriber.class);
-        subscriber.onMessage(ExistingAssetEvent.of("/", NAME));
-        subscriber.onMessage(AddedAssetEvent.of("/", "group"));
-        subscriber.onMessage(AddedAssetEvent.of("/group", NAME));
-        subscriber.onMessage(AddedAssetEvent.of("/group", NAME + 2));
-        subscriber.onMessage(RemovedAssetEvent.of("/group", NAME));
-    //    subscriber.onEndOfSubscription();
-        replay(subscriber);
+    @Test
+    public void testTopologicalEvents() throws IOException, InterruptedException {
+
+        final BlockingQueue<TopologicalEvent> eventsQueue = new LinkedBlockingQueue<>();
 
         yamlLoggger(() -> {
             try {
-                // todo fix the text
-                YamlLogging.writeMessage = "Sets up a subscription to listen to map events. And " +
-                        "subsequently puts and entry into the map, notice that the InsertedEvent is " +
-                        "received from the server";
+                YamlLogging.writeMessage = "Sets up a subscription to listen to new maps being added and removed.";
+                Subscriber<TopologicalEvent> subscription = eventsQueue::add;
+                {
+                    assetTree.registerSubscriber(NAME, TopologicalEvent.class, subscription);
 
-                assetTree.registerSubscriber(NAME, TopologicalEvent.class, subscriber);
+                    TopologicalEvent take = eventsQueue.poll(1, SECONDS);
+                    Assert.assertEquals(ExistingAssetEvent.of("/", NAME), take);
+                }
+                {
+                    assetTree.acquireMap("/group/" + NAME, String.class, String.class);
 
-                YamlLogging.writeMessage = "puts an entry into the map so that an event will be " +
-                        "triggered";
+                    TopologicalEvent take1 = eventsQueue.poll(1, SECONDS);
+                    Assert.assertEquals(AddedAssetEvent.of("/", "group"), take1);
 
-                assetTree.acquireMap("/group/" + NAME, String.class, String.class);
-                assetTree.acquireMap("/group/" + NAME + 2, String.class, String.class);
-                Jvm.pause(50);
-                // the client cannot remove maps yet.
-                serverAssetTree.acquireAsset(RequestContext.requestContext("/group")).removeChild(NAME);
+                }
+                {
+                    assetTree.acquireMap("/group/" + NAME + 2, String.class, String.class);
 
-                assetTree.unregisterSubscriber(NAME, subscriber);
+                    TopologicalEvent take3 = eventsQueue.poll(1, SECONDS);
+                    Assert.assertEquals(AddedAssetEvent.of("/group", NAME + 2), take3);
+                }
+                {
+                    // the client cannot remove maps yet.
+                    serverAssetTree.acquireAsset(RequestContext.requestContext("/group")).removeChild(NAME);
 
+                    TopologicalEvent take4 = eventsQueue.poll(1, SECONDS);
+                    Assert.assertEquals(RemovedAssetEvent.of("/group", NAME), take4);
+                }
+
+                assetTree.unregisterSubscriber(NAME, subscription);
             } catch (Exception e) {
                 throw Jvm.rethrow(e);
             }
         });
-        waitFor(subscriber);
     }
+
+
 
     @Test
     public void testTopicSubscribe() throws InvalidSubscriberException {

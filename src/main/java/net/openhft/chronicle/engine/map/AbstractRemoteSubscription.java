@@ -7,6 +7,7 @@ import net.openhft.chronicle.engine.api.pubsub.Subscription;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.server.internal.MapWireHandler;
 import net.openhft.chronicle.engine.server.internal.PublisherHandler;
+import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.network.connection.AbstractAsyncSubscription;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.CoreFields;
@@ -84,7 +85,8 @@ abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient imp
                     } else if (CoreFields.reply.contentEquals(eventname)) {
                         final Class aClass = rc.elementType();
 
-                        final Object object = (MapEvent.class.isAssignableFrom(aClass)) ?
+                        final Object object = (MapEvent.class.isAssignableFrom(aClass) ||
+                                (TopologicalEvent.class.isAssignableFrom(aClass))) ?
                                 valueIn.typedMarshallable()
                                 : valueIn.object(rc.elementType());
 
