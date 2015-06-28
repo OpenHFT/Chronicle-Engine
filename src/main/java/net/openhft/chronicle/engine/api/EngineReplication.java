@@ -98,7 +98,7 @@ public interface EngineReplication extends Replication {
      */
     interface ModificationIterator {
 
-        void forEach(@NotNull Consumer<ReplicationEntry> consumer) throws InterruptedException;
+        void forEach(@NotNull Consumer<ReplicationEntry> consumer);
 
         boolean hasNext();
         /**

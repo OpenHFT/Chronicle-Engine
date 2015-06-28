@@ -55,14 +55,14 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
     @Test(timeout = 100000)
     @Ignore("performance test")
-    public void testLargeStringTextWire() throws Exception {
+    public void testLargeStringTextWire() throws IOException {
         final int MB = 1 << 20;
         testStrings(50, 2 * MB, WireType.TEXT);
     }
 
     @Test(timeout = 100000)
     @Ignore("performance test")
-    public void testLargeStringBinaryWire() throws Exception {
+    public void testLargeStringBinaryWire() throws IOException {
         final int MB = 1 << 20;
         testStrings(50, 2 * MB, WireType.BINARY);
     }
@@ -116,7 +116,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
     @Test
     @Ignore("Waiting for merge")
-    public void test2MBEntries() throws Exception {
+    public void test2MBEntries() throws IOException {
 
         // server
         try (final RemoteMapSupplier<String, String> remote = new
@@ -160,7 +160,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     }
 
     @Test
-    public void testValuesCollection() throws Exception {
+    public void testValuesCollection() throws IOException {
 
         // server
         try (final RemoteMapSupplier<String, String> remote = new

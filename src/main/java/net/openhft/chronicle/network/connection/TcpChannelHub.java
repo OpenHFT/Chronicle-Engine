@@ -569,7 +569,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
 
     public interface Task {
-        void run() throws Exception;
+        void run();
     }
 
     /**

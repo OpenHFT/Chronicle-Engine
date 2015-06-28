@@ -109,7 +109,7 @@ public class ReplicationTest {
 
 
     @Test
-    public void test() throws Exception {
+    public void test() {
 
         final ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME, String.class, String
                 .class);

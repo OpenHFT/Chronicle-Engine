@@ -17,6 +17,7 @@
 package net.openhft.chronicle.engine.map;
 
 import junit.framework.AssertionFailedError;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,11 +25,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.FilePermission;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.lang.Thread.State;
 import java.security.*;
 import java.util.*;
@@ -270,7 +267,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
      * Triggers test case Assert.failure if interrupt status is set in the main thread.
      */
     @After
-    public void tearDown() throws Exception {
+    public void tearDown() throws InterruptedException {
         Throwable t = threadFailure.getAndSet(null);
         if (t != null) {
             if (t instanceof Error)
@@ -278,7 +275,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
             else if (t instanceof RuntimeException)
                 throw (RuntimeException) t;
             else if (t instanceof Exception)
-                throw (Exception) t;
+                throw Jvm.rethrow(t);
             else {
                 AssertionFailedError afe =
                         new AssertionFailedError(t.toString());

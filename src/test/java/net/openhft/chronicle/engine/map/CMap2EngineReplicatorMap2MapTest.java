@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.annotation.NotNull;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.map.ChronicleMap;
@@ -62,7 +63,7 @@ public class CMap2EngineReplicatorMap2MapTest {
      * tests that the updates from one map are replicated to the other and visa versa
      */
     @Test
-    public void testLocalPut() throws Exception {
+    public void testLocalPut() {
 
         final ModificationIterator iterator1for2 = replicator1.acquireModificationIterator
                 (replicator2.identifier());
@@ -110,7 +111,7 @@ public class CMap2EngineReplicatorMap2MapTest {
      * tests that the updates from one map are replicated to the other and visa versa
      */
     @Test
-    public void testLocalPutBootstrap() throws Exception {
+    public void testLocalPutBootstrap() throws InterruptedException {
 
         map1.put("hello1", "world1");
         map2.put("hello2", "world2");
@@ -165,18 +166,18 @@ public class CMap2EngineReplicatorMap2MapTest {
      * only resends the update that have occurred while its been disconnected ( plus the updates
      * that occurred in the last milliseconds while it was connected )
      *
-     * @throws Exception
+     * @
      */
     @Ignore
     @Test
-    public void testBootstrapFromKnownTime() throws Exception {
+    public void testBootstrapFromKnownTime() throws InterruptedException {
 
         final ModificationIterator iterator1for2 = replicator1.acquireModificationIterator
                 (replicator2.identifier());
 
         map1.put("hello1", "world1");
 
-        Thread.sleep(1);
+        Jvm.pause(1);
 
         map1.put("hello2", "world2"); //this is the last update before the disconnection, so will
         // be sent again as its in the last known milliseconds
@@ -188,7 +189,7 @@ public class CMap2EngineReplicatorMap2MapTest {
         });
 
 
-        Thread.sleep(1);
+        Jvm.pause(1);
         // !---------------- simulate a disconnection ---------------------
         // we do this by requesting by dirtying the entries form the last know timestamp
         final long timeSendInBootStrapMessage = replicator1.lastModificationTime(replicator2.identifier());
@@ -196,7 +197,7 @@ public class CMap2EngineReplicatorMap2MapTest {
         assert timeSendInBootStrapMessage != 0;
 
         map1.put("hello3", "world3");
-        Thread.sleep(1);
+        Jvm.pause(1);
 
         // this is where the bootstrap occurs
         iterator1for2.dirtyEntries(timeSendInBootStrapMessage);

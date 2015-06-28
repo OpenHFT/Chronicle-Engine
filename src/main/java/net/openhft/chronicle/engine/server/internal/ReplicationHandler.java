@@ -1,6 +1,5 @@
 package net.openhft.chronicle.engine.server.internal;
 
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.pubsub.Replication;
@@ -99,20 +98,15 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
                     System.out.println("onModificationNotifier");
 
-                    try {
-                        mi.forEach(e -> publisher.add(publish -> {
+                    mi.forEach(e -> publisher.add(publish -> {
 
-                            publish.writeDocument(true,
-                                    wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
+                        publish.writeDocument(true,
+                                wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
 
-                            publish.writeDocument(false,
-                                    wire -> wire.write(replicactionReply).typedMarshallable(e));
+                        publish.writeDocument(false,
+                                wire -> wire.write(replicactionReply).typedMarshallable(e));
 
-                        }));
-                    } catch (InterruptedException e) {
-                        Jvm.rethrow(e);
-                    }
-
+                    }));
                 });
 
                 mi.setModificationNotifier(eventLoop::unpause);
@@ -127,7 +121,6 @@ public class ReplicationHandler<E> extends AbstractHandler {
                         if (!mi.hasNext())
                             return false;
 
-                        try {
                             mi.forEach(e -> publisher.add(publish -> {
 
                                 publish.writeDocument(true,
@@ -137,10 +130,6 @@ public class ReplicationHandler<E> extends AbstractHandler {
                                         wire -> wire.write(replicactionReply).typedMarshallable(e));
 
                             }));
-                        } catch (InterruptedException e) {
-                            Jvm.rethrow(e);
-                        }
-
                         return true;
 
                     }

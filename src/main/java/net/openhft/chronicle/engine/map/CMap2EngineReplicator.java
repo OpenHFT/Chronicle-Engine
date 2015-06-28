@@ -26,7 +26,6 @@ import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.hash.replication.EngineReplicationLangBytesConsumer;
 import net.openhft.chronicle.map.EngineReplicationLangBytes;
 import net.openhft.chronicle.map.EngineReplicationLangBytes.EngineModificationIterator;
-import net.openhft.chronicle.map.EngineReplicationLangBytes.EngineReplicationModificationNotifier;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.IByteBufferBytes;
 import org.jetbrains.annotations.NotNull;
@@ -116,7 +115,7 @@ public class CMap2EngineReplicator implements EngineReplication,
 
         return new ModificationIterator() {
             @Override
-            public void forEach(@NotNull Consumer<ReplicationEntry> consumer) throws InterruptedException {
+            public void forEach(@NotNull Consumer<ReplicationEntry> consumer) {
                 while (hasNext()) {
                     nextEntry(entry -> {
                         consumer.accept(entry);
@@ -129,7 +128,7 @@ public class CMap2EngineReplicator implements EngineReplication,
                 return instance.hasNext();
             }
 
-            private boolean nextEntry(@NotNull final EntryCallback callback) throws InterruptedException {
+            private boolean nextEntry(@NotNull final EntryCallback callback) {
                 return instance.nextEntry((key, value, timestamp,
                                            identifier, isDeleted,
                                            bootStrapTimeStamp) ->
