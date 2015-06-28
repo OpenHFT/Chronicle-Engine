@@ -171,14 +171,14 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                     Assert.assertEquals(ExistingAssetEvent.of("/", NAME), take);
                 }
                 {
-                    assetTree.acquireMap("/group/" + NAME, String.class, String.class);
+                    serverAssetTree.acquireMap("/group/" + NAME, String.class, String.class);
 
                     TopologicalEvent take1 = eventsQueue.poll(1, SECONDS);
                     Assert.assertEquals(AddedAssetEvent.of("/", "group"), take1);
 
                 }
                 {
-                    assetTree.acquireMap("/group/" + NAME + 2, String.class, String.class);
+                    serverAssetTree.acquireMap("/group/" + NAME + 2, String.class, String.class);
 
                     TopologicalEvent take3 = eventsQueue.poll(1, SECONDS);
                     Assert.assertEquals(AddedAssetEvent.of("/group", NAME + 2), take3);
