@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.engine.collection;
 
-import net.openhft.chronicle.engine.collection.CollectionWireHandler.SetEventId;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.ValueIn;
@@ -27,11 +26,12 @@ import java.util.Iterator;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static net.openhft.chronicle.engine.collection.CollectionWireHandler.SetEventId.*;
+import static net.openhft.chronicle.engine.collection.CollectionWireHandler.*;
+import static net.openhft.chronicle.engine.collection.CollectionWireHandler.EventId.*;
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
 
 public class ClientWiredStatelessChronicleCollection<U, E extends Collection<U>> extends
-        AbstractStatelessClient<SetEventId> implements Collection<U> {
+        AbstractStatelessClient<EventId> implements Collection<U> {
 
     @NotNull
     private final Function<ValueIn, U> consumer;
@@ -66,7 +66,7 @@ public class ClientWiredStatelessChronicleCollection<U, E extends Collection<U>>
     @NotNull
     public Iterator<U> iterator() {
         // todo improve numberOfSegments
-        final int numberOfSegments = proxyReturnUint16(SetEventId.numberOfSegments);
+        final int numberOfSegments = proxyReturnUint16(EventId.numberOfSegments);
 
         // todo iterate the segments for the moment we just assume one segment
         return segmentSet(1).iterator();
@@ -101,7 +101,7 @@ public class ClientWiredStatelessChronicleCollection<U, E extends Collection<U>>
     @NotNull
     private E asCollection() {
         final E e = factory.get();
-        final int numberOfSegments = proxyReturnUint16(SetEventId.numberOfSegments);
+        final int numberOfSegments = proxyReturnUint16(EventId.numberOfSegments);
 
         for (long j = 0; j < numberOfSegments; j++) {
             final long i = j;

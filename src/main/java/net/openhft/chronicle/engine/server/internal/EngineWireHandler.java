@@ -31,7 +31,6 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.engine.collection.CollectionWireHandler;
-import net.openhft.chronicle.engine.collection.CollectionWireHandlerProcessor;
 import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.engine.tree.TopologySubscription;
@@ -46,8 +45,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.StreamCorruptedException;
-import java.util.*;
-import java.util.Map.Entry;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Queue;
 import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -67,16 +67,16 @@ public class EngineWireHandler extends WireTcpHandler {
 
     private final StringBuilder cspText = new StringBuilder();
     @NotNull
-    private final CollectionWireHandler<byte[], Set<byte[]>> keySetHandler;
+    private final CollectionWireHandler keySetHandler;
 
     @NotNull
     private final MapWireHandler mapWireHandler;
     @NotNull
-    private final CollectionWireHandler<Entry<byte[], byte[]>, Set<Entry<byte[], byte[]>>> entrySetHandler;
+    private final CollectionWireHandler entrySetHandler;
     @NotNull
-    private final CollectionWireHandler<byte[], Collection<byte[]>> valuesHandler;
+    private final CollectionWireHandler valuesHandler;
     @NotNull
-    private final ObjectKVSubscriptionHandlerProcessor subscriptionHandler;
+    private final ObjectKVSubscriptionHandler subscriptionHandler;
 
     @NotNull
     private final TopologySubscriptionHandler topologySubscriptionHandler;
@@ -128,11 +128,10 @@ public class EngineWireHandler extends WireTcpHandler {
         this.assetTree = assetTree;
         this.mapWireHandler = new MapWireHandler<>();
         this.metaDataConsumer = wireInConsumer();
-
-        this.keySetHandler = new CollectionWireHandlerProcessor<>();
-        this.entrySetHandler = new CollectionWireHandlerProcessor<>();
-        this.valuesHandler = new CollectionWireHandlerProcessor<>();
-        this.subscriptionHandler = new ObjectKVSubscriptionHandlerProcessor();
+        this.keySetHandler = new CollectionWireHandler();
+        this.entrySetHandler = new CollectionWireHandler();
+        this.valuesHandler = new CollectionWireHandler();
+        this.subscriptionHandler = new ObjectKVSubscriptionHandler();
         this.topologySubscriptionHandler = new TopologySubscriptionHandler();
         this.topicPublisherHandler = new TopicPublisherHandler();
         this.publisherHandler = new PublisherHandler();
@@ -288,7 +287,7 @@ public class EngineWireHandler extends WireTcpHandler {
                     if (viewType == TopologySubscription.class) {
                         topologySubscriptionHandler.process(in,
                                 requestContext, publisher, assetTree, tid,
-                                outWire, (TopologySubscription ) view);
+                                outWire, (TopologySubscription) view);
                         return;
                     }
 

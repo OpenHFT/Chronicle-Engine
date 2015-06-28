@@ -272,7 +272,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
             } finally {
                /* if (Jvm.isDebug() && YamlLogging.showServerWrites) {
                     final Bytes<?> outBytes = outWire.bytes();
-                    long len = outBytes.position() - CollectionWireHandlerProcessor.SIZE_OF_SIZE;
+                    long len = outBytes.position() - CollectionWireHandler.SIZE_OF_SIZE;
                     if (len == 0) {
                         LOG.info("--------------------------------------------\n" +
                                 "server writes:\n\n<EMPTY>");
@@ -280,7 +280,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                     } else {
                         LOG.info("--------------------------------------------\n" +
                                 "server writes:\n\n" +
-                                Wires.fromSizePrefixedBlobs(outBytes, CollectionWireHandlerProcessor.SIZE_OF_SIZE, len));
+                                Wires.fromSizePrefixedBlobs(outBytes, CollectionWireHandler.SIZE_OF_SIZE, len));
                     }
                 }*/
             }

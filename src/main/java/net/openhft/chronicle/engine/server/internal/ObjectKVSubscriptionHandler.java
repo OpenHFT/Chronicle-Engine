@@ -15,16 +15,16 @@ import java.util.Queue;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import static net.openhft.chronicle.engine.server.internal.ObjectKVSubscriptionHandlerProcessor.EventId.registerTopicSubscriber;
+import static net.openhft.chronicle.engine.server.internal.ObjectKVSubscriptionHandler.EventId.registerTopicSubscriber;
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
 import static net.openhft.chronicle.network.connection.CoreFields.tid;
 
 /**
  * Created by Rob Austin
  */
-public class ObjectKVSubscriptionHandlerProcessor extends SubscriptionHandler<ObjectKVSSubscription> {
+public class ObjectKVSubscriptionHandler extends SubscriptionHandler<ObjectKVSSubscription> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ObjectKVSubscriptionHandlerProcessor.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ObjectKVSubscriptionHandler.class);
 
     @Nullable
     private final BiConsumer<WireIn, Long> dataConsumer = (inWire, inputTid) -> {
