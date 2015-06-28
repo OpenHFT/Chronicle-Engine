@@ -22,7 +22,6 @@ import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
 import net.openhft.chronicle.engine.api.pubsub.Replication;
-import net.openhft.chronicle.engine.api.pubsub.Subscription;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
@@ -77,14 +76,17 @@ public class EngineWireHandler extends WireTcpHandler {
     @NotNull
     private final CollectionWireHandler<byte[], Collection<byte[]>> valuesHandler;
     @NotNull
-    private final SubscriptionHandlerProcessor subscriptionHandler;
+    private final ObjectKVSubscriptionHandlerProcessor subscriptionHandler;
+
+    @NotNull
+    private final TopologySubscriptionHandler topologySubscriptionHandler;
     @NotNull
     private final TopicPublisherHandler topicPublisherHandler;
     @NotNull
     private final PublisherHandler publisherHandler;
 
-  //  @NotNull
-  //  private final TopologyHandler topologyHandler;
+    //  @NotNull
+    //  private final TopologyHandler topologyHandler;
 
     @NotNull
     private final ReplicationHandler replicationHandler;
@@ -130,7 +132,8 @@ public class EngineWireHandler extends WireTcpHandler {
         this.keySetHandler = new CollectionWireHandlerProcessor<>();
         this.entrySetHandler = new CollectionWireHandlerProcessor<>();
         this.valuesHandler = new CollectionWireHandlerProcessor<>();
-        this.subscriptionHandler = new SubscriptionHandlerProcessor();
+        this.subscriptionHandler = new ObjectKVSubscriptionHandlerProcessor();
+        this.topologySubscriptionHandler = new TopologySubscriptionHandler();
         this.topicPublisherHandler = new TopicPublisherHandler();
         this.publisherHandler = new PublisherHandler();
         this.replicationHandler = new ReplicationHandler();
@@ -278,7 +281,14 @@ public class EngineWireHandler extends WireTcpHandler {
                     if (viewType == ObjectKVSSubscription.class) {
                         subscriptionHandler.process(in,
                                 requestContext, publisher, assetTree, tid,
-                                outWire, (Subscription) view);
+                                outWire, (ObjectKVSSubscription) view);
+                        return;
+                    }
+
+                    if (viewType == TopologySubscription.class) {
+                        topologySubscriptionHandler.process(in,
+                                requestContext, publisher, assetTree, tid,
+                                outWire, (TopologySubscription ) view);
                         return;
                     }
 
@@ -303,14 +313,6 @@ public class EngineWireHandler extends WireTcpHandler {
                         return;
                     }
 
-
-                   /* if (viewType == TopologySubscription.class) {
-                        topologyHandler.process(in,
-                                publisher, tid, outWire,
-                                hostIdentifier,
-                                (Replication) view, isClosed, eventLoop);
-                        return;
-                    }*/
 
                 }
 

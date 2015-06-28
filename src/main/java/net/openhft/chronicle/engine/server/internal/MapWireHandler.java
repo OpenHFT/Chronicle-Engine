@@ -411,8 +411,6 @@ public class MapWireHandler<K, V> extends AbstractHandler {
         valueBuilder,
         remoteIdentifier,
         numberOfSegments,
-        subscribe,
-        unSubscribe,
         bootstap;
 
         private final WireKey[] params;

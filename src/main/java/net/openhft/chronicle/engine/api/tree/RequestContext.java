@@ -28,6 +28,7 @@ import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
 import net.openhft.chronicle.engine.server.WireType;
+import net.openhft.chronicle.engine.tree.TopologySubscription;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,6 +52,7 @@ public class RequestContext implements Cloneable {
         addAlias(Publisher.class, "Publisher, Pub");
         addAlias(TopicPublisher.class, "TopicPublisher, TopicPub");
         addAlias(ObjectKVSSubscription.class, "Subscription");
+        addAlias(TopologySubscription.class, "topologySubscription");
         addAlias(Reference.class, "Reference, Ref");
     }
 

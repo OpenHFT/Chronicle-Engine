@@ -25,30 +25,20 @@ import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.server.internal.MapWireHandler;
-import net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId;
 import net.openhft.chronicle.network.connection.AbstractAsyncSubscription;
-import net.openhft.chronicle.network.connection.AbstractStatelessClient;
-import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
-import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
-import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
-import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.subscribe;
-import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.unSubscribe;
-import static net.openhft.chronicle.engine.server.internal.SubscriptionHandlerProcessor.EventId.*;
+import static net.openhft.chronicle.engine.server.internal.ObjectKVSubscriptionHandlerProcessor.EventId.*;
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
 
-public class RemoteKVSSubscription<K, MV, V> extends RemoteSubscription<MapEvent<K, V>> implements
+public class RemoteKVSSubscription<K, MV, V> extends AbstractRemoteSubscription<MapEvent<K, V>> implements
         ObjectKVSSubscription<K, MV, V>, Closeable {
 
     private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);

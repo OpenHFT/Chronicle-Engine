@@ -2,44 +2,35 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
-import net.openhft.chronicle.engine.api.pubsub.Publisher;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.Subscription;
-import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.server.internal.MapWireHandler;
 import net.openhft.chronicle.engine.server.internal.PublisherHandler;
-import net.openhft.chronicle.engine.tree.TopologicalEvent;
-import net.openhft.chronicle.engine.tree.TopologySubscription;
-import net.openhft.chronicle.network.connection.*;
+import net.openhft.chronicle.network.connection.AbstractAsyncSubscription;
+import net.openhft.chronicle.network.connection.AbstractStatelessClient;
+import net.openhft.chronicle.network.connection.CoreFields;
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
-
-
-import net.openhft.chronicle.engine.api.tree.Asset;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
-import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.subscribe;
-import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.unSubscribe;
-import static net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId.registerTopicSubscriber;
-import static net.openhft.chronicle.engine.server.internal.SubscriptionHandlerProcessor.EventId.entrySubscriberCount;
-import static net.openhft.chronicle.engine.server.internal.SubscriptionHandlerProcessor.EventId.keySubscriberCount;
-import static net.openhft.chronicle.engine.server.internal.SubscriptionHandlerProcessor.EventId.topicSubscriberCount;
+
+import static net.openhft.chronicle.engine.server.internal.SubscriptionHandler.SubscriptionEventID.*;
 
 /**
  * Created by rob on 27/06/2015.
  */
-public class RemoteSubscription<E> extends AbstractStatelessClient implements Subscription<E>  {
+abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient implements Subscription<E> {
 
     private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
     protected final Map<Object, Long> subscribersToTid = new ConcurrentHashMap<>();
@@ -49,7 +40,7 @@ public class RemoteSubscription<E> extends AbstractStatelessClient implements Su
      * @param cid used by proxies such as the entry-set
      * @param csp the uri of the request
      */
-    public RemoteSubscription(@NotNull TcpChannelHub hub, long cid, @NotNull String csp) {
+    public AbstractRemoteSubscription(@NotNull TcpChannelHub hub, long cid, @NotNull String csp) {
         super(hub, cid, csp);
     }
 
@@ -77,7 +68,7 @@ public class RemoteSubscription<E> extends AbstractStatelessClient implements Su
 
             @Override
             public void onSubscribe(@NotNull final WireOut wireOut) {
-                wireOut.writeEventName(subscribe).
+                wireOut.writeEventName(registerSubscriber).
                         typeLiteral(CLASS_ALIASES.nameFor(rc.elementType()));
             }
 
@@ -93,11 +84,11 @@ public class RemoteSubscription<E> extends AbstractStatelessClient implements Su
                     } else if (CoreFields.reply.contentEquals(eventname)) {
                         final Class aClass = rc.elementType();
 
-                        final Object object = (MapEvent.class.isAssignableFrom(aClass)) ? valueIn
-                                .typedMarshallable()
+                        final Object object = (MapEvent.class.isAssignableFrom(aClass)) ?
+                                valueIn.typedMarshallable()
                                 : valueIn.object(rc.elementType());
 
-                        RemoteSubscription.this.onEvent(object, subscriber);
+                        AbstractRemoteSubscription.this.onEvent(object, subscriber);
                     }
                 });
             }
@@ -123,7 +114,7 @@ public class RemoteSubscription<E> extends AbstractStatelessClient implements Su
     void unregisterSubscriber0(Subscriber subscriber) {
         Long tid = subscribersToTid.get(subscriber);
         if (tid == null) {
-            RemoteSubscription.LOG.warn("There is subscription to unsubscribe");
+            AbstractRemoteSubscription.LOG.warn("There is subscription to unsubscribe");
             return;
         }
 
@@ -131,7 +122,7 @@ public class RemoteSubscription<E> extends AbstractStatelessClient implements Su
         try {
             writeMetaDataForKnownTID(tid);
             hub.outWire().writeDocument(false, wireOut -> {
-                wireOut.writeEventName(unSubscribe).text("");
+                wireOut.writeEventName(unRegisterSubscriber).text("");
             });
 
             hub.writeSocket(hub.outWire());
