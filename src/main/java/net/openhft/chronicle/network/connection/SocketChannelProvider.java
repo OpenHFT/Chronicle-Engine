@@ -12,5 +12,5 @@ interface SocketChannelProvider {
     SocketChannel lazyConnect();
 
     @Nullable
-    SocketChannel reConnect();
+    SocketChannel reConnect() throws InterruptedException;
 }

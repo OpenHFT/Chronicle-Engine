@@ -51,7 +51,7 @@ public class RemoteRpc extends JSR166TestCase {
      * clear removes all pairs
      */
     @Ignore
-    @Test(timeout = 50000)
+    @Test
     public void testPut() throws IOException {
         WireType.wire = WireType.TEXT;
         assetTree = (new VanillaAssetTree(1)).forRemoteAccess("192.168.1.64", 8088);
