@@ -24,6 +24,7 @@ import net.openhft.chronicle.engine.api.pubsub.Publisher;
 import net.openhft.chronicle.engine.api.pubsub.Reference;
 import net.openhft.chronicle.engine.api.pubsub.Replication;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
+import net.openhft.chronicle.engine.api.session.Heartbeat;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
@@ -54,6 +55,7 @@ public class RequestContext implements Cloneable {
         addAlias(ObjectKVSSubscription.class, "Subscription");
         addAlias(TopologySubscription.class, "topologySubscription");
         addAlias(Reference.class, "Reference, Ref");
+        addAlias(Heartbeat.class, "Heartbeat");
     }
 
     private String pathName;

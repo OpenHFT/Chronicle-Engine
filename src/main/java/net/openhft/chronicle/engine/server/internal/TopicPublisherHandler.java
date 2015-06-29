@@ -90,12 +90,12 @@ public class TopicPublisherHandler<T, M> extends AbstractHandler {
         }
     };
 
-    void process(@NotNull final Wire inWire,
+    void process(@NotNull final WireIn inWire,
                  final Queue<Consumer<Wire>> publisher,
                  final long tid,
                  final Wire outWire,
-                 final TopicPublisher<T, M> view,
-                 final @NotNull WireAdapter<T, M> wireAdapter) {
+                 final TopicPublisher view,
+                 final @NotNull WireAdapter wireAdapter) {
 
         setOutWire(outWire);
         final Wire outWire1 = outWire;

@@ -1,7 +1,6 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireOut;
 import net.openhft.chronicle.wire.Wires;
 import net.openhft.chronicle.wire.YamlLogging;
@@ -22,9 +21,9 @@ public class AbstractHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractHandler.class);
     @Nullable
-    Wire outWire = null;
+    WireOut outWire = null;
 
-    void setOutWire(final Wire outWire) {
+    void setOutWire(final WireOut outWire) {
         this.outWire = outWire;
     }
 

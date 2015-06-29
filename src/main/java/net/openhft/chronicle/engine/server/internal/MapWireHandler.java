@@ -68,7 +68,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
 
 
     @Nullable
-    private Wire inWire = null;
+    private WireIn inWire = null;
     @Nullable
     private KeyValueStore<K, V, V> map;
     private boolean charSequenceValue;
@@ -77,8 +77,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
 
         @Override
         public void accept(WireIn wireIn, Long inputTid) {
-//            if (Jvm.isDebug())
-//                System.out.println("mwh " + wireIn);
+
             try {
                 eventName.setLength(0);
                 final ValueIn valueIn = inWire.readEventName(eventName);
@@ -101,8 +100,6 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                     map.remove(key);
                     return;
                 }
-
-
 
                 outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
 
@@ -298,11 +295,11 @@ public class MapWireHandler<K, V> extends AbstractHandler {
      * @param requestContext the uri of the event
      * @throws StreamCorruptedException
      */
-    public void process(@NotNull final Wire in,
-                        @NotNull final Wire out,
-                        @NotNull KeyValueStore<K, V, V> map,
+    public void process(@NotNull final WireIn in,
+                        @NotNull final WireOut out,
+                        @NotNull KeyValueStore map,
                         long tid,
-                        @NotNull final WireAdapter<K, V> wireAdapter,
+                        @NotNull final WireAdapter wireAdapter,
                         @NotNull final RequestContext requestContext) throws
             StreamCorruptedException {
         this.vToWire = wireAdapter.valueToWire();

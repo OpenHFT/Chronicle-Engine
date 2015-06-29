@@ -79,11 +79,11 @@ public class PublisherHandler<E> extends AbstractHandler {
         }
     };
 
-    void process(@NotNull final Wire inWire,
+    void process(@NotNull final WireIn inWire,
                  final Queue<Consumer<Wire>> publisher,
                  final long tid,
-                 Publisher<E> view, final Wire outWire,
-                 final @NotNull WireAdapter<?, E> wireAdapter) {
+                 Publisher view, final Wire outWire,
+                 final @NotNull WireAdapter wireAdapter) {
         setOutWire(outWire);
         this.outWire = outWire;
         this.publisher = publisher;

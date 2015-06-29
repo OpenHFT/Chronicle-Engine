@@ -140,7 +140,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
                 if (hostDetails.hostId <= localIdentifer)
                     continue;
 
-                TcpChannelHub tcpChannelHub = hostDetails.acquireTcpChannelHub();
+                final TcpChannelHub tcpChannelHub = hostDetails.acquireTcpChannelHub(eventLoop);
                 ReplicationHub replicationHub = new ReplicationHub(context, tcpChannelHub, eventLoop, isClosed);
 
                 try {

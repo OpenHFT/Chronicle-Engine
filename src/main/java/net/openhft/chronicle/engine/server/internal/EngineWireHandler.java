@@ -23,6 +23,7 @@ import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
 import net.openhft.chronicle.engine.api.pubsub.Replication;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
+import net.openhft.chronicle.engine.api.session.Heartbeat;
 import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
@@ -65,6 +66,7 @@ public class EngineWireHandler extends WireTcpHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(EngineWireHandler.class);
 
+
     private final StringBuilder cspText = new StringBuilder();
     @NotNull
     private final CollectionWireHandler keySetHandler;
@@ -97,6 +99,7 @@ public class EngineWireHandler extends WireTcpHandler {
     private final Consumer<WireIn> metaDataConsumer;
     private final StringBuilder lastCsp = new StringBuilder();
     private final StringBuilder eventName = new StringBuilder();
+    private final HeartbeatHandler systemHandler;
 
     private WireAdapter wireAdapter;
     private View view;
@@ -136,6 +139,7 @@ public class EngineWireHandler extends WireTcpHandler {
         this.topicPublisherHandler = new TopicPublisherHandler();
         this.publisherHandler = new PublisherHandler();
         this.replicationHandler = new ReplicationHandler();
+        this.systemHandler = new HeartbeatHandler();
         this.isClosed = isClosed;
 
         eventLoop.start();
@@ -171,6 +175,12 @@ public class EngineWireHandler extends WireTcpHandler {
 
                     requestContext = RequestContext.requestContext(cspText);
                     viewType = requestContext.viewType();
+                    if (viewType == null) {
+                        if (LOG.isDebugEnabled()) LOG.debug("received system-meta-data");
+                        isSystemMessage = true;
+                        return;
+                    }
+
                     asset = this.assetTree.acquireAsset(viewType, requestContext);
                     view = asset.acquireView(requestContext);
 
@@ -185,7 +195,8 @@ public class EngineWireHandler extends WireTcpHandler {
                             viewType == TopicPublisher.class ||
                             viewType == Publisher.class ||
                             viewType == TopologySubscription.class ||
-                            viewType == Replication.class) {
+                            viewType == Replication.class ||
+                            viewType == Heartbeat.class) {
 
                         // default to string type if not provided
                         final Class type = requestContext.type() == null ? String.class
@@ -228,8 +239,8 @@ public class EngineWireHandler extends WireTcpHandler {
     }
 
     @Override
-    protected void process(@NotNull final Wire in,
-                           @NotNull final Wire out,
+    protected void process(@NotNull final WireIn in,
+                           @NotNull final WireOut out,
                            @NotNull final SessionDetailsProvider sessionDetails)
             throws StreamCorruptedException {
 
@@ -245,7 +256,7 @@ public class EngineWireHandler extends WireTcpHandler {
                 sessionProvider.set(sessionDetails);
 
                 if (isSystemMessage) {
-                    sessionDetails.setUserId(wire.read(() -> "userid").text());
+                    systemHandler.process(in, out, tid, sessionDetails);
                     return;
                 }
 
@@ -329,7 +340,7 @@ public class EngineWireHandler extends WireTcpHandler {
         });
     }
 
-    private void logYamlToStandardOut(@NotNull Wire in) {
+    private void logYamlToStandardOut(@NotNull WireIn in) {
         if (YamlLogging.showServerReads) {
             try {
                 LOG.info("\nServer Reads:\n" +
@@ -358,4 +369,23 @@ public class EngineWireHandler extends WireTcpHandler {
             cspText.append(s);
         }
     }
+
+    public enum EventId implements ParameterizeWireKey {
+        userid,
+        heartbeat,
+        heartbeatReply;
+
+        private final WireKey[] params;
+
+        <P extends WireKey> EventId(P... params) {
+            this.params = params;
+        }
+
+        @NotNull
+        public <P extends WireKey> P[] params() {
+            return (P[]) this.params;
+        }
+    }
+
+
 }

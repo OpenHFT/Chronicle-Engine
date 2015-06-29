@@ -156,10 +156,13 @@ public class VanillaAsset implements Asset, Closeable {
         VanillaSessionDetails sessionDetails = new VanillaSessionDetails();
         sessionDetails.setUserId(System.getProperty("user.name"));
         sessionProvider.set(sessionDetails);
+
+        EventLoop eventLoop = findOrCreateView(EventLoop.class);
+
         if (getView(TcpChannelHub.class) == null) {
             addView(TcpChannelHub.class,
                     Threads.withThreadGroup(findView(ThreadGroup.class),
-                            () -> new TcpChannelHub(sessionProvider, hostname, port)));
+                            () -> new TcpChannelHub(sessionProvider, hostname, port,eventLoop)));
         }
     }
 

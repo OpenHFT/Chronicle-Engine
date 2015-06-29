@@ -104,7 +104,7 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<ObjectKVSSu
 
     };
 
-    void process(@NotNull final Wire inWire,
+    void process(@NotNull final WireIn inWire,
                  final RequestContext requestContext,
                  final Queue<Consumer<Wire>> publisher,
                  final AssetTree assetTree, final long tid,
