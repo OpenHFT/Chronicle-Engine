@@ -327,8 +327,12 @@ public class VanillaAsset implements Asset, Closeable {
     @Override
     public Asset acquireAsset(@NotNull RequestContext context, @NotNull String fullName) throws AssetNotFoundException {
         if (keyedAsset != Boolean.TRUE) {
-            int pos = fullName.indexOf("/");
-            if (pos >= 0) {
+            int pos = fullName.indexOf('/');
+            if (pos == 0) {
+                fullName = fullName.substring(1);
+                pos = fullName.indexOf('/');
+            }
+            if (pos > 0) {
                 String name1 = fullName.substring(0, pos);
                 String name2 = fullName.substring(pos + 1);
                 return getAssetOrANFE(context, name1).acquireAsset(context, name2);
