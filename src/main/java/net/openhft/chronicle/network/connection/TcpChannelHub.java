@@ -114,8 +114,11 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
         this.inWire = wire.apply(elasticByteBuffer());
         this.name = " connected to " + remoteAddress.toString();
         this.timeoutMs = 10_000;
-
-        attemptConnect(remoteAddress);
+        try {
+            attemptConnect(remoteAddress);
+        } catch (Exception e) {
+            LOG.debug("", e);
+        }
         tcpSocketConsumer = new TcpSocketConsumer(wire, this, this.remoteAddress.toString());
 
         this.sessionProvider = sessionProvider;
@@ -247,8 +250,11 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
     @Nullable
     @Override
-    public synchronized SocketChannel reConnect() {
+    public synchronized SocketChannel reConnect() throws InterruptedException {
         closeExisting();
+
+        Thread.sleep(1000);
+
         lazyConnect(timeoutMs, remoteAddress);
         return clientChannel;
     }
@@ -332,12 +338,19 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
      * closes the existing connections and establishes a new closeables
      */
     protected void closeExisting() {
+
         // ensure that any excising connection are first closed
         if (closeables != null)
             closeables.closeQuietly();
         closeables = null;
         if (tcpSocketConsumer != null)
             tcpSocketConsumer.onConnectionClosed();
+        if (clientChannel != null) try {
+            clientChannel.close();
+        } catch (IOException e) {
+            //
+        }
+        clientChannel = null;
     }
 
     public synchronized void close() {
@@ -769,7 +782,11 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
                 } catch (IOException e) {
                     if (!isClosed())
-                        this.clientChannel = provider.reConnect();
+                        try {
+                            this.clientChannel = provider.reConnect();
+                        } catch (InterruptedException e1) {
+                            return;
+                        }
                 } finally {
                     clear(inWire);
                 }
@@ -828,7 +845,11 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
                             " message we a tid which is unknown, something has become corrupted, " +
                             "so the safest thing to do is to drop the connection to the server and " +
                             "start again.");
-                    reConnect();
+                    try {
+                        reConnect();
+                    } catch (InterruptedException e) {
+                        //
+                    }
                     return;
                 }
 
@@ -1027,7 +1048,11 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
             // if we have not received a message from the server after the HEATBEAT_TIMEOUT_PERIOD
             // we will drop and then re-establish the connection.
             if (millisecondsSinceLastMessageReceived >= HEATBEAT_TIMEOUT_PERIOD)
-                reConnect();
+                try {
+                    reConnect();
+                } catch (InterruptedException e) {
+                    return true;
+                }
 
             if (TcpChannelHub.this.closed)
                 throw new InvalidEventHandlerException();
