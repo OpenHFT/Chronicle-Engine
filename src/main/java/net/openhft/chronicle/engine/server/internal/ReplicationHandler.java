@@ -35,7 +35,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
     private AtomicBoolean isClosed;
     private EventLoop eventLoop;
 
-    void process(@NotNull final Wire inWire,
+    void process(@NotNull final WireIn inWire,
                  final Queue<Consumer<Wire>> publisher,
                  final long tid,
                  final Wire outWire,

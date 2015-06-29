@@ -43,7 +43,10 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SocketChannel;
 import java.text.MessageFormat;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
@@ -52,6 +55,7 @@ import java.util.function.Function;
 import static java.lang.Integer.getInteger;
 import static java.lang.System.getProperty;
 import static java.lang.ThreadLocal.withInitial;
+import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static net.openhft.chronicle.bytes.Bytes.elasticByteBuffer;
 import static net.openhft.chronicle.engine.server.WireType.wire;
@@ -63,7 +67,7 @@ import static net.openhft.chronicle.engine.server.internal.EngineWireHandler.Eve
  */
 public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
-    public static final int HEATBEAT_PING_PERIOD = getInteger("heartbeat.ping.period", 1000);
+    public static final int HEATBEAT_PING_PERIOD = getInteger("heartbeat.ping.period", 3_000);
     public static final int HEATBEAT_TIMEOUT_PERIOD = getInteger("heartbeat.timeout", 5_000);
 
     public static final int SIZE_OF_SIZE = 4;
@@ -653,7 +657,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
             this.wireFunction = wireFunction;
             this.provider = provider;
             this.clientChannel = provider.lazyConnect();
-            executorService = Executors.newSingleThreadExecutor(
+            executorService = newSingleThreadExecutor(
                     new NamedThreadFactory("TcpSocketConsumer-" + name, true));
 
             // used for the heartbeat
@@ -826,6 +830,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
             if (o instanceof AsyncSubscription) {
                 blockingRead(inWire, messageSize);
                 logToStandardOutMessageReceived(inWire);
+                onMessageReceived();
                 ((AsyncSubscription) o).onConsumer(inWire);
 
                 // for async
@@ -844,7 +849,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
                     byteBuffer.position(SIZE_OF_SIZE);
                     byteBuffer.limit(SIZE_OF_SIZE + messageSize);
                     readBuffer(byteBuffer);
-
+                    onMessageReceived();
                     bytes.readLimit(byteBuffer.position());
                     bytes.notifyAll();
                 }
@@ -888,7 +893,6 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
             );
         }
 
-        volatile long lastTimeMessageReceived = System.currentTimeMillis();
 
         /**
          * blocks indefinitely until the number of expected bytes is received
@@ -925,6 +929,8 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
             onMessageReceived();
         }
 
+        private volatile long lastTimeMessageReceived = System.currentTimeMillis();
+
         private void onMessageReceived() {
             lastTimeMessageReceived = System.currentTimeMillis();
         }
@@ -938,7 +944,6 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
             long l = System.nanoTime();
 
             // this denotes that the next message is a system message as it has a null csp
-            TcpChannelHub.this.lock(() -> writeMetaDataForKnownTID(tid, outWire, null, 0));
 
             subscribe(new AbstractAsyncSubscription(TcpChannelHub.this, null) {
                 @Override
@@ -1004,7 +1009,8 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
             // if we have not received a message from the server after the HEATBEAT_TIMEOUT_PERIOD
             // we will drop and then re-establish the connection.
-            if (millisecondsSinceLastMessageReceived >= HEATBEAT_TIMEOUT_PERIOD)
+            if (millisecondsSinceLastMessageReceived >= HEATBEAT_TIMEOUT_PERIOD
+                    && !TcpChannelHub.this.closed)
                 reConnect();
 
             return true;

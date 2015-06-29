@@ -48,9 +48,9 @@ public class CollectionWireHandler<U, C extends Collection<U>> {
     private BiConsumer<ValueOut, U> toWire;
 
     @Nullable
-    private Wire inWire = null;
+    private WireIn inWire = null;
     @Nullable
-    private Wire outWire = null;
+    private WireOut outWire = null;
     private C underlyingCollection;
     private long tid;
     private Supplier<C> factory;
@@ -161,7 +161,7 @@ public class CollectionWireHandler<U, C extends Collection<U>> {
 
                     } else {
 
-                     LOG.info(
+                        LOG.info(
                                 "server writes:\n\n" +
                                         //      Bytes.toDebugString(outBytes, SIZE_OF_SIZE, len));
                                         Wires.fromSizePrefixedBlobs(outBytes, SIZE_OF_SIZE, len));
@@ -173,20 +173,20 @@ public class CollectionWireHandler<U, C extends Collection<U>> {
 
     private C collectionFromWire() {
         C c = factory.get();
-        final ValueIn valueIn = outWire.getValueIn();
+        final ValueIn valueIn = ((Wire) outWire).getValueIn();
         while (valueIn.hasNextSequenceItem()) {
             c.add(fromWire.apply(valueIn));
         }
         return c;
     }
 
-    public void process(@NotNull Wire in,
-                        @NotNull Wire out,
+    public void process(@NotNull WireIn in,
+                        @NotNull WireOut out,
                         @NotNull C collection,
                         @NotNull CharSequence csp,
-                        @NotNull BiConsumer<ValueOut, U> toWire,
-                        @NotNull Function<ValueIn, U> fromWire,
-                        @NotNull Supplier<C> factory,
+                        @NotNull BiConsumer toWire,
+                        @NotNull Function fromWire,
+                        @NotNull Supplier factory,
                         long tid) throws StreamCorruptedException {
 
         this.fromWire = fromWire;
