@@ -24,7 +24,11 @@ import net.openhft.chronicle.core.io.CloseablesManager;
 import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.network.api.session.SessionDetails;
+import net.openhft.chronicle.threads.HandlerPriority;
 import net.openhft.chronicle.threads.NamedThreadFactory;
+import net.openhft.chronicle.threads.api.EventHandler;
+import net.openhft.chronicle.threads.api.EventLoop;
+import net.openhft.chronicle.threads.api.InvalidEventHandlerException;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,18 +41,30 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SocketChannel;
+import java.text.MessageFormat;
 import java.util.Map;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
+import static java.lang.Integer.getInteger;
+import static java.lang.System.getProperty;
+import static java.lang.ThreadLocal.withInitial;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static net.openhft.chronicle.bytes.Bytes.elasticByteBuffer;
 import static net.openhft.chronicle.engine.server.WireType.wire;
+import static net.openhft.chronicle.engine.server.internal.EngineWireHandler.EventId.heartbeat;
+import static net.openhft.chronicle.engine.server.internal.EngineWireHandler.EventId.heartbeatReply;
 
 /**
  * Created by Rob Austin
  */
 public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
+
+    public static final int HEATBEAT_PING_PERIOD = getInteger("heartbeat.ping.period", 1000);
+    public static final int HEATBEAT_TIMEOUT_PERIOD = getInteger("heartbeat.timeout", 5_000);
 
     public static final int SIZE_OF_SIZE = 4;
     private static final Logger LOG = LoggerFactory.getLogger(TcpChannelHub.class);
@@ -66,6 +82,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
     private final SessionProvider sessionProvider;
     @NotNull
     private final TcpSocketConsumer tcpSocketConsumer;
+    private final EventLoop eventLoop;
     @Nullable
     protected CloseablesManager closeables;
     private long largestChunkSoFar = 0;
@@ -78,17 +95,24 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
     // set up in the header
     private long startTime;
     private volatile boolean closed;
+    private String hostname;
+    private String port;
 
-    public TcpChannelHub(SessionProvider sessionProvider, @NotNull String hostname, int port) {
+    public TcpChannelHub(@NotNull SessionProvider sessionProvider,
+                         @NotNull String hostname, int port,
+                         @NotNull EventLoop eventLoop) {
+        this.eventLoop = eventLoop;
+        this.hostname = hostname;
         this.tcpBufferSize = 64 << 10;
         this.remoteAddress = new InetSocketAddress(hostname, port);
-        this.outWire = wire.apply(Bytes.elasticByteBuffer());
-        this.inWire = wire.apply(Bytes.elasticByteBuffer());
+        this.outWire = wire.apply(elasticByteBuffer());
+        this.inWire = wire.apply(elasticByteBuffer());
         this.name = " connected to " + remoteAddress.toString();
         this.timeoutMs = 10_000;
 
         attemptConnect(remoteAddress);
         tcpSocketConsumer = new TcpSocketConsumer(wire, this, this.remoteAddress.toString());
+
         this.sessionProvider = sessionProvider;
     }
 
@@ -147,9 +171,8 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
     /**
      * sets up subscriptions with the server, even if the socket connection is down, the
-     * subsubscription will be re-establish with the server automatically once it comes back up.
-     * To end the subscription with the server call
-     * {@code net.openhft.chronicle.network.connection.TcpChannelHub#unsubscribe(long)}
+     * subsubscription will be re-establish with the server automatically once it comes back up. To
+     * end the subscription with the server call {@code net.openhft.chronicle.network.connection.TcpChannelHub#unsubscribe(long)}
      *
      * @param asyncSubscription detail of the subscription that you wish to hold with the server
      */
@@ -220,7 +243,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
     @Nullable
     @Override
     public synchronized SocketChannel reConnect() {
-        close();
+        closeExisting();
         lazyConnect(timeoutMs, remoteAddress);
         return clientChannel;
     }
@@ -237,7 +260,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
         long timeoutAt = System.currentTimeMillis() + timeoutMs;
 
         while (clientChannel == null) {
-            checkClosed();
+
             checkTimeout(timeoutAt);
 
             // ensures that the excising connection are closed
@@ -256,6 +279,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
                 clientChannel.socket().setTcpNoDelay(true);
                 clientChannel.socket().setReceiveBufferSize(tcpBufferSize);
                 clientChannel.socket().setSendBufferSize(tcpBufferSize);
+                closed = false;
                 doHandShaking();
 
             } catch (IOException e) {
@@ -277,9 +301,9 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
             outWire().writeDocument(false, wireOut -> {
                 if (sessionDetails == null)
-                    wireOut.write(() -> "userid").text(System.getProperty("user.name"));
+                    wireOut.writeEventName(() -> "userid").text(getProperty("user.name"));
                 else
-                    wireOut.write(() -> "userid").text(sessionDetails.userId());
+                    wireOut.writeEventName(() -> "userid").text(sessionDetails.userId());
             });
 
             writeSocket(outWire());
@@ -343,7 +367,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
      *
      * @param wire the {@code wire} containing the outbound data
      */
-    public void writeSocket(@NotNull final Wire wire) {
+    public void writeSocket(@NotNull final WireOut wire) {
         assert outBytesLock().isHeldByCurrentThread();
         checkClosed();
 
@@ -393,7 +417,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
      * @param timeoutTime how long before a we timeout
      * @throws IOException
      */
-    private void writeSocket(@NotNull Wire outWire, long timeoutTime) throws IOException {
+    private void writeSocket(@NotNull WireOut outWire, long timeoutTime) throws IOException {
 
         assert outBytesLock().isHeldByCurrentThread();
 
@@ -449,7 +473,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
         bytes.clear();
     }
 
-    private void logToStandardOutMessageSent(@NotNull Wire wire, @NotNull ByteBuffer outBuffer) {
+    private void logToStandardOutMessageSent(@NotNull WireOut wire, @NotNull ByteBuffer outBuffer) {
         if (!YamlLogging.clientWrites)
             return;
 
@@ -514,7 +538,8 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
         return tid;
     }
 
-    public void writeMetaDataForKnownTID(long tid, @NotNull Wire wire, String csp, long cid) {
+    public void writeMetaDataForKnownTID(long tid, @NotNull Wire wire, @Nullable String csp, long
+            cid) {
         assert outBytesLock().isHeldByCurrentThread();
         checkClosed();
 
@@ -575,30 +600,31 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
     /**
      * uses a single read thread, to process messages to waiting threads based on their {@code tid}
      */
-    private static class TcpSocketConsumer implements Closeable {
+    private class TcpSocketConsumer implements EventHandler, Closeable {
 
         @NotNull
         private final ExecutorService executorService;
         @NotNull
         private final SocketChannelProvider provider;
         private final Map<Long, Object> map = new ConcurrentHashMap<>();
-
         private volatile boolean closeSocketConsumer;
         private Function<Bytes, Wire> wireFunction;
         @Nullable
         private SocketChannel clientChannel;
         private long tid;
+
+
         @NotNull
-        private ThreadLocal<Wire> syncInWireThreadLocal = ThreadLocal.withInitial(() -> wire.apply(Bytes
-                .elasticByteBuffer()));
+        private ThreadLocal<Wire> syncInWireThreadLocal = withInitial(() -> wire.apply(
+                elasticByteBuffer()));
+
 
         /**
-         * re-establish all the subscriptions to the server, this method calls the
-         * {@code net.openhft.chronicle.network.connection.AsyncSubscription#applySubscribe()}
-         * for each subscription, this could should establish a subscriotuib with the server.
+         * re-establish all the subscriptions to the server, this method calls the {@code
+         * net.openhft.chronicle.network.connection.AsyncSubscription#applySubscribe()} for each
+         * subscription, this could should establish a subscriotuib with the server.
          */
         private void onReconnect() {
-
             map.values().forEach(v -> {
                 if (v instanceof AsyncSubscription) {
                     ((AsyncSubscription) v).applySubscribe();
@@ -630,7 +656,15 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
             executorService = Executors.newSingleThreadExecutor(
                     new NamedThreadFactory("TcpSocketConsumer-" + name, true));
 
+            // used for the heartbeat
+            eventLoop.addHandler(this);
+
             start();
+        }
+
+        @Override
+        public HandlerPriority priority() {
+            return HandlerPriority.MONITOR;
         }
 
         /**
@@ -640,7 +674,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
          * @param tid           the {@code tid} of the message that we are waiting for
          * @throws InterruptedException
          */
-        Wire syncBlockingReadSocket(final long timeoutTimeMs, long tid) throws
+        private Wire syncBlockingReadSocket(final long timeoutTimeMs, long tid) throws
                 InterruptedException, TimeoutException {
             long start = System.currentTimeMillis();
 
@@ -665,7 +699,6 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
         private void subscribe(@NotNull final AsyncSubscription asyncSubscription) {
             map.put(asyncSubscription.tid(), asyncSubscription);
-
             asyncSubscription.applySubscribe();
         }
 
@@ -691,7 +724,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
         }
 
         private void running() {
-            Wire inWire = wireFunction.apply(Bytes.elasticByteBuffer());
+            final Wire inWire = wireFunction.apply(elasticByteBuffer());
             assert inWire != null;
 
             while (!isClosed()) {
@@ -705,12 +738,12 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
                     final int header = bytes.readVolatileInt(0);
                     final long messageSize = size(header);
 
-                    // read the meta processData and get the tid
+                    // read the data
                     if (Wires.isData(header)) {
                         assert messageSize < Integer.MAX_VALUE;
                         processData(tid, Wires.isReady(header), header, (int) messageSize, inWire);
                     } else {
-                        // read the document
+                        // read  meta data - get the tid
                         blockingRead(inWire, messageSize);
                         logToStandardOutMessageReceived(inWire);
                         inWire.readDocument((WireIn w) -> this.tid = CoreFields.tid(w), null);
@@ -734,6 +767,10 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
             ((ByteBuffer) inWire.bytes().underlyingObject()).clear();
         }
 
+        /**
+         * @param header message size in header form
+         * @return the true size of the message
+         */
         private long size(int header) {
             final long messageSize = Wires.lengthOf(header);
             assert messageSize > 0 : "Invalid message size " + messageSize;
@@ -741,8 +778,18 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
             return messageSize;
         }
 
-        private void processData(final long tid, final boolean isReady, final int
-                header, final int messageSize, @NotNull Wire inWire) throws IOException {
+
+        /**
+         * @param tid         the transaction id of the message
+         * @param isReady     if true, this will be the last message for this tid
+         * @param header      message size in header form
+         * @param messageSize the sizeof the wire message
+         * @param inWire      the location the data will be writen to
+         * @throws IOException
+         */
+        private void processData(final long tid, final boolean isReady,
+                                 final int header, final int messageSize, @NotNull Wire inWire)
+                throws IOException {
 
             long startTime = 0;
             Object o;
@@ -758,12 +805,21 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
                 if (startTime == 0)
                     startTime = System.currentTimeMillis();
 
-                if (System.currentTimeMillis() - startTime > 1000) {
-                    LOG.error("unable to respond to tid=" + tid);
-                    blockingRead(inWire, messageSize);
+                if (System.currentTimeMillis() - startTime > 2000) {
+                    LOG.error("unable to respond to tid=" + tid + ", given that we have received a " +
+                            " message we a tid which is unknown, something has become corrupted, " +
+                            "so the safest thing to do is to drop the connection to the server and " +
+                            "start again.");
+                    reConnect();
                     return;
                 }
 
+            }
+
+            // heartbeat message sent from the server
+            if (tid == 0) {
+                processServerSystemMessage(header, messageSize);
+                return;
             }
 
             // for async
@@ -796,6 +852,44 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
         }
 
+        private Bytes serverHeartBeatHandler = Bytes.elasticByteBuffer();
+
+        /**
+         * process system messages which originate from the server
+         *
+         * @param header
+         * @param messageSize
+         * @throws IOException
+         */
+        private void processServerSystemMessage(final int header, final int messageSize)
+                throws IOException {
+            serverHeartBeatHandler.clear();
+            final Bytes bytes = serverHeartBeatHandler;
+
+            bytes.clear();
+            final ByteBuffer byteBuffer = (ByteBuffer) bytes.underlyingObject();
+            byteBuffer.clear();
+            // we have to first write the header back to the bytes so that is can be
+            // viewed as a document
+            bytes.writeInt(0, header);
+            byteBuffer.position(SIZE_OF_SIZE);
+            byteBuffer.limit(SIZE_OF_SIZE + messageSize);
+            readBuffer(byteBuffer);
+
+            bytes.readLimit(byteBuffer.position());
+
+            final StringBuilder eventName = Wires.acquireStringBuilder();
+            wire.apply(bytes).readDocument(null, d -> {
+                        final ValueIn valueIn = d.readEventName(eventName);
+                        if (heartbeat.contentEquals(eventName))
+                            reflectServerHeartbeatMessage(valueIn);
+
+                    }
+            );
+        }
+
+        volatile long lastTimeMessageReceived = System.currentTimeMillis();
+
         /**
          * blocks indefinitely until the number of expected bytes is received
          *
@@ -804,10 +898,10 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
          * @param numberOfBytes the size of the data to read
          * @throws IOException if anything bad happens to the socket connection
          */
-        private void blockingRead(@NotNull final Wire wire, final long numberOfBytes)
+        private void blockingRead(@NotNull final WireIn wire, final long numberOfBytes)
                 throws IOException {
 
-            Bytes<?> bytes = wire.bytes();
+            final Bytes<?> bytes = wire.bytes();
             bytes.ensureCapacity(bytes.readPosition() + numberOfBytes);
 
             final ByteBuffer buffer = (ByteBuffer) bytes.underlyingObject();
@@ -818,6 +912,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
             readBuffer(buffer);
             bytes.readLimit(buffer.position());
 
+            onMessageReceived();
         }
 
         private void readBuffer(@NotNull final ByteBuffer buffer) throws IOException {
@@ -827,10 +922,47 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
                 if (closeSocketConsumer)
                     throw new ClosedChannelException();
             }
+            onMessageReceived();
+        }
+
+        private void onMessageReceived() {
+            lastTimeMessageReceived = System.currentTimeMillis();
+        }
+
+
+        /**
+         * sends a heartbeat from the client to the server and logs the round trip time
+         */
+        private void sendHeartbeat() {
+            awaitingHeartbeat.set(true);
+            long l = System.nanoTime();
+
+            // this denotes that the next message is a system message as it has a null csp
+            TcpChannelHub.this.lock(() -> writeMetaDataForKnownTID(tid, outWire, null, 0));
+
+            subscribe(new AbstractAsyncSubscription(TcpChannelHub.this, null) {
+                @Override
+                public void onSubscribe(WireOut wireOut) {
+                    wireOut.writeEventName(heartbeat).int64(System.currentTimeMillis());
+                }
+
+                @Override
+                public void onConsumer(WireIn inWire) {
+                    awaitingHeartbeat.set(false);
+                    long roundTipTimeMicros = NANOSECONDS.toMicros(System.nanoTime() - l);
+                    if (LOG.isDebugEnabled())
+                        LOG.debug(MessageFormat.format("{0}:{1}heartbeat round trip time={2}us",
+                                TcpChannelHub.this.hostname, TcpChannelHub.this.port,
+                                roundTipTimeMicros));
+                    inWire.clear();
+
+                }
+            });
         }
 
         @Override
         public void close() {
+
             closeSocketConsumer = true;
             executorService.shutdown();
             try {
@@ -848,6 +980,54 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
             }
 
         }
+
+        // set to true if we have sent a heartbeat and are waiting a response
+        private final AtomicBoolean awaitingHeartbeat = new AtomicBoolean();
+
+        /**
+         * gets called to monitor the heartbeat
+         *
+         * @return true, if processing was performed
+         * @throws InvalidEventHandlerException
+         */
+        @Override
+        public boolean action() throws InvalidEventHandlerException {
+
+            if (TcpChannelHub.this.closed)
+                return false;
+
+            // a heartbeat only gets sent out if we have not received any data in the last
+            // HEATBEAT_PING_PERIOD milliseconds
+            long millisecondsSinceLastMessageReceived = System.currentTimeMillis() - lastTimeMessageReceived;
+            if (millisecondsSinceLastMessageReceived >= HEATBEAT_PING_PERIOD && !awaitingHeartbeat.get())
+                sendHeartbeat();
+
+            // if we have not received a message from the server after the HEATBEAT_TIMEOUT_PERIOD
+            // we will drop and then re-establish the connection.
+            if (millisecondsSinceLastMessageReceived >= HEATBEAT_TIMEOUT_PERIOD)
+                reConnect();
+
+            return true;
+        }
     }
+
+    private void reflectServerHeartbeatMessage(ValueIn valueIn) {
+
+        // time stamp sent from the server, this is so that the server can calculate the round
+        // trip time
+        long timestamp = valueIn.int64();
+
+        this.lock(() -> {
+
+            TcpChannelHub.this.writeMetaDataForKnownTID(0, outWire, null, 0);
+
+            TcpChannelHub.this.outWire.writeDocument(false, w ->
+                    // send back the time stamp that was sent from the server
+                    w.writeEventName(heartbeatReply).int64(timestamp));
+
+            TcpChannelHub.this.writeSocket(outWire);
+        });
+    }
+
 
 }

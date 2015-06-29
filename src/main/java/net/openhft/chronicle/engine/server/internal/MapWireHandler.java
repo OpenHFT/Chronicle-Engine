@@ -77,8 +77,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
 
         @Override
         public void accept(WireIn wireIn, Long inputTid) {
-//            if (Jvm.isDebug())
-//                System.out.println("mwh " + wireIn);
+
             try {
                 eventName.setLength(0);
                 final ValueIn valueIn = inWire.readEventName(eventName);
@@ -101,8 +100,6 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                     map.remove(key);
                     return;
                 }
-
-
 
                 outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
 

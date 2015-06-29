@@ -20,6 +20,7 @@ import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.session.VanillaSessionProvider;
 import net.openhft.chronicle.network.VanillaSessionDetails;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
+import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
@@ -58,11 +59,11 @@ public class HostDetails implements Marshallable {
                 .write(() -> "timeoutMs").int32(timeoutMs);
     }
 
-    public TcpChannelHub acquireTcpChannelHub() {
+    public TcpChannelHub acquireTcpChannelHub(EventLoop eventLoopv) {
         final HostPort key = new HostPort(hostname, port);
 
         return tcpChannelHubs.computeIfAbsent(key, hostPort ->
-                new TcpChannelHub(sessionProvider(), hostPort.host, hostPort.port));
+                new TcpChannelHub(sessionProvider(), hostPort.host, hostPort.port, eventLoopv));
     }
 
     @NotNull

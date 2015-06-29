@@ -55,6 +55,7 @@ import java.util.function.Function;
 
 import static net.openhft.chronicle.core.Jvm.rethrow;
 import static net.openhft.chronicle.core.util.StringUtils.endsWith;
+import static net.openhft.chronicle.engine.server.internal.EngineWireHandler.EventId.userid;
 import static net.openhft.chronicle.network.connection.CoreFields.cid;
 import static net.openhft.chronicle.network.connection.CoreFields.csp;
 
@@ -64,6 +65,7 @@ import static net.openhft.chronicle.network.connection.CoreFields.csp;
 public class EngineWireHandler extends WireTcpHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(EngineWireHandler.class);
+
 
     private final StringBuilder cspText = new StringBuilder();
     @NotNull
@@ -245,7 +247,15 @@ public class EngineWireHandler extends WireTcpHandler {
                 sessionProvider.set(sessionDetails);
 
                 if (isSystemMessage) {
-                    sessionDetails.setUserId(wire.read(() -> "userid").text());
+                    ValueIn valueIn = wire.readEventName(eventName);
+                    if (EventId.heartbeat.contentEquals(eventName)) {
+                        long timestamp = valueIn.int64();
+                        outWire.writeDocument(true, o -> o.write(CoreFields.tid).int64(tid));
+                        outWire.writeDocument(false, o -> o.writeEventName(EventId.heartbeatReply)
+                                .int64(timestamp));
+                    } else if (userid.contentEquals(eventName)) {
+                        sessionDetails.setUserId(valueIn.text());
+                    }
                     return;
                 }
 
@@ -358,4 +368,23 @@ public class EngineWireHandler extends WireTcpHandler {
             cspText.append(s);
         }
     }
+
+    public enum EventId implements ParameterizeWireKey {
+        userid,
+        heartbeat,
+        heartbeatReply;
+
+        private final WireKey[] params;
+
+        <P extends WireKey> EventId(P... params) {
+            this.params = params;
+        }
+
+        @NotNull
+        public <P extends WireKey> P[] params() {
+            return (P[]) this.params;
+        }
+    }
+
+
 }
