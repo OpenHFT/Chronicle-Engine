@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import shaded.org.apache.http.ConnectionClosedException;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -41,7 +42,6 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SocketChannel;
-import java.text.MessageFormat;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -55,6 +55,7 @@ import java.util.function.Function;
 import static java.lang.Integer.getInteger;
 import static java.lang.System.getProperty;
 import static java.lang.ThreadLocal.withInitial;
+import static java.text.MessageFormat.format;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static net.openhft.chronicle.bytes.Bytes.elasticByteBuffer;
@@ -88,7 +89,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
     private final TcpSocketConsumer tcpSocketConsumer;
     private final EventLoop eventLoop;
     @Nullable
-    protected CloseablesManager closeables;
+    protected volatile CloseablesManager closeables;
     private long largestChunkSoFar = 0;
 
     @Nullable
@@ -637,9 +638,12 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
         }
 
         public void onConnectionClosed() {
+
             map.values().forEach(v -> {
                 if (v instanceof AsyncSubscription) {
                     ((AsyncSubscription) v).onClose();
+                } else if (v instanceof Bytes) {
+                    v.notifyAll();
                 }
             });
         }
@@ -692,11 +696,21 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
             synchronized (bytes) {
                 map.put(tid, bytes);
                 bytes.wait(timeoutTimeMs);
+                if (TcpChannelHub.this.closeables == null) {
+                    ConnectionClosedException e = new ConnectionClosedException(format("The " +
+                            "connection to the server {0}:{1} was closed", hostname, port));
+                    if (LOG.isDebugEnabled())
+                        LOG.debug("", e);
+                    throw Jvm.rethrow(e);
+                }
             }
+
             logToStandardOutMessageReceived(wire);
+
             if (System.currentTimeMillis() - start >= timeoutTimeMs) {
                 throw new TimeoutException("timeoutTimeMs=" + timeoutTimeMs);
             }
+
             return wire;
 
         }
@@ -956,7 +970,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
                     awaitingHeartbeat.set(false);
                     long roundTipTimeMicros = NANOSECONDS.toMicros(System.nanoTime() - l);
                     if (LOG.isDebugEnabled())
-                        LOG.debug(MessageFormat.format("{0}:{1}heartbeat round trip time={2}us",
+                        LOG.debug(format("{0}:{1}heartbeat round trip time={2}us",
                                 TcpChannelHub.this.hostname, TcpChannelHub.this.port,
                                 roundTipTimeMicros));
                     inWire.clear();
@@ -1021,6 +1035,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
             return true;
         }
+
     }
 
     private void reflectServerHeartbeatMessage(ValueIn valueIn) {

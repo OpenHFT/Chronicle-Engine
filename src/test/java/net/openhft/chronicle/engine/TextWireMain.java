@@ -17,6 +17,7 @@
 package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.engine.server.WireType;
+import net.openhft.chronicle.wire.YamlLogging;
 
 import java.io.IOException;
 
@@ -27,7 +28,7 @@ public class TextWireMain {
     public static void main(String[] args) throws IOException, InterruptedException {
 
         WireType.wire = WireType.TEXT;
-
+        YamlLogging.showServerReads = true;
         // the default is BinaryWire
         BinaryWireMain.main(args);
     }
