@@ -27,10 +27,9 @@ import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
-import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.server.WireType;
-import net.openhft.chronicle.engine.tree.*;
+import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
@@ -44,15 +43,17 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.concurrent.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Function;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
 import static net.openhft.chronicle.engine.server.WireType.wire;
-import static org.easymock.EasyMock.*;
+import static org.easymock.EasyMock.verify;
 
 /**
  * test using the listener both remotely or locally via the engine
@@ -154,49 +155,6 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
         });
     }
 
-
-    @Test
-    public void testTopologicalEvents() throws IOException, InterruptedException {
-
-        final BlockingQueue<TopologicalEvent> eventsQueue = new LinkedBlockingQueue<>();
-
-        yamlLoggger(() -> {
-            try {
-                YamlLogging.writeMessage = "Sets up a subscription to listen to new maps being added and removed.";
-                Subscriber<TopologicalEvent> subscription = eventsQueue::add;
-                {
-                    assetTree.registerSubscriber(NAME, TopologicalEvent.class, subscription);
-
-                    TopologicalEvent take = eventsQueue.poll(1, SECONDS);
-                    Assert.assertEquals(ExistingAssetEvent.of("/", NAME), take);
-                }
-                {
-                    serverAssetTree.acquireMap("/group/" + NAME, String.class, String.class);
-
-                    TopologicalEvent take1 = eventsQueue.poll(1, SECONDS);
-                    Assert.assertEquals(AddedAssetEvent.of("/", "group"), take1);
-
-                }
-                {
-                    serverAssetTree.acquireMap("/group/" + NAME + 2, String.class, String.class);
-
-                    TopologicalEvent take3 = eventsQueue.poll(1, SECONDS);
-                    Assert.assertEquals(AddedAssetEvent.of("/group", NAME + 2), take3);
-                }
-                {
-                    // the client cannot remove maps yet.
-                    serverAssetTree.acquireAsset(RequestContext.requestContext("/group")).removeChild(NAME);
-
-                    TopologicalEvent take4 = eventsQueue.poll(1, SECONDS);
-                    Assert.assertEquals(RemovedAssetEvent.of("/group", NAME), take4);
-                }
-
-                assetTree.unregisterSubscriber(NAME, subscription);
-            } catch (Exception e) {
-                throw Jvm.rethrow(e);
-            }
-        });
-    }
 
 
 
