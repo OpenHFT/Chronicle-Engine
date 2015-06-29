@@ -62,7 +62,7 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
     @NotNull
     @Rule
     public TestName name = new TestName();
-    private AssetTree assetTree = new VanillaAssetTree().forTesting();
+    private AssetTree clientAssetTree = new VanillaAssetTree().forTesting();
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
@@ -104,16 +104,16 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
 
             serverEndpoint = new ServerEndpoint(serverAssetTree);
 
-            assetTree = new VanillaAssetTree().forRemoteAccess("localhost", serverEndpoint.getPort());
+            clientAssetTree = new VanillaAssetTree().forRemoteAccess("localhost", serverEndpoint.getPort());
         } else
-            assetTree = serverAssetTree;
+            clientAssetTree = serverAssetTree;
 
 
     }
 
     @After
     public void after() throws IOException {
-        assetTree.close();
+        clientAssetTree.close();
         if (serverEndpoint != null)
             serverEndpoint.close();
         serverAssetTree.close();
@@ -131,14 +131,14 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
             try {
                 YamlLogging.writeMessage = "Sets up a subscription to listen to new maps being added and removed.";
                 Subscriber<TopologicalEvent> subscription = eventsQueue::add;
-                serverAssetTree.registerSubscriber("", TopologicalEvent.class, subscription);
+                clientAssetTree.registerSubscriber("", TopologicalEvent.class, subscription);
 
                 {
                     TopologicalEvent take = eventsQueue.poll(1, SECONDS);
                     Assert.assertEquals(ExistingAssetEvent.of(null, ""), take);
                 }
                 {
-                    assetTree.acquireMap("/group/" + NAME, String.class, String.class).size();
+                    clientAssetTree.acquireMap("/group/" + NAME, String.class, String.class).size();
 
                     TopologicalEvent take1 = eventsQueue.poll(1, SECONDS);
                     Assert.assertEquals(AddedAssetEvent.of("/", "group"), take1);
@@ -161,7 +161,7 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
                     Assert.assertEquals(RemovedAssetEvent.of("/group", NAME), take4);
                 }
 
-                assetTree.unregisterSubscriber(NAME, subscription);
+                clientAssetTree.unregisterSubscriber(NAME, subscription);
             } catch (Exception e) {
                 throw Jvm.rethrow(e);
             }
