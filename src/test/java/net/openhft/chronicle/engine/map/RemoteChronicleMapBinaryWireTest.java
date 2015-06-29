@@ -19,6 +19,7 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
+import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
@@ -73,6 +74,8 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
             @Override
             public void close() throws IOException {
                 remoteMapSupplier.close();
+                assetTree.root().findView(EventLoop.class).close();
+                assetTree.close();
             }
         };
     }
@@ -94,6 +97,8 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
             @Override
             public void close() throws IOException {
                 remoteMapSupplier.close();
+                assetTree.root().findView(EventLoop.class).close();
+                assetTree.close();
             }
         };
     }

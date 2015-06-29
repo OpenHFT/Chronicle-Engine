@@ -999,7 +999,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
         public boolean action() throws InvalidEventHandlerException {
 
             if (TcpChannelHub.this.closed)
-                return false;
+                throw new InvalidEventHandlerException();
 
             // a heartbeat only gets sent out if we have not received any data in the last
             // HEATBEAT_PING_PERIOD milliseconds
@@ -1007,11 +1007,17 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
             if (millisecondsSinceLastMessageReceived >= HEATBEAT_PING_PERIOD && !awaitingHeartbeat.get())
                 sendHeartbeat();
 
+            if (TcpChannelHub.this.closed)
+                throw new InvalidEventHandlerException();
+
             // if we have not received a message from the server after the HEATBEAT_TIMEOUT_PERIOD
             // we will drop and then re-establish the connection.
-            if (millisecondsSinceLastMessageReceived >= HEATBEAT_TIMEOUT_PERIOD
-                    && !TcpChannelHub.this.closed)
+            if (millisecondsSinceLastMessageReceived >= HEATBEAT_TIMEOUT_PERIOD)
                 reConnect();
+
+            if (TcpChannelHub.this.closed)
+                throw new InvalidEventHandlerException();
+
 
             return true;
         }
