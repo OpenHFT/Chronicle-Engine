@@ -99,7 +99,7 @@ public class EngineWireHandler extends WireTcpHandler {
     private final Consumer<WireIn> metaDataConsumer;
     private final StringBuilder lastCsp = new StringBuilder();
     private final StringBuilder eventName = new StringBuilder();
-    private final HeartbeatHandler systemHandler;
+    private final SystemHandler systemHandler;
 
     private WireAdapter wireAdapter;
     private View view;
@@ -139,7 +139,7 @@ public class EngineWireHandler extends WireTcpHandler {
         this.topicPublisherHandler = new TopicPublisherHandler();
         this.publisherHandler = new PublisherHandler();
         this.replicationHandler = new ReplicationHandler();
-        this.systemHandler = new HeartbeatHandler();
+        this.systemHandler = new SystemHandler();
         this.isClosed = isClosed;
 
         eventLoop.start();
@@ -367,23 +367,6 @@ public class EngineWireHandler extends WireTcpHandler {
             final long cid = read.int64();
             final CharSequence s = mapWireHandler.getCspForCid(cid);
             cspText.append(s);
-        }
-    }
-
-    public enum EventId implements ParameterizeWireKey {
-        userid,
-        heartbeat,
-        heartbeatReply;
-
-        private final WireKey[] params;
-
-        <P extends WireKey> EventId(P... params) {
-            this.params = params;
-        }
-
-        @NotNull
-        public <P extends WireKey> P[] params() {
-            return (P[]) this.params;
         }
     }
 

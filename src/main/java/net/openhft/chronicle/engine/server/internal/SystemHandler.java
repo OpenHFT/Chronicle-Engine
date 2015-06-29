@@ -11,7 +11,7 @@ import java.util.function.BiConsumer;
 /**
  * @author Rob Austin.
  */
-public class HeartbeatHandler extends AbstractHandler {
+public class SystemHandler extends AbstractHandler {
     private final StringBuilder eventName = new StringBuilder();
     private SessionDetailsProvider sessionDetails;
 

@@ -23,6 +23,8 @@ import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.CloseablesManager;
 import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.api.tree.View;
+import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
+import net.openhft.chronicle.engine.server.internal.SystemHandler.EventId;
 import net.openhft.chronicle.network.api.session.SessionDetails;
 import net.openhft.chronicle.threads.HandlerPriority;
 import net.openhft.chronicle.threads.NamedThreadFactory;
@@ -305,9 +307,9 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
             outWire().writeDocument(false, wireOut -> {
                 if (sessionDetails == null)
-                    wireOut.writeEventName(() -> "userid").text(getProperty("user.name"));
+                    wireOut.writeEventName(EngineWireHandler.EventId.userid).text(getProperty("user.name"));
                 else
-                    wireOut.writeEventName(() -> "userid").text(sessionDetails.userId());
+                    wireOut.writeEventName(EventId.userid).text(sessionDetails.userId());
             });
 
             writeSocket(outWire());
