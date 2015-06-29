@@ -23,8 +23,6 @@ import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.CloseablesManager;
 import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.api.tree.View;
-import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
-import net.openhft.chronicle.engine.server.internal.SystemHandler.EventId;
 import net.openhft.chronicle.network.api.session.SessionDetails;
 import net.openhft.chronicle.threads.HandlerPriority;
 import net.openhft.chronicle.threads.NamedThreadFactory;
@@ -61,8 +59,8 @@ import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static net.openhft.chronicle.bytes.Bytes.elasticByteBuffer;
 import static net.openhft.chronicle.engine.server.WireType.wire;
-import static net.openhft.chronicle.engine.server.internal.EngineWireHandler.EventId.heartbeat;
-import static net.openhft.chronicle.engine.server.internal.EngineWireHandler.EventId.heartbeatReply;
+import static net.openhft.chronicle.engine.server.internal.SystemHandler.EventId.*;
+
 
 /**
  * Created by Rob Austin
@@ -307,9 +305,9 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
             outWire().writeDocument(false, wireOut -> {
                 if (sessionDetails == null)
-                    wireOut.writeEventName(EngineWireHandler.EventId.userid).text(getProperty("user.name"));
+                    wireOut.writeEventName(userid).text(getProperty("user.name"));
                 else
-                    wireOut.writeEventName(EventId.userid).text(sessionDetails.userId());
+                    wireOut.writeEventName(userid).text(sessionDetails.userId());
             });
 
             writeSocket(outWire());
