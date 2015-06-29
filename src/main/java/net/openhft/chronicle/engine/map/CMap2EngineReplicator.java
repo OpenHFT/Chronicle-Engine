@@ -65,7 +65,7 @@ public class CMap2EngineReplicator implements EngineReplication,
     @NotNull
     net.openhft.lang.io.Bytes toLangBytes(@NotNull BytesStore b) {
         if (b.underlyingObject() == null)
-            return wrap(b.address(), b.readRemaining());
+            return wrap(b.address(b.start()), b.readRemaining());
         else {
             ByteBuffer buffer = (ByteBuffer) b.underlyingObject();
             IByteBufferBytes wrap = ByteBufferBytes.wrap(buffer);
@@ -222,10 +222,10 @@ public class CMap2EngineReplicator implements EngineReplication,
                                final long bootStrapTimeStamp) {
             this.key = key;
             // must be native
-            key.address();
+            assert key.underlyingObject() == null;
             this.value = value;
             // must be native
-            value.address();
+            assert value.underlyingObject() == null;
             this.timestamp = timestamp;
             this.identifier = identifier;
             this.isDeleted = isDeleted;
