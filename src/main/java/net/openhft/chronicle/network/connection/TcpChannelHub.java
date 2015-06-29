@@ -113,8 +113,11 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
         this.inWire = wire.apply(elasticByteBuffer());
         this.name = " connected to " + remoteAddress.toString();
         this.timeoutMs = 10_000;
-
-        attemptConnect(remoteAddress);
+        try {
+            attemptConnect(remoteAddress);
+        } catch (Exception e) {
+            LOG.debug("", e);
+        }
         tcpSocketConsumer = new TcpSocketConsumer(wire, this, this.remoteAddress.toString());
 
         this.sessionProvider = sessionProvider;
