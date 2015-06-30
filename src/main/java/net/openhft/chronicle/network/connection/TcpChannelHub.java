@@ -20,7 +20,6 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.Jvm;
-import net.openhft.chronicle.core.io.CloseablesManager;
 import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.network.api.session.SessionDetails;
@@ -34,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import shaded.org.apache.http.ConnectionClosedException;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -54,6 +52,7 @@ import java.util.function.Function;
 
 import static java.lang.Integer.getInteger;
 import static java.lang.System.getProperty;
+import static java.lang.Thread.currentThread;
 import static java.lang.ThreadLocal.withInitial;
 import static java.text.MessageFormat.format;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
@@ -66,7 +65,7 @@ import static net.openhft.chronicle.engine.server.internal.SystemHandler.EventId
 /**
  * Created by Rob Austin
  */
-public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
+public class TcpChannelHub implements View, Closeable {
 
     public static final int HEATBEAT_PING_PERIOD = getInteger("heartbeat.ping.period", 3_000);
     public static final int HEATBEAT_TIMEOUT_PERIOD = getInteger("heartbeat.timeout", 5_000);
@@ -88,12 +87,11 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
     @NotNull
     private final TcpSocketConsumer tcpSocketConsumer;
     private final EventLoop eventLoop;
-    @Nullable
-    protected volatile CloseablesManager closeables;
+
     private long largestChunkSoFar = 0;
 
     @Nullable
-    private SocketChannel clientChannel;
+    private volatile SocketChannel clientChannel;
 
     private long limitOfLast = 0;
 
@@ -101,44 +99,43 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
     private long startTime;
     private volatile boolean closed;
     private String hostname;
-    private String port;
+    private int port;
+    private final Wire handShakingWire;
 
     public TcpChannelHub(@NotNull SessionProvider sessionProvider,
                          @NotNull String hostname, int port,
                          @NotNull EventLoop eventLoop) {
+
         this.eventLoop = eventLoop;
         this.hostname = hostname;
+        this.port = port;
+        this.tcpSocketConsumer = new TcpSocketConsumer(wire, hostname);
         this.tcpBufferSize = 64 << 10;
         this.remoteAddress = new InetSocketAddress(hostname, port);
         this.outWire = wire.apply(elasticByteBuffer());
         this.inWire = wire.apply(elasticByteBuffer());
         this.name = " connected to " + remoteAddress.toString();
         this.timeoutMs = 10_000;
+        Bytes<ByteBuffer> byteBufferBytes = Bytes.elasticByteBuffer();
+        handShakingWire = wire.apply(byteBufferBytes);
+
+
         try {
             attemptConnect(remoteAddress);
         } catch (Exception e) {
             LOG.debug("", e);
         }
-        tcpSocketConsumer = new TcpSocketConsumer(wire, this, this.remoteAddress.toString());
+
 
         this.sessionProvider = sessionProvider;
+        tcpSocketConsumer.start();
     }
 
     @Nullable
-    static SocketChannel openSocketChannel(@NotNull final CloseablesManager closeables)
+    static SocketChannel openSocketChannel()
             throws IOException {
-        SocketChannel result = null;
-        try {
-            result = SocketChannel.open();
-            result.socket().setTcpNoDelay(true);
-        } finally {
-            if (result != null)
-                try {
-                    closeables.add(result);
-                } catch (IllegalStateException e) {
-                    // already closed
-                }
-        }
+        SocketChannel result = SocketChannel.open();
+        result.socket().setTcpNoDelay(true);
         return result;
     }
 
@@ -201,24 +198,21 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
     private synchronized void attemptConnect(final InetSocketAddress remoteAddress) {
 
         // ensures that the excising connection are closed
-        closeExisting();
-
-        if (closeables == null)
-            closeables = new CloseablesManager();
+        closeSocket();
 
         try {
-            SocketChannel socketChannel = openSocketChannel(closeables);
+            SocketChannel socketChannel = openSocketChannel();
             if (socketChannel != null && socketChannel.connect(remoteAddress)) {
                 clientChannel = socketChannel;
                 clientChannel.configureBlocking(false);
                 clientChannel.socket().setTcpNoDelay(true);
                 clientChannel.socket().setReceiveBufferSize(tcpBufferSize);
                 clientChannel.socket().setSendBufferSize(tcpBufferSize);
-                doHandShaking();
+                doHandShaking(socketChannel);
             }
         } catch (IOException e) {
             LOG.error("Failed to connect to " + remoteAddress, e);
-            if (closeables != null) closeables.closeQuietly();
+
             clientChannel = null;
         }
     }
@@ -241,27 +235,39 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
         return true;
     }
 
+    // ensures that the first thread performs the connection, others are blocked
+    private AtomicBoolean connectOnce = new AtomicBoolean(true);
+
     @Nullable
-    @Override
-    public SocketChannel lazyConnect() {
-        lazyConnect(timeoutMs, remoteAddress);
+    private SocketChannel reConnect() throws InterruptedException {
+
+        // ensures that other threads that wish to reconnected are blocked till the current
+        // thread completes
+        boolean connectOnce = this.connectOnce.getAndSet(false);
+
+        synchronized (this) {
+            if (!connectOnce)
+                return clientChannel;
+            tcpSocketConsumer.stop();
+            try {
+                closeSocket();
+                Jvm.pause(500);
+                connect(timeoutMs, remoteAddress);
+            } finally {
+                this.connectOnce.set(true);
+            }
+            tcpSocketConsumer.start();
+        }
+
+        // re-established all the existing subscription ( if any )
+        tcpSocketConsumer.onReconnect();
         return clientChannel;
+
     }
 
     @Nullable
-    @Override
-    public synchronized SocketChannel reConnect() throws InterruptedException {
-        closeExisting();
-
-        Thread.sleep(1000);
-
-        lazyConnect(timeoutMs, remoteAddress);
-        return clientChannel;
-    }
-
-    @Nullable
-    public synchronized SocketChannel lazyConnect(final long timeoutMs,
-                                                  final InetSocketAddress remoteAddress) {
+    public synchronized SocketChannel connect(final long timeoutMs,
+                                              final InetSocketAddress remoteAddress) {
         if (clientChannel != null)
             return clientChannel;
 
@@ -274,58 +280,59 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
             checkTimeout(timeoutAt);
 
-            // ensures that the excising connection are closed
-            closeExisting();
-
             try {
-                if (closeables == null)
-                    closeables = new CloseablesManager();
 
-                clientChannel = openSocketChannel(closeables);
-                if (clientChannel == null || !clientChannel.connect(remoteAddress)) {
+                SocketChannel socketChannel = openSocketChannel();
+                if (socketChannel == null || !socketChannel.connect(remoteAddress)) {
                     Jvm.pause(100);
                     continue;
                 }
 
-                clientChannel.socket().setTcpNoDelay(true);
-                clientChannel.socket().setReceiveBufferSize(tcpBufferSize);
-                clientChannel.socket().setSendBufferSize(tcpBufferSize);
+                socketChannel.socket().setTcpNoDelay(true);
+                socketChannel.socket().setReceiveBufferSize(tcpBufferSize);
+                socketChannel.socket().setSendBufferSize(tcpBufferSize);
+
+                // the hand-shaking is assigned before setting the clientChannel, so that it can
+                // be assured to go first
+                doHandShaking(socketChannel);
+
+                clientChannel = socketChannel;
+
+                // resets the heartbeat timer
+                tcpSocketConsumer.onMessageReceived();
+
                 closed = false;
-                doHandShaking();
+
 
             } catch (IOException e) {
-                if (closeables != null) closeables.closeQuietly();
                 clientChannel = null;
             } catch (Exception e) {
-                if (closeables != null) closeables.closeQuietly();
                 throw e;
             }
         }
         return clientChannel;
     }
 
-    private void doHandShaking() {
-        outBytesLock().lock();
-        try {
+    private void flushBuffer() throws IOException {
+        Bytes buff = Bytes.elasticByteBuffer();
+        clientChannel.read((ByteBuffer) buff.underlyingObject());
+    }
 
-            final SessionDetails sessionDetails = sessionDetails();
 
-            outWire().writeDocument(false, wireOut -> {
-                if (sessionDetails == null)
-                    wireOut.writeEventName(userid).text(getProperty("user.name"));
-                else
-                    wireOut.writeEventName(userid).text(sessionDetails.userId());
-            });
+    private synchronized void doHandShaking(SocketChannel socketChannel) throws IOException {
 
-            writeSocket(outWire());
+        final SessionDetails sessionDetails = sessionDetails();
+        handShakingWire.clear();
+        handShakingWire.bytes().clear();
+        handShakingWire.writeDocument(false, wireOut -> {
+            if (sessionDetails == null)
+                wireOut.writeEventName(userid).text(getProperty("user.name"));
+            else
+                wireOut.writeEventName(userid).text(sessionDetails.userId());
+        });
 
-        } finally {
-            outBytesLock().unlock();
-        }
+        writeSocket(handShakingWire, timeoutMs, socketChannel);
 
-        // re-established all the subscription
-        if (tcpSocketConsumer != null)
-            tcpSocketConsumer.onReconnect();
     }
 
     private SessionDetails sessionDetails() {
@@ -337,30 +344,39 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
     /**
      * closes the existing connections and establishes a new closeables
      */
-    protected void closeExisting() {
+    protected synchronized void closeSocket() {
 
-        // ensure that any excising connection are first closed
-        if (closeables != null)
-            closeables.closeQuietly();
-        closeables = null;
-        if (tcpSocketConsumer != null)
-            tcpSocketConsumer.onConnectionClosed();
-        if (clientChannel != null) try {
-            clientChannel.close();
-        } catch (IOException e) {
-            //
+        if (clientChannel != null) {
+
+            try {
+                clientChannel.socket().getInputStream().close();
+            } catch (IOException ignored) {
+            }
+
+            try {
+                clientChannel.socket().close();
+            } catch (IOException ignored) {
+            }
+
+            try {
+                clientChannel.close();
+            } catch (IOException ignored) {
+            }
+
+            clientChannel = null;
+
+            // ensure that any excising connection are first closed
+            if (tcpSocketConsumer != null)
+                tcpSocketConsumer.onConnectionClosed();
         }
-        clientChannel = null;
+
+
     }
 
     public synchronized void close() {
         closed = true;
-        tcpSocketConsumer.close();
-
-        if (closeables != null)
-            closeables.closeQuietly();
-        closeables = null;
-        clientChannel = null;
+        tcpSocketConsumer.stop();
+        closeSocket();
     }
 
     /**
@@ -386,44 +402,61 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
      * @param wire the {@code wire} containing the outbound data
      */
     public void writeSocket(@NotNull final WireOut wire) {
-        assert outBytesLock().isHeldByCurrentThread();
-        checkClosed();
+
+        checkNotClosed();
 
         final long timeoutTime = startTime + this.timeoutMs;
         try {
             for (; ; ) {
-                if (clientChannel == null)
-                    lazyConnect(timeoutMs, remoteAddress);
+
                 try {
                     // send out all the bytes
-                    writeSocket(wire, timeoutTime);
+                    writeSocket(wire, timeoutTime, socketChannel());
                     break;
                 } catch (ClosedChannelException e) {
                     checkTimeout(timeoutTime);
-                    lazyConnect(timeoutMs, remoteAddress);
+                    reConnect();
                 }
             }
         } catch (IOException e) {
-            close();
-            throw new IORuntimeException(e);
+            closeSocket();
+            throw new IORuntimeException("server=" + hostname + ":" + port, e);
         } catch (Exception e) {
-            close();
-            throw e;
+            LOG.error("", e);
+            closeSocket();
         }
     }
 
+    /**
+     * provides a non null socket channel
+     *
+     * @return
+     * @throws InterruptedException
+     */
+    @NotNull
+    private SocketChannel socketChannel() throws InterruptedException {
+        if (clientChannel != null)
+            return clientChannel;
+        SocketChannel clientChannel;
+        for (; (clientChannel = this.clientChannel) == null; ) {
+            reConnect();
+        }
+        return clientChannel;
+    }
+
     public Wire proxyReply(long timeoutTime, final long tid) {
-        checkClosed();
+        checkNotClosed();
         try {
             return tcpSocketConsumer.syncBlockingReadSocket(timeoutTime, tid);
+        } catch (IORuntimeException e) {
+            throw e;
         } catch (RuntimeException e) {
-            close();
+            closeSocket();
             throw e;
         } catch (Exception e) {
-            close();
+            closeSocket();
             throw Jvm.rethrow(e);
         } catch (AssertionError e) {
-            LOG.error("name=" + name, e);
             throw e;
         }
     }
@@ -435,9 +468,9 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
      * @param timeoutTime how long before a we timeout
      * @throws IOException
      */
-    private void writeSocket(@NotNull WireOut outWire, long timeoutTime) throws IOException {
+    private void writeSocket(@NotNull WireOut outWire, long timeoutTime, @NotNull SocketChannel socketChannel) throws
+            IOException {
 
-        assert outBytesLock().isHeldByCurrentThread();
 
         final Bytes<?> bytes = outWire.bytes();
         long outBytesPosition = bytes.writePosition();
@@ -459,11 +492,11 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
         upateLargestChunkSoFarSize(outBuffer);
 
         while (outBuffer.remaining() > 0) {
-            checkClosed();
-            int len = clientChannel.write(outBuffer);
+            checkNotClosed();
+            int len = socketChannel.write(outBuffer);
 
             if (len == -1)
-                throw new IORuntimeException("Disconnection to server");
+                throw new IORuntimeException("Disconnection to server " + hostname + ":" + port);
 
             if (outBuffer.remaining() == 0)
                 break;
@@ -547,7 +580,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
     public long writeMetaDataStartTime(long startTime, @NotNull Wire wire, String csp, long cid) {
         assert outBytesLock().isHeldByCurrentThread();
-        checkClosed();
+        checkNotClosed();
         startTime(startTime);
         long tid = nextUniqueTransaction(startTime);
 
@@ -559,7 +592,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
     public void writeMetaDataForKnownTID(long tid, @NotNull Wire wire, @Nullable String csp, long
             cid) {
         assert outBytesLock().isHeldByCurrentThread();
-        checkClosed();
+        checkNotClosed();
 
         wire.writeDocument(true, wireOut -> {
             if (cid == 0)
@@ -579,7 +612,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
      */
     public void writeAsyncHeader(@NotNull Wire wire, String csp, long cid) {
         assert outBytesLock().isHeldByCurrentThread();
-        checkClosed();
+        checkNotClosed();
         wire.writeDocument(true, wireOut -> {
             if (cid == 0)
                 wireOut.writeEventName(CoreFields.csp).text(csp);
@@ -592,7 +625,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
         this.startTime = startTime;
     }
 
-    void checkClosed() {
+    void checkNotClosed() {
         if (closed)
             throw new IllegalStateException("Closed");
     }
@@ -618,17 +651,16 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
     /**
      * uses a single read thread, to process messages to waiting threads based on their {@code tid}
      */
-    private class TcpSocketConsumer implements EventHandler, Closeable {
+    private class TcpSocketConsumer implements EventHandler {
+
+        private volatile ExecutorService executorService;
 
         @NotNull
-        private final ExecutorService executorService;
-        @NotNull
-        private final SocketChannelProvider provider;
         private final Map<Long, Object> map = new ConcurrentHashMap<>();
-        private volatile boolean closeSocketConsumer;
+        private volatile boolean isShutdown;
         private Function<Bytes, Wire> wireFunction;
         @Nullable
-        private SocketChannel clientChannel;
+
         private long tid;
 
 
@@ -651,36 +683,32 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
         }
 
         public void onConnectionClosed() {
-
             map.values().forEach(v -> {
                 if (v instanceof AsyncSubscription) {
                     ((AsyncSubscription) v).onClose();
                 } else if (v instanceof Bytes) {
-                    v.notifyAll();
+                    synchronized (v) {
+                        v.notifyAll();
+                    }
                 }
             });
         }
 
         /**
          * @param wireFunction converts bytes into wire, ie TextWire or BinaryWire
-         * @param provider     used to re-establish a socket connection when/if the socket
          * @param name         the name of the uri of the request that the TcpSocketConsumer is
          *                     running for.
          */
         private TcpSocketConsumer(
                 @NotNull final Function<Bytes, Wire> wireFunction,
-                @NotNull final SocketChannelProvider provider,
                 @NotNull final String name) {
             this.wireFunction = wireFunction;
-            this.provider = provider;
-            this.clientChannel = provider.lazyConnect();
-            executorService = newSingleThreadExecutor(
-                    new NamedThreadFactory("TcpSocketConsumer-" + name, true));
+
 
             // used for the heartbeat
             eventLoop.addHandler(this);
 
-            start();
+
         }
 
         @Override
@@ -709,11 +737,12 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
             synchronized (bytes) {
                 map.put(tid, bytes);
                 bytes.wait(timeoutTimeMs);
-                if (TcpChannelHub.this.closeables == null) {
-                    ConnectionClosedException e = new ConnectionClosedException(format("The " +
-                            "connection to the server {0}:{1} was closed", hostname, port));
+                if (clientChannel == null) {
+                    IORuntimeException e = new IORuntimeException("Unable to " +
+                            "reprocess response, as the server=" + hostname + ":" + port + " is " +
+                            "disconnected");
                     if (LOG.isDebugEnabled())
-                        LOG.debug("", e);
+                        LOG.debug(hostname + ":" + port, e);
                     throw Jvm.rethrow(e);
                 }
             }
@@ -742,23 +771,27 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
          * tid}
          */
         private void start() {
-
+            awaitingHeartbeat.set(false);
+            executorService = newSingleThreadExecutor(
+                    new NamedThreadFactory("TcpSocketConsumer-" + name, true));
+            isShutdown = false;
             executorService.submit(() -> {
                 try {
                     running();
                 } catch (Throwable e) {
-                    if (!isClosed())
+                    if (!isShutdown())
                         LOG.error("", e);
                 }
             });
 
         }
 
+
         private void running() {
             final Wire inWire = wireFunction.apply(elasticByteBuffer());
             assert inWire != null;
 
-            while (!isClosed()) {
+            while (!isShutdown()) {
                 try {
                     // if we have processed all the bytes that we have read in
                     final Bytes<?> bytes = inWire.bytes();
@@ -781,9 +814,9 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
                     }
 
                 } catch (IOException e) {
-                    if (!isClosed())
+                    if (!isShutdown())
                         try {
-                            this.clientChannel = provider.reConnect();
+                            TcpChannelHub.this.clientChannel = TcpChannelHub.this.reConnect();
                         } catch (InterruptedException e1) {
                             return;
                         }
@@ -793,8 +826,8 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
             }
         }
 
-        private boolean isClosed() {
-            return closeSocketConsumer || Thread.currentThread().isInterrupted();
+        private boolean isShutdown() {
+            return isShutdown || currentThread().isInterrupted();
         }
 
         private void clear(@NotNull final Wire inWire) {
@@ -827,9 +860,10 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
                 throws IOException {
 
             long startTime = 0;
-            Object o;
+            Object o = null;
 
-            for (; ; ) {
+            for (; !isShutdown(); ) {
+
                 o = isReady ? map.remove(tid) : map.get(tid);
                 if (o != null)
                     break;
@@ -840,16 +874,11 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
                 if (startTime == 0)
                     startTime = System.currentTimeMillis();
 
-                if (System.currentTimeMillis() - startTime > 2000) {
+                if (System.currentTimeMillis() - startTime > 3_000) {
                     LOG.error("unable to respond to tid=" + tid + ", given that we have received a " +
                             " message we a tid which is unknown, something has become corrupted, " +
                             "so the safest thing to do is to drop the connection to the server and " +
                             "start again.");
-                    try {
-                        reConnect();
-                    } catch (InterruptedException e) {
-                        //
-                    }
                     return;
                 }
 
@@ -956,17 +985,18 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
         private void readBuffer(@NotNull final ByteBuffer buffer) throws IOException {
             while (buffer.remaining() > 0) {
+
                 if (clientChannel == null || clientChannel.read(buffer) == -1)
-                    throw new IORuntimeException("Disconnection to server");
-                if (closeSocketConsumer)
-                    throw new ClosedChannelException();
+                    throw new IORuntimeException("Disconnection to server " + hostname + ":" + port);
+                if (isShutdown)
+                    throw new IORuntimeException("The server was shutdown, " + hostname + ":" + port);
             }
-            onMessageReceived();
         }
 
         private volatile long lastTimeMessageReceived = System.currentTimeMillis();
 
         private void onMessageReceived() {
+            System.out.println("lastTimeMessageReceived=" + lastTimeMessageReceived);
             lastTimeMessageReceived = System.currentTimeMillis();
         }
 
@@ -1000,10 +1030,11 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
             });
         }
 
-        @Override
-        public void close() {
+        private void stop() {
+            isShutdown = true;
 
-            closeSocketConsumer = true;
+            if (executorService == null)
+                return;
             executorService.shutdown();
             try {
                 if (!executorService.awaitTermination(10, TimeUnit.MILLISECONDS)) {
@@ -1012,13 +1043,7 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
             } catch (InterruptedException e) {
                 LOG.error("", e);
             }
-            try {
-                if (clientChannel != null)
-                    clientChannel.close();
-            } catch (IOException e) {
-                LOG.error("", e);
-            }
-
+            executorService = null;
         }
 
         // set to true if we have sent a heartbeat and are waiting a response
@@ -1047,13 +1072,15 @@ public class TcpChannelHub implements View, Closeable, SocketChannelProvider {
 
             // if we have not received a message from the server after the HEATBEAT_TIMEOUT_PERIOD
             // we will drop and then re-establish the connection.
-            if (millisecondsSinceLastMessageReceived >= HEATBEAT_TIMEOUT_PERIOD)
+            long x = millisecondsSinceLastMessageReceived - HEATBEAT_TIMEOUT_PERIOD;
+            if (x > 0) {
+                System.out.println("millisecondsSinceLastMessageReceived=" + millisecondsSinceLastMessageReceived);
                 try {
                     reConnect();
                 } catch (InterruptedException e) {
                     return true;
                 }
-
+            }
             if (TcpChannelHub.this.closed)
                 throw new InvalidEventHandlerException();
 
