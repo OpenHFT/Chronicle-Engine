@@ -97,9 +97,7 @@ public class ChassisRFCTest {
         Map<String, String> map = acquireMap("group", String.class, String.class);
         Publisher<String> publisher = acquirePublisher("group/topic", String.class);
         List<String> values = new ArrayList<>();
-        Subscriber<String> subscriber = (String e) -> {
-            values.add(e);
-        };
+        Subscriber<String> subscriber = values::add;
         registerSubscriber("group/topic?bootstrap=false", String.class, subscriber);
 
         publisher.publish("Message-1");

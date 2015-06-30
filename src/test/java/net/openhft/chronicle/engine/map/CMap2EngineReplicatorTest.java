@@ -44,7 +44,7 @@ public class CMap2EngineReplicatorTest {
      * tests when the put has come locally from the server map
      */
     @Test
-    public void testLocalPut() throws Exception {
+    public void testLocalPut() throws InterruptedException {
 
         final CMap2EngineReplicator replicator = new CMap2EngineReplicator(null);
 
@@ -55,9 +55,7 @@ public class CMap2EngineReplicatorTest {
         map.put("hello", "world");
 
         BlockingQueue<ReplicationEntry> q = new ArrayBlockingQueue<>(1);
-        modificationIterator.forEach(e -> {
-            q.add(e);
-        });
+        modificationIterator.forEach(q::add);
 
         final ReplicationEntry entry = q.take();
 
@@ -73,7 +71,7 @@ public class CMap2EngineReplicatorTest {
      * tests when the put has come locally from another map with a remote identifier
      */
     @Test
-    public void testRemotePut() throws Exception {
+    public void testRemotePut() {
 
         final CMap2EngineReplicator replicator = new CMap2EngineReplicator(null);
 

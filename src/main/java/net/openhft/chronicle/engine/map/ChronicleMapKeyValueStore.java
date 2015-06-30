@@ -58,14 +58,19 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
         Closeable, Supplier<EngineReplication> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChronicleMapKeyValueStore.class);
     private final ChronicleMap<K, V> chronicleMap;
+    @NotNull
     private final ObjectKVSSubscription<K, MV, V> subscriptions;
+    @Nullable
     private final EngineReplication engineReplicator;
+    @NotNull
     private final Asset asset;
+    @NotNull
     private final String assetFullName;
+    @Nullable
     private final EventLoop eventLoop;
     private final AtomicBoolean isClosed = new AtomicBoolean();
 
-    public ChronicleMapKeyValueStore(@NotNull RequestContext context, Asset asset) {
+    public ChronicleMapKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset) {
         String basePath = context.basePath();
         double averageValueSize = context.getAverageValueSize();
         long maxEntries = context.getEntries();
@@ -84,10 +89,10 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
         try {
             engineReplicator1 = asset.acquireView(EngineReplication.class, RequestContext.requestContext());
 
-            final EngineReplicationLangBytesConsumer langBytesConsumer = asset.acquireView
-                    (EngineReplicationLangBytesConsumer.class, null);
+            final EngineReplicationLangBytesConsumer langBytesConsumer = asset.findView
+                    (EngineReplicationLangBytesConsumer.class);
 
-            hostIdentifier = asset.acquireView(HostIdentifier.class, RequestContext.requestContext());
+            hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
 
             builder.replication(builder().engineReplication(langBytesConsumer)
                     .createWithId(hostIdentifier.hostId()));
@@ -128,16 +133,18 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
         if (hostIdentifier != null) {
             Clusters clusters = asset.findView(Clusters.class);
             Map<String, HostDetails> hdMap = clusters.get("cluster");
-            int hostId = hostIdentifier.hostId();
+            int localIdentifer = hostIdentifier.hostId();
             for (HostDetails hostDetails : hdMap.values()) {
-                if (hostDetails.hostId == hostId)
+
+                // its the identifier with the larger values that will establish the conneciton
+                if (hostDetails.hostId <= localIdentifer)
                     continue;
 
-                TcpChannelHub tcpChannelHub = hostDetails.acquireTcpChannelHub();
+                final TcpChannelHub tcpChannelHub = hostDetails.acquireTcpChannelHub(eventLoop);
                 ReplicationHub replicationHub = new ReplicationHub(context, tcpChannelHub, eventLoop, isClosed);
 
                 try {
-                    replicationHub.bootstrap(engineReplicator1, hostId);
+                    replicationHub.bootstrap(engineReplicator1, localIdentifer);
                 } catch (InterruptedException e) {
                     throw new AssertionError(e);
                 }
@@ -152,6 +159,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
         return subscriptions;
     }
 
+    @Nullable
     @Override
     public V getAndPut(K key, V value) {
         if (!isClosed.get())
@@ -161,6 +169,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
 
     }
 
+    @Nullable
     @Override
     public V getAndRemove(K key) {
 
@@ -206,6 +215,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
         return chronicleMap.entrySet().iterator();
     }
 
+    @NotNull
     @Override
     public Iterator<K> keySetIterator() {
         return chronicleMap.keySet().iterator();
@@ -217,10 +227,11 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
     }
 
     @Override
-    public boolean containsValue(final MV value) {
+    public boolean containsValue(final V value) {
         throw new UnsupportedOperationException("todo");
     }
 
+    @NotNull
     @Override
     public Asset asset() {
         return asset;
@@ -242,13 +253,14 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
     }
 
     @Override
-    public void accept(final ReplicationEntry replicationEntry) {
+    public void accept(@NotNull final ReplicationEntry replicationEntry) {
         if (!isClosed.get())
             engineReplicator.applyReplication(replicationEntry);
         else
             LOGGER.warn("message skipped as closed replicationEntry=" + replicationEntry);
     }
 
+    @Nullable
     @Override
     public EngineReplication get() {
         return engineReplicator;
@@ -257,16 +269,18 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
     class PublishingOperations extends MapEventListener<K, V> {
         @Override
         public void onRemove(@NotNull K key, V value, boolean replicationEven) {
-            subscriptions.notifyEvent(RemovedEvent.of(assetFullName, key, value));
+            if (subscriptions.subscriberCount() > 0)
+                subscriptions.notifyEvent(RemovedEvent.of(assetFullName, key, value));
         }
 
         @Override
         public void onPut(@NotNull K key, V newValue, @Nullable V replacedValue, boolean replicationEvent) {
-            if (replacedValue != null) {
-                subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, replacedValue, newValue));
-            } else {
-                subscriptions.notifyEvent(InsertedEvent.of(assetFullName, key, newValue));
-            }
+            if (subscriptions.subscriberCount() > 0)
+                if (replacedValue == null) {
+                    subscriptions.notifyEvent(InsertedEvent.of(assetFullName, key, newValue));
+                } else {
+                    subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, replacedValue, newValue));
+                }
         }
     }
 

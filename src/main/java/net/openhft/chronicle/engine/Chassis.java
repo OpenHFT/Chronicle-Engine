@@ -46,30 +46,31 @@ public enum Chassis {
     }
 
     @NotNull
-    public static <E> Set<E> acquireSet(String name, Class<E> eClass) throws AssetNotFoundException {
+    public static <E> Set<E> acquireSet(@NotNull String name, Class<E> eClass) throws AssetNotFoundException {
         return assetTree.acquireSet(name, eClass);
     }
 
-    public static <S> S acquireService(String uri, Class<S> serviceClass) {
+    @NotNull
+    public static <S> S acquireService(@NotNull String uri, Class<S> serviceClass) {
         return assetTree.acquireService(uri, serviceClass);
     }
     @NotNull
-    public static <K, V> MapView<K, V, V> acquireMap(String name, Class<K> kClass, Class<V> vClass) throws AssetNotFoundException {
+    public static <K, V> MapView<K, V, V> acquireMap(@NotNull String name, Class<K> kClass, Class<V> vClass) throws AssetNotFoundException {
         return assetTree.acquireMap(name, kClass, vClass);
     }
 
     @NotNull
-    public static <E> Reference<E> acquireReference(String name, Class<E> eClass) throws AssetNotFoundException {
+    public static <E> Reference<E> acquireReference(@NotNull String name, Class<E> eClass) throws AssetNotFoundException {
         return assetTree.acquireReference(name, eClass);
     }
 
     @NotNull
-    public static <E> Publisher<E> acquirePublisher(String name, Class<E> eClass) throws AssetNotFoundException {
+    public static <E> Publisher<E> acquirePublisher(@NotNull String name, Class<E> eClass) throws AssetNotFoundException {
         return assetTree.acquirePublisher(name, eClass);
     }
 
     @NotNull
-    public static <T, E> TopicPublisher<T, E> acquireTopicPublisher(String name, Class<T> tClass, Class<E> eClass) throws AssetNotFoundException {
+    public static <T, E> TopicPublisher<T, E> acquireTopicPublisher(@NotNull String name, Class<T> tClass, Class<E> eClass) throws AssetNotFoundException {
         return assetTree.acquireTopicPublisher(name, tClass, eClass);
     }
 
@@ -84,19 +85,19 @@ public enum Chassis {
         return assetTree.acquireAsset(context);
     }
 
-    public static <E> void registerSubscriber(String name, Class<E> eClass, Subscriber<E> subscriber) throws AssetNotFoundException {
+    public static <E> void registerSubscriber(@NotNull String name, Class<E> eClass, Subscriber<E> subscriber) throws AssetNotFoundException {
         assetTree.registerSubscriber(name, eClass, subscriber);
     }
 
-    public static <E> void unregisterSubscriber(String name, Subscriber<E> subscriber) {
+    public static <E> void unregisterSubscriber(@NotNull String name, Subscriber<E> subscriber) {
         assetTree.unregisterSubscriber(name, subscriber);
     }
 
-    public static <T, E> void registerTopicSubscriber(String name, Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
+    public static <T, E> void registerTopicSubscriber(@NotNull String name, Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
         assetTree.registerTopicSubscriber(name, tClass, eClass, subscriber);
     }
 
-    public static <T, E> void unregisterTopicSubscriber(String name, TopicSubscriber<T, E> subscriber) {
+    public static <T, E> void unregisterTopicSubscriber(@NotNull String name, TopicSubscriber<T, E> subscriber) {
         assetTree.unregisterTopicSubscriber(name, subscriber);
     }
 

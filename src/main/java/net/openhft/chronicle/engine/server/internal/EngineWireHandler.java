@@ -23,6 +23,7 @@ import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
 import net.openhft.chronicle.engine.api.pubsub.Replication;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
+import net.openhft.chronicle.engine.api.session.Heartbeat;
 import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
@@ -31,13 +32,13 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.engine.collection.CollectionWireHandler;
-import net.openhft.chronicle.engine.collection.CollectionWireHandlerProcessor;
-import net.openhft.chronicle.engine.map.KVSSubscription;
 import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
+import net.openhft.chronicle.engine.tree.TopologySubscription;
 import net.openhft.chronicle.network.WireTcpHandler;
 import net.openhft.chronicle.network.api.session.SessionDetailsProvider;
 import net.openhft.chronicle.network.connection.CoreFields;
+import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,9 +46,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.StreamCorruptedException;
-import java.util.*;
-import java.util.Map.Entry;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Queue;
 import java.util.concurrent.LinkedTransferQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -63,23 +66,31 @@ public class EngineWireHandler extends WireTcpHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(EngineWireHandler.class);
 
+
     private final StringBuilder cspText = new StringBuilder();
     @NotNull
-    private final CollectionWireHandler<byte[], Set<byte[]>> keySetHandler;
+    private final CollectionWireHandler keySetHandler;
 
-    @Nullable
-    private final WireHandler queueWireHandler;
-
-  
     @NotNull
     private final MapWireHandler mapWireHandler;
     @NotNull
-    private final CollectionWireHandler<Entry<byte[], byte[]>, Set<Entry<byte[], byte[]>>> entrySetHandler;
+    private final CollectionWireHandler entrySetHandler;
     @NotNull
-    private final CollectionWireHandler<byte[], Collection<byte[]>> valuesHandler;
-    private final SubscriptionHandlerProcessor subscriptionHandler;
+    private final CollectionWireHandler valuesHandler;
+    @NotNull
+    private final ObjectKVSubscriptionHandler subscriptionHandler;
+
+    @NotNull
+    private final TopologySubscriptionHandler topologySubscriptionHandler;
+    @NotNull
     private final TopicPublisherHandler topicPublisherHandler;
+    @NotNull
     private final PublisherHandler publisherHandler;
+
+    //  @NotNull
+    //  private final TopologyHandler topologyHandler;
+
+    @NotNull
     private final ReplicationHandler replicationHandler;
 
     @NotNull
@@ -88,36 +99,50 @@ public class EngineWireHandler extends WireTcpHandler {
     private final Consumer<WireIn> metaDataConsumer;
     private final StringBuilder lastCsp = new StringBuilder();
     private final StringBuilder eventName = new StringBuilder();
+    private final SystemHandler systemHandler;
 
     private WireAdapter wireAdapter;
     private View view;
     private boolean isSystemMessage = true;
     private RequestContext requestContext;
+    @Nullable
     private Class viewType;
+    @Nullable
     private SessionProvider sessionProvider;
+    @NotNull
     private Queue<Consumer<Wire>> publisher = new LinkedTransferQueue<>();
     private long tid;
+    @Nullable
     private HostIdentifier hostIdentifier;
-    private Asset mapView;
+
     private Asset asset;
+    @Nullable
+    private EventLoop eventLoop;
+    private AtomicBoolean isClosed;
 
     public EngineWireHandler(@NotNull final Function<Bytes, Wire> byteToWire,
-                             @NotNull final AssetTree assetTree) {
+                             @NotNull final AssetTree assetTree,
+                             @NotNull final AtomicBoolean isClosed) {
         super(byteToWire);
 
         this.sessionProvider = assetTree.root().getView(SessionProvider.class);
+        this.eventLoop = assetTree.root().findOrCreateView(EventLoop.class);
+        this.hostIdentifier = assetTree.root().findOrCreateView(HostIdentifier.class);
         this.assetTree = assetTree;
         this.mapWireHandler = new MapWireHandler<>();
-        this.queueWireHandler = null;
         this.metaDataConsumer = wireInConsumer();
-
-        this.keySetHandler = new CollectionWireHandlerProcessor<>();
-        this.entrySetHandler = new CollectionWireHandlerProcessor<>();
-        this.valuesHandler = new CollectionWireHandlerProcessor<>();
-        this.subscriptionHandler = new SubscriptionHandlerProcessor();
+        this.keySetHandler = new CollectionWireHandler();
+        this.entrySetHandler = new CollectionWireHandler();
+        this.valuesHandler = new CollectionWireHandler();
+        this.subscriptionHandler = new ObjectKVSubscriptionHandler();
+        this.topologySubscriptionHandler = new TopologySubscriptionHandler();
         this.topicPublisherHandler = new TopicPublisherHandler();
         this.publisherHandler = new PublisherHandler();
         this.replicationHandler = new ReplicationHandler();
+        this.systemHandler = new SystemHandler();
+        this.isClosed = isClosed;
+
+        eventLoop.start();
     }
 
     protected void publish(Wire out) {
@@ -150,9 +175,15 @@ public class EngineWireHandler extends WireTcpHandler {
 
                     requestContext = RequestContext.requestContext(cspText);
                     viewType = requestContext.viewType();
+                    if (viewType == null) {
+                        if (LOG.isDebugEnabled()) LOG.debug("received system-meta-data");
+                        isSystemMessage = true;
+                        return;
+                    }
+
                     asset = this.assetTree.acquireAsset(viewType, requestContext);
                     view = asset.acquireView(requestContext);
-                    mapView = this.assetTree.acquireAsset(MapView.class, requestContext);
+
                     requestContext.keyType();
 
                     if (viewType == MapView.class ||
@@ -163,7 +194,9 @@ public class EngineWireHandler extends WireTcpHandler {
                             viewType == ObjectKVSSubscription.class ||
                             viewType == TopicPublisher.class ||
                             viewType == Publisher.class ||
-                            viewType == Replication.class) {
+                            viewType == TopologySubscription.class ||
+                            viewType == Replication.class ||
+                            viewType == Heartbeat.class) {
 
                         // default to string type if not provided
                         final Class type = requestContext.type() == null ? String.class
@@ -206,8 +239,8 @@ public class EngineWireHandler extends WireTcpHandler {
     }
 
     @Override
-    protected void process(@NotNull final Wire in,
-                           @NotNull final Wire out,
+    protected void process(@NotNull final WireIn in,
+                           @NotNull final WireOut out,
                            @NotNull final SessionDetailsProvider sessionDetails)
             throws StreamCorruptedException {
 
@@ -223,7 +256,7 @@ public class EngineWireHandler extends WireTcpHandler {
                 sessionProvider.set(sessionDetails);
 
                 if (isSystemMessage) {
-                    sessionDetails.setUserId(wire.read(() -> "userid").text());
+                    systemHandler.process(in, out, tid, sessionDetails);
                     return;
                 }
 
@@ -259,7 +292,14 @@ public class EngineWireHandler extends WireTcpHandler {
                     if (viewType == ObjectKVSSubscription.class) {
                         subscriptionHandler.process(in,
                                 requestContext, publisher, assetTree, tid,
-                                outWire, (KVSSubscription) view);
+                                outWire, (ObjectKVSSubscription) view);
+                        return;
+                    }
+
+                    if (viewType == TopologySubscription.class) {
+                        topologySubscriptionHandler.process(in,
+                                requestContext, publisher, assetTree, tid,
+                                outWire, (TopologySubscription) view);
                         return;
                     }
 
@@ -277,18 +317,18 @@ public class EngineWireHandler extends WireTcpHandler {
                     }
 
                     if (viewType == Replication.class) {
-                        hostIdentifier = asset.acquireView(HostIdentifier.class, RequestContext.requestContext());
                         replicationHandler.process(in,
                                 publisher, tid, outWire,
                                 hostIdentifier,
-                                (Replication)view);
+                                (Replication) view, isClosed, eventLoop);
                         return;
                     }
 
+
                 }
 
-                if (endsWith(cspText, "?view=queue") && queueWireHandler != null) {
-                    queueWireHandler.process(in, out);
+                if (endsWith(cspText, "?view=queue")) {
+                    // TODO
                 }
 
             } catch (Exception e) {
@@ -300,7 +340,7 @@ public class EngineWireHandler extends WireTcpHandler {
         });
     }
 
-    private void logYamlToStandardOut(@NotNull Wire in) {
+    private void logYamlToStandardOut(@NotNull WireIn in) {
         if (YamlLogging.showServerReads) {
             try {
                 LOG.info("\nServer Reads:\n" +
@@ -329,4 +369,6 @@ public class EngineWireHandler extends WireTcpHandler {
             cspText.append(s);
         }
     }
+
+
 }

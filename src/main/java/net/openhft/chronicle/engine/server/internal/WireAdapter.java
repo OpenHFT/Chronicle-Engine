@@ -18,6 +18,8 @@ package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.ValueOut;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map.Entry;
 import java.util.function.BiConsumer;
@@ -27,14 +29,18 @@ public interface WireAdapter<K, V> {
 
     BiConsumer<ValueOut, K> keyToWire();
 
+    @Nullable
     Function<ValueIn, K> wireToKey();
 
     BiConsumer<ValueOut, V> valueToWire();
 
+    @Nullable
     Function<ValueIn, V> wireToValue();
 
+    @NotNull
     BiConsumer<ValueOut, Entry<K, V>> entryToWire();
 
+    @NotNull
     Function<ValueIn, Entry<K, V>> wireToEntry();
 
 }

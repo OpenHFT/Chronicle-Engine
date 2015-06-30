@@ -18,15 +18,18 @@ package net.openhft.chronicle.engine.api.tree;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
+import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
 import net.openhft.chronicle.engine.api.pubsub.Reference;
 import net.openhft.chronicle.engine.api.pubsub.Replication;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
+import net.openhft.chronicle.engine.api.session.Heartbeat;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
 import net.openhft.chronicle.engine.server.WireType;
+import net.openhft.chronicle.engine.tree.TopologySubscription;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +45,7 @@ import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
 public class RequestContext implements Cloneable {
     static {
         addAlias(MapView.class, "Map");
+        addAlias(MapEvent.class, "MapEvent");
         addAlias(EntrySetView.class, "EntrySet");
         addAlias(KeySetView.class, "KeySet");
         addAlias(ValuesCollection.class, "Values");
@@ -49,7 +53,9 @@ public class RequestContext implements Cloneable {
         addAlias(Publisher.class, "Publisher, Pub");
         addAlias(TopicPublisher.class, "TopicPublisher, TopicPub");
         addAlias(ObjectKVSSubscription.class, "Subscription");
+        addAlias(TopologySubscription.class, "topologySubscription");
         addAlias(Reference.class, "Reference, Ref");
+        addAlias(Heartbeat.class, "Heartbeat");
     }
 
     private String pathName;
@@ -309,6 +315,7 @@ public class RequestContext implements Cloneable {
         return this;
     }
 
+    @NotNull
     @Override
     public String toString() {
         return "RequestContext{" +
@@ -332,12 +339,14 @@ public class RequestContext implements Cloneable {
         return recurse;
     }
 
+    @NotNull
     public RequestContext recurse(Boolean recurse) {
         this.recurse = recurse;
         return this;
     }
 
 
+    @NotNull
     public RequestContext clone() {
         try {
             return (RequestContext) super.clone();

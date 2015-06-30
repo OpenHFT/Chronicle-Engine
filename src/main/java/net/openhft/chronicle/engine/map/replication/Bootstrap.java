@@ -19,6 +19,7 @@ package net.openhft.chronicle.engine.map.replication;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by Rob Austin
@@ -46,14 +47,14 @@ public class Bootstrap implements Marshallable {
     }
 
     @Override
-    public void writeMarshallable(final WireOut wire) {
+    public void writeMarshallable(@NotNull final WireOut wire) {
         wire.write(() -> "id").int8(identifier);
         wire.write(() -> "lastUpdatedTime").int64(lastUpdatedTime);
 
     }
 
     @Override
-    public void readMarshallable(final WireIn wire) throws IllegalStateException {
+    public void readMarshallable(@NotNull final WireIn wire) throws IllegalStateException {
         identifier = wire.read(() -> "id").int8();
         lastUpdatedTime = wire.read(() -> "lastUpdatedTime").int64();
     }

@@ -47,7 +47,8 @@ public interface SubscriptionConsumer<T> {
         });
     }
 
-    static <E> void notifyEachEvent(@NotNull Set<E> subs, @NotNull SubscriptionConsumer<E> doNotify) throws InvalidSubscriberException {
+    static <E> void notifyEachEvent(@NotNull Set<E> subs, @NotNull SubscriptionConsumer<E> doNotify)
+            throws InvalidSubscriberException {
         doNotify.notifyEachEvent(subs);
     }
 

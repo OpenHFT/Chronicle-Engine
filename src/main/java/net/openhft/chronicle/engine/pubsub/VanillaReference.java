@@ -24,6 +24,7 @@ import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.api.tree.View;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
 
@@ -44,9 +45,10 @@ public class VanillaReference<E> implements Reference<E>, View {
 
     @Override
     public void set(E event) {
-        underlyingMap.put(name, event);
+        underlyingMap.set(name, event);
     }
 
+    @Nullable
     @Override
     public E get() {
         return underlyingMap.get(name);

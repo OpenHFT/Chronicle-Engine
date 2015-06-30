@@ -26,6 +26,7 @@ import org.junit.rules.TestName;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.Map.Entry;
 
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
@@ -51,7 +52,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     }
 
     @NotNull
-    static ClosableMapSupplier<Integer, String> newIntString() throws IOException {
+    private static ClosableMapSupplier<Integer, String> newIntString() throws IOException {
         final LocalMapSupplier supplier = new LocalMapSupplier<>(Integer
                 .class, String.class, new VanillaAssetTree().forTesting());
 
@@ -72,10 +73,10 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     }
 
     @NotNull
-    static ClosableMapSupplier<CharSequence, CharSequence> newStrStrMap() throws
+    private static ClosableMapSupplier<CharSequence, CharSequence> newStrStrMap() throws
             IOException {
 
-        final MapClientTest.LocalMapSupplier supplier = new MapClientTest.LocalMapSupplier<>(CharSequence.class, CharSequence.class, new VanillaAssetTree().forTesting());
+        final LocalMapSupplier supplier = new LocalMapSupplier<>(CharSequence.class, CharSequence.class, new VanillaAssetTree().forTesting());
 
         return new ClosableMapSupplier() {
 
@@ -111,7 +112,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
         return supplier;
     }
 
-    static int s_port = 11050;
+    private static int s_port = 11050;
 
     /**
      * clear removes all pairs
@@ -121,7 +122,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
             final Map map = supplier.get();
 
-            yamlLoggger(() -> map.clear());
+            yamlLoggger(map::clear);
             assertEquals(0, map.size());
         }
     }
@@ -284,8 +285,8 @@ public class LocalChronicleMapTest extends JSR166TestCase {
             Object[] ar = s.toArray();
             assertEquals(5, ar.length);
             for (int i = 0; i < 5; ++i) {
-                assertTrue(map.containsKey(((Map.Entry) (ar[i])).getKey()));
-                assertTrue(map.containsValue(((Map.Entry) (ar[i])).getValue()));
+                assertTrue(map.containsKey(((Entry) (ar[i])).getKey()));
+                assertTrue(map.containsValue(((Entry) (ar[i])).getValue()));
             }
         }
     }
@@ -328,9 +329,8 @@ public class LocalChronicleMapTest extends JSR166TestCase {
 
             Set s = map.entrySet();
             assertEquals(5, s.size());
-            Iterator it = s.iterator();
-            while (it.hasNext()) {
-                Map.Entry e = (Map.Entry) it.next();
+            for (final Object value : s) {
+                Entry e = (Entry) value;
                 assertTrue(
                         (e.getKey().equals(one) && e.getValue().equals("A")) ||
                                 (e.getKey().equals(two) && e.getValue().equals("B")) ||
@@ -708,13 +708,13 @@ public class LocalChronicleMapTest extends JSR166TestCase {
         }
     }
 
-    static class CI extends BI {
+    private static class CI extends BI {
         CI(int value) {
             super(value);
         }
     }
 
-    static class DI extends BI {
+    private static class DI extends BI {
         DI(int value) {
             super(value);
         }

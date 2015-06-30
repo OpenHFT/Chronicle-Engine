@@ -26,6 +26,8 @@ import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.threads.Threads;
 import net.openhft.lang.thread.NamedThreadFactory;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +37,7 @@ import javax.management.remote.JMXConnectorServerFactory;
 import javax.management.remote.JMXServiceURL;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.rmi.registry.LocateRegistry;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -55,6 +58,7 @@ public enum ManagementTools {
     private static JMXConnectorServer jmxServer;
 
     //MBeanServer for register MBeans
+    @Nullable
     private static MBeanServer mbs = null;
 
     private static AssetTreeDynamicMBean dynamicMBean;
@@ -71,12 +75,11 @@ public enum ManagementTools {
             mbs = ManagementFactory.getPlatformMBeanServer();
 
             // Create the RMI registry on port 9000
-            java.rmi.registry.LocateRegistry.createRegistry(9000);
+            LocateRegistry.createRegistry(9000);
 
             // Build a URL which tells the RMIConnectorServer to bind to the RMIRegistry running on port 9000
             JMXServiceURL url = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://localhost:9000/jmxrmi");
-
-            Map<String,String> env = new HashMap<String, String>();
+            Map<String, String> env = new HashMap<>();
             env.put("com.sun.management.jmxremote", "true");
             env.put("com.sun.management.jmxremote.ssl", "false");
             env.put("com.sun.management.jmxremote.authenticate", "false");
@@ -99,7 +102,7 @@ public enum ManagementTools {
      *
      * @param assetTree the object of AssetTree type for enable management
      */
-    public static void enableManagement(AssetTree assetTree) {
+    public static void enableManagement(@NotNull AssetTree assetTree) {
         try{
             startJMXRemoteService();
             count++;
@@ -131,7 +134,7 @@ public enum ManagementTools {
         }
     }
 
-    private static void registerViewofTree(AssetTree tree) {
+    private static void registerViewofTree(@NotNull AssetTree tree) {
         Threads.withThreadGroup(tree.root().getView(ThreadGroup.class), () -> {
             ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor(
                     new NamedThreadFactory("tree-watcher", true));
@@ -143,7 +146,7 @@ public enum ManagementTools {
         });
     }
 
-    private static void handleTreeUpdate(AssetTree tree, TopologicalEvent e, ScheduledExecutorService ses) {
+    private static void handleTreeUpdate(@NotNull AssetTree tree, @NotNull TopologicalEvent e, @NotNull ScheduledExecutorService ses) {
         try {
             HostIdentifier hostIdentifier = tree.root().getView(HostIdentifier.class);
             int hostId = hostIdentifier == null ? 0 : hostIdentifier.hostId();
@@ -205,7 +208,7 @@ public enum ManagementTools {
         }
     }
 
-    private static void handleAssetUpdate(ObjectKeyValueStore view, ObjectName atName, ObjectKVSSubscription objectKVSSubscription, String path){
+    private static void handleAssetUpdate(@NotNull ObjectKeyValueStore view, ObjectName atName, @NotNull ObjectKVSSubscription objectKVSSubscription, String path) {
         try {
             if(mbs.isRegistered(atName)){
                 /*AttributeList list = new AttributeList();
@@ -248,7 +251,8 @@ public enum ManagementTools {
         }
     }
 
-    private static String createObjectNameUri(int hostId, String assetName, String eventName, String treeName){
+    private static String createObjectNameUri(int hostId, @NotNull String assetName, String eventName, @NotNull String treeName) {
+        System.out.println(treeName);
         StringBuilder sb = new StringBuilder(256);
         sb.append("net.openhft.chronicle.engine:tree=");
         sb.append(hostId);
@@ -269,7 +273,7 @@ public enum ManagementTools {
             if(!mbs.isRegistered(atName)){
                 mbs.registerMBean(atBean, atName);
             }
-        } catch (InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException e) {
+        } catch (@NotNull InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException e) {
             LOGGER.error("Error register AssetTree with MBean", e);
         }
     }
@@ -279,7 +283,7 @@ public enum ManagementTools {
             if(mbs.isRegistered(atName)){
                 mbs.unregisterMBean(atName);
             }
-        } catch (InstanceNotFoundException | MBeanRegistrationException e) {
+        } catch (@NotNull InstanceNotFoundException | MBeanRegistrationException e) {
             LOGGER.error("Error unregister AssetTree with MBean",e);
         }
     }

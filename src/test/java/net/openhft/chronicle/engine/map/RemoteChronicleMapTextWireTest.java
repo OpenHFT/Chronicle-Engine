@@ -19,6 +19,7 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
+import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
@@ -28,6 +29,7 @@ import org.junit.rules.TestName;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.Map.Entry;
 
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
@@ -37,11 +39,12 @@ import static org.junit.Assert.*;
 
 public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
 
-    static int s_port = 11050;
+    private static int s_port = 11050;
     @NotNull
     @Rule
     public TestName name = new TestName();
-    private AssetTree assetTree = new VanillaAssetTree().forTesting();
+    @NotNull
+    private final AssetTree assetTree = new VanillaAssetTree().forTesting();
 
     @Before
     public void before() {
@@ -49,8 +52,9 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
         methodName(name.getMethodName());
     }
 
+
     @NotNull
-    ClosableMapSupplier newIntString(String name) throws IOException {
+    private ClosableMapSupplier newIntString(@NotNull String name) throws IOException {
         final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(
                 Integer.class, String.class, WireType.TEXT, assetTree, name);
 
@@ -64,12 +68,14 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
             @Override
             public void close() throws IOException {
                 remoteMapSupplier.close();
+                assetTree.root().findView(EventLoop.class).close();
+                assetTree.close();
             }
         };
     }
 
     @NotNull
-    ClosableMapSupplier<CharSequence, CharSequence> newStrStrMap() throws
+    private ClosableMapSupplier<CharSequence, CharSequence> newStrStrMap() throws
             IOException {
 
         final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(
@@ -85,6 +91,8 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
             @Override
             public void close() throws IOException {
                 remoteMapSupplier.close();
+                assetTree.root().findView(EventLoop.class).close();
+                assetTree.close();
             }
         };
     }
@@ -115,7 +123,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
             final Map map = supplier.get();
 
-            yamlLoggger(() -> map.clear());
+            yamlLoggger(map::clear);
             assertEquals(0, map.size());
         }
     }
@@ -280,8 +288,8 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
             Object[] ar = s.toArray();
             assertEquals(5, ar.length);
             for (int i = 0; i < 5; ++i) {
-                assertTrue(map.containsKey(((Map.Entry) (ar[i])).getKey()));
-                assertTrue(map.containsValue(((Map.Entry) (ar[i])).getValue()));
+                assertTrue(map.containsKey(((Entry) (ar[i])).getKey()));
+                assertTrue(map.containsValue(((Entry) (ar[i])).getValue()));
             }
         }
     }
@@ -318,13 +326,13 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
             final Map<Integer, String> map = supplier.get();
             writeMessage = "example of getting and entry set itterator";
             yamlLoggger(() -> {
-                Set<Map.Entry<Integer, String>> entrySet = map.entrySet();
+                Set<Entry<Integer, String>> entrySet = map.entrySet();
                 entrySet.iterator();
             });
 
-            Set<Map.Entry<Integer, String>> s = map.entrySet();
+            Set<Entry<Integer, String>> s = map.entrySet();
             assertEquals(5, s.size());
-            for (Map.Entry e : s) {
+            for (Entry e : s) {
                 assertTrue(
                         (e.getKey().equals(one) && e.getValue().equals("A")) ||
                                 (e.getKey().equals(two) && e.getValue().equals("B")) ||
@@ -702,13 +710,13 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
         }
     }
 
-    static class CI extends BI {
+    private static class CI extends BI {
         CI(int value) {
             super(value);
         }
     }
 
-    static class DI extends BI {
+    private static class DI extends BI {
         DI(int value) {
             super(value);
         }

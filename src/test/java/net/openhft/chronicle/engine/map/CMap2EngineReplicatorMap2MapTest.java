@@ -16,10 +16,12 @@
 
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.annotation.NotNull;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -35,20 +37,23 @@ import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplicat
 
 public class CMap2EngineReplicatorMap2MapTest {
 
-    final CMap2EngineReplicator replicator1 = new CMap2EngineReplicator(null);
-    final ChronicleMap<String, String> map1 = newMap(1, replicator1, String.class, String.class);
+    @Nullable
+    private final CMap2EngineReplicator replicator1 = new CMap2EngineReplicator(null);
+    private final ChronicleMap<String, String> map1 = newMap(1, replicator1, String.class, String.class);
 
-    final CMap2EngineReplicator replicator2 = new CMap2EngineReplicator(null);
-    final ChronicleMap<String, String> map2 = newMap(2, replicator2, String.class, String.class);
+    @Nullable
+    private final CMap2EngineReplicator replicator2 = new CMap2EngineReplicator(null);
+    private final ChronicleMap<String, String> map2 = newMap(2, replicator2, String.class, String.class);
 
-    final CMap2EngineReplicator replicator3 = new CMap2EngineReplicator(null);
-    final ChronicleMap<String, String> map3 = newMap(3, replicator3, String.class, String.class);
+    @Nullable
+    private final CMap2EngineReplicator replicator3 = new CMap2EngineReplicator(null);
+    private final ChronicleMap<String, String> map3 = newMap(3, replicator3, String.class, String.class);
 
 
-    public <K, V> ChronicleMap<K, V> newMap(int localIdentifier,
-                                            final CMap2EngineReplicator replicator,
-                                            @NotNull final Class<K> keyClass,
-                                            @NotNull final Class<V> valueClass) {
+    private <K, V> ChronicleMap<K, V> newMap(int localIdentifier,
+                                             final CMap2EngineReplicator replicator,
+                                             @org.jetbrains.annotations.NotNull @NotNull final Class<K> keyClass,
+                                             @org.jetbrains.annotations.NotNull @NotNull final Class<V> valueClass) {
         return ChronicleMapBuilder.of(keyClass, valueClass).
                 replication(builder().engineReplication(replicator).createWithId((byte) localIdentifier))
                 .create();
@@ -58,7 +63,7 @@ public class CMap2EngineReplicatorMap2MapTest {
      * tests that the updates from one map are replicated to the other and visa versa
      */
     @Test
-    public void testLocalPut() throws Exception {
+    public void testLocalPut() {
 
         final ModificationIterator iterator1for2 = replicator1.acquireModificationIterator
                 (replicator2.identifier());
@@ -106,7 +111,7 @@ public class CMap2EngineReplicatorMap2MapTest {
      * tests that the updates from one map are replicated to the other and visa versa
      */
     @Test
-    public void testLocalPutBootstrap() throws Exception {
+    public void testLocalPutBootstrap() throws InterruptedException {
 
         map1.put("hello1", "world1");
         map2.put("hello2", "world2");
@@ -161,33 +166,30 @@ public class CMap2EngineReplicatorMap2MapTest {
      * only resends the update that have occurred while its been disconnected ( plus the updates
      * that occurred in the last milliseconds while it was connected )
      *
-     * @throws Exception
+     * @
      */
     @Ignore
     @Test
-    public void testBootstrapFromKnownTime() throws Exception {
+    public void testBootstrapFromKnownTime() throws InterruptedException {
 
         final ModificationIterator iterator1for2 = replicator1.acquireModificationIterator
                 (replicator2.identifier());
 
         map1.put("hello1", "world1");
 
-        Thread.sleep(1);
+        Jvm.pause(1);
 
         map1.put("hello2", "world2"); //this is the last update before the disconnection, so will
         // be sent again as its in the last known milliseconds
 
-        iterator1for2.forEach((entry) -> {
-            // record the last time the entry was updated
-            replicator2.applyReplication(entry);
-        });
+        iterator1for2.forEach(replicator2::applyReplication);
 
         iterator1for2.forEach(e -> {
             // do nothing
         });
 
 
-        Thread.sleep(1);
+        Jvm.pause(1);
         // !---------------- simulate a disconnection ---------------------
         // we do this by requesting by dirtying the entries form the last know timestamp
         final long timeSendInBootStrapMessage = replicator1.lastModificationTime(replicator2.identifier());
@@ -195,7 +197,7 @@ public class CMap2EngineReplicatorMap2MapTest {
         assert timeSendInBootStrapMessage != 0;
 
         map1.put("hello3", "world3");
-        Thread.sleep(1);
+        Jvm.pause(1);
 
         // this is where the bootstrap occurs
         iterator1for2.dirtyEntries(timeSendInBootStrapMessage);
@@ -208,7 +210,7 @@ public class CMap2EngineReplicatorMap2MapTest {
 
         });
 
-        // ensure that the bootstap only sends updates upto and including all the updates in the
+        // ensure that the bootstrap only sends updates upto and including all the updates in the
         // last millisecond that it was connected. in otherwords where
         // key=="hello2",
         // rather than all the updates

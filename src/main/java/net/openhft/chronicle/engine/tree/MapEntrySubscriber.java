@@ -18,11 +18,11 @@ package net.openhft.chronicle.engine.tree;
 
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 
-import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Created by peter.lawrey on 10/06/2015.
  */
 @FunctionalInterface
-public interface MapEntrySubscriber<K, V> extends Subscriber<Map.Entry<K, V>> {
+public interface MapEntrySubscriber<K, V> extends Subscriber<Entry<K, V>> {
 }

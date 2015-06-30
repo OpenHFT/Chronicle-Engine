@@ -24,6 +24,7 @@ import net.openhft.chronicle.engine.map.ObjectKeyValueStore;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.lang.thread.NamedThreadFactory;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
@@ -58,6 +59,7 @@ public class VanillaAssetTreeEgMain {
         map3.put("keyB", "value1");
         map3.put("keyC", "value1");
         //tree.registerSubscriber("group2/subgroup/map3", String.class, (String s) -> System.out.println(s));
+        tree.registerSubscriber("group2/subgroup/map3", String.class, System.out::println);
 
         registerTextViewofTree("tree", tree);
 
@@ -108,14 +110,14 @@ public class VanillaAssetTreeEgMain {
 
     }
 
-    public static void registerTextViewofTree(String desc, AssetTree tree) {
+    public static void registerTextViewofTree(String desc, @NotNull AssetTree tree) {
         tree.registerSubscriber("", TopologicalEvent.class, e ->
                         // give the collection time to be setup.
                         ses.schedule(() -> handleTreeUpdate(desc, tree, e), 50, TimeUnit.MILLISECONDS)
         );
     }
 
-    static void handleTreeUpdate(String desc, AssetTree tree, TopologicalEvent e) {
+    static void handleTreeUpdate(String desc, @NotNull AssetTree tree, @NotNull TopologicalEvent e) {
         try {
             System.out.println(desc + " handle " + e);
             if (e.added()) {

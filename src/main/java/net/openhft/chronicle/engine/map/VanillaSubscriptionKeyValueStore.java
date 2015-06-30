@@ -19,19 +19,23 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by peter on 22/05/15.
  */
 public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValueStore<K, MV, V> implements ObjectKeyValueStore<K, MV, V>, AuthenticatedKeyValueStore<K, MV, V> {
+    @NotNull
     private final ObjectKVSSubscription<K, MV, V> subscriptions;
 
-    public VanillaSubscriptionKeyValueStore(RequestContext context, Asset asset, KeyValueStore<K, MV, V> item) {
+    public VanillaSubscriptionKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset, @NotNull KeyValueStore<K, MV, V> item) {
         super(context, asset, item);
         this.subscriptions = asset.acquireView(ObjectKVSSubscription.class, context);
         subscriptions.setKvStore(this);
     }
 
+    @NotNull
     @Override
     public ObjectKVSSubscription<K, MV, V> subscription(boolean createIfAbsent) {
         return subscriptions;
@@ -89,6 +93,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
         return false;
     }
 
+    @Nullable
     @Override
     public V putIfAbsent(K key, V value) {
         V ret = kvStore.putIfAbsent(key, value);
@@ -97,6 +102,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
         return ret;
     }
 
+    @Nullable
     @Override
     public V getAndPut(K key, V value) {
         V oldValue = kvStore.getAndPut(key, value);
@@ -107,6 +113,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
         return oldValue;
     }
 
+    @Nullable
     @Override
     public V getAndRemove(K key) {
         V oldValue = kvStore.getAndRemove(key);

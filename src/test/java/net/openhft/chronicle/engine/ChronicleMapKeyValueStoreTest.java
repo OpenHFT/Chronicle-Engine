@@ -32,6 +32,7 @@ import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
+import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 
 import java.io.File;
@@ -73,6 +74,7 @@ public class ChronicleMapKeyValueStoreTest {
         tree3.close();
     }
 
+    @NotNull
     private static AssetTree create(final int hostId) {
         Function<Bytes, Wire> writeType = WireType.TEXT;
         AssetTree tree = new VanillaAssetTree((byte) hostId)
@@ -93,6 +95,7 @@ public class ChronicleMapKeyValueStoreTest {
         return tree;
     }
 
+    @NotNull
     public static String resourcesDir() {
         String path = ChronicleMapKeyValueStoreTest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
         if (path == null)
@@ -103,7 +106,7 @@ public class ChronicleMapKeyValueStoreTest {
 
     @Test
     @Ignore
-    public void test() throws Exception {
+    public void test() {
 
         final ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME, String.class, String
                 .class);

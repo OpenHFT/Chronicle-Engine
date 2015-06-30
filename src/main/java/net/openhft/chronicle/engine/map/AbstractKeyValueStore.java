@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
@@ -34,12 +33,14 @@ import java.util.Map;
  * Created by peter on 22/05/15.
  */
 public class AbstractKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> {
+    @NotNull
     protected final Asset asset;
+    @NotNull
     protected final KeyValueStore<K, MV, V> kvStore;
     protected final Class<K> keyType;
     protected final Class<V> valueType;
 
-    protected AbstractKeyValueStore(RequestContext rc, Asset asset, @NotNull KeyValueStore<K, MV, V> kvStore) {
+    protected AbstractKeyValueStore(@NotNull RequestContext rc, @NotNull Asset asset, @NotNull KeyValueStore<K, MV, V> kvStore) {
         assert asset != null;
         assert kvStore != null;
         keyType = rc.keyType();
@@ -48,16 +49,19 @@ public class AbstractKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> 
         this.kvStore = kvStore;
     }
 
+    @NotNull
     @Override
     public KeyValueStore underlying() {
         return kvStore;
     }
 
+    @Nullable
     @Override
     public V getAndPut(K key, V value) {
         return kvStore.getAndPut(key, value);
     }
 
+    @Nullable
     @Override
     public V getAndRemove(K key) {
         return kvStore.getAndRemove(key);
@@ -161,6 +165,7 @@ public class AbstractKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> 
         return kvStore.isKeyType(key);
     }
 
+    @Nullable
     @Override
     public V putIfAbsent(K key, V value) {
         return kvStore.putIfAbsent(key, value);
@@ -172,7 +177,7 @@ public class AbstractKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> 
     }
 
     @Override
-    public boolean containsValue(final MV value) {
+    public boolean containsValue(final V value) {
         throw new UnsupportedOperationException("todo");
     }
 

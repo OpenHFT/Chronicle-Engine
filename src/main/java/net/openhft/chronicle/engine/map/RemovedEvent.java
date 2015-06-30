@@ -34,7 +34,9 @@ import java.util.function.Function;
  */
 public class RemovedEvent<K, V> implements MapEvent<K, V> {
     private String assetName;
+    @Nullable
     private K key;
+    @Nullable
     private V oldValue;
 
     private RemovedEvent(String assetName, K key, V oldValue) {
@@ -59,15 +61,18 @@ public class RemovedEvent<K, V> implements MapEvent<K, V> {
         return new RemovedEvent<>(assetName, keyFunction.apply(key), valueFunction.apply(oldValue));
     }
 
+    @NotNull
     @Override
-    public <K2, V2> MapEvent<K2, V2> translate(BiFunction<K, K2, K2> keyFunction, BiFunction<V, V2, V2> valueFunction) {
+    public <K2, V2> MapEvent<K2, V2> translate(@NotNull BiFunction<K, K2, K2> keyFunction, @NotNull BiFunction<V, V2, V2> valueFunction) {
         return new RemovedEvent<>(assetName, keyFunction.apply(key, null), valueFunction.apply(oldValue, null));
     }
 
+    @Nullable
     public K key() {
         return key;
     }
 
+    @Nullable
     @Override
     public V oldValue() {
         return oldValue;
@@ -99,6 +104,7 @@ public class RemovedEvent<K, V> implements MapEvent<K, V> {
                 .isPresent();
     }
 
+    @NotNull
     @Override
     public String toString() {
         return "RemovedEvent{" +
@@ -110,14 +116,14 @@ public class RemovedEvent<K, V> implements MapEvent<K, V> {
 
 
     @Override
-    public void readMarshallable(WireIn wire) throws IllegalStateException {
+    public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         wire.read(MapEventFields.assetName).text(s -> assetName = s);
         key = (K) wire.read(MapEventFields.key).object(Object.class);
         oldValue = (V) wire.read(MapEventFields.oldValue).object(Object.class);
     }
 
     @Override
-    public void writeMarshallable(WireOut wire) {
+    public void writeMarshallable(@NotNull WireOut wire) {
         wire.write(MapEventFields.assetName).text(assetName);
         wire.write(MapEventFields.key).object(key);
         wire.write(MapEventFields.oldValue).object(oldValue);

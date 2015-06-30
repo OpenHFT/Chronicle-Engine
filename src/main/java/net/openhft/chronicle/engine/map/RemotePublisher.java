@@ -7,10 +7,13 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId;
+import net.openhft.chronicle.network.connection.AbstractAsyncSubscription;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.ValueIn;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
 import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,15 +28,15 @@ public class RemotePublisher<E> extends AbstractStatelessClient<EventId> impleme
 
     private final Class<E> messageClass;
 
-    public RemotePublisher(@NotNull RequestContext context, Asset asset, Object underlying)
+    public RemotePublisher(@NotNull RequestContext context, @NotNull Asset asset, Object underlying)
             throws AssetNotFoundException {
         super(asset.findView(TcpChannelHub.class), (long) 0, toUri(context));
 
         messageClass = context.messageType();
     }
 
-    private static String toUri(final RequestContext context) {
-        StringBuilder uri = new StringBuilder("/" + context.name()
+    private static String toUri(@NotNull final RequestContext context) {
+        StringBuilder uri = new StringBuilder( "/" + context.fullName()
                 + "?view=" + "publisher");
 
         if (context.valueType() != String.class)
@@ -49,41 +52,43 @@ public class RemotePublisher<E> extends AbstractStatelessClient<EventId> impleme
     }
 
     @Override
-    public void registerSubscriber(final Subscriber subscriber) throws AssetNotFoundException {
-        final long startTime = System.currentTimeMillis();
+    public void registerSubscriber(@NotNull final Subscriber subscriber) throws AssetNotFoundException {
 
         if (hub.outBytesLock().isHeldByCurrentThread())
             throw new IllegalStateException("Cannot view map while debugging");
 
-        hub.outBytesLock().lock();
-        try {
-            long tid = writeMetaDataStartTime(startTime);
+        final AbstractAsyncSubscription asyncSubscription = new AbstractAsyncSubscription(hub, csp) {
 
-            hub.outWire().writeDocument(false, wireOut ->
-                    wireOut.writeEventName(registerTopicSubscriber).text(""));
+            @Override
+            public void onSubscribe(@NotNull final WireOut wireOut) {
+                wireOut.writeEventName(registerTopicSubscriber).text("");
+            }
 
-            hub.asyncReadSocket(tid, w -> w.readDocument(null, d -> {
+            @Override
+            public void onConsumer(@NotNull final WireIn w) {
+                w.readDocument(null, d -> {
+                    final StringBuilder eventname = Wires.acquireStringBuilder();
+                    final ValueIn valueIn = d.readEventName(eventname);
 
-                final StringBuilder eventname = Wires.acquireStringBuilder();
-                final ValueIn valueIn = d.readEventName(eventname);
+                    if (EventId.onEndOfSubscription.contentEquals(eventname)) {
+                        subscriber.onEndOfSubscription();
+                        hub.unsubscribe(tid());
+                    }else if (CoreFields.reply.contentEquals(eventname)) {
+                        valueIn.marshallable(m -> {
+                            final E message = m.read(() -> "message").object(messageClass);
+                            RemotePublisher.this.onEvent(message, subscriber);
+                        });
+                    }
 
-                if (EventId.onEndOfSubscription.contentEquals(eventname))
-                    subscriber.onEndOfSubscription();
-                else if (CoreFields.reply.contentEquals(eventname)) {
-                    valueIn.marshallable(m -> {
-                        final E message =  m.read(() -> "message").object(messageClass);
-                        this.onEvent(message, subscriber);
-                    });
-                }
-            }));
-            hub.writeSocket(hub.outWire());
-        } finally {
-            hub.outBytesLock().unlock();
-        }
+                });
+            }
 
+        };
+
+        hub.subscribe(asyncSubscription);
     }
 
-    private void onEvent(E message, Subscriber<E> subscriber) {
+    private void onEvent(@Nullable E message, @NotNull Subscriber<E> subscriber) {
         try {
             if (message == null) {
                 // todo

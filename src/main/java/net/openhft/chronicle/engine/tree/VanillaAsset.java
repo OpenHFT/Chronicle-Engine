@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.tree;
 
+import net.openhft.chronicle.core.annotation.ForceInline;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.util.ThrowingAcceptor;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
@@ -97,8 +98,7 @@ public class VanillaAsset implements Asset, Closeable {
 
         addWrappingRule(MapView.class, LAST + " string key maps", VanillaMapView::new, ObjectKeyValueStore.class);
 
-        addLeafRule(TopologySubscription.class, LAST + " vanilla",
-                VanillaTopologySubscription::new);
+
 
         String fullName = fullName();
         HostIdentifier hostIdentifier = findView(HostIdentifier.class);
@@ -133,6 +133,9 @@ public class VanillaAsset implements Asset, Closeable {
 
         addLeafRule(ObjectKVSSubscription.class, LAST + " vanilla",
                 VanillaKVSSubscription::new);
+
+        addLeafRule(TopologySubscription.class, LAST + " vanilla",
+                VanillaTopologySubscription::new);
     }
 
     public void forRemoteAccess(String hostname, int port) {
@@ -146,16 +149,20 @@ public class VanillaAsset implements Asset, Closeable {
         addWrappingRule(Publisher.class, LAST + "publisher", RemotePublisher::new, MapView.class);
         addWrappingRule(TopicPublisher.class, LAST + " topic publisher", RemoteTopicPublisher::new,
                 MapView.class);
-
+        addLeafRule(TopologySubscription.class, LAST + " vanilla",
+                RemoteTopologySubscription::new);
 
         SessionProvider sessionProvider = getView(SessionProvider.class);
         VanillaSessionDetails sessionDetails = new VanillaSessionDetails();
         sessionDetails.setUserId(System.getProperty("user.name"));
         sessionProvider.set(sessionDetails);
+
+        EventLoop eventLoop = findOrCreateView(EventLoop.class);
+
         if (getView(TcpChannelHub.class) == null) {
             addView(TcpChannelHub.class,
                     Threads.withThreadGroup(findView(ThreadGroup.class),
-                            () -> new TcpChannelHub(sessionProvider, hostname, port)));
+                            () -> new TcpChannelHub(sessionProvider, hostname, port,eventLoop)));
         }
     }
 
@@ -188,8 +195,9 @@ public class VanillaAsset implements Asset, Closeable {
         leafViewFactoryMap.put(iClass, factory);
     }
 
+    @Nullable
     @Override
-    public <I, U> I createWrappingView(Class viewType, RequestContext rc, Asset asset, U underling) throws AssetNotFoundException {
+    public <I, U> I createWrappingView(Class viewType, RequestContext rc, @NotNull Asset asset, @Nullable U underling) throws AssetNotFoundException {
         SortedMap<String, WrappingViewRecord> smap = wrappingViewFactoryMap.get(viewType);
         if (smap != null)
             for (WrappingViewRecord wvRecord : smap.values()) {
@@ -204,8 +212,10 @@ public class VanillaAsset implements Asset, Closeable {
         return parent.createWrappingView(viewType, rc, asset, underling);
     }
 
+    @Nullable
     @Override
-    public <I> I createLeafView(Class viewType, RequestContext rc, Asset asset) throws AssetNotFoundException {
+    public <I> I createLeafView(Class viewType, RequestContext rc, Asset asset) throws
+            AssetNotFoundException {
         LeafViewFactory lvFactory = leafViewFactoryMap.get(viewType);
         if (lvFactory != null)
             return (I) lvFactory.create(rc.clone().viewType(viewType), asset);
@@ -225,13 +235,14 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Override
-    public void forEachChild(ThrowingAcceptor<Asset, InvalidSubscriberException> consumer) throws InvalidSubscriberException {
+    public void forEachChild(@NotNull ThrowingAcceptor<Asset, InvalidSubscriberException> consumer) throws InvalidSubscriberException {
         for (Asset child : children.values())
             consumer.accept(child);
     }
 
     @Nullable
     @Override
+    @ForceInline
     public <V> V getView(@NotNull Class<V> vClass) {
         @SuppressWarnings("unchecked")
         V view = (V) viewMap.get(vClass);
@@ -240,6 +251,7 @@ public class VanillaAsset implements Asset, Closeable {
 
     @NotNull
     @Override
+    @ForceInline
     public String name() {
         return name;
     }
@@ -281,7 +293,7 @@ public class VanillaAsset implements Asset, Closeable {
 
     @Override
     public <I> void registerView(Class<I> viewType, I view) {
-        viewMap.put(viewType, (View) view);
+        viewMap.put(viewType, view);
     }
 
     @NotNull
@@ -309,16 +321,21 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Override
+    @ForceInline
     public Asset parent() {
         return parent;
     }
 
     @NotNull
     @Override
-    public Asset acquireAsset(RequestContext context, @NotNull String fullName) throws AssetNotFoundException {
+    public Asset acquireAsset(@NotNull RequestContext context, @NotNull String fullName) throws AssetNotFoundException {
         if (keyedAsset != Boolean.TRUE) {
-            int pos = fullName.indexOf("/");
-            if (pos >= 0) {
+            int pos = fullName.indexOf('/');
+            if (pos == 0) {
+                fullName = fullName.substring(1);
+                pos = fullName.indexOf('/');
+            }
+            if (pos > 0) {
                 String name1 = fullName.substring(0, pos);
                 String name2 = fullName.substring(pos + 1);
                 return getAssetOrANFE(context, name1).acquireAsset(context, name2);
@@ -333,7 +350,7 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Nullable
-    private Asset getAssetOrANFE(RequestContext context, @NotNull String name) throws AssetNotFoundException {
+    private Asset getAssetOrANFE(@NotNull RequestContext context, @NotNull String name) throws AssetNotFoundException {
         Asset asset = children.get(name);
         if (asset == null) {
             asset = createAsset(context, name);
@@ -344,7 +361,7 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Nullable
-    protected Asset createAsset(RequestContext context, @NotNull String name) {
+    protected Asset createAsset(@NotNull RequestContext context, @NotNull String name) {
         assert name.length() > 0;
         return children.computeIfAbsent(name, keyedAsset != Boolean.TRUE
                 ? n -> new VanillaAsset(this, name)
@@ -382,6 +399,7 @@ public class VanillaAsset implements Asset, Closeable {
             this.underlyingType = underlyingType;
         }
 
+        @NotNull
         @Override
         public String toString() {
             return "wraps " + underlyingType;

@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.engine.api;
 
-import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.engine.api.pubsub.Replication;
 import net.openhft.chronicle.wire.Marshallable;
@@ -24,7 +23,6 @@ import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Closeable;
 import java.util.function.Consumer;
 
 /**
@@ -85,10 +83,7 @@ public interface EngineReplication extends Replication {
      */
     @FunctionalInterface
     interface ModificationNotifier {
-        ModificationNotifier NOP = new ModificationNotifier() {
-            @Override
-            public void onChange() {
-            }
+        ModificationNotifier NOP = () -> {
         };
 
         /**
@@ -103,8 +98,9 @@ public interface EngineReplication extends Replication {
      */
     interface ModificationIterator {
 
-        void forEach(@NotNull Consumer<ReplicationEntry> consumer) throws InterruptedException;
+        void forEach(@NotNull Consumer<ReplicationEntry> consumer);
 
+        boolean hasNext();
         /**
          * Dirties all entries with a modification time equal to {@code fromTimeStamp} or newer. It
          * means all these entries will be considered as "new" by this ModificationIterator and
@@ -150,21 +146,32 @@ public interface EngineReplication extends Replication {
 
         long bootStrapTimeStamp();
 
-        void key(BytesStore key);
+        default void key(BytesStore key) {
+            throw new UnsupportedOperationException("immutable entry");
+        }
 
-        void value(BytesStore key);
+        default void value(BytesStore key) {
+            throw new UnsupportedOperationException("immutable entry");
+        }
 
-        void timestamp(long timestamp);
+        default void timestamp(long timestamp) {
+            throw new UnsupportedOperationException("immutable entry");
+        }
 
-        void identifier(byte identifier);
+        default void identifier(byte identifier) {
+            throw new UnsupportedOperationException("immutable entry");
+        }
 
-        void isDeleted(boolean isDeleted);
+        default void isDeleted(boolean isDeleted) {
+            throw new UnsupportedOperationException("immutable entry");
+        }
 
-        void bootStrapTimeStamp(long bootStrapTimeStamp);
-
+        default void bootStrapTimeStamp(long bootStrapTimeStamp) {
+            throw new UnsupportedOperationException("immutable entry");
+        }
 
         @Override
-        default void readMarshallable(final WireIn wire) throws IllegalStateException {
+        default void readMarshallable(@NotNull final WireIn wire) throws IllegalStateException {
             key(wire.read(() -> "key").bytesStore());
             value(wire.read(() -> "value").bytesStore());
             timestamp(wire.read(() -> "timestamp").int64());
@@ -175,7 +182,7 @@ public interface EngineReplication extends Replication {
 
 
         @Override
-        default void writeMarshallable(final WireOut wire) {
+        default void writeMarshallable(@NotNull final WireOut wire) {
             wire.write(() -> "key").bytes(key());
             wire.write(() -> "value").bytes(value());
             wire.write(() -> "timestamp").int64(timestamp());

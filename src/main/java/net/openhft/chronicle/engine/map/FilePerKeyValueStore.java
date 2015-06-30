@@ -76,7 +76,9 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
 
     @NotNull
     private final Thread fileFpmWatcher;
+    @NotNull
     private final RawKVSSubscription<String, Bytes, BytesStore> subscriptions;
+    @NotNull
     private final Asset asset;
     private volatile boolean closed = false;
 
@@ -85,7 +87,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         asset.registerView(StringBytesStoreKeyValueStore.class, this);
     }
 
-    FilePerKeyValueStore(RequestContext context, Asset asset, Class type, String basePath, String name) {
+    FilePerKeyValueStore(RequestContext context, @NotNull Asset asset, Class type, String basePath, String name) {
         this.asset = asset;
         assert type == String.class;
 
@@ -250,7 +252,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     }
 
     @Override
-    public boolean containsValue(final Bytes value) {
+    public boolean containsValue(final BytesStore value) {
         throw new UnsupportedOperationException("todo");
     }
 
@@ -369,6 +371,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         fileFpmWatcher.interrupt();
     }
 
+    @NotNull
     @Override
     public Asset asset() {
         return asset;
@@ -473,28 +476,5 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
             return key;
         }
     }
-
-    /*private static String bytesToString(BytesStore bytes) {
-        long pos = bytes.readPosition();
-        try {
-            return bytes.readUTFΔ();
-        } finally {
-            bytes.readPosition(pos);
-        }
-    }
-
-    @Override
-    public void applyChange(FilePerKeyValueStore store, ReplicationEntry remoteEntry) {
-        if (remoteEntry.isDeleted()) {
-            store.remove(bytesToString(remoteEntry.key()));
-        } else {
-            store.put(bytesToString(remoteEntry.key()), remoteEntry.value());
-        }
-    }
-
-    @Override
-    public Bytes getValue(FilePerKeyValueStore filePerKeyValueStore, Bytes key) {
-        return get(bytesToString(key)).bytesForRead();
-    }*/
 }
 

@@ -44,7 +44,7 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
     private Asset asset;
     private KeyValueStore<K, MV, V> kvStore;
 
-    public VanillaMapView(RequestContext context, Asset asset, KeyValueStore<K, MV, V> kvStore) {
+    public VanillaMapView(@org.jetbrains.annotations.NotNull RequestContext context, Asset asset, KeyValueStore<K, MV, V> kvStore) {
         this(context.keyType(), context.valueType(), asset, kvStore, context.putReturnsNull() != Boolean.FALSE, context.removeReturnsNull() != Boolean.FALSE);
     }
 
@@ -56,6 +56,7 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
         this.putReturnsNull = putReturnsNull;
         this.removeReturnsNull = removeReturnsNull;
     }
+
 
     @Override
     public Set<K> keySet() {
@@ -109,6 +110,13 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
         }
     }
 
+    @Override
+    public void set(K key, V value) {
+        checkKey(key);
+        checkValue(value);
+        kvStore.put(key, value);
+    }
+
     @Nullable
     @Override
     public V remove(Object key) {
@@ -144,6 +152,7 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
         kvStore.clear();
     }
 
+    @Nullable
     @Override
     public V putIfAbsent(@NotNull K key, V value) {
         checkKey(key);

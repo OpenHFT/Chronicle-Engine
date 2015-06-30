@@ -69,6 +69,7 @@ public class RemovedAssetEvent implements TopologicalEvent {
                 .isPresent();
     }
 
+    @NotNull
     @Override
     public String toString() {
         return "RemovedAssetEvent{" +
@@ -79,13 +80,13 @@ public class RemovedAssetEvent implements TopologicalEvent {
 
 
     @Override
-    public void readMarshallable(WireIn wire) throws IllegalStateException {
+    public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         wire.read(TopologicalFields.assetName).text(s -> assetName = s);
         wire.read(TopologicalFields.name).text(s -> name = s);
     }
 
     @Override
-    public void writeMarshallable(WireOut wire) {
+    public void writeMarshallable(@NotNull WireOut wire) {
         wire.write(TopologicalFields.assetName).text(assetName);
         wire.write(TopologicalFields.name).object(name);
     }

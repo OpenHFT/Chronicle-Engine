@@ -19,6 +19,7 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
+import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
@@ -28,6 +29,7 @@ import org.junit.rules.TestName;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.Map.Entry;
 
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
@@ -44,11 +46,12 @@ import static org.junit.Assert.*;
 
 public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
 
-    static int s_port = 11050;
+    private static int s_port = 11050;
     @NotNull
     @Rule
     public TestName name = new TestName();
-    private AssetTree assetTree = new VanillaAssetTree().forTesting();
+    @NotNull
+    private final AssetTree assetTree = new VanillaAssetTree().forTesting();
 
     @Before
     public void before() {
@@ -56,7 +59,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     }
 
     @NotNull
-    ClosableMapSupplier newIntString(String name) throws IOException {
+    private ClosableMapSupplier newIntString(@NotNull String name) throws IOException {
         final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(
                 Integer.class, String.class, WireType.BINARY, assetTree, name);
 
@@ -71,12 +74,14 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
             @Override
             public void close() throws IOException {
                 remoteMapSupplier.close();
+                assetTree.root().findView(EventLoop.class).close();
+                assetTree.close();
             }
         };
     }
 
     @NotNull
-    ClosableMapSupplier<CharSequence, CharSequence> newStrStrMap() throws
+    private ClosableMapSupplier<CharSequence, CharSequence> newStrStrMap() throws
             IOException {
 
         final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(CharSequence.class, CharSequence.class, WireType.BINARY, assetTree);
@@ -92,6 +97,8 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
             @Override
             public void close() throws IOException {
                 remoteMapSupplier.close();
+                assetTree.root().findView(EventLoop.class).close();
+                assetTree.close();
             }
         };
     }
@@ -122,7 +129,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
             final Map map = supplier.get();
 
-            yamlLoggger(() -> map.clear());
+            yamlLoggger(map::clear);
             assertEquals(0, map.size());
         }
     }
@@ -287,8 +294,8 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
             Object[] ar = s.toArray();
             assertEquals(5, ar.length);
             for (int i = 0; i < 5; ++i) {
-                assertTrue(map.containsKey(((Map.Entry) (ar[i])).getKey()));
-                assertTrue(map.containsValue(((Map.Entry) (ar[i])).getValue()));
+                assertTrue(map.containsKey(((Entry) (ar[i])).getKey()));
+                assertTrue(map.containsValue(((Entry) (ar[i])).getValue()));
             }
         }
     }
@@ -331,9 +338,8 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
 
             Set s = map.entrySet();
             assertEquals(5, s.size());
-            Iterator it = s.iterator();
-            while (it.hasNext()) {
-                Map.Entry e = (Map.Entry) it.next();
+            for (Object value : s) {
+                Entry e = (Entry) value;
                 assertTrue(
                         (e.getKey().equals(one) && e.getValue().equals("A")) ||
                                 (e.getKey().equals(two) && e.getValue().equals("B")) ||
@@ -711,13 +717,13 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
         }
     }
 
-    static class CI extends BI {
+    private static class CI extends BI {
         CI(int value) {
             super(value);
         }
     }
 
-    static class DI extends BI {
+    private static class DI extends BI {
         DI(int value) {
             super(value);
         }

@@ -19,12 +19,14 @@ package net.openhft.chronicle.engine;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
+import net.openhft.lang.io.Bytes;
+import net.openhft.lang.io.serialization.BytesMarshallable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 
-public class Factor implements Marshallable, net.openhft.lang.io.serialization.BytesMarshallable {
+public class Factor implements Marshallable, BytesMarshallable {
 
     private byte openPDFlag;
     private byte openUCFlag;
@@ -131,7 +133,7 @@ public class Factor implements Marshallable, net.openhft.lang.io.serialization.B
     }
 
     @Override
-    public void readMarshallable(@NotNull net.openhft.lang.io.Bytes in) throws IllegalStateException {
+    public void readMarshallable(@NotNull Bytes in) throws IllegalStateException {
         openPDFlag = in.readByte();
         openUCFlag = in.readByte();
         openActiveEMFlag = in.readByte();
@@ -162,7 +164,7 @@ public class Factor implements Marshallable, net.openhft.lang.io.serialization.B
     }
 
     @Override
-    public void writeMarshallable(@NotNull net.openhft.lang.io.Bytes out) {
+    public void writeMarshallable(@NotNull Bytes out) {
         out.writeByte(openPDFlag);
         out.writeByte(openUCFlag);
         out.writeByte(openActiveEMFlag);
@@ -212,7 +214,7 @@ public class Factor implements Marshallable, net.openhft.lang.io.serialization.B
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 

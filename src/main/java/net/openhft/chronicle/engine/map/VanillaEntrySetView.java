@@ -24,11 +24,12 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Created by peter on 22/05/15.
  */
-public class VanillaEntrySetView<K, MV, V> extends AbstractCollection<Map.Entry<K, V>> implements EntrySetView<K, MV, V> {
+public class VanillaEntrySetView<K, MV, V> extends AbstractCollection<Entry<K, V>> implements EntrySetView<K, MV, V> {
     private Asset asset;
     private MapView<K, MV, V> mapView;
 
@@ -39,7 +40,7 @@ public class VanillaEntrySetView<K, MV, V> extends AbstractCollection<Map.Entry<
 
     @NotNull
     @Override
-    public Iterator<Map.Entry<K, V>> iterator() {
+    public Iterator<Entry<K, V>> iterator() {
         return mapView.underlying().entrySetIterator();
     }
 
@@ -66,7 +67,7 @@ public class VanillaEntrySetView<K, MV, V> extends AbstractCollection<Map.Entry<
     @Override
     public int hashCode() {
         int h = 0;
-        for (Map.Entry<K, V> entry : this) {
+        for (Entry<K, V> entry : this) {
             h += entry.hashCode();
         }
         return h;
@@ -76,9 +77,9 @@ public class VanillaEntrySetView<K, MV, V> extends AbstractCollection<Map.Entry<
     public boolean equals(Object obj) {
         if (!(obj instanceof Set))
             return false;
-        Set<Map.Entry<K, V>> set = (Set<Map.Entry<K, V>>) obj;
+        Set<Entry<K, V>> set = (Set<Entry<K, V>>) obj;
         if (set.size() != size()) return false;
-        for (Map.Entry<K, V> entry : set) {
+        for (Entry<K, V> entry : set) {
             if (entry == null)
                 return false;
             K key = entry.getKey();

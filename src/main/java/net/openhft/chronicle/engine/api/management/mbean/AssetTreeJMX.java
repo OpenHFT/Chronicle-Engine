@@ -3,6 +3,7 @@ package net.openhft.chronicle.engine.api.management.mbean;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
 import net.openhft.chronicle.engine.map.ObjectKeyValueStore;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by pct25 on 6/16/2015.
@@ -25,7 +26,7 @@ public class AssetTreeJMX implements AssetTreeJMXMBean {
 
     }
 
-    public AssetTreeJMX(ObjectKeyValueStore view,ObjectKVSSubscription objectKVSSubscription,String path,String entries) {
+    public AssetTreeJMX(@NotNull ObjectKeyValueStore view, @NotNull ObjectKVSSubscription objectKVSSubscription,String path, String entries) {
         this.size = view.longSize();
         this.entries = entries;
         this.keyTypeClass = view.keyType();

@@ -46,7 +46,7 @@ public class VanillaTopicPublisher<T, M> implements TopicPublisher<T, M> {
 
     @Override
     public void publish(T topic, M message) {
-        underlying.put(topic, message);
+        underlying.set(topic, message);
     }
 
     @Override

@@ -20,9 +20,12 @@ import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.session.VanillaSessionProvider;
 import net.openhft.chronicle.network.VanillaSessionDetails;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
+import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -32,14 +35,14 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class HostDetails implements Marshallable {
     public int hostId;
-    int tcpBufferSize;
+    public int tcpBufferSize;
     public String hostname;
     public int port;
-    int timeoutMs;
+    public int timeoutMs;
 
 
     @Override
-    public void readMarshallable(WireIn wire) throws IllegalStateException {
+    public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         wire.read(() -> "hostId").int32(i -> hostId = i)
                 .read(() -> "tcpBufferSize").int32(i -> tcpBufferSize = i)
                 .read(() -> "hostname").text(i -> hostname = i)
@@ -48,7 +51,7 @@ public class HostDetails implements Marshallable {
     }
 
     @Override
-    public void writeMarshallable(WireOut wire) {
+    public void writeMarshallable(@NotNull WireOut wire) {
         wire.write(() -> "hostId").int32(hostId)
                 .write(() -> "tcpBufferSize").int32(tcpBufferSize)
                 .write(() -> "hostname").text(hostname)
@@ -56,13 +59,14 @@ public class HostDetails implements Marshallable {
                 .write(() -> "timeoutMs").int32(timeoutMs);
     }
 
-    public TcpChannelHub acquireTcpChannelHub() {
+    public TcpChannelHub acquireTcpChannelHub(EventLoop eventLoopv) {
         final HostPort key = new HostPort(hostname, port);
 
         return tcpChannelHubs.computeIfAbsent(key, hostPort ->
-                new TcpChannelHub(sessionProvider(), hostPort.host, hostPort.port));
+                new TcpChannelHub(sessionProvider(), hostPort.host, hostPort.port, eventLoopv));
     }
 
+    @NotNull
     private SessionProvider sessionProvider() {
         SessionProvider sessionProvider = new VanillaSessionProvider();
         VanillaSessionDetails sessionDetails = new VanillaSessionDetails();
@@ -71,19 +75,20 @@ public class HostDetails implements Marshallable {
         return sessionProvider;
     }
 
+    @NotNull
     private static Map<HostPort, TcpChannelHub> tcpChannelHubs = new ConcurrentHashMap<>();
 
     class HostPort {
         String host;
         int port;
 
-        HostPort(final String host, final int port) {
+        HostPort(@NotNull final String host, final int port) {
             this.host = host;
             this.port = port;
         }
 
         @Override
-        public boolean equals(final Object o) {
+        public boolean equals(@Nullable final Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 

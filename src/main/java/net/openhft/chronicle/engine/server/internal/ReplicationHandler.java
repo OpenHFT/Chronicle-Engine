@@ -1,23 +1,26 @@
 package net.openhft.chronicle.engine.server.internal;
 
-import net.openhft.chronicle.core.Jvm;
-import net.openhft.chronicle.engine.api.EngineReplication;
+import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
+import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.pubsub.Replication;
 import net.openhft.chronicle.engine.map.replication.Bootstrap;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.network.connection.CoreFields;
+import net.openhft.chronicle.threads.HandlerPriority;
+import net.openhft.chronicle.threads.api.EventHandler;
+import net.openhft.chronicle.threads.api.EventLoop;
+import net.openhft.chronicle.threads.api.InvalidEventHandlerException;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Queue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.bootstap;
 import static net.openhft.chronicle.engine.server.internal.ReplicationHandler.EventId.*;
-import static net.openhft.chronicle.engine.server.internal.ReplicationHandler.EventId.identifier;
-import static net.openhft.chronicle.engine.server.internal.ReplicationHandler.EventId.replicationEvent;
-import static net.openhft.chronicle.network.connection.CoreFields.reply;
 
 /**
  * Created by Rob Austin
@@ -29,14 +32,19 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
     private HostIdentifier hostId;
     private long tid;
+    private AtomicBoolean isClosed;
+    private EventLoop eventLoop;
 
-
-    void process(final Wire inWire,
+    void process(@NotNull final WireIn inWire,
                  final Queue<Consumer<Wire>> publisher,
                  final long tid,
                  final Wire outWire,
-                 HostIdentifier hostId,
-                 Replication replication) {
+                 final HostIdentifier hostId,
+                 final Replication replication,
+                 final AtomicBoolean isClosed,
+                 final EventLoop eventLoop) {
+        this.isClosed = isClosed;
+        this.eventLoop = eventLoop;
         setOutWire(outWire);
 
         this.hostId = hostId;
@@ -47,15 +55,12 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
     }
 
-    public enum Params implements WireKey {
-        entry, message;
-    }
-
     public enum EventId implements ParameterizeWireKey {
         publish,
         onEndOfSubscription,
         apply,
         replicationEvent,
+        replicationSubscribe,
         replicactionReply,
         bootstrapReply,
         identifierReply,
@@ -73,40 +78,49 @@ public class ReplicationHandler<E> extends AbstractHandler {
         }
     }
 
+    @Nullable
     private final BiConsumer<WireIn, Long> dataConsumer = new BiConsumer<WireIn, Long>() {
 
         @Override
-        public void accept(final WireIn inWire, Long inputTid) {
+        public void accept(@NotNull final WireIn inWire, Long inputTid) {
 
             eventName.setLength(0);
             final ValueIn valueIn = inWire.readEventName(eventName);
 
-            outWire.writeDocument(true, wire -> outWire.writeEventName(net.openhft.chronicle.network.connection.CoreFields.tid).int64(tid));
+            if (replicationSubscribe.contentEquals(eventName)) {
 
-            writeData(inWire.bytes(), out -> {
+                // receive bootstrap
+                final byte id = valueIn.int8();
+                final ModificationIterator mi = replication.acquireModificationIterator(id);
 
-                if (identifier.contentEquals(eventName)) {
-                    outWire.write(identifierReply).int8(hostId.hostId());
-                    return;
-                }
+                // sends replication events back to the remote client
+                mi.setModificationNotifier(() -> {
 
-                // receives replication events
-                if (replicationEvent.contentEquals(eventName)) {
-                    EngineReplication.ReplicationEntry replicatedEntry = valueIn.typedMarshallable();
-                    replication.applyReplication(replicatedEntry);
-                    return;
-                }
+                    System.out.println("onModificationNotifier");
 
-                if (bootstap.contentEquals(eventName)) {
+                    mi.forEach(e -> publisher.add(publish -> {
 
-                    // receive bootstrap
-                    final Bootstrap inBootstrap = valueIn.typedMarshallable();
-                    final byte id = inBootstrap.identifier();
-                    final EngineReplication.ModificationIterator mi = replication.acquireModificationIterator(id);
+                        publish.writeDocument(true,
+                                wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
 
-                    // sends replication events back to the remote client
-                    mi.setModificationNotifier(() -> {
-                        try {
+                        publish.writeDocument(false,
+                                wire -> wire.write(replicactionReply).typedMarshallable(e));
+
+                    }));
+                });
+
+                mi.setModificationNotifier(eventLoop::unpause);
+
+                eventLoop.addHandler(new EventHandler() {
+                    @Override
+                    public boolean action() throws InvalidEventHandlerException {
+
+                        if (isClosed.get())
+                            throw new InvalidEventHandlerException();
+
+                        if (!mi.hasNext())
+                            return false;
+
                             mi.forEach(e -> publisher.add(publish -> {
 
                                 publish.writeDocument(true,
@@ -116,18 +130,52 @@ public class ReplicationHandler<E> extends AbstractHandler {
                                         wire -> wire.write(replicactionReply).typedMarshallable(e));
 
                             }));
-                        } catch (InterruptedException e) {
-                            Jvm.rethrow(e);
-                        }
+                        return true;
 
-                    });
+                    }
+
+                    @NotNull
+                    @Override
+                    public HandlerPriority priority() {
+                        return HandlerPriority.MEDIUM;
+                    }
+                });
+
+                try {
+                    mi.dirtyEntries(0);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                return;
+            }
+
+            // receives replication events
+            if (replicationEvent.contentEquals(eventName)) {
+                ReplicationEntry replicatedEntry = valueIn.typedMarshallable();
+                replication.applyReplication(replicatedEntry);
+                return;
+            }
+
+            outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
+
+            writeData(inWire.bytes(), out -> {
+
+                if (identifier.contentEquals(eventName)) {
+                    outWire.write(identifierReply).int8(hostId.hostId());
+                    return;
+                }
+
+                if (bootstap.contentEquals(eventName)) {
+
+                    // receive bootstrap
+                    final Bootstrap inBootstrap = valueIn.typedMarshallable();
+                    final byte id = inBootstrap.identifier();
 
                     // send bootstrap
                     final Bootstrap outBootstrap = new Bootstrap();
                     outBootstrap.identifier(hostId.hostId());
                     outBootstrap.lastUpdatedTime(replication.lastModificationTime(id));
                     outWire.write(bootstrapReply).typedMarshallable(outBootstrap);
-                    return;
                 }
             });
         }

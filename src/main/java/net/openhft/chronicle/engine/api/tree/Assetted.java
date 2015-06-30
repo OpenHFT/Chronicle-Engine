@@ -16,11 +16,14 @@
 
 package net.openhft.chronicle.engine.api.tree;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Created by peter on 22/05/15.
  */
 public interface Assetted<U> {
     Asset asset();
 
+    @Nullable
     U underlying();
 }

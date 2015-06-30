@@ -31,18 +31,21 @@ import org.junit.Test;
 import org.junit.rules.TestName;
 
 import java.io.IOException;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import static net.openhft.chronicle.engine.Utils.methodName;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
     @NotNull
     @Rule
     public TestName name = new TestName();
+    @NotNull
     private AssetTree assetTree = new VanillaAssetTree().forTesting();
 
     @Before
@@ -52,14 +55,14 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
     @Test(timeout = 100000)
     @Ignore("performance test")
-    public void testLargeStringTextWire() throws Exception {
+    public void testLargeStringTextWire() throws IOException {
         final int MB = 1 << 20;
         testStrings(50, 2 * MB, WireType.TEXT);
     }
 
     @Test(timeout = 100000)
     @Ignore("performance test")
-    public void testLargeStringBinaryWire() throws Exception {
+    public void testLargeStringBinaryWire() throws IOException {
         final int MB = 1 << 20;
         testStrings(50, 2 * MB, WireType.BINARY);
     }
@@ -113,7 +116,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
     @Test
     @Ignore("Waiting for merge")
-    public void test2MBEntries() throws Exception {
+    public void test2MBEntries() throws IOException {
 
         // server
         try (final RemoteMapSupplier<String, String> remote = new
@@ -137,8 +140,58 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
         }
     }
 
+    @Test
+    @Ignore("Will be very slow, of course")
+    public void testLargeUpdates() throws IOException, InterruptedException {
+        String value = new String(new char[1024*1024]).replace("\0", "X");
+        try (final RemoteMapSupplier<String, String> remote = new
+                RemoteMapSupplier<>(String.class,
+                String.class,
+                WireType.BINARY, assetTree)) {
+
+            final long time = System.currentTimeMillis();
+            final ConcurrentMap<String, String> map = remote.get();
+            for (int j = 0; j < 30*1000; j++) {
+                map.put("key", value);
+            }
+
+            System.out.format("Time for 100MB %,dms%n", (System.currentTimeMillis() - time));
+        }
+    }
+
+    @Test
+    public void testValuesCollection() throws IOException {
+
+        // server
+        try (final RemoteMapSupplier<String, String> remote = new
+                RemoteMapSupplier<>(String.class,
+                String.class,
+                WireType.BINARY, assetTree))
+        {
+            final ConcurrentMap<String, String> map = remote.get();
+            HashMap<String, String> data = new HashMap<String, String>();
+            data.put("test1", "value1");
+            data.put("test1", "value1");
+            map.putAll(data);
+            assertEquals(data.size(), map.size());
+            assertEquals(data.size(), map.values().size());
+
+            Iterator<String> it = map.values().iterator();
+            ArrayList<String> values = new ArrayList<String>();
+            while (it.hasNext())
+            {
+                values.add(it.next());
+            }
+            Collections.sort(values);
+            Object[] dataValues = data.values().toArray();
+            Arrays.sort(dataValues);
+            assertArrayEquals(dataValues, values.toArray());
+        }
+    }
+
     class MyMarshallable implements Marshallable {
 
+        @Nullable
         String someData;
 
         public MyMarshallable(String someData) {

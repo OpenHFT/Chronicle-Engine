@@ -23,8 +23,10 @@ import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.tree.Assetted;
 import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.lang.model.constraints.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.function.Consumer;
 
 /**
@@ -47,6 +49,7 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
         return getAndPut(key, value) != null;
     }
 
+    @org.jetbrains.annotations.Nullable
     V getAndPut(K key, V value);
 
     /**
@@ -59,13 +62,16 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
         return getAndRemove(key) != null;
     }
 
+    @org.jetbrains.annotations.Nullable
     V getAndRemove(K key);
 
+    @org.jetbrains.annotations.Nullable
     @Nullable
     default V get(K key) {
         return getUsing(key, null);
     }
 
+    @org.jetbrains.annotations.Nullable
     @Nullable
     V getUsing(K key, MV value);
 
@@ -96,7 +102,7 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
         List<Map.Entry<K, V>> entries = new ArrayList<>();
         try {
             for (int i = 0, seg = segments(); i < seg; i++)
-                entriesFor(i, e -> entries.add(new AbstractMap.SimpleEntry<>(e.key(), e.value())));
+                entriesFor(i, e -> entries.add(new SimpleEntry<>(e.key(), e.value())));
         } catch (InvalidSubscriberException e) {
             throw new AssertionError(e);
         }
@@ -108,7 +114,7 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
         List<K> keys = new ArrayList<>();
         try {
             for (int i = 0, seg = segments(); i < seg; i++)
-                keysFor(i, k -> keys.add(k));
+                keysFor(i, keys::add);
         } catch (InvalidSubscriberException e) {
             throw new AssertionError(e);
         }
@@ -117,6 +123,7 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
 
     void clear();
 
+    @org.jetbrains.annotations.Nullable
     @Nullable
     default V replace(K key, V value) {
         if (containsKey(key)) {
@@ -148,6 +155,7 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
         return true;
     }
 
+    @org.jetbrains.annotations.Nullable
     default V putIfAbsent(K key, V value) {
         V value2 = get(key);
         return value2 == null ? getAndPut(key, value) : value2;
@@ -157,6 +165,7 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
         return true;
     }
 
+    @NotNull
     default Iterator<V> valuesIterator() {
         // todo optimise
         List<V> entries = new ArrayList<>();
@@ -169,11 +178,12 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
         return entries.iterator();
     }
 
-    boolean containsValue(MV value);
+    boolean containsValue(V value);
 
     interface Entry<K, V> {
         K key();
 
+        @org.jetbrains.annotations.Nullable
         V value();
     }
 }

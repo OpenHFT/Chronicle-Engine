@@ -25,9 +25,11 @@ import net.openhft.chronicle.engine.map.InsertedEvent;
 import net.openhft.chronicle.engine.map.RemovedEvent;
 import net.openhft.chronicle.engine.map.UpdatedEvent;
 import net.openhft.chronicle.threads.Threads;
+import net.openhft.chronicle.threads.api.EventLoop;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.Optional;
 
 import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
@@ -89,6 +91,7 @@ public class VanillaAssetTree implements AssetTree {
         return fullName.isEmpty() ? root : root.getAsset(fullName);
     }
 
+    @NotNull
     @Override
     public Asset root() {
         return root;
@@ -96,9 +99,20 @@ public class VanillaAssetTree implements AssetTree {
 
     @Override
     public void close() {
+
+        // ensure that the event loop get shutdown first
+        try {
+            EventLoop view = root().findView(EventLoop.class);
+            if (view != null)
+                view.close();
+        } catch (Exception e) {
+            //
+        }
+
         root.close();
     }
 
+    @NotNull
     public AssetTree withConfig(String etcDir, String baseDir) {
         Threads.withThreadGroup(root.getView(ThreadGroup.class), () -> {
             new ConfigurationFS("/etc", etcDir, baseDir).install(baseDir, this);
@@ -107,8 +121,9 @@ public class VanillaAssetTree implements AssetTree {
         return this;
     }
 
+    @NotNull
     @Override
     public String toString() {
-        return "tree-" + Optional.ofNullable(root.getView(HostIdentifier.class)).map(hi -> hi.hostId()).orElseGet(() -> (byte) 0);
+        return "tree-" + Optional.ofNullable(root.getView(HostIdentifier.class)).map(HostIdentifier::hostId).orElseGet(() -> (byte) 0);
     }
 }

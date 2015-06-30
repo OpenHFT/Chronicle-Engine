@@ -21,8 +21,10 @@ import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 /**
@@ -33,33 +35,35 @@ public class Clusters implements Marshallable, View {
             new ConcurrentSkipListMap<>();
 
     @Override
-    public void readMarshallable(WireIn wire) throws IllegalStateException {
+    public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         StringBuilder clusterName = new StringBuilder();
         StringBuilder hostDescription = new StringBuilder();
         while (wire.hasMore()) {
             wire.readEventName(clusterName).marshallable(host -> {
                 Map<String, HostDetails> hdMap = clusterMap.computeIfAbsent(clusterName.toString(), k -> new ConcurrentSkipListMap<>());
-                host.readEventName(hostDescription).marshallable(details -> {
-                    HostDetails hd = new HostDetails();
-                    hd.readMarshallable(details);
-                    hdMap.put(hostDescription.toString(), hd);
-                });
+                while (wire.hasMore()) {
+                    host.readEventName(hostDescription).marshallable(details -> {
+                        HostDetails hd = new HostDetails();
+                        hd.readMarshallable(details);
+                        hdMap.put(hostDescription.toString(), hd);
+                    });
+                }
             });
         }
     }
 
     @Override
-    public void writeMarshallable(WireOut wire) {
-        for (Map.Entry<String, Map<String, HostDetails>> entry : clusterMap.entrySet()) {
+    public void writeMarshallable(@NotNull WireOut wire) {
+        for (Entry<String, Map<String, HostDetails>> entry : clusterMap.entrySet()) {
             wire.writeEventName(entry::getKey).marshallable(host -> {
-                for (Map.Entry<String, HostDetails> entry2 : entry.getValue().entrySet()) {
+                for (Entry<String, HostDetails> entry2 : entry.getValue().entrySet()) {
                     wire.writeEventName(entry2::getKey).marshallable(entry2.getValue());
                 }
             });
         }
     }
 
-    public void install(AssetTree assetTree) {
+    public void install(@NotNull AssetTree assetTree) {
         assetTree.root().addView(Clusters.class, this);
     }
 

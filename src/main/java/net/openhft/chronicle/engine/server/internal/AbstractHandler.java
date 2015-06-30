@@ -1,7 +1,6 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireOut;
 import net.openhft.chronicle.wire.Wires;
 import net.openhft.chronicle.wire.YamlLogging;
@@ -21,16 +20,17 @@ import static net.openhft.chronicle.wire.WriteMarshallable.EMPTY;
 public class AbstractHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractHandler.class);
-    Wire outWire = null;
+    @Nullable
+    WireOut outWire = null;
 
-    void setOutWire(final Wire outWire) {
+    void setOutWire(final WireOut outWire) {
         this.outWire = outWire;
     }
 
     /**
      * write and exceptions and rolls back if no data was written
      */
-    void writeData(Bytes inBytes, @NotNull Consumer<WireOut> c) {
+    void writeData(@NotNull Bytes inBytes, @NotNull Consumer<WireOut> c) {
         outWire.writeDocument(false, out -> {
             final long readPosition = inBytes.readPosition();
             final long position = outWire.bytes().writePosition();

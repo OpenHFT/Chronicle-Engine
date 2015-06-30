@@ -5,6 +5,7 @@ import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Queue;
 import java.util.function.BiConsumer;
@@ -27,14 +28,15 @@ public class TopicPublisherHandler<T, M> extends AbstractHandler {
     private final StringBuilder eventName = new StringBuilder();
 
     private Queue<Consumer<Wire>> publisher;
-    private Wire outWire;
     private TopicPublisher<T, M> view;
+    @Nullable
     private Function<ValueIn, T> wireToT;
+    @Nullable
     private Function<ValueIn, M> wireToM;
     private final BiConsumer<WireIn, Long> dataConsumer = new BiConsumer<WireIn, Long>() {
 
         @Override
-        public void accept(final WireIn inWire, Long inputTid) {
+        public void accept(@NotNull final WireIn inWire, Long inputTid) {
 
             eventName.setLength(0);
             final ValueIn valueIn = inWire.readEventName(eventName);
@@ -88,15 +90,15 @@ public class TopicPublisherHandler<T, M> extends AbstractHandler {
         }
     };
 
-    void process(final Wire inWire,
+    void process(@NotNull final WireIn inWire,
                  final Queue<Consumer<Wire>> publisher,
                  final long tid,
                  final Wire outWire,
-                 final TopicPublisher<T, M> view,
-                 final @NotNull WireAdapter<T, M> wireAdapter) {
+                 final TopicPublisher view,
+                 final @NotNull WireAdapter wireAdapter) {
 
         setOutWire(outWire);
-        this.outWire = outWire;
+        final Wire outWire1 = outWire;
         this.view = view;
         this.publisher = publisher;
         this.wireToT = wireAdapter.wireToKey();

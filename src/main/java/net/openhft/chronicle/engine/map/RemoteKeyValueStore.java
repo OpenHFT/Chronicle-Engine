@@ -17,7 +17,7 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.Jvm;
-import net.openhft.chronicle.engine.api.EngineReplication;
+import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
@@ -58,6 +58,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     @NotNull
     private final Asset asset;
     // todo
+    @NotNull
     private final ObjectKVSSubscription<K, V, V> subscriptions;
 
     public RemoteKeyValueStore(@NotNull final RequestContext context,
@@ -74,12 +75,12 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     }
 
 
-    public RemoteKeyValueStore(RequestContext requestContext, Asset asset) {
+    public RemoteKeyValueStore(@NotNull RequestContext requestContext, @NotNull Asset asset) {
         this(requestContext, asset, asset.findView(TcpChannelHub.class));
     }
 
-    private static String toUri(final RequestContext context) {
-        StringBuilder uri = new StringBuilder("/" + context.name()
+    private static String toUri(@NotNull final RequestContext context) {
+        StringBuilder uri = new StringBuilder("/" + context.fullName()
                 + "?view=" + "map");
 
         if (context.keyType() != String.class)
@@ -147,7 +148,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     }
 
     @Override
-    public void keysFor(final int segment, final SubscriptionConsumer<K> kConsumer) throws InvalidSubscriberException {
+    public void keysFor(final int segment, @NotNull final SubscriptionConsumer<K> kConsumer) throws InvalidSubscriberException {
         keySet().forEach(k -> {
             try {
                 kConsumer.accept(k);
@@ -158,7 +159,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     }
 
     @Override
-    public void entriesFor(final int segment, final SubscriptionConsumer<MapEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
+    public void entriesFor(final int segment, @NotNull final SubscriptionConsumer<MapEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
         String assetName = asset.fullName();
         entrySet().forEach(entry -> {
             try {
@@ -201,6 +202,8 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     @NotNull
 
     public String toString() {
+        if (Jvm.isDebug()) return "toString() not available while debugging";
+
         final Iterator<Map.Entry<K, V>> entries = entrySet().iterator();
         if (!entries.hasNext())
             return "{}";
@@ -286,6 +289,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
         proxyReturnVoid(clear);
     }
 
+    @Nullable
     public Collection<V> values() {
         final StringBuilder csp = Wires.acquireStringBuilder();
         long cid = proxyReturnWireConsumer(values, read -> {
@@ -426,7 +430,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     }
 
     @Override
-    public void accept(final EngineReplication.ReplicationEntry replicationEntry) {
+    public void accept(final ReplicationEntry replicationEntry) {
         throw new UnsupportedOperationException("todo");
     }
 

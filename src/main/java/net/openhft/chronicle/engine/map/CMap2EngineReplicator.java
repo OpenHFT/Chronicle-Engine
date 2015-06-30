@@ -26,10 +26,12 @@ import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.hash.replication.EngineReplicationLangBytesConsumer;
 import net.openhft.chronicle.map.EngineReplicationLangBytes;
 import net.openhft.chronicle.map.EngineReplicationLangBytes.EngineModificationIterator;
+import net.openhft.lang.io.ByteBufferBytes;
+import net.openhft.lang.io.IByteBufferBytes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.function.Consumer;
 
 import static java.lang.ThreadLocal.withInitial;
@@ -46,7 +48,7 @@ public class CMap2EngineReplicator implements EngineReplication,
     private final ThreadLocal<PointerBytesStore> valueLocal = withInitial(PointerBytesStore::new);
     private EngineReplicationLangBytes engineReplicationLang;
 
-    public CMap2EngineReplicator(RequestContext requestContext, Asset asset) {
+    public CMap2EngineReplicator(RequestContext requestContext, @NotNull Asset asset) {
         this(requestContext);
         asset.addView(EngineReplicationLangBytesConsumer.class, this);
     }
@@ -60,17 +62,25 @@ public class CMap2EngineReplicator implements EngineReplication,
         this.engineReplicationLang = engineReplicationLangBytes;
     }
 
-    net.openhft.lang.io.Bytes toLangBytes(BytesStore b) {
-        return wrap(b.address(), b.readRemaining());
+    @NotNull
+    net.openhft.lang.io.Bytes toLangBytes(@NotNull BytesStore b) {
+        if (b.underlyingObject() == null)
+            return wrap(b.address(b.start()), b.readRemaining());
+        else {
+            ByteBuffer buffer = (ByteBuffer) b.underlyingObject();
+            IByteBufferBytes wrap = ByteBufferBytes.wrap(buffer);
+            wrap.limit((int) b.readLimit());
+            return wrap;
+        }
     }
 
-    public void put(final BytesStore key, final BytesStore value,
+    public void put(@NotNull final BytesStore key, @NotNull final BytesStore value,
                     final byte remoteIdentifier,
                     final long timestamp) {
         engineReplicationLang.put(toLangBytes(key), toLangBytes(value), remoteIdentifier, timestamp);
     }
 
-    private void remove(final BytesStore key, final byte remoteIdentifier, final long timestamp) {
+    private void remove(@NotNull final BytesStore key, final byte remoteIdentifier, final long timestamp) {
         engineReplicationLang.remove(toLangBytes(key), remoteIdentifier, timestamp);
     }
 
@@ -97,6 +107,7 @@ public class CMap2EngineReplicator implements EngineReplication,
         setLastModificationTime(entry.identifier(), entry.bootStrapTimeStamp());
     }
 
+    @Nullable
     @Override
     public ModificationIterator acquireModificationIterator(final byte remoteIdentifier) {
         final EngineModificationIterator instance = engineReplicationLang
@@ -104,7 +115,7 @@ public class CMap2EngineReplicator implements EngineReplication,
 
         return new ModificationIterator() {
             @Override
-            public void forEach(@NotNull Consumer<ReplicationEntry> consumer) throws InterruptedException {
+            public void forEach(@NotNull Consumer<ReplicationEntry> consumer) {
                 while (hasNext()) {
                     nextEntry(entry -> {
                         consumer.accept(entry);
@@ -113,11 +124,11 @@ public class CMap2EngineReplicator implements EngineReplication,
                 }
             }
 
-            private boolean hasNext() {
+            public boolean hasNext() {
                 return instance.hasNext();
             }
 
-            private boolean nextEntry(@NotNull final EntryCallback callback) throws InterruptedException {
+            private boolean nextEntry(@NotNull final EntryCallback callback) {
                 return instance.nextEntry((key, value, timestamp,
                                            identifier, isDeleted,
                                            bootStrapTimeStamp) ->
@@ -138,6 +149,7 @@ public class CMap2EngineReplicator implements EngineReplication,
                 return voidBytes;
             }
 
+            @Nullable
             private Bytes<Void> toValue(final @Nullable net.openhft.lang.io.Bytes value) {
                 if (value == null)
                     return null;
@@ -154,13 +166,7 @@ public class CMap2EngineReplicator implements EngineReplication,
 
             @Override
             public void setModificationNotifier(@NotNull final ModificationNotifier modificationNotifier) {
-                instance.setModificationNotifier(new EngineReplicationLangBytes.EngineReplicationModificationNotifier() {
-
-                    @Override
-                    public void onChange() {
-                        modificationNotifier.onChange();
-                    }
-                });
+                instance.setModificationNotifier(() -> modificationNotifier.onChange());
             }
         };
     }
@@ -177,6 +183,7 @@ public class CMap2EngineReplicator implements EngineReplication,
 
 
 
+    @NotNull
     @Override
     public String toString() {
         return "CMap2EngineReplicator{" +
@@ -207,14 +214,18 @@ public class CMap2EngineReplicator implements EngineReplication,
          *                           disconnection, this time maybe later than the message time as
          *                           event are not send in chronological order from the bit set.
          */
-        VanillaReplicatedEntry(final BytesStore key,
-                               final BytesStore value,
+        VanillaReplicatedEntry(@NotNull final BytesStore key,
+                               @NotNull final BytesStore value,
                                final long timestamp,
                                final byte identifier,
                                final boolean isDeleted,
                                final long bootStrapTimeStamp) {
             this.key = key;
+            // must be native
+            assert key.underlyingObject() == null;
             this.value = value;
+            // must be native
+            assert value.underlyingObject() == null;
             this.timestamp = timestamp;
             this.identifier = identifier;
             this.isDeleted = isDeleted;

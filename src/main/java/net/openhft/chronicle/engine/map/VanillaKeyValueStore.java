@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
@@ -83,6 +82,7 @@ public class VanillaKeyValueStore<K, MV, V> implements AuthenticatedKeyValueStor
         return map.entrySet().iterator();
     }
 
+    @NotNull
     @Override
     public Iterator<K> keySetIterator() {
         return map.keySet().iterator();
@@ -92,14 +92,14 @@ public class VanillaKeyValueStore<K, MV, V> implements AuthenticatedKeyValueStor
     public void clear() {
         try {
             for (int i = 0, segs = segments(); i < segs; i++)
-                keysFor(i, (K k) -> map.remove(k));
+                keysFor(i, map::remove);
         } catch (InvalidSubscriberException e) {
             throw new AssertionError(e);
         }
     }
 
     @Override
-    public boolean containsValue(final MV value) {
+    public boolean containsValue(final V value) {
         throw new UnsupportedOperationException("todo");
     }
 
@@ -119,6 +119,7 @@ public class VanillaKeyValueStore<K, MV, V> implements AuthenticatedKeyValueStor
 
     }
 
+    @NotNull
     @Override
     public KVSSubscription<K, MV, V> subscription(boolean createIfAbsent) {
         throw new UnsupportedOperationException("todo");
