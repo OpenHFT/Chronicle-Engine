@@ -24,6 +24,7 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.Set;
 
 /**
@@ -124,7 +125,7 @@ public enum Chassis {
         return assetTree.acquireAsset(assetClass, RequestContext.requestContext(name).type(class1).type2(class2));
     }
 
-    public static void close() {
+    public static void close() throws IOException {
         assetTree.close();
     }
 }

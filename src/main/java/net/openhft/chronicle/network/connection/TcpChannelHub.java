@@ -67,8 +67,8 @@ import static net.openhft.chronicle.engine.server.internal.SystemHandler.EventId
  */
 public class TcpChannelHub implements View, Closeable {
 
-    public static final int HEATBEAT_PING_PERIOD = getInteger("heartbeat.ping.period", 3_000);
-    public static final int HEATBEAT_TIMEOUT_PERIOD = getInteger("heartbeat.timeout", 5_000);
+    public static final int HEATBEAT_PING_PERIOD = getInteger("heartbeat.ping.period", 6_000);
+    public static final int HEATBEAT_TIMEOUT_PERIOD = getInteger("heartbeat.timeout", 7_000);
 
     public static final int SIZE_OF_SIZE = 4;
     private static final Logger LOG = LoggerFactory.getLogger(TcpChannelHub.class);
@@ -120,11 +120,7 @@ public class TcpChannelHub implements View, Closeable {
         handShakingWire = wire.apply(byteBufferBytes);
 
 
-        try {
-            attemptConnect(remoteAddress);
-        } catch (Exception e) {
-            LOG.debug("", e);
-        }
+        attemptConnect(remoteAddress);
 
 
         this.sessionProvider = sessionProvider;
@@ -211,8 +207,7 @@ public class TcpChannelHub implements View, Closeable {
                 doHandShaking(socketChannel);
             }
         } catch (IOException e) {
-            LOG.error("Failed to connect to " + remoteAddress, e);
-
+            // LOG.error("Failed to connect to " + remoteAddress, e);
             clientChannel = null;
         }
     }
@@ -248,7 +243,7 @@ public class TcpChannelHub implements View, Closeable {
         synchronized (this) {
             if (!connectOnce)
                 return clientChannel;
-            tcpSocketConsumer.stop();
+            //  tcpSocketConsumer.stop();
             try {
                 closeSocket();
                 Jvm.pause(500);
@@ -256,7 +251,7 @@ public class TcpChannelHub implements View, Closeable {
             } finally {
                 this.connectOnce.set(true);
             }
-            tcpSocketConsumer.start();
+            // tcpSocketConsumer.start();
         }
 
         // re-established all the existing subscription ( if any )
@@ -741,6 +736,7 @@ public class TcpChannelHub implements View, Closeable {
                     IORuntimeException e = new IORuntimeException("Unable to " +
                             "reprocess response, as the server=" + hostname + ":" + port + " is " +
                             "disconnected");
+
                     if (LOG.isDebugEnabled())
                         LOG.debug(hostname + ":" + port, e);
                     throw Jvm.rethrow(e);
@@ -778,6 +774,8 @@ public class TcpChannelHub implements View, Closeable {
             executorService.submit(() -> {
                 try {
                     running();
+                } catch (IORuntimeException e) {
+
                 } catch (Throwable e) {
                     if (!isShutdown())
                         LOG.error("", e);
@@ -985,11 +983,16 @@ public class TcpChannelHub implements View, Closeable {
 
         private void readBuffer(@NotNull final ByteBuffer buffer) throws IOException {
             while (buffer.remaining() > 0) {
+                try {
 
-                if (clientChannel == null || clientChannel.read(buffer) == -1)
-                    throw new IORuntimeException("Disconnection to server " + hostname + ":" + port);
-                if (isShutdown)
-                    throw new IORuntimeException("The server was shutdown, " + hostname + ":" + port);
+                    if (clientChannel == null || clientChannel.read(buffer) == -1)
+                        reConnect();
+                    //   throw new IORuntimeException("Disconnection to server " + hostname + ":" +                        port);
+                    if (isShutdown)
+                        throw new IORuntimeException("The server was shutdown, " + hostname + ":" + port);
+                } catch (InterruptedException e) {
+                    LOG.error("", e);
+                }
             }
         }
 
