@@ -252,7 +252,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     }
 
     @Override
-    public boolean containsValue(final Bytes value) {
+    public boolean containsValue(final BytesStore value) {
         throw new UnsupportedOperationException("todo");
     }
 
@@ -476,28 +476,5 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
             return key;
         }
     }
-
-    /*private static String bytesToString(BytesStore bytes) {
-        long pos = bytes.readPosition();
-        try {
-            return bytes.readUTFΔ();
-        } finally {
-            bytes.readPosition(pos);
-        }
-    }
-
-    @Override
-    public void applyChange(FilePerKeyValueStore store, ReplicationEntry remoteEntry) {
-        if (remoteEntry.isDeleted()) {
-            store.remove(bytesToString(remoteEntry.key()));
-        } else {
-            store.put(bytesToString(remoteEntry.key()), remoteEntry.value());
-        }
-    }
-
-    @Override
-    public Bytes getValue(FilePerKeyValueStore filePerKeyValueStore, Bytes key) {
-        return get(bytesToString(key)).bytesForRead();
-    }*/
 }
 

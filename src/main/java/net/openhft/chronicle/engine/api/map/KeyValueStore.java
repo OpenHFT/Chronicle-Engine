@@ -178,7 +178,7 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
         return entries.iterator();
     }
 
-    boolean containsValue(MV value);
+    boolean containsValue(V value);
 
     interface Entry<K, V> {
         K key();

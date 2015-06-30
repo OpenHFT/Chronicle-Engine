@@ -99,7 +99,7 @@ public class VanillaKeyValueStore<K, MV, V> implements AuthenticatedKeyValueStor
     }
 
     @Override
-    public boolean containsValue(final MV value) {
+    public boolean containsValue(final V value) {
         throw new UnsupportedOperationException("todo");
     }
 

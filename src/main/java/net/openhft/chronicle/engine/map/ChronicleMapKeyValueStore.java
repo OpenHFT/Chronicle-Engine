@@ -227,7 +227,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
     }
 
     @Override
-    public boolean containsValue(final MV value) {
+    public boolean containsValue(final V value) {
         throw new UnsupportedOperationException("todo");
     }
 

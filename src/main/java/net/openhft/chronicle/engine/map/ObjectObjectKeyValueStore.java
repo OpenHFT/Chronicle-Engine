@@ -134,7 +134,7 @@ public class ObjectObjectKeyValueStore<K, MV extends V, V> implements KeyValueSt
     }
 
     @Override
-    public boolean containsValue(final MV value) {
+    public boolean containsValue(final V value) {
         throw new UnsupportedOperationException("todo");
     }
 
