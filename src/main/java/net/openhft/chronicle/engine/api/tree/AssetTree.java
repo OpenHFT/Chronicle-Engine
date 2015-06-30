@@ -16,6 +16,8 @@
 
 package net.openhft.chronicle.engine.api.tree;
 
+import net.openhft.chronicle.bytes.BytesStore;
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.management.ManagementTools;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.*;
@@ -24,11 +26,9 @@ import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
 import net.openhft.chronicle.engine.map.RawKVSSubscription;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.TopologySubscription;
-import net.openhft.lang.io.BytesStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Closeable;
 import java.util.Set;
 
 import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
