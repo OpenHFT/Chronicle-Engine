@@ -344,7 +344,12 @@ public class TcpChannelHub implements View, Closeable {
         if (clientChannel != null) {
 
             try {
-                clientChannel.socket().getInputStream().close();
+                clientChannel.socket().shutdownInput();
+            } catch (IOException ignored) {
+            }
+
+            try {
+                clientChannel.socket().shutdownOutput();
             } catch (IOException ignored) {
             }
 
