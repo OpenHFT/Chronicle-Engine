@@ -67,8 +67,8 @@ import static net.openhft.chronicle.engine.server.internal.SystemHandler.EventId
  */
 public class TcpChannelHub implements View, Closeable {
 
-    public static final int HEATBEAT_PING_PERIOD = getInteger("heartbeat.ping.period", 6_000);
-    public static final int HEATBEAT_TIMEOUT_PERIOD = getInteger("heartbeat.timeout", 7_000);
+    public static final int HEATBEAT_PING_PERIOD = getInteger("heartbeat.ping.period", 5_000);
+    public static final int HEATBEAT_TIMEOUT_PERIOD = getInteger("heartbeat.timeout", 10_000);
 
     public static final int SIZE_OF_SIZE = 4;
     private static final Logger LOG = LoggerFactory.getLogger(TcpChannelHub.class);
@@ -243,7 +243,7 @@ public class TcpChannelHub implements View, Closeable {
         synchronized (this) {
             if (!connectOnce)
                 return clientChannel;
-            //  tcpSocketConsumer.stop();
+
             try {
                 closeSocket();
                 Jvm.pause(500);
@@ -251,7 +251,7 @@ public class TcpChannelHub implements View, Closeable {
             } finally {
                 this.connectOnce.set(true);
             }
-            // tcpSocketConsumer.start();
+
         }
 
         // re-established all the existing subscription ( if any )
@@ -368,6 +368,9 @@ public class TcpChannelHub implements View, Closeable {
 
     }
 
+    /**
+     * called when we are completed finished with using the TcpChannelHub
+     */
     public synchronized void close() {
         closed = true;
         tcpSocketConsumer.stop();
@@ -384,7 +387,8 @@ public class TcpChannelHub implements View, Closeable {
         long id = time;
         for (; ; ) {
             long old = transactionID.get();
-            if (old >= id) id = old + 1;
+            if (old == id)
+                id = old + 1;
             if (transactionID.compareAndSet(old, id))
                 break;
         }
@@ -672,7 +676,8 @@ public class TcpChannelHub implements View, Closeable {
         private void onReconnect() {
             map.values().forEach(v -> {
                 if (v instanceof AsyncSubscription) {
-                    ((AsyncSubscription) v).applySubscribe();
+                    if (!(v instanceof AsyncTemporarySubscription))
+                        ((AsyncSubscription) v).applySubscribe();
                 }
             });
         }
@@ -767,6 +772,7 @@ public class TcpChannelHub implements View, Closeable {
          * tid}
          */
         private void start() {
+            checkNotShutdown();
             awaitingHeartbeat.set(false);
             executorService = newSingleThreadExecutor(
                     new NamedThreadFactory("TcpSocketConsumer-" + name, true));
@@ -775,13 +781,19 @@ public class TcpChannelHub implements View, Closeable {
                 try {
                     running();
                 } catch (IORuntimeException e) {
-
+                    LOG.debug("", e);
                 } catch (Throwable e) {
                     if (!isShutdown())
                         LOG.error("", e);
                 }
             });
 
+        }
+
+        private void checkNotShutdown() {
+            if (isShutdown)
+                throw new IllegalStateException("you can not call this method once stop() has " +
+                        "been caleld.");
         }
 
 
@@ -999,7 +1011,6 @@ public class TcpChannelHub implements View, Closeable {
         private volatile long lastTimeMessageReceived = System.currentTimeMillis();
 
         private void onMessageReceived() {
-            System.out.println("lastTimeMessageReceived=" + lastTimeMessageReceived);
             lastTimeMessageReceived = System.currentTimeMillis();
         }
 
@@ -1013,7 +1024,7 @@ public class TcpChannelHub implements View, Closeable {
 
             // this denotes that the next message is a system message as it has a null csp
 
-            subscribe(new AbstractAsyncSubscription(TcpChannelHub.this, null) {
+            subscribe(new AbstractAsyncTemporarySubscription(TcpChannelHub.this, null) {
                 @Override
                 public void onSubscribe(WireOut wireOut) {
                     wireOut.writeEventName(heartbeat).int64(System.currentTimeMillis());
@@ -1033,6 +1044,10 @@ public class TcpChannelHub implements View, Closeable {
             });
         }
 
+        /**
+         * called when we are completed finished with using the TcpChannelHub, after this method is
+         * called you will no loger be able to use this instance to received data
+         */
         private void stop() {
             isShutdown = true;
 
@@ -1053,7 +1068,7 @@ public class TcpChannelHub implements View, Closeable {
         private final AtomicBoolean awaitingHeartbeat = new AtomicBoolean();
 
         /**
-         * gets called to monitor the heartbeat
+         * gets called periodically to monitor the heartbeat
          *
          * @return true, if processing was performed
          * @throws InvalidEventHandlerException

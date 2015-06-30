@@ -53,7 +53,7 @@ public class RemoteRpc extends JSR166TestCase {
      */
     @Ignore
     @Test
-    public void testPut() throws IOException {
+    public void testRpc() throws IOException, InterruptedException {
         WireType.wire = WireType.TEXT;
         YamlLogging.clientWrites = true;
         YamlLogging.clientReads = true;
@@ -70,6 +70,42 @@ public class RemoteRpc extends JSR166TestCase {
 
                 e.printStackTrace();
             }
+
+            Thread.sleep(1000);
+        }
+
+
+    }
+
+    /**
+     * clear removes all pairs
+     */
+    @Ignore
+    @Test
+    public void testSub() throws IOException, InterruptedException {
+        WireType.wire = WireType.TEXT;
+        YamlLogging.clientWrites = true;
+        YamlLogging.clientReads = true;
+        assetTree = (new VanillaAssetTree(1)).forRemoteAccess("192.168.1.76", 8088);
+
+        MapView<String, String, String> map = assetTree.acquireMap("/test", String.class, String.class);
+        map.put("hello", "world");
+
+
+        assetTree.registerSubscriber("/test", String.class, (x) -> System.out.println
+                ("******************+" + x));
+
+
+        for (int i = 0; i < 9999; i++) {
+            try {
+                map.put("hello", "world" + i);
+
+            } catch (IORuntimeException e) {
+
+                e.printStackTrace();
+            }
+
+            Thread.sleep(1000);
         }
 
 
