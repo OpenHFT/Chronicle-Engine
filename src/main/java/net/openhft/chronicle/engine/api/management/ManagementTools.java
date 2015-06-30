@@ -22,7 +22,9 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
 import net.openhft.chronicle.engine.map.ObjectKeyValueStore;
+import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
+import net.openhft.chronicle.threads.Threads;
 import net.openhft.lang.thread.NamedThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -130,16 +132,21 @@ public enum ManagementTools {
     }
 
     private static void registerViewofTree(AssetTree tree) {
-        ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor(
-                new NamedThreadFactory("tree-watcher", true));
-        tree.registerSubscriber("", TopologicalEvent.class, e ->
-                        // give the collection time to be setup.
-                        ses.schedule(() -> handleTreeUpdate(tree, e, ses), 50, TimeUnit.MILLISECONDS)
-        );
+        Threads.withThreadGroup(tree.root().getView(ThreadGroup.class), () -> {
+            ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor(
+                    new NamedThreadFactory("tree-watcher", true));
+            tree.registerSubscriber("", TopologicalEvent.class, e ->
+                            // give the collection time to be setup.
+                            ses.schedule(() -> handleTreeUpdate(tree, e, ses), 50, TimeUnit.MILLISECONDS)
+            );
+            return null;
+        });
     }
 
     private static void handleTreeUpdate(AssetTree tree, TopologicalEvent e, ScheduledExecutorService ses) {
         try {
+            HostIdentifier hostIdentifier = tree.root().getView(HostIdentifier.class);
+            int hostId = hostIdentifier == null ? 0 : hostIdentifier.hostId();
             String treeName = tree.toString();
             if (e.added()) {
                 String assetFullName = e.fullName();
@@ -177,7 +184,7 @@ public enum ManagementTools {
                             m.put("~" + entry.getKey().toString(), entry.getValue().toString());
                     }
                     dynamicMBean = new AssetTreeDynamicMBean(m);
-                    ObjectName atName = new ObjectName(createObjectNameUri(e.assetName(),e.name(),treeName));
+                    ObjectName atName = new ObjectName(createObjectNameUri(hostId, e.assetName(), e.name(), treeName));
                     registerTreeWithMBean(dynamicMBean, atName);
                     //end Dynamic MBeans Code
 
@@ -190,7 +197,7 @@ public enum ManagementTools {
 
                 }
             } else {
-                ObjectName atName = new ObjectName(createObjectNameUri(e.assetName(),e.name(),treeName));
+                ObjectName atName = new ObjectName(createObjectNameUri(hostId, e.assetName(), e.name(), treeName));
                 unregisterTreeWithMBean(atName);
             }
         } catch (Throwable t) {
@@ -241,10 +248,11 @@ public enum ManagementTools {
         }
     }
 
-    private static String createObjectNameUri(String assetName, String eventName, String treeName){
+    private static String createObjectNameUri(int hostId, String assetName, String eventName, String treeName){
         StringBuilder sb = new StringBuilder(256);
-        sb.append("net.openhft.chronicle.engine.tree");
-        sb.append(":type=");
+        sb.append("net.openhft.chronicle.engine:tree=");
+        sb.append(hostId);
+        sb.append(",type=");
         sb.append(treeName);
         //sb.append("net.openhft.chronicle.engine.api.tree:type=AssetTree");
 
