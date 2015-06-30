@@ -146,18 +146,29 @@ public interface EngineReplication extends Replication {
 
         long bootStrapTimeStamp();
 
-        void key(BytesStore key);
+        default void key(BytesStore key) {
+            throw new UnsupportedOperationException("immutable entry");
+        }
 
-        void value(BytesStore key);
+        default void value(BytesStore key) {
+            throw new UnsupportedOperationException("immutable entry");
+        }
 
-        void timestamp(long timestamp);
+        default void timestamp(long timestamp) {
+            throw new UnsupportedOperationException("immutable entry");
+        }
 
-        void identifier(byte identifier);
+        default void identifier(byte identifier) {
+            throw new UnsupportedOperationException("immutable entry");
+        }
 
-        void isDeleted(boolean isDeleted);
+        default void isDeleted(boolean isDeleted) {
+            throw new UnsupportedOperationException("immutable entry");
+        }
 
-        void bootStrapTimeStamp(long bootStrapTimeStamp);
-
+        default void bootStrapTimeStamp(long bootStrapTimeStamp) {
+            throw new UnsupportedOperationException("immutable entry");
+        }
 
         @Override
         default void readMarshallable(@NotNull final WireIn wire) throws IllegalStateException {

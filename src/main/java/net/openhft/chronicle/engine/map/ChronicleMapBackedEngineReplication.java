@@ -14,36 +14,32 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
- *//*
+ */
 
 
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
+import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.engine.api.EngineReplication;
-import net.openhft.chronicle.hash.ChronicleHash;
-import net.openhft.chronicle.hash.ChronicleHashBuilder;
-import net.openhft.chronicle.hash.replication.TimeProvider;
-import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ChronicleMapBuilder;
-import net.openhft.chronicle.map.WriteContext;
+import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.lang.collection.ATSDirectBitSet;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.io.DirectStore;
+import net.openhft.lang.model.Copyable;
 import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.model.constraints.MaxSize;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.io.Closeable;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicReferenceArray;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import static net.openhft.chronicle.engine.map.ChronicleMapBackedEngineReplication.Value.*;
+import static net.openhft.chronicle.engine.map.ChronicleMapBackedEngineReplication.ReplicationData.*;
 
-public class ChronicleMapBackedEngineReplication<Store> implements EngineReplication {
+public class ChronicleMapBackedEngineReplication<Store> implements EngineReplication, Closeable {
 
     public static final int RESERVED_MOD_ITER = 8;
     public static final int MAX_MODIFICATION_ITERATORS = 127 + RESERVED_MOD_ITER;
@@ -60,14 +56,10 @@ public class ChronicleMapBackedEngineReplication<Store> implements EngineReplica
     }
 
     interface GetValue<Store> {
-        Bytes getValue(Store store, Bytes key);
+        BytesStore getValue(Store store, BytesStore key);
     }
 
-    interface ChronicleHashConfigurer {
-        <C extends ChronicleHash> C configure(ChronicleHashBuilder<?, C, ?> builder);
-    }
-
-    interface Value {
+    interface ReplicationData extends Copyable<ReplicationData> {
         boolean getDeleted();
         void setDeleted(boolean deleted);
 
@@ -80,46 +72,81 @@ public class ChronicleMapBackedEngineReplication<Store> implements EngineReplica
         long getDirtyWord(@MaxSize(DIRTY_WORD_COUNT) int index);
         void setDirtyWord(@MaxSize(DIRTY_WORD_COUNT) int index, long word);
 
-        static void dropChange(Value value) {
+        static void dropChange(ReplicationData replicationData) {
             for (int i = 0; i < DIRTY_WORD_COUNT; i++) {
-                value.setDirtyWord(i, 0);
+                replicationData.setDirtyWord(i, 0);
             }
         }
 
-        static void raiseChange(Value value) {
+        static void raiseChange(ReplicationData replicationData) {
             for (int i = 0; i < DIRTY_WORD_COUNT; i++) {
-                value.setDirtyWord(i, ~0L);
+                replicationData.setDirtyWord(i, ~0L);
             }
         }
 
-        static void clearChange(Value value, int identifier) {
+        static void clearChange(ReplicationData replicationData, int identifier) {
             int index = identifier / 64;
             long bit = 1L << (identifier % 64);
-            value.setDirtyWord(index, value.getDirtyWord(index) ^ bit);
+            replicationData.setDirtyWord(index, replicationData.getDirtyWord(index) ^ bit);
         }
 
-        static void setChange(Value value, int identifier) {
+        static void setChange(ReplicationData replicationData, int identifier) {
             int index = identifier / 64;
             long bit = 1L << (identifier % 64);
-            value.setDirtyWord(index, value.getDirtyWord(index) | bit);
+            replicationData.setDirtyWord(index, replicationData.getDirtyWord(index) | bit);
         }
 
-        static boolean isChanged(Value value, int identifier) {
+        static boolean isChanged(ReplicationData replicationData, int identifier) {
             int index = identifier / 64;
             long bit = 1L << (identifier % 64);
-            return (value.getDirtyWord(index) & bit) != 0L;
+            return (replicationData.getDirtyWord(index) & bit) != 0L;
         }
+    }
+
+    interface RemoteNodeReplicationState extends Copyable<RemoteNodeReplicationState> {
+        long getNextBootstrapTimestamp();
+        void setNextBootstrapTimestamp(long nextBootstrapTimestamp);
+
+        long getLastBootstrapTimestamp();
+        void setLastBootstrapTimestamp(long lastBootstrapTimestamp);
+
+        long getLastModificationTime();
+        void setLastModificationTime(long lastModificationTime);
     }
 
     private static ATSDirectBitSet createModIterBitSet() {
         return new ATSDirectBitSet(new DirectStore(null, DIRTY_WORD_COUNT * 8, true).bytes());
     }
 
-    static ThreadLocal<Value> threadLocalValue =
-            ThreadLocal.withInitial(() -> DataValueClasses.newDirectReference(Value.class));
+    static class Instances {
+        final IntValue identifier = DataValueClasses.newInstance(IntValue.class);
 
-    private ChronicleMap<Bytes, Value> map;
-    private BytesStore modIterState;
+        RemoteNodeReplicationState usingState = null;
+        final RemoteNodeReplicationState copyState =
+                DataValueClasses.newInstance(RemoteNodeReplicationState.class);
+        RemoteNodeReplicationState zeroState =
+                DataValueClasses.newInstance(RemoteNodeReplicationState.class);
+
+        ReplicationData usingData = null;
+        ReplicationData newData = DataValueClasses.newInstance(ReplicationData.class);
+        ReplicationData zeroData = DataValueClasses.newInstance(ReplicationData.class);
+    }
+
+    private static void initZeroStateForAllPossibleRemoteIdentifiers(
+            KeyValueStore<IntValue, RemoteNodeReplicationState, RemoteNodeReplicationState> modIterState) {
+        Instances i = threadLocalInstances.get();
+        for (int id = 0; id < 256; id++) {
+            i.identifier.setValue(id);
+            modIterState.put(i.identifier, i.zeroState);
+        }
+    }
+
+    private static ThreadLocal<Instances> threadLocalInstances =
+            ThreadLocal.withInitial(Instances::new);
+
+    private KeyValueStore<BytesStore, ReplicationData, ReplicationData> keyReplicationData;
+    private KeyValueStore<IntValue, RemoteNodeReplicationState, RemoteNodeReplicationState> modIterState;
+
     private final byte identifier;
     private final Store store;
     private final ChangeApplier<Store> changeApplier;
@@ -130,27 +157,20 @@ public class ChronicleMapBackedEngineReplication<Store> implements EngineReplica
             createModIterBitSet();
     private final DirectBitSet modIterSet = createModIterBitSet();
 
-    private final TimeProvider timeProvider;
-
-
     public ChronicleMapBackedEngineReplication(
+            KeyValueStore<BytesStore, ReplicationData, ReplicationData> keyReplicationData,
+            KeyValueStore<IntValue, RemoteNodeReplicationState, RemoteNodeReplicationState> modIterState,
             byte identifier,
-            Store store, ChangeApplier<Store> changeApplier, GetValue<Store> getValue,
-            TimeProvider timeProvider,
-            ChronicleHashConfigurer chronicleHashConfigurer, @Nullable String stateFilePrefix)
-            throws IOException {
+            Store store, ChangeApplier<Store> changeApplier, GetValue<Store> getValue) {
+
+        this.keyReplicationData = keyReplicationData;
+        this.modIterState = modIterState;
+        initZeroStateForAllPossibleRemoteIdentifiers(modIterState);
+
         this.identifier = identifier;
         this.store = store;
         this.changeApplier = changeApplier;
         this.getValue = getValue;
-        this.timeProvider = timeProvider;
-        this.map = chronicleHashConfigurer
-                .configure(ChronicleMapBuilder.of(Bytes.class, Value.class));
-        if (stateFilePrefix != null) {
-            // TODO init modIterState
-        } else {
-            // TODO init modIterState
-        }
     }
 
     @Override
@@ -161,46 +181,59 @@ public class ChronicleMapBackedEngineReplication<Store> implements EngineReplica
     ////////////////
     // Method for working with modIterState
 
-    private static final long NEXT_BOOTSTRAP_TS_OFFSET = 0;
-    private static final long LAST_BOOTSTRAP_TS_OFFSET = NEXT_BOOTSTRAP_TS_OFFSET + 8;
-    private static final long LAST_MOD_TIME_OFFSET = LAST_BOOTSTRAP_TS_OFFSET + 8;
-
-    private static long identifierToModIterStateOffset(int identifier) {
-        return identifier * 4 * 64; // 4 cache lines for each identifier
-    }
-
-    private static long nextOff(int remoteIdentifier) {
-        return identifierToModIterStateOffset(remoteIdentifier) + LAST_BOOTSTRAP_TS_OFFSET;
-    }
-
-    private static long lastModOff(int remoteIdentifier) {
-        return identifierToModIterStateOffset(remoteIdentifier) + LAST_MOD_TIME_OFFSET;
-    }
-
     private void resetNextBootstrapTimestamp(int remoteIdentifier) {
-        long modIterOff = identifierToModIterStateOffset(remoteIdentifier);
-        long nextOff = modIterOff + NEXT_BOOTSTRAP_TS_OFFSET;
-        modIterState.writeOrderedLong(nextOff, 0);
+        Instances i = threadLocalInstances.get();
+        i.identifier.setValue(remoteIdentifier);
+        while (true) {
+            i.usingState = modIterState.getUsing(i.identifier, i.usingState);
+            i.copyState.copyFrom(i.usingState);
+            i.copyState.setNextBootstrapTimestamp(0);
+            if (modIterState.replaceIfEqual(i.identifier, i.usingState, i.copyState))
+                return;
+        }
     }
 
     private boolean setNextBootstrapTimestamp(int remoteIdentifier, long timestamp) {
-        long nextOff = nextOff(remoteIdentifier);
-        return modIterState.compareAndSwapLong(nextOff, 0, timestamp);
+        Instances i = threadLocalInstances.get();
+        i.identifier.setValue(remoteIdentifier);
+        while (true) {
+            i.usingState = modIterState.getUsing(i.identifier, i.usingState);
+            if (i.usingState.getNextBootstrapTimestamp() != 0)
+                return false;
+            i.copyState.copyFrom(i.usingState);
+            i.copyState.setNextBootstrapTimestamp(0);
+            if (modIterState.replaceIfEqual(i.identifier, i.usingState, i.copyState))
+                return true;
+        }
     }
 
     private void resetLastBootstrapTimestamp(int remoteIdentifier) {
-        long nextOff = nextOff(remoteIdentifier);
-        modIterState.writeOrderedLong(nextOff, 0);
+        Instances i = threadLocalInstances.get();
+        i.identifier.setValue(remoteIdentifier);
+        while (true) {
+            i.usingState = modIterState.getUsing(i.identifier, i.usingState);
+            i.copyState.copyFrom(i.usingState);
+            i.copyState.setLastBootstrapTimestamp(0);
+            if (modIterState.replaceIfEqual(i.identifier, i.usingState, i.copyState))
+                return;
+        }
     }
 
     private long bootstrapTimestamp(int remoteIdentifier) {
-        long modIterOff = identifierToModIterStateOffset(remoteIdentifier);
-        long nextOff = modIterOff + NEXT_BOOTSTRAP_TS_OFFSET;
-        long nextBootstrapTs = modIterState.readVolatileLong(nextOff);
-        long lastOff = modIterOff + LAST_BOOTSTRAP_TS_OFFSET;
-        long result = (nextBootstrapTs == 0) ? modIterState.readLong(lastOff) : nextBootstrapTs;
-        modIterState.writeLong(lastOff, result);
-        return result;
+        Instances i = threadLocalInstances.get();
+        i.identifier.setValue(remoteIdentifier);
+        while (true) {
+            i.usingState = modIterState.getUsing(i.identifier, i.usingState);
+            long nextBootstrapTs = i.usingState.getNextBootstrapTimestamp();
+            if (nextBootstrapTs == 0) {
+                return i.usingState.getLastBootstrapTimestamp();
+            } else {
+                i.copyState.copyFrom(i.usingState);
+                i.copyState.setLastBootstrapTimestamp(nextBootstrapTs);
+                if (modIterState.replaceIfEqual(i.identifier, i.usingState, i.copyState))
+                    return nextBootstrapTs;
+            }
+        }
     }
 
     @Override
@@ -209,10 +242,10 @@ public class ChronicleMapBackedEngineReplication<Store> implements EngineReplica
     }
 
     private long lastModificationTime(int remoteIdentifier) {
-        long lastModOff = lastModOff(remoteIdentifier);
-        // purposely not volatile as this will impact performance,
-        // and the worst that will happen is we'll end up loading more data on a bootstrap
-        return modIterState.readLong(lastModOff);
+        Instances i = threadLocalInstances.get();
+        i.identifier.setValue(remoteIdentifier);
+        i.usingState = modIterState.getUsing(i.identifier, i.usingState);
+        return i.usingState.getLastModificationTime();
     }
 
     @Override
@@ -221,41 +254,55 @@ public class ChronicleMapBackedEngineReplication<Store> implements EngineReplica
     }
 
     private void setLastModificationTime(int identifier, long timestamp) {
-        long lastModOff = identifierToModIterStateOffset(identifier) + LAST_MOD_TIME_OFFSET;
-        // purposely not volatile as this will impact performance,
-        // and the worst that will happen is we'll end up loading more data on a bootstrap
-        if (modIterState.readLong(lastModOff) < timestamp)
-            modIterState.writeLong(lastModOff, timestamp);
+        Instances i = threadLocalInstances.get();
+        i.identifier.setValue(identifier);
+        while (true) {
+            i.usingState = modIterState.getUsing(i.identifier, i.usingState);
+            if (i.usingState.getLastModificationTime() < timestamp) {
+                i.copyState.copyFrom(i.usingState);
+                i.copyState.setLastModificationTime(timestamp);
+                if (modIterState.replaceIfEqual(i.identifier, i.usingState, i.copyState))
+                    return;
+            } else {
+                return;
+            }
+        }
     }
 
-
-
     private static boolean shouldApplyRemoteModification(
-            ReplicationEntry remoteEntry, Value localValue) {
+            ReplicationEntry remoteEntry, ReplicationData localReplicationData) {
         long remoteTimestamp = remoteEntry.timestamp();
-        long originTimestamp = localValue.getTimestamp();
+        long originTimestamp = localReplicationData.getTimestamp();
         return remoteTimestamp > originTimestamp || (remoteTimestamp == originTimestamp &&
-                remoteEntry.identifier() <= localValue.getIdentifier());
+                remoteEntry.identifier() <= localReplicationData.getIdentifier());
     }
 
     @Override
     public void applyReplication(@NotNull ReplicationEntry replicatedEntry) {
-        Value value = threadLocalValue.get();
-        try (WriteContext<Bytes, Value> wc = map.acquireUsingLocked(replicatedEntry.key(), value)) {
-            boolean shouldApplyRemoteModification = wc.created() ||
-                    shouldApplyRemoteModification(replicatedEntry, value);
+        Instances i = threadLocalInstances.get();
+        BytesStore key = replicatedEntry.key();
+        while (true) {
+            ReplicationData data = keyReplicationData.getUsing(key, i.usingData);
+            if (data != null)
+                i.usingData = data;
+            boolean shouldApplyRemoteModification = data == null ||
+                    shouldApplyRemoteModification(replicatedEntry, data);
             if (shouldApplyRemoteModification) {
+                i.newData.copyFrom(data != null ? data : i.zeroData);
                 changeApplier.applyChange(store, replicatedEntry);
-                value.setDeleted(replicatedEntry.isDeleted());
-                value.setIdentifier(replicatedEntry.identifier());
-                value.setTimestamp(replicatedEntry.timestamp());
-                if (!wc.created()) {
-                    // if we apply the remote change, shouldn't propagate stale own change
-                    dropChange(value);
+                i.newData.setDeleted(replicatedEntry.isDeleted());
+                i.newData.setIdentifier(replicatedEntry.identifier());
+                i.newData.setTimestamp(replicatedEntry.timestamp());
+                if (data == null) {
+                    if (keyReplicationData.putIfAbsent(key, i.newData) == null)
+                        return;
+                } else {
+                    dropChange(i.newData);
+                    if (keyReplicationData.replaceIfEqual(key, data, i.newData))
+                        return;
                 }
             }
         }
-
     }
 
     @Override
@@ -285,41 +332,49 @@ public class ChronicleMapBackedEngineReplication<Store> implements EngineReplica
         }
     }
 
-    public void onPut(Bytes key) {
-        onChange(key, false);
+    public void onPut(BytesStore key, long putTimestamp) {
+        onChange(key, false, putTimestamp);
     }
 
-    public void onRemove(Bytes key) {
-        onChange(key, true);
+    public void onRemove(BytesStore key, long remoteTimestamp) {
+        onChange(key, true, remoteTimestamp);
     }
 
-    private void onChange(Bytes key, boolean deleted) {
-        Value value = threadLocalValue.get();
-        try (WriteContext<Bytes, Value> wc = map.acquireUsingLocked(key, value)) {
-            value.setDeleted(deleted);
-            long currentTs = timeProvider.currentTimeMillis();
-            long entryTs = value.getTimestamp();
-            if (entryTs > currentTs)
-                currentTs = entryTs + 1;
-            value.setTimestamp(currentTs);
-            value.setIdentifier(identifier);
-            raiseChange(value);
-            for (long next = modIterSet.nextSetBit(0L); next > 0L;
-                 next = modIterSet.nextSetBit(next + 1L)) {
-                ChronicleMapBackedModificationIterator modIter =
-                        modificationIterators.get((int) next);
-                modIter.modNotify();
-                if (modificationIteratorsRequiringSettingBootstrapTimestamp.clearIfSet(next)) {
-                    if (!setNextBootstrapTimestamp((int) next, currentTs))
-                        throw new AssertionError();
+    private void onChange(BytesStore key, boolean deleted, long changeTimestamp) {
+        Instances i = threadLocalInstances.get();
+        while (true) {
+            ReplicationData data = keyReplicationData.getUsing(key, i.usingData);
+            if (data != null)
+                i.usingData = data;
+            i.newData.copyFrom(data != null ? data : i.zeroData);
+            i.newData.setDeleted(deleted);
+            long entryTimestamp = i.newData.getTimestamp();
+            if (entryTimestamp > changeTimestamp)
+                changeTimestamp = entryTimestamp + 1;
+            i.newData.setTimestamp(changeTimestamp);
+            i.newData.setIdentifier(identifier);
+            raiseChange(i.newData);
+
+            boolean successfulUpdate = data == null ?
+                    (keyReplicationData.putIfAbsent(key, i.newData) == null) :
+                    (keyReplicationData.replaceIfEqual(key, data, i.newData));
+            if (successfulUpdate) {
+                for (long next = modIterSet.nextSetBit(0L); next > 0L;
+                     next = modIterSet.nextSetBit(next + 1L)) {
+                    ChronicleMapBackedModificationIterator modIter =
+                            modificationIterators.get((int) next);
+                    modIter.modNotify();
+                    if (modificationIteratorsRequiringSettingBootstrapTimestamp.clearIfSet(next)) {
+                        if (!setNextBootstrapTimestamp((int) next, changeTimestamp))
+                            throw new AssertionError();
+                    }
                 }
+                return;
             }
         }
-
     }
 
-    class ChronicleMapBackedModificationIterator
-            implements ModificationIterator, ReplicationEntry, BiConsumer<Bytes, Value> {
+    class ChronicleMapBackedModificationIterator implements ModificationIterator, ReplicationEntry {
 
         private final int identifier;
 
@@ -327,49 +382,62 @@ public class ChronicleMapBackedEngineReplication<Store> implements EngineReplica
             this.identifier = identifier;
         }
 
-        Consumer<ReplicationEntry> consumer;
         long forEachEntryCount;
 
         @Override
-        public void forEach(@NotNull Consumer<ReplicationEntry> consumer)
-                throws InterruptedException {
-            this.consumer = consumer;
+        public void forEach(@NotNull Consumer<ReplicationEntry> consumer)  {
             forEachEntryCount = 0;
-            try {
-                map.forEach(this);
-                if (forEachEntryCount == 0) {
-                    modificationIteratorsRequiringSettingBootstrapTimestamp.set(identifier);
-                    resetNextBootstrapTimestamp(identifier);
+            Instances i = threadLocalInstances.get();
+            keyReplicationData.keySetIterator().forEachRemaining(key -> {
+                i.usingData = keyReplicationData.getUsing(key, i.usingData);
+                if (isChanged(i.usingData, identifier)) {
+                    this.key = key;
+                    this.replicationData = i.usingData;
+                    try {
+                        consumer.accept(this);
+                        i.newData.copyFrom(i.usingData);
+                        clearChange(i.newData, identifier);
+                        if (!keyReplicationData.replaceIfEqual(key, i.usingData, i.newData))
+                            throw new AssertionError();
+                        forEachEntryCount++;
+                    } finally {
+                        this.key = null;
+                        this.replicationData = null;
+                    }
                 }
-            } finally {
-                this.consumer = null;
+            });
+            if (forEachEntryCount == 0) {
+                modificationIteratorsRequiringSettingBootstrapTimestamp.set(identifier);
+                resetNextBootstrapTimestamp(identifier);
             }
         }
 
         @Override
-        public void accept(Bytes key, Value value) {
-            if (isChanged(value, identifier)) {
-                this.key = key;
-                this.value = value;
-                try {
-                    consumer.accept(this);
-                    clearChange(value, identifier);
-                    forEachEntryCount++;
-                } finally {
-                    this.key = null;
-                    this.value = null;
-                }
+        public boolean hasNext() {
+            Instances i = threadLocalInstances.get();
+            for (Iterator<BytesStore> keyIt = keyReplicationData.keySetIterator();
+                 keyIt.hasNext(); ) {
+                BytesStore key = keyIt.next();
+                i.usingData = keyReplicationData.getUsing(key, i.usingData);
+                if (isChanged(i.usingData, identifier))
+                    return true;
             }
+            return false;
         }
 
         @Override
         public void dirtyEntries(long fromTimeStamp) throws InterruptedException {
-            map.forEach((key, value) -> {
-                if (value.getTimestamp() >= fromTimeStamp)
-                    setChange(value, identifier);
+            Instances i = threadLocalInstances.get();
+            keyReplicationData.keySetIterator().forEachRemaining(key -> {
+                i.usingData = keyReplicationData.getUsing(key, i.usingData);
+                if (i.usingData.getTimestamp() >= fromTimeStamp) {
+                    i.newData.copyFrom(i.usingData);
+                    setChange(i.newData, identifier);
+                    if (!keyReplicationData.replaceIfEqual(key, i.usingData, i.newData))
+                        throw new AssertionError();
+                }
             });
         }
-
 
         ModificationNotifier modificationNotifier;
 
@@ -384,42 +452,39 @@ public class ChronicleMapBackedEngineReplication<Store> implements EngineReplica
         }
 
         // Below methods and fields that implement ModIter as ReplicationEntry
-        Bytes key;
-        Value value;
+        BytesStore key;
+        ReplicationData replicationData;
 
         @Override
-        public Bytes key() {
+        public BytesStore key() {
             return key;
         }
 
         @Override
-        public Bytes value() {
+        public BytesStore value() {
             return getValue.getValue(store, key);
         }
 
         @Override
         public long timestamp() {
-            return value.getTimestamp();
+            return replicationData.getTimestamp();
         }
 
         @Override
         public byte identifier() {
-            return value.getIdentifier();
+            return replicationData.getIdentifier();
         }
 
         @Override
         public boolean isDeleted() {
-            return value.getDeleted();
+            return replicationData.getDeleted();
         }
 
-
-        */
-/**
+        /**
          * @return the timestamp  that the remote client should bootstrap from when there has been a
          * disconnection, this time maybe later than the message time as event are not send in
          * chronological order from the bit set.
-         *//*
-
+         */
         @Override
         public long bootStrapTimeStamp() {
             return bootstrapTimestamp(identifier);
@@ -428,7 +493,11 @@ public class ChronicleMapBackedEngineReplication<Store> implements EngineReplica
 
     @Override
     public void close() throws IOException {
-        map.close();
+        try {
+            keyReplicationData.close();
+        } finally {
+            modIterState.close();
+        }
     }
 }
-*/
+

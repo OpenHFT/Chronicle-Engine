@@ -160,7 +160,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     }
 
     @Override
-    public boolean containsValue(final StringBuilder value) {
+    public boolean containsValue(final String value) {
         throw new UnsupportedOperationException("todo");
     }
 
