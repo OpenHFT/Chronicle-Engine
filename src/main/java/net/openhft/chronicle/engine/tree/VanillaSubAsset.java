@@ -44,16 +44,10 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     @Nullable
     private Reference<E> reference;
 
-    VanillaSubAsset(@NotNull RequestContext rc, @NotNull VanillaAsset parent, String name) throws AssetNotFoundException {
+    VanillaSubAsset(@NotNull VanillaAsset parent, String name, Class<E> type, ValueReader valueReader) throws AssetNotFoundException {
         this.parent = parent;
         this.name = name;
-        reference = new VanillaReference<>(rc, this, parent.getView(MapView.class));
-        ValueReader valueReader;
-        try {
-            valueReader = parent.acquireView(ValueReader.class, rc);
-        } catch (Exception e) {
-            valueReader = ValueReader.PASS;
-        }
+        reference = new VanillaReference<E>(name, type, parent.getView(MapView.class));
         subscription = new SimpleSubscription<>(reference, valueReader == null ? ValueReader.PASS : valueReader);
     }
 
@@ -76,11 +70,6 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     @Override
     public String name() {
         return name;
-    }
-
-    @Override
-    public boolean isReadOnly() {
-        return false;
     }
 
     @NotNull
@@ -164,7 +153,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
 
     @NotNull
     @Override
-    public Asset acquireAsset(RequestContext context, String fullName) throws AssetNotFoundException {
+    public Asset acquireAsset(String childName) throws AssetNotFoundException {
         throw new UnsupportedOperationException();
     }
 

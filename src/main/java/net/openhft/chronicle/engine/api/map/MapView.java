@@ -32,6 +32,7 @@ public interface MapView<K, MV, V> extends ConcurrentMap<K, V>,
         Assetted<KeyValueStore<K, MV, V>>,
         Updatable<ConcurrentMap<K, V>>,
         KeyedVisitable<K, V>,
+        ValueReader<K, MV, V>,
         View {
     default boolean keyedView() {
         return true;
@@ -43,4 +44,7 @@ public interface MapView<K, MV, V> extends ConcurrentMap<K, V>,
 
     void registerSubscriber(Subscriber<MapEvent<K, V>> subscriber);
 
+    Class<K> keyType();
+
+    Class<V> valueType();
 }

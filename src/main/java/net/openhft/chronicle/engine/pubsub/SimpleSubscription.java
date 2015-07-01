@@ -31,9 +31,9 @@ import java.util.concurrent.CopyOnWriteArraySet;
 public class SimpleSubscription<E> implements Subscription<E> {
     private final Set<Subscriber<E>> subscribers = new CopyOnWriteArraySet<>();
     private final Reference<E> currentValue;
-    private final ValueReader<Object, E> valueReader;
+    private final ValueReader<Object, ?, E> valueReader;
 
-    public SimpleSubscription(Reference<E> reference, ValueReader<Object, E> valueReader) {
+    public SimpleSubscription(Reference<E> reference, ValueReader<Object, ?, E> valueReader) {
         this.currentValue = reference;
         this.valueReader = valueReader;
     }
@@ -76,7 +76,7 @@ public class SimpleSubscription<E> implements Subscription<E> {
 
     public void notifyMessage(Object e) {
         try {
-            E ee = e instanceof BytesStore ? valueReader.readFrom(e, null) : (E) e;
+            E ee = e instanceof BytesStore ? valueReader.getUsing(e, null) : (E) e;
             SubscriptionConsumer.notifyEachSubscriber(subscribers, s -> s.onMessage(ee));
         } catch (ClassCastException e1) {
             System.err.println("Is " + valueReader + " the correct ValueReader?");

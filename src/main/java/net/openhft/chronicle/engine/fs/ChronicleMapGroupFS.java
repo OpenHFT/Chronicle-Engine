@@ -33,6 +33,7 @@ public class ChronicleMapGroupFS implements Marshallable, MountPoint, LeafViewFa
     int averageValueSize;
     Boolean putReturnsNull, removeReturnsNull;
     private long maxEntries;
+    private transient String basePath;
 
     @Override
     public String spec() {
@@ -68,26 +69,15 @@ public class ChronicleMapGroupFS implements Marshallable, MountPoint, LeafViewFa
 
     @Override
     public void install(String baseDir, @NotNull AssetTree assetTree) {
-        final String baseDir1 = baseDir;
-        RequestContext context = RequestContext.requestContext(name).basePath(baseDir + "/" + spec);
-        Asset asset = assetTree.acquireAsset(context);
+        Asset asset = assetTree.acquireAsset(name);
         ((VanillaAsset) asset).enableTranslatingValuesToBytesStore();
         asset.addLeafRule(KeyValueStore.class, "use Chronicle Map", this);
+        this.basePath = baseDir;
     }
 
-    // todo check this
     @NotNull
     @Override
     public KeyValueStore create(@NotNull final RequestContext context, final Asset asset) throws AssetNotFoundException {
-        return new ChronicleMapKeyValueStore(context, asset);
+        return new ChronicleMapKeyValueStore(context.basePath(basePath), asset);
     }
-
-    /*@NotNull
-    @Override
-    public KeyValueStore create(RequestContext context, Asset asset) throws AssetNotFoundException {
-        return new ChronicleMapKeyValueStore(context.keyType(), context.valueType(),
-                baseDir + "/" + spec, context.name(), cluster,
-                putReturnsNull, removeReturnsNull, averageValueSize,
-                maxEntries, asset, asset.acquireView(ObjectKVSSubscription.class, context));*/
-
 }

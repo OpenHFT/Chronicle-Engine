@@ -19,7 +19,7 @@ package net.openhft.chronicle.engine.api.tree;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by peter on 22/05/15.
+ * This a resource associated with an underlying asset.
  */
 public interface Assetted<U> {
     Asset asset();

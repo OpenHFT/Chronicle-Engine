@@ -48,13 +48,7 @@ public interface AssetTree extends Closeable {
     }
 
     @NotNull
-    Asset acquireAsset(Class assetClass, RequestContext context) throws
-            AssetNotFoundException;
-
-    @NotNull
-    default Asset acquireAsset(@NotNull RequestContext context) throws AssetNotFoundException {
-        return acquireAsset(context.viewType(), context);
-    }
+    Asset acquireAsset(@NotNull String fullName) throws AssetNotFoundException;
 
     @Nullable
     Asset getAsset(String fullName);
@@ -67,12 +61,12 @@ public interface AssetTree extends Closeable {
     }
 
     @NotNull
-    default <E> E acquireView(@NotNull RequestContext rc) {
-        return acquireAsset(rc).acquireView(rc);
+    default <E> E acquireView(@NotNull RequestContext rc) throws AssetNotFoundException {
+        return acquireAsset(rc.fullName()).acquireView(rc);
     }
 
     @NotNull
-    default <S> S acquireService(@NotNull String uri, Class<S> service) {
+    default <S> S acquireService(@NotNull String uri, Class<S> service) throws AssetNotFoundException {
         return acquireView(requestContext(uri).viewType(service));
     }
 
@@ -108,10 +102,10 @@ public interface AssetTree extends Closeable {
     }
 
     @NotNull
-    default Subscription acquireSubscription(@NotNull RequestContext rc) {
+    default Subscription acquireSubscription(@NotNull RequestContext rc) throws AssetNotFoundException {
+        Asset asset = acquireAsset(rc.fullName());
         Class<Subscription> subscriptionType = getSubscriptionType(rc);
         rc.viewType(subscriptionType);
-        Asset asset = acquireAsset(subscriptionType, rc);
         return asset.acquireView(subscriptionType, rc);
     }
 

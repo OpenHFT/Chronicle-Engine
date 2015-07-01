@@ -138,7 +138,7 @@ public class VanillaAsset implements Asset, Closeable {
                 VanillaTopologySubscription::new);
     }
 
-    public void forRemoteAccess(String hostname, int port) {
+    public void forRemoteAccess(String hostname, int port) throws AssetNotFoundException {
         standardStack(true);
 
         addLeafRule(ObjectKVSSubscription.class, LAST + " Remote",
@@ -256,11 +256,6 @@ public class VanillaAsset implements Asset, Closeable {
         return name;
     }
 
-    @Override
-    public boolean isReadOnly() {
-        return false;
-    }
-
     @NotNull
     @Override
     public <V> V acquireView(@NotNull Class<V> viewType, RequestContext rc) throws
@@ -328,20 +323,20 @@ public class VanillaAsset implements Asset, Closeable {
 
     @NotNull
     @Override
-    public Asset acquireAsset(@NotNull RequestContext context, @NotNull String fullName) throws AssetNotFoundException {
+    public Asset acquireAsset(@NotNull String childName) throws AssetNotFoundException {
         if (keyedAsset != Boolean.TRUE) {
-            int pos = fullName.indexOf('/');
+            int pos = childName.indexOf('/');
             if (pos == 0) {
-                fullName = fullName.substring(1);
-                pos = fullName.indexOf('/');
+                childName = childName.substring(1);
+                pos = childName.indexOf('/');
             }
             if (pos > 0) {
-                String name1 = fullName.substring(0, pos);
-                String name2 = fullName.substring(pos + 1);
-                return getAssetOrANFE(context, name1).acquireAsset(context, name2);
+                String name1 = childName.substring(0, pos);
+                String name2 = childName.substring(pos + 1);
+                return getAssetOrANFE(name1).acquireAsset(name2);
             }
         }
-        return getAssetOrANFE(context, fullName);
+        return getAssetOrANFE(childName);
     }
 
     @Override
@@ -350,10 +345,10 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Nullable
-    private Asset getAssetOrANFE(@NotNull RequestContext context, @NotNull String name) throws AssetNotFoundException {
+    private Asset getAssetOrANFE(@NotNull String name) throws AssetNotFoundException {
         Asset asset = children.get(name);
         if (asset == null) {
-            asset = createAsset(context, name);
+            asset = createAsset(name);
             if (asset == null)
                 throw new AssetNotFoundException(name);
         }
@@ -361,11 +356,18 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Nullable
-    protected Asset createAsset(@NotNull RequestContext context, @NotNull String name) {
+    protected Asset createAsset(@NotNull String name) {
         assert name.length() > 0;
         return children.computeIfAbsent(name, keyedAsset != Boolean.TRUE
                 ? n -> new VanillaAsset(this, name)
-                : n -> new VanillaSubAsset(context, this, name));
+                : n -> {
+            MapView map = getView(MapView.class);
+            if (map == null)
+                throw new IllegalStateException("You can only have a SubAsset of a Map");
+            if (map.keyType() != String.class)
+                throw new IllegalStateException("You can only have a SubAsset of a Map with a String key.");
+            return new VanillaSubAsset(this, name, map.valueType(), map);
+        });
     }
 
     @Override

@@ -286,11 +286,11 @@ todo fix this test
 
     @Test
     public void newNode() {
-        Asset group = acquireAsset("group", Void.class, null, null);
-        Asset subgroup = acquireAsset("group/sub-group?option=unknown", Void.class, null, null);
+        Asset group = acquireAsset("group");
+        Asset subgroup = acquireAsset("group/sub-group");
         assertEquals("/group/sub-group", subgroup.fullName());
 
-        Asset group2 = acquireAsset("group2/sub-group?who=knows", Void.class, null, null);
+        Asset group2 = acquireAsset("/group2/sub-group");
         assertEquals("/group2/sub-group", group2.fullName());
     }
 
@@ -305,14 +305,14 @@ todo fix this test
 
     @Test(expected = AssetNotFoundException.class)
     public void noInterceptor() {
-        Asset asset = acquireAsset("", null, null, null);
+        Asset asset = acquireAsset("");
 
         asset.acquireView(requestContext("").viewType(MyInterceptor.class));
     }
 
     @Test
     public void generateInterceptor() {
-        Asset asset = acquireAsset("", null, null, null);
+        Asset asset = acquireAsset("");
 
         asset.addLeafRule(MyInterceptor.class, "test", (context, asset2) -> {
             assertEquals(MyInterceptor.class, context.viewType());

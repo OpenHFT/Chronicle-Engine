@@ -19,7 +19,6 @@ package net.openhft.chronicle.engine.tree;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
-import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.fs.ConfigurationFS;
 import net.openhft.chronicle.engine.map.InsertedEvent;
 import net.openhft.chronicle.engine.map.RemovedEvent;
@@ -29,7 +28,6 @@ import net.openhft.chronicle.threads.api.EventLoop;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.Optional;
 
 import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
@@ -76,11 +74,10 @@ public class VanillaAssetTree implements AssetTree {
 
     @NotNull
     @Override
-    public Asset acquireAsset(Class assetClass, @NotNull RequestContext context) throws AssetNotFoundException {
-        String fullName = context.fullName();
+    public Asset acquireAsset(@NotNull String fullName) throws AssetNotFoundException {
         if (fullName.startsWith("/"))
             fullName = fullName.substring(1);
-        return fullName.isEmpty() ? root : root.acquireAsset(context, fullName);
+        return fullName.isEmpty() ? root : root.acquireAsset(fullName);
     }
 
     @Nullable

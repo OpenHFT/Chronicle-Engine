@@ -37,7 +37,7 @@ public class VanillaReference<E> implements Reference<E>, View {
         this(context.name(), context.type(), underlying);
     }
 
-    public VanillaReference(String name, Class type, MapView<String, E, E> mapView) {
+    public VanillaReference(String name, Class<E> type, MapView<String, E, E> mapView) {
         this.name = name;
         this.eClass = type;
         this.underlyingMap = mapView;

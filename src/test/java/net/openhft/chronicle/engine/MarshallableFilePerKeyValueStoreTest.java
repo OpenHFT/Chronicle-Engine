@@ -20,10 +20,12 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
+import net.openhft.chronicle.engine.api.tree.LeafViewFactory;
 import net.openhft.chronicle.engine.map.AuthenticatedKeyValueStore;
 import net.openhft.chronicle.engine.map.FilePerKeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.map.VanillaStringMarshallableKeyValueStore;
+import net.openhft.chronicle.engine.tree.VanillaAsset;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.junit.AfterClass;
@@ -54,10 +56,10 @@ public class MarshallableFilePerKeyValueStoreTest {
     public static void createMap() throws IOException {
         resetChassis();
         Function<Bytes, Wire> writeType = WireType.TEXT;
-        enableTranslatingValuesToBytesStore();
+        ((VanillaAsset) assetTree().root()).enableTranslatingValuesToBytesStore();
 
-        addLeafRule(AuthenticatedKeyValueStore.class, "FilePer Key",
-                (context, asset) -> new FilePerKeyValueStore(context.basePath(OS.TARGET).wireType(writeType), asset));
+        LeafViewFactory<AuthenticatedKeyValueStore> factory = (context, asset) -> new FilePerKeyValueStore(context.basePath(OS.TARGET).wireType(writeType), asset);
+        assetTree().root().addLeafRule(AuthenticatedKeyValueStore.class, "FilePer Key", factory);
 
         map = acquireMap(NAME, String.class, TestMarshallable.class);
         KeyValueStore mapU = ((VanillaMapView) map).underlying();

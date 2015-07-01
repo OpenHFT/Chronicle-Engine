@@ -39,7 +39,7 @@ public class SessionProviderTest {
         sessionProvider.set(sessionDetails0);
 
         // get me a node in the graph
-        Asset asset = Chassis.acquireAsset("test", Void.class, null, null);
+        Asset asset = Chassis.acquireAsset("test");
         SessionDetails sessionDetails = asset.findView(SessionProvider.class).get();
         assertEquals("userId", sessionDetails.userId());
         assertEquals(info0, sessionDetails.get(MyInfo.class));

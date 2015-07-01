@@ -48,12 +48,12 @@ public class ConfigurationFS implements MountPoint {
     }
 
     public void install(String baseDir, @NotNull AssetTree assetTree) {
-        RequestContext context = RequestContext.requestContext(assetName)
-                .keyType(String.class).valueType(String.class);
-        Asset asset = assetTree.acquireAsset(context);
+        Asset asset = assetTree.acquireAsset(assetName);
 
         if (asset.getView(MapView.class) == null) {
             ((VanillaAsset) asset).enableTranslatingValuesToBytesStore();
+            RequestContext context = RequestContext.requestContext(assetName)
+                    .keyType(String.class).valueType(String.class);
             asset.registerView(AuthenticatedKeyValueStore.class, new FilePerKeyValueStore(context.basePath(etcDir), asset));
             asset.acquireView(MapView.class, context);
         }

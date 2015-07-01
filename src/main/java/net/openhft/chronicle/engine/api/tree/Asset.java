@@ -26,14 +26,25 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.BiPredicate;
 
 /**
- * Created by peter on 22/05/15.
+ * An Asset is a point on an AssetTree.  An Asset can not only have any number of Children it has multiple views depending on how you want to access the data.
+ * <p></p>
+ * A single asset can have a MapView, EntrySetView, KeySetView, ValuesCollection, Subscription, TopicPublisher. A Map may be viewed in terms of the objects it holds e.g. String or Marshallable or the raw data i.e. as a BytesStore.
  */
 public interface Asset extends Closeable {
+    /**
+     * @return the name of this asset (not including the group)
+     */
     String name();
 
-    @NotNull
-    Subscription subscription(boolean createIfAbsent) throws AssetNotFoundException;
+    /**
+     * @return the parent of this asset or null if it is the root.
+     */
+    @Nullable
+    Asset parent();
 
+    /**
+     * @return the full name of this asset including it's parent and theirs etc.
+     */
     @NotNull
     default String fullName() {
         Asset parent = parent();
@@ -44,16 +55,20 @@ public interface Asset extends Closeable {
                 : parent.fullName() + "/" + name();
     }
 
-    @Nullable
-    Asset parent();
-
+    /**
+     * Obtain the default subscription view. If there is more than one this will be the object subscription view.
+     *
+     * @param createIfAbsent create one if it doesn't exist.
+     * @return the Subscription
+     * @throws AssetNotFoundException if the Subscription doesn't exist and the tree is not able to create the Subscription.
+     */
     @NotNull
-    Asset acquireAsset(RequestContext context, String fullName) throws AssetNotFoundException;
+    Subscription subscription(boolean createIfAbsent) throws AssetNotFoundException;
 
     /**
      * Navigate down the tree to find an asset.
      *
-     * @param fullName with names seperated by /
+     * @param fullName with names separated by /
      * @return the Asset found or null
      */
     @Nullable
@@ -73,6 +88,16 @@ public interface Asset extends Closeable {
         }
         return getChild(fullName);
     }
+
+    /**
+     * Get or create an asset under this one.
+     *
+     * @param childName name of the child asset.
+     * @return
+     * @throws AssetNotFoundException
+     */
+    @NotNull
+    Asset acquireAsset(String childName) throws AssetNotFoundException;
 
     /**
      * Search a tree to find the first Asset with the name given.
@@ -104,8 +129,14 @@ public interface Asset extends Closeable {
         return v;
     }
 
+    /**
+     * Search up the tree for a view of viewType.  If one doesn't exist find a factory and add it to the asset the factory is associated with.  This view can then be shared for the Assets under the Asset where the factory is defined.
+     *
+     * @param viewType to obtain.
+     * @return the view it could be created
+     */
     @Nullable
-    default <V> V findOrCreateView(@NotNull Class<V> viewType) {
+    default <V> V findOrCreateView(@NotNull Class<V> viewType) throws AssetNotFoundException {
         V v = getView(viewType);
         if (v == null) {
             if (hasFactoryFor(viewType))
@@ -122,8 +153,6 @@ public interface Asset extends Closeable {
     Asset getChild(String name);
 
     void removeChild(String name);
-
-    boolean isReadOnly();
 
     @NotNull
     default <V> V acquireView(@NotNull RequestContext rc) throws AssetNotFoundException {

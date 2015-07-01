@@ -164,8 +164,6 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         throw new UnsupportedOperationException("todo");
     }
 
-
-
     @Override
     public Asset asset() {
         return asset;
@@ -196,12 +194,12 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         }
     }
 
-    enum StringValueReader implements ValueReader<BytesStore, String> {
+    enum StringValueReader implements ValueReader<BytesStore, Object, String> {
         BYTES_STORE_TO_STRING;
 
         @NotNull
         @Override
-        public String readFrom(@Nullable BytesStore bs, String usingValue) {
+        public String getUsing(@Nullable BytesStore bs, Object ignored) {
             return bs == null ? null : BytesUtil.to8bitString(bs);
         }
     }

@@ -27,7 +27,6 @@ import net.openhft.chronicle.engine.api.session.Heartbeat;
 import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
-import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.api.tree.View;
@@ -115,7 +114,6 @@ public class EngineWireHandler extends WireTcpHandler {
     @Nullable
     private HostIdentifier hostIdentifier;
 
-    private Asset asset;
     @Nullable
     private EventLoop eventLoop;
     private AtomicBoolean isClosed;
@@ -181,8 +179,7 @@ public class EngineWireHandler extends WireTcpHandler {
                         return;
                     }
 
-                    asset = this.assetTree.acquireAsset(viewType, requestContext);
-                    view = asset.acquireView(requestContext);
+                    view = this.assetTree.acquireView(requestContext);
 
                     requestContext.keyType();
 

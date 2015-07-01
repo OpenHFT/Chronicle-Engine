@@ -57,6 +57,21 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
         this.removeReturnsNull = removeReturnsNull;
     }
 
+    @Override
+    public Class<K> keyType() {
+        return keyClass;
+    }
+
+    @Override
+    public Class<V> valueType() {
+        return valueType;
+    }
+
+    @org.jetbrains.annotations.NotNull
+    @Override
+    public V getUsing(K key, MV usingValue) {
+        return kvStore.getUsing(key, usingValue);
+    }
 
     @Override
     public Set<K> keySet() {

@@ -23,7 +23,6 @@ import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
-import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.server.WireType;
 import net.openhft.chronicle.engine.tree.*;
@@ -155,7 +154,7 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
                 }
                 {
                     // the client cannot remove maps yet.
-                    serverAssetTree.acquireAsset(RequestContext.requestContext("/group")).removeChild(NAME);
+                    serverAssetTree.acquireAsset("/group").removeChild(NAME);
 
                     TopologicalEvent take4 = eventsQueue.poll(1, SECONDS);
                     Assert.assertEquals(RemovedAssetEvent.of("/group", NAME), take4);

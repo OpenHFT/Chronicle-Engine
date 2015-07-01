@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.server.internal;
 
+import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.tree.TopologySubscription;
@@ -28,7 +29,11 @@ public class TopologySubscriptionHandler extends SubscriptionHandler<TopologySub
         eventName.setLength(0);
         final ValueIn valueIn = inWire.readEventName(eventName);
 
-        if (before(inputTid, valueIn)) return;
+        try {
+            if (before(inputTid, valueIn)) return;
+        } catch (AssetNotFoundException e) {
+            throw new AssertionError(e);
+        }
 
         outWire.writeDocument(true, wire -> outWire.writeEventName(tid).int64(inputTid));
 

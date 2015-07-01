@@ -28,6 +28,7 @@ import net.openhft.chronicle.engine.api.map.StringBytesStoreKeyValueStore;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.tree.Asset;
+import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.threads.Threads;
 import org.jetbrains.annotations.NotNull;
@@ -82,12 +83,12 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     private final Asset asset;
     private volatile boolean closed = false;
 
-    public FilePerKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset) throws IORuntimeException {
+    public FilePerKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset) throws IORuntimeException, AssetNotFoundException {
         this(context, asset, context.type(), context.basePath(), context.name());
         asset.registerView(StringBytesStoreKeyValueStore.class, this);
     }
 
-    FilePerKeyValueStore(RequestContext context, @NotNull Asset asset, Class type, String basePath, String name) {
+    FilePerKeyValueStore(RequestContext context, @NotNull Asset asset, Class type, String basePath, String name) throws AssetNotFoundException {
         this.asset = asset;
         assert type == String.class;
 

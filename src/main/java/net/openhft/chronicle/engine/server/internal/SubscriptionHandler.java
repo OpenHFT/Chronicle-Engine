@@ -2,6 +2,7 @@ package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.Subscription;
+import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.network.connection.CoreFields;
@@ -69,7 +70,7 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
      * @param valueIn the value in from the wire
      * @return true if processed
      */
-    protected boolean before(Long tid, ValueIn valueIn) {
+    protected boolean before(Long tid, ValueIn valueIn) throws AssetNotFoundException {
         if (registerSubscriber.contentEquals(eventName)) {
             Class subscriptionType = valueIn.typeLiteral();
             Subscriber<Object> listener = e -> {
