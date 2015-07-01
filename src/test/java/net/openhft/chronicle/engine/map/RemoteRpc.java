@@ -16,11 +16,12 @@
 
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.WireType;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
+import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 import org.junit.rules.TestName;
@@ -52,23 +53,68 @@ public class RemoteRpc extends JSR166TestCase {
      */
     @Ignore
     @Test
-    public void testPut() throws IOException {
+    public void testRpc() throws IOException, InterruptedException {
         WireType.wire = WireType.TEXT;
-        assetTree = (new VanillaAssetTree(1)).forRemoteAccess("192.168.1.64", 8088);
+        YamlLogging.clientWrites = true;
+        YamlLogging.clientReads = true;
+        assetTree = (new VanillaAssetTree(1)).forRemoteAccess("192.168.1.76", 8088);
 
         MapView<String, String, String> map = assetTree.acquireMap("/test", String.class, String.class);
         map.put("hello", "world");
 
         for (int i = 0; i < 9999; i++) {
-            String hello = map.get("hello");
-            System.out.println(i + " " + hello);
-            Jvm.pause(2000);
+            try {
+                String hello = map.get("hello");
+                System.out.println(i + " " + hello);
+            } catch (IORuntimeException e) {
+
+                e.printStackTrace();
+            }
+
+            Thread.sleep(1000);
         }
+
+
     }
+
+    /**
+     * clear removes all pairs
+     */
+    @Ignore
+    @Test
+    public void testSub() throws IOException, InterruptedException {
+        WireType.wire = WireType.TEXT;
+        YamlLogging.clientWrites = true;
+        YamlLogging.clientReads = true;
+        assetTree = (new VanillaAssetTree(1)).forRemoteAccess("192.168.1.76", 8088);
+
+        MapView<String, String, String> map = assetTree.acquireMap("/test", String.class, String.class);
+        map.put("hello", "world");
+
+
+        assetTree.registerSubscriber("/test", String.class, (x) -> System.out.println
+                ("******************+" + x));
+
+
+        for (int i = 0; i < 9999; i++) {
+            try {
+                map.put("hello", "world" + i);
+
+            } catch (IORuntimeException e) {
+
+                e.printStackTrace();
+            }
+
+            Thread.sleep(1000);
+        }
+
+
+    }
+
 
     @After
     public void after() throws IOException {
-        assetTree.close();
+        //  assetTree.close();
     }
 
 }

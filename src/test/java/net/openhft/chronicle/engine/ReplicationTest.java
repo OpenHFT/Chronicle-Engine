@@ -65,7 +65,7 @@ public class ReplicationTest {
     }
 
     @AfterClass
-    public static void after() {
+    public static void after() throws IOException {
         if (serverEndpoint1 != null)
             serverEndpoint1.close();
         if (serverEndpoint2 != null)
