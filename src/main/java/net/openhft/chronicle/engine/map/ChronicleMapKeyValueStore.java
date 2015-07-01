@@ -115,20 +115,18 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
             builder.entries(maxEntries);
 
         if (basePath == null)
-            builder.create();
+            chronicleMap = builder.create();
         else {
             String pathname = basePath + "/" + context.name();
             new File(basePath).mkdirs();
             try {
-                builder.createPersistedTo(new File(pathname));
+                chronicleMap = builder.createPersistedTo(new File(pathname));
             } catch (IOException e) {
                 IORuntimeException iore = new IORuntimeException("Could not access " + pathname);
                 iore.initCause(e);
                 throw iore;
             }
         }
-
-        chronicleMap = builder.create();
 
         if (hostIdentifier != null) {
             Clusters clusters = asset.findView(Clusters.class);
