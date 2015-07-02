@@ -59,10 +59,10 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
 
     @NotNull
     @Override
-    public <V> V getView(Class<V> vClass) {
-        if (vClass == Reference.class || vClass == Publisher.class || vClass == Supplier.class)
+    public <V> V getView(Class<V> viewType) {
+        if (viewType == Reference.class || viewType == Publisher.class || viewType == Supplier.class)
             return (V) reference;
-        if (vClass == Subscription.class || vClass == SimpleSubscription.class)
+        if (viewType == Subscription.class || viewType == SimpleSubscription.class)
             return (V) subscription;
         throw new UnsupportedOperationException("todo");
     }
@@ -95,8 +95,8 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     }
 
     @Override
-    public <V> V addView(Class<V> viewType, V v) {
-        return v;
+    public <V> V addView(Class<V> viewType, V view) {
+        return view;
     }
 
     @Override
@@ -110,22 +110,22 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     }
 
     @Override
-    public <I> void registerView(Class<I> iClass, I interceptor) {
+    public <I> void registerView(Class<I> viewType, I view) {
         throw new UnsupportedOperationException("todo");
     }
 
     @Override
-    public <W, U> void addWrappingRule(Class<W> iClass, String description, BiPredicate<RequestContext, Asset> predicate, WrappingViewFactory<W, U> factory, Class<U> underlyingType) {
+    public <W, U> void addWrappingRule(Class<W> viewType, String description, BiPredicate<RequestContext, Asset> predicate, WrappingViewFactory<W, U> factory, Class<U> underlyingType) {
         throw new UnsupportedOperationException("todo");
     }
 
     @Override
-    public <W, U> void addWrappingRule(Class<W> iClass, String description, WrappingViewFactory<W, U> factory, Class<U> underlyingType) {
+    public <W, U> void addWrappingRule(Class<W> viewType, String description, WrappingViewFactory<W, U> factory, Class<U> underlyingType) {
         throw new UnsupportedOperationException("todo");
     }
 
     @Override
-    public <L> void addLeafRule(Class<L> iClass, String description, LeafViewFactory<L> factory) {
+    public <L> void addLeafRule(Class<L> viewType, String description, LeafViewFactory<L> factory) {
         throw new UnsupportedOperationException("todo");
     }
 
@@ -184,6 +184,6 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     }
 
     @Override
-    public void forEachChild(ThrowingAcceptor<Asset, InvalidSubscriberException> child) throws InvalidSubscriberException {
+    public void forEachChild(ThrowingAcceptor<Asset, InvalidSubscriberException> childAcceptor) throws InvalidSubscriberException {
     }
 }

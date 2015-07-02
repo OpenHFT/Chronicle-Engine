@@ -179,20 +179,20 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Override
-    public <W, U> void addWrappingRule(Class<W> iClass, String description, BiPredicate<RequestContext, Asset> predicate, WrappingViewFactory<W, U> factory, Class<U> underlyingType) {
-        SortedMap<String, WrappingViewRecord> smap = wrappingViewFactoryMap.computeIfAbsent(iClass, k -> new ConcurrentSkipListMap<>());
+    public <W, U> void addWrappingRule(Class<W> viewType, String description, BiPredicate<RequestContext, Asset> predicate, WrappingViewFactory<W, U> factory, Class<U> underlyingType) {
+        SortedMap<String, WrappingViewRecord> smap = wrappingViewFactoryMap.computeIfAbsent(viewType, k -> new ConcurrentSkipListMap<>());
         smap.put(description, new WrappingViewRecord(predicate, factory, underlyingType));
     }
 
     @Override
-    public <W, U> void addWrappingRule(Class<W> iClass, String description, WrappingViewFactory<W, U> factory, Class<U> underlyingType) {
-        addWrappingRule(iClass, description, ALWAYS, factory, underlyingType);
-        leafViewFactoryMap.remove(iClass);
+    public <W, U> void addWrappingRule(Class<W> viewType, String description, WrappingViewFactory<W, U> factory, Class<U> underlyingType) {
+        addWrappingRule(viewType, description, ALWAYS, factory, underlyingType);
+        leafViewFactoryMap.remove(viewType);
     }
 
     @Override
-    public <L> void addLeafRule(Class<L> iClass, String description, LeafViewFactory<L> factory) {
-        leafViewFactoryMap.put(iClass, factory);
+    public <L> void addLeafRule(Class<L> viewType, String description, LeafViewFactory<L> factory) {
+        leafViewFactoryMap.put(viewType, factory);
     }
 
     @Nullable
@@ -209,7 +209,7 @@ public class VanillaAsset implements Asset, Closeable {
             }
         if (parent == null)
             return null;
-        return parent.createWrappingView(viewType, rc, asset, underling);
+        return ((VanillaAsset) parent).createWrappingView(viewType, rc, asset, underling);
     }
 
     @Nullable
@@ -221,7 +221,7 @@ public class VanillaAsset implements Asset, Closeable {
             return (I) lvFactory.create(rc.clone().viewType(viewType), asset);
         if (parent == null)
             return null;
-        return parent.createLeafView(viewType, rc, asset);
+        return ((VanillaAsset) parent).createLeafView(viewType, rc, asset);
     }
 
     @Override
@@ -235,17 +235,17 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Override
-    public void forEachChild(@NotNull ThrowingAcceptor<Asset, InvalidSubscriberException> consumer) throws InvalidSubscriberException {
+    public void forEachChild(@NotNull ThrowingAcceptor<Asset, InvalidSubscriberException> childAcceptor) throws InvalidSubscriberException {
         for (Asset child : children.values())
-            consumer.accept(child);
+            childAcceptor.accept(child);
     }
 
     @Nullable
     @Override
     @ForceInline
-    public <V> V getView(@NotNull Class<V> vClass) {
+    public <V> V getView(@NotNull Class<V> viewType) {
         @SuppressWarnings("unchecked")
-        V view = (V) viewMap.get(vClass);
+        V view = (V) viewMap.get(viewType);
         return view;
     }
 

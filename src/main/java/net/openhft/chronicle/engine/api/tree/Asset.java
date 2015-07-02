@@ -148,45 +148,146 @@ public interface Asset extends Closeable {
         return v;
     }
 
+    /**
+     * Determine when an asset has a factory/rule for a viewType type.
+     *
+     * @param viewType to look for.
+     * @return true, if the factory can be found, or false if not.
+     */
     <V> boolean hasFactoryFor(Class<V> viewType);
 
+    /**
+     * Get the child of an asset.
+     *
+     * @param name of the child.
+     * @return the Asset or null if it doesn't exist.
+     */
     Asset getChild(String name);
 
+    /**
+     * Remove a child asset from the tree.
+     *
+     * @param name of the child to remove.
+     */
     void removeChild(String name);
 
+    /**
+     * Get or create a view based on a RequestContext.  First it looks for a matching viewType(). If found this is returned.
+     *
+     * @param requestContext to use in the construction of the view
+     * @return the View obtained.
+     * @throws AssetNotFoundException if the Asset could not be created. This can happen if a required rule is not provided.
+     */
     @NotNull
-    default <V> V acquireView(@NotNull RequestContext rc) throws AssetNotFoundException {
-        return (V) acquireView(rc.viewType(), rc);
+    default <V> V acquireView(@NotNull RequestContext requestContext) throws AssetNotFoundException {
+        return (V) acquireView(requestContext.viewType(), requestContext);
     }
 
+    /**
+     * Get or create a view based on a RequestContext.  First it looks for a matching viewType(). If found this is returned.
+     * The viewType given overrides the type providedin the RequestContext.
+     *
+     * @param viewType       to obtain.
+     * @param requestContext to use in the construction of the view
+     * @return the View obtained.
+     * @throws AssetNotFoundException if the Asset could not be created. This can happen if a required rule is not provided.
+     */
     @NotNull
-    <V> V acquireView(Class<V> viewType, RequestContext rc) throws AssetNotFoundException;
+    <V> V acquireView(Class<V> viewType, RequestContext requestContext) throws AssetNotFoundException;
 
+    /**
+     * Get a view if it already exists on the current Asset.
+     *
+     * @param viewType the associated interface or class for this view.
+     * @return a view which implements viewType, or null if it doesn't exist.
+     */
     @Nullable
-    <V> V getView(Class<V> vClass);
+    <V> V getView(Class<V> viewType);
 
-    <I> void registerView(Class<I> iClass, I interceptor);
+    /**
+     * Provide a specific implementation of a view
+     *
+     * @param viewType interface or class to associate this implementation with.
+     * @param view     implementation of viewType to use.
+     */
+    <V> void registerView(Class<V> viewType, V view);
 
-    <W, U> void addWrappingRule(Class<W> iClass, String description, BiPredicate<RequestContext, Asset> predicate, WrappingViewFactory<W, U> factory, Class<U> underlyingType);
+    /**
+     * Add a rule or factory for creating view on demand.  A Leaf rule doesn't need any view to exist before you create it.  This can be used for building the fundamental data structure which represents this Asset.
+     * <p></p>
+     * If two rules with the same description are provided, the new factory will replace the old.  At present, any new factory replaces the old one, however in the future we may support multiple factories.
+     *
+     * @param viewType    interface to associate this factory with.
+     * @param description of the factory
+     * @param factory     to create a viewType
+     */
+    <V> void addLeafRule(Class<V> viewType, String description, LeafViewFactory<V> factory);
 
-    <W, U> void addWrappingRule(Class<W> iClass, String description, WrappingViewFactory<W, U> factory, Class<U> underlyingType);
+    /**
+     * Add a rule or factory for creating views on demand.  A Wrapping Rule need an underlying view to wrap before it can be created. This can be used for laying functionality on existing views.
+     * <p></p>
+     * If two rules with the same description are provided, the new factory replaces the old one. <b>Note:</b> if rules with different descriptions are provided, they are called in ASCIIbetical order of the description.
+     * <p></p>
+     * If a factory returns null, a later factory will be called.
+     *
+     * @param viewType       class of the view.
+     * @param description    to use to comment on the view, determine order of factories and detect dupliates.
+     * @param factory        to use to create the view. If the factory returns null, the next factory is called.
+     * @param underlyingType the underlying view type required.
+     */
+    <V, U> void addWrappingRule(Class<V> viewType, String description, WrappingViewFactory<V, U> factory, Class<U> underlyingType);
 
-    <L> void addLeafRule(Class<L> iClass, String description, LeafViewFactory<L> factory);
+    /**
+     * Add a rule or factory for creating views on demand.  A Wrapping Rule need an underlying view to wrap before it can be created. This can be used for laying functionality on existing views.
+     * <p></p>
+     * If two rules with the same description are provided, the new factory replaces the old one. <b>Note:</b> if rules with different descriptions are provided, they are called in ASCIIbetical order of the description.
+     * <p></p>
+     * If the predictae returns false or a factory returns null, a later factory will be called.
+     *
+     * @param viewType       class of the view.
+     * @param description    to use to comment on the view, determine order of factories and detect dupliates.
+     * @param predicate      to test whether this factory applies.
+     * @param factory        to use to create the view. If the factory returns null, the next factory is called.
+     * @param underlyingType the underlying view type required.
+     */
+    <V, U> void addWrappingRule(Class<V> viewType, String description, BiPredicate<RequestContext, Asset> predicate, WrappingViewFactory<V, U> factory, Class<U> underlyingType);
 
-    <I, U> I createWrappingView(Class viewType, RequestContext rc, Asset asset, U underling) throws AssetNotFoundException;
+    /**
+     * Add an implementation of a view to the asset.. This can be used instead of, or in addition to adding rules.
+     *
+     * @param viewType to associate this implementation with.
+     * @param view
+     * @return the view provided.
+     */
+    <V> V addView(Class<V> viewType, V view);
 
-    <I> I createLeafView(Class viewType, RequestContext rc, Asset asset) throws AssetNotFoundException;
-
-    <V> V addView(Class<V> viewType, V v);
-
+    /**
+     * @return true if this is a simplified Asset atteched to a keyed Asset.  E.g. if you subscribe to a key in a Map this key uses a SubAsset.
+     */
     boolean isSubAsset();
 
+    /**
+     * Find the root Asset for this tree.
+     *
+     * @return the root.
+     */
     @NotNull
     default Asset root() {
         return parent() == null ? this : parent().root();
     }
 
+    /**
+     * Is this a leaf node.
+     *
+     * @return if this Asset has Asset as children.
+     */
     boolean hasChildren();
 
-    void forEachChild(ThrowingAcceptor<Asset, InvalidSubscriberException> child) throws InvalidSubscriberException;
+    /**
+     * Iterate of all the children of this Asset.
+     *
+     * @param childAcceptor to accept each child.
+     * @throws InvalidSubscriberException to throw if the accept is no longer interested in getting more children.
+     */
+    void forEachChild(ThrowingAcceptor<Asset, InvalidSubscriberException> childAcceptor) throws InvalidSubscriberException;
 }
