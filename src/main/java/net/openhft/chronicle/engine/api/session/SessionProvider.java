@@ -17,14 +17,28 @@
 package net.openhft.chronicle.engine.api.session;
 
 import net.openhft.chronicle.network.api.session.SessionDetails;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by peter on 01/06/15.
+ * A holder for the Session speicifc details i.e. for a remote client.
  */
 public interface SessionProvider {
+    /**
+     * @return the current session details
+     */
+    @Nullable
     SessionDetails get();
 
-    void set(SessionDetails sessionDetails);
+    /**
+     * Replace the session details
+     *
+     * @param sessionDetails to set to
+     */
+    void set(@NotNull SessionDetails sessionDetails);
 
+    /**
+     * There is no longer any valid session detaisl and get() will return null.
+     */
     void remove();
 }

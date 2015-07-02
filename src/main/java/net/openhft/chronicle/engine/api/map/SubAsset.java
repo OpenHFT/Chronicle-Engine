@@ -20,7 +20,9 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.View;
 
 /**
- * Created by peter on 23/05/15.
+ * This interface represents as Asset which are keyed components of a parent.
+ * <p></p>
+ * e.g. if the Parent in a Map, this represents on of the entries in that map.
  */
 public interface SubAsset<T> extends View, Asset {
 }

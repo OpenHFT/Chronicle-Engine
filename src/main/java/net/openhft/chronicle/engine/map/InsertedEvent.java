@@ -80,7 +80,7 @@ public class InsertedEvent<K, V> implements MapEvent<K, V> {
 
     @Override
     public void apply(@NotNull MapEventListener<K, V> listener) {
-        listener.insert(key, value);
+        listener.insert(assetName, key, value);
     }
 
     @Override

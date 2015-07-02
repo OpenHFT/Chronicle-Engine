@@ -16,15 +16,18 @@
 
 package net.openhft.chronicle.engine.api.map;
 
+/**
+ * This breaks down the events on a Map.  This is useful for providing one interface to handle all event types.
+ */
 @FunctionalInterface
 public interface MapEventListener<K, V> {
-    void update(K key, V oldValue, V newValue);
+    void update(String assetName, K key, V oldValue, V newValue);
 
-    default void insert(K key, V value) {
-        update(key, null, value);
+    default void insert(String assetName, K key, V value) {
+        update(assetName, key, null, value);
     }
 
-    default void remove(K key, V value) {
-        update(key, value, null);
+    default void remove(String assetName, K key, V value) {
+        update(assetName, key, value, null);
     }
 }

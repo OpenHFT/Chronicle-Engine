@@ -22,13 +22,27 @@ import net.openhft.chronicle.engine.api.tree.Assetted;
 import net.openhft.chronicle.engine.api.tree.View;
 
 /**
- * Created by peter on 22/05/15.
+ * Publish to any topic in an Asset group.
  */
 public interface TopicPublisher<T, M> extends View, Assetted<MapView<T, M, M>> {
+    /**
+     * Publish to a provided topic.
+     *
+     * @param topic   to publish to
+     * @param message to publish.
+     */
     void publish(T topic, M message);
 
+    /**
+     * Add a subscription to this group.
+     * @param topicSubscriber to listen to events.
+     * @throws AssetNotFoundException if the Asset is no longer valid.
+     */
     void registerTopicSubscriber(TopicSubscriber<T, M> topicSubscriber) throws AssetNotFoundException;
 
+    /**
+     * @return this represents a keyed asset, i.e. anything under this must be a SubAsset.
+     */
     default boolean keyedView() {
         return true;
     }

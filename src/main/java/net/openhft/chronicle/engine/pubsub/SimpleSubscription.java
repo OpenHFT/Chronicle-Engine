@@ -17,13 +17,13 @@
 package net.openhft.chronicle.engine.pubsub;
 
 import net.openhft.chronicle.bytes.BytesStore;
-import net.openhft.chronicle.engine.api.map.ValueReader;
 import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.function.Function;
 
 /**
  * Created by peter on 29/05/15.
@@ -31,9 +31,9 @@ import java.util.concurrent.CopyOnWriteArraySet;
 public class SimpleSubscription<E> implements Subscription<E> {
     private final Set<Subscriber<E>> subscribers = new CopyOnWriteArraySet<>();
     private final Reference<E> currentValue;
-    private final ValueReader<Object, ?, E> valueReader;
+    private final Function<Object, E> valueReader;
 
-    public SimpleSubscription(Reference<E> reference, ValueReader<Object, ?, E> valueReader) {
+    public SimpleSubscription(Reference<E> reference, Function<Object, E> valueReader) {
         this.currentValue = reference;
         this.valueReader = valueReader;
     }
@@ -76,7 +76,7 @@ public class SimpleSubscription<E> implements Subscription<E> {
 
     public void notifyMessage(Object e) {
         try {
-            E ee = e instanceof BytesStore ? valueReader.getUsing(e, null) : (E) e;
+            E ee = e instanceof BytesStore ? valueReader.apply(e) : (E) e;
             SubscriptionConsumer.notifyEachSubscriber(subscribers, s -> s.onMessage(ee));
         } catch (ClassCastException e1) {
             System.err.println("Is " + valueReader + " the correct ValueReader?");

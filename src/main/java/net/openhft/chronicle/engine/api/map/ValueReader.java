@@ -16,15 +16,11 @@
 
 package net.openhft.chronicle.engine.api.map;
 
-import org.jetbrains.annotations.NotNull;
+import java.util.function.Function;
 
 /**
- * Created by peter on 09/06/15.
+ * An interface which allows you to obtain the value for an underlying storage type, e.g. BytesStore
  */
 @FunctionalInterface
-public interface ValueReader<U, MT, T> {
-    ValueReader PASS = (u, t) -> u;
-
-    @NotNull
-    T getUsing(U underlying, MT usingValue);
+public interface ValueReader<U, V> extends Function<U, V> {
 }

@@ -16,10 +16,14 @@
 
 package net.openhft.chronicle.engine.api.collection;
 
+import net.openhft.chronicle.engine.api.map.MapView;
+import net.openhft.chronicle.engine.api.tree.Assetted;
+import net.openhft.chronicle.engine.api.tree.View;
+
 import java.util.Collection;
 
 /**
- * Created by peter on 28/05/15.
+ * Marker interface for a collection which represents the values() of a Map.  This may have additional method in future.
  */
-public interface ValuesCollection<V> extends Collection<V> {
+public interface ValuesCollection<V> extends Collection<V>, Assetted<MapView<?, ?, V>>, View {
 }

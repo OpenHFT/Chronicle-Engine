@@ -17,9 +17,16 @@
 package net.openhft.chronicle.engine.api.pubsub;
 
 /**
- * Created by peter on 22/05/15.
+ * Subscriber for a pair of topic and message on an Asset group.
  */
 @FunctionalInterface
 public interface TopicSubscriber<T, M> extends ISubscriber {
+    /**
+     * Called when a topic in a group has an new message/event
+     *
+     * @param topic   the message was associated with
+     * @param message published
+     * @throws InvalidSubscriberException to throw when this subscriber is no longer valid.
+     */
     void onMessage(T topic, M message) throws InvalidSubscriberException;
 }

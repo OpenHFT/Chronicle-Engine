@@ -194,12 +194,11 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         }
     }
 
-    enum StringValueReader implements ValueReader<BytesStore, Object, String> {
+    enum StringValueReader implements ValueReader<BytesStore, String> {
         BYTES_STORE_TO_STRING;
 
-        @NotNull
         @Override
-        public String getUsing(@Nullable BytesStore bs, Object ignored) {
+        public String apply(@Nullable BytesStore bs) {
             return bs == null ? null : BytesUtil.to8bitString(bs);
         }
     }

@@ -85,7 +85,7 @@ public class RemovedEvent<K, V> implements MapEvent<K, V> {
 
     @Override
     public void apply(@NotNull MapEventListener<K, V> listener) {
-        listener.remove(key, oldValue);
+        listener.remove(assetName, key, oldValue);
     }
 
     @Override

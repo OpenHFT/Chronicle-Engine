@@ -20,7 +20,6 @@ import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.util.ThrowingAcceptor;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.map.SubAsset;
-import net.openhft.chronicle.engine.api.map.ValueReader;
 import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.tree.*;
 import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
@@ -30,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiPredicate;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -44,11 +44,11 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     @Nullable
     private Reference<E> reference;
 
-    VanillaSubAsset(@NotNull VanillaAsset parent, String name, Class<E> type, ValueReader valueReader) throws AssetNotFoundException {
+    VanillaSubAsset(@NotNull VanillaAsset parent, String name, Class<E> type, Function<Object, E> valueReader) throws AssetNotFoundException {
         this.parent = parent;
         this.name = name;
         reference = new VanillaReference<E>(name, type, parent.getView(MapView.class));
-        subscription = new SimpleSubscription<>(reference, valueReader == null ? ValueReader.PASS : valueReader);
+        subscription = new SimpleSubscription<>(reference, valueReader);
     }
 
     @NotNull

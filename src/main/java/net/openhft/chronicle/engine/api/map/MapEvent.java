@@ -26,7 +26,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
- * Created by peter on 22/05/15.
+ * This is an update on a Map.
  */
 public interface MapEvent<K, V> extends Entry<K, V>, ChangeEvent {
     @Nullable

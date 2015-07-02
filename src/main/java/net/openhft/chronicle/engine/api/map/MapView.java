@@ -24,27 +24,56 @@ import net.openhft.chronicle.engine.api.tree.Assetted;
 import net.openhft.chronicle.engine.api.tree.View;
 
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
 
 /**
- * Created by peter on 22/05/15.
+ * Interface for Map views.
  */
 public interface MapView<K, MV, V> extends ConcurrentMap<K, V>,
         Assetted<KeyValueStore<K, MV, V>>,
         Updatable<ConcurrentMap<K, V>>,
         KeyedVisitable<K, V>,
-        ValueReader<K, MV, V>,
+        Function<K, V>,
         View {
     default boolean keyedView() {
         return true;
     }
 
+    /**
+     * Obtain a value using a mutable buffer privided.
+     *
+     * @param key   to lookup.
+     * @param using a mutable buffer
+     * @return the value.
+     */
+    V getUsing(K key, MV using);
+
+    /**
+     * Add a TopicSubscriber to this Map.
+     *
+     * @param topicSubscriber to add
+     */
     void registerTopicSubscriber(TopicSubscriber<K, V> topicSubscriber);
 
+    /**
+     * Add a Subscription for the keys changed on this Map
+     * @param subscriber to add
+     */
     void registerKeySubscriber(Subscriber<K> subscriber);
 
+    /**
+     * Add a Subscription for the MapEvents triggered by changes on this Map.
+     * @param subscriber
+     */
     void registerSubscriber(Subscriber<MapEvent<K, V>> subscriber);
 
+    /**
+     * @return the type of the keys
+     */
     Class<K> keyType();
 
+    /**
+     * @return the type of the values.
+     */
     Class<V> valueType();
 }

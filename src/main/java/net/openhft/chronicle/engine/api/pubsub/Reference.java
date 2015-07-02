@@ -20,27 +20,53 @@ import net.openhft.chronicle.engine.api.Visitable;
 
 import java.util.function.Supplier;
 
+/**
+ * Hold a reference to a specific topic/key.
+ */
 public interface Reference<E> extends Publisher<E>, Supplier<E>, Visitable<E> {
+    /**
+     * @return the current value.
+     */
     E get();
 
+    /**
+     * Set a new value and return the old value.
+     *
+     * @param e to set
+     * @return the old value.
+     */
     default E getAndSet(E e) {
         E prev = get();
         set(e);
         return prev;
     }
 
+    /**
+     * Set the new value
+     * @param e replace value
+     */
     void set(E e);
 
+    /**
+     * Remove the topic/key
+     */
     void remove();
 
+    /**
+     * Remove the topic/key and return the old value
+     * @return the old value.
+     */
     default E getAndRemove() {
         E prev = get();
         remove();
         return prev;
     }
 
+    /**
+     * Publish to this topic/key.
+     * @param e value to publish/set
+     */
     default void publish(E e) {
         set(e);
     }
-
 }

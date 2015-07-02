@@ -20,7 +20,7 @@ import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.engine.map.KVSSubscription;
 
 /**
- * Created by peter on 22/05/15.
+ * An interface which is a KeyValueStore where you can subscribe to changes.
  */
 public interface SubscriptionKeyValueStore<K, MV, V> extends KeyValueStore<K, MV, V>, View {
     KVSSubscription<K, MV, V> subscription(boolean createIfAbsent);

@@ -17,9 +17,15 @@
 package net.openhft.chronicle.engine.api.pubsub;
 
 /**
- * Created by peter on 22/05/15.
+ * Subscriber to events of a specific topic/key.
  */
 @FunctionalInterface
 public interface Subscriber<E> extends ISubscriber {
+    /**
+     * Called when there is an event.
+     *
+     * @param e event
+     * @throws InvalidSubscriberException to throw when this subscriber is no longer valid.
+     */
     void onMessage(E e) throws InvalidSubscriberException;
 }

@@ -25,11 +25,13 @@ import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.lang.model.constraints.Nullable;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
 import java.util.AbstractMap.SimpleEntry;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
+ * Internal API for creating new data stores.
+ *
  * @param <K>  key type
  * @param <MV> mutable value type
  * @param <V>  immutable value type

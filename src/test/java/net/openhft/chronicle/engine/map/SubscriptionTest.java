@@ -54,7 +54,7 @@ import static org.junit.Assert.assertEquals;
  */
 @RunWith(value = Parameterized.class)
 public class SubscriptionTest extends ThreadMonitoringTest {
-    private static final String NAME = "test";
+    private static final String NAME = "/test";
     private static ConcurrentMap<String, Factor> map;
     @NotNull
     @Rule
@@ -93,11 +93,11 @@ public class SubscriptionTest extends ThreadMonitoringTest {
         factorDDD.setAccountNumber("ddd");
 
         listener = createMock(MapEventListener.class);
-        listener.insert("testA", factorXYZ);
-        listener.insert("testB", factorABC);
-        listener.update("testA", factorXYZ, factorDDD);
-        listener.remove("testA", factorDDD);
-        listener.remove("testB", factorABC);
+        listener.insert(NAME, "testA", factorXYZ);
+        listener.insert(NAME, "testB", factorABC);
+        listener.update(NAME, "testA", factorXYZ, factorDDD);
+        listener.remove(NAME, "testA", factorDDD);
+        listener.remove(NAME, "testB", factorABC);
 
         replay(listener);
 

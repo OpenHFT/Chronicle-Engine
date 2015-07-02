@@ -19,10 +19,20 @@ package net.openhft.chronicle.engine.api.pubsub;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 
 /**
- * Created by peter on 22/05/15.
+ * A handle to Publish to a specific topic.
  */
 public interface Publisher<E> {
+    /**
+     * Publish an event
+     *
+     * @param event to publish
+     */
     void publish(E event);
 
+    /**
+     * Add a subscription to this spepcific topic
+     * @param subscriber to register
+     * @throws AssetNotFoundException if the topic no longer exists.
+     */
     void registerSubscriber(Subscriber<E> subscriber) throws AssetNotFoundException;
 }

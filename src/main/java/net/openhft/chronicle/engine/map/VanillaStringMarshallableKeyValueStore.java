@@ -74,7 +74,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
         valueToBytes = toBytes(valueType, wireType);
         bytesToValue = fromBytes(valueType, wireType);
         this.kvStore = kvStore;
-        ValueReader<BytesStore, V, V> valueReader = (bs, v) -> bytesToValue.apply(bs, null);
+        ValueReader<BytesStore, V> valueReader = bs -> bytesToValue.apply(bs, null);
         asset.registerView(ValueReader.class, valueReader);
         RawKVSSubscription<String, Bytes, BytesStore> rawSubscription =
                 (RawKVSSubscription<String, Bytes, BytesStore>) kvStore.subscription(true);

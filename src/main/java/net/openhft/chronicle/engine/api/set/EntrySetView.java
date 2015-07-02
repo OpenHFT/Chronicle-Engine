@@ -24,7 +24,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 /**
- * Created by peter on 22/05/15.
+ * Marker interface for a set which represents the entrySet() of a Map.  This may have additional method in future.
  */
 public interface EntrySetView<K, MV, V> extends Set<Entry<K, V>>, Assetted<MapView<K, MV, V>>, View {
 }

@@ -22,6 +22,7 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.api.tree.View;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.AbstractCollection;
 import java.util.Collection;
@@ -32,9 +33,11 @@ import java.util.Objects;
  * Created by peter on 11/06/15.
  */
 public class VanillaValuesCollection<K, V> extends AbstractCollection<V> implements ValuesCollection<V>, View {
+    private final Asset asset;
     private final MapView<K, V, V> mapView;
 
     public VanillaValuesCollection(RequestContext requestContext, Asset asset, MapView<K, V, V> mapView) {
+        this.asset = asset;
         this.mapView = mapView;
     }
 
@@ -74,5 +77,16 @@ public class VanillaValuesCollection<K, V> extends AbstractCollection<V> impleme
                 return false;
         }
         return true;
+    }
+
+    @Override
+    public Asset asset() {
+        return asset;
+    }
+
+    @Nullable
+    @Override
+    public MapView<?, ?, V> underlying() {
+        return mapView;
     }
 }

@@ -21,6 +21,7 @@ import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.AbstractCollection;
 import java.util.Iterator;
@@ -31,9 +32,11 @@ import java.util.Set;
  * Created by peter.lawrey on 11/06/2015.
  */
 public class VanillaKeySetView<K, V> extends AbstractCollection<K> implements KeySetView<K> {
+    private final Asset asset;
     private final MapView<K, V, V> kvMapView;
 
     public VanillaKeySetView(RequestContext context, Asset asset, MapView<K, V, V> kvMapView) {
+        this.asset = asset;
         this.kvMapView = kvMapView;
     }
 
@@ -84,5 +87,16 @@ public class VanillaKeySetView<K, V> extends AbstractCollection<K> implements Ke
     @Override
     public boolean remove(Object o) {
         return kvMapView.underlying().remove((K) o);
+    }
+
+    @Override
+    public Asset asset() {
+        return asset;
+    }
+
+    @Nullable
+    @Override
+    public MapView<K, ?, ?> underlying() {
+        return kvMapView;
     }
 }

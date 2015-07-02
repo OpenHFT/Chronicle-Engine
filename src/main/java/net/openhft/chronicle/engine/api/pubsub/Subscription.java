@@ -21,7 +21,7 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.api.tree.View;
 
 /**
- * Created by peter on 22/05/15.
+ * INternal API for manaing and monitoring subscriptions.
  */
 public interface Subscription<E> extends View, Closeable {
     void registerSubscriber(RequestContext rc, Subscriber<E> subscriber);

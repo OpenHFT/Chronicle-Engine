@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 /**
- * Created by peter on 02/06/15.
+ * Internal API for notifying events.
  */
 @FunctionalInterface
 public interface SubscriptionConsumer<T> {

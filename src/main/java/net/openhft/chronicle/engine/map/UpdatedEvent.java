@@ -88,7 +88,7 @@ public class UpdatedEvent<K, V> implements MapEvent<K, V> {
 
     @Override
     public void apply(@NotNull MapEventListener<K, V> listener) {
-        listener.update(key, oldValue, value);
+        listener.update(assetName, key, oldValue, value);
     }
 
     @Override
