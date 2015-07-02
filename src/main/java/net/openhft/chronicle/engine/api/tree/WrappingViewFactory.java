@@ -19,10 +19,19 @@ package net.openhft.chronicle.engine.api.tree;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by peter on 22/05/15.
+ * This factory creates a wrapping based on the context and the asset it is associated with.  A wrapping view expects to wrap an existing view.
  */
 @FunctionalInterface
 public interface WrappingViewFactory<I, U> {
+    /**
+     * Create a view for this asset based on the requestContext
+     *
+     * @param requestContext additional information to help build the view.
+     * @param asset          to associate this view with
+     * @param underlying     the implementation this view is expected to wrap.
+     * @return the view
+     * @throws AssetNotFoundException if the leaf node depends on something which could not be constructed.
+     */
     @NotNull
-    I create(RequestContext context, Asset asset, U underlying) throws AssetNotFoundException;
+    I create(RequestContext requestContext, Asset asset, U underlying) throws AssetNotFoundException;
 }

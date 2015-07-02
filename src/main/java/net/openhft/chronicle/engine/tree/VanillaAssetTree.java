@@ -17,7 +17,6 @@
 package net.openhft.chronicle.engine.tree;
 
 import net.openhft.chronicle.engine.api.tree.Asset;
-import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.fs.ConfigurationFS;
 import net.openhft.chronicle.engine.map.InsertedEvent;
@@ -74,7 +73,7 @@ public class VanillaAssetTree implements AssetTree {
 
     @NotNull
     @Override
-    public Asset acquireAsset(@NotNull String fullName) throws AssetNotFoundException {
+    public Asset acquireAsset(@NotNull String fullName) {
         if (fullName.startsWith("/"))
             fullName = fullName.substring(1);
         return fullName.isEmpty() ? root : root.acquireAsset(fullName);

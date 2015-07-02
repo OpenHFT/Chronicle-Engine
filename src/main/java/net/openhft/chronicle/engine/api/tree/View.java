@@ -17,9 +17,14 @@
 package net.openhft.chronicle.engine.api.tree;
 
 /**
- * Created by peter on 22/05/15.
+ * A Marker interface for all views.
  */
 public interface View {
+    /**
+     * If you attach a keyed view to an Asset, it is assumed that any child asset with be a SubAsset.
+     *
+     * @return Is this a keyed view?
+     */
     default boolean keyedView() {
         return false;
     }

@@ -17,18 +17,18 @@
 package net.openhft.chronicle.engine.api.tree;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
-import net.openhft.chronicle.engine.api.pubsub.Publisher;
-import net.openhft.chronicle.engine.api.pubsub.Reference;
-import net.openhft.chronicle.engine.api.pubsub.Replication;
-import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
+import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.session.Heartbeat;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
+import net.openhft.chronicle.engine.map.RawKVSSubscription;
 import net.openhft.chronicle.engine.server.WireType;
+import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.TopologySubscription;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
@@ -108,6 +108,16 @@ public class RequestContext implements Cloneable {
         String pathName = lastForwardSlash >= 0 ? fullName.substring(0, lastForwardSlash) : "";
         String name = lastForwardSlash >= 0 ? fullName.substring(lastForwardSlash + 1) : fullName;
         return new RequestContext(pathName, name).queryString(query);
+    }
+
+    @NotNull
+    public Class<Subscription> getSubscriptionType() {
+        Class elementType = elementType();
+        return elementType == TopologicalEvent.class
+                ? (Class) TopologySubscription.class
+                : elementType == BytesStore.class
+                ? (Class) RawKVSSubscription.class
+                : (Class) ObjectKVSSubscription.class;
     }
 
     @NotNull

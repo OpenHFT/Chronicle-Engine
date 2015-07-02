@@ -19,10 +19,18 @@ package net.openhft.chronicle.engine.api.tree;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by peter on 22/05/15.
+ * This factory creates a view based on the context and the asset it is associated with
  */
 @FunctionalInterface
 public interface LeafViewFactory<I> {
+    /**
+     * Create a view for this asset based on the requestContext
+     *
+     * @param requestContext
+     * @param asset          to associate this view with
+     * @return the view
+     * @throws AssetNotFoundException if the leaf node depends on something which could not be constructed.
+     */
     @NotNull
-    I create(RequestContext context, Asset asset) throws AssetNotFoundException;
+    I create(RequestContext requestContext, Asset asset) throws AssetNotFoundException;
 }

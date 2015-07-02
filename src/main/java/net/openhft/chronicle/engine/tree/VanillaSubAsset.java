@@ -129,18 +129,6 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
         throw new UnsupportedOperationException("todo");
     }
 
-    @NotNull
-    @Override
-    public <I, U> I createWrappingView(Class viewType, RequestContext rc, Asset asset, U underling) throws AssetNotFoundException {
-        throw new UnsupportedOperationException("todo");
-    }
-
-    @NotNull
-    @Override
-    public <I> I createLeafView(Class viewType, RequestContext rc, Asset asset) throws AssetNotFoundException {
-        throw new UnsupportedOperationException("todo");
-    }
-
     @Override
     public void close() {
         subscription.close();

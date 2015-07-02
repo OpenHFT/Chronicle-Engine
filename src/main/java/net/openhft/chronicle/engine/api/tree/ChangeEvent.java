@@ -19,8 +19,11 @@ package net.openhft.chronicle.engine.api.tree;
 import net.openhft.chronicle.wire.Marshallable;
 
 /**
- * Created by peter on 11/06/15.
+ * A super class for all change events.
  */
 public interface ChangeEvent extends Marshallable {
+    /**
+     * @return The full name of the Asset which changed.
+     */
     String assetName();
 }

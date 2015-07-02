@@ -16,16 +16,11 @@
 
 package net.openhft.chronicle.engine.api.tree;
 
-import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.management.ManagementTools;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.map.KVSSubscription;
-import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
-import net.openhft.chronicle.engine.map.RawKVSSubscription;
-import net.openhft.chronicle.engine.tree.TopologicalEvent;
-import net.openhft.chronicle.engine.tree.TopologySubscription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,108 +29,226 @@ import java.util.Set;
 import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
 
 /**
- * Created by peter on 22/05/15.
+ * A Hierarchical collection of Assets in a tree structure.
  */
 public interface AssetTree extends Closeable {
-    @NotNull
-    static Class<Subscription> getSubscriptionType(@NotNull RequestContext rc) {
-        Class elementType = rc.elementType();
-        return elementType == TopologicalEvent.class
-                ? (Class) TopologySubscription.class
-                : elementType == BytesStore.class
-                ? (Class) RawKVSSubscription.class
-                : (Class) ObjectKVSSubscription.class;
-    }
 
-    @NotNull
-    Asset acquireAsset(@NotNull String fullName) throws AssetNotFoundException;
+    /**
+     * Get the root asset.  This is useful for adding global rules for constructing views.
+     *
+     * @return the root Asset.
+     */
+    Asset root();
 
+    /**
+     * Get an existing Asset by fullName or return null.
+     *
+     * @param fullName of the Asset
+     * @return the Asset or null if it doesn't exist.
+     */
     @Nullable
     Asset getAsset(String fullName);
 
-    Asset root();
-
+    /**
+     * Get or create an asset
+     *
+     * @param fullName of the asset to obtain
+     * @return the asset obtained.
+     */
     @NotNull
-    default <E> Set<E> acquireSet(@NotNull String name, Class<E> eClass) throws AssetNotFoundException {
-        return acquireView(requestContext(name).view("set").type(eClass));
+    Asset acquireAsset(@NotNull String fullName) throws AssetNotFoundException;
+
+    /**
+     * Acquire a set view for a URI.
+     *
+     * @param uri to search for
+     * @param eClass element class.
+     * @return the Set.
+     * @throws AssetNotFoundException the view could not be constructed.
+     */
+    @NotNull
+    default <E> Set<E> acquireSet(@NotNull String uri, Class<E> eClass) throws AssetNotFoundException {
+        return acquireView(requestContext(uri).view("set").type(eClass));
     }
 
+    /**
+     * Acquire a map view for a URI.
+     *
+     * @param uri to search for
+     * @param kClass key class of the map.
+     * @param vClass value class of the map.
+     * @return the Map.
+     * @throws AssetNotFoundException the view could not be constructed.
+     */
     @NotNull
-    default <E> E acquireView(@NotNull RequestContext rc) throws AssetNotFoundException {
-        return acquireAsset(rc.fullName()).acquireView(rc);
+    default <K, V> MapView<K, V, V> acquireMap(@NotNull String uri, Class<K> kClass, Class<V> vClass) throws AssetNotFoundException {
+        return acquireView(requestContext(uri).view("map").type(kClass).type2(vClass));
     }
 
+    /**
+     * Acquire a publisher to a single URI.
+     *
+     * @param uri to search for
+     * @param eClass element class.
+     * @return the Set.
+     * @throws AssetNotFoundException the view could not be constructed.
+     */
     @NotNull
-    default <S> S acquireService(@NotNull String uri, Class<S> service) throws AssetNotFoundException {
-        return acquireView(requestContext(uri).viewType(service));
+    default <E> Publisher<E> acquirePublisher(@NotNull String uri, Class<E> eClass) throws AssetNotFoundException {
+        return acquireView(requestContext(uri).view("pub").type(eClass));
     }
 
+    /**
+     * Acquire a reference to a single URI
+     *
+     * @param uri to search for
+     * @param eClass type of the state referenced
+     * @return a reference to that state.
+     * @throws AssetNotFoundException the view could not be constructed.
+     */
     @NotNull
-    default <K, V> MapView<K, V, V> acquireMap(@NotNull String name, Class<K> kClass, Class<V> vClass) throws AssetNotFoundException {
-        return acquireView(requestContext(name).view("map").type(kClass).type2(vClass));
+    default <E> Reference<E> acquireReference(@NotNull String uri, Class<E> eClass) throws AssetNotFoundException {
+        return acquireView(requestContext(uri).view("ref").type(eClass));
     }
 
+    /**
+     * Acquire a Topic Publisher view for a URI. A Topic Publisher can publish to any topic in a group by passing the topic as an additional argument.
+     *
+     * @param uri to search for
+     * @param topicClass class of topic descriptions e.g. String.class.
+     * @param messageClass class of messages to send on that topic..
+     * @return the TopicPublisher
+     * @throws AssetNotFoundException the view could not be constructed.
+     */
     @NotNull
-    default <E> Publisher<E> acquirePublisher(@NotNull String name, Class<E> eClass) throws AssetNotFoundException {
-        return acquireView(requestContext(name).view("pub").type(eClass));
+    default <T, E> TopicPublisher<T, E> acquireTopicPublisher(@NotNull String uri, Class<T> topicClass, Class<E> messageClass) throws AssetNotFoundException {
+        return acquireView(requestContext(uri).view("topicPub").type(topicClass).type2(messageClass));
     }
 
-    @NotNull
-    default <E> Reference<E> acquireReference(@NotNull String name, Class<E> eClass) throws AssetNotFoundException {
-        return acquireView(requestContext(name).view("ref").type(eClass));
-    }
-
-    @NotNull
-    default <T, E> TopicPublisher<T, E> acquireTopicPublisher(@NotNull String name, Class<T> tClass, Class<E> eClass) throws AssetNotFoundException {
-        return acquireView(requestContext(name).view("topicPub").type(tClass).type2(eClass));
-    }
-
-    default <E> void registerSubscriber(@NotNull String name, Class<E> eClass, Subscriber<E> subscriber) throws AssetNotFoundException {
-        RequestContext rc = requestContext(name).type(eClass);
+    /**
+     * Register a subscriber to a URI with an expected type of message by class.
+     * <p></p>
+     * e.g. if you subscribe to a type of String.class you get the keys which changed, if you subscribe to MapEvent.class you get all the changes to the map.
+     *
+     * @param uri        of the asset to subscribe to.
+     * @param eClass     the type of event/message to subscribe to
+     * @param subscriber to notify which this type of message is sent.
+     * @throws AssetNotFoundException the view could not be constructed.
+     */
+    default <E> void registerSubscriber(@NotNull String uri, Class<E> eClass, Subscriber<E> subscriber) throws AssetNotFoundException {
+        RequestContext rc = requestContext(uri).type(eClass);
         acquireSubscription(rc)
                 .registerSubscriber(rc, subscriber);
     }
 
-    default <T, E> void registerTopicSubscriber(@NotNull String name, Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
-        RequestContext rc = requestContext(name).type(tClass).type2(eClass);
+    /**
+     * Register a topic subscriber to a URI with an expected type of message by topic class and message class
+     *
+     * @param uri          of the asset to subscribe to.
+     * @param topicClass   the type of topic to subscribe to
+     * @param messageClass the type of event/message to subscribe to
+     * @param subscriber   to notify which this type of message is sent.
+     * @throws AssetNotFoundException the view could not be constructed.
+     */
+    default <T, E> void registerTopicSubscriber(@NotNull String uri, Class<T> topicClass, Class<E> messageClass, TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
+        RequestContext rc = requestContext(uri).keyType(topicClass).valueType(messageClass);
         ((KVSSubscription) acquireSubscription(rc)).registerTopicSubscriber(rc, subscriber);
     }
 
+    /**
+     * Acquire the Subscription view for a URI.
+     *
+     * @param requestContext to find the subscription
+     * @return the Subscription
+     * @throws AssetNotFoundException the view could not be constructed.
+     */
     @NotNull
-    default Subscription acquireSubscription(@NotNull RequestContext rc) throws AssetNotFoundException {
-        Asset asset = acquireAsset(rc.fullName());
-        Class<Subscription> subscriptionType = getSubscriptionType(rc);
-        rc.viewType(subscriptionType);
-        return asset.acquireView(subscriptionType, rc);
+    default Subscription acquireSubscription(@NotNull RequestContext requestContext) throws AssetNotFoundException {
+        Asset asset = acquireAsset(requestContext.fullName());
+        Class<Subscription> subscriptionType = requestContext.getSubscriptionType();
+        requestContext.viewType(subscriptionType);
+        return asset.acquireView(subscriptionType, requestContext);
     }
 
-    @Nullable
-    default Subscription getSubscription(@NotNull RequestContext rc) {
-        Class<Subscription> subscriptionType = getSubscriptionType(rc);
-        rc.viewType(subscriptionType);
-        Asset asset = getAsset(rc.fullName());
-        return asset == null ? null : asset.getView(subscriptionType);
-    }
-
-    default <E> void unregisterSubscriber(@NotNull String name, Subscriber<E> subscriber) throws AssetNotFoundException {
-        RequestContext rc = requestContext(name);
+    /**
+     * Remove a subscription.  The alternative is for the Subscription to throw an IllegalSubscriberException.
+     *
+     * @param uri        of the asset subscribed to.
+     * @param subscriber to remove
+     */
+    default <E> void unregisterSubscriber(@NotNull String uri, Subscriber<E> subscriber) {
+        RequestContext rc = requestContext(uri);
         Subscription subscription = getSubscription(rc);
         if (subscription != null)
             subscription.unregisterSubscriber(subscriber);
     }
 
-    default <T, E> void unregisterTopicSubscriber(@NotNull String name, TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
-        RequestContext rc = requestContext(name).viewType(Subscriber.class);
+    /**
+     * Remove a topic subscription.  The alternative is for the Subscription to throw an IllegalSubscriberException.
+     *
+     * @param uri        of the asset subscribed to.
+     * @param subscriber to remove
+     */
+    default <T, E> void unregisterTopicSubscriber(@NotNull String uri, TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
+        RequestContext rc = requestContext(uri).viewType(Subscriber.class);
         Subscription subscription = getSubscription(rc);
         if (subscription instanceof KVSSubscription)
             ((KVSSubscription) acquireSubscription(rc)).unregisterTopicSubscriber(subscriber);
     }
 
-    default void enableManagement() {
-        ManagementTools.enableManagement(this);
+    /**
+     * Get a Subscription view for a URI if ti exists.  This is useful for unsubscribing.
+     *
+     * @param requestContext to find the subscription
+     * @return the Subscription
+     * @throws AssetNotFoundException the view could not be constructed.
+     */
+    @Nullable
+    default Subscription getSubscription(@NotNull RequestContext requestContext) {
+        Asset asset = getAsset(requestContext.fullName());
+        Class<Subscription> subscriptionType = requestContext.getSubscriptionType();
+        requestContext.viewType(subscriptionType);
+        return asset == null ? null : asset.getView(subscriptionType);
     }
 
-    default void disableManagement(){
+    /**
+     * Acquire a generic service by URI and serviceType.
+     *
+     * @param uri         to search for
+     * @param serviceType type of the service
+     * @return the Service
+     * @throws AssetNotFoundException if not found, and could not be created.
+     */
+    @NotNull
+    default <S> S acquireService(@NotNull String uri, Class<S> serviceType) throws AssetNotFoundException {
+        return acquireView(requestContext(uri).viewType(serviceType));
+    }
+
+    /**
+     * Acquire a generic view by ResourceContext.
+     *
+     * @param requestContext to use to search or create the view.
+     * @return the view obtained
+     * @throws AssetNotFoundException if the view could not be created.
+     */
+    @NotNull
+    default <E> E acquireView(@NotNull RequestContext requestContext) throws AssetNotFoundException {
+        return acquireAsset(requestContext.fullName()).acquireView(requestContext);
+    }
+
+    /**
+     * Enable JMX management of this Asset Tree
+     */
+    default AssetTree enableManagement() {
+        ManagementTools.enableManagement(this);
+        return this;
+    }
+
+    /**
+     * Disable JMX management of this Asset Tree
+     */
+    default AssetTree disableManagement(){
         ManagementTools.disableManagement(this);
+        return this;
     }
 }

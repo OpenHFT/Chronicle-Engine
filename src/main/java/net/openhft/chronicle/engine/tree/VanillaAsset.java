@@ -196,7 +196,6 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Nullable
-    @Override
     public <I, U> I createWrappingView(Class viewType, RequestContext rc, @NotNull Asset asset, @Nullable U underling) throws AssetNotFoundException {
         SortedMap<String, WrappingViewRecord> smap = wrappingViewFactoryMap.get(viewType);
         if (smap != null)
@@ -213,7 +212,6 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Nullable
-    @Override
     public <I> I createLeafView(Class viewType, RequestContext rc, Asset asset) throws
             AssetNotFoundException {
         LeafViewFactory lvFactory = leafViewFactoryMap.get(viewType);
@@ -323,7 +321,7 @@ public class VanillaAsset implements Asset, Closeable {
 
     @NotNull
     @Override
-    public Asset acquireAsset(@NotNull String childName) throws AssetNotFoundException {
+    public Asset acquireAsset(@NotNull String childName) {
         if (keyedAsset != Boolean.TRUE) {
             int pos = childName.indexOf('/');
             if (pos == 0) {
