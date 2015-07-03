@@ -19,9 +19,11 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
+import net.openhft.chronicle.network.TCPRegistery;
 import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -58,9 +60,14 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
         methodName(name.getMethodName());
     }
 
+    @AfterClass
+    public static void tearDownClass() {
+        TCPRegistery.assertAllServersStopped();
+    }
     @NotNull
     private ClosableMapSupplier newIntString(@NotNull String name) throws IOException {
         final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(
+                "RemoteChronicleMapBinaryWireTest.host.port",
                 Integer.class, String.class, WireType.BINARY, assetTree, name);
 
         return new ClosableMapSupplier() {
@@ -84,7 +91,9 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     private ClosableMapSupplier<CharSequence, CharSequence> newStrStrMap() throws
             IOException {
 
-        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(CharSequence.class, CharSequence.class, WireType.BINARY, assetTree);
+        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(
+                "RemoteChronicleMapBinaryWireTest.host.port",
+                CharSequence.class, CharSequence.class, WireType.BINARY, assetTree, "test");
 
         return new ClosableMapSupplier() {
 

@@ -27,6 +27,7 @@ import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.fs.Cluster;
 import net.openhft.chronicle.engine.fs.Clusters;
 import net.openhft.chronicle.engine.fs.HostDetails;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
@@ -130,15 +131,15 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
 
         if (hostIdentifier != null) {
             Clusters clusters = asset.findView(Clusters.class);
-            Map<String, HostDetails> hdMap = clusters.get("cluster");
+            Cluster cluster = clusters.get("cluster");
             int localIdentifer = hostIdentifier.hostId();
-            for (HostDetails hostDetails : hdMap.values()) {
+            for (HostDetails hostDetails : cluster.hostDetails()) {
 
                 // its the identifier with the larger values that will establish the connection
                 if (hostDetails.hostId <= localIdentifer)
                     continue;
 
-                final TcpChannelHub tcpChannelHub = hostDetails.acquireTcpChannelHub(eventLoop, context.wireType());
+                final TcpChannelHub tcpChannelHub = hostDetails.acquireTcpChannelHub(asset, eventLoop, context.wireType());
                 ReplicationHub replicationHub = new ReplicationHub(context, tcpChannelHub, eventLoop, isClosed);
 
                 try {

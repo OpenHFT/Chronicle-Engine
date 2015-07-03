@@ -31,9 +31,11 @@ import net.openhft.chronicle.engine.map.MapClientTest.LocalMapSupplier;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
+import net.openhft.chronicle.network.TCPRegistery;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.AfterClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.AllTests;
 
@@ -84,12 +86,17 @@ public class GuavaEngineTest   {
         return tests;
     }
 
+    @AfterClass
+    public void testTearDown() {
+        TCPRegistery.assertAllServersStopped();
+    }
+
     @NotNull
     static ConcurrentMap<CharSequence, CharSequence> newStrStrRemoteMap(@NotNull AssetTree assetTree) {
 
         try {
-            return new RemoteMapSupplier<>(CharSequence.class, CharSequence.class,
-                    WireType.TEXT, assetTree).get();
+            return new RemoteMapSupplier<>("guava.test.host.port", CharSequence.class, CharSequence.class,
+                    WireType.TEXT, assetTree, "test").get();
         } catch (IOException e) {
             throw new IORuntimeException(e);
         }
@@ -178,11 +185,11 @@ public class GuavaEngineTest   {
 
         public RemoteTestGenerator(@NotNull AssetTree assetTree) throws IOException {
             this.assetTree = assetTree;
-            final ServerEndpoint serverEndpoint = new ServerEndpoint(assetTree, WIRE_TYPE);
-            int serverPort = serverEndpoint.getPort();
+            TCPRegistery.createServerSocketChannelFor("guava.test.host.port");
+            final ServerEndpoint serverEndpoint = new ServerEndpoint("guava.test.host.port", assetTree, WIRE_TYPE);
 
             final String hostname = "localhost";
-            this.remoteAssetTree = ((VanillaAssetTree) assetTree).forRemoteAccess(hostname, serverPort, WIRE_TYPE);
+            this.remoteAssetTree = ((VanillaAssetTree) assetTree).forRemoteAccess("guava.test.host.port", WIRE_TYPE);
         }
 
         @NotNull

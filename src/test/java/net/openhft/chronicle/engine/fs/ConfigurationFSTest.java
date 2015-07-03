@@ -46,22 +46,19 @@ public class ConfigurationFSTest {
                 "  host1: {\n" +
                 "     hostId: 1\n" +
                 "     tcpBufferSize: 65536,\n" +
-                "     hostname: localhost,\n" +
-                "     port: 8088,\n" +
+                "     connectUri: localhost:8188,\n" +
                 "     timeoutMs: 1000,\n" +
                 "  },\n" +
                 "  host2: {\n" +
                 "     hostId: 2\n" +
                 "     tcpBufferSize: 65536,\n" +
-                "     hostname: localhost,\n" +
-                "     port: 8088,\n" +
+                "     connectUri: localhost:8288,\n" +
                 "     timeoutMs: 1000,\n" +
                 "  },\n" +
                 "  host3: {\n" +
                 "     hostId: 3\n" +
                 "     tcpBufferSize: 65536,\n" +
-                "     hostname: localhost,\n" +
-                "     port: 8088,\n" +
+                "     connectUri: localhost:8388,\n" +
                 "     timeoutMs: 1000,\n" +
                 "  }\n" +
                 "}\n");

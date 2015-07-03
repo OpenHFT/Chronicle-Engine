@@ -102,7 +102,6 @@ public class VanillaAsset implements Asset, Closeable {
         addWrappingRule(MapView.class, LAST + " string key maps", VanillaMapView::new, ObjectKeyValueStore.class);
 
 
-
         String fullName = fullName();
         HostIdentifier hostIdentifier = findView(HostIdentifier.class);
         if (hostIdentifier != null)
@@ -141,7 +140,7 @@ public class VanillaAsset implements Asset, Closeable {
                 VanillaTopologySubscription::new);
     }
 
-    public void forRemoteAccess(String hostname, int port, Function<Bytes, Wire> wire) throws AssetNotFoundException {
+    public void forRemoteAccess(String hostPortDescription, Function<Bytes, Wire> wire) throws AssetNotFoundException {
         standardStack(true);
 
         addLeafRule(ObjectKVSSubscription.class, LAST + " Remote",
@@ -165,7 +164,7 @@ public class VanillaAsset implements Asset, Closeable {
         if (getView(TcpChannelHub.class) == null) {
             addView(TcpChannelHub.class,
                     Threads.withThreadGroup(findView(ThreadGroup.class),
-                            () -> new TcpChannelHub(sessionProvider, hostname, port,eventLoop, wire)));
+                            () -> new TcpChannelHub(sessionProvider, hostPortDescription, eventLoop, wire)));
         }
     }
 

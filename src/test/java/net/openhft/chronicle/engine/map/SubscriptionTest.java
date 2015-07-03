@@ -24,9 +24,11 @@ import net.openhft.chronicle.engine.api.map.MapEventListener;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
+import net.openhft.chronicle.network.TCPRegistery;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -78,6 +80,11 @@ public class SubscriptionTest extends ThreadMonitoringTest {
         methodName(name.getMethodName());
     }
 
+    @AfterClass
+    public static void tearDownClass() {
+        TCPRegistery.assertAllServersStopped();
+    }
+
     @Test
     public void testSubscriptionTest() throws IOException, InterruptedException {
         MapEventListener<String, Factor> listener;
@@ -106,11 +113,10 @@ public class SubscriptionTest extends ThreadMonitoringTest {
         VanillaAssetTree assetTree;
         if (isRemote) {
             WireType wireType = WireType.TEXT;
+            TCPRegistery.createServerSocketChannelFor("testSubscriptionTest.host.port");
+            serverEndpoint = new ServerEndpoint("testSubscriptionTest.host.port", serverAssetTree, wireType);
 
-            serverEndpoint = new ServerEndpoint(serverAssetTree, wireType);
-            final int port = serverEndpoint.getPort();
-
-            assetTree = new VanillaAssetTree().forRemoteAccess("localhost", port, wireType);
+            assetTree = new VanillaAssetTree().forRemoteAccess("testSubscriptionTest.host.port", wireType);
         } else {
             assetTree = serverAssetTree;
         }
@@ -161,7 +167,6 @@ public class SubscriptionTest extends ThreadMonitoringTest {
 
         verify(listener);
     }
-
 
 
 }

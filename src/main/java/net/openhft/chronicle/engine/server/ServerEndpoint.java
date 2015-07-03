@@ -46,33 +46,24 @@ public class ServerEndpoint implements Closeable {
     @NotNull
     private AtomicBoolean isClosed = new AtomicBoolean();
 
-    public ServerEndpoint(@NotNull AssetTree assetTree, Function<Bytes, Wire> wire) throws
-            IOException {
-        this(0, assetTree, wire);
-    }
-
-    public ServerEndpoint(int port, @NotNull AssetTree assetTree, Function<Bytes, Wire> wire) throws IOException {
+    public ServerEndpoint(String hostPortDescription, @NotNull AssetTree assetTree, Function<Bytes, Wire> wire) throws IOException {
         eg = assetTree.root().acquireView(EventLoop.class, RequestContext.requestContext());
         Threads.withThreadGroup(assetTree.root().getView(ThreadGroup.class), () -> {
-            start(port, assetTree, wire);
+            start(hostPortDescription, assetTree, wire);
             return null;
         });
     }
 
     @Nullable
-    public AcceptorEventHandler start(int port, @NotNull final AssetTree asset, Function<Bytes, Wire> wire) throws IOException {
+    public AcceptorEventHandler start(String hostPortDescription, @NotNull final AssetTree asset, Function<Bytes, Wire> wire) throws IOException {
         eg.start();
 
-        AcceptorEventHandler eah = new AcceptorEventHandler(port, () -> new EngineWireHandler
-                (wire, asset, isClosed), VanillaSessionDetails::new);
+        AcceptorEventHandler eah = new AcceptorEventHandler(hostPortDescription,
+                () -> new EngineWireHandler(wire, asset, isClosed), VanillaSessionDetails::new);
 
         eg.addHandler(eah);
         this.eah = eah;
         return eah;
-    }
-
-    public int getPort() throws IOException {
-        return eah.getLocalPort();
     }
 
     public void stop() {

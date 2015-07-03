@@ -20,6 +20,7 @@ import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
+import net.openhft.chronicle.network.TCPRegistery;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
@@ -37,6 +38,7 @@ public class RemoteRpc extends JSR166TestCase {
     @NotNull
     @Rule
     public TestName name = new TestName();
+    AssetTree assetTree;
 
     @NotNull
 
@@ -46,7 +48,10 @@ public class RemoteRpc extends JSR166TestCase {
         methodName(name.getMethodName());
     }
 
-    AssetTree assetTree;
+    @AfterClass
+    public static void tearDownClass() {
+        TCPRegistery.assertAllServersStopped();
+    }
 
     /**
      * clear removes all pairs
@@ -57,7 +62,7 @@ public class RemoteRpc extends JSR166TestCase {
 
         YamlLogging.clientWrites = true;
         YamlLogging.clientReads = true;
-        assetTree = (new VanillaAssetTree(1)).forRemoteAccess("192.168.1.76", 8088, WIRE_TYPE);
+        assetTree = (new VanillaAssetTree(1)).forRemoteAccess("192.168.1.76:8088", WIRE_TYPE);
 
         MapView<String, String, String> map = assetTree.acquireMap("/test", String.class, String.class);
         map.put("hello", "world");
@@ -86,7 +91,7 @@ public class RemoteRpc extends JSR166TestCase {
 
         YamlLogging.clientWrites = true;
         YamlLogging.clientReads = true;
-        assetTree = (new VanillaAssetTree(1)).forRemoteAccess("192.168.1.76", 8088, WIRE_TYPE);
+        assetTree = (new VanillaAssetTree(1)).forRemoteAccess("192.168.1.76:8088", WIRE_TYPE);
 
         MapView<String, String, String> map = assetTree.acquireMap("/test", String.class, String.class);
         map.put("hello", "world");

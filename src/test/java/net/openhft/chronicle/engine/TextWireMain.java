@@ -35,7 +35,7 @@ public class TextWireMain {
         // the default is BinaryWire
         int port = 8088;
         VanillaAssetTree assetTree = new VanillaAssetTree().forTesting(false);
-        final ServerEndpoint serverEndpoint = new ServerEndpoint(port, assetTree, WIRE_TYPE);
+        final ServerEndpoint serverEndpoint = new ServerEndpoint("localhost:" + port, assetTree, WIRE_TYPE);
 
         if (args.length == 1 && args[0].compareTo("-debug") == 0)
         {
@@ -43,6 +43,6 @@ public class TextWireMain {
             YamlLogging.showServerReads = true;
             YamlLogging.showServerWrites = true;
         }
-        System.out.println("Server port seems to be " + serverEndpoint.getPort());
+        System.out.println("Server port seems to be " + port);
     }
 }

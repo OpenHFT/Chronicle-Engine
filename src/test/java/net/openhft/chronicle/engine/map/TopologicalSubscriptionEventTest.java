@@ -25,6 +25,7 @@ import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.*;
+import net.openhft.chronicle.network.TCPRegistery;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
@@ -45,7 +46,6 @@ import java.util.function.Function;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
-import static org.easymock.EasyMock.verify;
 
 /**
  * test using the listener both remotely or locally via the engine
@@ -80,18 +80,6 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
         );
     }
 
-    private static void waitFor(Object subscriber) {
-        for (int i = 1; i < 10; i++) {
-            Jvm.pause(i);
-            try {
-                verify(subscriber);
-            } catch (AssertionError e) {
-                // retry
-            }
-        }
-        verify(subscriber);
-    }
-
     @Before
     public void before() throws IOException {
         serverAssetTree = new VanillaAssetTree().forTesting();
@@ -99,10 +87,10 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
         if (isRemote) {
 
             methodName(name.getMethodName());
+            TCPRegistery.createServerSocketChannelFor("TopologicalSubscriptionEventTest.host.port");
+            serverEndpoint = new ServerEndpoint("TopologicalSubscriptionEventTest.host.port", serverAssetTree, wireType);
 
-            serverEndpoint = new ServerEndpoint(serverAssetTree, wireType);
-
-            clientAssetTree = new VanillaAssetTree().forRemoteAccess("localhost", serverEndpoint.getPort(), wireType);
+            clientAssetTree = new VanillaAssetTree().forRemoteAccess("TopologicalSubscriptionEventTest.host.port", wireType);
         } else
             clientAssetTree = serverAssetTree;
 
@@ -116,6 +104,7 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
             serverEndpoint.close();
         serverAssetTree.close();
 
+        TCPRegistery.assertAllServersStopped();
     }
 
 

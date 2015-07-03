@@ -15,6 +15,7 @@ import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
+import net.openhft.chronicle.network.TCPRegistery;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
@@ -54,14 +55,16 @@ public class ReplicationTest {
         //Delete any files from the last run
         Files.deleteIfExists(Paths.get(OS.TARGET, NAME));
 
+        TCPRegistery.createServerSocketChannelFor("host.port1", "host.port2", "host.port3");
+
         WireType writeType = WireType.TEXT;
         tree1 = create(1, writeType);
         tree2 = create(2, writeType);
         tree3 = create(3, writeType);
 
-        serverEndpoint1 = new ServerEndpoint(8080, tree1, writeType);
-        serverEndpoint2 = new ServerEndpoint(8081, tree2, writeType);
-        serverEndpoint3 = new ServerEndpoint(8082, tree3, writeType);
+        serverEndpoint1 = new ServerEndpoint("host.port1", tree1, writeType);
+        serverEndpoint2 = new ServerEndpoint("host.port2", tree2, writeType);
+        serverEndpoint3 = new ServerEndpoint("host.port3", tree3, writeType);
 
     }
 
@@ -77,6 +80,8 @@ public class ReplicationTest {
         if (tree2 != null)
             tree2.close();
         tree3.close();
+        TCPRegistery.reset();
+        // TODO TCPRegistery.assertAllServersStopped();
     }
 
     @NotNull

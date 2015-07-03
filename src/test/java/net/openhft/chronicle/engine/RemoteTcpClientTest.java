@@ -21,13 +21,11 @@ import net.openhft.chronicle.bytes.NativeBytes;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
-import net.openhft.chronicle.wire.*;
+import net.openhft.chronicle.network.TCPRegistery;
+import net.openhft.chronicle.wire.Wire;
+import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TestName;
 
 import java.io.IOException;
@@ -53,6 +51,12 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
         methodName(name.getMethodName());
     }
 
+    @AfterClass
+    public static void tearDownClass() {
+//   todo     TCPRegistery.assertAllServersStopped();
+        TCPRegistery.reset();
+    }
+
     @Test(timeout = 100000)
     @Ignore("performance test")
     public void testLargeStringTextWire() throws IOException {
@@ -70,9 +74,9 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     private void testStrings(int noPutsAndGets, int valueLength, Function<Bytes, Wire> wireType) throws IOException {
 
         try (final RemoteMapSupplier<CharSequence, CharSequence> remote = new
-                RemoteMapSupplier<>(CharSequence.class,
+                RemoteMapSupplier<>("testStrings.host.port", CharSequence.class,
                 CharSequence.class,
-                WireType.BINARY, assetTree)) {
+                wireType, assetTree, "test")) {
 
             ConcurrentMap test = remote.get();
 
@@ -120,9 +124,9 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
         // server
         try (final RemoteMapSupplier<String, String> remote = new
-                RemoteMapSupplier<>(String.class,
+                RemoteMapSupplier<>("test2MBEntries.host.port", String.class,
                 String.class,
-                WireType.BINARY, assetTree)) {
+                WireType.BINARY, assetTree, "test")) {
 
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < 50_000; i++) {
@@ -145,9 +149,9 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     public void testLargeUpdates() throws IOException, InterruptedException {
         String value = new String(new char[1024*1024]).replace("\0", "X");
         try (final RemoteMapSupplier<String, String> remote = new
-                RemoteMapSupplier<>(String.class,
+                RemoteMapSupplier<>("testLargeUpdates.host.port", String.class,
                 String.class,
-                WireType.BINARY, assetTree)) {
+                WireType.BINARY, assetTree, "test")) {
 
             final long time = System.currentTimeMillis();
             final ConcurrentMap<String, String> map = remote.get();
@@ -164,9 +168,9 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
         // server
         try (final RemoteMapSupplier<String, String> remote = new
-                RemoteMapSupplier<>(String.class,
+                RemoteMapSupplier<>("testValuesCollection.host.port", String.class,
                 String.class,
-                WireType.BINARY, assetTree))
+                WireType.BINARY, assetTree, "test"))
         {
             final ConcurrentMap<String, String> map = remote.get();
             HashMap<String, String> data = new HashMap<String, String>();
@@ -186,47 +190,6 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
             Object[] dataValues = data.values().toArray();
             Arrays.sort(dataValues);
             assertArrayEquals(dataValues, values.toArray());
-        }
-    }
-
-    class MyMarshallable implements Marshallable {
-
-        @Nullable
-        String someData;
-
-        public MyMarshallable(String someData) {
-            this.someData = someData;
-        }
-
-        @Override
-        public void writeMarshallable(@NotNull WireOut wire) {
-            wire.write(() -> "MyField").text(someData);
-        }
-
-        @Override
-        public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
-            someData = wire.read(() -> "MyField").text();
-        }
-
-        @Override
-        public boolean equals(@Nullable Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            MyMarshallable that = (MyMarshallable) o;
-
-            return Objects.equals(someData, that.someData);
-        }
-
-        @Override
-        public int hashCode() {
-            return someData != null ? someData.hashCode() : 0;
-        }
-
-        @NotNull
-        @Override
-        public String toString() {
-            return "MyMarshable{" + "someData='" + someData + '\'' + '}';
         }
     }
 }

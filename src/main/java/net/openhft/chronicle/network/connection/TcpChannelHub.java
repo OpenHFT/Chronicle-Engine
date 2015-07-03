@@ -22,6 +22,7 @@ import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.api.tree.View;
+import net.openhft.chronicle.network.TCPRegistery;
 import net.openhft.chronicle.network.api.session.SessionDetails;
 import net.openhft.chronicle.threads.HandlerPriority;
 import net.openhft.chronicle.threads.NamedThreadFactory;
@@ -58,7 +59,6 @@ import static java.text.MessageFormat.format;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static net.openhft.chronicle.bytes.Bytes.elasticByteBuffer;
-
 import static net.openhft.chronicle.engine.server.internal.SystemHandler.EventId.*;
 
 
@@ -99,21 +99,19 @@ public class TcpChannelHub implements View, Closeable {
     // set up in the header
     private long startTime;
     private volatile boolean closed;
-    private String hostname;
-    private int port;
     private final Wire handShakingWire;
+    private final String description;
 
     public TcpChannelHub(@NotNull SessionProvider sessionProvider,
-                         @NotNull String hostname, int port,
+                         @NotNull String description,
                          @NotNull EventLoop eventLoop,
-                         @NotNull  Function<Bytes, Wire> wire) {
+                         @NotNull Function<Bytes, Wire> wire) {
+        this.description = description;
 
         this.eventLoop = eventLoop;
-        this.hostname = hostname;
-        this.port = port;
-        this.tcpSocketConsumer = new TcpSocketConsumer(wire, hostname);
+        this.tcpSocketConsumer = new TcpSocketConsumer(wire, description);
         this.tcpBufferSize = 64 << 10;
-        this.remoteAddress = new InetSocketAddress(hostname, port);
+        this.remoteAddress = TCPRegistery.lookup(description);
         this.outWire = wire.apply(elasticByteBuffer());
         this.inWire = wire.apply(elasticByteBuffer());
         this.name = " connected to " + remoteAddress.toString();
@@ -427,7 +425,7 @@ public class TcpChannelHub implements View, Closeable {
             }
         } catch (IOException e) {
             closeSocket();
-            throw new IORuntimeException("server=" + hostname + ":" + port, e);
+            throw new IORuntimeException("server= " + description + "/" + TCPRegistery.lookup(description));
         } catch (Exception e) {
             LOG.error("", e);
             closeSocket();
@@ -503,7 +501,7 @@ public class TcpChannelHub implements View, Closeable {
             int len = socketChannel.write(outBuffer);
 
             if (len == -1)
-                throw new IORuntimeException("Disconnection to server " + hostname + ":" + port);
+                throw new IORuntimeException("Disconnection to server " + description + "/" + TCPRegistery.lookup(description));
 
             if (outBuffer.remaining() == 0)
                 break;
@@ -747,11 +745,11 @@ public class TcpChannelHub implements View, Closeable {
                 bytes.wait(timeoutTimeMs);
                 if (clientChannel == null) {
                     IORuntimeException e = new IORuntimeException("Unable to " +
-                            "reprocess response, as the server=" + hostname + ":" + port + " is " +
+                            "reprocess response, as the server=" + description + "/" + TCPRegistery.lookup(description) + " is " +
                             "disconnected");
 
                     if (LOG.isDebugEnabled())
-                        LOG.debug(hostname + ":" + port, e);
+                        LOG.debug(description + "/" + TCPRegistery.lookup(description), e);
                     throw Jvm.rethrow(e);
                 }
             }
@@ -1009,7 +1007,7 @@ public class TcpChannelHub implements View, Closeable {
                         reConnect();
                     //   throw new IORuntimeException("Disconnection to server " + hostname + ":" +                        port);
                     if (isShutdown)
-                        throw new IORuntimeException("The server was shutdown, " + hostname + ":" + port);
+                        throw new IORuntimeException("The server was shutdown, " + description + "/" + TCPRegistery.lookup(description));
                 } catch (InterruptedException e) {
                     LOG.error("", e);
                 }
@@ -1044,7 +1042,7 @@ public class TcpChannelHub implements View, Closeable {
                     long roundTipTimeMicros = NANOSECONDS.toMicros(System.nanoTime() - l);
                     if (LOG.isDebugEnabled())
                         LOG.debug(format("{0}:{1}heartbeat round trip time={2}us",
-                                TcpChannelHub.this.hostname, TcpChannelHub.this.port,
+                                description, TCPRegistery.lookup(description),
                                 roundTipTimeMicros));
                     inWire.clear();
 

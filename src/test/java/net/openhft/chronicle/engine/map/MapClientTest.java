@@ -22,10 +22,12 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.Assetted;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
+import net.openhft.chronicle.network.TCPRegistery;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,7 +44,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
-
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
@@ -71,6 +72,11 @@ public class MapClientTest extends ThreadMonitoringTest {
                 {LocalMapSupplier.class},
                 // {RemoteMapSupplier.class}
         });
+    }
+
+    @AfterClass
+    public static void tearDownClass() {
+        TCPRegistery.assertAllServersStopped();
     }
 
     @Test(timeout = 50000)
@@ -292,7 +298,7 @@ public class MapClientTest extends ThreadMonitoringTest {
             result = new LocalMapSupplier<>(kClass, vClass, assetTree);
 
         } else if (RemoteMapSupplier.class.equals(supplier)) {
-            result = new RemoteMapSupplier<>(kClass, vClass, WireType.TEXT, assetTree);
+            result = new RemoteMapSupplier<>("test", kClass, vClass, WireType.TEXT, assetTree, "test");
 
         } else {
             throw new IllegalStateException("unsuported type");
@@ -313,50 +319,38 @@ public class MapClientTest extends ThreadMonitoringTest {
     public static class RemoteMapSupplier<K, V> implements CloseableSupplier<ConcurrentMap<K, V>> {
 
         @NotNull
-        final ServerEndpoint serverEndpoint;
+        private final ServerEndpoint serverEndpoint;
         @NotNull
         private final ConcurrentMap<K, V> map;
-        @NotNull
-        private final AssetTree assetTree;
+        private final AssetTree serverAssetTree;
+        private final AssetTree clientAssetTree;
 
-        public RemoteMapSupplier(@NotNull final Class<K> kClass,
-                                 @NotNull final Class<V> vClass,
-                                 @NotNull final Function<Bytes, Wire> wireType,
-                                 @NotNull final AssetTree assetTree,
-                                 @NotNull final String name) throws IOException {
-            this.assetTree = assetTree;
+        public RemoteMapSupplier(
+                String hostPortDescription,
+                @NotNull final Class<K> kClass,
+                @NotNull final Class<V> vClass,
+                @NotNull final Function<Bytes, Wire> wireType,
+                @NotNull final AssetTree clientAssetTree,
+                @NotNull final String name) throws IOException {
+            this.clientAssetTree = clientAssetTree;
 
+            serverAssetTree = new VanillaAssetTree().forTesting(true);
+            TCPRegistery.createServerSocketChannelFor(hostPortDescription);
+            serverEndpoint = new ServerEndpoint(hostPortDescription, serverAssetTree, wireType);
+            ((VanillaAssetTree) clientAssetTree).forRemoteAccess(hostPortDescription, wireType);
 
-            serverEndpoint = new ServerEndpoint(new VanillaAssetTree().forTesting(), WIRE_TYPE);
-            int serverPort = serverEndpoint.getPort();
-
-            final String hostname = "localhost";
-
-            ((VanillaAssetTree) assetTree).forRemoteAccess(hostname, serverPort, WIRE_TYPE);
-
-            map = assetTree.acquireMap(
-                    name,
-                    kClass,
-                    vClass);
+            map = clientAssetTree.acquireMap(name, kClass, vClass);
 
             if (!(((Assetted) map).underlying() instanceof RemoteKeyValueStore)) {
                 throw new IllegalStateException();
             }
-
-        }
-
-        public RemoteMapSupplier(@NotNull final Class<K> kClass,
-                                 @NotNull final Class<V> vClass,
-                                 @NotNull final Function<Bytes, Wire> wireType,
-                                 @NotNull final AssetTree assetTree) throws IOException {
-            this(kClass, vClass, wireType, assetTree, "test");
         }
 
         @Override
         public void close() throws IOException {
             if (map instanceof Closeable)
                 ((Closeable) map).close();
-            assetTree.close();
+            serverAssetTree.close();
             serverEndpoint.close();
         }
 
