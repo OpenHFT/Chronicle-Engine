@@ -48,13 +48,13 @@ public class ReplicationClientMultipleAssetsMain {
         {
             String hostname = System.getProperty("host1", "localhost");
             int port = Integer.getInteger("port1", 5701);
-            map1 = create("map", hostId, hostname, port, q1, wireType);
+            map1 = create("map", hostId, hostname + ":" + port, q1, wireType);
         }
 
         {
             String hostname = System.getProperty("host2", "localhost");
             int port = Integer.getInteger("port2", 5702);
-            map2 = create("map", hostId, hostname, port, q2, wireType);
+            map2 = create("map", hostId, hostname + ":" + port, q2, wireType);
         }
 
         map1.put("hello", "world");
@@ -73,12 +73,12 @@ public class ReplicationClientMultipleAssetsMain {
     }
 
 
-    private static MapView<String, String, String> create(String nameName, Integer hostId, String hostName, int port,
+    private static MapView<String, String, String> create(String nameName, Integer hostId, String connectUri,
                                                           BlockingQueue<MapEvent> q, Function<Bytes, Wire> wireType) {
         final VanillaAssetTree tree = new VanillaAssetTree(hostId);
 
         final Asset asset = tree.root().acquireAsset(nameName);
-        ThreadGroup threadGroup = new ThreadGroup("host=" + hostName);
+        ThreadGroup threadGroup = new ThreadGroup("host=" + connectUri);
         tree.root().addView(ThreadGroup.class, threadGroup);
 
         tree.root().addLeafRule(ObjectKVSSubscription.class, " ObjectKVSSubscription",
@@ -91,7 +91,7 @@ public class ReplicationClientMultipleAssetsMain {
         EventGroup eventLoop = new EventGroup(true);
         SessionProvider sessionProvider = new VanillaSessionProvider();
 
-        tree.root().addView(TcpChannelHub.class, new TcpChannelHub(sessionProvider, hostName, port, eventLoop, wireType));
+        tree.root().addView(TcpChannelHub.class, new TcpChannelHub(sessionProvider, connectUri, eventLoop, wireType));
         asset.addView(AuthenticatedKeyValueStore.class, new RemoteKeyValueStore(requestContext(nameName), asset));
 
         MapView<String, String, String> result = tree.acquireMap(nameName, String.class, String.class);

@@ -7,6 +7,7 @@ import net.openhft.chronicle.engine.api.pubsub.Replication;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.api.tree.Asset;
+import net.openhft.chronicle.engine.fs.Cluster;
 import net.openhft.chronicle.engine.fs.Clusters;
 import net.openhft.chronicle.engine.fs.HostDetails;
 import net.openhft.chronicle.engine.map.*;
@@ -68,7 +69,7 @@ public class ReplicationServerMain {
                 VanillaKVSSubscription::new);
 
 
-        new ServerEndpoint(5700 + host, tree, wireType);
+        new ServerEndpoint("localhost:" + (5700 + host), tree, wireType);
     }
 
 
@@ -79,22 +80,20 @@ public class ReplicationServerMain {
         {
             final HostDetails value = new HostDetails();
             value.hostId = 1;
-            value.hostname = host == 1 ? "localhost" : HOST;
-            value.port = 5701;
+            value.connectUri = (host == 1 ? "localhost" : HOST) + ":" + 5701;
             value.timeoutMs = 1000;
             hostDetailsMap.put("host1", value);
         }
         {
             final HostDetails value = new HostDetails();
             value.hostId = 2;
-            value.hostname = host == 2 ? "localhost" : HOST;
-            value.port = 5702;
+            value.connectUri = (host == 1 ? "localhost" : HOST) + ":" + 5702;
             value.timeoutMs = 1000;
             hostDetailsMap.put("host2", value);
         }
 
 
-        clusters.put("cluster", hostDetailsMap);
+        clusters.put("cluster", new Cluster("hosts", hostDetailsMap));
         tree.root().addView(Clusters.class, clusters);
     }
 }
