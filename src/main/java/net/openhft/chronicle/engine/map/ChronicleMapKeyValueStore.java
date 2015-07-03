@@ -98,8 +98,8 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
                     .createWithId(hostIdentifier.hostId()));
 
         } catch (AssetNotFoundException anfe) {
-            if (LOGGER.isDebugEnabled())
-                LOGGER.debug("replication not enabled " + anfe.getMessage());
+            if (LOGGER.isInfoEnabled())
+                LOGGER.info("replication not enabled " + anfe.getMessage());
         }
 
         this.engineReplicator = engineReplicator1;
