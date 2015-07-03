@@ -171,16 +171,26 @@ public class CMap2EngineReplicator implements EngineReplication,
         };
     }
 
+    /**
+     * @param remoteIdentifier the identifier of the remote node to check last replicated update
+     *                         time from
+     * @return the last time that host denoted by the {@code remoteIdentifier} was updated in milliseconds.
+     */
+
     @Override
     public long lastModificationTime(final byte remoteIdentifier) {
         return engineReplicationLang.lastModificationTime(remoteIdentifier);
     }
 
+    /**
+     * @param identifier the identifier of the remote node to check last replicated update
+     *                   time from
+     * @param timestamp  set the last time that host denoted by the {@code remoteIdentifier} was updated in milliseconds.
+     */
     @Override
     public void setLastModificationTime(final byte identifier, final long timestamp) {
         engineReplicationLang.setLastModificationTime(identifier, timestamp);
     }
-
 
 
     @NotNull
@@ -215,7 +225,7 @@ public class CMap2EngineReplicator implements EngineReplication,
          *                           event are not send in chronological order from the bit set.
          */
         VanillaReplicatedEntry(@NotNull final BytesStore key,
-                               @NotNull final BytesStore value,
+                               @Nullable final BytesStore value,
                                final long timestamp,
                                final byte identifier,
                                final boolean isDeleted,
