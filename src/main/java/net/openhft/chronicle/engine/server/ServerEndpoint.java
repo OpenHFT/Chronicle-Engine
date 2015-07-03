@@ -15,6 +15,7 @@
  */
 package net.openhft.chronicle.engine.server;
 
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
@@ -23,11 +24,13 @@ import net.openhft.chronicle.network.AcceptorEventHandler;
 import net.openhft.chronicle.network.VanillaSessionDetails;
 import net.openhft.chronicle.threads.Threads;
 import net.openhft.chronicle.threads.api.EventLoop;
+import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
 import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
 
@@ -43,25 +46,25 @@ public class ServerEndpoint implements Closeable {
     @NotNull
     private AtomicBoolean isClosed = new AtomicBoolean();
 
-    public ServerEndpoint(@NotNull AssetTree assetTree) throws
+    public ServerEndpoint(@NotNull AssetTree assetTree, Function<Bytes, Wire> wire) throws
             IOException {
-        this(0, assetTree);
+        this(0, assetTree, wire);
     }
 
-    public ServerEndpoint(int port, @NotNull AssetTree assetTree) throws IOException {
+    public ServerEndpoint(int port, @NotNull AssetTree assetTree, Function<Bytes, Wire> wire) throws IOException {
         eg = assetTree.root().acquireView(EventLoop.class, RequestContext.requestContext());
         Threads.withThreadGroup(assetTree.root().getView(ThreadGroup.class), () -> {
-            start(port, assetTree);
+            start(port, assetTree, wire);
             return null;
         });
     }
 
     @Nullable
-    public AcceptorEventHandler start(int port, @NotNull final AssetTree asset) throws IOException {
+    public AcceptorEventHandler start(int port, @NotNull final AssetTree asset, Function<Bytes, Wire> wire) throws IOException {
         eg.start();
 
         AcceptorEventHandler eah = new AcceptorEventHandler(port, () -> new EngineWireHandler
-                (WireType.wire, asset, isClosed), VanillaSessionDetails::new);
+                (wire, asset, isClosed), VanillaSessionDetails::new);
 
         eg.addHandler(eah);
         this.eah = eah;

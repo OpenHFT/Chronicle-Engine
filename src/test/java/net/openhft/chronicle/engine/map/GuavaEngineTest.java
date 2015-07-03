@@ -49,6 +49,7 @@ import static com.google.common.collect.testing.features.MapFeature.*;
 
 @RunWith(AllTests.class)
 public class GuavaEngineTest   {
+    public static final WireType WIRE_TYPE = WireType.TEXT;
 
     @NotNull
     public static Test suite() throws IOException {
@@ -177,11 +178,11 @@ public class GuavaEngineTest   {
 
         public RemoteTestGenerator(@NotNull AssetTree assetTree) throws IOException {
             this.assetTree = assetTree;
-            final ServerEndpoint serverEndpoint = new ServerEndpoint(assetTree);
+            final ServerEndpoint serverEndpoint = new ServerEndpoint(assetTree, WIRE_TYPE);
             int serverPort = serverEndpoint.getPort();
 
             final String hostname = "localhost";
-            this.remoteAssetTree = ((VanillaAssetTree) assetTree).forRemoteAccess(hostname, serverPort);
+            this.remoteAssetTree = ((VanillaAssetTree) assetTree).forRemoteAccess(hostname, serverPort, WIRE_TYPE);
         }
 
         @NotNull

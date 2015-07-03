@@ -134,11 +134,11 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
             int localIdentifer = hostIdentifier.hostId();
             for (HostDetails hostDetails : hdMap.values()) {
 
-                // its the identifier with the larger values that will establish the conneciton
+                // its the identifier with the larger values that will establish the connection
                 if (hostDetails.hostId <= localIdentifer)
                     continue;
 
-                final TcpChannelHub tcpChannelHub = hostDetails.acquireTcpChannelHub(eventLoop);
+                final TcpChannelHub tcpChannelHub = hostDetails.acquireTcpChannelHub(eventLoop, context.wireType());
                 ReplicationHub replicationHub = new ReplicationHub(context, tcpChannelHub, eventLoop, isClosed);
 
                 try {

@@ -62,9 +62,9 @@ public class ChronicleMapKeyValueStoreTest {
         ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
         //Delete any files from the last run
         Files.deleteIfExists(Paths.get(OS.TARGET, NAME));
-        tree1 = create(1);
-        tree2 = create(2);
-        tree3 = create(3);
+        tree1 = create(1, WireType.TEXT);
+        tree2 = create(2, WireType.TEXT);
+        tree3 = create(3, WireType.TEXT);
     }
 
     @AfterClass
@@ -75,8 +75,7 @@ public class ChronicleMapKeyValueStoreTest {
     }
 
     @NotNull
-    private static AssetTree create(final int hostId) {
-        Function<Bytes, Wire> writeType = WireType.TEXT;
+    private static AssetTree create(final int hostId, Function<Bytes, Wire> writeType) {
         AssetTree tree = new VanillaAssetTree((byte) hostId)
                 .forTesting()
                 .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);

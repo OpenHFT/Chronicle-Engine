@@ -38,7 +38,7 @@ import static org.junit.Assert.assertNotNull;
  */
 
 public class ReplicationTest {
-
+    public static final WireType WIRE_TYPE = WireType.TEXT;
     public static final String NAME = "/ChMaps/test";
     public static ServerEndpoint serverEndpoint1;
     public static ServerEndpoint serverEndpoint2;
@@ -54,13 +54,14 @@ public class ReplicationTest {
         //Delete any files from the last run
         Files.deleteIfExists(Paths.get(OS.TARGET, NAME));
 
-        tree1 = create(1);
-        tree2 = create(2);
-        tree3 = create(3);
+        WireType writeType = WireType.TEXT;
+        tree1 = create(1, writeType);
+        tree2 = create(2, writeType);
+        tree3 = create(3, writeType);
 
-        serverEndpoint1 = new ServerEndpoint(8080, tree1);
-        serverEndpoint2 = new ServerEndpoint(8081, tree2);
-        serverEndpoint3 = new ServerEndpoint(8082, tree3);
+        serverEndpoint1 = new ServerEndpoint(8080, tree1, writeType);
+        serverEndpoint2 = new ServerEndpoint(8081, tree2, writeType);
+        serverEndpoint3 = new ServerEndpoint(8082, tree3, writeType);
 
     }
 
@@ -79,8 +80,7 @@ public class ReplicationTest {
     }
 
     @NotNull
-    private static AssetTree create(final int hostId) {
-        Function<Bytes, Wire> writeType = WireType.TEXT;
+    private static AssetTree create(final int hostId, Function<Bytes, Wire> writeType) {
         AssetTree tree = new VanillaAssetTree((byte) hostId)
                 .forTesting()
                 .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);

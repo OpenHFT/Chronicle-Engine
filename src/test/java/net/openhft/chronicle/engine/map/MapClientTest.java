@@ -42,7 +42,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
-import static net.openhft.chronicle.engine.server.WireType.wire;
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
@@ -53,13 +53,13 @@ import static org.junit.Assert.assertEquals;
  */
 @RunWith(value = Parameterized.class)
 public class MapClientTest extends ThreadMonitoringTest {
-
     private static int i;
     // server has it's own asset tree, to the client.
     @NotNull
     private final AssetTree assetTree = new VanillaAssetTree().forTesting();
     @Nullable
     private Class<? extends CloseableSupplier> supplier = null;
+    public static final WireType WIRE_TYPE = WireType.TEXT;
 
     public MapClientTest(Class<? extends CloseableSupplier> supplier) {
         this.supplier = supplier;
@@ -201,8 +201,7 @@ public class MapClientTest extends ThreadMonitoringTest {
 
             Iterator<String> it = mapProxy.values().iterator();
             ArrayList<String> values = new ArrayList<>();
-            while (it.hasNext())
-            {
+            while (it.hasNext()) {
                 values.add(it.next());
             }
             Collections.sort(values);
@@ -247,9 +246,9 @@ public class MapClientTest extends ThreadMonitoringTest {
     @org.junit.Ignore("Will be very slow, of course")
     @Test
     public void testLargeUpdates() throws IOException, InterruptedException {
-        String val = new String(new char[1024*1024]).replace("\0", "X");
+        String val = new String(new char[1024 * 1024]).replace("\0", "X");
         supplyMap(String.class, String.class, mapProxy -> {
-            for (int j = 0; j < 30*1000; j++) {
+            for (int j = 0; j < 30 * 1000; j++) {
                 mapProxy.put("key", val);
             }
         });
@@ -326,14 +325,14 @@ public class MapClientTest extends ThreadMonitoringTest {
                                  @NotNull final AssetTree assetTree,
                                  @NotNull final String name) throws IOException {
             this.assetTree = assetTree;
-            wire = wireType;
 
-            serverEndpoint = new ServerEndpoint(new VanillaAssetTree().forTesting());
+
+            serverEndpoint = new ServerEndpoint(new VanillaAssetTree().forTesting(), WIRE_TYPE);
             int serverPort = serverEndpoint.getPort();
 
             final String hostname = "localhost";
 
-            ((VanillaAssetTree) assetTree).forRemoteAccess(hostname, serverPort);
+            ((VanillaAssetTree) assetTree).forRemoteAccess(hostname, serverPort, WIRE_TYPE);
 
             map = assetTree.acquireMap(
                     name,
@@ -350,7 +349,7 @@ public class MapClientTest extends ThreadMonitoringTest {
                                  @NotNull final Class<V> vClass,
                                  @NotNull final Function<Bytes, Wire> wireType,
                                  @NotNull final AssetTree assetTree) throws IOException {
-            this(kClass,vClass,wireType,assetTree,"test");
+            this(kClass, vClass, wireType, assetTree, "test");
         }
 
         @Override
@@ -367,6 +366,7 @@ public class MapClientTest extends ThreadMonitoringTest {
             return map;
         }
     }
+
     public static class LocalMapSupplier<K, V> implements CloseableSupplier<ConcurrentMap<K, V>> {
 
         @NotNull

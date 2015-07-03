@@ -58,7 +58,7 @@ import static java.text.MessageFormat.format;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static net.openhft.chronicle.bytes.Bytes.elasticByteBuffer;
-import static net.openhft.chronicle.engine.server.WireType.wire;
+
 import static net.openhft.chronicle.engine.server.internal.SystemHandler.EventId.*;
 
 
@@ -87,6 +87,7 @@ public class TcpChannelHub implements View, Closeable {
     @NotNull
     private final TcpSocketConsumer tcpSocketConsumer;
     private final EventLoop eventLoop;
+    private final Function<Bytes, Wire> wire;
 
     private long largestChunkSoFar = 0;
 
@@ -104,7 +105,8 @@ public class TcpChannelHub implements View, Closeable {
 
     public TcpChannelHub(@NotNull SessionProvider sessionProvider,
                          @NotNull String hostname, int port,
-                         @NotNull EventLoop eventLoop) {
+                         @NotNull EventLoop eventLoop,
+                         @NotNull  Function<Bytes, Wire> wire) {
 
         this.eventLoop = eventLoop;
         this.hostname = hostname;
@@ -116,6 +118,7 @@ public class TcpChannelHub implements View, Closeable {
         this.inWire = wire.apply(elasticByteBuffer());
         this.name = " connected to " + remoteAddress.toString();
         this.timeoutMs = 10_000;
+        this.wire = wire;
         Bytes<ByteBuffer> byteBufferBytes = Bytes.elasticByteBuffer();
         handShakingWire = wire.apply(byteBufferBytes);
 

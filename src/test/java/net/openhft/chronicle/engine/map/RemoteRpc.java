@@ -19,7 +19,6 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
-import net.openhft.chronicle.engine.server.WireType;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +32,7 @@ import static net.openhft.chronicle.engine.Utils.methodName;
 
 public class RemoteRpc extends JSR166TestCase {
 
+    public static final net.openhft.chronicle.wire.WireType WIRE_TYPE = net.openhft.chronicle.wire.WireType.TEXT;
     private static int s_port = 11050;
     @NotNull
     @Rule
@@ -54,10 +54,10 @@ public class RemoteRpc extends JSR166TestCase {
     @Ignore
     @Test
     public void testRpc() throws IOException, InterruptedException {
-        WireType.wire = WireType.TEXT;
+
         YamlLogging.clientWrites = true;
         YamlLogging.clientReads = true;
-        assetTree = (new VanillaAssetTree(1)).forRemoteAccess("192.168.1.76", 8088);
+        assetTree = (new VanillaAssetTree(1)).forRemoteAccess("192.168.1.76", 8088, WIRE_TYPE);
 
         MapView<String, String, String> map = assetTree.acquireMap("/test", String.class, String.class);
         map.put("hello", "world");
@@ -83,10 +83,10 @@ public class RemoteRpc extends JSR166TestCase {
     @Ignore
     @Test
     public void testSub() throws IOException, InterruptedException {
-        WireType.wire = WireType.TEXT;
+
         YamlLogging.clientWrites = true;
         YamlLogging.clientReads = true;
-        assetTree = (new VanillaAssetTree(1)).forRemoteAccess("192.168.1.76", 8088);
+        assetTree = (new VanillaAssetTree(1)).forRemoteAccess("192.168.1.76", 8088, WIRE_TYPE);
 
         MapView<String, String, String> map = assetTree.acquireMap("/test", String.class, String.class);
         map.put("hello", "world");

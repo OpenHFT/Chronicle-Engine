@@ -43,7 +43,6 @@ import java.util.concurrent.TimeUnit;
 
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
-import static net.openhft.chronicle.engine.server.WireType.wire;
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertEquals;
 
@@ -106,12 +105,12 @@ public class SubscriptionTest extends ThreadMonitoringTest {
         Subscriber<MapEvent> mapEventSubscriber = e -> e.apply(listener);
         VanillaAssetTree assetTree;
         if (isRemote) {
-            wire = WireType.TEXT;
+            WireType wireType = WireType.TEXT;
 
-            serverEndpoint = new ServerEndpoint(serverAssetTree);
+            serverEndpoint = new ServerEndpoint(serverAssetTree, wireType);
             final int port = serverEndpoint.getPort();
 
-            assetTree = new VanillaAssetTree().forRemoteAccess("localhost", port);
+            assetTree = new VanillaAssetTree().forRemoteAccess("localhost", port, wireType);
         } else {
             assetTree = serverAssetTree;
         }

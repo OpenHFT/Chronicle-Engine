@@ -18,7 +18,6 @@
 
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.map.MapEvent;
@@ -28,9 +27,8 @@ import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
-import net.openhft.chronicle.engine.server.WireType;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
-import net.openhft.chronicle.wire.Wire;
+import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
@@ -47,12 +45,10 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.function.Function;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
-import static net.openhft.chronicle.engine.server.WireType.wire;
 import static org.easymock.EasyMock.verify;
 
 /**
@@ -63,6 +59,7 @@ import static org.easymock.EasyMock.verify;
 @RunWith(value = Parameterized.class)
 public class SubscriptionEventTest extends ThreadMonitoringTest {
     private static final String NAME = "test";
+    public static final WireType WIRE_TYPE = WireType.TEXT;
     private static ConcurrentMap<String, String> map;
     private static Boolean isRemote;
     @NotNull
@@ -74,8 +71,6 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
     public SubscriptionEventTest(Object isRemote, Object wireType) {
         SubscriptionEventTest.isRemote = (Boolean) isRemote;
-
-        wire = (Function<Bytes, Wire>) wireType;
     }
 
     @Parameters
@@ -108,9 +103,9 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
             methodName(name.getMethodName());
 
-            serverEndpoint = new ServerEndpoint(serverAssetTree);
+            serverEndpoint = new ServerEndpoint(serverAssetTree, WIRE_TYPE);
 
-            assetTree = new VanillaAssetTree().forRemoteAccess("localhost", serverEndpoint.getPort());
+            assetTree = new VanillaAssetTree().forRemoteAccess("localhost", serverEndpoint.getPort(), WIRE_TYPE);
         } else
             assetTree = serverAssetTree;
 

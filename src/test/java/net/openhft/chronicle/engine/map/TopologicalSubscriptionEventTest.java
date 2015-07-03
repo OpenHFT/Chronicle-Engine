@@ -24,9 +24,9 @@ import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
-import net.openhft.chronicle.engine.server.WireType;
 import net.openhft.chronicle.engine.tree.*;
 import net.openhft.chronicle.wire.Wire;
+import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
@@ -45,7 +45,6 @@ import java.util.function.Function;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
-import static net.openhft.chronicle.engine.server.WireType.wire;
 import static org.easymock.EasyMock.verify;
 
 /**
@@ -58,6 +57,7 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
     private static final String NAME = "test";
 
     private static Boolean isRemote;
+    private final Function<Bytes, Wire> wireType;
     @NotNull
     @Rule
     public TestName name = new TestName();
@@ -65,10 +65,9 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
-    public TopologicalSubscriptionEventTest(Object isRemote, Object wireType) {
+    public TopologicalSubscriptionEventTest(Object isRemote, Function<Bytes, Wire> wireType) {
         TopologicalSubscriptionEventTest.isRemote = (Boolean) isRemote;
-
-        wire = (Function<Bytes, Wire>) wireType;
+        this.wireType = wireType;
     }
 
     @Parameters
@@ -101,9 +100,9 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
 
             methodName(name.getMethodName());
 
-            serverEndpoint = new ServerEndpoint(serverAssetTree);
+            serverEndpoint = new ServerEndpoint(serverAssetTree, wireType);
 
-            clientAssetTree = new VanillaAssetTree().forRemoteAccess("localhost", serverEndpoint.getPort());
+            clientAssetTree = new VanillaAssetTree().forRemoteAccess("localhost", serverEndpoint.getPort(), wireType);
         } else
             clientAssetTree = serverAssetTree;
 

@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.tree;
 
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.annotation.ForceInline;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.util.ThrowingAcceptor;
@@ -39,6 +40,7 @@ import net.openhft.chronicle.threads.EventGroup;
 import net.openhft.chronicle.threads.Threads;
 import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.wire.Marshallable;
+import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,6 +51,7 @@ import java.util.SortedMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.BiPredicate;
+import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
 
@@ -138,7 +141,7 @@ public class VanillaAsset implements Asset, Closeable {
                 VanillaTopologySubscription::new);
     }
 
-    public void forRemoteAccess(String hostname, int port) throws AssetNotFoundException {
+    public void forRemoteAccess(String hostname, int port, Function<Bytes, Wire> wire) throws AssetNotFoundException {
         standardStack(true);
 
         addLeafRule(ObjectKVSSubscription.class, LAST + " Remote",
@@ -162,7 +165,7 @@ public class VanillaAsset implements Asset, Closeable {
         if (getView(TcpChannelHub.class) == null) {
             addView(TcpChannelHub.class,
                     Threads.withThreadGroup(findView(ThreadGroup.class),
-                            () -> new TcpChannelHub(sessionProvider, hostname, port,eventLoop)));
+                            () -> new TcpChannelHub(sessionProvider, hostname, port,eventLoop, wire)));
         }
     }
 

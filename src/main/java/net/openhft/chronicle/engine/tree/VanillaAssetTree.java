@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.tree;
 
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.fs.ConfigurationFS;
@@ -24,10 +25,12 @@ import net.openhft.chronicle.engine.map.RemovedEvent;
 import net.openhft.chronicle.engine.map.UpdatedEvent;
 import net.openhft.chronicle.threads.Threads;
 import net.openhft.chronicle.threads.api.EventLoop;
+import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
+import java.util.function.Function;
 
 import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
 
@@ -66,8 +69,8 @@ public class VanillaAssetTree implements AssetTree {
     }
 
     @NotNull
-    public VanillaAssetTree forRemoteAccess(String hostname, int port) {
-        root.forRemoteAccess(hostname, port);
+    public VanillaAssetTree forRemoteAccess(String hostname, int port, Function<Bytes, Wire> wire) {
+        root.forRemoteAccess(hostname, port, wire);
         return this;
     }
 

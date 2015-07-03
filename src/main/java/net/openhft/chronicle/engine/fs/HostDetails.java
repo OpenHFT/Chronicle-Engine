@@ -16,12 +16,14 @@
 
 package net.openhft.chronicle.engine.fs;
 
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.session.VanillaSessionProvider;
 import net.openhft.chronicle.network.VanillaSessionDetails;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.wire.Marshallable;
+import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 /**
  * Created by peter.lawrey on 17/06/2015.
@@ -59,11 +62,11 @@ public class HostDetails implements Marshallable {
                 .write(() -> "timeoutMs").int32(timeoutMs);
     }
 
-    public TcpChannelHub acquireTcpChannelHub(EventLoop eventLoopv) {
+    public TcpChannelHub acquireTcpChannelHub(EventLoop eventLoop, Function<Bytes, Wire> wire) {
         final HostPort key = new HostPort(hostname, port);
 
         return tcpChannelHubs.computeIfAbsent(key, hostPort ->
-                new TcpChannelHub(sessionProvider(), hostPort.host, hostPort.port, eventLoopv));
+                new TcpChannelHub(sessionProvider(), hostPort.host, hostPort.port, eventLoop, wire));
     }
 
     @NotNull
