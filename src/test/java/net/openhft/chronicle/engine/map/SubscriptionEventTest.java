@@ -354,13 +354,13 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                         "triggered";
                 String expected = "World";
                 map.put("Hello", expected);
+                Object putEvent = eventsQueue.poll(500, MILLISECONDS);
+                Assert.assertTrue(putEvent instanceof InsertedEvent);
 
                 Thread.sleep(1);
                 map.remove("Hello");
 
-                Object putEvent = eventsQueue.poll(500, MILLISECONDS);
                 Object removeEvent = eventsQueue.poll(500, MILLISECONDS);
-                Assert.assertTrue(putEvent instanceof InsertedEvent);
                 Assert.assertTrue(removeEvent instanceof RemovedEvent);
 
             } catch (InterruptedException e) {
