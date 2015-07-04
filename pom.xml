@@ -56,6 +56,12 @@
     <dependencies>
 
         <dependency>
+            <groupId>org.jminix</groupId>
+            <artifactId>jminix</artifactId>
+            <version>1.2.0</version>
+        </dependency>
+
+        <dependency>
             <groupId>net.openhft</groupId>
             <artifactId>chronicle-core</artifactId>
         </dependency>
