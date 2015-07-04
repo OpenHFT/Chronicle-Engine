@@ -28,7 +28,7 @@ import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
-import net.openhft.chronicle.network.TCPRegistery;
+import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
@@ -103,7 +103,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
         if (isRemote) {
 
             methodName(name.getMethodName());
-            TCPRegistery.createServerSocketChannelFor("SubscriptionEventTest.host.port");
+            TCPRegistry.createServerSocketChannelFor("SubscriptionEventTest.host.port");
             serverEndpoint = new ServerEndpoint("SubscriptionEventTest.host.port", serverAssetTree, WIRE_TYPE);
 
             assetTree = new VanillaAssetTree().forRemoteAccess("SubscriptionEventTest.host.port", WIRE_TYPE);
@@ -121,7 +121,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
         serverAssetTree.close();
         if (map instanceof Closeable)
             ((Closeable) map).close();
-        TCPRegistery.assertAllServersStopped();
+        TCPRegistry.assertAllServersStopped();
     }
 
     @Test

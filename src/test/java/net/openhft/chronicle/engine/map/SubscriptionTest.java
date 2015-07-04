@@ -24,7 +24,7 @@ import net.openhft.chronicle.engine.api.map.MapEventListener;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
-import net.openhft.chronicle.network.TCPRegistery;
+import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
@@ -82,7 +82,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
 
     @AfterClass
     public static void tearDownClass() {
-        TCPRegistery.assertAllServersStopped();
+        TCPRegistry.assertAllServersStopped();
     }
 
     @Test
@@ -113,7 +113,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
         VanillaAssetTree assetTree;
         if (isRemote) {
             WireType wireType = WireType.TEXT;
-            TCPRegistery.createServerSocketChannelFor("testSubscriptionTest.host.port");
+            TCPRegistry.createServerSocketChannelFor("testSubscriptionTest.host.port");
             serverEndpoint = new ServerEndpoint("testSubscriptionTest.host.port", serverAssetTree, wireType);
 
             assetTree = new VanillaAssetTree().forRemoteAccess("testSubscriptionTest.host.port", wireType);

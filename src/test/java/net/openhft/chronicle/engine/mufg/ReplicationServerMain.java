@@ -33,21 +33,40 @@ import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContex
 public class ReplicationServerMain {
 
 
-    public static final String HOST = System.getProperty("remote.host");
+    public static final String REMOTE_HOSTNAME = System.getProperty("remote.host");
     public static final Integer HOST_ID = Integer.getInteger("hostId", 1);
 
     public static void main(String[] args) throws IOException {
+        final Integer hostId = HOST_ID;
+        String remoteHostname = REMOTE_HOSTNAME;
+        ReplicationServerMain replicationServerMain = new ReplicationServerMain();
+        replicationServerMain.create(hostId, remoteHostname);
+    }
+
+
+    /**
+     * @param identifier     the local host identifier
+     * @param remoteHostname the hostname of the remote host
+     * @throws IOException
+     */
+
+    public void create(int identifier, String remoteHostname) throws IOException {
+        if (identifier < 0 || identifier > Byte.MAX_VALUE)
+            throw new IllegalStateException();
+        create((byte) identifier, remoteHostname);
+    }
+
+    private void create(byte identifier, String remoteHostname) throws IOException {
+
         YamlLogging.clientReads = true;
         YamlLogging.clientWrites = true;
         WireType wireType = WireType.TEXT;
 
-        final Integer host = HOST_ID;
+        System.out.println("using local hostid=" + identifier);
+        System.out.println("using remote hostname=" + remoteHostname);
 
-        System.out.println("using hostid=" + HOST_ID);
-        System.out.println("using host=" + HOST);
-
-        final VanillaAssetTree tree = new VanillaAssetTree(host);
-        newCluster(host, tree);
+        final VanillaAssetTree tree = new VanillaAssetTree(identifier);
+        newCluster(identifier, tree, remoteHostname);
         tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
                 CMap2EngineReplicator::new);
 
@@ -69,25 +88,26 @@ public class ReplicationServerMain {
                 VanillaKVSSubscription::new);
 
 
-        new ServerEndpoint("localhost:" + (5700 + host), tree, wireType);
+        new ServerEndpoint("localhost:" + (5700 + identifier), tree, wireType);
+
     }
 
 
-    private static void newCluster(Integer host, VanillaAssetTree tree) {
+    private static void newCluster(byte host, VanillaAssetTree tree, String remoteHostname) {
         Clusters clusters = new Clusters();
         HashMap<String, HostDetails> hostDetailsMap = new HashMap<String, HostDetails>();
 
         {
             final HostDetails value = new HostDetails();
             value.hostId = 1;
-            value.connectUri = (host == 1 ? "localhost" : HOST) + ":" + 5701;
+            value.connectUri = (host == 1 ? "localhost" : remoteHostname) + ":" + 5701;
             value.timeoutMs = 1000;
             hostDetailsMap.put("host1", value);
         }
         {
             final HostDetails value = new HostDetails();
             value.hostId = 2;
-            value.connectUri = (host == 1 ? "localhost" : HOST) + ":" + 5702;
+            value.connectUri = (host == 2 ? "localhost" : remoteHostname) + ":" + 5702;
             value.timeoutMs = 1000;
             hostDetailsMap.put("host2", value);
         }

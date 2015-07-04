@@ -19,7 +19,7 @@ package net.openhft.chronicle.engine.fs;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.api.tree.Asset;
-import net.openhft.chronicle.network.TCPRegistery;
+import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.wire.Marshallable;
@@ -62,7 +62,7 @@ public class HostDetails implements Marshallable {
 
 
     public TcpChannelHub acquireTcpChannelHub(Asset asset, EventLoop eventLoop, Function<Bytes, Wire> wire) {
-        InetSocketAddress addr = TCPRegistery.lookup(connectUri);
+        InetSocketAddress addr = TCPRegistry.lookup(connectUri);
         SessionProvider sessionProvider = asset.findOrCreateView(SessionProvider.class);
         return tcpChannelHubs.computeIfAbsent(addr, hostPort ->
                 new TcpChannelHub(sessionProvider, connectUri, eventLoop, wire));

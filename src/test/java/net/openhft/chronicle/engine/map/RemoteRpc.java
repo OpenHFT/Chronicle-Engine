@@ -20,7 +20,7 @@ import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
-import net.openhft.chronicle.network.TCPRegistery;
+import net.openhft.chronicle.network.TCPRegistry ;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
@@ -50,7 +50,7 @@ public class RemoteRpc extends JSR166TestCase {
 
     @AfterClass
     public static void tearDownClass() {
-        TCPRegistery.assertAllServersStopped();
+        TCPRegistry.assertAllServersStopped();
     }
 
     /**

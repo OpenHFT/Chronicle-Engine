@@ -22,7 +22,7 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.Assetted;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
-import net.openhft.chronicle.network.TCPRegistery;
+import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
@@ -76,7 +76,7 @@ public class MapClientTest extends ThreadMonitoringTest {
 
     @AfterClass
     public static void tearDownClass() {
-        TCPRegistery.assertAllServersStopped();
+        TCPRegistry.assertAllServersStopped();
     }
 
     @Test(timeout = 50000)
@@ -335,7 +335,7 @@ public class MapClientTest extends ThreadMonitoringTest {
             this.clientAssetTree = clientAssetTree;
 
             serverAssetTree = new VanillaAssetTree().forTesting(true);
-            TCPRegistery.createServerSocketChannelFor(hostPortDescription);
+            TCPRegistry.createServerSocketChannelFor(hostPortDescription);
             serverEndpoint = new ServerEndpoint(hostPortDescription, serverAssetTree, wireType);
             ((VanillaAssetTree) clientAssetTree).forRemoteAccess(hostPortDescription, wireType);
 
@@ -350,6 +350,7 @@ public class MapClientTest extends ThreadMonitoringTest {
         public void close() throws IOException {
             if (map instanceof Closeable)
                 ((Closeable) map).close();
+
             serverAssetTree.close();
             serverEndpoint.close();
         }

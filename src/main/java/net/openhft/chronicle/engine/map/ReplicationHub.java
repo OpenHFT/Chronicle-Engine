@@ -22,16 +22,14 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.engine.map.replication.Bootstrap;
 import net.openhft.chronicle.network.connection.AbstractAsyncSubscription;
+import net.openhft.chronicle.network.connection.AbstractAsyncTemporarySubscription;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.HandlerPriority;
 import net.openhft.chronicle.threads.api.EventHandler;
 import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.threads.api.InvalidEventHandlerException;
-import net.openhft.chronicle.wire.ValueIn;
-import net.openhft.chronicle.wire.ValueOut;
-import net.openhft.chronicle.wire.WireIn;
-import net.openhft.chronicle.wire.WireOut;
+import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,37 +69,78 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
         return uri.toString();
     }
 
-    public void bootstrap(@NotNull EngineReplication replication, int localIdentifer) throws InterruptedException {
+    public void bootstrap(@NotNull EngineReplication replication, byte localIdentifer) throws InterruptedException {
 
-        final byte remoteIdentifier = proxyReturnByte(identifierReply, identifier);
+        // a non block call to get the identifier from the remote host
+        hub.subscribe(new AbstractAsyncSubscription(hub, csp) {
+            @Override
+            public void onSubscribe(WireOut wireOut) {
+                wireOut.writeEventName(identifier).marshallable(WriteMarshallable.EMPTY);
+            }
+
+            @Override
+            public void onConsumer(WireIn inWire) {
+                inWire.readDocument(null, d -> {
+                    byte remoteIdentifier = d.read(identifierReply).int8();
+                    onConnected(localIdentifer, remoteIdentifier, replication);
+                });
+            }
+
+        });
+    }
+
+
+    /**
+     * called when the connection is established to the remote host, if the connection to the remote host is lost
+     * and re-established this method is called again each time the connection is establish.
+     *
+     * @param localIdentifier  the identifier of this host
+     * @param remoteIdentifier the identifier of the remote host
+     * @param replication      the instance the handles the replication
+     */
+    private void onConnected(byte localIdentifier, byte remoteIdentifier, EngineReplication replication) {
         final ModificationIterator mi = replication.acquireModificationIterator(remoteIdentifier);
         final long lastModificationTime = replication.lastModificationTime(remoteIdentifier);
 
         final Bootstrap bootstrap = new Bootstrap();
         bootstrap.lastUpdatedTime(lastModificationTime);
-        bootstrap.identifier((byte) localIdentifer);
+        bootstrap.identifier(localIdentifier);
 
         final Function<ValueIn, Bootstrap> typedMarshallable = ValueIn::typedMarshallable;
-        final Consumer<ValueOut> valueOutConsumer = o -> o.typedMarshallable(bootstrap);
-        final Bootstrap b = (Bootstrap) proxyReturnWireConsumerInOut(
-                bootstap, bootstrapReply, valueOutConsumer, typedMarshallable);
 
-        try {
+        // subscribes to updates - receives the replication events
+        subscribe(replication, localIdentifier);
 
-            // subscribes to updates - receives the replication events
-            subscribe(replication, localIdentifer);
+        // a non block call to get the identifier from the remote host
+        hub.subscribe(new AbstractAsyncSubscription(hub, csp) {
+            @Override
+            public void onSubscribe(WireOut wireOut) {
+                wireOut.writeEventName(bootstap).typedMarshallable(bootstrap);
+            }
 
-            // publishes changes - pushes the replication events
-            publish(mi, b);
+            @Override
+            public void onConsumer(WireIn inWire) {
+                inWire.readDocument(null, d -> {
+                    Bootstrap b = d.read(bootstrapReply).typedMarshallable();
 
-        } catch (Throwable t) {
-            LOG.error("", t);
-        }
+
+                    // publishes changes - pushes the replication events
+                    try {
+                        publish(mi, b);
+                    } catch (Exception e) {
+                        LOG.error("", e);
+                    }
+                });
+            }
+
+        });
+
 
     }
 
+
     /**
-     * publishes changes - pushes the replication events
+     * publishes changes - this method pushes the replication events
      *
      * @param mi     the modification iterator that notifies us of changes
      * @param remote details about the remote connection
@@ -115,10 +154,10 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
         eventLoop.addHandler(new EventHandler() {
             @Override
             public boolean action() throws InvalidEventHandlerException {
-                
+
                 if (!mi.hasNext())
-                     return false;
-                 
+                    return false;
+
                 if (isClosed.get())
                     throw new InvalidEventHandlerException();
 
@@ -139,15 +178,16 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
     }
 
 
-
     /**
      * subscribes to updates
-     * @param replication    the event will be applied to the EngineReplication
+     *
+     * @param replication     the event will be applied to the EngineReplication
      * @param localIdentifier our local identifier
      */
     private void subscribe(@NotNull final EngineReplication replication, final int localIdentifier) {
 
-        hub.subscribe(new AbstractAsyncSubscription(hub,csp) {
+        // the only has to be a temporary subscription because the onConnected() will be called upon a reconnect
+        hub.subscribe(new AbstractAsyncTemporarySubscription(hub, csp) {
             @Override
             public void onSubscribe(@NotNull final WireOut wireOut) {
                 wireOut.writeEventName(replicationSubscribe).int8(localIdentifier);

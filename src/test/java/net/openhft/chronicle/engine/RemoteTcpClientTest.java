@@ -21,7 +21,7 @@ import net.openhft.chronicle.bytes.NativeBytes;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
-import net.openhft.chronicle.network.TCPRegistery;
+import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +54,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     @AfterClass
     public static void tearDownClass() {
 //   todo     TCPRegistery.assertAllServersStopped();
-        TCPRegistery.reset();
+        TCPRegistry.reset();
     }
 
     @Test(timeout = 100000)

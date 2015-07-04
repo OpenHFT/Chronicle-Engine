@@ -125,6 +125,7 @@ public class EngineWireHandler extends WireTcpHandler {
 
         this.sessionProvider = assetTree.root().getView(SessionProvider.class);
         this.eventLoop = assetTree.root().findOrCreateView(EventLoop.class);
+        this.eventLoop.start();
         this.hostIdentifier = assetTree.root().findOrCreateView(HostIdentifier.class);
         this.assetTree = assetTree;
         this.mapWireHandler = new MapWireHandler<>();
@@ -140,7 +141,7 @@ public class EngineWireHandler extends WireTcpHandler {
         this.systemHandler = new SystemHandler();
         this.isClosed = isClosed;
 
-        eventLoop.start();
+
     }
 
     protected void publish(Wire out) {

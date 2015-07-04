@@ -20,9 +20,12 @@ package net.openhft.chronicle.engine.server.internal;
  * Created by Rob Austin
  */
 
+import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.pool.StringBuilderPool;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.collection.CollectionWireHandler;
 import net.openhft.chronicle.engine.map.RemoteKeyValueStore;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.network.connection.CoreFields;
@@ -267,10 +270,10 @@ public class MapWireHandler<K, V> extends AbstractHandler {
             } catch (Exception e) {
                 LOG.error("", e);
             } finally {
-               /* if (Jvm.isDebug() && YamlLogging.showServerWrites) {
+                if (Jvm.isDebug() && YamlLogging.showServerWrites) {
                     final Bytes<?> outBytes = outWire.bytes();
-                    long len = outBytes.position() - CollectionWireHandler.SIZE_OF_SIZE;
-                    if (len == 0) {
+                    long len = outBytes.readPosition() - CollectionWireHandler.SIZE_OF_SIZE;
+                    if (len <= 2) {
                         LOG.info("--------------------------------------------\n" +
                                 "server writes:\n\n<EMPTY>");
 
@@ -279,7 +282,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                                 "server writes:\n\n" +
                                 Wires.fromSizePrefixedBlobs(outBytes, CollectionWireHandler.SIZE_OF_SIZE, len));
                     }
-                }*/
+                }
             }
         }
     };
