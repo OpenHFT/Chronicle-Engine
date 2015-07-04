@@ -28,6 +28,7 @@ import net.openhft.chronicle.threads.Threads;
 import net.openhft.lang.thread.NamedThreadFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jminix.console.tool.StandaloneMiniConsole;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,6 +66,7 @@ public enum ManagementTools {
 
     //number of AssetTree enabled for management.
     private static int count = 0;
+    private static StandaloneMiniConsole console = null;
 
     public static int getCount(){
         return count;
@@ -112,10 +114,25 @@ public enum ManagementTools {
         registerViewofTree(assetTree);
     }
 
+    public static void enableManagement(@NotNull AssetTree assetTree, int port) {
+        try {
+            startJMXRemoteService();
+            if (console == null)
+                console = new StandaloneMiniConsole(port);
+            count++;
+        } catch (IOException ie) {
+            LOGGER.error("Error while enable management", ie);
+        }
+        registerViewofTree(assetTree);
+    }
+
     public static void disableManagement(AssetTree assetTree) {
 
         String treeName = assetTree.toString();
         try {
+            if (console != null)
+                console.shutdown();
+
             Set<ObjectName> objNames = mbs.queryNames(new ObjectName("*:type=" + treeName + ",*"), null);
             for(ObjectName atName : objNames) {
                 unregisterTreeWithMBean(atName);

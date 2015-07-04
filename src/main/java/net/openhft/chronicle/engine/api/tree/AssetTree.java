@@ -245,6 +245,15 @@ public interface AssetTree extends Closeable {
     }
 
     /**
+     * Enable JMX management of this Asset Tree
+     * @param  port to enable a simple web service on
+     */
+    default AssetTree enableManagement(int port) {
+        ManagementTools.enableManagement(this, port);
+        return this;
+    }
+
+    /**
      * Disable JMX management of this Asset Tree
      */
     default AssetTree disableManagement(){

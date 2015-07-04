@@ -40,7 +40,7 @@ public class VanillaAssetTreeEgMain {
 
     public static void main(String[] args) {
         AssetTree tree = new VanillaAssetTree().forTesting();
-        tree.enableManagement();
+        tree.enableManagement(18181);
 
         // start with some elements
         ConcurrentMap<String, String> map1 = tree.acquireMap("group/map1", String.class, String.class);
