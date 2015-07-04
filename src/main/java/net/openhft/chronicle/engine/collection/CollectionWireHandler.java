@@ -155,12 +155,7 @@ public class CollectionWireHandler<U, C extends Collection<U>> {
 
                 if (YamlLogging.showServerWrites) {
                     long len = outBytes.writePosition() - SIZE_OF_SIZE;
-                    if (len == 0) {
-                        LOG.info(
-                                "\n\nserver writes:\n\n<EMPTY>");
-
-                    } else {
-
+                    if (len > 0) {
                         LOG.info(
                                 "server writes:\n\n" +
                                         //      Bytes.toDebugString(outBytes, SIZE_OF_SIZE, len));

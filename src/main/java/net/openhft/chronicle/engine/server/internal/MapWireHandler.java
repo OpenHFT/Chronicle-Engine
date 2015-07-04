@@ -21,6 +21,7 @@ package net.openhft.chronicle.engine.server.internal;
  */
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.pool.StringBuilderPool;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
@@ -61,7 +62,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
     @NotNull
     private final Map<String, Long> cspToCid = new HashMap<>();
     private final AtomicLong cid = new AtomicLong();
-
+    private WireType byteToWire;
     private BiConsumer<ValueOut, V> vToWire;
     @Nullable
     private Function<ValueIn, K> wireToK;
@@ -272,21 +273,22 @@ public class MapWireHandler<K, V> extends AbstractHandler {
             } finally {
                 if (Jvm.isDebug() && YamlLogging.showServerWrites) {
                     final Bytes<?> outBytes = outWire.bytes();
-                    long len = outBytes.readPosition() - CollectionWireHandler.SIZE_OF_SIZE;
-                    if (len <= 2) {
-                        LOG.info("--------------------------------------------\n" +
-                                "server writes:\n\n<EMPTY>");
+                    long len = outBytes.writePosition() - CollectionWireHandler.SIZE_OF_SIZE;
+                    if (len > 2) {
 
-                    } else {
-                        LOG.info("--------------------------------------------\n" +
-                                "server writes:\n\n" +
-                                Wires.fromSizePrefixedBlobs(outBytes, CollectionWireHandler.SIZE_OF_SIZE, len));
+                        final String s = (WireType.TEXT == byteToWire) ?
+                                Wires.fromSizePrefixedBlobs(outBytes, CollectionWireHandler.SIZE_OF_SIZE, len) :
+                                BytesUtil.toHexString(outBytes, 0, outBytes.writePosition());
+
+                        System.out.println("server writes:");
+                        System.out.println("```yaml");
+                        System.out.println(s);
+                        System.out.println("```");
                     }
                 }
             }
         }
     };
-
 
 
     /**
@@ -296,6 +298,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
      * @param tid            the transaction id of the event
      * @param wireAdapter    adapts keys and values to and from wire
      * @param requestContext the uri of the event
+     * @param byteToWire
      * @throws StreamCorruptedException
      */
     public void process(@NotNull final WireIn in,
@@ -303,12 +306,14 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                         @NotNull KeyValueStore map,
                         long tid,
                         @NotNull final WireAdapter wireAdapter,
-                        @NotNull final RequestContext requestContext) throws
+                        @NotNull final RequestContext requestContext,
+                        @NotNull final WireType byteToWire) throws
             StreamCorruptedException {
         this.vToWire = wireAdapter.valueToWire();
         this.wireToK = wireAdapter.wireToKey();
         this.wireToV = wireAdapter.wireToValue();
         this.requestContext = requestContext;
+        this.byteToWire = byteToWire;
 
         setOutWire(outWire);
 

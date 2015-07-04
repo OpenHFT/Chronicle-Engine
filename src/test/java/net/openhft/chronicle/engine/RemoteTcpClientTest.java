@@ -22,7 +22,6 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
-import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
@@ -31,7 +30,6 @@ import org.junit.rules.TestName;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import static net.openhft.chronicle.engine.Utils.methodName;
@@ -71,7 +69,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
         testStrings(50, 2 * MB, WireType.BINARY);
     }
 
-    private void testStrings(int noPutsAndGets, int valueLength, Function<Bytes, Wire> wireType) throws IOException {
+    private void testStrings(int noPutsAndGets, int valueLength, WireType wireType) throws IOException {
 
         try (final RemoteMapSupplier<CharSequence, CharSequence> remote = new
                 RemoteMapSupplier<>("testStrings.host.port", CharSequence.class,

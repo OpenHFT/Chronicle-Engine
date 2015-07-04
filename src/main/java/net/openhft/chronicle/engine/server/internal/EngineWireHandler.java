@@ -49,9 +49,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Queue;
 import java.util.concurrent.LinkedTransferQueue;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static net.openhft.chronicle.core.Jvm.rethrow;
 import static net.openhft.chronicle.core.util.StringUtils.endsWith;
@@ -99,6 +99,7 @@ public class EngineWireHandler extends WireTcpHandler {
     private final StringBuilder lastCsp = new StringBuilder();
     private final StringBuilder eventName = new StringBuilder();
     private final SystemHandler systemHandler;
+    private final WireType byteToWire;
 
     private WireAdapter wireAdapter;
     private View view;
@@ -118,14 +119,18 @@ public class EngineWireHandler extends WireTcpHandler {
     private EventLoop eventLoop;
     private AtomicBoolean isClosed;
 
-    public EngineWireHandler(@NotNull final Function<Bytes, Wire> byteToWire,
+    public EngineWireHandler(@NotNull final WireType byteToWire,
                              @NotNull final AssetTree assetTree,
                              @NotNull final AtomicBoolean isClosed) {
         super(byteToWire);
-
+        this.byteToWire = byteToWire;
         this.sessionProvider = assetTree.root().getView(SessionProvider.class);
         this.eventLoop = assetTree.root().findOrCreateView(EventLoop.class);
-        this.eventLoop.start();
+        try {
+            this.eventLoop.start();
+        } catch (RejectedExecutionException e) {
+            LOG.debug("", e);
+        }
         this.hostIdentifier = assetTree.root().findOrCreateView(HostIdentifier.class);
         this.assetTree = assetTree;
         this.mapWireHandler = new MapWireHandler<>();
@@ -262,7 +267,7 @@ public class EngineWireHandler extends WireTcpHandler {
 
                     if (viewType == MapView.class) {
                         mapWireHandler.process(in, out, (KeyValueStore) ((MapView) view).underlying(), tid, wireAdapter,
-                                requestContext);
+                                requestContext, byteToWire);
                         return;
                     }
 
