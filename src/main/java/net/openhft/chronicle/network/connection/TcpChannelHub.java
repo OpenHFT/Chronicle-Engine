@@ -666,7 +666,7 @@ public class TcpChannelHub implements View, Closeable {
         void subscribe(@NotNull final AsyncSubscription asyncSubscription) {
 
             // we have lock here to prevent a race with the resubscribe upon a reconnection
-            ReentrantLock reentrantLock = outBytesLock();
+            final ReentrantLock reentrantLock = outBytesLock();
             reentrantLock.lock();
             try {
                 map.put(asyncSubscription.tid(), asyncSubscription);
@@ -717,59 +717,64 @@ public class TcpChannelHub implements View, Closeable {
 
 
         private void running() {
-            attemptConnect();
-            final Wire inWire = wireFunction.apply(elasticByteBuffer());
-            assert inWire != null;
 
-            while (!isShutdown()) {
-                checkConnectionState();
-                if (currentState.get() == ConnecitonStatus.DISCONNECTED) {
-                    try {
-                        Thread.sleep(500);
-                    } catch (InterruptedException e) {
+            try {
+                attemptConnect();
+                final Wire inWire = wireFunction.apply(elasticByteBuffer());
+                assert inWire != null;
+
+                while (!isShutdown()) {
+                    checkConnectionState();
+                    if (currentState.get() == ConnecitonStatus.DISCONNECTED) {
+                        try {
+                            Thread.sleep(500);
+                        } catch (InterruptedException e) {
+                            continue;
+                        }
                         continue;
                     }
-                    continue;
-                }
-                try {
-                    // if we have processed all the bytes that we have read in
-                    final Bytes<?> bytes = inWire.bytes();
+                    try {
+                        // if we have processed all the bytes that we have read in
+                        final Bytes<?> bytes = inWire.bytes();
 
-                    // the number bytes ( still required  ) to read the size
-                    blockingRead(inWire, SIZE_OF_SIZE);
+                        // the number bytes ( still required  ) to read the size
+                        blockingRead(inWire, SIZE_OF_SIZE);
 
-                    final int header = bytes.readVolatileInt(0);
-                    final long messageSize = size(header);
+                        final int header = bytes.readVolatileInt(0);
+                        final long messageSize = size(header);
 
-                    // read the data
-                    if (Wires.isData(header)) {
-                        assert messageSize < Integer.MAX_VALUE;
-                        processData(tid, Wires.isReady(header), header, (int) messageSize, inWire);
-                    } else {
-                        // read  meta data - get the tid
-                        blockingRead(inWire, messageSize);
-                        logToStandardOutMessageReceived(inWire);
-                        inWire.readDocument((WireIn w) -> this.tid = CoreFields.tid(w), null);
+                        // read the data
+                        if (Wires.isData(header)) {
+                            assert messageSize < Integer.MAX_VALUE;
+                            processData(tid, Wires.isReady(header), header, (int) messageSize, inWire);
+                        } else {
+                            // read  meta data - get the tid
+                            blockingRead(inWire, messageSize);
+                            logToStandardOutMessageReceived(inWire);
+                            inWire.readDocument((WireIn w) -> this.tid = CoreFields.tid(w), null);
+                        }
+
+                    } catch (IOException e) {
+                        // e.printStackTrace();
+
+                        if (isShutdown()) {
+                            break;
+                        } else {
+                            System.out.println("will reconnect");
+                            desiredState.set(ConnecitonStatus.RECONNECT);
+                        }
+
+
+                    } finally {
+                        clear(inWire);
                     }
-
-                } catch (IOException e) {
-                    // e.printStackTrace();
-
-                    if (isShutdown()) {
-                        break;
-                    } else {
-                        System.out.println("will reconnect");
-                        desiredState.set(ConnecitonStatus.RECONNECT);
-                    }
-
-
-                } finally {
-                    clear(inWire);
                 }
+
+            } finally {
+                System.out.println("disconnecting");
+                attemptDisconnect();
             }
-            System.out.println("disconnecting");
 
-            attemptDisconnect();
         }
 
         private boolean isShutdown() {
