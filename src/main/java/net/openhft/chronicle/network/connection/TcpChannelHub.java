@@ -20,9 +20,10 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.api.tree.View;
-import net.openhft.chronicle.network.TCPRegistery;
+import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.api.session.SessionDetails;
 import net.openhft.chronicle.threads.HandlerPriority;
 import net.openhft.chronicle.threads.NamedThreadFactory;
@@ -35,11 +36,10 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SocketChannel;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -48,6 +48,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
@@ -55,7 +56,6 @@ import static java.lang.Integer.getInteger;
 import static java.lang.System.getProperty;
 import static java.lang.Thread.currentThread;
 import static java.lang.ThreadLocal.withInitial;
-import static java.text.MessageFormat.format;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static net.openhft.chronicle.bytes.Bytes.elasticByteBuffer;
@@ -102,6 +102,15 @@ public class TcpChannelHub implements View, Closeable {
     private final Wire handShakingWire;
     private final String description;
 
+    enum ConnecitonStatus {
+        DISCONNECTED,
+        CONNECTED
+    }
+
+
+    private final AtomicReference<ConnecitonStatus> currentState = new AtomicReference<ConnecitonStatus>(ConnecitonStatus.DISCONNECTED);
+    private final AtomicReference<ConnecitonStatus> desiredState = new AtomicReference<ConnecitonStatus>();
+
     public TcpChannelHub(@NotNull SessionProvider sessionProvider,
                          @NotNull String description,
                          @NotNull EventLoop eventLoop,
@@ -109,9 +118,11 @@ public class TcpChannelHub implements View, Closeable {
         this.description = description;
 
         this.eventLoop = eventLoop;
-        this.tcpSocketConsumer = new TcpSocketConsumer(wire, description);
+
         this.tcpBufferSize = 64 << 10;
-        this.remoteAddress = TCPRegistery.lookup(description);
+        this.remoteAddress = TCPRegistry.lookup(description);
+
+
         this.outWire = wire.apply(elasticByteBuffer());
         this.inWire = wire.apply(elasticByteBuffer());
         this.name = " connected to " + remoteAddress.toString();
@@ -119,13 +130,9 @@ public class TcpChannelHub implements View, Closeable {
         this.wire = wire;
         Bytes<ByteBuffer> byteBufferBytes = Bytes.elasticByteBuffer();
         handShakingWire = wire.apply(byteBufferBytes);
-
-
-        attemptConnect(remoteAddress);
-
-
         this.sessionProvider = sessionProvider;
-        tcpSocketConsumer.start();
+        this.tcpSocketConsumer = new TcpSocketConsumer(wire, description);
+
     }
 
     @Nullable
@@ -173,7 +180,7 @@ public class TcpChannelHub implements View, Closeable {
 
     /**
      * sets up subscriptions with the server, even if the socket connection is down, the
-     * subsubscription will be re-establish with the server automatically once it comes back up. To
+     * subscriptions will be re-establish with the server automatically once it comes back up. To
      * end the subscription with the server call {@code net.openhft.chronicle.network.connection.TcpChannelHub#unsubscribe(long)}
      *
      * @param asyncSubscription detail of the subscription that you wish to hold with the server
@@ -192,126 +199,9 @@ public class TcpChannelHub implements View, Closeable {
         tcpSocketConsumer.unsubscribe(tid);
     }
 
-    private synchronized void attemptConnect(final InetSocketAddress remoteAddress) {
-
-        // ensures that the excising connection are closed
-        closeSocket();
-
-        try {
-            SocketChannel socketChannel = openSocketChannel();
-            if (socketChannel != null && socketChannel.connect(remoteAddress)) {
-                clientChannel = socketChannel;
-                clientChannel.configureBlocking(false);
-                clientChannel.socket().setTcpNoDelay(true);
-                clientChannel.socket().setReceiveBufferSize(tcpBufferSize);
-                clientChannel.socket().setSendBufferSize(tcpBufferSize);
-                doHandShaking(socketChannel);
-            }
-        } catch (IOException e) {
-            // LOG.error("Failed to connect to " + remoteAddress, e);
-            clientChannel = null;
-        }
-    }
-
     @NotNull
     public ReentrantLock outBytesLock() {
         return outBytesLock;
-    }
-
-    /**
-     * @param timeoutTime throws a RemoteCallTimeoutException if the timeout has passed, ignored if
-     *                    timeout is zero
-     */
-    private boolean checkTimeout(long timeoutTime) {
-        if (timeoutTime == 0)
-            return false;
-
-        if (timeoutTime < System.currentTimeMillis() && !Jvm.isDebug())
-            throw new RemoteCallTimeoutException("timeout=" + timeoutTime + "ms");
-        return true;
-    }
-
-    // ensures that the first thread performs the connection, others are blocked
-    private AtomicBoolean connectOnce = new AtomicBoolean(true);
-
-    @Nullable
-    private SocketChannel reConnect() throws InterruptedException {
-
-        // ensures that other threads that wish to reconnected are blocked till the current
-        // thread completes
-        boolean connectOnce = this.connectOnce.getAndSet(false);
-
-        synchronized (this) {
-            if (!connectOnce)
-                return clientChannel;
-
-            try {
-                closeSocket();
-                Jvm.pause(500);
-                connect(timeoutMs, remoteAddress);
-            } finally {
-                this.connectOnce.set(true);
-            }
-
-        }
-
-        // re-established all the existing subscription ( if any )
-        tcpSocketConsumer.onReconnect();
-        return clientChannel;
-
-    }
-
-    @Nullable
-    public synchronized SocketChannel connect(final long timeoutMs,
-                                              final InetSocketAddress remoteAddress) {
-        if (clientChannel != null)
-            return clientChannel;
-
-        if (LOG.isDebugEnabled())
-            LOG.debug("attempting to connect to " + remoteAddress + " ,name=" + name);
-
-        long timeoutAt = System.currentTimeMillis() + timeoutMs;
-
-        while (clientChannel == null) {
-
-            checkTimeout(timeoutAt);
-
-            try {
-
-                SocketChannel socketChannel = openSocketChannel();
-                if (socketChannel == null || !socketChannel.connect(remoteAddress)) {
-                    Jvm.pause(100);
-                    continue;
-                }
-
-                socketChannel.socket().setTcpNoDelay(true);
-                socketChannel.socket().setReceiveBufferSize(tcpBufferSize);
-                socketChannel.socket().setSendBufferSize(tcpBufferSize);
-
-                // the hand-shaking is assigned before setting the clientChannel, so that it can
-                // be assured to go first
-                doHandShaking(socketChannel);
-
-                clientChannel = socketChannel;
-
-                // resets the heartbeat timer
-                tcpSocketConsumer.onMessageReceived();
-
-                closed = false;
-
-
-            } catch (IOException e) {
-                clientChannel = null;
-            } catch (Exception e) {
-                throw e;
-            }
-        }
-        return clientChannel;
-    }
-
-    private void flushBuffer() throws IOException {
-        Bytes buff = Bytes.elasticByteBuffer();
-        clientChannel.read((ByteBuffer) buff.underlyingObject());
     }
 
 
@@ -366,9 +256,6 @@ public class TcpChannelHub implements View, Closeable {
 
             clientChannel = null;
 
-            // ensure that any excising connection are first closed
-            if (tcpSocketConsumer != null)
-                tcpSocketConsumer.onConnectionClosed();
         }
 
 
@@ -377,10 +264,18 @@ public class TcpChannelHub implements View, Closeable {
     /**
      * called when we are completed finished with using the TcpChannelHub
      */
-    public synchronized void close() {
-        closed = true;
+    public void close() {
+
+        //  eventLoop.stop();
         tcpSocketConsumer.stop();
-        closeSocket();
+        closed = true;
+
+        while (currentState.get() != ConnecitonStatus.DISCONNECTED) {
+            Jvm.pause(10);
+            System.out.println("waiting for disconnect");
+        }
+
+
     }
 
     /**
@@ -407,47 +302,27 @@ public class TcpChannelHub implements View, Closeable {
      * @param wire the {@code wire} containing the outbound data
      */
     public void writeSocket(@NotNull final WireOut wire) {
-
+        assert outBytesLock().isHeldByCurrentThread();
         checkNotClosed();
 
-        final long timeoutTime = startTime + this.timeoutMs;
+        if (currentState.get() == ConnecitonStatus.DISCONNECTED) {
+            return;
+        }
+
         try {
-            for (; ; ) {
-
-                try {
-                    // send out all the bytes
-                    writeSocket(wire, timeoutTime, socketChannel());
-                    break;
-                } catch (ClosedChannelException e) {
-                    checkTimeout(timeoutTime);
-                    reConnect();
-                }
-            }
-        } catch (IOException e) {
-            closeSocket();
-            throw new IORuntimeException("server= " + description + "/" + TCPRegistery.lookup(description));
+            SocketChannel clientChannel = this.clientChannel;
+            if (clientChannel != null)
+                // send out all the bytes
+                writeSocket(wire, timeoutMs, clientChannel);
+            else
+                currentState.set(ConnecitonStatus.DISCONNECTED);
         } catch (Exception e) {
-            LOG.error("", e);
-            closeSocket();
+            currentState.set(ConnecitonStatus.DISCONNECTED);
+            Jvm.rethrow(e);
         }
+
     }
 
-    /**
-     * provides a non null socket channel
-     *
-     * @return
-     * @throws InterruptedException
-     */
-    @NotNull
-    private SocketChannel socketChannel() throws InterruptedException {
-        if (clientChannel != null)
-            return clientChannel;
-        SocketChannel clientChannel;
-        for (; (clientChannel = this.clientChannel) == null; ) {
-            reConnect();
-        }
-        return clientChannel;
-    }
 
     public Wire proxyReply(long timeoutTime, final long tid) {
         checkNotClosed();
@@ -501,7 +376,7 @@ public class TcpChannelHub implements View, Closeable {
             int len = socketChannel.write(outBuffer);
 
             if (len == -1)
-                throw new IORuntimeException("Disconnection to server " + description + "/" + TCPRegistery.lookup(description));
+                throw new IORuntimeException("Disconnection to server " + description + "/" + TCPRegistry.lookup(description));
 
             if (outBuffer.remaining() == 0)
                 break;
@@ -522,7 +397,7 @@ public class TcpChannelHub implements View, Closeable {
                 return;
             }
 
-            checkTimeout(timeoutTime);
+            //checkTimeout(timeoutTime);
         }
 
         outBuffer.clear();
@@ -582,6 +457,26 @@ public class TcpChannelHub implements View, Closeable {
         assert outBytesLock().isHeldByCurrentThread();
         return outWire;
     }
+
+
+    private void reflectServerHeartbeatMessage(ValueIn valueIn) {
+
+        // time stamp sent from the server, this is so that the server can calculate the round
+        // trip time
+        long timestamp = valueIn.int64();
+
+        this.lock(() -> {
+
+            TcpChannelHub.this.writeMetaDataForKnownTID(0, outWire, null, 0);
+
+            TcpChannelHub.this.outWire.writeDocument(false, w ->
+                    // send back the time stamp that was sent from the server
+                    w.writeEventName(heartbeatReply).int64(timestamp));
+
+            TcpChannelHub.this.writeSocket(outWire);
+        });
+    }
+
 
     public long writeMetaDataStartTime(long startTime, @NotNull Wire wire, String csp, long cid) {
         assert outBytesLock().isHeldByCurrentThread();
@@ -658,7 +553,8 @@ public class TcpChannelHub implements View, Closeable {
      */
     private class TcpSocketConsumer implements EventHandler {
 
-        private volatile ExecutorService executorService;
+
+        private final ExecutorService executorService;
 
         @NotNull
         private final Map<Long, Object> map = new ConcurrentHashMap<>();
@@ -680,12 +576,20 @@ public class TcpChannelHub implements View, Closeable {
          * subscription, this could should establish a subscriotuib with the server.
          */
         private void onReconnect() {
-            map.values().forEach(v -> {
-                if (v instanceof AsyncSubscription) {
-                    if (!(v instanceof AsyncTemporarySubscription))
-                        ((AsyncSubscription) v).applySubscribe();
-                }
-            });
+
+            ReentrantLock reentrantLock = outBytesLock();
+            reentrantLock.lock();
+            try {
+                System.out.println("reconnected map.size=" + map.size());
+                map.values().forEach(v -> {
+                    if (v instanceof AsyncSubscription) {
+                        if (!(v instanceof AsyncTemporarySubscription))
+                            ((AsyncSubscription) v).applySubscribe();
+                    }
+                });
+            } finally {
+                reentrantLock.unlock();
+            }
         }
 
         public void onConnectionClosed() {
@@ -709,8 +613,10 @@ public class TcpChannelHub implements View, Closeable {
                 @NotNull final Function<Bytes, Wire> wireFunction,
                 @NotNull final String name) {
             this.wireFunction = wireFunction;
+            System.out.println("constructor remoteAddress=" + remoteAddress);
+            //     attemptConnect();
 
-
+            executorService = start();
             // used for the heartbeat
             eventLoop.addHandler(this);
 
@@ -743,15 +649,6 @@ public class TcpChannelHub implements View, Closeable {
             synchronized (bytes) {
                 map.put(tid, bytes);
                 bytes.wait(timeoutTimeMs);
-                if (clientChannel == null) {
-                    IORuntimeException e = new IORuntimeException("Unable to " +
-                            "reprocess response, as the server=" + description + "/" + TCPRegistery.lookup(description) + " is " +
-                            "disconnected");
-
-                    if (LOG.isDebugEnabled())
-                        LOG.debug(description + "/" + TCPRegistery.lookup(description), e);
-                    throw Jvm.rethrow(e);
-                }
             }
 
             logToStandardOutMessageReceived(wire);
@@ -764,9 +661,17 @@ public class TcpChannelHub implements View, Closeable {
 
         }
 
-        private void subscribe(@NotNull final AsyncSubscription asyncSubscription) {
-            map.put(asyncSubscription.tid(), asyncSubscription);
-            asyncSubscription.applySubscribe();
+        void subscribe(@NotNull final AsyncSubscription asyncSubscription) {
+
+            // we have lock here to prevent a race with the resubscribe upon a reconnection
+            final ReentrantLock reentrantLock = outBytesLock();
+            reentrantLock.lock();
+            try {
+                map.put(asyncSubscription.tid(), asyncSubscription);
+                asyncSubscription.applySubscribe();
+            } finally {
+                reentrantLock.unlock();
+            }
         }
 
         public void unsubscribe(long tid) {
@@ -777,10 +682,10 @@ public class TcpChannelHub implements View, Closeable {
          * uses a single read thread, to process messages to waiting threads based on their {@code
          * tid}
          */
-        private void start() {
+        private ExecutorService start() {
             checkNotShutdown();
             awaitingHeartbeat.set(false);
-            executorService = newSingleThreadExecutor(
+            ExecutorService executorService = newSingleThreadExecutor(
                     new NamedThreadFactory("TcpSocketConsumer-" + name, true));
             isShutdown = false;
             executorService.submit(() -> {
@@ -794,6 +699,12 @@ public class TcpChannelHub implements View, Closeable {
                 }
             });
 
+            while (currentState.get() == null) {
+
+            }
+
+            return executorService;
+
         }
 
         private void checkNotShutdown() {
@@ -804,42 +715,72 @@ public class TcpChannelHub implements View, Closeable {
 
 
         private void running() {
-            final Wire inWire = wireFunction.apply(elasticByteBuffer());
-            assert inWire != null;
 
-            while (!isShutdown()) {
-                try {
-                    // if we have processed all the bytes that we have read in
-                    final Bytes<?> bytes = inWire.bytes();
+            try {
 
-                    // the number bytes ( still required  ) to read the size
-                    blockingRead(inWire, SIZE_OF_SIZE);
+                attemptConnect();
+                final Wire inWire = wireFunction.apply(elasticByteBuffer());
+                assert inWire != null;
 
-                    final int header = bytes.readVolatileInt(0);
-                    final long messageSize = size(header);
-
-                    // read the data
-                    if (Wires.isData(header)) {
-                        assert messageSize < Integer.MAX_VALUE;
-                        processData(tid, Wires.isReady(header), header, (int) messageSize, inWire);
-                    } else {
-                        // read  meta data - get the tid
-                        blockingRead(inWire, messageSize);
-                        logToStandardOutMessageReceived(inWire);
-                        inWire.readDocument((WireIn w) -> this.tid = CoreFields.tid(w), null);
-                    }
-
-                } catch (IOException e) {
-                    if (!isShutdown())
+                while (!isShutdown()) {
+                    checkConnectionState();
+                    if (currentState.get() == ConnecitonStatus.DISCONNECTED) {
                         try {
-                            TcpChannelHub.this.clientChannel = TcpChannelHub.this.reConnect();
-                        } catch (InterruptedException e1) {
-                            return;
+                            Thread.sleep(500);
+                        } catch (InterruptedException e) {
+                            continue;
                         }
+                        continue;
+                    }
+                    try {
+                        // if we have processed all the bytes that we have read in
+                        final Bytes<?> bytes = inWire.bytes();
+
+                        // the number bytes ( still required  ) to read the size
+                        blockingRead(inWire, SIZE_OF_SIZE);
+
+                        final int header = bytes.readVolatileInt(0);
+                        final long messageSize = size(header);
+
+                        // read the data
+                        if (Wires.isData(header)) {
+                            assert messageSize < Integer.MAX_VALUE;
+                            processData(tid, Wires.isReady(header), header, (int) messageSize, inWire);
+                        } else {
+                            // read  meta data - get the tid
+                            blockingRead(inWire, messageSize);
+                            logToStandardOutMessageReceived(inWire);
+                            inWire.readDocument((WireIn w) -> this.tid = CoreFields.tid(w), null);
+                        }
+
+                    } catch (IOException e) {
+                        // e.printStackTrace();
+
+                        if (isShutdown()) {
+                            break;
+                        } else {
+                            System.out.println("will reconnect");
+                            currentState.set(ConnecitonStatus.DISCONNECTED);
+                        }
+
+
+                    } finally {
+                        clear(inWire);
+                    }
+                }
+
+            } finally {
+                System.out.println("disconnecting");
+
+                ReentrantLock reentrantLock = outBytesLock();
+                reentrantLock.lock();
+                try {
+                    attemptDisconnect();
                 } finally {
-                    clear(inWire);
+                    reentrantLock.unlock();
                 }
             }
+
         }
 
         private boolean isShutdown() {
@@ -872,8 +813,8 @@ public class TcpChannelHub implements View, Closeable {
          * @throws IOException
          */
         private void processData(final long tid, final boolean isReady,
-                                 final int header, final int messageSize, @NotNull Wire inWire)
-                throws IOException {
+                                 final int header,
+                                 final int messageSize, @NotNull Wire inWire) throws IOException {
 
             long startTime = 0;
             Object o = null;
@@ -908,6 +849,7 @@ public class TcpChannelHub implements View, Closeable {
 
             // for async
             if (o instanceof AsyncSubscription) {
+                System.out.println("processing aysnc");
                 blockingRead(inWire, messageSize);
                 logToStandardOutMessageReceived(inWire);
                 onMessageReceived();
@@ -1001,16 +943,15 @@ public class TcpChannelHub implements View, Closeable {
 
         private void readBuffer(@NotNull final ByteBuffer buffer) throws IOException {
             while (buffer.remaining() > 0) {
-                try {
 
-                    if (clientChannel == null || clientChannel.read(buffer) == -1)
-                        reConnect();
-                    //   throw new IORuntimeException("Disconnection to server " + hostname + ":" +                        port);
-                    if (isShutdown)
-                        throw new IORuntimeException("The server was shutdown, " + description + "/" + TCPRegistery.lookup(description));
-                } catch (InterruptedException e) {
-                    LOG.error("", e);
+
+                if (clientChannel == null || clientChannel.read(buffer) == -1) {
+                    // System.out.println("readBuffer will reconncet");
+                    throw new IOException("Disconnection to server " + description);
                 }
+                if (isShutdown)
+                    throw new IOException("The server was shutdown, " + description + "/" + TCPRegistry.lookup(description));
+
             }
         }
 
@@ -1041,8 +982,8 @@ public class TcpChannelHub implements View, Closeable {
                     awaitingHeartbeat.set(false);
                     long roundTipTimeMicros = NANOSECONDS.toMicros(System.nanoTime() - l);
                     if (LOG.isDebugEnabled())
-                        LOG.debug(format("{0}:{1}heartbeat round trip time={2}us",
-                                description, TCPRegistery.lookup(description),
+                        LOG.debug(String.format("{0}:{1}heartbeat round trip time={2}us",
+                                description, TCPRegistry.lookup(description),
                                 roundTipTimeMicros));
                     inWire.clear();
 
@@ -1057,17 +998,15 @@ public class TcpChannelHub implements View, Closeable {
         private void stop() {
             isShutdown = true;
 
-            if (executorService == null)
-                return;
             executorService.shutdown();
             try {
-                if (!executorService.awaitTermination(10, TimeUnit.MILLISECONDS)) {
+                if (!executorService.awaitTermination(500, TimeUnit.MILLISECONDS)) {
                     executorService.shutdownNow();
                 }
             } catch (InterruptedException e) {
+                executorService.shutdownNow();
                 LOG.error("", e);
             }
-            executorService = null;
         }
 
         // set to true if we have sent a heartbeat and are waiting a response
@@ -1091,20 +1030,16 @@ public class TcpChannelHub implements View, Closeable {
             if (millisecondsSinceLastMessageReceived >= HEATBEAT_PING_PERIOD && !awaitingHeartbeat.get())
                 sendHeartbeat();
 
-            if (TcpChannelHub.this.closed)
-                throw new InvalidEventHandlerException();
 
             // if we have not received a message from the server after the HEATBEAT_TIMEOUT_PERIOD
             // we will drop and then re-establish the connection.
             long x = millisecondsSinceLastMessageReceived - HEATBEAT_TIMEOUT_PERIOD;
             if (x > 0) {
-                System.out.println("millisecondsSinceLastMessageReceived=" + millisecondsSinceLastMessageReceived);
-                try {
-                    reConnect();
-                } catch (InterruptedException e) {
-                    return true;
-                }
+                //   System.out.println("millisecondsSinceLastMessageReceived=" + millisecondsSinceLastMessageReceived);
+                //System.out.println(" reconnect due to heatbeat failure");
+                currentState.set(ConnecitonStatus.DISCONNECTED);
             }
+
             if (TcpChannelHub.this.closed)
                 throw new InvalidEventHandlerException();
 
@@ -1112,24 +1047,108 @@ public class TcpChannelHub implements View, Closeable {
             return true;
         }
 
-    }
+        private void checkConnectionState() {
 
-    private void reflectServerHeartbeatMessage(ValueIn valueIn) {
 
-        // time stamp sent from the server, this is so that the server can calculate the round
-        // trip time
-        long timestamp = valueIn.int64();
+            if (currentState.get() == ConnecitonStatus.DISCONNECTED) {
 
-        this.lock(() -> {
+                ReentrantLock reentrantLock = outBytesLock();
+                reentrantLock.lock();
+                System.out.println("attempt reconnect remoteAddress=" + remoteAddress);
 
-            TcpChannelHub.this.writeMetaDataForKnownTID(0, outWire, null, 0);
+                if (currentState.get() == ConnecitonStatus.DISCONNECTED) {
+                    try {
+                        attemptDisconnect();
+                        attemptConnect();
+                    } finally {
+                        reentrantLock.unlock();
+                    }
+                }
 
-            TcpChannelHub.this.outWire.writeDocument(false, w ->
-                    // send back the time stamp that was sent from the server
-                    w.writeEventName(heartbeatReply).int64(timestamp));
+            }
 
-            TcpChannelHub.this.writeSocket(outWire);
-        });
+
+        }
+
+        private void attemptDisconnect() {
+            closeSocket();
+            onDisconnected();
+        }
+
+        private boolean attemptConnect() {
+            System.out.println("attemptConnect remoteAddress=" + remoteAddress);
+
+            SocketChannel socketChannel;
+
+            try {
+                long start = System.currentTimeMillis();
+                for (; ; ) {
+
+                    if (start + timeoutMs < System.currentTimeMillis())
+                        return false;
+                    socketChannel = openSocketChannel();
+
+                    try {
+                        if (socketChannel == null || !socketChannel.connect(remoteAddress)) {
+                            Jvm.pause(10);
+                            continue;
+                        } else
+                            break;
+                    } catch (ConnectException e) {
+                        Jvm.pause(10);
+                        continue;
+                    }
+
+                }
+
+                socketChannel.socket().setTcpNoDelay(true);
+                socketChannel.socket().setReceiveBufferSize(tcpBufferSize);
+                socketChannel.socket().setSendBufferSize(tcpBufferSize);
+
+                // the hand-shaking is assigned before setting the clientChannel, so that it can
+                // be assured to go first
+                doHandShaking(socketChannel);
+                clientChannel = socketChannel;
+                currentState.set(ConnecitonStatus.CONNECTED);
+
+                // resets the heartbeat timer
+                onMessageReceived();
+
+                onConnected();
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.out.println("failed to connect remoteAddress=" + remoteAddress + " so will reconnect");
+
+                currentState.set(ConnecitonStatus.DISCONNECTED);
+                if (clientChannel != null)
+                    try {
+                        clientChannel.close();
+                        clientChannel = null;
+                    } catch (IOException e1) {
+
+                    }
+            }
+
+            return false;
+        }
+
+        private void onDisconnected() {
+            currentState.set(ConnecitonStatus.DISCONNECTED);
+            desiredState.set(null);
+            System.out.println(" disconnected to remoteAddress=" + remoteAddress);
+            onConnectionClosed();
+        }
+
+        private void onConnected() {
+            System.out.println("successfully connected to  remoteAddress=" + remoteAddress);
+            onMessageReceived();
+            desiredState.set(null);
+            currentState.set(ConnecitonStatus.CONNECTED);
+            onReconnect();
+
+
+        }
+
     }
 
 

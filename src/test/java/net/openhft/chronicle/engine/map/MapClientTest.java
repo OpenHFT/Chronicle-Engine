@@ -16,14 +16,12 @@
 
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.Assetted;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
-import net.openhft.chronicle.network.TCPRegistery;
-import net.openhft.chronicle.wire.Wire;
+import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +38,6 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
@@ -76,7 +73,7 @@ public class MapClientTest extends ThreadMonitoringTest {
 
     @AfterClass
     public static void tearDownClass() {
-        TCPRegistery.assertAllServersStopped();
+        TCPRegistry.assertAllServersStopped();
     }
 
     @Test(timeout = 50000)
@@ -329,13 +326,12 @@ public class MapClientTest extends ThreadMonitoringTest {
                 String hostPortDescription,
                 @NotNull final Class<K> kClass,
                 @NotNull final Class<V> vClass,
-                @NotNull final Function<Bytes, Wire> wireType,
+                @NotNull final WireType wireType,
                 @NotNull final AssetTree clientAssetTree,
                 @NotNull final String name) throws IOException {
             this.clientAssetTree = clientAssetTree;
-
-            serverAssetTree = new VanillaAssetTree().forTesting(true);
-            TCPRegistery.createServerSocketChannelFor(hostPortDescription);
+            this.serverAssetTree = new VanillaAssetTree().forTesting(true);
+            TCPRegistry.createServerSocketChannelFor(hostPortDescription);
             serverEndpoint = new ServerEndpoint(hostPortDescription, serverAssetTree, wireType);
             ((VanillaAssetTree) clientAssetTree).forRemoteAccess(hostPortDescription, wireType);
 
@@ -350,6 +346,7 @@ public class MapClientTest extends ThreadMonitoringTest {
         public void close() throws IOException {
             if (map instanceof Closeable)
                 ((Closeable) map).close();
+
             serverAssetTree.close();
             serverEndpoint.close();
         }

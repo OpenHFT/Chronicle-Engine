@@ -19,6 +19,12 @@ public abstract class AbstractAsyncSubscription implements AsyncSubscription {
         this.csp = csp;
     }
 
+    public AbstractAsyncSubscription(@NotNull final TcpChannelHub hub, String csp, byte identifier) {
+        this.tid = hub.nextUniqueTransaction(System.currentTimeMillis()) * identifier;
+        this.hub = hub;
+        this.csp = csp;
+    }
+
     @Override
     public long tid() {
         return tid;

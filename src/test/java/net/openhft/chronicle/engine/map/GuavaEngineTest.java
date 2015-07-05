@@ -31,7 +31,7 @@ import net.openhft.chronicle.engine.map.MapClientTest.LocalMapSupplier;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
-import net.openhft.chronicle.network.TCPRegistery;
+import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,7 +88,7 @@ public class GuavaEngineTest   {
 
     @AfterClass
     public void testTearDown() {
-        TCPRegistery.assertAllServersStopped();
+        TCPRegistry.assertAllServersStopped();
     }
 
     @NotNull
@@ -185,7 +185,7 @@ public class GuavaEngineTest   {
 
         public RemoteTestGenerator(@NotNull AssetTree assetTree) throws IOException {
             this.assetTree = assetTree;
-            TCPRegistery.createServerSocketChannelFor("guava.test.host.port");
+            TCPRegistry.createServerSocketChannelFor("guava.test.host.port");
             final ServerEndpoint serverEndpoint = new ServerEndpoint("guava.test.host.port", assetTree, WIRE_TYPE);
 
             final String hostname = "localhost";

@@ -18,15 +18,13 @@
 
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.*;
-import net.openhft.chronicle.network.TCPRegistery;
-import net.openhft.chronicle.wire.Wire;
+import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +39,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.function.Function;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.engine.Utils.methodName;
@@ -57,7 +54,7 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
     private static final String NAME = "test";
 
     private static Boolean isRemote;
-    private final Function<Bytes, Wire> wireType;
+    private final WireType wireType;
     @NotNull
     @Rule
     public TestName name = new TestName();
@@ -65,7 +62,7 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
-    public TopologicalSubscriptionEventTest(Object isRemote, Function<Bytes, Wire> wireType) {
+    public TopologicalSubscriptionEventTest(Object isRemote,WireType  wireType) {
         TopologicalSubscriptionEventTest.isRemote = (Boolean) isRemote;
         this.wireType = wireType;
     }
@@ -87,7 +84,7 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
         if (isRemote) {
 
             methodName(name.getMethodName());
-            TCPRegistery.createServerSocketChannelFor("TopologicalSubscriptionEventTest.host.port");
+            TCPRegistry.createServerSocketChannelFor("TopologicalSubscriptionEventTest.host.port");
             serverEndpoint = new ServerEndpoint("TopologicalSubscriptionEventTest.host.port", serverAssetTree, wireType);
 
             clientAssetTree = new VanillaAssetTree().forRemoteAccess("TopologicalSubscriptionEventTest.host.port", wireType);
@@ -104,7 +101,7 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
             serverEndpoint.close();
         serverAssetTree.close();
 
-        TCPRegistery.assertAllServersStopped();
+        TCPRegistry.assertAllServersStopped();
     }
 
 

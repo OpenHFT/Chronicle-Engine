@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.mufg;
 
+import jdk.nashorn.internal.ir.annotations.Ignore;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -18,6 +19,7 @@ import net.openhft.chronicle.wire.YamlLogging;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.function.Function;
@@ -28,13 +30,22 @@ import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContex
  * Created by Rob Austin
  */
 
-public class ReplicationClientMultipleAssetsMain {
+public class ReplicationClient {
 
     private static MapView<String, String, String> map1;
     private static MapView<String, String, String> map2;
 
+    @Ignore
     @Test
-    public void test() throws InterruptedException {
+    public void test() throws InterruptedException, IOException {
+
+        ReplicationServerMain server = new ReplicationServerMain();
+
+        // creates the first instance of the server
+        server.create(1, "localhost");
+
+        // creates the seconds instance of the server
+        server.create(2, "localhost");
 
         YamlLogging.clientReads = true;
         YamlLogging.clientWrites = true;
