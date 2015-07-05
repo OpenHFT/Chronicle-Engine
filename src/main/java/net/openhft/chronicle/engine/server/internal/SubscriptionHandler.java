@@ -80,7 +80,7 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
                 });
             };
             tidToListener.put(tid, listener);
-            RequestContext rc = requestContext.type(subscriptionType);
+            RequestContext rc = requestContext.clone().type(subscriptionType);
             assetTree.acquireSubscription(rc).registerSubscriber(rc, listener);
 
             return true;

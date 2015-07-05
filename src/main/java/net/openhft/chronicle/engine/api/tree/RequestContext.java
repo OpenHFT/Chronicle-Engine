@@ -69,6 +69,7 @@ public class RequestContext implements Cloneable {
     private double averageValueSize;
     private long entries;
     private Boolean recurse;
+    private boolean sealed = false;
 
     private RequestContext() {
     }
@@ -76,6 +77,11 @@ public class RequestContext implements Cloneable {
     public RequestContext(String pathName, String name) {
         this.pathName = pathName;
         this.name = name;
+    }
+
+    public RequestContext seal() {
+        sealed = true;
+        return this;
     }
 
     private static void addAlias(Class type, @NotNull String aliases) {
@@ -123,24 +129,30 @@ public class RequestContext implements Cloneable {
     public RequestContext queryString(@NotNull String queryString) {
         if (queryString.isEmpty())
             return this;
+        WireParser parser = getWireParser();
+        Bytes bytes = Bytes.from(queryString);
+        QueryWire wire = new QueryWire(bytes);
+        while (bytes.readRemaining() > 0)
+            parser.parse(wire);
+        return this;
+    }
+
+    @NotNull
+    public WireParser getWireParser() {
         WireParser parser = new VanillaWireParser();
         parser.register(() -> "view", v -> v.text((Consumer<String>) this::view));
         parser.register(() -> "bootstrap", v -> v.bool(b -> this.bootstrap = b));
         parser.register(() -> "putReturnsNull", v -> v.bool(b -> this.putReturnsNull = b));
         parser.register(() -> "removeReturnsNull", v -> v.bool(b -> this.removeReturnsNull = b));
         parser.register(() -> "basePath", v -> v.text((Consumer<String>) x -> this.basePath = x));
-        parser.register(() -> "viewType", v -> v.typeLiteral(this::lookupType, x -> this.viewType = x));
-        parser.register(() -> "topicType", v -> v.typeLiteral(this::lookupType, x -> this.type = x));
-        parser.register(() -> "keyType", v -> v.typeLiteral(this::lookupType, x -> this.type = x));
-        parser.register(() -> "valueType", v -> v.typeLiteral(this::lookupType, x -> this.type2 = x));
-        parser.register(() -> "messageType", v -> v.typeLiteral(this::lookupType, x -> this.type2 = x));
-        parser.register(() -> "elementType", v -> v.typeLiteral(this::lookupType, x -> this.type = x));
+        parser.register(() -> "viewType", v -> v.typeLiteral(x -> this.viewType = x));
+        parser.register(() -> "topicType", v -> v.typeLiteral(x -> this.type = x));
+        parser.register(() -> "keyType", v -> v.typeLiteral(x -> this.type = x));
+        parser.register(() -> "valueType", v -> v.typeLiteral(x -> this.type2 = x));
+        parser.register(() -> "messageType", v -> v.typeLiteral(x -> this.type2 = x));
+        parser.register(() -> "elementType", v -> v.typeLiteral(x -> this.type = x));
         parser.register(WireParser.DEFAULT, ValueIn.DISCARD);
-        Bytes bytes = Bytes.from(queryString);
-        QueryWire wire = new QueryWire(bytes);
-        while (bytes.readRemaining() > 0)
-            parser.parse(wire);
-        return this;
+        return parser;
     }
 
     @NotNull
@@ -154,18 +166,20 @@ public class RequestContext implements Cloneable {
         return this;
     }
 
-    Class lookupType(@NotNull CharSequence typeName) throws IllegalArgumentException {
+    static Class lookupType(@NotNull CharSequence typeName) throws IllegalArgumentException {
         return CLASS_ALIASES.forName(typeName);
     }
 
     @NotNull
     public RequestContext type(Class type) {
+        checkSealed();
         this.type = type;
         return this;
     }
 
     @NotNull
     public RequestContext keyType(Class type) {
+        checkSealed();
         this.type = type;
         return this;
     }
@@ -209,12 +223,14 @@ public class RequestContext implements Cloneable {
 
     @NotNull
     public RequestContext valueType(Class type2) {
+        checkSealed();
         this.type2 = type2;
         return this;
     }
 
     @NotNull
     public RequestContext type2(Class type2) {
+        checkSealed();
         this.type2 = type2;
         return this;
     }
@@ -232,6 +248,7 @@ public class RequestContext implements Cloneable {
 
     @NotNull
     public RequestContext basePath(String basePath) {
+        checkSealed();
         this.basePath = basePath;
         return this;
     }
@@ -242,6 +259,7 @@ public class RequestContext implements Cloneable {
 
     @NotNull
     public RequestContext wireType(Function<Bytes, Wire> writeType) {
+        checkSealed();
         this.wireType = writeType;
         return this;
     }
@@ -264,6 +282,7 @@ public class RequestContext implements Cloneable {
 
     @NotNull
     public RequestContext averageValueSize(double averageValueSize) {
+        checkSealed();
         this.averageValueSize = averageValueSize;
         return this;
     }
@@ -274,6 +293,7 @@ public class RequestContext implements Cloneable {
 
     @NotNull
     public RequestContext entries(long entries) {
+        checkSealed();
         this.entries = entries;
         return this;
     }
@@ -286,6 +306,7 @@ public class RequestContext implements Cloneable {
 
     @NotNull
     public RequestContext viewType(Class assetType) {
+        checkSealed();
         this.viewType = assetType;
         return this;
     }
@@ -320,9 +341,15 @@ public class RequestContext implements Cloneable {
 
     @NotNull
     public RequestContext bootstrap(boolean bootstrap) {
+        checkSealed();
         this.bootstrap = bootstrap;
         return this;
     }
+
+    void checkSealed() {
+        if (sealed) throw new IllegalStateException();
+    }
+
 
     @NotNull
     @Override
@@ -358,7 +385,9 @@ public class RequestContext implements Cloneable {
     @NotNull
     public RequestContext clone() {
         try {
-            return (RequestContext) super.clone();
+            RequestContext clone = (RequestContext) super.clone();
+            clone.sealed = false;
+            return clone;
         } catch (CloneNotSupportedException e) {
             throw new AssertionError(e);
         }

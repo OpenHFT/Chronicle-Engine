@@ -29,6 +29,7 @@ import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.api.tree.RequestContextInterner;
 import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.engine.collection.CollectionWireHandler;
 import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
@@ -152,6 +153,8 @@ public class EngineWireHandler extends WireTcpHandler {
 
     }
 
+    final RequestContextInterner requestContextInterner = new RequestContextInterner(128);
+
     @NotNull
     private Consumer<WireIn> wireInConsumer() {
         return (wire) -> {
@@ -171,7 +174,7 @@ public class EngineWireHandler extends WireTcpHandler {
                     if (LOG.isDebugEnabled())
                         LOG.debug("received meta-data:\n" + wire.bytes().toHexString());
 
-                    requestContext = RequestContext.requestContext(cspText);
+                    requestContext = requestContextInterner.intern(cspText);
                     viewType = requestContext.viewType();
                     if (viewType == null) {
                         if (LOG.isDebugEnabled()) LOG.debug("received system-meta-data");
@@ -180,8 +183,6 @@ public class EngineWireHandler extends WireTcpHandler {
                     }
 
                     view = this.assetTree.acquireView(requestContext);
-
-                    requestContext.keyType();
 
                     if (viewType == MapView.class ||
                             viewType == EntrySetView.class ||
@@ -196,10 +197,10 @@ public class EngineWireHandler extends WireTcpHandler {
                             viewType == Heartbeat.class) {
 
                         // default to string type if not provided
-                        final Class type = requestContext.type() == null ? String.class
+                        final Class type = requestContext.keyType() == null ? String.class
                                 : requestContext.keyType();
 
-                        final Class type2 = requestContext.type2() == null ? String.class
+                        final Class type2 = requestContext.valueType() == null ? String.class
                                 : requestContext.valueType();
 
                         wireAdapter = new GenericWireAdapter(type, type2);
