@@ -153,8 +153,6 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     }
 
 
-
-
     @Test
     public void testTopicSubscribe() throws InvalidSubscriberException {
 
@@ -360,8 +358,8 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                 Thread.sleep(1);
                 map.remove("Hello");
 
-                Object removeEvent = eventsQueue.poll(500, MILLISECONDS);
-                Assert.assertTrue(removeEvent instanceof RemovedEvent);
+                Object removeEvent = eventsQueue.poll(1000, MILLISECONDS);
+                Assert.assertTrue("event=" + removeEvent.getClass(), removeEvent instanceof RemovedEvent);
 
             } catch (InterruptedException e) {
                 throw Jvm.rethrow(e);

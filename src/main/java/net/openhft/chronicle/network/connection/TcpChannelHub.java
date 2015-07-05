@@ -103,7 +103,6 @@ public class TcpChannelHub implements View, Closeable {
     private final String description;
 
     enum ConnecitonStatus {
-        RECONNECT,
         DISCONNECTED,
         CONNECTED
     }
@@ -307,7 +306,6 @@ public class TcpChannelHub implements View, Closeable {
         checkNotClosed();
 
         if (currentState.get() == ConnecitonStatus.DISCONNECTED) {
-            desiredState.set(ConnecitonStatus.RECONNECT);
             return;
         }
 
@@ -317,9 +315,9 @@ public class TcpChannelHub implements View, Closeable {
                 // send out all the bytes
                 writeSocket(wire, timeoutMs, clientChannel);
             else
-                desiredState.set(ConnecitonStatus.RECONNECT);
+                currentState.set(ConnecitonStatus.DISCONNECTED);
         } catch (Exception e) {
-            desiredState.set(ConnecitonStatus.RECONNECT);
+            currentState.set(ConnecitonStatus.DISCONNECTED);
             Jvm.rethrow(e);
         }
 
@@ -719,6 +717,7 @@ public class TcpChannelHub implements View, Closeable {
         private void running() {
 
             try {
+
                 attemptConnect();
                 final Wire inWire = wireFunction.apply(elasticByteBuffer());
                 assert inWire != null;
@@ -761,7 +760,7 @@ public class TcpChannelHub implements View, Closeable {
                             break;
                         } else {
                             System.out.println("will reconnect");
-                            desiredState.set(ConnecitonStatus.RECONNECT);
+                            currentState.set(ConnecitonStatus.DISCONNECTED);
                         }
 
 
@@ -772,7 +771,14 @@ public class TcpChannelHub implements View, Closeable {
 
             } finally {
                 System.out.println("disconnecting");
-                attemptDisconnect();
+
+                ReentrantLock reentrantLock = outBytesLock();
+                reentrantLock.lock();
+                try {
+                    attemptDisconnect();
+                } finally {
+                    reentrantLock.unlock();
+                }
             }
 
         }
@@ -1031,7 +1037,7 @@ public class TcpChannelHub implements View, Closeable {
             if (x > 0) {
                 //   System.out.println("millisecondsSinceLastMessageReceived=" + millisecondsSinceLastMessageReceived);
                 //System.out.println(" reconnect due to heatbeat failure");
-                desiredState.set(ConnecitonStatus.RECONNECT);
+                currentState.set(ConnecitonStatus.DISCONNECTED);
             }
 
             if (TcpChannelHub.this.closed)
@@ -1044,53 +1050,35 @@ public class TcpChannelHub implements View, Closeable {
         private void checkConnectionState() {
 
 
-            if (desiredState.get() == ConnecitonStatus.RECONNECT) {
+            if (currentState.get() == ConnecitonStatus.DISCONNECTED) {
 
                 ReentrantLock reentrantLock = outBytesLock();
                 reentrantLock.lock();
                 System.out.println("attempt reconnect remoteAddress=" + remoteAddress);
-                try {
-                    attemptDisconnect();
-                    attemptConnect();
-                } finally {
-                    reentrantLock.unlock();
+
+                if (currentState.get() == ConnecitonStatus.DISCONNECTED) {
+                    try {
+                        attemptDisconnect();
+                        attemptConnect();
+                    } finally {
+                        reentrantLock.unlock();
+                    }
                 }
 
             }
 
-            //   if (desiredState.get() == ConnecitonStatus.CONNECTED &&
-            //           currentState.get() == ConnecitonStatus.DISCONNECTED) {
-            //      attemptConnect();
-            //  }
-
-            if (desiredState.get() == ConnecitonStatus.DISCONNECTED &&
-                    currentState.get() == ConnecitonStatus.CONNECTED) {
-                attemptDisconnect();
-            }
 
         }
 
         private void attemptDisconnect() {
-            ReentrantLock reentrantLock = outBytesLock();
-            reentrantLock.lock();
-            try {
-                closeSocket();
-                onDisconnected();
-            } catch (Exception e) {
-
-            } finally {
-                reentrantLock.unlock();
-            }
+            closeSocket();
+            onDisconnected();
         }
 
         private boolean attemptConnect() {
             System.out.println("attemptConnect remoteAddress=" + remoteAddress);
 
             SocketChannel socketChannel;
-
-
-            ReentrantLock reentrantLock = outBytesLock();
-            reentrantLock.lock();
 
             try {
                 long start = System.currentTimeMillis();
@@ -1102,12 +1090,12 @@ public class TcpChannelHub implements View, Closeable {
 
                     try {
                         if (socketChannel == null || !socketChannel.connect(remoteAddress)) {
-                            Jvm.pause(100);
+                            Jvm.pause(10);
                             continue;
                         } else
                             break;
                     } catch (ConnectException e) {
-                        Jvm.pause(100);
+                        Jvm.pause(10);
                         continue;
                     }
 
@@ -1130,7 +1118,7 @@ public class TcpChannelHub implements View, Closeable {
             } catch (Exception e) {
                 e.printStackTrace();
                 System.out.println("failed to connect remoteAddress=" + remoteAddress + " so will reconnect");
-                desiredState.set(ConnecitonStatus.RECONNECT);
+
                 currentState.set(ConnecitonStatus.DISCONNECTED);
                 if (clientChannel != null)
                     try {
@@ -1139,9 +1127,8 @@ public class TcpChannelHub implements View, Closeable {
                     } catch (IOException e1) {
 
                     }
-            } finally {
-                reentrantLock.unlock();
             }
+
             return false;
         }
 

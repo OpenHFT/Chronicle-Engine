@@ -40,9 +40,7 @@ public class TextWireMain {
         if (args.length == 1 && args[0].compareTo("-debug") == 0)
         {
             System.out.println("Enabling message logging");
-            YamlLogging.showServerReads = true;
-            YamlLogging.showServerWrites = true;
-        }
+         }
         System.out.println("Server port seems to be " + port);
     }
 }
