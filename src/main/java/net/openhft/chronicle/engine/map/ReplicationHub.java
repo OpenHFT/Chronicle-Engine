@@ -72,7 +72,7 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
     public void bootstrap(@NotNull EngineReplication replication, byte localIdentifer) throws InterruptedException {
 
         // a non block call to get the identifier from the remote host
-        hub.subscribe(new AbstractAsyncSubscription(hub, csp) {
+        hub.subscribe(new AbstractAsyncSubscription(hub, csp,localIdentifer) {
             @Override
             public void onSubscribe(WireOut wireOut) {
                 wireOut.writeEventName(identifier).marshallable(WriteMarshallable.EMPTY);
@@ -98,7 +98,7 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
      * @param remoteIdentifier the identifier of the remote host
      * @param replication      the instance the handles the replication
      */
-    private void onConnected(byte localIdentifier, byte remoteIdentifier, EngineReplication replication) {
+    private void onConnected(final byte localIdentifier, byte remoteIdentifier, EngineReplication replication) {
         final ModificationIterator mi = replication.acquireModificationIterator(remoteIdentifier);
         final long lastModificationTime = replication.lastModificationTime(remoteIdentifier);
 
@@ -112,7 +112,8 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
         subscribe(replication, localIdentifier);
 
         // a non block call to get the identifier from the remote host
-        hub.subscribe(new AbstractAsyncSubscription(hub, csp) {
+        hub.subscribe(new AbstractAsyncSubscription(hub, csp,localIdentifier) {
+
             @Override
             public void onSubscribe(WireOut wireOut) {
                 wireOut.writeEventName(bootstap).typedMarshallable(bootstrap);
@@ -184,10 +185,10 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
      * @param replication     the event will be applied to the EngineReplication
      * @param localIdentifier our local identifier
      */
-    private void subscribe(@NotNull final EngineReplication replication, final int localIdentifier) {
+    private void subscribe(@NotNull final EngineReplication replication, final byte localIdentifier) {
 
         // the only has to be a temporary subscription because the onConnected() will be called upon a reconnect
-        hub.subscribe(new AbstractAsyncTemporarySubscription(hub, csp) {
+        hub.subscribe(new AbstractAsyncTemporarySubscription(hub, csp,localIdentifier) {
             @Override
             public void onSubscribe(@NotNull final WireOut wireOut) {
                 wireOut.writeEventName(replicationSubscribe).int8(localIdentifier);

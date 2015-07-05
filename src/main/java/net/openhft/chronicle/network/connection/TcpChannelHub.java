@@ -37,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
@@ -108,7 +109,7 @@ public class TcpChannelHub implements View, Closeable {
     }
 
 
-    private final AtomicReference<ConnecitonStatus> currentState = new AtomicReference<ConnecitonStatus>(null);
+    private final AtomicReference<ConnecitonStatus> currentState = new AtomicReference<ConnecitonStatus>(ConnecitonStatus.DISCONNECTED);
     private final AtomicReference<ConnecitonStatus> desiredState = new AtomicReference<ConnecitonStatus>();
 
     public TcpChannelHub(@NotNull SessionProvider sessionProvider,
@@ -304,6 +305,11 @@ public class TcpChannelHub implements View, Closeable {
     public void writeSocket(@NotNull final WireOut wire) {
         assert outBytesLock().isHeldByCurrentThread();
         checkNotClosed();
+
+        if (currentState.get() == ConnecitonStatus.DISCONNECTED) {
+            desiredState.set(ConnecitonStatus.RECONNECT);
+            return;
+        }
 
         try {
             SocketChannel clientChannel = this.clientChannel;
@@ -572,12 +578,20 @@ public class TcpChannelHub implements View, Closeable {
          * subscription, this could should establish a subscriotuib with the server.
          */
         private void onReconnect() {
-            map.values().forEach(v -> {
-                if (v instanceof AsyncSubscription) {
-                    if (!(v instanceof AsyncTemporarySubscription))
-                        ((AsyncSubscription) v).applySubscribe();
-                }
-            });
+
+            ReentrantLock reentrantLock = outBytesLock();
+            reentrantLock.lock();
+            try {
+                System.out.println("reconnected map.size=" + map.size());
+                map.values().forEach(v -> {
+                    if (v instanceof AsyncSubscription) {
+                        if (!(v instanceof AsyncTemporarySubscription))
+                            ((AsyncSubscription) v).applySubscribe();
+                    }
+                });
+            } finally {
+                reentrantLock.unlock();
+            }
         }
 
         public void onConnectionClosed() {
@@ -650,8 +664,16 @@ public class TcpChannelHub implements View, Closeable {
         }
 
         void subscribe(@NotNull final AsyncSubscription asyncSubscription) {
-            map.put(asyncSubscription.tid(), asyncSubscription);
-            asyncSubscription.applySubscribe();
+
+            // we have lock here to prevent a race with the resubscribe upon a reconnection
+            ReentrantLock reentrantLock = outBytesLock();
+            reentrantLock.lock();
+            try {
+                map.put(asyncSubscription.tid(), asyncSubscription);
+                asyncSubscription.applySubscribe();
+            } finally {
+                reentrantLock.unlock();
+            }
         }
 
         public void unsubscribe(long tid) {
@@ -1058,9 +1080,13 @@ public class TcpChannelHub implements View, Closeable {
 
         private boolean attemptConnect() {
             System.out.println("attemptConnect remoteAddress=" + remoteAddress);
+
+            SocketChannel socketChannel;
+
+
             ReentrantLock reentrantLock = outBytesLock();
             reentrantLock.lock();
-            SocketChannel socketChannel;
+
             try {
                 long start = System.currentTimeMillis();
                 for (; ; ) {
@@ -1069,11 +1095,16 @@ public class TcpChannelHub implements View, Closeable {
                         return false;
                     socketChannel = openSocketChannel();
 
-                    if (socketChannel == null || !socketChannel.connect(remoteAddress)) {
+                    try {
+                        if (socketChannel == null || !socketChannel.connect(remoteAddress)) {
+                            Jvm.pause(100);
+                            continue;
+                        } else
+                            break;
+                    } catch (ConnectException e) {
                         Jvm.pause(100);
                         continue;
-                    } else
-                        break;
+                    }
 
                 }
 
@@ -1122,6 +1153,8 @@ public class TcpChannelHub implements View, Closeable {
             desiredState.set(null);
             currentState.set(ConnecitonStatus.CONNECTED);
             onReconnect();
+
+
         }
 
     }

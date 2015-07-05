@@ -54,7 +54,7 @@ public class ReplicationTest {
         YamlLogging.clientWrites = true;
         YamlLogging.clientReads = true;
 
-        YamlLogging.showServerWrites = true;
+        //YamlLogging.showServerWrites = true;
 
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
         ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
@@ -141,7 +141,7 @@ public class ReplicationTest {
         for (int i = 1; i <= 30; i++) {
             if (map1.size() == 3 && map2.size() == 2)
                 break;
-            Jvm.pause(i * i);
+            Jvm.pause(200);
         }
 
 
