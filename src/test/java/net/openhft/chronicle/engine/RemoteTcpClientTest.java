@@ -18,6 +18,7 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.NativeBytes;
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
@@ -154,6 +155,8 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
                              String.class, String.class,
                              WireType.BINARY, assetTree, "test")) {
 
+            List<Closeable> closeables = new ArrayList<>();
+
             List<Map<String, String>> maps = new ArrayList<>();
             final ConcurrentMap<String, String> map = remote.get();
             maps.add(map);
@@ -161,16 +164,17 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
                 AssetTree assetTree2 = new VanillaAssetTree().forRemoteAccess("testLargeUpdates.host.port", WireType.BINARY);
                 Map<String, String> map2 = assetTree2.acquireMap("test", String.class, String.class);
                 maps.add(map2);
+                closeables.add(assetTree2);
             }
 
-
             final long time = System.currentTimeMillis();
-            for (int j = 0; j <= 30 * 1000; j += maps.size() * 50) {
+            for (int j = 0; j <= 30 * 1000; j += maps.size() * 100) {
                 System.out.println(j);
-                maps.parallelStream().forEach(m -> IntStream.range(0, 50).forEach(i -> m.put("key" + i, value)));
+                maps.parallelStream().forEach(m -> IntStream.range(0, 100).forEach(i -> m.put("key" + i, value)));
             }
 
             System.out.format("Time for 100MB %,dms%n", (System.currentTimeMillis() - time));
+            closeables.forEach(Closeable::close);
         }
     }
 

@@ -93,7 +93,7 @@ public class ReplicationClient {
 
         map2.remove("hello");
 
-       // Object actual = q1.take();
+        Object actual = q1.take();
         //System.out.println("here");
         //   Assert.assertEquals("InsertedEvent{assetName='/map', key=hello, value=world}", actual);
         //   Assert.assertEquals("InsertedEvent{assetName='/map', key=hello, value=world}", q2.take().toString());

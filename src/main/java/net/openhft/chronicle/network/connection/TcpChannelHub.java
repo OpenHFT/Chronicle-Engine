@@ -865,7 +865,7 @@ public class TcpChannelHub implements View, Closeable {
 
             // for async
             if (o instanceof AsyncSubscription) {
-                System.out.println("processing aysnc");
+//                System.out.println("processing async");
                 blockingRead(inWire, messageSize);
                 logToStandardOutMessageReceived(inWire);
                 onMessageReceived();
