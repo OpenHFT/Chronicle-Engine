@@ -1,7 +1,7 @@
 package net.openhft.chronicle.engine.mufg;
 
-import jdk.nashorn.internal.ir.annotations.Ignore;
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
@@ -16,10 +16,13 @@ import net.openhft.chronicle.threads.EventGroup;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.function.Function;
@@ -32,10 +35,17 @@ import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContex
 
 public class ReplicationClient {
 
+
+    static Set<Closeable> closeables = new HashSet<>();
+
     private static MapView<String, String, String> map1;
     private static MapView<String, String, String> map2;
 
-    @Ignore
+    @After
+    public void after() throws Exception {
+        closeables.forEach(c -> c.close());
+    }
+
     @Test
     public void test() throws InterruptedException, IOException {
 
@@ -80,6 +90,14 @@ public class ReplicationClient {
         //Test map 1 content
         Assert.assertEquals(1, map2.size());
         Assert.assertEquals("world", map2.get("hello"));
+
+        map2.remove("hello");
+
+       // Object actual = q1.take();
+        //System.out.println("here");
+        //   Assert.assertEquals("InsertedEvent{assetName='/map', key=hello, value=world}", actual);
+        //   Assert.assertEquals("InsertedEvent{assetName='/map', key=hello, value=world}", q2.take().toString());
+
 
     }
 

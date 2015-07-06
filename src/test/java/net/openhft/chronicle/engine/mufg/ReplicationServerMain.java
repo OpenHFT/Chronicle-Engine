@@ -87,9 +87,9 @@ public class ReplicationServerMain {
         tree.root().addLeafRule(ObjectKVSSubscription.class, " ObjectKVSSubscription",
                 VanillaKVSSubscription::new);
 
-
-        new ServerEndpoint("localhost:" + (5700 + identifier), tree, wireType);
-
+        ReplicationClient.closeables.add(tree);
+        ServerEndpoint serverEndpoint = new ServerEndpoint("localhost:" + (5700 + identifier), tree, wireType);
+        ReplicationClient.closeables.add(serverEndpoint);
     }
 
 

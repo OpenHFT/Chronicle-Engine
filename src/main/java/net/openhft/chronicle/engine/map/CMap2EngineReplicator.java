@@ -174,7 +174,8 @@ public class CMap2EngineReplicator implements EngineReplication,
     /**
      * @param remoteIdentifier the identifier of the remote node to check last replicated update
      *                         time from
-     * @return the last time that host denoted by the {@code remoteIdentifier} was updated in milliseconds.
+     * @return the last time that host denoted by the {@code remoteIdentifier} was updated in
+     * milliseconds.
      */
 
     @Override
@@ -183,9 +184,10 @@ public class CMap2EngineReplicator implements EngineReplication,
     }
 
     /**
-     * @param identifier the identifier of the remote node to check last replicated update
-     *                   time from
-     * @param timestamp  set the last time that host denoted by the {@code remoteIdentifier} was updated in milliseconds.
+     * @param identifier the identifier of the remote node to check last replicated update time
+     *                   from
+     * @param timestamp  set the last time that host denoted by the {@code remoteIdentifier} was
+     *                   updated in milliseconds.
      */
     @Override
     public void setLastModificationTime(final byte identifier, final long timestamp) {
@@ -235,7 +237,7 @@ public class CMap2EngineReplicator implements EngineReplication,
             assert key.underlyingObject() == null;
             this.value = value;
             // must be native
-            assert value.underlyingObject() == null;
+            assert value == null || value.underlyingObject() == null;
             this.timestamp = timestamp;
             this.identifier = identifier;
             this.isDeleted = isDeleted;
