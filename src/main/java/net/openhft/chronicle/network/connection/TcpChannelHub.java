@@ -109,9 +109,7 @@ public class TcpChannelHub implements View, Closeable {
                          @NotNull EventLoop eventLoop,
                          @NotNull Function<Bytes, Wire> wire) {
         this.description = description;
-
         this.eventLoop = eventLoop;
-
         this.tcpBufferSize = 64 << 10;
         this.remoteAddress = TCPRegistry.lookup(description);
         this.outWire = wire.apply(elasticByteBuffer());
@@ -119,10 +117,9 @@ public class TcpChannelHub implements View, Closeable {
         this.name = " connected to " + remoteAddress.toString();
         this.timeoutMs = 10_000;
         this.wire = wire;
-        handShakingWire = wire.apply(Bytes.elasticByteBuffer());
+        this.handShakingWire = wire.apply(Bytes.elasticByteBuffer());
         this.sessionProvider = sessionProvider;
         this.tcpSocketConsumer = new TcpSocketConsumer(wire, description);
-
     }
 
     @Nullable
