@@ -40,7 +40,6 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
     private final Set<Subscriber<MapEvent<K, V>>> subscribers = new CopyOnWriteArraySet<>();
     private final Set<Subscriber<K>> keySubscribers = new CopyOnWriteArraySet<>();
     private final Set<EventConsumer<K, V>> downstream = new CopyOnWriteArraySet<>();
-    @NotNull
     private final Asset asset;
     private KeyValueStore<K, MV, V> kvStore;
     private boolean hasSubscribers = false;
@@ -49,9 +48,9 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
         this(requestContext.viewType(), asset);
     }
 
-    public VanillaKVSSubscription(@Nullable Class viewType, @NotNull Asset asset) {
+    public VanillaKVSSubscription(@Nullable Class viewType, Asset asset) {
         this.asset = asset;
-        if (viewType != null)
+        if (viewType != null && asset != null)
             asset.addView(viewType, this);
     }
 
