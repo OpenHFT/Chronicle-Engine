@@ -114,7 +114,7 @@ public class TcpChannelHub implements View, Closeable {
         this.remoteAddress = TCPRegistry.lookup(description);
         this.outWire = wire.apply(elasticByteBuffer());
         this.inWire = wire.apply(elasticByteBuffer());
-        this.name = " connected to " + remoteAddress.toString();
+        this.name = remoteAddress.toString();
         this.timeoutMs = 10_000;
         this.wire = wire;
         this.handShakingWire = wire.apply(Bytes.elasticByteBuffer());
@@ -209,8 +209,6 @@ public class TcpChannelHub implements View, Closeable {
     }
 
     private SessionDetails sessionDetails() {
-        if (sessionProvider == null)
-            return null;
         return sessionProvider.get();
     }
 
@@ -220,29 +218,34 @@ public class TcpChannelHub implements View, Closeable {
     protected synchronized void closeSocket() {
         assert outBytesLock().isHeldByCurrentThread();
         if (clientChannel != null) {
+            synchronized (this) {
+                SocketChannel clientChannel = this.clientChannel;
+                this.clientChannel = null;
 
-            try {
-                clientChannel.socket().shutdownInput();
-            } catch (IOException ignored) {
+                if (clientChannel != null) {
+                    try {
+                        clientChannel.socket().shutdownInput();
+                    } catch (IOException ignored) {
+                    }
+
+                    try {
+                        clientChannel.socket().shutdownOutput();
+                    } catch (IOException ignored) {
+                    }
+
+                    try {
+                        clientChannel.socket().close();
+                    } catch (IOException ignored) {
+                    }
+
+                    try {
+                        clientChannel.close();
+                    } catch (IOException ignored) {
+                    }
+
+
+                }
             }
-
-            try {
-                clientChannel.socket().shutdownOutput();
-            } catch (IOException ignored) {
-            }
-
-            try {
-                clientChannel.socket().close();
-            } catch (IOException ignored) {
-            }
-
-            try {
-                clientChannel.close();
-            } catch (IOException ignored) {
-            }
-
-            clientChannel = null;
-
         }
 
 
@@ -294,7 +297,6 @@ public class TcpChannelHub implements View, Closeable {
 
         if (reconenct)
             throw new IORuntimeException("Not Connected " + remoteAddress);
-
 
         try {
             SocketChannel clientChannel = this.clientChannel;
@@ -1116,7 +1118,10 @@ public class TcpChannelHub implements View, Closeable {
                 // the hand-shaking is assigned before setting the clientChannel, so that it can
                 // be assured to go first
                 doHandShaking(socketChannel);
-                clientChannel = socketChannel;
+
+                synchronized (this) {
+                    clientChannel = socketChannel;
+                }
 
                 // resets the heartbeat timer
                 onMessageReceived();
@@ -1126,14 +1131,16 @@ public class TcpChannelHub implements View, Closeable {
                 e.printStackTrace();
                 System.out.println("failed to connect remoteAddress=" + remoteAddress + " so will reconnect");
 
+
                 if (clientChannel != null)
                     synchronized (this) {
-                        try {
-                            clientChannel.close();
-                            clientChannel = null;
-                        } catch (IOException e1) {
-                            // do nothing
-                        }
+                        if (clientChannel != null)
+                            try {
+                                clientChannel.close();
+                                clientChannel = null;
+                            } catch (IOException e1) {
+                                // do nothing
+                            }
                     }
             }
 
