@@ -62,7 +62,7 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
-    public TopologicalSubscriptionEventTest(Object isRemote,WireType  wireType) {
+    public TopologicalSubscriptionEventTest(Object isRemote, WireType wireType) {
         TopologicalSubscriptionEventTest.isRemote = (Boolean) isRemote;
         this.wireType = wireType;
     }
@@ -101,9 +101,9 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
             serverEndpoint.close();
         serverAssetTree.close();
 
-        TCPRegistry.assertAllServersStopped();
+        //TCPRegistry.assertAllServersStopped();
+        TCPRegistry.reset();
     }
-
 
 
     @Test
