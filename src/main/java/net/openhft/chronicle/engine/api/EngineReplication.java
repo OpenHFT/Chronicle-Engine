@@ -184,6 +184,8 @@ public interface EngineReplication extends Replication {
         @Override
         default void writeMarshallable(@NotNull final WireOut wire) {
             wire.write(() -> "key").bytes(key());
+
+            System.out.println("value=" + value());
             wire.write(() -> "value").bytes(value());
             wire.write(() -> "timestamp").int64(timestamp());
             wire.write(() -> "identifier").int8(identifier());
