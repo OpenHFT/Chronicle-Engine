@@ -667,10 +667,7 @@ public class TcpChannelHub implements View, Closeable {
 
         void subscribe(@NotNull final AsyncSubscription asyncSubscription) {
 
-
-            try {
-                checkConnection();
-            } catch (IORuntimeException e) {
+            if (reconenct) {
                 map.put(asyncSubscription.tid(), asyncSubscription);
                 // not currently connected
                 return;
@@ -679,12 +676,15 @@ public class TcpChannelHub implements View, Closeable {
             // we have lock here to prevent a race with the resubscribe upon a reconnection
             final ReentrantLock reentrantLock = outBytesLock();
             reentrantLock.lock();
+
             map.put(asyncSubscription.tid(), asyncSubscription);
-            try {
-                asyncSubscription.applySubscribe();
-            } finally {
-                reentrantLock.unlock();
-            }
+
+            if (!reconenct)
+                try {
+                    asyncSubscription.applySubscribe();
+                } finally {
+                    reentrantLock.unlock();
+                }
         }
 
         public void unsubscribe(long tid) {
