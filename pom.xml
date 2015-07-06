@@ -59,6 +59,7 @@
             <groupId>org.jminix</groupId>
             <artifactId>jminix</artifactId>
             <version>1.2.0</version>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
