@@ -344,10 +344,12 @@ public class MapClientTest extends ThreadMonitoringTest {
 
         @Override
         public void close() throws IOException {
+
             if (map instanceof Closeable)
                 ((Closeable) map).close();
 
             serverAssetTree.close();
+            clientAssetTree.close();
             serverEndpoint.close();
         }
 

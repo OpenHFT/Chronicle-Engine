@@ -121,15 +121,12 @@ public class TcpChannelHub implements View, Closeable {
 
         this.tcpBufferSize = 64 << 10;
         this.remoteAddress = TCPRegistry.lookup(description);
-
-
         this.outWire = wire.apply(elasticByteBuffer());
         this.inWire = wire.apply(elasticByteBuffer());
         this.name = " connected to " + remoteAddress.toString();
         this.timeoutMs = 10_000;
         this.wire = wire;
-        Bytes<ByteBuffer> byteBufferBytes = Bytes.elasticByteBuffer();
-        handShakingWire = wire.apply(byteBufferBytes);
+        handShakingWire = wire.apply(Bytes.elasticByteBuffer());
         this.sessionProvider = sessionProvider;
         this.tcpSocketConsumer = new TcpSocketConsumer(wire, description);
 
@@ -619,8 +616,6 @@ public class TcpChannelHub implements View, Closeable {
             executorService = start();
             // used for the heartbeat
             eventLoop.addHandler(this);
-
-
         }
 
         @Override
@@ -699,18 +694,13 @@ public class TcpChannelHub implements View, Closeable {
                 }
             });
 
-            while (currentState.get() == null) {
-
-            }
-
             return executorService;
-
         }
 
         private void checkNotShutdown() {
             if (isShutdown)
                 throw new IllegalStateException("you can not call this method once stop() has " +
-                        "been caleld.");
+                        "been called.");
         }
 
 
