@@ -91,7 +91,7 @@ public class ReplicationClient {
         Assert.assertEquals(1, map2.size());
         Assert.assertEquals("world", map2.get("hello"));
 
-        map2.remove("hello");
+       // map2.remove("hello");
 
        // Object actual = q1.take();
         //System.out.println("here");
