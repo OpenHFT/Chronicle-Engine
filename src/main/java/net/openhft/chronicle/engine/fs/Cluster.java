@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.fs;
 
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
@@ -30,7 +31,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 /**
  * Created by peter.lawrey on 17/06/2015.
  */
-public class Cluster implements Marshallable, View {
+public class Cluster implements Marshallable, View, Closeable {
     private final Map<String, HostDetails> map;
     private final String clusterName;
 
@@ -57,6 +58,10 @@ public class Cluster implements Marshallable, View {
         }
     }
 
+    public String clusterName() {
+        return clusterName;
+    }
+
     @Override
     public void writeMarshallable(@NotNull WireOut wire) {
         for (Entry<String, HostDetails> entry2 : map.entrySet()) {
@@ -66,5 +71,10 @@ public class Cluster implements Marshallable, View {
 
     public Collection<HostDetails> hostDetails() {
         return map.values();
+    }
+
+    @Override
+    public void close() {
+        hostDetails().forEach(h -> close());
     }
 }

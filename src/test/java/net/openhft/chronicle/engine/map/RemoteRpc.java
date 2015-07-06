@@ -65,15 +65,26 @@ public class RemoteRpc extends JSR166TestCase {
         assetTree = (new VanillaAssetTree(1)).forRemoteAccess("192.168.1.76:8088", WIRE_TYPE);
 
         MapView<String, String, String> map = assetTree.acquireMap("/test", String.class, String.class);
-        map.put("hello", "world");
+
+        for (int i = 0; i < 9999; i++) {
+            Thread.sleep(1000);
+            try {
+                map.put("hello", "world");
+            } catch (IORuntimeException e) {
+                System.out.println(e.getMessage());
+                continue;
+            } catch (Error e) {
+                e.printStackTrace();
+            }
+            break;
+        }
 
         for (int i = 0; i < 9999; i++) {
             try {
                 String hello = map.get("hello");
                 System.out.println(i + " " + hello);
             } catch (IORuntimeException e) {
-
-                e.printStackTrace();
+                System.out.println(e.getMessage());
             }
 
             Thread.sleep(1000);
@@ -94,16 +105,20 @@ public class RemoteRpc extends JSR166TestCase {
         assetTree = (new VanillaAssetTree(1)).forRemoteAccess("192.168.1.76:8088", WIRE_TYPE);
 
         MapView<String, String, String> map = assetTree.acquireMap("/test", String.class, String.class);
+        MapView<String, String, String> map2 = assetTree.acquireMap("/test2", String.class, String
+                .class);
         map.put("hello", "world");
 
 
         assetTree.registerSubscriber("/test", String.class, (x) -> System.out.println
                 ("******************+" + x));
-
+        assetTree.registerSubscriber("/test2", String.class, (x) -> System.out.println
+                ("------------------*+" + x));
 
         for (int i = 0; i < 9999; i++) {
             try {
                 map.put("hello", "world" + i);
+                map2.put("goodbye", "world" + i);
 
             } catch (IORuntimeException e) {
 

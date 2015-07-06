@@ -19,6 +19,7 @@ package net.openhft.chronicle.engine.fs;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.api.tree.Asset;
+import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.api.EventLoop;
@@ -28,6 +29,8 @@ import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,7 +39,7 @@ import java.util.function.Function;
 /**
  * Created by peter.lawrey on 17/06/2015.
  */
-public class HostDetails implements Marshallable {
+public class HostDetails implements Marshallable, View, Closeable {
     public int hostId;
     public int tcpBufferSize;
     public String connectUri;
@@ -66,5 +69,10 @@ public class HostDetails implements Marshallable {
         SessionProvider sessionProvider = asset.findOrCreateView(SessionProvider.class);
         return tcpChannelHubs.computeIfAbsent(addr, hostPort ->
                 new TcpChannelHub(sessionProvider, connectUri, eventLoop, wire));
+    }
+
+    @Override
+    public void close() throws IOException {
+        tcpChannelHubs.values().forEach(TcpChannelHub::close);
     }
 }
