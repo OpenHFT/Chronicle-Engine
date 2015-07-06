@@ -17,6 +17,7 @@
 package net.openhft.chronicle.network.connection;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
@@ -158,6 +159,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
         long tid;
         if (hub.outBytesLock().isHeldByCurrentThread())
             throw new IllegalStateException("Cannot view map while debugging");
+        hub.checkConnection();
         hub.outBytesLock().lock();
         try {
             tid = writeMetaDataStartTime(startTime);
@@ -180,12 +182,14 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
 
     protected void sendEventAsync(@NotNull final WireKey eventId,
                                   @Nullable final Consumer<ValueOut> consumer) {
-        if (hub.outBytesLock().isHeldByCurrentThread())
-            throw new IllegalStateException("Cannot view map while debugging");
-
+    /*    if (hub.outBytesLock().isHeldByCurrentThread())
+            throw new IllegalStateException("Cannot view map while debugging");*/
+        hub.checkConnection();
         hub.outBytesLock().lock();
         try {
             sendEventAsyncWithoutLock(eventId, consumer);
+        } catch (IORuntimeException e) {
+            // this can occur if the socket is not currently connected
         } finally {
             hub.outBytesLock().unlock();
         }

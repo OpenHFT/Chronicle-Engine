@@ -348,8 +348,8 @@ public class MapClientTest extends ThreadMonitoringTest {
             if (map instanceof Closeable)
                 ((Closeable) map).close();
 
-            serverAssetTree.close();
             clientAssetTree.close();
+            serverAssetTree.close();
             serverEndpoint.close();
         }
 

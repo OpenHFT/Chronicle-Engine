@@ -1,5 +1,6 @@
 package net.openhft.chronicle.network.connection;
 
+import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,16 +33,16 @@ public abstract class AbstractAsyncSubscription implements AsyncSubscription {
 
     @Override
     public void applySubscribe() {
-        hub.outBytesLock().lock();
+
+        hub.writeMetaDataForKnownTID(tid(), hub.outWire(), csp, 0);
+        hub.outWire().writeDocument(false, this::onSubscribe);
         try {
+                hub.writeSocket(hub.outWire());
+            } catch (IORuntimeException e) {
 
-            hub.writeMetaDataForKnownTID(tid(), hub.outWire(), csp, 0);
-            hub.outWire().writeDocument(false, this::onSubscribe);
+            }
 
-            hub.writeSocket(hub.outWire());
-        } finally {
-            hub.outBytesLock().unlock();
-        }
+
     }
 
     /**
