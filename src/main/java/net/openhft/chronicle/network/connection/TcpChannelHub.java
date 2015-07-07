@@ -783,7 +783,8 @@ public class TcpChannelHub implements View, Closeable {
                 }
 
             } catch (Exception e) {
-                e.printStackTrace();
+                if (!isShutdown())
+                    e.printStackTrace();
             } finally {
                 System.out.println("disconnecting");
 

@@ -12,7 +12,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static net.openhft.chronicle.engine.server.internal.MapWireHandler.nullCheck;
 import static net.openhft.chronicle.engine.server.internal.TopicPublisherHandler.EventId.publish;
 import static net.openhft.chronicle.engine.server.internal.TopicPublisherHandler.EventId.registerTopicSubscriber;
 import static net.openhft.chronicle.engine.server.internal.TopicPublisherHandler.Params.message;
@@ -98,7 +97,7 @@ public class TopicPublisherHandler<T, M> extends AbstractHandler {
                  final @NotNull WireAdapter wireAdapter) {
 
         setOutWire(outWire);
-        final Wire outWire1 = outWire;
+
         this.view = view;
         this.publisher = publisher;
         this.wireToT = wireAdapter.wireToKey();

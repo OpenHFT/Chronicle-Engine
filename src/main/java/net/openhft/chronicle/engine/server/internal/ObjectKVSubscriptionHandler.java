@@ -108,7 +108,8 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<ObjectKVSSu
                  final RequestContext requestContext,
                  final Queue<Consumer<Wire>> publisher,
                  final AssetTree assetTree, final long tid,
-                 final Wire outWire, final ObjectKVSSubscription subscription) {
+                 final Wire outWire,
+                 final ObjectKVSSubscription subscription) {
         setOutWire(outWire);
         this.outWire = outWire;
         this.subscription = subscription;

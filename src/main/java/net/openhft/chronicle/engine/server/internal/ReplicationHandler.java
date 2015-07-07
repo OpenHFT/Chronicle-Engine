@@ -61,7 +61,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
         apply,
         replicationEvent,
         replicationSubscribe,
-        replicactionReply,
+        replicationReply,
         bootstrapReply,
         identifierReply,
         identifier;
@@ -96,15 +96,13 @@ public class ReplicationHandler<E> extends AbstractHandler {
                 // sends replication events back to the remote client
                 mi.setModificationNotifier(() -> {
 
-                    System.out.println("onModificationNotifier");
-
                     mi.forEach(e -> publisher.add(publish -> {
 
                         publish.writeDocument(true,
                                 wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
 
-                        publish.writeDocument(false,
-                                wire -> wire.write(replicactionReply).typedMarshallable(e));
+                        publish.writeNotReadyDocument(false,
+                                wire -> wire.write(replicationReply).typedMarshallable(e));
 
                     }));
                 });
@@ -121,15 +119,15 @@ public class ReplicationHandler<E> extends AbstractHandler {
                         if (!mi.hasNext())
                             return false;
 
-                            mi.forEach(e -> publisher.add(publish -> {
+                        mi.forEach(e -> publisher.add(publish1 -> {
 
-                                publish.writeDocument(true,
-                                        wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
+                            publish1.writeDocument(true,
+                                    wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
 
-                                publish.writeDocument(false,
-                                        wire -> wire.write(replicactionReply).typedMarshallable(e));
+                            publish1.writeNotReadyDocument(false,
+                                    wire -> wire.write(replicationReply).typedMarshallable(e));
 
-                            }));
+                        }));
                         return true;
 
                     }

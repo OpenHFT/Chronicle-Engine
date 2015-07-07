@@ -7,8 +7,6 @@ import net.openhft.chronicle.engine.tree.TopologySubscription;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Queue;
 import java.util.function.BiConsumer;
@@ -22,7 +20,6 @@ import static net.openhft.chronicle.network.connection.CoreFields.tid;
  */
 public class TopologySubscriptionHandler extends SubscriptionHandler<TopologySubscription> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TopologySubscriptionHandler.class);
     @Nullable
     private final BiConsumer<WireIn, Long> dataConsumer = (inWire, inputTid) -> {
 

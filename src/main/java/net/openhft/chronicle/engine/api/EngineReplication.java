@@ -32,8 +32,8 @@ public interface EngineReplication extends Replication {
 
 
     /**
-     * Provides the unique Identifier associated with this instance. <p> An identifier is used
-     * to determine which replicating node made the change. <p> If two nodes update their map at the
+     * Provides the unique Identifier associated with this instance. <p> An identifier is used to
+     * determine which replicating node made the change. <p> If two nodes update their map at the
      * same time with different values, we have to deterministically resolve which update wins,
      * because of eventual consistency both nodes should end up locally holding the same data.
      * Although it is rare two remote nodes could receive an update to their maps at exactly the
@@ -66,8 +66,8 @@ public interface EngineReplication extends Replication {
 
     /**
      * Returns the timestamp of the last change from the specified remote node, already replicated
-     * to this host.  <p>Used in conjunction with replication, to back fill data from a remote
-     * node. This node may have missed updates while it was not been running or connected via TCP.
+     * to this host.  <p>Used in conjunction with replication, to back fill data from a remote node.
+     * This node may have missed updates while it was not been running or connected via TCP.
      *
      * @param remoteIdentifier the identifier of the remote node to check last replicated update
      *                         time from
@@ -101,6 +101,7 @@ public interface EngineReplication extends Replication {
         void forEach(@NotNull Consumer<ReplicationEntry> consumer);
 
         boolean hasNext();
+
         /**
          * Dirties all entries with a modification time equal to {@code fromTimeStamp} or newer. It
          * means all these entries will be considered as "new" by this ModificationIterator and
@@ -184,8 +185,6 @@ public interface EngineReplication extends Replication {
         @Override
         default void writeMarshallable(@NotNull final WireOut wire) {
             wire.write(() -> "key").bytes(key());
-
-            System.out.println("value=" + value());
             wire.write(() -> "value").bytes(value());
             wire.write(() -> "timestamp").int64(timestamp());
             wire.write(() -> "identifier").int8(identifier());

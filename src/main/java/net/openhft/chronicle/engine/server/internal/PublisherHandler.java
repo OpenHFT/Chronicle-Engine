@@ -90,7 +90,6 @@ public class PublisherHandler<E> extends AbstractHandler {
         this.view = view;
         this.wireToE = wireAdapter.wireToValue();
         dataConsumer.accept(inWire, tid);
-
     }
 
 

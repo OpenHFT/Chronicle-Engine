@@ -72,7 +72,7 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
     public void bootstrap(@NotNull EngineReplication replication, byte localIdentifer) throws InterruptedException {
 
         // a non block call to get the identifier from the remote host
-        hub.subscribe(new AbstractAsyncSubscription(hub, csp,localIdentifer) {
+        hub.subscribe(new AbstractAsyncSubscription(hub, csp, localIdentifer) {
             @Override
             public void onSubscribe(WireOut wireOut) {
                 wireOut.writeEventName(identifier).marshallable(WriteMarshallable.EMPTY);
@@ -91,8 +91,9 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
 
 
     /**
-     * called when the connection is established to the remote host, if the connection to the remote host is lost
-     * and re-established this method is called again each time the connection is establish.
+     * called when the connection is established to the remote host, if the connection to the remote
+     * host is lost and re-established this method is called again each time the connection is
+     * establish.
      *
      * @param localIdentifier  the identifier of this host
      * @param remoteIdentifier the identifier of the remote host
@@ -112,7 +113,7 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
         subscribe(replication, localIdentifier);
 
         // a non block call to get the identifier from the remote host
-        hub.subscribe(new AbstractAsyncSubscription(hub, csp,localIdentifier) {
+        hub.subscribe(new AbstractAsyncSubscription(hub, csp, localIdentifier) {
 
             @Override
             public void onSubscribe(WireOut wireOut) {
@@ -162,6 +163,7 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
                 if (isClosed.get())
                     throw new InvalidEventHandlerException();
 
+                // publishes the replication events
                 hub.lock(() -> mi.forEach(e -> sendEventAsyncWithoutLock(replicationEvent,
                         (Consumer<ValueOut>) v -> v.typedMarshallable(e))));
 
@@ -188,7 +190,7 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
     private void subscribe(@NotNull final EngineReplication replication, final byte localIdentifier) {
 
         // the only has to be a temporary subscription because the onConnected() will be called upon a reconnect
-        hub.subscribe(new AbstractAsyncTemporarySubscription(hub, csp,localIdentifier) {
+        hub.subscribe(new AbstractAsyncTemporarySubscription(hub, csp, localIdentifier) {
             @Override
             public void onSubscribe(@NotNull final WireOut wireOut) {
                 wireOut.writeEventName(replicationSubscribe).int8(localIdentifier);
@@ -196,8 +198,10 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
 
             @Override
             public void onConsumer(@NotNull final WireIn d) {
+
+                // receives the replication events and applies them
                 d.readDocument(null, w -> replication.applyReplication(
-                        w.read(replicactionReply).typedMarshallable()));
+                        w.read(replicationReply).typedMarshallable()));
             }
 
         });
