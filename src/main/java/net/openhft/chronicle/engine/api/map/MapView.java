@@ -31,7 +31,7 @@ import java.util.function.Function;
  */
 public interface MapView<K, MV, V> extends ConcurrentMap<K, V>,
         Assetted<KeyValueStore<K, MV, V>>,
-        Updatable<ConcurrentMap<K, V>>,
+        Updatable<MapView<K, MV, V>>,
         KeyedVisitable<K, V>,
         Function<K, V>,
         View {
@@ -57,12 +57,14 @@ public interface MapView<K, MV, V> extends ConcurrentMap<K, V>,
 
     /**
      * Add a Subscription for the keys changed on this Map
+     *
      * @param subscriber to add
      */
     void registerKeySubscriber(Subscriber<K> subscriber);
 
     /**
      * Add a Subscription for the MapEvents triggered by changes on this Map.
+     *
      * @param subscriber
      */
     void registerSubscriber(Subscriber<MapEvent<K, V>> subscriber);
@@ -76,4 +78,9 @@ public interface MapView<K, MV, V> extends ConcurrentMap<K, V>,
      * @return the type of the values.
      */
     Class<V> valueType();
+
+    @Override
+    default V apply(K k) {
+        return get(k);
+    }
 }

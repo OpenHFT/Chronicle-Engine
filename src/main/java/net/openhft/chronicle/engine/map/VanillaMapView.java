@@ -58,11 +58,6 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
     }
 
     @Override
-    public V apply(K key) {
-        return get(key);
-    }
-
-    @Override
     public Class<K> keyType() {
         return keyClass;
     }

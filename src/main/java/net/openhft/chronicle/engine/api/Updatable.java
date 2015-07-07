@@ -33,7 +33,7 @@ public interface Updatable<E> {
      * @param <R>      return type.
      * @return derived data.
      */
-    default <R> R apply(@NotNull SerializableFunction<E, R> function) {
+    default <R> R applyTo(@NotNull SerializableFunction<E, R> function) {
         return function.apply((E) this);
     }
 
@@ -65,7 +65,7 @@ public interface Updatable<E> {
      * @param <R> return type.
      * @return derived data.
      */
-    default <A, R> R apply(@NotNull SerializableBiFunction<E, A, R> function, A arg) {
+    default <A, R> R applyTo(@NotNull SerializableBiFunction<E, A, R> function, A arg) {
         return function.apply((E) this, arg);
     }
 

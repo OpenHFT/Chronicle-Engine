@@ -14,7 +14,7 @@
  *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.openhft.chronicle.engine.map;
+package net.openhft.chronicle.engine.map.remote;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
@@ -26,6 +26,9 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.collection.ClientWiredStatelessChronicleCollection;
 import net.openhft.chronicle.engine.collection.ClientWiredStatelessChronicleSet;
+import net.openhft.chronicle.engine.map.InsertedEvent;
+import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
+import net.openhft.chronicle.engine.map.ObjectKeyValueStore;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
@@ -114,7 +117,6 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     public boolean containsValue(final V value) {
         throw new UnsupportedOperationException("todo");
     }
-
 
 
     private void checkValue(@Nullable Object value) {
