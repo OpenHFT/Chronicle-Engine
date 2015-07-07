@@ -23,8 +23,11 @@ import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.AbstractCollection;
+import java.util.Iterator;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * Created by peter on 22/05/15.
@@ -46,7 +49,7 @@ public class VanillaEntrySetView<K, MV, V> extends AbstractCollection<Entry<K, V
 
     @Override
     public int size() {
-        return Math.min(Integer.MAX_VALUE, mapView.size());
+        return mapView.size();
     }
 
     @Override

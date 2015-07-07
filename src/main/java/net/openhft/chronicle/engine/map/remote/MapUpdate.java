@@ -28,15 +28,15 @@ import java.util.function.BiFunction;
 public enum MapUpdate implements SerializableUpdaterWithArg<MapView, Object> {
     PUT_ALL {
         @Override
-        public void accept(MapView mapView, Object mapToPut) {
-            mapView.putAll((Map) mapToPut);
+        public void accept(MapView map, Object mapToPut) {
+            map.putAll((Map) mapToPut);
         }
     },
     REPLACE_ALL {
         @Override
-        public void accept(MapView mapView, Object o) {
+        public void accept(MapView map, Object o) {
             BiFunction function = (BiFunction) o;
-            mapView.replaceAll(function);
+            map.replaceAll(function);
         }
     };
 }

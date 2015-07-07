@@ -18,7 +18,6 @@ package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
-import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
 import net.openhft.chronicle.engine.api.pubsub.Replication;
@@ -267,7 +266,7 @@ public class EngineWireHandler extends WireTcpHandler {
                 if (wireAdapter != null) {
 
                     if (viewType == MapView.class) {
-                        mapWireHandler.process(in, out, (KeyValueStore) ((MapView) view).underlying(), tid, wireAdapter,
+                        mapWireHandler.process(in, out, (MapView) view, tid, wireAdapter,
                                 requestContext, byteToWire);
                         return;
                     }

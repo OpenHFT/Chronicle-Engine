@@ -19,6 +19,7 @@ package net.openhft.chronicle.engine;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.NativeBytes;
 import net.openhft.chronicle.core.io.Closeable;
+import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
@@ -186,7 +187,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
                 RemoteMapSupplier<>("testValuesCollection.host.port", String.class,
                 String.class,
                 WireType.BINARY, assetTree, "test")) {
-            final ConcurrentMap<String, String> map = remote.get();
+            final MapView<String, String, String> map = remote.get();
             HashMap<String, String> data = new HashMap<String, String>();
             data.put("test1", "value1");
             data.put("test1", "value1");
@@ -203,6 +204,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
             Object[] dataValues = data.values().toArray();
             Arrays.sort(dataValues);
             assertArrayEquals(dataValues, values.toArray());
+
 
 /*    MapView<String, ?, String> map = acquireMap("my-map", String.class, String.class);
 

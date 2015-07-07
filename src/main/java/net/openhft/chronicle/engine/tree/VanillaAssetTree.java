@@ -23,6 +23,7 @@ import net.openhft.chronicle.engine.fs.ConfigurationFS;
 import net.openhft.chronicle.engine.map.InsertedEvent;
 import net.openhft.chronicle.engine.map.RemovedEvent;
 import net.openhft.chronicle.engine.map.UpdatedEvent;
+import net.openhft.chronicle.engine.map.remote.*;
 import net.openhft.chronicle.threads.Threads;
 import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.wire.Wire;
@@ -44,7 +45,13 @@ public class VanillaAssetTree implements AssetTree {
                 RemovedAssetEvent.class,
                 InsertedEvent.class,
                 UpdatedEvent.class,
-                RemovedEvent.class);
+                MapFunction.class,
+                MapUpdate.class,
+                RemovedEvent.class,
+                KeyFunctionPair.class,
+                KeyValueFunctionTuple.class,
+                KeyValuesTuple.class,
+                KeyValuePair.class);
     }
 
     final VanillaAsset root = new VanillaAsset(null, "");

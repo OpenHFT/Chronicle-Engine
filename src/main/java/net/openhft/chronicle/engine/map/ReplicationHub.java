@@ -21,6 +21,7 @@ import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.engine.map.replication.Bootstrap;
+import net.openhft.chronicle.engine.server.internal.MapWireHandler;
 import net.openhft.chronicle.network.connection.AbstractAsyncSubscription;
 import net.openhft.chronicle.network.connection.AbstractAsyncTemporarySubscription;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
@@ -40,7 +41,6 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
-import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.bootstap;
 import static net.openhft.chronicle.engine.server.internal.ReplicationHandler.EventId.*;
 
 /**
@@ -120,7 +120,7 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
 
             @Override
             public void onSubscribe(WireOut wireOut) {
-                wireOut.writeEventName(bootstap).typedMarshallable(bootstrap);
+                wireOut.writeEventName(MapWireHandler.EventId.bootstrap).typedMarshallable(bootstrap);
             }
 
             @Override

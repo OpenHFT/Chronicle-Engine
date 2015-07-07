@@ -145,6 +145,8 @@ public class VanillaAsset implements Asset, Closeable {
     public void forRemoteAccess(String hostPortDescription, Function<Bytes, Wire> wire) throws AssetNotFoundException {
         standardStack(true);
 
+        addWrappingRule(MapView.class, LAST + " remote key maps", RemoteMapView::new, ObjectKeyValueStore.class);
+
         addLeafRule(ObjectKVSSubscription.class, LAST + " Remote",
                 RemoteKVSSubscription::new);
 

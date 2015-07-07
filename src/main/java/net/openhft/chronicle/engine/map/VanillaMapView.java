@@ -20,6 +20,7 @@ import net.openhft.chronicle.core.annotation.NotNull;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
+import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
@@ -28,21 +29,21 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.AbstractMap;
-import java.util.Set;
+import java.util.*;
 
 import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
 
 /**
  * Created by peter on 22/05/15.
  */
-public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapView<K, MV, V> {
+public class VanillaMapView<K, MV, V> implements MapView<K, MV, V> {
     private final boolean putReturnsNull;
     private final boolean removeReturnsNull;
     private final Class keyClass;
     private final Class valueType;
     private Asset asset;
     private KeyValueStore<K, MV, V> kvStore;
+    private AbstractCollection<V> values;
 
     public VanillaMapView(@org.jetbrains.annotations.NotNull RequestContext context, Asset asset, KeyValueStore<K, MV, V> kvStore) {
         this(context.keyType(), context.valueType(), asset, kvStore, context.putReturnsNull() != Boolean.FALSE, context.removeReturnsNull() != Boolean.FALSE);
@@ -77,18 +78,83 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
         return asset.acquireView(KeySetView.class, null);
     }
 
+    @org.jetbrains.annotations.NotNull
+    @Override
+    public Collection<V> values() {
+        if (values == null) {
+            values = new AbstractCollection<V>() {
+                public Iterator<V> iterator() {
+                    return new Iterator<V>() {
+                        private Iterator<Entry<K, V>> i = entrySet().iterator();
+
+                        public boolean hasNext() {
+                            return i.hasNext();
+                        }
+
+                        public V next() {
+                            return i.next().getValue();
+                        }
+
+                        public void remove() {
+                            i.remove();
+                        }
+                    };
+                }
+
+                public int size() {
+                    return VanillaMapView.this.size();
+                }
+
+                public boolean isEmpty() {
+                    return VanillaMapView.this.isEmpty();
+                }
+
+                public void clear() {
+                    VanillaMapView.this.clear();
+                }
+
+                public boolean contains(Object v) {
+                    return VanillaMapView.this.containsValue(v);
+                }
+            };
+        }
+        return values;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return longSize() == 0;
+    }
+
     @Override
     public boolean containsKey(final Object key) {
         checkKey(key);
         return keyClass.isInstance(key) && kvStore.containsKey((K) key);
     }
 
-    private void checkKey(@Nullable final Object key) {
+    @Override
+    public boolean containsValue(Object value) {
+        checkValue(value);
+        try {
+            for (int i = 0; i < kvStore.segments(); i++) {
+                kvStore.entriesFor(i, e -> {
+                    if (Objects.equals(e.value(), value))
+                        throw new InvalidSubscriberException();
+                });
+
+            }
+            return false;
+        } catch (InvalidSubscriberException e) {
+            return true;
+        }
+    }
+
+    protected void checkKey(@Nullable final Object key) {
         if (key == null)
             throw new NullPointerException("key can not be null");
     }
 
-    private void checkValue(@Nullable final Object value) {
+    protected void checkValue(@Nullable final Object value) {
         if (value == null)
             throw new NullPointerException("value can not be null");
     }
@@ -149,8 +215,25 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
     }
 
     @Override
-    public int size() {
-        return (int) Math.min(Integer.MAX_VALUE, kvStore.longSize());
+    public void putAll(Map<? extends K, ? extends V> m) {
+        for (Entry<? extends K, ? extends V> entry : m.entrySet()) {
+            put(entry.getKey(), entry.getValue());
+        }
+    }
+
+    @Override
+    public long longSize() {
+        return kvStore.longSize();
+    }
+
+    @Override
+    public V getAndPut(K key, V value) {
+        return kvStore.getAndPut(key, value);
+    }
+
+    @Override
+    public V getAndRemove(K key) {
+        return kvStore.getAndRemove(key);
     }
 
     @org.jetbrains.annotations.NotNull
@@ -213,5 +296,49 @@ public class VanillaMapView<K, MV, V> extends AbstractMap<K, V> implements MapVi
     public void registerSubscriber(Subscriber<MapEvent<K, V>> subscriber) {
         KVSSubscription<K, V, V> subscription = (KVSSubscription) asset.subscription(true);
         subscription.registerSubscriber(RequestContext.requestContext().bootstrap(true).type(MapEvent.class), subscriber);
+    }
+
+    @Override
+    public int hashCode() {
+        return entrySet().hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Map) {
+            Map map = (Map) obj;
+            // todo use longSize()
+            if (size() != map.size())
+                return false;
+            try {
+                for (int i = 0; i < kvStore.segments(); i++) {
+                    kvStore.entriesFor(i, e -> {
+                        if (!Objects.equals(e.value(), map.get(e.key())))
+                            throw new InvalidSubscriberException();
+                    });
+
+                }
+                return true;
+            } catch (InvalidSubscriberException e) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{");
+        try {
+            for (int i = 0; i < kvStore.segments(); i++) {
+                kvStore.entriesFor(i, e -> sb.append(e.key()).append("=").append(e.value()).append(", "));
+            }
+            if (sb.length() > 3)
+                sb.setLength(sb.length() - 2);
+            return sb.append("}").toString();
+        } catch (InvalidSubscriberException e) {
+            throw new AssertionError(e);
+        }
     }
 }

@@ -32,6 +32,8 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
+
 /**
  * Created by peter on 22/05/15.
  */
@@ -46,13 +48,15 @@ public class RemoteMapView<K, MV, V> extends VanillaMapView<K, MV, V> {
 
     @Override
     public boolean containsValue(Object value) {
-        return this.<Object, Boolean>applyTo((SerializableBiFunction) MapFunction.CONTAINS_VALUE, value);
+        return convertTo(Boolean.class, this.applyTo((SerializableBiFunction) MapFunction.CONTAINS_VALUE, value));
     }
 
+/* Map serialization not supported yet.
     @Override
     public void putAll(Map<? extends K, ? extends V> m) {
         this.asyncUpdate((SerializableUpdaterWithArg) MapUpdate.PUT_ALL, m);
     }
+*/
 
     @Override
     public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
@@ -73,59 +77,77 @@ public class RemoteMapView<K, MV, V> extends VanillaMapView<K, MV, V> {
     @Nullable
     @Override
     public V putIfAbsent(@NotNull K key, V value) {
-        return (V) this.applyToKey(key, (SerializableBiFunction) MapFunction.PUT_IF_ABSENT, KeyValuePair.of(key, value));
+        checkKey(key);
+        checkValue(value);
+        return (V) this.applyTo((SerializableBiFunction) MapFunction.PUT_IF_ABSENT, KeyValuePair.of(key, value));
     }
 
     @Override
     public boolean remove(@NotNull Object key, Object value) {
-        return (Boolean) this.applyToKey((K) key, (SerializableBiFunction) MapFunction.REMOVE, KeyValuePair.of(key, value));
+        checkKey(key);
+        checkValue(value);
+        return (Boolean) this.applyTo((SerializableBiFunction) MapFunction.REMOVE, KeyValuePair.of(key, value));
     }
 
     @Override
     public boolean replace(@NotNull K key, @NotNull V oldValue, @NotNull V newValue) {
-        return (Boolean) this.applyToKey((K) key, (SerializableBiFunction) MapFunction.REPLACE, KeyValuesTuple.of(key, oldValue, newValue));
+        checkKey(key);
+        checkValue(oldValue);
+        checkValue(newValue);
+        Object o = this.applyTo((SerializableBiFunction) MapFunction.REPLACE, KeyValuesTuple.of(key, oldValue, newValue));
+        return convertTo(Boolean.class, o);
     }
 
     @Nullable
     @Override
     public V replace(@NotNull K key, @NotNull V value) {
-        return (V) this.applyToKey((K) key, (SerializableBiFunction) MapFunction.REPLACE, KeyValuePair.of(key, value));
+        checkKey(key);
+        checkValue(value);
+        return (V) this.applyTo((SerializableBiFunction) MapFunction.REPLACE, KeyValuePair.of(key, value));
     }
 
     @Override
     public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
-        return (V) this.applyToKey(key, (SerializableBiFunction) MapFunction.COMPUTE_IF_ABSENT, KeyFunctionPair.of(key, mappingFunction));
+        checkKey(key);
+        return (V) this.applyTo((SerializableBiFunction) MapFunction.COMPUTE_IF_ABSENT, KeyFunctionPair.of(key, mappingFunction));
     }
 
     @Override
     public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-        return (V) this.applyToKey(key, (SerializableBiFunction) MapFunction.COMPUTE_IF_PRESENT, KeyFunctionPair.of(key, remappingFunction));
+        checkKey(key);
+        return (V) this.applyTo((SerializableBiFunction) MapFunction.COMPUTE_IF_PRESENT, KeyFunctionPair.of(key, remappingFunction));
     }
 
     @Override
     public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-        return (V) this.applyToKey(key, (SerializableBiFunction) MapFunction.COMPUTE, KeyFunctionPair.of(key, remappingFunction));
+        checkKey(key);
+        return (V) this.applyTo((SerializableBiFunction) MapFunction.COMPUTE, KeyFunctionPair.of(key, remappingFunction));
     }
 
     @Override
     public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
-        return (V) this.applyToKey(key, (SerializableBiFunction) MapFunction.MERGE, KeyValueFunctionTuple.of(key, value, remappingFunction));
+        checkKey(key);
+        checkValue(value);
+        return (V) this.applyTo((SerializableBiFunction) MapFunction.MERGE, KeyValueFunctionTuple.of(key, value, remappingFunction));
     }
 
     // core functionality.
     @Override
     public <A, R> R applyTo(@NotNull SerializableBiFunction<MapView<K, MV, V>, A, R> function, A arg) {
-        throw new UnsupportedOperationException("todo CE-95");
+        RemoteKeyValueStore<K, V> store = (RemoteKeyValueStore<K, V>) underlying();
+        return store.applyTo((SerializableBiFunction<MapView<K, ?, V>, A, R>) (SerializableBiFunction) function, arg);
     }
 
     @Override
     public <A> void asyncUpdate(@NotNull SerializableUpdaterWithArg<MapView<K, MV, V>, A> updateFunction, A arg) {
-        throw new UnsupportedOperationException("todo CE-95");
+        RemoteKeyValueStore<K, V> store = (RemoteKeyValueStore<K, V>) underlying();
+        store.asyncUpdate((SerializableUpdaterWithArg) updateFunction, arg);
     }
 
     @Override
     public <UA, RA, R> R syncUpdate(@NotNull SerializableUpdaterWithArg<MapView<K, MV, V>, UA> updateFunction, UA ua, @NotNull SerializableBiFunction<MapView<K, MV, V>, RA, R> returnFunction, RA ra) {
-        throw new UnsupportedOperationException("todo CE-95");
+        RemoteKeyValueStore<K, V> store = (RemoteKeyValueStore<K, V>) underlying();
+        return store.syncUpdate((SerializableBiFunction) updateFunction, ua, (SerializableBiFunction) returnFunction, ra);
     }
 
     // helper functions.
@@ -149,36 +171,42 @@ public class RemoteMapView<K, MV, V> extends VanillaMapView<K, MV, V> {
 
     @Override
     public <R> R applyToKey(K key, @NotNull SerializableFunction<V, R> function) {
+        checkKey(key);
         // TODO CE-95 handle this natively.
         return applyTo((x, k) -> function.apply(x.get(k)), key);
     }
 
     @Override
     public <T, R> R applyToKey(K key, @NotNull SerializableBiFunction<V, T, R> function, T argument) {
+        checkKey(key);
         // TODO CE-95 handle this natively.
-        return applyTo((x, kv) -> function.apply(x.get(kv.key), (T) kv.value), KeyValuePair.of(key, argument));
+        return applyTo((map, kv) -> function.apply(map.get(kv.key), (T) kv.value), KeyValuePair.of(key, argument));
     }
 
     @Override
     public void asyncUpdateKey(K key, @NotNull SerializableFunction<V, V> updateFunction) {
+        checkKey(key);
         // TODO CE-95 handle this natively.
         compute(key, (k, v) -> updateFunction.apply(v));
     }
 
     @Override
     public <T> void asyncUpdateKey(K key, @NotNull SerializableBiFunction<V, T, V> updateFunction, T argument) {
+        checkKey(key);
         // TODO CE-95 handle this natively.
         compute(key, (k, v) -> updateFunction.apply(v, argument));
     }
 
     @Override
     public <R> R syncUpdateKey(K key, @NotNull SerializableFunction<V, V> updateFunction, @NotNull SerializableFunction<V, R> returnFunction) {
+        checkKey(key);
         // TODO CE-95 handle this natively.
         return applyTo((map, kvf) -> returnFunction.apply(map.compute(key, (k, v) -> updateFunction.apply(v))), key);
     }
 
     @Override
     public <T, RT, R> R syncUpdateKey(K key, @NotNull SerializableBiFunction<V, T, V> updateFunction, @Nullable T updateArgument, @NotNull SerializableBiFunction<V, RT, R> returnFunction, @Nullable RT returnArgument) {
+        checkKey(key);
         // TODO CE-95 handle this natively.
         return applyTo((map, kvf) -> returnFunction.apply(map.compute(key, (k, v) -> updateFunction.apply(v, updateArgument)), returnArgument), key);
     }

@@ -24,7 +24,9 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.pool.StringBuilderPool;
-import net.openhft.chronicle.engine.api.map.KeyValueStore;
+import net.openhft.chronicle.core.util.SerializableBiFunction;
+import net.openhft.chronicle.core.util.SerializableUpdaterWithArg;
+import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.collection.CollectionWireHandler;
 import net.openhft.chronicle.engine.map.remote.RemoteKeyValueStore;
@@ -74,7 +76,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
     @Nullable
     private WireIn inWire = null;
     @Nullable
-    private KeyValueStore<K, V, V> map;
+    private MapView<K, V, V> map;
     private boolean charSequenceValue;
     private long tid;
     private final BiConsumer<WireIn, Long> dataConsumer = new BiConsumer<WireIn, Long>() {
@@ -102,6 +104,16 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                     final K key = wireToK.apply(valueIn);
                     nullCheck(key);
                     map.remove(key);
+                    return;
+                }
+
+                if (update2.contentEquals(eventName)) {
+                    valueIn.marshallable(wire -> {
+                        final Params[] params = update2.params();
+                        final SerializableUpdaterWithArg updater = (SerializableUpdaterWithArg) wire.read(params[0]).object(Object.class);
+                        final Object arg = wire.read(params[1]).object(Object.class);
+                        map.asyncUpdate(updater, arg);
+                    });
                     return;
                 }
 
@@ -231,7 +243,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                             nullCheck(key);
                             nullCheck(oldValue);
                             nullCheck(newValue);
-                            outWire.writeEventName(reply).bool(map.replaceIfEqual(key, oldValue, newValue));
+                            outWire.writeEventName(reply).bool(map.replace(key, oldValue, newValue));
                         });
                         return;
                     }
@@ -257,12 +269,34 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                             final V value = wireToV.apply(wire.read(params[1]));
                             nullCheck(key);
                             nullCheck(value);
-                            outWire.writeEventName(reply).bool(map.removeIfEqual(key, value));
+                            outWire.writeEventName(reply).bool(map.remove(key, value));
                         });
                     }
 
                     if (hashCode.contentEquals(eventName)) {
                         outWire.writeEventName(reply).int32(map.hashCode());
+                        return;
+                    }
+
+                    if (applyTo2.contentEquals(eventName)) {
+                        valueIn.marshallable(wire -> {
+                            final Params[] params = applyTo2.params();
+                            final SerializableBiFunction function = (SerializableBiFunction) wire.read(params[0]).object(Object.class);
+                            final Object arg = wire.read(params[1]).object(Object.class);
+                            outWire.writeEventName(reply).object(map.applyTo(function, arg));
+                        });
+                        return;
+                    }
+
+                    if (update4.contentEquals(eventName)) {
+                        valueIn.marshallable(wire -> {
+                            final Params[] params = update4.params();
+                            final SerializableUpdaterWithArg updater = (SerializableUpdaterWithArg) wire.read(params[0]).object(Object.class);
+                            final Object updateArg = wire.read(params[1]).object(Object.class);
+                            final SerializableBiFunction returnFunction = (SerializableBiFunction) wire.read(params[2]).object(Object.class);
+                            final Object returnArg = wire.read(params[3]).object(Object.class);
+                            outWire.writeEventName(reply).object(map.syncUpdate(updater, updateArg, returnFunction, returnArg));
+                        });
                         return;
                     }
 
@@ -303,7 +337,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
      */
     public void process(@NotNull final WireIn in,
                         @NotNull final WireOut out,
-                        @NotNull KeyValueStore map,
+                        @NotNull MapView map,
                         long tid,
                         @NotNull final WireAdapter wireAdapter,
                         @NotNull final RequestContext requestContext,
@@ -385,7 +419,11 @@ public class MapWireHandler<K, V> extends AbstractHandler {
         newValue,
         timestamp,
         identifier,
-        entry
+        entry,
+        updateFunction,
+        updateArg,
+        function,
+        arg,
     }
 
     public enum EventId implements ParameterizeWireKey {
@@ -416,7 +454,10 @@ public class MapWireHandler<K, V> extends AbstractHandler {
         valueBuilder,
         remoteIdentifier,
         numberOfSegments,
-        bootstap;
+        applyTo2(function, arg),
+        update2(updateFunction, updateArg),
+        update4(updateFunction, updateArg, function, arg),
+        bootstrap;
 
         private final WireKey[] params;
 

@@ -29,6 +29,10 @@ public class KeyValuesTuple implements Marshallable {
     Object value;
 
     KeyValuesTuple(Object key, Object oldValue, Object value) {
+        assert key != null;
+        assert oldValue != null;
+        assert value != null;
+        
         this.key = key;
         this.oldValue = oldValue;
         this.value = value;

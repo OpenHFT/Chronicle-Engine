@@ -17,9 +17,11 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
+import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.Assetted;
 import net.openhft.chronicle.engine.map.remote.RemoteKeyValueStore;
+import net.openhft.chronicle.engine.map.remote.RemoteMapView;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
@@ -27,7 +29,6 @@ import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -37,13 +38,11 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 /**
  * test using the listener both remotely or locally via the engine
@@ -87,7 +86,7 @@ public class MapClientTest extends ThreadMonitoringTest {
                     assertEquals("hello", mapProxy.get(1));
                     assertEquals(1, mapProxy.size());
 
-                    Assert.assertEquals("{1=hello}", mapProxy.toString());
+                    assertEquals("{1=hello}", mapProxy.toString());
 
                 });
             } catch (IOException e) {
@@ -123,7 +122,12 @@ public class MapClientTest extends ThreadMonitoringTest {
     @Test(timeout = 50000)
     public void testEntrySetIsEmpty() throws IOException, InterruptedException {
 
-        supplyMap(Integer.class, String.class, mapProxy -> assertEquals(true, mapProxy.isEmpty()));
+        supplyMap(Integer.class, String.class, mapProxy -> {
+            long size = mapProxy.longSize();
+            boolean empty = mapProxy.isEmpty();
+            assertTrue(empty);
+            assertEquals(0, size);
+        });
     }
 
     @Test
@@ -263,7 +267,18 @@ public class MapClientTest extends ThreadMonitoringTest {
 
         supplyMap(String.class, String.class, mapProxy -> {
             mapProxy.put("hello", "world");
-            Assert.assertEquals("world", mapProxy.get("hello"));
+            assertEquals("world", mapProxy.get("hello"));
+            assertEquals(1, mapProxy.size());
+        });
+    }
+
+    @Test
+    public void testApplyTo() throws IOException, InterruptedException {
+
+        supplyMap(String.class, String.class, mapProxy -> {
+            mapProxy.asyncUpdate(m -> m.put("hello", "world"));
+            assertEquals("world", mapProxy.applyTo(m -> m.get("hello")));
+            assertEquals("world2", mapProxy.syncUpdate(m -> m.put("hello", "world2"), m -> m.get("hello")));
             assertEquals(1, mapProxy.size());
         });
     }
@@ -275,12 +290,12 @@ public class MapClientTest extends ThreadMonitoringTest {
 
             mapProxy.put(1, "Hello");
 
-            Assert.assertEquals("Hello", mapProxy.get(1));
-            Assert.assertEquals("{1=Hello}", mapProxy.toString());
+            assertEquals("Hello", mapProxy.get(1));
+            assertEquals("{1=Hello}", mapProxy.toString());
             mapProxy.remove(1);
 
             mapProxy.put(2, "World");
-            Assert.assertEquals("{2=World}", mapProxy.toString());
+            assertEquals("{2=World}", mapProxy.toString());
         });
     }
 
@@ -288,15 +303,16 @@ public class MapClientTest extends ThreadMonitoringTest {
      * supplies a listener and closes it once the tests are finished
      */
     private <K, V>
-    void supplyMap(@NotNull Class<K> kClass, @NotNull Class<V> vClass, @NotNull Consumer<ConcurrentMap<K, V>> c)
+    void supplyMap(@NotNull Class<K> kClass, @NotNull Class<V> vClass, @NotNull Consumer<MapView<K, V, V>> c)
             throws IOException {
 
-        CloseableSupplier<ConcurrentMap<K, V>> result;
+        CloseableSupplier<MapView<K, V, V>> result;
         if (LocalMapSupplier.class.equals(supplier)) {
             result = new LocalMapSupplier<>(kClass, vClass, assetTree);
 
         } else if (RemoteMapSupplier.class.equals(supplier)) {
             result = new RemoteMapSupplier<>("test", kClass, vClass, WireType.TEXT, assetTree, "test");
+            assertTrue(result.get() instanceof RemoteMapView);
 
         } else {
             throw new IllegalStateException("unsuported type");
@@ -314,12 +330,12 @@ public class MapClientTest extends ThreadMonitoringTest {
     private interface CloseableSupplier<X> extends Closeable, Supplier<X> {
     }
 
-    public static class RemoteMapSupplier<K, V> implements CloseableSupplier<ConcurrentMap<K, V>> {
+    public static class RemoteMapSupplier<K, V> implements CloseableSupplier<MapView<K, V, V>> {
 
         @NotNull
         private final ServerEndpoint serverEndpoint;
         @NotNull
-        private final ConcurrentMap<K, V> map;
+        private final MapView<K, V, V> map;
         private final AssetTree serverAssetTree;
         private final AssetTree clientAssetTree;
 
@@ -356,15 +372,15 @@ public class MapClientTest extends ThreadMonitoringTest {
 
         @NotNull
         @Override
-        public ConcurrentMap<K, V> get() {
+        public MapView<K, V, V> get() {
             return map;
         }
     }
 
-    public static class LocalMapSupplier<K, V> implements CloseableSupplier<ConcurrentMap<K, V>> {
+    public static class LocalMapSupplier<K, V> implements CloseableSupplier<MapView<K, V, V>> {
 
         @NotNull
-        private final ConcurrentMap<K, V> map;
+        private final MapView<K, V, V> map;
 
         public LocalMapSupplier(Class<K> kClass, Class<V> vClass, @NotNull AssetTree assetTree) throws IOException {
             map = assetTree.acquireMap("test" + i++ + "?putReturnsNull=false&removeReturnsNull=false", kClass, vClass);
@@ -378,7 +394,7 @@ public class MapClientTest extends ThreadMonitoringTest {
 
         @NotNull
         @Override
-        public ConcurrentMap<K, V> get() {
+        public MapView<K, V, V> get() {
             return map;
         }
     }

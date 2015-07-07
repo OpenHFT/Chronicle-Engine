@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.bootstap;
+import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.bootstrap;
 import static net.openhft.chronicle.engine.server.internal.ReplicationHandler.EventId.*;
 
 /**
@@ -175,7 +175,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
                     return;
                 }
 
-                if (bootstap.contentEquals(eventName)) {
+                if (bootstrap.contentEquals(eventName)) {
 
                     // receive bootstrap
                     final Bootstrap inBootstrap = valueIn.typedMarshallable();

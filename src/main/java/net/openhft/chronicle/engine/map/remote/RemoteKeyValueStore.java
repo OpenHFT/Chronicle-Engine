@@ -17,9 +17,12 @@
 package net.openhft.chronicle.engine.map.remote;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.util.SerializableBiFunction;
+import net.openhft.chronicle.core.util.SerializableUpdaterWithArg;
 import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
+import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.tree.Asset;
@@ -147,6 +150,18 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
         checkKey(key);
         checkValue(value);
         return proxyReturnTypedObject(replace, null, vClass, key, value);
+    }
+
+    public <A, R> R applyTo(@NotNull SerializableBiFunction<MapView<K, ?, V>, A, R> function, A arg) {
+        return (R) proxyReturnTypedObject(applyTo2, null, Object.class, function, arg);
+    }
+
+    public <R, UA, RA> R syncUpdate(SerializableBiFunction updateFunction, UA ua, SerializableBiFunction returnFunction, RA ra) {
+        return (R) proxyReturnTypedObject(update4, null, Object.class, updateFunction, ua, returnFunction, ra);
+    }
+
+    public <A> void asyncUpdate(SerializableUpdaterWithArg updateFunction, A arg) {
+        sendEventAsync(update2, toParameters(update2, updateFunction, arg));
     }
 
     @Override

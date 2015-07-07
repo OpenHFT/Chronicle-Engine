@@ -83,4 +83,30 @@ public interface MapView<K, MV, V> extends ConcurrentMap<K, V>,
     default V apply(K k) {
         return get(k);
     }
+
+    default int size() {
+        return (int) Math.min(Integer.MAX_VALUE, longSize());
+    }
+
+    /**
+     * @return the size as a long value.
+     */
+    long longSize();
+
+    /**
+     * Explicitly get the old value before putting a new one.
+     *
+     * @param key   to lookup
+     * @param value to set
+     * @return the old value or null if absent
+     */
+    V getAndPut(K key, V value);
+
+    /**
+     * Explicitly get the old value before removing.
+     *
+     * @param key to remove
+     * @return the old value or null if absent.
+     */
+    V getAndRemove(K key);
 }

@@ -22,6 +22,8 @@ import net.openhft.chronicle.engine.api.map.MapView;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
+
 /**
  * Created by peter on 07/07/15.
  */
@@ -29,72 +31,85 @@ public enum MapFunction implements SerializableBiFunction<MapView, Object, Objec
     CONTAINS_VALUE {
         @Override
         public Boolean apply(MapView map, Object value) {
-            return map.containsValue(value);
+            Class vClass = map.valueType();
+            return map.containsValue(convertTo(vClass, value));
         }
     },
     REMOVE {
         @Override
-        public Object apply(MapView mapView, Object o) {
+        public Object apply(MapView map, Object o) {
+            Class kClass = map.keyType();
+            Class vClass = map.valueType();
             KeyValuePair kf = (KeyValuePair) o;
-            return mapView.remove(kf.key, kf.value);
+            return map.remove(convertTo(kClass, kf.key), convertTo(vClass, kf.value));
         }
     },
     REPLACE {
         @Override
-        public Object apply(MapView mapView, Object o) {
+        public Object apply(MapView map, Object o) {
+            Class kClass = map.keyType();
+            Class vClass = map.valueType();
             if (o instanceof KeyValuePair) {
                 KeyValuePair kf = (KeyValuePair) o;
-                return mapView.replace(kf.key, kf.value);
+                return map.replace(convertTo(kClass, kf.key), convertTo(vClass, kf.value));
             }
             KeyValuesTuple kf = (KeyValuesTuple) o;
-            return mapView.replace(kf.key, kf.oldValue, kf.value);
+            boolean replace = map.replace(convertTo(kClass, kf.key), convertTo(vClass, kf.oldValue), convertTo(vClass, kf.value));
+            return replace;
         }
     },
     PUT_IF_ABSENT {
         @Override
-        public Object apply(MapView mapView, Object o) {
+        public Object apply(MapView map, Object o) {
+            Class kClass = map.keyType();
+            Class vClass = map.valueType();
             KeyValuePair kf = (KeyValuePair) o;
-            return mapView.putIfAbsent(kf.key, kf.value);
+            return map.putIfAbsent(convertTo(kClass, kf.key), convertTo(vClass, kf.value));
         }
     },
     COMPUTE_IF_ABSENT {
         @Override
-        public Object apply(MapView mapView, Object o) {
+        public Object apply(MapView map, Object o) {
+            Class kClass = map.keyType();
             KeyFunctionPair kf = (KeyFunctionPair) o;
-            return mapView.computeIfAbsent(kf.key, (Function) kf.function);
+            return map.computeIfAbsent(convertTo(kClass, kf.key), (Function) kf.function);
         }
     },
     COMPUTE_IF_PRESENT {
         @Override
-        public Object apply(MapView mapView, Object o) {
+        public Object apply(MapView map, Object o) {
+            Class kClass = map.keyType();
             KeyFunctionPair kf = (KeyFunctionPair) o;
-            return mapView.computeIfPresent(kf.key, (BiFunction) kf.function);
+            return map.computeIfPresent(convertTo(kClass, kf.key), (BiFunction) kf.function);
         }
     },
     COMPUTE {
         @Override
-        public Object apply(MapView mapView, Object o) {
+        public Object apply(MapView map, Object o) {
+            Class kClass = map.keyType();
             KeyFunctionPair kf = (KeyFunctionPair) o;
-            return mapView.compute(kf.key, (BiFunction) kf.function);
+            return map.compute(convertTo(kClass, kf.key), (BiFunction) kf.function);
         }
     },
     MERGE {
         @Override
-        public Object apply(MapView mapView, Object o) {
+        public Object apply(MapView map, Object o) {
+            Class kClass = map.keyType();
+            Class vClass = map.valueType();
             KeyValueFunctionTuple kvf = (KeyValueFunctionTuple) o;
-            return mapView.merge(kvf.key, kvf.value, (BiFunction) kvf.function);
+            return map.merge(convertTo(kClass, kvf.key), convertTo(vClass, kvf.value), (BiFunction) kvf.function);
         }
     },
     HASH_CODE {
         @Override
-        public Object apply(MapView mapView, Object ignored) {
-            return mapView.hashCode();
+        public Object apply(MapView map, Object ignored) {
+            return map.hashCode();
         }
     },
     EQUALS {
         @Override
-        public Object apply(MapView mapView, Object o) {
-            return mapView.equals(o);
+        public Object apply(MapView map, Object o) {
+            return map.equals(o);
         }
     };
 }

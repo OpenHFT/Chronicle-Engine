@@ -1,4 +1,4 @@
-package net.openhft.chronicle.engine.mufg;
+package net.openhft.chronicle.engine.mit;
 
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.MapView;
