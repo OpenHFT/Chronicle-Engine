@@ -1,4 +1,4 @@
-package net.openhft.chronicle.engine.map;
+package net.openhft.chronicle.engine.map.remote;
 
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
@@ -48,7 +48,7 @@ public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId>
     }
 
     private static String toUri(@NotNull final RequestContext context) {
-        final StringBuilder uri = new StringBuilder("/" +context.fullName()
+        final StringBuilder uri = new StringBuilder("/" + context.fullName()
                 + "?view=" + "topicPublisher");
 
         if (context.keyType() != String.class)
@@ -141,7 +141,6 @@ public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId>
     public MapView<T, M, M> underlying() {
         return underlying;
     }
-
 
 
 }

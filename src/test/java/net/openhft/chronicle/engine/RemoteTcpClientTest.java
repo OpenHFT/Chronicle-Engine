@@ -203,6 +203,17 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
             Object[] dataValues = data.values().toArray();
             Arrays.sort(dataValues);
             assertArrayEquals(dataValues, values.toArray());
+
+/*    MapView<String, ?, String> map = acquireMap("my-map", String.class, String.class);
+
+    Set<String> set =...
+    Map<String, String> subset = map.applyTo(m -> {
+        Map<String, String> ret = new HashMap<String, String>();
+        for (String key : set) {
+            ret.put(key, m.get(key));
+        }
+        return ret;
+    });*/
         }
     }
 }

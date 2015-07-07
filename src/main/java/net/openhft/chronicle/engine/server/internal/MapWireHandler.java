@@ -27,7 +27,7 @@ import net.openhft.chronicle.core.pool.StringBuilderPool;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.collection.CollectionWireHandler;
-import net.openhft.chronicle.engine.map.RemoteKeyValueStore;
+import net.openhft.chronicle.engine.map.remote.RemoteKeyValueStore;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.wire.*;

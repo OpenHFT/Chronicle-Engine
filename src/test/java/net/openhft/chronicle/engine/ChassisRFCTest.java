@@ -184,7 +184,7 @@ public class ChassisRFCTest {
         map.put("topic-1", "Message-1");
         assertEquals("Message-1", map.get("topic-1"));
 
-        assertEquals(1, map.apply(Map::size), 0);
+        assertEquals(1, map.applyTo(Map::size), 0);
 
         map.remove("topic-1");
         assertEquals(null, map.get("topic-1"));

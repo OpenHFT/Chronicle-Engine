@@ -1,4 +1,4 @@
-package net.openhft.chronicle.engine.map;
+package net.openhft.chronicle.engine.map.remote;
 
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
@@ -36,7 +36,7 @@ public class RemotePublisher<E> extends AbstractStatelessClient<EventId> impleme
     }
 
     private static String toUri(@NotNull final RequestContext context) {
-        StringBuilder uri = new StringBuilder( "/" + context.fullName()
+        StringBuilder uri = new StringBuilder("/" + context.fullName()
                 + "?view=" + "publisher");
 
         if (context.valueType() != String.class)
@@ -73,7 +73,7 @@ public class RemotePublisher<E> extends AbstractStatelessClient<EventId> impleme
                     if (EventId.onEndOfSubscription.contentEquals(eventname)) {
                         subscriber.onEndOfSubscription();
                         hub.unsubscribe(tid());
-                    }else if (CoreFields.reply.contentEquals(eventname)) {
+                    } else if (CoreFields.reply.contentEquals(eventname)) {
                         valueIn.marshallable(m -> {
                             final E message = m.read(() -> "message").object(messageClass);
                             RemotePublisher.this.onEvent(message, subscriber);

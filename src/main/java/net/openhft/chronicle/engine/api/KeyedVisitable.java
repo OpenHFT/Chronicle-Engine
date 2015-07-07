@@ -52,7 +52,7 @@ public interface KeyedVisitable<K, E> {
      * @param <R> data type to return.
      * @return the result of the code called.
      */
-    default <R> R apply(K key, @NotNull SerializableFunction<E, R> function) {
+    default <R> R applyToKey(K key, @NotNull SerializableFunction<E, R> function) {
         return function.apply(get(key));
     }
 
@@ -62,7 +62,7 @@ public interface KeyedVisitable<K, E> {
      * @param key to visit within this collection.
      * @param updateFunction to update the state of the visitiable.
      */
-    default void asyncUpdate(K key, @NotNull SerializableFunction<E, E> updateFunction) {
+    default void asyncUpdateKey(K key, @NotNull SerializableFunction<E, E> updateFunction) {
         set(key, updateFunction.apply(get(key)));
     }
 
@@ -75,7 +75,7 @@ public interface KeyedVisitable<K, E> {
      * @param <R> data type to return.
      * @return the result of the code called.
      */
-    default <R> R syncUpdate(K key, @NotNull SerializableFunction<E, E> updateFunction, @NotNull SerializableFunction<E, R> returnFunction) {
+    default <R> R syncUpdateKey(K key, @NotNull SerializableFunction<E, E> updateFunction, @NotNull SerializableFunction<E, R> returnFunction) {
         E e = updateFunction.apply(get(key));
         set(key, e);
         return returnFunction.apply(e);
@@ -91,7 +91,7 @@ public interface KeyedVisitable<K, E> {
      * @param <R> type of the return value.
      * @return data derived.
      */
-    default <T, R> R apply(K key, @NotNull SerializableBiFunction<E, T, R> function, T argument) {
+    default <T, R> R applyToKey(K key, @NotNull SerializableBiFunction<E, T, R> function, T argument) {
         return function.apply(get(key), argument);
     }
 
@@ -103,7 +103,7 @@ public interface KeyedVisitable<K, E> {
      * @param argument for the functions use.
      * @param <T> type of the argument
      */
-    default <T> void asyncUpdate(K key, @NotNull SerializableBiFunction<E, T, E> updateFunction, T argument) {
+    default <T> void asyncUpdateKey(K key, @NotNull SerializableBiFunction<E, T, E> updateFunction, T argument) {
         set(key, updateFunction.apply(get(key), argument));
     }
 
@@ -118,8 +118,8 @@ public interface KeyedVisitable<K, E> {
      * @param <R>            data type to return.
      * @return the result of the code called.
      */
-    default <T, RT, R> R syncUpdate(K key, @NotNull SerializableBiFunction<E, T, E> updateFunction, @Nullable T updateArgument,
-                                    @NotNull SerializableBiFunction<E, RT, R> returnFunction, @Nullable RT returnArgument) {
+    default <T, RT, R> R syncUpdateKey(K key, @NotNull SerializableBiFunction<E, T, E> updateFunction, @Nullable T updateArgument,
+                                       @NotNull SerializableBiFunction<E, RT, R> returnFunction, @Nullable RT returnArgument) {
         E e = updateFunction.apply(get(key), updateArgument);
         set(key, e);
         return returnFunction.apply(e, returnArgument);
