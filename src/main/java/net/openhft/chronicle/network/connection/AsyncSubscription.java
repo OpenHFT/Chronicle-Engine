@@ -1,6 +1,7 @@
 package net.openhft.chronicle.network.connection;
 
 import net.openhft.chronicle.wire.WireIn;
+import org.jetbrains.annotations.NotNull;
 
 public interface AsyncSubscription {
 
@@ -21,7 +22,7 @@ public interface AsyncSubscription {
      * Implement this to consume the subscription
      * @param inWire the wire to write the subscription to
      */
-    void onConsumer(final WireIn inWire);
+    void onConsumer(@NotNull  final WireIn inWire);
 
     /**
      * called when the socket connection is closed

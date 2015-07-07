@@ -70,8 +70,20 @@ public class RequestContext implements Cloneable {
     private long entries;
     private Boolean recurse;
     private boolean sealed = false;
+    private String cluster = "cluster";
 
     private RequestContext() {
+    }
+
+    @NotNull
+    public RequestContext cluster(String clusterTwo) {
+        this.cluster = clusterTwo;
+        return this;
+    }
+
+    @NotNull
+    public String cluster() {
+        return this.cluster;
     }
 
     public RequestContext(String pathName, String name) {
@@ -140,6 +152,7 @@ public class RequestContext implements Cloneable {
     @NotNull
     public WireParser getWireParser() {
         WireParser parser = new VanillaWireParser();
+        parser.register(() -> "cluster", v -> v.text((Consumer<String>) x -> this.cluster = x));
         parser.register(() -> "view", v -> v.text((Consumer<String>) this::view));
         parser.register(() -> "bootstrap", v -> v.bool(b -> this.bootstrap = b));
         parser.register(() -> "putReturnsNull", v -> v.bool(b -> this.putReturnsNull = b));
@@ -151,9 +164,11 @@ public class RequestContext implements Cloneable {
         parser.register(() -> "valueType", v -> v.typeLiteral(x -> this.type2 = x));
         parser.register(() -> "messageType", v -> v.typeLiteral(x -> this.type2 = x));
         parser.register(() -> "elementType", v -> v.typeLiteral(x -> this.type = x));
+
         parser.register(WireParser.DEFAULT, ValueIn.DISCARD);
         return parser;
     }
+
 
     @NotNull
     RequestContext view(@NotNull String viewName) {

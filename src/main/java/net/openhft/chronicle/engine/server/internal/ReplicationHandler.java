@@ -35,6 +35,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
     private AtomicBoolean isClosed;
     private EventLoop eventLoop;
 
+
     void process(@NotNull final WireIn inWire,
                  final Queue<Consumer<Wire>> publisher,
                  final long tid,
@@ -97,6 +98,9 @@ public class ReplicationHandler<E> extends AbstractHandler {
                 mi.setModificationNotifier(() -> {
 
                     mi.forEach(e -> publisher.add(publish -> {
+                        System.out.println("publish from server response from replicationSubscribe" +
+                                "localIdentifier=" + hostId + " ,remoteIdentifier=" +
+                                id + " event=" + e);
 
                         publish.writeDocument(true,
                                 wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
@@ -116,10 +120,17 @@ public class ReplicationHandler<E> extends AbstractHandler {
                         if (isClosed.get())
                             throw new InvalidEventHandlerException();
 
-                        if (!mi.hasNext())
-                            return false;
+                        final AtomicBoolean hadNext = new AtomicBoolean();
 
                         mi.forEach(e -> publisher.add(publish1 -> {
+
+                          if (e.identifier() != hostId.hostId())
+                               return;
+
+                            hadNext.set(true);
+                            System.out.println("publish from server response from itterator " +
+                                    "localIdentifier=" + hostId + " ,remoteIdentifier=" +
+                                    id + " event=" + e);
 
                             publish1.writeDocument(true,
                                     wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
@@ -128,7 +139,8 @@ public class ReplicationHandler<E> extends AbstractHandler {
                                     wire -> wire.write(replicationReply).typedMarshallable(e));
 
                         }));
-                        return true;
+
+                        return hadNext.get();
 
                     }
 

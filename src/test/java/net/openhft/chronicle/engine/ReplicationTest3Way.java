@@ -20,16 +20,19 @@ import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Map;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 
@@ -38,19 +41,30 @@ import static org.junit.Assert.assertNotNull;
 /**
  * Created by Rob Austin
  */
+@RunWith(Parameterized.class)
+public class ReplicationTest3Way {
 
-public class ReplicationTest {
+
+    @Parameterized.Parameters
+    public static List<Object[]> data() {
+        return Arrays.asList(new Object[10][0]);
+    }
+
+    public ReplicationTest3Way() {
+    }
+
+
     public static final WireType WIRE_TYPE = WireType.TEXT;
     public static final String NAME = "/ChMaps/test";
-    public static ServerEndpoint serverEndpoint1;
-    public static ServerEndpoint serverEndpoint2;
-    public static ServerEndpoint serverEndpoint3;
-    private static AssetTree tree3;
-    private static AssetTree tree1;
-    private static AssetTree tree2;
+    public ServerEndpoint serverEndpoint1;
+    public ServerEndpoint serverEndpoint2;
+    public ServerEndpoint serverEndpoint3;
+    private AssetTree tree3;
+    private AssetTree tree1;
+    private AssetTree tree2;
 
-    @BeforeClass
-    public static void before() throws IOException {
+    @Before
+    public void before() throws IOException {
         YamlLogging.clientWrites = true;
         YamlLogging.clientReads = true;
 
@@ -73,8 +87,8 @@ public class ReplicationTest {
         serverEndpoint3 = new ServerEndpoint("host.port3", tree3, writeType);
     }
 
-    @AfterClass
-    public static void after() throws IOException {
+    @After
+    public void after() throws IOException {
         if (serverEndpoint1 != null)
             serverEndpoint1.close();
         if (serverEndpoint2 != null)
@@ -119,7 +133,6 @@ public class ReplicationTest {
         return new File(path).getParentFile().getParentFile() + "/src/test/resources";
     }
 
-
     @Test
     public void test() throws InterruptedException {
 
@@ -133,7 +146,6 @@ public class ReplicationTest {
 
         final ConcurrentMap<String, String> map3 = tree3.acquireMap(NAME, String.class, String
                 .class);
-        assertNotNull(map3);
 
         map1.put("hello1", "world1");
         map2.put("hello2", "world2");
@@ -146,14 +158,22 @@ public class ReplicationTest {
         }
 
 
-        for (Map m : new Map[]{map1, map2, map3}) {
-            Assert.assertEquals("world1", m.get("hello1"));
-            Assert.assertEquals("world2", m.get("hello2"));
-            Assert.assertEquals("world3", m.get("hello3"));
-            Assert.assertEquals(3, m.size());
-        }
+        Assert.assertEquals("world1", map1.get("hello1"));
+        Assert.assertEquals("world2", map1.get("hello2"));
+        Assert.assertEquals("world3", map1.get("hello3"));
+
+        Assert.assertEquals("world1", map2.get("hello1"));
+        Assert.assertEquals("world2", map2.get("hello2"));
+        Assert.assertEquals("world3", map2.get("hello3"));
+
+        Assert.assertEquals("world1", map3.get("hello1"));
+        Assert.assertEquals("world2", map3.get("hello2"));
+        Assert.assertEquals("world3", map3.get("hello3"));
 
     }
 
+
 }
+
+
 

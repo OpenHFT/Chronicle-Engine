@@ -75,6 +75,14 @@ public class TcpChannelHub implements View, Closeable {
     public final long timeoutMs;
     @NotNull
     protected final String name;
+
+    @Override
+    public String toString() {
+        return "TcpChannelHub{" +
+                "remoteAddress=" + remoteAddress +
+                ", description='" + description + '}';
+    }
+
     @NotNull
     protected final InetSocketAddress remoteAddress;
     protected final int tcpBufferSize;
@@ -89,7 +97,7 @@ public class TcpChannelHub implements View, Closeable {
     private final EventLoop eventLoop;
     private final Function<Bytes, Wire> wire;
 
-    private volatile boolean reconenct = true;
+    private volatile boolean reconnect = true;
     private long largestChunkSoFar = 0;
 
     @Nullable
@@ -295,20 +303,20 @@ public class TcpChannelHub implements View, Closeable {
         assert outBytesLock().isHeldByCurrentThread();
         checkNotClosed();
 
-        if (reconenct)
+        if (reconnect)
             throw new IORuntimeException("Not Connected " + remoteAddress);
 
         try {
             SocketChannel clientChannel = this.clientChannel;
             if (clientChannel == null) {
-                reconenct = true;
+                reconnect = true;
                 throw new IORuntimeException("Not Connected " + remoteAddress);
             }
 
             writeSocket(wire, timeoutMs, clientChannel);
 
         } catch (Exception e) {
-            reconenct = true;
+            reconnect = true;
             throw rethrow(e);
         }
 
@@ -322,10 +330,10 @@ public class TcpChannelHub implements View, Closeable {
         } catch (IORuntimeException | AssertionError e) {
             throw e;
         } catch (RuntimeException e) {
-            reconenct = true;
+            reconnect = true;
             throw e;
         } catch (Exception e) {
-            reconenct = true;
+            reconnect = true;
             throw rethrow(e);
         }
     }
@@ -534,7 +542,7 @@ public class TcpChannelHub implements View, Closeable {
     public void checkConnection() {
         long start = System.currentTimeMillis();
 
-        while (reconenct) {
+        while (reconnect) {
 
             if (start + timeoutMs > System.currentTimeMillis())
                 Jvm.pause(100);
@@ -666,7 +674,7 @@ public class TcpChannelHub implements View, Closeable {
 
         void subscribe(@NotNull final AsyncSubscription asyncSubscription) {
 
-            if (reconenct) {
+            if (reconnect) {
                 map.put(asyncSubscription.tid(), asyncSubscription);
                 // not currently connected
                 return;
@@ -678,7 +686,7 @@ public class TcpChannelHub implements View, Closeable {
 
             map.put(asyncSubscription.tid(), asyncSubscription);
 
-            if (!reconenct)
+            if (!reconnect)
                 try {
                     asyncSubscription.applySubscribe();
                 } finally {
@@ -732,10 +740,10 @@ public class TcpChannelHub implements View, Closeable {
 
                 while (!isShutdown()) {
 
-                    if (reconenct) {
+                    if (reconnect) {
                         checkConnectionState();
 
-                        if (reconenct) {
+                        if (reconnect) {
                             try {
                                 Thread.sleep(500);
                             } catch (InterruptedException e) {
@@ -771,9 +779,8 @@ public class TcpChannelHub implements View, Closeable {
                         if (isShutdown()) {
                             break;
                         } else {
-                            System.out.println("will reconnect");
-                            reconenct = true;
-                            e.printStackTrace();
+                            LOG.warn("reconnecting due to unexpected exception", e);
+                            reconnect = true;
                         }
 
 
@@ -993,7 +1000,7 @@ public class TcpChannelHub implements View, Closeable {
                 }
 
                 @Override
-                public void onConsumer(WireIn inWire) {
+                public void onConsumer(@NotNull WireIn inWire) {
                     awaitingHeartbeat.set(false);
                     long roundTipTimeMicros = NANOSECONDS.toMicros(System.nanoTime() - l);
                     if (LOG.isDebugEnabled())
@@ -1039,6 +1046,9 @@ public class TcpChannelHub implements View, Closeable {
             if (TcpChannelHub.this.closed)
                 throw new InvalidEventHandlerException();
 
+            if (reconnect)
+                return false;
+
             // a heartbeat only gets sent out if we have not received any data in the last
             // HEATBEAT_PING_PERIOD milliseconds
             long millisecondsSinceLastMessageReceived = System.currentTimeMillis() - lastTimeMessageReceived;
@@ -1055,7 +1065,8 @@ public class TcpChannelHub implements View, Closeable {
             if (x > 0) {
                 //   System.out.println("millisecondsSinceLastMessageReceived=" + millisecondsSinceLastMessageReceived);
                 //System.out.println(" reconnect due to heatbeat failure");
-                reconenct = true;
+                LOG.warn("reconnecting due to heartbeat failure");
+                reconnect = true;
             }
 
             if (TcpChannelHub.this.closed)
@@ -1066,12 +1077,12 @@ public class TcpChannelHub implements View, Closeable {
         }
 
         private void checkConnectionState() {
-            if (reconenct) {
+            if (reconnect) {
                 outBytesLock.lock();
                 try {
                     System.out.println("attempt reconnect remoteAddress=" + remoteAddress);
                     attemptDisconnect();
-                    reconenct = attemptConnect();
+                    reconnect = attemptConnect();
                 } finally {
                     outBytesLock.unlock();
                 }
@@ -1155,10 +1166,10 @@ public class TcpChannelHub implements View, Closeable {
         }
 
         private void onConnected() {
-
-            System.out.println("successfully connected to  remoteAddress=" + remoteAddress);
+            eventLoop.unpause();
+            System.out.println("successfully connected to remoteAddress=" + remoteAddress);
             onMessageReceived();
-            reconenct = false;
+            reconnect = false;
             onReconnect();
 
 

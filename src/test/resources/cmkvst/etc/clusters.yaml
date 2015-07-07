@@ -22,19 +22,14 @@ clusterTwo: {
   host1: {
      hostId: 1,
      tcpBufferSize: 65536,
-     connectUri: host21,
+     connectUri: host.port1,
      timeoutMs: 1000,
   },
   host2: {
      hostId: 2,
      tcpBufferSize: 65536,
-     connectUri: host22,
+        connectUri: host.port2,
      timeoutMs: 1000,
   },
-  host3: {
-     hostId: 3,
-     tcpBufferSize: 65536,
-     connectUri: host23,
-     timeoutMs: 1000,
-  }
+
 }

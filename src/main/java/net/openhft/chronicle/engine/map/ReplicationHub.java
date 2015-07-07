@@ -29,14 +29,16 @@ import net.openhft.chronicle.threads.HandlerPriority;
 import net.openhft.chronicle.threads.api.EventHandler;
 import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.threads.api.InvalidEventHandlerException;
-import net.openhft.chronicle.wire.*;
+import net.openhft.chronicle.wire.ValueOut;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
+import net.openhft.chronicle.wire.WriteMarshallable;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.bootstap;
 import static net.openhft.chronicle.engine.server.internal.ReplicationHandler.EventId.*;
@@ -69,20 +71,23 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
         return uri.toString();
     }
 
-    public void bootstrap(@NotNull EngineReplication replication, byte localIdentifer) throws InterruptedException {
+    public void bootstrap(@NotNull EngineReplication replication, byte localIdentifier, byte
+            remoteIdentifier) throws
+            InterruptedException {
+
 
         // a non block call to get the identifier from the remote host
-        hub.subscribe(new AbstractAsyncSubscription(hub, csp, localIdentifer) {
+        hub.subscribe(new AbstractAsyncSubscription(hub, csp, localIdentifier) {
             @Override
             public void onSubscribe(WireOut wireOut) {
                 wireOut.writeEventName(identifier).marshallable(WriteMarshallable.EMPTY);
             }
 
             @Override
-            public void onConsumer(WireIn inWire) {
+            public void onConsumer(@NotNull WireIn inWire) {
                 inWire.readDocument(null, d -> {
                     byte remoteIdentifier = d.read(identifierReply).int8();
-                    onConnected(localIdentifer, remoteIdentifier, replication);
+                    onConnected(localIdentifier, remoteIdentifier, replication);
                 });
             }
 
@@ -107,8 +112,6 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
         bootstrap.lastUpdatedTime(lastModificationTime);
         bootstrap.identifier(localIdentifier);
 
-        final Function<ValueIn, Bootstrap> typedMarshallable = ValueIn::typedMarshallable;
-
         // subscribes to updates - receives the replication events
         subscribe(replication, localIdentifier);
 
@@ -121,14 +124,14 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
             }
 
             @Override
-            public void onConsumer(WireIn inWire) {
+            public void onConsumer(@NotNull WireIn inWire) {
                 inWire.readDocument(null, d -> {
                     Bootstrap b = d.read(bootstrapReply).typedMarshallable();
 
 
                     // publishes changes - pushes the replication events
                     try {
-                        publish(mi, b);
+                        publish(mi, b, localIdentifier, remoteIdentifier);
                     } catch (Exception e) {
                         LOG.error("", e);
                     }
@@ -144,11 +147,12 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
     /**
      * publishes changes - this method pushes the replication events
      *
-     * @param mi     the modification iterator that notifies us of changes
-     * @param remote details about the remote connection
-     * @throws InterruptedException
+     * @param mi               the modification iterator that notifies us of changes
+     * @param remote           details about the remote connection
+     * @param localIdentifier
+     * @param remoteIdentifier @throws InterruptedException
      */
-    private void publish(@NotNull final ModificationIterator mi, @NotNull final Bootstrap remote) throws InterruptedException {
+    private void publish(@NotNull final ModificationIterator mi, @NotNull final Bootstrap remote, byte localIdentifier, byte remoteIdentifier) throws InterruptedException {
 
         final TcpChannelHub hub = this.hub;
         mi.setModificationNotifier(eventLoop::unpause);
@@ -157,15 +161,21 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
             @Override
             public boolean action() throws InvalidEventHandlerException {
 
-                if (!mi.hasNext())
-                    return false;
 
                 if (isClosed.get())
                     throw new InvalidEventHandlerException();
 
                 // publishes the replication events
-                hub.lock(() -> mi.forEach(e -> sendEventAsyncWithoutLock(replicationEvent,
-                        (Consumer<ValueOut>) v -> v.typedMarshallable(e))));
+                hub.lock(() -> mi.forEach(e -> {
+
+
+                    if (e.identifier() != localIdentifier)
+                        return;
+
+                    sendEventAsyncWithoutLock(replicationEvent,
+                            (Consumer<ValueOut>) v -> v.typedMarshallable(e));
+
+                }));
 
                 return true;
             }

@@ -18,6 +18,7 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
+import net.openhft.chronicle.bytes.NativeBytesStore;
 import net.openhft.chronicle.bytes.PointerBytesStore;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.tree.Asset;
@@ -26,6 +27,8 @@ import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.hash.replication.EngineReplicationLangBytesConsumer;
 import net.openhft.chronicle.map.EngineReplicationLangBytes;
 import net.openhft.chronicle.map.EngineReplicationLangBytes.EngineModificationIterator;
+import net.openhft.chronicle.wire.TextWire;
+import net.openhft.chronicle.wire.Wires;
 import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.IByteBufferBytes;
 import org.jetbrains.annotations.NotNull;
@@ -142,21 +145,29 @@ public class CMap2EngineReplicator implements EngineReplication,
                                 bootStrapTimeStamp)));
             }
 
-            private Bytes<Void> toKey(final @NotNull net.openhft.lang.io.Bytes key) {
-                final PointerBytesStore result = keyLocal.get();
+            private Bytes  toKey(final @NotNull net.openhft.lang.io.Bytes key) {
+
+                NativeBytesStore<Void> byteStore = NativeBytesStore.nativeStoreWithFixedCapacity(key
+                        .remaining());
+                PointerBytesStore result = keyLocal.get();
                 result.set(key.address(), key.capacity());
-                Bytes<Void> voidBytes = result.bytesForRead();
-                return voidBytes;
+                result.copyTo(byteStore);
+                return byteStore.bytesForRead();
+
             }
 
             @Nullable
             private Bytes<Void> toValue(final @Nullable net.openhft.lang.io.Bytes value) {
                 if (value == null)
                     return null;
-                final PointerBytesStore result = valueLocal.get();
+
+                NativeBytesStore<Void> byteStore = NativeBytesStore.nativeStoreWithFixedCapacity(value
+                        .remaining());
+                PointerBytesStore result = valueLocal.get();
                 result.set(value.address(), value.capacity());
-                Bytes<Void> voidBytes = result.bytesForRead();
-                return voidBytes;
+                result.copyTo(byteStore);
+                return byteStore.bytesForRead();
+
             }
 
             @Override
@@ -302,6 +313,15 @@ public class CMap2EngineReplicator implements EngineReplication,
         @Override
         public void bootStrapTimeStamp(long bootStrapTimeStamp) {
             this.bootStrapTimeStamp = bootStrapTimeStamp;
+        }
+
+        @Override
+        public String toString() {
+            final Bytes<ByteBuffer> bytes = Bytes.elasticByteBuffer();
+            new TextWire(bytes).writeDocument(false, d -> d.write().typedMarshallable(this));
+            return "\n"+Wires.fromSizePrefixedBlobs(bytes, bytes.readPosition(), bytes
+                    .readLimit());
+
         }
 
     }

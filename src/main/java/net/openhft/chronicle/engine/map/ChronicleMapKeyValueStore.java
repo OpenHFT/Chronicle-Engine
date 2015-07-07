@@ -131,7 +131,19 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
 
         if (hostIdentifier != null) {
             Clusters clusters = asset.findView(Clusters.class);
-            Cluster cluster = clusters.get("cluster");
+
+            if (clusters == null) {
+                LOGGER.warn("no clusters found.");
+                return;
+            }
+
+            Cluster cluster = clusters.get(context.cluster());
+
+            if (clusters == null) {
+                LOGGER.warn("no cluster found.");
+                return;
+            }
+
             byte localIdentifier = hostIdentifier.hostId();
             for (HostDetails hostDetails : cluster.hostDetails()) {
 
@@ -143,7 +155,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
                 ReplicationHub replicationHub = new ReplicationHub(context, tcpChannelHub, eventLoop, isClosed);
 
                 try {
-                    replicationHub.bootstrap(engineReplicator1, localIdentifier);
+                    replicationHub.bootstrap(engineReplicator1, localIdentifier, (byte) hostDetails.hostId);
                 } catch (InterruptedException e) {
                     throw new AssertionError(e);
                 }
