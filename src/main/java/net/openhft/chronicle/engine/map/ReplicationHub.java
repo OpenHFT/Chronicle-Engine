@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
@@ -152,7 +153,10 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
      * @param localIdentifier
      * @param remoteIdentifier @throws InterruptedException
      */
-    private void publish(@NotNull final ModificationIterator mi, @NotNull final Bootstrap remote, byte localIdentifier, byte remoteIdentifier) throws InterruptedException {
+    private void publish(@NotNull final ModificationIterator mi,
+                         @NotNull final Bootstrap remote,
+                         byte localIdentifier,
+                         byte remoteIdentifier) throws InterruptedException {
 
         final TcpChannelHub hub = this.hub;
         mi.setModificationNotifier(eventLoop::unpause);
@@ -161,23 +165,27 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
             @Override
             public boolean action() throws InvalidEventHandlerException {
 
+                try {
+                    if (isClosed.get())
+                        throw new InvalidEventHandlerException();
 
-                if (isClosed.get())
+                    // publishes the replication events
+                    hub.lock(() -> mi.forEach(e -> {
+
+
+                        if (e.identifier() != localIdentifier)
+                            return;
+
+                        sendEventAsyncWithoutLock(replicationEvent,
+                                (Consumer<ValueOut>) v -> v.typedMarshallable(e));
+
+                    }));
+
+                    return true;
+                } catch (IORuntimeException e) {
+                    LOG.error(e.getMessage());
                     throw new InvalidEventHandlerException();
-
-                // publishes the replication events
-                hub.lock(() -> mi.forEach(e -> {
-
-
-                    if (e.identifier() != localIdentifier)
-                        return;
-
-                    sendEventAsyncWithoutLock(replicationEvent,
-                            (Consumer<ValueOut>) v -> v.typedMarshallable(e));
-
-                }));
-
-                return true;
+                }
             }
 
             @NotNull
