@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
+import net.openhft.chronicle.engine.api.pubsub.Subscription;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
@@ -22,7 +23,7 @@ import static net.openhft.chronicle.network.connection.CoreFields.tid;
 /**
  * Created by Rob Austin
  */
-public class ObjectKVSubscriptionHandler extends SubscriptionHandler<ObjectKVSSubscription> {
+public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscription> {
 
     private static final Logger LOG = LoggerFactory.getLogger(ObjectKVSubscriptionHandler.class);
 
@@ -96,7 +97,7 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<ObjectKVSSu
             if (after(eventName)) return;
 
             if (EventId.notifyEvent.contentEquals(eventName)) {
-                subscription.notifyEvent(valueIn.typedMarshallable());
+                ((ObjectKVSSubscription) subscription).notifyEvent(valueIn.typedMarshallable());
                 outWire.writeEventName(reply).int8(subscription.entrySubscriberCount());
             }
 
@@ -109,7 +110,7 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<ObjectKVSSu
                  final Queue<Consumer<Wire>> publisher,
                  final AssetTree assetTree, final long tid,
                  final Wire outWire,
-                 final ObjectKVSSubscription subscription) {
+                 final Subscription subscription) {
         setOutWire(outWire);
         this.outWire = outWire;
         this.subscription = subscription;
