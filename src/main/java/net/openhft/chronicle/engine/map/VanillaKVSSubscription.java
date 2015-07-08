@@ -235,18 +235,21 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
     public void unregisterKeySubscriber(Subscriber<K> subscriber) {
         keySubscribers.remove(subscriber);
         updateHasSubscribers();
+        subscriber.onEndOfSubscription();
     }
 
     @Override
     public void unregisterSubscriber(Subscriber<MapEvent<K, V>> subscriber) {
         subscribers.remove(subscriber);
         updateHasSubscribers();
+        subscriber.onEndOfSubscription();
     }
 
     @Override
     public void unregisterTopicSubscriber(TopicSubscriber subscriber) {
         topicSubscribers.remove(subscriber);
         updateHasSubscribers();
+        subscriber.onEndOfSubscription();
     }
 
     private void updateHasSubscribers() {

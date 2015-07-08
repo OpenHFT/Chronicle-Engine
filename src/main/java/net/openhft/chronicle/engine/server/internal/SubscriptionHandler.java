@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.server.internal;
 
+import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.Subscription;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
@@ -80,12 +81,7 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
     protected boolean before(Long tid, ValueIn valueIn) throws AssetNotFoundException {
         if (registerSubscriber.contentEquals(eventName)) {
             Class subscriptionType = valueIn.typeLiteral();
-            Subscriber<Object> listener = e -> {
-                publisherAdd(publish -> {
-                    publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(tid));
-                    publish.writeNotReadyDocument(false, wire -> wire.write(reply).object(e));
-                });
-            };
+            Subscriber<Object> listener = new LocalSubscriber(tid);
             tidToListener.put(tid, listener);
             RequestContext rc = requestContext.clone().type(subscriptionType);
             assetTree.acquireSubscription(rc).registerSubscriber(rc, listener);
@@ -99,11 +95,6 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
                 return true;
             }
             assetTree.unregisterSubscriber(requestContext.name(), listener);
-            // no more data.
-            publisherAdd(publish -> {
-                publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(tid));
-                publish.writeDocument(false, wire -> wire.write(reply).typedMarshallable(null));
-            });
 
             return true;
         }
@@ -128,6 +119,31 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
         @NotNull
         public <P extends WireKey> P[] params() {
             return (P[]) this.params;
+        }
+    }
+
+    class LocalSubscriber implements Subscriber<Object> {
+        private final Long tid;
+
+        LocalSubscriber(Long tid) {
+            this.tid = tid;
+        }
+
+        @Override
+        public void onMessage(Object e) throws InvalidSubscriberException {
+            SubscriptionHandler.this.publisherAdd(publish -> {
+                publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(tid));
+                publish.writeNotReadyDocument(false, wire -> wire.write(reply).object(e));
+            });
+        }
+
+        @Override
+        public void onEndOfSubscription() {
+            // no more data.
+            publisherAdd(publish -> {
+                publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(tid));
+                publish.writeDocument(false, wire -> wire.write(reply).typedMarshallable(null));
+            });
         }
     }
 }

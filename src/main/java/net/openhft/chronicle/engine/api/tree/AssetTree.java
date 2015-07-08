@@ -179,7 +179,9 @@ public interface AssetTree extends Closeable {
     default <E> void unregisterSubscriber(@NotNull String uri, Subscriber<E> subscriber) {
         RequestContext rc = requestContext(uri);
         Subscription subscription = getSubscription(rc);
-        if (subscription != null)
+        if (subscription == null)
+            subscriber.onEndOfSubscription();
+        else
             subscription.unregisterSubscriber(subscriber);
     }
 
@@ -193,7 +195,9 @@ public interface AssetTree extends Closeable {
         RequestContext rc = requestContext(uri).viewType(Subscriber.class);
         Subscription subscription = getSubscription(rc);
         if (subscription instanceof KVSSubscription)
-            ((KVSSubscription) acquireSubscription(rc)).unregisterTopicSubscriber(subscriber);
+            ((KVSSubscription) subscription).unregisterTopicSubscriber(subscriber);
+        else
+            subscriber.onEndOfSubscription();
     }
 
     /**
