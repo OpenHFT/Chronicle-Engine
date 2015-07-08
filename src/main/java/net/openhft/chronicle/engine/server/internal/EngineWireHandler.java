@@ -21,6 +21,7 @@ import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
 import net.openhft.chronicle.engine.api.pubsub.Replication;
+import net.openhft.chronicle.engine.api.pubsub.Subscription;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.session.Heartbeat;
 import net.openhft.chronicle.engine.api.session.SessionProvider;
@@ -293,7 +294,7 @@ public class EngineWireHandler extends WireTcpHandler {
                     if (viewType == ObjectKVSSubscription.class) {
                         subscriptionHandler.process(in,
                                 requestContext, publisher, assetTree, tid,
-                                outWire, (ObjectKVSSubscription) view);
+                                outWire, (Subscription) view);
                         return;
                     }
 
