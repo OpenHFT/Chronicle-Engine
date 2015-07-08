@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.core.annotation.NotNull;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
@@ -138,7 +139,7 @@ public class VanillaMapView<K, MV, V> implements MapView<K, MV, V> {
         try {
             for (int i = 0; i < kvStore.segments(); i++) {
                 kvStore.entriesFor(i, e -> {
-                    if (Objects.equals(e.value(), value))
+                    if (BytesUtil.equal(e.value(), value))
                         throw new InvalidSubscriberException();
                 });
 
@@ -313,7 +314,7 @@ public class VanillaMapView<K, MV, V> implements MapView<K, MV, V> {
             try {
                 for (int i = 0; i < kvStore.segments(); i++) {
                     kvStore.entriesFor(i, e -> {
-                        if (!Objects.equals(e.value(), map.get(e.key())))
+                        if (!BytesUtil.equal(e.value(), map.get(e.key())))
                             throw new InvalidSubscriberException();
                     });
 

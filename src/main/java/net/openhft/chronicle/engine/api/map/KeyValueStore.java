@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.api.map;
 
+import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
@@ -26,7 +27,10 @@ import net.openhft.lang.model.constraints.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.AbstractMap.SimpleEntry;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -136,7 +140,7 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
     }
 
     default boolean replaceIfEqual(K key, V oldValue, V newValue) {
-        if (containsKey(key) && Objects.equals(get(key), oldValue)) {
+        if (containsKey(key) && BytesUtil.equal(get(key), oldValue)) {
             put(key, newValue);
             return true;
         } else
@@ -146,7 +150,7 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
     default boolean removeIfEqual(K key, V value) {
         if (!isKeyType(key))
             return false;
-        if (containsKey(key) && Objects.equals(get(key), value)) {
+        if (containsKey(key) && BytesUtil.equal(get(key), value)) {
             remove(key);
             return true;
         } else

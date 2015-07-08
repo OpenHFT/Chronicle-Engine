@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.tree.Asset;
@@ -26,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.AbstractCollection;
 import java.util.Iterator;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -89,7 +89,7 @@ public class VanillaEntrySetView<K, MV, V> extends AbstractCollection<Entry<K, V
             if (key == null)
                 return false;
             V value = mapView.get(key);
-            if (!Objects.equals(entry.getValue(), value))
+            if (!BytesUtil.equal(entry.getValue(), value))
                 return false;
         }
         return true;
