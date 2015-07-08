@@ -25,6 +25,7 @@ import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
+import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
@@ -42,15 +43,15 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
-import static org.easymock.EasyMock.verify;
+import static org.easymock.EasyMock.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * test using the listener both remotely or locally via the engine
@@ -237,7 +238,6 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     }
 
     @Test
-
     public void testSubscribeToKeyEvents() throws IOException, InterruptedException, InvalidSubscriberException {
 
         final BlockingQueue<String> eventsQueue = new LinkedBlockingQueue<>();
@@ -262,6 +262,50 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
                 // todo fix the text for the unsubscribe.
                 assetTree.unregisterSubscriber(NAME, subscriber);
+            } catch (InterruptedException e) {
+                throw Jvm.rethrow(e);
+            }
+
+        });
+
+    }
+
+
+    @Test
+    public void testSubscribeToValueBasedOnKeys() throws IOException, InterruptedException, InvalidSubscriberException {
+
+        final BlockingQueue<String> eventsQueue = new LinkedBlockingQueue<>();
+
+        yamlLoggger(() -> {
+            try {
+
+                YamlLogging.writeMessage = "Sets up a subscription to listen to key events. And " +
+                        "subsequently puts and entry into the map, notice that the InsertedEvent is " +
+                        "received from the server";
+
+                ConcurrentMap<String, String> map = assetTree.acquireMap(NAME, String.class, String.class);
+
+                map.put("Key-1", "Value-1");
+                map.put("Key-2", "Value-2");
+
+                assertEquals(2, map.size());
+
+                ArrayBlockingQueue q = new ArrayBlockingQueue(1);
+
+                assetTree.registerSubscriber(NAME + "/Key-1?bootstrap=true", String.class, q::add);
+                Asset asset = assetTree.getAsset(NAME + "/Key-1");
+
+                assertTrue(asset.isSubAsset());
+                Object take = q.poll(5, TimeUnit.SECONDS);
+
+                Assert.assertEquals(take, "Value-1");
+                map.put("Key-1", "Value-2");
+
+                Object take2 = q.poll(5, TimeUnit.SECONDS);
+                Assert.assertEquals(take2, "Value-2");
+
+                assertEquals(2, map.size());
+
             } catch (InterruptedException e) {
                 throw Jvm.rethrow(e);
             }

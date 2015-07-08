@@ -145,8 +145,6 @@ public class EngineWireHandler extends WireTcpHandler {
         this.replicationHandler = new ReplicationHandler();
         this.systemHandler = new SystemHandler();
         this.isClosed = isClosed;
-
-
     }
 
     protected void publish(Wire out) {
