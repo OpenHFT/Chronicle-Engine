@@ -107,7 +107,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractRemoteSubscription<
     public void unregisterTopicSubscriber(final TopicSubscriber subscriber) {
         Long tid = subscribersToTid.get(subscriber);
         if (tid == null) {
-            LOG.warn("There is no subscription to unsubscribe");
+            LOG.warn("There is no subscription to unsubscribe, was " + subscribersToTid.size() + " other subscriptions.");
             return;
         }
 
