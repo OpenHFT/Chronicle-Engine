@@ -28,7 +28,8 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.AfterClass;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -71,8 +72,13 @@ public class MapClientTest extends ThreadMonitoringTest {
         });
     }
 
-    @AfterClass
-    public static void tearDownClass() {
+    @Before
+    public void clearState() {
+        TCPRegistry.reset();
+    }
+
+    @After
+    public void tearDown() {
         TCPRegistry.assertAllServersStopped();
     }
 
