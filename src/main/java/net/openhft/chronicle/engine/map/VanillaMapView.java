@@ -139,7 +139,7 @@ public class VanillaMapView<K, MV, V> implements MapView<K, MV, V> {
         try {
             for (int i = 0; i < kvStore.segments(); i++) {
                 kvStore.entriesFor(i, e -> {
-                    if (BytesUtil.equal(e.value(), value))
+                    if (BytesUtil.equals(e.value(), value))
                         throw new InvalidSubscriberException();
                 });
 
@@ -314,7 +314,7 @@ public class VanillaMapView<K, MV, V> implements MapView<K, MV, V> {
             try {
                 for (int i = 0; i < kvStore.segments(); i++) {
                     kvStore.entriesFor(i, e -> {
-                        if (!BytesUtil.equal(e.value(), map.get(e.key())))
+                        if (!BytesUtil.equals(e.value(), map.get(e.key())))
                             throw new InvalidSubscriberException();
                     });
 

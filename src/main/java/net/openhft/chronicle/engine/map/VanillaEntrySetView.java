@@ -89,7 +89,7 @@ public class VanillaEntrySetView<K, MV, V> extends AbstractCollection<Entry<K, V
             if (key == null)
                 return false;
             V value = mapView.get(key);
-            if (!BytesUtil.equal(entry.getValue(), value))
+            if (!BytesUtil.equals(entry.getValue(), value))
                 return false;
         }
         return true;

@@ -94,8 +94,8 @@ public class InsertedEvent<K, V> implements MapEvent<K, V> {
                 .filter(o -> o instanceof InsertedEvent)
                 .map(o -> (InsertedEvent<K, V>) o)
                 .filter(e -> Objects.equals(assetName, e.assetName))
-                .filter(e -> BytesUtil.equal(key, e.key))
-                .filter(e -> BytesUtil.equal(value, e.value))
+                .filter(e -> BytesUtil.equals(key, e.key))
+                .filter(e -> BytesUtil.equals(value, e.value))
                 .isPresent();
     }
 

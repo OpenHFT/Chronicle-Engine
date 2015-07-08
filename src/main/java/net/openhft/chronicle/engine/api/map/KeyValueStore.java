@@ -140,7 +140,7 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
     }
 
     default boolean replaceIfEqual(K key, V oldValue, V newValue) {
-        if (containsKey(key) && BytesUtil.equal(get(key), oldValue)) {
+        if (containsKey(key) && BytesUtil.equals(get(key), oldValue)) {
             put(key, newValue);
             return true;
         } else
@@ -150,7 +150,7 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
     default boolean removeIfEqual(K key, V value) {
         if (!isKeyType(key))
             return false;
-        if (containsKey(key) && BytesUtil.equal(get(key), value)) {
+        if (containsKey(key) && BytesUtil.equals(get(key), value)) {
             remove(key);
             return true;
         } else
