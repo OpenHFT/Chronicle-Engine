@@ -51,7 +51,8 @@ public class RemoteMapView<K, MV, V> extends VanillaMapView<K, MV, V> {
         return convertTo(Boolean.class, this.applyTo((SerializableBiFunction) MapFunction.CONTAINS_VALUE, value));
     }
 
-/* Map serialization not supported yet.
+/* TODO CE-95
+   Map serialization not supported yet.
     @Override
     public void putAll(Map<? extends K, ? extends V> m) {
         this.asyncUpdate((SerializableUpdaterWithArg) MapUpdate.PUT_ALL, m);
