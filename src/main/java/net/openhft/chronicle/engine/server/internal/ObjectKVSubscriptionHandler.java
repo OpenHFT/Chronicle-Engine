@@ -24,7 +24,6 @@ import static net.openhft.chronicle.network.connection.CoreFields.tid;
  * Created by Rob Austin
  */
 public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscription> {
-
     private static final Logger LOG = LoggerFactory.getLogger(ObjectKVSubscriptionHandler.class);
 
     @Nullable
@@ -39,8 +38,7 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscriptio
 
                 @Override
                 public void onMessage(final Object topic, final Object message) throws InvalidSubscriberException {
-
-                    publisher.add(publish -> {
+                    publisherAdd(publish -> {
                         publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
                                 (inputTid));
                         publish.writeNotReadyDocument(false, wire -> wire.write(reply)
@@ -52,7 +50,7 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscriptio
                 }
 
                 public void onEndOfSubscription() {
-                    publisher.add(publish -> {
+                    publisherAdd(publish -> {
                         publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
                                 (inputTid));
                         publish.writeNotReadyDocument(false, wire -> wire.writeEventName
@@ -80,7 +78,7 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscriptio
             }
             assetTree.unregisterTopicSubscriber(requestContext.name(), listener);
             // no more data.
-            publisher.add(publish -> {
+            publisherAdd(publish -> {
                 publish.writeDocument(true, wire -> wire.writeEventName(tid).int64(inputTid));
                 publish.writeDocument(false, wire -> wire.write(reply).typedMarshallable(null));
             });

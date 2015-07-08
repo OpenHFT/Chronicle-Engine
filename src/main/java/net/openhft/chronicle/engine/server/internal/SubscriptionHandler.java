@@ -26,6 +26,7 @@ import static net.openhft.chronicle.network.connection.CoreFields.reply;
  * Created by rob on 28/06/2015.
  */
 public class SubscriptionHandler<T extends Subscription> extends AbstractHandler {
+    private static final int MAX_QUEUE_LENGTH = 10;
 
     private static final Logger LOG = LoggerFactory.getLogger(SubscriptionHandler.class);
 
@@ -36,6 +37,12 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
     protected RequestContext requestContext;
     protected Queue<Consumer<Wire>> publisher;
     protected AssetTree assetTree;
+
+    protected void publisherAdd(Consumer<Wire> toPublish) {
+        if (publisher.size() > MAX_QUEUE_LENGTH)
+            System.out.println("publish queue length: " + publisher.size());
+        publisher.add(toPublish);
+    }
 
     /**
      * after writing the tid to the wire
@@ -74,7 +81,7 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
         if (registerSubscriber.contentEquals(eventName)) {
             Class subscriptionType = valueIn.typeLiteral();
             Subscriber<Object> listener = e -> {
-                publisher.add(publish -> {
+                publisherAdd(publish -> {
                     publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(tid));
                     publish.writeNotReadyDocument(false, wire -> wire.write(reply).object(e));
                 });
@@ -93,7 +100,7 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
             }
             assetTree.unregisterSubscriber(requestContext.name(), listener);
             // no more data.
-            publisher.add(publish -> {
+            publisherAdd(publish -> {
                 publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(tid));
                 publish.writeDocument(false, wire -> wire.write(reply).typedMarshallable(null));
             });

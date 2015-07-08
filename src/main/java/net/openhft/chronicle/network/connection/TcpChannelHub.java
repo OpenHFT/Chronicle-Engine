@@ -61,7 +61,6 @@ import static net.openhft.chronicle.bytes.Bytes.elasticByteBuffer;
 import static net.openhft.chronicle.core.Jvm.*;
 import static net.openhft.chronicle.engine.server.internal.SystemHandler.EventId.*;
 
-
 /**
  * Created by Rob Austin
  */
@@ -111,7 +110,6 @@ public class TcpChannelHub implements View, Closeable {
     private final Wire handShakingWire;
     private final String description;
 
-
     public TcpChannelHub(@NotNull SessionProvider sessionProvider,
                          @NotNull String description,
                          @NotNull EventLoop eventLoop,
@@ -156,7 +154,6 @@ public class TcpChannelHub implements View, Closeable {
                                 "```\n" +
 //                                        Wires.fromSizePrefixedBlobs(bytes)
                                         BytesUtil.toHexString(bytes, bytes.readPosition(), bytes.readRemaining())
-
                         ) +
                         "```\n");
                 YamlLogging.title = "";
@@ -199,9 +196,7 @@ public class TcpChannelHub implements View, Closeable {
         return outBytesLock;
     }
 
-
     private synchronized void doHandShaking(SocketChannel socketChannel) throws IOException {
-
         final SessionDetails sessionDetails = sessionDetails();
         handShakingWire.clear();
         handShakingWire.bytes().clear();
@@ -213,7 +208,6 @@ public class TcpChannelHub implements View, Closeable {
         });
 
         writeSocket(handShakingWire, timeoutMs, socketChannel);
-
     }
 
     private SessionDetails sessionDetails() {
@@ -250,13 +244,9 @@ public class TcpChannelHub implements View, Closeable {
                         clientChannel.close();
                     } catch (IOException ignored) {
                     }
-
-
                 }
             }
         }
-
-
     }
 
     /**
@@ -272,8 +262,6 @@ public class TcpChannelHub implements View, Closeable {
             pause(10);
             System.out.println("waiting for disconnect");
         }
-
-
     }
 
     /**
@@ -319,9 +307,7 @@ public class TcpChannelHub implements View, Closeable {
             reconnect = true;
             throw rethrow(e);
         }
-
     }
-
 
     public Wire proxyReply(long timeoutTime, final long tid) {
         checkNotClosed();
@@ -347,7 +333,6 @@ public class TcpChannelHub implements View, Closeable {
      */
     private void writeSocket(@NotNull WireOut outWire, long timeoutTime, @NotNull SocketChannel socketChannel) throws
             IOException {
-
 
         final Bytes<?> bytes = outWire.bytes();
         long outBytesPosition = bytes.writePosition();
@@ -393,7 +378,6 @@ public class TcpChannelHub implements View, Closeable {
                 bytes.writePosition(outBuffer.position());
                 return;
             }
-
         }
 
         outBuffer.clear();
@@ -456,7 +440,6 @@ public class TcpChannelHub implements View, Closeable {
 
 
     private void reflectServerHeartbeatMessage(ValueIn valueIn) {
-
         // time stamp sent from the server, this is so that the server can calculate the round
         // trip time
         long timestamp = valueIn.int64();
@@ -536,7 +519,6 @@ public class TcpChannelHub implements View, Closeable {
         } finally {
             outBytesLock().unlock();
         }
-
     }
 
     public void checkConnection() {
@@ -551,7 +533,6 @@ public class TcpChannelHub implements View, Closeable {
         }
     }
 
-
     public interface Task {
         void run();
     }
@@ -560,8 +541,6 @@ public class TcpChannelHub implements View, Closeable {
      * uses a single read thread, to process messages to waiting threads based on their {@code tid}
      */
     private class TcpSocketConsumer implements EventHandler {
-
-
         private final ExecutorService executorService;
 
         @NotNull
@@ -575,20 +554,17 @@ public class TcpChannelHub implements View, Closeable {
         private ThreadLocal<Wire> syncInWireThreadLocal = withInitial(() -> wire.apply(
                 elasticByteBuffer()));
 
-
         /**
          * re-establish all the subscriptions to the server, this method calls the {@code
          * net.openhft.chronicle.network.connection.AsyncSubscription#applySubscribe()} for each
          * subscription, this could should establish a subscriotuib with the server.
          */
         private void onReconnect() {
-
             ReentrantLock reentrantLock = outBytesLock();
             reentrantLock.lock();
             try {
                 outBytesLock().lock();
                 try {
-
                     map.values().forEach(v -> {
                         if (v instanceof AsyncSubscription) {
                             if (!(v instanceof AsyncTemporarySubscription))
@@ -627,11 +603,9 @@ public class TcpChannelHub implements View, Closeable {
             this.wireFunction = wireFunction;
             System.out.println("constructor remoteAddress=" + remoteAddress);
 
-
             executorService = start();
             // used for the heartbeat
             eventLoop.addHandler(this);
-
         }
 
         @Override
@@ -667,9 +641,7 @@ public class TcpChannelHub implements View, Closeable {
             if (System.currentTimeMillis() - start >= timeoutTimeMs) {
                 throw new TimeoutException("timeoutTimeMs=" + timeoutTimeMs);
             }
-
             return wire;
-
         }
 
         void subscribe(@NotNull final AsyncSubscription asyncSubscription) {
@@ -729,20 +701,14 @@ public class TcpChannelHub implements View, Closeable {
                         "been called.");
         }
 
-
         private void running() {
-
             try {
-
-
                 final Wire inWire = wireFunction.apply(elasticByteBuffer());
                 assert inWire != null;
 
                 while (!isShutdown()) {
-
                     if (reconnect) {
                         checkConnectionState();
-
                         if (reconnect) {
                             try {
                                 Thread.sleep(500);
@@ -751,7 +717,6 @@ public class TcpChannelHub implements View, Closeable {
                             }
                             continue;
                         }
-
                     }
                     try {
                         // if we have processed all the bytes that we have read in
@@ -782,8 +747,6 @@ public class TcpChannelHub implements View, Closeable {
                             LOG.warn("reconnecting due to unexpected exception", e);
                             reconnect = true;
                         }
-
-
                     } finally {
                         clear(inWire);
                     }
@@ -803,7 +766,6 @@ public class TcpChannelHub implements View, Closeable {
                     reentrantLock.unlock();
                 }
             }
-
         }
 
         private boolean isShutdown() {
@@ -826,7 +788,6 @@ public class TcpChannelHub implements View, Closeable {
             return messageSize;
         }
 
-
         /**
          * @param tid         the transaction id of the message
          * @param isReady     if true, this will be the last message for this tid
@@ -843,7 +804,6 @@ public class TcpChannelHub implements View, Closeable {
             Object o = null;
 
             for (; !isShutdown(); ) {
-
                 o = isReady ? map.remove(tid) : map.get(tid);
                 if (o != null)
                     break;
@@ -861,7 +821,6 @@ public class TcpChannelHub implements View, Closeable {
                             "start again.");
                     return;
                 }
-
             }
 
             // heartbeat message sent from the server
@@ -899,7 +858,6 @@ public class TcpChannelHub implements View, Closeable {
                     bytes.notifyAll();
                 }
             }
-
         }
 
         private Bytes serverHeartBeatHandler = Bytes.elasticByteBuffer();
@@ -933,11 +891,9 @@ public class TcpChannelHub implements View, Closeable {
                         final ValueIn valueIn = d.readEventName(eventName);
                         if (heartbeat.contentEquals(eventName))
                             reflectServerHeartbeatMessage(valueIn);
-
                     }
             );
         }
-
 
         /**
          * blocks indefinitely until the number of expected bytes is received
@@ -966,14 +922,11 @@ public class TcpChannelHub implements View, Closeable {
 
         private void readBuffer(@NotNull final ByteBuffer buffer) throws IOException {
             while (buffer.remaining() > 0) {
-
-
                 if (clientChannel == null || clientChannel.read(buffer) == -1) {
                     throw new IOException("Disconnection to server " + description);
                 }
                 if (isShutdown)
                     throw new IOException("The server was shutdown, " + description + "/" + TCPRegistry.lookup(description));
-
             }
         }
 
@@ -982,7 +935,6 @@ public class TcpChannelHub implements View, Closeable {
         private void onMessageReceived() {
             lastTimeMessageReceived = System.currentTimeMillis();
         }
-
 
         /**
          * sends a heartbeat from the client to the server and logs the round trip time
@@ -1008,7 +960,6 @@ public class TcpChannelHub implements View, Closeable {
                                 description, TCPRegistry.lookup(description),
                                 roundTipTimeMicros));
                     inWire.clear();
-
                 }
             });
         }
@@ -1053,11 +1004,8 @@ public class TcpChannelHub implements View, Closeable {
             // HEATBEAT_PING_PERIOD milliseconds
             long millisecondsSinceLastMessageReceived = System.currentTimeMillis() - lastTimeMessageReceived;
             if (millisecondsSinceLastMessageReceived >= HEATBEAT_PING_PERIOD && !awaitingHeartbeat.get()) {
-
                 sendHeartbeat();
-
             }
-
 
             // if we have not received a message from the server after the HEATBEAT_TIMEOUT_PERIOD
             // we will drop and then re-establish the connection.
@@ -1087,8 +1035,6 @@ public class TcpChannelHub implements View, Closeable {
                     outBytesLock.unlock();
                 }
             }
-
-
         }
 
         private void attemptDisconnect() {
@@ -1120,7 +1066,6 @@ public class TcpChannelHub implements View, Closeable {
                         pause(100);
                         continue;
                     }
-
                 }
 
                 socketChannel.socket().setTcpNoDelay(true);
@@ -1143,7 +1088,6 @@ public class TcpChannelHub implements View, Closeable {
                 e.printStackTrace();
                 System.out.println("failed to connect remoteAddress=" + remoteAddress + " so will reconnect");
 
-
                 if (clientChannel != null)
                     synchronized (this) {
                         if (clientChannel != null)
@@ -1160,7 +1104,6 @@ public class TcpChannelHub implements View, Closeable {
         }
 
         private void onDisconnected() {
-
             System.out.println(" disconnected to remoteAddress=" + remoteAddress);
             onConnectionClosed();
         }
@@ -1171,11 +1114,6 @@ public class TcpChannelHub implements View, Closeable {
             onMessageReceived();
             reconnect = false;
             onReconnect();
-
-
         }
-
     }
-
-
 }
