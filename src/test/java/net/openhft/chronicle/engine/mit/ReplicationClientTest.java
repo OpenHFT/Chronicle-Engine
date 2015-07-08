@@ -39,7 +39,7 @@ import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContex
  * Created by Rob Austin
  */
 
-public class ReplicationClient {
+public class ReplicationClientTest {
 
 
     static Set<Closeable> closeables = new HashSet<>();
