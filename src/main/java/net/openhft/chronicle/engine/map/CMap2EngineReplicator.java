@@ -145,15 +145,13 @@ public class CMap2EngineReplicator implements EngineReplication,
                                 bootStrapTimeStamp)));
             }
 
-            private Bytes  toKey(final @NotNull net.openhft.lang.io.Bytes key) {
-
+            private Bytes toKey(final @NotNull net.openhft.lang.io.Bytes key) {
                 NativeBytesStore<Void> byteStore = NativeBytesStore.nativeStoreWithFixedCapacity(key
                         .remaining());
                 PointerBytesStore result = keyLocal.get();
                 result.set(key.address(), key.capacity());
                 result.copyTo(byteStore);
                 return byteStore.bytesForRead();
-
             }
 
             @Nullable
@@ -167,7 +165,6 @@ public class CMap2EngineReplicator implements EngineReplication,
                 result.set(value.address(), value.capacity());
                 result.copyTo(byteStore);
                 return byteStore.bytesForRead();
-
             }
 
             @Override
