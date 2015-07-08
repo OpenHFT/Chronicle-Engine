@@ -169,6 +169,7 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
                     if (isClosed.get())
                         throw new InvalidEventHandlerException();
 
+
                     // publishes the replication events
                     hub.lock(() -> mi.forEach(e -> {
 

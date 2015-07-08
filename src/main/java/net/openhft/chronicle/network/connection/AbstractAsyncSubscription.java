@@ -40,7 +40,7 @@ public abstract class AbstractAsyncSubscription implements AsyncSubscription {
         try {
             hub.writeSocket(hub.outWire());
         } catch (IORuntimeException e) {
-
+            e.printStackTrace();
         }
 
 
