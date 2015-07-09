@@ -96,7 +96,6 @@ public class VanillaAsset implements Asset, Closeable {
 
         addWrappingRule(Reference.class, LAST + "reference", VanillaReference::new, MapView.class);
         addWrappingRule(Replication.class, LAST + "replication", VanillaReplication::new, MapView.class);
-        addWrappingRule(Publisher.class, LAST + "publisher", VanillaReference::new, MapView.class);
         addWrappingRule(EntrySetView.class, LAST + " entrySet", VanillaEntrySetView::new, MapView.class);
         addWrappingRule(KeySetView.class, LAST + " keySet", VanillaKeySetView::new, MapView.class);
         addWrappingRule(ValuesCollection.class, LAST + " values", VanillaValuesCollection::new, MapView.class);
@@ -128,7 +127,8 @@ public class VanillaAsset implements Asset, Closeable {
         standardStack(daemon);
 
         addWrappingRule(TopicPublisher.class, LAST + " topic publisher", VanillaTopicPublisher::new, MapView.class);
-        addWrappingRule(Publisher.class, LAST + "publisher", VanillaReference::new, MapView.class);
+        addWrappingRule(Publisher.class, LAST + " publisher", VanillaReference::new, MapView.class);
+        addWrappingRule(Reference.class, LAST + " reference", VanillaReference::new, MapView.class);
         addWrappingRule(ObjectKeyValueStore.class, LAST + " authenticated",
                 VanillaSubscriptionKeyValueStore::new, AuthenticatedKeyValueStore.class);
 
@@ -156,7 +156,8 @@ public class VanillaAsset implements Asset, Closeable {
 
         addLeafRule(ObjectKeyValueStore.class, LAST + " Remote AKVS",
                 RemoteKeyValueStore::new);
-        addWrappingRule(Publisher.class, LAST + "publisher", RemotePublisher::new, MapView.class);
+        addLeafRule(Publisher.class, LAST + " publisher", RemoteReference::new);
+        addLeafRule(Reference.class, LAST + " reference", RemoteReference::new);
         addWrappingRule(TopicPublisher.class, LAST + " topic publisher", RemoteTopicPublisher::new,
                 MapView.class);
         addLeafRule(TopologySubscription.class, LAST + " vanilla",
