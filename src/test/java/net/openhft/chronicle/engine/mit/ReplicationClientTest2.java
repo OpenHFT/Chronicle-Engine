@@ -40,7 +40,7 @@ import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContex
  * Created by Rob Austin
  */
 
-public class ReplicationClientTest {
+public class ReplicationClientTest2 {
 
 
     static Set<Closeable> closeables = new HashSet<>();
@@ -52,64 +52,6 @@ public class ReplicationClientTest {
     public void after() throws Exception {
         closeables.forEach(c -> c.close());
     }
-
-    @Test
-    public void test() throws InterruptedException, IOException {
-
-        ReplicationServerMain server = new ReplicationServerMain();
-        //    ServerEndpoint s1 = server.create(1, "localhost");
-
-       /* Thread.sleep(1000);
-        // creates the first instance of the server
-        server.create(2, "localhost");
-
-        // creates the seconds instance of the server
-
-        s1.stop();
-        Thread.sleep(1000);
-        server.create(1, "localhost");*/
-
-
-        YamlLogging.clientReads = true;
-        YamlLogging.clientWrites = true;
-        WireType wireType = WireType.TEXT;
-
-        final Integer hostId = Integer.getInteger("hostId", 1);
-
-        BlockingQueue q1 = new ArrayBlockingQueue(1);
-        BlockingQueue q2 = new ArrayBlockingQueue(1);
-
-        {
-            String hostname = System.getProperty("host1", "localhost");
-            int port = Integer.getInteger("port1", 5701);
-            map1 = create("map", hostId, hostname + ":" + port, q1, wireType);
-        }
-
-        {
-            String hostname = System.getProperty("host2", "localhost");
-            int port = Integer.getInteger("port2", 5702);
-            map2 = create("map", hostId, hostname + ":" + port, q2, wireType);
-        }
-
-        map2.put("hello", "world");
-
-        Assert.assertEquals("InsertedEvent{assetName='/map', key=hello, value=world}", q1.take().toString());
-        Assert.assertEquals("InsertedEvent{assetName='/map', key=hello, value=world}", q2.take().toString());
-
-        //Test map 1 content
-        Assert.assertEquals(1, map1.size());
-        Assert.assertEquals("world", map1.get("hello"));
-
-        //Test map 1 content
-        Assert.assertEquals(1, map2.size());
-        Assert.assertEquals("world", map2.get("hello"));
-
-        map2.remove("hello");
-
-        Assert.assertEquals("RemovedEvent{assetName='/map', key=hello, oldValue=world}", q1.take().toString());
-        Assert.assertEquals("RemovedEvent{assetName='/map', key=hello, oldValue=world}", q2.take().toString());
-    }
-
 
     @Test
     public void test2() throws InterruptedException, IOException {

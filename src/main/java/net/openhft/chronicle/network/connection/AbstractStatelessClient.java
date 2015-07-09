@@ -185,6 +185,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
     /*    if (hub.outBytesLock().isHeldByCurrentThread())
             throw new IllegalStateException("Cannot view map while debugging");*/
         hub.checkConnection();
+
         hub.outBytesLock().lock();
         try {
             sendEventAsyncWithoutLock(eventId, consumer);

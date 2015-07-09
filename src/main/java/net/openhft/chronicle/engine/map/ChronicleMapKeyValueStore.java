@@ -148,14 +148,16 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
             for (HostDetails hostDetails : cluster.hostDetails()) {
 
                 // its the identifier with the larger values that will establish the connection
-                if (hostDetails.hostId <= localIdentifier)
+                int remoteIdentifier = hostDetails.hostId;
+
+                if (remoteIdentifier <= localIdentifier)
                     continue;
 
                 final TcpChannelHub tcpChannelHub = hostDetails.acquireTcpChannelHub(asset, eventLoop, context.wireType());
                 ReplicationHub replicationHub = new ReplicationHub(context, tcpChannelHub, eventLoop, isClosed);
 
                 try {
-                    replicationHub.bootstrap(engineReplicator1, localIdentifier, (byte) hostDetails.hostId);
+                    replicationHub.bootstrap(engineReplicator1, localIdentifier, (byte) remoteIdentifier);
                 } catch (InterruptedException e) {
                     throw new AssertionError(e);
                 }

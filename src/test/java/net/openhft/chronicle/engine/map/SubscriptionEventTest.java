@@ -43,6 +43,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.*;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -145,6 +146,96 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                 Object object = eventsQueue.take();
                 Assert.assertTrue(object instanceof InsertedEvent);
 
+                assetTree.unregisterSubscriber(NAME, add);
+            } catch (Exception e) {
+                throw Jvm.rethrow(e);
+            }
+        });
+    }
+
+
+    /**
+     * REMOTE ONLY TEST
+     *
+     * @throws IOException
+     * @throws InterruptedException
+     */
+
+    @Test
+    public void testPushingEntriesToTheServerDirectly() throws IOException, InterruptedException {
+
+        if (!isRemote)
+            return;
+
+        final BlockingQueue<MapEvent> eventsQueue = new LinkedBlockingQueue<>();
+
+
+        yamlLoggger(() -> {
+            try {
+
+                Subscriber<MapEvent> add = eventsQueue::add;
+                assetTree.registerSubscriber(NAME, MapEvent.class, add);
+
+                final Map serverMap = serverAssetTree.acquireMap(NAME, String.class, String.class);
+
+                YamlLogging.writeMessage = "puts an entry into the map so that an event will be " +
+                        "triggered";
+
+                serverMap.put("sever-key", "server-value");
+                map.put("hello", "world");
+
+                Object object = eventsQueue.take();
+                eventsQueue.take();
+                Assert.assertTrue(object instanceof InsertedEvent);
+
+                // server map
+                Assert.assertEquals(2, serverMap.size());
+
+                // client map
+                Assert.assertEquals(2, map.size());
+
+                assetTree.unregisterSubscriber(NAME, add);
+            } catch (Exception e) {
+                throw Jvm.rethrow(e);
+            }
+        });
+    }
+
+
+    @Test
+    public void testSubscribeToChangesToTheMapRestartClient() throws IOException,
+            InterruptedException {
+
+        if (!isRemote)
+            return;
+
+        final BlockingQueue<MapEvent> eventsQueue = new LinkedBlockingQueue<>();
+
+
+        yamlLoggger(() -> {
+            try {
+                YamlLogging.writeMessage = "Sets up a subscription to listen to map events. And " +
+                        "subsequently puts and entry into the map, notice that the InsertedEvent is " +
+                        "received from the server";
+                Thread.sleep(1000);
+
+                map.put("key", "value");
+                assetTree.close();
+                Thread.sleep(1000);
+
+                assetTree = new VanillaAssetTree().forRemoteAccess("SubscriptionEventTest.host.port", WIRE_TYPE);
+
+                Subscriber<MapEvent> add = eventsQueue::add;
+                assetTree.registerSubscriber(NAME, MapEvent.class, add);
+
+                Map map = assetTree.acquireMap(NAME, String.class, String.class);
+                YamlLogging.writeMessage = "puts an entry into the map so that an event will be " +
+                        "triggered";
+                map.put("Hello", "World");
+
+                Object object = eventsQueue.take();
+                Assert.assertTrue(object instanceof InsertedEvent);
+                Assert.assertEquals(2, map.size());
                 assetTree.unregisterSubscriber(NAME, add);
             } catch (Exception e) {
                 throw Jvm.rethrow(e);

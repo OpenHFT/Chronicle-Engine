@@ -180,7 +180,6 @@ public class EngineWireHandler extends WireTcpHandler {
                             viewType == ValuesCollection.class ||
                             viewType == KeySetView.class ||
                             viewType == ObjectKVSSubscription.class ||
-                            viewType == ObjectKVSSubscription.class ||
                             viewType == TopicPublisher.class ||
                             viewType == Publisher.class ||
                             viewType == TopologySubscription.class ||
