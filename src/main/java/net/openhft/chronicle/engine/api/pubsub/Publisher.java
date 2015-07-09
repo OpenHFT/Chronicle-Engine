@@ -31,8 +31,22 @@ public interface Publisher<E> {
 
     /**
      * Add a subscription to this spepcific topic
+     *
+     * @param bootstrap  to bootstrap
      * @param subscriber to register
      * @throws AssetNotFoundException if the topic no longer exists.
      */
-    void registerSubscriber(Subscriber<E> subscriber) throws AssetNotFoundException;
+    void registerSubscriber(boolean bootstrap, Subscriber<E> subscriber) throws AssetNotFoundException;
+
+    /**
+     * Remove a subscriber
+     *
+     * @param subscriber to remove
+     */
+    void unregisterSubscriber(Subscriber<E> subscriber);
+
+    /**
+     * @return the number of subscriptions.
+     */
+    int subscriberCount();
 }

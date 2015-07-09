@@ -13,7 +13,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId.publish;
-import static net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId.registerTopicSubscriber;
+import static net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId.registerSubscriber;
 import static net.openhft.chronicle.engine.server.internal.PublisherHandler.Params.message;
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
 import static net.openhft.chronicle.network.connection.CoreFields.tid;
@@ -36,7 +36,7 @@ public class TopologyHandler<E> extends AbstractHandler {
             eventName.setLength(0);
             final ValueIn valueIn = inWire.readEventName(eventName);
 
-            if (registerTopicSubscriber.contentEquals(eventName)) {
+            if (registerSubscriber.contentEquals(eventName)) {
 
                 final Subscriber listener = new Subscriber() {
 
@@ -53,7 +53,10 @@ public class TopologyHandler<E> extends AbstractHandler {
 
                 };
 
-                valueIn.marshallable(m -> view.registerSubscriber(listener));
+                // TODO CE-101
+                boolean bootstrap = true;
+
+                valueIn.marshallable(m -> view.registerSubscriber(bootstrap, listener));
                 return;
             }
 

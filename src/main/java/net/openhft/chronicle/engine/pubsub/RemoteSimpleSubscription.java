@@ -16,14 +16,11 @@
 
 package net.openhft.chronicle.engine.pubsub;
 
-import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Reference;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.Function;
 
 /**
@@ -31,32 +28,22 @@ import java.util.function.Function;
  */
 public class RemoteSimpleSubscription<E> implements SimpleSubscription<E> {
     // TODO CE-101 pass to the server
-    private final Set<Subscriber<E>> subscribers = new CopyOnWriteArraySet<>();
-    private final Reference<E> currentValue;
+    private final Reference<E> reference;
     private final Function<Object, E> valueReader;
 
     public RemoteSimpleSubscription(Reference<E> reference, Function<Object, E> valueReader) {
-        this.currentValue = reference;
+        this.reference = reference;
         this.valueReader = valueReader;
     }
 
     @Override
     public void registerSubscriber(@NotNull RequestContext rc, @NotNull Subscriber<E> subscriber) {
-        // TODO CE-101 pass to the server
-        //   subscribers.add(subscriber);
-        if (rc.bootstrap() != Boolean.FALSE)
-            try {
-                subscriber.onMessage(currentValue.get());
-            } catch (InvalidSubscriberException e) {
-                subscribers.remove(subscriber);
-            }
+        reference.registerSubscriber(rc.bootstrap() != Boolean.FALSE, subscriber);
     }
 
     @Override
     public void unregisterSubscriber(Subscriber<E> subscriber) {
-
-        // TODO CE-101 pass to the server
-        subscribers.remove(subscriber);
+        reference.unregisterSubscriber(subscriber);
     }
 
     @Override
@@ -78,7 +65,7 @@ public class RemoteSimpleSubscription<E> implements SimpleSubscription<E> {
 
     @Override
     public int subscriberCount() {
-        return subscribers.size();
+        return reference.subscriberCount();
     }
 
     @Override
@@ -93,13 +80,5 @@ public class RemoteSimpleSubscription<E> implements SimpleSubscription<E> {
 
     @Override
     public void close() {
-        // TODO CE-101 pass to the server
-        for (Subscriber<E> subscriber : subscribers) {
-            try {
-                subscriber.onEndOfSubscription();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
     }
 }

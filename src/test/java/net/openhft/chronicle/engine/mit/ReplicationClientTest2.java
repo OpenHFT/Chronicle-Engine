@@ -13,8 +13,8 @@ import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
 import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.map.remote.RemoteKVSSubscription;
 import net.openhft.chronicle.engine.map.remote.RemoteKeyValueStore;
-import net.openhft.chronicle.engine.map.remote.RemotePublisher;
-import net.openhft.chronicle.engine.map.remote.RemoteTopicPublisher;
+import net.openhft.chronicle.engine.pubsub.RemoteReference;
+import net.openhft.chronicle.engine.pubsub.RemoteTopicPublisher;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.session.VanillaSessionProvider;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
@@ -123,7 +123,7 @@ public class ReplicationClientTest2 {
 
         tree.root().addWrappingRule(MapView.class, "mapv view", VanillaMapView::new, AuthenticatedKeyValueStore.class);
         tree.root().addWrappingRule(TopicPublisher.class, " topic publisher", RemoteTopicPublisher::new, MapView.class);
-        tree.root().addWrappingRule(Publisher.class, "publisher", RemotePublisher::new, MapView.class);
+        tree.root().addLeafRule(Publisher.class, "publisher", RemoteReference::new);
 
         EventGroup eventLoop = new EventGroup(true);
         SessionProvider sessionProvider = new VanillaSessionProvider();

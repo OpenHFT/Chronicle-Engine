@@ -19,7 +19,7 @@ import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId.registerTopicSubscriber;
+import static net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId.registerSubscriber;
 
 /**
  * Created by Rob Austin
@@ -78,16 +78,28 @@ public class RemoteReference<E> extends AbstractStatelessClient<EventId> impleme
     }
 
     @Override
-    public void registerSubscriber(@NotNull final Subscriber subscriber) throws AssetNotFoundException {
+    public void unregisterSubscriber(Subscriber<E> subscriber) {
+        // TODO CE-101 pass to the server
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public int subscriberCount() {
+        // TODO CE-101 pass to the server
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public void registerSubscriber(boolean bootstrap, @NotNull final Subscriber subscriber) throws AssetNotFoundException {
 
         if (hub.outBytesLock().isHeldByCurrentThread())
             throw new IllegalStateException("Cannot view map while debugging");
 
-        final AbstractAsyncSubscription asyncSubscription = new AbstractAsyncSubscription(hub, csp) {
+        final AbstractAsyncSubscription asyncSubscription = new AbstractAsyncSubscription(hub, csp + "&bootstrap=" + bootstrap) {
 
             @Override
             public void onSubscribe(@NotNull final WireOut wireOut) {
-                wireOut.writeEventName(registerTopicSubscriber).text("");
+                wireOut.writeEventName(registerSubscriber).text("");
             }
 
             @Override

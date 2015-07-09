@@ -12,7 +12,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId.publish;
-import static net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId.registerTopicSubscriber;
+import static net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId.registerSubscriber;
 import static net.openhft.chronicle.engine.server.internal.PublisherHandler.Params.message;
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
 import static net.openhft.chronicle.network.connection.CoreFields.tid;
@@ -35,7 +35,7 @@ public class PublisherHandler<E> extends AbstractHandler {
             eventName.setLength(0);
             final ValueIn valueIn = inWire.readEventName(eventName);
 
-            if (registerTopicSubscriber.contentEquals(eventName)) {
+            if (registerSubscriber.contentEquals(eventName)) {
 
                 final Subscriber listener = new Subscriber() {
 
@@ -53,7 +53,9 @@ public class PublisherHandler<E> extends AbstractHandler {
 
                 };
 
-                valueIn.marshallable(m -> view.registerSubscriber(listener));
+                // TODO CE-101 get the true value from the CSP
+                boolean bootstrap = false;
+                valueIn.marshallable(m -> view.registerSubscriber(bootstrap, listener));
                 return;
             }
 
@@ -99,7 +101,7 @@ public class PublisherHandler<E> extends AbstractHandler {
     public enum EventId implements ParameterizeWireKey {
         publish,
         onEndOfSubscription,
-        registerTopicSubscriber(message);
+        registerSubscriber(message);
 
         private final WireKey[] params;
 

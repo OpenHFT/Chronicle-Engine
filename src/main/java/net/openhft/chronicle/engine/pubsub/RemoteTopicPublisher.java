@@ -20,7 +20,7 @@ import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId.registerTopicSubscriber;
+import static net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId.registerSubscriber;
 import static net.openhft.chronicle.engine.server.internal.TopicPublisherHandler.EventId.onEndOfSubscription;
 import static net.openhft.chronicle.engine.server.internal.TopicPublisherHandler.EventId.publish;
 
@@ -92,7 +92,7 @@ public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId>
 
             @Override
             public void onSubscribe(@NotNull final WireOut wireOut) {
-                wireOut.writeEventName(registerTopicSubscriber).text("");
+                wireOut.writeEventName(registerSubscriber).text("");
             }
 
             @Override
