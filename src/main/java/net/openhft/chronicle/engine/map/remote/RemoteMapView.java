@@ -23,6 +23,7 @@ import net.openhft.chronicle.core.util.SerializableUpdater;
 import net.openhft.chronicle.core.util.SerializableUpdaterWithArg;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
+import net.openhft.chronicle.engine.api.pubsub.Reference;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.map.VanillaMapView;
@@ -68,6 +69,12 @@ public class RemoteMapView<K, MV, V> extends VanillaMapView<K, MV, V> {
     public boolean equals(Object o) {
         return o instanceof Map &&
                 this.<Object, Boolean>applyTo((SerializableBiFunction) MapFunction.EQUALS, o);
+    }
+
+    @Override
+    public Reference<V> referenceFor(K key) {
+        // TODO CE-101
+        throw new UnsupportedOperationException("todo");
     }
 
     @Override

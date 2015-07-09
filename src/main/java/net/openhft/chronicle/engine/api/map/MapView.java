@@ -18,6 +18,7 @@ package net.openhft.chronicle.engine.api.map;
 
 import net.openhft.chronicle.engine.api.KeyedVisitable;
 import net.openhft.chronicle.engine.api.Updatable;
+import net.openhft.chronicle.engine.api.pubsub.Reference;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.Assetted;
@@ -68,6 +69,14 @@ public interface MapView<K, MV, V> extends ConcurrentMap<K, V>,
      * @param subscriber
      */
     void registerSubscriber(Subscriber<MapEvent<K, V>> subscriber);
+
+    /**
+     * Obtain a reference the value for a key
+     *
+     * @param key to bind the reference to
+     * @return a reference object.
+     */
+    Reference<V> referenceFor(K key);
 
     /**
      * @return the type of the keys

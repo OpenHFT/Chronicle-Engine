@@ -22,6 +22,7 @@ import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
+import net.openhft.chronicle.engine.api.pubsub.Reference;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
@@ -295,6 +296,12 @@ public class VanillaMapView<K, MV, V> implements MapView<K, MV, V> {
     public void registerSubscriber(Subscriber<MapEvent<K, V>> subscriber) {
         KVSSubscription<K, V, V> subscription = (KVSSubscription) asset.subscription(true);
         subscription.registerSubscriber(RequestContext.requestContext().bootstrap(true).type(MapEvent.class), subscriber);
+    }
+
+    @Override
+    public Reference<V> referenceFor(K key) {
+        // TODO CE-101
+        throw new UnsupportedOperationException("todo");
     }
 
     @Override
