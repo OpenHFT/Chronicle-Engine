@@ -54,7 +54,7 @@ public class PublisherHandler<E> extends AbstractHandler {
                 };
 
                 // TODO CE-101 get the true value from the CSP
-                boolean bootstrap = false;
+                boolean bootstrap = true;
                 valueIn.marshallable(m -> view.registerSubscriber(bootstrap, listener));
                 return;
             }
