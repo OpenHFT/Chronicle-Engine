@@ -3,13 +3,12 @@ package net.openhft.chronicle.engine.server.internal;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
+import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Queue;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.server.internal.TopicPublisherHandler.EventId.publish;
@@ -26,7 +25,7 @@ public class TopicPublisherHandler<T, M> extends AbstractHandler {
 
     private final StringBuilder eventName = new StringBuilder();
 
-    private Queue<Consumer<Wire>> publisher;
+    private WireOutPublisher publisher;
     private TopicPublisher<T, M> view;
     @Nullable
     private Function<ValueIn, T> wireToT;
@@ -90,7 +89,7 @@ public class TopicPublisherHandler<T, M> extends AbstractHandler {
     };
 
     void process(@NotNull final WireIn inWire,
-                 final Queue<Consumer<Wire>> publisher,
+                 final WireOutPublisher publisher,
                  final long tid,
                  final Wire outWire,
                  final TopicPublisher view,

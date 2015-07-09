@@ -4,13 +4,12 @@ import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.tree.TopologySubscription;
+import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Queue;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
 import static net.openhft.chronicle.network.connection.CoreFields.tid;
@@ -48,7 +47,7 @@ public class TopologySubscriptionHandler extends SubscriptionHandler<TopologySub
 
     void process(@NotNull final WireIn inWire,
                  final RequestContext requestContext,
-                 final Queue<Consumer<Wire>> publisher,
+                 final WireOutPublisher publisher,
                  final AssetTree assetTree, final long tid,
                  final Wire outWire, final TopologySubscription subscription) {
         setOutWire(outWire);

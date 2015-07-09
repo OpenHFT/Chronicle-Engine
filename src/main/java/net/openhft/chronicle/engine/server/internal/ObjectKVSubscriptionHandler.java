@@ -6,13 +6,13 @@ import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
+import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Queue;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -38,7 +38,7 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscriptio
 
                 @Override
                 public void onMessage(final Object topic, final Object message) throws InvalidSubscriberException {
-                    publisherAdd(publish -> {
+                    Consumer<WireOut> toPublish = publish -> {
                         publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
                                 (inputTid));
                         publish.writeNotReadyDocument(false, wire -> wire.write(reply)
@@ -46,17 +46,19 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscriptio
                                     m.write(() -> "topic").object(topic);
                                     m.write(() -> "message").object(message);
                                 }));
-                    });
+                    };
+                    publisher.add(toPublish);
                 }
 
                 public void onEndOfSubscription() {
-                    publisherAdd(publish -> {
+                    Consumer<WireOut> toPublish = publish -> {
                         publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
                                 (inputTid));
                         publish.writeNotReadyDocument(false, wire -> wire.writeEventName
                                 (EventId.onEndOfSubscription).text(""));
 
-                    });
+                    };
+                    publisher.add(toPublish);
                 }
             };
 
@@ -78,10 +80,11 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscriptio
             }
             assetTree.unregisterTopicSubscriber(requestContext.name(), listener);
             // no more data.
-            publisherAdd(publish -> {
+            Consumer<WireOut> toPublish = publish -> {
                 publish.writeDocument(true, wire -> wire.writeEventName(tid).int64(inputTid));
                 publish.writeDocument(false, wire -> wire.write(reply).typedMarshallable(null));
-            });
+            };
+            publisher.add(toPublish);
 
             return;
         }
@@ -105,7 +108,7 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscriptio
 
     void process(@NotNull final WireIn inWire,
                  final RequestContext requestContext,
-                 final Queue<Consumer<Wire>> publisher,
+                 final WireOutPublisher publisher,
                  final AssetTree assetTree, final long tid,
                  final Wire outWire,
                  final Subscription subscription) {

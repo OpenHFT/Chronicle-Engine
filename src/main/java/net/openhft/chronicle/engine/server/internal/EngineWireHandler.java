@@ -48,8 +48,6 @@ import org.slf4j.LoggerFactory;
 import java.io.StreamCorruptedException;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Queue;
-import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -110,8 +108,6 @@ public class EngineWireHandler extends WireTcpHandler {
     private Class viewType;
     @Nullable
     private SessionProvider sessionProvider;
-    @NotNull
-    private Queue<Consumer<Wire>> publisher = new LinkedTransferQueue<>();
     private long tid;
     @Nullable
     private HostIdentifier hostIdentifier;
@@ -146,15 +142,6 @@ public class EngineWireHandler extends WireTcpHandler {
         this.replicationHandler = new ReplicationHandler();
         this.systemHandler = new SystemHandler();
         this.isClosed = isClosed;
-    }
-
-    protected void publish(Wire out) {
-        final Consumer<Wire> wireConsumer = publisher.poll();
-
-        if (wireConsumer != null) {
-            wireConsumer.accept(out);
-        }
-
     }
 
     final RequestContextInterner requestContextInterner = new RequestContextInterner(128);

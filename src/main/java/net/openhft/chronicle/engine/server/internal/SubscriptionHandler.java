@@ -7,16 +7,13 @@ import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.network.connection.CoreFields;
-import net.openhft.chronicle.wire.ParameterizeWireKey;
-import net.openhft.chronicle.wire.ValueIn;
-import net.openhft.chronicle.wire.Wire;
-import net.openhft.chronicle.wire.WireKey;
+import net.openhft.chronicle.network.connection.WireOutPublisher;
+import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
-import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
@@ -27,8 +24,6 @@ import static net.openhft.chronicle.network.connection.CoreFields.reply;
  * Created by rob on 28/06/2015.
  */
 public class SubscriptionHandler<T extends Subscription> extends AbstractHandler {
-    private static final int MAX_QUEUE_LENGTH = 10;
-
     private static final Logger LOG = LoggerFactory.getLogger(SubscriptionHandler.class);
 
     final StringBuilder eventName = new StringBuilder();
@@ -36,14 +31,8 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
     protected Wire outWire;
     protected T subscription;
     protected RequestContext requestContext;
-    protected Queue<Consumer<Wire>> publisher;
+    protected WireOutPublisher publisher;
     protected AssetTree assetTree;
-
-    protected void publisherAdd(Consumer<Wire> toPublish) {
-        if (publisher.size() > MAX_QUEUE_LENGTH)
-            System.out.println("publish queue length: " + publisher.size());
-        publisher.add(toPublish);
-    }
 
     /**
      * after writing the tid to the wire
@@ -131,19 +120,21 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
 
         @Override
         public void onMessage(Object e) throws InvalidSubscriberException {
-            SubscriptionHandler.this.publisherAdd(publish -> {
+            Consumer<WireOut> toPublish = publish -> {
                 publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(tid));
                 publish.writeNotReadyDocument(false, wire -> wire.write(reply).object(e));
-            });
+            };
+            publisher.add(toPublish);
         }
 
         @Override
         public void onEndOfSubscription() {
             // no more data.
-            publisherAdd(publish -> {
+            Consumer<WireOut> toPublish = publish -> {
                 publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(tid));
                 publish.writeDocument(false, wire -> wire.write(reply).typedMarshallable(null));
-            });
+            };
+            publisher.add(toPublish);
         }
     }
 }
