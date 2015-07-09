@@ -1,6 +1,8 @@
 package net.openhft.chronicle.engine.pubsub;
 
 import net.openhft.chronicle.core.pool.ClassAliasPool;
+import net.openhft.chronicle.core.util.SerializableBiFunction;
+import net.openhft.chronicle.core.util.SerializableFunction;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Reference;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
@@ -140,5 +142,41 @@ public class RemoteReference<E> extends AbstractStatelessClient<EventId> impleme
     private void checkEvent(@Nullable Object key) {
         if (key == null)
             throw new NullPointerException("event can not be null");
+    }
+
+    @Override
+    public <R> R apply(@NotNull SerializableFunction<E, R> function) {
+        // TODO CE-101
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public void asyncUpdate(@NotNull SerializableFunction<E, E> updateFunction) {
+        // TODO CE-101
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public <R> R syncUpdate(@NotNull SerializableFunction<E, E> updateFunction, @NotNull SerializableFunction<E, R> returnFunction) {
+        // TODO CE-101
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public <T, R> R apply(@NotNull SerializableBiFunction<E, T, R> function, T argument) {
+        // TODO CE-101
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public <T> void asyncUpdate(@NotNull SerializableBiFunction<E, T, E> updateFunction, T argument) {
+        // TODO CE-101
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public <UT, RT, R> R syncUpdate(@NotNull SerializableBiFunction<E, UT, E> updateFunction, @Nullable UT updateArgument, @NotNull SerializableBiFunction<E, RT, R> returnFunction, @Nullable RT returnArgument) {
+        // TODO CE-101
+        throw new UnsupportedOperationException("todo");
     }
 }
