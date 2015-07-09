@@ -1,4 +1,4 @@
-package net.openhft.chronicle.engine.map.remote;
+package net.openhft.chronicle.engine.pubsub;
 
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;

@@ -32,10 +32,13 @@ import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.api.tree.*;
 import net.openhft.chronicle.engine.collection.VanillaValuesCollection;
 import net.openhft.chronicle.engine.map.*;
-import net.openhft.chronicle.engine.map.remote.*;
-import net.openhft.chronicle.engine.pubsub.SimpleSubscriptionFactory;
+import net.openhft.chronicle.engine.map.remote.RemoteKVSSubscription;
+import net.openhft.chronicle.engine.map.remote.RemoteKeyValueStore;
+import net.openhft.chronicle.engine.map.remote.RemoteMapView;
+import net.openhft.chronicle.engine.map.remote.RemoteTopologySubscription;
+import net.openhft.chronicle.engine.pubsub.RemoteTopicPublisher;
 import net.openhft.chronicle.engine.pubsub.VanillaReference;
-import net.openhft.chronicle.engine.pubsub.VanillaSimpleSubscription;
+import net.openhft.chronicle.engine.pubsub.VanillaTopicPublisher;
 import net.openhft.chronicle.engine.session.VanillaSessionProvider;
 import net.openhft.chronicle.engine.set.VanillaKeySetView;
 import net.openhft.chronicle.network.VanillaSessionDetails;
@@ -96,6 +99,7 @@ public class VanillaAsset implements Asset, Closeable {
 
         addWrappingRule(Reference.class, LAST + "reference", VanillaReference::new, MapView.class);
         addWrappingRule(Replication.class, LAST + "replication", VanillaReplication::new, MapView.class);
+        addWrappingRule(Publisher.class, LAST + "publisher", VanillaReference::new, MapView.class);
         addWrappingRule(EntrySetView.class, LAST + " entrySet", VanillaEntrySetView::new, MapView.class);
         addWrappingRule(KeySetView.class, LAST + " keySet", VanillaKeySetView::new, MapView.class);
         addWrappingRule(ValuesCollection.class, LAST + " values", VanillaValuesCollection::new, MapView.class);
@@ -127,15 +131,12 @@ public class VanillaAsset implements Asset, Closeable {
         standardStack(daemon);
 
         addWrappingRule(TopicPublisher.class, LAST + " topic publisher", VanillaTopicPublisher::new, MapView.class);
-        addWrappingRule(Publisher.class, LAST + " publisher", VanillaReference::new, MapView.class);
-        addWrappingRule(Reference.class, LAST + " reference", VanillaReference::new, MapView.class);
         addWrappingRule(ObjectKeyValueStore.class, LAST + " authenticated",
                 VanillaSubscriptionKeyValueStore::new, AuthenticatedKeyValueStore.class);
 
         addLeafRule(AuthenticatedKeyValueStore.class, LAST + " vanilla", VanillaKeyValueStore::new);
         addLeafRule(SubscriptionKeyValueStore.class, LAST + " vanilla", VanillaKeyValueStore::new);
         addLeafRule(KeyValueStore.class, LAST + " vanilla", VanillaKeyValueStore::new);
-        addLeafRule(SimpleSubscriptionFactory.class, LAST + " vanilla", (rc, a) -> VanillaSimpleSubscription::new);
 
         addLeafRule(ObjectKVSSubscription.class, LAST + " vanilla",
                 VanillaKVSSubscription::new);
@@ -148,16 +149,12 @@ public class VanillaAsset implements Asset, Closeable {
         standardStack(true);
 
         addWrappingRule(MapView.class, LAST + " remote key maps", RemoteMapView::new, ObjectKeyValueStore.class);
-        // TODO change for to a remote simple subscription.
-        addLeafRule(SimpleSubscriptionFactory.class, LAST + " vanilla", (rc, a) -> VanillaSimpleSubscription::new);
 
         addLeafRule(ObjectKVSSubscription.class, LAST + " Remote",
                 RemoteKVSSubscription::new);
 
         addLeafRule(ObjectKeyValueStore.class, LAST + " Remote AKVS",
                 RemoteKeyValueStore::new);
-        addLeafRule(Publisher.class, LAST + " publisher", RemoteReference::new);
-        addLeafRule(Reference.class, LAST + " reference", RemoteReference::new);
         addWrappingRule(TopicPublisher.class, LAST + " topic publisher", RemoteTopicPublisher::new,
                 MapView.class);
         addLeafRule(TopologySubscription.class, LAST + " vanilla",

@@ -1,5 +1,6 @@
-package net.openhft.chronicle.engine.map.remote;
+package net.openhft.chronicle.engine.pubsub;
 
+import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Reference;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
@@ -26,18 +27,22 @@ import static net.openhft.chronicle.engine.server.internal.PublisherHandler.Even
 public class RemoteReference<E> extends AbstractStatelessClient<EventId> implements Reference<E> {
     private final Class<E> messageClass;
 
-    public RemoteReference(@NotNull RequestContext context, @NotNull Asset asset)
-            throws AssetNotFoundException {
-        super(asset.findView(TcpChannelHub.class), (long) 0, toUri(context));
-
-        messageClass = context.messageType();
+    public RemoteReference(RequestContext requestContext, Asset asset) {
+        this(asset.findView(TcpChannelHub.class), requestContext.messageType(), asset.fullName());
     }
 
-    private static String toUri(@NotNull final RequestContext context) {
-        StringBuilder uri = new StringBuilder("/" + context.fullName() + "?view=reference");
+    public RemoteReference(TcpChannelHub hub, Class<E> messageClass, String fullName)
+            throws AssetNotFoundException {
+        super(hub, (long) 0, toUri(fullName, messageClass));
 
-        if (context.valueType() != String.class)
-            uri.append("&messageType=").append(context.messageType().getName());
+        this.messageClass = messageClass;
+    }
+
+    private static String toUri(String fullName, Class messageClass) {
+        StringBuilder uri = new StringBuilder("/" + fullName + "?view=reference");
+
+        if (messageClass != String.class)
+            uri.append("&messageType=").append(ClassAliasPool.CLASS_ALIASES.nameFor(messageClass));
 
         return uri.toString();
     }
@@ -50,21 +55,25 @@ public class RemoteReference<E> extends AbstractStatelessClient<EventId> impleme
 
     @Override
     public E get() {
+        // TODO CE-101 pass to the server
         throw new UnsupportedOperationException("todo");
     }
 
     @Override
     public E getAndSet(E e) {
+        // TODO CE-101 pass to the server
         throw new UnsupportedOperationException("todo");
     }
 
     @Override
     public void remove() {
+        // TODO CE-101 pass to the server
         throw new UnsupportedOperationException("todo");
     }
 
     @Override
     public E getAndRemove() {
+        // TODO CE-101 pass to the server
         throw new UnsupportedOperationException("todo");
     }
 

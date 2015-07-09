@@ -23,10 +23,11 @@ import net.openhft.chronicle.engine.api.map.SubAsset;
 import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.tree.*;
 import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
+import net.openhft.chronicle.engine.pubsub.RemoteReference;
 import net.openhft.chronicle.engine.pubsub.SimpleSubscription;
-import net.openhft.chronicle.engine.pubsub.SimpleSubscriptionFactory;
 import net.openhft.chronicle.engine.pubsub.VanillaReference;
 import net.openhft.chronicle.engine.pubsub.VanillaSimpleSubscription;
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,9 +50,14 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     VanillaSubAsset(@NotNull VanillaAsset parent, String name, Class<E> type, Function<Object, E> valueReader) throws AssetNotFoundException {
         this.parent = parent;
         this.name = name;
-        reference = new VanillaReference<E>(name, type, parent.getView(MapView.class));
-        SimpleSubscriptionFactory<E> simpleSubscriptionFactory = parent.acquireView(SimpleSubscriptionFactory.class);
-        subscription = simpleSubscriptionFactory.create(reference, valueReader);
+        TcpChannelHub tcpChannelHub = parent.findView(TcpChannelHub.class);
+        if (tcpChannelHub == null) {
+            reference = new VanillaReference<>(name, type, parent.acquireView(MapView.class));
+            subscription = new VanillaSimpleSubscription<>(reference, valueReader);
+        } else {
+            reference = new RemoteReference<>(tcpChannelHub, type, parent.fullName() + "/" + name);
+            subscription = new VanillaSimpleSubscription<>(reference, valueReader);
+        }
     }
 
     @NotNull
