@@ -57,17 +57,12 @@ public class ReplicationClientTest {
     public void test() throws InterruptedException, IOException {
 
         ReplicationServerMain server = new ReplicationServerMain();
-        //    ServerEndpoint s1 = server.create(1, "localhost");
 
-       /* Thread.sleep(1000);
         // creates the first instance of the server
-        server.create(2, "localhost");
+        ServerEndpoint s1 = server.create(1, "localhost");
 
         // creates the seconds instance of the server
-
-        s1.stop();
-        Thread.sleep(1000);
-        server.create(1, "localhost");*/
+        server.create(2, "localhost");
 
 
         YamlLogging.clientReads = true;
