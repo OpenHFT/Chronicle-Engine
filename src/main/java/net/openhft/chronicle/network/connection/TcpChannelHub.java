@@ -223,7 +223,7 @@ public class TcpChannelHub implements View, Closeable {
      * closes the existing connections and establishes a new closeables
      */
     protected synchronized void closeSocket() {
-        assert outBytesLock().isHeldByCurrentThread();
+
         if (clientChannel != null) {
             synchronized (this) {
                 SocketChannel clientChannel = this.clientChannel;
@@ -249,8 +249,6 @@ public class TcpChannelHub implements View, Closeable {
                         clientChannel.close();
                     } catch (IOException ignored) {
                     }
-
-
                 }
             }
         }
@@ -477,8 +475,8 @@ public class TcpChannelHub implements View, Closeable {
         return tid;
     }
 
-    public void writeMetaDataForKnownTID(long tid, @NotNull Wire wire, @Nullable String csp, long
-            cid) {
+    public void writeMetaDataForKnownTID(long tid, @NotNull Wire wire, @Nullable String csp,
+                                         long cid) {
         assert outBytesLock().isHeldByCurrentThread();
         checkNotClosed();
 
@@ -573,12 +571,13 @@ public class TcpChannelHub implements View, Closeable {
          * net.openhft.chronicle.network.connection.AsyncSubscription#applySubscribe()} for each
          * subscription, this could should establish a subscriotuib with the server.
          */
-        private void onReconnect() {
+        private void reconnect() {
 
             ReentrantLock reentrantLock = outBytesLock();
             reentrantLock.lock();
             try {
                 outBytesLock().lock();
+                reconnect = false;
                 try {
 
                     map.values().forEach(v -> {
@@ -788,14 +787,7 @@ public class TcpChannelHub implements View, Closeable {
                     e.printStackTrace();
             } finally {
                 System.out.println("disconnecting");
-
-                ReentrantLock reentrantLock = outBytesLock();
-                reentrantLock.lock();
-                try {
-                    attemptDisconnect();
-                } finally {
-                    reentrantLock.unlock();
-                }
+                disconnect();
             }
 
         }
@@ -1067,31 +1059,23 @@ public class TcpChannelHub implements View, Closeable {
         }
 
         private void checkConnectionState() {
-            if (reconnect) {
-                outBytesLock.lock();
-                try {
-                    System.out.println("attempt reconnect remoteAddress=" + remoteAddress);
-                    attemptDisconnect();
-                    reconnect = attemptConnect();
-                } finally {
-                    outBytesLock.unlock();
-                }
-            }
+            if (!reconnect)
+                return;
 
-
+            System.out.println("attempt reconnect remoteAddress=" + remoteAddress);
+            disconnect();
+            reconnect = attemptConnect();
         }
 
-        private void attemptDisconnect() {
+        private void disconnect() {
             closeSocket();
             onDisconnected();
         }
 
         private boolean attemptConnect() {
-            assert outBytesLock().isHeldByCurrentThread();
+
             System.out.println("attemptConnect remoteAddress=" + remoteAddress);
-
             SocketChannel socketChannel;
-
             try {
 
                 for (; ; ) {
@@ -1126,8 +1110,12 @@ public class TcpChannelHub implements View, Closeable {
                     clientChannel = socketChannel;
                 }
 
+                eventLoop.addHandler(this);
+                System.out.println("successfully connected to remoteAddress=" + remoteAddress);
 
+                reconnect();
                 onConnected();
+
             } catch (Exception e) {
                 e.printStackTrace();
                 System.out.println("failed to connect remoteAddress=" + remoteAddress + " so will reconnect");
@@ -1155,10 +1143,7 @@ public class TcpChannelHub implements View, Closeable {
         }
 
         private void onConnected() {
-            eventLoop.addHandler(this);
-            System.out.println("successfully connected to remoteAddress=" + remoteAddress);
-            reconnect = false;
-            onReconnect();
+
         }
 
     }
