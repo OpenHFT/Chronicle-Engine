@@ -61,7 +61,7 @@ public class CMap2EngineReplicator implements EngineReplication,
     }
 
     @Override
-    public void set(final EngineReplicationLangBytes engineReplicationLangBytes) {
+    public void set(@NotNull final EngineReplicationLangBytes engineReplicationLangBytes) {
         this.engineReplicationLang = engineReplicationLangBytes;
     }
 
