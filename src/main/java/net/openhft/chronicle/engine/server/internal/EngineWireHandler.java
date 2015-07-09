@@ -19,10 +19,7 @@ package net.openhft.chronicle.engine.server.internal;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.map.MapView;
-import net.openhft.chronicle.engine.api.pubsub.Publisher;
-import net.openhft.chronicle.engine.api.pubsub.Replication;
-import net.openhft.chronicle.engine.api.pubsub.Subscription;
-import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
+import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.session.Heartbeat;
 import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
@@ -182,6 +179,7 @@ public class EngineWireHandler extends WireTcpHandler {
                             viewType == ObjectKVSSubscription.class ||
                             viewType == TopicPublisher.class ||
                             viewType == Publisher.class ||
+                            viewType == Reference.class ||
                             viewType == TopologySubscription.class ||
                             viewType == Replication.class ||
                             viewType == Heartbeat.class) {

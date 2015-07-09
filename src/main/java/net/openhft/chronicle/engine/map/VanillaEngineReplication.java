@@ -23,6 +23,9 @@ import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
+import net.openhft.chronicle.wire.Marshallable;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
 import net.openhft.lang.collection.ATSDirectBitSet;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.io.DirectStore;
@@ -36,10 +39,12 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.Consumer;
+import java.util.function.IntFunction;
 
-import static net.openhft.chronicle.engine.map.ChronicleMapBackedEngineReplication.ReplicationData.*;
+import static net.openhft.chronicle.engine.map.VanillaEngineReplication.ReplicationData.*;
 
-public class ChronicleMapBackedEngineReplication<Store> implements EngineReplication, Closeable {
+public class VanillaEngineReplication<Store extends KeyValueStore<?, ?, ?>>
+        implements EngineReplication, Closeable {
 
     public static final int RESERVED_MOD_ITER = 8;
     public static final int MAX_MODIFICATION_ITERATORS = 127 + RESERVED_MOD_ITER;
@@ -51,15 +56,19 @@ public class ChronicleMapBackedEngineReplication<Store> implements EngineReplica
         return identifier & 0xFF;
     }
 
-    interface ChangeApplier<Store> {
+    public interface ChangeApplier<Store> {
         void applyChange(Store store, ReplicationEntry replicationEntry);
     }
 
-    interface GetValue<Store> {
+    public interface GetValue<Store> {
         BytesStore getValue(Store store, BytesStore key);
     }
 
-    interface ReplicationData extends Copyable<ReplicationData> {
+    public interface SegmentForKey<Store> {
+        int segmentForKey(Store store, BytesStore key);
+    }
+
+    public interface ReplicationData extends Copyable<ReplicationData>, Marshallable {
         boolean getDeleted();
         void setDeleted(boolean deleted);
 
@@ -71,6 +80,28 @@ public class ChronicleMapBackedEngineReplication<Store> implements EngineReplica
 
         long getDirtyWord(@MaxSize(DIRTY_WORD_COUNT) int index);
         void setDirtyWord(@MaxSize(DIRTY_WORD_COUNT) int index, long word);
+
+        @Override
+        default void readMarshallable(WireIn wire) throws IllegalStateException {
+            setDeleted(wire.read(() -> "deleted").bool());
+            setTimestamp(wire.read(() -> "timestamp").int64());
+            setIdentifier(wire.read(() -> "identifier").int8());
+            for (int i = 0; i < DIRTY_WORD_COUNT; i++) {
+                final int finalI = i;
+                setDirtyWord(i, wire.read(() -> "dirtyWord-" + finalI).int64());
+            }
+        }
+
+        @Override
+        default void writeMarshallable(WireOut wire) {
+            wire.write(() -> "deleted").bool(getDeleted());
+            wire.write(() -> "timestamp").int64(getTimestamp());
+            wire.write(() -> "identifier").int8(getIdentifier());
+            for (int i = 0; i < DIRTY_WORD_COUNT; i++) {
+                final int finalI = i;
+                wire.write(() -> "dirtyWord-" + finalI).int64(getDirtyWord(i));
+            }
+        }
 
         static void dropChange(ReplicationData replicationData) {
             for (int i = 0; i < DIRTY_WORD_COUNT; i++) {
@@ -103,7 +134,8 @@ public class ChronicleMapBackedEngineReplication<Store> implements EngineReplica
         }
     }
 
-    interface RemoteNodeReplicationState extends Copyable<RemoteNodeReplicationState> {
+    public interface RemoteNodeReplicationState
+            extends Copyable<RemoteNodeReplicationState>, Marshallable {
         long getNextBootstrapTimestamp();
         void setNextBootstrapTimestamp(long nextBootstrapTimestamp);
 
@@ -112,6 +144,20 @@ public class ChronicleMapBackedEngineReplication<Store> implements EngineReplica
 
         long getLastModificationTime();
         void setLastModificationTime(long lastModificationTime);
+
+        @Override
+        default void readMarshallable(WireIn wire) throws IllegalStateException {
+            setNextBootstrapTimestamp(wire.read(() -> "nextBootstrapTimestamp").int64());
+            setLastBootstrapTimestamp(wire.read(() -> "lastBootstrapTimestamp").int64());
+            setLastModificationTime(wire.read(() -> "lastModificationTime").int64());
+        }
+
+        @Override
+        default void writeMarshallable(WireOut wire) {
+            wire.write(() -> "nextBootstrapTimestamp").int64(getNextBootstrapTimestamp());
+            wire.write(() -> "lastBootstrapTimestamp").int64(getLastBootstrapTimestamp());
+            wire.write(() -> "lastModificationTime").int64(getLastModificationTime());
+        }
     }
 
     private static ATSDirectBitSet createModIterBitSet() {
@@ -133,7 +179,8 @@ public class ChronicleMapBackedEngineReplication<Store> implements EngineReplica
     }
 
     private static void initZeroStateForAllPossibleRemoteIdentifiers(
-            KeyValueStore<IntValue, RemoteNodeReplicationState, RemoteNodeReplicationState> modIterState) {
+            KeyValueStore<IntValue, RemoteNodeReplicationState, RemoteNodeReplicationState>
+                    modIterState) {
         Instances i = threadLocalInstances.get();
         for (int id = 0; id < 256; id++) {
             i.identifier.setValue(id);
@@ -144,26 +191,36 @@ public class ChronicleMapBackedEngineReplication<Store> implements EngineReplica
     private static ThreadLocal<Instances> threadLocalInstances =
             ThreadLocal.withInitial(Instances::new);
 
-    private KeyValueStore<BytesStore, ReplicationData, ReplicationData> keyReplicationData;
-    private KeyValueStore<IntValue, RemoteNodeReplicationState, RemoteNodeReplicationState> modIterState;
+    private KeyValueStore<BytesStore, ReplicationData, ReplicationData>[] keyReplicationData;
+    private KeyValueStore<IntValue, RemoteNodeReplicationState, RemoteNodeReplicationState>
+            modIterState;
 
     private final byte identifier;
     private final Store store;
     private final ChangeApplier<Store> changeApplier;
     private final GetValue<Store> getValue;
-    private final AtomicReferenceArray<ChronicleMapBackedModificationIterator> modificationIterators =
-            new AtomicReferenceArray<>(127 + RESERVED_MOD_ITER);
+    private final SegmentForKey<Store> segmentForKey;
+    private final AtomicReferenceArray<ChronicleMapBackedModificationIterator>
+            modificationIterators = new AtomicReferenceArray<>(127 + RESERVED_MOD_ITER);
     private final DirectBitSet modificationIteratorsRequiringSettingBootstrapTimestamp =
             createModIterBitSet();
     private final DirectBitSet modIterSet = createModIterBitSet();
 
-    public ChronicleMapBackedEngineReplication(
-            KeyValueStore<BytesStore, ReplicationData, ReplicationData> keyReplicationData,
-            KeyValueStore<IntValue, RemoteNodeReplicationState, RemoteNodeReplicationState> modIterState,
+    public VanillaEngineReplication(
+            IntFunction<KeyValueStore<BytesStore, ReplicationData, ReplicationData>>
+                    obtainKeyReplicationDataBySegment,
+            KeyValueStore<IntValue, RemoteNodeReplicationState, RemoteNodeReplicationState>
+                    modIterState,
             byte identifier,
-            Store store, ChangeApplier<Store> changeApplier, GetValue<Store> getValue) {
+            Store store, ChangeApplier<Store> changeApplier, GetValue<Store> getValue,
+            SegmentForKey<Store> segmentForKey) {
 
-        this.keyReplicationData = keyReplicationData;
+        int segments = store.segments();
+        this.keyReplicationData = new KeyValueStore[segments];
+        for (int i = 0; i < segments; i++) {
+            keyReplicationData[i] = obtainKeyReplicationDataBySegment.apply(i);
+        }
+
         this.modIterState = modIterState;
         initZeroStateForAllPossibleRemoteIdentifiers(modIterState);
 
@@ -171,6 +228,7 @@ public class ChronicleMapBackedEngineReplication<Store> implements EngineReplica
         this.store = store;
         this.changeApplier = changeApplier;
         this.getValue = getValue;
+        this.segmentForKey = segmentForKey;
     }
 
     @Override
@@ -282,6 +340,8 @@ public class ChronicleMapBackedEngineReplication<Store> implements EngineReplica
         Instances i = threadLocalInstances.get();
         BytesStore key = replicatedEntry.key();
         while (true) {
+            KeyValueStore<BytesStore, ReplicationData, ReplicationData> keyReplicationData =
+                    this.keyReplicationData[segmentForKey.segmentForKey(store, key)];
             ReplicationData data = keyReplicationData.getUsing(key, i.usingData);
             if (data != null)
                 i.usingData = data;
@@ -343,6 +403,8 @@ public class ChronicleMapBackedEngineReplication<Store> implements EngineReplica
     private void onChange(BytesStore key, boolean deleted, long changeTimestamp) {
         Instances i = threadLocalInstances.get();
         while (true) {
+            KeyValueStore<BytesStore, ReplicationData, ReplicationData> keyReplicationData =
+                    this.keyReplicationData[segmentForKey.segmentForKey(store, key)];
             ReplicationData data = keyReplicationData.getUsing(key, i.usingData);
             if (data != null)
                 i.usingData = data;
@@ -388,24 +450,27 @@ public class ChronicleMapBackedEngineReplication<Store> implements EngineReplica
         public void forEach(@NotNull Consumer<ReplicationEntry> consumer)  {
             forEachEntryCount = 0;
             Instances i = threadLocalInstances.get();
-            keyReplicationData.keySetIterator().forEachRemaining(key -> {
-                i.usingData = keyReplicationData.getUsing(key, i.usingData);
-                if (isChanged(i.usingData, identifier)) {
-                    this.key = key;
-                    this.replicationData = i.usingData;
-                    try {
-                        consumer.accept(this);
-                        i.newData.copyFrom(i.usingData);
-                        clearChange(i.newData, identifier);
-                        if (!keyReplicationData.replaceIfEqual(key, i.usingData, i.newData))
-                            throw new AssertionError();
-                        forEachEntryCount++;
-                    } finally {
-                        this.key = null;
-                        this.replicationData = null;
+            for (KeyValueStore<BytesStore, ReplicationData, ReplicationData> keyReplicationData :
+                    VanillaEngineReplication.this.keyReplicationData) {
+                keyReplicationData.keySetIterator().forEachRemaining(key -> {
+                    i.usingData = keyReplicationData.getUsing(key, i.usingData);
+                    if (isChanged(i.usingData, identifier)) {
+                        this.key = key;
+                        this.replicationData = i.usingData;
+                        try {
+                            consumer.accept(this);
+                            i.newData.copyFrom(i.usingData);
+                            clearChange(i.newData, identifier);
+                            if (!keyReplicationData.replaceIfEqual(key, i.usingData, i.newData))
+                                throw new AssertionError();
+                            forEachEntryCount++;
+                        } finally {
+                            this.key = null;
+                            this.replicationData = null;
+                        }
                     }
-                }
-            });
+                });
+            }
             if (forEachEntryCount == 0) {
                 modificationIteratorsRequiringSettingBootstrapTimestamp.set(identifier);
                 resetNextBootstrapTimestamp(identifier);
@@ -415,12 +480,15 @@ public class ChronicleMapBackedEngineReplication<Store> implements EngineReplica
         @Override
         public boolean hasNext() {
             Instances i = threadLocalInstances.get();
-            for (Iterator<BytesStore> keyIt = keyReplicationData.keySetIterator();
-                 keyIt.hasNext(); ) {
-                BytesStore key = keyIt.next();
-                i.usingData = keyReplicationData.getUsing(key, i.usingData);
-                if (isChanged(i.usingData, identifier))
-                    return true;
+            for (KeyValueStore<BytesStore, ReplicationData, ReplicationData> keyReplicationData :
+                    VanillaEngineReplication.this.keyReplicationData) {
+                for (Iterator<BytesStore> keyIt = keyReplicationData.keySetIterator();
+                     keyIt.hasNext(); ) {
+                    BytesStore key = keyIt.next();
+                    i.usingData = keyReplicationData.getUsing(key, i.usingData);
+                    if (isChanged(i.usingData, identifier))
+                        return true;
+                }
             }
             return false;
         }
@@ -428,15 +496,18 @@ public class ChronicleMapBackedEngineReplication<Store> implements EngineReplica
         @Override
         public void dirtyEntries(long fromTimeStamp) throws InterruptedException {
             Instances i = threadLocalInstances.get();
-            keyReplicationData.keySetIterator().forEachRemaining(key -> {
-                i.usingData = keyReplicationData.getUsing(key, i.usingData);
-                if (i.usingData.getTimestamp() >= fromTimeStamp) {
-                    i.newData.copyFrom(i.usingData);
-                    setChange(i.newData, identifier);
-                    if (!keyReplicationData.replaceIfEqual(key, i.usingData, i.newData))
-                        throw new AssertionError();
-                }
-            });
+            for (KeyValueStore<BytesStore, ReplicationData, ReplicationData> keyReplicationData :
+                    VanillaEngineReplication.this.keyReplicationData) {
+                keyReplicationData.keySetIterator().forEachRemaining(key -> {
+                    i.usingData = keyReplicationData.getUsing(key, i.usingData);
+                    if (i.usingData.getTimestamp() >= fromTimeStamp) {
+                        i.newData.copyFrom(i.usingData);
+                        setChange(i.newData, identifier);
+                        if (!keyReplicationData.replaceIfEqual(key, i.usingData, i.newData))
+                            throw new AssertionError();
+                    }
+                });
+            }
         }
 
         ModificationNotifier modificationNotifier;
@@ -494,7 +565,26 @@ public class ChronicleMapBackedEngineReplication<Store> implements EngineReplica
     @Override
     public void close() throws IOException {
         try {
-            keyReplicationData.close();
+            Throwable throwable = null;
+            for (KeyValueStore<BytesStore, ReplicationData, ReplicationData> keyReplicationData :
+                    this.keyReplicationData) {
+                try {
+                    keyReplicationData.close();
+                } catch (Throwable e) {
+                    if (throwable == null) {
+                        throwable = e;
+                    } else {
+                        throwable.addSuppressed(e);
+                    }
+                }
+            }
+            if (throwable != null) {
+                if (throwable instanceof Error) {
+                    throw (Error) throwable;
+                } else {
+                    throw (RuntimeException) throwable;
+                }
+            }
         } finally {
             modIterState.close();
         }

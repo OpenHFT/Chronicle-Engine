@@ -1,7 +1,7 @@
 package net.openhft.chronicle.engine.map.remote;
 
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
-import net.openhft.chronicle.engine.api.pubsub.Publisher;
+import net.openhft.chronicle.engine.api.pubsub.Reference;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
@@ -23,12 +23,10 @@ import static net.openhft.chronicle.engine.server.internal.PublisherHandler.Even
 /**
  * Created by Rob Austin
  */
-public class RemotePublisher<E> extends AbstractStatelessClient<EventId> implements Publisher<E> {
-
-
+public class RemoteReference<E> extends AbstractStatelessClient<EventId> implements Reference<E> {
     private final Class<E> messageClass;
 
-    public RemotePublisher(@NotNull RequestContext context, @NotNull Asset asset, Object underlying)
+    public RemoteReference(@NotNull RequestContext context, @NotNull Asset asset)
             throws AssetNotFoundException {
         super(asset.findView(TcpChannelHub.class), (long) 0, toUri(context));
 
@@ -36,8 +34,7 @@ public class RemotePublisher<E> extends AbstractStatelessClient<EventId> impleme
     }
 
     private static String toUri(@NotNull final RequestContext context) {
-        StringBuilder uri = new StringBuilder("/" + context.fullName()
-                + "?view=" + "publisher");
+        StringBuilder uri = new StringBuilder("/" + context.fullName() + "?view=reference");
 
         if (context.valueType() != String.class)
             uri.append("&messageType=").append(context.messageType().getName());
@@ -46,9 +43,29 @@ public class RemotePublisher<E> extends AbstractStatelessClient<EventId> impleme
     }
 
     @Override
-    public void publish(final E event) {
+    public void set(final E event) {
         checkEvent(event);
         sendEventAsync(EventId.publish, valueOut -> valueOut.object(event));
+    }
+
+    @Override
+    public E get() {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public E getAndSet(E e) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public void remove() {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public E getAndRemove() {
+        throw new UnsupportedOperationException("todo");
     }
 
     @Override
@@ -76,7 +93,7 @@ public class RemotePublisher<E> extends AbstractStatelessClient<EventId> impleme
                     } else if (CoreFields.reply.contentEquals(eventname)) {
                         valueIn.marshallable(m -> {
                             final E message = m.read(() -> "message").object(messageClass);
-                            RemotePublisher.this.onEvent(message, subscriber);
+                            RemoteReference.this.onEvent(message, subscriber);
                         });
                     }
 
