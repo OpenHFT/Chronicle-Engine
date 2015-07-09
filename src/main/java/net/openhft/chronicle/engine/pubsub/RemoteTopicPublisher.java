@@ -120,6 +120,12 @@ public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId>
 
     }
 
+    @Override
+    public void unregisterTopicSubscriber(TopicSubscriber<T, M> topicSubscriber) {
+        // TODO CE-101
+        throw new UnsupportedOperationException("todo");
+    }
+
     private void onEvent(T topic, @Nullable M message, @NotNull TopicSubscriber<T, M> topicSubscriber) {
         try {
             if (message == null) {

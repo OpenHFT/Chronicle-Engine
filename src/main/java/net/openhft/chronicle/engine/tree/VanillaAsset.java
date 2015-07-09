@@ -297,7 +297,6 @@ public class VanillaAsset implements Asset, Closeable {
         viewMap.put(viewType, view);
     }
 
-    @NotNull
     @Override
     public Subscription subscription(boolean createIfAbsent) throws AssetNotFoundException {
         return createIfAbsent ? acquireView(ObjectKVSSubscription.class) : getView(ObjectKVSSubscription.class);

@@ -62,7 +62,6 @@ public interface Asset extends Closeable {
      * @return the Subscription
      * @throws AssetNotFoundException if the Subscription doesn't exist and the tree is not able to create the Subscription.
      */
-    @NotNull
     Subscription subscription(boolean createIfAbsent) throws AssetNotFoundException;
 
     /**

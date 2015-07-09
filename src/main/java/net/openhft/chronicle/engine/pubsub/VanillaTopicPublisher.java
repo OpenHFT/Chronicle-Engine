@@ -65,4 +65,11 @@ public class VanillaTopicPublisher<T, M> implements TopicPublisher<T, M> {
         KVSSubscription<T, M, M> subscription = (KVSSubscription) asset.subscription(true);
         subscription.registerTopicSubscriber(RequestContext.requestContext().bootstrap(true).type(tClass).type2(mClass), topicSubscriber);
     }
+
+    @Override
+    public void unregisterTopicSubscriber(TopicSubscriber<T, M> topicSubscriber) {
+        KVSSubscription<T, M, M> subscription = (KVSSubscription) asset.subscription(false);
+        if (subscription != null)
+            subscription.unregisterTopicSubscriber(topicSubscriber);
+    }
 }

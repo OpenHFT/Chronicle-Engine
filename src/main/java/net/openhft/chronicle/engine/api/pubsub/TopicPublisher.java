@@ -41,6 +41,13 @@ public interface TopicPublisher<T, M> extends View, Assetted<MapView<T, M, M>> {
     void registerTopicSubscriber(TopicSubscriber<T, M> topicSubscriber) throws AssetNotFoundException;
 
     /**
+     * Unregister a TopicSubscriber
+     *
+     * @param topicSubscriber to unregister
+     */
+    void unregisterTopicSubscriber(TopicSubscriber<T, M> topicSubscriber);
+
+    /**
      * @return this represents a keyed asset, i.e. anything under this must be a SubAsset.
      */
     default boolean keyedView() {
