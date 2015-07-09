@@ -61,7 +61,7 @@ public class ReplicationClientTest {
         server.create(1, "localhost");
 
         // creates the seconds instance of the server
-        server.create(2, "localhost");
+         server.create(2, "localhost");
 
         YamlLogging.clientReads = true;
         YamlLogging.clientWrites = true;

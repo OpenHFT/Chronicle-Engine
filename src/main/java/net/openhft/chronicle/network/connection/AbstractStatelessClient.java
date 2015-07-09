@@ -236,7 +236,6 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
      * @param startTime the start time of this transaction
      */
     protected void writeAsyncMetaData(long startTime) {
-        hub.startTime(startTime);
         hub.writeAsyncHeader(hub.outWire(), csp, cid);
     }
 
