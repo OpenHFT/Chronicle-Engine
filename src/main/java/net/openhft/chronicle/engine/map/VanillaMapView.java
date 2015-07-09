@@ -32,8 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
-
 /**
  * Created by peter on 22/05/15.
  */
@@ -76,7 +74,7 @@ public class VanillaMapView<K, MV, V> implements MapView<K, MV, V> {
 
     @Override
     public Set<K> keySet() {
-        return asset.acquireView(KeySetView.class, null);
+        return asset.acquireView(KeySetView.class);
     }
 
     @org.jetbrains.annotations.NotNull
@@ -242,7 +240,7 @@ public class VanillaMapView<K, MV, V> implements MapView<K, MV, V> {
     @Override
     public Set<Entry<K, V>> entrySet() {
         //noinspection unchecked
-        return asset.acquireView(EntrySetView.class, requestContext(asset.fullName()).viewType(EntrySetView.class));
+        return asset.acquireView(EntrySetView.class);
     }
 
     @Override

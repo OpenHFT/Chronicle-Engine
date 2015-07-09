@@ -24,7 +24,9 @@ import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.tree.*;
 import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
 import net.openhft.chronicle.engine.pubsub.SimpleSubscription;
+import net.openhft.chronicle.engine.pubsub.SimpleSubscriptionFactory;
 import net.openhft.chronicle.engine.pubsub.VanillaReference;
+import net.openhft.chronicle.engine.pubsub.VanillaSimpleSubscription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +50,8 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
         this.parent = parent;
         this.name = name;
         reference = new VanillaReference<E>(name, type, parent.getView(MapView.class));
-        subscription = new SimpleSubscription<>(reference, valueReader);
+        SimpleSubscriptionFactory<E> simpleSubscriptionFactory = parent.acquireView(SimpleSubscriptionFactory.class);
+        subscription = simpleSubscriptionFactory.create(reference, valueReader);
     }
 
     @NotNull
@@ -62,7 +65,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     public <V> V getView(Class<V> viewType) {
         if (viewType == Reference.class || viewType == Publisher.class || viewType == Supplier.class)
             return (V) reference;
-        if (viewType == Subscription.class || viewType == SimpleSubscription.class)
+        if (viewType == Subscription.class || viewType == VanillaSimpleSubscription.class)
             return (V) subscription;
         throw new UnsupportedOperationException("todo");
     }
@@ -83,7 +86,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
                 return acquireViewFor(viewType, rc);
             return (V) reference;
         }
-        if (viewType == SimpleSubscription.class || viewType == ObjectKVSSubscription.class) {
+        if (viewType == VanillaSimpleSubscription.class || viewType == ObjectKVSSubscription.class) {
             return (V) subscription;
         }
         throw new UnsupportedOperationException("todo vClass: " + viewType + ", rc: " + rc);

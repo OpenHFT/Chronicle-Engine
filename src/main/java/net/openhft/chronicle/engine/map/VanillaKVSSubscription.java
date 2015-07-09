@@ -23,6 +23,7 @@ import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.pubsub.SimpleSubscription;
+import net.openhft.chronicle.engine.pubsub.VanillaSimpleSubscription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -145,7 +146,7 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
             Asset child = asset.getChild(keyStr);
             if (child != null) {
                 Subscription subscription = child.subscription(false);
-                if (subscription instanceof SimpleSubscription) {
+                if (subscription instanceof VanillaSimpleSubscription) {
 //                    System.out.println(changeEvent.toString().substring(0, 100));
                     ((SimpleSubscription) subscription).notifyMessage(changeEvent.value());
                 }

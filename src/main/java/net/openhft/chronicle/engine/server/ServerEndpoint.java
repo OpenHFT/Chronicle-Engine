@@ -17,7 +17,6 @@ package net.openhft.chronicle.engine.server;
 
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
-import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
 import net.openhft.chronicle.network.AcceptorEventHandler;
 import net.openhft.chronicle.network.VanillaSessionDetails;
@@ -45,7 +44,7 @@ public class ServerEndpoint implements Closeable {
     private AtomicBoolean isClosed = new AtomicBoolean();
 
     public ServerEndpoint(String hostPortDescription, @NotNull AssetTree assetTree, WireType wire) throws IOException {
-        eg = assetTree.root().acquireView(EventLoop.class, RequestContext.requestContext());
+        eg = assetTree.root().acquireView(EventLoop.class);
         Threads.withThreadGroup(assetTree.root().getView(ThreadGroup.class), () -> {
             start(hostPortDescription, assetTree, wire);
             return null;

@@ -33,7 +33,9 @@ import net.openhft.chronicle.engine.api.tree.*;
 import net.openhft.chronicle.engine.collection.VanillaValuesCollection;
 import net.openhft.chronicle.engine.map.*;
 import net.openhft.chronicle.engine.map.remote.*;
+import net.openhft.chronicle.engine.pubsub.SimpleSubscriptionFactory;
 import net.openhft.chronicle.engine.pubsub.VanillaReference;
+import net.openhft.chronicle.engine.pubsub.VanillaSimpleSubscription;
 import net.openhft.chronicle.engine.session.VanillaSessionProvider;
 import net.openhft.chronicle.engine.set.VanillaKeySetView;
 import net.openhft.chronicle.network.VanillaSessionDetails;
@@ -54,8 +56,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
-
-import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
 
 /**
  * Created by peter on 22/05/15.
@@ -126,6 +126,7 @@ public class VanillaAsset implements Asset, Closeable {
 
     public void forTesting(boolean daemon) {
         standardStack(daemon);
+
         addWrappingRule(TopicPublisher.class, LAST + " topic publisher", VanillaTopicPublisher::new, MapView.class);
         addWrappingRule(Publisher.class, LAST + "publisher", VanillaReference::new, MapView.class);
         addWrappingRule(ObjectKeyValueStore.class, LAST + " authenticated",
@@ -134,6 +135,7 @@ public class VanillaAsset implements Asset, Closeable {
         addLeafRule(AuthenticatedKeyValueStore.class, LAST + " vanilla", VanillaKeyValueStore::new);
         addLeafRule(SubscriptionKeyValueStore.class, LAST + " vanilla", VanillaKeyValueStore::new);
         addLeafRule(KeyValueStore.class, LAST + " vanilla", VanillaKeyValueStore::new);
+        addLeafRule(SimpleSubscriptionFactory.class, LAST + " vanilla", (rc, a) -> VanillaSimpleSubscription::new);
 
         addLeafRule(ObjectKVSSubscription.class, LAST + " vanilla",
                 VanillaKVSSubscription::new);
@@ -146,6 +148,8 @@ public class VanillaAsset implements Asset, Closeable {
         standardStack(true);
 
         addWrappingRule(MapView.class, LAST + " remote key maps", RemoteMapView::new, ObjectKeyValueStore.class);
+        // TODO change for to a remote simple subscription.
+        addLeafRule(SimpleSubscriptionFactory.class, LAST + " vanilla", (rc, a) -> VanillaSimpleSubscription::new);
 
         addLeafRule(ObjectKVSSubscription.class, LAST + " Remote",
                 RemoteKVSSubscription::new);
@@ -298,7 +302,7 @@ public class VanillaAsset implements Asset, Closeable {
     @NotNull
     @Override
     public Subscription subscription(boolean createIfAbsent) throws AssetNotFoundException {
-        return createIfAbsent ? acquireView(ObjectKVSSubscription.class, requestContext()) : getView(ObjectKVSSubscription.class);
+        return createIfAbsent ? acquireView(ObjectKVSSubscription.class) : getView(ObjectKVSSubscription.class);
     }
 
     @Override

@@ -140,7 +140,7 @@ public interface Asset extends Closeable {
         V v = getView(viewType);
         if (v == null) {
             if (hasFactoryFor(viewType))
-                return acquireView(viewType, RequestContext.requestContext());
+                return acquireView(viewType);
             Asset parent = parent();
             if (parent != null)
                 v = parent.findOrCreateView(viewType);
@@ -185,7 +185,7 @@ public interface Asset extends Closeable {
 
     /**
      * Get or create a view based on a RequestContext.  First it looks for a matching viewType(). If found this is returned.
-     * The viewType given overrides the type providedin the RequestContext.
+     * The viewType given overrides the type provided in the RequestContext.
      *
      * @param viewType       to obtain.
      * @param requestContext to use in the construction of the view
@@ -194,6 +194,19 @@ public interface Asset extends Closeable {
      */
     @NotNull
     <V> V acquireView(Class<V> viewType, RequestContext requestContext) throws AssetNotFoundException;
+
+    /**
+     * Get or create a view with out a RequestContext.  First it looks for a matching viewType(). If found this is returned.
+     * The viewType given overrides the type provided in the RequestContext.
+     *
+     * @param viewType to obtain.
+     * @return the View obtained.
+     * @throws AssetNotFoundException if the Asset could not be created. This can happen if a required rule is not provided.
+     */
+    @NotNull
+    default <V> V acquireView(Class<V> viewType) {
+        return acquireView(viewType, RequestContext.requestContext(fullName()).viewType(viewType));
+    }
 
     /**
      * Get a view if it already exists on the current Asset.

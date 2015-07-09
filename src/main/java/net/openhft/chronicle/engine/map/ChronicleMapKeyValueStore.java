@@ -88,7 +88,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
         HostIdentifier hostIdentifier = null;
         EngineReplication engineReplicator1 = null;
         try {
-            engineReplicator1 = asset.acquireView(EngineReplication.class, RequestContext.requestContext());
+            engineReplicator1 = asset.acquireView(EngineReplication.class);
 
             final EngineReplicationLangBytesConsumer langBytesConsumer = asset.findView
                     (EngineReplicationLangBytesConsumer.class);
