@@ -138,7 +138,7 @@ public class ChassisRFCTest {
         assertEquals("[Message-1, Message-2, Message-3]", values.toString());
         assertEquals("[null, Message-1, Message-2, Message-3]", values2.toString());
 
-        assertEquals("Message-3".length(), reference.apply(String::length), 0);
+        assertEquals("Message-3".length(), reference.applyTo(String::length), 0);
         reference.asyncUpdate(String::toUpperCase);
         assertEquals("MESSAGE-3", reference.get());
         assertEquals("MESSAGE-3", map.get("topic"));

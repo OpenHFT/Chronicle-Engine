@@ -48,7 +48,7 @@ public interface Visitable<E> {
      * @param <R>      data type to return.
      * @return the result of the code called.
      */
-    default <R> R apply(@NotNull SerializableFunction<E, R> function) {
+    default <R> R applyTo(@NotNull SerializableFunction<E, R> function) {
         return function.apply(get());
     }
 
@@ -84,7 +84,7 @@ public interface Visitable<E> {
      * @param <R> type of the return value.
      * @return data derived.
      */
-    default <T, R> R apply(@NotNull SerializableBiFunction<E, T, R> function, T argument) {
+    default <T, R> R applyTo(@NotNull SerializableBiFunction<E, T, R> function, T argument) {
         return function.apply(get(), argument);
     }
 

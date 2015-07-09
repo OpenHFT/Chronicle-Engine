@@ -145,7 +145,7 @@ public class RemoteReference<E> extends AbstractStatelessClient<EventId> impleme
     }
 
     @Override
-    public <R> R apply(@NotNull SerializableFunction<E, R> function) {
+    public <R> R applyTo(@NotNull SerializableFunction<E, R> function) {
         // TODO CE-101
         throw new UnsupportedOperationException("todo");
     }
@@ -163,7 +163,7 @@ public class RemoteReference<E> extends AbstractStatelessClient<EventId> impleme
     }
 
     @Override
-    public <T, R> R apply(@NotNull SerializableBiFunction<E, T, R> function, T argument) {
+    public <T, R> R applyTo(@NotNull SerializableBiFunction<E, T, R> function, T argument) {
         // TODO CE-101
         throw new UnsupportedOperationException("todo");
     }
