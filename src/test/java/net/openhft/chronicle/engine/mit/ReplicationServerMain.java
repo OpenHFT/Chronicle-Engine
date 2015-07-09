@@ -51,16 +51,18 @@ public class ReplicationServerMain {
      * @throws IOException
      */
 
-    public void create(int identifier, String remoteHostname) throws IOException {
+    public ServerEndpoint create(int identifier, String remoteHostname) throws IOException {
         if (identifier < 0 || identifier > Byte.MAX_VALUE)
             throw new IllegalStateException();
-        create((byte) identifier, remoteHostname);
+        return create((byte) identifier, remoteHostname);
     }
 
-    private void create(byte identifier, String remoteHostname) throws IOException {
+    private ServerEndpoint create(byte identifier, String remoteHostname) throws IOException {
 
         YamlLogging.clientReads = true;
         YamlLogging.clientWrites = true;
+        YamlLogging.showServerWrites = true;
+        YamlLogging.showServerReads = true;
         WireType wireType = WireType.TEXT;
 
         System.out.println("using local hostid=" + identifier);
@@ -91,6 +93,8 @@ public class ReplicationServerMain {
         ReplicationClientTest.closeables.add(tree);
         ServerEndpoint serverEndpoint = new ServerEndpoint("localhost:" + (5700 + identifier), tree, wireType);
         ReplicationClientTest.closeables.add(serverEndpoint);
+
+        return serverEndpoint;
     }
 
 

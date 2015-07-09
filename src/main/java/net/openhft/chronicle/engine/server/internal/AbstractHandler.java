@@ -52,7 +52,8 @@ public class AbstractHandler {
         if (YamlLogging.showServerWrites)
             try {
                 System.out.println("server-writes:\n" +
-                        Wires.fromSizePrefixedBlobs(outWire.bytes(), 0, outWire.bytes().writePosition()));
+                        Wires.fromSizePrefixedBlobs(outWire.bytes(),  outWire.bytes().readPosition(), outWire
+                                .bytes().readLimit() - outWire.bytes().readPosition()));
             } catch (Exception e) {
                 System.out.println("server-writes:\n" +
                         outWire.bytes().toDebugString());

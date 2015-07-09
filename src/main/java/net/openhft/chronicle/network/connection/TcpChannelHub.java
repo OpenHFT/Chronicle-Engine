@@ -66,8 +66,8 @@ import static net.openhft.chronicle.engine.server.internal.SystemHandler.EventId
  */
 public class TcpChannelHub implements View, Closeable {
 
-    public static final int HEATBEAT_PING_PERIOD = getInteger("heartbeat.ping.period", 5_000);
-    public static final int HEATBEAT_TIMEOUT_PERIOD = getInteger("heartbeat.timeout", 15_000);
+    public static final int HEATBEAT_PING_PERIOD = getInteger("heartbeat.ping.period", 500);
+    public static final int HEATBEAT_TIMEOUT_PERIOD = getInteger("heartbeat.timeout", 20_000);
 
     public static final int SIZE_OF_SIZE = 4;
     private static final Logger LOG = LoggerFactory.getLogger(TcpChannelHub.class);
@@ -542,10 +542,14 @@ public class TcpChannelHub implements View, Closeable {
         long start = System.currentTimeMillis();
 
         while (clientChannel == null) {
+
+            if (tcpSocketConsumer.isShutdown())
+                throw new IORuntimeException("Shutdown connection to" + remoteAddress);
+
             if (start + timeoutMs > System.currentTimeMillis())
                 Jvm.pause(100);
             else
-                throw new IORuntimeException("Not connected to" + remoteAddress);
+                throw new IORuntimeException("Not connected to " + remoteAddress);
         }
     }
 
@@ -772,7 +776,7 @@ public class TcpChannelHub implements View, Closeable {
                 if (!isShutdown())
                     e.printStackTrace();
             } finally {
-                System.out.println("disconnecting");
+                System.out.println("STOPPING....");
                 disconnect();
             }
 
@@ -1017,10 +1021,10 @@ public class TcpChannelHub implements View, Closeable {
             // HEATBEAT_PING_PERIOD milliseconds
             long currentTime = System.currentTimeMillis();
             long millisecondsSinceLastMessageReceived = currentTime - lastTimeMessageReceived;
-            long millisecondsSinceLastHeatbeatsend = currentTime - lastheartbeatSentTime;
+            long millisecondsSinceLastHeatbeatSend = currentTime - lastheartbeatSentTime;
 
             if (millisecondsSinceLastMessageReceived >= HEATBEAT_PING_PERIOD &&
-                    millisecondsSinceLastHeatbeatsend >= HEATBEAT_PING_PERIOD) {
+                    millisecondsSinceLastHeatbeatSend >= HEATBEAT_PING_PERIOD) {
                 lastheartbeatSentTime = System.currentTimeMillis();
                 sendHeartbeat();
             }
