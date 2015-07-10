@@ -307,11 +307,9 @@ public class MapWireHandler<K, V> extends AbstractHandler {
             } finally {
                 if (Jvm.isDebug() && YamlLogging.showServerWrites) {
                     final Bytes<?> outBytes = outWire.bytes();
-                    long len = outBytes.writePosition() - CollectionWireHandler.SIZE_OF_SIZE;
-                    if (len > 2) {
-
+                    if (outBytes.writePosition() > CollectionWireHandler.SIZE_OF_SIZE) {
                         final String s = (WireType.TEXT == byteToWire) ?
-                                Wires.fromSizePrefixedBlobs(outBytes, CollectionWireHandler.SIZE_OF_SIZE, len) :
+                                Wires.fromSizePrefixedBlobs(outBytes, 0, outBytes.writePosition()) :
                                 BytesUtil.toHexString(outBytes, 0, outBytes.writePosition());
 
                         System.out.println("server writes:");

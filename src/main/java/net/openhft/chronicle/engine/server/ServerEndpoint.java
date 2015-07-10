@@ -64,6 +64,7 @@ public class ServerEndpoint implements Closeable {
     }
 
     public void stop() {
+        if (eg != null)
         eg.stop();
     }
 

@@ -19,6 +19,7 @@ package net.openhft.chronicle.network.connection;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.util.Time;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -126,7 +127,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
 
     public <T> T proxyReturnWireConsumer(@NotNull final WireKey eventId,
                                          @NotNull final Function<ValueIn, T> consumer) {
-        final long startTime = System.currentTimeMillis();
+        final long startTime = Time.currentTimeMillis();
         long tid = sendEvent(startTime, eventId, null);
         return readWire(tid, startTime, CoreFields.reply, consumer);
     }
@@ -135,7 +136,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
                                               @NotNull final WireKey reply,
                                               @Nullable final Consumer<ValueOut> consumerOut,
                                               @NotNull final Function<ValueIn, T> consumerIn) {
-        final long startTime = System.currentTimeMillis();
+        final long startTime = Time.currentTimeMillis();
         long tid = sendEvent(startTime, eventId, consumerOut);
         return readWire(tid, startTime, reply, consumerIn);
     }
@@ -143,7 +144,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
     @SuppressWarnings("SameParameterValue")
     protected void proxyReturnVoid(@NotNull final WireKey eventId,
                                    @Nullable final Consumer<ValueOut> consumer) {
-        final long startTime = System.currentTimeMillis();
+        final long startTime = Time.currentTimeMillis();
         long tid = sendEvent(startTime, eventId, consumer);
         readWire(tid, startTime, CoreFields.reply, v -> v.marshallable(ReadMarshallable.DISCARD));
     }
@@ -199,7 +200,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
     protected void sendEventAsyncWithoutLock(@NotNull final WireKey eventId,
                                              @Nullable final Consumer<ValueOut> consumer) {
 
-        writeAsyncMetaData(System.currentTimeMillis());
+        writeAsyncMetaData(Time.currentTimeMillis());
         hub.outWire().writeDocument(false, wireOut -> {
 
             final ValueOut valueOut = wireOut.writeEventName(eventId);
@@ -295,7 +296,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
     protected boolean proxyReturnBooleanWithArgs(
             @NotNull final E eventId,
             @NotNull final Object... args) {
-        final long startTime = System.currentTimeMillis();
+        final long startTime = Time.currentTimeMillis();
 
         final long tid = sendEvent(startTime, eventId, toParameters(eventId, args));
         return readBoolean(tid, startTime);
@@ -304,7 +305,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
     protected boolean proxyReturnBooleanWithSequence(
             @NotNull final E eventId,
             @NotNull final Collection sequence) {
-        final long startTime = System.currentTimeMillis();
+        final long startTime = Time.currentTimeMillis();
 
         final long tid = sendEvent(startTime, eventId, out -> sequence.forEach(out::object));
         return readBoolean(tid, startTime);
@@ -312,7 +313,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
 
     @SuppressWarnings("SameParameterValue")
     protected boolean proxyReturnBoolean(@NotNull final WireKey eventId) {
-        final long startTime = System.currentTimeMillis();
+        final long startTime = Time.currentTimeMillis();
         final long tid = sendEvent(startTime, eventId, null);
         return readBoolean(tid, startTime);
     }

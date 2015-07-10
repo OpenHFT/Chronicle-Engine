@@ -19,6 +19,7 @@ package net.openhft.chronicle.engine.map.remote;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.util.SerializableBiFunction;
 import net.openhft.chronicle.core.util.SerializableUpdaterWithArg;
+import net.openhft.chronicle.core.util.Time;
 import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
@@ -408,13 +409,13 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     @SuppressWarnings("SameParameterValue")
     private boolean proxyReturnBoolean(@NotNull final EventId eventId,
                                        @Nullable final Consumer<ValueOut> consumer) {
-        final long startTime = System.currentTimeMillis();
+        final long startTime = Time.currentTimeMillis();
         return readBoolean(sendEvent(startTime, eventId, consumer), startTime);
     }
 
     @SuppressWarnings("SameParameterValue")
     private int proxyReturnInt(@NotNull final EventId eventId) {
-        final long startTime = System.currentTimeMillis();
+        final long startTime = Time.currentTimeMillis();
         return readInt(sendEvent(startTime, eventId, VOID_PARAMETERS), startTime);
     }
 
