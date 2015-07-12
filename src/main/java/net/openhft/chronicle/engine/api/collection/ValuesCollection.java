@@ -17,13 +17,19 @@
 package net.openhft.chronicle.engine.api.collection;
 
 import net.openhft.chronicle.engine.api.map.MapView;
+import net.openhft.chronicle.engine.api.query.Queryable;
 import net.openhft.chronicle.engine.api.tree.Assetted;
 import net.openhft.chronicle.engine.api.tree.View;
 
 import java.util.Collection;
+import java.util.stream.Stream;
 
 /**
  * Marker interface for a collection which represents the values() of a Map.  This may have additional method in future.
  */
-public interface ValuesCollection<V> extends Collection<V>, Assetted<MapView<?, ?, V>>, View {
+public interface ValuesCollection<V> extends Collection<V>, Assetted<MapView<?, ?, V>>,
+        Queryable<V>, View {
+    default Stream<V> stream() {
+        return Collection.super.stream();
+    }
 }
