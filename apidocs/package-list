@@ -5,6 +5,7 @@ net.openhft.chronicle.engine.api.management
 net.openhft.chronicle.engine.api.management.mbean
 net.openhft.chronicle.engine.api.map
 net.openhft.chronicle.engine.api.pubsub
+net.openhft.chronicle.engine.api.query
 net.openhft.chronicle.engine.api.session
 net.openhft.chronicle.engine.api.set
 net.openhft.chronicle.engine.api.tree
@@ -14,6 +15,7 @@ net.openhft.chronicle.engine.map
 net.openhft.chronicle.engine.map.remote
 net.openhft.chronicle.engine.map.replication
 net.openhft.chronicle.engine.pubsub
+net.openhft.chronicle.engine.query
 net.openhft.chronicle.engine.server
 net.openhft.chronicle.engine.server.internal
 net.openhft.chronicle.engine.session
