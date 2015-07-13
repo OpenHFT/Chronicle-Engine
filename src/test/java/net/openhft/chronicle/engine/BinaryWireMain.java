@@ -18,6 +18,7 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
+import net.openhft.chronicle.wire.WireType;
 
 import java.io.IOException;
 
@@ -26,7 +27,7 @@ import java.io.IOException;
  */
 public class BinaryWireMain {
 
-    public static final net.openhft.chronicle.wire.WireType WIRE_TYPE = net.openhft.chronicle.wire.WireType.TEXT;
+    public static final net.openhft.chronicle.wire.WireType WIRE_TYPE = WireType.BINARY;
 
     public static void main(String[] args) throws IOException, InterruptedException {
         int port = 8088;
