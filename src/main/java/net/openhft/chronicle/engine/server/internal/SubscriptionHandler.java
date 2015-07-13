@@ -77,10 +77,10 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
 
             return true;
         }
-        if (unRegisterSubscriber.contentEquals(eventName)) {
+        if (unregisterSubscriber.contentEquals(eventName)) {
             Subscriber<Object> listener = (Subscriber) tidToListener.remove(tid);
             if (listener == null) {
-                SubscriptionHandler.LOG.warn("No subscriber to present to unRegisterSubscriber (" + tid + ")");
+                SubscriptionHandler.LOG.warn("No subscriber to present to unregisterSubscriber (" + tid + ")");
                 return true;
             }
             assetTree.unregisterSubscriber(requestContext.name(), listener);
@@ -94,7 +94,7 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
     public enum SubscriptionEventID implements ParameterizeWireKey {
 
         registerSubscriber,
-        unRegisterSubscriber,
+        unregisterSubscriber,
         keySubscriberCount,
         entrySubscriberCount,
         topicSubscriberCount;
