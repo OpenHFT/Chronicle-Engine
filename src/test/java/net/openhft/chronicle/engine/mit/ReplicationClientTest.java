@@ -59,10 +59,10 @@ public class ReplicationClientTest {
         ReplicationServerMain server = new ReplicationServerMain();
 
         // creates the first instance of the server
-        ServerEndpoint s1 = server.create(1, "localhost");
+    //    ServerEndpoint s1 = server.create(1, "localhost");
 
         // creates the seconds instance of the server
-        server.create(2, "localhost");
+   //     server.create(2, "localhost");
 
 
         YamlLogging.clientReads = true;
@@ -71,8 +71,8 @@ public class ReplicationClientTest {
 
         final Integer hostId = Integer.getInteger("hostId", 1);
 
-        BlockingQueue q1 = new ArrayBlockingQueue(1);
-        BlockingQueue q2 = new ArrayBlockingQueue(1);
+        BlockingQueue q1 = new ArrayBlockingQueue(10);
+        BlockingQueue q2 = new ArrayBlockingQueue(10);
 
         {
             String hostname = System.getProperty("host1", "localhost");

@@ -90,6 +90,19 @@ public class EngineWireHandler extends WireTcpHandler {
 
     @NotNull
     private final AssetTree assetTree;
+
+    @Override
+    public void onEndOfConnection(boolean heartbeatTimeOut) {
+
+
+        for (final AbstractHandler abstractHandler : new AbstractHandler[]{mapWireHandler,
+                subscriptionHandler, topologySubscriptionHandler,
+                publisherHandler, replicationHandler}) {
+            abstractHandler.onEndOfConnection(heartbeatTimeOut);
+        }
+
+    }
+
     @NotNull
     private final Consumer<WireIn> metaDataConsumer;
     private final StringBuilder lastCsp = new StringBuilder();
@@ -114,8 +127,7 @@ public class EngineWireHandler extends WireTcpHandler {
     private AtomicBoolean isClosed;
 
     public EngineWireHandler(@NotNull final WireType byteToWire,
-                             @NotNull final AssetTree assetTree,
-                             @NotNull final AtomicBoolean isClosed) {
+                             @NotNull final AssetTree assetTree) {
         super(byteToWire);
         this.byteToWire = byteToWire;
         this.sessionProvider = assetTree.root().getView(SessionProvider.class);
@@ -138,7 +150,7 @@ public class EngineWireHandler extends WireTcpHandler {
         this.publisherHandler = new PublisherHandler();
         this.replicationHandler = new ReplicationHandler();
         this.systemHandler = new SystemHandler();
-        this.isClosed = isClosed;
+
     }
 
     final RequestContextInterner requestContextInterner = new RequestContextInterner(128);
@@ -250,7 +262,7 @@ public class EngineWireHandler extends WireTcpHandler {
 
                     if (viewType == MapView.class) {
                         mapWireHandler.process(in, out, (MapView) view, tid, wireAdapter,
-                                requestContext, byteToWire);
+                                requestContext);
                         return;
                     }
 
@@ -306,7 +318,7 @@ public class EngineWireHandler extends WireTcpHandler {
                         replicationHandler.process(in,
                                 publisher, tid, outWire,
                                 hostIdentifier,
-                                (Replication) view, isClosed, eventLoop);
+                                (Replication) view, eventLoop);
                         return;
                     }
 

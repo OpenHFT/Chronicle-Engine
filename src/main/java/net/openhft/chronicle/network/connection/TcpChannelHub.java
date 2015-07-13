@@ -139,11 +139,6 @@ public class TcpChannelHub implements View, Closeable {
     }
 
 
-    private void disconnect() {
-        closeSocket();
-    }
-
-
     private void onDisconnected() {
 
         System.out.println(" disconnected to remoteAddress=" + remoteAddress);
@@ -324,7 +319,8 @@ public class TcpChannelHub implements View, Closeable {
         try {
             writeSocket(wire, timeoutMs, clientChannel);
         } catch (Exception e) {
-            disconnect();
+            LOG.error("",e);
+            closeSocket();
             //reconnect = true;
             throw rethrow(e);
         }
@@ -339,11 +335,13 @@ public class TcpChannelHub implements View, Closeable {
         } catch (IORuntimeException | AssertionError e) {
             throw e;
         } catch (RuntimeException e) {
-            disconnect();
+            LOG.error("",e);
+            closeSocket();
             //reconnect = true;
             throw e;
         } catch (Exception e) {
-            disconnect();
+            LOG.error("",e);
+            closeSocket();
             // reconnect = true;
             throw rethrow(e);
         }
@@ -760,8 +758,9 @@ public class TcpChannelHub implements View, Closeable {
                             break;
                         } else {
                             LOG.warn("reconnecting due to unexpected exception", e);
-                            disconnect();
-                            //  reconnect = true;
+                            e.printStackTrace();
+                            closeSocket();
+
                         }
 
 
@@ -775,7 +774,7 @@ public class TcpChannelHub implements View, Closeable {
                     e.printStackTrace();
             } finally {
                 System.out.println("STOPPING....");
-                disconnect();
+                closeSocket();
             }
 
         }
@@ -1033,7 +1032,7 @@ public class TcpChannelHub implements View, Closeable {
             long x = millisecondsSinceLastMessageReceived - HEATBEAT_TIMEOUT_PERIOD;
             if (x > 0) {
                 LOG.warn("reconnecting due to heartbeat failure");
-                disconnect();
+                closeSocket();
                 throw new InvalidEventHandlerException();
             }
 
@@ -1046,7 +1045,6 @@ public class TcpChannelHub implements View, Closeable {
                 return;
 
             System.out.println("attempt reconnect remoteAddress=" + remoteAddress);
-            disconnect();
             attemptConnect();
         }
 
@@ -1099,7 +1097,7 @@ public class TcpChannelHub implements View, Closeable {
                 } catch (Exception e) {
                     e.printStackTrace();
                     System.out.println("failed to connect remoteAddress=" + remoteAddress + " so will reconnect");
-                    disconnect();
+                    closeSocket();
                 }
 
             }

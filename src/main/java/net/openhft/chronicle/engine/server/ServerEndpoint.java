@@ -56,7 +56,7 @@ public class ServerEndpoint implements Closeable {
         eg.start();
 
         AcceptorEventHandler eah = new AcceptorEventHandler(hostPortDescription,
-                () -> new EngineWireHandler(wireType, asset, isClosed), VanillaSessionDetails::new);
+                () -> new EngineWireHandler(wireType, asset), VanillaSessionDetails::new);
 
         eg.addHandler(eah);
         this.eah = eah;
