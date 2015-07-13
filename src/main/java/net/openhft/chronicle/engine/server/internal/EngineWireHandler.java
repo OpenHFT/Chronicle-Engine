@@ -81,6 +81,8 @@ public class EngineWireHandler extends WireTcpHandler {
     private final TopicPublisherHandler topicPublisherHandler;
     @NotNull
     private final PublisherHandler publisherHandler;
+    @NotNull
+    private final ReferenceHandler referenceHandler;
 
     //  @NotNull
     //  private final TopologyHandler topologyHandler;
@@ -136,6 +138,7 @@ public class EngineWireHandler extends WireTcpHandler {
         this.topologySubscriptionHandler = new TopologySubscriptionHandler();
         this.topicPublisherHandler = new TopicPublisherHandler();
         this.publisherHandler = new PublisherHandler();
+        this.referenceHandler = new ReferenceHandler();
         this.replicationHandler = new ReplicationHandler();
         this.systemHandler = new SystemHandler();
         this.isClosed = isClosed;
@@ -286,6 +289,13 @@ public class EngineWireHandler extends WireTcpHandler {
                         topologySubscriptionHandler.process(in,
                                 requestContext, publisher, assetTree, tid,
                                 outWire, (TopologySubscription) view);
+                        return;
+                    }
+
+                    if (viewType == Reference.class) {
+                        referenceHandler.process(in,
+                                publisher, tid,
+                                (Reference) view, outWire, wireAdapter);
                         return;
                     }
 

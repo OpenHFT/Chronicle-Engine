@@ -81,4 +81,9 @@ public class VanillaReference<E> implements Reference<E>, View {
             return subscription.subscriberCount();
         return 0;
     }
+
+    @Override
+    public Class getType(){
+        return eClass;
+    }
 }
