@@ -23,9 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId.registerSubscriber;
-import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.EventId.get;
-import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.EventId.getAndSet;
-import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.EventId.set;
+import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.EventId.*;
 
 /**
  * Created by Rob Austin
@@ -71,14 +69,12 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
 
     @Override
     public void remove() {
-        // TODO CE-101 pass to the server
-        throw new UnsupportedOperationException("todo");
+        sendEventAsync(remove, null);
     }
 
     @Override
     public E getAndRemove() {
-        // TODO CE-101 pass to the server
-        throw new UnsupportedOperationException("todo");
+        return (E)proxyReturnTypedObject(getAndRemove, null, messageClass, null);
     }
 
     @Override

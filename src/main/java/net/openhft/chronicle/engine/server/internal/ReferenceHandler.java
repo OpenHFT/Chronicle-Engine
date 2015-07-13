@@ -10,9 +10,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.server.internal.PublisherHandler.Params.message;
-import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.EventId.get;
-import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.EventId.getAndSet;
-import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.EventId.set;
+import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.EventId.*;
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
 import static net.openhft.chronicle.network.connection.CoreFields.tid;
 
@@ -42,6 +40,11 @@ public class ReferenceHandler<E> extends AbstractHandler {
                 return;
             }
 
+            if (remove.contentEquals(eventName)) {
+                view.remove();
+                return;
+            }
+
             outWire.writeDocument(true, wire -> outWire.writeEventName(tid).int64(inputTid));
 
             writeData(inWire.bytes(), out -> {
@@ -52,8 +55,12 @@ public class ReferenceHandler<E> extends AbstractHandler {
                 }
 
                 if (getAndSet.contentEquals(eventName)) {
-                    view.set((E) valueIn.object(view.getType()));
-                    vToWire.accept(outWire.writeEventName(reply), view.get());
+                    vToWire.accept(outWire.writeEventName(reply), view.getAndSet((E) valueIn.object(view.getType())));
+                    return;
+                }
+
+                if (getAndRemove.contentEquals(eventName)) {
+                    vToWire.accept(outWire.writeEventName(reply), view.getAndRemove());
                     return;
                 }
 
@@ -83,6 +90,8 @@ public class ReferenceHandler<E> extends AbstractHandler {
     public enum EventId implements ParameterizeWireKey {
         set,
         get,
+        remove,
+        getAndRemove,
         getAndSet(Params.value),
         onEndOfSubscription;
 

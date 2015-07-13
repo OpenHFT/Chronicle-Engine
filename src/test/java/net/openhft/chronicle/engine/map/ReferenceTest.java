@@ -104,6 +104,17 @@ public class ReferenceTest {
         ref.getAndSet("biology");
 
         assertEquals("biology", ref.get());
+
+        String s = (String)ref.getAndRemove();
+
+        assertEquals("biology", s);
+
+        ref.set("physics");
+        assertEquals("physics", ref.get());
+
+        ref.remove();
+        assertEquals(null, ref.get());
+
         //ref.applyTo(o -> "applied");
     }
 }
