@@ -129,12 +129,14 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
 
         @Override
         public void onEndOfSubscription() {
-            // no more data.
-            Consumer<WireOut> toPublish = publish -> {
-                publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(tid));
-                publish.writeDocument(false, wire -> wire.write(reply).typedMarshallable(null));
-            };
-            publisher.add(toPublish);
+            if (!publisher.isClosed()) {
+                // no more data.
+                Consumer<WireOut> toPublish = publish -> {
+                    publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(tid));
+                    publish.writeDocument(false, wire -> wire.write(reply).typedMarshallable(null));
+                };
+                publisher.add(toPublish);
+            }
         }
     }
 }
