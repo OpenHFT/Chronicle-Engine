@@ -51,14 +51,14 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscriptio
                 }
 
                 public void onEndOfSubscription() {
-                    Consumer<WireOut> toPublish = publish -> {
-                        publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
-                                (inputTid));
-                        publish.writeNotReadyDocument(false, wire -> wire.writeEventName
-                                (EventId.onEndOfSubscription).text(""));
-
-                    };
-                    publisher.add(toPublish);
+                    if (!publisher.isClosed()) {
+                        publisher.add(publish -> {
+                            publish.writeDocument(true, wire ->
+                                    wire.writeEventName(tid).int64(inputTid));
+                            publish.writeDocument(false, wire ->
+                                    wire.writeEventName(EventId.onEndOfSubscription).text(""));
+                        });
+                    }
                 }
             };
 

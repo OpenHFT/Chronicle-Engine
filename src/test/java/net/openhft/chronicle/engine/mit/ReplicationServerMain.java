@@ -91,7 +91,7 @@ public class ReplicationServerMain {
                 VanillaKVSSubscription::new);
 
         ReplicationClientTest.closeables.add(tree);
-        ServerEndpoint serverEndpoint = new ServerEndpoint("localhost:" + (5700 + identifier), tree, wireType);
+        ServerEndpoint serverEndpoint = new ServerEndpoint("*:" + (5700 + identifier), tree, wireType);
         ReplicationClientTest.closeables.add(serverEndpoint);
 
         return serverEndpoint;
@@ -105,14 +105,14 @@ public class ReplicationServerMain {
         {
             final HostDetails value = new HostDetails();
             value.hostId = 1;
-            value.connectUri = (host == 1 ? "localhost" : remoteHostname) + ":" + 5701;
+            value.connectUri = (host == 1 ? "*" : remoteHostname) + ":" + 5701;
             value.timeoutMs = 1000;
             hostDetailsMap.put("host1", value);
         }
         {
             final HostDetails value = new HostDetails();
             value.hostId = 2;
-            value.connectUri = (host == 2 ? "localhost" : remoteHostname) + ":" + 5702;
+            value.connectUri = (host == 2 ? "*" : remoteHostname) + ":" + 5702;
             value.timeoutMs = 1000;
             hostDetailsMap.put("host2", value);
         }
