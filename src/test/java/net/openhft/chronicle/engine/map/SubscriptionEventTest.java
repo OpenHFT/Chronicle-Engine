@@ -130,6 +130,10 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
         final BlockingQueue<MapEvent> eventsQueue = new LinkedBlockingQueue<>();
 
+
+        YamlLogging.showServerWrites = true;
+        YamlLogging.showServerReads = true;
+
         yamlLoggger(() -> {
             try {
                 YamlLogging.writeMessage = "Sets up a subscription to listen to map events. And " +
@@ -246,6 +250,11 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
     @Test
     public void testTopicSubscribe() throws InvalidSubscriberException {
+
+        YamlLogging.showServerWrites = true;
+        YamlLogging.showServerReads = true;
+        YamlLogging.clientWrites = true;
+        YamlLogging.clientReads = true;
 
         class TopicDetails<T, M> {
             private final M message;

@@ -51,13 +51,17 @@ public class AbstractHandler {
 
         if (YamlLogging.showServerWrites)
             try {
-                System.out.println("server-writes:\n" +
-                        Wires.fromSizePrefixedBlobs(outWire.bytes(),  outWire.bytes().readPosition(), outWire
-                                .bytes().readLimit() - outWire.bytes().readPosition()));
+                System.out.println("\nServer Sends:\n" +
+                        Wires.fromSizePrefixedBlobs(outWire.bytes(), outWire.bytes().readPosition(), outWire
+                                .bytes().readRemaining()));
             } catch (Exception e) {
-                System.out.println("server-writes:\n" +
+                System.out.println("\nServer Sends:\n" +
                         outWire.bytes().toDebugString());
             }
+
+        System.out.println("");
+
+
     }
 
     public static void nullCheck(@Nullable Object o) {
