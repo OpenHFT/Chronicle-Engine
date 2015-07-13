@@ -20,15 +20,11 @@ package net.openhft.chronicle.engine.server.internal;
  * Created by Rob Austin
  */
 
-import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.bytes.BytesUtil;
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.pool.StringBuilderPool;
 import net.openhft.chronicle.core.util.SerializableBiFunction;
 import net.openhft.chronicle.core.util.SerializableUpdaterWithArg;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
-import net.openhft.chronicle.engine.collection.CollectionWireHandler;
 import net.openhft.chronicle.engine.map.remote.RemoteKeyValueStore;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.network.connection.CoreFields;
@@ -304,24 +300,6 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                 });
             } catch (Exception e) {
                 LOG.error("", e);
-            } finally {
-                if (Jvm.isDebug() && YamlLogging.showServerWrites) {
-                    final Bytes<?> outBytes = outWire.bytes();
-                    long len = outBytes.writePosition() - CollectionWireHandler.SIZE_OF_SIZE;
-                    if (len > 2) {
-
-
-                        final String s = (WireType.TEXT == byteToWire) ?
-                                Wires.fromSizePrefixedBlobs(outBytes,
-                                        outBytes.readPosition(), outBytes.readRemaining()) :
-                                BytesUtil.toHexString(outBytes, 0, outBytes.writePosition());
-
-                        System.out.println("server writes:");
-                        System.out.println("```yaml");
-                        System.out.println(s);
-                        System.out.println("```");
-                    }
-                }
             }
         }
     };

@@ -130,6 +130,10 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
         final BlockingQueue<MapEvent> eventsQueue = new LinkedBlockingQueue<>();
 
+
+        YamlLogging.showServerWrites = true;
+        YamlLogging.showServerReads = true;
+
         yamlLoggger(() -> {
             try {
                 YamlLogging.writeMessage = "Sets up a subscription to listen to map events. And " +
