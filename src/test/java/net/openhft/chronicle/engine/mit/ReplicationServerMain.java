@@ -37,11 +37,16 @@ public class ReplicationServerMain {
     public static final String REMOTE_HOSTNAME = System.getProperty("remote.host");
     public static final Integer HOST_ID = Integer.getInteger("hostId", 1);
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
         final Integer hostId = HOST_ID;
         String remoteHostname = REMOTE_HOSTNAME;
         ReplicationServerMain replicationServerMain = new ReplicationServerMain();
         replicationServerMain.create(hostId, remoteHostname);
+
+        for(;;) {
+            Thread.sleep(10000);
+        }
+
     }
 
 
@@ -81,9 +86,10 @@ public class ReplicationServerMain {
         tree.root().addLeafRule(ObjectKVSSubscription.class, " vanilla", VanillaKVSSubscription::new);
 
         ThreadGroup threadGroup = new ThreadGroup("my-named-thread-group");
+        threadGroup.setDaemon(true);
         tree.root().addView(ThreadGroup.class, threadGroup);
 
-        tree.root().addView(EventLoop.class, new EventGroup(false));
+        tree.root().addView(EventLoop.class, new EventGroup(true));
         Asset asset = tree.root().acquireAsset("map");
         asset.addView(AuthenticatedKeyValueStore.class, new ChronicleMapKeyValueStore<>(requestContext("map"), asset));
 

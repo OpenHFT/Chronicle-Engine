@@ -46,7 +46,6 @@ import java.io.StreamCorruptedException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import static net.openhft.chronicle.core.Jvm.rethrow;
@@ -126,7 +125,7 @@ public class EngineWireHandler extends WireTcpHandler {
 
     @Nullable
     private EventLoop eventLoop;
-    private AtomicBoolean isClosed;
+
 
     public EngineWireHandler(@NotNull final WireType byteToWire,
                              @NotNull final AssetTree assetTree) {

@@ -54,7 +54,7 @@ public class ServerEndpoint implements Closeable {
     @Nullable
     public AcceptorEventHandler start(String hostPortDescription, @NotNull final AssetTree asset, WireType wireType) throws IOException {
         eg.start();
-
+        System.out.println("starting server=" + hostPortDescription);
         AcceptorEventHandler eah = new AcceptorEventHandler(hostPortDescription,
                 () -> new EngineWireHandler(wireType, asset), VanillaSessionDetails::new);
 
@@ -65,7 +65,7 @@ public class ServerEndpoint implements Closeable {
 
     public void stop() {
         if (eg != null)
-        eg.stop();
+            eg.stop();
     }
 
     @Override
