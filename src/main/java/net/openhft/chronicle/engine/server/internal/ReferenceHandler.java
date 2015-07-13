@@ -11,6 +11,7 @@ import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.server.internal.PublisherHandler.Params.message;
 import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.EventId.get;
+import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.EventId.getAndSet;
 import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.EventId.set;
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
 import static net.openhft.chronicle.network.connection.CoreFields.tid;
@@ -37,7 +38,7 @@ public class ReferenceHandler<E> extends AbstractHandler {
             final ValueIn valueIn = inWire.readEventName(eventName);
 
             if (set.contentEquals(eventName)) {
-                view.set((E)valueIn.object(view.getType()));
+                view.set((E) valueIn.object(view.getType()));
                 return;
             }
 
@@ -46,6 +47,12 @@ public class ReferenceHandler<E> extends AbstractHandler {
             writeData(inWire.bytes(), out -> {
 
                 if (get.contentEquals(eventName)) {
+                    vToWire.accept(outWire.writeEventName(reply), view.get());
+                    return;
+                }
+
+                if (getAndSet.contentEquals(eventName)) {
+                    view.set((E) valueIn.object(view.getType()));
                     vToWire.accept(outWire.writeEventName(reply), view.get());
                     return;
                 }
@@ -70,14 +77,15 @@ public class ReferenceHandler<E> extends AbstractHandler {
 
 
     public enum Params implements WireKey {
-        message
+        value
     }
 
     public enum EventId implements ParameterizeWireKey {
         set,
         get,
-        onEndOfSubscription,
-        registerSubscriber(message);
+        getAndSet(Params.value),
+        onEndOfSubscription;
+
 
         private final WireKey[] params;
 

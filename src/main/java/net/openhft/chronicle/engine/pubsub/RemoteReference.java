@@ -9,7 +9,6 @@ import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
-import net.openhft.chronicle.engine.server.internal.MapWireHandler;
 import net.openhft.chronicle.engine.server.internal.ReferenceHandler;
 import net.openhft.chronicle.engine.server.internal.ReferenceHandler.EventId;
 import net.openhft.chronicle.network.connection.AbstractAsyncSubscription;
@@ -23,9 +22,9 @@ import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.applyTo2;
 import static net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId.registerSubscriber;
 import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.EventId.get;
+import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.EventId.getAndSet;
 import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.EventId.set;
 
 /**
@@ -67,8 +66,7 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
 
     @Override
     public E getAndSet(E e) {
-        // TODO CE-101 pass to the server
-        throw new UnsupportedOperationException("todo");
+        return (E)proxyReturnTypedObject(getAndSet, null, messageClass, e);
     }
 
     @Override

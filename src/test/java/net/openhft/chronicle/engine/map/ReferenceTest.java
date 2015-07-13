@@ -89,18 +89,21 @@ public class ReferenceTest {
         YamlLogging.showServerWrites=true;
 
         Map map = assetTree.acquireMap("group", String.class, String.class);
-        map.put("topic", "cs");
+        map.put("subject", "cs");
 
-        System.out.println(map.get("topic"));
-        Reference ref = assetTree.acquireReference("group/topic", String.class);
+        System.out.println(map.get("subject"));
+        Reference ref = assetTree.acquireReference("group/subject", String.class);
 
         //test the set method
         ref.set("sport");
 
-        assertEquals("sport", map.get("topic"));
+        assertEquals("sport", map.get("subject"));
 
         assertEquals("sport", ref.get());
 
+        ref.getAndSet("biology");
+
+        assertEquals("biology", ref.get());
         //ref.applyTo(o -> "applied");
     }
 }
