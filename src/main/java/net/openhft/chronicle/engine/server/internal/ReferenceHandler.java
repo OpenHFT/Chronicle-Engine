@@ -1,5 +1,7 @@
 package net.openhft.chronicle.engine.server.internal;
 
+import net.openhft.chronicle.core.util.SerializableBiFunction;
+import net.openhft.chronicle.core.util.SerializableUpdaterWithArg;
 import net.openhft.chronicle.engine.api.pubsub.Reference;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.wire.*;
@@ -11,13 +13,14 @@ import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.server.internal.PublisherHandler.Params.message;
 import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.EventId.*;
+import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.Params.*;
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
 import static net.openhft.chronicle.network.connection.CoreFields.tid;
 
 /**
  * Created by Rob Austin
  */
-public class ReferenceHandler<E> extends AbstractHandler {
+public class ReferenceHandler<E,T> extends AbstractHandler {
     private final StringBuilder eventName = new StringBuilder();
 
     private WireOutPublisher publisher;
@@ -45,6 +48,16 @@ public class ReferenceHandler<E> extends AbstractHandler {
                 return;
             }
 
+            if (update2.contentEquals(eventName)) {
+                valueIn.marshallable(wire -> {
+                    final Params[] params = update2.params();
+                    final SerializableBiFunction<E,T,E> updater = (SerializableBiFunction) wire.read(params[0]).object(Object.class);
+                    final Object arg = wire.read(params[1]).object(Object.class);
+                    view.asyncUpdate(updater, (T)arg);
+                });
+                return;
+            }
+
             outWire.writeDocument(true, wire -> outWire.writeEventName(tid).int64(inputTid));
 
             writeData(inWire.bytes(), out -> {
@@ -63,6 +76,26 @@ public class ReferenceHandler<E> extends AbstractHandler {
                     vToWire.accept(outWire.writeEventName(reply), view.getAndRemove());
                     return;
                 }
+
+                if (update4.contentEquals(eventName)) {
+                    valueIn.marshallable(wire -> {
+                        final Params[] params = update4.params();
+                        final SerializableBiFunction updater = (SerializableBiFunction) wire.read(params[0]).object(Object.class);
+                        final Object updateArg = wire.read(params[1]).object(Object.class);
+                        final SerializableBiFunction returnFunction = (SerializableBiFunction) wire.read(params[2]).object(Object.class);
+                        final Object returnArg = wire.read(params[3]).object(Object.class);
+                        outWire.writeEventName(reply).object(view.syncUpdate(updater, updateArg, returnFunction, returnArg));
+                    });
+                    return;
+                }
+
+                valueIn.marshallable(wire -> {
+                    final Params[] params = applyTo2.params();
+                    final SerializableBiFunction function = (SerializableBiFunction) wire.read(params[0]).object(Object.class);
+                    final Object arg = wire.read(params[1]).object(Object.class);
+                    outWire.writeEventName(reply).object(view.applyTo(function, arg));
+                });
+                return;
 
             });
         }
@@ -84,7 +117,11 @@ public class ReferenceHandler<E> extends AbstractHandler {
 
 
     public enum Params implements WireKey {
-        value
+        value,
+        function,
+        updateFunction,
+        updateArg,
+        arg
     }
 
     public enum EventId implements ParameterizeWireKey {
@@ -92,7 +129,11 @@ public class ReferenceHandler<E> extends AbstractHandler {
         get,
         remove,
         getAndRemove,
-        getAndSet(Params.value),
+        applyTo2(function, arg),
+        update2(function, arg),
+        update4(updateFunction, updateArg, function, arg),
+        getAndSet(value),
+        asyncUpdate,
         onEndOfSubscription;
 
 

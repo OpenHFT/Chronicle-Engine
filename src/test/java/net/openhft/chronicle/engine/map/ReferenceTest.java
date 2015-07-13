@@ -75,8 +75,6 @@ public class ReferenceTest {
         if (serverEndpoint != null)
             serverEndpoint.close();
         serverAssetTree.close();
-        //if (map instanceof Closeable)
-        //    ((Closeable) map).close();
         TCPRegistry.assertAllServersStopped();
     }
 
@@ -92,21 +90,16 @@ public class ReferenceTest {
         map.put("subject", "cs");
 
         System.out.println(map.get("subject"));
-        Reference ref = assetTree.acquireReference("group/subject", String.class);
+        Reference<String> ref = assetTree.acquireReference("group/subject", String.class);
 
-        //test the set method
         ref.set("sport");
-
         assertEquals("sport", map.get("subject"));
-
         assertEquals("sport", ref.get());
 
         ref.getAndSet("biology");
-
         assertEquals("biology", ref.get());
 
-        String s = (String)ref.getAndRemove();
-
+        String s = ref.getAndRemove();
         assertEquals("biology", s);
 
         ref.set("physics");
@@ -115,6 +108,20 @@ public class ReferenceTest {
         ref.remove();
         assertEquals(null, ref.get());
 
-        //ref.applyTo(o -> "applied");
+        ref.set("chemistry");
+        assertEquals("chemistry", ref.get());
+
+        s = ref.applyTo(o -> "applied_" + o.toString());
+        assertEquals("applied_chemistry", s);
+
+        ref.asyncUpdate(o -> "**" + o.toString());
+        assertEquals("**chemistry", ref.get());
+
+        ref.set("maths");
+        assertEquals("maths", ref.get());
+
+        s = ref.syncUpdate(o -> "**" + o.toString(), o -> "**" + o.toString());
+        assertEquals("****maths", s);
+
     }
 }

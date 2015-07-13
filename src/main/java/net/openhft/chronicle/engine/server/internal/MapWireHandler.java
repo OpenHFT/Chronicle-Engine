@@ -306,7 +306,6 @@ public class MapWireHandler<K, V> extends AbstractHandler {
 
 
     /**
-     * @param byteToWire
      * @param in             the data the has come in from network
      * @param out            the data that is going out to network
      * @param map            the map that is being processed
