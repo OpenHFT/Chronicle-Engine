@@ -17,13 +17,19 @@
 package net.openhft.chronicle.engine.api.set;
 
 import net.openhft.chronicle.engine.api.map.MapView;
+import net.openhft.chronicle.engine.api.query.Queryable;
 import net.openhft.chronicle.engine.api.tree.Assetted;
 import net.openhft.chronicle.engine.api.tree.View;
 
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * Marker interface for a set which represents the keySet() of a Map.  This may have additional method in future.
  */
-public interface KeySetView<K> extends Set<K>, Assetted<MapView<K, ?, ?>>, View {
+public interface KeySetView<K> extends Set<K>, Assetted<MapView<K, ?, ?>>,
+        Queryable<K>, View {
+    default Stream<K> stream() {
+        return Set.super.stream();
+    }
 }

@@ -16,11 +16,15 @@
 
 package net.openhft.chronicle.engine.api.pubsub;
 
+import net.openhft.chronicle.core.Jvm;
+
+import java.util.function.Consumer;
+
 /**
  * Subscriber to events of a specific topic/key.
  */
 @FunctionalInterface
-public interface Subscriber<E> extends ISubscriber {
+public interface Subscriber<E> extends ISubscriber, Consumer<E> {
     /**
      * Called when there is an event.
      *
@@ -28,4 +32,13 @@ public interface Subscriber<E> extends ISubscriber {
      * @throws InvalidSubscriberException to throw when this subscriber is no longer valid.
      */
     void onMessage(E e) throws InvalidSubscriberException;
+
+    @Override
+    default void accept(E e) {
+        try {
+            onMessage(e);
+        } catch (InvalidSubscriberException ise) {
+            throw Jvm.rethrow(ise);
+        }
+    }
 }

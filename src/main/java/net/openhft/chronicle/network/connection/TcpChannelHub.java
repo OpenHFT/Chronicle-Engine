@@ -21,6 +21,7 @@ import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.Closeable;
+import net.openhft.chronicle.core.util.Time;
 import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.network.TCPRegistry;
@@ -550,14 +551,14 @@ public class TcpChannelHub implements View, Closeable {
      * blocks until there is a conneciton
      */
     public void checkConnection() {
-        long start = System.currentTimeMillis();
+        long start = Time.currentTimeMillis();
 
         while (clientChannel == null) {
 
             if (tcpSocketConsumer.isShutdown())
                 throw new IORuntimeException("Shutdown connection to" + remoteAddress);
 
-            if (start + timeoutMs > System.currentTimeMillis())
+            if (start + timeoutMs > Time.currentTimeMillis())
                 Jvm.pause(100);
             else
                 throw new IORuntimeException("Not connected to " + remoteAddress);
@@ -652,7 +653,7 @@ public class TcpChannelHub implements View, Closeable {
          */
         private Wire syncBlockingReadSocket(final long timeoutTimeMs, long tid) throws
                 InterruptedException, TimeoutException {
-            long start = System.currentTimeMillis();
+            long start = Time.currentTimeMillis();
 
             final Wire wire = syncInWireThreadLocal.get();
             wire.clear();
@@ -668,7 +669,7 @@ public class TcpChannelHub implements View, Closeable {
 
             logToStandardOutMessageReceived(wire);
 
-            if (System.currentTimeMillis() - start >= timeoutTimeMs) {
+            if (Time.currentTimeMillis() - start >= timeoutTimeMs) {
                 throw new TimeoutException("timeoutTimeMs=" + timeoutTimeMs);
             }
 
@@ -839,9 +840,9 @@ public class TcpChannelHub implements View, Closeable {
                 // listen to it
 
                 if (startTime == 0)
-                    startTime = System.currentTimeMillis();
+                    startTime = Time.currentTimeMillis();
 
-                if (System.currentTimeMillis() - startTime > 3_000) {
+                if (Time.currentTimeMillis() - startTime > 3_000) {
                     LOG.error("unable to respond to tid=" + tid + ", given that we have received a " +
                             " message we a tid which is unknown, something has become corrupted, " +
                             "so the safest thing to do is to drop the connection to the server and " +
@@ -961,10 +962,10 @@ public class TcpChannelHub implements View, Closeable {
             }
         }
 
-        private volatile long lastTimeMessageReceived = System.currentTimeMillis();
+        private volatile long lastTimeMessageReceived = Time.currentTimeMillis();
 
         private void onMessageReceived() {
-            lastTimeMessageReceived = System.currentTimeMillis();
+            lastTimeMessageReceived = Time.currentTimeMillis();
         }
 
 
@@ -980,7 +981,7 @@ public class TcpChannelHub implements View, Closeable {
             subscribe(new AbstractAsyncTemporarySubscription(TcpChannelHub.this, null) {
                 @Override
                 public void onSubscribe(WireOut wireOut) {
-                    wireOut.writeEventName(heartbeat).int64(System.currentTimeMillis());
+                    wireOut.writeEventName(heartbeat).int64(Time.currentTimeMillis());
                 }
 
                 @Override
@@ -1030,13 +1031,13 @@ public class TcpChannelHub implements View, Closeable {
 
             // a heartbeat only gets sent out if we have not received any data in the last
             // HEATBEAT_PING_PERIOD milliseconds
-            long currentTime = System.currentTimeMillis();
+            long currentTime = Time.currentTimeMillis();
             long millisecondsSinceLastMessageReceived = currentTime - lastTimeMessageReceived;
             long millisecondsSinceLastHeatbeatSend = currentTime - lastheartbeatSentTime;
 
             if (millisecondsSinceLastMessageReceived >= HEATBEAT_PING_PERIOD &&
                     millisecondsSinceLastHeatbeatSend >= HEATBEAT_PING_PERIOD) {
-                lastheartbeatSentTime = System.currentTimeMillis();
+                lastheartbeatSentTime = Time.currentTimeMillis();
                 sendHeartbeat();
             }
 
