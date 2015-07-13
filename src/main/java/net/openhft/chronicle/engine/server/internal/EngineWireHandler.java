@@ -81,6 +81,8 @@ public class EngineWireHandler extends WireTcpHandler {
     private final TopicPublisherHandler topicPublisherHandler;
     @NotNull
     private final PublisherHandler publisherHandler;
+    @NotNull
+    private final ReferenceHandler referenceHandler;
 
     //  @NotNull
     //  private final TopologyHandler topologyHandler;
@@ -90,6 +92,19 @@ public class EngineWireHandler extends WireTcpHandler {
 
     @NotNull
     private final AssetTree assetTree;
+
+    @Override
+    public void onEndOfConnection(boolean heartbeatTimeOut) {
+
+
+        for (final AbstractHandler abstractHandler : new AbstractHandler[]{mapWireHandler,
+                subscriptionHandler, topologySubscriptionHandler,
+                publisherHandler, replicationHandler}) {
+            abstractHandler.onEndOfConnection(heartbeatTimeOut);
+        }
+
+    }
+
     @NotNull
     private final Consumer<WireIn> metaDataConsumer;
     private final StringBuilder lastCsp = new StringBuilder();
@@ -114,8 +129,7 @@ public class EngineWireHandler extends WireTcpHandler {
     private AtomicBoolean isClosed;
 
     public EngineWireHandler(@NotNull final WireType byteToWire,
-                             @NotNull final AssetTree assetTree,
-                             @NotNull final AtomicBoolean isClosed) {
+                             @NotNull final AssetTree assetTree) {
         super(byteToWire);
         this.byteToWire = byteToWire;
         this.sessionProvider = assetTree.root().getView(SessionProvider.class);
@@ -136,9 +150,10 @@ public class EngineWireHandler extends WireTcpHandler {
         this.topologySubscriptionHandler = new TopologySubscriptionHandler();
         this.topicPublisherHandler = new TopicPublisherHandler();
         this.publisherHandler = new PublisherHandler();
+        this.referenceHandler = new ReferenceHandler();
         this.replicationHandler = new ReplicationHandler();
         this.systemHandler = new SystemHandler();
-        this.isClosed = isClosed;
+
     }
 
     final RequestContextInterner requestContextInterner = new RequestContextInterner(128);
@@ -250,7 +265,7 @@ public class EngineWireHandler extends WireTcpHandler {
 
                     if (viewType == MapView.class) {
                         mapWireHandler.process(in, out, (MapView) view, tid, wireAdapter,
-                                requestContext, byteToWire);
+                                requestContext);
                         return;
                     }
 
@@ -289,6 +304,13 @@ public class EngineWireHandler extends WireTcpHandler {
                         return;
                     }
 
+                    if (viewType == Reference.class) {
+                        referenceHandler.process(in,
+                                publisher, tid,
+                                (Reference) view, outWire, wireAdapter);
+                        return;
+                    }
+
                     if (viewType == TopicPublisher.class) {
                         topicPublisherHandler.process(in, publisher, tid, outWire,
                                 (TopicPublisher) view, wireAdapter);
@@ -306,7 +328,7 @@ public class EngineWireHandler extends WireTcpHandler {
                         replicationHandler.process(in,
                                 publisher, tid, outWire,
                                 hostIdentifier,
-                                (Replication) view, isClosed, eventLoop);
+                                (Replication) view, eventLoop);
                         return;
                     }
 

@@ -69,4 +69,8 @@ public interface Reference<E> extends Publisher<E>, Supplier<E>, Visitable<E> {
     default void publish(E e) {
         set(e);
     }
+
+    default Class getType(){
+        throw new UnsupportedOperationException();
+    }
 }

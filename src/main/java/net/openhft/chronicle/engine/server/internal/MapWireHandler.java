@@ -60,7 +60,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
     @NotNull
     private final Map<String, Long> cspToCid = new HashMap<>();
     private final AtomicLong cid = new AtomicLong();
-    private WireType byteToWire;
+
     private BiConsumer<ValueOut, V> vToWire;
     @Nullable
     private Function<ValueIn, K> wireToK;
@@ -312,7 +312,6 @@ public class MapWireHandler<K, V> extends AbstractHandler {
      * @param tid            the transaction id of the event
      * @param wireAdapter    adapts keys and values to and from wire
      * @param requestContext the uri of the event
-     * @param byteToWire
      * @throws StreamCorruptedException
      */
     public void process(@NotNull final WireIn in,
@@ -320,14 +319,12 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                         @NotNull MapView map,
                         long tid,
                         @NotNull final WireAdapter wireAdapter,
-                        @NotNull final RequestContext requestContext,
-                        @NotNull final WireType byteToWire) throws
+                        @NotNull final RequestContext requestContext) throws
             StreamCorruptedException {
         this.vToWire = wireAdapter.valueToWire();
         this.wireToK = wireAdapter.wireToKey();
         this.wireToV = wireAdapter.wireToValue();
         this.requestContext = requestContext;
-        this.byteToWire = byteToWire;
 
         setOutWire(outWire);
 

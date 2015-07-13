@@ -9,7 +9,8 @@ import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
-import net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId;
+import net.openhft.chronicle.engine.server.internal.ReferenceHandler;
+import net.openhft.chronicle.engine.server.internal.ReferenceHandler.EventId;
 import net.openhft.chronicle.network.connection.AbstractAsyncSubscription;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.CoreFields;
@@ -22,11 +23,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId.registerSubscriber;
+import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.EventId.*;
 
 /**
  * Created by Rob Austin
  */
-public class RemoteReference<E> extends AbstractStatelessClient<EventId> implements Reference<E> {
+public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler.EventId> implements Reference<E> {
     private final Class<E> messageClass;
 
     public RemoteReference(RequestContext requestContext, Asset asset) {
@@ -52,31 +54,27 @@ public class RemoteReference<E> extends AbstractStatelessClient<EventId> impleme
     @Override
     public void set(final E event) {
         checkEvent(event);
-        sendEventAsync(EventId.publish, valueOut -> valueOut.object(event));
+        sendEventAsync(set, valueOut -> valueOut.object(event));
     }
 
     @Override
     public E get() {
-        // TODO CE-101 pass to the server
-        throw new UnsupportedOperationException("todo");
+        return (E)proxyReturnTypedObject(get, null, messageClass, null);
     }
 
     @Override
     public E getAndSet(E e) {
-        // TODO CE-101 pass to the server
-        throw new UnsupportedOperationException("todo");
+        return (E)proxyReturnTypedObject(getAndSet, null, messageClass, e);
     }
 
     @Override
     public void remove() {
-        // TODO CE-101 pass to the server
-        throw new UnsupportedOperationException("todo");
+        sendEventAsync(remove, null);
     }
 
     @Override
     public E getAndRemove() {
-        // TODO CE-101 pass to the server
-        throw new UnsupportedOperationException("todo");
+        return (E)proxyReturnTypedObject(getAndRemove, null, messageClass, null);
     }
 
     @Override
@@ -146,37 +144,34 @@ public class RemoteReference<E> extends AbstractStatelessClient<EventId> impleme
 
     @Override
     public <R> R applyTo(@NotNull SerializableFunction<E, R> function) {
-        // TODO CE-101
-        throw new UnsupportedOperationException("todo");
+        return applyTo((x, $) -> function.apply(x), null);
     }
 
     @Override
     public void asyncUpdate(@NotNull SerializableFunction<E, E> updateFunction) {
-        // TODO CE-101
-        throw new UnsupportedOperationException("todo");
+        asyncUpdate((x, $) -> updateFunction.apply(x), null);
     }
 
     @Override
     public <R> R syncUpdate(@NotNull SerializableFunction<E, E> updateFunction, @NotNull SerializableFunction<E, R> returnFunction) {
-        // TODO CE-101
-        throw new UnsupportedOperationException("todo");
+        return syncUpdate((x, $) -> updateFunction.apply(x), null, (x, $) -> returnFunction.apply(x), null);
     }
 
     @Override
     public <T, R> R applyTo(@NotNull SerializableBiFunction<E, T, R> function, T argument) {
-        // TODO CE-101
-        throw new UnsupportedOperationException("todo");
+        return (R) super.proxyReturnTypedObject(applyTo2, null, Object.class, function, argument);
     }
+
 
     @Override
     public <T> void asyncUpdate(@NotNull SerializableBiFunction<E, T, E> updateFunction, T argument) {
-        // TODO CE-101
-        throw new UnsupportedOperationException("todo");
+        sendEventAsync(update2, toParameters(update2, updateFunction, argument));
     }
 
     @Override
-    public <UT, RT, R> R syncUpdate(@NotNull SerializableBiFunction<E, UT, E> updateFunction, @Nullable UT updateArgument, @NotNull SerializableBiFunction<E, RT, R> returnFunction, @Nullable RT returnArgument) {
-        // TODO CE-101
-        throw new UnsupportedOperationException("todo");
+    public <UT, RT, R> R syncUpdate(@NotNull SerializableBiFunction<E, UT, E> updateFunction, @Nullable UT updateArgument,
+                                    @NotNull SerializableBiFunction<E, RT, R> returnFunction, @Nullable RT returnArgument) {
+        return (R) proxyReturnTypedObject(update4, null, Object.class, updateFunction,
+                updateArgument, returnFunction, returnArgument);
     }
 }

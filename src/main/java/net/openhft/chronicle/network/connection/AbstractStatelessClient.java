@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -62,7 +63,9 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
         return out -> {
             final WireKey[] paramNames = eventId.params();
 
-            assert args != null;
+            //args can be null, e.g. when get() is called from Reference.
+            if(args ==null)return;
+
             assert args.length == paramNames.length :
                     "methodName=" + eventId +
                             ", args.length=" + args.length +

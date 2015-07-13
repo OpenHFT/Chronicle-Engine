@@ -31,7 +31,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
     private HostIdentifier hostId;
     private long tid;
-    private AtomicBoolean isClosed;
+
     private EventLoop eventLoop;
 
 
@@ -41,9 +41,8 @@ public class ReplicationHandler<E> extends AbstractHandler {
                  final Wire outWire,
                  final HostIdentifier hostId,
                  final Replication replication,
-                 final AtomicBoolean isClosed,
                  final EventLoop eventLoop) {
-        this.isClosed = isClosed;
+
         this.eventLoop = eventLoop;
         setOutWire(outWire);
 
@@ -54,6 +53,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
         dataConsumer.accept(inWire, tid);
 
     }
+
 
     public enum EventId implements ParameterizeWireKey {
         publish,
@@ -97,31 +97,38 @@ public class ReplicationHandler<E> extends AbstractHandler {
                 mi.setModificationNotifier(eventLoop::unpause);
 
                 eventLoop.addHandler(new EventHandler() {
+
                     @Override
                     public boolean action() throws InvalidEventHandlerException {
 
-                        if (isClosed.get())
+
+                        if (connectionClosed)
                             throw new InvalidEventHandlerException();
 
                         final AtomicBoolean hadNext = new AtomicBoolean();
 
-                        mi.forEach(e -> publisher.add(publish1 -> {
+                        mi.forEach(e -> {
 
-                          if (e.identifier() != hostId.hostId())
-                               return;
+                            System.out.println(e.toString());
 
-                            hadNext.set(true);
-                            System.out.println("publish from server response from itterator " +
-                                    "localIdentifier=" + hostId + " ,remoteIdentifier=" +
-                                    id + " event=" + e);
+                            publisher.add(publish1 -> {
 
-                            publish1.writeDocument(true,
-                                    wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
+                                if (e.identifier() != hostId.hostId())
+                                    return;
 
-                            publish1.writeNotReadyDocument(false,
-                                    wire -> wire.write(replicationReply).typedMarshallable(e));
+                                hadNext.set(true);
+                                System.out.println("publish from server response from itterator " +
+                                        "localIdentifier=" + hostId + " ,remoteIdentifier=" +
+                                        id + " event=" + e);
 
-                        }));
+                                publish1.writeDocument(true,
+                                        wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
+
+                                publish1.writeNotReadyDocument(false,
+                                        wire -> wire.write(replicationReply).typedMarshallable(e));
+
+                            });
+                        });
 
                         return hadNext.get();
 
@@ -162,6 +169,8 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
                     // receive bootstrap
                     final Bootstrap inBootstrap = valueIn.typedMarshallable();
+                    if (inBootstrap == null)
+                        return;
                     final byte id = inBootstrap.identifier();
 
                     // send bootstrap
