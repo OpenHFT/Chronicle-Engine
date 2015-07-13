@@ -66,7 +66,7 @@ import static net.openhft.chronicle.engine.server.internal.SystemHandler.EventId
  */
 public class TcpChannelHub implements View, Closeable {
 
-    public static final int HEATBEAT_PING_PERIOD = getInteger("heartbeat.ping.period", 500);
+    public static final int HEATBEAT_PING_PERIOD = getInteger("heartbeat.ping.period", 5_000);
     public static final int HEATBEAT_TIMEOUT_PERIOD = getInteger("heartbeat.timeout", 20_000);
 
     public static final int SIZE_OF_SIZE = 4;
@@ -164,13 +164,18 @@ public class TcpChannelHub implements View, Closeable {
         final long limit = bytes.writeLimit();
         try {
             try {
+
+                String textWire = Wires.fromSizePrefixedBlobs(bytes);
+               // if (textWire.toUpperCase().contains("heart".toUpperCase()))
+               //     return;
+
                 System.out.println("\nreceives:\n" +
+
 
                         ((wire instanceof TextWire) ?
                                 "```yaml\n" +
-                                        Wires.fromSizePrefixedBlobs(bytes) :
+                                        textWire :
                                 "```\n" +
-//                                        Wires.fromSizePrefixedBlobs(bytes)
                                         BytesUtil.toHexString(bytes, bytes.readPosition(), bytes.readRemaining())
 
                         ) +
@@ -414,6 +419,12 @@ public class TcpChannelHub implements View, Closeable {
             bytes.writePosition(outBuffer.position());
 
             try {
+
+                String textWire = Wires.fromSizePrefixedBlobs(bytes);
+              //  if (textWire.toUpperCase().contains("heart".toUpperCase()))
+              //      return;
+
+
                 System.out.println(((!YamlLogging.title.isEmpty()) ? "### " + YamlLogging
                         .title + "\n" : "") + "" +
                         YamlLogging.writeMessage + (YamlLogging.writeMessage.isEmpty() ?

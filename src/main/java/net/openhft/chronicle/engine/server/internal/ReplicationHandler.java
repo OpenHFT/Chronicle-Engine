@@ -94,22 +94,6 @@ public class ReplicationHandler<E> extends AbstractHandler {
                 final ModificationIterator mi = replication.acquireModificationIterator(id);
 
                 // sends replication events back to the remote client
-                mi.setModificationNotifier(() -> {
-
-                    mi.forEach(e -> publisher.add(publish -> {
-                        System.out.println("publish from server response from replicationSubscribe" +
-                                "localIdentifier=" + hostId + " ,remoteIdentifier=" +
-                                id + " event=" + e);
-
-                        publish.writeDocument(true,
-                                wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
-
-                        publish.writeNotReadyDocument(false,
-                                wire -> wire.write(replicationReply).typedMarshallable(e));
-
-                    }));
-                });
-
                 mi.setModificationNotifier(eventLoop::unpause);
 
                 eventLoop.addHandler(new EventHandler() {

@@ -156,10 +156,14 @@ public class CollectionWireHandler<U, C extends Collection<U>> {
                 if (YamlLogging.showServerWrites) {
                     long len = outBytes.writePosition() - SIZE_OF_SIZE;
                     if (len > 0) {
-                        LOG.info(
-                                "server writes:\n\n" +
-                                        //      Bytes.toDebugString(outBytes, SIZE_OF_SIZE, len));
-                                        Wires.fromSizePrefixedBlobs(outBytes, SIZE_OF_SIZE, len));
+
+
+
+                        String s = Wires.fromSizePrefixedBlobs(outBytes, SIZE_OF_SIZE, len);
+
+                    //    if (!s.toUpperCase().contains("heart".toUpperCase()))
+                            LOG.info(
+                                    "server writes:\n\n" + s);
                     }
                 }
             }

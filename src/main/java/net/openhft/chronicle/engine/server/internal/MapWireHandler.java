@@ -311,7 +311,8 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                     if (len > 2) {
 
                         final String s = (WireType.TEXT == byteToWire) ?
-                                Wires.fromSizePrefixedBlobs(outBytes, CollectionWireHandler.SIZE_OF_SIZE, len) :
+                                Wires.fromSizePrefixedBlobs(outBytes, outWire.bytes()
+                                        .readPosition(), outWire.bytes().readRemaining()) :
                                 BytesUtil.toHexString(outBytes, 0, outBytes.writePosition());
 
                         System.out.println("server writes:");
