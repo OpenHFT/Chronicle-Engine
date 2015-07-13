@@ -166,18 +166,16 @@ public class TcpChannelHub implements View, Closeable {
         try {
             try {
 
-                String textWire = Wires.fromSizePrefixedBlobs(bytes);
-               // if (textWire.toUpperCase().contains("heart".toUpperCase()))
-               //     return;
-
                 System.out.println("\nreceives:\n" +
 
 
                         ((wire instanceof TextWire) ?
                                 "```yaml\n" +
-                                        textWire :
+                                        Wires.fromSizePrefixedBlobs(bytes,
+                                                bytes.readPosition(), bytes.readRemaining()) :
                                 "```\n" +
-                                        BytesUtil.toHexString(bytes, bytes.readPosition(), bytes.readRemaining())
+                                        BytesUtil.toHexString(bytes, bytes.readPosition(),
+                                                bytes.readRemaining())
 
                         ) +
                         "```\n");
@@ -412,40 +410,28 @@ public class TcpChannelHub implements View, Closeable {
 
         Bytes<?> bytes = wire.bytes();
 
-        final long position = bytes.writePosition();
-        final long limit = bytes.writeLimit();
         try {
 
-            bytes.writeLimit(outBuffer.limit());
-            bytes.writePosition(outBuffer.position());
-
-            try {
-
-                String textWire = Wires.fromSizePrefixedBlobs(bytes);
-              //  if (textWire.toUpperCase().contains("heart".toUpperCase()))
-              //      return;
-
-
-                System.out.println(((!YamlLogging.title.isEmpty()) ? "### " + YamlLogging
-                        .title + "\n" : "") + "" +
-                        YamlLogging.writeMessage + (YamlLogging.writeMessage.isEmpty() ?
-                        "" : "\n\n") +
-                        "sends:\n\n" +
-                        "```yaml\n" +
-                        ((wire instanceof TextWire) ?
-                                Wires.fromSizePrefixedBlobs(bytes, bytes.writePosition(), bytes.writeLimit()) :
-                                BytesUtil.toHexString(bytes, bytes.writePosition(), bytes.writeRemaining())) +
-                        "```");
-                YamlLogging.title = "";
-                YamlLogging.writeMessage = "";
-            } catch (Exception e) {
-                LOG.error(Bytes.toString(bytes), e);
-            }
-
-        } finally {
-            bytes.writeLimit(limit);
-            bytes.writePosition(position);
+            System.out.println(((!YamlLogging.title.isEmpty()) ? "### " + YamlLogging
+                    .title + "\n" : "") + "" +
+                    YamlLogging.writeMessage + (YamlLogging.writeMessage.isEmpty() ?
+                    "" : "\n\n") +
+                    "sends:\n\n" +
+                    "```yaml\n" +
+                    ((wire instanceof TextWire) ?
+                            Wires.fromSizePrefixedBlobs(bytes,
+                                    bytes.readPosition(), bytes.readRemaining()) :
+                            BytesUtil.toHexString(bytes, bytes.readRemaining(), bytes
+                                            .readRemaining()
+                            )) +
+                    "```");
+            YamlLogging.title = "";
+            YamlLogging.writeMessage = "";
+        } catch (Exception e) {
+            LOG.error(Bytes.toString(bytes), e);
         }
+
+
     }
 
     /**
