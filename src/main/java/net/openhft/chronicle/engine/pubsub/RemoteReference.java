@@ -10,6 +10,7 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.server.internal.MapWireHandler;
+import net.openhft.chronicle.engine.server.internal.ReferenceHandler;
 import net.openhft.chronicle.engine.server.internal.ReferenceHandler.EventId;
 import net.openhft.chronicle.network.connection.AbstractAsyncSubscription;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
@@ -24,11 +25,13 @@ import org.jetbrains.annotations.Nullable;
 
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.applyTo2;
 import static net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId.registerSubscriber;
+import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.EventId.get;
+import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.EventId.set;
 
 /**
  * Created by Rob Austin
  */
-public class RemoteReference<E> extends AbstractStatelessClient<MapWireHandler.EventId> implements Reference<E> {
+public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler.EventId> implements Reference<E> {
     private final Class<E> messageClass;
 
     public RemoteReference(RequestContext requestContext, Asset asset) {
@@ -54,13 +57,12 @@ public class RemoteReference<E> extends AbstractStatelessClient<MapWireHandler.E
     @Override
     public void set(final E event) {
         checkEvent(event);
-        sendEventAsync(EventId.set, valueOut -> valueOut.object(event));
+        sendEventAsync(set, valueOut -> valueOut.object(event));
     }
 
     @Override
     public E get() {
-        // TODO CE-101 pass to the server
-        throw new UnsupportedOperationException("todo");
+        return (E)proxyReturnTypedObject(get, null, messageClass, null);
     }
 
     @Override
@@ -167,9 +169,9 @@ public class RemoteReference<E> extends AbstractStatelessClient<MapWireHandler.E
 
     @Override
     public <T, R> R applyTo(@NotNull SerializableBiFunction<E, T, R> function, T argument) {
-        return (R) super.proxyReturnTypedObject(applyTo2, null, Object.class, function, null);
+        //return (R) super.proxyReturnTypedObject(applyTo2, null, Object.class, function, null);
         // TODO CE-101
-        //throw new UnsupportedOperationException("todo");
+        throw new UnsupportedOperationException("todo");
     }
 
 

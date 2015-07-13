@@ -10,7 +10,9 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.server.internal.PublisherHandler.Params.message;
+import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.EventId.get;
 import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.EventId.set;
+import static net.openhft.chronicle.network.connection.CoreFields.reply;
 import static net.openhft.chronicle.network.connection.CoreFields.tid;
 
 /**
@@ -24,8 +26,7 @@ public class ReferenceHandler<E> extends AbstractHandler {
     @Nullable
     private Function<ValueIn, E> wireToE;
 
-    @Nullable
-    private Function<ValueIn, E> wireToV;
+    private BiConsumer<ValueOut, E> vToWire;
 
     private final BiConsumer<WireIn, Long> dataConsumer = new BiConsumer<WireIn, Long>() {
 
@@ -44,17 +45,9 @@ public class ReferenceHandler<E> extends AbstractHandler {
 
             writeData(inWire.bytes(), out -> {
 
-                if (set.contentEquals(eventName)) {
-
-                    valueIn.marshallable(wire -> {
-                        final Params[] params = set.params();
-
-                        final E message = wireToE.apply(wire.read(params[1]));
-
-                        nullCheck(message);
-                        view.publish(message);
-                    });
-
+                if (get.contentEquals(eventName)) {
+                    vToWire.accept(outWire.writeEventName(reply), view.get());
+                    return;
                 }
 
             });
@@ -66,7 +59,7 @@ public class ReferenceHandler<E> extends AbstractHandler {
                  final long tid,
                  Reference view, final Wire outWire,
                  final @NotNull WireAdapter wireAdapter) {
-        this.wireToV = wireAdapter.wireToValue();
+        this.vToWire = wireAdapter.valueToWire();
         setOutWire(outWire);
         this.outWire = outWire;
         this.publisher = publisher;
@@ -82,6 +75,7 @@ public class ReferenceHandler<E> extends AbstractHandler {
 
     public enum EventId implements ParameterizeWireKey {
         set,
+        get,
         onEndOfSubscription,
         registerSubscriber(message);
 
