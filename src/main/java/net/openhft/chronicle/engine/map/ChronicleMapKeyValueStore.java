@@ -261,8 +261,10 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
         isClosed.set(true);
         eventLoop.stop();
         closeQuietly(asset.findView(TcpChannelHub.class));
-        Jvm.pause(1000);
-        chronicleMap.close();
+        new Thread(() -> {
+            Jvm.pause(1000);
+            chronicleMap.close();
+        }, "close " + assetFullName).start();
     }
 
     @Override
