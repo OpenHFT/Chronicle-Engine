@@ -22,10 +22,7 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TestName;
 
 import java.io.IOException;
@@ -37,7 +34,7 @@ import static net.openhft.chronicle.engine.Utils.yamlLoggger;
 import static net.openhft.chronicle.wire.YamlLogging.writeMessage;
 import static org.junit.Assert.*;
 
-
+@Ignore
 public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
 
     private static int s_port = 11050;

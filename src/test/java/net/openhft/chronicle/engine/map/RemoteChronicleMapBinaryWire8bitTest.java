@@ -24,10 +24,7 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TestName;
 
 import java.io.IOException;
@@ -46,7 +43,7 @@ import static org.junit.Assert.*;
  * Other contributors include Andrew Wright, Jeffrey Hayes,
  * Pat Fisher, Mike Judd.
  */
-
+@Ignore
 public class RemoteChronicleMapBinaryWire8bitTest extends JSR166TestCase {
 
     private static int s_port = 12050;
