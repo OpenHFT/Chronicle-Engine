@@ -15,20 +15,18 @@
   ~     along with this program.  If not, see <http://www.gnu.org/licenses />.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <parent>
         <groupId>net.openhft</groupId>
         <artifactId>java-parent-pom</artifactId>
         <version>1.1.2</version>
-        <relativePath/>
+        <relativePath />
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>chronicle-engine</artifactId>
-    <version>1.5.6-beta-SNAPSHOT</version>
+    <version>1.5.5-beta</version>
     <name>OpenHFT/Chronicle-Engine</name>
     <description>Chronicle Engine Framework</description>
 
@@ -46,7 +44,7 @@
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>chronicle-bom</artifactId>
-                <version>1.5.7-SNAPSHOT</version>
+                <version>1.5.6</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -137,8 +135,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-scm-publish-plugin</artifactId>
                 <configuration>
-                    <checkoutDirectory>${project.build.directory}/scmpublish/javadoc
-                    </checkoutDirectory>
+                    <checkoutDirectory>${project.build.directory}/scmpublish/javadoc</checkoutDirectory>
                     <checkinComment>Publishing javadoc for ${project.artifactId}:${project.version}
                     </checkinComment>
                     <content>${project.reporting.outputDirectory}</content>
@@ -165,9 +162,8 @@
     <scm>
         <url>scm:git:git@github.com:OpenHFT/Chronicle-Engine.git</url>
         <connection>scm:git:git@github.com:OpenHFT/Chronicle-Engine.git</connection>
-        <developerConnection>scm:git:git@github.com:OpenHFT/Chronicle-Engine.git
-        </developerConnection>
-        <tag>master</tag>
+        <developerConnection>scm:git:git@github.com:OpenHFT/Chronicle-Engine.git</developerConnection>
+        <tag>chronicle-engine-1.5.5-beta</tag>
     </scm>
 
 </project>

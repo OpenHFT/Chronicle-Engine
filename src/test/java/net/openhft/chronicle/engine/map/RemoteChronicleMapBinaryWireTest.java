@@ -42,7 +42,7 @@ import static org.junit.Assert.*;
  * Other contributors include Andrew Wright, Jeffrey Hayes,
  * Pat Fisher, Mike Judd.
  */
-@Ignore
+
 public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
 
     private static int s_port = 11050;

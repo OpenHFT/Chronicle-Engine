@@ -34,7 +34,7 @@ import static net.openhft.chronicle.engine.Utils.yamlLoggger;
 import static net.openhft.chronicle.wire.YamlLogging.writeMessage;
 import static org.junit.Assert.*;
 
-@Ignore
+
 public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
 
     private static int s_port = 11050;
