@@ -648,7 +648,6 @@ public class TcpChannelHub implements View, Closeable {
             //noinspection SynchronizationOnLocalVariableOrMethodParameter
             synchronized (bytes) {
                 map.put(tid, bytes);
-                System.out.println("map.put(tid=" + tid + "bytes=" + bytes);
                 bytes.wait(timeoutTimeMs);
             }
 
@@ -672,7 +671,7 @@ public class TcpChannelHub implements View, Closeable {
                 }
 
                 map.put(asyncSubscription.tid(), asyncSubscription);
-                System.out.println("map.put(tid=" + asyncSubscription.tid() + "asyncSubscription=" + asyncSubscription);
+
                 // not currently connected
                 return;
             }
@@ -682,7 +681,7 @@ public class TcpChannelHub implements View, Closeable {
             reentrantLock.lock();
             try {
                 map.put(asyncSubscription.tid(), asyncSubscription);
-                System.out.println("map.put(tid=" + asyncSubscription.tid() + "asyncSubscription=" + asyncSubscription);
+
                 asyncSubscription.applySubscribe();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -782,7 +781,7 @@ public class TcpChannelHub implements View, Closeable {
                 if (!isShutdown())
                     e.printStackTrace();
             } finally {
-                System.out.println("STOPPING....");
+                System.out.println("Shuting down....");
                 closeSocket();
             }
 
@@ -860,7 +859,7 @@ public class TcpChannelHub implements View, Closeable {
 
             // for async
             if (o instanceof AsyncSubscription) {
-//                System.out.println("processing async");
+
                 blockingRead(inWire, messageSize);
                 logToStandardOutMessageReceived(inWire);
                 onMessageReceived();
