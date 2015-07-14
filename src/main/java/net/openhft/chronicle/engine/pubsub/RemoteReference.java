@@ -85,8 +85,7 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
 
     @Override
     public int subscriberCount() {
-        // TODO CE-101 pass to the server
-        throw new UnsupportedOperationException("todo");
+        return proxyReturnInt(countSubscribers);
     }
 
     @Override

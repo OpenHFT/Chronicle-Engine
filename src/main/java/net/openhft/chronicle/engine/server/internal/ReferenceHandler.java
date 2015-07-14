@@ -1,8 +1,9 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.core.util.SerializableBiFunction;
-import net.openhft.chronicle.core.util.SerializableUpdaterWithArg;
+import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Reference;
+import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-import static net.openhft.chronicle.engine.server.internal.PublisherHandler.Params.message;
 import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.EventId.*;
 import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.Params.*;
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
@@ -51,10 +51,30 @@ public class ReferenceHandler<E,T> extends AbstractHandler {
             if (update2.contentEquals(eventName)) {
                 valueIn.marshallable(wire -> {
                     final Params[] params = update2.params();
-                    final SerializableBiFunction<E,T,E> updater = (SerializableBiFunction) wire.read(params[0]).object(Object.class);
+                    final SerializableBiFunction<E, T, E> updater = (SerializableBiFunction) wire.read(params[0]).object(Object.class);
                     final Object arg = wire.read(params[1]).object(Object.class);
-                    view.asyncUpdate(updater, (T)arg);
+                    view.asyncUpdate(updater, (T) arg);
                 });
+                return;
+            }
+
+            if (registerSubscriber.contentEquals(eventName)) {
+
+                final Subscriber listener = new Subscriber() {
+                    @Override
+                    public void onMessage(final Object message) throws InvalidSubscriberException {
+                        publisher.add(publish -> {
+                            publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
+                                    (inputTid));
+                            publish.writeNotReadyDocument(false, wire -> wire.writeEventName(reply)
+                                    .marshallable(m -> m.write(Params.message).object(message)));
+                        });
+                    }
+                };
+
+                // TODO CE-101 get the true value from the CSP
+                boolean bootstrap = true;
+                view.registerSubscriber(bootstrap, listener);
                 return;
             }
 
@@ -74,6 +94,11 @@ public class ReferenceHandler<E,T> extends AbstractHandler {
 
                 if (getAndRemove.contentEquals(eventName)) {
                     vToWire.accept(outWire.writeEventName(reply), view.getAndRemove());
+                    return;
+                }
+
+                if (countSubscribers.contentEquals(eventName)) {
+                    outWire.writeEventName(reply).int64(view.subscriberCount());
                     return;
                 }
 
@@ -121,7 +146,8 @@ public class ReferenceHandler<E,T> extends AbstractHandler {
         function,
         updateFunction,
         updateArg,
-        arg
+        arg,
+        message
     }
 
     public enum EventId implements ParameterizeWireKey {
@@ -134,6 +160,8 @@ public class ReferenceHandler<E,T> extends AbstractHandler {
         update4(updateFunction, updateArg, function, arg),
         getAndSet(value),
         asyncUpdate,
+        registerSubscriber,
+        countSubscribers,
         onEndOfSubscription;
 
 
