@@ -62,7 +62,7 @@ abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient imp
         if (bootstrap != null)
             csp = csp + "&bootstrap=" + bootstrap;
 
-        hub.subscribe(new AbstractAsyncSubscription(hub, csp) {
+        hub.subscribe(new AbstractAsyncSubscription(hub, csp, this.getClass().getSimpleName() + " registerSubscriber") {
             {
                 subscribersToTid.put(subscriber, tid());
             }

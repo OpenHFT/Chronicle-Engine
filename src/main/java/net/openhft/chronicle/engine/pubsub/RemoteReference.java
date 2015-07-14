@@ -95,7 +95,7 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
         if (hub.outBytesLock().isHeldByCurrentThread())
             throw new IllegalStateException("Cannot view map while debugging");
 
-        final AbstractAsyncSubscription asyncSubscription = new AbstractAsyncSubscription(hub, csp + "&bootstrap=" + bootstrap) {
+        final AbstractAsyncSubscription asyncSubscription = new AbstractAsyncSubscription(hub, csp + "&bootstrap=" + bootstrap, "Remote Ref registerSubscriber") {
 
             @Override
             public void onSubscribe(@NotNull final WireOut wireOut) {

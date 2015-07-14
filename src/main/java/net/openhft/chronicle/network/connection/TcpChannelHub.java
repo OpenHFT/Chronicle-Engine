@@ -319,7 +319,7 @@ public class TcpChannelHub implements View, Closeable {
         try {
             writeSocket(wire, timeoutMs, clientChannel);
         } catch (Exception e) {
-            LOG.error("",e);
+            LOG.error("", e);
             closeSocket();
             //reconnect = true;
             throw rethrow(e);
@@ -335,12 +335,12 @@ public class TcpChannelHub implements View, Closeable {
         } catch (IORuntimeException | AssertionError e) {
             throw e;
         } catch (RuntimeException e) {
-            LOG.error("",e);
+            LOG.error("", e);
             closeSocket();
             //reconnect = true;
             throw e;
         } catch (Exception e) {
-            LOG.error("",e);
+            LOG.error("", e);
             closeSocket();
             // reconnect = true;
             throw rethrow(e);
@@ -576,7 +576,7 @@ public class TcpChannelHub implements View, Closeable {
         /**
          * re-establish all the subscriptions to the server, this method calls the {@code
          * net.openhft.chronicle.network.connection.AsyncSubscription#applySubscribe()} for each
-         * subscription, this could should establish a subscriotuib with the server.
+         * subscription, this could should establish a subscription with the server.
          */
         private void reconnect() {
 
@@ -648,6 +648,7 @@ public class TcpChannelHub implements View, Closeable {
             //noinspection SynchronizationOnLocalVariableOrMethodParameter
             synchronized (bytes) {
                 map.put(tid, bytes);
+                System.out.println("map.put(tid=" + tid + "bytes=" + bytes);
                 bytes.wait(timeoutTimeMs);
             }
 
@@ -664,7 +665,14 @@ public class TcpChannelHub implements View, Closeable {
         void subscribe(@NotNull final AsyncSubscription asyncSubscription) {
 
             if (clientChannel == null) {
+
+
+                if (asyncSubscription instanceof AsyncTemporarySubscription) {
+                    LOG.error(");");
+                }
+
                 map.put(asyncSubscription.tid(), asyncSubscription);
+                System.out.println("map.put(tid=" + asyncSubscription.tid() + "asyncSubscription=" + asyncSubscription);
                 // not currently connected
                 return;
             }
@@ -674,6 +682,7 @@ public class TcpChannelHub implements View, Closeable {
             reentrantLock.lock();
             try {
                 map.put(asyncSubscription.tid(), asyncSubscription);
+                System.out.println("map.put(tid=" + asyncSubscription.tid() + "asyncSubscription=" + asyncSubscription);
                 asyncSubscription.applySubscribe();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -817,7 +826,13 @@ public class TcpChannelHub implements View, Closeable {
 
             for (; !isShutdown(); ) {
 
-                o = isReady ? map.remove(tid) : map.get(tid);
+                o = map.get(tid);
+
+                // we only remove the subscription so they are AsyncTemporarySubscription, as the AsyncSubscription
+                // can not be remove from the map as they are required when you resubscribe when we loose connectivity
+                if (isReady && (!(o instanceof AsyncSubscription) || (o instanceof AsyncTemporarySubscription)))
+                    map.remove(tid);
+
                 if (o != null)
                     break;
 
@@ -963,7 +978,7 @@ public class TcpChannelHub implements View, Closeable {
 
             // this denotes that the next message is a system message as it has a null csp
 
-            subscribe(new AbstractAsyncTemporarySubscription(TcpChannelHub.this, null) {
+            subscribe(new AbstractAsyncTemporarySubscription(TcpChannelHub.this, null, name) {
                 @Override
                 public void onSubscribe(WireOut wireOut) {
                     wireOut.writeEventName(heartbeat).int64(Time.currentTimeMillis());
@@ -1061,12 +1076,14 @@ public class TcpChannelHub implements View, Closeable {
 
                         try {
                             if (socketChannel == null || !socketChannel.connect(remoteAddress)) {
-                                pause(100);
+                                LOG.error("Connection refused to remoteAddress=" + remoteAddress);
+                                pause(1000);
                                 continue;
                             } else
                                 break;
                         } catch (ConnectException e) {
-                            pause(100);
+                            LOG.error("Connection refused to remoteAddress=" + remoteAddress);
+                            pause(1000);
                             continue;
                         }
 

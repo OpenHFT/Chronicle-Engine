@@ -88,7 +88,7 @@ public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId>
         if (hub.outBytesLock().isHeldByCurrentThread())
             throw new IllegalStateException("Cannot view map while debugging");
 
-        hub.subscribe(new AbstractAsyncSubscription(hub, csp) {
+        hub.subscribe(new AbstractAsyncSubscription(hub, csp, "Remote Topic publisher register subscribe") {
 
             @Override
             public void onSubscribe(@NotNull final WireOut wireOut) {

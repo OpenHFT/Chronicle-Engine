@@ -65,7 +65,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractRemoteSubscription<
         if (hub.outBytesLock().isHeldByCurrentThread())
             throw new IllegalStateException("Cannot view map while debugging");
 
-        hub.subscribe(new AbstractAsyncSubscription(hub, csp) {
+        hub.subscribe(new AbstractAsyncSubscription(hub, csp, "Remove KV Subscription registerTopicSubscriber") {
             @Override
             public void onSubscribe(@NotNull final WireOut wireOut) {
                 wireOut.writeEventName(registerTopicSubscriber).marshallable(m -> {
