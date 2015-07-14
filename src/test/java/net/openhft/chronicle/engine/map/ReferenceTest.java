@@ -1,16 +1,18 @@
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Reference;
+import net.openhft.chronicle.engine.api.pubsub.Subscriber;
+import net.openhft.chronicle.engine.api.pubsub.Subscription;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
+import net.openhft.chronicle.engine.pubsub.SimpleSubscription;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -41,6 +43,11 @@ public class ReferenceTest {
 
     public ReferenceTest(Object isRemote, Object wireType) {
         ReferenceTest.isRemote = (Boolean) isRemote;
+
+        YamlLogging.clientReads=true;
+        YamlLogging.clientWrites=true;
+        YamlLogging.showServerReads=true;
+        YamlLogging.showServerWrites=true;
     }
 
     @Parameterized.Parameters
@@ -80,18 +87,12 @@ public class ReferenceTest {
 
     @Test
     public void testRemoteReference() throws IOException {
-
-        YamlLogging.clientReads=true;
-        YamlLogging.clientWrites=true;
-        YamlLogging.showServerReads=true;
-        YamlLogging.showServerWrites=true;
-
         Map map = assetTree.acquireMap("group", String.class, String.class);
+
         map.put("subject", "cs");
+        assertEquals("cs", map.get("subject"));
 
-        System.out.println(map.get("subject"));
         Reference<String> ref = assetTree.acquireReference("group/subject", String.class);
-
         ref.set("sport");
         assertEquals("sport", map.get("subject"));
         assertEquals("sport", ref.get());
@@ -122,6 +123,27 @@ public class ReferenceTest {
 
         s = ref.syncUpdate(o -> "**" + o.toString(), o -> "**" + o.toString());
         assertEquals("****maths", s);
+        assertEquals("**maths", ref.get());
+    }
 
+    @Ignore
+    @Test
+    public void testReferenceSubscriptions(){
+        Map map = assetTree.acquireMap("group", String.class, String.class);
+
+        map.put("subject", "cs");
+        assertEquals("cs", map.get("subject"));
+
+        Reference<String> ref = assetTree.acquireReference("group/subject", String.class);
+        ref.set("sport");
+        assertEquals("sport", map.get("subject"));
+        assertEquals("sport", ref.get());
+
+        Subscriber<String> subscriber = s -> System.out.println("*****Message Received " + s);
+        assetTree.registerSubscriber("group/subject", String.class, subscriber);
+
+        ref.set("maths");
+
+        Jvm.pause(200);
     }
 }

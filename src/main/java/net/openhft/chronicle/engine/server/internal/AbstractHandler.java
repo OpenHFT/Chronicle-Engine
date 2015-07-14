@@ -56,7 +56,7 @@ public class AbstractHandler {
                         Wires.fromSizePrefixedBlobs(outWire.bytes(), outWire.bytes().readPosition(), outWire
                                 .bytes().readRemaining()));
             } catch (Exception e) {
-                System.out.println("\nServer Sends:\n" +
+                System.out.println("\nServer Sends ( corrupted ) :\n" +
                         outWire.bytes().toDebugString());
             }
 

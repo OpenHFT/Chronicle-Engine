@@ -99,7 +99,7 @@ public class VanillaAssetTree implements AssetTree {
 
     @NotNull
     @Override
-    public Asset root() {
+    public VanillaAsset root() {
         return root;
     }
 

@@ -939,7 +939,7 @@ public class TcpChannelHub implements View, Closeable {
                 throws IOException {
 
             final Bytes<?> bytes = wire.bytes();
-            bytes.ensureCapacity(bytes.readPosition() + numberOfBytes);
+            bytes.ensureCapacity(bytes.writePosition() + numberOfBytes);
 
             final ByteBuffer buffer = (ByteBuffer) bytes.underlyingObject();
             final int start = (int) bytes.writePosition();

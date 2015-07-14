@@ -14,6 +14,8 @@ import net.openhft.chronicle.threads.api.InvalidEventHandlerException;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
@@ -28,7 +30,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
     private final StringBuilder eventName = new StringBuilder();
     private Replication replication;
     private WireOutPublisher publisher;
-
+    private static final Logger LOG = LoggerFactory.getLogger(ReplicationHandler.class);
     private HostIdentifier hostId;
     private long tid;
 
@@ -172,6 +174,14 @@ public class ReplicationHandler<E> extends AbstractHandler {
                     if (inBootstrap == null)
                         return;
                     final byte id = inBootstrap.identifier();
+
+
+                    final ModificationIterator mi = replication.acquireModificationIterator(id);
+                    try {
+                        mi.dirtyEntries(inBootstrap.lastUpdatedTime());
+                    } catch (InterruptedException e) {
+                        LOG.error("",e);
+                    }
 
                     // send bootstrap
                     final Bootstrap outBootstrap = new Bootstrap();
