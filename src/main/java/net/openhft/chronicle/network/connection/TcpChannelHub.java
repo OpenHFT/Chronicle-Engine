@@ -141,7 +141,8 @@ public class TcpChannelHub implements View, Closeable {
 
     private void onDisconnected() {
 
-        System.out.println(" disconnected to remoteAddress=" + remoteAddress);
+        if (Jvm.isDebug())
+            System.out.println(" disconnected to remoteAddress=" + remoteAddress);
         tcpSocketConsumer.onConnectionClosed();
     }
 
@@ -179,8 +180,7 @@ public class TcpChannelHub implements View, Closeable {
             } catch (Exception e) {
 
                 String x = Bytes.toString(bytes);
-                System.out.println(x);
-                LOG.error("", e);
+                LOG.error(x, e);
             }
         } finally {
             bytes.writeLimit(limit);
@@ -614,7 +614,8 @@ public class TcpChannelHub implements View, Closeable {
         private TcpSocketConsumer(
                 @NotNull final Function<Bytes, Wire> wireFunction) {
             this.wireFunction = wireFunction;
-            System.out.println("constructor remoteAddress=" + remoteAddress);
+            if (Jvm.isDebug())
+                System.out.println("constructor remoteAddress=" + remoteAddress);
 
 
             executorService = start();
@@ -1076,7 +1077,6 @@ public class TcpChannelHub implements View, Closeable {
                         socketChannel = openSocketChannel();
 
                         try {
-
                             if (socketChannel == null || !socketChannel.connect(remoteAddress)) {
                                 LOG.error("Connection refused to remoteAddress=" + remoteAddress);
                                 pause(1000);
@@ -1108,18 +1108,15 @@ public class TcpChannelHub implements View, Closeable {
                     }
 
                     eventLoop.addHandler(this);
-                    System.out.println("successfully connected to remoteAddress=" + remoteAddress);
+                    if (Jvm.isDebug())
+                        System.out.println("successfully connected to remoteAddress=" + remoteAddress);
 
                     reconnect();
                     onConnected();
                     break;
-                } catch (IORuntimeException e) {
-
-                    closeSocket();
-                    throw e;
                 } catch (Exception e) {
+                    System.err.println("failed to connect remoteAddress=" + remoteAddress + " so will reconnect");
                     e.printStackTrace();
-                    System.out.println("failed to connect remoteAddress=" + remoteAddress + " so will reconnect");
                     closeSocket();
                 }
 
