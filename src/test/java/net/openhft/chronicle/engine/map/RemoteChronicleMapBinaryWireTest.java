@@ -23,10 +23,7 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TestName;
 
 import java.io.IOException;
@@ -61,12 +58,11 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     }
 
 
-
-
     @AfterClass
     public static void tearDownClass() {
         TCPRegistry.assertAllServersStopped();
     }
+
     @NotNull
     private ClosableMapSupplier newIntString(@NotNull String name) throws IOException {
         final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(

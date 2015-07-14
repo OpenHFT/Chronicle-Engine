@@ -279,7 +279,13 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         FileRecord<BytesStore> lastFileRecord = lastFileRecordMap.get(file);
         if (lastFileRecord != null && lastFileRecord.valid
                 && file.lastModified() == lastFileRecord.timestamp) {
-            return lastFileRecord.contents;
+            BytesStore contents = lastFileRecord.contents;
+            try {
+                contents.reserve();
+                return contents;
+            } catch (IllegalStateException e) {
+                return null;
+            }
         }
         return getFileContentsFromDisk(path, using);
     }

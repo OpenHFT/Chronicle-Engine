@@ -103,7 +103,12 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         bytes.clear();
         bytes.append(value);
         BytesStore retBytes = kvStore.getAndPut(key, bytes);
-        return retBytes == null ? null : retBytes.toString();
+        if (retBytes == null) return null;
+        else {
+            String s = retBytes.toString();
+            retBytes.release();
+            return s;
+        }
     }
 
     @Override

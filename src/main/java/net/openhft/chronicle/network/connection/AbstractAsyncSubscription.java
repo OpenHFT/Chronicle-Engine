@@ -14,17 +14,20 @@ public abstract class AbstractAsyncSubscription implements AsyncSubscription {
     @NotNull
     private final TcpChannelHub hub;
     private String csp;
+    private String name;
 
-    public AbstractAsyncSubscription(@NotNull final TcpChannelHub hub, String csp) {
+    public AbstractAsyncSubscription(@NotNull final TcpChannelHub hub, String csp, String name) {
         tid = hub.nextUniqueTransaction(Time.currentTimeMillis());
         this.hub = hub;
         this.csp = csp;
+        this.name = name;
     }
 
-    public AbstractAsyncSubscription(@NotNull final TcpChannelHub hub, String csp, byte identifier) {
+    public AbstractAsyncSubscription(@NotNull final TcpChannelHub hub, String csp, byte identifier, String name) {
         this.tid = hub.nextUniqueTransaction(Time.currentTimeMillis()) * identifier;
         this.hub = hub;
         this.csp = csp;
+        this.name = name;
     }
 
     @Override
@@ -60,5 +63,14 @@ public abstract class AbstractAsyncSubscription implements AsyncSubscription {
     @Override
     public void onClose() {
 
+    }
+
+    @Override
+    public String toString() {
+        return "AbstractAsyncSubscription{" +
+                "name='" + name + '\'' +
+                ", csp='" + csp + '\'' +
+                ", tid=" + tid +
+                '}';
     }
 }
