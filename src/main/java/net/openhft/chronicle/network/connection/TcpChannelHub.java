@@ -1071,10 +1071,13 @@ public class TcpChannelHub implements View, Closeable {
                 try {
 
                     for (; ; ) {
+                        if (tcpSocketConsumer.isShutdown())
+                            throw new IORuntimeException("Shutdown connection to" + remoteAddress);
 
                         socketChannel = openSocketChannel();
 
                         try {
+
                             if (socketChannel == null || !socketChannel.connect(remoteAddress)) {
                                 LOG.error("Connection refused to remoteAddress=" + remoteAddress);
                                 pause(1000);
@@ -1111,6 +1114,10 @@ public class TcpChannelHub implements View, Closeable {
                     reconnect();
                     onConnected();
                     break;
+                } catch (IORuntimeException e) {
+
+                    closeSocket();
+                    throw e;
                 } catch (Exception e) {
                     e.printStackTrace();
                     System.out.println("failed to connect remoteAddress=" + remoteAddress + " so will reconnect");
