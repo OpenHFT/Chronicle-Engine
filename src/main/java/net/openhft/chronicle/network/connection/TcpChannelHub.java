@@ -141,7 +141,8 @@ public class TcpChannelHub implements View, Closeable {
 
     private void onDisconnected() {
 
-        System.out.println(" disconnected to remoteAddress=" + remoteAddress);
+        if (Jvm.isDebug())
+            System.out.println(" disconnected to remoteAddress=" + remoteAddress);
         tcpSocketConsumer.onConnectionClosed();
     }
 
@@ -179,8 +180,7 @@ public class TcpChannelHub implements View, Closeable {
             } catch (Exception e) {
 
                 String x = Bytes.toString(bytes);
-                System.out.println(x);
-                LOG.error("", e);
+                LOG.error(x, e);
             }
         } finally {
             bytes.writeLimit(limit);
@@ -276,7 +276,8 @@ public class TcpChannelHub implements View, Closeable {
         //  eventLoop.stop();
         tcpSocketConsumer.stop();
         closed = true;
-        System.out.println("closing " + remoteAddress + "");
+        if (Jvm.isDebug())
+            System.out.println("closing " + remoteAddress + "");
         while (clientChannel != null) {
             pause(10);
             System.out.println("waiting for disconnect");
@@ -614,7 +615,8 @@ public class TcpChannelHub implements View, Closeable {
         private TcpSocketConsumer(
                 @NotNull final Function<Bytes, Wire> wireFunction) {
             this.wireFunction = wireFunction;
-            System.out.println("constructor remoteAddress=" + remoteAddress);
+            if (Jvm.isDebug())
+                System.out.println("constructor remoteAddress=" + remoteAddress);
 
 
             executorService = start();
@@ -648,7 +650,8 @@ public class TcpChannelHub implements View, Closeable {
             //noinspection SynchronizationOnLocalVariableOrMethodParameter
             synchronized (bytes) {
                 map.put(tid, bytes);
-                System.out.println("map.put(tid=" + tid + "bytes=" + bytes);
+                if (Jvm.isDebug())
+                    System.out.println("map.put(tid=" + tid + "bytes=" + bytes);
                 bytes.wait(timeoutTimeMs);
             }
 
@@ -672,6 +675,7 @@ public class TcpChannelHub implements View, Closeable {
                 }
 
                 map.put(asyncSubscription.tid(), asyncSubscription);
+                if (Jvm.isDebug())
                 System.out.println("map.put(tid=" + asyncSubscription.tid() + "asyncSubscription=" + asyncSubscription);
                 // not currently connected
                 return;
@@ -682,6 +686,7 @@ public class TcpChannelHub implements View, Closeable {
             reentrantLock.lock();
             try {
                 map.put(asyncSubscription.tid(), asyncSubscription);
+                if (Jvm.isDebug())
                 System.out.println("map.put(tid=" + asyncSubscription.tid() + "asyncSubscription=" + asyncSubscription);
                 asyncSubscription.applySubscribe();
             } catch (Exception e) {
@@ -1106,14 +1111,15 @@ public class TcpChannelHub implements View, Closeable {
                     }
 
                     eventLoop.addHandler(this);
-                    System.out.println("successfully connected to remoteAddress=" + remoteAddress);
+                    if (Jvm.isDebug())
+                        System.out.println("successfully connected to remoteAddress=" + remoteAddress);
 
                     reconnect();
                     onConnected();
                     break;
                 } catch (Exception e) {
+                    System.err.println("failed to connect remoteAddress=" + remoteAddress + " so will reconnect");
                     e.printStackTrace();
-                    System.out.println("failed to connect remoteAddress=" + remoteAddress + " so will reconnect");
                     closeSocket();
                 }
 
