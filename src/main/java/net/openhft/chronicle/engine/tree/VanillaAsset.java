@@ -166,7 +166,7 @@ public class VanillaAsset implements Asset, Closeable {
         sessionProvider.set(sessionDetails);
 
         EventLoop eventLoop = findOrCreateView(EventLoop.class);
-
+        eventLoop.start();
         if (getView(TcpChannelHub.class) == null) {
             TcpChannelHub view = Threads.withThreadGroup(findView(ThreadGroup.class),
                     () -> new TcpChannelHub(sessionProvider, hostPortDescription, eventLoop, wire));
