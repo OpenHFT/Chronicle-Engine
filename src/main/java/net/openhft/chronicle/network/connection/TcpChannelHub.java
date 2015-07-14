@@ -956,11 +956,11 @@ public class TcpChannelHub implements View, Closeable {
             while (buffer.remaining() > 0) {
                 final SocketChannel clientChannel = TcpChannelHub.this.clientChannel;
                 if (clientChannel == null)
-                    throw new IOException("Disconnection to server channel is closed" +
-                            description);
+                    throw new IOException("Disconnection to server channel is closed" + description + "/" +
+                            TCPRegistry.lookup(description));
 
                 if (clientChannel.read(buffer) == -1)
-                    throw new IOException("Disconnection to server read=-1 " + description);
+                    throw new IOException("Disconnection to server read=-1 " + description + "/" + TCPRegistry.lookup(description));
                 if (isShutdown)
                     throw new IOException("The server was shutdown, " + description + "/" + TCPRegistry.lookup(description));
             }
