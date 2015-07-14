@@ -20,6 +20,8 @@ import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 
+import java.io.Serializable;
+
 /**
  * Created by peter on 07/07/15.
  */
@@ -29,6 +31,7 @@ public class KeyFunctionPair implements Marshallable {
 
     KeyFunctionPair(Object key, Object function) {
         this.key = key;
+        assert Serializable.class.isAssignableFrom(function.getClass());
         this.function = function;
     }
 

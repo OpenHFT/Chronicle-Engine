@@ -874,6 +874,7 @@ public class TcpChannelHub implements View, Closeable {
                 //noinspection SynchronizationOnLocalVariableOrMethodParameter
                 synchronized (bytes) {
                     bytes.clear();
+                    bytes.ensureCapacity(SIZE_OF_SIZE + messageSize);
                     final ByteBuffer byteBuffer = (ByteBuffer) bytes.underlyingObject();
                     byteBuffer.clear();
                     // we have to first write the header back to the bytes so that is can be

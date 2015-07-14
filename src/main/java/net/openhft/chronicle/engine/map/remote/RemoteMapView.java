@@ -195,27 +195,31 @@ public class RemoteMapView<K, MV, V> extends VanillaMapView<K, MV, V> {
     public void asyncUpdateKey(K key, @NotNull SerializableFunction<V, V> updateFunction) {
         checkKey(key);
         // TODO CE-95 handle this natively.
-        compute(key, (k, v) -> updateFunction.apply(v));
+        SerializableBiFunction<K, V, V> kvvBiFunction = (k, v) -> updateFunction.apply(v);
+        compute(key, kvvBiFunction);
     }
 
     @Override
     public <T> void asyncUpdateKey(K key, @NotNull SerializableBiFunction<V, T, V> updateFunction, T argument) {
         checkKey(key);
         // TODO CE-95 handle this natively.
-        compute(key, (k, v) -> updateFunction.apply(v, argument));
+        SerializableBiFunction<K, V, V> kvvBiFunction = (k, v) -> updateFunction.apply(v, argument);
+        compute(key, kvvBiFunction);
     }
 
     @Override
     public <R> R syncUpdateKey(K key, @NotNull SerializableFunction<V, V> updateFunction, @NotNull SerializableFunction<V, R> returnFunction) {
         checkKey(key);
         // TODO CE-95 handle this natively.
-        return applyTo((map, kvf) -> returnFunction.apply(map.compute(key, (k, v) -> updateFunction.apply(v))), key);
+        SerializableBiFunction<K, V, V> kvvBiFunction = (k, v) -> updateFunction.apply(v);
+        return applyTo((map, kvf) -> returnFunction.apply(map.compute(key, kvvBiFunction)), key);
     }
 
     @Override
     public <T, RT, R> R syncUpdateKey(K key, @NotNull SerializableBiFunction<V, T, V> updateFunction, @Nullable T updateArgument, @NotNull SerializableBiFunction<V, RT, R> returnFunction, @Nullable RT returnArgument) {
         checkKey(key);
         // TODO CE-95 handle this natively.
-        return applyTo((map, kvf) -> returnFunction.apply(map.compute(key, (k, v) -> updateFunction.apply(v, updateArgument)), returnArgument), key);
+        SerializableBiFunction<K, V, V> kvvBiFunction = (k, v) -> updateFunction.apply(v, updateArgument);
+        return applyTo((map, kvf) -> returnFunction.apply(map.compute(key, kvvBiFunction), returnArgument), key);
     }
 }
