@@ -99,8 +99,8 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
                     .createWithId(hostIdentifier.hostId()));
 
         } catch (AssetNotFoundException anfe) {
-            if (LOGGER.isInfoEnabled())
-                LOGGER.info("replication not enabled " + anfe.getMessage());
+            if (LOGGER.isDebugEnabled())
+                LOGGER.debug("replication not enabled " + anfe.getMessage());
         }
 
         this.engineReplicator = engineReplicator1;
@@ -261,8 +261,10 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
         isClosed.set(true);
         eventLoop.stop();
         closeQuietly(asset.findView(TcpChannelHub.class));
-        Jvm.pause(1000);
-        chronicleMap.close();
+        new Thread(() -> {
+            Jvm.pause(1000);
+            chronicleMap.close();
+        }, "close " + assetFullName).start();
     }
 
     @Override

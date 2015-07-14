@@ -126,7 +126,7 @@ abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient imp
         try {
             writeMetaDataForKnownTID(tid);
             hub.outWire().writeDocument(false, wireOut -> {
-                wireOut.writeEventName(unRegisterSubscriber).text("");
+                wireOut.writeEventName(unregisterSubscriber).text("");
             });
 
             try {
