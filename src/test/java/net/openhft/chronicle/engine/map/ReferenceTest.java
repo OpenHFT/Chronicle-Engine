@@ -12,10 +12,7 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -129,6 +126,7 @@ public class ReferenceTest {
         assertEquals("**maths", ref.get());
     }
 
+    @Ignore
     @Test
     public void testReferenceSubscriptions(){
         Map map = assetTree.acquireMap("group", String.class, String.class);
