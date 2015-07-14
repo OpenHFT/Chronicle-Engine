@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.wire.WireOut;
 import net.openhft.chronicle.wire.Wires;
 import net.openhft.chronicle.wire.YamlLogging;
@@ -50,7 +51,7 @@ public class AbstractHandler {
             }
         });
 
-        if (YamlLogging.showServerWrites)
+        if (Jvm.IS_DEBUG && YamlLogging.showServerWrites)
             try {
                 System.out.println("\nServer Sends:\n" +
                         Wires.fromSizePrefixedBlobs(outWire.bytes(), outWire.bytes().readPosition(), outWire

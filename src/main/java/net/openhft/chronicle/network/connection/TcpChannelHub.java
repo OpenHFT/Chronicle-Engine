@@ -154,7 +154,7 @@ public class TcpChannelHub implements View, Closeable {
     static void logToStandardOutMessageReceived(@NotNull Wire wire) {
         Bytes<?> bytes = wire.bytes();
 
-        if (!YamlLogging.clientReads)
+        if (!Jvm.IS_DEBUG || !YamlLogging.clientReads)
             return;
 
         final long position = bytes.writePosition();

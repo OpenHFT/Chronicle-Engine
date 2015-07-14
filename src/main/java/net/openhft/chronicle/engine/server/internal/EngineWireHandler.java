@@ -17,6 +17,7 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.*;
@@ -348,7 +349,7 @@ public class EngineWireHandler extends WireTcpHandler {
     }
 
     private void logYamlToStandardOut(@NotNull WireIn in) {
-        if (YamlLogging.showServerReads) {
+        if (Jvm.IS_DEBUG && YamlLogging.showServerReads) {
             try {
                 System.out.println("\nServer Receives:\n" +
                         Wires.fromSizePrefixedBlobs(in.bytes()));
