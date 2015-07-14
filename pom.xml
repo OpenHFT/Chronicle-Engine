@@ -26,7 +26,7 @@
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>chronicle-engine</artifactId>
-    <version>1.5.7-beta-SNAPSHOT</version>
+    <version>1.5.8-beta-SNAPSHOT</version>
     <name>OpenHFT/Chronicle-Engine</name>
     <description>Chronicle Engine Framework</description>
 
