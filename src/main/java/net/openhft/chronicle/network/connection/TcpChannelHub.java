@@ -605,14 +605,10 @@ public class TcpChannelHub implements View, Closeable {
         private TcpSocketConsumer(
                 @NotNull final Function<Bytes, Wire> wireFunction) {
             this.wireFunction = wireFunction;
-            if (Jvm.isDebug())
-                System.out.println("constructor remoteAddress=" + remoteAddress);
-
+            if (LOG.isDebugEnabled())
+                LOG.debug("constructor remoteAddress=" + remoteAddress);
 
             executorService = start();
-            // used for the heartbeat
-
-
         }
 
         @Override
@@ -658,7 +654,8 @@ public class TcpChannelHub implements View, Closeable {
             if (clientChannel == null) {
 
                 map.put(asyncSubscription.tid(), asyncSubscription);
-                LOG.warn("deferred subscription tid=" + asyncSubscription.tid() + ",asyncSubscription=" + asyncSubscription);
+                if (LOG.isDebugEnabled())
+                    LOG.debug("deferred subscription tid=" + asyncSubscription.tid() + ",asyncSubscription=" + asyncSubscription);
 
                 // not currently connected
                 return;
@@ -1054,7 +1051,7 @@ public class TcpChannelHub implements View, Closeable {
             if (clientChannel != null)
                 return;
 
-            System.out.println("attempt reconnect remoteAddress=" + remoteAddress);
+
             attemptConnect();
         }
 
@@ -1065,7 +1062,8 @@ public class TcpChannelHub implements View, Closeable {
                 if (isShutdown())
                     throw new IOException("shutdown..");
 
-                System.out.println("attemptConnect remoteAddress=" + remoteAddress);
+                if (LOG.isDebugEnabled())
+                    LOG.debug("attemptConnect remoteAddress=" + remoteAddress);
                 SocketChannel socketChannel;
                 try {
 
@@ -1107,14 +1105,14 @@ public class TcpChannelHub implements View, Closeable {
                     }
 
                     eventLoop.addHandler(this);
-                    if (Jvm.isDebug())
-                        System.out.println("successfully connected to remoteAddress=" + remoteAddress);
+                    if (LOG.isInfoEnabled())
+                        LOG.info("successfully connected to remoteAddress=" + remoteAddress);
 
                     reconnect();
                     onConnected();
                     break;
                 } catch (Exception e) {
-                    System.err.println("failed to connect remoteAddress=" + remoteAddress + " so will reconnect");
+                    LOG.error("failed to connect remoteAddress=" + remoteAddress + " so will reconnect");
                     e.printStackTrace();
                     closeSocket();
                 }

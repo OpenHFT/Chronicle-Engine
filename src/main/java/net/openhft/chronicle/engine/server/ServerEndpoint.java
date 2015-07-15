@@ -17,6 +17,7 @@ package net.openhft.chronicle.engine.server;
 
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
+import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
 import net.openhft.chronicle.network.AcceptorEventHandler;
 import net.openhft.chronicle.network.VanillaSessionDetails;
@@ -25,6 +26,8 @@ import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -36,6 +39,7 @@ import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
  */
 public class ServerEndpoint implements Closeable {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ChronicleMapKeyValueStore.class);
     @Nullable
     private EventLoop eg;
     @Nullable
@@ -54,7 +58,8 @@ public class ServerEndpoint implements Closeable {
     @Nullable
     public AcceptorEventHandler start(String hostPortDescription, @NotNull final AssetTree asset, WireType wireType) throws IOException {
         eg.start();
-        System.out.println("starting server=" + hostPortDescription);
+        if (LOGGER.isDebugEnabled())
+            LOGGER.info("starting server=" + hostPortDescription);
         AcceptorEventHandler eah = new AcceptorEventHandler(hostPortDescription,
                 () -> new EngineWireHandler(wireType, asset), VanillaSessionDetails::new);
 
