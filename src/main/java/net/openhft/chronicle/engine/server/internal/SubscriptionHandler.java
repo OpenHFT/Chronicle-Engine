@@ -133,7 +133,8 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
                 // no more data.
                 Consumer<WireOut> toPublish = publish -> {
                     publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(tid));
-                    publish.writeDocument(false, wire -> wire.write(reply).typedMarshallable(null));
+                    publish.writeDocument(false, wire ->
+                            wire.writeEventName(ObjectKVSubscriptionHandler.EventId.onEndOfSubscription).text(""));
                 };
                 publisher.add(toPublish);
             }

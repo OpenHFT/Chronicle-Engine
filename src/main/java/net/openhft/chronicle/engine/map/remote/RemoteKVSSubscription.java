@@ -79,6 +79,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractRemoteSubscription<
 
             @Override
             public void onConsumer(@NotNull final WireIn inWire) {
+
                 inWire.readDocument(null, d -> {
                     StringBuilder sb = Wires.acquireStringBuilder();
                     ValueIn valueIn = d.readEventName(sb);

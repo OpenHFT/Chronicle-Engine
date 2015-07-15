@@ -35,7 +35,6 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscriptio
         if (registerTopicSubscriber.contentEquals(eventName)) {
 
             final TopicSubscriber listener = new TopicSubscriber() {
-
                 @Override
                 public void onMessage(final Object topic, final Object message) throws InvalidSubscriberException {
                     Consumer<WireOut> toPublish = publish -> {
@@ -79,12 +78,6 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscriptio
                 return;
             }
             assetTree.unregisterTopicSubscriber(requestContext.name(), listener);
-            // no more data.
-            Consumer<WireOut> toPublish = publish -> {
-                publish.writeDocument(true, wire -> wire.writeEventName(tid).int64(inputTid));
-                publish.writeDocument(false, wire -> wire.write(reply).typedMarshallable(null));
-            };
-            publisher.add(toPublish);
 
             return;
         }
