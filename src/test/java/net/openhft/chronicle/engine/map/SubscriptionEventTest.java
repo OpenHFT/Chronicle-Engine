@@ -307,6 +307,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
     }
 
+    @Ignore
     @Test
     public void testUnsubscribeToMapEvents() throws IOException, InterruptedException {
 
