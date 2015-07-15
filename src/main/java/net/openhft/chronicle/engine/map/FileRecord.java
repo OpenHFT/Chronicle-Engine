@@ -16,16 +16,28 @@
 
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.core.ReferenceCounted;
+
 /**
  * Created by daniel on 21/05/15.
  */
 class FileRecord<T> {
     final long timestamp;
     boolean valid = true;
-    final T contents;
+    private final T contents;
 
     FileRecord(long timestamp, T contents) {
         this.timestamp = timestamp;
         this.contents = contents;
+    }
+
+    public T contents() {
+        if (contents instanceof ReferenceCounted)
+            try {
+                ((ReferenceCounted) contents).reserve();
+            } catch (IllegalStateException e) {
+                return null;
+            }
+        return contents;
     }
 }
