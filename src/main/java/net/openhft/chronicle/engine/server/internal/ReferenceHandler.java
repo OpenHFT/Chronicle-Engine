@@ -8,7 +8,11 @@ import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -21,6 +25,7 @@ import static net.openhft.chronicle.network.connection.CoreFields.tid;
  * Created by Rob Austin
  */
 public class ReferenceHandler<E,T> extends AbstractHandler {
+    private static final Logger LOG = LoggerFactory.getLogger(ReferenceHandler.class);
     private final StringBuilder eventName = new StringBuilder();
 
     private WireOutPublisher publisher;
@@ -29,6 +34,7 @@ public class ReferenceHandler<E,T> extends AbstractHandler {
     private Function<ValueIn, E> wireToE;
 
     private BiConsumer<ValueOut, E> vToWire;
+    final Map<Long, Object> tidToListener = new ConcurrentHashMap<>();
 
     private final BiConsumer<WireIn, Long> dataConsumer = new BiConsumer<WireIn, Long>() {
 
@@ -74,7 +80,20 @@ public class ReferenceHandler<E,T> extends AbstractHandler {
 
                 // TODO CE-101 get the true value from the CSP
                 boolean bootstrap = true;
+                tidToListener.put(inputTid, listener);
                 view.registerSubscriber(bootstrap, listener);
+                return;
+            }
+
+            if (unregisterSubscriber.contentEquals(eventName)) {
+                long subscriberTid = valueIn.int64();
+                Subscriber<E> listener = (Subscriber) tidToListener.remove(subscriberTid);
+                if (listener == null) {
+                    LOG.warn("No subscriber to present to unregisterSubscriber (" + subscriberTid + ")");
+                    return;
+                }
+                view.unregisterSubscriber(listener);
+
                 return;
             }
 
@@ -161,6 +180,7 @@ public class ReferenceHandler<E,T> extends AbstractHandler {
         getAndSet(value),
         asyncUpdate,
         registerSubscriber,
+        unregisterSubscriber,
         countSubscribers,
         onEndOfSubscription;
 

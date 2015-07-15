@@ -32,11 +32,13 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
+import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static net.openhft.chronicle.engine.server.internal.ObjectKVSubscriptionHandler.EventId.onEndOfSubscription;
 import static net.openhft.chronicle.engine.server.internal.ObjectKVSubscriptionHandler.EventId.registerTopicSubscriber;
 import static net.openhft.chronicle.engine.server.internal.ObjectKVSubscriptionHandler.EventId.unregisterTopicSubscriber;
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
@@ -68,6 +70,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractRemoteSubscription<
         hub.subscribe(new AbstractAsyncSubscription(hub, csp, "Remove KV Subscription registerTopicSubscriber") {
             @Override
             public void onSubscribe(@NotNull final WireOut wireOut) {
+                subscribersToTid.put(subscriber, tid());
                 wireOut.writeEventName(registerTopicSubscriber).marshallable(m -> {
                     m.write(() -> "keyType").typeLiteral(kClass);
                     m.write(() -> "valueType").typeLiteral(vClass);
@@ -77,12 +80,17 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractRemoteSubscription<
             @Override
             public void onConsumer(@NotNull final WireIn inWire) {
                 inWire.readDocument(null, d -> {
-                    ValueIn valueIn = d.read(reply);
-                    valueIn.marshallable(m -> {
-                        final K topic = m.read(() -> "topic").object(kClass);
-                        final V message = m.read(() -> "message").object(vClass);
-                        RemoteKVSSubscription.this.onEvent(topic, message, subscriber);
-                    });
+                    StringBuilder sb = Wires.acquireStringBuilder();
+                    ValueIn valueIn = d.readEventName(sb);
+                    if(reply.contentEquals(sb)){
+                        valueIn.marshallable(m -> {
+                            final K topic = m.read(() -> "topic").object(kClass);
+                            final V message = m.read(() -> "message").object(vClass);
+                            RemoteKVSSubscription.this.onEvent(topic, message, subscriber);
+                        });
+                    }else if(onEndOfSubscription.contentEquals(sb)) {
+                        RemoteKVSSubscription.this.onEndOfSubscription();
+                    }
                 });
             }
 

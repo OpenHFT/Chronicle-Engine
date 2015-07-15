@@ -68,9 +68,10 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     public <V> V getView(Class<V> viewType) {
         if (viewType == Reference.class || viewType == Publisher.class || viewType == Supplier.class)
             return (V) reference;
-        if (viewType == Subscription.class || viewType == VanillaSimpleSubscription.class)
+        if (viewType == Subscription.class || viewType == VanillaSimpleSubscription.class
+                || viewType == ObjectKVSSubscription.class)
             return (V) subscription;
-        throw new UnsupportedOperationException("todo");
+        throw new UnsupportedOperationException("Unable to classify view type " + viewType);
     }
 
     @Override
