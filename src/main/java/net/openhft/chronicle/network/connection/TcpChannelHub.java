@@ -79,6 +79,7 @@ public class TcpChannelHub implements View, Closeable {
     @Override
     public String toString() {
         return "TcpChannelHub{" +
+                " ,name=" + name +
                 "remoteAddress=" + remoteAddress +
                 ", description='" + description + '}';
     }
@@ -112,17 +113,19 @@ public class TcpChannelHub implements View, Closeable {
     private final String description;
 
 
-    public TcpChannelHub(@NotNull SessionProvider sessionProvider,
-                         @NotNull String description,
-                         @NotNull EventLoop eventLoop,
-                         @NotNull Function<Bytes, Wire> wire) {
+    public TcpChannelHub(@NotNull final SessionProvider sessionProvider,
+                         @NotNull final String description,
+                         @NotNull final EventLoop eventLoop,
+                         @NotNull final Function<Bytes, Wire> wire,
+                         @NotNull final String name) {
+
         this.description = description;
         this.eventLoop = eventLoop;
         this.tcpBufferSize = 64 << 10;
         this.remoteAddress = TCPRegistry.lookup(description);
         this.outWire = wire.apply(elasticByteBuffer());
         this.inWire = wire.apply(elasticByteBuffer());
-        this.name = remoteAddress.toString();
+        this.name = name;
         this.timeoutMs = 10_000;
         this.wire = wire;
         this.handShakingWire = wire.apply(Bytes.elasticByteBuffer());
@@ -375,26 +378,7 @@ public class TcpChannelHub implements View, Closeable {
             int len = socketChannel.write(outBuffer);
 
             if (len == -1)
-                throw new IORuntimeException("Disconnection to server " + description + "/" + TCPRegistry.lookup(description));
-
-            if (outBuffer.remaining() == 0)
-                break;
-
-            if (LOG.isDebugEnabled())
-                LOG.debug("Buffer is full");
-
-            // if we have queued threads then we don't have to write all the bytes as the other
-            // threads will write the remains bytes.
-            if (outBuffer.remaining() > 0 && outBytesLock().hasQueuedThreads() &&
-                    outBuffer.remaining() + largestChunkSoFar <= tcpBufferSize) {
-                if (LOG.isDebugEnabled())
-                    LOG.debug("continuing -  without all the data being written to the buffer as " +
-                            "it will be written by the next thread");
-                outBuffer.compact();
-                bytes.writeLimit(outBuffer.limit());
-                bytes.writePosition(outBuffer.position());
-                return;
-            }
+                throw new IORuntimeException("Disconnection to server " + description + "/" + TCPRegistry.lookup(description) + ",name=" + name);
 
         }
 
@@ -961,12 +945,12 @@ public class TcpChannelHub implements View, Closeable {
                 final SocketChannel clientChannel = TcpChannelHub.this.clientChannel;
                 if (clientChannel == null)
                     throw new IOException("Disconnection to server channel is closed" + description + "/" +
-                            TCPRegistry.lookup(description));
+                            TCPRegistry.lookup(description) + " ,name=" + name);
 
                 if (clientChannel.read(buffer) == -1)
-                    throw new IOException("Disconnection to server read=-1 " + description + "/" + TCPRegistry.lookup(description));
+                    throw new IOException("Disconnection to server read=-1 " + description + "/" + TCPRegistry.lookup(description) + " ,name=" + name);
                 if (isShutdown)
-                    throw new IOException("The server was shutdown, " + description + "/" + TCPRegistry.lookup(description));
+                    throw new IOException("The server was shutdown, " + description + "/" + TCPRegistry.lookup(description) + " ,name=" + name);
             }
         }
 
@@ -996,7 +980,7 @@ public class TcpChannelHub implements View, Closeable {
                 public void onConsumer(@NotNull WireIn inWire) {
                     long roundTipTimeMicros = NANOSECONDS.toMicros(System.nanoTime() - l);
                     if (LOG.isDebugEnabled())
-                        LOG.debug(String.format("{0}:{1}heartbeat round trip time={2}us",
+                        LOG.debug(String.format("{0}:{1}heartbeat round trip time={2}us" + " ,name=" + name,
                                 description, TCPRegistry.lookup(description),
                                 roundTipTimeMicros));
                     inWire.clear();
