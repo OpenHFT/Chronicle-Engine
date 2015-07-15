@@ -60,7 +60,7 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
     @Override
     public void set(final E event) {
         checkEvent(event);
-        sendEventAsync(set, valueOut -> valueOut.object(event));
+        sendEventAsync(set, valueOut -> valueOut.object(event), true);
     }
 
     @Override
@@ -75,7 +75,7 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
 
     @Override
     public void remove() {
-        sendEventAsync(remove, null);
+        sendEventAsync(remove, null, true);
     }
 
     @Override
@@ -87,7 +87,7 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
     public void unregisterSubscriber(Subscriber<E> subscriber) {
         Long subscriberTid = subscribersToTid.remove(subscriber);
         if(subscriberTid!=null) {
-            sendEventAsync(unregisterSubscriber, valueOut -> valueOut.int64(subscriberTid));
+            sendEventAsync(unregisterSubscriber, valueOut -> valueOut.int64(subscriberTid), false);
         }else
             LOG.warn("No subscriber to unsubscribe");
     }
@@ -174,7 +174,7 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
 
     @Override
     public <T> void asyncUpdate(@NotNull SerializableBiFunction<E, T, E> updateFunction, T argument) {
-        sendEventAsync(update2, toParameters(update2, updateFunction, argument));
+        sendEventAsync(update2, toParameters(update2, updateFunction, argument), true);
     }
 
     @Override

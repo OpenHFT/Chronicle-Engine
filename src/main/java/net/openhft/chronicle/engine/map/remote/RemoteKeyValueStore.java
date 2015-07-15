@@ -162,7 +162,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     }
 
     public <A> void asyncUpdate(SerializableUpdaterWithArg updateFunction, A arg) {
-        sendEventAsync(update2, toParameters(update2, updateFunction, arg));
+        sendEventAsync(update2, toParameters(update2, updateFunction, arg), true);
     }
 
     @Override
@@ -272,7 +272,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
 
     public boolean remove(Object key) {
         checkKey(key);
-        sendEventAsync(remove, toParameters(remove, key));
+        sendEventAsync(remove, toParameters(remove, key), true);
         return false;
     }
 
@@ -291,7 +291,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     public boolean put(K key, V value) {
         checkKey(key);
         checkValue(value);
-        sendEventAsync(put, toParameters(put, key, value));
+        sendEventAsync(put, toParameters(put, key, value), true);
         return false;
     }
 

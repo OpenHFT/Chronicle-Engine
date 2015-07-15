@@ -21,6 +21,7 @@ import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
+import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -35,7 +36,7 @@ public class Clusters implements Marshallable, View {
 
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
-        StringBuilder clusterName = new StringBuilder();
+        StringBuilder clusterName = Wires.acquireStringBuilder();
         while (wire.hasMore()) {
             wire.readEventName(clusterName).marshallable(host -> {
                 Cluster cluster = clusterMap.computeIfAbsent(clusterName.toString(), Cluster::new);

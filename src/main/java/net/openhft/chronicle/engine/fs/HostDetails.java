@@ -75,4 +75,12 @@ public class HostDetails implements Marshallable, View, Closeable {
     public void close() throws IOException {
         tcpChannelHubs.values().forEach(TcpChannelHub::close);
     }
+
+    @Override
+    public String toString() {
+        return "HostDetails{" +
+                "hostId=" + hostId +
+                ", connectUri='" + connectUri +
+                '}';
+    }
 }

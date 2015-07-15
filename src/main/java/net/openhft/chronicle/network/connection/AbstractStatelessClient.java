@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -41,8 +40,6 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
     protected final TcpChannelHub hub;
     private final long cid;
     protected String csp;
-    @NotNull
-    StringBuilder eventName = new StringBuilder();
 
     /**
      * @param hub for this connection
@@ -64,7 +61,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
             final WireKey[] paramNames = eventId.params();
 
             //args can be null, e.g. when get() is called from Reference.
-            if(args ==null)return;
+            if (args == null) return;
 
             assert args.length == paramNames.length :
                     "methodName=" + eventId +
@@ -184,11 +181,19 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
         return tid;
     }
 
+    /**
+     * @param eventId
+     * @param consumer
+     * @param blockTillTimeout if false - will only be sent if the connection is valid
+     */
     protected void sendEventAsync(@NotNull final WireKey eventId,
-                                  @Nullable final Consumer<ValueOut> consumer) {
-    /*    if (hub.outBytesLock().isHeldByCurrentThread())
-            throw new IllegalStateException("Cannot view map while debugging");*/
-        hub.checkConnection();
+                                  @Nullable final Consumer<ValueOut> consumer,
+                                  boolean blockTillTimeout) {
+
+        if (blockTillTimeout)
+            hub.checkConnection();
+        else if (!hub.isOpen())
+            return;
 
         hub.outBytesLock().lock();
         try {
@@ -268,6 +273,8 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
     }
 
     protected <R> R readReply(@NotNull WireIn wireIn, @NotNull WireKey replyId, @NotNull Function<ValueIn, R> function) {
+
+        StringBuilder eventName = Wires.acquireStringBuilder();
         final ValueIn event = wireIn.read(eventName);
 
         if (replyId.contentEquals(eventName))
@@ -281,6 +288,8 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
     }
 
     protected void readReplyConsumer(@NotNull WireIn wireIn, @NotNull WireKey replyId, @NotNull Consumer<ValueIn> consumer) {
+
+        StringBuilder eventName = Wires.acquireStringBuilder();
         final ValueIn event = wireIn.read(eventName);
 
         if (replyId.contentEquals(eventName)) {

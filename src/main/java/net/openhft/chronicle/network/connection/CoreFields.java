@@ -20,6 +20,7 @@ import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireKey;
+import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -32,11 +33,10 @@ public enum CoreFields implements WireKey {
     reply,
     exception;
 
-    private final static StringBuilder cpsBuilder = new StringBuilder();
-    @NotNull
-    private static StringBuilder eventName = new StringBuilder();
+    static ThreadLocal<StringBuilder> cpsBuilder = ThreadLocal.withInitial(StringBuilder::new);
 
     private static long longEvent(@NotNull final WireKey expecting, @NotNull final WireIn wire) {
+        final StringBuilder eventName = Wires.acquireStringBuilder();
         long position = wire.bytes().readPosition();
         final ValueIn valueIn = wire.readEventName(eventName);
         if (expecting.contentEquals(eventName))
@@ -49,6 +49,7 @@ public enum CoreFields implements WireKey {
     @NotNull
     public static StringBuilder stringEvent(@NotNull final WireKey expecting, @NotNull StringBuilder using,
                                             @NotNull final WireIn wire) {
+        final StringBuilder eventName = Wires.acquireStringBuilder();
         final ValueIn valueIn = wire.readEventName(eventName);
         if (expecting.contentEquals(eventName)) {
             valueIn.textTo(using);
@@ -68,6 +69,6 @@ public enum CoreFields implements WireKey {
 
     @NotNull
     public static StringBuilder csp(@NotNull final WireIn wire) {
-        return stringEvent(CoreFields.csp, cpsBuilder, wire);
+        return stringEvent(CoreFields.csp, cpsBuilder.get(), wire);
     }
 }

@@ -1,6 +1,5 @@
 package net.openhft.chronicle.engine.map.remote;
 
-import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
@@ -121,22 +120,12 @@ abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient imp
         }
 
 
-        hub.checkConnection();
-        hub.outBytesLock().lock();
-        try {
+        hub.lock(() -> {
             writeMetaDataForKnownTID(tid);
             hub.outWire().writeDocument(false, wireOut -> {
                 wireOut.writeEventName(unregisterSubscriber).text("");
             });
-
-            try {
-                hub.writeSocket(hub.outWire());
-            } catch (IORuntimeException e) {
-                // if we are not connected then we cant un-subscribe
-            }
-        } finally {
-            hub.outBytesLock().unlock();
-        }
+        });
     }
 
     @Override

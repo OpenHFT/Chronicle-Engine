@@ -67,7 +67,7 @@ public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId>
         sendEventAsync(publish, valueOut -> valueOut.marshallable(m -> {
             m.write(Params.topic).object(topic);
             m.write(Params.message).object(message);
-        }));
+        }), true);
 
     }
 

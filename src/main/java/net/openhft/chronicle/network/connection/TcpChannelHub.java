@@ -79,7 +79,7 @@ public class TcpChannelHub implements View, Closeable {
     @Override
     public String toString() {
         return "TcpChannelHub{" +
-                " ,name=" + name +
+                "name=" + name +
                 "remoteAddress=" + remoteAddress +
                 ", description='" + description + '}';
     }
@@ -269,6 +269,11 @@ public class TcpChannelHub implements View, Closeable {
             onDisconnected();
         }
 
+    }
+
+
+    public boolean isOpen() {
+        return clientChannel != null;
     }
 
     /**
@@ -503,15 +508,17 @@ public class TcpChannelHub implements View, Closeable {
     }
 
     public void lock(@NotNull Task r) {
-        checkConnection();
+        if (clientChannel == null)
+            return;
         outBytesLock().lock();
         try {
             r.run();
         } catch (Exception e) {
-            throw rethrow(e);
+            LOG.debug("", e);
         } finally {
             outBytesLock().unlock();
         }
+
 
     }
 
@@ -650,12 +657,8 @@ public class TcpChannelHub implements View, Closeable {
 
             if (clientChannel == null) {
 
-
-                if (asyncSubscription instanceof AsyncTemporarySubscription) {
-                    LOG.error(");");
-                }
-
                 map.put(asyncSubscription.tid(), asyncSubscription);
+                LOG.warn("deferred subscription tid=" + asyncSubscription.tid() + ",asyncSubscription=" + asyncSubscription);
 
                 // not currently connected
                 return;

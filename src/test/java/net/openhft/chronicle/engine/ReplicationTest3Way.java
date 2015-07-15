@@ -78,13 +78,13 @@ public class ReplicationTest3Way {
         TCPRegistry.createServerSocketChannelFor("host.port1", "host.port2", "host.port3");
 
         WireType writeType = WireType.TEXT;
-        tree1 = create(1, writeType);
-        tree2 = create(2, writeType);
         tree3 = create(3, writeType);
+        tree2 = create(2, writeType);
+        tree1 = create(1, writeType);
 
-        serverEndpoint1 = new ServerEndpoint("host.port1", tree1, writeType);
-        serverEndpoint2 = new ServerEndpoint("host.port2", tree2, writeType);
         serverEndpoint3 = new ServerEndpoint("host.port3", tree3, writeType);
+        serverEndpoint2 = new ServerEndpoint("host.port2", tree2, writeType);
+        serverEndpoint1 = new ServerEndpoint("host.port1", tree1, writeType);
     }
 
     @After
@@ -120,7 +120,7 @@ public class ReplicationTest3Way {
                 new ChronicleMapKeyValueStore(context.wireType(writeType),
                         asset));
 
-        VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
+      //  VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
 
         return tree;
     }
@@ -136,7 +136,7 @@ public class ReplicationTest3Way {
     @Test
     public void test() throws InterruptedException {
 
-        YamlLogging.showServerWrites = true;
+      YamlLogging.showServerWrites = true;
       YamlLogging.showServerReads = true;
 
         final ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME, String.class, String
@@ -154,7 +154,7 @@ public class ReplicationTest3Way {
         map1.put("hello1", "world1");
         map2.put("hello2", "world2");
         map3.put("hello3", "world3");
-   Jvm.pause(2);
+  // Jvm.pause(2);
         for (int i = 1; i <= 50; i++) {
             if (map1.size() == 3 && map2.size() == 3 && map3.size() == 3)
                 break;
