@@ -108,7 +108,7 @@ public class TcpChannelHub implements View, Closeable {
 
     // set up in the header
 
-    private volatile boolean closed;
+
     private final Wire handShakingWire;
     private final String description;
 
@@ -283,7 +283,7 @@ public class TcpChannelHub implements View, Closeable {
 
         //  eventLoop.stop();
         tcpSocketConsumer.stop();
-        closed = true;
+
         System.out.println("closing " + remoteAddress + "");
         while (clientChannel != null) {
             pause(10);
@@ -318,7 +318,7 @@ public class TcpChannelHub implements View, Closeable {
      */
     public void writeSocket(@NotNull final WireOut wire) {
         assert outBytesLock().isHeldByCurrentThread();
-        checkNotClosed();
+
 
         SocketChannel clientChannel = this.clientChannel;
         if (clientChannel == null)
@@ -337,7 +337,7 @@ public class TcpChannelHub implements View, Closeable {
 
 
     public Wire proxyReply(long timeoutTime, final long tid) {
-        checkNotClosed();
+
         try {
             return tcpSocketConsumer.syncBlockingReadSocket(timeoutTime, tid);
         } catch (IORuntimeException | AssertionError e) {
@@ -379,7 +379,7 @@ public class TcpChannelHub implements View, Closeable {
         updateLargestChunkSoFarSize(outBuffer);
 
         while (outBuffer.remaining() > 0) {
-            checkNotClosed();
+
             int len = socketChannel.write(outBuffer);
 
             if (len == -1)
@@ -461,7 +461,7 @@ public class TcpChannelHub implements View, Closeable {
 
     public long writeMetaDataStartTime(long startTime, @NotNull Wire wire, String csp, long cid) {
         assert outBytesLock().isHeldByCurrentThread();
-        checkNotClosed();
+
         long tid = nextUniqueTransaction(startTime);
 
         writeMetaDataForKnownTID(tid, wire, csp, cid);
@@ -472,7 +472,7 @@ public class TcpChannelHub implements View, Closeable {
     public void writeMetaDataForKnownTID(long tid, @NotNull Wire wire, @Nullable String csp,
                                          long cid) {
         assert outBytesLock().isHeldByCurrentThread();
-        checkNotClosed();
+
 
         wire.writeDocument(true, wireOut -> {
             if (cid == 0)
@@ -492,7 +492,7 @@ public class TcpChannelHub implements View, Closeable {
      */
     public void writeAsyncHeader(@NotNull Wire wire, String csp, long cid) {
         assert outBytesLock().isHeldByCurrentThread();
-        checkNotClosed();
+
         wire.writeDocument(true, wireOut -> {
             if (cid == 0)
                 wireOut.writeEventName(CoreFields.csp).text(csp);
@@ -501,11 +501,6 @@ public class TcpChannelHub implements View, Closeable {
         });
     }
 
-
-    void checkNotClosed() {
-        if (closed)
-            throw new IllegalStateException("Closed");
-    }
 
     public void lock(@NotNull Task r) {
         if (clientChannel == null)
@@ -523,7 +518,7 @@ public class TcpChannelHub implements View, Closeable {
     }
 
     /**
-     * blocks until there is a conneciton
+     * blocks until there is a connection
      */
     public void checkConnection() {
         long start = Time.currentTimeMillis();
