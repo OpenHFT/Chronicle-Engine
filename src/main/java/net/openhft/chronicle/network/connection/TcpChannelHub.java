@@ -789,7 +789,10 @@ public class TcpChannelHub implements View, Closeable {
         }
 
         private boolean isShutdown() {
-            return isShutdown || currentThread().isInterrupted();
+            boolean interrupted = currentThread().isInterrupted();
+            if (interrupted)
+                isShutdown = true;
+            return isShutdown;
         }
 
         private void clear(@NotNull final Wire inWire) {
@@ -1060,7 +1063,7 @@ public class TcpChannelHub implements View, Closeable {
             return true;
         }
 
-        private void checkConnectionState() {
+        private void checkConnectionState() throws IOException {
             if (clientChannel != null)
                 return;
 
@@ -1069,11 +1072,11 @@ public class TcpChannelHub implements View, Closeable {
         }
 
 
-        private void attemptConnect() {
+        private void attemptConnect() throws IOException {
             OUTER:
             for (; ; ) {
-                if (tcpSocketConsumer.isShutdown())
-                    throw new IORuntimeException("shutdown..");
+                if (isShutdown())
+                    throw new IOException("shutdown..");
 
                 System.out.println("attemptConnect remoteAddress=" + remoteAddress);
                 SocketChannel socketChannel;
@@ -1081,8 +1084,8 @@ public class TcpChannelHub implements View, Closeable {
 
                     for (; ; ) {
 
-                        if (tcpSocketConsumer.isShutdown())
-                            break OUTER;
+                        if (isShutdown())
+                            continue OUTER;
 
                         socketChannel = openSocketChannel();
 
