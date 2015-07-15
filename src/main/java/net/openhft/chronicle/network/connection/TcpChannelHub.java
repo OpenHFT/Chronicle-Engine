@@ -687,7 +687,7 @@ public class TcpChannelHub implements View, Closeable {
             checkNotShutdown();
 
             ExecutorService executorService = newSingleThreadExecutor(
-                    new NamedThreadFactory("TcpSocketConsumer-" + name, true));
+                    new NamedThreadFactory("TcpChannelHub-" + remoteAddress.getHostName() + ":" + remoteAddress.getPort(), true));
             isShutdown = false;
             executorService.submit(() -> {
                 try {
