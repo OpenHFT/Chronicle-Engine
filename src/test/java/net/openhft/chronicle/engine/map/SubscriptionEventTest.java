@@ -414,6 +414,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
     }
 
+    @Ignore("see https://higherfrequencytrading.atlassian.net/browse/CE-110")
     @Test
     public void testUnSubscribeToKeyEvents() throws IOException, InterruptedException {
 
