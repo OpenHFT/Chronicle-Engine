@@ -7,22 +7,22 @@ import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.Subscription;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
-import net.openhft.chronicle.engine.pubsub.SimpleSubscription;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.IntStream;
 
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static org.junit.Assert.assertEquals;
@@ -55,11 +55,10 @@ public class ReferenceTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() throws IOException {
         return Arrays.asList(
-             //   new Object[]{Boolean.FALSE, WireType.TEXT}
-            //    , new Object[]{Boolean.FALSE, WireType.BINARY}
-                new Object[]{Boolean.TRUE, WireType.TEXT},
-                new Object[]{Boolean.TRUE, WireType.TEXT}
-            //    , new Object[]{Boolean.TRUE, WireType.BINARY}
+                new Object[]{Boolean.FALSE, WireType.TEXT}
+                , new Object[]{Boolean.FALSE, WireType.BINARY}
+               , new Object[]{Boolean.TRUE, WireType.TEXT}
+              , new Object[]{Boolean.TRUE, WireType.BINARY}
         );
     }
 
@@ -163,8 +162,17 @@ public class ReferenceTest {
         map.put("subject", "init");
 
         List<String> events = new ArrayList<>();
-        Subscriber<String> keyEventSubscriber = s -> {
-            events.add(s);
+
+        Subscriber<String> keyEventSubscriber = new Subscriber<String>() {
+            @Override
+            public void onMessage(String s) throws InvalidSubscriberException {
+                events.add(s);
+            }
+
+            @Override
+            public void onEndOfSubscription() {
+                events.add("END");
+            }
         };
 
         assetTree.registerSubscriber("group" + "/" + "subject" + "?bootstrap=false&putReturnsNull=true", String.class, keyEventSubscriber);
@@ -183,9 +191,52 @@ public class ReferenceTest {
 
         Jvm.pause(100);
         assertEquals(0, subscription.subscriberCount());
+        assertEquals("cs", events.get(0));
+        assertEquals("maths", events.get(1));
+        assertEquals("END", events.get(2));
+    }
+
+    @Test
+    public void testAssetReferenceSubscriptionsBootstrapTrue(){
+        Map map = assetTree.acquireMap("group", String.class, String.class);
+        //TODO The child has to be in the map before you register to it
+        map.put("subject", "init");
+
+        List<String> events = new ArrayList<>();
+
+        Subscriber<String> keyEventSubscriber = new Subscriber<String>() {
+            @Override
+            public void onMessage(String s) throws InvalidSubscriberException {
+                events.add(s);
+            }
+
+            @Override
+            public void onEndOfSubscription() {
+                events.add("END");
+            }
+        };
+
+        assetTree.registerSubscriber("group" + "/" + "subject" + "?bootstrap=true&putReturnsNull=true", String.class, keyEventSubscriber);
+
+        Jvm.pause(100);
+        Asset child = assetTree.getAsset("group").getChild("subject");
+        assertNotNull(child);
+        Subscription subscription = child.subscription(false);
+
+        assertEquals(1, subscription.subscriberCount());
+
+        map.put("subject", "cs");
+        map.put("subject", "maths");
+
+        assetTree.unregisterSubscriber("group" + "/" + "subject", keyEventSubscriber);
+
+        Jvm.pause(100);
+        assertEquals(0, subscription.subscriberCount());
+
         assertEquals("init", events.get(0));
         assertEquals("cs", events.get(1));
         assertEquals("maths", events.get(2));
+        assertEquals("END", events.get(3));
     }
 
 
@@ -224,7 +275,7 @@ public class ReferenceTest {
            // });
 
         Jvm.pause(100);
-        assertEquals(4, events.size());
+        assertEquals(3, events.size());
 
 
         assetTree.unregisterSubscriber(_mapName + "/" + key, keyEventSubscriber);
