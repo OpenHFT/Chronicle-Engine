@@ -41,7 +41,7 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscriptio
                     Consumer<WireOut> toPublish = publish -> {
                         publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
                                 (inputTid));
-                        publish.writeNotReadyDocument(false, wire -> wire.write(reply)
+                        publish.writeNotReadyDocument(false, wire -> wire.writeEventName(reply)
                                 .marshallable(m -> {
                                     m.write(() -> "topic").object(topic);
                                     m.write(() -> "message").object(message);
