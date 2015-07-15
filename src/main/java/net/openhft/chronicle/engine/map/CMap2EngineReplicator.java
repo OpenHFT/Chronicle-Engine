@@ -142,7 +142,8 @@ public class CMap2EngineReplicator implements EngineReplication,
                                 timestamp,
                                 identifier,
                                 isDeleted,
-                                bootStrapTimeStamp)));
+                                bootStrapTimeStamp,
+                                remoteIdentifier)));
             }
 
             private Bytes toKey(final @NotNull net.openhft.lang.io.Bytes key) {
@@ -220,27 +221,29 @@ public class CMap2EngineReplicator implements EngineReplication,
         private BytesStore value;
         private long timestamp;
         private byte identifier;
+        private byte remoteIdentifier;
         private boolean isDeleted;
         private long bootStrapTimeStamp;
 
         /**
          * @param key                the key of the entry
          * @param value              the value of the entry
-         * @param identifier         the identifier of the remote server
          * @param timestamp          the timestamp send from the remote server, this time stamp was
          *                           the time the entry was removed
+         * @param identifier         the identifier of the remote server
          * @param bootStrapTimeStamp sent to the client on every update this is the timestamp that
          *                           the remote client should bootstrap from when there has been a
-         *                           disconnection, this time maybe later than the message time as
-         *                           event are not send in chronological order from the bit set.
+         * @param remoteIdentifier   the identifier of the server we are sending data to ( only used as a comment )
          */
         VanillaReplicatedEntry(@NotNull final BytesStore key,
                                @Nullable final BytesStore value,
                                final long timestamp,
                                final byte identifier,
                                final boolean isDeleted,
-                               final long bootStrapTimeStamp) {
+                               final long bootStrapTimeStamp,
+                               byte remoteIdentifier) {
             this.key = key;
+            this.remoteIdentifier = remoteIdentifier;
             // must be native
             assert key.underlyingObject() == null;
             this.value = value;
@@ -270,6 +273,11 @@ public class CMap2EngineReplicator implements EngineReplication,
         @Override
         public byte identifier() {
             return identifier;
+        }
+
+        @Override
+        public byte remoteIdentifier() {
+            return remoteIdentifier;
         }
 
         @Override
@@ -316,7 +324,7 @@ public class CMap2EngineReplicator implements EngineReplication,
         public String toString() {
             final Bytes<ByteBuffer> bytes = Bytes.elasticByteBuffer();
             new TextWire(bytes).writeDocument(false, d -> d.write().typedMarshallable(this));
-            return "\n"+Wires.fromSizePrefixedBlobs(bytes, bytes.readPosition(), bytes
+            return "\n" + Wires.fromSizePrefixedBlobs(bytes, bytes.readPosition(), bytes
                     .readLimit());
 
         }

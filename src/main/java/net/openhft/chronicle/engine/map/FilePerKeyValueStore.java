@@ -127,6 +127,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         return getFiles().count();
     }
 
+
     @Nullable
     @Override
     public BytesStore getUsing(String key, Bytes value) {
@@ -163,16 +164,22 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     }
 
     void entriesFor0(@NotNull SubscriptionConsumer<MapEvent<String, BytesStore>> kvConsumer) throws InvalidSubscriberException {
-        getFiles().map(p -> InsertedEvent.of(asset.fullName(), p.getFileName().toString(), getFileContents(p, null)))
-                .forEach(e -> {
-                    try {
-                        // in case the file has been deleted in the meantime.
-                        if (e != null)
-                            kvConsumer.accept(e);
-                    } catch (InvalidSubscriberException ise) {
-                        throw Jvm.rethrow(ise);
-                    }
-                });
+        getFiles().forEach(p -> {
+            BytesStore fileContents = null;
+            try {
+                // in case the file has been deleted in the meantime.
+                fileContents = getFileContents(p, null);
+                if (fileContents != null) {
+                    InsertedEvent e = InsertedEvent.of(asset.fullName(), p.getFileName().toString(), fileContents);
+                    kvConsumer.accept(e);
+                }
+            } catch (InvalidSubscriberException ise) {
+                throw Jvm.rethrow(ise);
+            } finally {
+                if (fileContents != null)
+                    fileContents.release();
+            }
+        });
     }
 
     @Override
@@ -187,7 +194,16 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
 
     public Stream<Map.Entry<String, BytesStore>> getEntryStream() {
         return getFiles()
-                .map(p -> (Map.Entry<String, BytesStore>) new SimpleEntry<>(p.getFileName().toString(), getFileContents(p, null)));
+                .map(p -> {
+                    BytesStore fileContents = null;
+                    try {
+                        fileContents = getFileContents(p, null);
+                        return (Map.Entry<String, BytesStore>) new SimpleEntry<>(p.getFileName().toString(), fileContents);
+                    } finally {
+                        if (fileContents != null)
+                            fileContents.release();
+                    }
+                });
     }
 
     @Override
@@ -200,6 +216,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         return fr != null;
     }
 
+    // TODO mark return value as reserved.
     @Nullable
     @Override
     public BytesStore getAndPut(String key, @NotNull BytesStore value) {
@@ -212,6 +229,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         return existingValue == null ? null : existingValue;
     }
 
+    // TODO mark return value as reserved.
     @Nullable
     @Override
     public BytesStore getAndRemove(String key) {
@@ -279,13 +297,9 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         FileRecord<BytesStore> lastFileRecord = lastFileRecordMap.get(file);
         if (lastFileRecord != null && lastFileRecord.valid
                 && file.lastModified() == lastFileRecord.timestamp) {
-            BytesStore contents = lastFileRecord.contents;
-            try {
-                contents.reserve();
+            BytesStore contents = lastFileRecord.contents();
+            if (contents != null)
                 return contents;
-            } catch (IllegalStateException e) {
-                return null;
-            }
         }
         return getFileContentsFromDisk(path, using);
     }
@@ -320,6 +334,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
             readingBytes.readLimit(dst.position());
             dst.flip();
         }
+        readingBytes.reserve();
         return readingBytes;
     }
 
@@ -450,34 +465,42 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
 //                    if (mapVal == null) {
 //                            System.out.println("Unable to read "+mapKey+", exists: "+p.toFile().exists());
 //                    }
-                    if (prev != null && BytesUtil.contentEqual(mapVal, prev.contents)) {
+                    BytesStore prevContents = prev == null ? null : prev.contents();
+                    try {
+                        if (BytesUtil.contentEqual(mapVal, prevContents)) {
 //                            System.out.println("... key: "+mapKey+" equal, last.keys: "+new TreeSet<>(lastFileRecordMap.keySet()));
-                        continue;
-                    }
+                            continue;
+                        }
 
-                    if (mapVal == null) {
-                        // todo this shouldn't happen.
-                        if (prev != null)
-                            mapVal = prev.contents;
-                    } else {
+                        if (mapVal == null) {
+                            // todo this shouldn't happen.
+                            if (prev != null)
+                                mapVal = prevContents;
+                        } else {
 //                            System.out.println("adding "+mapKey);
-                        lastFileRecordMap.put(p.toFile(), new FileRecord<>(p.toFile().lastModified(), mapVal.copy()));
-                    }
-                    if (prev == null) {
-                        subscriptions.notifyEvent(InsertedEvent.of(asset.fullName(), p.toFile().getName(), mapVal));
-                    } else {
-                        subscriptions.notifyEvent(UpdatedEvent.of(asset.fullName(), p.toFile().getName(), prev.contents, mapVal));
-                        prev.contents.release();
+                            lastFileRecordMap.put(p.toFile(), new FileRecord<>(p.toFile().lastModified(), mapVal.copy()));
+                        }
+                        if (prev == null) {
+                            subscriptions.notifyEvent(InsertedEvent.of(asset.fullName(), p.toFile().getName(), mapVal));
+                        } else {
+                            subscriptions.notifyEvent(UpdatedEvent.of(asset.fullName(), p.toFile().getName(), prevContents, mapVal));
+                        }
+                    } finally {
+                        if (prevContents != null)
+                            prevContents.release();
                     }
 
                 } else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
                     Path p = dirPath.resolve(fileName);
 
                     FileRecord<BytesStore> prev = lastFileRecordMap.remove(p.toFile());
-                    BytesStore lastVal = prev == null ? null : prev.contents;
-                    subscriptions.notifyEvent(RemovedEvent.of(asset.fullName(), p.toFile().getName(), lastVal));
-                    if (prev != null)
-                        prev.contents.release();
+                    BytesStore lastVal = prev == null ? null : prev.contents();
+                    try {
+                        subscriptions.notifyEvent(RemovedEvent.of(asset.fullName(), p.toFile().getName(), lastVal));
+                    } finally {
+                        if (lastVal != null)
+                            lastVal.release();
+                    }
                 }
             }
             return key;
