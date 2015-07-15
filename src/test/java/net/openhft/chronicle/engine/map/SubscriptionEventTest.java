@@ -372,10 +372,8 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
 
     @Test
-    @Ignore("TODO")
     public void testSubscribeToValueBasedOnKeys() throws IOException, InterruptedException, InvalidSubscriberException {
 
-        final BlockingQueue<String> eventsQueue = new LinkedBlockingQueue<>();
 
         yamlLoggger(() -> {
             try {
