@@ -32,6 +32,7 @@ public class ReferenceHandler<E,T> extends AbstractHandler {
     private Reference<E> view;
     @Nullable
     private Function<ValueIn, E> wireToE;
+    private StringBuilder csp;
 
     private BiConsumer<ValueOut, E> vToWire;
     final Map<Long, Object> tidToListener = new ConcurrentHashMap<>();
@@ -78,8 +79,13 @@ public class ReferenceHandler<E,T> extends AbstractHandler {
                     }
                 };
 
-                // TODO CE-101 get the true value from the CSP
+                int p = csp.indexOf("bootstrap=");
                 boolean bootstrap = true;
+                if(p!=-1){
+                    char e = csp.charAt(p+10);
+                    if('f'==e)bootstrap=false;
+                }
+
                 tidToListener.put(inputTid, listener);
                 view.registerSubscriber(bootstrap, listener);
                 return;
@@ -93,6 +99,15 @@ public class ReferenceHandler<E,T> extends AbstractHandler {
                     return;
                 }
                 view.unregisterSubscriber(listener);
+
+                if (!publisher.isClosed()) {
+                    publisher.add(publish -> {
+                        publish.writeDocument(true, wire ->
+                                wire.writeEventName(tid).int64(subscriberTid));
+                        publish.writeDocument(false, wire ->
+                                wire.writeEventName(EventId.onEndOfSubscription).text(""));
+                    });
+                }
 
                 return;
             }
@@ -145,11 +160,15 @@ public class ReferenceHandler<E,T> extends AbstractHandler {
         }
     };
 
+
     void process(@NotNull final WireIn inWire,
                  final WireOutPublisher publisher,
                  final long tid,
-                 Reference view, final Wire outWire,
+                 Reference view,
+                 StringBuilder csp,
+                 final Wire outWire,
                  final @NotNull WireAdapter wireAdapter) {
+        this.csp = csp;
         this.vToWire = wireAdapter.valueToWire();
         setOutWire(outWire);
         this.outWire = outWire;

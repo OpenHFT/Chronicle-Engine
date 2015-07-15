@@ -307,7 +307,7 @@ public class EngineWireHandler extends WireTcpHandler {
                     if (viewType == Reference.class) {
                         referenceHandler.process(in,
                                 publisher, tid,
-                                (Reference) view, outWire, wireAdapter);
+                                (Reference) view, cspText, outWire, wireAdapter);
                         return;
                     }
 
