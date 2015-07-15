@@ -21,15 +21,21 @@ import net.openhft.chronicle.wire.WireOut;
 import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import static net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId.registerSubscriber;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.EventId.*;
 
 /**
  * Created by Rob Austin
  */
 public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler.EventId> implements Reference<E> {
+    private static final Logger LOG = LoggerFactory.getLogger(ReferenceHandler.class);
     private final Class<E> messageClass;
+    protected final Map<Object, Long> subscribersToTid = new ConcurrentHashMap<>();
 
     public RemoteReference(RequestContext requestContext, Asset asset) {
         this(asset.findView(TcpChannelHub.class), requestContext.messageType(), asset.fullName());
@@ -79,8 +85,11 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
 
     @Override
     public void unregisterSubscriber(Subscriber<E> subscriber) {
-        // TODO CE-101 pass to the server
-        throw new UnsupportedOperationException("todo");
+        Long subscriberTid = subscribersToTid.remove(subscriber);
+        if(subscriberTid!=null) {
+            sendEventAsync(unregisterSubscriber, valueOut -> valueOut.int64(subscriberTid));
+        }else
+            LOG.warn("No subscriber to unsubscribe");
     }
 
     @Override
@@ -98,6 +107,7 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
 
             @Override
             public void onSubscribe(@NotNull final WireOut wireOut) {
+                subscribersToTid.put(subscriber, tid());
                 wireOut.writeEventName(registerSubscriber).text("");
             }
 

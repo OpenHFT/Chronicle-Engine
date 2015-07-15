@@ -179,11 +179,10 @@ public class ReferenceTest {
         map.put("subject", "cs");
         map.put("subject", "maths");
 
-        //TODO IMPLEMENT UNREGISTER
-//        assetTree.unregisterSubscriber("group" + "/" + "subject", keyEventSubscriber);
+        assetTree.unregisterSubscriber("group" + "/" + "subject", keyEventSubscriber);
 
         Jvm.pause(100);
-//        assertEquals(0, subscription.subscriberCount());
+        assertEquals(0, subscription.subscriberCount());
         assertEquals("init", events.get(0));
         assertEquals("cs", events.get(1));
         assertEquals("maths", events.get(2));
@@ -228,10 +227,10 @@ public class ReferenceTest {
         assertEquals(4, events.size());
 
 
-//        clientAssetTree.unregisterSubscriber(_mapName + "/" + key, keyEventSubscriber);
-//
-//        Jvm.pause(100);
-//        assertEquals(0, subscription.subscriberCount());
+        assetTree.unregisterSubscriber(_mapName + "/" + key, keyEventSubscriber);
+
+        Jvm.pause(100);
+        assertEquals(0, subscription.subscriberCount());
     }
 
 }
