@@ -47,7 +47,7 @@ public class ReplicationTest3Way {
 
     @Parameterized.Parameters
     public static List<Object[]> data() {
-        return Arrays.asList(new Object[10][0]);
+        return Arrays.asList(new Object[108][0]);
     }
 
     public ReplicationTest3Way() {
@@ -153,7 +153,7 @@ public class ReplicationTest3Way {
         map2.put("hello2", "world2");
         map3.put("hello3", "world3");
   // Jvm.pause(2);
-        for (int i = 1; i <= 50; i++) {
+        for (int i = 1; i <= 100; i++) {
             if (map1.size() == 3 && map2.size() == 3 && map3.size() == 3)
                 break;
             Jvm.pause(200);

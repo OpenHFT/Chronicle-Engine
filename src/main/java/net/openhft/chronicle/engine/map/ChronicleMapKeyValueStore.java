@@ -157,13 +157,13 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
 
 
                 if (remoteIdentifier <= localIdentifier) {
-                    if (LOGGER.isDebugEnabled())
-                        LOGGER.debug("skipping : attempting to connect to localIdentifier=" + localIdentifier + ",remoteIdentifier=" + remoteIdentifier);
+                    // if (LOGGER.isDebugEnabled())
+                    System.out.println("skipping : attempting to connect to localIdentifier=" + localIdentifier + ",remoteIdentifier=" + remoteIdentifier);
                     continue;
                 }
 
-                if (LOGGER.isDebugEnabled())
-                    LOGGER.debug("attempting to connect to localIdentifier=" + localIdentifier + ",remoteIdentifier=" + remoteIdentifier);
+                //if (LOGGER.isDebugEnabled())
+                System.out.println("attempting to connect to localIdentifier=" + localIdentifier + ",remoteIdentifier=" + remoteIdentifier);
 
                 final TcpChannelHub tcpChannelHub = hostDetails.acquireTcpChannelHub(asset, eventLoop, context.wireType());
                 ReplicationHub replicationHub = new ReplicationHub(context, tcpChannelHub, eventLoop, isClosed);
@@ -174,6 +174,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
                     throw new AssertionError(e);
                 }
             }
+            System.out.println("loop exit");
         }
 
     }

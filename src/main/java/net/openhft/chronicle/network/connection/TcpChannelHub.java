@@ -646,14 +646,17 @@ public class TcpChannelHub implements View, Closeable {
 
         void subscribe(@NotNull final AsyncSubscription asyncSubscription) {
 
-            if (clientChannel == null) {
 
-                map.put(asyncSubscription.tid(), asyncSubscription);
-                if (LOG.isDebugEnabled())
-                    LOG.debug("deferred subscription tid=" + asyncSubscription.tid() + ",asyncSubscription=" + asyncSubscription);
+            // we add a synchronize to ensure that the asyncSubscription is added before map before the clientChannel is assigned
+            synchronized (this) {
+                if (clientChannel == null) {
 
-                // not currently connected
-                return;
+                    map.put(asyncSubscription.tid(), asyncSubscription);
+                    System.out.println("deferred subscription tid=" + asyncSubscription.tid() + ",asyncSubscription=" + asyncSubscription);
+
+                    // not currently connected
+                    return;
+                }
             }
 
             // we have lock here to prevent a race with the resubscribe upon a reconnection

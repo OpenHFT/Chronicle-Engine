@@ -81,9 +81,12 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
         hub.subscribe(new AbstractAsyncSubscription(hub, csp, localIdentifier, "ReplicationHub bootstrap") {
             @Override
             public void onSubscribe(WireOut wireOut) {
+
+                System.out.println("onSubscribe - localIdentifier=" + localIdentifier + ",remoteIdentifier=" + remoteIdentifier);
+
                 wireOut.writeEventName(identifier)
                         .marshallable(WriteMarshallable.EMPTY)
-                        .writeComment(toString()+", tcpChannelHub={"+hub.toString()+"}");
+                        .writeComment(toString() + ", tcpChannelHub={" + hub.toString() + "}");
             }
 
             @Override
