@@ -68,8 +68,6 @@ public class ReplicationTest3Way {
         YamlLogging.clientWrites = true;
         YamlLogging.clientReads = true;
 
-        //YamlLogging.showServerWrites = true;
-
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
         ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
         //Delete any files from the last run
@@ -136,8 +134,8 @@ public class ReplicationTest3Way {
     @Test
     public void test() throws InterruptedException {
 
-      YamlLogging.showServerWrites = true;
-      YamlLogging.showServerReads = true;
+//      YamlLogging.showServerWrites = true;
+//      YamlLogging.showServerReads = true;
 
         final ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME, String.class, String
                 .class);
