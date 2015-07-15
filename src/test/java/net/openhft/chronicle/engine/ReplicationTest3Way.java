@@ -47,7 +47,7 @@ public class ReplicationTest3Way {
 
     @Parameterized.Parameters
     public static List<Object[]> data() {
-        return Arrays.asList(new Object[108][0]);
+        return Arrays.asList(new Object[10][0]);
     }
 
     public ReplicationTest3Way() {
