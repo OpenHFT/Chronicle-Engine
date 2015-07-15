@@ -70,15 +70,19 @@ public class VanillaEngineReplication<Store extends KeyValueStore<?, ?, ?>>
 
     public interface ReplicationData extends Copyable<ReplicationData>, Marshallable {
         boolean getDeleted();
+
         void setDeleted(boolean deleted);
 
         long getTimestamp();
+
         void setTimestamp(long timestamp);
 
         byte getIdentifier();
+
         void setIdentifier(byte identifier);
 
         long getDirtyWord(@MaxSize(DIRTY_WORD_COUNT) int index);
+
         void setDirtyWord(@MaxSize(DIRTY_WORD_COUNT) int index, long word);
 
         @Override
@@ -132,17 +136,22 @@ public class VanillaEngineReplication<Store extends KeyValueStore<?, ?, ?>>
             long bit = 1L << (identifier % 64);
             return (replicationData.getDirtyWord(index) & bit) != 0L;
         }
+
+
     }
 
     public interface RemoteNodeReplicationState
             extends Copyable<RemoteNodeReplicationState>, Marshallable {
         long getNextBootstrapTimestamp();
+
         void setNextBootstrapTimestamp(long nextBootstrapTimestamp);
 
         long getLastBootstrapTimestamp();
+
         void setLastBootstrapTimestamp(long lastBootstrapTimestamp);
 
         long getLastModificationTime();
+
         void setLastModificationTime(long lastModificationTime);
 
         @Override
@@ -447,7 +456,7 @@ public class VanillaEngineReplication<Store extends KeyValueStore<?, ?, ?>>
         long forEachEntryCount;
 
         @Override
-        public void forEach(@NotNull Consumer<ReplicationEntry> consumer)  {
+        public void forEach(@NotNull Consumer<ReplicationEntry> consumer) {
             forEachEntryCount = 0;
             Instances i = threadLocalInstances.get();
             for (KeyValueStore<BytesStore, ReplicationData, ReplicationData> keyReplicationData :
@@ -544,6 +553,11 @@ public class VanillaEngineReplication<Store extends KeyValueStore<?, ?, ?>>
         @Override
         public byte identifier() {
             return replicationData.getIdentifier();
+        }
+
+        @Override
+        public byte remoteIdentifier() {
+            throw new UnsupportedOperationException("todo");
         }
 
         @Override

@@ -143,9 +143,12 @@ public interface EngineReplication extends Replication {
 
         byte identifier();
 
+        byte remoteIdentifier();
+
         boolean isDeleted();
 
         long bootStrapTimeStamp();
+
 
         default void key(BytesStore key) {
             throw new UnsupportedOperationException("immutable entry");
@@ -190,6 +193,7 @@ public interface EngineReplication extends Replication {
             wire.write(() -> "identifier").int8(identifier());
             wire.write(() -> "isDeleted").bool(isDeleted());
             wire.write(() -> "bootStrapTimeStamp").int64(bootStrapTimeStamp());
+            wire.writeComment("remoteIdentifier=" + remoteIdentifier());
         }
 
 
