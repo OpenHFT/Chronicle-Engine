@@ -112,7 +112,8 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
         return topicSubscribers.size();
     }
 
-    private boolean hasSubscribers() {
+    @Override
+    public boolean hasSubscribers() {
         return hasSubscribers || asset.hasChildren();
     }
 

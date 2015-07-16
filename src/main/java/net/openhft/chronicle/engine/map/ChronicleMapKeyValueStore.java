@@ -297,13 +297,13 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
     class PublishingOperations extends MapEventListener<K, V> {
         @Override
         public void onRemove(@NotNull K key, V value, boolean replicationEven) {
-            if (subscriptions.subscriberCount() > 0)
+            if (subscriptions.hasSubscribers())
                 subscriptions.notifyEvent(RemovedEvent.of(assetFullName, key, value));
         }
 
         @Override
         public void onPut(@NotNull K key, V newValue, @Nullable V replacedValue, boolean replicationEvent) {
-            if (subscriptions.subscriberCount() > 0)
+            if (subscriptions.hasSubscribers())
                 if (replacedValue == null) {
                     subscriptions.notifyEvent(InsertedEvent.of(assetFullName, key, newValue));
                 } else {

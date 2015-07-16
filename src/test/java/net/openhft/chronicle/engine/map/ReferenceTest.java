@@ -283,5 +283,4 @@ public class ReferenceTest {
         Jvm.pause(100);
         assertEquals(0, subscription.subscriberCount());
     }
-
 }
