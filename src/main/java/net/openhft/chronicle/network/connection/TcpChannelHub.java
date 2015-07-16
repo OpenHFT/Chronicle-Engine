@@ -453,6 +453,7 @@ public class TcpChannelHub implements View, Closeable {
             TcpChannelHub.this.outWire.writeDocument(false, w ->
                     // send back the time stamp that was sent from the server
                     w.writeEventName(heartbeatReply).int64(timestamp));
+            writeSocket(outWire);
         });
     }
 
@@ -809,33 +810,34 @@ public class TcpChannelHub implements View, Closeable {
             long startTime = 0;
             Object o = null;
 
-            for (; !isShutdown(); ) {
+            if (tid != 0)
+                for (; !isShutdown(); ) {
 
-                o = map.get(tid);
+                    o = map.get(tid);
 
-                // we only remove the subscription so they are AsyncTemporarySubscription, as the AsyncSubscription
-                // can not be remove from the map as they are required when you resubscribe when we loose connectivity
-                if (isReady && (!(o instanceof AsyncSubscription) || (o instanceof AsyncTemporarySubscription)))
-                    map.remove(tid);
+                    // we only remove the subscription so they are AsyncTemporarySubscription, as the AsyncSubscription
+                    // can not be remove from the map as they are required when you resubscribe when we loose connectivity
+                    if (isReady && (!(o instanceof AsyncSubscription) || (o instanceof AsyncTemporarySubscription)))
+                        map.remove(tid);
 
-                if (o != null)
-                    break;
+                    if (o != null)
+                        break;
 
-                // this can occur if the server returns the response before we have started to
-                // listen to it
+                    // this can occur if the server returns the response before we have started to
+                    // listen to it
 
-                if (startTime == 0)
-                    startTime = Time.currentTimeMillis();
+                    if (startTime == 0)
+                        startTime = Time.currentTimeMillis();
 
-                if (Time.currentTimeMillis() - startTime > 3_000) {
-                    LOG.error("unable to respond to tid=" + tid + ", given that we have received a " +
-                            " message we a tid which is unknown, something has become corrupted, " +
-                            "so the safest thing to do is to drop the connection to the server and " +
-                            "start again.");
-                    return;
+                    if (Time.currentTimeMillis() - startTime > 3_000) {
+                        LOG.error("unable to respond to tid=" + tid + ", given that we have received a " +
+                                " message we a tid which is unknown, something has become corrupted, " +
+                                "so the safest thing to do is to drop the connection to the server and " +
+                                "start again.");
+                        return;
+                    }
+
                 }
-
-            }
 
             // heartbeat message sent from the server
             if (tid == 0) {
