@@ -43,10 +43,24 @@ public class ReferenceChronicleTest {
         ServerEndpoint serverEndpoint = new ServerEndpoint("RemoteSubscriptionModelPerformanceTest.port", serverAssetTree, WireType.BINARY);
         AssetTree clientAssetTree = new VanillaAssetTree().forRemoteAccess("RemoteSubscriptionModelPerformanceTest.port", WireType.BINARY);
 
+        test(clientAssetTree);
+    }
+    @Test
+    public void testLocalSubscriptionMUFGChronicle() throws IOException {
 
+        AssetTree serverAssetTree = new VanillaAssetTree().forTesting();
+        serverAssetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore", VanillaMapView::new, KeyValueStore.class);
+        serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
+                new ChronicleMapKeyValueStore(context.basePath(OS.TARGET).entries(50).averageValueSize(2_000_000), asset));
+        TCPRegistry.createServerSocketChannelFor("RemoteSubscriptionModelPerformanceTest.port");
+
+        test(serverAssetTree);
+     }
+
+    public void test(AssetTree assetTree){
         String key = "subject";
         String _mapName = "group";
-        Map map = clientAssetTree.acquireMap(_mapName, String.class, String.class);
+        Map map = assetTree.acquireMap(_mapName, String.class, String.class);
         //TODO does not work without an initial put
         map.put(key, "init");
 
@@ -59,72 +73,19 @@ public class ReferenceChronicleTest {
 
             @Override
             public void onEndOfSubscription() {
-                //events.add("END");
+                events.add("END");
             }
-        };
-
-//        TopicSubscriber<String, String> topicSubscriber = (t, m) -> {
-//            events.add(m);
-//        };
-
-        clientAssetTree.registerSubscriber(_mapName + "/" + key + "?bootstrap=false&putReturnsNull=true", String.class, keyEventSubscriber);
-        //serverAssetTree.registerTopicSubscriber(_mapName + "?bootstrap=false&putReturnsNull=true", String.class, String.class, topicSubscriber);
-
-        Jvm.pause(100);
-        Asset child = clientAssetTree.getAsset(_mapName).getChild(key);
-        //Asset child = serverAssetTree.getAsset(_mapName);
-
-        assertNotNull(child);
-        Subscription subscription = child.subscription(false);
-        assertEquals(1, subscription.subscriberCount());
-
-        YamlLogging.showServerWrites = true;
-
-        AtomicInteger count = new AtomicInteger();
-        map.put(key, "" + count.incrementAndGet());
-        map.put(key, "" + count.incrementAndGet());
-        map.put(key, "" + count.incrementAndGet());
-
-        Jvm.pause(100);
-        assertEquals(3, events.size());
-
-
-        serverAssetTree.unregisterSubscriber(_mapName + "/" + key, keyEventSubscriber);
-        //serverAssetTree.unregisterTopicSubscriber(_mapName, topicSubscriber);
-
-        Jvm.pause(100);
-        //assertEquals(0, subscription.subscriberCount());
-    }
-    @Test
-    public void testLocalSubscriptionMUFGChronicle() throws IOException {
-
-        AssetTree serverAssetTree = new VanillaAssetTree().forTesting();
-        serverAssetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore", VanillaMapView::new, KeyValueStore.class);
-        serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
-                new ChronicleMapKeyValueStore(context.basePath(OS.TARGET).entries(50).averageValueSize(2_000_000), asset));
-        TCPRegistry.createServerSocketChannelFor("RemoteSubscriptionModelPerformanceTest.port");
-
-
-        String key = "subject";
-        String _mapName = "group";
-        Map map = serverAssetTree.acquireMap(_mapName, String.class, String.class);
-        //TODO does not work without an initial put
-        map.put(key, "init");
-
-        List<String> events = new ArrayList<>();
-        Subscriber<String> keyEventSubscriber = s -> {
-            events.add(s);
         };
 
         TopicSubscriber<String, String> topicSubscriber = (t, m) -> {
             events.add(m);
         };
 
-        serverAssetTree.registerSubscriber(_mapName + "/" + key + "?bootstrap=false&putReturnsNull=true", String.class, keyEventSubscriber);
+        assetTree.registerSubscriber(_mapName + "/" + key + "?bootstrap=false&putReturnsNull=true", String.class, keyEventSubscriber);
         //serverAssetTree.registerTopicSubscriber(_mapName + "?bootstrap=false&putReturnsNull=true", String.class, String.class, topicSubscriber);
 
         Jvm.pause(100);
-        Asset child = serverAssetTree.getAsset(_mapName).getChild(key);
+        Asset child = assetTree.getAsset(_mapName).getChild(key);
         //Asset child = serverAssetTree.getAsset(_mapName);
 
         assertNotNull(child);
@@ -139,13 +100,12 @@ public class ReferenceChronicleTest {
         map.put(key, "" + count.incrementAndGet());
 
         Jvm.pause(100);
-        assertEquals(3, events.size());
 
-
-        serverAssetTree.unregisterSubscriber(_mapName + "/" + key, keyEventSubscriber);
+        assetTree.unregisterSubscriber(_mapName + "/" + key, keyEventSubscriber);
         //serverAssetTree.unregisterTopicSubscriber(_mapName, topicSubscriber);
 
         Jvm.pause(100);
         //assertEquals(0, subscription.subscriberCount());
+        assertEquals(4, events.size());
     }
 }
