@@ -61,7 +61,6 @@ import static net.openhft.chronicle.bytes.Bytes.elasticByteBuffer;
 import static net.openhft.chronicle.core.Jvm.*;
 import static net.openhft.chronicle.engine.server.internal.SystemHandler.EventId.*;
 
-
 /**
  * Created by Rob Austin
  */
@@ -137,8 +136,6 @@ public class TcpChannelHub implements View, Closeable {
             try {
 
                 System.out.println("\nreceives:\n" +
-
-
                         ((wire instanceof TextWire) ?
                                 "```yaml\n" +
                                         Wires.fromSizePrefixedBlobs(bytes,
@@ -207,7 +204,6 @@ public class TcpChannelHub implements View, Closeable {
         return outBytesLock;
     }
 
-
     private synchronized void doHandShaking(SocketChannel socketChannel) throws IOException {
 
         final SessionDetails sessionDetails = sessionDetails();
@@ -261,7 +257,6 @@ public class TcpChannelHub implements View, Closeable {
 
     }
 
-
     public boolean isOpen() {
         return clientChannel != null;
     }
@@ -279,8 +274,6 @@ public class TcpChannelHub implements View, Closeable {
             pause(10);
             System.out.println("waiting for disconnect");
         }
-
-
     }
 
     /**
@@ -308,8 +301,6 @@ public class TcpChannelHub implements View, Closeable {
      */
     public void writeSocket(@NotNull final WireOut wire) {
         assert outBytesLock().isHeldByCurrentThread();
-
-
         SocketChannel clientChannel = this.clientChannel;
         if (clientChannel == null)
             throw new IORuntimeException("Not Connected " + remoteAddress);
@@ -324,7 +315,6 @@ public class TcpChannelHub implements View, Closeable {
         }
 
     }
-
 
     public Wire proxyReply(long timeoutTime, final long tid) {
 
@@ -354,8 +344,6 @@ public class TcpChannelHub implements View, Closeable {
      */
     private void writeSocket0(@NotNull WireOut outWire, long timeoutTime, @NotNull SocketChannel socketChannel) throws
             IOException {
-
-
         final Bytes<?> bytes = outWire.bytes();
 
         final ByteBuffer outBuffer = (ByteBuffer) bytes.underlyingObject();
@@ -413,8 +401,6 @@ public class TcpChannelHub implements View, Closeable {
         } catch (Exception e) {
             LOG.error(Bytes.toString(bytes), e);
         }
-
-
     }
 
     /**
@@ -435,7 +421,6 @@ public class TcpChannelHub implements View, Closeable {
         return outWire;
     }
 
-
     private void reflectServerHeartbeatMessage(ValueIn valueIn) {
 
         // time stamp sent from the server, this is so that the server can calculate the round
@@ -453,7 +438,6 @@ public class TcpChannelHub implements View, Closeable {
         });
     }
 
-
     public long writeMetaDataStartTime(long startTime, @NotNull Wire wire, String csp, long cid) {
         assert outBytesLock().isHeldByCurrentThread();
 
@@ -467,8 +451,6 @@ public class TcpChannelHub implements View, Closeable {
     public void writeMetaDataForKnownTID(long tid, @NotNull Wire wire, @Nullable String csp,
                                          long cid) {
         assert outBytesLock().isHeldByCurrentThread();
-
-
         wire.writeDocument(true, wireOut -> {
             if (cid == 0)
                 wireOut.writeEventName(CoreFields.csp).text(csp);
@@ -496,7 +478,6 @@ public class TcpChannelHub implements View, Closeable {
         });
     }
 
-
     public void lock(@NotNull Task r) {
         if (clientChannel == null)
             return;
@@ -509,8 +490,6 @@ public class TcpChannelHub implements View, Closeable {
         } finally {
             outBytesLock().unlock();
         }
-
-
     }
 
     /**
@@ -539,8 +518,6 @@ public class TcpChannelHub implements View, Closeable {
      * uses a single read thread, to process messages to waiting threads based on their {@code tid}
      */
     private class TcpSocketConsumer implements EventHandler {
-
-
         private final ExecutorService executorService;
 
         @NotNull
@@ -583,8 +560,6 @@ public class TcpChannelHub implements View, Closeable {
                             ((AsyncSubscription) v).applySubscribe();
                     }
                 });
-
-
             } finally {
                 lock.unlock();
             }
@@ -641,8 +616,6 @@ public class TcpChannelHub implements View, Closeable {
         }
 
         void subscribe(@NotNull final AsyncSubscription asyncSubscription) {
-
-
             // we add a synchronize to ensure that the asyncSubscription is added before map before the clientChannel is assigned
             synchronized (this) {
                 if (clientChannel == null) {
@@ -707,8 +680,6 @@ public class TcpChannelHub implements View, Closeable {
         private void running() {
 
             try {
-
-
                 final Wire inWire = wireFunction.apply(elasticByteBuffer());
                 assert inWire != null;
 
@@ -925,8 +896,6 @@ public class TcpChannelHub implements View, Closeable {
             buffer.limit((int) (start + numberOfBytes));
             readBuffer(buffer);
             bytes.readLimit(buffer.position());
-
-
         }
 
         private void readBuffer(@NotNull final ByteBuffer buffer) throws IOException {
@@ -935,8 +904,6 @@ public class TcpChannelHub implements View, Closeable {
                 if (clientChannel == null)
                     throw new IOException("Disconnection to server channel is closed" + description + "/" +
                             TCPRegistry.lookup(description) + " ,name=" + name);
-
-
                 int numberOfBytesRead = clientChannel.read(buffer);
                 if (numberOfBytesRead == -1)
                     throw new IOException("Disconnection to server read=-1 " + description + "/" + TCPRegistry.lookup(description) + " ,name=" + name);
@@ -1025,8 +992,6 @@ public class TcpChannelHub implements View, Closeable {
                 lastheartbeatSentTime = Time.currentTimeMillis();
                 sendHeartbeat();
             }
-
-
             // if we have not received a message from the server after the HEATBEAT_TIMEOUT_PERIOD
             // we will drop and then re-establish the connection.
             long x = millisecondsSinceLastMessageReceived - HEATBEAT_TIMEOUT_PERIOD;
@@ -1035,8 +1000,6 @@ public class TcpChannelHub implements View, Closeable {
                 closeSocket();
                 throw new InvalidEventHandlerException();
             }
-
-
             return true;
         }
 
@@ -1045,7 +1008,6 @@ public class TcpChannelHub implements View, Closeable {
                 return;
             attemptConnect();
         }
-
 
         private void attemptConnect() throws IOException {
             OUTER:
@@ -1115,9 +1077,5 @@ public class TcpChannelHub implements View, Closeable {
 
             }
         }
-
-
     }
-
-
 }
