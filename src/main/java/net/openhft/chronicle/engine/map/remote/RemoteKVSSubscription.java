@@ -38,9 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static net.openhft.chronicle.engine.server.internal.ObjectKVSubscriptionHandler.EventId.onEndOfSubscription;
-import static net.openhft.chronicle.engine.server.internal.ObjectKVSubscriptionHandler.EventId.registerTopicSubscriber;
-import static net.openhft.chronicle.engine.server.internal.ObjectKVSubscriptionHandler.EventId.unregisterTopicSubscriber;
+import static net.openhft.chronicle.engine.server.internal.ObjectKVSubscriptionHandler.EventId.*;
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
 
 public class RemoteKVSSubscription<K, MV, V> extends AbstractRemoteSubscription<MapEvent<K, V>> implements
@@ -120,17 +118,12 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractRemoteSubscription<
             return;
         }
 
-        hub.outBytesLock().lock();
-        try {
+        hub.lock(() -> {
             writeMetaDataForKnownTID(tid);
             hub.outWire().writeDocument(false, wireOut -> {
                 wireOut.writeEventName(unregisterTopicSubscriber).text("");
             });
-
-            hub.writeSocket(hub.outWire());
-        } finally {
-            hub.outBytesLock().unlock();
-        }
+        });
     }
 
     @Override

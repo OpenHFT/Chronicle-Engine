@@ -95,14 +95,11 @@ public class EngineWireHandler extends WireTcpHandler {
 
     @Override
     public void onEndOfConnection(boolean heartbeatTimeOut) {
-
-
         for (final AbstractHandler abstractHandler : new AbstractHandler[]{mapWireHandler,
                 subscriptionHandler, topologySubscriptionHandler,
                 publisherHandler, replicationHandler}) {
             abstractHandler.onEndOfConnection(heartbeatTimeOut);
         }
-
     }
 
     @NotNull

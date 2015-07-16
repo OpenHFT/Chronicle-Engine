@@ -75,6 +75,6 @@ public class Cluster implements Marshallable, View, Closeable {
 
     @Override
     public void close() {
-        hostDetails().forEach(h -> close());
+        hostDetails().forEach(Closeable::closeQuietly);
     }
 }

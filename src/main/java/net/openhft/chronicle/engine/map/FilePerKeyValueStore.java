@@ -22,6 +22,7 @@ import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.StringBytesStoreKeyValueStore;
@@ -36,7 +37,10 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.*;
@@ -81,6 +85,8 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     private final RawKVSSubscription<String, Bytes, BytesStore> subscriptions;
     @NotNull
     private final Asset asset;
+
+    private final WatchService watcher;
     private volatile boolean closed = false;
 
     public FilePerKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset) throws IORuntimeException, AssetNotFoundException {
@@ -95,7 +101,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         String first = basePath;
         String dirName = first == null ? name : first + "/" + name;
         this.dirPath = Paths.get(dirName);
-        WatchService watcher;
+
         try {
             Files.createDirectories(dirPath);
             watcher = FileSystems.getDefault().newWatchService();
@@ -391,6 +397,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     public void close() {
         closed = true;
         fileFpmWatcher.interrupt();
+        Closeable.closeQuietly(watcher);
     }
 
     @NotNull
@@ -420,7 +427,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         @Override
         public void run() {
             try {
-                while (true) {
+                while (!closed) {
                     WatchKey key = null;
                     try {
                         key = processKey();

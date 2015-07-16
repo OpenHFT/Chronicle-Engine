@@ -453,8 +453,6 @@ public class TcpChannelHub implements View, Closeable {
             TcpChannelHub.this.outWire.writeDocument(false, w ->
                     // send back the time stamp that was sent from the server
                     w.writeEventName(heartbeatReply).int64(timestamp));
-
-            TcpChannelHub.this.writeSocket(outWire);
         });
     }
 
@@ -508,6 +506,7 @@ public class TcpChannelHub implements View, Closeable {
         outBytesLock().lock();
         try {
             r.run();
+            writeSocket(outWire());
         } catch (Exception e) {
             LOG.debug("", e);
         } finally {
@@ -748,8 +747,8 @@ public class TcpChannelHub implements View, Closeable {
                         if (isShutdown()) {
                             break;
                         } else {
-                            LOG.warn("reconnecting due to unexpected exception", e);
-                            e.printStackTrace();
+                            LOG.warn("reconnecting due to unexpected " + e);
+//                            e.printStackTrace();
                             closeSocket();
 
                         }
@@ -764,8 +763,9 @@ public class TcpChannelHub implements View, Closeable {
                 if (!isShutdown())
                     e.printStackTrace();
             } finally {
-                System.out.println("Shuting down....");
+                System.out.println("Shutting down....");
                 closeSocket();
+                stop();
             }
 
         }
@@ -988,7 +988,7 @@ public class TcpChannelHub implements View, Closeable {
 
         /**
          * called when we are completed finished with using the TcpChannelHub, after this method is
-         * called you will no loger be able to use this instance to received data
+         * called you will no lonThreadger be able to use this instance to received data
          */
         private void stop() {
             isShutdown = true;
@@ -1000,7 +1000,6 @@ public class TcpChannelHub implements View, Closeable {
                 }
             } catch (InterruptedException e) {
                 executorService.shutdownNow();
-                LOG.error("", e);
             }
         }
 
@@ -1110,9 +1109,10 @@ public class TcpChannelHub implements View, Closeable {
                     onConnected();
                     break;
                 } catch (Exception e) {
-                    LOG.error("failed to connect remoteAddress=" + remoteAddress + " so will reconnect");
-                    e.printStackTrace();
-                    closeSocket();
+                    if (!isShutdown) {
+                        LOG.error("failed to connect remoteAddress=" + remoteAddress + " so will reconnect ", e);
+                        closeSocket();
+                    }
                 }
 
             }
