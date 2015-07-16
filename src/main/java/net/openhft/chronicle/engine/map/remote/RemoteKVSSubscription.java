@@ -152,6 +152,11 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractRemoteSubscription<
     }
 
     @Override
+    public boolean hasSubscribers() {
+        throw new UnsupportedOperationException("hasSubscibers only implemented on the server");
+    }
+
+    @Override
     public void registerDownstream(EventConsumer<K, V> subscription) {
         throw new UnsupportedOperationException("todo");
     }
