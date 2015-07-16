@@ -25,6 +25,7 @@ import net.openhft.chronicle.core.util.Time;
 import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.network.TCPRegistry;
+import net.openhft.chronicle.network.WanSimulator;
 import net.openhft.chronicle.network.api.session.SessionDetails;
 import net.openhft.chronicle.threads.HandlerPriority;
 import net.openhft.chronicle.threads.NamedThreadFactory;
@@ -121,8 +122,8 @@ public class TcpChannelHub implements View, Closeable {
     static SocketChannel openSocketChannel()
             throws IOException {
         SocketChannel result = SocketChannel.open();
-        result.socket().setSendBufferSize(3 * 1024 * 1024);
-        result.socket().setReceiveBufferSize(3 * 1024 * 1024);
+//        result.socket().setSendBufferSize(3 * 1024 * 1024);
+//        result.socket().setReceiveBufferSize(3 * 1024 * 1024);
         result.socket().setTcpNoDelay(true);
         return result;
     }
@@ -925,6 +926,7 @@ public class TcpChannelHub implements View, Closeable {
                     throw new IOException("Disconnection to server channel is closed" + description + "/" +
                             TCPRegistry.lookup(description) + " ,name=" + name);
                 int numberOfBytesRead = clientChannel.read(buffer);
+                WanSimulator.dataRead(numberOfBytesRead);
                 if (numberOfBytesRead == -1)
                     throw new IOException("Disconnection to server read=-1 " + description + "/" + TCPRegistry.lookup(description) + " ,name=" + name);
 
