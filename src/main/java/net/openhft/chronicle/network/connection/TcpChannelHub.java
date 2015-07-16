@@ -357,18 +357,23 @@ public class TcpChannelHub implements View, Closeable {
         updateLargestChunkSoFarSize(outBuffer);
 
         long start = Time.currentTimeMillis();
-        while (outBuffer.remaining() > 0) {
+        socketChannel.configureBlocking(false);
+        try {
+            while (outBuffer.remaining() > 0) {
 
-            int len = socketChannel.write(outBuffer);
+                int len = socketChannel.write(outBuffer);
 
-            if (len == -1)
-                throw new IORuntimeException("Disconnection to server " + description + "/" + TCPRegistry.lookup(description) + ",name=" + name);
+                if (len == -1)
+                    throw new IORuntimeException("Disconnection to server " + description + "/" + TCPRegistry.lookup(description) + ",name=" + name);
 
-            long writeTime = Time.currentTimeMillis() - start;
-            if (writeTime > 5000) {
-                socketChannel.close();
-                throw new IORuntimeException("Took " + writeTime + " ms to perform a write, remaining= " + outBuffer.remaining());
+                long writeTime = Time.currentTimeMillis() - start;
+                if (writeTime > 5000) {
+                    socketChannel.close();
+                    throw new IORuntimeException("Took " + writeTime + " ms to perform a write, remaining= " + outBuffer.remaining());
+                }
             }
+        } finally {
+            socketChannel.configureBlocking(true);
         }
 
         outBuffer.clear();
