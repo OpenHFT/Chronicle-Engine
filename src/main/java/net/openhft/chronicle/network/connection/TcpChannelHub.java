@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SocketChannel;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -357,7 +358,12 @@ public class TcpChannelHub implements View, Closeable {
         updateLargestChunkSoFarSize(outBuffer);
 
         long start = Time.currentTimeMillis();
-        socketChannel.configureBlocking(false);
+        try {
+            if (socketChannel.isOpen())
+                socketChannel.configureBlocking(false);
+        } catch (ClosedChannelException ignored) {
+
+        }
         try {
             while (outBuffer.remaining() > 0) {
 
@@ -373,7 +379,11 @@ public class TcpChannelHub implements View, Closeable {
                 }
             }
         } finally {
-            socketChannel.configureBlocking(true);
+            try {
+                if (socketChannel.isOpen())
+                    socketChannel.configureBlocking(true);
+            } catch (ClosedChannelException ignored) {
+            }
         }
 
         outBuffer.clear();
