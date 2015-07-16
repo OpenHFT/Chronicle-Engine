@@ -17,6 +17,7 @@
 package net.openhft.chronicle.engine.fs;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.View;
@@ -29,8 +30,6 @@ import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -72,8 +71,8 @@ public class HostDetails implements Marshallable, View, Closeable {
     }
 
     @Override
-    public void close() throws IOException {
-        tcpChannelHubs.values().forEach(TcpChannelHub::close);
+    public void close() {
+        tcpChannelHubs.values().forEach(Closeable::closeQuietly);
     }
 
     @Override
