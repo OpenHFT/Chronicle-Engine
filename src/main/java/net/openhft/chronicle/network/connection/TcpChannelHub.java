@@ -373,6 +373,7 @@ public class TcpChannelHub implements View, Closeable {
                     throw new IORuntimeException("Disconnection to server " + description + "/" + TCPRegistry.lookup(description) + ",name=" + name);
 
                 long writeTime = Time.currentTimeMillis() - start;
+
                 if (writeTime > 5000) {
                     socketChannel.close();
                     throw new IORuntimeException("Took " + writeTime + " ms to perform a write, remaining= " + outBuffer.remaining());
