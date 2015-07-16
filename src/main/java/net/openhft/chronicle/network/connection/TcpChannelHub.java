@@ -759,7 +759,7 @@ public class TcpChannelHub implements View, Closeable {
                     }
                 }
 
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 if (!isShutdown())
                     e.printStackTrace();
             } finally {
@@ -988,13 +988,18 @@ public class TcpChannelHub implements View, Closeable {
 
         /**
          * called when we are completed finished with using the TcpChannelHub, after this method is
-         * called you will no lonThreadger be able to use this instance to received data
+         * called you will no longer be able to use this instance to received or send data
          */
         private void stop() {
+
+            if (isShutdown)
+                return;
+
             isShutdown = true;
 
             executorService.shutdown();
             try {
+
                 if (!executorService.awaitTermination(500, TimeUnit.MILLISECONDS)) {
                     executorService.shutdownNow();
                 }
