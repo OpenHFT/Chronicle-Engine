@@ -220,7 +220,7 @@ public class TcpChannelHub implements View, Closeable {
                 wireOut.writeEventName(userid).text(sessionDetails.userId());
         });
 
-        writeSocket(handShakingWire, timeoutMs, socketChannel);
+        writeSocket0(handShakingWire, timeoutMs, socketChannel);
 
     }
 
@@ -315,7 +315,7 @@ public class TcpChannelHub implements View, Closeable {
             throw new IORuntimeException("Not Connected " + remoteAddress);
 
         try {
-            writeSocket(wire, timeoutMs, clientChannel);
+            writeSocket0(wire, timeoutMs, clientChannel);
         } catch (Exception e) {
             LOG.error("", e);
             closeSocket();
@@ -352,7 +352,7 @@ public class TcpChannelHub implements View, Closeable {
      * @param timeoutTime how long before a we timeout
      * @throws IOException
      */
-    private void writeSocket(@NotNull WireOut outWire, long timeoutTime, @NotNull SocketChannel socketChannel) throws
+    private void writeSocket0(@NotNull WireOut outWire, long timeoutTime, @NotNull SocketChannel socketChannel) throws
             IOException {
 
 
@@ -375,7 +375,8 @@ public class TcpChannelHub implements View, Closeable {
 
             if (len == -1)
                 throw new IORuntimeException("Disconnection to server " + description + "/" + TCPRegistry.lookup(description) + ",name=" + name);
-            long writeTime = System.currentTimeMillis() - start;
+
+            long writeTime = Time.currentTimeMillis() - start;
             if (writeTime > 5000) {
                 socketChannel.close();
                 throw new IORuntimeException("Took " + writeTime + " ms to perform a write, remaining= " + outBuffer.remaining());
