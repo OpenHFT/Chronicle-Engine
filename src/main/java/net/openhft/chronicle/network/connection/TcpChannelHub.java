@@ -121,6 +121,8 @@ public class TcpChannelHub implements View, Closeable {
     static SocketChannel openSocketChannel()
             throws IOException {
         SocketChannel result = SocketChannel.open();
+        result.socket().setSendBufferSize(3 * 1024 * 1024);
+        result.socket().setReceiveBufferSize(3 * 1024 * 1024);
         result.socket().setTcpNoDelay(true);
         return result;
     }
