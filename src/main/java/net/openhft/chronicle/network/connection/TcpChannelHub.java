@@ -749,12 +749,8 @@ public class TcpChannelHub implements View, Closeable {
                             break;
                         } else {
                             LOG.warn("reconnecting due to unexpected " + e);
-//                            e.printStackTrace();
                             closeSocket();
-
                         }
-
-
                     } finally {
                         clear(inWire);
                     }
@@ -810,7 +806,10 @@ public class TcpChannelHub implements View, Closeable {
             long startTime = 0;
             Object o = null;
 
+            // tid == 0 for system messages
             if (tid != 0)
+
+                // this loop if to handle the rare case where we receive the tid before its been registered by this class
                 for (; !isShutdown(); ) {
 
                     o = map.get(tid);
@@ -850,7 +849,6 @@ public class TcpChannelHub implements View, Closeable {
 
                 blockingRead(inWire, messageSize);
                 logToStandardOutMessageReceived(inWire);
-                onMessageReceived();
                 ((AsyncSubscription) o).onConsumer(inWire);
 
                 // for async
@@ -870,7 +868,6 @@ public class TcpChannelHub implements View, Closeable {
                     byteBuffer.position(SIZE_OF_SIZE);
                     byteBuffer.limit(SIZE_OF_SIZE + messageSize);
                     readBuffer(byteBuffer);
-                    onMessageReceived();
                     bytes.readLimit(byteBuffer.position());
                     bytes.notifyAll();
                 }
@@ -889,6 +886,7 @@ public class TcpChannelHub implements View, Closeable {
          */
         private void processServerSystemMessage(final int header, final int messageSize)
                 throws IOException {
+
             serverHeartBeatHandler.clear();
             final Bytes bytes = serverHeartBeatHandler;
 
@@ -937,7 +935,7 @@ public class TcpChannelHub implements View, Closeable {
             readBuffer(buffer);
             bytes.readLimit(buffer.position());
 
-            onMessageReceived();
+
         }
 
         private void readBuffer(@NotNull final ByteBuffer buffer) throws IOException {
@@ -947,8 +945,14 @@ public class TcpChannelHub implements View, Closeable {
                     throw new IOException("Disconnection to server channel is closed" + description + "/" +
                             TCPRegistry.lookup(description) + " ,name=" + name);
 
-                if (clientChannel.read(buffer) == -1)
+
+                int numberOfBytesRead = clientChannel.read(buffer);
+                if (numberOfBytesRead == -1)
                     throw new IOException("Disconnection to server read=-1 " + description + "/" + TCPRegistry.lookup(description) + " ,name=" + name);
+
+                if (numberOfBytesRead > 0)
+                    onMessageReceived();
+
                 if (isShutdown)
                     throw new IOException("The server was shutdown, " + description + "/" + TCPRegistry.lookup(description) + " ,name=" + name);
             }
@@ -1042,7 +1046,7 @@ public class TcpChannelHub implements View, Closeable {
             // we will drop and then re-establish the connection.
             long x = millisecondsSinceLastMessageReceived - HEATBEAT_TIMEOUT_PERIOD;
             if (x > 0) {
-                LOG.warn("reconnecting due to heartbeat failure");
+                LOG.warn("reconnecting due to heartbeat failure, millisecondsSinceLastMessageReceived=" + millisecondsSinceLastMessageReceived);
                 closeSocket();
                 throw new InvalidEventHandlerException();
             }
@@ -1054,8 +1058,6 @@ public class TcpChannelHub implements View, Closeable {
         private void checkConnectionState() throws IOException {
             if (clientChannel != null)
                 return;
-
-
             attemptConnect();
         }
 
