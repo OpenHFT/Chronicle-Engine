@@ -75,15 +75,6 @@ public class TcpChannelHub implements View, Closeable {
     public final long timeoutMs;
     @NotNull
     protected final String name;
-
-    @Override
-    public String toString() {
-        return "TcpChannelHub{" +
-                "name=" + name +
-                "remoteAddress=" + remoteAddress +
-                ", description='" + description + '}';
-    }
-
     @NotNull
     protected final InetSocketAddress remoteAddress;
     protected final int tcpBufferSize;
@@ -97,21 +88,14 @@ public class TcpChannelHub implements View, Closeable {
     private final TcpSocketConsumer tcpSocketConsumer;
     private final EventLoop eventLoop;
     private final Function<Bytes, Wire> wire;
-
-
+    private final Wire handShakingWire;
+    private final String description;
     private long largestChunkSoFar = 0;
-
     @Nullable
     private volatile SocketChannel clientChannel;
 
-    private long limitOfLast = 0;
-
     // set up in the header
-
-
-    private final Wire handShakingWire;
-    private final String description;
-
+    private long limitOfLast = 0;
 
     public TcpChannelHub(@NotNull final SessionProvider sessionProvider,
                          @NotNull final String description,
@@ -140,19 +124,6 @@ public class TcpChannelHub implements View, Closeable {
         result.socket().setTcpNoDelay(true);
         return result;
     }
-
-
-    private void onDisconnected() {
-
-        if (Jvm.isDebug())
-            System.out.println(" disconnected to remoteAddress=" + remoteAddress);
-        tcpSocketConsumer.onConnectionClosed();
-    }
-
-    private void onConnected() {
-
-    }
-
 
     static void logToStandardOutMessageReceived(@NotNull Wire wire) {
         Bytes<?> bytes = wire.bytes();
@@ -189,6 +160,25 @@ public class TcpChannelHub implements View, Closeable {
             bytes.writeLimit(limit);
             bytes.writePosition(position);
         }
+    }
+
+    @Override
+    public String toString() {
+        return "TcpChannelHub{" +
+                "name=" + name +
+                "remoteAddress=" + remoteAddress +
+                ", description='" + description + '}';
+    }
+
+    private void onDisconnected() {
+
+        if (Jvm.isDebug())
+            System.out.println(" disconnected to remoteAddress=" + remoteAddress);
+        tcpSocketConsumer.onConnectionClosed();
+    }
+
+    private void onConnected() {
+
     }
 
     /**
@@ -378,13 +368,18 @@ public class TcpChannelHub implements View, Closeable {
 
         updateLargestChunkSoFarSize(outBuffer);
 
+        long start = Time.currentTimeMillis();
         while (outBuffer.remaining() > 0) {
 
             int len = socketChannel.write(outBuffer);
 
             if (len == -1)
                 throw new IORuntimeException("Disconnection to server " + description + "/" + TCPRegistry.lookup(description) + ",name=" + name);
-
+            long writeTime = System.currentTimeMillis() - start;
+            if (writeTime > 5000) {
+                socketChannel.close();
+                throw new IORuntimeException("Took " + writeTime + " ms to perform a write, remaining= " + outBuffer.remaining());
+            }
         }
 
         outBuffer.clear();
@@ -549,15 +544,27 @@ public class TcpChannelHub implements View, Closeable {
 
         @NotNull
         private final Map<Long, Object> map = new ConcurrentHashMap<>();
+        long lastheartbeatSentTime = 0;
         private volatile boolean isShutdown;
         private Function<Bytes, Wire> wireFunction;
-
         private long tid;
-
         @NotNull
         private ThreadLocal<Wire> syncInWireThreadLocal = withInitial(() -> wire.apply(
                 elasticByteBuffer()));
+        private Bytes serverHeartBeatHandler = Bytes.elasticByteBuffer();
+        private volatile long lastTimeMessageReceived = Time.currentTimeMillis();
 
+        /**
+         * @param wireFunction converts bytes into wire, ie TextWire or BinaryWire
+         */
+        private TcpSocketConsumer(
+                @NotNull final Function<Bytes, Wire> wireFunction) {
+            this.wireFunction = wireFunction;
+            if (LOG.isDebugEnabled())
+                LOG.debug("constructor remoteAddress=" + remoteAddress);
+
+            executorService = start();
+        }
 
         /**
          * re-establish all the subscriptions to the server, this method calls the {@code
@@ -592,18 +599,6 @@ public class TcpChannelHub implements View, Closeable {
                     }
                 }
             });
-        }
-
-        /**
-         * @param wireFunction converts bytes into wire, ie TextWire or BinaryWire
-         */
-        private TcpSocketConsumer(
-                @NotNull final Function<Bytes, Wire> wireFunction) {
-            this.wireFunction = wireFunction;
-            if (LOG.isDebugEnabled())
-                LOG.debug("constructor remoteAddress=" + remoteAddress);
-
-            executorService = start();
         }
 
         @Override
@@ -708,7 +703,6 @@ public class TcpChannelHub implements View, Closeable {
                         "been called.");
         }
 
-
         private void running() {
 
             try {
@@ -789,7 +783,6 @@ public class TcpChannelHub implements View, Closeable {
             assert messageSize < 1 << 30 : "Invalid message size " + messageSize;
             return messageSize;
         }
-
 
         /**
          * @param tid         the transaction id of the message
@@ -875,8 +868,6 @@ public class TcpChannelHub implements View, Closeable {
 
         }
 
-        private Bytes serverHeartBeatHandler = Bytes.elasticByteBuffer();
-
         /**
          * process system messages which originate from the server
          *
@@ -911,7 +902,6 @@ public class TcpChannelHub implements View, Closeable {
                     }
             );
         }
-
 
         /**
          * blocks indefinitely until the number of expected bytes is received
@@ -958,12 +948,9 @@ public class TcpChannelHub implements View, Closeable {
             }
         }
 
-        private volatile long lastTimeMessageReceived = Time.currentTimeMillis();
-
         private void onMessageReceived() {
             lastTimeMessageReceived = Time.currentTimeMillis();
         }
-
 
         /**
          * sends a heartbeat from the client to the server and logs the round trip time
@@ -1013,9 +1000,6 @@ public class TcpChannelHub implements View, Closeable {
                 executorService.shutdownNow();
             }
         }
-
-
-        long lastheartbeatSentTime = 0;
 
         /**
          * gets called periodically to monitor the heartbeat
