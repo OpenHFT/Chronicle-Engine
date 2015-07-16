@@ -744,7 +744,7 @@ public class TcpChannelHub implements View, Closeable {
                 if (!isShutdown())
                     e.printStackTrace();
             } finally {
-                System.out.println("Shutting down....");
+                System.err.println("Shutting down....");
                 closeSocket();
                 stop();
             }
