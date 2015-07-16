@@ -1081,14 +1081,18 @@ public class TcpChannelHub implements View, Closeable {
                         socketChannel = openSocketChannel();
 
                         try {
-                            if (socketChannel == null || !socketChannel.connect(remoteAddress)) {
-                                LOG.error("Connection refused to remoteAddress=" + remoteAddress);
+                            if (socketChannel == null) {
+                                LOG.error("Unable to open socketChannel to remoteAddress=" + remoteAddress);
+                                pause(1000);
+                                continue;
+                            } else if (!socketChannel.connect(remoteAddress)) {
+                                LOG.error("Unable to connect to remoteAddress=" + remoteAddress);
                                 pause(1000);
                                 continue;
                             } else
                                 break;
                         } catch (ConnectException e) {
-                            LOG.error("Connection refused to remoteAddress=" + remoteAddress);
+                            LOG.error("ConnectException to remoteAddress=" + remoteAddress, e);
                             pause(1000);
                             continue;
                         }
