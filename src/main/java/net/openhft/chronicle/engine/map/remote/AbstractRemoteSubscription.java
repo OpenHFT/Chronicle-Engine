@@ -93,11 +93,7 @@ abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient imp
                     }
                 });
             }
-
-
         });
-
-
     }
 
     private void onEvent(@Nullable Object message, @NotNull Subscriber subscriber) {
@@ -118,7 +114,6 @@ abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient imp
             AbstractRemoteSubscription.LOG.warn("There is subscription to unsubscribe");
             return;
         }
-
 
         hub.lock(() -> {
             writeMetaDataForKnownTID(tid);

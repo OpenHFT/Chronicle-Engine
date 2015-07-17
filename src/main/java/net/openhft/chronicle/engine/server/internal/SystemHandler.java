@@ -2,7 +2,10 @@ package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.network.api.session.SessionDetailsProvider;
 import net.openhft.chronicle.network.connection.CoreFields;
-import net.openhft.chronicle.wire.*;
+import net.openhft.chronicle.wire.ValueIn;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireKey;
+import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +25,6 @@ public class SystemHandler extends AbstractHandler {
         setOutWire(outWire);
         dataConsumer.accept(inWire, tid);
     }
-
 
     @Nullable
     private final BiConsumer<WireIn, Long> dataConsumer = (inWire, tid) -> {

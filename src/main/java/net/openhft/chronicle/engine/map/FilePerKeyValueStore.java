@@ -133,7 +133,6 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         return getFiles().count();
     }
 
-
     @Nullable
     @Override
     public BytesStore getUsing(String key, Bytes value) {
@@ -280,7 +279,6 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     public boolean containsValue(final BytesStore value) {
         throw new UnsupportedOperationException("todo");
     }
-
 
     private Stream<Path> getFiles() {
         try {

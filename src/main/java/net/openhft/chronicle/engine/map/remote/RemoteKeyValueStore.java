@@ -81,7 +81,6 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
         subscriptions.setKvStore(this);
     }
 
-
     public RemoteKeyValueStore(@NotNull RequestContext requestContext, @NotNull Asset asset) {
         this(requestContext, asset, asset.findView(TcpChannelHub.class));
     }
@@ -121,7 +120,6 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     public boolean containsValue(final V value) {
         throw new UnsupportedOperationException("todo");
     }
-
 
     private void checkValue(@Nullable Object value) {
         if (value == null)

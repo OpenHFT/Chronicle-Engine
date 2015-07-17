@@ -61,7 +61,6 @@ public class EngineWireHandler extends WireTcpHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(EngineWireHandler.class);
 
-
     private final StringBuilder cspText = new StringBuilder();
     @NotNull
     private final CollectionWireHandler keySetHandler;
@@ -124,7 +123,6 @@ public class EngineWireHandler extends WireTcpHandler {
     @Nullable
     private EventLoop eventLoop;
 
-
     public EngineWireHandler(@NotNull final WireType byteToWire,
                              @NotNull final AssetTree assetTree) {
         super(byteToWire);
@@ -150,7 +148,6 @@ public class EngineWireHandler extends WireTcpHandler {
         this.referenceHandler = new ReferenceHandler();
         this.replicationHandler = new ReplicationHandler();
         this.systemHandler = new SystemHandler();
-
     }
 
     final RequestContextInterner requestContextInterner = new RequestContextInterner(128);
@@ -328,8 +325,6 @@ public class EngineWireHandler extends WireTcpHandler {
                                 (Replication) view, eventLoop);
                         return;
                     }
-
-
                 }
 
                 if (endsWith(cspText, "?view=queue")) {
@@ -341,7 +336,6 @@ public class EngineWireHandler extends WireTcpHandler {
             } finally {
                 sessionProvider.remove();
             }
-
         });
     }
 
@@ -374,6 +368,4 @@ public class EngineWireHandler extends WireTcpHandler {
             cspText.append(s);
         }
     }
-
-
 }

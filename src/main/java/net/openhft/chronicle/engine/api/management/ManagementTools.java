@@ -28,7 +28,6 @@ import net.openhft.chronicle.threads.Threads;
 import net.openhft.lang.thread.NamedThreadFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -202,7 +201,6 @@ public enum ManagementTools {
                     ObjectName atName = new ObjectName(createObjectNameUri(hostId, e.assetName(), e.name(), treeName));
                     registerTreeWithMBean(dynamicMBean, atName);
                     //end Dynamic MBeans Code
-
 
                     tree.registerSubscriber(e.fullName(), MapEvent.class, (MapEvent me) ->
                             ses.schedule(() -> handleAssetUpdate(view,atName,objectKVSSubscription,e.assetName() + "-" + e.name()), 100, TimeUnit.MILLISECONDS));

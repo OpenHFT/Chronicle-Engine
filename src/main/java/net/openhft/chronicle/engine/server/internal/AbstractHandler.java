@@ -60,10 +60,6 @@ public class AbstractHandler {
                 System.out.println("\nServer Sends ( corrupted ) :\n" +
                         outWire.bytes().toDebugString());
             }
-
-        System.out.println("");
-
-
     }
 
     public static void nullCheck(@Nullable Object o) {

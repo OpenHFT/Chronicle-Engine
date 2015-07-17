@@ -46,8 +46,6 @@ public abstract class AbstractAsyncSubscription implements AsyncSubscription {
         } catch (IORuntimeException e) {
             e.printStackTrace();
         }
-
-
     }
 
     /**

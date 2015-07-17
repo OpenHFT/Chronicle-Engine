@@ -68,7 +68,6 @@ public class MapWireHandler<K, V> extends AbstractHandler {
     private Function<ValueIn, V> wireToV;
     private RequestContext requestContext;
 
-
     @Nullable
     private WireIn inWire = null;
     @Nullable
@@ -152,7 +151,6 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                         outWire.writeEventName(reply).int64(map.longSize());
                         return;
                     }
-
 
                     if (keySet.contentEquals(eventName) ||
                             values.contentEquals(eventName) ||
@@ -304,7 +302,6 @@ public class MapWireHandler<K, V> extends AbstractHandler {
         }
     };
 
-
     /**
      * @param in             the data the has come in from network
      * @param out            the data that is going out to network
@@ -382,7 +379,6 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                     w.writeEventName(CoreFields.cid).int64(createCid(cpsBuff));
                 });
     }
-
 
     public CharSequence getCspForCid(long cid) {
         return cidToCsp.get(cid);

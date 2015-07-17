@@ -78,7 +78,6 @@ public class RemovedAssetEvent implements TopologicalEvent {
                 '}';
     }
 
-
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         wire.read(TopologicalFields.assetName).text(s -> assetName = s);

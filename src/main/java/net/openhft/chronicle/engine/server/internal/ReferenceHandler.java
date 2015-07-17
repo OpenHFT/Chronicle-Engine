@@ -160,7 +160,6 @@ public class ReferenceHandler<E,T> extends AbstractHandler {
         }
     };
 
-
     void process(@NotNull final WireIn inWire,
                  final WireOutPublisher publisher,
                  final long tid,
@@ -177,7 +176,6 @@ public class ReferenceHandler<E,T> extends AbstractHandler {
         this.wireToE = wireAdapter.wireToValue();
         dataConsumer.accept(inWire, tid);
     }
-
 
     public enum Params implements WireKey {
         value,
@@ -202,7 +200,6 @@ public class ReferenceHandler<E,T> extends AbstractHandler {
         unregisterSubscriber,
         countSubscribers,
         onEndOfSubscription;
-
 
         private final WireKey[] params;
 

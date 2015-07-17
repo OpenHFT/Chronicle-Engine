@@ -50,7 +50,6 @@ public class PublisherHandler<E> extends AbstractHandler {
                     }
 
 
-
                 };
 
                 // TODO CE-101 get the true value from the CSP
@@ -92,7 +91,6 @@ public class PublisherHandler<E> extends AbstractHandler {
         this.wireToE = wireAdapter.wireToValue();
         dataConsumer.accept(inWire, tid);
     }
-
 
     public enum Params implements WireKey {
         message

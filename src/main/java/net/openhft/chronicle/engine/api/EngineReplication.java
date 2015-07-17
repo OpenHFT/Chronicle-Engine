@@ -30,7 +30,6 @@ import java.util.function.Consumer;
  */
 public interface EngineReplication extends Replication {
 
-
     /**
      * Provides the unique Identifier associated with this instance. <p> An identifier is used to
      * determine which replicating node made the change. <p> If two nodes update their map at the
@@ -149,7 +148,6 @@ public interface EngineReplication extends Replication {
 
         long bootStrapTimeStamp();
 
-
         default void key(BytesStore key) {
             throw new UnsupportedOperationException("immutable entry");
         }
@@ -184,7 +182,6 @@ public interface EngineReplication extends Replication {
             bootStrapTimeStamp(wire.read(() -> "bootStrapTimeStamp").int64());
         }
 
-
         @Override
         default void writeMarshallable(@NotNull final WireOut wire) {
             wire.write(() -> "key").bytes(key());
@@ -195,7 +192,5 @@ public interface EngineReplication extends Replication {
             wire.write(() -> "bootStrapTimeStamp").int64(bootStrapTimeStamp());
             wire.writeComment("remoteIdentifier=" + remoteIdentifier());
         }
-
-
     }
 }

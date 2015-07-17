@@ -106,7 +106,6 @@ public class VanillaAsset implements Asset, Closeable {
 
         addWrappingRule(MapView.class, LAST + " string key maps", VanillaMapView::new, ObjectKeyValueStore.class);
 
-
         String fullName = fullName();
         HostIdentifier hostIdentifier = findView(HostIdentifier.class);
         if (hostIdentifier != null)

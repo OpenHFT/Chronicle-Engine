@@ -41,7 +41,6 @@ public class SocketReader {
     public void read(long tid) {
 
 
-
         Queue queue = queues.get();
         threads.put(tid, queue);
         queue.wait(10,TimeUnit.SECONDS);

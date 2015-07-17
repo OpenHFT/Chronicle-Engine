@@ -121,7 +121,6 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscriptio
         onEndOfSubscription,
         notifyEvent;
 
-
         private final WireKey[] params;
 
         <P extends WireKey> EventId(P... params) {

@@ -37,7 +37,6 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
     private EventLoop eventLoop;
 
-
     void process(@NotNull final WireIn inWire,
                  final WireOutPublisher publisher,
                  final long tid,
@@ -56,7 +55,6 @@ public class ReplicationHandler<E> extends AbstractHandler {
         dataConsumer.accept(inWire, tid);
 
     }
-
 
     public enum EventId implements ParameterizeWireKey {
         publish,
@@ -103,7 +101,6 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
                     @Override
                     public boolean action() throws InvalidEventHandlerException {
-
 
                         if (connectionClosed)
                             throw new InvalidEventHandlerException();
@@ -177,7 +174,6 @@ public class ReplicationHandler<E> extends AbstractHandler {
                     if (inBootstrap == null)
                         return;
                     final byte id = inBootstrap.identifier();
-
 
                     final ModificationIterator mi = replication.acquireModificationIterator(id);
                     try {

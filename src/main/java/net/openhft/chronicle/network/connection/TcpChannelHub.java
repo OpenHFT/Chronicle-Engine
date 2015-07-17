@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SocketChannel;
@@ -118,16 +119,6 @@ public class TcpChannelHub implements View, Closeable {
         this.tcpSocketConsumer = new TcpSocketConsumer(wire);
     }
 
-    @Nullable
-    static SocketChannel openSocketChannel()
-            throws IOException {
-        SocketChannel result = SocketChannel.open();
-//        result.socket().setSendBufferSize(3 * 1024 * 1024);
-//        result.socket().setReceiveBufferSize(3 * 1024 * 1024);
-        result.socket().setTcpNoDelay(true);
-        return result;
-    }
-
     static void logToStandardOutMessageReceived(@NotNull Wire wire) {
         Bytes<?> bytes = wire.bytes();
 
@@ -163,6 +154,17 @@ public class TcpChannelHub implements View, Closeable {
         }
     }
 
+    @Nullable
+    SocketChannel openSocketChannel()
+            throws IOException {
+        SocketChannel result = SocketChannel.open();
+        Socket socket = result.socket();
+        socket.setTcpNoDelay(true);
+        socket.setReceiveBufferSize(tcpBufferSize);
+        socket.setSendBufferSize(tcpBufferSize);
+        return result;
+    }
+
     @Override
     public String toString() {
         return "TcpChannelHub{" +
@@ -190,7 +192,11 @@ public class TcpChannelHub implements View, Closeable {
      * @param asyncSubscription detail of the subscription that you wish to hold with the server
      */
     public void subscribe(@NotNull final AsyncSubscription asyncSubscription) {
-        tcpSocketConsumer.subscribe(asyncSubscription);
+        subscribe(asyncSubscription, false);
+    }
+
+    public void subscribe(@NotNull final AsyncSubscription asyncSubscription, boolean tryLock) {
+        tcpSocketConsumer.subscribe(asyncSubscription, tryLock);
     }
 
     /**
@@ -258,7 +264,6 @@ public class TcpChannelHub implements View, Closeable {
             this.clientChannel = null;
             onDisconnected();
         }
-
     }
 
     public boolean isOpen() {
@@ -273,7 +278,8 @@ public class TcpChannelHub implements View, Closeable {
         //  eventLoop.stop();
         tcpSocketConsumer.stop();
 
-        System.out.println("closing " + remoteAddress + "");
+        String remoteAddressStr = remoteAddress.toString().replace("0:0:0:0:0:0:0:0/0:0:0:0:0:0:0:0", "localhost");
+        System.out.println("closing " + remoteAddressStr);
         while (clientChannel != null) {
             pause(10);
             System.out.println("waiting for disconnect");
@@ -317,7 +323,6 @@ public class TcpChannelHub implements View, Closeable {
             //reconnect = true;
             throw rethrow(e);
         }
-
     }
 
     public Wire proxyReply(long timeoutTime, final long tid) {
@@ -369,8 +374,12 @@ public class TcpChannelHub implements View, Closeable {
         }
         try {
             while (outBuffer.remaining() > 0) {
-
+                int prevRemaining = outBuffer.remaining();
                 int len = socketChannel.write(outBuffer);
+
+                // reset the timer if we wrote something.
+                if (prevRemaining != outBuffer.remaining())
+                    start = Time.currentTimeMillis();
 
                 if (len == -1)
                     throw new IORuntimeException("Disconnection to server " + description + "/"
@@ -379,7 +388,20 @@ public class TcpChannelHub implements View, Closeable {
                 long writeTime = Time.currentTimeMillis() - start;
 
                 if (writeTime > 5000) {
+                    System.err.println("\n========= THREAD DUMP =========\n");
+                    for (Map.Entry<Thread, StackTraceElement[]> entry : Thread.getAllStackTraces().entrySet()) {
+                        Thread thread = entry.getKey();
+                        if (thread.getThreadGroup().getName().equals("system"))
+                            continue;
+                        StringBuilder sb = new StringBuilder();
+                        sb.append(thread).append(" ").append(thread.getState());
+                        Jvm.trimStackTrace(sb, entry.getValue());
+                        sb.append("\n");
+                        System.err.println(sb);
+                    }
+
                     socketChannel.close();
+
                     throw new IORuntimeException("Took " + writeTime + " ms " +
                             "to perform a write, remaining= " + outBuffer.remaining());
                 }
@@ -442,7 +464,7 @@ public class TcpChannelHub implements View, Closeable {
         return outWire;
     }
 
-    private void reflectServerHeartbeatMessage(ValueIn valueIn) {
+    void reflectServerHeartbeatMessage(ValueIn valueIn) {
 
         // time stamp sent from the server, this is so that the server can calculate the round
         // trip time
@@ -456,7 +478,7 @@ public class TcpChannelHub implements View, Closeable {
                     // send back the time stamp that was sent from the server
                     w.writeEventName(heartbeatReply).int64(timestamp));
             writeSocket(outWire);
-        });
+        }, true);
     }
 
     public long writeMetaDataStartTime(long startTime, @NotNull Wire wire, String csp, long cid) {
@@ -500,16 +522,26 @@ public class TcpChannelHub implements View, Closeable {
     }
 
     public void lock(@NotNull Task r) {
+        lock(r, false);
+    }
+
+    public void lock(@NotNull Task r, boolean tryLock) {
         if (clientChannel == null)
             return;
-        outBytesLock().lock();
+        ReentrantLock lock = outBytesLock();
+        if (tryLock) {
+            if (!lock.tryLock())
+                return;
+        } else {
+            lock.lock();
+        }
         try {
             r.run();
             writeSocket(outWire());
         } catch (Exception e) {
             LOG.debug("", e);
         } finally {
-            outBytesLock().unlock();
+            lock.unlock();
         }
     }
 
@@ -636,7 +668,7 @@ public class TcpChannelHub implements View, Closeable {
 
         }
 
-        void subscribe(@NotNull final AsyncSubscription asyncSubscription) {
+        void subscribe(@NotNull final AsyncSubscription asyncSubscription, boolean tryLock) {
             // we add a synchronize to ensure that the asyncSubscription is added before map before the clientChannel is assigned
             synchronized (this) {
                 if (clientChannel == null) {
@@ -651,7 +683,12 @@ public class TcpChannelHub implements View, Closeable {
 
             // we have lock here to prevent a race with the resubscribe upon a reconnection
             final ReentrantLock reentrantLock = outBytesLock();
-            reentrantLock.lock();
+            if (tryLock) {
+                if (!reentrantLock.tryLock())
+                    return;
+            } else {
+                reentrantLock.lock();
+            }
             try {
                 map.put(asyncSubscription.tid(), asyncSubscription);
 
@@ -751,7 +788,6 @@ public class TcpChannelHub implements View, Closeable {
                 closeSocket();
                 stop();
             }
-
         }
 
         private boolean isShutdown() {
@@ -821,7 +857,6 @@ public class TcpChannelHub implements View, Closeable {
                                 "start again.");
                         return;
                     }
-
                 }
 
             // heartbeat message sent from the server
@@ -858,7 +893,6 @@ public class TcpChannelHub implements View, Closeable {
                     bytes.notifyAll();
                 }
             }
-
         }
 
         /**
@@ -966,7 +1000,7 @@ public class TcpChannelHub implements View, Closeable {
                                 roundTipTimeMicros));
                     inWire.clear();
                 }
-            });
+            }, true);
         }
 
         /**
@@ -1065,12 +1099,7 @@ public class TcpChannelHub implements View, Closeable {
                             pause(1000);
                             continue;
                         }
-
                     }
-
-                    socketChannel.socket().setTcpNoDelay(true);
-                    socketChannel.socket().setReceiveBufferSize(tcpBufferSize);
-                    socketChannel.socket().setSendBufferSize(tcpBufferSize);
 
                     // resets the heartbeat timer
                     onMessageReceived();
@@ -1096,7 +1125,6 @@ public class TcpChannelHub implements View, Closeable {
                         closeSocket();
                     }
                 }
-
             }
         }
     }

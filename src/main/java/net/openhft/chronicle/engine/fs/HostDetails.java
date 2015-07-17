@@ -45,7 +45,6 @@ public class HostDetails implements Marshallable, View, Closeable {
     public int timeoutMs;
     private final Map<InetSocketAddress, TcpChannelHub> tcpChannelHubs = new ConcurrentHashMap<>();
 
-
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         wire.read(() -> "hostId").int32(i -> hostId = i)
@@ -61,7 +60,6 @@ public class HostDetails implements Marshallable, View, Closeable {
                 .write(() -> "connectUri").text(connectUri)
                 .write(() -> "timeoutMs").int32(timeoutMs);
     }
-
 
     public TcpChannelHub acquireTcpChannelHub(Asset asset, EventLoop eventLoop, Function<Bytes, Wire> wire) {
         InetSocketAddress addr = TCPRegistry.lookup(connectUri);

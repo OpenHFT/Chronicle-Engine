@@ -58,7 +58,6 @@ import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
 import static net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer.notifyEachEvent;
 import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplication.builder;
 
-
 public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValueStore<K, MV, V>,
         Closeable, Supplier<EngineReplication> {
 
@@ -157,10 +156,8 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
 
             for (HostDetails hostDetails : cluster.hostDetails()) {
 
-
                 // its the identifier with the larger values that will establish the connection
                 int remoteIdentifier = hostDetails.hostId;
-
 
                 if (remoteIdentifier <= localIdentifier) {
                     // if (LOGGER.isDebugEnabled())
@@ -182,7 +179,6 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
             }
             System.out.println("loop exit");
         }
-
     }
 
     @NotNull

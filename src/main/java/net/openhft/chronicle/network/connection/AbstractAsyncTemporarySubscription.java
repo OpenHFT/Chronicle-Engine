@@ -18,7 +18,6 @@ public abstract class AbstractAsyncTemporarySubscription extends AbstractAsyncSu
         super(hub, csp, name);
     }
 
-
     /**
      * @param hub handles the tcp connectivity.
      * @param csp the url of the subscription.

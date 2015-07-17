@@ -169,7 +169,6 @@ public class RequestContext implements Cloneable {
         return parser;
     }
 
-
     @NotNull
     RequestContext view(@NotNull String viewName) {
         try {
@@ -365,7 +364,6 @@ public class RequestContext implements Cloneable {
         if (sealed) throw new IllegalStateException();
     }
 
-
     @NotNull
     @Override
     public String toString() {
@@ -395,7 +393,6 @@ public class RequestContext implements Cloneable {
         this.recurse = recurse;
         return this;
     }
-
 
     @NotNull
     public RequestContext clone() {

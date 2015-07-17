@@ -171,7 +171,6 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
         return (R) super.proxyReturnTypedObject(applyTo2, null, Object.class, function, argument);
     }
 
-
     @Override
     public <T> void asyncUpdate(@NotNull SerializableBiFunction<E, T, E> updateFunction, T argument) {
         sendEventAsync(update2, toParameters(update2, updateFunction, argument), true);

@@ -158,7 +158,6 @@ public class CollectionWireHandler<U, C extends Collection<U>> {
                     if (len > 0) {
 
 
-
                         String s = Wires.fromSizePrefixedBlobs(outBytes, SIZE_OF_SIZE, len);
 
                     //    if (!s.toUpperCase().contains("heart".toUpperCase()))

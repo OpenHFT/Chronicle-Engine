@@ -59,7 +59,6 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
         return false;
     }
 
-
     /**
      * before writing the tid to the wire
      *
@@ -89,7 +88,6 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
         }
         return false;
     }
-
 
     public enum SubscriptionEventID implements ParameterizeWireKey {
 

@@ -92,11 +92,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractRemoteSubscription<
                     }
                 });
             }
-
-
         });
-
-
     }
 
     private void onEvent(K topic, @Nullable V message, @NotNull TopicSubscriber<K, V> subscriber) {

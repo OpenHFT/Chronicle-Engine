@@ -50,7 +50,6 @@ public class TopologyHandler<E> extends AbstractHandler {
                         });
                     }
 
-
                 };
 
                 // TODO CE-101
@@ -94,7 +93,6 @@ public class TopologyHandler<E> extends AbstractHandler {
         dataConsumer.accept(inWire, tid);
 
     }
-
 
     public enum Params implements WireKey {
         message

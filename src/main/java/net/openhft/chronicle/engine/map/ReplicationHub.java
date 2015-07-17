@@ -76,7 +76,6 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
                           byte localIdentifier,
                           byte remoteIdentifier) throws InterruptedException {
 
-
         // a non block call to get the identifier from the remote host
         hub.subscribe(new AbstractAsyncSubscription(hub, csp, localIdentifier, "ReplicationHub bootstrap") {
             @Override
@@ -103,7 +102,6 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
             }
         });
     }
-
 
     /**
      * called when the connection is established to the remote host, if the connection to the remote
@@ -139,7 +137,6 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
                 inWire.readDocument(null, d -> {
                     Bootstrap b = d.read(bootstrapReply).typedMarshallable();
 
-
                     // publishes changes - pushes the replication events
                     try {
                         publish(mi, b, localIdentifier, remoteIdentifier);
@@ -151,9 +148,7 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
 
         });
 
-
     }
-
 
     /**
      * publishes changes - this method pushes the replication events
@@ -178,7 +173,6 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
                 try {
                     if (isClosed.get())
                         throw new InvalidEventHandlerException();
-
 
                     // publishes the replication events
                     hub.lock(() -> mi.forEach(e -> {
@@ -206,7 +200,6 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
 
         mi.dirtyEntries(remote.lastUpdatedTime());
     }
-
 
     /**
      * subscribes to updates

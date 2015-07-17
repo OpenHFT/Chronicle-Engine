@@ -40,7 +40,6 @@ public class VanillaKeySetView<K, V> extends AbstractCollection<K> implements Ke
         this.kvMapView = kvMapView;
     }
 
-
     @Override
     public int size() {
         return kvMapView.size();

@@ -16,7 +16,6 @@
  *  limitations under the License.
  */
 
-
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.BytesStore;
@@ -136,8 +135,6 @@ public class VanillaEngineReplication<Store extends KeyValueStore<?, ?, ?>>
             long bit = 1L << (identifier % 64);
             return (replicationData.getDirtyWord(index) & bit) != 0L;
         }
-
-
     }
 
     public interface RemoteNodeReplicationState
