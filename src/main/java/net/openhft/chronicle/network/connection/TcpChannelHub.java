@@ -552,8 +552,7 @@ public class TcpChannelHub implements View, Closeable {
 
         while (clientChannel == null) {
 
-            if (tcpSocketConsumer.isShutdown())
-                throw new IORuntimeException("Shutdown connection to" + remoteAddress);
+            tcpSocketConsumer.checkNotShutdown();
 
             if (start + timeoutMs > Time.currentTimeMillis())
                 Jvm.pause(100);
@@ -583,6 +582,7 @@ public class TcpChannelHub implements View, Closeable {
                 elasticByteBuffer()));
         private Bytes serverHeartBeatHandler = Bytes.elasticByteBuffer();
         private volatile long lastTimeMessageReceived = Time.currentTimeMillis();
+        private Throwable shutdownHere = null;
 
         /**
          * @param wireFunction converts bytes into wire, ie TextWire or BinaryWire
@@ -728,14 +728,12 @@ public class TcpChannelHub implements View, Closeable {
             return executorService;
         }
 
-        private void checkNotShutdown() {
+        public void checkNotShutdown() {
             if (isShutdown)
-                throw new IllegalStateException("you can not call this method once stop() has " +
-                        "been called.");
+                throw new IllegalStateException("Called after shutdown", shutdownHere);
         }
 
         private void running() {
-
             try {
                 final Wire inWire = wireFunction.apply(elasticByteBuffer());
                 assert inWire != null;
@@ -1013,6 +1011,7 @@ public class TcpChannelHub implements View, Closeable {
             if (isShutdown)
                 return;
 
+            shutdownHere = new Throwable("Shutdown here");
             isShutdown = true;
 
             executorService.shutdown();
@@ -1069,8 +1068,7 @@ public class TcpChannelHub implements View, Closeable {
         private void attemptConnect() throws IOException {
             OUTER:
             for (; ; ) {
-                if (isShutdown())
-                    throw new IOException("shutdown..");
+                checkNotShutdown();
 
                 if (LOG.isDebugEnabled())
                     LOG.debug("attemptConnect remoteAddress=" + remoteAddress);
