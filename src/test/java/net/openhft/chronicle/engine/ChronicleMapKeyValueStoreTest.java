@@ -100,6 +100,9 @@ public class ChronicleMapKeyValueStoreTest {
         tree.root().addLeafRule(FilePerKeyValueStore.class, "FilePerKey Map",
                 FilePerKeyValueStore::new);
 
+        tree.root().addLeafRule(RawKVSSubscription.class, " vanilla",
+                VanillaKVSSubscription::new);
+
         tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
                 (RequestContext requestContext, Asset asset) -> new VanillaEngineReplication<>(
                         segment -> new FilePerKeyBasedKeyMarshallableValueStore<>(
