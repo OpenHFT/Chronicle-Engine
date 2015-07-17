@@ -69,6 +69,10 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
     protected boolean before(Long tid, ValueIn valueIn) throws AssetNotFoundException {
         if (registerSubscriber.contentEquals(eventName)) {
             Class subscriptionType = valueIn.typeLiteral();
+            if(tidToListener.containsKey(tid)){
+                System.out.println("Duplicate registration for tid " + tid);
+                return true;
+            }
             Subscriber<Object> listener = new LocalSubscriber(tid);
             tidToListener.put(tid, listener);
             RequestContext rc = requestContext.clone().type(subscriptionType);
@@ -136,6 +140,13 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
                 };
                 publisher.add(toPublish);
             }
+        }
+
+        @Override
+        public String toString() {
+            return "LocalSubscriber{" +
+                    "tid=" + tid +
+                    '}';
         }
     }
 }
