@@ -278,7 +278,7 @@ public class TcpChannelHub implements View, Closeable {
         tcpSocketConsumer.stop();
 
         String remoteAddressStr = remoteAddress.toString().replaceAll("0:0:0:0:0:0:0:0", "localhost");
-        System.out.println("closing " + remoteAddressStr);
+        System.out.println(Thread.currentThread() + " closing " + remoteAddressStr);
         while (clientChannel != null) {
             pause(10);
             System.out.println("waiting for disconnect");
@@ -769,6 +769,7 @@ public class TcpChannelHub implements View, Closeable {
                         if (isShutdown()) {
                             break;
                         } else {
+                            System.err.println("reconnecting due to unexpected " + e);
                             LOG.warn("reconnecting due to unexpected " + e);
                             closeSocket();
                         }
@@ -776,12 +777,13 @@ public class TcpChannelHub implements View, Closeable {
                         clear(inWire);
                     }
                 }
-
+                System.err.println("Exiting while loop");
             } catch (Throwable e) {
+                e.printStackTrace();
                 if (!isShutdown())
                     e.printStackTrace();
             } finally {
-                System.err.println("Shutting down....");
+                System.err.println("\nShutting down.... isShutdown=" + isShutdown);
                 closeSocket();
                 stop();
             }
@@ -1011,7 +1013,7 @@ public class TcpChannelHub implements View, Closeable {
             if (isShutdown)
                 return;
 
-            shutdownHere = new Throwable("Shutdown here");
+            shutdownHere = new Throwable(Thread.currentThread() + " Shutdown here");
             isShutdown = true;
 
             executorService.shutdown();
