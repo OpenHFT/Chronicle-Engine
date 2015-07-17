@@ -574,15 +574,16 @@ public class TcpChannelHub implements View, Closeable {
         @NotNull
         private final Map<Long, Object> map = new ConcurrentHashMap<>();
         long lastheartbeatSentTime = 0;
-        private volatile boolean isShutdown;
         private Function<Bytes, Wire> wireFunction;
         private long tid;
         @NotNull
         private ThreadLocal<Wire> syncInWireThreadLocal = withInitial(() -> wire.apply(
                 elasticByteBuffer()));
         private Bytes serverHeartBeatHandler = Bytes.elasticByteBuffer();
+
         private volatile long lastTimeMessageReceived = Time.currentTimeMillis();
-        private Throwable shutdownHere = null;
+        private volatile boolean isShutdown;
+        private volatile Throwable shutdownHere = null;
 
         /**
          * @param wireFunction converts bytes into wire, ie TextWire or BinaryWire
