@@ -77,8 +77,7 @@ public class ServerEndpoint implements Closeable {
     public void close() {
         isClosed.set(true);
         stop();
-        closeQuietly(eg);
-        eg = null;
+
         closeQuietly(eah);
         eah = null;
 

@@ -56,7 +56,6 @@ import java.util.function.Function;
 
 import static java.lang.Integer.getInteger;
 import static java.lang.System.getProperty;
-import static java.lang.Thread.currentThread;
 import static java.lang.ThreadLocal.withInitial;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
@@ -107,7 +106,7 @@ public class TcpChannelHub implements View, Closeable {
 
         this.description = description;
         this.eventLoop = eventLoop;
-        this.tcpBufferSize = 64 << 10;
+        this.tcpBufferSize = Integer.getInteger("tcpBufferSize", 2 << 20);
         this.remoteAddress = TCPRegistry.lookup(description);
         this.outWire = wire.apply(elasticByteBuffer());
         this.inWire = wire.apply(elasticByteBuffer());
@@ -278,7 +277,7 @@ public class TcpChannelHub implements View, Closeable {
         //  eventLoop.stop();
         tcpSocketConsumer.stop();
 
-        String remoteAddressStr = remoteAddress.toString().replace("0:0:0:0:0:0:0:0/0:0:0:0:0:0:0:0", "localhost");
+        String remoteAddressStr = remoteAddress.toString().replaceAll("0:0:0:0:0:0:0:0", "localhost");
         System.out.println("closing " + remoteAddressStr);
         while (clientChannel != null) {
             pause(10);
@@ -712,7 +711,7 @@ public class TcpChannelHub implements View, Closeable {
             checkNotShutdown();
 
             ExecutorService executorService = newSingleThreadExecutor(
-                    new NamedThreadFactory("TcpChannelHub-" + remoteAddress.getHostName() + ":" + remoteAddress.getPort(), true));
+                    new NamedThreadFactory("TcpChannelHub-" + remoteAddress.toString().replaceAll("0:0:0:0:0:0:0:0", "*"), true));
             isShutdown = false;
             executorService.submit(() -> {
                 try {
@@ -791,9 +790,9 @@ public class TcpChannelHub implements View, Closeable {
         }
 
         private boolean isShutdown() {
-            boolean interrupted = currentThread().isInterrupted();
-            if (interrupted)
-                isShutdown = true;
+//            boolean interrupted = currentThread().isInterrupted();
+//            if (interrupted)
+//                isShutdown = true;
             return isShutdown;
         }
 
@@ -870,7 +869,9 @@ public class TcpChannelHub implements View, Closeable {
 
                 blockingRead(inWire, messageSize);
                 logToStandardOutMessageReceived(inWire);
-                ((AsyncSubscription) o).onConsumer(inWire);
+                AsyncSubscription asyncSubscription = (AsyncSubscription) o;
+
+                asyncSubscription.onConsumer(inWire);
 
                 // for async
             } else {
