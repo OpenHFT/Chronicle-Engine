@@ -94,6 +94,7 @@ public class TcpChannelHub implements View, Closeable {
     private long largestChunkSoFar = 0;
     @Nullable
     private volatile SocketChannel clientChannel;
+    private volatile boolean closed;
 
     // set up in the header
     private long limitOfLast = 0;
@@ -273,7 +274,9 @@ public class TcpChannelHub implements View, Closeable {
      * called when we are completed finished with using the TcpChannelHub
      */
     public void close() {
-
+        if (closed)
+            return;
+        closed = true;
         //  eventLoop.stop();
         tcpSocketConsumer.stop();
 
