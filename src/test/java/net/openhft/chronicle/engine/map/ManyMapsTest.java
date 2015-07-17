@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.core.util.SerializablePredicate;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
@@ -28,6 +29,7 @@ public class ManyMapsTest {
 
         Map<String, Map<String, String>> _clientMaps = new HashMap<>();
         TCPRegistry.createServerSocketChannelFor("SubscriptionEventTest.host.port");
+        //TODO CHENT-68 Only works with BINARY NOT TEXT.
         ServerEndpoint serverEndpoint = new ServerEndpoint("SubscriptionEventTest.host.port", assetTree, WireType.BINARY);
 
         AssetTree clientAssetTree = new VanillaAssetTree().forRemoteAccess("SubscriptionEventTest.host.port", WireType.BINARY);
@@ -58,14 +60,14 @@ public class ManyMapsTest {
             //Test that the number of key-value-pairs in the map matches the expected.
             Assert.assertEquals(noOfKvps, map.size());
 
-//            //Test that all the keys in this map contains the map name (ie. no other map's keys overlap).
-//            String key = mapEntry.getKey();
-//            SerializablePredicate<String> stringPredicate = k -> !k.contains(key);
-//            Assert.assertFalse(map.keySet().stream().anyMatch(stringPredicate));
-//
-//            //Test that all the values in this map contains the map name (ie. no other map's values overlap).
-//            SerializablePredicate<String> stringPredicate1 = v -> !v.contains(key);
-//            Assert.assertFalse(map.values().stream().anyMatch(stringPredicate1));
+            //Test that all the keys in this map contains the map name (ie. no other map's keys overlap).
+            String key = mapEntry.getKey();
+            SerializablePredicate<String> stringPredicate = k -> !k.contains(key);
+            Assert.assertFalse(map.keySet().stream().anyMatch(stringPredicate));
+
+            //Test that all the values in this map contains the map name (ie. no other map's values overlap).
+            SerializablePredicate<String> stringPredicate1 = v -> !v.contains(key);
+            Assert.assertFalse(map.values().stream().anyMatch(stringPredicate1));
         }
     }
 
