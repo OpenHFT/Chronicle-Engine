@@ -22,6 +22,10 @@ import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
+import net.openhft.chronicle.engine.api.map.MapEventListener;
+import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
+import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
+import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
@@ -38,11 +42,12 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.IntFunction;
 
 import static net.openhft.chronicle.engine.map.VanillaEngineReplication.ReplicationData.*;
 
-public class VanillaEngineReplication<Store extends KeyValueStore<?, ?, ?>>
+public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyValueStore<K, V, MV>>
         implements EngineReplication, Closeable {
 
     public static final int RESERVED_MOD_ITER = 8;
@@ -80,9 +85,9 @@ public class VanillaEngineReplication<Store extends KeyValueStore<?, ?, ?>>
 
         void setIdentifier(byte identifier);
 
-        long getDirtyWord(@MaxSize(DIRTY_WORD_COUNT) int index);
+        long getDirtyWordAt(@MaxSize(DIRTY_WORD_COUNT) int index);
 
-        void setDirtyWord(@MaxSize(DIRTY_WORD_COUNT) int index, long word);
+        void setDirtyWordAt(@MaxSize(DIRTY_WORD_COUNT) int index, long word);
 
         @Override
         default void readMarshallable(WireIn wire) throws IllegalStateException {
@@ -91,7 +96,7 @@ public class VanillaEngineReplication<Store extends KeyValueStore<?, ?, ?>>
             setIdentifier(wire.read(() -> "identifier").int8());
             for (int i = 0; i < DIRTY_WORD_COUNT; i++) {
                 final int finalI = i;
-                setDirtyWord(i, wire.read(() -> "dirtyWord-" + finalI).int64());
+                setDirtyWordAt(i, wire.read(() -> "dirtyWord-" + finalI).int64());
             }
         }
 
@@ -102,38 +107,38 @@ public class VanillaEngineReplication<Store extends KeyValueStore<?, ?, ?>>
             wire.write(() -> "identifier").int8(getIdentifier());
             for (int i = 0; i < DIRTY_WORD_COUNT; i++) {
                 final int finalI = i;
-                wire.write(() -> "dirtyWord-" + finalI).int64(getDirtyWord(i));
+                wire.write(() -> "dirtyWord-" + finalI).int64(getDirtyWordAt(i));
             }
         }
 
         static void dropChange(ReplicationData replicationData) {
             for (int i = 0; i < DIRTY_WORD_COUNT; i++) {
-                replicationData.setDirtyWord(i, 0);
+                replicationData.setDirtyWordAt(i, 0);
             }
         }
 
         static void raiseChange(ReplicationData replicationData) {
             for (int i = 0; i < DIRTY_WORD_COUNT; i++) {
-                replicationData.setDirtyWord(i, ~0L);
+                replicationData.setDirtyWordAt(i, ~0L);
             }
         }
 
         static void clearChange(ReplicationData replicationData, int identifier) {
             int index = identifier / 64;
             long bit = 1L << (identifier % 64);
-            replicationData.setDirtyWord(index, replicationData.getDirtyWord(index) ^ bit);
+            replicationData.setDirtyWordAt(index, replicationData.getDirtyWordAt(index) ^ bit);
         }
 
         static void setChange(ReplicationData replicationData, int identifier) {
             int index = identifier / 64;
             long bit = 1L << (identifier % 64);
-            replicationData.setDirtyWord(index, replicationData.getDirtyWord(index) | bit);
+            replicationData.setDirtyWordAt(index, replicationData.getDirtyWordAt(index) | bit);
         }
 
         static boolean isChanged(ReplicationData replicationData, int identifier) {
             int index = identifier / 64;
             long bit = 1L << (identifier % 64);
-            return (replicationData.getDirtyWord(index) & bit) != 0L;
+            return (replicationData.getDirtyWordAt(index) & bit) != 0L;
         }
     }
 
@@ -206,11 +211,12 @@ public class VanillaEngineReplication<Store extends KeyValueStore<?, ?, ?>>
     private final ChangeApplier<Store> changeApplier;
     private final GetValue<Store> getValue;
     private final SegmentForKey<Store> segmentForKey;
-    private final AtomicReferenceArray<ChronicleMapBackedModificationIterator>
+    private final AtomicReferenceArray<VanillaModificationIterator>
             modificationIterators = new AtomicReferenceArray<>(127 + RESERVED_MOD_ITER);
     private final DirectBitSet modificationIteratorsRequiringSettingBootstrapTimestamp =
             createModIterBitSet();
     private final DirectBitSet modIterSet = createModIterBitSet();
+    private final MapEventListener<K, MV> eventListener;
 
     public VanillaEngineReplication(
             IntFunction<KeyValueStore<BytesStore, ReplicationData, ReplicationData>>
@@ -219,7 +225,8 @@ public class VanillaEngineReplication<Store extends KeyValueStore<?, ?, ?>>
                     modIterState,
             byte identifier,
             Store store, ChangeApplier<Store> changeApplier, GetValue<Store> getValue,
-            SegmentForKey<Store> segmentForKey) {
+            SegmentForKey<Store> segmentForKey,
+            Function<K, BytesStore> keyToBytesStore) {
 
         int segments = store.segments();
         this.keyReplicationData = new KeyValueStore[segments];
@@ -235,6 +242,26 @@ public class VanillaEngineReplication<Store extends KeyValueStore<?, ?, ?>>
         this.changeApplier = changeApplier;
         this.getValue = getValue;
         this.segmentForKey = segmentForKey;
+
+        eventListener = new MapEventListener<K, MV>() {
+
+            @Override
+            public void insert(String assetName, K key, MV value) {
+                onPut(keyToBytesStore.apply(key), System.currentTimeMillis());
+            }
+
+            @Override
+            public void remove(String assetName, K key, MV value) {
+                onRemove(keyToBytesStore.apply(key), System.currentTimeMillis());
+            }
+
+            @Override
+            public void update(String assetName, K key, MV oldValue, MV newValue) {
+                onPut(keyToBytesStore.apply(key), System.currentTimeMillis());
+            }
+        };
+
+        store.subscription(true).registerDownstream(e -> e.apply(eventListener));
     }
 
     @Override
@@ -385,8 +412,8 @@ public class VanillaEngineReplication<Store extends KeyValueStore<?, ?, ?>>
             if (modificationIterator != null)
                 return modificationIterator;
 
-            final ChronicleMapBackedModificationIterator newModificationIterator =
-                    new ChronicleMapBackedModificationIterator(remoteIdentifier);
+            final VanillaModificationIterator newModificationIterator =
+                    new VanillaModificationIterator(remoteIdentifier);
             modificationIteratorsRequiringSettingBootstrapTimestamp.set(remoteIdentifier);
             resetNextBootstrapTimestamp(remoteIdentifier);
             // in ChMap 2.1 currentTime() is set as a default lastBsTs; set to 0 here; TODO review
@@ -402,8 +429,8 @@ public class VanillaEngineReplication<Store extends KeyValueStore<?, ?, ?>>
         onChange(key, false, putTimestamp);
     }
 
-    public void onRemove(BytesStore key, long remoteTimestamp) {
-        onChange(key, true, remoteTimestamp);
+    public void onRemove(BytesStore key, long removeTimestamp) {
+        onChange(key, true, removeTimestamp);
     }
 
     private void onChange(BytesStore key, boolean deleted, long changeTimestamp) {
@@ -429,7 +456,7 @@ public class VanillaEngineReplication<Store extends KeyValueStore<?, ?, ?>>
             if (successfulUpdate) {
                 for (long next = modIterSet.nextSetBit(0L); next > 0L;
                      next = modIterSet.nextSetBit(next + 1L)) {
-                    ChronicleMapBackedModificationIterator modIter =
+                    VanillaModificationIterator modIter =
                             modificationIterators.get((int) next);
                     modIter.modNotify();
                     if (modificationIteratorsRequiringSettingBootstrapTimestamp.clearIfSet(next)) {
@@ -442,11 +469,11 @@ public class VanillaEngineReplication<Store extends KeyValueStore<?, ?, ?>>
         }
     }
 
-    class ChronicleMapBackedModificationIterator implements ModificationIterator, ReplicationEntry {
+    class VanillaModificationIterator implements ModificationIterator, ReplicationEntry {
 
         private final int identifier;
 
-        ChronicleMapBackedModificationIterator(int identifier) {
+        VanillaModificationIterator(int identifier) {
             this.identifier = identifier;
         }
 

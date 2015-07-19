@@ -18,17 +18,12 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
-import net.openhft.chronicle.bytes.HeapBytesStore;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
-import net.openhft.chronicle.engine.api.map.KeyValueStore;
-import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
-import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
-import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
@@ -43,12 +38,10 @@ import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.lang.model.DataValueClasses;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.junit.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
@@ -87,6 +80,11 @@ public class ChronicleMapKeyValueStoreTest {
         tree3.close();
     }
 
+    private static String fullPath(RequestContext cxt) {
+        String basePath = cxt.basePath();
+        return basePath == null ? cxt.name() : basePath + "/" + cxt.name();
+    }
+
     @NotNull
     private static AssetTree create(final int hostId, Function<Bytes, Wire> writeType) {
         AssetTree tree = new VanillaAssetTree((byte) hostId)
@@ -108,7 +106,7 @@ public class ChronicleMapKeyValueStoreTest {
                         segment -> new FilePerKeyBasedKeyMarshallableValueStore<>(
                                 new FilePerKeyValueStore(
                                         requestContext(
-                                                Paths.get(requestContext.fullName(),
+                                                Paths.get(fullPath(requestContext),
                                                         "perKeyReplicationData_segment" +
                                                                 segment).toString()), asset),
                                 BytesStore::toString,
@@ -123,7 +121,7 @@ public class ChronicleMapKeyValueStoreTest {
                         new FilePerKeyBasedKeyMarshallableValueStore<>(
                                 new FilePerKeyValueStore(
                                         requestContext(
-                                                Paths.get(requestContext.fullName(),
+                                                Paths.get(fullPath(requestContext),
                                                         "perRemoteNodeReplicationState")
                                                         .toString()), asset),
                                 id -> id.getValue() + "",
@@ -145,7 +143,13 @@ public class ChronicleMapKeyValueStoreTest {
                             }
                         },
                         (kvStore, key) -> kvStore.get(key.toString()),
-                        (kvStore, key) -> kvStore.segmentFor(key.toString())
+                        (kvStore, key) -> kvStore.segmentFor(key.toString()),
+                        s -> {
+                            Bytes bs = BytesStore.wrap(new byte[s.length()])
+                                    .bytesForWrite();
+                            bs.writeUTFΔ(s);
+                            return bs;
+                        }
                 ));
 
         VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
