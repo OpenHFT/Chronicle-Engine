@@ -657,6 +657,7 @@ public class TcpChannelHub implements View, Closeable {
 
             //noinspection SynchronizationOnLocalVariableOrMethodParameter
             synchronized (bytes) {
+                System.out.println("tid=" + tid + " of client request");
                 map.put(tid, bytes);
                 bytes.wait(timeoutTimeMs);
             }
@@ -795,9 +796,6 @@ public class TcpChannelHub implements View, Closeable {
         }
 
         private boolean isShutdown() {
-//            boolean interrupted = currentThread().isInterrupted();
-//            if (interrupted)
-//                isShutdown = true;
             return isShutdown;
         }
 
@@ -827,7 +825,8 @@ public class TcpChannelHub implements View, Closeable {
          */
         private void processData(final long tid, final boolean isReady,
                                  final int header,
-                                 final int messageSize, @NotNull Wire inWire) throws IOException {
+                                 final int messageSize,
+                                 @NotNull Wire inWire) throws IOException {
 
             long startTime = 0;
             Object o = null;
@@ -855,11 +854,20 @@ public class TcpChannelHub implements View, Closeable {
                         startTime = Time.currentTimeMillis();
 
                     if (Time.currentTimeMillis() - startTime > 3_000) {
+
                         LOG.error("unable to respond to tid=" + tid + ", given that we have received a " +
                                 " message we a tid which is unknown, something has become corrupted, " +
                                 "so the safest thing to do is to drop the connection to the server and " +
                                 "start again.");
-                        return;
+
+                        blockingRead(inWire, messageSize);
+                        logToStandardOutMessageReceived(inWire);
+
+                        throw new IOException("unable to respond to tid=" + tid + ", given that we have received a " +
+                                " message we a tid which is unknown, something has become corrupted, " +
+                                "so the safest thing to do is to drop the connection to the server and " +
+                                "start again.");
+
                     }
                 }
 
