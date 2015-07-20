@@ -48,7 +48,7 @@ import static org.junit.Assert.*;
 
 public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
 
-    private static int s_port = 11050;
+
     @NotNull
     @Rule
     public TestName name = new TestName();
@@ -367,7 +367,6 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
      */
     @Test(timeout = 50000)
     public void testPutAll() throws IOException {
-        int port = s_port++;
         try (ClosableMapSupplier<Integer, String> emptySupplier = newIntString("test")) {
             final Map<Integer, String> empty = emptySupplier.get();
             try (ClosableMapSupplier<Integer, String> supplier = map5()) {
