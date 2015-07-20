@@ -291,11 +291,12 @@ public class TcpChannelHub implements View, Closeable {
     /**
      * the transaction id are generated as unique timestamps
      *
-     * @param time in milliseconds
+     * @param timeMs in milliseconds
+     * @param timeNS
      * @return a unique transactionId
      */
-    public long nextUniqueTransaction(long time) {
-        long id = time;
+    public long nextUniqueTransaction(long timeMs, long timeNS) {
+        long id = timeMs + timeNS;
         for (; ; ) {
             long old = transactionID.get();
             if (old == id)
@@ -486,7 +487,7 @@ public class TcpChannelHub implements View, Closeable {
     public long writeMetaDataStartTime(long startTime, @NotNull Wire wire, String csp, long cid) {
         assert outBytesLock().isHeldByCurrentThread();
 
-        long tid = nextUniqueTransaction(startTime);
+        long tid = nextUniqueTransaction(startTime, System.nanoTime());
 
         writeMetaDataForKnownTID(tid, wire, csp, cid);
 

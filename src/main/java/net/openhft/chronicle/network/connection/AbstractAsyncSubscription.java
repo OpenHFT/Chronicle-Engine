@@ -17,14 +17,14 @@ public abstract class AbstractAsyncSubscription implements AsyncSubscription {
     private String name;
 
     public AbstractAsyncSubscription(@NotNull final TcpChannelHub hub, String csp, String name) {
-        tid = hub.nextUniqueTransaction(Time.currentTimeMillis());
+        tid = hub.nextUniqueTransaction(Time.currentTimeMillis(), System.nanoTime());
         this.hub = hub;
         this.csp = csp;
         this.name = name;
     }
 
     public AbstractAsyncSubscription(@NotNull final TcpChannelHub hub, String csp, byte identifier, String name) {
-        this.tid = hub.nextUniqueTransaction(Time.currentTimeMillis()) * identifier;
+        this.tid = hub.nextUniqueTransaction(Time.currentTimeMillis(),  System.nanoTime()) * identifier;
         this.hub = hub;
         this.csp = csp;
         this.name = name;
