@@ -767,9 +767,13 @@ public class TcpChannelHub implements View, Closeable {
                             // read  meta data - get the tid
                             blockingRead(inWire, messageSize);
                             logToStandardOutMessageReceived(inWire);
+                            // ensure the tid is reset
+                            this.tid = -1;
                             inWire.readDocument((WireIn w) -> this.tid = CoreFields.tid(w), null);
                         }
 
+                    } catch (ClosedChannelException e) {
+                        break;
                     } catch (IOException e) {
 
                         if (isShutdown()) {
@@ -823,7 +827,8 @@ public class TcpChannelHub implements View, Closeable {
          * @param inWire      the location the data will be writen to
          * @throws IOException
          */
-        private void processData(final long tid, final boolean isReady,
+        private void processData(final long tid,
+                                 final boolean isReady,
                                  final int header,
                                  final int messageSize,
                                  @NotNull Wire inWire) throws IOException {
@@ -835,7 +840,7 @@ public class TcpChannelHub implements View, Closeable {
             if (tid != 0)
 
                 // this loop if to handle the rare case where we receive the tid before its been registered by this class
-                for (; !isShutdown(); ) {
+                for (; !isShutdown() && clientChannel.isOpen(); ) {
 
                     o = map.get(tid);
 

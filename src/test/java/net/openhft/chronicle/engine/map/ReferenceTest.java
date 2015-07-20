@@ -84,7 +84,8 @@ public class ReferenceTest {
         if (serverEndpoint != null)
             serverEndpoint.close();
         serverAssetTree.close();
-        TCPRegistry.assertAllServersStopped();
+        TCPRegistry.reset();
+        //TCPRegistry.assertAllServersStopped();
     }
 
     @Test
