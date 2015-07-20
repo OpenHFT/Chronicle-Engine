@@ -21,6 +21,7 @@ import java.util.stream.IntStream;
  */
 public class ManyMapsTest {
     @Test
+    @Ignore("Long running test")
     public void testConnectToMultipleMapsUsingTheSamePort() throws IOException {
         int noOfMaps = 100;
         int noOfKvps = 100;
