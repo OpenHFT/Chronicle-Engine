@@ -726,6 +726,7 @@ public class TcpChannelHub implements View, Closeable {
                 } catch (IORuntimeException e) {
 
                     LOG.debug("", e);
+
                 } catch (Throwable e) {
                     if (!isShutdown())
                         LOG.error("", e);
@@ -1117,7 +1118,7 @@ public class TcpChannelHub implements View, Closeable {
                             } else
                                 break;
                         } catch (ConnectException e) {
-                            LOG.error("ConnectException to remoteAddress=" + remoteAddress, e);
+                            LOG.info("Server is not available, ConnectException to remoteAddress=" + remoteAddress);
                             pause(1000);
                             continue;
                         }
