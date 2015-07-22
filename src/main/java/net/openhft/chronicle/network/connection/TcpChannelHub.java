@@ -291,11 +291,12 @@ public class TcpChannelHub implements View, Closeable {
     /**
      * the transaction id are generated as unique timestamps
      *
-     * @param time in milliseconds
+     * @param timeMs in milliseconds
+     * @param timeNS
      * @return a unique transactionId
      */
-    public long nextUniqueTransaction(long time) {
-        long id = time;
+    public long nextUniqueTransaction(long timeMs, long timeNS) {
+        long id = timeMs + timeNS;
         for (; ; ) {
             long old = transactionID.get();
             if (old == id)
@@ -486,7 +487,7 @@ public class TcpChannelHub implements View, Closeable {
     public long writeMetaDataStartTime(long startTime, @NotNull Wire wire, String csp, long cid) {
         assert outBytesLock().isHeldByCurrentThread();
 
-        long tid = nextUniqueTransaction(startTime);
+        long tid = nextUniqueTransaction(startTime, System.nanoTime());
 
         writeMetaDataForKnownTID(tid, wire, csp, cid);
 
@@ -657,6 +658,7 @@ public class TcpChannelHub implements View, Closeable {
 
             //noinspection SynchronizationOnLocalVariableOrMethodParameter
             synchronized (bytes) {
+                System.out.println("tid=" + tid + " of client request");
                 map.put(tid, bytes);
                 bytes.wait(timeoutTimeMs);
             }
@@ -716,14 +718,15 @@ public class TcpChannelHub implements View, Closeable {
 
             ExecutorService executorService = newSingleThreadExecutor(
                     new NamedThreadFactory("TcpChannelHub-" + remoteAddress.toString().replaceAll("0:0:0:0:0:0:0:0", "*"), true));
-            shutdownHere = null;
-            isShutdown = false;
+            assert shutdownHere == null;
+            assert !isShutdown;
             executorService.submit(() -> {
                 try {
                     running();
                 } catch (IORuntimeException e) {
 
                     LOG.debug("", e);
+
                 } catch (Throwable e) {
                     if (!isShutdown())
                         LOG.error("", e);
@@ -766,9 +769,13 @@ public class TcpChannelHub implements View, Closeable {
                             // read  meta data - get the tid
                             blockingRead(inWire, messageSize);
                             logToStandardOutMessageReceived(inWire);
+                            // ensure the tid is reset
+                            this.tid = -1;
                             inWire.readDocument((WireIn w) -> this.tid = CoreFields.tid(w), null);
                         }
 
+                    } catch (ClosedChannelException e) {
+                        break;
                     } catch (IOException e) {
 
                         if (isShutdown()) {
@@ -795,9 +802,6 @@ public class TcpChannelHub implements View, Closeable {
         }
 
         private boolean isShutdown() {
-//            boolean interrupted = currentThread().isInterrupted();
-//            if (interrupted)
-//                isShutdown = true;
             return isShutdown;
         }
 
@@ -825,9 +829,11 @@ public class TcpChannelHub implements View, Closeable {
          * @param inWire      the location the data will be writen to
          * @throws IOException
          */
-        private void processData(final long tid, final boolean isReady,
+        private void processData(final long tid,
+                                 final boolean isReady,
                                  final int header,
-                                 final int messageSize, @NotNull Wire inWire) throws IOException {
+                                 final int messageSize,
+                                 @NotNull Wire inWire) throws IOException {
 
             long startTime = 0;
             Object o = null;
@@ -836,7 +842,7 @@ public class TcpChannelHub implements View, Closeable {
             if (tid != 0)
 
                 // this loop if to handle the rare case where we receive the tid before its been registered by this class
-                for (; !isShutdown(); ) {
+                for (; !isShutdown() && clientChannel.isOpen(); ) {
 
                     o = map.get(tid);
 
@@ -855,11 +861,20 @@ public class TcpChannelHub implements View, Closeable {
                         startTime = Time.currentTimeMillis();
 
                     if (Time.currentTimeMillis() - startTime > 3_000) {
+
                         LOG.error("unable to respond to tid=" + tid + ", given that we have received a " +
                                 " message we a tid which is unknown, something has become corrupted, " +
                                 "so the safest thing to do is to drop the connection to the server and " +
                                 "start again.");
-                        return;
+
+                        blockingRead(inWire, messageSize);
+                        logToStandardOutMessageReceived(inWire);
+
+                        throw new IOException("unable to respond to tid=" + tid + ", given that we have received a " +
+                                " message we a tid which is unknown, something has become corrupted, " +
+                                "so the safest thing to do is to drop the connection to the server and " +
+                                "start again.");
+
                     }
                 }
 
@@ -1103,7 +1118,7 @@ public class TcpChannelHub implements View, Closeable {
                             } else
                                 break;
                         } catch (ConnectException e) {
-                            LOG.error("ConnectException to remoteAddress=" + remoteAddress, e);
+                            LOG.info("Server is not available, ConnectException to remoteAddress=" + remoteAddress);
                             pause(1000);
                             continue;
                         }

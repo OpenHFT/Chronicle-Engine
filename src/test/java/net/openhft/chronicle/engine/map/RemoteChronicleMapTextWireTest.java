@@ -21,6 +21,7 @@ import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
+import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 import org.junit.rules.TestName;
@@ -48,6 +49,9 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     public void before() {
         System.out.println("\t... test " + name.getMethodName());
         methodName(name.getMethodName());
+        YamlLogging.clientReads = true;
+        YamlLogging.clientWrites = true;
+
     }
 
     @AfterClass
