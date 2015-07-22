@@ -21,8 +21,11 @@ import net.openhft.chronicle.engine.api.Updatable;
 import net.openhft.chronicle.engine.api.pubsub.Reference;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
+import net.openhft.chronicle.engine.api.set.EntrySetView;
+import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.api.tree.Assetted;
 import net.openhft.chronicle.engine.api.tree.View;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
@@ -36,6 +39,15 @@ public interface MapView<K, MV, V> extends ConcurrentMap<K, V>,
         KeyedVisitable<K, V>,
         Function<K, V>,
         View {
+
+    @NotNull
+    @Override
+    KeySetView<K> keySet();
+
+    @NotNull
+    @Override
+    EntrySetView<K, MV, V> entrySet();
+
     default boolean keyedView() {
         return true;
     }
