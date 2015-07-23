@@ -22,6 +22,7 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.wire.WireType;
+import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -50,20 +51,21 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
 
 
     @NotNull
+    private final AssetTree assetTree = new VanillaAssetTree().forTesting();
+    @NotNull
     @Rule
     public TestName name = new TestName();
-    @NotNull
-    private final AssetTree assetTree = new VanillaAssetTree().forTesting();
-
-    @Before
-    public void before() {
-        methodName(name.getMethodName());
-    }
-
 
     @AfterClass
     public static void tearDownClass() {
+        YamlLogging.setAll(false);
         TCPRegistry.reset();
+    }
+
+    @Before
+    public void before() {
+        YamlLogging.setAll(true);
+        methodName(name.getMethodName());
     }
 
     @NotNull
@@ -422,8 +424,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
      * replace succeeds if the key is already present
      */
     @Test(timeout = 50000)
-    public void testReplace2() throws
-            IOException {
+    public void testReplace2() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
             final Map map = supplier.get();
             writeMessage = "example of replace where the value is known";
@@ -478,8 +479,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
      * remove(key,value) removes only if pair present
      */
     @Test(timeout = 50000)
-    public void testRemove2
-    () throws IOException {
+    public void testRemove2() throws IOException {
    /*     try(   ClosableMapSupplier map = map5(8076)) {
         map.remove(five, "E");
     assertEquals(4, map.size());

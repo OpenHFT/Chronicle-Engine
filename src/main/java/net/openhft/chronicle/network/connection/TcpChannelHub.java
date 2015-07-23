@@ -17,7 +17,6 @@
 package net.openhft.chronicle.network.connection;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.Closeable;
@@ -131,15 +130,8 @@ public class TcpChannelHub implements View, Closeable {
             try {
 
                 System.out.println("\nreceives:\n" +
-                        ((wire instanceof TextWire) ?
-                                "```yaml\n" +
-                                        Wires.fromSizePrefixedBlobs(bytes,
-                                                bytes.readPosition(), bytes.readRemaining()) :
-                                "```\n" +
-                                        BytesUtil.toHexString(bytes, bytes.readPosition(),
-                                                bytes.readRemaining())
-
-                        ) +
+                        "```yaml\n" +
+                        Wires.fromSizePrefixedBinaryToText(bytes) +
                         "```\n");
                 YamlLogging.title = "";
                 YamlLogging.writeMessage = "";
@@ -435,12 +427,7 @@ public class TcpChannelHub implements View, Closeable {
                     "" : "\n\n") +
                     "sends:\n\n" +
                     "```yaml\n" +
-                    ((wire instanceof TextWire) ?
-                            Wires.fromSizePrefixedBlobs(bytes,
-                                    bytes.readPosition(), bytes.readRemaining()) :
-                            BytesUtil.toHexString(bytes, bytes.readRemaining(), bytes
-                                            .readRemaining()
-                            )) +
+                    Wires.fromSizePrefixedBinaryToText(bytes) +
                     "```");
             YamlLogging.title = "";
             YamlLogging.writeMessage = "";
@@ -577,6 +564,7 @@ public class TcpChannelHub implements View, Closeable {
 
         @NotNull
         private final Map<Long, Object> map = new ConcurrentHashMap<>();
+        private final Map<Long, Object> omap = new ConcurrentHashMap<>();
         long lastheartbeatSentTime = 0;
         private Function<Bytes, Wire> wireFunction;
         private long tid;
@@ -646,7 +634,7 @@ public class TcpChannelHub implements View, Closeable {
          * @param tid           the {@code tid} of the message that we are waiting for
          * @throws InterruptedException
          */
-        private Wire syncBlockingReadSocket(final long timeoutTimeMs, long tid) throws
+        Wire syncBlockingReadSocket(final long timeoutTimeMs, long tid) throws
                 InterruptedException, TimeoutException {
             long start = Time.currentTimeMillis();
 
@@ -659,8 +647,11 @@ public class TcpChannelHub implements View, Closeable {
             //noinspection SynchronizationOnLocalVariableOrMethodParameter
             synchronized (bytes) {
                 System.out.println("tid=" + tid + " of client request");
+                bytes.clear();
                 map.put(tid, bytes);
-                bytes.wait(timeoutTimeMs);
+                do {
+                    bytes.wait(timeoutTimeMs);
+                } while (bytes.readLimit() == 0);
             }
 
             logToStandardOutMessageReceived(wire);
@@ -848,17 +839,24 @@ public class TcpChannelHub implements View, Closeable {
 
                     // we only remove the subscription so they are AsyncTemporarySubscription, as the AsyncSubscription
                     // can not be remove from the map as they are required when you resubscribe when we loose connectivity
-                    if (isReady && (!(o instanceof AsyncSubscription) || (o instanceof AsyncTemporarySubscription)))
-                        map.remove(tid);
-
-                    if (o != null)
+                    if (o == null) {
+                        o = omap.get(tid);
+                        if (o != null) {
+                            throw new AssertionError("Found tid=" + tid + " in the old map.");
+                        }
+                    } else {
+                        if (isReady && o instanceof Bytes)
+                            omap.put(tid, map.remove(tid));
                         break;
+                    }
 
                     // this can occur if the server returns the response before we have started to
                     // listen to it
 
                     if (startTime == 0)
                         startTime = Time.currentTimeMillis();
+                    else
+                        Jvm.pause(1);
 
                     if (Time.currentTimeMillis() - startTime > 3_000) {
 

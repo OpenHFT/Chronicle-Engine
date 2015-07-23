@@ -50,10 +50,14 @@ public class Utils {
         try {
             YamlLogging.clientWrites = true;
             YamlLogging.clientReads = true;
+            YamlLogging.showServerWrites = true;
+            YamlLogging.showServerReads = true;
             r.run();
         } finally {
             YamlLogging.clientWrites = false;
             YamlLogging.clientReads = false;
+            YamlLogging.showServerWrites = false;
+            YamlLogging.showServerReads = false;
         }
     }
 }

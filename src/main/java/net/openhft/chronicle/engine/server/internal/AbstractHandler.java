@@ -54,8 +54,7 @@ public class AbstractHandler {
         if (Jvm.IS_DEBUG && YamlLogging.showServerWrites)
             try {
                 System.out.println("\nServer Sends:\n" +
-                        Wires.fromSizePrefixedBlobs(outWire.bytes(), outWire.bytes().readPosition(), outWire
-                                .bytes().readRemaining()));
+                        Wires.fromSizePrefixedBinaryToText(outWire.bytes()));
             } catch (Exception e) {
                 System.out.println("\nServer Sends ( corrupted ) :\n" +
                         outWire.bytes().toDebugString());

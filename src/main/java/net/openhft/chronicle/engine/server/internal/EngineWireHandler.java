@@ -248,6 +248,7 @@ public class EngineWireHandler extends WireTcpHandler {
                 if (LOG.isDebugEnabled())
                     LOG.debug("received data:\n" + wire.bytes().toHexString());
 
+                if (sessionProvider != null)
                 sessionProvider.set(sessionDetails);
 
                 if (isSystemMessage) {
@@ -334,6 +335,7 @@ public class EngineWireHandler extends WireTcpHandler {
             } catch (Exception e) {
                 LOG.error("", e);
             } finally {
+                if (sessionProvider != null)
                 sessionProvider.remove();
             }
         });
@@ -343,7 +345,7 @@ public class EngineWireHandler extends WireTcpHandler {
         if (Jvm.IS_DEBUG && YamlLogging.showServerReads) {
             try {
                 System.out.println("\nServer Receives:\n" +
-                        Wires.fromSizePrefixedBlobs(in.bytes()));
+                        Wires.fromSizePrefixedBinaryToText(in.bytes()));
             } catch (Exception e) {
                 System.out.println("\n\n" +
                         Bytes.toString(in.bytes()));
