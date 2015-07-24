@@ -61,6 +61,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static net.openhft.chronicle.bytes.Bytes.elasticByteBuffer;
 import static net.openhft.chronicle.core.Jvm.*;
 import static net.openhft.chronicle.engine.server.internal.SystemHandler.EventId.*;
+import static net.openhft.chronicle.wire.Wires.*;
 
 /**
  * Created by Rob Austin
@@ -106,12 +107,12 @@ public class TcpChannelHub implements View, Closeable {
 
         this.description = description;
         this.eventLoop = eventLoop;
-        this.tcpBufferSize = Integer.getInteger("tcpBufferSize", 2 << 20);
+        this.tcpBufferSize = Integer.getInteger("tcp.client.buffer.size", 2 << 20);
         this.remoteAddress = TCPRegistry.lookup(description);
         this.outWire = wire.apply(elasticByteBuffer());
         this.inWire = wire.apply(elasticByteBuffer());
         this.name = name;
-        this.timeoutMs = 10_000;
+        this.timeoutMs = Integer.getInteger("tcp.client.timeout", 10_000);
         this.wire = wire;
         this.handShakingWire = wire.apply(Bytes.elasticByteBuffer());
         this.sessionProvider = sessionProvider;
@@ -131,7 +132,7 @@ public class TcpChannelHub implements View, Closeable {
 
                 System.out.println("\nreceives:\n" +
                         "```yaml\n" +
-                        Wires.fromSizePrefixedBinaryToText(bytes) +
+                        fromSizePrefixedBinaryToText(bytes) +
                         "```\n");
                 YamlLogging.title = "";
                 YamlLogging.writeMessage = "";
@@ -227,7 +228,7 @@ public class TcpChannelHub implements View, Closeable {
     }
 
     /**
-     * closes the existing connections and establishes a new closeables
+     * closes the existing connections
      */
     protected synchronized void closeSocket() {
         SocketChannel clientChannel = this.clientChannel;
@@ -367,6 +368,7 @@ public class TcpChannelHub implements View, Closeable {
         } catch (ClosedChannelException ignored) {
 
         }
+
         try {
             while (outBuffer.remaining() > 0) {
                 int prevRemaining = outBuffer.remaining();
@@ -427,7 +429,7 @@ public class TcpChannelHub implements View, Closeable {
                     "" : "\n\n") +
                     "sends:\n\n" +
                     "```yaml\n" +
-                    Wires.fromSizePrefixedBinaryToText(bytes) +
+                    fromSizePrefixedBinaryToText(bytes) +
                     "```");
             YamlLogging.title = "";
             YamlLogging.writeMessage = "";
@@ -753,9 +755,9 @@ public class TcpChannelHub implements View, Closeable {
                         final long messageSize = size(header);
 
                         // read the data
-                        if (Wires.isData(header)) {
+                        if (isData(header)) {
                             assert messageSize < Integer.MAX_VALUE;
-                            processData(tid, Wires.isReady(header), header, (int) messageSize, inWire);
+                            processData(tid, isReady(header), header, (int) messageSize, inWire);
                         } else {
                             // read  meta data - get the tid
                             blockingRead(inWire, messageSize);
@@ -806,7 +808,7 @@ public class TcpChannelHub implements View, Closeable {
          * @return the true size of the message
          */
         private long size(int header) {
-            final long messageSize = Wires.lengthOf(header);
+            final long messageSize = lengthOf(header);
             assert messageSize > 0 : "Invalid message size " + messageSize;
             assert messageSize < 1 << 30 : "Invalid message size " + messageSize;
             return messageSize;
@@ -845,7 +847,7 @@ public class TcpChannelHub implements View, Closeable {
                             throw new AssertionError("Found tid=" + tid + " in the old map.");
                         }
                     } else {
-                        if (isReady && o instanceof Bytes)
+                        if (isReady && (o instanceof Bytes || o instanceof AsyncTemporarySubscription))
                             omap.put(tid, map.remove(tid));
                         break;
                     }
@@ -939,7 +941,7 @@ public class TcpChannelHub implements View, Closeable {
 
             bytes.readLimit(byteBuffer.position());
 
-            final StringBuilder eventName = Wires.acquireStringBuilder();
+            final StringBuilder eventName = acquireStringBuilder();
             wire.apply(bytes).readDocument(null, d -> {
                         final ValueIn valueIn = d.readEventName(eventName);
                         if (heartbeat.contentEquals(eventName))
