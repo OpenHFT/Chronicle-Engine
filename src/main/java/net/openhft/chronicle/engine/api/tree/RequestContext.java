@@ -404,4 +404,9 @@ public class RequestContext implements Cloneable {
             throw new AssertionError(e);
         }
     }
+
+    public RequestContext putReturnsNull(Boolean putReturnsNull) {
+        this.putReturnsNull = putReturnsNull;
+        return this;
+    }
 }

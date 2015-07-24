@@ -86,7 +86,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
         this.subscriptions = asset.acquireView(ObjectKVSSubscription.class, context);
         this.subscriptions.setKvStore(this);
         this.eventLoop = asset.findOrCreateView(EventLoop.class);
-        this.putReturnsNull = context.putReturnsNull() != Boolean.TRUE;
+        this.putReturnsNull = context.putReturnsNull() != Boolean.FALSE;
         eventLoop.start();
 
         PublishingOperations publishingOperations = new PublishingOperations();
@@ -101,8 +101,8 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
                     (EngineReplicationLangBytesConsumer.class);
 
             hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
-            builder.putReturnsNull(context.putReturnsNull() != Boolean.TRUE)
-                    .removeReturnsNull(context.removeReturnsNull() != Boolean.TRUE);
+            builder.putReturnsNull(context.putReturnsNull() != Boolean.FALSE)
+                    .removeReturnsNull(context.removeReturnsNull() != Boolean.FALSE);
             builder.replication(builder().engineReplication(langBytesConsumer)
                     .createWithId(hostIdentifier.hostId()));
 
