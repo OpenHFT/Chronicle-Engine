@@ -75,6 +75,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
     @Nullable
     private final EventLoop eventLoop;
     private final AtomicBoolean isClosed = new AtomicBoolean();
+    private boolean putReturnsNull;
 
     public ChronicleMapKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset) {
         String basePath = context.basePath();
@@ -85,6 +86,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
         this.subscriptions = asset.acquireView(ObjectKVSSubscription.class, context);
         this.subscriptions.setKvStore(this);
         this.eventLoop = asset.findOrCreateView(EventLoop.class);
+        this.putReturnsNull = context.putReturnsNull() != Boolean.TRUE;
         eventLoop.start();
 
         PublishingOperations publishingOperations = new PublishingOperations();
@@ -99,7 +101,8 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
                     (EngineReplicationLangBytesConsumer.class);
 
             hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
-
+            builder.putReturnsNull(context.putReturnsNull() != Boolean.TRUE)
+                    .removeReturnsNull(context.removeReturnsNull() != Boolean.TRUE);
             builder.replication(builder().engineReplication(langBytesConsumer)
                     .createWithId(hostIdentifier.hostId()));
 
@@ -185,6 +188,13 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
     @Override
     public KVSSubscription<K, MV, V> subscription(boolean createIfAbsent) {
         return subscriptions;
+    }
+
+    @Override
+    public boolean put(K key, V value) {
+        boolean present = !putReturnsNull && chronicleMap.containsKey(key);
+        getAndPut(key, value);
+        return present;
     }
 
     @Nullable

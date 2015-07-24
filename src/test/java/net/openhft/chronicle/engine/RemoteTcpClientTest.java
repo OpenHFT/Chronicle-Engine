@@ -17,7 +17,6 @@
 package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.bytes.NativeBytes;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
@@ -80,7 +79,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
             ConcurrentMap test = remote.get();
 
-            Bytes bytes = NativeBytes.nativeBytes(valueLength);
+            Bytes bytes = Bytes.allocateElasticDirect(valueLength);
             while (bytes.readPosition() < valueLength)
                 bytes.append('x');
 
