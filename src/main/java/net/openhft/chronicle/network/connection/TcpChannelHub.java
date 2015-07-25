@@ -653,7 +653,7 @@ public class TcpChannelHub implements View, Closeable {
                 map.put(tid, bytes);
                 do {
                     bytes.wait(timeoutTimeMs);
-                } while (bytes.readLimit() == 0);
+                } while (bytes.readLimit() == 0 && !isShutdown);
             }
 
             logToStandardOutMessageReceived(wire);
