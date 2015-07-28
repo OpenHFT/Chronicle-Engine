@@ -113,7 +113,8 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
 
         this.engineReplicator = engineReplicator1;
 
-        if (context.nullOldValueOnUpdateEvent()) {
+        Boolean nullOldValueOnUpdateEvent = context.nullOldValueOnUpdateEvent();
+        if (nullOldValueOnUpdateEvent != null && nullOldValueOnUpdateEvent) {
             builder.bytesEventListener(new NullOldValuePublishingOperations());
         } else {
             builder.eventListener(new PublishingOperations());
