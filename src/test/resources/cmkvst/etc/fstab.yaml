@@ -5,7 +5,8 @@ ChronMaps: !ChronicleMapGroupFS {
      maxEntries: 10000,
      averageValueSize: 10000,
      putReturnsNull: true,
-     removeReturnsNull: true
+     removeReturnsNull: true,
+     nullOldValueOnUpdateEvent: true
   }
 ChronMaps: !ChronicleMapGroupFS {
      spec: ChMaps2,
@@ -14,7 +15,8 @@ ChronMaps: !ChronicleMapGroupFS {
      maxEntries: 20000,
      averageValueSize: 2000,
      putReturnsNull: true,
-     removeReturnsNull: true
+     removeReturnsNull: true,
+     nullOldValueOnUpdateEvent: true
   }
 DFCurves: !FilePerKeyGroupFS {
     spec: DFCurves,

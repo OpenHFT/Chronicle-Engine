@@ -33,12 +33,14 @@ import net.openhft.chronicle.engine.fs.Clusters;
 import net.openhft.chronicle.engine.fs.HostDetails;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.hash.replication.EngineReplicationLangBytesConsumer;
+import net.openhft.chronicle.map.BytesMapEventListener;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.MapEventListener;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.threads.api.EventLoop;
+import net.openhft.lang.io.Bytes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -89,8 +91,6 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
         this.putReturnsNull = context.putReturnsNull() != Boolean.FALSE;
         eventLoop.start();
 
-        PublishingOperations publishingOperations = new PublishingOperations();
-
         ChronicleMapBuilder<K, V> builder = ChronicleMapBuilder.of(context.keyType(), context.valueType());
         HostIdentifier hostIdentifier = null;
         EngineReplication engineReplicator1 = null;
@@ -112,7 +112,12 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
         }
 
         this.engineReplicator = engineReplicator1;
-        builder.eventListener(publishingOperations);
+
+        if (context.nullOldValueOnUpdateEvent()) {
+            builder.bytesEventListener(new NullOldValuePublishingOperations());
+        } else {
+            builder.eventListener(new PublishingOperations());
+        }
 
         if (context.putReturnsNull() != Boolean.FALSE)
             builder.putReturnsNull(true);
@@ -318,6 +323,32 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
                 } else {
                     subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, replacedValue, newValue));
                 }
+        }
+    }
+
+    class NullOldValuePublishingOperations extends BytesMapEventListener {
+        @Override
+        public void onRemove(Bytes entry, long metaDataPos, long keyPos, long valuePos,
+                             boolean replicationEvent) {
+            if (subscriptions.hasSubscribers()) {
+                K key = chronicleMap.readKey(entry, keyPos);
+                V value = chronicleMap.readValue(entry, valuePos);
+                subscriptions.notifyEvent(RemovedEvent.of(assetFullName, key, value));
+            }
+        }
+
+        @Override
+        public void onPut(Bytes entry, long metaDataPos, long keyPos, long valuePos,
+                          boolean added, boolean replicationEvent) {
+            if (subscriptions.hasSubscribers()) {
+                K key = chronicleMap.readKey(entry, keyPos);
+                V value = chronicleMap.readValue(entry, valuePos);
+                if (added) {
+                    subscriptions.notifyEvent(InsertedEvent.of(assetFullName, key, value));
+                } else {
+                    subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, null, value));
+                }
+            }
         }
     }
 
