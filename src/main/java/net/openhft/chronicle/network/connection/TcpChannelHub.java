@@ -23,7 +23,6 @@ import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.util.Time;
 import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.api.tree.View;
-import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.WanSimulator;
 import net.openhft.chronicle.network.api.session.SessionDetails;
 import net.openhft.chronicle.threads.HandlerPriority;
@@ -39,7 +38,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.ConnectException;
-import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
@@ -73,11 +71,11 @@ public class TcpChannelHub implements View, Closeable {
 
     public static final int SIZE_OF_SIZE = 4;
     private static final Logger LOG = LoggerFactory.getLogger(TcpChannelHub.class);
+    private final SocketAddressSupplier socketAddressSupplier;
     public final long timeoutMs;
     @NotNull
     protected final String name;
-    @NotNull
-    protected final InetSocketAddress remoteAddress;
+
     protected final int tcpBufferSize;
     final Wire outWire;
     final Wire inWire;
@@ -90,7 +88,7 @@ public class TcpChannelHub implements View, Closeable {
     private final EventLoop eventLoop;
     private final Function<Bytes, Wire> wire;
     private final Wire handShakingWire;
-    private final String description;
+    // private final String description;
     private long largestChunkSoFar = 0;
     @Nullable
     private volatile SocketChannel clientChannel;
@@ -100,15 +98,17 @@ public class TcpChannelHub implements View, Closeable {
     private long limitOfLast = 0;
 
     public TcpChannelHub(@NotNull final SessionProvider sessionProvider,
-                         @NotNull final String description,
+                         @NotNull final String[] connectURIs,
                          @NotNull final EventLoop eventLoop,
                          @NotNull final Function<Bytes, Wire> wire,
                          @NotNull final String name) {
 
-        this.description = description;
+        socketAddressSupplier = new SocketAddressSupplier(connectURIs);
+
+        //     this.description = description;
         this.eventLoop = eventLoop;
         this.tcpBufferSize = Integer.getInteger("tcp.client.buffer.size", 2 << 20);
-        this.remoteAddress = TCPRegistry.lookup(description);
+
         this.outWire = wire.apply(elasticByteBuffer());
         this.inWire = wire.apply(elasticByteBuffer());
         this.name = name;
@@ -162,14 +162,13 @@ public class TcpChannelHub implements View, Closeable {
     public String toString() {
         return "TcpChannelHub{" +
                 "name=" + name +
-                "remoteAddress=" + remoteAddress +
-                ", description='" + description + '}';
+                "remoteAddressSupplier=" + socketAddressSupplier + '}';
     }
 
     private void onDisconnected() {
 
         if (Jvm.isDebug())
-            System.out.println(" disconnected to remoteAddress=" + remoteAddress);
+            System.out.println("disconnected to remoteAddress=" + socketAddressSupplier);
         tcpSocketConsumer.onConnectionClosed();
     }
 
@@ -272,9 +271,7 @@ public class TcpChannelHub implements View, Closeable {
         closed = true;
         //  eventLoop.stop();
         tcpSocketConsumer.stop();
-
-        String remoteAddressStr = remoteAddress.toString().replaceAll("0:0:0:0:0:0:0:0", "localhost");
-        System.out.println(Thread.currentThread() + " closing " + remoteAddressStr);
+        System.out.println(Thread.currentThread() + " closing " + socketAddressSupplier);
         while (clientChannel != null) {
             pause(10);
             System.out.println("waiting for disconnect");
@@ -309,7 +306,7 @@ public class TcpChannelHub implements View, Closeable {
         assert outBytesLock().isHeldByCurrentThread();
         SocketChannel clientChannel = this.clientChannel;
         if (clientChannel == null)
-            throw new IORuntimeException("Not Connected " + remoteAddress);
+            throw new IORuntimeException("Not Connected " + socketAddressSupplier);
 
         try {
             writeSocket1(wire, timeoutMs, clientChannel);
@@ -379,8 +376,8 @@ public class TcpChannelHub implements View, Closeable {
                     start = Time.currentTimeMillis();
 
                 if (len == -1)
-                    throw new IORuntimeException("Disconnection to server " + description + "/"
-                            + TCPRegistry.lookup(description) + ",name=" + name);
+                    throw new IORuntimeException("Disconnection to server=" +
+                            socketAddressSupplier + ", name=" + name);
 
                 long writeTime = Time.currentTimeMillis() - start;
 
@@ -550,7 +547,7 @@ public class TcpChannelHub implements View, Closeable {
             if (start + timeoutMs > Time.currentTimeMillis())
                 Jvm.pause(100);
             else
-                throw new IORuntimeException("Not connected to " + remoteAddress);
+                throw new IORuntimeException("Not connected to " + socketAddressSupplier);
         }
     }
 
@@ -586,7 +583,7 @@ public class TcpChannelHub implements View, Closeable {
                 @NotNull final Function<Bytes, Wire> wireFunction) {
             this.wireFunction = wireFunction;
             if (LOG.isDebugEnabled())
-                LOG.debug("constructor remoteAddress=" + remoteAddress);
+                LOG.debug("constructor remoteAddress=" + socketAddressSupplier);
 
             executorService = start();
         }
@@ -617,6 +614,7 @@ public class TcpChannelHub implements View, Closeable {
                 if (v instanceof AsyncSubscription) {
                     ((AsyncSubscription) v).onClose();
                 } else if (v instanceof Bytes) {
+                    //noinspection SynchronizationOnLocalVariableOrMethodParameter
                     synchronized (v) {
                         v.notifyAll();
                     }
@@ -698,6 +696,11 @@ public class TcpChannelHub implements View, Closeable {
             }
         }
 
+        /**
+         * unsubscribes the subscription based upon the {@code tid}
+         *
+         * @param tid the unique identifier for the subscription
+         */
         public void unsubscribe(long tid) {
             map.remove(tid);
         }
@@ -709,17 +712,15 @@ public class TcpChannelHub implements View, Closeable {
         private ExecutorService start() {
             checkNotShutdown();
 
-            ExecutorService executorService = newSingleThreadExecutor(
-                    new NamedThreadFactory("TcpChannelHub-" + remoteAddress.toString().replaceAll("0:0:0:0:0:0:0:0", "*"), true));
+            final ExecutorService executorService = newSingleThreadExecutor(
+                    new NamedThreadFactory("TcpChannelHub-" + socketAddressSupplier, true));
             assert shutdownHere == null;
             assert !isShutdown;
             executorService.submit(() -> {
                 try {
                     running();
                 } catch (IORuntimeException e) {
-
                     LOG.debug("", e);
-
                 } catch (Throwable e) {
                     if (!isShutdown())
                         LOG.error("", e);
@@ -832,10 +833,16 @@ public class TcpChannelHub implements View, Closeable {
             Object o = null;
 
             // tid == 0 for system messages
-            if (tid != 0)
+            if (tid != 0) {
+
+                final SocketChannel c = clientChannel;
+
+                // this can occur if we received a shutdown
+                if (c == null)
+                    return;
 
                 // this loop if to handle the rare case where we receive the tid before its been registered by this class
-                for (; !isShutdown() && clientChannel.isOpen(); ) {
+                for (; !isShutdown() && c.isOpen(); ) {
 
                     o = map.get(tid);
 
@@ -862,21 +869,26 @@ public class TcpChannelHub implements View, Closeable {
 
                     if (Time.currentTimeMillis() - startTime > 3_000) {
 
-                        LOG.error("unable to respond to tid=" + tid + ", given that we have received a " +
-                                " message we a tid which is unknown, something has become corrupted, " +
-                                "so the safest thing to do is to drop the connection to the server and " +
-                                "start again.");
-
                         blockingRead(inWire, messageSize);
                         logToStandardOutMessageReceived(inWire);
 
-                        throw new IOException("unable to respond to tid=" + tid + ", given that we have received a " +
+                        IOException ioException = new IOException("unable to respond to tid=" + tid + ", given that we have received a " +
                                 " message we a tid which is unknown, something has become corrupted, " +
                                 "so the safest thing to do is to drop the connection to the server and " +
                                 "start again.");
 
+                        LOG.error("", ioException);
+                        throw ioException;
+
                     }
                 }
+
+                // this can occur if we received a shutdown
+                if (o == null)
+                    return;
+
+            }
+
 
             // heartbeat message sent from the server
             if (tid == 0) {
@@ -893,9 +905,10 @@ public class TcpChannelHub implements View, Closeable {
 
                 asyncSubscription.onConsumer(inWire);
 
-                // for async
-            } else {
+            }
 
+            // for sync
+            if (o instanceof Bytes) {
                 final Bytes bytes = (Bytes) o;
                 // for sync
                 //noinspection SynchronizationOnLocalVariableOrMethodParameter
@@ -978,18 +991,21 @@ public class TcpChannelHub implements View, Closeable {
             while (buffer.remaining() > 0) {
                 final SocketChannel clientChannel = TcpChannelHub.this.clientChannel;
                 if (clientChannel == null)
-                    throw new IOException("Disconnection to server channel is closed" + description + "/" +
-                            TCPRegistry.lookup(description) + " ,name=" + name);
+                    throw new IOException("Disconnection to server=" + socketAddressSupplier +
+                            " channel is closed, name=" + name);
                 int numberOfBytesRead = clientChannel.read(buffer);
                 WanSimulator.dataRead(numberOfBytesRead);
                 if (numberOfBytesRead == -1)
-                    throw new IOException("Disconnection to server read=-1 " + description + "/" + TCPRegistry.lookup(description) + " ,name=" + name);
+                    throw new IOException("Disconnection to server=" + socketAddressSupplier +
+                            " read=-1 "
+                            + ", name=" + name);
 
                 if (numberOfBytesRead > 0)
                     onMessageReceived();
 
                 if (isShutdown)
-                    throw new IOException("The server was shutdown, " + description + "/" + TCPRegistry.lookup(description) + " ,name=" + name);
+                    throw new IOException("The server" + socketAddressSupplier + " was shutdown, " +
+                            "name=" + name);
             }
         }
 
@@ -1016,9 +1032,9 @@ public class TcpChannelHub implements View, Closeable {
                 public void onConsumer(@NotNull WireIn inWire) {
                     long roundTipTimeMicros = NANOSECONDS.toMicros(System.nanoTime() - l);
                     if (LOG.isDebugEnabled())
-                        LOG.debug(String.format("{0}:{1}heartbeat round trip time={2}us" + " ,name=" + name,
-                                description, TCPRegistry.lookup(description),
-                                roundTipTimeMicros));
+                        LOG.debug("heartbeat round trip time=" + roundTipTimeMicros + "" +
+                                " server=" + socketAddressSupplier);
+
                     inWire.clear();
                 }
             }, true);
@@ -1090,37 +1106,51 @@ public class TcpChannelHub implements View, Closeable {
         }
 
         private void attemptConnect() throws IOException {
+            long start = System.currentTimeMillis();
+            socketAddressSupplier.startAtFirstAddress();
+
             OUTER:
             for (; ; ) {
                 checkNotShutdown();
 
                 if (LOG.isDebugEnabled())
-                    LOG.debug("attemptConnect remoteAddress=" + remoteAddress);
+                    LOG.debug("attemptConnect remoteAddress=" + socketAddressSupplier);
                 SocketChannel socketChannel;
                 try {
+
 
                     for (; ; ) {
 
                         if (isShutdown())
                             continue OUTER;
 
+                        if (start + socketAddressSupplier.timoutMS() < System.currentTimeMillis()) {
+                            socketAddressSupplier.failoverToNextAddress();
+
+                            // reset the timer, so that we can try this new address for a while
+                            start = System.currentTimeMillis();
+                        }
+
                         socketChannel = openSocketChannel();
 
                         try {
                             if (socketChannel == null) {
-                                LOG.error("Unable to open socketChannel to remoteAddress=" + remoteAddress);
+                                LOG.error("Unable to open socketChannel to remoteAddress=" +
+                                        socketAddressSupplier);
                                 pause(1000);
                                 continue;
-                            } else if (!socketChannel.connect(remoteAddress)) {
-                                LOG.error("Unable to connect to remoteAddress=" + remoteAddress);
-                                pause(1000);
-                                continue;
-                            } else
+                            } else if (socketChannel.connect(socketAddressSupplier.get()))
+                                // successfully connected
                                 break;
-                        } catch (ConnectException e) {
-                            LOG.info("Server is not available, ConnectException to remoteAddress=" + remoteAddress);
+
+                            LOG.error("Unable to connect to remoteAddress=" +
+                                    socketAddressSupplier);
                             pause(1000);
-                            continue;
+
+                        } catch (ConnectException e) {
+                            LOG.info("Server is not available, ConnectException to " +
+                                    "remoteAddress=" + socketAddressSupplier);
+                            pause(1000);
                         }
                     }
 
@@ -1137,14 +1167,16 @@ public class TcpChannelHub implements View, Closeable {
 
                     eventLoop.addHandler(this);
                     if (LOG.isInfoEnabled())
-                        LOG.info("successfully connected to remoteAddress=" + remoteAddress);
+                        LOG.info("successfully connected to remoteAddress=" +
+                                socketAddressSupplier.get());
 
                     reconnect();
                     onConnected();
                     break;
                 } catch (Exception e) {
                     if (!isShutdown) {
-                        LOG.error("failed to connect remoteAddress=" + remoteAddress + " so will reconnect ", e);
+                        LOG.error("failed to connect remoteAddress=" + socketAddressSupplier.get()
+                                + " so will reconnect ", e);
                         closeSocket();
                     }
                 }

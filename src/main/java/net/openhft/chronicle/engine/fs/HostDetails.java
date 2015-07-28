@@ -64,8 +64,12 @@ public class HostDetails implements Marshallable, View, Closeable {
     public TcpChannelHub acquireTcpChannelHub(Asset asset, EventLoop eventLoop, Function<Bytes, Wire> wire) {
         InetSocketAddress addr = TCPRegistry.lookup(connectUri);
         SessionProvider sessionProvider = asset.findOrCreateView(SessionProvider.class);
-        return tcpChannelHubs.computeIfAbsent(addr, hostPort ->
-                new TcpChannelHub(sessionProvider, connectUri, eventLoop, wire, "hostId=" + hostId + ",connectUri=" + connectUri));
+
+
+        return tcpChannelHubs.computeIfAbsent(addr, hostPort -> {
+            String[] connectURIs = new String[]{connectUri};
+            return new TcpChannelHub(sessionProvider, connectURIs, eventLoop, wire, "hostId=" + hostId + ",connectUri=" + connectUri);
+        });
     }
 
     @Override

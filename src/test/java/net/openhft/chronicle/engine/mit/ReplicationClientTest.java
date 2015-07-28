@@ -112,8 +112,6 @@ public class ReplicationClientTest {
     }
 
 
-
-
     private static MapView<String, String, String> create(String nameName, Integer hostId, String connectUri,
                                                           BlockingQueue<MapEvent> q, Function<Bytes, Wire> wireType) {
         final VanillaAssetTree tree = new VanillaAssetTree(hostId);
@@ -132,7 +130,8 @@ public class ReplicationClientTest {
         EventGroup eventLoop = new EventGroup(true);
         SessionProvider sessionProvider = new VanillaSessionProvider();
 
-        tree.root().addView(TcpChannelHub.class, new TcpChannelHub(sessionProvider, connectUri, eventLoop, wireType, "connectUri="+connectUri));
+        String[] connectURIs = new String[]{connectUri};
+        tree.root().addView(TcpChannelHub.class, new TcpChannelHub(sessionProvider, connectURIs, eventLoop, wireType, "connectUri=" + connectUri));
         asset.addView(AuthenticatedKeyValueStore.class, new RemoteKeyValueStore(requestContext(nameName), asset));
 
         MapView<String, String, String> result = tree.acquireMap(nameName, String.class, String.class);
