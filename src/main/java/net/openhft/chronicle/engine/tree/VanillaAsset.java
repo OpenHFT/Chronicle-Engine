@@ -42,6 +42,7 @@ import net.openhft.chronicle.engine.pubsub.VanillaTopicPublisher;
 import net.openhft.chronicle.engine.session.VanillaSessionProvider;
 import net.openhft.chronicle.engine.set.VanillaKeySetView;
 import net.openhft.chronicle.network.VanillaSessionDetails;
+import net.openhft.chronicle.network.connection.SocketAddressSupplier;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.EventGroup;
 import net.openhft.chronicle.threads.Threads;
@@ -85,7 +86,7 @@ public class VanillaAsset implements Asset, Closeable {
         if ("".equals(name)) {
             assert parent == null;
         } else {
-            assert parent != null;
+//            assert parent != null;
             assert name != null;
         }
         if (parent != null) {
@@ -144,8 +145,11 @@ public class VanillaAsset implements Asset, Closeable {
                 VanillaTopologySubscription::new);
     }
 
-    public void forRemoteAccess(String hostPortDescription, Function<Bytes, Wire> wire) throws AssetNotFoundException {
+
+    public void forRemoteAccess(String[] hostPortDescriptions, Function<Bytes, Wire> wire) throws
+            AssetNotFoundException {
         standardStack(true);
+
 
         addWrappingRule(MapView.class, LAST + " remote key maps", RemoteMapView::new, ObjectKeyValueStore.class);
 
@@ -167,11 +171,12 @@ public class VanillaAsset implements Asset, Closeable {
         EventLoop eventLoop = findOrCreateView(EventLoop.class);
         eventLoop.start();
         if (getView(TcpChannelHub.class) == null) {
+
+            // used for client failover
+            final SocketAddressSupplier socketAddressSupplier = new SocketAddressSupplier(hostPortDescriptions, name);
+
             TcpChannelHub view = Threads.withThreadGroup(findView(ThreadGroup.class),
-                    () -> {
-                        String[] hostPortDescriptions = new String[]{hostPortDescription};
-                        return new TcpChannelHub(sessionProvider, hostPortDescriptions, eventLoop, wire, name);
-                    });
+                    () -> new TcpChannelHub(sessionProvider, eventLoop, wire, name, socketAddressSupplier));
             addView(TcpChannelHub.class, view);
         }
     }

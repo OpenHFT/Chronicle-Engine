@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SocketChannel;
@@ -98,12 +99,12 @@ public class TcpChannelHub implements View, Closeable {
     private long limitOfLast = 0;
 
     public TcpChannelHub(@NotNull final SessionProvider sessionProvider,
-                         @NotNull final String[] connectURIs,
                          @NotNull final EventLoop eventLoop,
                          @NotNull final Function<Bytes, Wire> wire,
-                         @NotNull final String name) {
+                         @NotNull final String name,
+                         @NotNull final SocketAddressSupplier socketAddressSupplier) {
 
-        socketAddressSupplier = new SocketAddressSupplier(connectURIs);
+        this.socketAddressSupplier = socketAddressSupplier;
 
         //     this.description = description;
         this.eventLoop = eventLoop;
@@ -611,6 +612,10 @@ public class TcpChannelHub implements View, Closeable {
 
         public void onConnectionClosed() {
             map.values().forEach(v -> {
+                if (v instanceof Bytes)
+                    synchronized (v) {
+                        v.notifyAll();
+                    }
                 if (v instanceof AsyncSubscription) {
                     ((AsyncSubscription) v).onClose();
                 } else if (v instanceof Bytes) {
@@ -651,6 +656,11 @@ public class TcpChannelHub implements View, Closeable {
                 map.put(tid, bytes);
                 do {
                     bytes.wait(timeoutTimeMs);
+
+                    if (clientChannel == null)
+                        throw new IORuntimeException("Connection Closed : the connection to the " +
+                                "server has been dropped.");
+
                 } while (bytes.readLimit() == 0 && !isShutdown);
             }
 
@@ -775,7 +785,6 @@ public class TcpChannelHub implements View, Closeable {
                         if (isShutdown()) {
                             break;
                         } else {
-                            System.err.println("reconnecting due to unexpected " + e);
                             LOG.warn("reconnecting due to unexpected " + e);
                             closeSocket();
                         }
@@ -783,13 +792,12 @@ public class TcpChannelHub implements View, Closeable {
                         clear(inWire);
                     }
                 }
-                System.err.println("Exiting while loop");
             } catch (Throwable e) {
                 e.printStackTrace();
                 if (!isShutdown())
                     e.printStackTrace();
             } finally {
-                System.err.println("\nShutting down.... isShutdown=" + isShutdown);
+                LOG.info("\nShutting down....");
                 closeSocket();
                 stop();
             }
@@ -1108,7 +1116,7 @@ public class TcpChannelHub implements View, Closeable {
         private void attemptConnect() throws IOException {
             long start = System.currentTimeMillis();
             socketAddressSupplier.startAtFirstAddress();
-
+            final SocketAddress socketAddress1 = socketAddressSupplier.get();
             OUTER:
             for (; ; ) {
                 checkNotShutdown();
@@ -1124,8 +1132,18 @@ public class TcpChannelHub implements View, Closeable {
                         if (isShutdown())
                             continue OUTER;
 
-                        if (start + socketAddressSupplier.timoutMS() < System.currentTimeMillis()) {
+                        if (start + socketAddressSupplier.timeoutMS() < System.currentTimeMillis()) {
+
+                            String oldAddress = socketAddressSupplier.toString();
+
                             socketAddressSupplier.failoverToNextAddress();
+                            System.out.println("failed to connect to address=" +
+                                    oldAddress + " so will fail over to" +
+                                    socketAddressSupplier + ", name=" + name);
+
+                            if (socketAddressSupplier.get() == null)
+                                throw new ConnectException("failed to establish a socket " +
+                                        "connection of any of the following servers=" + socketAddressSupplier.all());
 
                             // reset the timer, so that we can try this new address for a while
                             start = System.currentTimeMillis();
@@ -1139,9 +1157,20 @@ public class TcpChannelHub implements View, Closeable {
                                         socketAddressSupplier);
                                 pause(1000);
                                 continue;
-                            } else if (socketChannel.connect(socketAddressSupplier.get()))
-                                // successfully connected
-                                break;
+                            } else {
+
+                                final SocketAddress socketAddress = socketAddressSupplier.get();
+                                if (socketAddress == null)
+                                    throw new IORuntimeException("failed to connect as " +
+                                            "socketAddress=null");
+
+                                final SocketAddress remote = socketAddressSupplier.get();
+                                System.out.println("attempting to conenct to address=" + remote);
+
+                                if (socketChannel.connect(remote))
+                                    // successfully connected
+                                    break;
+                            }
 
                             LOG.error("Unable to connect to remoteAddress=" +
                                     socketAddressSupplier);
@@ -1168,14 +1197,14 @@ public class TcpChannelHub implements View, Closeable {
                     eventLoop.addHandler(this);
                     if (LOG.isInfoEnabled())
                         LOG.info("successfully connected to remoteAddress=" +
-                                socketAddressSupplier.get());
+                                socketAddressSupplier);
 
                     reconnect();
                     onConnected();
                     break;
                 } catch (Exception e) {
                     if (!isShutdown) {
-                        LOG.error("failed to connect remoteAddress=" + socketAddressSupplier.get()
+                        LOG.error("failed to connect remoteAddress=" + socketAddressSupplier
                                 + " so will reconnect ", e);
                         closeSocket();
                     }

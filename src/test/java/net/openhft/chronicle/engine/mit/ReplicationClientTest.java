@@ -15,9 +15,9 @@ import net.openhft.chronicle.engine.map.remote.RemoteKVSSubscription;
 import net.openhft.chronicle.engine.map.remote.RemoteKeyValueStore;
 import net.openhft.chronicle.engine.pubsub.RemoteReference;
 import net.openhft.chronicle.engine.pubsub.RemoteTopicPublisher;
-import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.session.VanillaSessionProvider;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
+import net.openhft.chronicle.network.connection.SocketAddressSupplier;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.EventGroup;
 import net.openhft.chronicle.wire.Wire;
@@ -50,7 +50,7 @@ public class ReplicationClientTest {
 
     @After
     public void after() throws Exception {
-        closeables.forEach(c -> c.close());
+        closeables.forEach(Closeable::close);
     }
 
     @Test
@@ -59,7 +59,7 @@ public class ReplicationClientTest {
         ReplicationServerMain server = new ReplicationServerMain();
 
         // creates the first instance of the server
-        ServerEndpoint s1 = server.create(1, "localhost");
+        server.create(1, "localhost");
 
         // creates the seconds instance of the server
         server.create(2, "localhost");
@@ -130,8 +130,8 @@ public class ReplicationClientTest {
         EventGroup eventLoop = new EventGroup(true);
         SessionProvider sessionProvider = new VanillaSessionProvider();
 
-        String[] connectURIs = new String[]{connectUri};
-        tree.root().addView(TcpChannelHub.class, new TcpChannelHub(sessionProvider, connectURIs, eventLoop, wireType, "connectUri=" + connectUri));
+        final SocketAddressSupplier socketAddressSupplier = new SocketAddressSupplier(new String[]{connectUri}, "connectUri=" + connectUri);
+        tree.root().addView(TcpChannelHub.class, new TcpChannelHub(sessionProvider, eventLoop, wireType, "connectUri=" + connectUri, socketAddressSupplier));
         asset.addView(AuthenticatedKeyValueStore.class, new RemoteKeyValueStore(requestContext(nameName), asset));
 
         MapView<String, String, String> result = tree.acquireMap(nameName, String.class, String.class);
