@@ -732,7 +732,7 @@ public class TcpChannelHub implements View, Closeable {
 
         public void checkNotShutdown() {
             if (isShutdown)
-                throw new IllegalStateException("Called after shutdown", shutdownHere);
+                throw new IORuntimeException("Called after shutdown", shutdownHere);
         }
 
         private void running() {
@@ -770,7 +770,7 @@ public class TcpChannelHub implements View, Closeable {
 
                     } catch (ClosedChannelException e) {
                         break;
-                    } catch (IOException e) {
+                    } catch (IOException | IORuntimeException e) {
 
                         if (isShutdown()) {
                             break;
