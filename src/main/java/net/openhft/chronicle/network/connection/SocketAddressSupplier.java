@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.SocketAddress;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -21,10 +22,13 @@ public class SocketAddressSupplier implements Supplier<SocketAddress> {
 
 
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(SocketAddressSupplier.class);
+
+
     private final List<SocketAddress> remoteAddresses = new ArrayList<>();
     private final String descriptions;
     private long failoverTimeout = Integer.getInteger("tcp.failover.time", 2000);
     private SocketAddress remoteAddress;
+    private Iterator<SocketAddress> iterator;
 
     /**
      * @param connectURIs the connections defined in order with the primary first
@@ -42,10 +46,12 @@ public class SocketAddressSupplier implements Supplier<SocketAddress> {
 
     public void failoverToNextAddress() {
         LOG.warn("failing over to next address");
+        remoteAddress = iterator.next();
     }
 
     public void startAtFirstAddress() {
-
+        iterator = remoteAddresses.iterator();
+        remoteAddress = iterator.next();
     }
 
     public long timoutMS() {
