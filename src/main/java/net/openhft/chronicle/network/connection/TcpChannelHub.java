@@ -276,12 +276,14 @@ public class TcpChannelHub implements View, Closeable {
         if (closed)
             return;
         closed = true;
-        //  eventLoop.stop();
         tcpSocketConsumer.stop();
-        System.out.println(Thread.currentThread() + " closing " + socketAddressSupplier);
+
+        if (LOG.isInfoEnabled())
+            LOG.info("closing connection to " + socketAddressSupplier);
         while (clientChannel != null) {
             pause(10);
-            System.out.println("waiting for disconnect");
+            if (LOG.isDebugEnabled())
+                LOG.debug("waiting for disconnect to " + socketAddressSupplier);
         }
     }
 
@@ -690,7 +692,9 @@ public class TcpChannelHub implements View, Closeable {
                 if (clientChannel == null) {
 
                     map.put(asyncSubscription.tid(), asyncSubscription);
-                    System.out.println("deferred subscription tid=" + asyncSubscription.tid() + ",asyncSubscription=" + asyncSubscription);
+                    if (LOG.isDebugEnabled())
+                        LOG.debug("deferred subscription tid=" + asyncSubscription.tid() + "," +
+                                "asyncSubscription=" + asyncSubscription);
 
                     // not currently connected
                     return;
@@ -796,8 +800,9 @@ public class TcpChannelHub implements View, Closeable {
                         if (isShutdown()) {
                             break;
                         } else {
-                            LOG.warn("reconnecting due to unexpected " + e);
                             closeSocket();
+                            LOG.warn("reconnecting due to unexpected " + e);
+                            Jvm.pause(500);
                         }
                     } finally {
                         clear(inWire);

@@ -1,6 +1,5 @@
 package net.openhft.chronicle.engine.server.internal;
 
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.pubsub.Replication;
@@ -65,17 +64,14 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
                         mi.forEach(e -> {
 
-                            if (Jvm.isDebug())
-                                System.out.println(e.toString());
-
                             publisher.add(publish1 -> {
 
                                 if (e.identifier() != hostId.hostId())
                                     return;
 
                                 hadNext.set(true);
-                                if (Jvm.isDebug())
-                                    System.out.println("publish from server response from itterator " +
+                                if (LOG.isDebugEnabled())
+                                    LOG.debug("publish from server response from iterator " +
                                             "localIdentifier=" + hostId + " ,remoteIdentifier=" +
                                             id + " event=" + e);
 

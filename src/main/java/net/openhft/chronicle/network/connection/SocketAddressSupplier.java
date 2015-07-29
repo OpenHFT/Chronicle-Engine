@@ -75,6 +75,8 @@ public class SocketAddressSupplier implements Supplier<SocketAddress> {
             this.remoteAddresses.add(new RemoteAddressSupplier(connectURI));
         }
 
+        assert this.remoteAddresses.size() > 0;
+
         // for (String descriptions : descriptions) {
         this.iterator = remoteAddresses.iterator();
         next();

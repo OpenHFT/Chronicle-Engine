@@ -18,6 +18,7 @@ import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
+import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
@@ -52,7 +53,7 @@ import static org.junit.Assert.assertNotNull;
 public class ReplicationTest10Way {
 
 
-    public static final int MAX = 10;
+    public static final int MAX = 20;
     public static final String CLUSTER_NAME = "max-cluster";
 
     @Parameterized.Parameters
@@ -107,7 +108,8 @@ public class ReplicationTest10Way {
     private void shutdownTrees() {
         ArrayList<Future> futures = new ArrayList<>();
 
-        ExecutorService c = Executors.newCachedThreadPool();
+        ExecutorService c = Executors.newCachedThreadPool(new NamedThreadFactory("Tree Closer",
+                true));
         for (int i = 1; i < MAX; i++) {
             final int j = i;
             futures.add(c.submit(trees[j]::close));
@@ -126,7 +128,7 @@ public class ReplicationTest10Way {
     private void shutDownServers() {
         ArrayList<Future> futures = new ArrayList<>();
 
-        ExecutorService c = Executors.newCachedThreadPool();
+        ExecutorService c = Executors.newCachedThreadPool(new NamedThreadFactory("Servers Closer", true));
         for (int i = 1; i < MAX; i++) {
             final int j = i;
             futures.add(c.submit(serverEndpoints[j]::close));
@@ -155,8 +157,6 @@ public class ReplicationTest10Way {
         tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
                 new ChronicleMapKeyValueStore(context.wireType(writeType).cluster(CLUSTER_NAME),
                         asset));
-
-        //  VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
 
         addHostDenialsToCluster(tree, MAX);
 
