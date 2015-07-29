@@ -15,6 +15,7 @@ import net.openhft.chronicle.engine.map.remote.RemoteKVSSubscription;
 import net.openhft.chronicle.engine.map.remote.RemoteKeyValueStore;
 import net.openhft.chronicle.engine.pubsub.RemoteReference;
 import net.openhft.chronicle.engine.pubsub.RemoteTopicPublisher;
+import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.session.VanillaSessionProvider;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.connection.SocketAddressSupplier;
@@ -47,10 +48,15 @@ public class ReplicationClientTest {
 
     private static MapView<String, String, String> map1;
     private static MapView<String, String, String> map2;
+    private ServerEndpoint server1;
+    private ServerEndpoint server2;
+    private static VanillaAssetTree tree;
 
     @After
     public void after() throws Exception {
-        closeables.forEach(Closeable::close);
+        server1.close();
+        server2.close();
+        tree.close();
     }
 
     @Test
@@ -59,10 +65,10 @@ public class ReplicationClientTest {
         ReplicationServerMain server = new ReplicationServerMain();
 
         // creates the first instance of the server
-        server.create(1, "localhost");
+        server1 = server.create(1, "localhost");
 
         // creates the seconds instance of the server
-        server.create(2, "localhost");
+        server2 = server.create(2, "localhost");
 
 
         YamlLogging.clientReads = true;
@@ -114,7 +120,7 @@ public class ReplicationClientTest {
 
     private static MapView<String, String, String> create(String nameName, Integer hostId, String connectUri,
                                                           BlockingQueue<MapEvent> q, Function<Bytes, Wire> wireType) {
-        final VanillaAssetTree tree = new VanillaAssetTree(hostId);
+        tree = new VanillaAssetTree(hostId);
 
         final Asset asset = tree.root().acquireAsset(nameName);
         ThreadGroup threadGroup = new ThreadGroup("host=" + connectUri);
