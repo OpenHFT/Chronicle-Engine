@@ -183,13 +183,13 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
         RemoteNodeReplicationState usingState = null;
         final RemoteNodeReplicationState copyState =
                 DataValueClasses.newInstance(RemoteNodeReplicationState.class);
-        RemoteNodeReplicationState zeroState =
+        final RemoteNodeReplicationState zeroState =
                 DataValueClasses.newInstance(RemoteNodeReplicationState.class);
 
         @Nullable
         ReplicationData usingData = null;
-        ReplicationData newData = DataValueClasses.newInstance(ReplicationData.class);
-        ReplicationData zeroData = DataValueClasses.newInstance(ReplicationData.class);
+        final ReplicationData newData = DataValueClasses.newInstance(ReplicationData.class);
+        final ReplicationData zeroData = DataValueClasses.newInstance(ReplicationData.class);
     }
 
     private static void initZeroStateForAllPossibleRemoteIdentifiers(
@@ -203,11 +203,11 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
     }
 
     @NotNull
-    private static ThreadLocal<Instances> threadLocalInstances =
+    private static final ThreadLocal<Instances> threadLocalInstances =
             ThreadLocal.withInitial(Instances::new);
 
-    private KeyValueStore<BytesStore, ReplicationData, ReplicationData>[] keyReplicationData;
-    private KeyValueStore<IntValue, RemoteNodeReplicationState, RemoteNodeReplicationState>
+    private final KeyValueStore<BytesStore, ReplicationData, ReplicationData>[] keyReplicationData;
+    private final KeyValueStore<IntValue, RemoteNodeReplicationState, RemoteNodeReplicationState>
             modIterState;
 
     private final byte identifier;

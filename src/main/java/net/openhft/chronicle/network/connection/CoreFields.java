@@ -34,7 +34,7 @@ public enum CoreFields implements WireKey {
     exception;
 
     @NotNull
-    static ThreadLocal<StringBuilder> cpsBuilder = ThreadLocal.withInitial(StringBuilder::new);
+    static final ThreadLocal<StringBuilder> cpsBuilder = ThreadLocal.withInitial(StringBuilder::new);
 
     private static long longEvent(@NotNull final WireKey expecting, @NotNull final WireIn wire) {
         final StringBuilder eventName = Wires.acquireStringBuilder();

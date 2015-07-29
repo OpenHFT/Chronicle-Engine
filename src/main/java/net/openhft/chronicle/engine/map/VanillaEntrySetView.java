@@ -33,8 +33,8 @@ import java.util.Set;
  * Created by peter on 22/05/15.
  */
 public class VanillaEntrySetView<K, MV, V> extends AbstractCollection<Entry<K, V>> implements EntrySetView<K, MV, V> {
-    private Asset asset;
-    private MapView<K, MV, V> mapView;
+    private final Asset asset;
+    private final MapView<K, MV, V> mapView;
 
     public VanillaEntrySetView(RequestContext context, Asset asset, @NotNull MapView<K, MV, V> mapView) throws AssetNotFoundException {
         this.asset = asset;

@@ -35,7 +35,7 @@ import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.Even
 public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler.EventId> implements Reference<E> {
     private static final Logger LOG = LoggerFactory.getLogger(ReferenceHandler.class);
     private final Class<E> messageClass;
-    protected final Map<Object, Long> subscribersToTid = new ConcurrentHashMap<>();
+    private final Map<Object, Long> subscribersToTid = new ConcurrentHashMap<>();
 
     public RemoteReference(@NotNull RequestContext requestContext, @NotNull Asset asset) {
         this(asset.findView(TcpChannelHub.class), requestContext.messageType(), asset.fullName());

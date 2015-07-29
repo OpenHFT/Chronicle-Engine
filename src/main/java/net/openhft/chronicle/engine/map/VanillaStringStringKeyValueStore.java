@@ -46,8 +46,8 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     @NotNull
     private final ObjectKVSSubscription<String, StringBuilder, String> subscriptions;
 
-    private SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore;
-    private Asset asset;
+    private final SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore;
+    private final Asset asset;
 
     public VanillaStringStringKeyValueStore(RequestContext context, @NotNull Asset asset,
                                             @NotNull SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore) throws AssetNotFoundException {

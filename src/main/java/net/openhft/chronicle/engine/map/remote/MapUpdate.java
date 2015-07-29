@@ -39,5 +39,5 @@ public enum MapUpdate implements SerializableUpdaterWithArg<MapView, Object> {
             BiFunction function = (BiFunction) o;
             map.replaceAll(function);
         }
-    };
+    }
 }

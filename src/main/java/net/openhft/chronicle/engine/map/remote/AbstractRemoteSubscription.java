@@ -33,14 +33,14 @@ import static net.openhft.chronicle.engine.server.internal.SubscriptionHandler.S
 abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient implements Subscription<E> {
 
     private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
-    protected final Map<Object, Long> subscribersToTid = new ConcurrentHashMap<>();
+    final Map<Object, Long> subscribersToTid = new ConcurrentHashMap<>();
 
     /**
      * @param hub for this connection
      * @param cid used by proxies such as the entry-set
      * @param csp the uri of the request
      */
-    public AbstractRemoteSubscription(@NotNull TcpChannelHub hub, long cid, @NotNull String csp) {
+    AbstractRemoteSubscription(@NotNull TcpChannelHub hub, long cid, @NotNull String csp) {
         super(hub, cid, csp);
     }
 

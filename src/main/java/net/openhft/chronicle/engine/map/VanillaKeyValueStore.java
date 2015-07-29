@@ -36,7 +36,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class VanillaKeyValueStore<K, MV, V> implements AuthenticatedKeyValueStore<K, MV, V> {
     private final ConcurrentMap<K, V> map = new ConcurrentHashMap<>();
-    private Asset asset;
+    private final Asset asset;
 
     public VanillaKeyValueStore(RequestContext context, Asset asset) {
         this(asset);

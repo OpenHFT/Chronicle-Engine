@@ -31,8 +31,8 @@ import org.jetbrains.annotations.NotNull;
 public class VanillaTopicPublisher<T, M> implements TopicPublisher<T, M> {
     private final Class<T> tClass;
     private final Class<M> mClass;
-    private Asset asset;
-    private MapView<T, M, M> underlying;
+    private final Asset asset;
+    private final MapView<T, M, M> underlying;
 
     public VanillaTopicPublisher(@NotNull RequestContext context, Asset asset, @NotNull MapView<T, M, M> underlying) throws AssetNotFoundException {
         this(asset, context.type(), context.type2(), underlying);

@@ -94,7 +94,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         asset.registerView(StringBytesStoreKeyValueStore.class, this);
     }
 
-    FilePerKeyValueStore(RequestContext context, @NotNull Asset asset, Class type, String basePath, String name) throws AssetNotFoundException {
+    private FilePerKeyValueStore(RequestContext context, @NotNull Asset asset, Class type, String basePath, String name) throws AssetNotFoundException {
         this.asset = asset;
         assert type == String.class;
 
@@ -149,7 +149,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         }
     }
 
-    void keysFor0(@NotNull SubscriptionConsumer<String> stringConsumer) throws InvalidSubscriberException {
+    private void keysFor0(@NotNull SubscriptionConsumer<String> stringConsumer) throws InvalidSubscriberException {
         getFiles().forEach(p -> {
             try {
                 stringConsumer.accept(p.getFileName().toString());
@@ -168,7 +168,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         }
     }
 
-    void entriesFor0(@NotNull SubscriptionConsumer<MapEvent<String, BytesStore>> kvConsumer) throws InvalidSubscriberException {
+    private void entriesFor0(@NotNull SubscriptionConsumer<MapEvent<String, BytesStore>> kvConsumer) throws InvalidSubscriberException {
         getFiles().forEach(p -> {
             BytesStore fileContents = null;
             try {
@@ -197,7 +197,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         return getEntryStream().iterator();
     }
 
-    public Stream<Map.Entry<String, BytesStore>> getEntryStream() {
+    private Stream<Map.Entry<String, BytesStore>> getEntryStream() {
         return getFiles()
                 .map(p -> {
                     BytesStore fileContents = null;
@@ -291,12 +291,12 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         }
     }
 
-    boolean isVisible(@NotNull Path p) {
+    private boolean isVisible(@NotNull Path p) {
         return !p.getFileName().startsWith(".");
     }
 
     @Nullable
-    BytesStore getFileContents(@NotNull Path path, Bytes using) {
+    private BytesStore getFileContents(@NotNull Path path, Bytes using) {
         File file = path.toFile();
         FileRecord<BytesStore> lastFileRecord = lastFileRecordMap.get(file);
         if (lastFileRecord != null && lastFileRecord.valid
@@ -309,7 +309,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     }
 
     @Nullable
-    Bytes getFileContentsFromDisk(@NotNull Path path, Bytes using) {
+    private Bytes getFileContentsFromDisk(@NotNull Path path, Bytes using) {
         for (int i = 1; i <= 5; i++) {
             try {
                 return getFileContentsFromDisk0(path, using);

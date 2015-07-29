@@ -44,8 +44,8 @@ public class VanillaMapView<K, MV, V> implements MapView<K, MV, V> {
     private final boolean removeReturnsNull;
     private final Class keyClass;
     private final Class valueType;
-    private Asset asset;
-    private KeyValueStore<K, MV, V> kvStore;
+    private final Asset asset;
+    private final KeyValueStore<K, MV, V> kvStore;
     private AbstractCollection<V> values;
 
     public VanillaMapView(@org.jetbrains.annotations.NotNull RequestContext context, Asset asset, KeyValueStore<K, MV, V> kvStore) {
@@ -92,7 +92,7 @@ public class VanillaMapView<K, MV, V> implements MapView<K, MV, V> {
                 public Iterator<V> iterator() {
                     return new Iterator<V>() {
                         @org.jetbrains.annotations.NotNull
-                        private Iterator<Entry<K, V>> i = entrySet().iterator();
+                        private final Iterator<Entry<K, V>> i = entrySet().iterator();
 
                         public boolean hasNext() {
                             return i.hasNext();

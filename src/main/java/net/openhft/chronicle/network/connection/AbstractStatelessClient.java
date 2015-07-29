@@ -39,22 +39,22 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
     @NotNull
     protected final TcpChannelHub hub;
     private final long cid;
-    protected String csp;
+    protected final String csp;
 
     /**
      * @param hub for this connection
      * @param cid used by proxies such as the entry-set
      * @param csp the uri of the request
      */
-    public AbstractStatelessClient(@NotNull final TcpChannelHub hub,
-                                   long cid,
-                                   @NotNull final String csp) {
+    protected AbstractStatelessClient(@NotNull final TcpChannelHub hub,
+                                      long cid,
+                                      @NotNull final String csp) {
         this.cid = cid;
         this.csp = csp;
         this.hub = hub;
     }
 
-    public static <E extends ParameterizeWireKey>
+    protected static <E extends ParameterizeWireKey>
     Consumer<ValueOut> toParameters(@NotNull final E eventId,
                                     @Nullable final Object... args) {
         return out -> {
@@ -125,25 +125,25 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
         return proxyReturnWireConsumer(eventId, ValueIn::uint16);
     }
 
-    public <T> T proxyReturnWireConsumer(@NotNull final WireKey eventId,
-                                         @NotNull final Function<ValueIn, T> consumer) {
+    protected <T> T proxyReturnWireConsumer(@NotNull final WireKey eventId,
+                                            @NotNull final Function<ValueIn, T> consumer) {
         final long startTime = Time.currentTimeMillis();
         long tid = sendEvent(startTime, eventId, null);
         return readWire(tid, startTime, CoreFields.reply, consumer);
     }
 
-    public <T> T proxyReturnWireConsumerInOut(@NotNull final WireKey eventId,
-                                              @NotNull final WireKey reply,
-                                              @Nullable final Consumer<ValueOut> consumerOut,
-                                              @NotNull final Function<ValueIn, T> consumerIn) {
+    protected <T> T proxyReturnWireConsumerInOut(@NotNull final WireKey eventId,
+                                                 @NotNull final WireKey reply,
+                                                 @Nullable final Consumer<ValueOut> consumerOut,
+                                                 @NotNull final Function<ValueIn, T> consumerIn) {
         final long startTime = Time.currentTimeMillis();
         long tid = sendEvent(startTime, eventId, consumerOut);
         return readWire(tid, startTime, reply, consumerIn);
     }
 
     @SuppressWarnings("SameParameterValue")
-    protected void proxyReturnVoid(@NotNull final WireKey eventId,
-                                   @Nullable final Consumer<ValueOut> consumer) {
+    private void proxyReturnVoid(@NotNull final WireKey eventId,
+                                 @Nullable final Consumer<ValueOut> consumer) {
         final long startTime = Time.currentTimeMillis();
         long tid = sendEvent(startTime, eventId, consumer);
         readWire(tid, startTime, CoreFields.reply, v -> v.marshallable(ReadMarshallable.DISCARD));
@@ -227,7 +227,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
      * @param startTime the start time of this transaction
      * @return the translation id ( which is sent to the server )
      */
-    protected long writeMetaDataStartTime(long startTime) {
+    private long writeMetaDataStartTime(long startTime) {
         return hub.writeMetaDataStartTime(startTime, hub.outWire(), csp, cid);
     }
 
@@ -245,11 +245,11 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
      *
      * @param startTime the start time of this transaction
      */
-    protected void writeAsyncMetaData(long startTime) {
+    private void writeAsyncMetaData(long startTime) {
         hub.writeAsyncHeader(hub.outWire(), csp, cid);
     }
 
-    protected void checkIsData(@NotNull Wire wireIn) {
+    private void checkIsData(@NotNull Wire wireIn) {
         Bytes<?> bytes = wireIn.bytes();
         int datalen = bytes.readVolatileInt();
 
@@ -272,7 +272,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
 
     }
 
-    protected <R> R readReply(@NotNull WireIn wireIn, @NotNull WireKey replyId, @NotNull Function<ValueIn, R> function) {
+    private <R> R readReply(@NotNull WireIn wireIn, @NotNull WireKey replyId, @NotNull Function<ValueIn, R> function) {
 
         StringBuilder eventName = Wires.acquireStringBuilder();
         final ValueIn event = wireIn.read(eventName);

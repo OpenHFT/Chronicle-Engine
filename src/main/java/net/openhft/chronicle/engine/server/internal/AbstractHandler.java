@@ -18,12 +18,12 @@ import static net.openhft.chronicle.wire.WriteMarshallable.EMPTY;
 /**
  * Created by Rob Austin
  */
-public class AbstractHandler {
+class AbstractHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractHandler.class);
     @Nullable
     WireOut outWire = null;
-    protected volatile boolean connectionClosed = false;
+    volatile boolean connectionClosed = false;
 
     void setOutWire(final WireOut outWire) {
         this.outWire = outWire;
@@ -61,7 +61,7 @@ public class AbstractHandler {
             }
     }
 
-    public static void nullCheck(@Nullable Object o) {
+    static void nullCheck(@Nullable Object o) {
         if (o == null)
             throw new NullPointerException();
     }

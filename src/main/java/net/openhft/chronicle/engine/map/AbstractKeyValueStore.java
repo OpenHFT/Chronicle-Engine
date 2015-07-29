@@ -34,13 +34,13 @@ import java.util.Map;
  */
 public class AbstractKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> {
     @NotNull
-    protected final Asset asset;
+    final Asset asset;
     @NotNull
-    protected final KeyValueStore<K, MV, V> kvStore;
-    protected final Class<K> keyType;
-    protected final Class<V> valueType;
+    final KeyValueStore<K, MV, V> kvStore;
+    private final Class<K> keyType;
+    private final Class<V> valueType;
 
-    protected AbstractKeyValueStore(@NotNull RequestContext rc, @NotNull Asset asset, @NotNull KeyValueStore<K, MV, V> kvStore) {
+    AbstractKeyValueStore(@NotNull RequestContext rc, @NotNull Asset asset, @NotNull KeyValueStore<K, MV, V> kvStore) {
         assert asset != null;
         assert kvStore != null;
         keyType = rc.keyType();

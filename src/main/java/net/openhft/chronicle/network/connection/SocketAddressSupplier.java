@@ -54,7 +54,7 @@ public class SocketAddressSupplier implements Supplier<SocketAddress> {
 
     private final List<RemoteAddressSupplier> remoteAddresses = new ArrayList<>();
 
-    private long failoverTimeout = Integer.getInteger("tcp.failover.time", 2_000);
+    private final long failoverTimeout = Integer.getInteger("tcp.failover.time", 2_000);
 
     private Iterator<RemoteAddressSupplier> iterator;
 

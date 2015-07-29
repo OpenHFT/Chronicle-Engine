@@ -55,7 +55,7 @@ import static net.openhft.chronicle.network.connection.CoreFields.stringEvent;
 public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
         implements Cloneable, ObjectKeyValueStore<K, V, V> {
 
-    public static final Consumer<ValueOut> VOID_PARAMETERS = out -> out.marshallable(WriteMarshallable.EMPTY);
+    private static final Consumer<ValueOut> VOID_PARAMETERS = out -> out.marshallable(WriteMarshallable.EMPTY);
 
     private final Class<K> kClass;
     private final Class<V> vClass;
@@ -262,8 +262,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     @Nullable
     public V getUsing(K key, V usingValue) {
         checkKey(key);
-        final V v = this.proxyReturnTypedObject(get, usingValue, vClass, key);
-        return v;
+        return this.proxyReturnTypedObject(get, usingValue, vClass, key);
     }
 
     public long longSize() {

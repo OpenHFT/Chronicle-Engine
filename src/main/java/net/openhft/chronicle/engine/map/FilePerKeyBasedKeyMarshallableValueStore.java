@@ -37,10 +37,10 @@ import static net.openhft.chronicle.bytes.NativeBytes.nativeBytes;
 public class FilePerKeyBasedKeyMarshallableValueStore<K, V extends Marshallable>
         implements KeyValueStore<K, V, V> {
     @NotNull
-    static ThreadLocal<Wire> threadLocalValueWire =
+    private static final ThreadLocal<Wire> threadLocalValueWire =
             ThreadLocal.withInitial(() -> new TextWire(nativeBytes()));
 
-    static Wire valueWire() {
+    private static Wire valueWire() {
         Wire valueWire = threadLocalValueWire.get();
         valueWire.bytes().clear();
         return valueWire;

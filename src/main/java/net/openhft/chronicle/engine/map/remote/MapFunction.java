@@ -55,8 +55,7 @@ public enum MapFunction implements SerializableBiFunction<MapView, Object, Objec
                 return map.replace(convertTo(kClass, kf.key), convertTo(vClass, kf.value));
             }
             KeyValuesTuple kf = (KeyValuesTuple) o;
-            boolean replace = map.replace(convertTo(kClass, kf.key), convertTo(vClass, kf.oldValue), convertTo(vClass, kf.value));
-            return replace;
+            return map.replace(convertTo(kClass, kf.key), convertTo(vClass, kf.oldValue), convertTo(vClass, kf.value));
         }
     },
     PUT_IF_ABSENT {
@@ -112,5 +111,5 @@ public enum MapFunction implements SerializableBiFunction<MapView, Object, Objec
         public Object apply(@NotNull MapView map, Object o) {
             return map.equals(o);
         }
-    };
+    }
 }

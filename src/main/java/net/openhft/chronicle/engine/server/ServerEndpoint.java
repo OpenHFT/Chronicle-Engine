@@ -41,11 +41,11 @@ public class ServerEndpoint implements Closeable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ChronicleMapKeyValueStore.class);
     @Nullable
-    private EventLoop eg;
+    private final EventLoop eg;
     @Nullable
     private AcceptorEventHandler eah;
     @NotNull
-    private AtomicBoolean isClosed = new AtomicBoolean();
+    private final AtomicBoolean isClosed = new AtomicBoolean();
 
     public ServerEndpoint(String hostPortDescription, @NotNull AssetTree assetTree, @NotNull WireType wire) throws IOException {
         eg = assetTree.root().acquireView(EventLoop.class);
@@ -56,7 +56,7 @@ public class ServerEndpoint implements Closeable {
     }
 
     @Nullable
-    public AcceptorEventHandler start(String hostPortDescription, @NotNull final AssetTree asset, @NotNull WireType wireType) throws IOException {
+    private AcceptorEventHandler start(String hostPortDescription, @NotNull final AssetTree asset, @NotNull WireType wireType) throws IOException {
         eg.start();
         if (LOGGER.isDebugEnabled())
             LOGGER.info("starting server=" + hostPortDescription);
@@ -68,7 +68,7 @@ public class ServerEndpoint implements Closeable {
         return eah;
     }
 
-    public void stop() {
+    private void stop() {
         if (eg != null)
             eg.stop();
     }

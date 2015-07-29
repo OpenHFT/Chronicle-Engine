@@ -33,9 +33,10 @@ import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
  * Created by peter on 12/06/15.
  */
 public class FilePerKeyGroupFS implements Marshallable, MountPoint {
-    String spec, name;
-    Class valueType;
-    boolean recurse;
+    private String spec;
+    private String name;
+    private Class valueType;
+    private boolean recurse;
 
     @Override
     public String spec() {

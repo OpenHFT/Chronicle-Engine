@@ -61,9 +61,9 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     private final BiFunction<BytesStore, V, V> bytesToValue;
     @NotNull
     private final ObjectKVSSubscription<String, V, V> subscriptions;
-    private SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore;
-    private Asset asset;
-    private Class<V> valueType;
+    private final SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore;
+    private final Asset asset;
+    private final Class<V> valueType;
 
     public VanillaStringMarshallableKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset,
                                                   @NotNull SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore) throws AssetNotFoundException {

@@ -77,7 +77,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
     @Nullable
     private final EventLoop eventLoop;
     private final AtomicBoolean isClosed = new AtomicBoolean();
-    private boolean putReturnsNull;
+    private final boolean putReturnsNull;
 
     public ChronicleMapKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset) {
         String basePath = context.basePath();
@@ -309,7 +309,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
         return engineReplicator;
     }
 
-    class PublishingOperations extends MapEventListener<K, V> {
+    private class PublishingOperations extends MapEventListener<K, V> {
         @Override
         public void onRemove(@NotNull K key, V value, boolean replicationEven) {
             if (subscriptions.hasSubscribers())
@@ -327,7 +327,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
         }
     }
 
-    class NullOldValuePublishingOperations extends BytesMapEventListener {
+    private class NullOldValuePublishingOperations extends BytesMapEventListener {
         @Override
         public void onRemove(Bytes entry, long metaDataPos, long keyPos, long valuePos,
                              boolean replicationEvent) {

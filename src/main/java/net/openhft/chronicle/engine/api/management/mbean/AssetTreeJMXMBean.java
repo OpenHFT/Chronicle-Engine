@@ -7,7 +7,7 @@ public interface AssetTreeJMXMBean {
 
     void setSize(long size);
 
-    public String getEntries();
+    String getEntries();
     long getSize();
 
     String getKeyType();

@@ -28,11 +28,11 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
 
     final StringBuilder eventName = new StringBuilder();
     final Map<Long, Object> tidToListener = new ConcurrentHashMap<>();
-    protected Wire outWire;
-    protected T subscription;
-    protected RequestContext requestContext;
-    protected WireOutPublisher publisher;
-    protected AssetTree assetTree;
+    Wire outWire;
+    T subscription;
+    RequestContext requestContext;
+    WireOutPublisher publisher;
+    AssetTree assetTree;
 
     /**
      * after writing the tid to the wire
@@ -40,7 +40,7 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
      * @param eventName the name of the event
      * @return true if processed
      */
-    protected boolean after(@NotNull StringBuilder eventName) {
+    boolean after(@NotNull StringBuilder eventName) {
 
         if (topicSubscriberCount.contentEquals(eventName)) {
             outWire.writeEventName(reply).int8(subscription.topicSubscriberCount());
@@ -66,7 +66,7 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
      * @param valueIn the value in from the wire
      * @return true if processed
      */
-    protected boolean before(Long tid, @NotNull ValueIn valueIn) throws AssetNotFoundException {
+    boolean before(Long tid, @NotNull ValueIn valueIn) throws AssetNotFoundException {
         if (registerSubscriber.contentEquals(eventName)) {
             Class subscriptionType = valueIn.typeLiteral();
             if(tidToListener.containsKey(tid)){

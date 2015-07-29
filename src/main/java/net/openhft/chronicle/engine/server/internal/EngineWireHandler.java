@@ -107,8 +107,6 @@ public class EngineWireHandler extends WireTcpHandler {
     private final StringBuilder eventName = new StringBuilder();
     @NotNull
     private final SystemHandler systemHandler;
-    @NotNull
-    private final WireType byteToWire;
 
     private WireAdapter wireAdapter;
     private View view;
@@ -117,18 +115,18 @@ public class EngineWireHandler extends WireTcpHandler {
     @Nullable
     private Class viewType;
     @Nullable
-    private SessionProvider sessionProvider;
+    private final SessionProvider sessionProvider;
     private long tid;
     @Nullable
-    private HostIdentifier hostIdentifier;
+    private final HostIdentifier hostIdentifier;
 
     @Nullable
-    private EventLoop eventLoop;
+    private final EventLoop eventLoop;
 
     public EngineWireHandler(@NotNull final WireType byteToWire,
                              @NotNull final AssetTree assetTree) {
         super(byteToWire);
-        this.byteToWire = byteToWire;
+        WireType byteToWire1 = byteToWire;
         this.sessionProvider = assetTree.root().getView(SessionProvider.class);
         this.eventLoop = assetTree.root().findOrCreateView(EventLoop.class);
         try {
@@ -152,7 +150,7 @@ public class EngineWireHandler extends WireTcpHandler {
         this.systemHandler = new SystemHandler();
     }
 
-    final RequestContextInterner requestContextInterner = new RequestContextInterner(128);
+    private final RequestContextInterner requestContextInterner = new RequestContextInterner(128);
 
     @NotNull
     private Consumer<WireIn> wireInConsumer() {
