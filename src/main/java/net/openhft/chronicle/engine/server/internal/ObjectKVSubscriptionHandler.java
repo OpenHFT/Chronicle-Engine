@@ -34,7 +34,7 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscriptio
 
         if (registerTopicSubscriber.contentEquals(eventName)) {
             if(tidToListener.containsKey(tid)){
-                System.out.println("Duplicate topic registration for tid " + tid);
+                LOG.info("Duplicate topic registration for tid " + tid);
                 return;
             }
 

@@ -82,7 +82,9 @@ class ReplicationHub extends AbstractStatelessClient implements View {
             @Override
             public void onSubscribe(@NotNull WireOut wireOut) {
 
-                System.out.println("onSubscribe - localIdentifier=" + localIdentifier + ",remoteIdentifier=" + remoteIdentifier);
+                if (LOG.isDebugEnabled())
+                    LOG.debug("onSubscribe - localIdentifier=" + localIdentifier + "," +
+                            "remoteIdentifier=" + remoteIdentifier);
 
                 wireOut.writeEventName(identifier)
                         .marshallable(WriteMarshallable.EMPTY)

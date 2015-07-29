@@ -53,7 +53,7 @@ import static org.junit.Assert.assertNotNull;
 public class ReplicationTest10Way {
 
 
-    public static final int MAX = 20;
+    public static final int MAX = 10;
     public static final String CLUSTER_NAME = "max-cluster";
 
     @Parameterized.Parameters
@@ -98,8 +98,11 @@ public class ReplicationTest10Way {
 
     @After
     public void after() throws IOException {
-        shutDownServers();
+
         shutdownTrees();
+        Jvm.pause(100);
+        shutDownServers();
+
 
         TCPRegistry.reset();
         // TODO TCPRegistery.assertAllServersStopped();

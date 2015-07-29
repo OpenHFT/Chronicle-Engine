@@ -70,7 +70,7 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
         if (registerSubscriber.contentEquals(eventName)) {
             Class subscriptionType = valueIn.typeLiteral();
             if(tidToListener.containsKey(tid)){
-                System.out.println("Duplicate registration for tid " + tid);
+                LOG.info("Duplicate registration for tid " + tid);
                 return true;
             }
             Subscriber<Object> listener = new LocalSubscriber(tid);

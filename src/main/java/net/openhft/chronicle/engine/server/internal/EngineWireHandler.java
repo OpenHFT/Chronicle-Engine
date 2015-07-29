@@ -344,10 +344,10 @@ public class EngineWireHandler extends WireTcpHandler {
     private void logYamlToStandardOut(@NotNull WireIn in) {
         if (Jvm.IS_DEBUG && YamlLogging.showServerReads) {
             try {
-                System.out.println("\nServer Receives:\n" +
+                LOG.info("\nServer Receives:\n" +
                         Wires.fromSizePrefixedBinaryToText(in.bytes()));
             } catch (Exception e) {
-                System.out.println("\n\n" +
+                LOG.info("\n\n" +
                         Bytes.toString(in.bytes()));
             }
         }

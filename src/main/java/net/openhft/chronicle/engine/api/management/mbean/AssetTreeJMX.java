@@ -1,14 +1,18 @@
 package net.openhft.chronicle.engine.api.management.mbean;
 
-import net.openhft.chronicle.engine.api.map.KeyValueStore;
+import net.openhft.chronicle.engine.api.management.ManagementTools;
 import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
 import net.openhft.chronicle.engine.map.ObjectKeyValueStore;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by pct25 on 6/16/2015.
  */
 public class AssetTreeJMX implements AssetTreeJMXMBean {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ManagementTools.class);
 
     private long size;
     private String entries;
@@ -22,11 +26,11 @@ public class AssetTreeJMX implements AssetTreeJMXMBean {
     private String keyStoreValue;
     private String path;
 
-    public AssetTreeJMX(){
+    public AssetTreeJMX() {
 
     }
 
-    public AssetTreeJMX(@NotNull ObjectKeyValueStore view, @NotNull ObjectKVSSubscription objectKVSSubscription,String path, String entries) {
+    public AssetTreeJMX(@NotNull ObjectKeyValueStore view, @NotNull ObjectKVSSubscription objectKVSSubscription, String path, String entries) {
         this.size = view.longSize();
         this.entries = entries;
         this.keyTypeClass = view.keyType();
@@ -46,7 +50,9 @@ public class AssetTreeJMX implements AssetTreeJMXMBean {
     }
 
     @Override
-    public String getEntries() {return entries;}
+    public String getEntries() {
+        return entries;
+    }
 
     @Override
     public long getSize() {
@@ -90,8 +96,8 @@ public class AssetTreeJMX implements AssetTreeJMXMBean {
 
     @Override
     public void notifyMe(String key, String value) {
-        System.out.println("Added Key = "+keyTypeClass.cast(key));
-        System.out.println("Added Value = "+valueTypeClass.cast(value));
-        System.out.println("changed size: "+size);
+        LOG.info("Added Key = " + keyTypeClass.cast(key));
+        LOG.info("Added Value = " + valueTypeClass.cast(value));
+        LOG.info("changed size: " + size);
     }
 }

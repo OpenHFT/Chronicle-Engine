@@ -135,7 +135,7 @@ public class TcpChannelHub implements View, Closeable {
         try {
             try {
 
-                System.out.println("\nreceives:\n" +
+                LOG.info("\nreceives:\n" +
                         "```yaml\n" +
                         fromSizePrefixedBinaryToText(bytes) +
                         "```\n");
@@ -278,8 +278,9 @@ public class TcpChannelHub implements View, Closeable {
         closed = true;
         tcpSocketConsumer.stop();
 
-        if (LOG.isInfoEnabled())
-            LOG.info("closing connection to " + socketAddressSupplier);
+        if (LOG.isDebugEnabled())
+            LOG.debug("closing connection to " + socketAddressSupplier);
+
         while (clientChannel != null) {
             pause(10);
             if (LOG.isDebugEnabled())
@@ -430,7 +431,7 @@ public class TcpChannelHub implements View, Closeable {
         try {
 
             if (bytes.readRemaining() > 0)
-                System.out.println(((!YamlLogging.title.isEmpty()) ? "### " + YamlLogging
+                LOG.info(((!YamlLogging.title.isEmpty()) ? "### " + YamlLogging
                         .title + "\n" : "") + "" +
                         YamlLogging.writeMessage + (YamlLogging.writeMessage.isEmpty() ?
                         "" : "\n\n") +
@@ -801,7 +802,8 @@ public class TcpChannelHub implements View, Closeable {
                             break;
                         } else {
                             closeSocket();
-                            LOG.warn("reconnecting due to unexpected " + e);
+                            if (LOG.isDebugEnabled())
+                                LOG.debug("reconnecting due to unexpected " + e);
                             Jvm.pause(500);
                         }
                     } finally {
@@ -812,7 +814,7 @@ public class TcpChannelHub implements View, Closeable {
                 if (!isShutdown())
                     LOG.error("", e);
             } finally {
-                LOG.info("\nShutting down....");
+                LOG.info("Shutting down....");
                 closeSocket();
                 stop();
             }
@@ -1128,7 +1130,7 @@ public class TcpChannelHub implements View, Closeable {
         private void attemptConnect() throws IOException {
             long start = System.currentTimeMillis();
             socketAddressSupplier.startAtFirstAddress();
-            final SocketAddress socketAddress1 = socketAddressSupplier.get();
+
             OUTER:
             for (; ; ) {
                 checkNotShutdown();
@@ -1149,13 +1151,16 @@ public class TcpChannelHub implements View, Closeable {
                             String oldAddress = socketAddressSupplier.toString();
 
                             socketAddressSupplier.failoverToNextAddress();
-                            System.out.println("failed to connect to address=" +
+                            LOG.info("failed to connect to address=" +
                                     oldAddress + " so will fail over to" +
                                     socketAddressSupplier + ", name=" + name);
 
-                            if (socketAddressSupplier.get() == null)
-                                throw new ConnectException("failed to establish a socket " +
-                                        "connection of any of the following servers=" + socketAddressSupplier.all());
+                            if (socketAddressSupplier.get() == null) {
+                                LOG.warn("failed to establish a socket " +
+                                        "connection of any of the following servers=" +
+                                        socketAddressSupplier.all() + " so will re-attempt");
+                                socketAddressSupplier.startAtFirstAddress();
+                            }
 
                             // reset the timer, so that we can try this new address for a while
                             start = System.currentTimeMillis();
@@ -1177,7 +1182,8 @@ public class TcpChannelHub implements View, Closeable {
                                             "socketAddress=null");
 
                                 final SocketAddress remote = socketAddressSupplier.get();
-                                System.out.println("attempting to conenct to address=" + remote);
+                                if (LOG.isDebugEnabled())
+                                    LOG.debug("attempting to conenct to address=" + remote);
 
                                 if (socketChannel.connect(remote))
                                     // successfully connected
@@ -1189,7 +1195,7 @@ public class TcpChannelHub implements View, Closeable {
                             pause(1000);
 
                         } catch (ConnectException e) {
-                            LOG.info("Server is not available, ConnectException to " +
+                            LOG.info("Server is unavailable, ConnectException to " +
                                     "remoteAddress=" + socketAddressSupplier);
                             pause(1000);
                         }
@@ -1207,8 +1213,8 @@ public class TcpChannelHub implements View, Closeable {
                     }
 
                     eventLoop.addHandler(this);
-                    if (LOG.isInfoEnabled())
-                        LOG.info("successfully connected to remoteAddress=" +
+                    if (LOG.isDebugEnabled())
+                        LOG.debug("successfully connected to remoteAddress=" +
                                 socketAddressSupplier);
 
                     reconnect();
