@@ -105,6 +105,7 @@ public class ReplicationClientTest {
         Assert.assertEquals(1, map2.size());
         Assert.assertEquals("world", map2.get("hello"));
 
+        Thread.sleep(500);
 
         // todo not sure why we have to added a clear here !
         q1.clear();
