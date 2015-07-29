@@ -17,6 +17,7 @@
 package net.openhft.chronicle.network.connection;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.ConnectionDroppedException;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.Closeable;
@@ -107,13 +108,9 @@ public class TcpChannelHub implements View, Closeable {
                          @NotNull final Function<Bytes, Wire> wire,
                          @NotNull final String name,
                          @NotNull final SocketAddressSupplier socketAddressSupplier) {
-
         this.socketAddressSupplier = socketAddressSupplier;
-
-        //     this.description = description;
         this.eventLoop = eventLoop;
         this.tcpBufferSize = Integer.getInteger("tcp.client.buffer.size", 2 << 20);
-
         this.outWire = wire.apply(elasticByteBuffer());
         this.inWire = wire.apply(elasticByteBuffer());
         this.name = name;
@@ -125,7 +122,7 @@ public class TcpChannelHub implements View, Closeable {
     }
 
     static void logToStandardOutMessageReceived(@NotNull Wire wire) {
-        Bytes<?> bytes = wire.bytes();
+        final Bytes<?> bytes = wire.bytes();
 
         if (!Jvm.IS_DEBUG || !YamlLogging.clientReads)
             return;
@@ -173,8 +170,8 @@ public class TcpChannelHub implements View, Closeable {
 
     private void onDisconnected() {
 
-        if (Jvm.isDebug())
-            System.out.println("disconnected to remoteAddress=" + socketAddressSupplier);
+        if (LOG.isDebugEnabled())
+            LOG.debug("disconnected to remoteAddress=" + socketAddressSupplier);
         tcpSocketConsumer.onConnectionClosed();
     }
 
@@ -328,21 +325,19 @@ public class TcpChannelHub implements View, Closeable {
         }
     }
 
-    public Wire proxyReply(long timeoutTime, final long tid) {
+    public Wire proxyReply(long timeoutTime, final long tid) throws ConnectionDroppedException {
 
         try {
             return tcpSocketConsumer.syncBlockingReadSocket(timeoutTime, tid);
-        } catch (@NotNull IORuntimeException | AssertionError e) {
+        } catch (@NotNull IORuntimeException | AssertionError | ConnectionDroppedException e) {
             throw e;
         } catch (RuntimeException e) {
             LOG.error("", e);
             closeSocket();
-            //reconnect = true;
             throw e;
         } catch (Exception e) {
             LOG.error("", e);
             closeSocket();
-            // reconnect = true;
             throw rethrow(e);
         }
     }
@@ -392,7 +387,7 @@ public class TcpChannelHub implements View, Closeable {
                 long writeTime = Time.currentTimeMillis() - start;
 
                 if (writeTime > 5000) {
-                    System.err.println("\n========= THREAD DUMP =========\n");
+
                     for (Map.Entry<Thread, StackTraceElement[]> entry : Thread.getAllStackTraces().entrySet()) {
                         Thread thread = entry.getKey();
                         if (thread.getThreadGroup().getName().equals("system"))
@@ -401,7 +396,7 @@ public class TcpChannelHub implements View, Closeable {
                         sb.append(thread).append(" ").append(thread.getState());
                         Jvm.trimStackTrace(sb, entry.getValue());
                         sb.append("\n");
-                        System.err.println(sb);
+                        LOG.error("\n========= THREAD DUMP =========\n", sb);
                     }
 
                     socketChannel.close();
@@ -653,7 +648,7 @@ public class TcpChannelHub implements View, Closeable {
          * @throws InterruptedException
          */
         Wire syncBlockingReadSocket(final long timeoutTimeMs, long tid) throws
-                InterruptedException, TimeoutException {
+                InterruptedException, TimeoutException, ConnectionDroppedException {
             long start = Time.currentTimeMillis();
 
             final Wire wire = syncInWireThreadLocal.get();
@@ -664,14 +659,17 @@ public class TcpChannelHub implements View, Closeable {
 
             //noinspection SynchronizationOnLocalVariableOrMethodParameter
             synchronized (bytes) {
-                System.out.println("tid=" + tid + " of client request");
+
+                if (LOG.isDebugEnabled())
+                    LOG.debug("tid=" + tid + " of client request");
+
                 bytes.clear();
                 map.put(tid, bytes);
                 do {
                     bytes.wait(timeoutTimeMs);
 
                     if (clientChannel == null)
-                        throw new IORuntimeException("Connection Closed : the connection to the " +
+                        throw new ConnectionDroppedException("Connection Closed : the connection to the " +
                                 "server has been dropped.");
 
                 } while (bytes.readLimit() == 0 && !isShutdown);
@@ -768,8 +766,7 @@ public class TcpChannelHub implements View, Closeable {
 
                 while (!isShutdown()) {
 
-                    if (clientChannel == null)
-                        checkConnectionState();
+                    checkConnectionState();
 
                     try {
                         // if we have processed all the bytes that we have read in
@@ -804,7 +801,7 @@ public class TcpChannelHub implements View, Closeable {
                             closeSocket();
                             if (LOG.isDebugEnabled())
                                 LOG.debug("reconnecting due to unexpected " + e);
-                            Jvm.pause(500);
+                            Jvm.pause(100);
                         }
                     } finally {
                         clear(inWire);
@@ -1151,8 +1148,8 @@ public class TcpChannelHub implements View, Closeable {
                             String oldAddress = socketAddressSupplier.toString();
 
                             socketAddressSupplier.failoverToNextAddress();
-                            LOG.info("failed to connect to address=" +
-                                    oldAddress + " so will fail over to" +
+                            LOG.info("Connection Dropped to address=" +
+                                    oldAddress + ", so will fail over to" +
                                     socketAddressSupplier + ", name=" + name);
 
                             if (socketAddressSupplier.get() == null) {

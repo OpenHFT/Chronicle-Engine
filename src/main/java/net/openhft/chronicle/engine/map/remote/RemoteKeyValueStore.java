@@ -405,17 +405,19 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
                 csp.toString(), cid, valueIn -> valueIn.object(kClass));
     }
 
+
     @SuppressWarnings("SameParameterValue")
     private boolean proxyReturnBoolean(@NotNull final EventId eventId,
                                        @Nullable final Consumer<ValueOut> consumer) {
         final long startTime = Time.currentTimeMillis();
-        return readBoolean(sendEvent(startTime, eventId, consumer), startTime);
+        return tryTwice(() -> readBoolean(sendEvent(startTime, eventId, consumer), startTime));
     }
+
 
     @SuppressWarnings("SameParameterValue")
     private int proxyReturnInt(@NotNull final EventId eventId) {
         final long startTime = Time.currentTimeMillis();
-        return readInt(sendEvent(startTime, eventId, VOID_PARAMETERS), startTime);
+        return tryTwice(() -> readInt(sendEvent(startTime, eventId, VOID_PARAMETERS), startTime));
     }
 
     @NotNull

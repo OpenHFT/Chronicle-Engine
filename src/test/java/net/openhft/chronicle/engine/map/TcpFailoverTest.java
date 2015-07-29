@@ -126,14 +126,7 @@ public class TcpFailoverTest extends ThreadMonitoringTest {
             serverAssetTree1.close();
 
             // shutting server1 down should cause the failover client to connect to server 2
-            try {
-                Assert.assertEquals("server2", failoverClient.get("hello"));
-            } catch (Exception e) {
-                e.printStackTrace();
-                // retry as it possible the first RPC call may fail if the connection was closed
-                // on it
-                Assert.assertEquals("server2", failoverClient.get("hello"));
-            }
+            Assert.assertEquals("server2", failoverClient.get("hello"));
 
         } catch (Exception e) {
             throw Jvm.rethrow(e);

@@ -84,7 +84,8 @@ public class SocketAddressSupplier implements Supplier<SocketAddress> {
 
 
     public void failoverToNextAddress() {
-        LOG.warn("failing over to next address");
+        if (LOG.isDebugEnabled())
+            LOG.debug("failing over to next address");
         next();
     }
 

@@ -50,7 +50,7 @@ import static com.google.common.collect.testing.features.MapFeature.*;
 @SuppressWarnings("all")
 
 @RunWith(AllTests.class)
-public class GuavaEngineTest   {
+public class GuavaEngineTest {
     public static final WireType WIRE_TYPE = WireType.TEXT;
 
     @NotNull
@@ -88,7 +88,7 @@ public class GuavaEngineTest   {
 
     @AfterClass
     public void testTearDown() {
-        TCPRegistry.assertAllServersStopped();
+        TCPRegistry.reset();
     }
 
     @NotNull
