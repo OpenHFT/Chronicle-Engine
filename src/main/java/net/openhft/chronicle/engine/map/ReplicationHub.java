@@ -23,6 +23,7 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.engine.map.replication.Bootstrap;
 import net.openhft.chronicle.engine.server.internal.MapWireHandler;
+import net.openhft.chronicle.engine.server.internal.ReplicationHandler.EventId;
 import net.openhft.chronicle.network.connection.AbstractAsyncSubscription;
 import net.openhft.chronicle.network.connection.AbstractAsyncTemporarySubscription;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
@@ -136,7 +137,7 @@ class ReplicationHub extends AbstractStatelessClient implements View {
             @Override
             public void onConsumer(@NotNull WireIn inWire) {
                 inWire.readDocument(null, d -> {
-                    Bootstrap b = d.read(bootstrapReply).typedMarshallable();
+                    Bootstrap b = d.read(EventId.bootstrap).typedMarshallable();
 
                     // publishes changes - pushes the replication events
                     try {
@@ -223,7 +224,7 @@ class ReplicationHub extends AbstractStatelessClient implements View {
 
                 // receives the replication events and applies them
                 d.readDocument(null, w -> replication.applyReplication(
-                        w.read(replicationReply).typedMarshallable()));
+                        w.read(replicationEvent).typedMarshallable()));
             }
 
         });

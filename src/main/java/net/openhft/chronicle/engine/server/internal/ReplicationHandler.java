@@ -14,14 +14,12 @@ import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.threads.api.InvalidEventHandlerException;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 
-import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.bootstrap;
 import static net.openhft.chronicle.engine.server.internal.ReplicationHandler.EventId.*;
 
 /**
@@ -37,49 +35,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
     private EventLoop eventLoop;
 
-    void process(@NotNull final WireIn inWire,
-                 final WireOutPublisher publisher,
-                 final long tid,
-                 final Wire outWire,
-                 final HostIdentifier hostId,
-                 final Replication replication,
-                 final EventLoop eventLoop) {
-
-        this.eventLoop = eventLoop;
-        setOutWire(outWire);
-
-        this.hostId = hostId;
-        this.publisher = publisher;
-        this.replication = replication;
-        this.tid = tid;
-        dataConsumer.accept(inWire, tid);
-
-    }
-
-    public enum EventId implements ParameterizeWireKey {
-        publish,
-        onEndOfSubscription,
-        apply,
-        replicationEvent,
-        replicationSubscribe,
-        replicationReply,
-        bootstrapReply,
-        identifierReply,
-        identifier;
-
-        private final WireKey[] params;
-
-        <P extends WireKey> EventId(P... params) {
-            this.params = params;
-        }
-
-        @NotNull
-        public <P extends WireKey> P[] params() {
-            return (P[]) this.params;
-        }
-    }
-
-    @Nullable
+    @NotNull
     private final BiConsumer<WireIn, Long> dataConsumer = new BiConsumer<WireIn, Long>() {
 
         @Override
@@ -120,14 +76,14 @@ public class ReplicationHandler<E> extends AbstractHandler {
                                 hadNext.set(true);
                                 if (Jvm.isDebug())
                                     System.out.println("publish from server response from itterator " +
-                                        "localIdentifier=" + hostId + " ,remoteIdentifier=" +
-                                        id + " event=" + e);
+                                            "localIdentifier=" + hostId + " ,remoteIdentifier=" +
+                                            id + " event=" + e);
 
                                 publish1.writeDocument(true,
                                         wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
 
                                 publish1.writeNotReadyDocument(false,
-                                        wire -> wire.write(replicationReply).typedMarshallable(e));
+                                        wire -> wire.write(replicationEvent).typedMarshallable(e));
 
                             });
                         });
@@ -154,10 +110,12 @@ public class ReplicationHandler<E> extends AbstractHandler {
             // receives replication events
             if (replicationEvent.contentEquals(eventName)) {
                 ReplicationEntry replicatedEntry = valueIn.typedMarshallable();
+                assert replicatedEntry != null;
                 replication.applyReplication(replicatedEntry);
                 return;
             }
 
+            assert outWire != null;
             outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
 
             writeData(inWire.bytes(), out -> {
@@ -177,20 +135,67 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
                     final ModificationIterator mi = replication.acquireModificationIterator(id);
                     try {
-                        mi.dirtyEntries(inBootstrap.lastUpdatedTime());
+                        if (mi != null)
+                            mi.dirtyEntries(inBootstrap.lastUpdatedTime());
                     } catch (InterruptedException e) {
-                        LOG.error("",e);
+                        LOG.error("", e);
                     }
 
                     // send bootstrap
                     final Bootstrap outBootstrap = new Bootstrap();
                     outBootstrap.identifier(hostId.hostId());
                     outBootstrap.lastUpdatedTime(replication.lastModificationTime(id));
-                    outWire.write(bootstrapReply).typedMarshallable(outBootstrap);
+                    outWire.write(bootstrap).typedMarshallable(outBootstrap);
                 }
             });
         }
 
     };
+
+
+    void process(@NotNull final WireIn inWire,
+                 final WireOutPublisher publisher,
+                 final long tid,
+                 final Wire outWire,
+                 final HostIdentifier hostId,
+                 final Replication replication,
+                 final EventLoop eventLoop) {
+
+        this.eventLoop = eventLoop;
+        setOutWire(outWire);
+
+        this.hostId = hostId;
+        this.publisher = publisher;
+        this.replication = replication;
+        this.tid = tid;
+
+        dataConsumer.accept(inWire, tid);
+
+    }
+
+    public enum EventId implements ParameterizeWireKey {
+        publish,
+        onEndOfSubscription,
+        apply,
+        replicationEvent,
+        replicationSubscribe,
+        bootstrap,
+        identifierReply,
+        identifier;
+
+        private final WireKey[] params;
+
+        @SafeVarargs
+        <P extends WireKey> EventId(P... params) {
+            this.params = params;
+        }
+
+        @NotNull
+        public <P extends WireKey> P[] params() {
+            //noinspection unchecked
+            return (P[]) this.params;
+        }
+    }
+
 
 }

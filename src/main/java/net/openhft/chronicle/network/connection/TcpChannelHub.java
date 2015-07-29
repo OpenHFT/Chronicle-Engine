@@ -427,14 +427,15 @@ public class TcpChannelHub implements View, Closeable {
 
         try {
 
-            System.out.println(((!YamlLogging.title.isEmpty()) ? "### " + YamlLogging
-                    .title + "\n" : "") + "" +
-                    YamlLogging.writeMessage + (YamlLogging.writeMessage.isEmpty() ?
-                    "" : "\n\n") +
-                    "sends:\n\n" +
-                    "```yaml\n" +
-                    fromSizePrefixedBinaryToText(bytes) +
-                    "```");
+            if (bytes.readRemaining() > 0)
+                System.out.println(((!YamlLogging.title.isEmpty()) ? "### " + YamlLogging
+                        .title + "\n" : "") + "" +
+                        YamlLogging.writeMessage + (YamlLogging.writeMessage.isEmpty() ?
+                        "" : "\n\n") +
+                        "sends:\n\n" +
+                        "```yaml\n" +
+                        fromSizePrefixedBinaryToText(bytes) +
+                        "```");
             YamlLogging.title = "";
             YamlLogging.writeMessage = "";
         } catch (Exception e) {
@@ -803,9 +804,8 @@ public class TcpChannelHub implements View, Closeable {
                     }
                 }
             } catch (Throwable e) {
-                e.printStackTrace();
                 if (!isShutdown())
-                    e.printStackTrace();
+                    LOG.error("", e);
             } finally {
                 LOG.info("\nShutting down....");
                 closeSocket();
@@ -1071,13 +1071,10 @@ public class TcpChannelHub implements View, Closeable {
                 shutdownHere = new Throwable(Thread.currentThread() + " Shutdown here");
 
             isShutdown = true;
-
             executorService.shutdown();
             try {
-
-                if (!executorService.awaitTermination(500, TimeUnit.MILLISECONDS)) {
+                if (!executorService.awaitTermination(100, TimeUnit.MILLISECONDS))
                     executorService.shutdownNow();
-                }
             } catch (InterruptedException e) {
                 executorService.shutdownNow();
             }
