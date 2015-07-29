@@ -17,6 +17,7 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.ReferenceCounted;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by daniel on 21/05/15.
@@ -31,6 +32,7 @@ class FileRecord<T> {
         this.contents = contents;
     }
 
+    @Nullable
     public T contents() {
         if (contents instanceof ReferenceCounted)
             try {

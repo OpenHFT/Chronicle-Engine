@@ -123,7 +123,7 @@ public enum ManagementTools {
         registerViewofTree(assetTree);
     }
 
-    public static void disableManagement(AssetTree assetTree) {
+    public static void disableManagement(@NotNull AssetTree assetTree) {
 
         String treeName = assetTree.toString();
         try {
@@ -298,7 +298,7 @@ public enum ManagementTools {
         }
     }
 
-    private static String getMapAsString(ObjectKeyValueStore view){
+    private static String getMapAsString(@NotNull ObjectKeyValueStore view) {
 
         long max = view.longSize() - 1;
         if (max == -1)

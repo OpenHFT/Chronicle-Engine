@@ -70,7 +70,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
         testStrings(50, 2 * MB, WireType.BINARY);
     }
 
-    private void testStrings(int noPutsAndGets, int valueLength, WireType wireType) throws IOException {
+    private void testStrings(int noPutsAndGets, int valueLength, @NotNull WireType wireType) throws IOException {
 
         try (final RemoteMapSupplier<CharSequence, CharSequence> remote = new
                 RemoteMapSupplier<>("testStrings.host.port", CharSequence.class,

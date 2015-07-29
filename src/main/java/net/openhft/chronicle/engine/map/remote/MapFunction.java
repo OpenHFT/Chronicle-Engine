@@ -18,6 +18,7 @@ package net.openhft.chronicle.engine.map.remote;
 
 import net.openhft.chronicle.core.util.SerializableBiFunction;
 import net.openhft.chronicle.engine.api.map.MapView;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -30,14 +31,14 @@ import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
 public enum MapFunction implements SerializableBiFunction<MapView, Object, Object> {
     CONTAINS_VALUE {
         @Override
-        public Boolean apply(MapView map, Object value) {
+        public Boolean apply(@NotNull MapView map, Object value) {
             Class vClass = map.valueType();
             return map.containsValue(convertTo(vClass, value));
         }
     },
     REMOVE {
         @Override
-        public Object apply(MapView map, Object o) {
+        public Object apply(@NotNull MapView map, Object o) {
             Class kClass = map.keyType();
             Class vClass = map.valueType();
             KeyValuePair kf = (KeyValuePair) o;
@@ -46,7 +47,7 @@ public enum MapFunction implements SerializableBiFunction<MapView, Object, Objec
     },
     REPLACE {
         @Override
-        public Object apply(MapView map, Object o) {
+        public Object apply(@NotNull MapView map, Object o) {
             Class kClass = map.keyType();
             Class vClass = map.valueType();
             if (o instanceof KeyValuePair) {
@@ -60,7 +61,7 @@ public enum MapFunction implements SerializableBiFunction<MapView, Object, Objec
     },
     PUT_IF_ABSENT {
         @Override
-        public Object apply(MapView map, Object o) {
+        public Object apply(@NotNull MapView map, Object o) {
             Class kClass = map.keyType();
             Class vClass = map.valueType();
             KeyValuePair kf = (KeyValuePair) o;
@@ -69,7 +70,7 @@ public enum MapFunction implements SerializableBiFunction<MapView, Object, Objec
     },
     COMPUTE_IF_ABSENT {
         @Override
-        public Object apply(MapView map, Object o) {
+        public Object apply(@NotNull MapView map, Object o) {
             Class kClass = map.keyType();
             KeyFunctionPair kf = (KeyFunctionPair) o;
             return map.computeIfAbsent(convertTo(kClass, kf.key), (Function) kf.function);
@@ -77,7 +78,7 @@ public enum MapFunction implements SerializableBiFunction<MapView, Object, Objec
     },
     COMPUTE_IF_PRESENT {
         @Override
-        public Object apply(MapView map, Object o) {
+        public Object apply(@NotNull MapView map, Object o) {
             Class kClass = map.keyType();
             KeyFunctionPair kf = (KeyFunctionPair) o;
             return map.computeIfPresent(convertTo(kClass, kf.key), (BiFunction) kf.function);
@@ -85,7 +86,7 @@ public enum MapFunction implements SerializableBiFunction<MapView, Object, Objec
     },
     COMPUTE {
         @Override
-        public Object apply(MapView map, Object o) {
+        public Object apply(@NotNull MapView map, Object o) {
             Class kClass = map.keyType();
             KeyFunctionPair kf = (KeyFunctionPair) o;
             return map.compute(convertTo(kClass, kf.key), (BiFunction) kf.function);
@@ -93,7 +94,7 @@ public enum MapFunction implements SerializableBiFunction<MapView, Object, Objec
     },
     MERGE {
         @Override
-        public Object apply(MapView map, Object o) {
+        public Object apply(@NotNull MapView map, Object o) {
             Class kClass = map.keyType();
             Class vClass = map.valueType();
             KeyValueFunctionTuple kvf = (KeyValueFunctionTuple) o;
@@ -102,13 +103,13 @@ public enum MapFunction implements SerializableBiFunction<MapView, Object, Objec
     },
     HASH_CODE {
         @Override
-        public Object apply(MapView map, Object ignored) {
+        public Object apply(@NotNull MapView map, Object ignored) {
             return map.hashCode();
         }
     },
     EQUALS {
         @Override
-        public Object apply(MapView map, Object o) {
+        public Object apply(@NotNull MapView map, Object o) {
             return map.equals(o);
         }
     };

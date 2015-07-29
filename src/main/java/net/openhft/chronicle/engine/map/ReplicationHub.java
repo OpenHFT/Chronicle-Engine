@@ -79,7 +79,7 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
         // a non block call to get the identifier from the remote host
         hub.subscribe(new AbstractAsyncSubscription(hub, csp, localIdentifier, "ReplicationHub bootstrap") {
             @Override
-            public void onSubscribe(WireOut wireOut) {
+            public void onSubscribe(@NotNull WireOut wireOut) {
 
                 System.out.println("onSubscribe - localIdentifier=" + localIdentifier + ",remoteIdentifier=" + remoteIdentifier);
 
@@ -96,6 +96,7 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
                 });
             }
 
+            @NotNull
             @Override
             public String toString() {
                 return "bootstrap {localIdentifier=" + localIdentifier + " ,remoteIdentifier=" + remoteIdentifier + "}";
@@ -112,7 +113,7 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
      * @param remoteIdentifier the identifier of the remote host
      * @param replication      the instance the handles the replication
      */
-    private void onConnected(final byte localIdentifier, byte remoteIdentifier, EngineReplication replication) {
+    private void onConnected(final byte localIdentifier, byte remoteIdentifier, @NotNull EngineReplication replication) {
         final ModificationIterator mi = replication.acquireModificationIterator(remoteIdentifier);
         final long lastModificationTime = replication.lastModificationTime(remoteIdentifier);
 
@@ -128,7 +129,7 @@ public class ReplicationHub extends AbstractStatelessClient implements View {
                 "onConnected") {
 
             @Override
-            public void onSubscribe(WireOut wireOut) {
+            public void onSubscribe(@NotNull WireOut wireOut) {
                 wireOut.writeEventName(MapWireHandler.EventId.bootstrap).typedMarshallable(bootstrap);
             }
 

@@ -105,7 +105,9 @@ public class EngineWireHandler extends WireTcpHandler {
     private final Consumer<WireIn> metaDataConsumer;
     private final StringBuilder lastCsp = new StringBuilder();
     private final StringBuilder eventName = new StringBuilder();
+    @NotNull
     private final SystemHandler systemHandler;
+    @NotNull
     private final WireType byteToWire;
 
     private WireAdapter wireAdapter;

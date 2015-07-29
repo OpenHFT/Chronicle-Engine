@@ -37,6 +37,7 @@ public class ReferenceHandler<E,T> extends AbstractHandler {
     private BiConsumer<ValueOut, E> vToWire;
     final Map<Long, Object> tidToListener = new ConcurrentHashMap<>();
 
+    @Nullable
     private final BiConsumer<WireIn, Long> dataConsumer = new BiConsumer<WireIn, Long>() {
 
         @Override

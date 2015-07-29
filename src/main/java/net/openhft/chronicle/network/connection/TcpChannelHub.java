@@ -72,6 +72,7 @@ public class TcpChannelHub implements View, Closeable {
 
     public static final int SIZE_OF_SIZE = 4;
     private static final Logger LOG = LoggerFactory.getLogger(TcpChannelHub.class);
+    @NotNull
     private final SocketAddressSupplier socketAddressSupplier;
     public final long timeoutMs;
     @NotNull
@@ -83,10 +84,13 @@ public class TcpChannelHub implements View, Closeable {
     private final ReentrantLock outBytesLock = new ReentrantLock();
     @NotNull
     private final AtomicLong transactionID = new AtomicLong(0);
+    @NotNull
     private final SessionProvider sessionProvider;
     @NotNull
     private final TcpSocketConsumer tcpSocketConsumer;
+    @NotNull
     private final EventLoop eventLoop;
+    @NotNull
     private final Function<Bytes, Wire> wire;
     private final Wire handShakingWire;
     // private final String description;
@@ -159,6 +163,7 @@ public class TcpChannelHub implements View, Closeable {
         return result;
     }
 
+    @NotNull
     @Override
     public String toString() {
         return "TcpChannelHub{" +
@@ -207,7 +212,7 @@ public class TcpChannelHub implements View, Closeable {
         return outBytesLock;
     }
 
-    private synchronized void doHandShaking(SocketChannel socketChannel) throws IOException {
+    private synchronized void doHandShaking(@NotNull SocketChannel socketChannel) throws IOException {
 
         final SessionDetails sessionDetails = sessionDetails();
         handShakingWire.clear();
@@ -223,6 +228,7 @@ public class TcpChannelHub implements View, Closeable {
 
     }
 
+    @Nullable
     private SessionDetails sessionDetails() {
         return sessionProvider.get();
     }
@@ -323,7 +329,7 @@ public class TcpChannelHub implements View, Closeable {
 
         try {
             return tcpSocketConsumer.syncBlockingReadSocket(timeoutTime, tid);
-        } catch (IORuntimeException | AssertionError e) {
+        } catch (@NotNull IORuntimeException | AssertionError e) {
             throw e;
         } catch (RuntimeException e) {
             LOG.error("", e);
@@ -454,7 +460,7 @@ public class TcpChannelHub implements View, Closeable {
         return outWire;
     }
 
-    void reflectServerHeartbeatMessage(ValueIn valueIn) {
+    void reflectServerHeartbeatMessage(@NotNull ValueIn valueIn) {
 
         // time stamp sent from the server, this is so that the server can calculate the round
         // trip time
@@ -560,6 +566,7 @@ public class TcpChannelHub implements View, Closeable {
      * uses a single read thread, to process messages to waiting threads based on their {@code tid}
      */
     private class TcpSocketConsumer implements EventHandler {
+        @NotNull
         private final ExecutorService executorService;
 
         @NotNull
@@ -575,6 +582,7 @@ public class TcpChannelHub implements View, Closeable {
 
         private volatile long lastTimeMessageReceived = Time.currentTimeMillis();
         private volatile boolean isShutdown;
+        @Nullable
         private volatile Throwable shutdownHere = null;
 
         /**
@@ -627,6 +635,7 @@ public class TcpChannelHub implements View, Closeable {
             });
         }
 
+        @NotNull
         @Override
         public HandlerPriority priority() {
             return HandlerPriority.MONITOR;
@@ -719,6 +728,7 @@ public class TcpChannelHub implements View, Closeable {
          * uses a single read thread, to process messages to waiting threads based on their {@code
          * tid}
          */
+        @NotNull
         private ExecutorService start() {
             checkNotShutdown();
 
@@ -780,7 +790,7 @@ public class TcpChannelHub implements View, Closeable {
 
                     } catch (ClosedChannelException e) {
                         break;
-                    } catch (IOException | IORuntimeException e) {
+                    } catch (@NotNull IOException | IORuntimeException e) {
 
                         if (isShutdown()) {
                             break;
@@ -1032,7 +1042,7 @@ public class TcpChannelHub implements View, Closeable {
 
             subscribe(new AbstractAsyncTemporarySubscription(TcpChannelHub.this, null, name) {
                 @Override
-                public void onSubscribe(WireOut wireOut) {
+                public void onSubscribe(@NotNull WireOut wireOut) {
                     wireOut.writeEventName(heartbeat).int64(Time.currentTimeMillis());
                 }
 

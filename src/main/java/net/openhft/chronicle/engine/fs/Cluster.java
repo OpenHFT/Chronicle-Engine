@@ -32,6 +32,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
  * Created by peter.lawrey on 17/06/2015.
  */
 public class Cluster implements Marshallable, View, Closeable {
+    @NotNull
     private final Map<String, HostDetails> map;
     private final String clusterName;
 
@@ -69,6 +70,7 @@ public class Cluster implements Marshallable, View, Closeable {
         }
     }
 
+    @NotNull
     public Collection<HostDetails> hostDetails() {
         return map.values();
     }

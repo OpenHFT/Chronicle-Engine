@@ -3,6 +3,7 @@ package net.openhft.chronicle.engine.query;
 import net.openhft.chronicle.core.util.SerializableFunction;
 import net.openhft.chronicle.core.util.SerializablePredicate;
 import net.openhft.chronicle.engine.api.query.Query;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
 import java.util.stream.Collector;
@@ -18,23 +19,27 @@ public class VanillaQuery<E> implements Query<E> {
         this.stream = stream;
     }
 
+    @NotNull
     @Override
     public Query<E> filter(SerializablePredicate<? super E> predicate) {
         return new VanillaQuery<>(stream.filter(predicate));
     }
 
+    @NotNull
     @Override
     public <R> Query<R> map(SerializableFunction<? super E, ? extends R> mapper) {
         return new VanillaQuery<>(stream.map(mapper));
     }
 
+    @NotNull
     @Override
     public <R> Query<R> project(Class<R> rClass) {
         throw new UnsupportedOperationException("todo");
     }
 
+    @NotNull
     @Override
-    public <R> Query<R> flatMap(SerializableFunction<? super E, ? extends Query<? extends R>> mapper) {
+    public <R> Query<R> flatMap(@NotNull SerializableFunction<? super E, ? extends Query<? extends R>> mapper) {
         return new VanillaQuery<>(stream.flatMap(e -> mapper.apply(e).stream()));
     }
 

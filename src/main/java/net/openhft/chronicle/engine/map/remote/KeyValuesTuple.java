@@ -19,6 +19,7 @@ package net.openhft.chronicle.engine.map.remote;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by peter on 07/07/15.
@@ -28,7 +29,7 @@ public class KeyValuesTuple implements Marshallable {
     Object oldValue;
     Object value;
 
-    KeyValuesTuple(Object key, Object oldValue, Object value) {
+    KeyValuesTuple(@NotNull Object key, @NotNull Object oldValue, @NotNull Object value) {
         assert key != null;
         assert oldValue != null;
         assert value != null;
@@ -39,20 +40,21 @@ public class KeyValuesTuple implements Marshallable {
     }
 
     @Override
-    public void readMarshallable(WireIn wire) throws IllegalStateException {
+    public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         wire.read(() -> "key").object(Object.class, o -> key = o)
                 .read(() -> "oldValue").object(Object.class, o -> oldValue = o)
                 .read(() -> "value").object(Object.class, o -> value = o);
     }
 
     @Override
-    public void writeMarshallable(WireOut wire) {
+    public void writeMarshallable(@NotNull WireOut wire) {
         wire.write(() -> "key").object(key)
                 .write(() -> "oldValue").object(oldValue)
                 .write(() -> "value").object(value);
     }
 
-    public static KeyValuesTuple of(Object key, Object oldValue, Object value) {
+    @NotNull
+    public static KeyValuesTuple of(@NotNull Object key, @NotNull Object oldValue, @NotNull Object value) {
         return new KeyValuesTuple(key, oldValue, value);
     }
 }

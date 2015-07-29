@@ -92,6 +92,7 @@ public class RequestContext implements Cloneable {
         this.name = name;
     }
 
+    @NotNull
     public RequestContext seal() {
         sealed = true;
         return this;
@@ -413,6 +414,7 @@ public class RequestContext implements Cloneable {
         }
     }
 
+    @NotNull
     public RequestContext putReturnsNull(Boolean putReturnsNull) {
         this.putReturnsNull = putReturnsNull;
         return this;

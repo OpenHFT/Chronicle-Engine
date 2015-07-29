@@ -24,6 +24,7 @@ import net.openhft.chronicle.threads.EventGroup;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -44,6 +45,7 @@ import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContex
 public class ReplicationClientTest {
 
 
+    @NotNull
     static Set<Closeable> closeables = new HashSet<>();
 
     private static MapView<String, String, String> map1;
@@ -119,8 +121,9 @@ public class ReplicationClientTest {
     }
 
 
-    private static MapView<String, String, String> create(String nameName, Integer hostId, String connectUri,
-                                                          BlockingQueue<MapEvent> q, Function<Bytes, Wire> wireType) {
+    @NotNull
+    private static MapView<String, String, String> create(@NotNull String nameName, Integer hostId, String connectUri,
+                                                          @NotNull BlockingQueue<MapEvent> q, @NotNull Function<Bytes, Wire> wireType) {
         tree = new VanillaAssetTree(hostId);
 
         final Asset asset = tree.root().acquireAsset(nameName);

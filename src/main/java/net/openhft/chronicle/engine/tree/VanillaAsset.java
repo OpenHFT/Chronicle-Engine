@@ -146,7 +146,7 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
 
-    public void forRemoteAccess(String[] hostPortDescriptions, Function<Bytes, Wire> wire) throws
+    public void forRemoteAccess(@NotNull String[] hostPortDescriptions, @NotNull Function<Bytes, Wire> wire) throws
             AssetNotFoundException {
         standardStack(true);
 
@@ -227,7 +227,7 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Nullable
-    public <I> I createLeafView(Class viewType, RequestContext rc, Asset asset) throws
+    public <I> I createLeafView(Class viewType, @NotNull RequestContext rc, Asset asset) throws
             AssetNotFoundException {
         LeafViewFactory lvFactory = leafViewFactoryMap.get(viewType);
         if (lvFactory != null)
@@ -271,7 +271,7 @@ public class VanillaAsset implements Asset, Closeable {
 
     @NotNull
     @Override
-    public <V> V acquireView(@NotNull Class<V> viewType, RequestContext rc) throws
+    public <V> V acquireView(@NotNull Class<V> viewType, @NotNull RequestContext rc) throws
             AssetNotFoundException {
         synchronized (viewMap) {
             V view = getView(viewType);
@@ -304,6 +304,7 @@ public class VanillaAsset implements Asset, Closeable {
         viewMap.put(viewType, view);
     }
 
+    @Nullable
     @Override
     public Subscription subscription(boolean createIfAbsent) throws AssetNotFoundException {
         return createIfAbsent ? acquireView(ObjectKVSSubscription.class) : getView(ObjectKVSSubscription.class);

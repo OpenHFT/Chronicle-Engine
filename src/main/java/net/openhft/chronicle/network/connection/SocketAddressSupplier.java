@@ -23,8 +23,10 @@ public class SocketAddressSupplier implements Supplier<SocketAddress> {
 
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(SocketAddressSupplier.class);
     private final String name;
+    @Nullable
     private RemoteAddressSupplier current;
 
+    @NotNull
     public List<RemoteAddressSupplier> all() {
         return remoteAddresses;
     }
@@ -109,6 +111,7 @@ public class SocketAddressSupplier implements Supplier<SocketAddress> {
         return current.get();
     }
 
+    @NotNull
     public String toString() {
 
         RemoteAddressSupplier current = this.current;

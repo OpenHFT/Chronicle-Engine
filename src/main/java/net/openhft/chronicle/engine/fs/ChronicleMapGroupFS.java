@@ -77,7 +77,7 @@ public class ChronicleMapGroupFS implements Marshallable, MountPoint, LeafViewFa
 
     @NotNull
     @Override
-    public KeyValueStore create(@NotNull final RequestContext requestContext, final Asset asset) throws AssetNotFoundException {
+    public KeyValueStore create(@NotNull final RequestContext requestContext, @NotNull final Asset asset) throws AssetNotFoundException {
         return new ChronicleMapKeyValueStore(requestContext.basePath(basePath), asset);
     }
 }

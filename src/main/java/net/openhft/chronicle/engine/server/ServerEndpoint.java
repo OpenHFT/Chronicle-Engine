@@ -47,7 +47,7 @@ public class ServerEndpoint implements Closeable {
     @NotNull
     private AtomicBoolean isClosed = new AtomicBoolean();
 
-    public ServerEndpoint(String hostPortDescription, @NotNull AssetTree assetTree, WireType wire) throws IOException {
+    public ServerEndpoint(String hostPortDescription, @NotNull AssetTree assetTree, @NotNull WireType wire) throws IOException {
         eg = assetTree.root().acquireView(EventLoop.class);
         Threads.withThreadGroup(assetTree.root().getView(ThreadGroup.class), () -> {
             start(hostPortDescription, assetTree, wire);
@@ -56,7 +56,7 @@ public class ServerEndpoint implements Closeable {
     }
 
     @Nullable
-    public AcceptorEventHandler start(String hostPortDescription, @NotNull final AssetTree asset, WireType wireType) throws IOException {
+    public AcceptorEventHandler start(String hostPortDescription, @NotNull final AssetTree asset, @NotNull WireType wireType) throws IOException {
         eg.start();
         if (LOGGER.isDebugEnabled())
             LOGGER.info("starting server=" + hostPortDescription);

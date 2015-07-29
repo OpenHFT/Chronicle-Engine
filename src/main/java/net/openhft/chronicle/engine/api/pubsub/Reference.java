@@ -17,6 +17,7 @@
 package net.openhft.chronicle.engine.api.pubsub;
 
 import net.openhft.chronicle.engine.api.Visitable;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
@@ -27,6 +28,7 @@ public interface Reference<E> extends Publisher<E>, Supplier<E>, Visitable<E> {
     /**
      * @return the current value.
      */
+    @Nullable
     E get();
 
     /**
@@ -35,6 +37,7 @@ public interface Reference<E> extends Publisher<E>, Supplier<E>, Visitable<E> {
      * @param e to set
      * @return the old value.
      */
+    @Nullable
     default E getAndSet(E e) {
         E prev = get();
         set(e);
@@ -56,6 +59,7 @@ public interface Reference<E> extends Publisher<E>, Supplier<E>, Visitable<E> {
      * Remove the topic/key and return the old value
      * @return the old value.
      */
+    @Nullable
     default E getAndRemove() {
         E prev = get();
         remove();

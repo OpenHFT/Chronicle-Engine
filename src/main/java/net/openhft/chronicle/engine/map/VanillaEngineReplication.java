@@ -24,8 +24,6 @@ import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
 import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
-import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
-import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
@@ -36,6 +34,7 @@ import net.openhft.lang.model.Copyable;
 import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.model.constraints.MaxSize;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -65,6 +64,7 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
     }
 
     public interface GetValue<Store> {
+        @NotNull
         BytesStore getValue(Store store, BytesStore key);
     }
 
@@ -90,7 +90,7 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
         void setDirtyWordAt(@MaxSize(DIRTY_WORD_COUNT) int index, long word);
 
         @Override
-        default void readMarshallable(WireIn wire) throws IllegalStateException {
+        default void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
             setDeleted(wire.read(() -> "deleted").bool());
             setTimestamp(wire.read(() -> "timestamp").int64());
             setIdentifier(wire.read(() -> "identifier").int8());
@@ -101,7 +101,7 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
         }
 
         @Override
-        default void writeMarshallable(WireOut wire) {
+        default void writeMarshallable(@NotNull WireOut wire) {
             wire.write(() -> "deleted").bool(getDeleted());
             wire.write(() -> "timestamp").int64(getTimestamp());
             wire.write(() -> "identifier").int8(getIdentifier());
@@ -111,31 +111,31 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
             }
         }
 
-        static void dropChange(ReplicationData replicationData) {
+        static void dropChange(@NotNull ReplicationData replicationData) {
             for (int i = 0; i < DIRTY_WORD_COUNT; i++) {
                 replicationData.setDirtyWordAt(i, 0);
             }
         }
 
-        static void raiseChange(ReplicationData replicationData) {
+        static void raiseChange(@NotNull ReplicationData replicationData) {
             for (int i = 0; i < DIRTY_WORD_COUNT; i++) {
                 replicationData.setDirtyWordAt(i, ~0L);
             }
         }
 
-        static void clearChange(ReplicationData replicationData, int identifier) {
+        static void clearChange(@NotNull ReplicationData replicationData, int identifier) {
             int index = identifier / 64;
             long bit = 1L << (identifier % 64);
             replicationData.setDirtyWordAt(index, replicationData.getDirtyWordAt(index) ^ bit);
         }
 
-        static void setChange(ReplicationData replicationData, int identifier) {
+        static void setChange(@NotNull ReplicationData replicationData, int identifier) {
             int index = identifier / 64;
             long bit = 1L << (identifier % 64);
             replicationData.setDirtyWordAt(index, replicationData.getDirtyWordAt(index) | bit);
         }
 
-        static boolean isChanged(ReplicationData replicationData, int identifier) {
+        static boolean isChanged(@NotNull ReplicationData replicationData, int identifier) {
             int index = identifier / 64;
             long bit = 1L << (identifier % 64);
             return (replicationData.getDirtyWordAt(index) & bit) != 0L;
@@ -157,20 +157,21 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
         void setLastModificationTime(long lastModificationTime);
 
         @Override
-        default void readMarshallable(WireIn wire) throws IllegalStateException {
+        default void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
             setNextBootstrapTimestamp(wire.read(() -> "nextBootstrapTimestamp").int64());
             setLastBootstrapTimestamp(wire.read(() -> "lastBootstrapTimestamp").int64());
             setLastModificationTime(wire.read(() -> "lastModificationTime").int64());
         }
 
         @Override
-        default void writeMarshallable(WireOut wire) {
+        default void writeMarshallable(@NotNull WireOut wire) {
             wire.write(() -> "nextBootstrapTimestamp").int64(getNextBootstrapTimestamp());
             wire.write(() -> "lastBootstrapTimestamp").int64(getLastBootstrapTimestamp());
             wire.write(() -> "lastModificationTime").int64(getLastModificationTime());
         }
     }
 
+    @NotNull
     private static ATSDirectBitSet createModIterBitSet() {
         return new ATSDirectBitSet(new DirectStore(null, DIRTY_WORD_COUNT * 8, true).bytes());
     }
@@ -178,19 +179,21 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
     static class Instances {
         final IntValue identifier = DataValueClasses.newInstance(IntValue.class);
 
+        @Nullable
         RemoteNodeReplicationState usingState = null;
         final RemoteNodeReplicationState copyState =
                 DataValueClasses.newInstance(RemoteNodeReplicationState.class);
         RemoteNodeReplicationState zeroState =
                 DataValueClasses.newInstance(RemoteNodeReplicationState.class);
 
+        @Nullable
         ReplicationData usingData = null;
         ReplicationData newData = DataValueClasses.newInstance(ReplicationData.class);
         ReplicationData zeroData = DataValueClasses.newInstance(ReplicationData.class);
     }
 
     private static void initZeroStateForAllPossibleRemoteIdentifiers(
-            KeyValueStore<IntValue, RemoteNodeReplicationState, RemoteNodeReplicationState>
+            @NotNull KeyValueStore<IntValue, RemoteNodeReplicationState, RemoteNodeReplicationState>
                     modIterState) {
         Instances i = threadLocalInstances.get();
         for (int id = 0; id < 256; id++) {
@@ -199,6 +202,7 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
         }
     }
 
+    @NotNull
     private static ThreadLocal<Instances> threadLocalInstances =
             ThreadLocal.withInitial(Instances::new);
 
@@ -207,6 +211,7 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
             modIterState;
 
     private final byte identifier;
+    @NotNull
     private final Store store;
     private final ChangeApplier<Store> changeApplier;
     private final GetValue<Store> getValue;
@@ -216,17 +221,18 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
     private final DirectBitSet modificationIteratorsRequiringSettingBootstrapTimestamp =
             createModIterBitSet();
     private final DirectBitSet modIterSet = createModIterBitSet();
+    @NotNull
     private final MapEventListener<K, MV> eventListener;
 
     public VanillaEngineReplication(
-            IntFunction<KeyValueStore<BytesStore, ReplicationData, ReplicationData>>
+            @NotNull IntFunction<KeyValueStore<BytesStore, ReplicationData, ReplicationData>>
                     obtainKeyReplicationDataBySegment,
-            KeyValueStore<IntValue, RemoteNodeReplicationState, RemoteNodeReplicationState>
+            @NotNull KeyValueStore<IntValue, RemoteNodeReplicationState, RemoteNodeReplicationState>
                     modIterState,
             byte identifier,
-            Store store, ChangeApplier<Store> changeApplier, GetValue<Store> getValue,
+            @NotNull Store store, ChangeApplier<Store> changeApplier, GetValue<Store> getValue,
             SegmentForKey<Store> segmentForKey,
-            Function<K, BytesStore> keyToBytesStore) {
+            @NotNull Function<K, BytesStore> keyToBytesStore) {
 
         int segments = store.segments();
         this.keyReplicationData = new KeyValueStore[segments];
@@ -361,7 +367,7 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
     }
 
     private static boolean shouldApplyRemoteModification(
-            ReplicationEntry remoteEntry, ReplicationData localReplicationData) {
+            @NotNull ReplicationEntry remoteEntry, @NotNull ReplicationData localReplicationData) {
         long remoteTimestamp = remoteEntry.timestamp();
         long originTimestamp = localReplicationData.getTimestamp();
         return remoteTimestamp > originTimestamp || (remoteTimestamp == originTimestamp &&
@@ -556,14 +562,18 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
         }
 
         // Below methods and fields that implement ModIter as ReplicationEntry
+        @Nullable
         BytesStore key;
+        @Nullable
         ReplicationData replicationData;
 
+        @Nullable
         @Override
         public BytesStore key() {
             return key;
         }
 
+        @NotNull
         @Override
         public BytesStore value() {
             return getValue.getValue(store, key);

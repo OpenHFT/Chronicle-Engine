@@ -63,6 +63,7 @@ public abstract class AbstractAsyncSubscription implements AsyncSubscription {
 
     }
 
+    @NotNull
     @Override
     public String toString() {
         return "AbstractAsyncSubscription{" +

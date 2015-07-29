@@ -342,7 +342,9 @@ public class MapClientTest extends ThreadMonitoringTest {
         private final ServerEndpoint serverEndpoint;
         @NotNull
         private final MapView<K, V, V> map;
+        @NotNull
         private final AssetTree serverAssetTree;
+        @NotNull
         private final AssetTree clientAssetTree;
 
         public RemoteMapSupplier(

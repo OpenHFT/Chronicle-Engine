@@ -41,6 +41,7 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
     private final Set<Subscriber<MapEvent<K, V>>> subscribers = new CopyOnWriteArraySet<>();
     private final Set<Subscriber<K>> keySubscribers = new CopyOnWriteArraySet<>();
     private final Set<EventConsumer<K, V>> downstream = new CopyOnWriteArraySet<>();
+    @Nullable
     private final Asset asset;
     private KeyValueStore<K, MV, V> kvStore;
     private boolean hasSubscribers = false;
@@ -49,7 +50,7 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
         this(requestContext.viewType(), asset);
     }
 
-    public VanillaKVSSubscription(@Nullable Class viewType, Asset asset) {
+    public VanillaKVSSubscription(@Nullable Class viewType, @Nullable Asset asset) {
         this.asset = asset;
         if (viewType != null && asset != null)
             asset.addView(viewType, this);
@@ -234,21 +235,21 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
     }
 
     @Override
-    public void unregisterKeySubscriber(Subscriber<K> subscriber) {
+    public void unregisterKeySubscriber(@NotNull Subscriber<K> subscriber) {
         keySubscribers.remove(subscriber);
         updateHasSubscribers();
         subscriber.onEndOfSubscription();
     }
 
     @Override
-    public void unregisterSubscriber(Subscriber<MapEvent<K, V>> subscriber) {
+    public void unregisterSubscriber(@NotNull Subscriber<MapEvent<K, V>> subscriber) {
         subscribers.remove(subscriber);
         updateHasSubscribers();
         subscriber.onEndOfSubscription();
     }
 
     @Override
-    public void unregisterTopicSubscriber(TopicSubscriber subscriber) {
+    public void unregisterTopicSubscriber(@NotNull TopicSubscriber subscriber) {
         topicSubscribers.remove(subscriber);
         updateHasSubscribers();
         subscriber.onEndOfSubscription();

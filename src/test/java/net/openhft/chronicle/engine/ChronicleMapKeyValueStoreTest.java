@@ -80,7 +80,8 @@ public class ChronicleMapKeyValueStoreTest {
         tree3.close();
     }
 
-    private static String fullPath(RequestContext cxt) {
+    @NotNull
+    private static String fullPath(@NotNull RequestContext cxt) {
         String basePath = cxt.basePath();
         return basePath == null ? cxt.name() : basePath + "/" + cxt.name();
     }

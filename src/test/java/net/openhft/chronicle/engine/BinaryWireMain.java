@@ -20,6 +20,7 @@ import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -30,7 +31,7 @@ public class BinaryWireMain {
 
     public static final net.openhft.chronicle.wire.WireType WIRE_TYPE = WireType.BINARY;
 
-    public static void main(String[] args) throws IOException, InterruptedException {
+    public static void main(@NotNull String[] args) throws IOException, InterruptedException {
         int port = 8088;
 
         VanillaAssetTree assetTree = new VanillaAssetTree().forTesting(false);

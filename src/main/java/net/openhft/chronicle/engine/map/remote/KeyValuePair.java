@@ -19,6 +19,7 @@ package net.openhft.chronicle.engine.map.remote;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by peter on 07/07/15.
@@ -33,17 +34,18 @@ public class KeyValuePair implements Marshallable {
     }
 
     @Override
-    public void readMarshallable(WireIn wire) throws IllegalStateException {
+    public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         wire.read(() -> "key").object(Object.class, o -> key = o)
                 .read(() -> "value").object(Object.class, o -> value = o);
     }
 
     @Override
-    public void writeMarshallable(WireOut wire) {
+    public void writeMarshallable(@NotNull WireOut wire) {
         wire.write(() -> "key").object(key)
                 .write(() -> "value").object(value);
     }
 
+    @NotNull
     public static KeyValuePair of(Object key, Object value) {
         return new KeyValuePair(key, value);
     }

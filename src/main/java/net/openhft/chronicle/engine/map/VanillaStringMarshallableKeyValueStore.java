@@ -28,6 +28,8 @@ import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.Wire;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Constructor;
 import java.util.AbstractMap.SimpleEntry;
@@ -53,22 +55,25 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
             throw new AssertionError(e);
         }
     });
+    @NotNull
     private final BiFunction<V, Bytes, Bytes> valueToBytes;
+    @NotNull
     private final BiFunction<BytesStore, V, V> bytesToValue;
+    @NotNull
     private final ObjectKVSSubscription<String, V, V> subscriptions;
     private SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore;
     private Asset asset;
     private Class<V> valueType;
 
-    public VanillaStringMarshallableKeyValueStore(RequestContext context, Asset asset,
-                                                  SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore) throws AssetNotFoundException {
+    public VanillaStringMarshallableKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset,
+                                                  @NotNull SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore) throws AssetNotFoundException {
         this(asset.acquireView(ObjectKVSSubscription.class, context), asset, context.valueType(),
                 kvStore, context.wireType());
     }
 
-    VanillaStringMarshallableKeyValueStore(ObjectKVSSubscription<String, V, V> subscriptions, Asset asset, Class valueType,
-                                           SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore,
-                                           Function<Bytes, Wire> wireType) {
+    VanillaStringMarshallableKeyValueStore(@NotNull ObjectKVSSubscription<String, V, V> subscriptions, @NotNull Asset asset, @NotNull Class valueType,
+                                           @NotNull SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore,
+                                           @NotNull Function<Bytes, Wire> wireType) {
         this.asset = asset;
         this.valueType = valueType;
         valueToBytes = toBytes(valueType, wireType);
@@ -83,7 +88,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
                 subscriptions.notifyEvent(mpe.translate(s -> s, b -> bytesToValue.apply(b, null))));
     }
 
-    static <T> BiFunction<T, Bytes, Bytes> toBytes(Class type, Function<Bytes, Wire> wireType) {
+    static <T> BiFunction<T, Bytes, Bytes> toBytes(@NotNull Class type, @NotNull Function<Bytes, Wire> wireType) {
         if (type == String.class)
             return (t, bytes) -> (Bytes) bytes.append((String) t);
         if (Marshallable.class.isAssignableFrom(type))
@@ -95,7 +100,8 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
         throw new UnsupportedOperationException("todo");
     }
 
-    static <T> T acquireInstance(Class type, T t) {
+    @Nullable
+    static <T> T acquireInstance(@NotNull Class type, @Nullable T t) {
         if (t == null)
             try {
                 t = (T) CONSTRUCTORS.get(type).newInstance();
@@ -105,7 +111,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
         return t;
     }
 
-    private <T> BiFunction<BytesStore, T, T> fromBytes(Class type, Function<Bytes, Wire> wireType) {
+    private <T> BiFunction<BytesStore, T, T> fromBytes(@NotNull Class type, @NotNull Function<Bytes, Wire> wireType) {
         if (type == String.class)
             return (t, bytes) -> (T) (bytes == null ? null : bytes.toString());
         if (Marshallable.class.isAssignableFrom(type))
@@ -120,6 +126,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
         throw new UnsupportedOperationException("todo");
     }
 
+    @NotNull
     @Override
     public ObjectKVSSubscription<String, V, V> subscription(boolean createIfAbsent) {
         return subscriptions;
@@ -169,11 +176,12 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     }
 
     @Override
-    public void entriesFor(int segment, SubscriptionConsumer<MapEvent<String, V>> kvConsumer) throws InvalidSubscriberException {
+    public void entriesFor(int segment, @NotNull SubscriptionConsumer<MapEvent<String, V>> kvConsumer) throws InvalidSubscriberException {
         kvStore.entriesFor(segment, e -> kvConsumer.accept(
                 InsertedEvent.of(asset.fullName(), e.key(), bytesToValue.apply(e.value(), null))));
     }
 
+    @NotNull
     @Override
     public Iterator<Map.Entry<String, V>> entrySetIterator() {
         // todo optimise
@@ -187,6 +195,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
         return entries.iterator();
     }
 
+    @NotNull
     @Override
     public Iterator<String> keySetIterator() {
         // todo optimise
@@ -225,6 +234,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
         kvStore.close();
     }
 
+    @NotNull
     @Override
     public Class<String> keyType() {
         return String.class;

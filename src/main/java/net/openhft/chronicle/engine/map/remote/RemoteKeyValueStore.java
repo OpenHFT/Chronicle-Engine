@@ -151,10 +151,12 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
         return proxyReturnTypedObject(replace, null, vClass, key, value);
     }
 
+    @Nullable
     public <A, R> R applyTo(@NotNull SerializableBiFunction<MapView<K, ?, V>, A, R> function, A arg) {
         return (R) proxyReturnTypedObject(applyTo2, null, Object.class, function, arg);
     }
 
+    @Nullable
     public <R, UA, RA> R syncUpdate(SerializableBiFunction updateFunction, UA ua, SerializableBiFunction returnFunction, RA ra) {
         return (R) proxyReturnTypedObject(update4, null, Object.class, updateFunction, ua, returnFunction, ra);
     }

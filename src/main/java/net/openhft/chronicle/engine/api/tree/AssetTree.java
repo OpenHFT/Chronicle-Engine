@@ -38,6 +38,7 @@ public interface AssetTree extends Closeable {
      *
      * @return the root Asset.
      */
+    @NotNull
     Asset root();
 
     /**
@@ -176,7 +177,7 @@ public interface AssetTree extends Closeable {
      * @param uri        of the asset subscribed to.
      * @param subscriber to remove
      */
-    default <E> void unregisterSubscriber(@NotNull String uri, Subscriber<E> subscriber) {
+    default <E> void unregisterSubscriber(@NotNull String uri, @NotNull Subscriber<E> subscriber) {
         RequestContext rc = requestContext(uri);
         Subscription subscription = getSubscription(rc);
         if (subscription == null)
@@ -191,7 +192,7 @@ public interface AssetTree extends Closeable {
      * @param uri        of the asset subscribed to.
      * @param subscriber to remove
      */
-    default <T, E> void unregisterTopicSubscriber(@NotNull String uri, TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
+    default <T, E> void unregisterTopicSubscriber(@NotNull String uri, @NotNull TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
         RequestContext rc = requestContext(uri).viewType(Subscriber.class);
         Subscription subscription = getSubscription(rc);
         if (subscription instanceof KVSSubscription)
@@ -243,6 +244,7 @@ public interface AssetTree extends Closeable {
     /**
      * Enable JMX management of this Asset Tree
      */
+    @NotNull
     default AssetTree enableManagement() {
         ManagementTools.enableManagement(this);
         return this;
@@ -252,6 +254,7 @@ public interface AssetTree extends Closeable {
      * Enable JMX management of this Asset Tree
      * @param  port to enable a simple web service on
      */
+    @NotNull
     default AssetTree enableManagement(int port) {
         ManagementTools.enableManagement(this, port);
         return this;
@@ -260,6 +263,7 @@ public interface AssetTree extends Closeable {
     /**
      * Disable JMX management of this Asset Tree
      */
+    @NotNull
     default AssetTree disableManagement(){
         ManagementTools.disableManagement(this);
         return this;

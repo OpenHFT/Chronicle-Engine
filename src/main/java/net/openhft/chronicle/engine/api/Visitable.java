@@ -34,6 +34,7 @@ public interface Visitable<E> {
     /**
      * @return the current state of a visitable Asset
      */
+    @Nullable
     E get();
 
     /**

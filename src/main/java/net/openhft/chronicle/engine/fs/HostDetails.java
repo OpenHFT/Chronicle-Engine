@@ -62,7 +62,7 @@ public class HostDetails implements Marshallable, View, Closeable {
                 .write(() -> "timeoutMs").int32(timeoutMs);
     }
 
-    public TcpChannelHub acquireTcpChannelHub(Asset asset, EventLoop eventLoop, Function<Bytes, Wire> wire) {
+    public TcpChannelHub acquireTcpChannelHub(@NotNull Asset asset, @NotNull EventLoop eventLoop, @NotNull Function<Bytes, Wire> wire) {
         InetSocketAddress addr = TCPRegistry.lookup(connectUri);
         SessionProvider sessionProvider = asset.findOrCreateView(SessionProvider.class);
 
@@ -79,6 +79,7 @@ public class HostDetails implements Marshallable, View, Closeable {
         tcpChannelHubs.values().forEach(Closeable::closeQuietly);
     }
 
+    @NotNull
     @Override
     public String toString() {
         return "HostDetails{" +
