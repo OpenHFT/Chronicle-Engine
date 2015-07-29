@@ -1220,7 +1220,7 @@ public class TcpChannelHub implements View, Closeable {
                 } catch (Exception e) {
                     if (!isShutdown) {
                         LOG.error("failed to connect remoteAddress=" + socketAddressSupplier
-                                + " so will reconnect ", e);
+                                + " so will reconnect " + e.getMessage());
                         closeSocket();
                     }
                 }
