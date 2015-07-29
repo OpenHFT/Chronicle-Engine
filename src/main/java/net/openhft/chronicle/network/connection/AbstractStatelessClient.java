@@ -121,42 +121,11 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
             // pause then resend the request
             Jvm.pause(1000);
 
-            // by this time if successful the TcpChannelHub should have reconnected to another
-            // server
+            // by this time, the TcpChannelHub should have reconnected to another server
 
-            try {
-                return s.get();
-            } catch (ConnectionDroppedException e1) {
-                throw Jvm.rethrow(e1);
-            }
+            return s.get();
         }
     }
-
-    /**
-     * use to retry once when the connection is dropped to the remote server if the conneciton is
-     * dropped the TcpChannelHub will automactically failover ( if configured )
-     *
-     * @param r the runnable
-     */
-    public void tryTwice(Runnable r) {
-        try {
-            r.run();
-        } catch (ConnectionDroppedException e) {
-
-            // pause then resend the request
-            Jvm.pause(1000);
-
-            // by this time if successful the TcpChannelHub should have reconnected to another
-            // server
-
-            try {
-                r.run();
-            } catch (ConnectionDroppedException e1) {
-                throw Jvm.rethrow(e1);
-            }
-        }
-    }
-
 
     @SuppressWarnings("SameParameterValue")
     protected long proxyReturnLong(@NotNull final WireKey eventId) {
