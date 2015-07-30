@@ -45,6 +45,7 @@ public class RequestContext implements Cloneable {
     static {
         addAlias(MapView.class, "Map");
         addAlias(MapEvent.class, "MapEvent");
+        addAlias(TopologicalEvent.class, "TopologicalEvent");
         addAlias(EntrySetView.class, "EntrySet");
         addAlias(KeySetView.class, "KeySet");
         addAlias(ValuesCollection.class, "Values");
