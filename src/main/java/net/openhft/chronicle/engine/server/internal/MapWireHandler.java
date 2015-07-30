@@ -52,8 +52,8 @@ public class MapWireHandler<K, V> extends AbstractHandler {
 
     private static final StringBuilderPool SBP = new StringBuilderPool();
     private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
-    final StringBuilder eventName = new StringBuilder();
-    final StringBuilder cpsBuff = new StringBuilder();
+    private final StringBuilder eventName = new StringBuilder();
+    private final StringBuilder cpsBuff = new StringBuilder();
 
     @NotNull
     private final Map<Long, String> cidToCsp = new HashMap<>();

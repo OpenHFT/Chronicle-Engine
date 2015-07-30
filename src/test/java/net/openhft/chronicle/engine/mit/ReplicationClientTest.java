@@ -18,14 +18,15 @@ import net.openhft.chronicle.engine.pubsub.RemoteTopicPublisher;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.session.VanillaSessionProvider;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
+import net.openhft.chronicle.network.connection.SocketAddressSupplier;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.EventGroup;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -44,27 +45,32 @@ import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContex
 public class ReplicationClientTest {
 
 
+    @NotNull
     static Set<Closeable> closeables = new HashSet<>();
 
     private static MapView<String, String, String> map1;
     private static MapView<String, String, String> map2;
+    private ServerEndpoint server1;
+    private ServerEndpoint server2;
+    private static VanillaAssetTree tree;
 
     @After
     public void after() throws Exception {
-        closeables.forEach(c -> c.close());
+        server1.close();
+        server2.close();
+        tree.close();
     }
 
     @Test
-    @Ignore("TODO FIX")
     public void test() throws InterruptedException, IOException {
 
         ReplicationServerMain server = new ReplicationServerMain();
 
         // creates the first instance of the server
-    //    ServerEndpoint s1 = server.create(1, "localhost");
+        server1 = server.create(1, "localhost");
 
         // creates the seconds instance of the server
-   //     server.create(2, "localhost");
+        server2 = server.create(2, "localhost");
 
 
         YamlLogging.clientReads = true;
@@ -101,73 +107,24 @@ public class ReplicationClientTest {
         Assert.assertEquals(1, map2.size());
         Assert.assertEquals("world", map2.get("hello"));
 
+        Thread.sleep(500);
+
+        // todo not sure why we have to added a clear here !
+        q1.clear();
+
         map2.remove("hello");
+
+        Thread.sleep(100);
 
         Assert.assertEquals("RemovedEvent{assetName='/map', key=hello, oldValue=world}", q1.take().toString());
         Assert.assertEquals("RemovedEvent{assetName='/map', key=hello, oldValue=world}", q2.take().toString());
     }
 
 
-    @Test
-    public void test2() throws InterruptedException, IOException {
-
-        ReplicationServerMain server = new ReplicationServerMain();
-
-        // creates the first instance of the server
-        ServerEndpoint s1 = server.create(1, "localhost");
-
-
-        // creates the seconds instance of the server
-        ServerEndpoint s2 = server.create(2, "localhost");
-
-        Thread.sleep(200);
-
-        s1.stop();
-        Thread.sleep(2000);
-        server.create(1, "localhost");
-
-
-        YamlLogging.clientReads = true;
-        YamlLogging.clientWrites = true;
-        WireType wireType = WireType.TEXT;
-
-        final Integer hostId = Integer.getInteger("hostId", 1);
-
-        BlockingQueue q1 = new ArrayBlockingQueue(1);
-        BlockingQueue q2 = new ArrayBlockingQueue(1);
-
-        {
-            String hostname = System.getProperty("host1", "localhost");
-            int port = Integer.getInteger("port1", 5701);
-            map1 = create("map", hostId, hostname + ":" + port, q1, wireType);
-        }
-
-        {
-            String hostname = System.getProperty("host2", "localhost");
-            int port = Integer.getInteger("port2", 5702);
-            map2 = create("map", hostId, hostname + ":" + port, q2, wireType);
-        }
-
-        Thread.sleep(1000);
-
-        map2.put("hello", "world");
-
-        Thread.sleep(100);
-
-        //Test map 1 content
-        Assert.assertEquals(1, map1.size());
-        Assert.assertEquals("world", map1.get("hello"));
-
-        Assert.assertEquals(1, map2.size());
-        Assert.assertEquals("world", map2.get("hello"));
-
-
-    }
-
-
-    private static MapView<String, String, String> create(String nameName, Integer hostId, String connectUri,
-                                                          BlockingQueue<MapEvent> q, Function<Bytes, Wire> wireType) {
-        final VanillaAssetTree tree = new VanillaAssetTree(hostId);
+    @NotNull
+    private static MapView<String, String, String> create(@NotNull String nameName, Integer hostId, String connectUri,
+                                                          @NotNull BlockingQueue<MapEvent> q, @NotNull Function<Bytes, Wire> wireType) {
+        tree = new VanillaAssetTree(hostId);
 
         final Asset asset = tree.root().acquireAsset(nameName);
         ThreadGroup threadGroup = new ThreadGroup("host=" + connectUri);
@@ -183,7 +140,8 @@ public class ReplicationClientTest {
         EventGroup eventLoop = new EventGroup(true);
         SessionProvider sessionProvider = new VanillaSessionProvider();
 
-        tree.root().addView(TcpChannelHub.class, new TcpChannelHub(sessionProvider, connectUri, eventLoop, wireType, "connectUri="+connectUri));
+        final SocketAddressSupplier socketAddressSupplier = new SocketAddressSupplier(new String[]{connectUri}, "connectUri=" + connectUri);
+        tree.root().addView(TcpChannelHub.class, new TcpChannelHub(sessionProvider, eventLoop, wireType, "connectUri=" + connectUri, socketAddressSupplier));
         asset.addView(AuthenticatedKeyValueStore.class, new RemoteKeyValueStore(requestContext(nameName), asset));
 
         MapView<String, String, String> result = tree.acquireMap(nameName, String.class, String.class);

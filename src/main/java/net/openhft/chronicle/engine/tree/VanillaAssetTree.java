@@ -54,13 +54,19 @@ public class VanillaAssetTree implements AssetTree {
                 KeyValuePair.class);
     }
 
-    final VanillaAsset root = new VanillaAsset(null, "");
+    @NotNull
+    final VanillaAsset root;
 
     public VanillaAssetTree() {
+        this("");
+    }
 
+    public VanillaAssetTree(@Nullable String name) {
+        root = new VanillaAsset(null, name == null ? "" : name);
     }
 
     public VanillaAssetTree(int hostId) {
+        this();
         root.addView(HostIdentifier.class, new HostIdentifier((byte) hostId));
     }
 
@@ -76,7 +82,13 @@ public class VanillaAssetTree implements AssetTree {
     }
 
     @NotNull
-    public VanillaAssetTree forRemoteAccess(String hostPortDescription, Function<Bytes, Wire> wire) {
+    public VanillaAssetTree forRemoteAccess(String hostPortDescription, @NotNull Function<Bytes, Wire> wire) {
+        root.forRemoteAccess(new String[]{hostPortDescription}, wire);
+        return this;
+    }
+
+    @NotNull
+    public VanillaAssetTree forRemoteAccess(@NotNull String[] hostPortDescription, @NotNull Function<Bytes, Wire> wire) {
         root.forRemoteAccess(hostPortDescription, wire);
         return this;
     }

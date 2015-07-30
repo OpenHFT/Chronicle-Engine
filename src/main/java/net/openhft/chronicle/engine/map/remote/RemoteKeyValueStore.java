@@ -55,7 +55,7 @@ import static net.openhft.chronicle.network.connection.CoreFields.stringEvent;
 public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
         implements Cloneable, ObjectKeyValueStore<K, V, V> {
 
-    public static final Consumer<ValueOut> VOID_PARAMETERS = out -> out.marshallable(WriteMarshallable.EMPTY);
+    private static final Consumer<ValueOut> VOID_PARAMETERS = out -> out.marshallable(WriteMarshallable.EMPTY);
 
     private final Class<K> kClass;
     private final Class<V> vClass;
@@ -151,10 +151,12 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
         return proxyReturnTypedObject(replace, null, vClass, key, value);
     }
 
+    @Nullable
     public <A, R> R applyTo(@NotNull SerializableBiFunction<MapView<K, ?, V>, A, R> function, A arg) {
         return (R) proxyReturnTypedObject(applyTo2, null, Object.class, function, arg);
     }
 
+    @Nullable
     public <R, UA, RA> R syncUpdate(SerializableBiFunction updateFunction, UA ua, SerializableBiFunction returnFunction, RA ra) {
         return (R) proxyReturnTypedObject(update4, null, Object.class, updateFunction, ua, returnFunction, ra);
     }
@@ -260,8 +262,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     @Nullable
     public V getUsing(K key, V usingValue) {
         checkKey(key);
-        final V v = this.proxyReturnTypedObject(get, usingValue, vClass, key);
-        return v;
+        return this.proxyReturnTypedObject(get, usingValue, vClass, key);
     }
 
     public long longSize() {
@@ -404,17 +405,19 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
                 csp.toString(), cid, valueIn -> valueIn.object(kClass));
     }
 
+
     @SuppressWarnings("SameParameterValue")
     private boolean proxyReturnBoolean(@NotNull final EventId eventId,
                                        @Nullable final Consumer<ValueOut> consumer) {
         final long startTime = Time.currentTimeMillis();
-        return readBoolean(sendEvent(startTime, eventId, consumer), startTime);
+        return tryTwice(() -> readBoolean(sendEvent(startTime, eventId, consumer), startTime));
     }
+
 
     @SuppressWarnings("SameParameterValue")
     private int proxyReturnInt(@NotNull final EventId eventId) {
         final long startTime = Time.currentTimeMillis();
-        return readInt(sendEvent(startTime, eventId, VOID_PARAMETERS), startTime);
+        return tryTwice(() -> readInt(sendEvent(startTime, eventId, VOID_PARAMETERS), startTime));
     }
 
     @NotNull

@@ -44,8 +44,8 @@ public class VanillaMapView<K, MV, V> implements MapView<K, MV, V> {
     private final boolean removeReturnsNull;
     private final Class keyClass;
     private final Class valueType;
-    private Asset asset;
-    private KeyValueStore<K, MV, V> kvStore;
+    private final Asset asset;
+    private final KeyValueStore<K, MV, V> kvStore;
     private AbstractCollection<V> values;
 
     public VanillaMapView(@org.jetbrains.annotations.NotNull RequestContext context, Asset asset, KeyValueStore<K, MV, V> kvStore) {
@@ -71,11 +71,13 @@ public class VanillaMapView<K, MV, V> implements MapView<K, MV, V> {
         return valueType;
     }
 
+    @Nullable
     @Override
     public V getUsing(K key, MV usingValue) {
         return kvStore.getUsing(key, usingValue);
     }
 
+    @org.jetbrains.annotations.NotNull
     @Override
     public KeySetView<K> keySet() {
         return asset.acquireView(KeySetView.class);
@@ -86,9 +88,11 @@ public class VanillaMapView<K, MV, V> implements MapView<K, MV, V> {
     public Collection<V> values() {
         if (values == null) {
             values = new AbstractCollection<V>() {
+                @org.jetbrains.annotations.NotNull
                 public Iterator<V> iterator() {
                     return new Iterator<V>() {
-                        private Iterator<Entry<K, V>> i = entrySet().iterator();
+                        @org.jetbrains.annotations.NotNull
+                        private final Iterator<Entry<K, V>> i = entrySet().iterator();
 
                         public boolean hasNext() {
                             return i.hasNext();
@@ -218,7 +222,7 @@ public class VanillaMapView<K, MV, V> implements MapView<K, MV, V> {
     }
 
     @Override
-    public void putAll(Map<? extends K, ? extends V> m) {
+    public void putAll(@NotNull Map<? extends K, ? extends V> m) {
         for (Entry<? extends K, ? extends V> entry : m.entrySet()) {
             put(entry.getKey(), entry.getValue());
         }
@@ -229,11 +233,13 @@ public class VanillaMapView<K, MV, V> implements MapView<K, MV, V> {
         return kvStore.longSize();
     }
 
+    @Nullable
     @Override
     public V getAndPut(K key, V value) {
         return kvStore.getAndPut(key, value);
     }
 
+    @Nullable
     @Override
     public V getAndRemove(K key) {
         return kvStore.getAndRemove(key);
@@ -301,6 +307,7 @@ public class VanillaMapView<K, MV, V> implements MapView<K, MV, V> {
         subscription.registerSubscriber(RequestContext.requestContext().bootstrap(true).type(MapEvent.class), subscriber);
     }
 
+    @org.jetbrains.annotations.NotNull
     @Override
     public Reference<V> referenceFor(K key) {
         // TODO CE-101
@@ -335,6 +342,7 @@ public class VanillaMapView<K, MV, V> implements MapView<K, MV, V> {
         return false;
     }
 
+    @org.jetbrains.annotations.NotNull
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

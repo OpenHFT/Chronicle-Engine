@@ -19,6 +19,7 @@ package net.openhft.chronicle.engine.map.remote;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by peter on 07/07/15.
@@ -35,19 +36,20 @@ public class KeyValueFunctionTuple implements Marshallable {
     }
 
     @Override
-    public void readMarshallable(WireIn wire) throws IllegalStateException {
+    public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         wire.read(() -> "key").object(Object.class, o -> key = o)
                 .read(() -> "value").object(Object.class, o -> value = o)
                 .read(() -> "function").object(Object.class, f -> function = f);
     }
 
     @Override
-    public void writeMarshallable(WireOut wire) {
+    public void writeMarshallable(@NotNull WireOut wire) {
         wire.write(() -> "key").object(key)
                 .write(() -> "value").object(value)
                 .write(() -> "function").object(function);
     }
 
+    @NotNull
     public static KeyValueFunctionTuple of(Object key, Object value, Object function) {
         return new KeyValueFunctionTuple(key, value, function);
     }

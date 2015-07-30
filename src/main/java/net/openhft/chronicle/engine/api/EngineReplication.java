@@ -22,6 +22,7 @@ import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 
@@ -61,6 +62,7 @@ public interface EngineReplication extends Replication {
      * identifier
      * @see #identifier()
      */
+    @Nullable
     ModificationIterator acquireModificationIterator(byte remoteIdentifier);
 
     /**

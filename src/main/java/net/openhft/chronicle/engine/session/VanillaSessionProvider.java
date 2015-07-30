@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class VanillaSessionProvider implements SessionProvider, View {
     @NotNull
-    private ThreadLocal<SessionDetails> sessionDetails = new ThreadLocal<>();
+    private final ThreadLocal<SessionDetails> sessionDetails = new ThreadLocal<>();
 
     public VanillaSessionProvider() {
 

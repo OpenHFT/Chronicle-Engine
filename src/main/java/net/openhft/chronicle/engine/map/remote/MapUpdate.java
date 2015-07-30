@@ -18,6 +18,7 @@ package net.openhft.chronicle.engine.map.remote;
 
 import net.openhft.chronicle.core.util.SerializableUpdaterWithArg;
 import net.openhft.chronicle.engine.api.map.MapView;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -28,15 +29,15 @@ import java.util.function.BiFunction;
 public enum MapUpdate implements SerializableUpdaterWithArg<MapView, Object> {
     PUT_ALL {
         @Override
-        public void accept(MapView map, Object mapToPut) {
+        public void accept(@NotNull MapView map, Object mapToPut) {
             map.putAll((Map) mapToPut);
         }
     },
     REPLACE_ALL {
         @Override
-        public void accept(MapView map, Object o) {
+        public void accept(@NotNull MapView map, Object o) {
             BiFunction function = (BiFunction) o;
             map.replaceAll(function);
         }
-    };
+    }
 }

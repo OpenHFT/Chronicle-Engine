@@ -19,6 +19,7 @@ package net.openhft.chronicle.engine.map.remote;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 
@@ -29,25 +30,26 @@ public class KeyFunctionPair implements Marshallable {
     Object key;
     Object function;
 
-    KeyFunctionPair(Object key, Object function) {
+    KeyFunctionPair(Object key, @NotNull Object function) {
         this.key = key;
         assert Serializable.class.isAssignableFrom(function.getClass());
         this.function = function;
     }
 
     @Override
-    public void readMarshallable(WireIn wire) throws IllegalStateException {
+    public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         wire.read(() -> "key").object(Object.class, o -> key = o)
                 .read(() -> "function").object(Object.class, f -> function = f);
     }
 
     @Override
-    public void writeMarshallable(WireOut wire) {
+    public void writeMarshallable(@NotNull WireOut wire) {
         wire.write(() -> "key").object(key)
                 .write(() -> "function").object(function);
     }
 
-    public static KeyFunctionPair of(Object key, Object function) {
+    @NotNull
+    public static KeyFunctionPair of(Object key, @NotNull Object function) {
         return new KeyFunctionPair(key, function);
     }
 }

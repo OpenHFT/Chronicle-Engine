@@ -67,7 +67,7 @@ public class ConfigurationFS implements MountPoint {
         assetTree.registerSubscriber(assetName, MapEvent.class, eventSub);
     }
 
-    public void onFile(@NotNull MapEvent<String, String> mapEvent) {
+    private void onFile(@NotNull MapEvent<String, String> mapEvent) {
         switch (mapEvent.key()) {
             case FSTAB:
                 processFstab(mapEvent.value());

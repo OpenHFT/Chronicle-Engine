@@ -42,7 +42,7 @@ import static net.openhft.chronicle.wire.Wires.acquireStringBuilder;
  */
 public class CollectionWireHandler<U, C extends Collection<U>> {
 
-    public static final int SIZE_OF_SIZE = 4;
+    private static final int SIZE_OF_SIZE = 4;
     private static final Logger LOG = LoggerFactory.getLogger(CollectionWireHandler.class);
     private Function<ValueIn, U> fromWire;
     private BiConsumer<ValueOut, U> toWire;

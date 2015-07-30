@@ -26,6 +26,7 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
@@ -35,10 +36,11 @@ import static net.openhft.chronicle.bytes.NativeBytes.nativeBytes;
 
 public class FilePerKeyBasedKeyMarshallableValueStore<K, V extends Marshallable>
         implements KeyValueStore<K, V, V> {
-    static ThreadLocal<Wire> threadLocalValueWire =
+    @NotNull
+    private static final ThreadLocal<Wire> threadLocalValueWire =
             ThreadLocal.withInitial(() -> new TextWire(nativeBytes()));
 
-    static Wire valueWire() {
+    private static Wire valueWire() {
         Wire valueWire = threadLocalValueWire.get();
         valueWire.bytes().clear();
         return valueWire;
@@ -58,7 +60,8 @@ public class FilePerKeyBasedKeyMarshallableValueStore<K, V extends Marshallable>
         this.createValue = createValue;
     }
 
-    private V bytesToValue(BytesStore oldValue) {
+    @Nullable
+    private V bytesToValue(@Nullable BytesStore oldValue) {
         V ret;
         if (oldValue != null) {
             V using = createValue.get();
@@ -72,7 +75,7 @@ public class FilePerKeyBasedKeyMarshallableValueStore<K, V extends Marshallable>
 
     @Nullable
     @Override
-    public V getAndPut(K key, V value) {
+    public V getAndPut(K key, @NotNull V value) {
         Wire valueWire = valueWire();
         value.writeMarshallable(valueWire);
         BytesStore oldValue = kvStore.getAndPut(keyToString.apply(key), valueWire.bytes());
@@ -88,7 +91,7 @@ public class FilePerKeyBasedKeyMarshallableValueStore<K, V extends Marshallable>
 
     @Nullable
     @Override
-    public V getUsing(K key, V value) {
+    public V getUsing(K key, @Nullable V value) {
         Wire valueWire = valueWire();
         kvStore.getUsing(keyToString.apply(key), valueWire.bytes());
         if (value == null)
@@ -103,13 +106,13 @@ public class FilePerKeyBasedKeyMarshallableValueStore<K, V extends Marshallable>
     }
 
     @Override
-    public void keysFor(int segment, SubscriptionConsumer<K> kConsumer)
+    public void keysFor(int segment, @NotNull SubscriptionConsumer<K> kConsumer)
             throws InvalidSubscriberException {
         kvStore.keysFor(segment, key -> kConsumer.accept(stringToKey.apply(key)));
     }
 
     @Override
-    public void entriesFor(int segment, SubscriptionConsumer<MapEvent<K, V>> kvConsumer)
+    public void entriesFor(int segment, @NotNull SubscriptionConsumer<MapEvent<K, V>> kvConsumer)
             throws InvalidSubscriberException {
         String assetName = asset().fullName();
         kvStore.entriesFor(segment, event -> kvConsumer.accept(InsertedEvent.of(assetName,
@@ -126,6 +129,7 @@ public class FilePerKeyBasedKeyMarshallableValueStore<K, V extends Marshallable>
         throw new UnsupportedOperationException();
     }
 
+    @NotNull
     @Override
     public Asset asset() {
         return kvStore.asset();

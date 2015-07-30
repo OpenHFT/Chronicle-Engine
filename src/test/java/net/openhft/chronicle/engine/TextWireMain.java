@@ -20,6 +20,7 @@ import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -28,7 +29,8 @@ import java.io.IOException;
  */
 public class TextWireMain {
     public static final WireType WIRE_TYPE = WireType.TEXT;
-    public static void main(String[] args) throws IOException, InterruptedException {
+
+    public static void main(@NotNull String[] args) throws IOException, InterruptedException {
 
 
         YamlLogging.showServerReads = true;

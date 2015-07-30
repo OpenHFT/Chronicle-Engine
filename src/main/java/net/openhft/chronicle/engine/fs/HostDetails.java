@@ -22,6 +22,7 @@ import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.network.TCPRegistry;
+import net.openhft.chronicle.network.connection.SocketAddressSupplier;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.wire.Marshallable;
@@ -61,11 +62,16 @@ public class HostDetails implements Marshallable, View, Closeable {
                 .write(() -> "timeoutMs").int32(timeoutMs);
     }
 
-    public TcpChannelHub acquireTcpChannelHub(Asset asset, EventLoop eventLoop, Function<Bytes, Wire> wire) {
+    public TcpChannelHub acquireTcpChannelHub(@NotNull Asset asset, @NotNull EventLoop eventLoop, @NotNull Function<Bytes, Wire> wire) {
         InetSocketAddress addr = TCPRegistry.lookup(connectUri);
         SessionProvider sessionProvider = asset.findOrCreateView(SessionProvider.class);
-        return tcpChannelHubs.computeIfAbsent(addr, hostPort ->
-                new TcpChannelHub(sessionProvider, connectUri, eventLoop, wire, "hostId=" + hostId + ",connectUri=" + connectUri));
+
+
+        return tcpChannelHubs.computeIfAbsent(addr, hostPort -> {
+            String[] connectURIs = new String[]{connectUri};
+            final SocketAddressSupplier socketAddressSupplier = new SocketAddressSupplier(connectURIs, "hostId=" + hostId + ",connectUri=" + connectUri);
+            return new TcpChannelHub(sessionProvider, eventLoop, wire, "hostId=" + hostId + ",connectUri=" + connectUri, socketAddressSupplier);
+        });
     }
 
     @Override
@@ -73,6 +79,7 @@ public class HostDetails implements Marshallable, View, Closeable {
         tcpChannelHubs.values().forEach(Closeable::closeQuietly);
     }
 
+    @NotNull
     @Override
     public String toString() {
         return "HostDetails{" +

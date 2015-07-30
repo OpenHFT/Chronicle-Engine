@@ -139,7 +139,7 @@ public enum Chassis {
      * @param uri        of the asset to unsubscribe from.
      * @param subscriber to unregister
      */
-    public static <E> void unregisterSubscriber(@NotNull String uri, Subscriber<E> subscriber) {
+    public static <E> void unregisterSubscriber(@NotNull String uri, @NotNull Subscriber<E> subscriber) {
         assetTree.unregisterSubscriber(uri, subscriber);
     }
 
@@ -162,7 +162,7 @@ public enum Chassis {
      * @param uri        of the group of Assets to unregister from
      * @param subscriber to remove.
      */
-    public static <T, E> void unregisterTopicSubscriber(@NotNull String uri, TopicSubscriber<T, E> subscriber) {
+    public static <T, E> void unregisterTopicSubscriber(@NotNull String uri, @NotNull TopicSubscriber<T, E> subscriber) {
         assetTree.unregisterTopicSubscriber(uri, subscriber);
     }
 
@@ -173,7 +173,7 @@ public enum Chassis {
      * @return the Asset
      * @throws AssetNotFoundException if not found or could not be created.
      */
-    public static Asset acquireAsset(String name) throws AssetNotFoundException {
+    public static Asset acquireAsset(@NotNull String name) throws AssetNotFoundException {
         return assetTree.acquireAsset(name);
     }
 

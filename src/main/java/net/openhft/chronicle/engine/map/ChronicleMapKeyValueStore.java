@@ -64,7 +64,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
         Closeable, Supplier<EngineReplication> {
 
     private static final ScheduledExecutorService DELAYED_CLOSER = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("ChronicleMapKeyValueStore Closer", true));
-    private static final Logger LOGGER = LoggerFactory.getLogger(ChronicleMapKeyValueStore.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ChronicleMapKeyValueStore.class);
     private final ChronicleMap<K, V> chronicleMap;
     @NotNull
     private final ObjectKVSSubscription<K, MV, V> subscriptions;
@@ -77,7 +77,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
     @Nullable
     private final EventLoop eventLoop;
     private final AtomicBoolean isClosed = new AtomicBoolean();
-    private boolean putReturnsNull;
+    private final boolean putReturnsNull;
 
     public ChronicleMapKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset) {
         String basePath = context.basePath();
@@ -107,13 +107,14 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
                     .createWithId(hostIdentifier.hostId()));
 
         } catch (AssetNotFoundException anfe) {
-            if (LOGGER.isDebugEnabled())
-                LOGGER.debug("replication not enabled " + anfe.getMessage());
+            if (LOG.isDebugEnabled())
+                LOG.debug("replication not enabled " + anfe.getMessage());
         }
 
         this.engineReplicator = engineReplicator1;
 
-        if (context.nullOldValueOnUpdateEvent()) {
+        Boolean nullOldValueOnUpdateEvent = context.nullOldValueOnUpdateEvent();
+        if (nullOldValueOnUpdateEvent != null && nullOldValueOnUpdateEvent) {
             builder.bytesEventListener(new NullOldValuePublishingOperations());
         } else {
             builder.eventListener(new PublishingOperations());
@@ -146,21 +147,21 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
             Clusters clusters = asset.findView(Clusters.class);
 
             if (clusters == null) {
-                LOGGER.warn("no clusters found.");
+                LOG.warn("no clusters found.");
                 return;
             }
 
             Cluster cluster = clusters.get(context.cluster());
 
             if (clusters == null) {
-                LOGGER.warn("no cluster found.");
+                LOG.warn("no cluster found.");
                 return;
             }
 
             byte localIdentifier = hostIdentifier.hostId();
 
-            if (LOGGER.isDebugEnabled())
-                LOGGER.debug("hostDetails : localIdentifier=" + localIdentifier + ",cluster=" + cluster.hostDetails());
+            if (LOG.isDebugEnabled())
+                LOG.debug("hostDetails : localIdentifier=" + localIdentifier + ",cluster=" + cluster.hostDetails());
 
             for (HostDetails hostDetails : cluster.hostDetails()) {
 
@@ -168,13 +169,15 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
                 int remoteIdentifier = hostDetails.hostId;
 
                 if (remoteIdentifier <= localIdentifier) {
-                    // if (LOGGER.isDebugEnabled())
-                    System.out.println("skipping : attempting to connect to localIdentifier=" + localIdentifier + ",remoteIdentifier=" + remoteIdentifier);
+
+                    if (LOG.isDebugEnabled())
+                        LOG.debug("skipping : attempting to connect to localIdentifier=" + localIdentifier + ",remoteIdentifier=" + remoteIdentifier);
+
                     continue;
                 }
 
-                //if (LOGGER.isDebugEnabled())
-                System.out.println("attempting to connect to localIdentifier=" + localIdentifier + ",remoteIdentifier=" + remoteIdentifier);
+                if (LOG.isDebugEnabled())
+                    LOG.debug("attempting to connect to localIdentifier=" + localIdentifier + ",remoteIdentifier=" + remoteIdentifier);
 
                 final TcpChannelHub tcpChannelHub = hostDetails.acquireTcpChannelHub(asset, eventLoop, context.wireType());
                 ReplicationHub replicationHub = new ReplicationHub(context, tcpChannelHub, eventLoop, isClosed);
@@ -185,7 +188,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
                     throw new AssertionError(e);
                 }
             }
-            System.out.println("loop exit");
+
         }
     }
 
@@ -299,7 +302,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
         if (!isClosed.get())
             engineReplicator.applyReplication(replicationEntry);
         else
-            LOGGER.warn("message skipped as closed replicationEntry=" + replicationEntry);
+            LOG.warn("message skipped as closed replicationEntry=" + replicationEntry);
     }
 
     @Nullable
@@ -308,7 +311,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
         return engineReplicator;
     }
 
-    class PublishingOperations extends MapEventListener<K, V> {
+    private class PublishingOperations extends MapEventListener<K, V> {
         @Override
         public void onRemove(@NotNull K key, V value, boolean replicationEven) {
             if (subscriptions.hasSubscribers())
@@ -326,7 +329,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
         }
     }
 
-    class NullOldValuePublishingOperations extends BytesMapEventListener {
+    private class NullOldValuePublishingOperations extends BytesMapEventListener {
         @Override
         public void onRemove(Bytes entry, long metaDataPos, long keyPos, long valuePos,
                              boolean replicationEvent) {

@@ -13,8 +13,8 @@ public abstract class AbstractAsyncSubscription implements AsyncSubscription {
     private final long tid;
     @NotNull
     private final TcpChannelHub hub;
-    private String csp;
-    private String name;
+    private final String csp;
+    private final String name;
 
     public AbstractAsyncSubscription(@NotNull final TcpChannelHub hub, String csp, String name) {
         tid = hub.nextUniqueTransaction(Time.currentTimeMillis(), System.nanoTime());
@@ -63,6 +63,7 @@ public abstract class AbstractAsyncSubscription implements AsyncSubscription {
 
     }
 
+    @NotNull
     @Override
     public String toString() {
         return "AbstractAsyncSubscription{" +

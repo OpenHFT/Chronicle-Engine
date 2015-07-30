@@ -42,6 +42,7 @@ import net.openhft.chronicle.engine.pubsub.VanillaTopicPublisher;
 import net.openhft.chronicle.engine.session.VanillaSessionProvider;
 import net.openhft.chronicle.engine.set.VanillaKeySetView;
 import net.openhft.chronicle.network.VanillaSessionDetails;
+import net.openhft.chronicle.network.connection.SocketAddressSupplier;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.EventGroup;
 import net.openhft.chronicle.threads.Threads;
@@ -85,7 +86,7 @@ public class VanillaAsset implements Asset, Closeable {
         if ("".equals(name)) {
             assert parent == null;
         } else {
-            assert parent != null;
+//            assert parent != null;
             assert name != null;
         }
         if (parent != null) {
@@ -144,8 +145,11 @@ public class VanillaAsset implements Asset, Closeable {
                 VanillaTopologySubscription::new);
     }
 
-    public void forRemoteAccess(String hostPortDescription, Function<Bytes, Wire> wire) throws AssetNotFoundException {
+
+    public void forRemoteAccess(@NotNull String[] hostPortDescriptions, @NotNull Function<Bytes, Wire> wire) throws
+            AssetNotFoundException {
         standardStack(true);
+
 
         addWrappingRule(MapView.class, LAST + " remote key maps", RemoteMapView::new, ObjectKeyValueStore.class);
 
@@ -167,8 +171,12 @@ public class VanillaAsset implements Asset, Closeable {
         EventLoop eventLoop = findOrCreateView(EventLoop.class);
         eventLoop.start();
         if (getView(TcpChannelHub.class) == null) {
+
+            // used for client failover
+            final SocketAddressSupplier socketAddressSupplier = new SocketAddressSupplier(hostPortDescriptions, name);
+
             TcpChannelHub view = Threads.withThreadGroup(findView(ThreadGroup.class),
-                    () -> new TcpChannelHub(sessionProvider, hostPortDescription, eventLoop, wire, name));
+                    () -> new TcpChannelHub(sessionProvider, eventLoop, wire, name, socketAddressSupplier));
             addView(TcpChannelHub.class, view);
         }
     }
@@ -219,7 +227,7 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Nullable
-    public <I> I createLeafView(Class viewType, RequestContext rc, Asset asset) throws
+    public <I> I createLeafView(Class viewType, @NotNull RequestContext rc, Asset asset) throws
             AssetNotFoundException {
         LeafViewFactory lvFactory = leafViewFactoryMap.get(viewType);
         if (lvFactory != null)
@@ -263,7 +271,7 @@ public class VanillaAsset implements Asset, Closeable {
 
     @NotNull
     @Override
-    public <V> V acquireView(@NotNull Class<V> viewType, RequestContext rc) throws
+    public <V> V acquireView(@NotNull Class<V> viewType, @NotNull RequestContext rc) throws
             AssetNotFoundException {
         synchronized (viewMap) {
             V view = getView(viewType);
@@ -296,6 +304,7 @@ public class VanillaAsset implements Asset, Closeable {
         viewMap.put(viewType, view);
     }
 
+    @Nullable
     @Override
     public Subscription subscription(boolean createIfAbsent) throws AssetNotFoundException {
         return createIfAbsent ? acquireView(ObjectKVSSubscription.class) : getView(ObjectKVSSubscription.class);

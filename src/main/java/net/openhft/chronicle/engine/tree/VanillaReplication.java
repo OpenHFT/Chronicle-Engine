@@ -9,6 +9,7 @@ import net.openhft.chronicle.engine.api.pubsub.Replication;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
@@ -28,6 +29,7 @@ public class VanillaReplication implements Replication {
         ((KeyValueStore) mapView.underlying()).accept(replicatedEntry);
     }
 
+    @Nullable
     @Override
     public ModificationIterator acquireModificationIterator(final byte id) {
         EngineReplication engineReplication = ((Supplier<EngineReplication>) mapView.underlying()).get();

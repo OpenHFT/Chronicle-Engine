@@ -37,6 +37,7 @@ public interface MapEvent<K, V> extends Entry<K, V>, ChangeEvent {
     @NotNull
     <K2, V2> MapEvent<K2, V2> translate(Function<K, K2> keyFunction, Function<V, V2> valueFunction);
 
+    @NotNull
     <K2, V2> MapEvent<K2, V2> translate(BiFunction<K, K2, K2> keyFunction, BiFunction<V, V2, V2> valueFunction);
 
     enum MapEventFields implements WireKey {

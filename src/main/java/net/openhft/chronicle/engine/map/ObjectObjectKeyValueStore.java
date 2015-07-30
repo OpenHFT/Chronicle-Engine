@@ -47,8 +47,8 @@ public class ObjectObjectKeyValueStore<K, MV extends V, V> implements KeyValueSt
     private final BiFunction<BytesStore, K, K> bytesToKey;
     @NotNull
     private final BiFunction<BytesStore, V, V> bytesToValue;
-    private KeyValueStore<BytesStore, Bytes, BytesStore> kvStore;
-    private Asset asset;
+    private final KeyValueStore<BytesStore, Bytes, BytesStore> kvStore;
+    private final Asset asset;
 
     public ObjectObjectKeyValueStore(@NotNull RequestContext context, Asset asset, Assetted assetted) {
         this.asset = asset;
@@ -61,7 +61,7 @@ public class ObjectObjectKeyValueStore<K, MV extends V, V> implements KeyValueSt
         kvStore = (KeyValueStore<BytesStore, Bytes, BytesStore>) assetted;
     }
 
-    static <T> BiFunction<T, Bytes, Bytes> toBytes(Class type) {
+    private static <T> BiFunction<T, Bytes, Bytes> toBytes(Class type) {
         if (type == String.class)
             return (t, bytes) -> (Bytes) bytes.append((String) t);
         throw new UnsupportedOperationException("todo");

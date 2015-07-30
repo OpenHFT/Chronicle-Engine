@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
  */
 public class Fstab implements Marshallable {
     @NotNull
-    private Map<String, MountPoint> mounts = new ConcurrentSkipListMap<>();
+    private final Map<String, MountPoint> mounts = new ConcurrentSkipListMap<>();
 
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {

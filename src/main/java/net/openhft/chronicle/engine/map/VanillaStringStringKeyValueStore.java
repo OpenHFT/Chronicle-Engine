@@ -46,8 +46,8 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     @NotNull
     private final ObjectKVSSubscription<String, StringBuilder, String> subscriptions;
 
-    private SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore;
-    private Asset asset;
+    private final SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore;
+    private final Asset asset;
 
     public VanillaStringStringKeyValueStore(RequestContext context, @NotNull Asset asset,
                                             @NotNull SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore) throws AssetNotFoundException {
@@ -202,6 +202,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     enum StringValueReader implements ValueReader<BytesStore, String> {
         BYTES_STORE_TO_STRING;
 
+        @Nullable
         @Override
         public String apply(@Nullable BytesStore bs) {
             return bs == null ? null : BytesUtil.to8bitString(bs);

@@ -52,7 +52,7 @@ import java.util.concurrent.TimeUnit;
 public enum ManagementTools {
     ;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ManagementTools.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ManagementTools.class);
 
     //JMXConnectorServer for create jmx service
     private static JMXConnectorServer jmxServer;
@@ -66,12 +66,12 @@ public enum ManagementTools {
     //number of AssetTree enabled for management.
     private static int count = 0;
 
-    public static int getCount(){
+    public static int getCount() {
         return count;
     }
 
     private static void startJMXRemoteService() throws IOException {
-        if(jmxServer==null) {
+        if (jmxServer == null) {
             mbs = ManagementFactory.getPlatformMBeanServer();
 
             // Create the RMI registry on port 9000
@@ -90,24 +90,24 @@ public enum ManagementTools {
     }
 
     private static void stopJMXRemoteService() throws IOException {
-        if(jmxServer!=null) {
+        if (jmxServer != null) {
             mbs = null;
             jmxServer.stop();
         }
     }
 
     /**
-     * It will enable the management for given object of AssetTree type.
-     * It will create a object of MBeanServer and register AssetTree.
+     * It will enable the management for given object of AssetTree type. It will create a object of
+     * MBeanServer and register AssetTree.
      *
      * @param assetTree the object of AssetTree type for enable management
      */
     public static void enableManagement(@NotNull AssetTree assetTree) {
-        try{
+        try {
             startJMXRemoteService();
             count++;
-        }catch (IOException ie){
-            LOGGER.error("Error while enable management",ie);
+        } catch (IOException ie) {
+            LOG.error("Error while enable management", ie);
         }
         registerViewofTree(assetTree);
     }
@@ -118,30 +118,30 @@ public enum ManagementTools {
 
             count++;
         } catch (IOException ie) {
-            LOGGER.error("Error while enable management", ie);
+            LOG.error("Error while enable management", ie);
         }
         registerViewofTree(assetTree);
     }
 
-    public static void disableManagement(AssetTree assetTree) {
+    public static void disableManagement(@NotNull AssetTree assetTree) {
 
         String treeName = assetTree.toString();
         try {
             Set<ObjectName> objNames = mbs.queryNames(new ObjectName("*:type=" + treeName + ",*"), null);
-            for(ObjectName atName : objNames) {
+            for (ObjectName atName : objNames) {
                 unregisterTreeWithMBean(atName);
             }
         } catch (MalformedObjectNameException e) {
-            LOGGER.error("Error while disable management", e);
+            LOG.error("Error while disable management", e);
         }
         count--;
 
         try {
-            if(count==0) {
+            if (count == 0) {
                 stopJMXRemoteService();
             }
         } catch (IOException e) {
-            LOGGER.error("Error while stopping JMX remote service", e);
+            LOG.error("Error while stopping JMX remote service", e);
         }
     }
 
@@ -179,21 +179,21 @@ public enum ManagementTools {
 
                     //start Dynamic MBeans Code
                     Map m = new HashMap();
-                    m.put("size",""+view.longSize());
-                    m.put("keyType",view.keyType().getName());
-                    m.put("valueType",view.valueType().getName());
-                    m.put("topicSubscriberCount",""+objectKVSSubscription.topicSubscriberCount());
-                    m.put("keySubscriberCount",""+objectKVSSubscription.keySubscriberCount());
-                    m.put("entrySubscriberCount",""+objectKVSSubscription.entrySubscriberCount());
-                    m.put("keyStoreValue",objectKVSSubscription.getClass().getName());
-                    m.put("path",e.assetName() + "-" + e.name());
+                    m.put("size", "" + view.longSize());
+                    m.put("keyType", view.keyType().getName());
+                    m.put("valueType", view.valueType().getName());
+                    m.put("topicSubscriberCount", "" + objectKVSSubscription.topicSubscriberCount());
+                    m.put("keySubscriberCount", "" + objectKVSSubscription.keySubscriberCount());
+                    m.put("entrySubscriberCount", "" + objectKVSSubscription.entrySubscriberCount());
+                    m.put("keyStoreValue", objectKVSSubscription.getClass().getName());
+                    m.put("path", e.assetName() + "-" + e.name());
 
-                    Iterator<Map.Entry> it =  view.entrySetIterator();
-                    for (int i = 0; i<view.longSize(); i++) {
+                    Iterator<Map.Entry> it = view.entrySetIterator();
+                    for (int i = 0; i < view.longSize(); i++) {
                         Map.Entry entry = it.next();
 
-                        if(entry.getValue().toString().length()>128)
-                            m.put("~" + entry.getKey().toString(), entry.getValue().toString().substring(0,128)+"...");
+                        if (entry.getValue().toString().length() > 128)
+                            m.put("~" + entry.getKey().toString(), entry.getValue().toString().substring(0, 128) + "...");
                         else
                             m.put("~" + entry.getKey().toString(), entry.getValue().toString());
                     }
@@ -203,7 +203,7 @@ public enum ManagementTools {
                     //end Dynamic MBeans Code
 
                     tree.registerSubscriber(e.fullName(), MapEvent.class, (MapEvent me) ->
-                            ses.schedule(() -> handleAssetUpdate(view,atName,objectKVSSubscription,e.assetName() + "-" + e.name()), 100, TimeUnit.MILLISECONDS));
+                            ses.schedule(() -> handleAssetUpdate(view, atName, objectKVSSubscription, e.assetName() + "-" + e.name()), 100, TimeUnit.MILLISECONDS));
 
                     //AssetTreeJMX atBean = new AssetTreeJMX(view,objectKVSSubscription,e.assetName() + "-" + e.name(),getMapAsString(view));
                     //registerTreeWithMBean(atBean, atName);
@@ -214,13 +214,13 @@ public enum ManagementTools {
                 unregisterTreeWithMBean(atName);
             }
         } catch (Throwable t) {
-            LOGGER.error("Error while handle AssetTree update", t);
+            LOG.error("Error while handle AssetTree update", t);
         }
     }
 
     private static void handleAssetUpdate(@NotNull ObjectKeyValueStore view, ObjectName atName, @NotNull ObjectKVSSubscription objectKVSSubscription, String path) {
         try {
-            if(mbs.isRegistered(atName)){
+            if (mbs.isRegistered(atName)) {
                 /*AttributeList list = new AttributeList();
                 list.add(new Attribute("Size",view.longSize()));
                 list.add(new Attribute("Entries",getMapAsString(view)));
@@ -234,20 +234,20 @@ public enum ManagementTools {
 
                 //start Dynamic MBeans Code
                 Map m = new HashMap();
-                m.put("size",""+view.longSize());
-                m.put("keyType",view.keyType().getName());
-                m.put("valueType",view.valueType().getName());
-                m.put("topicSubscriberCount",""+objectKVSSubscription.topicSubscriberCount());
-                m.put("keySubscriberCount",""+objectKVSSubscription.keySubscriberCount());
-                m.put("entrySubscriberCount",""+objectKVSSubscription.entrySubscriberCount());
-                m.put("keyStoreValue",objectKVSSubscription.getClass().getName());
-                m.put("path",path);
+                m.put("size", "" + view.longSize());
+                m.put("keyType", view.keyType().getName());
+                m.put("valueType", view.valueType().getName());
+                m.put("topicSubscriberCount", "" + objectKVSSubscription.topicSubscriberCount());
+                m.put("keySubscriberCount", "" + objectKVSSubscription.keySubscriberCount());
+                m.put("entrySubscriberCount", "" + objectKVSSubscription.entrySubscriberCount());
+                m.put("keyStoreValue", objectKVSSubscription.getClass().getName());
+                m.put("path", path);
 
-                Iterator<Map.Entry> it =  view.entrySetIterator();
-                for (int i = 0; i<view.longSize(); i++) {
+                Iterator<Map.Entry> it = view.entrySetIterator();
+                for (int i = 0; i < view.longSize(); i++) {
                     Map.Entry entry = it.next();
-                    if(entry.getValue().toString().length()>128)
-                        m.put("~" + entry.getKey().toString(), entry.getValue().toString().substring(0,128)+"...");
+                    if (entry.getValue().toString().length() > 128)
+                        m.put("~" + entry.getKey().toString(), entry.getValue().toString().substring(0, 128) + "...");
                     else
                         m.put("~" + entry.getKey().toString(), entry.getValue().toString());
                 }
@@ -257,12 +257,13 @@ public enum ManagementTools {
                 //end Dynamic MBeans Code
             }
         } catch (Throwable t) {
-            LOGGER.error("Error while handle Asset update", t);
+            LOG.error("Error while handle Asset update", t);
         }
     }
 
     private static String createObjectNameUri(int hostId, @NotNull String assetName, String eventName, @NotNull String treeName) {
-        System.out.println(treeName);
+        if (LOG.isDebugEnabled())
+            LOG.debug("treeName=" + treeName);
         StringBuilder sb = new StringBuilder(256);
         sb.append("net.openhft.chronicle.engine:tree=");
         sb.append(hostId);
@@ -278,27 +279,27 @@ public enum ManagementTools {
         return sb.toString();
     }
 
-    private static void registerTreeWithMBean(AssetTreeDynamicMBean atBean,ObjectName atName){
+    private static void registerTreeWithMBean(AssetTreeDynamicMBean atBean, ObjectName atName) {
         try {
-            if(!mbs.isRegistered(atName)){
+            if (!mbs.isRegistered(atName)) {
                 mbs.registerMBean(atBean, atName);
             }
         } catch (@NotNull InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException e) {
-            LOGGER.error("Error register AssetTree with MBean", e);
+            LOG.error("Error register AssetTree with MBean", e);
         }
     }
 
-    private static void unregisterTreeWithMBean(ObjectName atName){
+    private static void unregisterTreeWithMBean(ObjectName atName) {
         try {
-            if(mbs.isRegistered(atName)){
+            if (mbs.isRegistered(atName)) {
                 mbs.unregisterMBean(atName);
             }
         } catch (@NotNull InstanceNotFoundException | MBeanRegistrationException e) {
-            LOGGER.error("Error unregister AssetTree with MBean",e);
+            LOG.error("Error unregister AssetTree with MBean", e);
         }
     }
 
-    private static String getMapAsString(ObjectKeyValueStore view){
+    private static String getMapAsString(@NotNull ObjectKeyValueStore view) {
 
         long max = view.longSize() - 1;
         if (max == -1)
@@ -306,7 +307,7 @@ public enum ManagementTools {
 
         StringBuilder sb = new StringBuilder();
 
-        Iterator<Map.Entry> it =  view.entrySetIterator();
+        Iterator<Map.Entry> it = view.entrySetIterator();
         sb.append('{');
         for (int i = 0; ; i++) {
             Map.Entry e = it.next();
@@ -317,8 +318,8 @@ public enum ManagementTools {
             sb.append(key);
             sb.append('=');
 
-            if(value.length()>128)
-                sb.append(value.substring(0,128)).append("...");
+            if (value.length() > 128)
+                sb.append(value.substring(0, 128)).append("...");
             else
                 sb.append(value);
 

@@ -25,6 +25,7 @@ import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.tree.Asset;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
@@ -46,7 +47,8 @@ public class FilePerKeyValueStoreBackedKeyValueStore<K, V> implements KeyValueSt
         this.bytesStoreToValue = bytesStoreToValue;
     }
 
-    private V nullableToValue(BytesStore outputValue) {
+    @Nullable
+    private V nullableToValue(@Nullable BytesStore outputValue) {
         return outputValue != null ? bytesStoreToValue.apply(outputValue) : null;
     }
 
@@ -98,6 +100,7 @@ public class FilePerKeyValueStoreBackedKeyValueStore<K, V> implements KeyValueSt
         return filePerKeyValueStore.containsValue(valueToBytesStore.apply(value));
     }
 
+    @NotNull
     @Override
     public Asset asset() {
         return filePerKeyValueStore.asset();

@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class RemoteTopologySubscription extends AbstractRemoteSubscription<TopologicalEvent> implements TopologySubscription {
 
-    public RemoteTopologySubscription(RequestContext requestContext, Asset asset) {
+    public RemoteTopologySubscription(@NotNull RequestContext requestContext, @NotNull Asset asset) {
         super(asset.findView(TcpChannelHub.class), (long) 0, toUri(requestContext));
     }
 

@@ -18,11 +18,13 @@ package net.openhft.chronicle.engine.api.tree;
 
 import net.openhft.chronicle.core.Maths;
 import net.openhft.chronicle.core.util.StringUtils;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by peter on 05/07/15.
  */
 public class RequestContextInterner {
+    @NotNull
     private final StringToRequestContext[] interner;
     private final int mask;
 
@@ -32,7 +34,7 @@ public class RequestContextInterner {
         mask = n - 1;
     }
 
-    public RequestContext intern(CharSequence cs) {
+    public RequestContext intern(@NotNull CharSequence cs) {
         int h = Maths.hash(cs) & mask;
         StringToRequestContext s = interner[h];
         if (s != null && StringUtils.isEqual(s.name, cs))

@@ -73,7 +73,7 @@ public class CMap2EngineReplicator implements EngineReplication,
     }
 
     @NotNull
-    net.openhft.lang.io.Bytes toLangBytes(@NotNull BytesStore b) {
+    private net.openhft.lang.io.Bytes toLangBytes(@NotNull BytesStore b) {
         if (b.underlyingObject() == null)
             return wrap(b.address(b.start()), b.readRemaining());
         else {
@@ -224,10 +224,11 @@ public class CMap2EngineReplicator implements EngineReplication,
     public static class VanillaReplicatedEntry implements ReplicationEntry {
 
         private BytesStore key;
+        @Nullable
         private BytesStore value;
         private long timestamp;
         private byte identifier;
-        private byte remoteIdentifier;
+        private final byte remoteIdentifier;
         private boolean isDeleted;
         private long bootStrapTimeStamp;
 
@@ -266,6 +267,7 @@ public class CMap2EngineReplicator implements EngineReplication,
             return key;
         }
 
+        @Nullable
         @Override
         public BytesStore value() {
             return value;
@@ -326,6 +328,7 @@ public class CMap2EngineReplicator implements EngineReplication,
             this.bootStrapTimeStamp = bootStrapTimeStamp;
         }
 
+        @NotNull
         @Override
         public String toString() {
             final Bytes<ByteBuffer> bytes = Bytes.elasticByteBuffer();

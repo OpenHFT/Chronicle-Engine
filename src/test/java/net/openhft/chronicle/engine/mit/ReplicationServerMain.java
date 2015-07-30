@@ -21,6 +21,7 @@ import net.openhft.chronicle.threads.EventGroup;
 import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -56,12 +57,14 @@ public class ReplicationServerMain {
      * @throws IOException
      */
 
+    @NotNull
     public ServerEndpoint create(int identifier, String remoteHostname) throws IOException {
         if (identifier < 0 || identifier > Byte.MAX_VALUE)
             throw new IllegalStateException();
         return create((byte) identifier, remoteHostname);
     }
 
+    @NotNull
     private ServerEndpoint create(byte identifier, String remoteHostname) throws IOException {
 
         YamlLogging.clientReads = true;
@@ -104,7 +107,7 @@ public class ReplicationServerMain {
     }
 
 
-    private static void newCluster(byte host, VanillaAssetTree tree, String remoteHostname) {
+    private static void newCluster(byte host, @NotNull VanillaAssetTree tree, String remoteHostname) {
         Clusters clusters = new Clusters();
         HashMap<String, HostDetails> hostDetailsMap = new HashMap<String, HostDetails>();
 

@@ -30,13 +30,12 @@ public class ReferenceHandler<E,T> extends AbstractHandler {
 
     private WireOutPublisher publisher;
     private Reference<E> view;
-    @Nullable
-    private Function<ValueIn, E> wireToE;
     private StringBuilder csp;
 
     private BiConsumer<ValueOut, E> vToWire;
-    final Map<Long, Object> tidToListener = new ConcurrentHashMap<>();
+    private final Map<Long, Object> tidToListener = new ConcurrentHashMap<>();
 
+    @Nullable
     private final BiConsumer<WireIn, Long> dataConsumer = new BiConsumer<WireIn, Long>() {
 
         @Override
@@ -154,7 +153,6 @@ public class ReferenceHandler<E,T> extends AbstractHandler {
                     final Object arg = wire.read(params[1]).object(Object.class);
                     outWire.writeEventName(reply).object(view.applyTo(function, arg));
                 });
-                return;
 
             });
         }
@@ -173,7 +171,7 @@ public class ReferenceHandler<E,T> extends AbstractHandler {
         this.outWire = outWire;
         this.publisher = publisher;
         this.view = view;
-        this.wireToE = wireAdapter.wireToValue();
+        Function<ValueIn, E> wireToE = wireAdapter.wireToValue();
         dataConsumer.accept(inWire, tid);
     }
 

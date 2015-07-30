@@ -12,6 +12,7 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -35,8 +36,10 @@ import static org.junit.Assert.assertNotNull;
 public class ReferenceTest {
     private static Boolean isRemote;
     private static final String NAME = "test";
+    @NotNull
     @Rule
     public TestName name = new TestName();
+    @NotNull
     WireType WIRE_TYPE = WireType.TEXT;
     VanillaAssetTree serverAssetTree;
     AssetTree assetTree;

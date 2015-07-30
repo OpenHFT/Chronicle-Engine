@@ -187,6 +187,7 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
     boolean containsValue(V value);
 
     interface Entry<K, V> {
+        @org.jetbrains.annotations.Nullable
         K key();
 
         @org.jetbrains.annotations.Nullable

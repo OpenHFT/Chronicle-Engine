@@ -35,13 +35,13 @@ import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.Even
 public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler.EventId> implements Reference<E> {
     private static final Logger LOG = LoggerFactory.getLogger(ReferenceHandler.class);
     private final Class<E> messageClass;
-    protected final Map<Object, Long> subscribersToTid = new ConcurrentHashMap<>();
+    private final Map<Object, Long> subscribersToTid = new ConcurrentHashMap<>();
 
-    public RemoteReference(RequestContext requestContext, Asset asset) {
+    public RemoteReference(@NotNull RequestContext requestContext, @NotNull Asset asset) {
         this(asset.findView(TcpChannelHub.class), requestContext.messageType(), asset.fullName());
     }
 
-    public RemoteReference(TcpChannelHub hub, Class<E> messageClass, String fullName)
+    public RemoteReference(@NotNull TcpChannelHub hub, Class<E> messageClass, String fullName)
             throws AssetNotFoundException {
         super(hub, (long) 0, toUri(fullName, messageClass));
 
@@ -63,11 +63,13 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
         sendEventAsync(set, valueOut -> valueOut.object(event), true);
     }
 
+    @Nullable
     @Override
     public E get() {
         return (E)proxyReturnTypedObject(get, null, messageClass, null);
     }
 
+    @Nullable
     @Override
     public E getAndSet(E e) {
         return (E)proxyReturnTypedObject(getAndSet, null, messageClass, e);
@@ -78,6 +80,7 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
         sendEventAsync(remove, null, true);
     }
 
+    @Nullable
     @Override
     public E getAndRemove() {
         return (E)proxyReturnTypedObject(getAndRemove, null, messageClass, null);
@@ -151,6 +154,7 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
             throw new NullPointerException("event can not be null");
     }
 
+    @Nullable
     @Override
     public <R> R applyTo(@NotNull SerializableFunction<E, R> function) {
         return applyTo((x, $) -> function.apply(x), null);
@@ -161,11 +165,13 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
         asyncUpdate((x, $) -> updateFunction.apply(x), null);
     }
 
+    @Nullable
     @Override
     public <R> R syncUpdate(@NotNull SerializableFunction<E, E> updateFunction, @NotNull SerializableFunction<E, R> returnFunction) {
         return syncUpdate((x, $) -> updateFunction.apply(x), null, (x, $) -> returnFunction.apply(x), null);
     }
 
+    @Nullable
     @Override
     public <T, R> R applyTo(@NotNull SerializableBiFunction<E, T, R> function, T argument) {
         return (R) super.proxyReturnTypedObject(applyTo2, null, Object.class, function, argument);
@@ -176,6 +182,7 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
         sendEventAsync(update2, toParameters(update2, updateFunction, argument), true);
     }
 
+    @Nullable
     @Override
     public <UT, RT, R> R syncUpdate(@NotNull SerializableBiFunction<E, UT, E> updateFunction, @Nullable UT updateArgument,
                                     @NotNull SerializableBiFunction<E, RT, R> returnFunction, @Nullable RT returnArgument) {

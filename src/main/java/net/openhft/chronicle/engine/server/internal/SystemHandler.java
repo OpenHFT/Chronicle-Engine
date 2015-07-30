@@ -41,10 +41,8 @@ public class SystemHandler extends AbstractHandler {
 
         writeData(inWire.bytes(), out -> {
 
-            if (EventId.heartbeat.contentEquals(eventName)) {
+            if (EventId.heartbeat.contentEquals(eventName))
                 outWire.write(EventId.heartbeatReply).int64(valueIn.int64());
-                return;
-            }
 
         });
     };
@@ -52,7 +50,7 @@ public class SystemHandler extends AbstractHandler {
     public enum EventId implements WireKey {
         heartbeat,
         heartbeatReply,
-        userid;
+        userid
     }
 
 }

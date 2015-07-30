@@ -26,6 +26,7 @@ import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.api.tree.Assetted;
 import net.openhft.chronicle.engine.api.tree.View;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
@@ -100,6 +101,7 @@ public interface MapView<K, MV, V> extends ConcurrentMap<K, V>,
      */
     Class<V> valueType();
 
+    @Nullable
     @Override
     default V apply(K k) {
         return get(k);

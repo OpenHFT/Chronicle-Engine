@@ -4,12 +4,16 @@ package net.openhft.chronicle.engine.api.management.mbean;
  * Created by pct25 on 6/24/2015.
  */
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import javax.management.*;
 import java.io.IOException;
 import java.util.*;
 
 public class AssetTreeDynamicMBean implements DynamicMBean {
 
+    @NotNull
     private final Properties properties;
     private final Map attributelist;
 
@@ -20,8 +24,7 @@ public class AssetTreeDynamicMBean implements DynamicMBean {
     }
 
 
-
-    public synchronized String getAttribute(String name) throws AttributeNotFoundException {
+    public synchronized String getAttribute(@NotNull String name) throws AttributeNotFoundException {
         String value = this.properties.getProperty(name);
         if (value != null) {
             return value;
@@ -29,7 +32,7 @@ public class AssetTreeDynamicMBean implements DynamicMBean {
         throw new AttributeNotFoundException("No such property: " + name);
     }
 
-    public synchronized void setAttribute(Attribute attribute) throws InvalidAttributeValueException, MBeanException, AttributeNotFoundException {
+    public synchronized void setAttribute(@NotNull Attribute attribute) throws InvalidAttributeValueException, MBeanException, AttributeNotFoundException {
         String name = attribute.getName();
         if (this.properties.getProperty(name) == null)
             throw new AttributeNotFoundException(name);
@@ -41,14 +44,15 @@ public class AssetTreeDynamicMBean implements DynamicMBean {
         this.properties.setProperty(name, (String) value);
     }
 
-    public void setAttribute(String name, String value) {
+    public void setAttribute(@NotNull String name, String value) {
         Attribute attribute = new Attribute(name, value);
         AttributeList list = new AttributeList();
         list.add(attribute);
         setAttributes(list);
     }
 
-    public synchronized AttributeList getAttributes(String[] names) {
+    @NotNull
+    public synchronized AttributeList getAttributes(@NotNull String[] names) {
         AttributeList list = new AttributeList();
         for (String name : names) {
             String value = this.properties.getProperty(name);
@@ -58,7 +62,8 @@ public class AssetTreeDynamicMBean implements DynamicMBean {
         return list;
     }
 
-    public synchronized AttributeList setAttributes(AttributeList list) {
+    @NotNull
+    public synchronized AttributeList setAttributes(@NotNull AttributeList list) {
         Attribute[] attrs = (Attribute[]) list.toArray(new Attribute[0]);
         AttributeList retlist = new AttributeList();
         for (Attribute attr : attrs) {
@@ -72,7 +77,8 @@ public class AssetTreeDynamicMBean implements DynamicMBean {
         return retlist;
     }
 
-    public Object invoke(String name, Object[] args, String[] sig) throws MBeanException, ReflectionException {
+    @Nullable
+    public Object invoke(@NotNull String name, @Nullable Object[] args, @Nullable String[] sig) throws MBeanException, ReflectionException {
         if ((name.equals("reload")) && ((args == null) || (args.length == 0)) && ((sig == null) || (sig.length == 0))) {
             try {
                 load();
@@ -84,6 +90,7 @@ public class AssetTreeDynamicMBean implements DynamicMBean {
         throw new ReflectionException(new NoSuchMethodException(name));
     }
 
+    @Nullable
     public synchronized MBeanInfo getMBeanInfo() {
         SortedSet names = new TreeSet();
         for (Iterator localIterator1 = this.properties.keySet().iterator(); localIterator1.hasNext();) {

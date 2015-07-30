@@ -29,11 +29,10 @@ import java.util.function.Function;
 public class RemoteSimpleSubscription<E> implements SimpleSubscription<E> {
     // TODO CE-101 pass to the server
     private final Reference<E> reference;
-    private final Function<Object, E> valueReader;
 
     public RemoteSimpleSubscription(Reference<E> reference, Function<Object, E> valueReader) {
         this.reference = reference;
-        this.valueReader = valueReader;
+
     }
 
     @Override
