@@ -19,14 +19,15 @@ package net.openhft.chronicle.engine.api.pubsub;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.api.tree.View;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * INternal API for manaing and monitoring subscriptions.
  */
 public interface Subscription<E> extends View, Closeable {
-    void registerSubscriber(RequestContext rc, Subscriber<E> subscriber);
+    void registerSubscriber(@NotNull RequestContext rc, @NotNull Subscriber<E> subscriber);
 
-    void unregisterSubscriber(Subscriber<E> subscriber);
+    void unregisterSubscriber(@NotNull Subscriber<E> subscriber);
 
     int keySubscriberCount();
 

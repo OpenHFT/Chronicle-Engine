@@ -41,7 +41,7 @@ public class RemoteSimpleSubscription<E> implements SimpleSubscription<E> {
     }
 
     @Override
-    public void unregisterSubscriber(Subscriber<E> subscriber) {
+    public void unregisterSubscriber(@NotNull Subscriber<E> subscriber) {
         reference.unregisterSubscriber(subscriber);
     }
 
