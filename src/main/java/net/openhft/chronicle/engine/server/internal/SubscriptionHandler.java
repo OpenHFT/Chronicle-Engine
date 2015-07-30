@@ -76,7 +76,8 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
             Subscriber<Object> listener = new LocalSubscriber(tid);
             tidToListener.put(tid, listener);
             RequestContext rc = requestContext.clone().type(subscriptionType);
-            assetTree.acquireSubscription(rc).registerSubscriber(rc, listener);
+            final Subscription subscription = assetTree.acquireSubscription(rc);
+            subscription.registerSubscriber(rc, listener);
 
             return true;
         }

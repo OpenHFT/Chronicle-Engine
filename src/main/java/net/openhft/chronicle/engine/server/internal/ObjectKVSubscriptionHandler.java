@@ -33,7 +33,7 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscriptio
         final ValueIn valueIn = inWire.readEventName(eventName);
 
         if (registerTopicSubscriber.contentEquals(eventName)) {
-            if(tidToListener.containsKey(tid)){
+            if (tidToListener.containsKey(tid)) {
                 LOG.info("Duplicate topic registration for tid " + tid);
                 return;
             }
@@ -42,8 +42,7 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscriptio
                 @Override
                 public void onMessage(final Object topic, final Object message) throws InvalidSubscriberException {
                     Consumer<WireOut> toPublish = publish -> {
-                        publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
-                                (inputTid));
+                        publish.writeDocument(true, wire -> wire.writeEventName(tid).int64(inputTid));
                         publish.writeNotReadyDocument(false, wire -> wire.writeEventName(reply)
                                 .marshallable(m -> {
                                     m.write(() -> "topic").object(topic);
