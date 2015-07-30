@@ -102,6 +102,10 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscriptio
 
     };
 
+    public ObjectKVSubscriptionHandler(final Throttler throttler) {
+        super(throttler);
+    }
+
     void process(@NotNull final WireIn inWire,
                  final RequestContext requestContext,
                  final WireOutPublisher publisher,

@@ -124,11 +124,12 @@ public class EngineWireHandler extends WireTcpHandler {
     private final EventLoop eventLoop;
 
     public EngineWireHandler(@NotNull final WireType byteToWire,
-                             @NotNull final AssetTree assetTree) {
+                             @NotNull final AssetTree assetTree,
+                             @NotNull final Throttler throttler) {
         super(byteToWire);
-        WireType byteToWire1 = byteToWire;
         this.sessionProvider = assetTree.root().getView(SessionProvider.class);
         this.eventLoop = assetTree.root().findOrCreateView(EventLoop.class);
+        assert eventLoop != null;
         try {
             this.eventLoop.start();
         } catch (RejectedExecutionException e) {
@@ -141,8 +142,8 @@ public class EngineWireHandler extends WireTcpHandler {
         this.keySetHandler = new CollectionWireHandler();
         this.entrySetHandler = new CollectionWireHandler();
         this.valuesHandler = new CollectionWireHandler();
-        this.subscriptionHandler = new ObjectKVSubscriptionHandler();
-        this.topologySubscriptionHandler = new TopologySubscriptionHandler();
+        this.subscriptionHandler = new ObjectKVSubscriptionHandler(throttler);
+        this.topologySubscriptionHandler = new TopologySubscriptionHandler(throttler);
         this.topicPublisherHandler = new TopicPublisherHandler();
         this.publisherHandler = new PublisherHandler();
         this.referenceHandler = new ReferenceHandler();
@@ -249,7 +250,7 @@ public class EngineWireHandler extends WireTcpHandler {
                     LOG.debug("received data:\n" + wire.bytes().toHexString());
 
                 if (sessionProvider != null)
-                sessionProvider.set(sessionDetails);
+                    sessionProvider.set(sessionDetails);
 
                 if (isSystemMessage) {
                     systemHandler.process(in, out, tid, sessionDetails);
@@ -336,7 +337,7 @@ public class EngineWireHandler extends WireTcpHandler {
                 LOG.error("", e);
             } finally {
                 if (sessionProvider != null)
-                sessionProvider.remove();
+                    sessionProvider.remove();
             }
         });
     }

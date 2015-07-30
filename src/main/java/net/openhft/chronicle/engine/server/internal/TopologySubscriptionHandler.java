@@ -45,6 +45,10 @@ public class TopologySubscriptionHandler extends SubscriptionHandler<TopologySub
         });
     };
 
+    public TopologySubscriptionHandler(final Throttler throttler) {
+        super(throttler);
+    }
+
     void process(@NotNull final WireIn inWire,
                  final RequestContext requestContext,
                  final WireOutPublisher publisher,

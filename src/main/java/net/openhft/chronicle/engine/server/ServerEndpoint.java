@@ -19,6 +19,7 @@ import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
+import net.openhft.chronicle.engine.server.internal.Throttler;
 import net.openhft.chronicle.network.AcceptorEventHandler;
 import net.openhft.chronicle.network.VanillaSessionDetails;
 import net.openhft.chronicle.threads.Threads;
@@ -39,6 +40,7 @@ import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
  */
 public class ServerEndpoint implements Closeable {
 
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ChronicleMapKeyValueStore.class);
     @Nullable
     private final EventLoop eg;
@@ -46,6 +48,8 @@ public class ServerEndpoint implements Closeable {
     private AcceptorEventHandler eah;
     @NotNull
     private final AtomicBoolean isClosed = new AtomicBoolean();
+
+    private final int maxEventsPreSecond = Integer.getInteger("Throttler.maxEventsPreSecond", 1000);
 
     public ServerEndpoint(String hostPortDescription, @NotNull AssetTree assetTree, @NotNull WireType wire) throws IOException {
         eg = assetTree.root().acquireView(EventLoop.class);
@@ -56,12 +60,24 @@ public class ServerEndpoint implements Closeable {
     }
 
     @Nullable
-    private AcceptorEventHandler start(String hostPortDescription, @NotNull final AssetTree asset, @NotNull WireType wireType) throws IOException {
+    private AcceptorEventHandler start(@NotNull String hostPortDescription,
+                                       @NotNull final AssetTree asset,
+                                       @NotNull WireType wireType) throws IOException {
+        assert eg != null;
+
         eg.start();
         if (LOGGER.isDebugEnabled())
             LOGGER.info("starting server=" + hostPortDescription);
-        AcceptorEventHandler eah = new AcceptorEventHandler(hostPortDescription,
-                () -> new EngineWireHandler(wireType, asset), VanillaSessionDetails::new);
+
+        final EventLoop eventLoop = asset.root().findOrCreateView(EventLoop.class);
+        assert eventLoop != null;
+
+        final AcceptorEventHandler eah = new AcceptorEventHandler(hostPortDescription,
+                () -> {
+                    final Throttler throttler = new Throttler(eventLoop, maxEventsPreSecond);
+                    return new EngineWireHandler(wireType, asset, throttler);
+                },
+                VanillaSessionDetails::new);
 
         eg.addHandler(eah);
         this.eah = eah;
