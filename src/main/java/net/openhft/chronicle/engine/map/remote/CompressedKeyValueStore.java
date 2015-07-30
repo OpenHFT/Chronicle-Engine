@@ -12,6 +12,7 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.map.KVSSubscription;
 import net.openhft.chronicle.engine.map.ObjectKeyValueStore;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xerial.snappy.Snappy;
 
@@ -20,15 +21,15 @@ import java.io.IOException;
 /**
  * Created by daniel on 28/07/2015.
  */
-public class CompressedKeyValueStore<K> implements ObjectKeyValueStore<K,String, String> {
+public class CompressedKeyValueStore<K> implements ObjectKeyValueStore<K, String, String> {
     private KeyValueStore<K, Bytes, BytesStore> remoteKeyValueStore;
 
-    public CompressedKeyValueStore(RequestContext requestContext, Asset asset) {
+    public CompressedKeyValueStore(@NotNull RequestContext requestContext, @NotNull Asset asset) {
         remoteKeyValueStore = new RemoteKeyValueStore(requestContext, asset, asset.findView(TcpChannelHub.class));
     }
 
-    public CompressedKeyValueStore(RequestContext requestContext, Asset asset,
-                                   KeyValueStore<K, Bytes, BytesStore> kvStore) {
+    public CompressedKeyValueStore(@NotNull RequestContext requestContext, @NotNull Asset asset,
+                                   @NotNull KeyValueStore<K, Bytes, BytesStore> kvStore) {
         this.remoteKeyValueStore = kvStore;
     }
 
@@ -54,28 +55,27 @@ public class CompressedKeyValueStore<K> implements ObjectKeyValueStore<K,String,
     @Nullable
     @Override
     public String getAndPut(K key, String value) {
-            //Compress V
-            System.out.println("Value " + value);
+        //Compress V
+        System.out.println("Value " + value);
 
-            try {
-                byte[] cbytes = Snappy.compress(value);
+        try {
+            byte[] cbytes = Snappy.compress(value);
 
-                BytesStore bs = Bytes.wrapForRead(cbytes);
-                BytesStore ret = remoteKeyValueStore.getAndPut(key, bs);
-                if(ret==null)return null;
-                byte[] rbytes = new byte[(int)ret.readRemaining()];
-                ret.copyTo(rbytes);
-                System.out.println("c->" + Bytes.wrapForRead(cbytes).toHexString());
-                System.out.println("r->" + Bytes.wrapForRead(rbytes).toHexString());
-                String r =  Snappy.uncompressString(rbytes);
-                System.out.println("**" + r);
-                return r;
+            BytesStore bs = Bytes.wrapForRead(cbytes);
+            BytesStore ret = remoteKeyValueStore.getAndPut(key, bs);
+            if (ret == null) return null;
+            byte[] rbytes = new byte[(int) ret.readRemaining()];
+            ret.copyTo(rbytes);
+            System.out.println("c->" + Bytes.wrapForRead(cbytes).toHexString());
+            System.out.println("r->" + Bytes.wrapForRead(rbytes).toHexString());
+            String r = Snappy.uncompressString(rbytes);
+            System.out.println("**" + r);
+            return r;
 
 
-
-            } catch (IOException e) {
-                throw new AssertionError(e);
-            }
+        } catch (IOException e) {
+            throw new AssertionError(e);
+        }
 
 //        try {
 //

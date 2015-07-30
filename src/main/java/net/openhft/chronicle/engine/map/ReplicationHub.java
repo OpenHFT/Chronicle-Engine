@@ -118,6 +118,7 @@ class ReplicationHub extends AbstractStatelessClient implements View {
      */
     private void onConnected(final byte localIdentifier, byte remoteIdentifier, @NotNull EngineReplication replication) {
         final ModificationIterator mi = replication.acquireModificationIterator(remoteIdentifier);
+        assert mi != null;
         final long lastModificationTime = replication.lastModificationTime(remoteIdentifier);
 
         final Bootstrap bootstrap = new Bootstrap();
@@ -225,6 +226,7 @@ class ReplicationHub extends AbstractStatelessClient implements View {
             public void onConsumer(@NotNull final WireIn d) {
 
                 // receives the replication events and applies them
+                //noinspection ConstantConditions
                 d.readDocument(null, w -> replication.applyReplication(
                         w.read(replicationEvent).typedMarshallable()));
             }

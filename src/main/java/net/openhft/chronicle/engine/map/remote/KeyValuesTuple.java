@@ -30,15 +30,12 @@ public class KeyValuesTuple implements Marshallable {
     Object value;
 
     KeyValuesTuple(@NotNull Object key, @NotNull Object oldValue, @NotNull Object value) {
-        assert key != null;
-        assert oldValue != null;
-        assert value != null;
-        
         this.key = key;
         this.oldValue = oldValue;
         this.value = value;
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         wire.read(() -> "key").object(Object.class, o -> key = o)

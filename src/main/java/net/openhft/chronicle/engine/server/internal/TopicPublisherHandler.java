@@ -35,6 +35,8 @@ public class TopicPublisherHandler<T, M> extends AbstractHandler {
 
         @Override
         public void accept(@NotNull final WireIn inWire, Long inputTid) {
+            assert wireToT != null;
+            assert wireToM != null;
 
             eventName.setLength(0);
             final ValueIn valueIn = inWire.readEventName(eventName);
@@ -88,6 +90,7 @@ public class TopicPublisherHandler<T, M> extends AbstractHandler {
         }
     };
 
+    @SuppressWarnings("unchecked")
     void process(@NotNull final WireIn inWire,
                  final WireOutPublisher publisher,
                  final long tid,

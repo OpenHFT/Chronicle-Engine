@@ -138,6 +138,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
             chronicleMap = builder.create();
         else {
             String pathname = basePath + "/" + context.name();
+            //noinspection ResultOfMethodCallIgnored
             new File(basePath).mkdirs();
             try {
                 chronicleMap = builder.createPersistedTo(new File(pathname));

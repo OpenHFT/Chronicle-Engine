@@ -76,6 +76,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
     private long tid;
     private final BiConsumer<WireIn, Long> dataConsumer = new BiConsumer<WireIn, Long>() {
 
+        @SuppressWarnings("ConstantConditions")
         @Override
         public void accept(WireIn wireIn, Long inputTid) {
 

@@ -168,6 +168,7 @@ public class CollectionWireHandler<U, C extends Collection<U>> {
 
     private C collectionFromWire() {
         C c = factory.get();
+        @SuppressWarnings("ConstantConditions")
         final ValueIn valueIn = ((Wire) outWire).getValueIn();
         while (valueIn.hasNextSequenceItem()) {
             c.add(fromWire.apply(valueIn));
@@ -175,10 +176,10 @@ public class CollectionWireHandler<U, C extends Collection<U>> {
         return c;
     }
 
+    @SuppressWarnings("unchecked")
     public void process(@NotNull WireIn in,
                         @NotNull WireOut out,
                         @NotNull C collection,
-                        @NotNull CharSequence csp,
                         @NotNull BiConsumer toWire,
                         @NotNull Function fromWire,
                         @NotNull Supplier factory,

@@ -218,7 +218,7 @@ public enum ManagementTools {
 
     private static void handleAssetUpdate(@NotNull ObjectKeyValueStore view, ObjectName atName, @NotNull ObjectKVSSubscription objectKVSSubscription, String path) {
         try {
-            if (mbs.isRegistered(atName)) {
+            if (mbs != null && mbs.isRegistered(atName)) {
                 /*AttributeList list = new AttributeList();
                 list.add(new Attribute("Size",view.longSize()));
                 list.add(new Attribute("Entries",getMapAsString(view)));
@@ -279,7 +279,7 @@ public enum ManagementTools {
 
     private static void registerTreeWithMBean(AssetTreeDynamicMBean atBean, ObjectName atName) {
         try {
-            if (!mbs.isRegistered(atName)) {
+            if (mbs != null && !mbs.isRegistered(atName)) {
                 mbs.registerMBean(atBean, atName);
             }
         } catch (@NotNull InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException e) {
@@ -289,7 +289,7 @@ public enum ManagementTools {
 
     private static void unregisterTreeWithMBean(ObjectName atName) {
         try {
-            if (mbs.isRegistered(atName)) {
+            if (mbs != null && mbs.isRegistered(atName)) {
                 mbs.unregisterMBean(atName);
             }
         } catch (@NotNull InstanceNotFoundException | MBeanRegistrationException e) {

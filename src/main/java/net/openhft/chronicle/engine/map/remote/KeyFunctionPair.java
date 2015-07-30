@@ -27,7 +27,10 @@ import java.io.Serializable;
  * Created by peter on 07/07/15.
  */
 public class KeyFunctionPair implements Marshallable {
+    @NotNull
     Object key;
+
+    @NotNull
     Object function;
 
     KeyFunctionPair(Object key, @NotNull Object function) {
@@ -36,6 +39,7 @@ public class KeyFunctionPair implements Marshallable {
         this.function = function;
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         wire.read(() -> "key").object(Object.class, o -> key = o)

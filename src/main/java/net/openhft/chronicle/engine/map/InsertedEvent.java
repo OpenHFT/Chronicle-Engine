@@ -34,12 +34,12 @@ import java.util.function.Function;
  */
 public class InsertedEvent<K, V> implements MapEvent<K, V> {
     private String assetName;
-    @Nullable
+    @NotNull
     private K key;
-    @Nullable
+    @NotNull
     private V value;
 
-    private InsertedEvent(String assetName, K key, V value) {
+    private InsertedEvent(String assetName, @NotNull K key, @NotNull V value) {
         this.assetName = assetName;
         this.key = key;
         this.value = value;

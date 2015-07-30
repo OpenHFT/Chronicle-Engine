@@ -72,20 +72,22 @@ class GenericWireAdapter<K, V> implements WireAdapter<K, V> {
             = (v, e) -> v.marshallable(w -> w.write(() -> "key").object(e.getKey())
             .write(() -> "value").object(e.getValue()));
 
+    @NotNull
     public BiConsumer<ValueOut, K> keyToWire() {
         return keyToWire;
     }
 
-    @Nullable
+    @NotNull
     public Function<ValueIn, K> wireToKey() {
         return wireToKey;
     }
 
+    @NotNull
     public BiConsumer<ValueOut, V> valueToWire() {
         return valueToWire;
     }
 
-    @Nullable
+    @NotNull
     public Function<ValueIn, V> wireToValue() {
         return wireToValue;
     }

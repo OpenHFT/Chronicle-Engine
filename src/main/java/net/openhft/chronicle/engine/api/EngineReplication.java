@@ -50,7 +50,9 @@ public interface EngineReplication extends Replication {
 
     default void forEach(byte remoteIdentifier, @NotNull Consumer<ReplicationEntry> consumer) throws
             InterruptedException {
-        acquireModificationIterator(remoteIdentifier).forEach(consumer);
+        final ModificationIterator modificationIterator = acquireModificationIterator(remoteIdentifier);
+        if (modificationIterator != null)
+            modificationIterator.forEach(consumer);
     }
 
     /**

@@ -617,6 +617,7 @@ public class TcpChannelHub implements View, Closeable {
             }
         }
 
+        @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
         public void onConnectionClosed() {
             map.values().forEach(v -> {
                 if (v instanceof Bytes)
@@ -626,7 +627,6 @@ public class TcpChannelHub implements View, Closeable {
                 if (v instanceof AsyncSubscription) {
                     ((AsyncSubscription) v).onClose();
                 } else if (v instanceof Bytes) {
-                    //noinspection SynchronizationOnLocalVariableOrMethodParameter
                     synchronized (v) {
                         v.notifyAll();
                     }

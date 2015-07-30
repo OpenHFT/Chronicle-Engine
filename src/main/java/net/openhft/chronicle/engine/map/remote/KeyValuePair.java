@@ -33,6 +33,7 @@ public class KeyValuePair implements Marshallable {
         this.value = value;
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         wire.read(() -> "key").object(Object.class, o -> key = o)

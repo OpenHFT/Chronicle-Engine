@@ -127,25 +127,28 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
     }
 
     /**
-     * use to retry once when the connection is dropped to the remote server if the conneciton is
-     * dropped the TcpChannelHub will automactically failover ( if configured )
+     * this method will re attempt a number of times until successfull,if connection is dropped to
+     * the  remote server the TcpChannelHub may ( if configured )  automatically failover to another
+     * host.
      *
      * @param s   the supply
      * @param <T> the type of supply
      * @return the result for s.get()
      */
-    protected <T> T tryTwice(Supplier<T> s) {
-        try {
-            return s.get();
-        } catch (ConnectionDroppedException e) {
-            // this can occur if the socket connect is dropped
+    protected <T> T attempt(Supplier<T> s) {
 
+        ConnectionDroppedException t = null;
+        for (int i = 0; i < 10; i++) {
             // pause then resend the request
-            Jvm.pause(1000);
-
-            // by this time, the TcpChannelHub should have reconnected to another server
-            return s.get();
+            Jvm.pause(200);
+            try {
+                return s.get();
+            } catch (ConnectionDroppedException e) {
+                t = e;
+            }
         }
+
+        throw t;
     }
 
     @SuppressWarnings("SameParameterValue")
@@ -173,7 +176,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
     protected <T> T proxyReturnWireConsumer(@NotNull final WireKey eventId,
                                             @NotNull final Function<ValueIn, T> consumer) {
         final long startTime = Time.currentTimeMillis();
-        return tryTwice(() -> readWire(sendEvent(startTime, eventId, null), startTime, CoreFields
+        return attempt(() -> readWire(sendEvent(startTime, eventId, null), startTime, CoreFields
                 .reply, consumer));
     }
 
@@ -182,7 +185,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
                                                  @Nullable final Consumer<ValueOut> consumerOut,
                                                  @NotNull final Function<ValueIn, T> consumerIn) {
         final long startTime = Time.currentTimeMillis();
-        return tryTwice(() -> readWire(sendEvent(startTime, eventId, consumerOut), startTime,
+        return attempt(() -> readWire(sendEvent(startTime, eventId, consumerOut), startTime,
                 reply, consumerIn));
     }
 
@@ -191,7 +194,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
                                  @Nullable final Consumer<ValueOut> consumer) {
         final long startTime = Time.currentTimeMillis();
 
-        tryTwice(() -> readWire(sendEvent(startTime, eventId, consumer), startTime, CoreFields
+        attempt(() -> readWire(sendEvent(startTime, eventId, consumer), startTime, CoreFields
                 .reply, v -> v.marshallable(ReadMarshallable.DISCARD)));
     }
 
@@ -336,7 +339,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
             @NotNull final E eventId,
             @NotNull final Object... args) {
         final long startTime = Time.currentTimeMillis();
-        return tryTwice(() -> readBoolean(sendEvent(startTime, eventId, toParameters(eventId, args)
+        return attempt(() -> readBoolean(sendEvent(startTime, eventId, toParameters(eventId, args)
         ), startTime));
     }
 
@@ -344,14 +347,14 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
             @NotNull final E eventId,
             @NotNull final Collection sequence) {
         final long startTime = Time.currentTimeMillis();
-        return tryTwice(() -> readBoolean(sendEvent(startTime, eventId, out -> sequence.forEach
+        return attempt(() -> readBoolean(sendEvent(startTime, eventId, out -> sequence.forEach
                 (out::object)), startTime));
     }
 
     @SuppressWarnings("SameParameterValue")
     protected boolean proxyReturnBoolean(@NotNull final WireKey eventId) {
         final long startTime = Time.currentTimeMillis();
-        return tryTwice(() -> readBoolean(sendEvent(startTime, eventId, null), startTime));
+        return attempt(() -> readBoolean(sendEvent(startTime, eventId, null), startTime));
     }
 
     private <T> T readWire(long tid, long startTime, @NotNull WireKey reply, @NotNull Function<ValueIn, T> c) throws ConnectionDroppedException {

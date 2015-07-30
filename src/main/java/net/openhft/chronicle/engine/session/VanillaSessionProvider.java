@@ -38,7 +38,7 @@ public class VanillaSessionProvider implements SessionProvider, View {
     }
 
     @Override
-    public void set(SessionDetails sessionDetails) {
+    public void set(@NotNull SessionDetails sessionDetails) {
         this.sessionDetails.set(sessionDetails);
     }
 

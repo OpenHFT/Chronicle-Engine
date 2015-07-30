@@ -7,7 +7,6 @@ import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireKey;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiConsumer;
 
@@ -26,7 +25,7 @@ public class SystemHandler extends AbstractHandler {
         dataConsumer.accept(inWire, tid);
     }
 
-    @Nullable
+    @NotNull
     private final BiConsumer<WireIn, Long> dataConsumer = (inWire, tid) -> {
 
         eventName.setLength(0);
@@ -37,6 +36,7 @@ public class SystemHandler extends AbstractHandler {
             return;
         }
 
+        //noinspection ConstantConditions
         outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
 
         writeData(inWire.bytes(), out -> {

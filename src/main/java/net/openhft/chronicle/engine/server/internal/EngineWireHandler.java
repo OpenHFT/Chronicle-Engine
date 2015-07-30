@@ -266,21 +266,21 @@ public class EngineWireHandler extends WireTcpHandler {
                     }
 
                     if (viewType == EntrySetView.class) {
-                        entrySetHandler.process(in, out, (EntrySetView) view, cspText,
+                        entrySetHandler.process(in, out, (EntrySetView) view,
                                 wireAdapter.entryToWire(),
                                 wireAdapter.wireToEntry(), HashSet::new, tid);
                         return;
                     }
 
                     if (viewType == KeySetView.class) {
-                        keySetHandler.process(in, out, (KeySetView) view, cspText,
+                        keySetHandler.process(in, out, (KeySetView) view,
                                 wireAdapter.keyToWire(),
                                 wireAdapter.wireToKey(), HashSet::new, tid);
                         return;
                     }
 
                     if (viewType == ValuesCollection.class) {
-                        valuesHandler.process(in, out, (ValuesCollection) view, cspText,
+                        valuesHandler.process(in, out, (ValuesCollection) view,
                                 wireAdapter.keyToWire(),
                                 wireAdapter.wireToKey(), ArrayList::new, tid);
                         return;

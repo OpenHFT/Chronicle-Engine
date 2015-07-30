@@ -35,6 +35,7 @@ public class KeyValueFunctionTuple implements Marshallable {
         this.function = function;
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         wire.read(() -> "key").object(Object.class, o -> key = o)

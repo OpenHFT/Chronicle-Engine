@@ -48,7 +48,8 @@ public class ReplicationHandler<E> extends AbstractHandler {
                 // receive bootstrap
                 final byte id = valueIn.int8();
                 final ModificationIterator mi = replication.acquireModificationIterator(id);
-
+                if (mi == null)
+                    return;
                 // sends replication events back to the remote client
                 mi.setModificationNotifier(eventLoop::unpause);
 
