@@ -86,9 +86,13 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
         this.asset = asset;
         this.assetFullName = asset.fullName();
         this.subscriptions = asset.acquireView(ObjectKVSSubscription.class, context);
+
         this.subscriptions.setKvStore(this);
         this.eventLoop = asset.findOrCreateView(EventLoop.class);
+        assert eventLoop != null;
+
         this.putReturnsNull = context.putReturnsNull() != Boolean.FALSE;
+
         eventLoop.start();
 
         ChronicleMapBuilder<K, V> builder = ChronicleMapBuilder.of(context.keyType(), context.valueType());
@@ -101,6 +105,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
                     (EngineReplicationLangBytesConsumer.class);
 
             hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
+            assert hostIdentifier != null;
             builder.putReturnsNull(context.putReturnsNull() != Boolean.FALSE)
                     .removeReturnsNull(context.removeReturnsNull() != Boolean.FALSE);
             builder.replication(builder().engineReplication(langBytesConsumer)
@@ -292,6 +297,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
     @Override
     public void close() {
         isClosed.set(true);
+        assert eventLoop != null;
         eventLoop.stop();
         closeQuietly(asset.findView(TcpChannelHub.class));
         DELAYED_CLOSER.schedule(() -> Closeable.closeQuietly(chronicleMap), 1, TimeUnit.SECONDS);
@@ -299,7 +305,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
 
     @Override
     public void accept(@NotNull final ReplicationEntry replicationEntry) {
-        if (!isClosed.get())
+        if (!isClosed.get() && engineReplicator != null)
             engineReplicator.applyReplication(replicationEntry);
         else
             LOG.warn("message skipped as closed replicationEntry=" + replicationEntry);
