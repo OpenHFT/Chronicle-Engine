@@ -648,7 +648,7 @@ public class TcpChannelHub implements View, Closeable {
 
             //noinspection SynchronizationOnLocalVariableOrMethodParameter
             synchronized (bytes) {
-                System.out.println("tid=" + tid + " of client request");
+                //System.out.println("tid=" + tid + " of client request");
                 bytes.clear();
                 map.put(tid, bytes);
                 do {
