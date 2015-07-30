@@ -82,7 +82,7 @@ public class TcpManyClientConnectionsTest extends ThreadMonitoringTest {
     }
 
     private void shutdownTrees() {
-        ArrayList<Future> futures = new ArrayList<>();
+        final ArrayList<Future> futures = new ArrayList<>();
 
         ExecutorService c = Executors.newCachedThreadPool(new NamedThreadFactory("Tree Closer",
                 true));
