@@ -1,5 +1,7 @@
 package net.openhft.chronicle.engine.server.internal;
 
+import net.openhft.chronicle.engine.api.map.KeyValueStore;
+import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.Subscription;
@@ -28,6 +30,14 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
 
     final StringBuilder eventName = new StringBuilder();
     final Map<Long, Object> tidToListener = new ConcurrentHashMap<>();
+
+
+    final Throttler throttler;
+
+    public SubscriptionHandler(@NotNull final Throttler throttler) {
+        this.throttler = throttler;
+    }
+
     Wire outWire;
     T subscription;
     RequestContext requestContext;
@@ -69,7 +79,7 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
     boolean before(Long tid, @NotNull ValueIn valueIn) throws AssetNotFoundException {
         if (registerSubscriber.contentEquals(eventName)) {
             Class subscriptionType = valueIn.typeLiteral();
-            if(tidToListener.containsKey(tid)){
+            if (tidToListener.containsKey(tid)) {
                 LOG.info("Duplicate registration for tid " + tid);
                 return true;
             }
@@ -123,11 +133,24 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
 
         @Override
         public void onMessage(Object e) throws InvalidSubscriberException {
-            Consumer<WireOut> toPublish = publish -> {
-                publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(tid));
-                publish.writeNotReadyDocument(false, wire -> wire.write(reply).object(e));
+
+            Runnable r = () -> {
+                Consumer<WireOut> toPublish = publish -> {
+                    publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(tid));
+                    publish.writeNotReadyDocument(false, wire -> wire.write(reply).object(e));
+                };
+                publisher.add(toPublish);
             };
-            publisher.add(toPublish);
+
+
+            final Class eClass = e.getClass();
+
+            if (eClass == KeyValueStore.Entry.class || eClass == MapEvent.class)
+                r.run();
+            else
+                // key subscription
+                throttler.add(r);
+
         }
 
         @Override

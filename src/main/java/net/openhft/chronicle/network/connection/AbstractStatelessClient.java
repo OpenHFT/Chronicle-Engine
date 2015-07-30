@@ -116,13 +116,13 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
     public <T> T tryTwice(Supplier<T> s) {
         try {
             return s.get();
-        } catch (ConnectionDroppedException e) {
+        } catch (Exception e) {
+            // this can occur if the socket connect is dropped
 
             // pause then resend the request
             Jvm.pause(1000);
 
             // by this time, the TcpChannelHub should have reconnected to another server
-
             return s.get();
         }
     }

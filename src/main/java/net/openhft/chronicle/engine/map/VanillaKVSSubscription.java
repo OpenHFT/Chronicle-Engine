@@ -177,18 +177,9 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
                     subscribers.remove(subscriber);
                 }
             }
-        } else {
-            Subscriber<K> sub = (Subscriber<K>) subscriber;
-            keySubscribers.add(sub);
-            if (bootstrap != Boolean.FALSE && kvStore != null) {
-                try {
-                    for (int i = 0; i < kvStore.segments(); i++)
-                        kvStore.keysFor(i, sub::onMessage);
-                } catch (InvalidSubscriberException e) {
-                    subscribers.remove(subscriber);
-                }
-            }
-        }
+        } else
+            registerKeySubscriber(rc, subscriber);
+
         hasSubscribers = true;
     }
 

@@ -584,6 +584,7 @@ public class TcpChannelHub implements View, Closeable {
         @Nullable
         private volatile Throwable shutdownHere = null;
 
+
         /**
          * @param wireFunction converts bytes into wire, ie TextWire or BinaryWire
          */
