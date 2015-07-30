@@ -26,9 +26,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.BiPredicate;
 
 /**
- * An Asset is a point on an AssetTree.  An Asset can not only have any number of Children it has multiple views depending on how you want to access the data.
- * <p></p>
- * A single asset can have a MapView, EntrySetView, KeySetView, ValuesCollection, Subscription, TopicPublisher. A Map may be viewed in terms of the objects it holds e.g. String or Marshallable or the raw data i.e. as a BytesStore.
+ * An Asset is a point on an AssetTree.  An Asset can not only have any number of Children it has
+ * multiple views depending on how you want to access the data. <p></p> A single asset can have a
+ * MapView, EntrySetView, KeySetView, ValuesCollection, Subscription, TopicPublisher. A Map may be
+ * viewed in terms of the objects it holds e.g. String or Marshallable or the raw data i.e. as a
+ * BytesStore.
  */
 public interface Asset extends Closeable {
     /**
@@ -56,11 +58,13 @@ public interface Asset extends Closeable {
     }
 
     /**
-     * Obtain the default subscription view. If there is more than one this will be the object subscription view.
+     * Obtain the default subscription view. If there is more than one this will be the object
+     * subscription view.
      *
      * @param createIfAbsent create one if it doesn't exist.
      * @return the Subscription
-     * @throws AssetNotFoundException if the Subscription doesn't exist and the tree is not able to create the Subscription.
+     * @throws AssetNotFoundException if the Subscription doesn't exist and the tree is not able to
+     *                                create the Subscription.
      */
     Subscription subscription(boolean createIfAbsent) throws AssetNotFoundException;
 
@@ -129,7 +133,9 @@ public interface Asset extends Closeable {
     }
 
     /**
-     * Search up the tree for a view of viewType.  If one doesn't exist find a factory and add it to the asset the factory is associated with.  This view can then be shared for the Assets under the Asset where the factory is defined.
+     * Search up the tree for a view of viewType.  If one doesn't exist find a factory and add it to
+     * the asset the factory is associated with.  This view can then be shared for the Assets under
+     * the Asset where the factory is defined.
      *
      * @param viewType to obtain.
      * @return the view it could be created
@@ -171,11 +177,13 @@ public interface Asset extends Closeable {
     void removeChild(String name);
 
     /**
-     * Get or create a view based on a RequestContext.  First it looks for a matching viewType(). If found this is returned.
+     * Get or create a view based on a RequestContext.  First it looks for a matching viewType(). If
+     * found this is returned.
      *
      * @param requestContext to use in the construction of the view
      * @return the View obtained.
-     * @throws AssetNotFoundException if the Asset could not be created. This can happen if a required rule is not provided.
+     * @throws AssetNotFoundException if the Asset could not be created. This can happen if a
+     *                                required rule is not provided.
      */
     @NotNull
     default <V> V acquireView(@NotNull RequestContext requestContext) throws AssetNotFoundException {
@@ -183,24 +191,28 @@ public interface Asset extends Closeable {
     }
 
     /**
-     * Get or create a view based on a RequestContext.  First it looks for a matching viewType(). If found this is returned.
-     * The viewType given overrides the type provided in the RequestContext.
+     * Get or create a view based on a RequestContext.  First it looks for a matching viewType(). If
+     * found this is returned. The viewType given overrides the type provided in the
+     * RequestContext.
      *
      * @param viewType       to obtain.
      * @param requestContext to use in the construction of the view
      * @return the View obtained.
-     * @throws AssetNotFoundException if the Asset could not be created. This can happen if a required rule is not provided.
+     * @throws AssetNotFoundException if the Asset could not be created. This can happen if a
+     *                                required rule is not provided.
      */
     @NotNull
     <V> V acquireView(Class<V> viewType, RequestContext requestContext) throws AssetNotFoundException;
 
     /**
-     * Get or create a view with out a RequestContext.  First it looks for a matching viewType(). If found this is returned.
-     * The viewType given overrides the type provided in the RequestContext.
+     * Get or create a view with out a RequestContext.  First it looks for a matching viewType(). If
+     * found this is returned. The viewType given overrides the type provided in the
+     * RequestContext.
      *
      * @param viewType to obtain.
      * @return the View obtained.
-     * @throws AssetNotFoundException if the Asset could not be created. This can happen if a required rule is not provided.
+     * @throws AssetNotFoundException if the Asset could not be created. This can happen if a
+     *                                required rule is not provided.
      */
     @NotNull
     default <V> V acquireView(Class<V> viewType) {
@@ -225,9 +237,11 @@ public interface Asset extends Closeable {
     <V> void registerView(Class<V> viewType, V view);
 
     /**
-     * Add a rule or factory for creating view on demand.  A Leaf rule doesn't need any view to exist before you create it.  This can be used for building the fundamental data structure which represents this Asset.
-     * <p></p>
-     * If two rules with the same description are provided, the new factory will replace the old.  At present, any new factory replaces the old one, however in the future we may support multiple factories.
+     * Add a rule or factory for creating view on demand.  A Leaf rule doesn't need any view to
+     * exist before you create it.  This can be used for building the fundamental data structure
+     * which represents this Asset. <p></p> If two rules with the same description are provided, the
+     * new factory will replace the old.  At present, any new factory replaces the old one, however
+     * in the future we may support multiple factories.
      *
      * @param viewType    interface to associate this factory with.
      * @param description of the factory
@@ -236,36 +250,43 @@ public interface Asset extends Closeable {
     <V> void addLeafRule(Class<V> viewType, String description, LeafViewFactory<V> factory);
 
     /**
-     * Add a rule or factory for creating views on demand.  A Wrapping Rule need an underlying view to wrap before it can be created. This can be used for laying functionality on existing views.
-     * <p></p>
-     * If two rules with the same description are provided, the new factory replaces the old one. <b>Note:</b> if rules with different descriptions are provided, they are called in ASCIIbetical order of the description.
-     * <p></p>
-     * If a factory returns null, a later factory will be called.
+     * Add a rule or factory for creating views on demand.  A Wrapping Rule need an underlying view
+     * to wrap before it can be created. This can be used for laying functionality on existing
+     * views. <p></p> If two rules with the same description are provided, the new factory replaces
+     * the old one. <b>Note:</b> if rules with different descriptions are provided, they are called
+     * in ASCIIbetical order of the description. <p></p> If a factory returns null, a later factory
+     * will be called.
      *
      * @param viewType       class of the view.
-     * @param description    to use to comment on the view, determine order of factories and detect dupliates.
-     * @param factory        to use to create the view. If the factory returns null, the next factory is called.
+     * @param description    to use to comment on the view, determine order of factories and detect
+     *                       dupliates.
+     * @param factory        to use to create the view. If the factory returns null, the next
+     *                       factory is called.
      * @param underlyingType the underlying view type required.
      */
     <V, U> void addWrappingRule(Class<V> viewType, String description, WrappingViewFactory<V, U> factory, Class<U> underlyingType);
 
     /**
-     * Add a rule or factory for creating views on demand.  A Wrapping Rule need an underlying view to wrap before it can be created. This can be used for laying functionality on existing views.
-     * <p></p>
-     * If two rules with the same description are provided, the new factory replaces the old one. <b>Note:</b> if rules with different descriptions are provided, they are called in ASCIIbetical order of the description.
-     * <p></p>
-     * If the predictae returns false or a factory returns null, a later factory will be called.
+     * Add a rule or factory for creating views on demand.  A Wrapping Rule need an underlying view
+     * to wrap before it can be created. This can be used for laying functionality on existing
+     * views. <p></p> If two rules with the same description are provided, the new factory replaces
+     * the old one. <b>Note:</b> if rules with different descriptions are provided, they are called
+     * in ASCIIbetical order of the description. <p></p> If the predictae returns false or a factory
+     * returns null, a later factory will be called.
      *
      * @param viewType       class of the view.
-     * @param description    to use to comment on the view, determine order of factories and detect dupliates.
+     * @param description    to use to comment on the view, determine order of factories and detect
+     *                       dupliates.
      * @param predicate      to test whether this factory applies.
-     * @param factory        to use to create the view. If the factory returns null, the next factory is called.
+     * @param factory        to use to create the view. If the factory returns null, the next
+     *                       factory is called.
      * @param underlyingType the underlying view type required.
      */
     <V, U> void addWrappingRule(Class<V> viewType, String description, BiPredicate<RequestContext, Asset> predicate, WrappingViewFactory<V, U> factory, Class<U> underlyingType);
 
     /**
-     * Add an implementation of a view to the asset.. This can be used instead of, or in addition to adding rules.
+     * Add an implementation of a view to the asset.. This can be used instead of, or in addition to
+     * adding rules.
      *
      * @param viewType to associate this implementation with.
      * @param view
@@ -274,7 +295,8 @@ public interface Asset extends Closeable {
     <V> V addView(Class<V> viewType, V view);
 
     /**
-     * @return true if this is a simplified Asset atteched to a keyed Asset.  E.g. if you subscribe to a key in a Map this key uses a SubAsset.
+     * @return true if this is a simplified Asset atteched to a keyed Asset.  E.g. if you subscribe
+     * to a key in a Map this key uses a SubAsset.
      */
     boolean isSubAsset();
 
@@ -285,7 +307,8 @@ public interface Asset extends Closeable {
      */
     @NotNull
     default Asset root() {
-        return parent() == null ? this : parent().root();
+        final Asset parent = parent();
+        return parent == null ? this : parent.root();
     }
 
     /**
@@ -299,7 +322,8 @@ public interface Asset extends Closeable {
      * Iterate of all the children of this Asset.
      *
      * @param childAcceptor to accept each child.
-     * @throws InvalidSubscriberException to throw if the accept is no longer interested in getting more children.
+     * @throws InvalidSubscriberException to throw if the accept is no longer interested in getting
+     *                                    more children.
      */
     void forEachChild(ThrowingAcceptor<Asset, InvalidSubscriberException> childAcceptor) throws InvalidSubscriberException;
 }

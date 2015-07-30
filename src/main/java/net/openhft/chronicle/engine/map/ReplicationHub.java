@@ -159,7 +159,7 @@ class ReplicationHub extends AbstractStatelessClient implements View {
      *
      * @param mi               the modification iterator that notifies us of changes
      * @param remote           details about the remote connection
-     * @param localIdentifier
+     * @param localIdentifier  the identifier of this host or client
      * @param remoteIdentifier @throws InterruptedException
      */
     private void publish(@NotNull final ModificationIterator mi,

@@ -29,9 +29,13 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -40,7 +44,22 @@ import java.util.concurrent.ConcurrentMap;
  * @author Rob Austin.
  */
 
-public class TcpFailoverTest extends ThreadMonitoringTest {
+
+@RunWith(Parameterized.class)
+public class TcpFailoverTest {
+
+
+    public static final int MAX = 10;
+    public static final String CLUSTER_NAME = "max-cluster";
+
+    @Parameterized.Parameters
+    public static List<Object[]> data() {
+        return Arrays.asList(new Object[10][0]);
+    }
+
+    public TcpFailoverTest() {
+    }
+
     private static final String NAME = "test";
     public static final WireType WIRE_TYPE = WireType.TEXT;
     private static ConcurrentMap<String, String> map;

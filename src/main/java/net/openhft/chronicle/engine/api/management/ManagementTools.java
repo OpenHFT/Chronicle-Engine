@@ -128,9 +128,7 @@ public enum ManagementTools {
         String treeName = assetTree.toString();
         try {
             Set<ObjectName> objNames = mbs.queryNames(new ObjectName("*:type=" + treeName + ",*"), null);
-            for (ObjectName atName : objNames) {
-                unregisterTreeWithMBean(atName);
-            }
+            objNames.forEach((atName) -> ManagementTools.unregisterTreeWithMBean(atName));
         } catch (MalformedObjectNameException e) {
             LOG.error("Error while disable management", e);
         }

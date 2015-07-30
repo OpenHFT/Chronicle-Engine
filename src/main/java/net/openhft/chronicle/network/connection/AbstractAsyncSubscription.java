@@ -1,6 +1,5 @@
 package net.openhft.chronicle.network.connection;
 
-import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.util.Time;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
@@ -17,14 +16,14 @@ public abstract class AbstractAsyncSubscription implements AsyncSubscription {
     private final String name;
 
     public AbstractAsyncSubscription(@NotNull final TcpChannelHub hub, String csp, String name) {
-        tid = hub.nextUniqueTransaction(Time.currentTimeMillis(), System.nanoTime());
+        tid = hub.nextUniqueTransaction(Time.currentTimeMillis());
         this.hub = hub;
         this.csp = csp;
         this.name = name;
     }
 
     public AbstractAsyncSubscription(@NotNull final TcpChannelHub hub, String csp, byte identifier, String name) {
-        this.tid = hub.nextUniqueTransaction(Time.currentTimeMillis(),  System.nanoTime()) * identifier;
+        this.tid = hub.nextUniqueTransaction(Time.currentTimeMillis()) * identifier;
         this.hub = hub;
         this.csp = csp;
         this.name = name;
@@ -41,11 +40,8 @@ public abstract class AbstractAsyncSubscription implements AsyncSubscription {
 
         hub.writeMetaDataForKnownTID(tid(), hub.outWire(), csp, 0);
         hub.outWire().writeDocument(false, this::onSubscribe);
-        try {
-            hub.writeSocket(hub.outWire());
-        } catch (IORuntimeException e) {
-            e.printStackTrace();
-        }
+        hub.writeSocket(hub.outWire());
+
     }
 
     /**

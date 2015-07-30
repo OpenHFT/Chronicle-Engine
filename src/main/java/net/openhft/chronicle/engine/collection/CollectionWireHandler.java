@@ -58,11 +58,12 @@ public class CollectionWireHandler<U, C extends Collection<U>> {
     private final Consumer<WireIn> dataConsumer = new Consumer<WireIn>() {
         @Override
         public void accept(WireIn wireIn) {
-            final Bytes<?> outBytes = outWire.bytes();
+            @SuppressWarnings("ConstantConditions") final Bytes<?> outBytes = outWire.bytes();
 
             try {
 
                 final StringBuilder eventName = acquireStringBuilder();
+                @SuppressWarnings("ConstantConditions")
                 final ValueIn valueIn = inWire.readEventName(eventName);
 
                 outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64
