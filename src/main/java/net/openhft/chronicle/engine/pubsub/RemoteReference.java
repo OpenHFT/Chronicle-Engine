@@ -66,7 +66,7 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
     @Nullable
     @Override
     public E get() {
-        return (E)proxyReturnTypedObject(get, null, messageClass, null);
+        return (E) proxyReturnTypedObject(get, null, messageClass);
     }
 
     @Nullable
@@ -83,7 +83,7 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
     @Nullable
     @Override
     public E getAndRemove() {
-        return (E)proxyReturnTypedObject(getAndRemove, null, messageClass, null);
+        return (E) proxyReturnTypedObject(getAndRemove, null, messageClass);
     }
 
     @Override

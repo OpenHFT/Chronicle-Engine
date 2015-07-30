@@ -86,12 +86,13 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
         };
     }
 
+
     @Nullable
     protected <R> R proxyReturnTypedObject(
             @NotNull final E eventId,
             @Nullable R usingValue,
             @NotNull final Class<R> resultType,
-            @Nullable Object... args) {
+            @NotNull Object... args) {
 
         Function<ValueIn, R> consumerIn = resultType == CharSequence.class && usingValue != null
                 ? f -> {
@@ -105,6 +106,26 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
                 consumerIn);
     }
 
+
+    @Nullable
+    protected <R> R proxyReturnTypedObject(
+            @NotNull final E eventId,
+            @Nullable R usingValue,
+            @NotNull final Class<R> resultType) {
+
+        Function<ValueIn, R> consumerIn = resultType == CharSequence.class && usingValue != null
+                ? f -> {
+            f.textTo((StringBuilder) usingValue);
+            return usingValue;
+        }
+                : f -> f.object(resultType);
+        return proxyReturnWireConsumerInOut(eventId,
+                CoreFields.reply,
+                x -> {
+                },
+                consumerIn);
+    }
+
     /**
      * use to retry once when the connection is dropped to the remote server if the conneciton is
      * dropped the TcpChannelHub will automactically failover ( if configured )
@@ -113,7 +134,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
      * @param <T> the type of supply
      * @return the result for s.get()
      */
-    public <T> T tryTwice(Supplier<T> s) {
+    protected <T> T tryTwice(Supplier<T> s) {
         try {
             return s.get();
         } catch (ConnectionDroppedException e) {
@@ -208,8 +229,8 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
     }
 
     /**
-     * @param eventId
-     * @param consumer
+     * @param eventId          the wire event id
+     * @param consumer         a funcition consume the wire
      * @param blockTillTimeout if false - will only be sent if the connection is valid
      */
     protected void sendEventAsync(@NotNull final WireKey eventId,

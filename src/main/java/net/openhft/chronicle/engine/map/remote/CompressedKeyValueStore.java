@@ -8,20 +8,14 @@ import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.tree.Asset;
-import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
-import net.openhft.chronicle.engine.api.tree.LeafViewFactory;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.map.KVSSubscription;
-import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
 import net.openhft.chronicle.engine.map.ObjectKeyValueStore;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xerial.snappy.Snappy;
 
 import java.io.IOException;
-
-import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.put;
 
 /**
  * Created by daniel on 28/07/2015.
