@@ -151,10 +151,10 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
                 return;
             }
 
-            Cluster cluster = clusters.get(context.cluster());
+            final Cluster cluster = clusters.get(context.cluster());
 
-            if (clusters == null) {
-                LOG.warn("no cluster found.");
+            if (cluster == null) {
+                LOG.warn("no cluster found name=" + context.cluster());
                 return;
             }
 
