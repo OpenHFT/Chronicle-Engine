@@ -76,7 +76,7 @@ public class Throttler<K> implements EventHandler {
     private void send() {
         long value = this.numberOfMessageSent.get();
         while (value < maxEventsPreSecond) {
-            // for processing later
+
             final Runnable r = events.poll();
 
             if (r == null)
