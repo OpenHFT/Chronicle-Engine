@@ -163,7 +163,7 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
     }
 
     @Override
-    public void registerSubscriber(@NotNull RequestContext rc, Subscriber subscriber) {
+    public void registerSubscriber(@NotNull RequestContext rc, @NotNull Subscriber subscriber) {
         Boolean bootstrap = rc.bootstrap();
         Class eClass = rc.type();
         if (eClass == Entry.class || eClass == MapEvent.class) {
