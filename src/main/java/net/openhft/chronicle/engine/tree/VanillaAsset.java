@@ -91,7 +91,7 @@ public class VanillaAsset implements Asset, Closeable {
         }
         if (parent != null) {
             TopologySubscription parentSubs = parent.findView(TopologySubscription.class);
-            if (parentSubs != null)
+            if (parentSubs != null && !(parentSubs instanceof RemoteTopologySubscription))
                 parentSubs.notifyEvent(AddedAssetEvent.of(parent.fullName(), name));
         }
     }
