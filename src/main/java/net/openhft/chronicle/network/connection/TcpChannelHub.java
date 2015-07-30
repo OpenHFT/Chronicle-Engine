@@ -313,7 +313,7 @@ public class TcpChannelHub implements View, Closeable {
         assert outBytesLock().isHeldByCurrentThread();
         SocketChannel clientChannel = this.clientChannel;
         if (clientChannel == null)
-            throw new IORuntimeException("Not Connected " + socketAddressSupplier);
+            throw new ConnectionDroppedException("Not Connected " + socketAddressSupplier);
 
         try {
             writeSocket1(wire, timeoutMs, clientChannel);
@@ -321,7 +321,7 @@ public class TcpChannelHub implements View, Closeable {
             LOG.error("", e);
             closeSocket();
             //reconnect = true;
-            throw rethrow(e);
+            throw new ConnectionDroppedException(e);
         }
     }
 
@@ -794,7 +794,8 @@ public class TcpChannelHub implements View, Closeable {
 
                     } catch (ClosedChannelException e) {
                         break;
-                    } catch (@NotNull IOException | IORuntimeException e) {
+                    } catch (@NotNull IOException | IORuntimeException |
+                            ConnectionDroppedException e) {
 
                         if (isShutdown()) {
                             break;

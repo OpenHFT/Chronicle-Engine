@@ -116,7 +116,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
     public <T> T tryTwice(Supplier<T> s) {
         try {
             return s.get();
-        } catch (Exception e) {
+        } catch (ConnectionDroppedException e) {
             // this can occur if the socket connect is dropped
 
             // pause then resend the request
