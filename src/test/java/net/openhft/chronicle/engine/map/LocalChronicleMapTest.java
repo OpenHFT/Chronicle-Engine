@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.map;
 
+import jdk.nashorn.internal.ir.annotations.Ignore;
 import net.openhft.chronicle.engine.map.MapClientTest.LocalMapSupplier;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +41,7 @@ import static org.junit.Assert.*;
  * Other contributors include Andrew Wright, Jeffrey Hayes,
  * Pat Fisher, Mike Judd.
  */
-
+@Ignore
 public class LocalChronicleMapTest extends JSR166TestCase {
     @NotNull
     @Rule
