@@ -77,7 +77,7 @@ public class MarshallableFilePerKeyValueStoreTest {
         map.clear();
     }
 
-    @Ignore("todo fix")
+    @Ignore("todo fix -  see JIRA https://higherfrequencytrading.atlassian.net/browse/CE-118")
     @Test
     public void test() throws InterruptedException {
         TestMarshallable tm = new TestMarshallable("testing1", "testing2",
