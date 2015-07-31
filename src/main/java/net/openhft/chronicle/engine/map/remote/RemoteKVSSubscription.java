@@ -47,11 +47,13 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractRemoteSubscription<
     private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
     private final Class<K> kClass;
     private final Class<V> vClass;
+    private RequestContext rc;
 
     public RemoteKVSSubscription(@NotNull RequestContext context, @NotNull Asset asset) {
         super(asset.findView(TcpChannelHub.class), (long) 0, toUri(context));
         kClass = context.keyType();
         vClass = context.valueType();
+        this.rc = context;
     }
 
     @NotNull
@@ -154,7 +156,12 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractRemoteSubscription<
 
     @Override
     public void registerDownstream(EventConsumer<K, V> subscription) {
-        throw new UnsupportedOperationException("todo");
+        registerSubscriber(rc.clone().type(MapEvent.class).type2(null), new Subscriber<MapEvent<K, V>>() {
+            @Override
+            public void onMessage(MapEvent<K, V> kvMapEvent) throws InvalidSubscriberException {
+                subscription.notifyEvent(kvMapEvent);
+            }
+        });
     }
 
 }

@@ -140,6 +140,8 @@ public class VanillaAsset implements Asset, Closeable {
 
         addLeafRule(ObjectKVSSubscription.class, LAST + " vanilla",
                 VanillaKVSSubscription::new);
+        addLeafRule(RawKVSSubscription.class, LAST + " vanilla",
+                VanillaKVSSubscription::new);
 
         addLeafRule(TopologySubscription.class, LAST + " vanilla",
                 VanillaTopologySubscription::new);
@@ -155,6 +157,9 @@ public class VanillaAsset implements Asset, Closeable {
 
         addLeafRule(ObjectKVSSubscription.class, LAST + " Remote",
                 RemoteKVSSubscription::new);
+        //TODO This is incorrect should be RemoteKVSSubscription
+        addLeafRule(RawKVSSubscription.class, LAST + " vanilla",
+                VanillaKVSSubscription::new);
 
         addLeafRule(ObjectKeyValueStore.class, LAST + " Remote AKVS",
                 RemoteKeyValueStore::new);

@@ -37,23 +37,37 @@ import java.util.concurrent.ConcurrentMap;
 public class VanillaKeyValueStore<K, V> implements AuthenticatedKeyValueStore<K, V> {
     private final ConcurrentMap<K, V> map = new ConcurrentHashMap<>();
     private final Asset asset;
+    private final RawKVSSubscription<K, Object, V> subscriptions;
 
     public VanillaKeyValueStore(RequestContext context, Asset asset) {
-        this(asset);
+
+        //this(asset);
+        this.asset = asset;
+        this.subscriptions = asset.acquireView(RawKVSSubscription.class, context);
+        subscriptions.setKvStore(this);
     }
 
     public VanillaKeyValueStore(Asset asset) {
-        this.asset = asset;
+        this(null,asset);
+        //this.asset = asset;
+
     }
 
     @Override
     public V getAndPut(K key, V value) {
-        return map.put(key, value);
+        V oldValue = map.put(key, value);
+        subscriptions.notifyEvent(oldValue == null
+                ? InsertedEvent.of(asset.fullName(), key, value)
+                : UpdatedEvent.of(asset.fullName(), key, oldValue, value));
+        return oldValue;
     }
 
     @Override
     public V getAndRemove(K key) {
-        return map.remove(key);
+        V oldValue = map.remove(key);
+        if (oldValue != null)
+            subscriptions.notifyEvent(RemovedEvent.of(asset.fullName(), key, oldValue));
+        return oldValue;
     }
 
     @Override
@@ -122,7 +136,7 @@ public class VanillaKeyValueStore<K, V> implements AuthenticatedKeyValueStore<K,
     @NotNull
     @Override
     public KVSSubscription<K, V> subscription(boolean createIfAbsent) {
-        throw new UnsupportedOperationException("todo");
+        return subscriptions;
     }
 
     @Override
