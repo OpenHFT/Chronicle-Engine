@@ -33,7 +33,7 @@ import static org.junit.Assert.assertNotNull;
  * Tests the combination of Reference and Chronicle
  */
 public class ReferenceChronicleTest {
-    @Ignore("todo fix")
+    @Ignore("todo fix - JIRA https://higherfrequencytrading.atlassian.net/browse/CE-120")
     @Test
     public void testRemoteSubscriptionMUFGChronicle() throws IOException {
 
