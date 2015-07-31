@@ -127,7 +127,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
     }
 
     /**
-     * this method will re attempt a number of times until successfull,if connection is dropped to
+     * this method will re attempt a number of times until successful,if connection is dropped to
      * the  remote server the TcpChannelHub may ( if configured )  automatically failover to another
      * host.
      *
@@ -232,36 +232,51 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
     }
 
     /**
-     * @param eventId          the wire event id
-     * @param consumer         a funcition consume the wire
-     * @param blockTillTimeout if false - will only be sent if the connection is valid
+     * @param eventId             the wire event id
+     * @param consumer            a function consume the wire
+     * @param reattemptUponFailure if false - will only be sent if the connection is valid
      */
     protected void sendEventAsync(@NotNull final WireKey eventId,
                                   @Nullable final Consumer<ValueOut> consumer,
-                                  boolean blockTillTimeout) {
+                                  boolean reattemptUponFailure) {
 
-        if (blockTillTimeout)
+        if (reattemptUponFailure)
             hub.checkConnection();
         else if (!hub.isOpen())
             return;
 
-        hub.lock(() -> {
-            try {
-                sendEventAsyncWithoutLock(eventId, consumer);
-            } catch (IORuntimeException e) {
-                // this can occur if the socket is not currently connected
-            }
+        if (!reattemptUponFailure) {
+
+            hub.lock(() -> {
+                try {
+                    sendEventAsyncWithoutLock(eventId, consumer);
+                } catch (IORuntimeException e) {
+                    // this can occur if the socket is not currently connected
+                }
+            });
+            return;
+        }
+
+        attempt(() -> {
+            hub.lock(() -> {
+                try {
+                    sendEventAsyncWithoutLock(eventId, consumer);
+                } catch (IORuntimeException e) {
+                    // this can occur if the socket is not currently connected
+                }
+            });
+            return null;
         });
+
     }
+
 
     protected void sendEventAsyncWithoutLock(@NotNull final WireKey eventId,
                                              @Nullable final Consumer<ValueOut> consumer) {
 
         writeAsyncMetaData();
         hub.outWire().writeDocument(false, wireOut -> {
-
             final ValueOut valueOut = wireOut.writeEventName(eventId);
-
             if (consumer == null)
                 valueOut.marshallable(WriteMarshallable.EMPTY);
             else
@@ -269,7 +284,6 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
         });
 
         hub.writeSocket(hub.outWire());
-
     }
 
     /**
@@ -298,9 +312,9 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
 
     private void checkIsData(@NotNull Wire wireIn) {
         Bytes<?> bytes = wireIn.bytes();
-        int datalen = bytes.readVolatileInt();
+        int dataLen = bytes.readVolatileInt();
 
-        if (!Wires.isData(datalen))
+        if (!Wires.isData(dataLen))
             throw new IllegalStateException("expecting a data blob, from ->" + Bytes.toString
                     (bytes, 0, bytes.readLimit()));
     }

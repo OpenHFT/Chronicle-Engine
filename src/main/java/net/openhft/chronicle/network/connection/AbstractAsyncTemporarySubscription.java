@@ -21,7 +21,7 @@ public abstract class AbstractAsyncTemporarySubscription extends AbstractAsyncSu
     /**
      * @param hub handles the tcp connectivity.
      * @param csp the url of the subscription.
-     * @param id  use as a seed to the tid, makes unique tid'd makes reading the logs easier.
+     * @param id  use as a seed to the tid, makes unique tid's makes reading the logs easier.
      * @param name the name of the subscription
      */
     public AbstractAsyncTemporarySubscription(@NotNull TcpChannelHub hub, @Nullable String csp, byte id, String name) {

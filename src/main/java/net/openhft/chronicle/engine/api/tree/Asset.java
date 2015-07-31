@@ -259,7 +259,7 @@ public interface Asset extends Closeable {
      *
      * @param viewType       class of the view.
      * @param description    to use to comment on the view, determine order of factories and detect
-     *                       dupliates.
+     *                       duplicates.
      * @param factory        to use to create the view. If the factory returns null, the next
      *                       factory is called.
      * @param underlyingType the underlying view type required.
@@ -271,12 +271,12 @@ public interface Asset extends Closeable {
      * to wrap before it can be created. This can be used for laying functionality on existing
      * views. <p></p> If two rules with the same description are provided, the new factory replaces
      * the old one. <b>Note:</b> if rules with different descriptions are provided, they are called
-     * in ASCIIbetical order of the description. <p></p> If the predictae returns false or a factory
+     * in ASCIIbetical order of the description. <p></p> If the predicate returns false or a factory
      * returns null, a later factory will be called.
      *
      * @param viewType       class of the view.
      * @param description    to use to comment on the view, determine order of factories and detect
-     *                       dupliates.
+     *                       duplicates.
      * @param predicate      to test whether this factory applies.
      * @param factory        to use to create the view. If the factory returns null, the next
      *                       factory is called.
@@ -295,7 +295,7 @@ public interface Asset extends Closeable {
     <V> V addView(Class<V> viewType, V view);
 
     /**
-     * @return true if this is a simplified Asset atteched to a keyed Asset.  E.g. if you subscribe
+     * @return true if this is a simplified Asset attached to a keyed Asset.  E.g. if you subscribe
      * to a key in a Map this key uses a SubAsset.
      */
     boolean isSubAsset();
