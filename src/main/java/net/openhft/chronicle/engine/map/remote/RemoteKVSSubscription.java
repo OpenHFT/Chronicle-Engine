@@ -151,7 +151,8 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractRemoteSubscription<
 
     @Override
     public boolean hasSubscribers() {
-        throw new UnsupportedOperationException("hasSubscibers only implemented on the server");
+        throw new UnsupportedOperationException("has subscribers, is only implemented on the " +
+                "server");
     }
 
     @Override

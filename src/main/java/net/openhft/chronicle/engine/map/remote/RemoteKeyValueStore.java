@@ -346,7 +346,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
             });
         });
 
-        Function<ValueIn, Map.Entry<K, V>> conumer = valueIn -> valueIn.applyToMarshallable(r -> {
+        Function<ValueIn, Map.Entry<K, V>> consumer = valueIn -> valueIn.applyToMarshallable(r -> {
 
                     final K k = r.read(() -> "key").object(kClass);
                     final V v = r.read(() -> "value").object(vClass);
@@ -374,7 +374,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
 
         );
 
-        return new ClientWiredStatelessChronicleSet<>(hub, csp.toString(), cid, conumer);
+        return new ClientWiredStatelessChronicleSet<>(hub, csp.toString(), cid, consumer);
     }
 
     @NotNull

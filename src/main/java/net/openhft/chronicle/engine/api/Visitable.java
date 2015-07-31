@@ -56,7 +56,7 @@ public interface Visitable<E> {
     /**
      * Apply a function to visitable potentially asynchronously.  This function is assumed to replace the value and trigger and events or replciated changes.
      *
-     * @param updateFunction to update the state of the visitiable.
+     * @param updateFunction to update the state of the visitable.
      */
     default void asyncUpdate(@NotNull SerializableFunction<E, E> updateFunction) {
         set(updateFunction.apply(get()));

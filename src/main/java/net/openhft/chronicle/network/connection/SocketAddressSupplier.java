@@ -13,7 +13,7 @@ import java.util.function.Supplier;
 
 /**
  * Provides support for failover TCP connections to the server, if the primary connection can not be
- * establish, after retrying upto a timeout,  see {@link SocketAddressSupplier#timeoutMS()} the
+ * establish, after retrying up to a timeout,  see {@link SocketAddressSupplier#timeoutMS()} the
  * other connections will be attempted see, the order of these connections are determined by the
  * order of the connectURIs
  *

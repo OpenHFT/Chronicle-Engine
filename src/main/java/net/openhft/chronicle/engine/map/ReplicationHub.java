@@ -32,7 +32,6 @@ import net.openhft.chronicle.threads.HandlerPriority;
 import net.openhft.chronicle.threads.api.EventHandler;
 import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.threads.api.InvalidEventHandlerException;
-import net.openhft.chronicle.wire.ValueOut;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import net.openhft.chronicle.wire.WriteMarshallable;
@@ -41,7 +40,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
 
 import static net.openhft.chronicle.engine.server.internal.ReplicationHandler.EventId.*;
 
@@ -185,8 +183,7 @@ class ReplicationHub extends AbstractStatelessClient implements View {
                         if (e.identifier() != localIdentifier)
                             return;
 
-                        sendEventAsyncWithoutLock(replicationEvent,
-                                (Consumer<ValueOut>) v -> v.typedMarshallable(e));
+                        sendEventAsyncWithoutLock(replicationEvent, v -> v.typedMarshallable(e));
                     }));
 
                     return true;

@@ -54,7 +54,7 @@ public interface MapView<K, V> extends ConcurrentMap<K, V>,
     }
 
     /**
-     * Obtain a value using a mutable buffer privided.
+     * Obtain a value using a mutable buffer provided.
      *
      * @param key   to lookup.
      * @param using a mutable buffer

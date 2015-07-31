@@ -127,7 +127,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
     }
 
     /**
-     * this method will re attempt a number of times until successfull,if connection is dropped to
+     * this method will re attempt a number of times until successful,if connection is dropped to
      * the  remote server the TcpChannelHub may ( if configured )  automatically failover to another
      * host.
      *
@@ -233,19 +233,19 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
 
     /**
      * @param eventId             the wire event id
-     * @param consumer            a funcition consume the wire
-     * @param reattempUponFailure if false - will only be sent if the connection is valid
+     * @param consumer            a function consume the wire
+     * @param reattemptUponFailure if false - will only be sent if the connection is valid
      */
     protected void sendEventAsync(@NotNull final WireKey eventId,
                                   @Nullable final Consumer<ValueOut> consumer,
-                                  boolean reattempUponFailure) {
+                                  boolean reattemptUponFailure) {
 
-        if (reattempUponFailure)
+        if (reattemptUponFailure)
             hub.checkConnection();
         else if (!hub.isOpen())
             return;
 
-        if (!reattempUponFailure) {
+        if (!reattemptUponFailure) {
 
             hub.lock(() -> {
                 try {
@@ -312,9 +312,9 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
 
     private void checkIsData(@NotNull Wire wireIn) {
         Bytes<?> bytes = wireIn.bytes();
-        int datalen = bytes.readVolatileInt();
+        int dataLen = bytes.readVolatileInt();
 
-        if (!Wires.isData(datalen))
+        if (!Wires.isData(dataLen))
             throw new IllegalStateException("expecting a data blob, from ->" + Bytes.toString
                     (bytes, 0, bytes.readLimit()));
     }
