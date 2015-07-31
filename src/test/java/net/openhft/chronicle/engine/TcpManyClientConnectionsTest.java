@@ -25,7 +25,10 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.wire.WireType;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,7 +47,7 @@ public class TcpManyClientConnectionsTest extends ThreadMonitoringTest {
 
     private static final String NAME = "test";
     public static final WireType WIRE_TYPE = WireType.TEXT;
-    public static final int MAX = 100;
+    public static final int MAX = 50;
     private static ConcurrentMap[] maps = new ConcurrentMap[MAX];
     private static final String CONNECTION = "host.port.TcpManyConnectionsTest";
     private AssetTree[] trees = new AssetTree[MAX];
@@ -103,7 +106,6 @@ public class TcpManyClientConnectionsTest extends ThreadMonitoringTest {
      * test many clients connecting to a single server
      */
     @Test
-    @Ignore
     public void test() throws IOException, InterruptedException {
 
         final MapView<String, String, String> serverMap = serverAssetTree.acquireMap(NAME, String
