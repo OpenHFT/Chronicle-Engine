@@ -92,8 +92,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
         if (isRemote) {
 
             methodName(name.getMethodName());
-            final String hostPort = "SubscriptionEventTest." + name.getMethodName
-                    () + name.getMethodName();
+            final String hostPort = "SubscriptionEventTest." + name.getMethodName() + ".host.port";
             TCPRegistry.createServerSocketChannelFor(hostPort);
             serverEndpoint = new ServerEndpoint(hostPort, serverAssetTree, WIRE_TYPE);
 
