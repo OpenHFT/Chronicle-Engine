@@ -13,7 +13,10 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -241,7 +244,6 @@ public class ReferenceTest {
     }
 
 
-    @Ignore("sometimes fails")
     @Test
     public void testSubscriptionMUFG() {
         String key = "subject";
@@ -276,10 +278,13 @@ public class ReferenceTest {
         map.put(key, "" + count.incrementAndGet());
         // });
 
-        Jvm.pause(100);
+        for (int i = 0; i < 100; i++) {
+            if (events.size() == 3)
+                break;
+            Jvm.pause(150);
+        }
+
         assertEquals(3, events.size());
-
-
         assetTree.unregisterSubscriber(_mapName + "/" + key, keyEventSubscriber);
 
         Jvm.pause(100);
