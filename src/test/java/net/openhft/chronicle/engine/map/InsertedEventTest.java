@@ -74,7 +74,6 @@ public class InsertedEventTest {
     }
 
     @Test
-    @Ignore("TODO Fix")
     public void testMarshalling3() {
         Bytes bytes = Bytes.elasticByteBuffer();
         InsertedEvent<String, BytesStore> insertedEvent = InsertedEvent.of("asset", "key", BytesStore.wrap("Hello World".getBytes()));
