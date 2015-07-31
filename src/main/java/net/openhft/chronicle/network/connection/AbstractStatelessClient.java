@@ -135,7 +135,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
      * @param <T> the type of supply
      * @return the result for s.get()
      */
-    protected <T> T attempt(Supplier<T> s) {
+    protected <T> T attempt(@NotNull final Supplier<T> s) {
 
         ConnectionDroppedException t = null;
         for (int i = 0; i < 10; i++) {
@@ -237,8 +237,8 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
     }
 
     /**
-     * @param eventId             the wire event id
-     * @param consumer            a function consume the wire
+     * @param eventId              the wire event id
+     * @param consumer             a function consume the wire
      * @param reattemptUponFailure if false - will only be sent if the connection is valid
      */
     protected void sendEventAsync(@NotNull final WireKey eventId,
