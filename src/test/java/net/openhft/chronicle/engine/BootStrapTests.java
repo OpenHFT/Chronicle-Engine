@@ -62,17 +62,13 @@ public class BootStrapTests {
     private static final String NAME = "test";
     public static final WireType WIRE_TYPE = WireType.TEXT;
     private static ConcurrentMap<String, String> map1, map2;
-
-
-    private static final String CONNECTION_1 = "Test1.host.port";
-    private final static String CONNECTION_2 = "Test2.host.port";
+    private static final String CONNECTION_1 = "BootStrapTests.host.port";
 
     private AssetTree client1;
     private AssetTree client2;
 
 
     private VanillaAssetTree serverAssetTree1;
-
     private ServerEndpoint serverEndpoint1;
 
 
@@ -81,7 +77,7 @@ public class BootStrapTests {
         serverAssetTree1 = new VanillaAssetTree().forTesting();
 
         TCPRegistry.createServerSocketChannelFor(CONNECTION_1);
-        TCPRegistry.createServerSocketChannelFor(CONNECTION_2);
+
 
         serverEndpoint1 = new ServerEndpoint(CONNECTION_1, serverAssetTree1, WIRE_TYPE);
 
@@ -126,10 +122,7 @@ public class BootStrapTests {
                 map1 = client1.acquireMap(NAME, String.class, String.class);
                 Queue q1 = new ConcurrentLinkedQueue();
                 client1.registerSubscriber(NAME, MapEvent.class, q1::add);
-
-
                 map1.put("hello", "world1");
-
                 Assert.assertEquals("world1", map1.get("hello"));
                 final String poll = q1.poll().toString();
                 Assert.assertEquals("InsertedEvent{assetName='/test', key=hello, value=world1}",
@@ -144,7 +137,6 @@ public class BootStrapTests {
                 client2.registerSubscriber(NAME + "?bootstrap=false", MapEvent.class, q2::add);
 
                 map2.put("hello", "world2");
-                // shutting server1 down should cause the failover client to connect to server 2
                 Assert.assertEquals("world2", map2.get("hello"));
                 final String poll = q2.poll().toString();
                 Assert.assertEquals("UpdatedEvent{assetName='/test', key=hello, oldValue=world1, value=world2}", poll);
