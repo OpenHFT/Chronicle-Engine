@@ -33,9 +33,9 @@ import java.util.Set;
  */
 public class VanillaKeySetView<K, V> extends AbstractCollection<K> implements KeySetView<K> {
     private final Asset asset;
-    private final MapView<K, V, V> kvMapView;
+    private final MapView<K, V> kvMapView;
 
-    public VanillaKeySetView(RequestContext context, Asset asset, MapView<K, V, V> kvMapView) {
+    public VanillaKeySetView(RequestContext context, Asset asset, MapView<K, V> kvMapView) {
         this.asset = asset;
         this.kvMapView = kvMapView;
     }
@@ -95,7 +95,7 @@ public class VanillaKeySetView<K, V> extends AbstractCollection<K> implements Ke
 
     @Nullable
     @Override
-    public MapView<K, ?, ?> underlying() {
+    public MapView<K, ?> underlying() {
         return kvMapView;
     }
 }

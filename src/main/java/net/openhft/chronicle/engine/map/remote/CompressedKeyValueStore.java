@@ -21,15 +21,15 @@ import java.io.IOException;
 /**
  * Created by daniel on 28/07/2015.
  */
-public class CompressedKeyValueStore<K> implements ObjectKeyValueStore<K, String, String> {
-    private KeyValueStore<K, Bytes, BytesStore> remoteKeyValueStore;
+public class CompressedKeyValueStore<K> implements ObjectKeyValueStore<K, String> {
+    private KeyValueStore<K, BytesStore> remoteKeyValueStore;
 
     public CompressedKeyValueStore(@NotNull RequestContext requestContext, @NotNull Asset asset) {
         remoteKeyValueStore = new RemoteKeyValueStore(requestContext, asset, asset.findView(TcpChannelHub.class));
     }
 
-    public CompressedKeyValueStore(@NotNull RequestContext requestContext, @NotNull Asset asset,
-                                   @NotNull KeyValueStore<K, Bytes, BytesStore> kvStore) {
+    public CompressedKeyValueStore(RequestContext requestContext, Asset asset,
+                                   KeyValueStore<K, BytesStore> kvStore) {
         this.remoteKeyValueStore = kvStore;
     }
 
@@ -44,7 +44,7 @@ public class CompressedKeyValueStore<K> implements ObjectKeyValueStore<K, String
     }
 
     @Override
-    public KVSSubscription<K, String, String> subscription(boolean createIfAbsent) {
+    public KVSSubscription<K, String> subscription(boolean createIfAbsent) {
         //Make this an ObjectSubscription see RemoteKVSubscription
         //this should subscribe to the other one
         //then call translate to convert BytesStore to String
@@ -93,7 +93,7 @@ public class CompressedKeyValueStore<K> implements ObjectKeyValueStore<K, String
 
     @Nullable
     @Override
-    public String getUsing(K key, String value) {
+    public String getUsing(K key, Object value) {
         throw new UnsupportedOperationException("todo");
     }
 
@@ -129,7 +129,7 @@ public class CompressedKeyValueStore<K> implements ObjectKeyValueStore<K, String
 
     @Nullable
     @Override
-    public KeyValueStore<K, String, String> underlying() {
+    public KeyValueStore<K, String> underlying() {
         throw new UnsupportedOperationException("todo");
     }
 

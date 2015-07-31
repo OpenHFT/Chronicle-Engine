@@ -30,12 +30,12 @@ import static net.openhft.chronicle.engine.server.internal.TopicPublisherHandler
 public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId> implements
         TopicPublisher<T, M> {
 
-    private final MapView<T, M, M> underlying;
+    private final MapView<T, M> underlying;
     private final Class<T> topicClass;
     private final Class<M> messageClass;
     private final Asset asset;
 
-    public RemoteTopicPublisher(@NotNull RequestContext context, @NotNull Asset asset, MapView<T, M, M> underlying)
+    public RemoteTopicPublisher(@NotNull RequestContext context, @NotNull Asset asset, MapView<T, M> underlying)
             throws AssetNotFoundException {
         super(asset.findView(TcpChannelHub.class), (long) 0, toUri(context));
         this.asset = asset;
@@ -139,7 +139,7 @@ public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId>
 
     // todo not sure the interface for this is correct  ? should it be a map view ?
     @Override
-    public MapView<T, M, M> underlying() {
+    public MapView<T, M> underlying() {
         return underlying;
     }
 

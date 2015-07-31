@@ -176,7 +176,7 @@ public class ChassisRFCTest {
 
     @Test
     public void updateTheMapView() {
-        MapView<String, String, String> map = acquireMap("group", String.class, String.class);
+        MapView<String, String> map = acquireMap("group", String.class, String.class);
         List<String> values = new ArrayList<>();
         TopicSubscriber<String, String> subscriber = (topic, message) -> values.add("{name: " + topic + ", message: " + message + "}");
         registerTopicSubscriber("group", String.class, String.class, subscriber);

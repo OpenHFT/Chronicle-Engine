@@ -27,7 +27,7 @@ import java.util.stream.Stream;
 /**
  * Marker interface for a collection which represents the values() of a Map.  This may have additional method in future.
  */
-public interface ValuesCollection<V> extends Collection<V>, Assetted<MapView<?, ?, V>>,
+public interface ValuesCollection<V> extends Collection<V>, Assetted<MapView<?, V>>,
         Queryable<V>, View {
     default Stream<V> stream() {
         return Collection.super.stream();

@@ -37,11 +37,10 @@ import java.util.function.Consumer;
  * Internal API for creating new data stores.
  *
  * @param <K>  key type
- * @param <MV> mutable value type
  * @param <V>  immutable value type
  */
 
-public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V>>, View, Closeable,
+public interface KeyValueStore<K, V> extends Assetted<KeyValueStore<K, V>>, View, Closeable,
         Consumer<ReplicationEntry> {
 
     /**
@@ -79,7 +78,7 @@ public interface KeyValueStore<K, MV, V> extends Assetted<KeyValueStore<K, MV, V
 
     @org.jetbrains.annotations.Nullable
     @Nullable
-    V getUsing(K key, MV value);
+    V getUsing(K key, Object value);
 
     default boolean containsKey(K key) {
         return get(key) != null;

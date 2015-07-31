@@ -34,9 +34,9 @@ import java.util.Set;
  */
 public class VanillaEntrySetView<K, MV, V> extends AbstractCollection<Entry<K, V>> implements EntrySetView<K, MV, V> {
     private final Asset asset;
-    private final MapView<K, MV, V> mapView;
+    private final MapView<K, V> mapView;
 
-    public VanillaEntrySetView(RequestContext context, Asset asset, @NotNull MapView<K, MV, V> mapView) throws AssetNotFoundException {
+    public VanillaEntrySetView(RequestContext context, Asset asset, @NotNull MapView<K, V> mapView) throws AssetNotFoundException {
         this.asset = asset;
         this.mapView = mapView;
     }
@@ -58,7 +58,7 @@ public class VanillaEntrySetView<K, MV, V> extends AbstractCollection<Entry<K, V
     }
 
     @Override
-    public MapView<K, MV, V> underlying() {
+    public MapView<K, V> underlying() {
         return mapView;
     }
 

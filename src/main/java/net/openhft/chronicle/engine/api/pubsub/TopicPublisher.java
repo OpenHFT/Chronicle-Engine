@@ -24,7 +24,7 @@ import net.openhft.chronicle.engine.api.tree.View;
 /**
  * Publish to any topic in an Asset group.
  */
-public interface TopicPublisher<T, M> extends View, Assetted<MapView<T, M, M>> {
+public interface TopicPublisher<T, M> extends View, Assetted<MapView<T, M>> {
     /**
      * Publish to a provided topic.
      *

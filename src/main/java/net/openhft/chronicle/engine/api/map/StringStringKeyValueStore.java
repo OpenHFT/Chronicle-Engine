@@ -22,5 +22,5 @@ import net.openhft.chronicle.engine.map.ObjectKeyValueStore;
 /**
  * Created by peter on 25/05/15.
  */
-public interface StringStringKeyValueStore extends ObjectKeyValueStore<String, StringBuilder, String>, View {
+public interface StringStringKeyValueStore extends ObjectKeyValueStore<String, String>, View {
 }

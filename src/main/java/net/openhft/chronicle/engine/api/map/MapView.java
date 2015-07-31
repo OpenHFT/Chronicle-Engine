@@ -34,9 +34,9 @@ import java.util.function.Function;
 /**
  * Interface for Map views.
  */
-public interface MapView<K, MV, V> extends ConcurrentMap<K, V>,
-        Assetted<KeyValueStore<K, MV, V>>,
-        Updatable<MapView<K, MV, V>>,
+public interface MapView<K, V> extends ConcurrentMap<K, V>,
+        Assetted<KeyValueStore<K, V>>,
+        Updatable<MapView<K, V>>,
         KeyedVisitable<K, V>,
         Function<K, V>,
         View {
@@ -47,7 +47,7 @@ public interface MapView<K, MV, V> extends ConcurrentMap<K, V>,
 
     @NotNull
     @Override
-    EntrySetView<K, MV, V> entrySet();
+    EntrySetView<K, Object, V> entrySet();
 
     default boolean keyedView() {
         return true;
@@ -60,7 +60,7 @@ public interface MapView<K, MV, V> extends ConcurrentMap<K, V>,
      * @param using a mutable buffer
      * @return the value.
      */
-    V getUsing(K key, MV using);
+    V getUsing(K key, Object using);
 
     /**
      * Add a TopicSubscriber to this Map.

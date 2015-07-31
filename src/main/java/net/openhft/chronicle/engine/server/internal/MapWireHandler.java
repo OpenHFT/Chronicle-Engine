@@ -71,7 +71,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
     @Nullable
     private WireIn inWire = null;
     @Nullable
-    private MapView<K, V, V> map;
+    private MapView<K, V> map;
     private boolean charSequenceValue;
     private long tid;
     private final BiConsumer<WireIn, Long> dataConsumer = new BiConsumer<WireIn, Long>() {

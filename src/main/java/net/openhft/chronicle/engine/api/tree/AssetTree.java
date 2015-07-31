@@ -82,7 +82,7 @@ public interface AssetTree extends Closeable {
      * @throws AssetNotFoundException the view could not be constructed.
      */
     @NotNull
-    default <K, V> MapView<K, V, V> acquireMap(@NotNull String uri, Class<K> kClass, Class<V> vClass) throws AssetNotFoundException {
+    default <K, V> MapView<K, V> acquireMap(@NotNull String uri, Class<K> kClass, Class<V> vClass) throws AssetNotFoundException {
         return acquireView(requestContext(uri).view("map").type(kClass).type2(vClass));
     }
 

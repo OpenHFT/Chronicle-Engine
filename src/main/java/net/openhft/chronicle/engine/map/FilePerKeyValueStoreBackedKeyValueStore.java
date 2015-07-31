@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
-public class FilePerKeyValueStoreBackedKeyValueStore<K, V> implements KeyValueStore<K, V, V> {
+public class FilePerKeyValueStoreBackedKeyValueStore<K, V> implements KeyValueStore<K, V> {
 
     private final FilePerKeyValueStore filePerKeyValueStore;
     private final Function<K, String> keyToString;
@@ -68,7 +68,7 @@ public class FilePerKeyValueStoreBackedKeyValueStore<K, V> implements KeyValueSt
 
     @Nullable
     @Override
-    public V getUsing(K key, V value) {
+    public V getUsing(K key, Object value) {
         // TODO using
         return nullableToValue(filePerKeyValueStore.get(keyToString.apply(key)));
     }
@@ -108,7 +108,7 @@ public class FilePerKeyValueStoreBackedKeyValueStore<K, V> implements KeyValueSt
 
     @Nullable
     @Override
-    public KeyValueStore<K, V, V> underlying() {
+    public KeyValueStore<K, V> underlying() {
         throw new UnsupportedOperationException();
     }
 

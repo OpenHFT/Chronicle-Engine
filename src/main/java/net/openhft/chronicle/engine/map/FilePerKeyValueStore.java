@@ -135,9 +135,9 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
 
     @Nullable
     @Override
-    public BytesStore getUsing(String key, Bytes value) {
+    public BytesStore getUsing(String key, Object value) {
         Path path = dirPath.resolve(key);
-        return getFileContents(path, value);
+        return getFileContents(path, (Bytes) value);
     }
 
     @Override
@@ -406,7 +406,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
 
     @Nullable
     @Override
-    public KeyValueStore<String, Bytes, BytesStore> underlying() {
+    public KeyValueStore<String, BytesStore> underlying() {
         return null;
     }
 

@@ -60,7 +60,7 @@ import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
 import static net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer.notifyEachEvent;
 import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplication.builder;
 
-public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValueStore<K, MV, V>,
+public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValueStore<K, V>,
         Closeable, Supplier<EngineReplication> {
 
     private static final ScheduledExecutorService DELAYED_CLOSER = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("ChronicleMapKeyValueStore Closer", true));
@@ -200,7 +200,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
 
     @NotNull
     @Override
-    public KVSSubscription<K, MV, V> subscription(boolean createIfAbsent) {
+    public KVSSubscription<K, V> subscription(boolean createIfAbsent) {
         return subscriptions;
     }
 
@@ -233,7 +233,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
     }
 
     @Override
-    public V getUsing(K key, @Nullable MV value) {
+    public V getUsing(K key, @Nullable Object value) {
         if (value != null) throw new UnsupportedOperationException("Mutable values not supported");
         return chronicleMap.getUsing(key, (V) value);
     }
@@ -291,7 +291,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
 
     @Nullable
     @Override
-    public KeyValueStore<K, MV, V> underlying() {
+    public KeyValueStore<K, V> underlying() {
         return null;
     }
 

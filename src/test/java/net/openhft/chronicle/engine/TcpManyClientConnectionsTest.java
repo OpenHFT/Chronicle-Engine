@@ -108,7 +108,7 @@ public class TcpManyClientConnectionsTest extends ThreadMonitoringTest {
     @Test
     public void test() throws IOException, InterruptedException {
 
-        final MapView<String, String, String> serverMap = serverAssetTree.acquireMap(NAME, String
+        final MapView<String, String> serverMap = serverAssetTree.acquireMap(NAME, String
                 .class, String.class);
 
         serverMap.put("hello", "world");

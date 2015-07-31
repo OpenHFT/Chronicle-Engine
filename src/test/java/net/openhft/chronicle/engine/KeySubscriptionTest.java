@@ -76,12 +76,12 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
     @Test
     public void test() throws IOException, InterruptedException {
 
-        final MapView<String, String, String> serverMap = serverAssetTree.acquireMap(NAME, String
+        final MapView<String, String> serverMap = serverAssetTree.acquireMap(NAME, String
                 .class, String.class);
 
         serverMap.put("hello", "world");
 
-        final MapView<String, String, String> map = clientTree.acquireMap(NAME, String.class,
+        final MapView<String, String> map = clientTree.acquireMap(NAME, String.class,
                 String.class);
 
         map.registerKeySubscriber(System.out::println);

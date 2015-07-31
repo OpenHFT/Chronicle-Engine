@@ -24,6 +24,7 @@ import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.wire.Marshallable;
+import net.openhft.chronicle.wire.ReadMarshallable;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,7 @@ import java.util.function.Supplier;
 import static net.openhft.chronicle.bytes.NativeBytes.nativeBytes;
 
 public class FilePerKeyBasedKeyMarshallableValueStore<K, V extends Marshallable>
-        implements KeyValueStore<K, V, V> {
+        implements KeyValueStore<K, V> {
     @NotNull
     private static final ThreadLocal<Wire> threadLocalValueWire =
             ThreadLocal.withInitial(() -> new TextWire(nativeBytes()));
@@ -91,13 +92,13 @@ public class FilePerKeyBasedKeyMarshallableValueStore<K, V extends Marshallable>
 
     @Nullable
     @Override
-    public V getUsing(K key, @Nullable V value) {
+    public V getUsing(K key, @Nullable Object value) {
         Wire valueWire = valueWire();
         kvStore.getUsing(keyToString.apply(key), valueWire.bytes());
         if (value == null)
             value = createValue.get();
-        value.readMarshallable(valueWire);
-        return value;
+        ((ReadMarshallable) value).readMarshallable(valueWire);
+        return (V) value;
     }
 
     @Override
@@ -137,7 +138,7 @@ public class FilePerKeyBasedKeyMarshallableValueStore<K, V extends Marshallable>
 
     @Nullable
     @Override
-    public KeyValueStore<K, V, V> underlying() {
+    public KeyValueStore<K, V> underlying() {
         return null;
     }
 

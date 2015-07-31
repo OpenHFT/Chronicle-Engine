@@ -27,7 +27,7 @@ import java.util.stream.Stream;
 /**
  * Marker interface for a set which represents the keySet() of a Map.  This may have additional method in future.
  */
-public interface KeySetView<K> extends Set<K>, Assetted<MapView<K, ?, ?>>,
+public interface KeySetView<K> extends Set<K>, Assetted<MapView<K, ?>>,
         Queryable<K>, View {
     default Stream<K> stream() {
         return Set.super.stream();

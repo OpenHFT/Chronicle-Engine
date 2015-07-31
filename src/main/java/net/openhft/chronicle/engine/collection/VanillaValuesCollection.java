@@ -34,9 +34,9 @@ import java.util.Objects;
  */
 public class VanillaValuesCollection<K, V> extends AbstractCollection<V> implements ValuesCollection<V>, View {
     private final Asset asset;
-    private final MapView<K, V, V> mapView;
+    private final MapView<K, V> mapView;
 
-    public VanillaValuesCollection(RequestContext requestContext, Asset asset, MapView<K, V, V> mapView) {
+    public VanillaValuesCollection(RequestContext requestContext, Asset asset, MapView<K, V> mapView) {
         this.asset = asset;
         this.mapView = mapView;
     }
@@ -86,7 +86,7 @@ public class VanillaValuesCollection<K, V> extends AbstractCollection<V> impleme
 
     @Nullable
     @Override
-    public MapView<?, ?, V> underlying() {
+    public MapView<?, V> underlying() {
         return mapView;
     }
 }

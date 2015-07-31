@@ -39,20 +39,20 @@ import java.util.Map;
 /**
  * Created by peter on 22/05/15.
  */
-public class VanillaMapView<K, MV, V> implements MapView<K, MV, V> {
+public class VanillaMapView<K, V> implements MapView<K, V> {
     private final boolean putReturnsNull;
     private final boolean removeReturnsNull;
     private final Class keyClass;
     private final Class valueType;
     private final Asset asset;
-    private final KeyValueStore<K, MV, V> kvStore;
+    private final KeyValueStore<K, V> kvStore;
     private AbstractCollection<V> values;
 
-    public VanillaMapView(@org.jetbrains.annotations.NotNull RequestContext context, Asset asset, KeyValueStore<K, MV, V> kvStore) {
+    public VanillaMapView(@org.jetbrains.annotations.NotNull RequestContext context, Asset asset, KeyValueStore<K, V> kvStore) {
         this(context.keyType(), context.valueType(), asset, kvStore, context.putReturnsNull() != Boolean.FALSE, context.removeReturnsNull() != Boolean.FALSE);
     }
 
-    public VanillaMapView(Class keyClass, Class valueType, Asset asset, KeyValueStore<K, MV, V> kvStore, boolean putReturnsNull, boolean removeReturnsNull) {
+    public VanillaMapView(Class keyClass, Class valueType, Asset asset, KeyValueStore<K, V> kvStore, boolean putReturnsNull, boolean removeReturnsNull) {
         this.keyClass = keyClass;
         this.valueType = valueType;
         this.asset = asset;
@@ -73,7 +73,7 @@ public class VanillaMapView<K, MV, V> implements MapView<K, MV, V> {
 
     @Nullable
     @Override
-    public V getUsing(K key, MV usingValue) {
+    public V getUsing(K key, Object usingValue) {
         return kvStore.getUsing(key, usingValue);
     }
 
@@ -172,7 +172,7 @@ public class VanillaMapView<K, MV, V> implements MapView<K, MV, V> {
     }
 
     @Override
-    public KeyValueStore<K, MV, V> underlying() {
+    public KeyValueStore<K, V> underlying() {
         return kvStore;
     }
 
@@ -248,7 +248,7 @@ public class VanillaMapView<K, MV, V> implements MapView<K, MV, V> {
     @org.jetbrains.annotations.NotNull
     @NotNull
     @Override
-    public EntrySetView<K, MV, V> entrySet() {
+    public EntrySetView<K, Object, V> entrySet() {
         //noinspection unchecked
         return asset.acquireView(EntrySetView.class);
     }
@@ -291,19 +291,19 @@ public class VanillaMapView<K, MV, V> implements MapView<K, MV, V> {
 
     @Override
     public void registerTopicSubscriber(TopicSubscriber<K, V> topicSubscriber) {
-        KVSSubscription<K, V, V> subscription = (KVSSubscription) asset.subscription(true);
+        KVSSubscription<K, V> subscription = (KVSSubscription) asset.subscription(true);
         subscription.registerTopicSubscriber(RequestContext.requestContext().bootstrap(true).type(keyClass).type2(valueType), topicSubscriber);
     }
 
     @Override
     public void registerKeySubscriber(Subscriber<K> subscriber) {
-        KVSSubscription<K, V, V> subscription = (KVSSubscription) asset.subscription(true);
+        KVSSubscription<K, V> subscription = (KVSSubscription) asset.subscription(true);
         subscription.registerKeySubscriber(RequestContext.requestContext().bootstrap(true).type(keyClass), subscriber);
     }
 
     @Override
     public void registerSubscriber(Subscriber<MapEvent<K, V>> subscriber) {
-        KVSSubscription<K, V, V> subscription = (KVSSubscription) asset.subscription(true);
+        KVSSubscription<K, V> subscription = (KVSSubscription) asset.subscription(true);
         subscription.registerSubscriber(RequestContext.requestContext().bootstrap(true).type(MapEvent.class), subscriber);
     }
 

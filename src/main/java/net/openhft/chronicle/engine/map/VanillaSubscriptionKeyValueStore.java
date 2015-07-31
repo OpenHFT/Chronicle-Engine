@@ -25,11 +25,11 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Created by peter on 22/05/15.
  */
-public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValueStore<K, MV, V> implements ObjectKeyValueStore<K, MV, V>, AuthenticatedKeyValueStore<K, MV, V> {
+public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValueStore<K, V> implements ObjectKeyValueStore<K, V>, AuthenticatedKeyValueStore<K, V> {
     @NotNull
     private final ObjectKVSSubscription<K, MV, V> subscriptions;
 
-    public VanillaSubscriptionKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset, @NotNull KeyValueStore<K, MV, V> item) {
+    public VanillaSubscriptionKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset, @NotNull KeyValueStore<K, V> item) {
         super(context, asset, item);
         this.subscriptions = asset.acquireView(ObjectKVSSubscription.class, context);
         subscriptions.setKvStore(this);

@@ -125,14 +125,14 @@ public class TcpFailoverTest {
 
         try {
 
-            final MapView<String, String, String> failoverClient = failOverClient.acquireMap(NAME,
+            final MapView<String, String> failoverClient = failOverClient.acquireMap(NAME,
                     String.class,
                     String.class);
 
-            final MapView<String, String, String> map1 = serverAssetTree1.acquireMap(NAME, String.class,
+            final MapView<String, String> map1 = serverAssetTree1.acquireMap(NAME, String.class,
                     String.class);
 
-            final MapView<String, String, String> map2 = serverAssetTree2.acquireMap(NAME, String.class,
+            final MapView<String, String> map2 = serverAssetTree2.acquireMap(NAME, String.class,
                     String.class);
 
             map1.put("hello", "server1");

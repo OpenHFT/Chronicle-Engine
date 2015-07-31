@@ -48,8 +48,8 @@ public class ReplicationClientTest {
     @NotNull
     static Set<Closeable> closeables = new HashSet<>();
 
-    private static MapView<String, String, String> map1;
-    private static MapView<String, String, String> map2;
+    private static MapView<String, String> map1;
+    private static MapView<String, String> map2;
     private ServerEndpoint server1;
     private ServerEndpoint server2;
     private static VanillaAssetTree tree;
@@ -122,8 +122,8 @@ public class ReplicationClientTest {
 
 
     @NotNull
-    private static MapView<String, String, String> create(@NotNull String nameName, Integer hostId, String connectUri,
-                                                          @NotNull BlockingQueue<MapEvent> q, @NotNull Function<Bytes, Wire> wireType) {
+    private static MapView<String, String> create(@NotNull String nameName, Integer hostId, String connectUri,
+                                                  @NotNull BlockingQueue<MapEvent> q, @NotNull Function<Bytes, Wire> wireType) {
         tree = new VanillaAssetTree(hostId);
 
         final Asset asset = tree.root().acquireAsset(nameName);
@@ -144,7 +144,7 @@ public class ReplicationClientTest {
         tree.root().addView(TcpChannelHub.class, new TcpChannelHub(sessionProvider, eventLoop, wireType, "connectUri=" + connectUri, socketAddressSupplier));
         asset.addView(AuthenticatedKeyValueStore.class, new RemoteKeyValueStore(requestContext(nameName), asset));
 
-        MapView<String, String, String> result = tree.acquireMap(nameName, String.class, String.class);
+        MapView<String, String> result = tree.acquireMap(nameName, String.class, String.class);
 
         result.clear();
         tree.registerSubscriber(nameName, MapEvent.class, q::add);

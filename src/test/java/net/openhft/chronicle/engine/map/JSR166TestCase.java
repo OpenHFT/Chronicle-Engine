@@ -270,18 +270,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     public void tearDown() throws InterruptedException {
         Throwable t = threadFailure.getAndSet(null);
         if (t != null) {
-            if (t instanceof Error)
-                throw (Error) t;
-            else if (t instanceof RuntimeException)
-                throw (RuntimeException) t;
-            else if (t instanceof Exception)
                 throw Jvm.rethrow(t);
-            else {
-                AssertionFailedError afe =
-                        new AssertionFailedError(t.toString());
-                afe.initCause(t);
-                throw afe;
-            }
         }
 
         if (Thread.interrupted())

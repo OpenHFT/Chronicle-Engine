@@ -32,15 +32,15 @@ import java.util.Map;
 /**
  * Created by peter on 22/05/15.
  */
-public class AbstractKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> {
+public class AbstractKeyValueStore<K, V> implements KeyValueStore<K, V> {
     @NotNull
     final Asset asset;
     @NotNull
-    final KeyValueStore<K, MV, V> kvStore;
+    final KeyValueStore<K, V> kvStore;
     private final Class<K> keyType;
     private final Class<V> valueType;
 
-    AbstractKeyValueStore(@NotNull RequestContext rc, @NotNull Asset asset, @NotNull KeyValueStore<K, MV, V> kvStore) {
+    AbstractKeyValueStore(@NotNull RequestContext rc, @NotNull Asset asset, @NotNull KeyValueStore<K, V> kvStore) {
         assert asset != null;
         assert kvStore != null;
         keyType = rc.keyType();
@@ -69,7 +69,7 @@ public class AbstractKeyValueStore<K, MV, V> implements KeyValueStore<K, MV, V> 
 
     @Nullable
     @Override
-    public V getUsing(K key, MV value) {
+    public V getUsing(K key, Object value) {
         return kvStore.getUsing(key, value);
     }
 

@@ -138,7 +138,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractRemoteSubscription<
     }
 
     @Override
-    public void setKvStore(KeyValueStore<K, MV, V> store) {
+    public void setKvStore(KeyValueStore<K, V> store) {
 
     }
 

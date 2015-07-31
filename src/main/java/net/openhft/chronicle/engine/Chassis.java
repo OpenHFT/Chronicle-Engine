@@ -77,7 +77,7 @@ public enum Chassis {
      * @throws AssetNotFoundException if not found or could not be created.
      */
     @NotNull
-    public static <K, V> MapView<K, V, V> acquireMap(@NotNull String uri, Class<K> kClass, Class<V> vClass) throws AssetNotFoundException {
+    public static <K, V> MapView<K, V> acquireMap(@NotNull String uri, Class<K> kClass, Class<V> vClass) throws AssetNotFoundException {
         return assetTree.acquireMap(uri, kClass, vClass);
     }
 

@@ -46,17 +46,17 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     @NotNull
     private final ObjectKVSSubscription<String, StringBuilder, String> subscriptions;
 
-    private final SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore;
+    private final SubscriptionKeyValueStore<String, BytesStore> kvStore;
     private final Asset asset;
 
     public VanillaStringStringKeyValueStore(RequestContext context, @NotNull Asset asset,
-                                            @NotNull SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore) throws AssetNotFoundException {
+                                            @NotNull SubscriptionKeyValueStore<String, BytesStore> kvStore) throws AssetNotFoundException {
         this(asset.acquireView(ObjectKVSSubscription.class, context), asset, kvStore);
     }
 
     VanillaStringStringKeyValueStore(@NotNull ObjectKVSSubscription<String, StringBuilder, String> subscriptions,
                                      @NotNull Asset asset,
-                                     @NotNull SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore) throws AssetNotFoundException {
+                                     @NotNull SubscriptionKeyValueStore<String, BytesStore> kvStore) throws AssetNotFoundException {
         this.asset = asset;
         this.kvStore = kvStore;
         asset.registerView(ValueReader.class, StringValueReader.BYTES_STORE_TO_STRING);
@@ -125,7 +125,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
 
     @Nullable
     @Override
-    public String getUsing(String key, StringBuilder value) {
+    public String getUsing(String key, Object value) {
         Buffers b = BUFFERS.get();
         BytesStore retBytes = kvStore.getUsing(key, b.valueBuffer);
         return retBytes == null ? null : retBytes.toString();

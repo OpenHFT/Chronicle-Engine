@@ -27,7 +27,7 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 /**
  * Created by peter on 29/05/15.
  */
-public interface KVSSubscription<K, MV, V> extends Subscription<MapEvent<K, V>>, ISubscriber, EventConsumer<K, V> {
+public interface KVSSubscription<K, V> extends Subscription<MapEvent<K, V>>, ISubscriber, EventConsumer<K, V> {
 
     void registerKeySubscriber(RequestContext rc, Subscriber<K> subscriber);
 
@@ -45,7 +45,7 @@ public interface KVSSubscription<K, MV, V> extends Subscription<MapEvent<K, V>>,
 
     boolean needsPrevious();
 
-    void setKvStore(KeyValueStore<K, MV, V> store);
+    void setKvStore(KeyValueStore<K, V> store);
 
     void notifyEvent(MapEvent<K, V> changeEvent);
 

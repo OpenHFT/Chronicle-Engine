@@ -43,7 +43,7 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
     private final Set<EventConsumer<K, V>> downstream = new CopyOnWriteArraySet<>();
     @Nullable
     private final Asset asset;
-    private KeyValueStore<K, MV, V> kvStore;
+    private KeyValueStore<K, V> kvStore;
     private boolean hasSubscribers = false;
 
     public VanillaKVSSubscription(@NotNull RequestContext requestContext, @NotNull Asset asset) {
@@ -88,7 +88,7 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
     }
 
     @Override
-    public void setKvStore(KeyValueStore<K, MV, V> kvStore) {
+    public void setKvStore(KeyValueStore<K, V> kvStore) {
         this.kvStore = kvStore;
     }
 

@@ -53,7 +53,7 @@ import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventI
 import static net.openhft.chronicle.network.connection.CoreFields.stringEvent;
 
 public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
-        implements Cloneable, ObjectKeyValueStore<K, V, V> {
+        implements Cloneable, ObjectKeyValueStore<K, V> {
 
     private static final Consumer<ValueOut> VOID_PARAMETERS = out -> out.marshallable(WriteMarshallable.EMPTY);
 
@@ -152,7 +152,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     }
 
     @Nullable
-    public <A, R> R applyTo(@NotNull SerializableBiFunction<MapView<K, ?, V>, A, R> function, A arg) {
+    public <A, R> R applyTo(@NotNull SerializableBiFunction<MapView<K, V>, A, R> function, A arg) {
         return (R) proxyReturnTypedObject(applyTo2, null, Object.class, function, arg);
     }
 
@@ -260,9 +260,9 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     }
 
     @Nullable
-    public V getUsing(K key, V usingValue) {
+    public V getUsing(K key, Object usingValue) {
         checkKey(key);
-        return this.proxyReturnTypedObject(get, usingValue, vClass, key);
+        return this.proxyReturnTypedObject(get, (V) usingValue, vClass, key);
     }
 
     public long longSize() {
@@ -428,7 +428,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
 
     @NotNull
     @Override
-    public KeyValueStore<K, V, V> underlying() {
+    public KeyValueStore<K, V> underlying() {
         throw new UnsupportedOperationException();
     }
 

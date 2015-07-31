@@ -186,7 +186,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
                 RemoteMapSupplier<>("testValuesCollection.host.port", String.class,
                 String.class,
                 WireType.BINARY, assetTree, "test")) {
-            final MapView<String, String, String> map = remote.get();
+            final MapView<String, String> map = remote.get();
             HashMap<String, String> data = new HashMap<String, String>();
             data.put("test1", "value1");
             data.put("test1", "value1");

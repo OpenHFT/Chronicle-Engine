@@ -309,10 +309,10 @@ public class MapClientTest extends ThreadMonitoringTest {
      * supplies a listener and closes it once the tests are finished
      */
     private <K, V>
-    void supplyMap(@NotNull Class<K> kClass, @NotNull Class<V> vClass, @NotNull Consumer<MapView<K, V, V>> c)
+    void supplyMap(@NotNull Class<K> kClass, @NotNull Class<V> vClass, @NotNull Consumer<MapView<K, V>> c)
             throws IOException {
 
-        CloseableSupplier<MapView<K, V, V>> result;
+        CloseableSupplier<MapView<K, V>> result;
         if (LocalMapSupplier.class.equals(supplier)) {
             result = new LocalMapSupplier<>(kClass, vClass, assetTree);
 
@@ -336,12 +336,12 @@ public class MapClientTest extends ThreadMonitoringTest {
     private interface CloseableSupplier<X> extends Closeable, Supplier<X> {
     }
 
-    public static class RemoteMapSupplier<K, V> implements CloseableSupplier<MapView<K, V, V>> {
+    public static class RemoteMapSupplier<K, V> implements CloseableSupplier<MapView<K, V>> {
 
         @NotNull
         private final ServerEndpoint serverEndpoint;
         @NotNull
-        private final MapView<K, V, V> map;
+        private final MapView<K, V> map;
         @NotNull
         private final AssetTree serverAssetTree;
         @NotNull
@@ -380,15 +380,15 @@ public class MapClientTest extends ThreadMonitoringTest {
 
         @NotNull
         @Override
-        public MapView<K, V, V> get() {
+        public MapView<K, V> get() {
             return map;
         }
     }
 
-    public static class LocalMapSupplier<K, V> implements CloseableSupplier<MapView<K, V, V>> {
+    public static class LocalMapSupplier<K, V> implements CloseableSupplier<MapView<K, V>> {
 
         @NotNull
-        private final MapView<K, V, V> map;
+        private final MapView<K, V> map;
 
         public LocalMapSupplier(Class<K> kClass, Class<V> vClass, @NotNull AssetTree assetTree) throws IOException {
             map = assetTree.acquireMap("test" + i++ + "?putReturnsNull=false&removeReturnsNull=false", kClass, vClass);
@@ -402,7 +402,7 @@ public class MapClientTest extends ThreadMonitoringTest {
 
         @NotNull
         @Override
-        public MapView<K, V, V> get() {
+        public MapView<K, V> get() {
             return map;
         }
     }

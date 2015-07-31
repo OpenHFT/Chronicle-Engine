@@ -61,18 +61,18 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     private final BiFunction<BytesStore, V, V> bytesToValue;
     @NotNull
     private final ObjectKVSSubscription<String, V, V> subscriptions;
-    private final SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore;
+    private final SubscriptionKeyValueStore<String, BytesStore> kvStore;
     private final Asset asset;
     private final Class<V> valueType;
 
     public VanillaStringMarshallableKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset,
-                                                  @NotNull SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore) throws AssetNotFoundException {
+                                                  @NotNull SubscriptionKeyValueStore<String, BytesStore> kvStore) throws AssetNotFoundException {
         this(asset.acquireView(ObjectKVSSubscription.class, context), asset, context.valueType(),
                 kvStore, context.wireType());
     }
 
     VanillaStringMarshallableKeyValueStore(@NotNull ObjectKVSSubscription<String, V, V> subscriptions, @NotNull Asset asset, @NotNull Class valueType,
-                                           @NotNull SubscriptionKeyValueStore<String, Bytes, BytesStore> kvStore,
+                                           @NotNull SubscriptionKeyValueStore<String, BytesStore> kvStore,
                                            @NotNull Function<Bytes, Wire> wireType) {
         this.asset = asset;
         this.valueType = valueType;
@@ -159,10 +159,10 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     }
 
     @Override
-    public V getUsing(String key, V value) {
+    public V getUsing(String key, Object value) {
         Buffers b = BUFFERS.get();
         BytesStore retBytes = kvStore.getUsing(key, b.valueBuffer);
-        return retBytes == null ? null : bytesToValue.apply(retBytes, value);
+        return retBytes == null ? null : bytesToValue.apply(retBytes, (V) value);
     }
 
     @Override

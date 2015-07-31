@@ -24,14 +24,14 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Created by daniel on 08/06/15.
  */
-public class AbstractSubscriptionKeyValueStore<K, MV,V> extends AbstractKeyValueStore<K, MV,V>
-        implements SubscriptionKeyValueStore<K, MV,V> {
-    protected AbstractSubscriptionKeyValueStore(@NotNull RequestContext rc, @NotNull Asset asset, @NotNull SubscriptionKeyValueStore<K, MV, V> kvStore) {
+public class AbstractSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValueStore<K, V>
+        implements SubscriptionKeyValueStore<K, V> {
+    protected AbstractSubscriptionKeyValueStore(@NotNull RequestContext rc, @NotNull Asset asset, @NotNull SubscriptionKeyValueStore<K, V> kvStore) {
         super(rc, asset, kvStore);
     }
 
     @Override
     public KVSSubscription subscription(boolean createIfAbsent) {
-        return ((SubscriptionKeyValueStore<K, MV,V>) kvStore).subscription(createIfAbsent);
+        return ((SubscriptionKeyValueStore<K, V>) kvStore).subscription(createIfAbsent);
     }
 }

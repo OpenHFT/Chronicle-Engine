@@ -28,7 +28,7 @@ import java.util.stream.Stream;
 /**
  * Marker interface for a set which represents the entrySet() of a Map.  This may have additional method in future.
  */
-public interface EntrySetView<K, MV, V> extends Set<Entry<K, V>>, Assetted<MapView<K, MV, V>>,
+public interface EntrySetView<K, MV, V> extends Set<Entry<K, V>>, Assetted<MapView<K, V>>,
         Queryable<Entry<K, V>>, View {
     default Stream<Entry<K, V>> stream() {
         return Set.super.stream();

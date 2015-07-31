@@ -64,7 +64,7 @@ public class MapViewTest {
     public void testRemoteAccess() throws IOException {
         Chassis.resetChassis();
 
-        MapView<String, UserInfo, UserInfo> userMap = Chassis.acquireMap("users", String.class, UserInfo.class);
+        MapView<String, UserInfo> userMap = Chassis.acquireMap("users", String.class, UserInfo.class);
         userMap.put("userid", new UserInfo("User's Name"));
 
         userMap.registerSubscriber(System.out::println);

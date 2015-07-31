@@ -38,7 +38,7 @@ import static net.openhft.chronicle.engine.map.Buffers.BUFFERS;
 /**
  * Created by peter on 25/05/15.
  */
-public class ObjectObjectKeyValueStore<K, MV extends V, V> implements KeyValueStore<K, MV, V> {
+public class ObjectObjectKeyValueStore<K, V> implements KeyValueStore<K, V> {
     @NotNull
     private final BiFunction<K, Bytes, Bytes> keyToBytes;
     @NotNull
@@ -47,7 +47,7 @@ public class ObjectObjectKeyValueStore<K, MV extends V, V> implements KeyValueSt
     private final BiFunction<BytesStore, K, K> bytesToKey;
     @NotNull
     private final BiFunction<BytesStore, V, V> bytesToValue;
-    private final KeyValueStore<BytesStore, Bytes, BytesStore> kvStore;
+    private final KeyValueStore<BytesStore, BytesStore> kvStore;
     private final Asset asset;
 
     public ObjectObjectKeyValueStore(@NotNull RequestContext context, Asset asset, Assetted assetted) {
@@ -58,7 +58,7 @@ public class ObjectObjectKeyValueStore<K, MV extends V, V> implements KeyValueSt
         Class type2 = context.type2();
         valueToBytes = toBytes(type2);
         bytesToValue = fromBytes(type2);
-        kvStore = (KeyValueStore<BytesStore, Bytes, BytesStore>) assetted;
+        kvStore = (KeyValueStore<BytesStore, BytesStore>) assetted;
     }
 
     private static <T> BiFunction<T, Bytes, Bytes> toBytes(Class type) {
@@ -94,11 +94,11 @@ public class ObjectObjectKeyValueStore<K, MV extends V, V> implements KeyValueSt
 
     @Nullable
     @Override
-    public V getUsing(K key, MV value) {
+    public V getUsing(K key, Object value) {
         Buffers b = BUFFERS.get();
         Bytes keyBytes = keyToBytes.apply(key, b.keyBuffer);
         BytesStore retBytes = kvStore.getUsing(keyBytes, b.valueBuffer);
-        return retBytes == null ? null : bytesToValue.apply(retBytes, value);
+        return retBytes == null ? null : bytesToValue.apply(retBytes, (V) value);
     }
 
     @Override

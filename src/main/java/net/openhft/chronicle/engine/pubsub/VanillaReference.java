@@ -32,13 +32,13 @@ import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContex
 public class VanillaReference<E> implements Reference<E>, View {
     private final String name;
     private final Class<E> eClass;
-    private final MapView<String, E, E> underlyingMap;
+    private final MapView<String, E> underlyingMap;
 
-    public VanillaReference(@NotNull RequestContext context, Asset asset, MapView<String, E, E> underlying) throws AssetNotFoundException {
+    public VanillaReference(@NotNull RequestContext context, Asset asset, MapView<String, E> underlying) throws AssetNotFoundException {
         this(context.name(), context.type(), underlying);
     }
 
-    public VanillaReference(String name, Class<E> type, MapView<String, E, E> mapView) {
+    public VanillaReference(String name, Class<E> type, MapView<String, E> mapView) {
         this.name = name;
         this.eClass = type;
         this.underlyingMap = mapView;

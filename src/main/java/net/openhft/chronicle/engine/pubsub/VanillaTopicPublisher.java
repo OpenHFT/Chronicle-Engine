@@ -32,13 +32,13 @@ public class VanillaTopicPublisher<T, M> implements TopicPublisher<T, M> {
     private final Class<T> tClass;
     private final Class<M> mClass;
     private final Asset asset;
-    private final MapView<T, M, M> underlying;
+    private final MapView<T, M> underlying;
 
-    public VanillaTopicPublisher(@NotNull RequestContext context, Asset asset, @NotNull MapView<T, M, M> underlying) throws AssetNotFoundException {
+    public VanillaTopicPublisher(@NotNull RequestContext context, Asset asset, @NotNull MapView<T, M> underlying) throws AssetNotFoundException {
         this(asset, context.type(), context.type2(), underlying);
     }
 
-    VanillaTopicPublisher(Asset asset, Class<T> tClass, Class<M> mClass, MapView<T, M, M> underlying) {
+    VanillaTopicPublisher(Asset asset, Class<T> tClass, Class<M> mClass, MapView<T, M> underlying) {
         this.asset = asset;
         this.tClass = tClass;
         this.mClass = mClass;
@@ -56,19 +56,19 @@ public class VanillaTopicPublisher<T, M> implements TopicPublisher<T, M> {
     }
 
     @Override
-    public MapView<T, M, M> underlying() {
+    public MapView<T, M> underlying() {
         return underlying;
     }
 
     @Override
     public void registerTopicSubscriber(TopicSubscriber<T, M> topicSubscriber) throws AssetNotFoundException {
-        KVSSubscription<T, M, M> subscription = (KVSSubscription) asset.subscription(true);
+        KVSSubscription<T, M> subscription = (KVSSubscription) asset.subscription(true);
         subscription.registerTopicSubscriber(RequestContext.requestContext().bootstrap(true).type(tClass).type2(mClass), topicSubscriber);
     }
 
     @Override
     public void unregisterTopicSubscriber(TopicSubscriber<T, M> topicSubscriber) {
-        KVSSubscription<T, M, M> subscription = (KVSSubscription) asset.subscription(false);
+        KVSSubscription<T, M> subscription = (KVSSubscription) asset.subscription(false);
         if (subscription != null)
             subscription.unregisterTopicSubscriber(topicSubscriber);
     }
