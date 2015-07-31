@@ -2,16 +2,18 @@ package net.openhft.chronicle.engine.map.remote;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
+import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
+import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
+import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
+import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
-import net.openhft.chronicle.engine.map.KVSSubscription;
-import net.openhft.chronicle.engine.map.ObjectKeyValueStore;
-import net.openhft.chronicle.network.connection.TcpChannelHub;
+import net.openhft.chronicle.engine.map.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xerial.snappy.Snappy;
@@ -22,25 +24,43 @@ import java.io.IOException;
  * Created by daniel on 28/07/2015.
  */
 public class CompressedKeyValueStore<K> implements ObjectKeyValueStore<K, String> {
-    private KeyValueStore<K, BytesStore> remoteKeyValueStore;
+    private final Class kClass;
+    private Asset asset;
+    private KeyValueStore<K, BytesStore> underlyingKVStore;
 
-    public CompressedKeyValueStore(@NotNull RequestContext requestContext, @NotNull Asset asset) {
-        remoteKeyValueStore = new RemoteKeyValueStore(requestContext, asset, asset.findView(TcpChannelHub.class));
-    }
+    @NotNull
+    private  RawKVSSubscription<K, String, String> subscriptions;
 
-    public CompressedKeyValueStore(RequestContext requestContext, Asset asset,
+    public CompressedKeyValueStore(RequestContext context, Asset asset,
                                    KeyValueStore<K, BytesStore> kvStore) {
-        this.remoteKeyValueStore = kvStore;
+        this.asset = asset;
+        this.underlyingKVStore = kvStore;
+        this.kClass = context.keyType();
+
+        subscriptions = asset.acquireView(RawKVSSubscription.class, context);
+        subscriptions.setKvStore(this);
+
+        SubscriptionKeyValueStore<K, BytesStore> sKVStore = (SubscriptionKeyValueStore)kvStore;
+
+        sKVStore.subscription(true).registerDownstream(new EventConsumer<K, BytesStore>() {
+            @Override
+            public void notifyEvent(MapEvent<K, BytesStore> changeEvent) throws InvalidSubscriberException {
+                //MapEvent m = changeEvent.translate(k->k, v->decompressBytesStore(v));
+                System.out.println("In notify event");
+
+                //subscriptions.notifyEvent(changeEvent.translate(k->k, v->decompressBytesStore(v)));
+            }
+        });
     }
 
     @Override
     public Class<K> keyType() {
-        throw new UnsupportedOperationException("todo");
+        return kClass;
     }
 
     @Override
     public Class<String> valueType() {
-        throw new UnsupportedOperationException("todo");
+        return String.class;
     }
 
     @Override
@@ -49,62 +69,39 @@ public class CompressedKeyValueStore<K> implements ObjectKeyValueStore<K, String
         //this should subscribe to the other one
         //then call translate to convert BytesStore to String
         //then call notify
-        throw new UnsupportedOperationException("todo");
+        return subscriptions;
     }
 
     @Nullable
     @Override
     public String getAndPut(K key, String value) {
-        //Compress V
-        System.out.println("Value " + value);
-
-        try {
-            byte[] cbytes = Snappy.compress(value);
-
-            BytesStore bs = Bytes.wrapForRead(cbytes);
-            BytesStore ret = remoteKeyValueStore.getAndPut(key, bs);
-            if (ret == null) return null;
-            byte[] rbytes = new byte[(int) ret.readRemaining()];
-            ret.copyTo(rbytes);
-            System.out.println("c->" + Bytes.wrapForRead(cbytes).toHexString());
-            System.out.println("r->" + Bytes.wrapForRead(rbytes).toHexString());
-            String r = Snappy.uncompressString(rbytes);
-            System.out.println("**" + r);
-            return r;
-
-
-        } catch (IOException e) {
-            throw new AssertionError(e);
-        }
-
-//        try {
-//
-//
-//        } catch (IOException e) {
-//            throw new AssertionError(e);
-//        }
+        BytesStore ret = underlyingKVStore.getAndPut(key, compressString(value));
+        return ret == null ? null : decompressBytesStore(ret);
     }
 
     @Nullable
     @Override
     public String getAndRemove(K key) {
-        throw new UnsupportedOperationException("todo");
+        BytesStore ret = underlyingKVStore.getAndRemove(key);
+        return ret == null ? null : decompressBytesStore(ret);
     }
 
     @Nullable
     @Override
     public String getUsing(K key, Object value) {
-        throw new UnsupportedOperationException("todo");
+        Bytes compressedValue = value == null ? null : (Bytes) compressString((String)value);
+        BytesStore ret = underlyingKVStore.getUsing(key, compressedValue);
+        return ret == null ? null : decompressBytesStore(ret);
     }
 
     @Override
     public long longSize() {
-        throw new UnsupportedOperationException("todo");
+        return underlyingKVStore.longSize();
     }
 
     @Override
     public void keysFor(int segment, SubscriptionConsumer<K> kConsumer) throws InvalidSubscriberException {
-        throw new UnsupportedOperationException("todo");
+        underlyingKVStore.keysFor(segment, kConsumer);
     }
 
     @Override
@@ -114,32 +111,54 @@ public class CompressedKeyValueStore<K> implements ObjectKeyValueStore<K, String
 
     @Override
     public void clear() {
-        throw new UnsupportedOperationException("todo");
+        underlyingKVStore.clear();
     }
 
     @Override
     public boolean containsValue(String value) {
-        throw new UnsupportedOperationException("todo");
+        return underlyingKVStore.containsValue(compressString(value));
     }
 
     @Override
     public Asset asset() {
-        throw new UnsupportedOperationException("todo");
+        return asset;
     }
 
     @Nullable
     @Override
-    public KeyValueStore<K, String> underlying() {
-        throw new UnsupportedOperationException("todo");
+    public KeyValueStore underlying() {
+        return underlyingKVStore;
     }
 
     @Override
     public void close() {
-        throw new UnsupportedOperationException("todo");
+        underlyingKVStore.close();
     }
 
     @Override
     public void accept(EngineReplication.ReplicationEntry replicationEntry) {
-        throw new UnsupportedOperationException("todo");
+        underlyingKVStore.accept(replicationEntry);
+    }
+
+    @NotNull
+    private String decompressBytesStore(BytesStore bs){
+        try {
+            byte[] rbytes = new byte[(int) bs.readRemaining()];
+            bs.copyTo(rbytes);
+
+            return Snappy.uncompressString(rbytes);
+        }catch(IOException e){
+            throw new IORuntimeException(e);
+        }
+    }
+
+    @NotNull
+    private BytesStore compressString(String value){
+        try{
+            byte[] cbytes = Snappy.compress(value);
+            return Bytes.wrapForRead(cbytes);
+        }catch(IOException e){
+            throw new IORuntimeException(e);
+        }
     }
 }
