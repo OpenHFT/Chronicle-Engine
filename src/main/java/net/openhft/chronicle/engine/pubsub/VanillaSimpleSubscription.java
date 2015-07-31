@@ -53,7 +53,7 @@ public class VanillaSimpleSubscription<E> implements SimpleSubscription<E> {
     }
 
     @Override
-    public void unregisterSubscriber(@NotNull Subscriber<E> subscriber) {
+    public void unregisterSubscriber(Subscriber subscriber) {
         subscribers.remove(subscriber);
         subscriber.onEndOfSubscription();
     }

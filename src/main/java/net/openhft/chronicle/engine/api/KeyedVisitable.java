@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  * <p></p>
  * This interface allows visiting any element of a keyed collection of resources
  * <p></p>
- * The default implementations are trivial, however further guarentees can be provided.
+ * The default implementations are trivial, however further guarantees can be provided.
  * e.g. a remote client may have the code executed on the server atomically.
  */
 public interface KeyedVisitable<K, E> {
@@ -57,10 +57,11 @@ public interface KeyedVisitable<K, E> {
     }
 
     /**
-     * Apply a function to visitable potentially asynchronously.  This function is assumed to replace the value and trigger and events or replciated changes.
+     * Apply a function to visitable potentially asynchronously.  This function is assumed to replace
+     * the value and trigger and events or replicated changes.
      *
      * @param key to visit within this collection.
-     * @param updateFunction to update the state of the visitiable.
+     * @param updateFunction to update the state of the visibility.
      */
     default void asyncUpdateKey(K key, @NotNull SerializableFunction<E, E> updateFunction) {
         set(key, updateFunction.apply(get(key)));

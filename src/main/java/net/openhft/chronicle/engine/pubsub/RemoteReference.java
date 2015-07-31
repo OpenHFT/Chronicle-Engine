@@ -66,13 +66,13 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
     @Nullable
     @Override
     public E get() {
-        return (E) proxyReturnTypedObject(get, null, messageClass);
+        return proxyReturnTypedObject(get, null, messageClass);
     }
 
     @Nullable
     @Override
     public E getAndSet(E e) {
-        return (E)proxyReturnTypedObject(getAndSet, null, messageClass, e);
+        return proxyReturnTypedObject(getAndSet, null, messageClass, e);
     }
 
     @Override
@@ -83,15 +83,15 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
     @Nullable
     @Override
     public E getAndRemove() {
-        return (E) proxyReturnTypedObject(getAndRemove, null, messageClass);
+        return proxyReturnTypedObject(getAndRemove, null, messageClass);
     }
 
     @Override
-    public void unregisterSubscriber(Subscriber<E> subscriber) {
+    public void unregisterSubscriber(Subscriber subscriber) {
         Long subscriberTid = subscribersToTid.remove(subscriber);
-        if(subscriberTid!=null) {
+        if (subscriberTid != null) {
             sendEventAsync(unregisterSubscriber, valueOut -> valueOut.int64(subscriberTid), false);
-        }else
+        } else
             LOG.warn("No subscriber to unsubscribe");
     }
 

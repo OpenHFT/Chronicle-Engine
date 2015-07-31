@@ -31,8 +31,6 @@ public interface KVSSubscription<K, V> extends Subscription<MapEvent<K, V>>, ISu
 
     void registerKeySubscriber(RequestContext rc, Subscriber<K> subscriber);
 
-    void unregisterKeySubscriber(Subscriber<K> subscriber);
-
     void registerTopicSubscriber(RequestContext rc, TopicSubscriber<K, V> subscriber);
 
     void unregisterTopicSubscriber(TopicSubscriber subscriber);

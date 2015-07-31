@@ -21,8 +21,6 @@ import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Function;
-
 /**
  * Created by peter on 29/05/15.
  */
@@ -30,9 +28,8 @@ public class RemoteSimpleSubscription<E> implements SimpleSubscription<E> {
     // TODO CE-101 pass to the server
     private final Reference<E> reference;
 
-    public RemoteSimpleSubscription(Reference<E> reference, Function<Object, E> valueReader) {
+    public RemoteSimpleSubscription(Reference<E> reference) {
         this.reference = reference;
-
     }
 
     @Override
@@ -41,7 +38,7 @@ public class RemoteSimpleSubscription<E> implements SimpleSubscription<E> {
     }
 
     @Override
-    public void unregisterSubscriber(@NotNull Subscriber<E> subscriber) {
+    public void unregisterSubscriber(@NotNull Subscriber subscriber) {
         reference.unregisterSubscriber(subscriber);
     }
 

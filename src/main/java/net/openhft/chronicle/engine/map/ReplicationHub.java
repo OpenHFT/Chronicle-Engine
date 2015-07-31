@@ -75,7 +75,7 @@ class ReplicationHub extends AbstractStatelessClient implements View {
 
     public void bootstrap(@NotNull EngineReplication replication,
                           byte localIdentifier,
-                          byte remoteIdentifier) throws InterruptedException {
+                          byte remoteIdentifier) {
 
         // a non block call to get the identifier from the remote host
         hub.subscribe(new AbstractAsyncSubscription(hub, csp, localIdentifier, "ReplicationHub bootstrap") {
@@ -144,7 +144,7 @@ class ReplicationHub extends AbstractStatelessClient implements View {
 
                     // publishes changes - pushes the replication events
                     try {
-                        publish(mi, b, localIdentifier, remoteIdentifier);
+                        publish(mi, b, localIdentifier);
                     } catch (Exception e) {
                         LOG.error("", e);
                     }
@@ -157,16 +157,13 @@ class ReplicationHub extends AbstractStatelessClient implements View {
 
     /**
      * publishes changes - this method pushes the replication events
-     *
-     * @param mi               the modification iterator that notifies us of changes
+     *  @param mi               the modification iterator that notifies us of changes
      * @param remote           details about the remote connection
      * @param localIdentifier  the identifier of this host or client
-     * @param remoteIdentifier @throws InterruptedException
      */
     private void publish(@NotNull final ModificationIterator mi,
                          @NotNull final Bootstrap remote,
-                         byte localIdentifier,
-                         byte remoteIdentifier) throws InterruptedException {
+                         byte localIdentifier) throws InterruptedException {
 
         final TcpChannelHub hub = this.hub;
         mi.setModificationNotifier(eventLoop::unpause);

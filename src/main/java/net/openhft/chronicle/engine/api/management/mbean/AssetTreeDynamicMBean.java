@@ -15,11 +15,11 @@ public class AssetTreeDynamicMBean implements DynamicMBean {
 
     @NotNull
     private final Properties properties;
-    private final Map attributelist;
+    private final Map attributeList;
 
-    public AssetTreeDynamicMBean(Map attributelist) throws IOException {
+    public AssetTreeDynamicMBean(Map attributeList) throws IOException {
         this.properties = new Properties();
-        this.attributelist = attributelist;
+        this.attributeList = attributeList;
         load();
     }
 
@@ -64,7 +64,7 @@ public class AssetTreeDynamicMBean implements DynamicMBean {
 
     @NotNull
     public synchronized AttributeList setAttributes(@NotNull AttributeList list) {
-        Attribute[] attrs = (Attribute[]) list.toArray(new Attribute[0]);
+        Attribute[] attrs = list.toArray(new Attribute[0]);
         AttributeList retlist = new AttributeList();
         for (Attribute attr : attrs) {
             String name = attr.getName();
@@ -93,9 +93,9 @@ public class AssetTreeDynamicMBean implements DynamicMBean {
     @Nullable
     public synchronized MBeanInfo getMBeanInfo() {
         SortedSet names = new TreeSet();
-        for (Iterator localIterator1 = this.properties.keySet().iterator(); localIterator1.hasNext();) {
+        for (Iterator localIterator1 = this.properties.keySet().iterator(); localIterator1.hasNext(); ) {
             Object name = localIterator1.next();
-            names.add((String) name);
+            names.add(name);
         }
 
         MBeanAttributeInfo[] attrs = new MBeanAttributeInfo[names.size()];
@@ -103,14 +103,14 @@ public class AssetTreeDynamicMBean implements DynamicMBean {
 
         for (int i = 0; i < attrs.length; i++) {
             String name = (String) it.next();
-            attrs[i] = new MBeanAttributeInfo(name, "java.lang.String","Property " + name, true, true, false);
+            attrs[i] = new MBeanAttributeInfo(name, "java.lang.String", "Property " + name, true, true, false);
         }
 
-        MBeanOperationInfo[] opers = { new MBeanOperationInfo("reload","Reload properties from file", null, "void", 1) };
-        return new MBeanInfo(getClass().getName(), "Property Manager MBean",attrs, null, opers, null);
+        MBeanOperationInfo[] opers = {new MBeanOperationInfo("reload", "Reload properties from file", null, "void", 1)};
+        return new MBeanInfo(getClass().getName(), "Property Manager MBean", attrs, null, opers, null);
     }
 
     private void load() throws IOException {
-        this.properties.putAll(attributelist);
+        this.properties.putAll(attributeList);
     }
 }

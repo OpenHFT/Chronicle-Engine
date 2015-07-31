@@ -542,7 +542,7 @@ public class TcpChannelHub implements View, Closeable {
     /**
      * blocks until there is a connection
      */
-    public void checkConnection() {
+    public void checkConnection() throws InterruptedException {
         long start = Time.currentTimeMillis();
 
         while (clientChannel == null) {
@@ -550,7 +550,7 @@ public class TcpChannelHub implements View, Closeable {
             tcpSocketConsumer.checkNotShutdown();
 
             if (start + timeoutMs > Time.currentTimeMillis())
-                Jvm.pause(100);
+                Thread.sleep(50);
             else
                 throw new IORuntimeException("Not connected to " + socketAddressSupplier);
         }
@@ -802,7 +802,7 @@ public class TcpChannelHub implements View, Closeable {
                             closeSocket();
                             if (LOG.isDebugEnabled())
                                 LOG.debug("reconnecting due to unexpected " + e);
-                            Jvm.pause(100);
+                            Thread.sleep(50);
                         }
                     } finally {
                         clear(inWire);
@@ -850,7 +850,7 @@ public class TcpChannelHub implements View, Closeable {
                                  final boolean isReady,
                                  final int header,
                                  final int messageSize,
-                                 @NotNull Wire inWire) throws IOException {
+                                 @NotNull Wire inWire) throws IOException, InterruptedException {
 
             long startTime = 0;
             Object o = null;
@@ -888,7 +888,7 @@ public class TcpChannelHub implements View, Closeable {
                     if (startTime == 0)
                         startTime = Time.currentTimeMillis();
                     else
-                        Jvm.pause(1);
+                        Thread.sleep(1);
 
                     if (Time.currentTimeMillis() - startTime > 3_000) {
 
@@ -955,7 +955,7 @@ public class TcpChannelHub implements View, Closeable {
         /**
          * process system messages which originate from the server
          *
-         * @param header   a value representing the type of message
+         * @param header      a value representing the type of message
          * @param messageSize the size of the message
          * @throws IOException
          */
@@ -1074,6 +1074,7 @@ public class TcpChannelHub implements View, Closeable {
 
             if (shutdownHere == null)
                 shutdownHere = new Throwable(Thread.currentThread() + " Shutdown here");
+
 
             isShutdown = true;
             executorService.shutdown();

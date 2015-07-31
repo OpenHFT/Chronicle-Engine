@@ -49,7 +49,6 @@ import java.util.concurrent.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
-import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -71,31 +70,20 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
-    public SubscriptionEventTest(Object isRemote, Object wireType) {
+    public SubscriptionEventTest(Object isRemote) {
         SubscriptionEventTest.isRemote = (Boolean) isRemote;
+
     }
 
     @Parameters
     public static Collection<Object[]> data() throws IOException {
         return Arrays.asList(
-                new Object[]{Boolean.FALSE, WireType.TEXT}
-                , new Object[]{Boolean.FALSE, WireType.BINARY}
-                , new Object[]{Boolean.TRUE, WireType.TEXT}
-                , new Object[]{Boolean.TRUE, WireType.BINARY}
+                new Object[]{Boolean.FALSE}
+                , new Object[]{Boolean.TRUE}
+
         );
     }
 
-    private static void waitFor(Object subscriber) {
-        for (int i = 1; i < 10; i++) {
-            Jvm.pause(i);
-            try {
-                verify(subscriber);
-            } catch (AssertionError e) {
-                // retry
-            }
-        }
-        verify(subscriber);
-    }
 
     @Before
     public void before() throws IOException {
@@ -104,10 +92,11 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
         if (isRemote) {
 
             methodName(name.getMethodName());
-            TCPRegistry.createServerSocketChannelFor("SubscriptionEventTest.host.port");
-            serverEndpoint = new ServerEndpoint("SubscriptionEventTest.host.port", serverAssetTree, WIRE_TYPE);
+            final String hostPort = "SubscriptionEventTest." + name.getMethodName() + ".host.port";
+            TCPRegistry.createServerSocketChannelFor(hostPort);
+            serverEndpoint = new ServerEndpoint(hostPort, serverAssetTree, WIRE_TYPE);
 
-            assetTree = new VanillaAssetTree().forRemoteAccess("SubscriptionEventTest.host.port", WIRE_TYPE);
+            assetTree = new VanillaAssetTree().forRemoteAccess(hostPort, WIRE_TYPE);
         } else
             assetTree = serverAssetTree;
 
@@ -199,48 +188,6 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                 // client map
                 Assert.assertEquals(2, map.size());
 
-                assetTree.unregisterSubscriber(NAME, add);
-            } catch (Exception e) {
-                throw Jvm.rethrow(e);
-            }
-        });
-    }
-
-
-    @Test
-    public void testSubscribeToChangesToTheMapRestartClient() throws IOException,
-            InterruptedException {
-
-        if (!isRemote)
-            return;
-
-        final BlockingQueue<MapEvent> eventsQueue = new LinkedBlockingQueue<>();
-
-
-        yamlLoggger(() -> {
-            try {
-                YamlLogging.writeMessage = "Sets up a subscription to listen to map events. And " +
-                        "subsequently puts and entry into the map, notice that the InsertedEvent is " +
-                        "received from the server";
-                Thread.sleep(1000);
-
-                map.put("key", "value");
-                assetTree.close();
-                Thread.sleep(1000);
-
-                assetTree = new VanillaAssetTree().forRemoteAccess("SubscriptionEventTest.host.port", WIRE_TYPE);
-
-                Subscriber<MapEvent> add = eventsQueue::add;
-                assetTree.registerSubscriber(NAME, MapEvent.class, add);
-
-                Map map = assetTree.acquireMap(NAME, String.class, String.class);
-                YamlLogging.writeMessage = "puts an entry into the map so that an event will be " +
-                        "triggered";
-                map.put("Hello", "World");
-
-                Object object = eventsQueue.take();
-                Assert.assertTrue(object instanceof InsertedEvent);
-                Assert.assertEquals(2, map.size());
                 assetTree.unregisterSubscriber(NAME, add);
             } catch (Exception e) {
                 throw Jvm.rethrow(e);
@@ -418,12 +365,13 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
     }
 
-    @Ignore("see https://higherfrequencytrading.atlassian.net/browse/CE-110")
+    //@Ignore("see https://higherfrequencytrading.atlassian.net/browse/CE-110")
     @Test
     public void testUnSubscribeToKeyEvents() throws IOException, InterruptedException {
 
         final BlockingQueue<String> eventsQueue = new LinkedBlockingQueue<>();
-
+        if (!isRemote)
+            return;
         yamlLoggger(() -> {
             try {
                 YamlLogging.writeMessage = "Sets up a subscription to listen to key events. Then " +
@@ -434,6 +382,8 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                 assetTree.registerSubscriber(NAME, String.class, add);
                 // need to unsubscribe the same object which was subscribed to.
                 assetTree.unregisterSubscriber(NAME, add);
+
+                eventsQueue.clear();
 
                 YamlLogging.writeMessage = "puts an entry into the map so that an event will be " +
                         "triggered";

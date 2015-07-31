@@ -47,11 +47,13 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractRemoteSubscription<
     private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
     private final Class<K> kClass;
     private final Class<V> vClass;
+    private RequestContext rc;
 
     public RemoteKVSSubscription(@NotNull RequestContext context, @NotNull Asset asset) {
         super(asset.findView(TcpChannelHub.class), (long) 0, toUri(context));
         kClass = context.keyType();
         vClass = context.valueType();
+        this.rc = context;
     }
 
     @NotNull
@@ -81,13 +83,13 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractRemoteSubscription<
                 inWire.readDocument(null, d -> {
                     StringBuilder sb = Wires.acquireStringBuilder();
                     ValueIn valueIn = d.readEventName(sb);
-                    if(reply.contentEquals(sb)){
+                    if (reply.contentEquals(sb)) {
                         valueIn.marshallable(m -> {
                             final K topic = m.read(() -> "topic").object(kClass);
                             final V message = m.read(() -> "message").object(vClass);
                             RemoteKVSSubscription.this.onEvent(topic, message, subscriber);
                         });
-                    }else if(onEndOfSubscription.contentEquals(sb)) {
+                    } else if (onEndOfSubscription.contentEquals(sb)) {
                         RemoteKVSSubscription.this.onEndOfSubscription();
                     }
                 });
@@ -128,11 +130,6 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractRemoteSubscription<
     }
 
     @Override
-    public void unregisterKeySubscriber(Subscriber<K> subscriber) {
-        unregisterSubscriber0(subscriber);
-    }
-
-    @Override
     public boolean needsPrevious() {
         return true;
     }
@@ -149,12 +146,18 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractRemoteSubscription<
 
     @Override
     public boolean hasSubscribers() {
-        throw new UnsupportedOperationException("hasSubscibers only implemented on the server");
+        throw new UnsupportedOperationException("has subscribers, is only implemented on the " +
+                "server");
     }
 
     @Override
     public void registerDownstream(EventConsumer<K, V> subscription) {
-        throw new UnsupportedOperationException("todo");
+        registerSubscriber(rc.clone().type(MapEvent.class).type2(null), new Subscriber<MapEvent<K, V>>() {
+            @Override
+            public void onMessage(MapEvent<K, V> kvMapEvent) throws InvalidSubscriberException {
+                subscription.notifyEvent(kvMapEvent);
+            }
+        });
     }
 
 }

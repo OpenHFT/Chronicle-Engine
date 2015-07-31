@@ -48,7 +48,7 @@ abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient imp
         registerSubscriber0(rc, subscriber);
     }
 
-    public void unregisterSubscriber(@NotNull Subscriber<E> subscriber) {
+    public void unregisterSubscriber(@NotNull Subscriber subscriber) {
         unregisterSubscriber0(subscriber);
     }
 
@@ -75,13 +75,13 @@ abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient imp
             @Override
             public void onConsumer(@NotNull final WireIn inWire) {
                 inWire.readDocument(null, d -> {
-                    final StringBuilder eventname = Wires.acquireStringBuilder();
-                    final ValueIn valueIn = d.readEventName(eventname);
+                    final StringBuilder eventName = Wires.acquireStringBuilder();
+                    final ValueIn valueIn = d.readEventName(eventName);
 
-                    if (PublisherHandler.EventId.onEndOfSubscription.contentEquals(eventname)) {
+                    if (PublisherHandler.EventId.onEndOfSubscription.contentEquals(eventName)) {
                         subscriber.onEndOfSubscription();
                         hub.unsubscribe(tid());
-                    } else if (CoreFields.reply.contentEquals(eventname)) {
+                    } else if (CoreFields.reply.contentEquals(eventName)) {
                         final Class aClass = rc.elementType();
 
                         final Object object = (MapEvent.class.isAssignableFrom(aClass) ||

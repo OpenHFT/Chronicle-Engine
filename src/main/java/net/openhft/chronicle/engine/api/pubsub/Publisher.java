@@ -30,7 +30,7 @@ public interface Publisher<E> {
     void publish(E event);
 
     /**
-     * Add a subscription to this spepcific topic
+     * Add a subscription to this specific topic
      *
      * @param bootstrap  to bootstrap
      * @param subscriber to register
@@ -43,7 +43,7 @@ public interface Publisher<E> {
      *
      * @param subscriber to remove
      */
-    void unregisterSubscriber(Subscriber<E> subscriber);
+    void unregisterSubscriber(Subscriber subscriber);
 
     /**
      * @return the number of subscriptions.

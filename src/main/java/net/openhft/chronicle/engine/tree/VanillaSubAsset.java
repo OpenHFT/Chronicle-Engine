@@ -53,7 +53,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
             subscription = new VanillaSimpleSubscription<>(reference, valueReader);
         } else {
             reference = new RemoteReference<>(tcpChannelHub, type, parent.fullName() + "/" + name);
-            subscription = new RemoteSimpleSubscription<>(reference, valueReader);
+            subscription = new RemoteSimpleSubscription<>(reference);
         }
     }
 

@@ -22,12 +22,12 @@ import net.openhft.chronicle.engine.api.tree.View;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * INternal API for manaing and monitoring subscriptions.
+ * Internal API for managing and monitoring subscriptions.
  */
 public interface Subscription<E> extends View, Closeable {
     void registerSubscriber(@NotNull RequestContext rc, @NotNull Subscriber<E> subscriber);
 
-    void unregisterSubscriber(@NotNull Subscriber<E> subscriber);
+    void unregisterSubscriber(@NotNull Subscriber subscriber);
 
     int keySubscriberCount();
 
