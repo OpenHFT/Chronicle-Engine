@@ -245,26 +245,31 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
         else if (!hub.isOpen())
             return;
 
-        if (reattempUponFailure)
-            attempt(() -> {
-                hub.lock(() -> {
-                    try {
-                        sendEventAsyncWithoutLock(eventId, consumer);
-                    } catch (IORuntimeException e) {
-                        // this can occur if the socket is not currently connected
-                    }
-                });
-                return null;
-            });
+        if (!reattempUponFailure) {
 
-        hub.lock(() -> {
-            try {
-                sendEventAsyncWithoutLock(eventId, consumer);
-            } catch (IORuntimeException e) {
-                // this can occur if the socket is not currently connected
-            }
+            hub.lock(() -> {
+                try {
+                    sendEventAsyncWithoutLock(eventId, consumer);
+                } catch (IORuntimeException e) {
+                    // this can occur if the socket is not currently connected
+                }
+            });
+            return;
+        }
+
+        attempt(() -> {
+            hub.lock(() -> {
+                try {
+                    sendEventAsyncWithoutLock(eventId, consumer);
+                } catch (IORuntimeException e) {
+                    // this can occur if the socket is not currently connected
+                }
+            });
+            return null;
         });
+
     }
+
 
     protected void sendEventAsyncWithoutLock(@NotNull final WireKey eventId,
                                              @Nullable final Consumer<ValueOut> consumer) {
