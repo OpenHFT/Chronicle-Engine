@@ -22,7 +22,6 @@ import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.engine.api.EngineReplication;
-import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
@@ -38,18 +37,16 @@ import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.lang.model.DataValueClasses;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Map;
-import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
-import static org.junit.Assert.assertNotNull;
 
 
 /**
@@ -168,68 +165,5 @@ public class ChronicleMapKeyValueStoreTest {
         return resources;
     }
 
-    @Test
-    @Ignore
-    public void test() {
 
-        final ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME, String.class, String
-                .class);
-        assertNotNull(map1);
-
-        final ConcurrentMap<String, String> map2 = tree2.acquireMap(NAME, String.class, String
-                .class);
-        assertNotNull(map2);
-
-        final ConcurrentMap<String, String> map3 = tree3.acquireMap(NAME, String.class, String
-                .class);
-        assertNotNull(map3);
-
-        final EngineReplication replicator1 = tree1.acquireService(NAME, EngineReplication.class);
-        assertNotNull(replicator1);
-
-        final EngineReplication replicator2 = tree2.acquireService(NAME, EngineReplication.class);
-        assertNotNull(replicator2);
-
-        final EngineReplication replicator3 = tree3.acquireService(NAME, EngineReplication.class);
-        assertNotNull(replicator3);
-
-
-        final ModificationIterator iterator1for2 = replicator1.acquireModificationIterator
-                (replicator2.identifier());
-
-        final ModificationIterator iterator1for3 = replicator1.acquireModificationIterator
-                (replicator3.identifier());
-
-        final ModificationIterator iterator2for1 = replicator2.acquireModificationIterator
-                (replicator1.identifier());
-
-        final ModificationIterator iterator2for3 = replicator2.acquireModificationIterator
-                (replicator3.identifier());
-
-        final ModificationIterator iterator3for1 = replicator3.acquireModificationIterator
-                (replicator1.identifier());
-
-        final ModificationIterator iterator3for2 = replicator3.acquireModificationIterator
-                (replicator2.identifier());
-
-        map1.put("hello1", "world1");
-        map2.put("hello2", "world2");
-        map3.put("hello3", "world3");
-
-        iterator1for2.forEach(replicator2::applyReplication);
-        iterator1for3.forEach(replicator3::applyReplication);
-
-        iterator2for1.forEach(replicator1::applyReplication);
-        iterator2for3.forEach(replicator3::applyReplication);
-
-        iterator3for1.forEach(replicator1::applyReplication);
-        iterator3for2.forEach(replicator2::applyReplication);
-
-        for (Map m : new Map[]{map1, map2, map3}) {
-            Assert.assertEquals("world1", m.get("hello1"));
-            Assert.assertEquals("world2", m.get("hello2"));
-            Assert.assertEquals("world3", m.get("hello3"));
-            Assert.assertEquals(3, m.size());
-        }
-    }
 }
