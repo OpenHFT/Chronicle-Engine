@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.redis;
 
+import net.openhft.chronicle.core.util.SerializableFunction;
 import net.openhft.chronicle.engine.api.Updatable;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.Reference;
@@ -126,9 +127,28 @@ public class RedisEmulator {
         return v.getAndSet(newValue);
     }
 
-    public static void hdel(MapView<String, ?> map, String... keys) {
-        // perform on the server as a batch
+    /**
+     * Removes the specified fields from the hash stored at key. Specified fields that do not exist within
+     * this hash are ignored. If key does not exist, it is treated as an empty hash
+     * and this command returns 0.
+     *
+     * @return Integer reply: the number of fields that were removed from the hash,
+     * not including specified but non existing fields.
+     */
+    public static int hdel(MapView<String, ?> map, String... keys) {
+        if(keys.length==1){
+            return map.getAndRemove(keys[0]) == null ? 0 : 1;
+        }
         map.asyncUpdate(m -> Stream.of(keys).forEach(m::remove));
+        return 1;
+//        return map.applyTo(m -> {
+//            int count = 0;
+//            for(String key :keys) {
+//                if(m.getAndRemove(key) != null)
+//                    count++;
+//            }
+//            return count;
+//        });
     }
 
     public static boolean hexists(MapView<String, ?> map, String key) {
@@ -149,6 +169,9 @@ public class RedisEmulator {
      * Returns all fields and values of the hash stored at key. In the returned value,
      * every field name is followed by its value,
      * so the length of the reply is twice the size of the hash.
+     *
+     * Note Redis returns the keys in the same order they were inserted
+     * Chronicle returns them in an arbitrary order
      *
      * @reply Array reply: list of fields and their values stored in the hash, or
      * an empty list when key does not exist.
@@ -198,6 +221,22 @@ public class RedisEmulator {
     }
 
     /**
+     * Delete all the keys of the currently selected DB. This command never fails.
+     * The time-complexity for this operation is O(N), N being the number of keys in the database.
+     */
+    public static <V> String flushdb(MapView<String, V> map){
+        map.clear();
+        return "OK";
+    }
+
+    /**
+     * Return the number of keys in the currently-selected database.
+     */
+    public static <V> int dbsize(MapView<String, V> map){
+        return map.size();
+    }
+
+    /**
      * Sets field in the hash stored at key to value. If key does not exist, a new key holding a hash is created.
      * If field already exists in the hash, it is overwritten.
      *
@@ -206,7 +245,7 @@ public class RedisEmulator {
      * 0 if field already exists in the hash and the value was updated.
      */
     public static <V> int hset(MapView<String, V> map, String key, V value) {
-        V put = map.put(key, value);
+        V put = map.getAndPut(key, value);
         return put==null ? 1 : 0;
     }
 
