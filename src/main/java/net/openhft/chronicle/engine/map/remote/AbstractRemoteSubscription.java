@@ -48,7 +48,7 @@ abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient imp
         registerSubscriber0(rc, subscriber);
     }
 
-    public void unregisterSubscriber(@NotNull Subscriber<E> subscriber) {
+    public void unregisterSubscriber(@NotNull Subscriber subscriber) {
         unregisterSubscriber0(subscriber);
     }
 

@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public interface Subscription<E> extends View, Closeable {
     void registerSubscriber(@NotNull RequestContext rc, @NotNull Subscriber<E> subscriber);
 
-    void unregisterSubscriber(@NotNull Subscriber<E> subscriber);
+    void unregisterSubscriber(@NotNull Subscriber subscriber);
 
     int keySubscriberCount();
 

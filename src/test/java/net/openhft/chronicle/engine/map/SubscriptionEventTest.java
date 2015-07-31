@@ -70,17 +70,17 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
-    public SubscriptionEventTest(Object isRemote, Object wireType) {
+    public SubscriptionEventTest(Object isRemote) {
         SubscriptionEventTest.isRemote = (Boolean) isRemote;
+
     }
 
     @Parameters
     public static Collection<Object[]> data() throws IOException {
         return Arrays.asList(
-                new Object[]{Boolean.FALSE, WireType.TEXT}
-                , new Object[]{Boolean.FALSE, WireType.BINARY}
-                , new Object[]{Boolean.TRUE, WireType.TEXT}
-                , new Object[]{Boolean.TRUE, WireType.BINARY}
+                new Object[]{Boolean.FALSE}
+                , new Object[]{Boolean.TRUE}
+
         );
     }
 
@@ -366,12 +366,13 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
     }
 
-    @Ignore("see https://higherfrequencytrading.atlassian.net/browse/CE-110")
+    //@Ignore("see https://higherfrequencytrading.atlassian.net/browse/CE-110")
     @Test
     public void testUnSubscribeToKeyEvents() throws IOException, InterruptedException {
 
         final BlockingQueue<String> eventsQueue = new LinkedBlockingQueue<>();
-
+        if (!isRemote)
+            return;
         yamlLoggger(() -> {
             try {
                 YamlLogging.writeMessage = "Sets up a subscription to listen to key events. Then " +
@@ -382,6 +383,8 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                 assetTree.registerSubscriber(NAME, String.class, add);
                 // need to unsubscribe the same object which was subscribed to.
                 assetTree.unregisterSubscriber(NAME, add);
+
+                eventsQueue.clear();
 
                 YamlLogging.writeMessage = "puts an entry into the map so that an event will be " +
                         "triggered";

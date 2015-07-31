@@ -83,13 +83,13 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractRemoteSubscription<
                 inWire.readDocument(null, d -> {
                     StringBuilder sb = Wires.acquireStringBuilder();
                     ValueIn valueIn = d.readEventName(sb);
-                    if(reply.contentEquals(sb)){
+                    if (reply.contentEquals(sb)) {
                         valueIn.marshallable(m -> {
                             final K topic = m.read(() -> "topic").object(kClass);
                             final V message = m.read(() -> "message").object(vClass);
                             RemoteKVSSubscription.this.onEvent(topic, message, subscriber);
                         });
-                    }else if(onEndOfSubscription.contentEquals(sb)) {
+                    } else if (onEndOfSubscription.contentEquals(sb)) {
                         RemoteKVSSubscription.this.onEndOfSubscription();
                     }
                 });
@@ -127,11 +127,6 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractRemoteSubscription<
     @Override
     public void registerKeySubscriber(@NotNull RequestContext rc, @NotNull Subscriber<K> subscriber) {
         registerSubscriber0(rc, subscriber);
-    }
-
-    @Override
-    public void unregisterKeySubscriber(Subscriber<K> subscriber) {
-        unregisterSubscriber0(subscriber);
     }
 
     @Override

@@ -43,7 +43,7 @@ public interface Publisher<E> {
      *
      * @param subscriber to remove
      */
-    void unregisterSubscriber(Subscriber<E> subscriber);
+    void unregisterSubscriber(Subscriber subscriber);
 
     /**
      * @return the number of subscriptions.

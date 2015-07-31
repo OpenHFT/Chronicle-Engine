@@ -60,7 +60,7 @@ public class VanillaTopologySubscription implements TopologySubscription {
     }
 
     @Override
-    public void unregisterSubscriber(@NotNull Subscriber<TopologicalEvent> subscriber) {
+    public void unregisterSubscriber(@NotNull Subscriber subscriber) {
         subscribers.remove(subscriber);
     }
 

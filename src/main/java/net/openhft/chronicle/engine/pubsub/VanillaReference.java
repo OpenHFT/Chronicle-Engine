@@ -68,7 +68,7 @@ public class VanillaReference<E> implements Reference<E>, View {
     }
 
     @Override
-    public void unregisterSubscriber(Subscriber<E> subscriber) {
+    public void unregisterSubscriber(Subscriber subscriber) {
         Subscription subscription = underlyingMap.asset().getChild(name).subscription(false);
         if (subscription != null)
             subscription.unregisterSubscriber(subscriber);
