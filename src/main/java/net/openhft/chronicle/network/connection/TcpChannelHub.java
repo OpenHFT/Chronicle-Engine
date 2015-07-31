@@ -550,7 +550,7 @@ public class TcpChannelHub implements View, Closeable {
             tcpSocketConsumer.checkNotShutdown();
 
             if (start + timeoutMs > Time.currentTimeMillis())
-                Thread.sleep(100);
+                Thread.sleep(50);
             else
                 throw new IORuntimeException("Not connected to " + socketAddressSupplier);
         }
@@ -802,7 +802,7 @@ public class TcpChannelHub implements View, Closeable {
                             closeSocket();
                             if (LOG.isDebugEnabled())
                                 LOG.debug("reconnecting due to unexpected " + e);
-                            Thread.sleep(100);
+                            Thread.sleep(50);
                         }
                     } finally {
                         clear(inWire);
