@@ -232,18 +232,30 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
     }
 
     /**
-     * @param eventId          the wire event id
-     * @param consumer         a funcition consume the wire
-     * @param blockTillTimeout if false - will only be sent if the connection is valid
+     * @param eventId             the wire event id
+     * @param consumer            a funcition consume the wire
+     * @param reattempUponFailure if false - will only be sent if the connection is valid
      */
     protected void sendEventAsync(@NotNull final WireKey eventId,
                                   @Nullable final Consumer<ValueOut> consumer,
-                                  boolean blockTillTimeout) {
+                                  boolean reattempUponFailure) {
 
-        if (blockTillTimeout)
+        if (reattempUponFailure)
             hub.checkConnection();
         else if (!hub.isOpen())
             return;
+
+        if (reattempUponFailure)
+            attempt(() -> {
+                hub.lock(() -> {
+                    try {
+                        sendEventAsyncWithoutLock(eventId, consumer);
+                    } catch (IORuntimeException e) {
+                        // this can occur if the socket is not currently connected
+                    }
+                });
+                return null;
+            });
 
         hub.lock(() -> {
             try {
@@ -259,9 +271,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
 
         writeAsyncMetaData();
         hub.outWire().writeDocument(false, wireOut -> {
-
             final ValueOut valueOut = wireOut.writeEventName(eventId);
-
             if (consumer == null)
                 valueOut.marshallable(WriteMarshallable.EMPTY);
             else
@@ -269,7 +279,6 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
         });
 
         hub.writeSocket(hub.outWire());
-
     }
 
     /**
