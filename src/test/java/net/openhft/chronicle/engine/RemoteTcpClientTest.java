@@ -118,7 +118,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     }
 
     @Test
-    @Ignore("Waiting for merge")
+    @Ignore("Waiting for merge - JIRA https://higherfrequencytrading.atlassian.net/browse/CE-119")
     public void test2MBEntries() throws IOException {
 
         // server
