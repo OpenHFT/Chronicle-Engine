@@ -123,6 +123,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
         if (map instanceof Closeable)
             ((Closeable) map).close();
         TCPRegistry.assertAllServersStopped();
+        TCPRegistry.reset();
     }
 
     @Test
