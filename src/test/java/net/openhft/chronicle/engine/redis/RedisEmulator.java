@@ -135,14 +135,35 @@ public class RedisEmulator {
         return map.containsKey(key);
     }
 
+    /**
+     * Returns the value associated with field in the hash stored at key.
+     *
+     * @return Bulk string reply: the value associated with field,
+     * or nil when field is not present in the hash or key does not exist.
+     */
     public static <V> V hget(MapView<String, V> map, String key) {
         return map.get(key);
     }
 
+    /**
+     * Returns all fields and values of the hash stored at key. In the returned value,
+     * every field name is followed by its value,
+     * so the length of the reply is twice the size of the hash.
+     *
+     * @reply Array reply: list of fields and their values stored in the hash, or
+     * an empty list when key does not exist.
+     */
     public static <K, V> void hgetall(MapView<K, V> map, Consumer<Map.Entry<K, V>> entryConsumer) {
         map.entrySet().forEach(entryConsumer);
     }
 
+    /**
+     * Increments the number stored at field in the hash stored at key by increment.
+     * If key does not exist, a new key holding a hash is created. If field does
+     * not exist the value is set to 0 before the operation is performed.
+     *
+     * @return Integer reply: the value at field after the increment operation.
+     */
     public static void hincrby(MapView<String, Long> map, String key, long toAdd) {
         map.asyncUpdateKey(key, v -> v + toAdd);
     }
@@ -176,8 +197,17 @@ public class RedisEmulator {
         });
     }
 
-    public static <V> void hset(MapView<String, V> map, String key, V value) {
-        map.put(key, value);
+    /**
+     * Sets field in the hash stored at key to value. If key does not exist, a new key holding a hash is created.
+     * If field already exists in the hash, it is overwritten.
+     *
+     * @return Integer reply, specifically:
+     * 1 if field is a new field in the hash and value was set.
+     * 0 if field already exists in the hash and the value was updated.
+     */
+    public static <V> int hset(MapView<String, V> map, String key, V value) {
+        V put = map.put(key, value);
+        return put==null ? 1 : 0;
     }
 
     public static <V> void hsetnx(MapView<String, V> map, String key, V value) {
