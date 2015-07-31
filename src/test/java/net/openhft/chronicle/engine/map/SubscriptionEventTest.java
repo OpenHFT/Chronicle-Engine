@@ -308,9 +308,13 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
     }
 
-    @Ignore
+
     @Test
     public void testUnsubscribeToMapEvents() throws IOException, InterruptedException {
+
+        // not supported for remote
+        if (isRemote)
+            return;
 
         final BlockingQueue<MapEvent> eventsQueue = new LinkedBlockingQueue<>();
 
