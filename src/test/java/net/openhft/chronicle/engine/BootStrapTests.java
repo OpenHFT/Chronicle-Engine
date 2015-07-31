@@ -51,9 +51,6 @@ import java.util.concurrent.ConcurrentMap;
 public class BootStrapTests {
 
 
-    public static final int MAX = 10;
-    public static final String CLUSTER_NAME = "max-cluster";
-
     @Parameterized.Parameters
     public static List<Object[]> data() {
         return Arrays.asList(new Object[5][0]);
