@@ -187,8 +187,6 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
 
                 final TcpChannelHub tcpChannelHub = hostDetails.acquireTcpChannelHub(asset, eventLoop, context.wireType());
                 ReplicationHub replicationHub = new ReplicationHub(context, tcpChannelHub, eventLoop, isClosed);
-
-
                 replicationHub.bootstrap(engineReplicator1, localIdentifier, (byte) remoteIdentifier);
             }
 
