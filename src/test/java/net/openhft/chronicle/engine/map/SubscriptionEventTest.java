@@ -49,7 +49,6 @@ import java.util.concurrent.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
-import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -85,17 +84,6 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
         );
     }
 
-    private static void waitFor(Object subscriber) {
-        for (int i = 1; i < 10; i++) {
-            Jvm.pause(i);
-            try {
-                verify(subscriber);
-            } catch (AssertionError e) {
-                // retry
-            }
-        }
-        verify(subscriber);
-    }
 
     @Before
     public void before() throws IOException {
