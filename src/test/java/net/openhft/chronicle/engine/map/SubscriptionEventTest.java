@@ -206,49 +206,6 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
         });
     }
 
-    @Ignore
-    @Test
-    public void testSubscribeToChangesToTheMapRestartClient() throws IOException,
-            InterruptedException {
-
-        if (!isRemote)
-            return;
-
-        final BlockingQueue<MapEvent> eventsQueue = new LinkedBlockingQueue<>();
-
-
-        yamlLoggger(() -> {
-            try {
-                {
-                    map.put("key", "value");
-                    //          assetTree.close();
-                }
-
-
-                Thread.sleep(1000);
-
-                AssetTree assetTree2 = new VanillaAssetTree().forRemoteAccess
-                        ("SubscriptionEventTest.host" +
-                                ".port", WIRE_TYPE);
-
-                Subscriber<MapEvent> queue = eventsQueue::add;
-                assetTree2.registerSubscriber(NAME, MapEvent.class, queue);
-
-                Map map = assetTree2.acquireMap(NAME, String.class, String.class);
-                YamlLogging.writeMessage = "puts an entry into the map so that an event will be " +
-                        "triggered";
-                map.put("Hello", "World");
-
-                Object object = eventsQueue.take();
-                Assert.assertTrue(object instanceof InsertedEvent);
-                Assert.assertEquals(1, map.size());
-
-            } catch (Exception e) {
-                throw Jvm.rethrow(e);
-            }
-        });
-    }
-
 
     @Test
     public void testTopicSubscribe() throws InvalidSubscriberException {
