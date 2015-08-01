@@ -383,7 +383,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                 assetTree.registerSubscriber(NAME, String.class, add);
                 // need to unsubscribe the same object which was subscribed to.
                 assetTree.unregisterSubscriber(NAME, add);
-
+                Jvm.pause(1000);
                 eventsQueue.clear();
 
                 YamlLogging.writeMessage = "puts an entry into the map so that an event will be " +
