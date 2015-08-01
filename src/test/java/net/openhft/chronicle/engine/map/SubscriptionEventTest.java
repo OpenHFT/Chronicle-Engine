@@ -47,6 +47,7 @@ import java.util.Map;
 import java.util.concurrent.*;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
 import static org.junit.Assert.assertEquals;
@@ -390,7 +391,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                 String expected = "World";
                 map.put("Hello", expected);
 
-                Object object = eventsQueue.poll(500, MILLISECONDS);
+                Object object = eventsQueue.poll(30, SECONDS);
                 Assert.assertNull(object);
 
             } catch (InterruptedException e) {
