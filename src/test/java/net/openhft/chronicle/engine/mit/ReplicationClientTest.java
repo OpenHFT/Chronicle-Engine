@@ -115,8 +115,6 @@ public class ReplicationClientTest {
 
         map2.remove("hello");
 
-        Thread.sleep(100);
-
         Assert.assertEquals("RemovedEvent{assetName='/map', key=hello, oldValue=world}", q1.poll
                 (15, TimeUnit.DAYS.SECONDS).toString());
         Assert.assertEquals("RemovedEvent{assetName='/map', key=hello, oldValue=world}", q2.poll
