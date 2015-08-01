@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
@@ -116,8 +117,10 @@ public class ReplicationClientTest {
 
         Thread.sleep(100);
 
-        Assert.assertEquals("RemovedEvent{assetName='/map', key=hello, oldValue=world}", q1.take().toString());
-        Assert.assertEquals("RemovedEvent{assetName='/map', key=hello, oldValue=world}", q2.take().toString());
+        Assert.assertEquals("RemovedEvent{assetName='/map', key=hello, oldValue=world}", q1.poll
+                (15, TimeUnit.DAYS.SECONDS).toString());
+        Assert.assertEquals("RemovedEvent{assetName='/map', key=hello, oldValue=world}", q2.poll
+                (15, TimeUnit.DAYS.SECONDS).toString());
     }
 
 
