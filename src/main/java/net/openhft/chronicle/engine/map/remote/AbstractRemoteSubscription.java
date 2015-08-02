@@ -117,7 +117,7 @@ abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient imp
             AbstractRemoteSubscription.LOG.warn("There is subscription to unsubscribe");
             return;
         }
-        hub.unsubscribe(tid);
+
 
         hub.lock(() -> {
             writeMetaDataForKnownTID(tid);
@@ -125,6 +125,7 @@ abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient imp
                 wireOut.writeEventName(unregisterSubscriber).text("");
             });
         });
+        hub.unsubscribe(tid);
     }
 
     @Override

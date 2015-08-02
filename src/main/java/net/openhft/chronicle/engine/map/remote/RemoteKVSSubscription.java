@@ -116,13 +116,15 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractRemoteSubscription<
             LOG.warn("There is no subscription to unsubscribe, was " + subscribersToTid.size() + " other subscriptions.");
             return;
         }
-        hub.unsubscribe(tid);
+
         hub.lock(() -> {
             writeMetaDataForKnownTID(tid);
             hub.outWire().writeDocument(false, wireOut -> {
                 wireOut.writeEventName(unregisterTopicSubscriber).text("");
             });
         });
+
+        hub.unsubscribe(tid);
     }
 
     @Override
