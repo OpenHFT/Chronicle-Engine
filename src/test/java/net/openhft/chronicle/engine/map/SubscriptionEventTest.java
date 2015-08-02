@@ -21,6 +21,7 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.map.MapEvent;
+import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
@@ -61,7 +62,7 @@ import static org.junit.Assert.assertTrue;
 public class SubscriptionEventTest extends ThreadMonitoringTest {
     private static final String NAME = "test";
     public static final WireType WIRE_TYPE = WireType.TEXT;
-    private static ConcurrentMap<String, String> map;
+    private static MapView<String, String> map;
     private static Boolean isRemote;
     @NotNull
     @Rule
