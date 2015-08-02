@@ -21,6 +21,7 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.map.MapEvent;
+import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
@@ -61,7 +62,7 @@ import static org.junit.Assert.assertTrue;
 public class SubscriptionEventTest extends ThreadMonitoringTest {
     private static final String NAME = "test";
     public static final WireType WIRE_TYPE = WireType.TEXT;
-    private static ConcurrentMap<String, String> map;
+    private static MapView<String, String> map;
     private static Boolean isRemote;
     @NotNull
     @Rule
@@ -370,8 +371,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     public void testUnSubscribeToKeyEvents() throws IOException, InterruptedException {
 
         final BlockingQueue<String> eventsQueue = new LinkedBlockingQueue<>();
-        if (!isRemote)
-            return;
+
         yamlLoggger(() -> {
             try {
                 YamlLogging.writeMessage = "Sets up a subscription to listen to key events. Then " +
@@ -380,6 +380,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
                 Subscriber<String> add = eventsQueue::add;
                 assetTree.registerSubscriber(NAME, String.class, add);
+                Thread.sleep(500);
                 // need to unsubscribe the same object which was subscribed to.
                 assetTree.unregisterSubscriber(NAME, add);
 
@@ -388,9 +389,9 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                 YamlLogging.writeMessage = "puts an entry into the map so that an event will be " +
                         "triggered";
                 String expected = "World";
-                map.put("Hello", expected);
+                map.getAndPut("Hello", expected);
 
-                Object object = eventsQueue.poll(500, MILLISECONDS);
+                Object object = eventsQueue.poll(1000, MILLISECONDS);
                 Assert.assertNull(object);
 
             } catch (InterruptedException e) {
