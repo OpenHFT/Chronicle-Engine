@@ -95,6 +95,7 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
             sendEventAsync(unregisterSubscriber, valueOut -> valueOut.int64(subscriberTid), false);
         } else
             LOG.warn("No subscriber to unsubscribe");
+        hub.unsubscribe(subscriberTid);
     }
 
     @Override

@@ -109,11 +109,15 @@ abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient imp
     }
 
     void unregisterSubscriber0(@NotNull Subscriber subscriber) {
+
         Long tid = subscribersToTid.get(subscriber);
+
+
         if (tid == null) {
             AbstractRemoteSubscription.LOG.warn("There is subscription to unsubscribe");
             return;
         }
+        hub.unsubscribe(tid);
 
         hub.lock(() -> {
             writeMetaDataForKnownTID(tid);
