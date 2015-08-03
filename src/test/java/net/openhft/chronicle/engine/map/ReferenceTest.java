@@ -178,7 +178,7 @@ public class ReferenceTest {
 
         assetTree.registerSubscriber("group" + "/" + "subject" + "?bootstrap=false&putReturnsNull=true", String.class, keyEventSubscriber);
 
-        Jvm.pause(100);
+        // Jvm.pause(100);
         Asset child = assetTree.getAsset("group").getChild("subject");
         assertNotNull(child);
         Subscription subscription = child.subscription(false);
@@ -187,9 +187,6 @@ public class ReferenceTest {
 
         map.put("subject", "cs");
         map.put("subject", "maths");
-
-
-        Jvm.pause(1000);
 
         assetTree.unregisterSubscriber("group" + "/" + "subject", keyEventSubscriber);
 
