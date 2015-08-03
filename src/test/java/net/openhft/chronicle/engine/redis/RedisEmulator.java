@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.redis;
 
+import net.openhft.chronicle.core.util.SerializableBiFunction;
 import net.openhft.chronicle.core.util.SerializableFunction;
 import net.openhft.chronicle.engine.api.Updatable;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -26,6 +27,7 @@ import java.util.*;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -35,12 +37,37 @@ import java.util.stream.Stream;
  */
 public class RedisEmulator {
 
+    /**
+     * If key already exists and is a string, this command appends the value at the end of the string.
+     * If key does not exist it is created and set as an empty string, so APPEND will be similar to
+     * SET in this special case.
+     *
+     * @return Integer reply: the length of the string after the append operation.
+     */
     public static void append(Reference<String> ref, String toAppend) {
-        ref.asyncUpdate(v -> v + toAppend);
+        ref.applyTo(v -> v + toAppend);
     }
 
-    public static void append(MapView<String, String> map, String key, String toAppend) {
-        map.asyncUpdateKey(key, v -> v + toAppend);
+    /**
+     * If key already exists and is a string, this command appends the value at the end of the string.
+     * If key does not exist it is created and set as an empty string, so APPEND will be similar to
+     * SET in this special case.
+     *
+     * @return Integer reply: the length of the string after the append operation.
+     */
+    public static int append(MapView<String, String> map, String key, String toAppend) {
+        return map.applyTo(m -> {
+                    String v = m.get(key);
+                    if(v!=null) {
+                        m.put(key, v + toAppend);
+                        return (v + toAppend).length();
+                    }
+                    else {
+                        m.put(key, toAppend);
+                        return toAppend.length();
+                    }
+                }
+        );
     }
 
     public static int bitcount(Reference<BitSet> bits) {
@@ -107,10 +134,46 @@ public class RedisEmulator {
         updatable.asyncUpdate(v -> Logger.getAnonymousLogger().info(message));
     }
 
-    public static boolean exists(MapView<String, ?> map, String key) {
-        return map.containsKey(key);
+    /**
+     * Returns if key exists.
+     * Since Redis 3.0.3 it is possible to specify multiple keys instead of a
+     * single one. In such a case, it returns the total number of keys existing.
+     * Note that returning 1 or 0 for a single key is just a special case
+     * of the variadic usage, so the command is completely backward compatible.
+     * <p/>
+     * The user should be aware that if the same existing key is mentioned
+     * in the arguments multiple times, it will be counted multiple times.
+     * So if somekey exists, EXISTS somekey somekey will return 2.
+     *
+     * @param map
+     * @param keys
+     * @return Integer reply, specifically:
+     * 1 if the key exists.
+     * 0 if the key does not exist.
+     * Since Redis 3.0.3 the command accepts a variable number of keys and the
+     * return value is generalized:
+     * The number of keys existing among the ones specified as arguments.
+     * Keys mentioned multiple times and existing are counted multiple times.
+     */
+    public static int exists(MapView<String, ?> map, String... keys) {
+        if (keys.length == 1) return map.containsKey(keys) ? 1 : 0;
+
+        return map.applyTo(m -> {
+                    int count = 0;
+                    for (int i = 0; i < keys.length; i++) {
+                        if (m.containsKey(keys[i])) count++;
+                    }
+                    return count;
+                }
+        );
     }
 
+    /**
+     * Get the value of key. If the key does not exist the special value nil is returned.
+     * An error is returned if the value stored at key is not a string,
+     * because GET only handles string values.
+     * @return Bulk string reply: the value of key, or nil when key does not exist.
+     */
     public static <V> V get(MapView<String, V> map, String key) {
         return map.get(key);
     }
@@ -136,23 +199,22 @@ public class RedisEmulator {
      * not including specified but non existing fields.
      */
     public static int hdel(MapView<String, ?> map, String... keys) {
-        if(keys.length==1){
+        if (keys.length == 1) {
             return map.getAndRemove(keys[0]) == null ? 0 : 1;
         }
         map.asyncUpdate(m -> Stream.of(keys).forEach(m::remove));
         return 1;
-//        return map.applyTo(m -> {
-//            int count = 0;
-//            for(String key :keys) {
-//                if(m.getAndRemove(key) != null)
-//                    count++;
-//            }
-//            return count;
-//        });
     }
 
-    public static boolean hexists(MapView<String, ?> map, String key) {
-        return map.containsKey(key);
+    /**
+     * Returns if field is an existing field in the hash stored at key.
+     *
+     * @return Integer reply, specifically:
+     * 1 if the hash contains field.
+     * 0 if the hash does not contain field, or key does not exist.
+     */
+    public static int hexists(MapView<String, ?> map, String key) {
+        return map.containsKey(key) ? 1 : 0;
     }
 
     /**
@@ -169,7 +231,7 @@ public class RedisEmulator {
      * Returns all fields and values of the hash stored at key. In the returned value,
      * every field name is followed by its value,
      * so the length of the reply is twice the size of the hash.
-     *
+     * <p/>
      * Note Redis returns the keys in the same order they were inserted
      * Chronicle returns them in an arbitrary order
      *
@@ -203,6 +265,15 @@ public class RedisEmulator {
         return map.size();
     }
 
+    /**
+     * Returns the values associated with the specified fields in the hash stored at key.
+     * For every field that does not exist in the hash, a nil value is returned.
+     * Because a non-existing keys are treated as empty hashes, running HMGET against
+     * a non-existing key will return a list of nil values.
+     *
+     * @return Array reply: list of values associated with the given fields,
+     * in the same order as they are requested.
+     */
     public static Map<String, Object> hmget(MapView<String, Object> map, String... keys) {
         return map.applyTo(m -> {
             Map<String, Object> ret = new LinkedHashMap<String, Object>();
@@ -224,7 +295,7 @@ public class RedisEmulator {
      * Delete all the keys of the currently selected DB. This command never fails.
      * The time-complexity for this operation is O(N), N being the number of keys in the database.
      */
-    public static <V> String flushdb(MapView<String, V> map){
+    public static <V> String flushdb(MapView<String, V> map) {
         map.clear();
         return "OK";
     }
@@ -232,7 +303,7 @@ public class RedisEmulator {
     /**
      * Return the number of keys in the currently-selected database.
      */
-    public static <V> int dbsize(MapView<String, V> map){
+    public static <V> int dbsize(MapView<String, V> map) {
         return map.size();
     }
 
@@ -246,7 +317,7 @@ public class RedisEmulator {
      */
     public static <V> int hset(MapView<String, V> map, String key, V value) {
         V put = map.getAndPut(key, value);
-        return put==null ? 1 : 0;
+        return put == null ? 1 : 0;
     }
 
     public static <V> void hsetnx(MapView<String, V> map, String key, V value) {
@@ -265,10 +336,32 @@ public class RedisEmulator {
         return l.applyTo(v -> v + 1);
     }
 
+    /**
+     * Increments the number stored at key by one. If the key does not exist, it is set to 0
+     * before performing the operation. An error is returned if the key contains a value
+     * of the wrong type or contains a string that can not be represented as integer.
+     * This operation is limited to 64 bit signed integers.
+     * Note: this is a string operation because Redis does not have a dedicated integer type.
+     * The string stored at the key is interpreted as a base-10 64 bit signed integer
+     * to execute the operation.
+     * Redis stores integers in their integer representation, so for string values
+     * that actually hold an integer, there is no overhead for storing
+     * the string representation of the integer.
+     * @return Integer reply: the value of key after the increment
+     */
     public static long incr(MapView<String, Long> map, String key) {
         return map.applyToKey(key, v -> v + 1);
     }
 
+    /**
+     * Increments the number stored at key by increment. If the key does not exist,
+     * it is set to 0 before performing the operation. An error is returned if the
+     * key contains a value of the wrong type or contains a string that can not be
+     * represented as integer. This operation is limited to 64 bit signed integers.
+     * See INCR for extra information on increment/decrement operations.
+     *
+     * @return Integer reply: the value of key after the increment
+     */
     public static long incrby(MapView<String, Long> map, String key, long toAdd) {
         return map.applyToKey(key, v -> v + toAdd);
     }

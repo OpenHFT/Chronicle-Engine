@@ -7,8 +7,7 @@ import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -23,8 +22,12 @@ import static org.junit.Assert.assertEquals;
  * Created by daniel on 31/07/2015.
  */
 public class RedisEmulatorTest {
-    @Test
-    public void testBasicFunctions() throws IOException {
+    private static MapView myStringHash;
+    private static MapView myLongHash;
+    private static MapView myDoubleHash;
+
+    @BeforeClass
+    public static void setup() throws IOException{
         //For this test we can use a VanillaMapKeyValueStore
         //To test with a ChronicleMapKeyValueStore uncomment lines below
         AssetTree serverAssetTree = new VanillaAssetTree().forTesting();
@@ -35,37 +38,53 @@ public class RedisEmulatorTest {
         TCPRegistry.createServerSocketChannelFor("RemoteSubscriptionModelPerformanceTest.port");
 
         ServerEndpoint serverEndpoint = new ServerEndpoint("RemoteSubscriptionModelPerformanceTest.port",
-                serverAssetTree, WireType.TEXT);
+                serverAssetTree, WireType.BINARY);
         AssetTree clientAssetTree = new VanillaAssetTree()
-                .forRemoteAccess("RemoteSubscriptionModelPerformanceTest.port", WireType.TEXT);
+                .forRemoteAccess("RemoteSubscriptionModelPerformanceTest.port", WireType.BINARY);
 
 
-        MapView myhash = clientAssetTree.acquireMap("/myhash", String.class, String.class);
+        myStringHash = clientAssetTree.acquireMap("/myStringHash", String.class, String.class);
+        myLongHash = clientAssetTree.acquireMap("/myLongHash", String.class, Long.class);
+        myDoubleHash = clientAssetTree.acquireMap("/myDoubleHash", String.class, Double.class);
+    }
 
+    @Before
+    public void before(){
+        assertEquals("OK", flushdb(myStringHash));
+        assertEquals("OK", flushdb(myLongHash));
+    }
 
-        //Test for hset
-        assertEquals(1, hset(myhash, "field1", "Hello"));
-        assertEquals(0, hset(myhash, "field1", "Hello"));
+    @Test
+    public void test_dbsize () throws IOException{
+        assertEquals(0, dbsize(myStringHash));
+        assertEquals(1, hset(myStringHash, "field1", "Hello"));
+        assertEquals(1, hset(myStringHash, "field2", "World"));
+        assertEquals(2, dbsize(myStringHash));
+    }
 
-        //Test for dbsize
-        assertEquals(1, dbsize(myhash));
+    @Test
+    //todo check example
+    public void test_flushdb() {
+        assertEquals("OK", flushdb(myStringHash));
+        assertEquals(0, dbsize(myStringHash));
+    }
 
-        //Test for flushdb
-        assertEquals("OK", flushdb(myhash));
-        assertEquals(0, dbsize(myhash));
+    @Test
+    public void test_hget() {
+        assertEquals(1, hset(myStringHash, "field1", "foo"));
+        assertEquals("foo", hget(myStringHash, "field1"));
+        assertEquals(null, hget(myStringHash, "field2"));
+    }
 
-        //Test for hget
-        assertEquals(1, hset(myhash, "field1", "foo"));
-        assertEquals("foo", hget(myhash, "field1"));
-        assertEquals(null, hget(myhash, "field2"));
-
+    @Test
+    public void test_hgetall() {
         //Test for hgetall
-        assertEquals("OK", flushdb(myhash));
-        assertEquals(1, hset(myhash, "field1", "Hello"));
-        assertEquals(1, hset(myhash, "field2", "World"));
+        assertEquals("OK", flushdb(myStringHash));
+        assertEquals(1, hset(myStringHash, "field1", "Hello"));
+        assertEquals(1, hset(myStringHash, "field2", "World"));
 
         List<String> results = new ArrayList();
-        hgetall(myhash, new Consumer<Map.Entry<String, String>>() {
+        hgetall(myStringHash, new Consumer<Map.Entry<String, String>>() {
             @Override
             public void accept(Map.Entry<String, String> entry) {
                 results.add(entry.getKey());
@@ -76,32 +95,111 @@ public class RedisEmulatorTest {
         Jvm.pause(100);
         //todo Redis returns the values in the order they were inserted
         assertEquals(4, results.size());
-        if(results.get(0).equals("field1")) {
+        if (results.get(0).equals("field1")) {
             assertEquals("field1", results.get(0));
             assertEquals("Hello", results.get(1));
             assertEquals("field2", results.get(2));
             assertEquals("World", results.get(3));
-        }else if(results.get(0).equals("field2")) {
+        } else if (results.get(0).equals("field2")) {
             assertEquals("field2", results.get(0));
             assertEquals("World", results.get(1));
             assertEquals("field1", results.get(2));
             assertEquals("Hello", results.get(3));
-        } else{
+        } else {
             throw new AssertionError("Incorrect results " + results);
         }
+    }
 
-        //Test for hdel
-        //Test 1 delete
-        assertEquals("OK", flushdb(myhash));
-        assertEquals(1, RedisEmulator.hset(myhash, "field1", "foo"));
-        assertEquals(1, RedisEmulator.hdel(myhash, "field1"));
-        assertEquals(0, RedisEmulator.hdel(myhash, "field1"));
+    @Test
+    public void test_hdell_single() {
+        assertEquals("OK", flushdb(myStringHash));
+        assertEquals(1, hset(myStringHash, "field1", "foo"));
+        assertEquals(1, hdel(myStringHash, "field1"));
+        assertEquals(0, hdel(myStringHash, "field1"));
+    }
 
-        //Test multiple deletes.
-//        assertEquals("OK", flushdb(myhash));
-//        assertEquals(1, RedisEmulator.hset(myhash, "field1", "foo1"));
-//        assertEquals(1, RedisEmulator.hset(myhash, "field2", "foo2"));
-//        assertEquals(1, RedisEmulator.hset(myhash, "field3", "foo3"));
-//        assertEquals(2, RedisEmulator.hdel(myhash, "field1", "field3"));
+    @Test
+    @Ignore //WIRE-29
+    public void test_hdell_multiple() {
+        //Test multiple deletes. //todo WIRE-29 add arrays as marshallable
+//        assertEquals("OK", flushdb(myStringHash));
+//        assertEquals(1, RedisEmulator.hset(myStringHash, "field1", "foo1"));
+//        assertEquals(1, RedisEmulator.hset(myStringHash, "field2", "foo2"));
+//        assertEquals(1, RedisEmulator.hset(myStringHash, "field3", "foo3"));
+//        assertEquals(2, RedisEmulator.hdel(myStringHash, "field1", "field3"));
+    }
+
+    @Test
+    public void test_hexists() {
+        //test for hexists
+        assertEquals("OK", flushdb(myStringHash));
+        assertEquals(1, hset(myStringHash, "field1", "foo"));
+        assertEquals(1, hexists(myStringHash, "field1"));
+        assertEquals(0, hexists(myStringHash, "field2"));
+
+        //test for hmget
+    }
+
+    @Test
+    public void test_hset() {
+        assertEquals(1, hset(myStringHash, "field1", "Hello"));
+        assertEquals(0, hset(myStringHash, "field1", "Hello"));
+    }
+
+    @Test
+    @Ignore //WIRE-29
+    public void test_hmget(){
+        assertEquals(1, hset(myStringHash, "field1", "Hello"));
+        assertEquals(1, hset(myStringHash, "field2", "World"));
+        Map hmget = hmget(myStringHash, "field1", "field2", "nofield");
+        System.out.println(hmget);
+    }
+
+    @Test
+     public void test_exists_single() {
+        assertEquals(1, hset(myStringHash, "key1", "Hello"));
+        assertEquals(0, exists(myStringHash, "nosuchkey"));
+        assertEquals(1, hset(myStringHash, "key2", "World"));
+    }
+
+    @Test
+    @Ignore //WIRE-29
+    public void test_exists_multiple() {
+        assertEquals(1, hset(myStringHash, "key1", "Hello"));
+        assertEquals(2, exists(myStringHash, "key1", "key2", "nosuchkey"));
+    }
+
+    @Test
+    @Ignore //ClassCastException
+    public void test_incr() {
+        assertEquals(1, hset(myLongHash, "mykey", 10));
+        assertEquals(11, incr(myLongHash, "mykey"));
+    }
+
+    @Test
+    @Ignore //net.openhft.chronicle.bytes.IORuntimeException: Expected a ] but got ￿ (￿)
+    public void test_incrby() {
+        assertEquals(1, hset(myLongHash, "mykey", 10l));
+        assertEquals(15, incrby(myLongHash, "mykey", 5l));
+    }
+
+    @Test
+    @Ignore //net.openhft.chronicle.bytes.IORuntimeException: Expected a ] but got ￿ (￿)
+    public void test_incrbyfloat() {
+        assertEquals(1, hset(myDoubleHash, "mykey", 10.5));
+        assertEquals(10.6, incrbyfloat(myDoubleHash, "mykey", 0.1),0);
+        assertEquals(1, hset(myDoubleHash, "mykey", 5.0e3));
+        assertEquals(5200, incrbyfloat(myDoubleHash, "mykey", 2.0e2),0);
+    }
+
+    @Test
+    @Ignore //net.openhft.chronicle.bytes.IORuntimeException: Expected a ] but got ￿ (￿)
+    //todo only works in BINARY not TEXT
+    //todo review implementation which is not efficient
+    public void test_append() {
+        assertEquals(0, exists(myStringHash, "mykey"));
+        assertEquals(5, append(myStringHash, "mykey", "Hello"));
+        assertEquals(11, append(myStringHash, "mykey", " World"));
+        assertEquals("Hello World", get(myStringHash, "mykey"));
     }
 }
