@@ -25,7 +25,7 @@ class AbstractHandler {
     WireOut outWire = null;
     volatile boolean connectionClosed = false;
 
-    void setOutWire(final WireOut outWire) {
+    void setOutWire(@NotNull final WireOut outWire) {
         this.outWire = outWire;
     }
 

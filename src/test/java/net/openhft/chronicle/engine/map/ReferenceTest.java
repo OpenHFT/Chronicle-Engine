@@ -178,7 +178,7 @@ public class ReferenceTest {
 
         assetTree.registerSubscriber("group" + "/" + "subject" + "?bootstrap=false&putReturnsNull=true", String.class, keyEventSubscriber);
 
-        Jvm.pause(100);
+        // Jvm.pause(100);
         Asset child = assetTree.getAsset("group").getChild("subject");
         assertNotNull(child);
         Subscription subscription = child.subscription(false);
@@ -190,7 +190,6 @@ public class ReferenceTest {
 
         assetTree.unregisterSubscriber("group" + "/" + "subject", keyEventSubscriber);
 
-        Jvm.pause(100);
         assertEquals(0, subscription.subscriberCount());
         assertEquals("cs", events.get(0));
         assertEquals("maths", events.get(1));

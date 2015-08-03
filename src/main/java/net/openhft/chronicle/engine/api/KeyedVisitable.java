@@ -100,7 +100,7 @@ public interface KeyedVisitable<K, E> {
      * Apply a function to visitable potentially asynchronously.  This argument may contain a combination of data. This function is assumed to replace the value and trigger and events or replciated changes.
      *
      * @param key to update within this collection
-     * @param updateFunction to update the state of the visitiable.
+     * @param updateFunction to update the state of the visitable.
      * @param argument for the functions use.
      * @param <T> type of the argument
      */

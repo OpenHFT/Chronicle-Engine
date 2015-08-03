@@ -33,7 +33,7 @@ public class KeyFunctionPair implements Marshallable {
     @NotNull
     Object function;
 
-    KeyFunctionPair(Object key, @NotNull Object function) {
+    KeyFunctionPair(@NotNull Object key, @NotNull Object function) {
         this.key = key;
         assert Serializable.class.isAssignableFrom(function.getClass());
         this.function = function;

@@ -95,7 +95,7 @@ public enum Chassis {
     }
 
     /**
-     * Get or create a Publisher view for a given lement or update type.
+     * Get or create a Publisher view for a given element or update type.
      *
      * @param uri    to publish to.
      * @param eClass of the data to publish

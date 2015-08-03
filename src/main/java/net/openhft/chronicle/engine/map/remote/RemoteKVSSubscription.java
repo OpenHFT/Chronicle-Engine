@@ -91,6 +91,7 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractRemoteSubscription<
                         });
                     } else if (onEndOfSubscription.contentEquals(sb)) {
                         RemoteKVSSubscription.this.onEndOfSubscription();
+                        hub.unsubscribe(tid());
                     }
                 });
             }

@@ -208,7 +208,7 @@ public class EngineWireHandler extends WireTcpHandler {
                 }
             } catch (Exception e) {
                 LOG.error("", e);
-                rethrow(e);
+                throw rethrow(e);
             }
         };
     }
@@ -330,7 +330,7 @@ public class EngineWireHandler extends WireTcpHandler {
                 }
 
                 if (endsWith(cspText, "?view=queue")) {
-                    // TODO
+                    // TODO add in chronicle queue
                 }
 
             } catch (Exception e) {

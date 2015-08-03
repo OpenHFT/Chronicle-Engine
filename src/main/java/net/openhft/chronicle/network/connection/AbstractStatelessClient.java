@@ -241,9 +241,9 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
      * @param consumer             a function consume the wire
      * @param reattemptUponFailure if false - will only be sent if the connection is valid
      */
-    protected void sendEventAsync(@NotNull final WireKey eventId,
-                                  @Nullable final Consumer<ValueOut> consumer,
-                                  boolean reattemptUponFailure) {
+    protected boolean sendEventAsync(@NotNull final WireKey eventId,
+                                     @Nullable final Consumer<ValueOut> consumer,
+                                     boolean reattemptUponFailure) {
 
         if (reattemptUponFailure)
             try {
@@ -252,7 +252,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
                 Thread.currentThread().interrupt();
             }
         else if (!hub.isOpen())
-            return;
+            return false;
 
         if (!reattemptUponFailure) {
 
@@ -263,7 +263,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
                     // this can occur if the socket is not currently connected
                 }
             });
-            return;
+            return true;
         }
 
         attempt(() -> {
@@ -274,9 +274,10 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
                     // this can occur if the socket is not currently connected
                 }
             });
-            return null;
+            return true;
         });
 
+        return false;
     }
 
 

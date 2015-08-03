@@ -32,7 +32,7 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
     final Map<Long, Object> tidToListener = new ConcurrentHashMap<>();
 
 
-    final Throttler throttler;
+    private final Throttler throttler;
 
     public SubscriptionHandler(@NotNull final Throttler throttler) {
         this.throttler = throttler;
@@ -43,6 +43,7 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
     RequestContext requestContext;
     WireOutPublisher publisher;
     AssetTree assetTree;
+
 
     /**
      * after writing the tid to the wire
@@ -134,13 +135,10 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
         @Override
         public void onMessage(Object e) throws InvalidSubscriberException {
 
-            Runnable r = () -> {
-                Consumer<WireOut> toPublish = publish -> {
-                    publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(tid));
-                    publish.writeNotReadyDocument(false, wire -> wire.write(reply).object(e));
-                };
-                publisher.add(toPublish);
-            };
+            final Runnable r = () -> publisher.add(p -> {
+                p.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(tid));
+                p.writeNotReadyDocument(false, wire -> wire.write(reply).object(e));
+            });
 
 
             final Class eClass = e.getClass();
@@ -149,7 +147,10 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
                 r.run();
             else
                 // key subscription
-                throttler.add(r);
+                if (throttler.useThrottler())
+                    throttler.add(r);
+                else
+                    r.run();
 
         }
 

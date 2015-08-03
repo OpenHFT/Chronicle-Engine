@@ -39,7 +39,7 @@ public class RemovedEvent<K, V> implements MapEvent<K, V> {
     @Nullable
     private V oldValue;
 
-    private RemovedEvent(String assetName, K key, V oldValue) {
+    private RemovedEvent(String assetName, @NotNull K key, @Nullable V oldValue) {
         this.assetName = assetName;
         this.key = key;
         this.oldValue = oldValue;
