@@ -49,7 +49,8 @@ public class ServerEndpoint implements Closeable {
     @NotNull
     private final AtomicBoolean isClosed = new AtomicBoolean();
 
-    private final int maxEventsPreSecond = Integer.getInteger("Throttler.maxEventsPreSecond", 1000);
+    // set Throttler.maxEventsPreSecond == 0 if you dont want to use the throttler
+    private final int maxEventsPreSecond = Integer.getInteger("Throttler.maxEventsPreSecond", 0);
 
     public ServerEndpoint(String hostPortDescription, @NotNull AssetTree assetTree, @NotNull WireType wire) throws IOException {
         eg = assetTree.root().acquireView(EventLoop.class);

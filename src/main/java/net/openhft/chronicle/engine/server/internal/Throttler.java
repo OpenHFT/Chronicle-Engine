@@ -30,6 +30,12 @@ public class Throttler<K> implements EventHandler {
         eventLoop.addHandler(this);
     }
 
+
+    public boolean useThrottler() {
+        return maxEventsPreSecond > 0;
+    }
+
+
     public void add(Runnable r) {
         events.add(r);
         sendEvents();
