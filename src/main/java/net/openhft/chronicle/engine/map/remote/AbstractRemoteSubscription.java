@@ -121,6 +121,7 @@ abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient imp
                 wireOut.writeEventName(unregisterSubscriber).text("");
             });
         });
+        hub.unsubscribe(tid);
     }
 
     @Override
