@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.engine;
 
+import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
@@ -31,7 +32,9 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.concurrent.ConcurrentMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -42,12 +45,12 @@ import java.util.concurrent.Future;
  * @author Rob Austin.
  */
 
-public class TcpManyClientConnectionsTest extends ThreadMonitoringTest {
+public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest {
 
     private static final String NAME = "test";
     public static final WireType WIRE_TYPE = WireType.TEXT;
     public static final int MAX = 50;
-    private static ConcurrentMap[] maps = new ConcurrentMap[MAX];
+    private static MapView[] maps = new MapView[MAX];
     private static final String CONNECTION = "host.port.TcpManyConnectionsTest";
     private AssetTree[] trees = new AssetTree[MAX];
     private VanillaAssetTree serverAssetTree;
@@ -64,16 +67,14 @@ public class TcpManyClientConnectionsTest extends ThreadMonitoringTest {
 
         for (int i = 0; i < MAX; i++) {
             trees[i] = new VanillaAssetTree().forRemoteAccess(CONNECTION, WIRE_TYPE);
-            maps[i] = trees[i].acquireMap(NAME, String.class, String.class);
+            maps[i] = trees[i].acquireMap(NAME + i, String.class, String.class);
         }
 
     }
 
     @After
     public void after() throws IOException {
-
         shutdownTrees();
-
         serverAssetTree.close();
         serverEndpoint.close();
 
@@ -108,23 +109,100 @@ public class TcpManyClientConnectionsTest extends ThreadMonitoringTest {
     public void test() throws IOException, InterruptedException {
 
         final ExecutorService executorService = Executors.newCachedThreadPool();
+        {
+            List<Future> futures = new ArrayList<>();
+            for (int i = 0; i < MAX; i++) {
+                final int j = i;
 
+                futures.add(executorService.submit(() -> {
+                    assert maps[j].size() == 0;
+                    maps[j].put("hello" + j, "world" + j);
+                    Assert.assertEquals("world" + j, maps[j].get("hello" + j));
 
+                }));
+
+            }
+
+            futures.forEach(f -> {
+                try {
+                    f.get();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                }
+            });
+        }
+
+        List<Future<String>> futures2 = new ArrayList<Future<String>>();
         for (int i = 0; i < MAX; i++) {
             final int j = i;
-            executorService.submit(() -> {
-                maps[j].put("hello" + j, "world" + j);
-                Assert.assertEquals("world" + j, maps[j].get("hello" + j));
+            futures2.add(executorService.submit(() -> {
+                assert maps[j].size() == 1;
+                return (String) (maps[j].get("hello" + j));
+            }));
+        }
 
-            });
+
+        final Iterator<Future<String>> iterator = futures2.iterator();
+        for (int i = 0; i < MAX; i++) {
+
+            try {
+                final Future<String> s = iterator.next();
+                final String actual = s.get();
+                Assert.assertEquals("world" + (i), actual);
+
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
 
         }
 
     }
 
 
-}
+    /**
+     * test many clients connecting to a single server
+     */
+    @Test
+    public void andresTest() throws IOException, InterruptedException {
 
+        final ExecutorService executorService = Executors.newCachedThreadPool();
+        {
+            List<Future> futures = new ArrayList<>();
+            for (int i = 0; i < MAX; i++) {
+                final int j = i;
+
+                futures.add(executorService.submit(() -> {
+                    assert maps[j].size() == 0;
+                    maps[j].clear();
+                    maps[j].getAndPut("x", "y");
+                    final Object x = maps[j].get("x");
+                    assert "y".equals(x) : "get(\"x\")=" + x;
+                    assert maps[j].size() == 1;
+                    maps[j].clear();
+                }));
+
+            }
+
+            futures.forEach(f -> {
+                try {
+                    f.get();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                }
+            });
+        }
+
+
+    }
+
+
+}
 
 
 
