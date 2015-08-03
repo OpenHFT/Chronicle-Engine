@@ -710,9 +710,10 @@ public class TcpChannelHub implements View, Closeable {
             }
             try {
                 map.put(asyncSubscription.tid(), asyncSubscription);
+
                 asyncSubscription.applySubscribe();
             } catch (Exception e) {
-                LOG.error("", e);
+                e.printStackTrace();
             } finally {
                 reentrantLock.unlock();
             }
