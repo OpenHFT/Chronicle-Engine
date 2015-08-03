@@ -515,28 +515,30 @@ public class TcpChannelHub implements View, Closeable {
         });
     }
 
-    public void lock(@NotNull Task r) {
-        lock(r, false);
+    public boolean lock(@NotNull Task r) {
+        return lock(r, false);
     }
 
-    public void lock(@NotNull Task r, boolean tryLock) {
+    public boolean lock(@NotNull Task r, boolean tryLock) {
         if (clientChannel == null)
-            return;
-        ReentrantLock lock = outBytesLock();
+            return tryLock;
+        final ReentrantLock lock = outBytesLock();
         if (tryLock) {
             if (!lock.tryLock())
-                return;
-        } else {
+                return false;
+        } else
             lock.lock();
-        }
+
         try {
             r.run();
             writeSocket(outWire());
         } catch (Exception e) {
             LOG.debug("", e);
+            return false;
         } finally {
             lock.unlock();
         }
+        return true;
     }
 
     /**
@@ -895,13 +897,12 @@ public class TcpChannelHub implements View, Closeable {
                         blockingRead(inWire, messageSize);
                         logToStandardOutMessageReceived(inWire);
 
-                        IOException ioException = new IOException("unable to respond to tid=" + tid + ", given that we have received a " +
-                                " message we a tid which is unknown, something has become corrupted, " +
-                                "so the safest thing to do is to drop the connection to the server and " +
-                                "start again.");
-
-                        LOG.error("", ioException);
-                        throw ioException;
+                        LOG.debug("unable to respond to tid=" + tid + ", given that we have " +
+                                "received a message we a tid which is unknown, this can occur " +
+                                "sometime if " +
+                                "the subscription has just become unregistered ( an the server " +
+                                "has not yet processed the unregister event ) ");
+                        return;
 
                     }
                 }

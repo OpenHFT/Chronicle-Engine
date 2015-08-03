@@ -112,20 +112,25 @@ abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient imp
 
         Long tid = subscribersToTid.get(subscriber);
 
-
         if (tid == null) {
             AbstractRemoteSubscription.LOG.warn("There is subscription to unsubscribe");
             return;
         }
 
+        if (!hub.isOpen()) {
+            hub.unsubscribe(tid);
+            return;
+        }
 
-        hub.lock(() -> {
+        boolean success = hub.lock(() -> {
             writeMetaDataForKnownTID(tid);
-            hub.outWire().writeDocument(false, wireOut -> {
-                wireOut.writeEventName(unregisterSubscriber).text("");
-            });
+            hub.outWire().writeDocument(false, wireOut ->
+                    wireOut.writeEventName(unregisterSubscriber).text(""));
         });
-        hub.unsubscribe(tid);
+
+        if (!success)
+            hub.unsubscribe(tid);
+
     }
 
     @Override

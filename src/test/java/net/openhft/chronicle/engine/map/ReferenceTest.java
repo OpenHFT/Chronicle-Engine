@@ -188,9 +188,11 @@ public class ReferenceTest {
         map.put("subject", "cs");
         map.put("subject", "maths");
 
+
+        Jvm.pause(1000);
+
         assetTree.unregisterSubscriber("group" + "/" + "subject", keyEventSubscriber);
 
-        Jvm.pause(100);
         assertEquals(0, subscription.subscriberCount());
         assertEquals("cs", events.get(0));
         assertEquals("maths", events.get(1));
