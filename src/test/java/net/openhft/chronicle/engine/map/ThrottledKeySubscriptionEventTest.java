@@ -49,11 +49,6 @@ import static net.openhft.chronicle.engine.Utils.yamlLoggger;
  */
 public class ThrottledKeySubscriptionEventTest extends ThreadMonitoringTest {
 
-
-    static {
-        System.setProperty("Throttler.maxEventsPreSecond", "1");
-    }
-
     private static final String NAME = "test";
     public static final WireType WIRE_TYPE = WireType.TEXT;
     private static MapView<String, String> map;
@@ -67,6 +62,7 @@ public class ThrottledKeySubscriptionEventTest extends ThreadMonitoringTest {
 
     @Before
     public void before() throws IOException {
+        System.setProperty("Throttler.maxEventsPreSecond", "1");
         serverAssetTree = new VanillaAssetTree().forTesting();
 
         methodName(name.getMethodName());
@@ -89,6 +85,7 @@ public class ThrottledKeySubscriptionEventTest extends ThreadMonitoringTest {
             ((Closeable) map).close();
         TCPRegistry.assertAllServersStopped();
         TCPRegistry.reset();
+        System.setProperty("Throttler.maxEventsPreSecond", "0");
     }
 
 
@@ -134,7 +131,7 @@ public class ThrottledKeySubscriptionEventTest extends ThreadMonitoringTest {
                 throw Jvm.rethrow(e);
             }
         });
-        System.setProperty("Throttler.maxEventsPreSecond", "0");
+
     }
 
 
