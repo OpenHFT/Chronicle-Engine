@@ -51,6 +51,11 @@ import static net.openhft.chronicle.engine.Utils.yamlLoggger;
  */
 @RunWith(value = Parameterized.class)
 public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
+
+    static {
+        System.setProperty("Throttler.maxEventsPreSecond", "0");
+    }
+
     private static final String NAME = "test";
 
     private static Boolean isRemote;

@@ -41,7 +41,7 @@ public class UpdatedEvent<K, V> implements MapEvent<K, V> {
     @Nullable
     private V value;
 
-    private UpdatedEvent(String assetName, K key, V oldValue, V value) {
+    private UpdatedEvent(String assetName, @NotNull K key, V oldValue, V value) {
         this.assetName = assetName;
         this.key = key;
         this.oldValue = oldValue;

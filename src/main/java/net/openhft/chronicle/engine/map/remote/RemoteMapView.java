@@ -146,19 +146,19 @@ public class RemoteMapView<K, MV, V> extends VanillaMapView<K, V> {
 
     // core functionality.
     @Override
-    public <A, R> R applyTo(@NotNull SerializableBiFunction<MapView<K, V>, A, R> function, A arg) {
+    public <A, R> R applyTo(@org.jetbrains.annotations.NotNull @NotNull SerializableBiFunction<MapView<K, V>, A, R> function, A arg) {
         RemoteKeyValueStore<K, V> store = (RemoteKeyValueStore<K, V>) underlying();
         return store.applyTo((SerializableBiFunction<MapView<K, V>, A, R>) (SerializableBiFunction) function, arg);
     }
 
     @Override
-    public <A> void asyncUpdate(@NotNull SerializableUpdaterWithArg<MapView<K, V>, A> updateFunction, A arg) {
+    public <A> void asyncUpdate(@org.jetbrains.annotations.NotNull @NotNull SerializableUpdaterWithArg<MapView<K, V>, A> updateFunction, A arg) {
         RemoteKeyValueStore<K, V> store = (RemoteKeyValueStore<K, V>) underlying();
         store.asyncUpdate((SerializableUpdaterWithArg) updateFunction, arg);
     }
 
     @Override
-    public <UA, RA, R> R syncUpdate(@NotNull SerializableUpdaterWithArg<MapView<K, V>, UA> updateFunction, UA ua, @NotNull SerializableBiFunction<MapView<K, V>, RA, R> returnFunction, RA ra) {
+    public <UA, RA, R> R syncUpdate(@org.jetbrains.annotations.NotNull @NotNull SerializableUpdaterWithArg<MapView<K, V>, UA> updateFunction, UA ua, @org.jetbrains.annotations.NotNull @NotNull SerializableBiFunction<MapView<K, V>, RA, R> returnFunction, RA ra) {
         RemoteKeyValueStore<K, V> store = (RemoteKeyValueStore<K, V>) underlying();
         return store.syncUpdate((SerializableBiFunction) updateFunction, ua, (SerializableBiFunction) returnFunction, ra);
     }

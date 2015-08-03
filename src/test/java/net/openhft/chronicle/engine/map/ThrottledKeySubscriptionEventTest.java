@@ -134,6 +134,7 @@ public class ThrottledKeySubscriptionEventTest extends ThreadMonitoringTest {
                 throw Jvm.rethrow(e);
             }
         });
+        System.setProperty("Throttler.maxEventsPreSecond", "0");
     }
 
 

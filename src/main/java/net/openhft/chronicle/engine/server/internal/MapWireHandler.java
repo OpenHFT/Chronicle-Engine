@@ -324,7 +324,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
         this.wireToV = wireAdapter.wireToValue();
         this.requestContext = requestContext;
 
-        setOutWire(outWire);
+        setOutWire(out);
 
         try {
             this.inWire = in;
