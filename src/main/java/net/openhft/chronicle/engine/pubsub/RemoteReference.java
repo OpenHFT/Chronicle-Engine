@@ -26,8 +26,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.EventId.*;
 
@@ -93,8 +91,10 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
         Long subscriberTid = subscribersToTid.remove(subscriber);
         if (subscriberTid != null) {
             sendEventAsync(unregisterSubscriber, valueOut -> valueOut.int64(subscriberTid), false);
+            hub.unsubscribe(subscriberTid);
         } else
             LOG.warn("No subscriber to unsubscribe");
+
     }
 
     @Override
@@ -105,10 +105,6 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
     @Override
     public void registerSubscriber(boolean bootstrap, @NotNull final Subscriber subscriber) throws AssetNotFoundException {
 
-        // makes it more likely ( up to a timeout ) that this method does not return until a
-        // subscription is made.
-        final CountDownLatch hasSubscribed = new CountDownLatch(1);
-
         if (hub.outBytesLock().isHeldByCurrentThread())
             throw new IllegalStateException("Cannot view map while debugging");
 
@@ -118,7 +114,6 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
             public void onSubscribe(@NotNull final WireOut wireOut) {
                 subscribersToTid.put(subscriber, tid());
                 wireOut.writeEventName(registerSubscriber).text("");
-                hasSubscribed.countDown();
             }
 
             @Override
@@ -143,12 +138,6 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
         };
 
         hub.subscribe(asyncSubscription);
-
-        try {
-            hasSubscribed.await(2, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
     }
 
     private void onEvent(@Nullable E message, @NotNull Subscriber<E> subscriber) {
