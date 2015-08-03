@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  * <p></p>
  * This interface allows visiting an individual resource.
  * <p></p>
- * The default implementations are trivial, however further guarentees can be provided.
+ * The default implementations are trivial, however further guarantees can be provided.
  * e.g. a remote client may have the code executed on the server atomically.
  */
 public interface Visitable<E> {
@@ -54,7 +54,8 @@ public interface Visitable<E> {
     }
 
     /**
-     * Apply a function to visitable potentially asynchronously.  This function is assumed to replace the value and trigger and events or replciated changes.
+     * Apply a function to visitable potentially asynchronously.  This function is assumed to replace
+     * the value and trigger and events or replicated changes.
      *
      * @param updateFunction to update the state of the visitable.
      */
@@ -90,9 +91,10 @@ public interface Visitable<E> {
     }
 
     /**
-     * Apply a function to visitable potentially asynchronously.  This argument may contain a combination of data. This function is assumed to replace the value and trigger and events or replciated changes.
+     * Apply a function to visitable potentially asynchronously.  This argument may contain a
+     * combination of data. This function is assumed to replace the value and trigger and events or replicated changes.
      *
-     * @param updateFunction to update the state of the visitiable.
+     * @param updateFunction to update the state of the visitable.
      * @param argument for the functions use.
      * @param <T> type of the argument
      */
