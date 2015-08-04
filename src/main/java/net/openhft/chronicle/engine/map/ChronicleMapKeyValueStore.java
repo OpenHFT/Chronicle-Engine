@@ -67,7 +67,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
     private static final Logger LOG = LoggerFactory.getLogger(ChronicleMapKeyValueStore.class);
     private final ChronicleMap<K, V> chronicleMap;
     @NotNull
-    private final ObjectKVSSubscription<K, MV, V> subscriptions;
+    private final ObjectKVSSubscription<K, V> subscriptions;
     @Nullable
     private final EngineReplication engineReplicator;
     @NotNull

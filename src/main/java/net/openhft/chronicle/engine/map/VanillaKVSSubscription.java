@@ -36,7 +36,8 @@ import static net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer.notif
  * Created by peter on 22/05/15.
  */
 // todo review thread safety
-public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K, MV, V>, RawKVSSubscription<K, MV, V> {
+public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K, V>,
+        RawKVSSubscription<K, V> {
     private final Set<TopicSubscriber<K, V>> topicSubscribers = new CopyOnWriteArraySet<>();
     private final Set<Subscriber<MapEvent<K, V>>> subscribers = new CopyOnWriteArraySet<>();
     private final Set<Subscriber<K>> keySubscribers = new CopyOnWriteArraySet<>();

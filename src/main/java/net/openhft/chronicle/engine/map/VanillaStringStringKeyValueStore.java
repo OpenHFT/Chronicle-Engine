@@ -44,7 +44,7 @@ import static net.openhft.chronicle.engine.map.Buffers.BUFFERS;
  */
 public class VanillaStringStringKeyValueStore implements StringStringKeyValueStore {
     @NotNull
-    private final ObjectKVSSubscription<String, StringBuilder, String> subscriptions;
+    private final ObjectKVSSubscription<String, String> subscriptions;
 
     private final SubscriptionKeyValueStore<String, BytesStore> kvStore;
     private final Asset asset;
@@ -54,14 +54,14 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         this(asset.acquireView(ObjectKVSSubscription.class, context), asset, kvStore);
     }
 
-    VanillaStringStringKeyValueStore(@NotNull ObjectKVSSubscription<String, StringBuilder, String> subscriptions,
+    VanillaStringStringKeyValueStore(@NotNull ObjectKVSSubscription<String, String> subscriptions,
                                      @NotNull Asset asset,
                                      @NotNull SubscriptionKeyValueStore<String, BytesStore> kvStore) throws AssetNotFoundException {
         this.asset = asset;
         this.kvStore = kvStore;
         asset.registerView(ValueReader.class, StringValueReader.BYTES_STORE_TO_STRING);
-        RawKVSSubscription<String, Bytes, BytesStore> rawSubscription =
-                (RawKVSSubscription<String, Bytes, BytesStore>) kvStore.subscription(true);
+        RawKVSSubscription<String, BytesStore> rawSubscription =
+                (RawKVSSubscription<String, BytesStore>) kvStore.subscription(true);
         this.subscriptions = subscriptions;
         subscriptions.setKvStore(this);
         rawSubscription.registerDownstream(mpe ->
@@ -82,7 +82,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
 
     @NotNull
     @Override
-    public ObjectKVSSubscription<String, StringBuilder, String> subscription(boolean createIfAbsent) {
+    public ObjectKVSSubscription<String, String> subscription(boolean createIfAbsent) {
         return subscriptions;
     }
 

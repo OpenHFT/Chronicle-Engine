@@ -56,20 +56,14 @@ import static net.openhft.chronicle.core.Jvm.pause;
 import static net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 
 /**
- * A {@link Map} implementation that stores each entry as a file in a
- * directory. The <code>key</code> is the file fullName and the <code>value</code>
- * is the contents of the file.
- * <p>
- * The class is effectively an abstraction over a directory in the file system.
- * Therefore when the underlying files are changed an event will be fired to those
- * registered for notifications.
- * <p>
- * Updates will be fired every time the file is saved but will be suppressed
- * if the value has not changed.  To avoid temporary files (e.g. if edited in vi)
- * being included in the map, any file starting with a '.' will be ignored.
- * <p>
- * Note the {@link WatchService} is extremely OS dependant.  Mas OSX registers
- * very few events if they are done quickly and there is a significant delay
+ * A {@link Map} implementation that stores each entry as a file in a directory. The
+ * <code>key</code> is the file fullName and the <code>value</code> is the contents of the file. <p>
+ * The class is effectively an abstraction over a directory in the file system. Therefore when the
+ * underlying files are changed an event will be fired to those registered for notifications. <p>
+ * Updates will be fired every time the file is saved but will be suppressed if the value has not
+ * changed.  To avoid temporary files (e.g. if edited in vi) being included in the map, any file
+ * starting with a '.' will be ignored. <p> Note the {@link WatchService} is extremely OS dependant.
+ *  Mas OSX registers very few events if they are done quickly and there is a significant delay
  * between the event and the event being triggered.
  */
 public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Closeable {
@@ -82,7 +76,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     @NotNull
     private final Thread fileFpmWatcher;
     @NotNull
-    private final RawKVSSubscription<String, Bytes, BytesStore> subscriptions;
+    private final RawKVSSubscription<String, BytesStore> subscriptions;
     @NotNull
     private final Asset asset;
 
@@ -124,7 +118,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
 
     @NotNull
     @Override
-    public RawKVSSubscription<String, Bytes, BytesStore> subscription(boolean createIfAbsent) {
+    public RawKVSSubscription<String, BytesStore> subscription(boolean createIfAbsent) {
         return subscriptions;
     }
 

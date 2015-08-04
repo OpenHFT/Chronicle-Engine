@@ -60,7 +60,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     @NotNull
     private final BiFunction<BytesStore, V, V> bytesToValue;
     @NotNull
-    private final ObjectKVSSubscription<String, V, V> subscriptions;
+    private final ObjectKVSSubscription<String, V> subscriptions;
     private final SubscriptionKeyValueStore<String, BytesStore> kvStore;
     private final Asset asset;
     private final Class<V> valueType;
@@ -71,7 +71,8 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
                 kvStore, context.wireType());
     }
 
-    VanillaStringMarshallableKeyValueStore(@NotNull ObjectKVSSubscription<String, V, V> subscriptions, @NotNull Asset asset, @NotNull Class valueType,
+    VanillaStringMarshallableKeyValueStore(@NotNull ObjectKVSSubscription<String, V>
+                                                   subscriptions, @NotNull Asset asset, @NotNull Class valueType,
                                            @NotNull SubscriptionKeyValueStore<String, BytesStore> kvStore,
                                            @NotNull Function<Bytes, Wire> wireType) {
         this.asset = asset;
@@ -81,8 +82,8 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
         this.kvStore = kvStore;
         ValueReader<BytesStore, V> valueReader = bs -> bytesToValue.apply(bs, null);
         asset.registerView(ValueReader.class, valueReader);
-        RawKVSSubscription<String, Bytes, BytesStore> rawSubscription =
-                (RawKVSSubscription<String, Bytes, BytesStore>) kvStore.subscription(true);
+        RawKVSSubscription<String, BytesStore> rawSubscription =
+                (RawKVSSubscription<String, BytesStore>) kvStore.subscription(true);
         this.subscriptions = subscriptions;
         rawSubscription.registerDownstream(mpe ->
                 subscriptions.notifyEvent(mpe.translate(s -> s, b -> bytesToValue.apply(b, null))));
@@ -128,7 +129,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
 
     @NotNull
     @Override
-    public ObjectKVSSubscription<String, V, V> subscription(boolean createIfAbsent) {
+    public ObjectKVSSubscription<String, V> subscription(boolean createIfAbsent) {
         return subscriptions;
     }
 

@@ -30,7 +30,7 @@ public class CompressedKeyValueStore<K> implements ObjectKeyValueStore<K, String
     private KeyValueStore<K, BytesStore> underlyingKVStore;
 
     @NotNull
-    private  RawKVSSubscription<K, String, String> subscriptions;
+    private RawKVSSubscription<K, String> subscriptions;
 
     public CompressedKeyValueStore(RequestContext context, Asset asset,
                                    KeyValueStore<K, BytesStore> kvStore) {

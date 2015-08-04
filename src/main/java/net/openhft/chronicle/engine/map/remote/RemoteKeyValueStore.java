@@ -66,7 +66,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     private final Asset asset;
     // todo
     @NotNull
-    private final ObjectKVSSubscription<K, V, V> subscriptions;
+    private final ObjectKVSSubscription<K, V> subscriptions;
 
     public RemoteKeyValueStore(@NotNull final RequestContext context,
                                @NotNull Asset asset,
@@ -434,7 +434,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
 
     @NotNull
     @Override
-    public ObjectKVSSubscription<K, V, V> subscription(boolean createIfAbsent) {
+    public ObjectKVSSubscription<K, V> subscription(boolean createIfAbsent) {
         return subscriptions;
     }
 

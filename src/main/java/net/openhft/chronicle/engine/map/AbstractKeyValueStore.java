@@ -36,7 +36,7 @@ public class AbstractKeyValueStore<K, V> implements KeyValueStore<K, V> {
     @NotNull
     final Asset asset;
     @NotNull
-    final KeyValueStore<K, V> kvStore;
+    public final KeyValueStore<K, V> kvStore;
     private final Class<K> keyType;
     private final Class<V> valueType;
 
