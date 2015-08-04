@@ -118,7 +118,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     }
 
     @Test
-    @Ignore("Waiting for merge - JIRA https://higherfrequencytrading.atlassian.net/browse/CE-119")
+    @Ignore("Takes 407s (~0.2s/iteration) so best to only run it on demand")
     public void test2MBEntries() throws IOException {
 
         // server
@@ -136,6 +136,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
             long time = System.currentTimeMillis();
             final ConcurrentMap<String, String> map = remote.get();
             for (int i = 0; i < 2_000; i++) {
+                System.out.println(i);
                 map.put("largeEntry", value);
             }
 
