@@ -118,6 +118,13 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractRemoteSubscription<
             return;
         }
 
+        hub.preventSubscribeUponReconnect(tid);
+
+        if (!hub.isOpen()) {
+            hub.unsubscribe(tid);
+            return;
+        }
+
         hub.lock(() -> {
             writeMetaDataForKnownTID(tid);
             hub.outWire().writeDocument(false, wireOut -> {
@@ -125,7 +132,6 @@ public class RemoteKVSSubscription<K, MV, V> extends AbstractRemoteSubscription<
             });
         });
 
-        hub.unsubscribe(tid);
     }
 
     @Override

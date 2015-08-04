@@ -45,10 +45,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SocketChannel;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.Set;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
@@ -78,6 +76,7 @@ public class TcpChannelHub implements View, Closeable {
     public final long timeoutMs;
     @NotNull
     protected final String name;
+    private final Set<Long> preventSubscribeUponReconnect = new ConcurrentSkipListSet<>();
 
     protected final int tcpBufferSize;
     final Wire outWire;
@@ -99,6 +98,7 @@ public class TcpChannelHub implements View, Closeable {
     @Nullable
     private volatile SocketChannel clientChannel;
     private volatile boolean closed;
+
 
     // set up in the header
     private long limitOfLast = 0;
@@ -160,6 +160,18 @@ public class TcpChannelHub implements View, Closeable {
         return result;
     }
 
+
+    /**
+     * prevents subscriptions upon reconnect for the following {@code tid} its useful to call this
+     * method when an unsubscribe has been sent to the server, but before the server has acknoleged
+     * the unsubscribe, hence, perverting a resubscribe uppon reconnection.
+     *
+     * @param tid unique transcation id
+     */
+    public void preventSubscribeUponReconnect(long tid) {
+        preventSubscribeUponReconnect.add(tid);
+    }
+
     @NotNull
     @Override
     public String toString() {
@@ -173,6 +185,8 @@ public class TcpChannelHub implements View, Closeable {
         if (LOG.isDebugEnabled())
             LOG.debug("disconnected to remoteAddress=" + socketAddressSupplier);
         tcpSocketConsumer.onConnectionClosed();
+
+
     }
 
     private void onConnected() {
@@ -203,6 +217,7 @@ public class TcpChannelHub implements View, Closeable {
     public void unsubscribe(final long tid) {
         tcpSocketConsumer.unsubscribe(tid);
     }
+
 
     @NotNull
     public ReentrantLock outBytesLock() {
@@ -367,7 +382,7 @@ public class TcpChannelHub implements View, Closeable {
             if (socketChannel.isOpen())
                 socketChannel.configureBlocking(false);
         } catch (ClosedChannelException ignored) {
-
+            closeSocket();
         }
 
         try {
@@ -398,17 +413,21 @@ public class TcpChannelHub implements View, Closeable {
                         LOG.error("\n========= THREAD DUMP =========\n", sb);
                     }
 
-                    socketChannel.close();
+                    closeSocket();
 
                     throw new IORuntimeException("Took " + writeTime + " ms " +
                             "to perform a write, remaining= " + outBuffer.remaining());
                 }
             }
+        } catch (IOException e) {
+            closeSocket();
+            throw e;
         } finally {
             try {
                 if (socketChannel.isOpen())
                     socketChannel.configureBlocking(true);
             } catch (ClosedChannelException ignored) {
+                closeSocket();
             }
         }
 
@@ -608,6 +627,7 @@ public class TcpChannelHub implements View, Closeable {
             ReentrantLock lock = outBytesLock();
             lock.lock();
             try {
+                preventSubscribeUponReconnect.forEach(this::unsubscribe);
                 map.values().forEach(v -> {
                     if (v instanceof AsyncSubscription) {
                         if (!(v instanceof AsyncTemporarySubscription))
@@ -1229,5 +1249,7 @@ public class TcpChannelHub implements View, Closeable {
                 }
             }
         }
+
+
     }
 }

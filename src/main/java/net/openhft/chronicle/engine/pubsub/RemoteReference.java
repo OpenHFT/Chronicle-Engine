@@ -89,12 +89,21 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
     @Override
     public void unregisterSubscriber(Subscriber subscriber) {
 
-        Long subscriberTid = subscribersToTid.remove(subscriber);
-        if (subscriberTid != null) {
-            sendEventAsync(unregisterSubscriber, valueOut -> valueOut.int64(subscriberTid), false);
-
-        } else
+        final Long tid = subscribersToTid.remove(subscriber);
+        if (tid == null) {
             LOG.warn("No subscriber to unsubscribe");
+            return;
+        }
+
+        hub.preventSubscribeUponReconnect(tid);
+
+        if (!hub.isOpen()) {
+            hub.unsubscribe(tid);
+            return;
+        }
+
+        sendEventAsync(unregisterSubscriber, valueOut -> valueOut.int64(tid), false);
+
 
     }
 
