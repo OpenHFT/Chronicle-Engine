@@ -98,7 +98,7 @@ public class TcpChannelHub implements View, Closeable {
     @Nullable
     private volatile SocketChannel clientChannel;
     private volatile boolean closed;
-
+    private CountDownLatch receivedClosedAcknowledgement = new CountDownLatch(1);
 
     // set up in the header
     private long limitOfLast = 0;
@@ -291,6 +291,7 @@ public class TcpChannelHub implements View, Closeable {
 
         sendCloseMessage();
 
+
         closed = true;
         tcpSocketConsumer.stop();
 
@@ -306,7 +307,8 @@ public class TcpChannelHub implements View, Closeable {
 
 
     /**
-     * used to signal to the server that the client is going to drop the connection
+     * used to signal to the server that the client is going to drop the connection, and waits up to
+     * one second for the server to acknowledge the receipt of this message
      */
     private void sendCloseMessage() {
 
@@ -315,10 +317,21 @@ public class TcpChannelHub implements View, Closeable {
             TcpChannelHub.this.writeMetaDataForKnownTID(0, outWire, null, 0);
 
             TcpChannelHub.this.outWire.writeDocument(false, w ->
-                    w.writeEventName(clientClosing).text(""));
+                    w.writeEventName(onClientClosing).text(""));
 
             writeSocket(outWire);
         }, false);
+
+
+        // wait up to 1 seconds to receive an close request acknowledgment from the server
+        try {
+            final boolean await = receivedClosedAcknowledgement.await(1, TimeUnit.SECONDS);
+            if (!await)
+                LOG.warn("SERVER IGNORED CLOSE REQUEST : shutting down the client anyway as the " +
+                        "serve did not respond to the close() request.");
+        } catch (InterruptedException ignore) {
+            //
+        }
     }
 
 
@@ -958,6 +971,7 @@ public class TcpChannelHub implements View, Closeable {
 
             // heartbeat message sent from the server
             if (tid == 0) {
+
                 processServerSystemMessage(header, messageSize);
                 return;
             }
@@ -1021,10 +1035,14 @@ public class TcpChannelHub implements View, Closeable {
             bytes.readLimit(byteBuffer.position());
 
             final StringBuilder eventName = acquireStringBuilder();
-            wire.apply(bytes).readDocument(null, d -> {
+            final Wire inWire = wire.apply(bytes);
+            logToStandardOutMessageReceived(inWire);
+            inWire.readDocument(null, d -> {
                         final ValueIn valueIn = d.readEventName(eventName);
                         if (heartbeat.contentEquals(eventName))
                             reflectServerHeartbeatMessage(valueIn);
+                        else if (onClosingReply.contentEquals(eventName))
+                            receivedClosedAcknowledgement.countDown();
 
                     }
             );

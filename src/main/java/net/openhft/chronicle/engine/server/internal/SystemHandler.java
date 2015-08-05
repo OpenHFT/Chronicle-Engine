@@ -46,15 +46,18 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
             if (EventId.heartbeat.contentEquals(eventName))
                 outWire.write(EventId.heartbeatReply).int64(valueIn.int64());
 
-            else if (EventId.clientClosing.contentEquals(eventName))
+            else if (EventId.onClientClosing.contentEquals(eventName)) {
                 hasClientClosed = true;
+                outWire.write(EventId.onClosingReply).text("");
+            }
         });
     };
 
     public enum EventId implements WireKey {
         heartbeat,
         heartbeatReply,
-        clientClosing,
+        onClientClosing,
+        onClosingReply,
         userid
     }
 
