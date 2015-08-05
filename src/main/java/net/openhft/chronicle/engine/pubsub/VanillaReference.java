@@ -62,23 +62,29 @@ public class VanillaReference<E> implements Reference<E>, View {
 
     @Override
     public void registerSubscriber(boolean bootstrap, Subscriber<E> subscriber) throws AssetNotFoundException {
-        underlyingMap.asset().getChild(name)
+        underlyingMap.asset().acquireAsset(name)
                 .subscription(true)
                 .registerSubscriber(requestContext().bootstrap(bootstrap).type(eClass), subscriber);
     }
 
     @Override
     public void unregisterSubscriber(Subscriber subscriber) {
-        Subscription subscription = underlyingMap.asset().getChild(name).subscription(false);
-        if (subscription != null)
-            subscription.unregisterSubscriber(subscriber);
+        Asset child = underlyingMap.asset().getChild(name);
+        if (child != null) {
+            Subscription subscription = child.subscription(false);
+            if (subscription != null)
+                subscription.unregisterSubscriber(subscriber);
+        }
     }
 
     @Override
     public int subscriberCount() {
-        Subscription subscription = underlyingMap.asset().getChild(name).subscription(false);
-        if (subscription != null)
-            return subscription.subscriberCount();
+        Asset child = underlyingMap.asset().getChild(name);
+        if (child != null) {
+            Subscription subscription = child.subscription(false);
+            if (subscription != null)
+                return subscription.subscriberCount();
+        }
         return 0;
     }
 
