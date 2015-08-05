@@ -51,6 +51,8 @@ import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Comparator;
@@ -65,6 +67,9 @@ import java.util.function.Function;
  * Created by peter on 22/05/15.
  */
 public class VanillaAsset implements Asset, Closeable {
+
+    private static final Logger LOG = LoggerFactory.getLogger(VanillaAsset.class);
+
     public static final Comparator<Class> CLASS_COMPARATOR = Comparator.comparing(Class::getName);
     private static final String LAST = "{last}";
     private static final BiPredicate<RequestContext, Asset> ALWAYS = (rc, asset) -> true;
@@ -329,7 +334,7 @@ public class VanillaAsset implements Asset, Closeable {
         try {
             forEachChild(Closeable::close);
         } catch (InvalidSubscriberException e) {
-            e.printStackTrace();
+            LOG.error("", e);
         }
     }
 

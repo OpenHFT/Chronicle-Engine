@@ -23,6 +23,8 @@ import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -32,6 +34,9 @@ import java.util.function.Function;
  * Created by peter on 29/05/15.
  */
 public class VanillaSimpleSubscription<E> implements SimpleSubscription<E> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(VanillaSimpleSubscription.class);
+
     private final Set<Subscriber<E>> subscribers = new CopyOnWriteArraySet<>();
     private final Reference<E> currentValue;
     private final Function<Object, E> valueReader;
@@ -100,7 +105,7 @@ public class VanillaSimpleSubscription<E> implements SimpleSubscription<E> {
             try {
                 subscriber.onEndOfSubscription();
             } catch (Exception e) {
-                e.printStackTrace();
+                LOG.error("", e);
             }
         }
     }

@@ -17,6 +17,8 @@ import net.openhft.chronicle.engine.map.ObjectKeyValueStore;
 import net.openhft.chronicle.engine.map.RawKVSSubscription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xerial.snappy.Snappy;
 
 import java.io.IOException;
@@ -25,6 +27,9 @@ import java.io.IOException;
  * Created by daniel on 28/07/2015.
  */
 public class CompressedKeyValueStore<K> implements ObjectKeyValueStore<K, String> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(CompressedKeyValueStore.class);
+
     private final Class kClass;
     private Asset asset;
     private KeyValueStore<K, BytesStore> underlyingKVStore;
@@ -47,7 +52,7 @@ public class CompressedKeyValueStore<K> implements ObjectKeyValueStore<K, String
             @Override
             public void notifyEvent(MapEvent<K, BytesStore> changeEvent) throws InvalidSubscriberException {
                 //MapEvent m = changeEvent.translate(k->k, v->decompressBytesStore(v));
-                System.out.println("In notify event");
+                LOG.info("In notify event");
 
                 //subscriptions.notifyEvent(changeEvent.translate(k->k, v->decompressBytesStore(v)));
             }

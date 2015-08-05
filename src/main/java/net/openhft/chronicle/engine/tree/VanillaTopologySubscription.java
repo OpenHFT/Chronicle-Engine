@@ -21,6 +21,8 @@ import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -29,6 +31,9 @@ import java.util.concurrent.CopyOnWriteArraySet;
  * Created by peter on 11/06/15.
  */
 public class VanillaTopologySubscription implements TopologySubscription {
+
+    private static final Logger LOG = LoggerFactory.getLogger(VanillaTopologySubscription.class);
+
     private final Asset asset;
     private final Set<Subscriber<TopologicalEvent>> subscribers = new CopyOnWriteArraySet<>();
 
@@ -107,7 +112,7 @@ public class VanillaTopologySubscription implements TopologySubscription {
             try {
                 subscriber.onEndOfSubscription();
             } catch (Exception e) {
-                e.printStackTrace();
+                LOG.error("", e);
             }
         }
     }

@@ -67,8 +67,8 @@ import static net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntr
  * between the event and the event being triggered.
  */
 public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Closeable {
+    private static final Logger LOG = LoggerFactory.getLogger(FilePerKeyValueStore.class);
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FilePerKeyValueStore.class);
     private final Path dirPath;
     //Use BytesStore so that it can be shared safely between threads
     private final Map<File, FileRecord<BytesStore>> lastFileRecordMap = new ConcurrentHashMap<>();
@@ -364,8 +364,8 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
                 break;
 
             } catch (FileSystemException fse) {
-                if (LOGGER.isDebugEnabled())
-                    LOGGER.debug("Unable to rename file " + fse);
+                if (LOG.isDebugEnabled())
+                    LOG.debug("Unable to rename file " + fse);
                 try {
                     Thread.sleep(i * i * 2);
                 } catch (InterruptedException e) {
@@ -431,7 +431,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
                 }
             } catch (Throwable e) {
                 if (!closed)
-                    e.printStackTrace();
+                    LOG.error("", e);
             }
         }
 

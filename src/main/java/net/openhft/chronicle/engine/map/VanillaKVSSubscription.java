@@ -26,6 +26,8 @@ import net.openhft.chronicle.engine.pubsub.SimpleSubscription;
 import net.openhft.chronicle.engine.pubsub.VanillaSimpleSubscription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -38,6 +40,10 @@ import static net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer.notif
 // todo review thread safety
 public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K, V>,
         RawKVSSubscription<K, V> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(VanillaKVSSubscription.class);
+
+
     private final Set<TopicSubscriber<K, V>> topicSubscribers = new CopyOnWriteArraySet<>();
     private final Set<Subscriber<MapEvent<K, V>>> subscribers = new CopyOnWriteArraySet<>();
     private final Set<Subscriber<K>> keySubscribers = new CopyOnWriteArraySet<>();
@@ -79,7 +85,7 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
         try {
             subscriber.onEndOfSubscription();
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("", e);
         }
     }
 

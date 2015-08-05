@@ -770,7 +770,7 @@ public class TcpChannelHub implements View, Closeable {
 
                 asyncSubscription.applySubscribe();
             } catch (Exception e) {
-                e.printStackTrace();
+                LOG.error("", e);
             } finally {
                 reentrantLock.unlock();
             }

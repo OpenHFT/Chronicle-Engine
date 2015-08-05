@@ -99,7 +99,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
                 try {
                     mi.dirtyEntries(0);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    LOG.error("", e);
                 }
                 return;
             }

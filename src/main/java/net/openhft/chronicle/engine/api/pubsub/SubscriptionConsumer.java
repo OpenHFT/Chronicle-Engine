@@ -18,6 +18,8 @@ package net.openhft.chronicle.engine.api.pubsub;
 
 import net.openhft.lang.Jvm;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 
@@ -26,6 +28,8 @@ import java.util.Set;
  */
 @FunctionalInterface
 public interface SubscriptionConsumer<T> {
+    final Logger LOG = LoggerFactory.getLogger(SubscriptionConsumer.class);
+
     static <S extends ISubscriber> void notifyEachSubscriber(@NotNull Set<S> subs, @NotNull SubscriptionConsumer<S> doNotify) {
         doNotify.notifyEachSubscriber(subs);
     }
@@ -40,7 +44,7 @@ public interface SubscriptionConsumer<T> {
                     try {
                         ((ISubscriber) s).onEndOfSubscription();
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        LOG.error("", e);
                     }
                 }
             }
