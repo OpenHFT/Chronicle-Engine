@@ -59,7 +59,7 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
     }
 
     /**
-     * @return {@true} if the client has intentionally closed
+     * @return {@code true} if the client has intentionally closed
      */
     @Override
     public boolean hasClientClosed() {
