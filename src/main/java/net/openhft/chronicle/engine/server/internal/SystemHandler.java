@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.server.internal;
 
+import net.openhft.chronicle.network.ClientClosedProvider;
 import net.openhft.chronicle.network.api.session.SessionDetailsProvider;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.wire.ValueIn;
@@ -13,9 +14,10 @@ import java.util.function.BiConsumer;
 /**
  * @author Rob Austin.
  */
-public class SystemHandler extends AbstractHandler {
+public class SystemHandler extends AbstractHandler implements ClientClosedProvider {
     private final StringBuilder eventName = new StringBuilder();
     private SessionDetailsProvider sessionDetails;
+    private volatile boolean hasClientClosed;
 
     void process(@NotNull final WireIn inWire,
                  @NotNull final WireOut outWire, final long tid,
@@ -44,14 +46,24 @@ public class SystemHandler extends AbstractHandler {
             if (EventId.heartbeat.contentEquals(eventName))
                 outWire.write(EventId.heartbeatReply).int64(valueIn.int64());
 
+            else if (EventId.clientClosing.contentEquals(eventName))
+                hasClientClosed = true;
         });
     };
 
     public enum EventId implements WireKey {
         heartbeat,
         heartbeatReply,
+        clientClosing,
         userid
     }
 
+    /**
+     * @return {@true} if the client has intentionally closed
+     */
+    @Override
+    public boolean hasClientClosed() {
+        return hasClientClosed;
+    }
 }
 

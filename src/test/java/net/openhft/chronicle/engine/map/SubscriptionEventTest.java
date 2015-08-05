@@ -107,6 +107,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     @After
     public void after() throws IOException {
         assetTree.close();
+        Jvm.pause(1000);
         if (serverEndpoint != null)
             serverEndpoint.close();
         serverAssetTree.close();

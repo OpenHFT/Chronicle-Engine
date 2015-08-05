@@ -285,8 +285,12 @@ public class TcpChannelHub implements View, Closeable {
      * called when we are completed finished with using the TcpChannelHub
      */
     public void close() {
+
         if (closed)
             return;
+
+        sendCloseMessage();
+
         closed = true;
         tcpSocketConsumer.stop();
 
@@ -299,6 +303,24 @@ public class TcpChannelHub implements View, Closeable {
                 LOG.debug("waiting for disconnect to " + socketAddressSupplier);
         }
     }
+
+
+    /**
+     * used to signal to the server that the client is going to drop the connection
+     */
+    private void sendCloseMessage() {
+
+        this.lock(() -> {
+
+            TcpChannelHub.this.writeMetaDataForKnownTID(0, outWire, null, 0);
+
+            TcpChannelHub.this.outWire.writeDocument(false, w ->
+                    w.writeEventName(clientClosing).text(""));
+
+            writeSocket(outWire);
+        }, false);
+    }
+
 
     /**
      * the transaction id are generated as unique timestamps

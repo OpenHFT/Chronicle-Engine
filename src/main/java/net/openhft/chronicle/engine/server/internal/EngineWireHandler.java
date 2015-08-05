@@ -33,6 +33,7 @@ import net.openhft.chronicle.engine.collection.CollectionWireHandler;
 import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.engine.tree.TopologySubscription;
+import net.openhft.chronicle.network.ClientClosedProvider;
 import net.openhft.chronicle.network.WireTcpHandler;
 import net.openhft.chronicle.network.api.session.SessionDetailsProvider;
 import net.openhft.chronicle.network.connection.CoreFields;
@@ -57,7 +58,7 @@ import static net.openhft.chronicle.network.connection.CoreFields.csp;
 /**
  * Created by Rob Austin
  */
-public class EngineWireHandler extends WireTcpHandler {
+public class EngineWireHandler extends WireTcpHandler implements ClientClosedProvider {
 
     private static final Logger LOG = LoggerFactory.getLogger(EngineWireHandler.class);
 
@@ -370,5 +371,10 @@ public class EngineWireHandler extends WireTcpHandler {
             final CharSequence s = mapWireHandler.getCspForCid(cid);
             cspText.append(s);
         }
+    }
+
+    @Override
+    public boolean hasClientClosed() {
+        return systemHandler.hasClientClosed();
     }
 }
