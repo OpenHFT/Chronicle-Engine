@@ -26,6 +26,7 @@ import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import java.util.*;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Logger;
@@ -198,12 +199,20 @@ public class RedisEmulator {
      * @return Integer reply: the number of fields that were removed from the hash,
      * not including specified but non existing fields.
      */
-    public static int hdel(MapView<String, ?> map, String... keys) {
+    public  static <T> int hdel(MapView<String, T> map, String... keys) {
         if (keys.length == 1) {
             return map.getAndRemove(keys[0]) == null ? 0 : 1;
         }
-        map.asyncUpdate(m -> Stream.of(keys).forEach(m::remove));
-        return 1;
+
+        //todo not able to apply return value
+        Object integer = map.applyTo((SerializableFunction<MapView<String, T>, Integer>) m -> {
+            int counter = 0;
+            for (String key : keys) {
+                if (m.getAndRemove(key) != null) counter++;
+            }
+            return counter;
+        });
+        return Integer.parseInt((String)integer);
     }
 
     /**
@@ -398,11 +407,13 @@ public class RedisEmulator {
         return map.applyToKey(name, l -> l.remove(0));
     }
 
-    public static <V> void lpush(MapView<String, List<V>> map, String name, V... values) {
+    public static <V> int lpush(MapView<String, List<V>> map, String name, V... values) {
         map.asyncUpdateKey(name, l -> {
             l.addAll(0, Arrays.asList(values));
             return l;
         });
+        //todo this should be part of the update
+        return 0;
     }
 
     public static <V> void lpushx(MapView<String, List<V>> map, String name, V value) {

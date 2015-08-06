@@ -7,6 +7,7 @@ import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
+import net.openhft.chronicle.wire.YamlLogging;
 import org.junit.*;
 
 import java.io.IOException;
@@ -28,6 +29,8 @@ public class RedisEmulatorTest {
 
     @BeforeClass
     public static void setup() throws IOException{
+        System.out.println("Hello");
+        YamlLogging.showServerReads=true;
         //For this test we can use a VanillaMapKeyValueStore
         //To test with a ChronicleMapKeyValueStore uncomment lines below
         AssetTree serverAssetTree = new VanillaAssetTree().forTesting();
@@ -38,9 +41,9 @@ public class RedisEmulatorTest {
         TCPRegistry.createServerSocketChannelFor("RemoteSubscriptionModelPerformanceTest.port");
 
         ServerEndpoint serverEndpoint = new ServerEndpoint("RemoteSubscriptionModelPerformanceTest.port",
-                serverAssetTree, WireType.BINARY);
+                serverAssetTree, WireType.TEXT);
         AssetTree clientAssetTree = new VanillaAssetTree()
-                .forRemoteAccess("RemoteSubscriptionModelPerformanceTest.port", WireType.BINARY);
+                .forRemoteAccess("RemoteSubscriptionModelPerformanceTest.port", WireType.TEXT);
 
 
         myStringHash = clientAssetTree.acquireMap("/myStringHash", String.class, String.class);
@@ -79,7 +82,6 @@ public class RedisEmulatorTest {
     @Test
     public void test_hgetall() {
         //Test for hgetall
-        assertEquals("OK", flushdb(myStringHash));
         assertEquals(1, hset(myStringHash, "field1", "Hello"));
         assertEquals(1, hset(myStringHash, "field2", "World"));
 
@@ -112,7 +114,6 @@ public class RedisEmulatorTest {
 
     @Test
     public void test_hdell_single() {
-        assertEquals("OK", flushdb(myStringHash));
         assertEquals(1, hset(myStringHash, "field1", "foo"));
         assertEquals(1, hdel(myStringHash, "field1"));
         assertEquals(0, hdel(myStringHash, "field1"));
@@ -122,17 +123,15 @@ public class RedisEmulatorTest {
     @Ignore //WIRE-29
     public void test_hdell_multiple() {
         //Test multiple deletes. //todo WIRE-29 add arrays as marshallable
-//        assertEquals("OK", flushdb(myStringHash));
-//        assertEquals(1, RedisEmulator.hset(myStringHash, "field1", "foo1"));
-//        assertEquals(1, RedisEmulator.hset(myStringHash, "field2", "foo2"));
-//        assertEquals(1, RedisEmulator.hset(myStringHash, "field3", "foo3"));
-//        assertEquals(2, RedisEmulator.hdel(myStringHash, "field1", "field3"));
+        assertEquals(1, hset(myStringHash, "field1", "foo1"));
+        assertEquals(1, hset(myStringHash, "field2", "foo2"));
+        assertEquals(1, hset(myStringHash, "field3", "foo3"));
+        assertEquals(2, hdel(myStringHash, "field1", "field3"));
     }
 
     @Test
     public void test_hexists() {
         //test for hexists
-        assertEquals("OK", flushdb(myStringHash));
         assertEquals(1, hset(myStringHash, "field1", "foo"));
         assertEquals(1, hexists(myStringHash, "field1"));
         assertEquals(0, hexists(myStringHash, "field2"));
@@ -201,5 +200,13 @@ public class RedisEmulatorTest {
         assertEquals(5, append(myStringHash, "mykey", "Hello"));
         assertEquals(11, append(myStringHash, "mykey", " World"));
         assertEquals("Hello World", get(myStringHash, "mykey"));
+    }
+
+    @Test
+    @Ignore //WIRE-29
+    public void test_lpush(){
+        assertEquals(1, lpush(myStringHash, "mylist", "world"));
+        assertEquals(2, lpush(myStringHash, "mylist", "hello"));
+        assertEquals(2, lrange(myStringHash, "mylist", 0, -1));
     }
 }
