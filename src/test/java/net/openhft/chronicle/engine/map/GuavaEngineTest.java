@@ -35,6 +35,7 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.AllTests;
@@ -88,6 +89,11 @@ public class GuavaEngineTest {
 
     @AfterClass
     public void testTearDown() {
+        TCPRegistry.reset();
+    }
+
+    @After
+    public void tearDown() {
         TCPRegistry.reset();
     }
 
