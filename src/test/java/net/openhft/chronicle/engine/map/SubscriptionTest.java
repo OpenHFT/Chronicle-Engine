@@ -83,6 +83,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
     @AfterClass
     public static void tearDownClass() {
         TCPRegistry.assertAllServersStopped();
+        TCPRegistry.reset();
     }
 
     @Test
