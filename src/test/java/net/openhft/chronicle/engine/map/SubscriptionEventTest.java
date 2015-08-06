@@ -62,9 +62,10 @@ import static org.junit.Assert.assertTrue;
 @RunWith(value = Parameterized.class)
 public class SubscriptionEventTest extends ThreadMonitoringTest {
     private static final String NAME = "test";
-    public static final WireType WIRE_TYPE = WireType.TEXT;
+
     private static MapView<String, String> map;
-    private static Boolean isRemote;
+    private final Boolean isRemote;
+    private final WireType wireType;
     @NotNull
     @Rule
     public TestName name = new TestName();
@@ -72,17 +73,18 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
-    public SubscriptionEventTest(Object isRemote) {
-        SubscriptionEventTest.isRemote = (Boolean) isRemote;
-
+    public SubscriptionEventTest(Object isRemote, WireType wireType) {
+        this.isRemote = (Boolean) isRemote;
+        this.wireType = wireType;
     }
 
     @Parameters
     public static Collection<Object[]> data() throws IOException {
         return Arrays.asList(
-                new Object[]{Boolean.FALSE}
-                , new Object[]{Boolean.TRUE}
-
+                new Object[]{Boolean.FALSE, WireType.BINARY},
+                new Object[]{Boolean.TRUE, WireType.BINARY},
+                new Object[]{Boolean.FALSE, WireType.TEXT},
+                new Object[]{Boolean.TRUE, WireType.TEXT}
         );
     }
 
@@ -96,9 +98,9 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
             methodName(name.getMethodName());
             final String hostPort = "SubscriptionEventTest." + name.getMethodName() + ".host.port";
             TCPRegistry.createServerSocketChannelFor(hostPort);
-            serverEndpoint = new ServerEndpoint(hostPort, serverAssetTree, WIRE_TYPE);
+            serverEndpoint = new ServerEndpoint(hostPort, serverAssetTree, wireType);
 
-            assetTree = new VanillaAssetTree().forRemoteAccess(hostPort, WIRE_TYPE);
+            assetTree = new VanillaAssetTree().forRemoteAccess(hostPort, wireType);
         } else
             assetTree = serverAssetTree;
 
