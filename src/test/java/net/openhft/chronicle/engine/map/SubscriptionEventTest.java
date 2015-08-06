@@ -392,7 +392,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                         "triggered";
                 String expected = "World";
                 map.getAndPut("Hello", expected);
-                
+
                 Object object = eventsQueue.poll(1000, MILLISECONDS);
                 Assert.assertNull(object);
 
@@ -423,8 +423,8 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                 map.put("Hello", expected);
                 map.remove("Hello");
 
-                String putEvent = eventsQueue.poll(500, MILLISECONDS);
-                String removeEvent = eventsQueue.poll(500, MILLISECONDS);
+                String putEvent = eventsQueue.poll(5, SECONDS);
+                String removeEvent = eventsQueue.poll(5, SECONDS);
 
                 Assert.assertTrue(putEvent instanceof String);
                 Assert.assertTrue(removeEvent instanceof String);
