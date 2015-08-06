@@ -57,7 +57,7 @@ public class RedisEmulator {
      * @return Integer reply: the length of the string after the append operation.
      */
     public static int append(MapView<String, String> map, String key, String toAppend) {
-        return map.applyTo(m -> {
+        Object integer =  map.applyTo(m -> {
                     String v = m.get(key);
                     if(v!=null) {
                         m.put(key, v + toAppend);
@@ -69,6 +69,7 @@ public class RedisEmulator {
                     }
                 }
         );
+        return Integer.parseInt((String)integer);
     }
 
     public static int bitcount(Reference<BitSet> bits) {
@@ -159,7 +160,7 @@ public class RedisEmulator {
     public static int exists(MapView<String, ?> map, String... keys) {
         if (keys.length == 1) return map.containsKey(keys) ? 1 : 0;
 
-        return map.applyTo(m -> {
+        Object integer =  map.applyTo(m -> {
                     int count = 0;
                     for (int i = 0; i < keys.length; i++) {
                         if (m.containsKey(keys[i])) count++;
@@ -167,6 +168,7 @@ public class RedisEmulator {
                     return count;
                 }
         );
+        return Integer.parseInt((String)integer);
     }
 
     /**
@@ -359,7 +361,8 @@ public class RedisEmulator {
      * @return Integer reply: the value of key after the increment
      */
     public static long incr(MapView<String, Long> map, String key) {
-        return map.applyToKey(key, v -> v + 1);
+        Object integer = map.applyToKey(key, v -> v + 1);
+        return Integer.parseInt((String)integer);
     }
 
     /**
