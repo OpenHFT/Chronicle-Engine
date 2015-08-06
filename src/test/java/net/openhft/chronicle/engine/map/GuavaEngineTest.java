@@ -202,6 +202,7 @@ public class GuavaEngineTest {
         public void close() throws IOException {
             assetTree.close();
             remoteAssetTree.close();
+            TCPRegistry.reset();
         }
     }
 
