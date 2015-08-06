@@ -48,6 +48,7 @@ import java.util.Map;
 import java.util.concurrent.*;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
 import static org.junit.Assert.assertEquals;
@@ -113,7 +114,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
         serverAssetTree.close();
         if (map instanceof Closeable)
             ((Closeable) map).close();
-        TCPRegistry.assertAllServersStopped();
+        //   TCPRegistry.assertAllServersStopped();
         TCPRegistry.reset();
     }
 
@@ -453,13 +454,13 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                         "triggered";
                 String expected = "World";
                 map.put("Hello", expected);
-                Object putEvent = eventsQueue.poll(500, MILLISECONDS);
+                Object putEvent = eventsQueue.poll(1, SECONDS);
                 Assert.assertTrue(putEvent instanceof InsertedEvent);
 
                 Thread.sleep(1);
                 map.remove("Hello");
 
-                Object removeEvent = eventsQueue.poll(1000, MILLISECONDS);
+                Object removeEvent = eventsQueue.poll(1, SECONDS);
                 Assert.assertTrue("event=" + removeEvent.getClass(), removeEvent instanceof RemovedEvent);
 
             } catch (InterruptedException e) {
