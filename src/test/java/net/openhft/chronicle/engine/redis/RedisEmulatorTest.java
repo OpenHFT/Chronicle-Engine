@@ -66,7 +66,6 @@ public class RedisEmulatorTest {
     }
 
     @Test
-    //todo check example
     public void test_flushdb() {
         assertEquals("OK", flushdb(myStringHash));
         assertEquals(0, dbsize(myStringHash));
@@ -81,7 +80,6 @@ public class RedisEmulatorTest {
 
     @Test
     public void test_hgetall() {
-        //Test for hgetall
         assertEquals(1, hset(myStringHash, "field1", "Hello"));
         assertEquals(1, hset(myStringHash, "field2", "World"));
 
@@ -120,9 +118,7 @@ public class RedisEmulatorTest {
     }
 
     @Test
-    @Ignore //WIRE-29
     public void test_hdell_multiple() {
-        //Test multiple deletes. //todo WIRE-29 add arrays as marshallable
         assertEquals(1, hset(myStringHash, "field1", "foo1"));
         assertEquals(1, hset(myStringHash, "field2", "foo2"));
         assertEquals(1, hset(myStringHash, "field3", "foo3"));
@@ -131,12 +127,9 @@ public class RedisEmulatorTest {
 
     @Test
     public void test_hexists() {
-        //test for hexists
         assertEquals(1, hset(myStringHash, "field1", "foo"));
         assertEquals(1, hexists(myStringHash, "field1"));
         assertEquals(0, hexists(myStringHash, "field2"));
-
-        //test for hmget
     }
 
     @Test
@@ -146,7 +139,7 @@ public class RedisEmulatorTest {
     }
 
     @Test
-    @Ignore //WIRE-29
+    @Ignore //WIRE-29 maps can't be serialised
     public void test_hmget(){
         assertEquals(1, hset(myStringHash, "field1", "Hello"));
         assertEquals(1, hset(myStringHash, "field2", "World"));
@@ -162,28 +155,27 @@ public class RedisEmulatorTest {
     }
 
     @Test
-    @Ignore //WIRE-29
     public void test_exists_multiple() {
         assertEquals(1, hset(myStringHash, "key1", "Hello"));
+        assertEquals(1, hset(myStringHash, "key2", "World"));
         assertEquals(2, exists(myStringHash, "key1", "key2", "nosuchkey"));
     }
 
     @Test
-    @Ignore //ClassCastException
     public void test_incr() {
         assertEquals(1, hset(myLongHash, "mykey", 10));
         assertEquals(11, incr(myLongHash, "mykey"));
     }
 
     @Test
-    @Ignore //net.openhft.chronicle.bytes.IORuntimeException: Expected a ] but got ￿ (￿)
+    @Ignore //Caused by: java.lang.ClassCastException: java.lang.String cannot be cast to java.lang.Long
     public void test_incrby() {
         assertEquals(1, hset(myLongHash, "mykey", 10l));
         assertEquals(15, incrby(myLongHash, "mykey", 5l));
     }
 
     @Test
-    @Ignore //net.openhft.chronicle.bytes.IORuntimeException: Expected a ] but got ￿ (￿)
+    @Ignore //Caused by: java.lang.ClassCastException: java.lang.String cannot be cast to java.lang.Long
     public void test_incrbyfloat() {
         assertEquals(1, hset(myDoubleHash, "mykey", 10.5));
         assertEquals(10.6, incrbyfloat(myDoubleHash, "mykey", 0.1),0);
@@ -192,9 +184,6 @@ public class RedisEmulatorTest {
     }
 
     @Test
-    @Ignore //net.openhft.chronicle.bytes.IORuntimeException: Expected a ] but got ￿ (￿)
-    //todo only works in BINARY not TEXT
-    //todo review implementation which is not efficient
     public void test_append() {
         assertEquals(0, exists(myStringHash, "mykey"));
         assertEquals(5, append(myStringHash, "mykey", "Hello"));
@@ -203,7 +192,7 @@ public class RedisEmulatorTest {
     }
 
     @Test
-    @Ignore //WIRE-29
+    @Ignore //NPE
     public void test_lpush(){
         assertEquals(1, lpush(myStringHash, "mylist", "world"));
         assertEquals(2, lpush(myStringHash, "mylist", "hello"));
