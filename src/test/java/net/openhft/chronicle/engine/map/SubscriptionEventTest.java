@@ -460,7 +460,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                 Thread.sleep(1);
                 map.remove("Hello");
 
-                Object removeEvent = eventsQueue.poll(1, SECONDS);
+                Object removeEvent = eventsQueue.poll(5, SECONDS);
                 Assert.assertTrue("event=" + removeEvent.getClass(), removeEvent instanceof RemovedEvent);
 
             } catch (InterruptedException e) {
