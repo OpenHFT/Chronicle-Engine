@@ -83,7 +83,7 @@ public class ThrottledKeySubscriptionEventTest extends ThreadMonitoringTest {
         serverAssetTree.close();
         if (map instanceof Closeable)
             ((Closeable) map).close();
-        TCPRegistry.assertAllServersStopped();
+
         TCPRegistry.reset();
         System.setProperty("Throttler.maxEventsPreSecond", "0");
     }
