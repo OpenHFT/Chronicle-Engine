@@ -7,7 +7,7 @@ import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
-import net.openhft.chronicle.engine.map.remote.CompressedKeyValueStore;
+import net.openhft.chronicle.engine.map.remote.RemoteKVSSubscription;
 import net.openhft.chronicle.engine.map.remote.RemoteKeyValueStore;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
@@ -25,7 +25,6 @@ import static org.junit.Assert.assertEquals;
  * Created by daniel on 30/07/2015.
  */
 public class CompressedMapTest {
-    @Ignore //In Progress
     @Test
     public void testCompression() throws IOException {
 
@@ -55,6 +54,12 @@ public class CompressedMapTest {
                 CompressedKeyValueStore::new, RemoteKeyValueStore.class);
 
 
+        clientAssetTree.root().addWrappingRule(ObjectKVSSubscription.class, " Compressed KVS",
+                CompressedKVSubscription::new, RemoteKVSSubscription.class);
+        clientAssetTree.root().addLeafRule(RemoteKVSSubscription.class, " Remote AKVS",
+                (requestContext, asset) -> new RemoteKVSSubscription<>
+                        (requestContext, asset));
+
         MapView<Integer, String> testMap = clientAssetTree.acquireMap("/tmp/testBatch", Integer.class, String.class);
 
         for (int i = 0; i < 2; i++) {
@@ -68,16 +73,19 @@ public class CompressedMapTest {
         assertEquals(null, testMap.get(1));
         assertEquals(1, testMap.longSize());
 
+        String[] update = {""};
         clientAssetTree.registerSubscriber("/tmp/testBatch", MapEvent.class, new Subscriber<MapEvent>() {
             @Override
             public void onMessage(MapEvent mapEvent) throws InvalidSubscriberException {
-                System.out.println("******" + mapEvent);
+                update[0] = (String)mapEvent.value();
             }
         });
 
 
         testMap.put(5, "5");
 
-        Jvm.pause(1000);
+        Jvm.pause(100);
+
+        assertEquals("5", update[0]);
     }
 }
