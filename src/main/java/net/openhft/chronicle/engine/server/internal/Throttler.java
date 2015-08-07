@@ -12,9 +12,13 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * This code focusing on maintain message order, It attempts not to exceed the {@code
- * maxEventsPreSecond}, in other word in rare case a few more message maybe send in any second that
- * the {@code maxEventsPreSecond } this is due to the use of lazySet() amongst other things
+ *
+ * Throttles and limits the number of messages send in any second, this code does not consolidate
+ * the updates, all updates will eventually be sent.
+
+ * This code is focusing mainly on message order, It attempts not to exceed the {@code
+ * maxEventsPreSecond}, in other words in rare cases, a few more messages, maybe send in any second than
+ * the {@code maxEventsPreSecond } this is due to the use of lazySet() amongst other things.
  *
  * @author Rob Austin.
  */
