@@ -18,6 +18,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.assertEquals;
 
@@ -74,18 +75,26 @@ public class CompressedMapTest {
         assertEquals(1, testMap.longSize());
 
         String[] update = {""};
+        AtomicBoolean closed = new AtomicBoolean(false);
         clientAssetTree.registerSubscriber("/tmp/testBatch", MapEvent.class, new Subscriber<MapEvent>() {
             @Override
             public void onMessage(MapEvent mapEvent) throws InvalidSubscriberException {
                 update[0] = (String)mapEvent.value();
             }
+
+            @Override
+            public void onEndOfSubscription(){
+                closed.set(true);
+            }
         });
 
 
         testMap.put(5, "5");
+        clientAssetTree.close();
 
         Jvm.pause(100);
 
         assertEquals("5", update[0]);
+        assertEquals(true, closed.get());
     }
 }

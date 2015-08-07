@@ -14,102 +14,214 @@ import org.xerial.snappy.Snappy;
 
 import java.io.IOException;
 import java.util.Base64;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * Created by daniel on 07/08/2015.
  */
+//todo implement the rest of the functionality from VanillaKVSSubscription.
 public class CompressedKVSubscription<K> implements ObjectKVSSubscription {
 
+    private Asset asset;
+    private KeyValueStore<K, BytesStore> kvStore;
+    private boolean hasSubscribers = false;
     private ObjectKVSSubscription underlying;
-    private Subscriber subscriber;
+    private final Set<TopicSubscriber<K, BytesStore>> topicSubscribers = new CopyOnWriteArraySet<>();
+    private final Set<Subscriber<MapEvent<K, BytesStore>>> subscribers = new CopyOnWriteArraySet<>();
+    private final Set<Subscriber<K>> keySubscribers = new CopyOnWriteArraySet<>();
+    private final Set<EventConsumer<K, BytesStore>> downstream = new CopyOnWriteArraySet<>();
 
     public CompressedKVSubscription(RequestContext requestContext, Asset asset,
                                     ObjectKVSSubscription underlying) {
+        this.asset = asset;
         this.underlying = underlying;
         underlying.registerDownstream(new EventConsumer<K, BytesStore>() {
             @Override
             public void notifyEvent(MapEvent<K, BytesStore> changeEvent){
-                MapEvent m = changeEvent.translate(k->k, v->decompressBytesStore(v));
-                System.out.println("In notify event " + m);
+                MapEvent uncompressedEvent = changeEvent.translate(k->k, v->decompressBytesStore(v));
+                System.out.println("In notify event " + uncompressedEvent);
 
-                if(subscriber != null) {
-                    try {subscriber.onMessage(m);
-                    } catch (InvalidSubscriberException e) {
-                        e.printStackTrace();
-                    }
+                if(!subscribers.isEmpty()) {
+                    subscribers.forEach(s -> {
+                        try {
+                            s.onMessage(uncompressedEvent);
+                        } catch (InvalidSubscriberException e) {
+                            e.printStackTrace();
+                            throw new RuntimeException(e);
+                        }
+                    });
                 }
+                if(!keySubscribers.isEmpty()){
+                    keySubscribers.forEach(s -> {
+                        try {
+                            s.onMessage((K)uncompressedEvent.key());
+                        } catch (InvalidSubscriberException e) {
+                            e.printStackTrace();
+                            throw new RuntimeException(e);
+                        }
+                    });
+                }
+                if(!topicSubscribers.isEmpty()){
+                    topicSubscribers.forEach(s -> {
+                        try {
+                            s.onMessage((K)uncompressedEvent.key(), (BytesStore)uncompressedEvent.value());
+                        } catch (InvalidSubscriberException e) {
+                            e.printStackTrace();
+                            throw new RuntimeException(e);
+                        }
+                    });
+                }
+                if(!downstream.isEmpty()){
+                    downstream.forEach(d -> {
+                        try {
+                            d.notifyEvent(uncompressedEvent);
+                        } catch (InvalidSubscriberException e) {
+                            e.printStackTrace();
+                            throw new RuntimeException(e);
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onEndOfSubscription(){
+                subscribers.forEach(s->onEndOfSubscription());
             }
         });
     }
 
     @Override
     public void registerKeySubscriber(RequestContext rc, Subscriber subscriber) {
-        throw new UnsupportedOperationException("todo");
+        Boolean bootstrap = rc.bootstrap();
+
+        keySubscribers.add(subscriber);
+        if (bootstrap != Boolean.FALSE && kvStore != null) {
+            try {
+                for (int i = 0; i < kvStore.segments(); i++)
+                    kvStore.keysFor(i, subscriber::onMessage);
+            } catch (InvalidSubscriberException e) {
+                keySubscribers.remove(subscriber);
+            }
+        }
+        hasSubscribers = true;
     }
 
     @Override
     public void registerTopicSubscriber(RequestContext rc, TopicSubscriber subscriber) {
-        throw new UnsupportedOperationException("todo");
+        Boolean bootstrap = rc.bootstrap();
+        topicSubscribers.add((TopicSubscriber<K, BytesStore>) subscriber);
+        if (bootstrap != Boolean.FALSE && kvStore != null) {
+            try {
+                for (int i = 0; i < kvStore.segments(); i++)
+                    kvStore.entriesFor(i, e -> subscriber.onMessage(e.key(), e.value()));
+            } catch (InvalidSubscriberException dontAdd) {
+                topicSubscribers.remove(subscriber);
+            }
+        }
+        hasSubscribers = true;
     }
 
-    @Override
-    public void unregisterTopicSubscriber(TopicSubscriber subscriber) {
-        throw new UnsupportedOperationException("todo");
-    }
 
-    @Override
-    public void registerDownstream(EventConsumer subscription) {
-        throw new UnsupportedOperationException("todo");
-    }
+
 
     @Override
     public boolean needsPrevious() {
-        throw new UnsupportedOperationException("todo");
+        return underlying.needsPrevious();
     }
 
     @Override
     public void setKvStore(KeyValueStore store) {
         underlying.setKvStore(store);
+        kvStore = store;
     }
 
     @Override
     public void notifyEvent(MapEvent changeEvent) {
-        throw new UnsupportedOperationException("todo");
+        underlying.notifyEvent(changeEvent);
     }
 
     @Override
     public boolean hasSubscribers() {
-        throw new UnsupportedOperationException("todo");
+        return hasSubscribers || asset.hasChildren();
     }
 
     @Override
     public void registerSubscriber(@NotNull RequestContext rc, @NotNull Subscriber subscriber) {
-        this.subscriber = subscriber;
+        Boolean bootstrap = rc.bootstrap();
+        Class eClass = rc.type();
+        if (eClass == KeyValueStore.Entry.class || eClass == MapEvent.class) {
+            subscribers.add(subscriber);
+            if (bootstrap != Boolean.FALSE && kvStore != null) {
+                Subscriber<MapEvent<K, BytesStore>> sub = (Subscriber<MapEvent<K, BytesStore>>) subscriber;
+                try {
+                    for (int i = 0; i < kvStore.segments(); i++)
+                        kvStore.entriesFor(i, sub::onMessage);
+                } catch (InvalidSubscriberException e) {
+                    subscribers.remove(subscriber);
+                }
+            }
+        } else
+            registerKeySubscriber(rc, subscriber);
+
+        hasSubscribers = true;
+
+    }
+
+    public void unregisterDownstream(EventConsumer<K, BytesStore> subscription) {
+        downstream.remove(subscription);
+        updateHasSubscribers();
     }
 
     @Override
     public void unregisterSubscriber(@NotNull Subscriber subscriber) {
-        throw new UnsupportedOperationException("todo");
+        subscribers.remove(subscriber);
+        keySubscribers.remove(subscriber);
+        updateHasSubscribers();
+        subscriber.onEndOfSubscription();
     }
 
     @Override
+    public void unregisterTopicSubscriber(@NotNull TopicSubscriber subscriber) {
+        topicSubscribers.remove(subscriber);
+        updateHasSubscribers();
+        subscriber.onEndOfSubscription();
+    }
+
+    @Override
+    public void registerDownstream(EventConsumer subscription) {
+        downstream.add(subscription);
+        hasSubscribers = true;
+    }
+
+    private void updateHasSubscribers() {
+        hasSubscribers = !topicSubscribers.isEmpty() && !subscribers.isEmpty()
+                && !keySubscribers.isEmpty() && !downstream.isEmpty();
+    }
+
+
+    @Override
     public int keySubscriberCount() {
-        throw new UnsupportedOperationException("todo");
+        return keySubscribers.size();
     }
 
     @Override
     public int entrySubscriberCount() {
-        throw new UnsupportedOperationException("todo");
+        return subscribers.size();
     }
 
     @Override
     public int topicSubscriberCount() {
-        throw new UnsupportedOperationException("todo");
+        return topicSubscribers.size();
     }
+
 
     @Override
     public void close() {
-        throw new UnsupportedOperationException("todo");
+        //todo Is there a problem with the underlying (RemoteKVSSubscription)
+        //in that it doesn't send out events onEndOfSubscription
+        underlying.close();
+        subscribers.forEach(s->s.onEndOfSubscription());
     }
 
     @NotNull
