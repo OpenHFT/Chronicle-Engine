@@ -104,7 +104,6 @@ public class QueryableTest extends ThreadMonitoringTest {
         map.put("2", "2");
 
         final Query<String> query = map.keySet().query();
-
         final Set<String> result = new HashSet<>();
         query.forEach(result::add);
 
