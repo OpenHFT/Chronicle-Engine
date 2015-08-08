@@ -1,4 +1,4 @@
-package net.openhft.chronicle.engine.map.remote;
+package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
@@ -6,15 +6,10 @@ import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
-import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
-import net.openhft.chronicle.engine.map.EventConsumer;
-import net.openhft.chronicle.engine.map.KVSSubscription;
-import net.openhft.chronicle.engine.map.ObjectKeyValueStore;
-import net.openhft.chronicle.engine.map.RawKVSSubscription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -34,8 +29,8 @@ public class CompressedKeyValueStore<K> implements ObjectKeyValueStore<K, String
     private Asset asset;
     private KeyValueStore<K, BytesStore> underlyingKVStore;
 
-    @NotNull
-    private RawKVSSubscription<K, String> subscriptions;
+//    @NotNull
+//    private RawKVSSubscription<K, String> subscriptions;
 
     public CompressedKeyValueStore(RequestContext context, Asset asset,
                                    KeyValueStore<K, BytesStore> kvStore) {
@@ -43,20 +38,21 @@ public class CompressedKeyValueStore<K> implements ObjectKeyValueStore<K, String
         this.underlyingKVStore = kvStore;
         this.kClass = context.keyType();
 
-        subscriptions = asset.acquireView(RawKVSSubscription.class, context);
-        subscriptions.setKvStore(this);
+        //This should be a CompressedKVSSubscription
+//        subscriptions = asset.acquireView(RawKVSSubscription.class, context);
+//        subscriptions.setKvStore(this);
 
-        SubscriptionKeyValueStore<K, BytesStore> sKVStore = (SubscriptionKeyValueStore)kvStore;
-
-        sKVStore.subscription(true).registerDownstream(new EventConsumer<K, BytesStore>() {
-            @Override
-            public void notifyEvent(MapEvent<K, BytesStore> changeEvent) throws InvalidSubscriberException {
-                //MapEvent m = changeEvent.translate(k->k, v->decompressBytesStore(v));
-                LOG.info("In notify event");
-
-                //subscriptions.notifyEvent(changeEvent.translate(k->k, v->decompressBytesStore(v)));
-            }
-        });
+//        SubscriptionKeyValueStore<K, BytesStore> sKVStore = (SubscriptionKeyValueStore)kvStore;
+//
+//        sKVStore.subscription(true).registerDownstream(new EventConsumer<K, BytesStore>() {
+//            @Override
+//            public void notifyEvent(MapEvent<K, BytesStore> changeEvent) throws InvalidSubscriberException {
+//                //MapEvent m = changeEvent.translate(k->k, v->decompressBytesStore(v));
+//                LOG.info("In notify event");
+//
+//                //subscriptions.notifyEvent(changeEvent.translate(k->k, v->decompressBytesStore(v)));
+//            }
+//        });
     }
 
     @Override
@@ -75,7 +71,8 @@ public class CompressedKeyValueStore<K> implements ObjectKeyValueStore<K, String
         //this should subscribe to the other one
         //then call translate to convert BytesStore to String
         //then call notify
-        return subscriptions;
+        //return subscriptions;
+        throw new UnsupportedOperationException();
     }
 
     @Nullable

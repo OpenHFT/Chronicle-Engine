@@ -184,7 +184,6 @@ public class RedisEmulatorTest {
     }
 
     @Test
-    @Ignore ("WIRE-32")
     public void test_append() {
         assertEquals(0, exists(myStringHash, "mykey"));
         assertEquals(5, append(myStringHash, "mykey", "Hello"));
