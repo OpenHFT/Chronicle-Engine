@@ -34,6 +34,7 @@ import static net.openhft.chronicle.engine.Utils.methodName;
 @RunWith(value = Parameterized.class)
 public class ServerOverloadTest extends ThreadMonitoringTest {
     private static final String NAME = "test";
+    public static final int SIZE = 100;
     public String connection = "QueryableTest.host.port";
     private static MapView<String, String> map;
     private final Boolean isRemote;
@@ -92,24 +93,24 @@ public class ServerOverloadTest extends ThreadMonitoringTest {
 
 
     @Test
-    public void testThatSendingAlotOfDataToTheServerIsNotAnIussue() throws Exception {
+    public void testThatSendingAlotOfDataToTheServer() throws Exception {
 
         final MapView<String, String> map = assetTree.acquireMap("name", String.class, String
                 .class);
 
-
         final int megabyte = 1048576;
-        char[] large2MBChar = new char[2 * megabyte];
+        char[] large2MbChar = new char[2 * megabyte];
 
-        Arrays.fill(large2MBChar, 'X');
+        Arrays.fill(large2MbChar, 'X');
 
-        final String large20MBString = new String(large2MBChar);
+        final String large2MbString = new String(large2MbChar);
 
-        for (int i = 0; i < 20; i++) {
-            map.put("" + i, large20MBString);
+        for (int i = 0; i < SIZE; i++) {
+            System.out.print(".");
+            map.put("" + i, large2MbString);
         }
 
-        Assert.assertEquals(20, map.size());
+        Assert.assertEquals(SIZE, map.size());
 
 
     }
