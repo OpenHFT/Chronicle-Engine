@@ -40,6 +40,7 @@ import net.openhft.chronicle.engine.pubsub.RemoteTopicPublisher;
 import net.openhft.chronicle.engine.pubsub.VanillaReference;
 import net.openhft.chronicle.engine.pubsub.VanillaTopicPublisher;
 import net.openhft.chronicle.engine.session.VanillaSessionProvider;
+import net.openhft.chronicle.engine.set.RemoteKeySetView;
 import net.openhft.chronicle.engine.set.VanillaKeySetView;
 import net.openhft.chronicle.network.VanillaSessionDetails;
 import net.openhft.chronicle.network.connection.SocketAddressSupplier;
@@ -107,7 +108,7 @@ public class VanillaAsset implements Asset, Closeable {
         addWrappingRule(Replication.class, LAST + "replication", VanillaReplication::new, MapView.class);
         addWrappingRule(Publisher.class, LAST + "publisher", VanillaReference::new, MapView.class);
         addWrappingRule(EntrySetView.class, LAST + " entrySet", VanillaEntrySetView::new, MapView.class);
-        addWrappingRule(KeySetView.class, LAST + " keySet", VanillaKeySetView::new, MapView.class);
+
         addWrappingRule(ValuesCollection.class, LAST + " values", VanillaValuesCollection::new, MapView.class);
 
         addWrappingRule(MapView.class, LAST + " string key maps", VanillaMapView::new, ObjectKeyValueStore.class);
@@ -138,7 +139,7 @@ public class VanillaAsset implements Asset, Closeable {
         addWrappingRule(TopicPublisher.class, LAST + " topic publisher", VanillaTopicPublisher::new, MapView.class);
         addWrappingRule(ObjectKeyValueStore.class, LAST + " authenticated",
                 VanillaSubscriptionKeyValueStore::new, AuthenticatedKeyValueStore.class);
-
+        addWrappingRule(KeySetView.class, LAST + " keySet", VanillaKeySetView::new, MapView.class);
         addLeafRule(AuthenticatedKeyValueStore.class, LAST + " vanilla", VanillaKeyValueStore::new);
         addLeafRule(SubscriptionKeyValueStore.class, LAST + " vanilla", VanillaKeyValueStore::new);
         addLeafRule(KeyValueStore.class, LAST + " vanilla", VanillaKeyValueStore::new);
@@ -157,11 +158,13 @@ public class VanillaAsset implements Asset, Closeable {
             AssetNotFoundException {
         standardStack(true);
 
-
         addWrappingRule(MapView.class, LAST + " remote key maps", RemoteMapView::new, ObjectKeyValueStore.class);
 
-        addLeafRule(ObjectKVSSubscription.class, LAST + " Remote",
-                RemoteKVSSubscription::new);
+        addWrappingRule(KeySetView.class, LAST + " remote key maps", RemoteKeySetView::new,
+                MapView.class);
+
+        addLeafRule(ObjectKVSSubscription.class, LAST + " Remote", RemoteKVSSubscription::new);
+
         //TODO This is incorrect should be RemoteKVSSubscription
         addLeafRule(RawKVSSubscription.class, LAST + " vanilla",
                 VanillaKVSSubscription::new);
@@ -189,6 +192,7 @@ public class VanillaAsset implements Asset, Closeable {
                     () -> new TcpChannelHub(sessionProvider, eventLoop, wire, name, socketAddressSupplier));
             addView(TcpChannelHub.class, view);
         }
+
     }
 
     public void enableTranslatingValuesToBytesStore() {

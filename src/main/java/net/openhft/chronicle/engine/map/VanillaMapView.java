@@ -17,7 +17,6 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.BytesUtil;
-import net.openhft.chronicle.core.annotation.NotNull;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -29,12 +28,18 @@ import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.query.Filter;
+import net.openhft.chronicle.engine.query.Operation;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.AbstractCollection;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 /**
  * Created by peter on 22/05/15.
@@ -48,7 +53,9 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
     private final KeyValueStore<K, V> kvStore;
     private AbstractCollection<V> values;
 
-    public VanillaMapView(@org.jetbrains.annotations.NotNull RequestContext context, Asset asset, KeyValueStore<K, V> kvStore) {
+    public VanillaMapView(@NotNull RequestContext context,
+                          @NotNull Asset asset,
+                          @NotNull KeyValueStore<K, V> kvStore) {
         this(context.keyType(), context.valueType(), asset, kvStore, context.putReturnsNull() != Boolean.FALSE, context.removeReturnsNull() != Boolean.FALSE);
     }
 
@@ -77,21 +84,21 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
         return kvStore.getUsing(key, usingValue);
     }
 
-    @org.jetbrains.annotations.NotNull
+    @NotNull
     @Override
     public KeySetView<K> keySet() {
         return asset.acquireView(KeySetView.class);
     }
 
-    @org.jetbrains.annotations.NotNull
+    @NotNull
     @Override
     public Collection<V> values() {
         if (values == null) {
             values = new AbstractCollection<V>() {
-                @org.jetbrains.annotations.NotNull
+                @NotNull
                 public Iterator<V> iterator() {
                     return new Iterator<V>() {
-                        @org.jetbrains.annotations.NotNull
+                        @NotNull
                         private final Iterator<Entry<K, V>> i = entrySet().iterator();
 
                         public boolean hasNext() {
@@ -222,7 +229,7 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
     }
 
     @Override
-    public void putAll(@NotNull Map<? extends K, ? extends V> m) {
+    public void putAll(@net.openhft.chronicle.core.annotation.NotNull Map<? extends K, ? extends V> m) {
         for (Entry<? extends K, ? extends V> entry : m.entrySet()) {
             put(entry.getKey(), entry.getValue());
         }
@@ -245,7 +252,7 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
         return kvStore.getAndRemove(key);
     }
 
-    @org.jetbrains.annotations.NotNull
+
     @NotNull
     @Override
     public EntrySetView<K, Object, V> entrySet() {
@@ -260,21 +267,23 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
 
     @Nullable
     @Override
-    public V putIfAbsent(@NotNull K key, V value) {
+    public V putIfAbsent(@net.openhft.chronicle.core.annotation.NotNull K key, V value) {
         checkKey(key);
         checkValue(value);
         return kvStore.putIfAbsent(key, value);
     }
 
     @Override
-    public boolean remove(@NotNull Object key, Object value) {
+    public boolean remove(@net.openhft.chronicle.core.annotation.NotNull Object key, Object value) {
         checkKey(key);
         checkValue(value);
         return kvStore.isKeyType(key) && kvStore.removeIfEqual((K) key, (V) value);
     }
 
     @Override
-    public boolean replace(@NotNull K key, @NotNull V oldValue, @NotNull V newValue) {
+    public boolean replace(@net.openhft.chronicle.core.annotation.NotNull K key,
+                           @net.openhft.chronicle.core.annotation.NotNull V oldValue,
+                           @net.openhft.chronicle.core.annotation.NotNull V newValue) {
         checkKey(key);
         checkValue(oldValue);
         checkValue(newValue);
@@ -283,31 +292,101 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
 
     @Nullable
     @Override
-    public V replace(@NotNull K key, @NotNull V value) {
+    public V replace(@net.openhft.chronicle.core.annotation.NotNull K key,
+                     @net.openhft.chronicle.core.annotation.NotNull V value) {
         checkKey(key);
         checkValue(value);
         return kvStore.replace(key, value);
     }
 
     @Override
-    public void registerTopicSubscriber(TopicSubscriber<K, V> topicSubscriber) {
-        KVSSubscription<K, V> subscription = (KVSSubscription) asset.subscription(true);
+    public void registerTopicSubscriber(@NotNull TopicSubscriber<K, V> topicSubscriber) {
+        KVSSubscription<K, V> subscription = (KVSSubscription<K, V>) asset.subscription(true);
         subscription.registerTopicSubscriber(RequestContext.requestContext().bootstrap(true).type(keyClass).type2(valueType), topicSubscriber);
     }
 
     @Override
-    public void registerKeySubscriber(Subscriber<K> subscriber) {
-        KVSSubscription<K, V> subscription = (KVSSubscription) asset.subscription(true);
+    public void registerKeySubscriber(@NotNull Subscriber<K> subscriber) {
+        KVSSubscription<K, V> subscription = (KVSSubscription<K, V>) asset.subscription(true);
         subscription.registerKeySubscriber(RequestContext.requestContext().bootstrap(true).type(keyClass), subscriber);
     }
 
     @Override
-    public void registerSubscriber(Subscriber<MapEvent<K, V>> subscriber) {
-        KVSSubscription<K, V> subscription = (KVSSubscription) asset.subscription(true);
+    public void registerKeySubscriber(@NotNull Subscriber<K> subscriber,
+                                      @NotNull Filter filter,
+                                      final boolean bootstrapOnly) {
+
+        final Subscriber<K> filteredSubscribe = new FilteredSubscriber<K>(filter, subscriber);
+
+        if (bootstrapOnly)
+            keySet().stream().forEach(filteredSubscribe);
+        else
+            registerKeySubscriber(filteredSubscribe);
+    }
+
+
+    /**
+     * filters subscription on based on {@code net.openhft.chronicle.engine.query.Filter}
+     *
+     * @param <E>
+     */
+    private class FilteredSubscriber<E> implements Subscriber<E> {
+
+        private final Subscriber<E> subscriber;
+        private final Filter<E> filter;
+
+        private FilteredSubscriber(@NotNull Filter<E> filter,
+                                   @NotNull Subscriber<E> subscriber) {
+            this.filter = filter;
+            this.subscriber = subscriber;
+        }
+
+        @Override
+        public void onMessage(@NotNull E message) throws InvalidSubscriberException {
+
+            for (Operation o : filter) {
+                switch (o.op()) {
+                    case FILTER:
+                        final Predicate<E> serializable = o.serializable();
+                        if (!serializable.test(message))
+                            return;
+                        break;
+
+                    case MAP:
+                        final Function<Object, E> function = o.serializable();
+                        message = function.apply(message);
+                        break;
+
+                    case FLAT_MAP:
+                        final Function<Object, Stream<E>> func = o.serializable();
+                        func.apply(message).forEach(e -> {
+                            try {
+                                FilteredSubscriber.this.onMessage(e);
+                            } catch (InvalidSubscriberException e1) {
+                                e1.printStackTrace();
+                            }
+                        });
+                        break;
+
+                    case PROJECT:
+                        throw new UnsupportedOperationException("todo");
+                }
+
+            }
+
+            subscriber.onMessage(message);
+        }
+
+    }
+
+
+    @Override
+    public void registerSubscriber(@NotNull Subscriber<MapEvent<K, V>> subscriber) {
+        KVSSubscription<K, V> subscription = (KVSSubscription<K, V>) asset.subscription(true);
         subscription.registerSubscriber(RequestContext.requestContext().bootstrap(true).type(MapEvent.class), subscriber);
     }
 
-    @org.jetbrains.annotations.NotNull
+    @NotNull
     @Override
     public Reference<V> referenceFor(K key) {
         // TODO CE-101
@@ -342,7 +421,7 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
         return false;
     }
 
-    @org.jetbrains.annotations.NotNull
+    @NotNull
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

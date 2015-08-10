@@ -38,11 +38,11 @@ public class CompressedKVSubscription<K> implements ObjectKVSSubscription {
         this.underlying = underlying;
         underlying.registerDownstream(new EventConsumer<K, BytesStore>() {
             @Override
-            public void notifyEvent(MapEvent<K, BytesStore> changeEvent){
-                MapEvent uncompressedEvent = changeEvent.translate(k->k, v->decompressBytesStore(v));
+            public void notifyEvent(MapEvent<K, BytesStore> changeEvent) {
+                MapEvent uncompressedEvent = changeEvent.translate(k -> k, v -> decompressBytesStore(v));
                 System.out.println("In notify event " + uncompressedEvent);
 
-                if(!subscribers.isEmpty()) {
+                if (!subscribers.isEmpty()) {
                     subscribers.forEach(s -> {
                         try {
                             s.onMessage(uncompressedEvent);
@@ -52,27 +52,27 @@ public class CompressedKVSubscription<K> implements ObjectKVSSubscription {
                         }
                     });
                 }
-                if(!keySubscribers.isEmpty()){
+                if (!keySubscribers.isEmpty()) {
                     keySubscribers.forEach(s -> {
                         try {
-                            s.onMessage((K)uncompressedEvent.key());
+                            s.onMessage((K) uncompressedEvent.key());
                         } catch (InvalidSubscriberException e) {
                             e.printStackTrace();
                             throw new RuntimeException(e);
                         }
                     });
                 }
-                if(!topicSubscribers.isEmpty()){
+                if (!topicSubscribers.isEmpty()) {
                     topicSubscribers.forEach(s -> {
                         try {
-                            s.onMessage((K)uncompressedEvent.key(), (BytesStore)uncompressedEvent.value());
+                            s.onMessage((K) uncompressedEvent.key(), (BytesStore) uncompressedEvent.value());
                         } catch (InvalidSubscriberException e) {
                             e.printStackTrace();
                             throw new RuntimeException(e);
                         }
                     });
                 }
-                if(!downstream.isEmpty()){
+                if (!downstream.isEmpty()) {
                     downstream.forEach(d -> {
                         try {
                             d.notifyEvent(uncompressedEvent);
@@ -85,8 +85,8 @@ public class CompressedKVSubscription<K> implements ObjectKVSSubscription {
             }
 
             @Override
-            public void onEndOfSubscription(){
-                subscribers.forEach(s->onEndOfSubscription());
+            public void onEndOfSubscription() {
+                subscribers.forEach(s -> onEndOfSubscription());
             }
         });
     }
@@ -107,6 +107,7 @@ public class CompressedKVSubscription<K> implements ObjectKVSSubscription {
         hasSubscribers = true;
     }
 
+
     @Override
     public void registerTopicSubscriber(RequestContext rc, TopicSubscriber subscriber) {
         Boolean bootstrap = rc.bootstrap();
@@ -121,8 +122,6 @@ public class CompressedKVSubscription<K> implements ObjectKVSSubscription {
         }
         hasSubscribers = true;
     }
-
-
 
 
     @Override
@@ -221,11 +220,11 @@ public class CompressedKVSubscription<K> implements ObjectKVSSubscription {
         //todo Is there a problem with the underlying (RemoteKVSSubscription)
         //in that it doesn't send out events onEndOfSubscription
         underlying.close();
-        subscribers.forEach(s->s.onEndOfSubscription());
+        subscribers.forEach(s -> s.onEndOfSubscription());
     }
 
     @NotNull
-    private String decompressBytesStore(BytesStore bs){
+    private String decompressBytesStore(BytesStore bs) {
         try {
             byte[] rbytes = new byte[(int) bs.readRemaining()];
             bs.copyTo(rbytes);
@@ -234,7 +233,7 @@ public class CompressedKVSubscription<K> implements ObjectKVSSubscription {
             byte[] compressedBytes = Base64.getDecoder().decode(rbytes);
 
             return Snappy.uncompressString(compressedBytes);
-        }catch(IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
             throw new IORuntimeException(e);
         }

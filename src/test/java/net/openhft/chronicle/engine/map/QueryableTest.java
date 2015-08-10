@@ -4,11 +4,13 @@ import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.query.Query;
+import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
+import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 import org.junit.rules.TestName;
@@ -17,10 +19,7 @@ import org.junit.runners.Parameterized;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import static java.util.stream.Collectors.averagingInt;
 import static net.openhft.chronicle.engine.Utils.methodName;
@@ -56,12 +55,14 @@ public class QueryableTest extends ThreadMonitoringTest {
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() throws IOException {
-        return Arrays.asList(
-                new Object[]{Boolean.FALSE, WireType.BINARY},
-                new Object[]{Boolean.TRUE, WireType.BINARY},
-                new Object[]{Boolean.FALSE, WireType.TEXT},
-                new Object[]{Boolean.TRUE, WireType.TEXT}
-        );
+
+        final List<Object[]> list = new ArrayList<>();
+        //  list.add(new Object[]{Boolean.FALSE, WireType.BINARY});
+        //list.add(new Object[]{Boolean.TRUE, WireType.BINARY});
+        //  list.add(new Object[]{Boolean.FALSE, WireType.TEXT});
+        list.add(new Object[]{Boolean.TRUE, WireType.TEXT});
+
+        return list;
     }
 
 
@@ -121,7 +122,11 @@ public class QueryableTest extends ThreadMonitoringTest {
         map.put("2", "2");
         map.put("3", "3");
 
-        final Query<String> query = map.keySet().query();
+        YamlLogging.showServerReads = true;
+        YamlLogging.showServerWrites = true;
+
+        final KeySetView<String> remoteSetView = map.keySet();
+        final Query<String> query = remoteSetView.query();
 
         final Set<String> result = new HashSet<>();
         query.filter("1"::equals).forEach(result::add);

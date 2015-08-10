@@ -25,6 +25,7 @@ import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.api.tree.Assetted;
 import net.openhft.chronicle.engine.api.tree.View;
+import net.openhft.chronicle.engine.query.Filter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,21 +68,35 @@ public interface MapView<K, V> extends ConcurrentMap<K, V>,
      *
      * @param topicSubscriber to add
      */
-    void registerTopicSubscriber(TopicSubscriber<K, V> topicSubscriber);
+    void registerTopicSubscriber(@NotNull TopicSubscriber<K, V> topicSubscriber);
 
     /**
      * Add a Subscription for the keys changed on this Map
      *
      * @param subscriber to add
      */
-    void registerKeySubscriber(Subscriber<K> subscriber);
+    void registerKeySubscriber(@NotNull Subscriber<K> subscriber);
+
+
+    /**
+     * Add a Subscription for the keys changed on this Map
+     *
+     * @param subscriber    to add
+     * @param filter        a list of filter operations
+     * @param bootstrapOnly if {@code true} only the elements in the current bootstrap should be
+     *                      sent
+     */
+    void registerKeySubscriber(@NotNull Subscriber<K> subscriber,
+                               @NotNull Filter filter,
+                               boolean bootstrapOnly);
+
 
     /**
      * Add a Subscription for the MapEvents triggered by changes on this Map.
      *
-     * @param subscriber
+     * @param subscriber the subscriber to the subscription
      */
-    void registerSubscriber(Subscriber<MapEvent<K, V>> subscriber);
+    void registerSubscriber(@NotNull Subscriber<MapEvent<K, V>> subscriber);
 
     /**
      * Obtain a reference the value for a key
