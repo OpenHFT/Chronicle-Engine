@@ -20,6 +20,7 @@ import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.query.Filter;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +50,7 @@ public class VanillaTopologySubscription implements TopologySubscription {
     }
 
     @Override
-    public void registerSubscriber(@NotNull RequestContext rc, @NotNull Subscriber<TopologicalEvent> subscriber) {
+    public void registerSubscriber(@NotNull RequestContext rc, @NotNull Subscriber<TopologicalEvent> subscriber, @NotNull Filter<TopologicalEvent> filter) {
         try {
             if (rc.bootstrap() != Boolean.FALSE) {
                 // root node.

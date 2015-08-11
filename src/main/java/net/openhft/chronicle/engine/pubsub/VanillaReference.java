@@ -24,6 +24,7 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.api.tree.View;
+import net.openhft.chronicle.engine.query.Filter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +65,8 @@ public class VanillaReference<E> implements Reference<E>, View {
     public void registerSubscriber(boolean bootstrap, Subscriber<E> subscriber) throws AssetNotFoundException {
         underlyingMap.asset().acquireAsset(name)
                 .subscription(true)
-                .registerSubscriber(requestContext().bootstrap(bootstrap).type(eClass), subscriber);
+                .registerSubscriber(requestContext().bootstrap(bootstrap).type(eClass),
+                        subscriber, Filter.EMPTY);
     }
 
     @Override
@@ -89,7 +91,7 @@ public class VanillaReference<E> implements Reference<E>, View {
     }
 
     @Override
-    public Class getType(){
+    public Class getType() {
         return eClass;
     }
 }

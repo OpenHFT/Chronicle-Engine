@@ -28,18 +28,15 @@ import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.api.tree.RequestContext.Operation;
 import net.openhft.chronicle.engine.query.Filter;
-import net.openhft.chronicle.engine.query.Operation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.AbstractCollection;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
+import java.util.*;
+
+import static java.util.EnumSet.of;
+import static net.openhft.chronicle.engine.api.tree.RequestContext.Operation.BOOTSTRAP;
 
 /**
  * Created by peter on 22/05/15.
@@ -47,26 +44,25 @@ import java.util.stream.Stream;
 public class VanillaMapView<K, V> implements MapView<K, V> {
     private final boolean putReturnsNull;
     private final boolean removeReturnsNull;
-    private final Class keyClass;
+    protected final Class keyClass;
     private final Class valueType;
-    private final Asset asset;
+    protected final Asset asset;
     private final KeyValueStore<K, V> kvStore;
+    protected final RequestContext context;
     private AbstractCollection<V> values;
 
     public VanillaMapView(@NotNull RequestContext context,
                           @NotNull Asset asset,
                           @NotNull KeyValueStore<K, V> kvStore) {
-        this(context.keyType(), context.valueType(), asset, kvStore, context.putReturnsNull() != Boolean.FALSE, context.removeReturnsNull() != Boolean.FALSE);
-    }
-
-    public VanillaMapView(Class keyClass, Class valueType, Asset asset, KeyValueStore<K, V> kvStore, boolean putReturnsNull, boolean removeReturnsNull) {
-        this.keyClass = keyClass;
-        this.valueType = valueType;
+        this.context = context;
+        this.keyClass = context.keyType();
+        this.valueType = context.valueType();
         this.asset = asset;
         this.kvStore = kvStore;
-        this.putReturnsNull = putReturnsNull;
-        this.removeReturnsNull = removeReturnsNull;
+        this.putReturnsNull = context.putReturnsNull() != Boolean.FALSE;
+        this.removeReturnsNull = context.removeReturnsNull() != Boolean.FALSE;
     }
+
 
     @Override
     public Class<K> keyType() {
@@ -307,83 +303,26 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
 
     @Override
     public void registerKeySubscriber(@NotNull Subscriber<K> subscriber) {
-        KVSSubscription<K, V> subscription = (KVSSubscription<K, V>) asset.subscription(true);
-        subscription.registerKeySubscriber(RequestContext.requestContext().bootstrap(true).type(keyClass), subscriber);
+        registerKeySubscriber(subscriber, Filter.EMPTY, of(BOOTSTRAP));
     }
 
     @Override
     public void registerKeySubscriber(@NotNull Subscriber<K> subscriber,
                                       @NotNull Filter filter,
-                                      final boolean bootstrapOnly) {
+                                      @NotNull Set<Operation> operations) {
 
-        final Subscriber<K> filteredSubscribe = new FilteredSubscriber<K>(filter, subscriber);
+        final RequestContext rc = context.clone();
+        operations.forEach(e -> e.apply(rc));
 
-        if (bootstrapOnly)
-            keySet().stream().forEach(filteredSubscribe);
-        else
-            registerKeySubscriber(filteredSubscribe);
-    }
-
-
-    /**
-     * filters subscription on based on {@code net.openhft.chronicle.engine.query.Filter}
-     *
-     * @param <E>
-     */
-    private class FilteredSubscriber<E> implements Subscriber<E> {
-
-        private final Subscriber<E> subscriber;
-        private final Filter<E> filter;
-
-        private FilteredSubscriber(@NotNull Filter<E> filter,
-                                   @NotNull Subscriber<E> subscriber) {
-            this.filter = filter;
-            this.subscriber = subscriber;
-        }
-
-        @Override
-        public void onMessage(@NotNull E message) throws InvalidSubscriberException {
-
-            for (Operation o : filter) {
-                switch (o.op()) {
-                    case FILTER:
-                        final Predicate<E> serializable = o.serializable();
-                        if (!serializable.test(message))
-                            return;
-                        break;
-
-                    case MAP:
-                        final Function<Object, E> function = o.serializable();
-                        message = function.apply(message);
-                        break;
-
-                    case FLAT_MAP:
-                        final Function<Object, Stream<E>> func = o.serializable();
-                        func.apply(message).forEach(e -> {
-                            try {
-                                FilteredSubscriber.this.onMessage(e);
-                            } catch (InvalidSubscriberException e1) {
-                                e1.printStackTrace();
-                            }
-                        });
-                        break;
-
-                    case PROJECT:
-                        throw new UnsupportedOperationException("todo");
-                }
-
-            }
-
-            subscriber.onMessage(message);
-        }
-
+        KVSSubscription<K, V> subscription = (KVSSubscription<K, V>) asset.subscription(true);
+        subscription.registerKeySubscriber(rc.type(keyClass), subscriber, filter);
     }
 
 
     @Override
     public void registerSubscriber(@NotNull Subscriber<MapEvent<K, V>> subscriber) {
         KVSSubscription<K, V> subscription = (KVSSubscription<K, V>) asset.subscription(true);
-        subscription.registerSubscriber(RequestContext.requestContext().bootstrap(true).type(MapEvent.class), subscriber);
+        subscription.registerSubscriber(RequestContext.requestContext().bootstrap(true).type(MapEvent.class), subscriber, null);
     }
 
     @NotNull

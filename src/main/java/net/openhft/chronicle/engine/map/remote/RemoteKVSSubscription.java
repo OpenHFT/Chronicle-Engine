@@ -26,6 +26,7 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.map.EventConsumer;
 import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
+import net.openhft.chronicle.engine.query.Filter;
 import net.openhft.chronicle.engine.server.internal.MapWireHandler;
 import net.openhft.chronicle.network.connection.AbstractAsyncSubscription;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
@@ -63,7 +64,7 @@ public class RemoteKVSSubscription<K, V> extends AbstractRemoteSubscription<MapE
 
 
     @Override
-    public void registerTopicSubscriber(RequestContext rc, @NotNull TopicSubscriber<K, V> subscriber) {
+    public void registerTopicSubscriber(@NotNull RequestContext rc, @NotNull TopicSubscriber<K, V> subscriber) {
 
         if (hub.outBytesLock().isHeldByCurrentThread())
             throw new IllegalStateException("Cannot view map while debugging");
@@ -111,7 +112,7 @@ public class RemoteKVSSubscription<K, V> extends AbstractRemoteSubscription<MapE
     }
 
     @Override
-    public void unregisterTopicSubscriber(final TopicSubscriber subscriber) {
+    public void unregisterTopicSubscriber(@NotNull final TopicSubscriber subscriber) {
         Long tid = subscribersToTid.get(subscriber);
 
         if (tid == null) {
@@ -136,8 +137,8 @@ public class RemoteKVSSubscription<K, V> extends AbstractRemoteSubscription<MapE
     }
 
     @Override
-    public void registerKeySubscriber(RequestContext rc, Subscriber<K> subscriber) {
-        registerSubscriber0(rc, subscriber);
+    public void registerKeySubscriber(@NotNull RequestContext rc, @NotNull Subscriber<K> subscriber, @NotNull Filter<K> filter) {
+        registerSubscriber0(rc, subscriber, filter);
     }
 
 
@@ -163,13 +164,9 @@ public class RemoteKVSSubscription<K, V> extends AbstractRemoteSubscription<MapE
     }
 
     @Override
-    public void registerDownstream(EventConsumer<K, V> subscription) {
-        registerSubscriber(rc.clone().type(MapEvent.class).type2(null), new Subscriber<MapEvent<K, V>>() {
-            @Override
-            public void onMessage(MapEvent<K, V> kvMapEvent) throws InvalidSubscriberException {
-                subscription.notifyEvent(kvMapEvent);
-            }
-        });
+    public void registerDownstream(@NotNull EventConsumer<K, V> subscription) {
+        registerSubscriber(rc.clone().type(MapEvent.class).type2(null),
+                subscription::notifyEvent, Filter.EMPTY);
     }
 
 }

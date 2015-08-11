@@ -27,6 +27,7 @@ import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
 import net.openhft.chronicle.engine.map.RawKVSSubscription;
+import net.openhft.chronicle.engine.query.Filter;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.TopologySubscription;
 import net.openhft.chronicle.wire.*;
@@ -56,6 +57,8 @@ public class RequestContext implements Cloneable {
         addAlias(TopologySubscription.class, "topologySubscription");
         addAlias(Reference.class, "Reference, Ref");
         addAlias(Heartbeat.class, "Heartbeat");
+        addAlias(Filter.class, "Filter");
+        addAlias(net.openhft.chronicle.engine.query.Operation.class, "Operation");
     }
 
     private String pathName;
@@ -67,6 +70,7 @@ public class RequestContext implements Cloneable {
     private Boolean putReturnsNull = null,
             removeReturnsNull = null,
             nullOldValueOnUpdateEvent = null,
+            endSubscriptionAfterBootstrap = null,
             bootstrap = null;
     private double averageValueSize;
     private long entries;
@@ -169,7 +173,7 @@ public class RequestContext implements Cloneable {
         parser.register(() -> "valueType", v -> v.typeLiteral(x -> this.type2 = x));
         parser.register(() -> "messageType", v -> v.typeLiteral(x -> this.type2 = x));
         parser.register(() -> "elementType", v -> v.typeLiteral(x -> this.type = x));
-
+        parser.register(() -> "endSubscriptionAfterBootstrap", v -> v.bool(b -> this.endSubscriptionAfterBootstrap = b));
         parser.register(WireParser.DEFAULT, ValueIn.DISCARD);
         return parser;
     }
@@ -370,6 +374,20 @@ public class RequestContext implements Cloneable {
         return this;
     }
 
+
+    @NotNull
+    public RequestContext endSubscriptionAfterBootstrap(boolean endSubscriptionAfterBootstrap) {
+        checkSealed();
+        this.endSubscriptionAfterBootstrap = endSubscriptionAfterBootstrap;
+        return this;
+    }
+
+
+    public Boolean endSubscriptionAfterBootstrap() {
+        return endSubscriptionAfterBootstrap;
+    }
+
+
     void checkSealed() {
         if (sealed) throw new IllegalStateException();
     }
@@ -391,6 +409,7 @@ public class RequestContext implements Cloneable {
                 ", averageValueSize=" + averageValueSize +
                 ", entries=" + entries +
                 ", recurse=" + recurse +
+                ", endSubscriptionAfterBootstrap=" + endSubscriptionAfterBootstrap +
                 '}';
     }
 
@@ -420,4 +439,20 @@ public class RequestContext implements Cloneable {
         this.putReturnsNull = putReturnsNull;
         return this;
     }
+
+    public enum Operation {
+        END_SUBSCRIPTION_AFTER_BOOTSTRAP, BOOTSTRAP;
+
+        public void apply(RequestContext rc) {
+            switch (this) {
+                case END_SUBSCRIPTION_AFTER_BOOTSTRAP:
+                    rc.endSubscriptionAfterBootstrap(true);
+                    break;
+                case BOOTSTRAP:
+                    rc.bootstrap(true);
+                    break;
+            }
+        }
+    }
+
 }

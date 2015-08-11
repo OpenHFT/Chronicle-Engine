@@ -19,6 +19,7 @@ package net.openhft.chronicle.engine.pubsub;
 import net.openhft.chronicle.engine.api.pubsub.Reference;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.query.Filter;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,7 +34,7 @@ public class RemoteSimpleSubscription<E> implements SimpleSubscription<E> {
     }
 
     @Override
-    public void registerSubscriber(@NotNull RequestContext rc, @NotNull Subscriber<E> subscriber) {
+    public void registerSubscriber(@NotNull RequestContext rc, @NotNull Subscriber<E> subscriber, @NotNull Filter<E> filter) {
         reference.registerSubscriber(rc.bootstrap() != Boolean.FALSE, subscriber);
     }
 

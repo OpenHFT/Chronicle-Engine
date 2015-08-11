@@ -36,6 +36,8 @@ import static net.openhft.chronicle.engine.Utils.methodName;
  */
 @RunWith(value = Parameterized.class)
 public class QueryableTest extends ThreadMonitoringTest {
+
+
     private static final String NAME = "test";
     public String connection = "QueryableTest.host.port";
     private static MapView<String, String> map;
@@ -52,6 +54,7 @@ public class QueryableTest extends ThreadMonitoringTest {
         this.isRemote = (Boolean) isRemote;
         this.wireType = wireType;
     }
+
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() throws IOException {
@@ -73,6 +76,10 @@ public class QueryableTest extends ThreadMonitoringTest {
         if (isRemote) {
 
             methodName(name.getMethodName());
+
+            YamlLogging.showServerWrites = true;
+            YamlLogging.showServerReads = true;
+
             connection = "StreamTest." + name.getMethodName() + ".host.port";
             TCPRegistry.createServerSocketChannelFor(connection);
             serverEndpoint = new ServerEndpoint(connection, serverAssetTree, wireType);
@@ -148,6 +155,22 @@ public class QueryableTest extends ThreadMonitoringTest {
         Double x = query.filter((obj) -> obj >= 1 && obj <= 2).collect(averagingInt(v -> (int) v));
         Assert.assertEquals((Double) 1.5, x);
     }
+
+    @Test
+    public void testForEach() throws Exception {
+
+        final MapView<Integer, Integer> map = assetTree.acquireMap("name", Integer.class, Integer
+                .class);
+
+        map.put(1, 1);
+        map.put(2, 2);
+        map.put(3, 3);
+
+        final Query<Integer> query = map.keySet().query();
+        query.filter((obj) -> obj >= 1 && obj <= 2).forEach(System.out::println);
+
+    }
+
 
 }
 

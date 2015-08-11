@@ -8,6 +8,7 @@ import net.openhft.chronicle.engine.api.pubsub.Subscription;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.query.Filter;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.wire.*;
@@ -30,7 +31,6 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
 
     final StringBuilder eventName = new StringBuilder();
     final Map<Long, Object> tidToListener = new ConcurrentHashMap<>();
-
 
     private final Throttler throttler;
 
@@ -79,7 +79,15 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
      */
     boolean before(Long tid, @NotNull ValueIn valueIn) throws AssetNotFoundException {
         if (registerSubscriber.contentEquals(eventName)) {
-            Class subscriptionType = valueIn.typeLiteral();
+            final Class subscriptionType = valueIn.typeLiteral();
+
+            final StringBuilder sb = Wires.acquireStringBuilder();
+            final ValueIn valueIn1 = valueIn.wireIn().readEventName(sb);
+
+            final Filter filter = "filter".contentEquals(sb) ?
+                    valueIn1.object(Filter.class) :
+                    Filter.EMPTY;
+
             if (tidToListener.containsKey(tid)) {
                 LOG.info("Duplicate registration for tid " + tid);
                 return true;
@@ -88,8 +96,7 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
             tidToListener.put(tid, listener);
             RequestContext rc = requestContext.clone().type(subscriptionType);
             final Subscription subscription = assetTree.acquireSubscription(rc);
-            subscription.registerSubscriber(rc, listener);
-
+            subscription.registerSubscriber(rc, listener, filter);
             return true;
         }
         if (unregisterSubscriber.contentEquals(eventName)) {
@@ -163,6 +170,7 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
                     publish.writeDocument(false, wire ->
                             wire.writeEventName(ObjectKVSubscriptionHandler.EventId.onEndOfSubscription).text(""));
                 };
+
                 publisher.add(toPublish);
             }
         }

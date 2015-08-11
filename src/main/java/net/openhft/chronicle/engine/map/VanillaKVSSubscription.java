@@ -24,14 +24,18 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.pubsub.SimpleSubscription;
 import net.openhft.chronicle.engine.pubsub.VanillaSimpleSubscription;
+import net.openhft.chronicle.engine.query.Filter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+import static java.lang.Boolean.TRUE;
 import static net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer.notifyEachSubscriber;
 
 /**
@@ -51,7 +55,7 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
     @Nullable
     private final Asset asset;
     private KeyValueStore<K, V> kvStore;
-    private boolean hasSubscribers = false;
+
 
     public VanillaKVSSubscription(@NotNull RequestContext requestContext, @NotNull Asset asset) {
         this(requestContext.viewType(), asset);
@@ -122,7 +126,9 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
 
     @Override
     public boolean hasSubscribers() {
-        return hasSubscribers || asset.hasChildren();
+        return !topicSubscribers.isEmpty() || !subscribers.isEmpty()
+                || !keySubscribers.isEmpty() || !downstream.isEmpty()
+                || asset.hasChildren();
     }
 
     private void notifyEvent0(@NotNull MapEvent<K, V> changeEvent) {
@@ -170,13 +176,15 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
     }
 
     @Override
-    public void registerSubscriber(@NotNull RequestContext rc, @NotNull Subscriber subscriber) {
+    public void registerSubscriber(@NotNull RequestContext rc,
+                                   @NotNull Subscriber<MapEvent<K, V>> subscriber,
+                                   @NotNull Filter<MapEvent<K, V>> filter) {
         Boolean bootstrap = rc.bootstrap();
         Class eClass = rc.type();
         if (eClass == Entry.class || eClass == MapEvent.class) {
             subscribers.add(subscriber);
             if (bootstrap != Boolean.FALSE && kvStore != null) {
-                Subscriber<MapEvent<K, V>> sub = (Subscriber<MapEvent<K, V>>) subscriber;
+                Subscriber<MapEvent<K, V>> sub = subscriber;
                 try {
                     for (int i = 0; i < kvStore.segments(); i++)
                         kvStore.entriesFor(i, sub::onMessage);
@@ -184,27 +192,46 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
                     subscribers.remove(subscriber);
                 }
             }
-        } else
-            registerKeySubscriber(rc, subscriber);
 
-        hasSubscribers = true;
+        } else
+            registerKeySubscriber(rc, (Subscriber) subscriber, (Filter) filter);
+
     }
+
+    Map<Subscriber, Subscriber> subscriptionDelegate = new HashMap<>();
+
 
     @Override
     public void registerKeySubscriber(@NotNull RequestContext rc,
-                                      @NotNull Subscriber<K> subscriber) {
-        Boolean bootstrap = rc.bootstrap();
+                                      @NotNull Subscriber<K> subscriber,
+                                      @NotNull Filter<K> filter) {
+        final Boolean bootstrap = rc.bootstrap();
+        final Subscriber<K> sub;
 
-        keySubscribers.add(subscriber);
+        if (Filter.EMPTY.equals(filter))
+            sub = subscriber;
+        else {
+            sub = new Filter.FilteredSubscriber<>(filter, subscriber);
+            subscriptionDelegate.put(subscriber, sub);
+        }
+
+        keySubscribers.add(sub);
         if (bootstrap != Boolean.FALSE && kvStore != null) {
             try {
                 for (int i = 0; i < kvStore.segments(); i++)
-                    kvStore.keysFor(i, subscriber::onMessage);
+                    kvStore.keysFor(i, sub::onMessage);
+
+                if (TRUE.equals(rc.endSubscriptionAfterBootstrap())) {
+
+                    sub.onEndOfSubscription();
+                    LOG.info("onEndOfSubscription");
+                    keySubscribers.remove(sub);
+                }
+
             } catch (InvalidSubscriberException e) {
-                keySubscribers.remove(subscriber);
+                keySubscribers.remove(sub);
             }
         }
-        hasSubscribers = true;
     }
 
     @Override
@@ -219,37 +246,35 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
                 topicSubscribers.remove(subscriber);
             }
         }
-        hasSubscribers = true;
+
     }
 
     @Override
-    public void registerDownstream(EventConsumer<K, V> subscription) {
+    public void registerDownstream(@NotNull EventConsumer<K, V> subscription) {
         downstream.add(subscription);
-        hasSubscribers = true;
+
     }
 
     public void unregisterDownstream(EventConsumer<K, V> subscription) {
         downstream.remove(subscription);
-        updateHasSubscribers();
+
     }
 
     @Override
     public void unregisterSubscriber(@NotNull Subscriber subscriber) {
-        subscribers.remove(subscriber);
-        keySubscribers.remove(subscriber);
-        updateHasSubscribers();
-        subscriber.onEndOfSubscription();
+        final Subscriber delegate = subscriptionDelegate.get(subscriber);
+        final Subscriber s = delegate != null ? delegate : subscriber;
+        subscribers.remove(s);
+        keySubscribers.remove(s);
+        s.onEndOfSubscription();
     }
 
     @Override
     public void unregisterTopicSubscriber(@NotNull TopicSubscriber subscriber) {
         topicSubscribers.remove(subscriber);
-        updateHasSubscribers();
+
         subscriber.onEndOfSubscription();
     }
 
-    private void updateHasSubscribers() {
-        hasSubscribers = !topicSubscribers.isEmpty() && !subscribers.isEmpty()
-                && !keySubscribers.isEmpty() && !downstream.isEmpty();
-    }
+
 }

@@ -24,12 +24,16 @@ import net.openhft.chronicle.core.util.SerializableUpdaterWithArg;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.Reference;
+import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.map.KVSSubscription;
 import net.openhft.chronicle.engine.map.VanillaMapView;
+import net.openhft.chronicle.engine.query.Filter;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -39,12 +43,12 @@ import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
  * Created by peter on 22/05/15.
  */
 public class RemoteMapView<K, MV, V> extends VanillaMapView<K, V> {
-    public RemoteMapView(@org.jetbrains.annotations.NotNull @NotNull RequestContext context, Asset asset, KeyValueStore<K, V> kvStore) {
-        this(context.keyType(), context.valueType(), asset, kvStore, context.putReturnsNull() != Boolean.FALSE, context.removeReturnsNull() != Boolean.FALSE);
-    }
+    private final RequestContext context;
 
-    public RemoteMapView(Class keyClass, Class valueType, Asset asset, KeyValueStore<K, V> kvStore, boolean putReturnsNull, boolean removeReturnsNull) {
-        super(keyClass, valueType, asset, kvStore, putReturnsNull, removeReturnsNull);
+    public RemoteMapView(@NotNull RequestContext context, Asset asset, KeyValueStore<K, V>
+            kvStore) {
+        super(context, asset, kvStore);
+        this.context = context;
     }
 
     @Override
@@ -60,6 +64,21 @@ public class RemoteMapView<K, MV, V> extends VanillaMapView<K, V> {
     }
 */
 
+
+    @Override
+    public void registerKeySubscriber(@org.jetbrains.annotations.NotNull @NotNull Subscriber<K> subscriber,
+                                      @org.jetbrains.annotations.NotNull @NotNull Filter filter,
+                                      @org.jetbrains.annotations.NotNull @NotNull Set<RequestContext.Operation> contextOperations) {
+
+        final KVSSubscription<K, V> subscription = (KVSSubscription<K, V>) asset.subscription(true);
+        final RequestContext rc = RequestContext.requestContext().type(keyClass);
+        contextOperations.forEach(e -> e.apply(rc));
+
+        subscription.registerKeySubscriber(rc, subscriber, filter);
+
+    }
+
+
     @Override
     public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
         this.asyncUpdate((SerializableUpdaterWithArg) MapUpdate.REPLACE_ALL, function);
@@ -72,6 +91,7 @@ public class RemoteMapView<K, MV, V> extends VanillaMapView<K, V> {
     }
 
     @org.jetbrains.annotations.NotNull
+    @NotNull
     @Override
     public Reference<V> referenceFor(K key) {
         // TODO CE-101
@@ -115,28 +135,28 @@ public class RemoteMapView<K, MV, V> extends VanillaMapView<K, V> {
         return (V) this.applyTo((SerializableBiFunction) MapFunction.REPLACE, KeyValuePair.of(key, value));
     }
 
-    @org.jetbrains.annotations.NotNull
+    @NotNull
     @Override
     public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
         checkKey(key);
         return (V) this.applyTo((SerializableBiFunction) MapFunction.COMPUTE_IF_ABSENT, KeyFunctionPair.of(key, mappingFunction));
     }
 
-    @org.jetbrains.annotations.NotNull
+    @NotNull
     @Override
     public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
         checkKey(key);
         return (V) this.applyTo((SerializableBiFunction) MapFunction.COMPUTE_IF_PRESENT, KeyFunctionPair.of(key, remappingFunction));
     }
 
-    @org.jetbrains.annotations.NotNull
+    @NotNull
     @Override
     public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
         checkKey(key);
         return (V) this.applyTo((SerializableBiFunction) MapFunction.COMPUTE, KeyFunctionPair.of(key, remappingFunction));
     }
 
-    @org.jetbrains.annotations.NotNull
+    @NotNull
     @Override
     public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
         checkKey(key);
@@ -146,58 +166,61 @@ public class RemoteMapView<K, MV, V> extends VanillaMapView<K, V> {
 
     // core functionality.
     @Override
-    public <A, R> R applyTo(@org.jetbrains.annotations.NotNull @NotNull SerializableBiFunction<MapView<K, V>, A, R> function, A arg) {
+    public <A, R> R applyTo(@NotNull SerializableBiFunction<MapView<K, V>, A, R> function, A arg) {
         RemoteKeyValueStore<K, V> store = (RemoteKeyValueStore<K, V>) underlying();
         return store.applyTo((SerializableBiFunction<MapView<K, V>, A, R>) (SerializableBiFunction) function, arg);
     }
 
     @Override
-    public <A> void asyncUpdate(@org.jetbrains.annotations.NotNull @NotNull SerializableUpdaterWithArg<MapView<K, V>, A> updateFunction, A arg) {
+    public <A> void asyncUpdate(@NotNull SerializableUpdaterWithArg<MapView<K, V>, A> updateFunction, A arg) {
         RemoteKeyValueStore<K, V> store = (RemoteKeyValueStore<K, V>) underlying();
         store.asyncUpdate((SerializableUpdaterWithArg) updateFunction, arg);
     }
 
     @Override
-    public <UA, RA, R> R syncUpdate(@org.jetbrains.annotations.NotNull @NotNull SerializableUpdaterWithArg<MapView<K, V>, UA> updateFunction, UA ua, @org.jetbrains.annotations.NotNull @NotNull SerializableBiFunction<MapView<K, V>, RA, R> returnFunction, RA ra) {
+    public <UA, RA, R> R syncUpdate(@NotNull SerializableUpdaterWithArg<MapView<K, V>, UA>
+                                            updateFunction, UA ua, @NotNull
+                                    SerializableBiFunction<MapView<K, V>, RA, R> returnFunction, RA ra) {
         RemoteKeyValueStore<K, V> store = (RemoteKeyValueStore<K, V>) underlying();
         return store.syncUpdate((SerializableBiFunction) updateFunction, ua, (SerializableBiFunction) returnFunction, ra);
     }
 
     // helper functions.
     @Override
-    public <R> R applyTo(@org.jetbrains.annotations.NotNull @NotNull SerializableFunction<MapView<K, V>, R> function) {
+    public <R> R applyTo(@NotNull SerializableFunction<MapView<K, V>, R> function) {
         // TODO CE-95 handle this natively.
         return applyTo((x, $) -> function.apply(x), null);
     }
 
     @Override
-    public void asyncUpdate(@org.jetbrains.annotations.NotNull @NotNull SerializableUpdater<MapView<K, V>> updateFunction) {
+    public void asyncUpdate(@NotNull SerializableUpdater<MapView<K, V>> updateFunction) {
         // TODO CE-95 handle this natively.
         asyncUpdate((x, $) -> updateFunction.accept(x), null);
     }
 
     @Override
-    public <R> R syncUpdate(@org.jetbrains.annotations.NotNull @NotNull SerializableUpdater<MapView<K, V>> updateFunction, @org.jetbrains.annotations.NotNull @NotNull SerializableFunction<MapView<K, V>, R> returnFunction) {
+    public <R> R syncUpdate(@NotNull SerializableUpdater<MapView<K, V>> updateFunction, @NotNull
+    SerializableFunction<MapView<K, V>, R> returnFunction) {
         // TODO CE-95 handle this natively.
         return syncUpdate((x, $) -> updateFunction.accept(x), null, (x, $) -> returnFunction.apply(x), null);
     }
 
     @Override
-    public <R> R applyToKey(K key, @org.jetbrains.annotations.NotNull SerializableFunction<V, R> function) {
+    public <R> R applyToKey(K key, @NotNull SerializableFunction<V, R> function) {
         checkKey(key);
         // TODO CE-95 handle this natively.
         return applyTo((x, k) -> function.apply(x.get(k)), key);
     }
 
     @Override
-    public <T, R> R applyToKey(K key, @org.jetbrains.annotations.NotNull SerializableBiFunction<V, T, R> function, T argument) {
+    public <T, R> R applyToKey(K key, @NotNull SerializableBiFunction<V, T, R> function, T argument) {
         checkKey(key);
         // TODO CE-95 handle this natively.
         return applyTo((map, kv) -> function.apply(map.get(kv.key), (T) kv.value), KeyValuePair.of(key, argument));
     }
 
     @Override
-    public void asyncUpdateKey(K key, @org.jetbrains.annotations.NotNull SerializableFunction<V,
+    public void asyncUpdateKey(K key, @NotNull SerializableFunction<V,
             V> updateFunction) {
         checkKey(key);
         // TODO CE-95 handle this natively.
@@ -206,7 +229,7 @@ public class RemoteMapView<K, MV, V> extends VanillaMapView<K, V> {
     }
 
     @Override
-    public <T> void asyncUpdateKey(K key, @org.jetbrains.annotations.NotNull SerializableBiFunction<V, T, V> updateFunction, T argument) {
+    public <T> void asyncUpdateKey(K key, @NotNull SerializableBiFunction<V, T, V> updateFunction, T argument) {
         checkKey(key);
         // TODO CE-95 handle this natively.
         SerializableBiFunction<K, V, V> kvvBiFunction = (k, v) -> updateFunction.apply(v, argument);
@@ -214,8 +237,9 @@ public class RemoteMapView<K, MV, V> extends VanillaMapView<K, V> {
     }
 
     @Override
-    public <R> R syncUpdateKey(K key, @org.jetbrains.annotations.NotNull
-    SerializableFunction<V, V> updateFunction, @org.jetbrains.annotations.NotNull @NotNull SerializableFunction<V, R> returnFunction) {
+    public <R> R syncUpdateKey(K key, @NotNull
+    SerializableFunction<V, V> updateFunction, @NotNull SerializableFunction<V, R>
+                                       returnFunction) {
         checkKey(key);
         // TODO CE-95 handle this natively.
         SerializableBiFunction<K, V, V> kvvBiFunction = (k, v) -> updateFunction.apply(v);
@@ -223,7 +247,9 @@ public class RemoteMapView<K, MV, V> extends VanillaMapView<K, V> {
     }
 
     @Override
-    public <T, RT, R> R syncUpdateKey(K key, @org.jetbrains.annotations.NotNull @NotNull SerializableBiFunction<V, T, V> updateFunction, @Nullable T updateArgument, @org.jetbrains.annotations.NotNull @NotNull SerializableBiFunction<V, RT, R> returnFunction, @Nullable RT returnArgument) {
+    public <T, RT, R> R syncUpdateKey(K key, @NotNull SerializableBiFunction<V, T, V>
+            updateFunction, @Nullable T updateArgument, @NotNull SerializableBiFunction<V, RT,
+            R> returnFunction, @Nullable RT returnArgument) {
         checkKey(key);
         // TODO CE-95 handle this natively.
         SerializableBiFunction<K, V, V> kvvBiFunction = (k, v) -> updateFunction.apply(v, updateArgument);

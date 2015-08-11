@@ -23,19 +23,30 @@ import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.Subscription;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.query.Filter;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by peter on 29/05/15.
  */
 public interface KVSSubscription<K, V> extends Subscription<MapEvent<K, V>>, ISubscriber, EventConsumer<K, V> {
 
-    void registerKeySubscriber(RequestContext rc, Subscriber<K> subscriber);
+    /**
+     * Add a Subscription for the keys changed on this Map
+     *
+     * @param subscriber to add
+     * @param filter     a list of filter operations
+     */
+    void registerKeySubscriber(@NotNull RequestContext rc,
+                               @NotNull Subscriber<K> subscriber,
+                               @NotNull Filter<K> filter);
 
-    void registerTopicSubscriber(RequestContext rc, TopicSubscriber<K, V> subscriber);
+    void registerTopicSubscriber(@NotNull RequestContext rc,
+                                 @NotNull TopicSubscriber<K, V> subscriber);
 
-    void unregisterTopicSubscriber(TopicSubscriber subscriber);
+    void unregisterTopicSubscriber(@NotNull TopicSubscriber subscriber);
 
-    void registerDownstream(EventConsumer<K, V> subscription);
+    void registerDownstream(@NotNull EventConsumer<K, V> subscription);
 
     default boolean keyedView() {
         return true;

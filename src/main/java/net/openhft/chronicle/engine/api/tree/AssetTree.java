@@ -21,6 +21,7 @@ import net.openhft.chronicle.engine.api.management.ManagementTools;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.map.KVSSubscription;
+import net.openhft.chronicle.engine.query.Filter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -139,7 +140,7 @@ public interface AssetTree extends Closeable {
     default <E> void registerSubscriber(@NotNull String uri, Class<E> eClass, Subscriber<E> subscriber) throws AssetNotFoundException {
         RequestContext rc = requestContext(uri).type(eClass);
         acquireSubscription(rc)
-                .registerSubscriber(rc, subscriber);
+                .registerSubscriber(rc, subscriber, Filter.EMPTY);
     }
 
     /**

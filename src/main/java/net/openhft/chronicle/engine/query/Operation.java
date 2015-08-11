@@ -9,45 +9,68 @@ import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 
-import java.io.Serializable;
-
 public class Operation implements Marshallable {
 
-    private OperationType op;
-    private Serializable serializable;
+    private OperationType type;
+    private Object wrapped;
 
     public Operation() {
-
     }
 
     public OperationType op() {
-        return op;
+        return type;
     }
 
-    public <T extends Serializable> T serializable() {
-        return (T) serializable;
+    public <T> T wrapped() {
+        return (T) wrapped;
     }
 
-    public Operation(@NotNull final OperationType filter,
-                     @NotNull final Serializable serializable) {
-        this.op = filter;
-        this.serializable = serializable;
+    public Operation(@NotNull final OperationType type,
+                     @NotNull final Object wrapped) {
+        this.type = type;
+        this.wrapped = wrapped;
     }
 
     @Override
     public void readMarshallable(WireIn wireIn) throws IllegalStateException {
-        this.op = wireIn.read(() -> "op").object(OperationType.class);
-        this.serializable = wireIn.read(() -> "serializable").object(Serializable.class);
+        this.type = OperationType.valueOf(wireIn.read(() -> "type").text());
+        this.wrapped = wireIn.read(() -> "wrapped").object(Object.class);
     }
 
     @Override
     public void writeMarshallable(WireOut wireOut) {
-        wireOut.write(() -> "op").object(op);
-        wireOut.write(() -> "serializable").object(serializable);
+        wireOut.write(() -> "type").text(type.toString());
+        wireOut.write(() -> "wrapped").object(wrapped);
     }
 
     public enum OperationType {
         MAP, FILTER, PROJECT, FLAT_MAP
     }
 
+    @Override
+    public String toString() {
+        return "Operation{" +
+                "type=" + type +
+                ", wrapped=" + wrapped +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Operation)) return false;
+
+        Operation operation = (Operation) o;
+
+        if (type != operation.type) return false;
+        return !(wrapped != null ? !wrapped.equals(operation.wrapped) : operation.wrapped != null);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = type != null ? type.hashCode() : 0;
+        result = 31 * result + (wrapped != null ? wrapped.hashCode() : 0);
+        return result;
+    }
 }

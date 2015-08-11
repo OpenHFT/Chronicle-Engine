@@ -5,6 +5,7 @@ import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.Subscription;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.query.Filter;
 import net.openhft.chronicle.engine.server.internal.MapWireHandler;
 import net.openhft.chronicle.engine.server.internal.PublisherHandler;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
@@ -25,6 +26,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
+import static net.openhft.chronicle.engine.query.Filter.EMPTY;
 import static net.openhft.chronicle.engine.server.internal.SubscriptionHandler.SubscriptionEventID.*;
 
 /**
@@ -44,22 +46,30 @@ abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient imp
         super(hub, cid, csp);
     }
 
-    public void registerSubscriber(@NotNull RequestContext rc, @NotNull Subscriber<E> subscriber) {
-        registerSubscriber0(rc, subscriber);
+    public void registerSubscriber(@NotNull RequestContext rc,
+                                   @NotNull Subscriber<E> subscriber,
+                                   @NotNull Filter<E> filter) {
+        registerSubscriber0(rc, subscriber, filter);
     }
 
     public void unregisterSubscriber(@NotNull Subscriber subscriber) {
         unregisterSubscriber0(subscriber);
     }
 
-    void registerSubscriber0(@NotNull RequestContext rc, @NotNull Subscriber subscriber) {
+    void registerSubscriber0(@NotNull RequestContext rc,
+                             @NotNull Subscriber subscriber,
+                             @NotNull Filter filter) {
         if (hub.outBytesLock().isHeldByCurrentThread())
             throw new IllegalStateException("Cannot view map while debugging");
 
-        Boolean bootstrap = rc.bootstrap();
+        final Boolean bootstrap = rc.bootstrap();
+        final Boolean endSubscriptionAfterBootstrap = rc.endSubscriptionAfterBootstrap();
         String csp = this.csp;
         if (bootstrap != null)
             csp = csp + "&bootstrap=" + bootstrap;
+        if (endSubscriptionAfterBootstrap != null)
+            csp = csp + "&endSubscriptionAfterBootstrap=" + endSubscriptionAfterBootstrap;
+
 
         hub.subscribe(new AbstractAsyncSubscription(hub, csp, this.getClass().getSimpleName() + " registerSubscriber") {
             {
@@ -70,6 +80,8 @@ abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient imp
             public void onSubscribe(@NotNull final WireOut wireOut) {
                 wireOut.writeEventName(registerSubscriber).
                         typeLiteral(CLASS_ALIASES.nameFor(rc.elementType()));
+                if (!EMPTY.equals(filter))
+                    wireOut.writeEventName(() -> "filter").object(filter);
             }
 
             @Override

@@ -51,6 +51,10 @@ class AbstractHandler {
             }
         });
 
+        logYaml();
+    }
+
+    private void logYaml() {
         if (Jvm.IS_DEBUG && YamlLogging.showServerWrites)
             try {
                 LOG.info("\nServer Sends:\n" +

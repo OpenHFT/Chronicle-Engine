@@ -9,6 +9,7 @@ import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.query.Filter;
 import org.jetbrains.annotations.NotNull;
 import org.xerial.snappy.Snappy;
 
@@ -92,7 +93,7 @@ public class CompressedKVSubscription<K> implements ObjectKVSSubscription {
     }
 
     @Override
-    public void registerKeySubscriber(RequestContext rc, Subscriber subscriber) {
+    public void registerKeySubscriber(@NotNull RequestContext rc, @NotNull Subscriber subscriber, @NotNull Filter filter) {
         Boolean bootstrap = rc.bootstrap();
 
         keySubscribers.add(subscriber);
@@ -109,7 +110,7 @@ public class CompressedKVSubscription<K> implements ObjectKVSSubscription {
 
 
     @Override
-    public void registerTopicSubscriber(RequestContext rc, TopicSubscriber subscriber) {
+    public void registerTopicSubscriber(@NotNull RequestContext rc, @NotNull TopicSubscriber subscriber) {
         Boolean bootstrap = rc.bootstrap();
         topicSubscribers.add((TopicSubscriber<K, BytesStore>) subscriber);
         if (bootstrap != Boolean.FALSE && kvStore != null) {
@@ -146,7 +147,7 @@ public class CompressedKVSubscription<K> implements ObjectKVSSubscription {
     }
 
     @Override
-    public void registerSubscriber(@NotNull RequestContext rc, @NotNull Subscriber subscriber) {
+    public void registerSubscriber(@NotNull RequestContext rc, @NotNull Subscriber subscriber, @NotNull Filter filter) {
         Boolean bootstrap = rc.bootstrap();
         Class eClass = rc.type();
         if (eClass == KeyValueStore.Entry.class || eClass == MapEvent.class) {
@@ -161,7 +162,7 @@ public class CompressedKVSubscription<K> implements ObjectKVSSubscription {
                 }
             }
         } else
-            registerKeySubscriber(rc, subscriber);
+            registerKeySubscriber(rc, subscriber, filter);
 
         hasSubscribers = true;
 
@@ -188,7 +189,7 @@ public class CompressedKVSubscription<K> implements ObjectKVSSubscription {
     }
 
     @Override
-    public void registerDownstream(EventConsumer subscription) {
+    public void registerDownstream(@NotNull EventConsumer subscription) {
         downstream.add(subscription);
         hasSubscribers = true;
     }

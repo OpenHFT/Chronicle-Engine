@@ -24,11 +24,13 @@ import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.api.tree.Assetted;
+import net.openhft.chronicle.engine.api.tree.RequestContext.Operation;
 import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.engine.query.Filter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 
@@ -81,14 +83,12 @@ public interface MapView<K, V> extends ConcurrentMap<K, V>,
     /**
      * Add a Subscription for the keys changed on this Map
      *
-     * @param subscriber    to add
-     * @param filter        a list of filter operations
-     * @param bootstrapOnly if {@code true} only the elements in the current bootstrap should be
-     *                      sent
+     * @param subscriber to add
+     * @param filter     a list of filter operations
      */
     void registerKeySubscriber(@NotNull Subscriber<K> subscriber,
                                @NotNull Filter filter,
-                               boolean bootstrapOnly);
+                               @NotNull Set<Operation> contextOperations);
 
 
     /**
@@ -98,13 +98,13 @@ public interface MapView<K, V> extends ConcurrentMap<K, V>,
      */
     void registerSubscriber(@NotNull Subscriber<MapEvent<K, V>> subscriber);
 
-    /**
-     * Obtain a reference the value for a key
-     *
-     * @param key to bind the reference to
-     * @return a reference object.
-     */
-    Reference<V> referenceFor(K key);
+        /**
+         * Obtain a reference the value for a key
+         *
+         * @param key to bind the reference to
+         * @return a reference object.
+         */
+        Reference<V> referenceFor(K key);
 
     /**
      * @return the type of the keys

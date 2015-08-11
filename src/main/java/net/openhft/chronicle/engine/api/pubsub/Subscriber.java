@@ -25,6 +25,8 @@ import java.util.function.Consumer;
  */
 @FunctionalInterface
 public interface Subscriber<E> extends ISubscriber, Consumer<E> {
+
+
     /**
      * Called when there is an event.
      *
@@ -41,4 +43,6 @@ public interface Subscriber<E> extends ISubscriber, Consumer<E> {
             throw Jvm.rethrow(ise);
         }
     }
+
+
 }

@@ -23,4 +23,6 @@ package net.openhft.chronicle.engine.api.pubsub;
 public interface ISubscriber {
     default void onEndOfSubscription() {
     }
+
+
 }
