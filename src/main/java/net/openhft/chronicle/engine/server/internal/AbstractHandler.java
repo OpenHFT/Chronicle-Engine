@@ -4,13 +4,12 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.wire.WireOut;
 import net.openhft.chronicle.wire.Wires;
+import net.openhft.chronicle.wire.WriteMarshallable;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.function.Consumer;
 
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
 import static net.openhft.chronicle.wire.WriteMarshallable.EMPTY;
@@ -25,6 +24,11 @@ class AbstractHandler {
     WireOut outWire = null;
     volatile boolean connectionClosed = false;
 
+    static void nullCheck(@Nullable Object o) {
+        if (o == null)
+            throw new NullPointerException();
+    }
+
     void setOutWire(@NotNull final WireOut outWire) {
         this.outWire = outWire;
     }
@@ -32,12 +36,12 @@ class AbstractHandler {
     /**
      * write and exceptions and rolls back if no data was written
      */
-    void writeData(@NotNull Bytes inBytes, @NotNull Consumer<WireOut> c) {
+    void writeData(@NotNull Bytes inBytes, @NotNull WriteMarshallable c) {
         outWire.writeDocument(false, out -> {
             final long readPosition = inBytes.readPosition();
             final long position = outWire.bytes().writePosition();
             try {
-                c.accept(outWire);
+                c.writeMarshallable(outWire);
             } catch (Throwable t) {
                 inBytes.readPosition(readPosition);
                 LOG.info("While reading " + inBytes.toDebugString(), " processing wire " + c, t);
@@ -59,11 +63,6 @@ class AbstractHandler {
                 LOG.info("\nServer Sends ( corrupted ) :\n" +
                         outWire.bytes().toDebugString());
             }
-    }
-
-    static void nullCheck(@Nullable Object o) {
-        if (o == null)
-            throw new NullPointerException();
     }
 
     public void onEndOfConnection(boolean heartbeatTimeOut) {

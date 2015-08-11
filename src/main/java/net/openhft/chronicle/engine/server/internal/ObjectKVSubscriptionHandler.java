@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 import static net.openhft.chronicle.engine.server.internal.ObjectKVSubscriptionHandler.EventId.registerTopicSubscriber;
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
@@ -41,7 +40,7 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscriptio
             final TopicSubscriber listener = new TopicSubscriber() {
                 @Override
                 public void onMessage(final Object topic, final Object message) throws InvalidSubscriberException {
-                    Consumer<WireOut> toPublish = publish -> {
+                    WriteMarshallable toPublish = publish -> {
                         publish.writeDocument(true, wire -> wire.writeEventName(tid).int64(inputTid));
                         publish.writeNotReadyDocument(false, wire -> wire.writeEventName(reply)
                                 .marshallable(m -> {

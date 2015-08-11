@@ -48,7 +48,6 @@ import java.io.StreamCorruptedException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.function.Consumer;
 
 import static net.openhft.chronicle.core.Jvm.rethrow;
 import static net.openhft.chronicle.core.util.StringUtils.endsWith;
@@ -92,37 +91,26 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
 
     @NotNull
     private final AssetTree assetTree;
-
-    @Override
-    public void onEndOfConnection(boolean heartbeatTimeOut) {
-        for (final AbstractHandler abstractHandler : new AbstractHandler[]{mapWireHandler,
-                subscriptionHandler, topologySubscriptionHandler,
-                publisherHandler, replicationHandler}) {
-            abstractHandler.onEndOfConnection(heartbeatTimeOut);
-        }
-    }
-
     @NotNull
-    private final Consumer<WireIn> metaDataConsumer;
+    private final ReadMarshallable metaDataConsumer;
     private final StringBuilder lastCsp = new StringBuilder();
     private final StringBuilder eventName = new StringBuilder();
     @NotNull
     private final SystemHandler systemHandler;
-
+    @Nullable
+    private final SessionProvider sessionProvider;
+    @Nullable
+    private final HostIdentifier hostIdentifier;
+    @Nullable
+    private final EventLoop eventLoop;
+    private final RequestContextInterner requestContextInterner = new RequestContextInterner(128);
     private WireAdapter wireAdapter;
     private View view;
     private boolean isSystemMessage = true;
     private RequestContext requestContext;
     @Nullable
     private Class viewType;
-    @Nullable
-    private final SessionProvider sessionProvider;
     private long tid;
-    @Nullable
-    private final HostIdentifier hostIdentifier;
-
-    @Nullable
-    private final EventLoop eventLoop;
 
     public EngineWireHandler(@NotNull final WireType byteToWire,
                              @NotNull final AssetTree assetTree,
@@ -152,10 +140,17 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
         this.systemHandler = new SystemHandler();
     }
 
-    private final RequestContextInterner requestContextInterner = new RequestContextInterner(128);
+    @Override
+    public void onEndOfConnection(boolean heartbeatTimeOut) {
+        for (final AbstractHandler abstractHandler : new AbstractHandler[]{mapWireHandler,
+                subscriptionHandler, topologySubscriptionHandler,
+                publisherHandler, replicationHandler}) {
+            abstractHandler.onEndOfConnection(heartbeatTimeOut);
+        }
+    }
 
     @NotNull
-    private Consumer<WireIn> wireInConsumer() {
+    private ReadMarshallable wireInConsumer() {
         return (wire) -> {
 
             // if true the next data message will be a system message
