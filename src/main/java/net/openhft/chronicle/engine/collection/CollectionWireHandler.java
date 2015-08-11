@@ -31,7 +31,6 @@ import org.slf4j.LoggerFactory;
 import java.io.StreamCorruptedException;
 import java.util.Collection;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -55,9 +54,9 @@ public class CollectionWireHandler<U, C extends Collection<U>> {
     private long tid;
     private Supplier<C> factory;
 
-    private final Consumer<WireIn> dataConsumer = new Consumer<WireIn>() {
+    private final ReadMarshallable dataConsumer = new ReadMarshallable() {
         @Override
-        public void accept(WireIn wireIn) {
+        public void readMarshallable(WireIn wire) throws IllegalStateException {
             @SuppressWarnings("ConstantConditions") final Bytes<?> outBytes = outWire.bytes();
 
             try {
@@ -66,7 +65,7 @@ public class CollectionWireHandler<U, C extends Collection<U>> {
                 @SuppressWarnings("ConstantConditions")
                 final ValueIn valueIn = inWire.readEventName(eventName);
 
-                outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64
+                outWire.writeDocument(true, w -> w.writeEventName(CoreFields.tid).int64
                         (CollectionWireHandler.this.tid));
 
                 outWire.writeDocument(false, out -> {
@@ -81,7 +80,7 @@ public class CollectionWireHandler<U, C extends Collection<U>> {
                     // note :  remove on the key-set returns a boolean and on the map returns the
                     // old value
                     if (EventId.iterator.contentEquals(eventName)) {
-                        final ValueOut valueOut = outWire.writeEventName(CoreFields.reply);
+                        final ValueOut valueOut = out.writeEventName(CoreFields.reply);
                         valueOut.sequence(v -> underlyingCollection.forEach(e -> toWire.accept(v, e)));
                         return;
                     }
@@ -194,7 +193,7 @@ public class CollectionWireHandler<U, C extends Collection<U>> {
             this.inWire = in;
             this.outWire = out;
             this.tid = tid;
-            dataConsumer.accept(in);
+            dataConsumer.readMarshallable(in);
         } catch (Exception e) {
             LOG.error("", e);
         }
