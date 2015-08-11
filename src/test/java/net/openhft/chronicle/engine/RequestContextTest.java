@@ -50,7 +50,8 @@ public class RequestContextTest {
                 "bootstrap=true,\n" +
                 "averageValueSize=0.0,\n" +
                 "entries=0,\n" +
-                "recurse=null}", rc.toString().replaceAll(", ", ",\n"));
+                "recurse=null,\n" +
+                "endSubscriptionAfterBootstrap=null}", rc.toString().replaceAll(", ", ",\n"));
         assertEquals(Boolean.TRUE, rc.putReturnsNull());
         assertEquals(Boolean.FALSE, rc.removeReturnsNull());
         assertEquals(Boolean.TRUE, rc.bootstrap());
