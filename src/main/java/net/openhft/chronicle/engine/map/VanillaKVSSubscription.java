@@ -191,7 +191,8 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
     }
 
     @Override
-    public void registerKeySubscriber(@NotNull RequestContext rc, @NotNull Subscriber<K> subscriber) {
+    public void registerKeySubscriber(@NotNull RequestContext rc,
+                                      @NotNull Subscriber<K> subscriber) {
         Boolean bootstrap = rc.bootstrap();
 
         keySubscribers.add(subscriber);

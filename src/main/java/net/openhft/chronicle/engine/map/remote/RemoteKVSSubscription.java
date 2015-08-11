@@ -61,6 +61,7 @@ public class RemoteKVSSubscription<K, V> extends AbstractRemoteSubscription<MapE
         return "/" + context.fullName() + "?view=subscription";
     }
 
+
     @Override
     public void registerTopicSubscriber(RequestContext rc, @NotNull TopicSubscriber<K, V> subscriber) {
 
@@ -135,9 +136,10 @@ public class RemoteKVSSubscription<K, V> extends AbstractRemoteSubscription<MapE
     }
 
     @Override
-    public void registerKeySubscriber(@NotNull RequestContext rc, @NotNull Subscriber<K> subscriber) {
+    public void registerKeySubscriber(RequestContext rc, Subscriber<K> subscriber) {
         registerSubscriber0(rc, subscriber);
     }
+
 
     @Override
     public boolean needsPrevious() {

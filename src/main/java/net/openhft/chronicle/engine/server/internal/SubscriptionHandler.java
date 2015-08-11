@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
 
 import static net.openhft.chronicle.engine.server.internal.SubscriptionHandler.SubscriptionEventID.*;
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
@@ -33,17 +32,15 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
 
 
     private final Throttler throttler;
-
-    public SubscriptionHandler(@NotNull final Throttler throttler) {
-        this.throttler = throttler;
-    }
-
     Wire outWire;
     T subscription;
     RequestContext requestContext;
     WireOutPublisher publisher;
     AssetTree assetTree;
 
+    public SubscriptionHandler(@NotNull final Throttler throttler) {
+        this.throttler = throttler;
+    }
 
     /**
      * after writing the tid to the wire
@@ -158,7 +155,7 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
         public void onEndOfSubscription() {
             if (!publisher.isClosed()) {
                 // no more data.
-                Consumer<WireOut> toPublish = publish -> {
+                WriteMarshallable toPublish = publish -> {
                     publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(tid));
                     publish.writeDocument(false, wire ->
                             wire.writeEventName(ObjectKVSubscriptionHandler.EventId.onEndOfSubscription).text(""));
