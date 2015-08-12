@@ -28,6 +28,7 @@ public class Filter<E> implements Marshallable, Iterable<Operation> {
             throw new UnsupportedOperationException("Must be empty");
         }
     };
+
     private List<Operation> pipeline = new ArrayList<>();
 
     public static <N> Filter<N> empty() {
@@ -35,6 +36,9 @@ public class Filter<E> implements Marshallable, Iterable<Operation> {
         return EMPTY;
     }
 
+    public boolean isEmpty() {
+        return pipeline == null || pipeline.isEmpty();
+    }
     @Override
     public void readMarshallable(@NotNull WireIn wireIn) throws IllegalStateException {
         clearPipeline();
