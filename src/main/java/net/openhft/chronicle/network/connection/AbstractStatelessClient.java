@@ -139,13 +139,14 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
 
         ConnectionDroppedException t = null;
         for (int i = 0; i < 10; i++) {
-            // pause then resend the request
-            Jvm.pause(200);
+
             try {
                 return s.get();
             } catch (ConnectionDroppedException e) {
                 t = e;
             }
+            // pause then resend the request
+            Jvm.pause(200);
         }
 
         throw t;
