@@ -40,8 +40,8 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
 
     @NotNull
     protected final TcpChannelHub hub;
-    private final long cid;
     protected final String csp;
+    private final long cid;
 
     /**
      * @param hub for this connection
@@ -138,7 +138,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
     protected <T> T attempt(@NotNull final Supplier<T> s) {
 
         ConnectionDroppedException t = null;
-        for (int i = 0; i < 10; i++) {
+        for (int i = 1; i <= 10; i++) {
 
             try {
                 return s.get();
@@ -146,7 +146,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
                 t = e;
             }
             // pause then resend the request
-            Jvm.pause(200);
+            Jvm.pause(i * i * 5);
         }
 
         throw t;
