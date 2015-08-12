@@ -121,6 +121,14 @@ public class Filter<E> implements Marshallable, Iterable<Operation> {
         return pipeline != null ? pipeline.hashCode() : 0;
     }
 
+    public int pipelineSize() {
+        return pipeline == null ? 0 : pipeline.size();
+    }
+
+    public Operation getPipeline(int index) {
+        return pipeline.get(index);
+    }
+
     /**
      * filters subscription on based on {@code net.openhft.chronicle.engine.query.Filter}
      */
