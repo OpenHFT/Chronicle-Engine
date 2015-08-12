@@ -83,7 +83,7 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
 
             final Filter filter = "filter".contentEquals(sb) ?
                     valueIn1.object(Filter.class) :
-                    Filter.EMPTY;
+                    Filter.empty();
 
             if (tidToListener.containsKey(tid)) {
                 LOG.info("Duplicate registration for tid " + tid);

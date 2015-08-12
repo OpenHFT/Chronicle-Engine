@@ -140,7 +140,7 @@ public interface AssetTree extends Closeable {
     default <E> void registerSubscriber(@NotNull String uri, Class<E> eClass, Subscriber<E> subscriber) throws AssetNotFoundException {
         RequestContext rc = requestContext(uri).type(eClass);
         acquireSubscription(rc)
-                .registerSubscriber(rc, subscriber, Filter.EMPTY);
+                .registerSubscriber(rc, subscriber, Filter.empty());
     }
 
     /**

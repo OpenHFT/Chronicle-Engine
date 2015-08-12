@@ -54,8 +54,8 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
     private final Set<EventConsumer<K, V>> downstream = new CopyOnWriteArraySet<>();
     @Nullable
     private final Asset asset;
+    Map<Subscriber, Subscriber> subscriptionDelegate = new HashMap<>();
     private KeyValueStore<K, V> kvStore;
-
 
     public VanillaKVSSubscription(@NotNull RequestContext requestContext, @NotNull Asset asset) {
         this(requestContext.viewType(), asset);
@@ -198,9 +198,6 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
 
     }
 
-    Map<Subscriber, Subscriber> subscriptionDelegate = new HashMap<>();
-
-
     @Override
     public void registerKeySubscriber(@NotNull RequestContext rc,
                                       @NotNull Subscriber<K> subscriber,
@@ -208,7 +205,7 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
         final Boolean bootstrap = rc.bootstrap();
         final Subscriber<K> sub;
 
-        if (Filter.EMPTY.equals(filter))
+        if (filter.isEmpty())
             sub = subscriber;
         else {
             sub = new Filter.FilteredSubscriber<>(filter, subscriber);

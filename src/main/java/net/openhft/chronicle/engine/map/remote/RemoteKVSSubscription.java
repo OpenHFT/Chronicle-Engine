@@ -166,7 +166,7 @@ public class RemoteKVSSubscription<K, V> extends AbstractRemoteSubscription<MapE
     @Override
     public void registerDownstream(@NotNull EventConsumer<K, V> subscription) {
         registerSubscriber(rc.clone().type(MapEvent.class).type2(null),
-                subscription::notifyEvent, Filter.EMPTY);
+                subscription::notifyEvent, Filter.empty());
     }
 
 }
