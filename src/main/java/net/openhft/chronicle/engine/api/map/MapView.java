@@ -98,13 +98,23 @@ public interface MapView<K, V> extends ConcurrentMap<K, V>,
      */
     void registerSubscriber(@NotNull Subscriber<MapEvent<K, V>> subscriber);
 
-        /**
-         * Obtain a reference the value for a key
-         *
-         * @param key to bind the reference to
-         * @return a reference object.
-         */
-        Reference<V> referenceFor(K key);
+
+    /**
+     * Add a Subscription for the MapEvents triggered by changes on this Map.
+     *
+     * @param subscriber the subscriber to the subscription
+     */
+    void registerSubscriber(@NotNull Subscriber<MapEvent<K, V>> subscriber,
+                            @NotNull Filter<MapEvent<K, V>> filter,
+                            @NotNull Set<Operation> contextOperations);
+
+    /**
+     * Obtain a reference the value for a key
+     *
+     * @param key to bind the reference to
+     * @return a reference object.
+     */
+    Reference<V> referenceFor(K key);
 
     /**
      * @return the type of the keys

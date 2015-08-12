@@ -45,6 +45,7 @@ public class ReferenceChronicleTest {
         AssetTree clientAssetTree = new VanillaAssetTree().forRemoteAccess("RemoteSubscriptionModelPerformanceTest.port", WireType.BINARY);
 
         test(clientAssetTree);
+        TCPRegistry.reset();
     }
     @Test
     public void testLocalSubscriptionMUFGChronicle() throws IOException {
@@ -56,6 +57,7 @@ public class ReferenceChronicleTest {
         TCPRegistry.createServerSocketChannelFor("RemoteSubscriptionModelPerformanceTest.port");
 
         test(serverAssetTree);
+        TCPRegistry.reset();
      }
 
     public void test(@NotNull AssetTree assetTree) {

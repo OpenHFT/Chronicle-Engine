@@ -109,6 +109,7 @@ public class SubscriptionModelPerformanceTest {
         clientAssetTree.close();
         serverEndpoint.close();
         serverAssetTree.close();
+        TCPRegistry.reset();
     }
 
     /**

@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
-import static net.openhft.chronicle.engine.query.Filter.EMPTY;
 import static net.openhft.chronicle.engine.server.internal.SubscriptionHandler.SubscriptionEventID.*;
 
 /**
@@ -80,7 +79,7 @@ abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient imp
             public void onSubscribe(@NotNull final WireOut wireOut) {
                 wireOut.writeEventName(registerSubscriber).
                         typeLiteral(CLASS_ALIASES.nameFor(rc.elementType()));
-                if (!EMPTY.equals(filter))
+                if (!Filter.empty().equals(filter))
                     wireOut.writeEventName(() -> "filter").object(filter);
             }
 

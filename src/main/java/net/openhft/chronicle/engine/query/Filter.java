@@ -21,7 +21,12 @@ import java.util.stream.Stream;
  */
 public class Filter<E> implements Marshallable, Iterable<Operation> {
 
-    public static Filter EMPTY = new Filter();
+    private static Filter EMPTY = new Filter();
+
+    public static <T> T empty() {
+        //noinspection unchecked
+        return (T) EMPTY;
+    }
 
     List<Operation> pipeline = new ArrayList<>();
 

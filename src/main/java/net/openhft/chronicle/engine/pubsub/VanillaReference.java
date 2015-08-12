@@ -66,7 +66,7 @@ public class VanillaReference<E> implements Reference<E>, View {
         underlyingMap.asset().acquireAsset(name)
                 .subscription(true)
                 .registerSubscriber(requestContext().bootstrap(bootstrap).type(eClass),
-                        subscriber, Filter.EMPTY);
+                        subscriber, Filter.empty());
     }
 
     @Override

@@ -208,7 +208,7 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
         final Boolean bootstrap = rc.bootstrap();
         final Subscriber<K> sub;
 
-        if (Filter.EMPTY.equals(filter))
+        if (Filter.empty().equals(filter))
             sub = subscriber;
         else {
             sub = new Filter.FilteredSubscriber<>(filter, subscriber);
