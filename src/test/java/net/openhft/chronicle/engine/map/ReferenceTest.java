@@ -31,8 +31,9 @@ import static org.junit.Assert.assertNotNull;
  */
 @RunWith(value = Parameterized.class)
 public class ReferenceTest {
+    public static final String NAME = "net.openhft.chronicle.engine.map.ReferenceTest.host.port";
     private static Boolean isRemote;
-    private static final String NAME = "test";
+
     @NotNull
     @Rule
     public TestName name = new TestName();
@@ -69,10 +70,10 @@ public class ReferenceTest {
         if (isRemote) {
 
             methodName(name.getMethodName());
-            TCPRegistry.createServerSocketChannelFor("SubscriptionEventTest.host.port");
-            serverEndpoint = new ServerEndpoint("SubscriptionEventTest.host.port", serverAssetTree, WIRE_TYPE);
+            TCPRegistry.createServerSocketChannelFor(ReferenceTest.NAME);
+            serverEndpoint = new ServerEndpoint(ReferenceTest.NAME, serverAssetTree, WIRE_TYPE);
 
-            assetTree = new VanillaAssetTree().forRemoteAccess("SubscriptionEventTest.host.port", WIRE_TYPE);
+            assetTree = new VanillaAssetTree().forRemoteAccess(ReferenceTest.NAME, WIRE_TYPE);
         } else
             assetTree = serverAssetTree;
 

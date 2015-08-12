@@ -20,6 +20,10 @@ import java.util.stream.IntStream;
  * Created by daniel on 16/07/2015.
  */
 public class ManyMapsTest {
+
+    public static final String NAME =
+            "ManyMapsTest.testConnectToMultipleMapsUsingTheSamePort.host.port";
+
     @Test
     @Ignore("Long running test")
     public void testConnectToMultipleMapsUsingTheSamePort() throws IOException {
@@ -29,11 +33,11 @@ public class ManyMapsTest {
         AssetTree assetTree = new VanillaAssetTree().forTesting();
 
         Map<String, Map<String, String>> _clientMaps = new HashMap<>();
-        TCPRegistry.createServerSocketChannelFor("SubscriptionEventTest.host.port");
+        TCPRegistry.createServerSocketChannelFor(NAME);
         //TODO CHENT-68 Only works with BINARY NOT TEXT.
-        ServerEndpoint serverEndpoint = new ServerEndpoint("SubscriptionEventTest.host.port", assetTree, WireType.BINARY);
+        ServerEndpoint serverEndpoint = new ServerEndpoint(NAME, assetTree, WireType.BINARY);
 
-        AssetTree clientAssetTree = new VanillaAssetTree().forRemoteAccess("SubscriptionEventTest.host.port", WireType.BINARY);
+        AssetTree clientAssetTree = new VanillaAssetTree().forRemoteAccess(NAME, WireType.BINARY);
         System.out.println("Creating maps.");
         AtomicInteger count = new AtomicInteger();
         IntStream.rangeClosed(1, noOfMaps).forEach(i -> {
