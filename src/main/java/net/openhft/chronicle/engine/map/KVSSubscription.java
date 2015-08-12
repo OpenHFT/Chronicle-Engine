@@ -41,6 +41,12 @@ public interface KVSSubscription<K, V> extends Subscription<MapEvent<K, V>>, ISu
                                @NotNull Subscriber<K> subscriber,
                                @NotNull Filter<K> filter);
 
+    @Deprecated
+    default void registerKeySubscriber(@NotNull RequestContext rc,
+                                       @NotNull Subscriber<K> subscriber) {
+        registerKeySubscriber(rc, subscriber, Filter.EMPTY);
+    }
+
     void registerTopicSubscriber(@NotNull RequestContext rc,
                                  @NotNull TopicSubscriber<K, V> subscriber);
 
