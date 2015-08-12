@@ -4,6 +4,7 @@ import net.openhft.chronicle.core.util.SerializableFunction;
 import net.openhft.chronicle.core.util.SerializablePredicate;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
+import net.openhft.chronicle.engine.api.query.Query;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
@@ -27,13 +28,22 @@ public class Filter<E> implements Marshallable, Iterable<Operation> {
 
     @Override
     public void readMarshallable(@NotNull WireIn wireIn) throws IllegalStateException {
-        pipeline = new ArrayList<>();
-        wireIn.read(() -> "pipeline").sequence(s -> pipeline.add((Operation) s.object(Object.class)));
+        if (pipeline == null)
+            pipeline = new ArrayList<>();
+        else
+            pipeline.clear();
+        wireIn.read(
+                () -> "pipeline").sequence(s -> {
+            while (s.hasNextSequenceItem())
+                pipeline.add((Operation) s.object(Object.class));
+        });
     }
 
     @Override
     public void writeMarshallable(@NotNull WireOut wireOut) {
-        wireOut.write(() -> "pipeline").sequence(w -> pipeline.forEach(w::object));
+        wireOut.write(() -> "pipeline")
+                .sequence(
+                        w -> pipeline.forEach(w::object));
     }
 
     @Override
@@ -58,6 +68,38 @@ public class Filter<E> implements Marshallable, Iterable<Operation> {
         return "Filter{" +
                 "pipeline=" + pipeline +
                 '}';
+    }
+
+    public void addFilter(SerializablePredicate<? super E> predicate) {
+        pipeline.add(new Operation(Operation.OperationType.FILTER, predicate));
+    }
+
+    public <R> void addMap(SerializableFunction<? super E, ? extends R> mapper) {
+        pipeline.add(new Operation(Operation.OperationType.MAP, mapper));
+    }
+
+    public void addProject(Class rClass) {
+        pipeline.add(new Operation(Operation.OperationType.PROJECT, rClass));
+    }
+
+    public <R> void addFlatMap(SerializableFunction<? super E, ? extends Query<? extends R>> mapper) {
+        pipeline.add(new Operation(Operation.OperationType.FLAT_MAP, mapper));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Filter)) return false;
+
+        Filter<?> filter = (Filter<?>) o;
+
+        return !(pipeline != null ? !pipeline.equals(filter.pipeline) : filter.pipeline != null);
+
+    }
+
+    @Override
+    public int hashCode() {
+        return pipeline != null ? pipeline.hashCode() : 0;
     }
 
     /**
@@ -114,22 +156,5 @@ public class Filter<E> implements Marshallable, Iterable<Operation> {
         public void onEndOfSubscription() {
             subscriber.onEndOfSubscription();
         }
-    }
-
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Filter)) return false;
-
-        Filter<?> filter = (Filter<?>) o;
-
-        return !(pipeline != null ? !pipeline.equals(filter.pipeline) : filter.pipeline != null);
-
-    }
-
-    @Override
-    public int hashCode() {
-        return pipeline != null ? pipeline.hashCode() : 0;
     }
 }

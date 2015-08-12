@@ -24,7 +24,6 @@ import static java.util.EnumSet.of;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.engine.api.tree.RequestContext.Operation.BOOTSTRAP;
 import static net.openhft.chronicle.engine.api.tree.RequestContext.Operation.END_SUBSCRIPTION_AFTER_BOOTSTRAP;
-import static net.openhft.chronicle.engine.query.Operation.OperationType.*;
 
 /**
  * @author Rob Austin.
@@ -40,28 +39,28 @@ public class RemoteQuery<E> implements Query<E> {
 
     @Override
     public Query<E> filter(SerializablePredicate<? super E> predicate) {
-        filter.add(predicate, FILTER);
+        filter.addFilter(predicate);
         return this;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public <R> Query<R> map(SerializableFunction<? super E, ? extends R> mapper) {
-        filter.add(mapper, MAP);
+        filter.addMap(mapper);
         return (Query<R>) this;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public <R> Query<R> project(Class<R> rClass) {
-        filter.add(rClass, PROJECT);
+        filter.addProject(rClass);
         return (Query<R>) this;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public <R> Query<R> flatMap(SerializableFunction<? super E, ? extends Query<? extends R>> mapper) {
-        filter.add(mapper, FLAT_MAP);
+        filter.addFlatMap(mapper);
         return (Query<R>) this;
     }
 

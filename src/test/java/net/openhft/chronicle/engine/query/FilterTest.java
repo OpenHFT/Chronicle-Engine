@@ -1,8 +1,11 @@
 package net.openhft.chronicle.engine.query;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.core.util.SerializablePredicate;
+import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
+import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.wire.BinaryWire;
+import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import org.junit.Assert;
@@ -25,6 +28,12 @@ import java.util.List;
 @RunWith(value = Parameterized.class)
 public class FilterTest extends ThreadMonitoringTest {
 
+    static {
+        // dummy call to ensure all the aliases are initialised.
+        RequestContext.requestContext();
+        ClassAliasPool.CLASS_ALIASES.addAlias(FilterTest.class);
+    }
+
     private final WireType wireType;
 
     @Rule
@@ -39,8 +48,9 @@ public class FilterTest extends ThreadMonitoringTest {
     public static Collection<Object[]> data() throws IOException {
 
         final List<Object[]> list = new ArrayList<>();
-        //    list.add(new Object[]{WireType.BINARY});
+//            list.add(new Object[]{WireType.RAW});
         list.add(new Object[]{WireType.TEXT});
+        list.add(new Object[]{WireType.BINARY});
         return list;
     }
 
@@ -51,13 +61,22 @@ public class FilterTest extends ThreadMonitoringTest {
         final Bytes b = Bytes.elasticByteBuffer();
         final Wire wire = wireType.apply(b);
 
-        Filter expected = new Filter();
-        expected.add((SerializablePredicate) o -> true, Operation.OperationType.FILTER);
+        Filter<String> expected = new Filter<>();
+        expected.addFilter(o -> true);
 
         wire.write(() -> "filter").object(expected);
 
+        if (wireType == WireType.TEXT) {
+            System.out.println(wireType + ": " + b);
+        } else if (wireType == WireType.BINARY) {
+            final Bytes b2 = Bytes.elasticByteBuffer();
+            Bytes bytes = b.bytesForRead();
+            new BinaryWire(bytes).copyTo(new TextWire(b2));
+            System.out.println(wireType + ": " + b2);
+        }
         final Filter actual = wire.read(() -> "filter").object(Filter.class);
 
+        assert actual != null;
         Assert.assertEquals(1, actual.pipeline.size());
         Assert.assertEquals(Operation.OperationType.FILTER, ((Operation) actual.pipeline.get(0)).op());
     }
