@@ -7,6 +7,10 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.query.RemoteQuery;
 import org.jetbrains.annotations.NotNull;
 
+import static java.util.EnumSet.of;
+import static net.openhft.chronicle.engine.api.tree.RequestContext.Operation.BOOTSTRAP;
+import static net.openhft.chronicle.engine.api.tree.RequestContext.Operation.END_SUBSCRIPTION_AFTER_BOOTSTRAP;
+
 /**
  * @author Rob Austin.
  */
@@ -25,6 +29,9 @@ public class RemoteKeySetView<K, V> extends VanillaKeySetView<K, V> {
     @Override
     @NotNull
     public Query<K> query() {
-        return new RemoteQuery<>(mapView);
+        return new RemoteQuery<>((subscriber, filter1, contextOperations) -> mapView.registerKeySubscriber(
+                subscriber,
+                filter1,
+                of(BOOTSTRAP, END_SUBSCRIPTION_AFTER_BOOTSTRAP)));
     }
 }

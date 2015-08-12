@@ -3,15 +3,16 @@ package net.openhft.chronicle.engine.query;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.util.SerializableFunction;
 import net.openhft.chronicle.core.util.SerializablePredicate;
-import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.query.Query;
+import net.openhft.chronicle.engine.api.tree.RequestContext;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -30,11 +31,11 @@ import static net.openhft.chronicle.engine.query.Operation.OperationType.*;
  */
 public class RemoteQuery<E> implements Query<E> {
     private static final Logger LOG = LoggerFactory.getLogger(RemoteQuery.class);
-    private final MapView<E, ?> mapView;
     private final Filter<E> filter = new Filter<>();
+    private final Subscribable<E> subscribable;
 
-    public RemoteQuery(@NotNull MapView<E, ?> mapView) {
-        this.mapView = mapView;
+    public RemoteQuery(final Subscribable<E> eSubscribable) {
+        this.subscribable = eSubscribable;
     }
 
     @Override
@@ -43,18 +44,21 @@ public class RemoteQuery<E> implements Query<E> {
         return this;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <R> Query<R> map(SerializableFunction<? super E, ? extends R> mapper) {
         filter.add(mapper, MAP);
         return (Query<R>) this;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <R> Query<R> project(Class<R> rClass) {
         filter.add(rClass, PROJECT);
         return (Query<R>) this;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <R> Query<R> flatMap(SerializableFunction<? super E, ? extends Query<? extends R>> mapper) {
         filter.add(mapper, FLAT_MAP);
@@ -68,15 +72,21 @@ public class RemoteQuery<E> implements Query<E> {
 
     @Override
     public void subscribe(Consumer<? super E> action) {
-        mapView.registerKeySubscriber(action::accept);
+        subscribable.subscribe(
+                action::accept,
+                filter,
+                of(BOOTSTRAP));
     }
 
     @Override
     public void forEach(Consumer<? super E> action) {
+        forEach2(action);
+    }
 
+    private void forEach2(Consumer<? super E> action) {
         final BlockingQueue<E> queue = new ArrayBlockingQueue<E>(128);
         final AtomicBoolean finished = new AtomicBoolean();
-        final Thread thread = Thread.currentThread();
+
         final Subscriber<E> accept = new Subscriber<E>() {
 
             @Override
@@ -106,7 +116,7 @@ public class RemoteQuery<E> implements Query<E> {
             }
         };
 
-        mapView.registerKeySubscriber(
+        subscribable.subscribe(
                 accept,
                 filter,
                 of(BOOTSTRAP, END_SUBSCRIPTION_AFTER_BOOTSTRAP));
@@ -117,6 +127,7 @@ public class RemoteQuery<E> implements Query<E> {
 
                 final E message = queue.poll();
                 if (message == null) {
+                    //noinspection SynchronizationOnLocalVariableOrMethodParameter
                     synchronized (queue) {
                         queue.wait(1000); // 1 SECONDS
                     }
@@ -130,8 +141,6 @@ public class RemoteQuery<E> implements Query<E> {
         }
 
         queue.forEach(action::accept);
-
-
     }
 
     private void dumpThreads() {
@@ -154,4 +163,9 @@ public class RemoteQuery<E> implements Query<E> {
         return collector.finisher().apply(container);
     }
 
+    public interface Subscribable<E> {
+        void subscribe(@NotNull Subscriber<E> subscriber,
+                       @NotNull Filter<E> filter,
+                       @NotNull Set<RequestContext.Operation> contextOperations);
+    }
 }
