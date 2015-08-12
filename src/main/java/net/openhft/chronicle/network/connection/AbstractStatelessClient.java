@@ -139,6 +139,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
 
         ConnectionDroppedException t = null;
         for (int i = 1; i <= 10; i++) {
+
             try {
                 return s.get();
             } catch (ConnectionDroppedException e) {
