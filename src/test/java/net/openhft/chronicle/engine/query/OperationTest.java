@@ -6,6 +6,7 @@ import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.Wires;
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -51,12 +52,9 @@ public class OperationTest extends ThreadMonitoringTest {
         final Operation operation = new Operation(Operation.OperationType.FILTER, (SerializablePredicate) o -> true);
         wire.write(() -> "operation").object(operation);
 
-
         System.out.println(Wires.fromSizePrefixedBlobs(b));
         final Object object = wire.read(() -> "operation").object(Object.class);
 
-        System.out.println(object);
-
-
+        Assert.assertNotNull(object);
     }
 }
