@@ -148,17 +148,12 @@ public class ReplicationTest3WayBoostrap {
         map3.put("hello3", "world3");
         Jvm.pause(2);
 
-
-
         serverEndpoint1 = new ServerEndpoint("host.port1", tree1, writeType);
         serverEndpoint2 = new ServerEndpoint("host.port2", tree2, writeType);
         serverEndpoint3 = new ServerEndpoint("host.port3", tree3, writeType);
 
         YamlLogging.showServerWrites = true;
         YamlLogging.showServerReads = true;
-
-
-
 
         for (int i = 1; i <= 50; i++) {
             if (map1.size() == 3 && map2.size() == 3 && map3.size() == 3)

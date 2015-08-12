@@ -51,6 +51,11 @@ public class RedisEmulatorTest {
         myDoubleHash = clientAssetTree.acquireMap("/myDoubleHash", String.class, Double.class);
     }
 
+
+    @AfterClass
+    public static void down() throws IOException {
+        TCPRegistry.reset();
+    }
     @Before
     public void before(){
         assertEquals("OK", flushdb(myStringHash));

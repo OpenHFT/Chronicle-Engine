@@ -167,6 +167,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
 
 
         verify(listener);
+        TCPRegistry.reset();
     }
 
 

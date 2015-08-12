@@ -34,7 +34,7 @@ import java.util.Set;
  */
 public class VanillaEntrySetView<K, MV, V> extends AbstractCollection<Entry<K, V>> implements EntrySetView<K, MV, V> {
     private final Asset asset;
-    private final MapView<K, V> mapView;
+    protected final MapView<K, V> mapView;
 
     public VanillaEntrySetView(RequestContext context, Asset asset, @NotNull MapView<K, V> mapView) throws AssetNotFoundException {
         this.asset = asset;

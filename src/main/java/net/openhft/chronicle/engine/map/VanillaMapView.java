@@ -322,7 +322,17 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
     @Override
     public void registerSubscriber(@NotNull Subscriber<MapEvent<K, V>> subscriber) {
         KVSSubscription<K, V> subscription = (KVSSubscription<K, V>) asset.subscription(true);
-        subscription.registerSubscriber(RequestContext.requestContext().bootstrap(true).type(MapEvent.class), subscriber, null);
+        subscription.registerSubscriber(RequestContext.requestContext().bootstrap(true).type
+                (MapEvent.class), subscriber, Filter.empty());
+    }
+
+    @Override
+    public void registerSubscriber(@NotNull Subscriber<MapEvent<K, V>> subscriber,
+                                   @NotNull Filter<MapEvent<K, V>> filter,
+                                   @NotNull Set<Operation> contextOperations) {
+        KVSSubscription<K, V> subscription = (KVSSubscription<K, V>) asset.subscription(true);
+        subscription.registerSubscriber(RequestContext.requestContext().bootstrap(true)
+                .type(MapEvent.class), subscriber, filter);
     }
 
     @NotNull

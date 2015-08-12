@@ -98,6 +98,7 @@ public class RemoteSubscriptionModelPerformanceTest {
     public void tearDown() throws IOException {
 //        System.out.println("Native memory used "+OS.memory().nativeMemoryUsed());
 //        System.gc();
+
     }
 
     @AfterClass
