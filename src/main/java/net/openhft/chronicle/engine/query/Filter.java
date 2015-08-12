@@ -4,13 +4,14 @@ import net.openhft.chronicle.core.util.SerializableFunction;
 import net.openhft.chronicle.core.util.SerializablePredicate;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
-import net.openhft.chronicle.wire.*;
+import net.openhft.chronicle.wire.Marshallable;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -27,27 +28,12 @@ public class Filter<E> implements Marshallable, Iterable<Operation> {
     @Override
     public void readMarshallable(@NotNull WireIn wireIn) throws IllegalStateException {
         pipeline = new ArrayList<>();
-        wireIn.read(() -> "pipeline").sequence(new Consumer<ValueIn>() {
-            @Override
-            public void accept(ValueIn s) {
-                pipeline.add((Operation) s.object(Object.class));
-            }
-        });
+        wireIn.read(() -> "pipeline").sequence(s -> pipeline.add((Operation) s.object(Object.class)));
     }
 
     @Override
     public void writeMarshallable(@NotNull WireOut wireOut) {
-        wireOut.write(() -> "pipeline").sequence(new Consumer<ValueOut>() {
-            @Override
-            public void accept(ValueOut w) {
-                pipeline.forEach(new Consumer<Operation>() {
-                    @Override
-                    public void accept(Operation object) {
-                        w.object(object);
-                    }
-                });
-            }
-        });
+        wireOut.write(() -> "pipeline").sequence(w -> pipeline.forEach(w::object));
     }
 
     @Override

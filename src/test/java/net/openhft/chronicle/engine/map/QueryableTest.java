@@ -60,9 +60,9 @@ public class QueryableTest extends ThreadMonitoringTest {
     public static Collection<Object[]> data() throws IOException {
 
         final List<Object[]> list = new ArrayList<>();
-        //  list.add(new Object[]{Boolean.FALSE, WireType.BINARY});
-        //list.add(new Object[]{Boolean.TRUE, WireType.BINARY});
-        //  list.add(new Object[]{Boolean.FALSE, WireType.TEXT});
+        list.add(new Object[]{Boolean.FALSE, WireType.BINARY});
+        //  list.add(new Object[]{Boolean.TRUE, WireType.BINARY});
+        list.add(new Object[]{Boolean.FALSE, WireType.TEXT});
         list.add(new Object[]{Boolean.TRUE, WireType.TEXT});
 
         return list;
