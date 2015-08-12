@@ -25,13 +25,11 @@ public class RemoteKeySetView<K, V> extends VanillaKeySetView<K, V> {
         this.mapView = mapView;
     }
 
-
     @Override
     @NotNull
     public Query<K> query() {
-        return new RemoteQuery<>((subscriber, filter1, contextOperations) -> mapView.registerKeySubscriber(
-                subscriber,
-                filter1,
-                of(BOOTSTRAP, END_SUBSCRIPTION_AFTER_BOOTSTRAP)));
+        return new RemoteQuery<>((subscriber, filter, contextOperations) ->
+                mapView.registerKeySubscriber(subscriber, filter,
+                        of(BOOTSTRAP, END_SUBSCRIPTION_AFTER_BOOTSTRAP)));
     }
 }
