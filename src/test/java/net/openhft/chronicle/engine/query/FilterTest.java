@@ -49,14 +49,14 @@ public class FilterTest extends ThreadMonitoringTest {
     public void test() throws Exception {
 
         final Bytes b = Bytes.elasticByteBuffer();
-        final Wire textWire = wireType.apply(b);
+        final Wire wire = wireType.apply(b);
 
         Filter expected = new Filter();
         expected.add((SerializablePredicate) o -> true, Operation.OperationType.FILTER);
 
-        textWire.write(() -> "filter").object(expected);
+        wire.write(() -> "filter").object(expected);
 
-        final Filter actual = textWire.read(() -> "filter").object(Filter.class);
+        final Filter actual = wire.read(() -> "filter").object(Filter.class);
 
         Assert.assertEquals(1, actual.pipeline.size());
         Assert.assertEquals(Operation.OperationType.FILTER, ((Operation) actual.pipeline.get(0)).op());

@@ -46,14 +46,14 @@ public class OperationTest extends ThreadMonitoringTest {
     public void test() throws Exception {
 
         final Bytes b = Bytes.elasticByteBuffer();
-        final Wire textWire = wireType.apply(b);
+        final Wire wire = wireType.apply(b);
 
         final Operation operation = new Operation(Operation.OperationType.FILTER, (SerializablePredicate) o -> true);
-        textWire.write(() -> "operation").object(operation);
+        wire.write(() -> "operation").object(operation);
 
 
         System.out.println(Wires.fromSizePrefixedBlobs(b));
-        final Object object = textWire.read(() -> "operation").object(Object.class);
+        final Object object = wire.read(() -> "operation").object(Object.class);
 
         System.out.println(object);
 
