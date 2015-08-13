@@ -339,7 +339,7 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
     }
 
     private void logYamlToStandardOut(@NotNull WireIn in) {
-        if (Jvm.IS_DEBUG && YamlLogging.showServerReads) {
+        if (Jvm.isDebug() && YamlLogging.showServerReads) {
             try {
                 LOG.info("\nServer Receives:\n" +
                         Wires.fromSizePrefixedBinaryToText(in.bytes()));
