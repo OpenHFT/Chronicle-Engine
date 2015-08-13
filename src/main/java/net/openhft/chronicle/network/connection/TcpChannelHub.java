@@ -764,6 +764,11 @@ public class TcpChannelHub implements View, Closeable {
                     LOG.debug("tid=" + tid + " of client request");
 
                 bytes.clear();
+
+
+                // this check ensure that a put does not occur while currently re-subscribing
+                outBytesLock().isHeldByCurrentThread();
+
                 map.put(tid, bytes);
                 do {
                     bytes.wait(timeoutTimeMs);
@@ -786,9 +791,13 @@ public class TcpChannelHub implements View, Closeable {
         }
 
         void subscribe(@NotNull final AsyncSubscription asyncSubscription, boolean tryLock) {
-            // we add a synchronize to ensure that the asyncSubscription is added before map before the clientChannel is assigned
+            // we add a synchronize to ensure that the asyncSubscription is added before map before
+            // the clientChannel is assigned
             synchronized (this) {
                 if (clientChannel == null) {
+
+                    // this check ensure that a put does not occur while currently re-subscribing
+                    outBytesLock().isHeldByCurrentThread();
 
                     map.put(asyncSubscription.tid(), asyncSubscription);
                     if (LOG.isDebugEnabled())
@@ -809,6 +818,10 @@ public class TcpChannelHub implements View, Closeable {
                 reentrantLock.lock();
             }
             try {
+
+                // this check ensure that a put does not occur while currently re-subscribing
+                outBytesLock().isHeldByCurrentThread();
+
                 map.put(asyncSubscription.tid(), asyncSubscription);
 
                 asyncSubscription.applySubscribe();
