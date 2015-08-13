@@ -412,7 +412,6 @@ public class TcpChannelHub implements View, Closeable {
         } catch (Exception e) {
             LOG.error("", e);
             closeSocket();
-            //reconnect = true;
             throw new ConnectionDroppedException(e);
         }
     }
@@ -421,10 +420,10 @@ public class TcpChannelHub implements View, Closeable {
 
         try {
             return tcpSocketConsumer.syncBlockingReadSocket(timeoutTime, tid);
-        } catch (@NotNull IORuntimeException | AssertionError | ConnectionDroppedException e) {
+        } catch (ConnectionDroppedException e) {
             closeSocket();
             throw e;
-        } catch (RuntimeException e) {
+        } catch (@NotNull AssertionError | RuntimeException e) {
             LOG.error("", e);
             closeSocket();
             throw e;
