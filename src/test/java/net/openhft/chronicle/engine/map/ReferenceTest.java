@@ -47,10 +47,7 @@ public class ReferenceTest {
     public ReferenceTest(Object isRemote, Object wireType) {
         ReferenceTest.isRemote = (Boolean) isRemote;
 
-        YamlLogging.clientReads = true;
-        YamlLogging.clientWrites = true;
-        YamlLogging.showServerReads = true;
-        YamlLogging.showServerWrites = true;
+        YamlLogging.setAll(true);
     }
 
     @Parameterized.Parameters

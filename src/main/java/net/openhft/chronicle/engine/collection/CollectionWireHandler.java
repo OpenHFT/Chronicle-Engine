@@ -21,6 +21,7 @@ package net.openhft.chronicle.engine.collection;
  */
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
@@ -153,7 +154,7 @@ public class CollectionWireHandler<U, C extends Collection<U>> {
                 LOG.error("", e);
             } finally {
 
-                if (YamlLogging.showServerWrites) {
+                if (Jvm.isDebug() && YamlLogging.showServerWrites) {
                     long len = outBytes.writePosition();
                     if (len >= SIZE_OF_SIZE) {
                         String s = Wires.fromSizePrefixedBinaryToText(outBytes);
