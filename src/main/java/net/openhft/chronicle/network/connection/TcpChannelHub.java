@@ -125,7 +125,7 @@ public class TcpChannelHub implements View, Closeable {
     static void logToStandardOutMessageReceived(@NotNull Wire wire) {
         final Bytes<?> bytes = wire.bytes();
 
-        if (!Jvm.isDebug() || !YamlLogging.clientReads)
+        if (!YamlLogging.clientReads)
             return;
 
         final long position = bytes.writePosition();
@@ -932,6 +932,8 @@ public class TcpChannelHub implements View, Closeable {
                     if (o == null) {
                         o = omap.get(tid);
                         if (o != null) {
+                            blockingRead(inWire, messageSize);
+                            logToStandardOutMessageReceived(inWire);
                             throw new AssertionError("Found tid=" + tid + " in the old map.");
                         }
                     } else {
