@@ -259,17 +259,26 @@ public class TcpChannelHub implements View, Closeable {
 
     private synchronized void doHandShaking(@NotNull SocketChannel socketChannel) throws IOException {
 
-        final SessionDetails sessionDetails = sessionDetails();
-        handShakingWire.clear();
-        handShakingWire.bytes().clear();
-        handShakingWire.writeDocument(false, wireOut -> {
-            if (sessionDetails == null)
-                wireOut.writeEventName(userid).text(getProperty("user.name"));
-            else
-                wireOut.writeEventName(userid).text(sessionDetails.userId());
-        });
+        outBytesLock().lock();
+        try {
 
-        writeSocket1(handShakingWire, timeoutMs, socketChannel);
+            clear(inWire);
+            clear(outWire);
+
+            final SessionDetails sessionDetails = sessionDetails();
+            handShakingWire.clear();
+            handShakingWire.bytes().clear();
+            handShakingWire.writeDocument(false, wireOut -> {
+                if (sessionDetails == null)
+                    wireOut.writeEventName(userid).text(getProperty("user.name"));
+                else
+                    wireOut.writeEventName(userid).text(sessionDetails.userId());
+            });
+
+            writeSocket1(handShakingWire, timeoutMs, socketChannel);
+        } finally {
+            outBytesLock().unlock();
+        }
 
     }
 
@@ -1255,12 +1264,8 @@ public class TcpChannelHub implements View, Closeable {
         }
 
         private void attemptConnect() throws IOException {
-
             tid = 0;
             omap.clear();
-            clear(inWire);
-            clear(outWire);
-
             long start = System.currentTimeMillis();
             socketAddressSupplier.startAtFirstAddress();
 
