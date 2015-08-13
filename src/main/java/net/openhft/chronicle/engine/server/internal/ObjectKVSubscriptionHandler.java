@@ -38,8 +38,12 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscriptio
             }
 
             final TopicSubscriber listener = new TopicSubscriber() {
+                volatile boolean subscriptionEnded;
+
                 @Override
                 public void onMessage(final Object topic, final Object message) throws InvalidSubscriberException {
+                    assert !subscriptionEnded : "we received this message after the " +
+                            "subscription has ended " + message;
                     WriteMarshallable toPublish = publish -> {
                         publish.writeDocument(true, wire -> wire.writeEventName(tid).int64(inputTid));
                         publish.writeNotReadyDocument(false, wire -> wire.writeEventName(reply)
@@ -52,6 +56,7 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscriptio
                 }
 
                 public void onEndOfSubscription() {
+                    subscriptionEnded = true;
                     if (!publisher.isClosed()) {
                         publisher.add(publish -> {
                             publish.writeDocument(true, wire ->

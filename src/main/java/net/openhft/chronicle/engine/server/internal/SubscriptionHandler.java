@@ -131,14 +131,15 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
 
     class LocalSubscriber implements Subscriber<Object> {
         private final Long tid;
-
+        volatile boolean subscriptionEnded;
         LocalSubscriber(Long tid) {
             this.tid = tid;
         }
 
         @Override
         public void onMessage(Object e) throws InvalidSubscriberException {
-
+            assert !subscriptionEnded : "we received this message after the " +
+                    "subscription has ended " + e;
             final Runnable r = () -> publisher.add(p -> {
                 p.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(tid));
                 p.writeNotReadyDocument(false, wire -> wire.write(reply).object(e));
@@ -160,6 +161,7 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
 
         @Override
         public void onEndOfSubscription() {
+            subscriptionEnded = true;
             if (!publisher.isClosed()) {
                 // no more data.
                 WriteMarshallable toPublish = publish -> {
