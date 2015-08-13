@@ -922,14 +922,12 @@ public class TcpChannelHub implements View, Closeable {
                         clear(inWire);
                     }
                 }
+
             } catch (Throwable e) {
                 if (!isShutdown())
                     LOG.error("", e);
             } finally {
-                tid = -1;
-                LOG.info("Shutting down....");
                 closeSocket();
-                stop();
             }
         }
 
