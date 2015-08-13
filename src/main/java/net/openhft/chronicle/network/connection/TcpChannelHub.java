@@ -150,6 +150,33 @@ public class TcpChannelHub implements View, Closeable {
         }
     }
 
+
+    static void logToStandardOutMessageReceivedInERROR(@NotNull Wire wire) {
+        final Bytes<?> bytes = wire.bytes();
+
+
+        final long position = bytes.writePosition();
+        final long limit = bytes.writeLimit();
+        try {
+            try {
+
+                LOG.info("\nreceives IN ERROR:\n" +
+                        "```yaml\n" +
+                        fromSizePrefixedBinaryToText(bytes) +
+                        "```\n");
+                YamlLogging.title = "";
+                YamlLogging.writeMessage = "";
+            } catch (Exception e) {
+
+                String x = Bytes.toString(bytes);
+                LOG.error(x, e);
+            }
+        } finally {
+            bytes.writeLimit(limit);
+            bytes.writePosition(position);
+        }
+    }
+
     @Nullable
     SocketChannel openSocketChannel()
             throws IOException {
@@ -186,7 +213,6 @@ public class TcpChannelHub implements View, Closeable {
         if (LOG.isDebugEnabled())
             LOG.debug("disconnected to remoteAddress=" + socketAddressSupplier);
         tcpSocketConsumer.onConnectionClosed();
-
 
     }
 
@@ -250,6 +276,7 @@ public class TcpChannelHub implements View, Closeable {
      * closes the existing connections
      */
     protected synchronized void closeSocket() {
+
         SocketChannel clientChannel = this.clientChannel;
         if (clientChannel != null) {
 
@@ -291,7 +318,6 @@ public class TcpChannelHub implements View, Closeable {
             return;
 
         sendCloseMessage();
-
 
         closed = true;
         tcpSocketConsumer.stop();
@@ -839,7 +865,11 @@ public class TcpChannelHub implements View, Closeable {
                         // read the data
                         if (isData(header)) {
                             assert messageSize < Integer.MAX_VALUE;
-                            processData(tid, isReady(header), header, (int) messageSize, inWire);
+                            final boolean clearTid = processData(tid, isReady(header), header, (int) messageSize,
+                                    inWire);
+                            if (clearTid)
+                                tid = -1;
+
                         } else {
                             // read  meta data - get the tid
                             blockingRead(inWire, messageSize);
@@ -850,10 +880,12 @@ public class TcpChannelHub implements View, Closeable {
                         }
 
                     } catch (ClosedChannelException e) {
+                        tid = -1;
                         break;
                     } catch (@NotNull IOException | IORuntimeException |
                             ConnectionDroppedException e) {
 
+                        tid = -1;
                         if (isShutdown()) {
                             break;
                         } else {
@@ -870,6 +902,7 @@ public class TcpChannelHub implements View, Closeable {
                 if (!isShutdown())
                     LOG.error("", e);
             } finally {
+                tid = -1;
                 LOG.info("Shutting down....");
                 closeSocket();
                 stop();
@@ -902,14 +935,16 @@ public class TcpChannelHub implements View, Closeable {
          * @param header      message size in header form
          * @param messageSize the sizeof the wire message
          * @param inWire      the location the data will be writen to
+         * @return {@code true} if the tid should not be used again
          * @throws IOException
          */
-        private void processData(final long tid,
-                                 final boolean isReady,
-                                 final int header,
-                                 final int messageSize,
-                                 @NotNull Wire inWire) throws IOException, InterruptedException {
-
+        private boolean processData(final long tid,
+                                    final boolean isReady,
+                                    final int header,
+                                    final int messageSize,
+                                    @NotNull Wire inWire) throws IOException, InterruptedException {
+            assert tid != -1;
+            boolean isLastMessageForThisTid = false;
             long startTime = 0;
             Object o = null;
 
@@ -920,7 +955,7 @@ public class TcpChannelHub implements View, Closeable {
 
                 // this can occur if we received a shutdown
                 if (c == null)
-                    return;
+                    return false;
 
                 // this loop if to handle the rare case where we receive the tid before its been registered by this class
                 for (; !isShutdown() && c.isOpen(); ) {
@@ -933,12 +968,16 @@ public class TcpChannelHub implements View, Closeable {
                         o = omap.get(tid);
                         if (o != null) {
                             blockingRead(inWire, messageSize);
-                            logToStandardOutMessageReceived(inWire);
+
+                            logToStandardOutMessageReceivedInERROR(inWire);
                             throw new AssertionError("Found tid=" + tid + " in the old map.");
                         }
                     } else {
-                        if (isReady && (o instanceof Bytes || o instanceof AsyncTemporarySubscription))
+                        if (isReady && (o instanceof Bytes || o instanceof
+                                AsyncTemporarySubscription)) {
                             omap.put(tid, map.remove(tid));
+                            isLastMessageForThisTid = true;
+                        }
                         break;
                     }
 
@@ -960,14 +999,14 @@ public class TcpChannelHub implements View, Closeable {
                                 "sometime if " +
                                 "the subscription has just become unregistered ( an the server " +
                                 "has not yet processed the unregister event ) ");
-                        return;
+                        return isLastMessageForThisTid;
 
                     }
                 }
 
                 // this can occur if we received a shutdown
                 if (o == null)
-                    return;
+                    return isLastMessageForThisTid;
 
             }
 
@@ -976,7 +1015,7 @@ public class TcpChannelHub implements View, Closeable {
             if (tid == 0) {
 
                 processServerSystemMessage(header, messageSize);
-                return;
+                return isLastMessageForThisTid;
             }
 
             // for async
@@ -1010,6 +1049,7 @@ public class TcpChannelHub implements View, Closeable {
                     bytes.notifyAll();
                 }
             }
+            return isLastMessageForThisTid;
         }
 
         /**
@@ -1262,6 +1302,9 @@ public class TcpChannelHub implements View, Closeable {
                             pause(1000);
                         }
                     }
+
+                    tid = 0;
+                    omap.clear();
 
                     // resets the heartbeat timer
                     onMessageReceived();

@@ -37,8 +37,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.*;
 
 /**
  * test using the listener both remotely or locally via the engine
@@ -163,14 +162,14 @@ public class BootStrapTests {
 
             {
                 map1 = client1.acquireMap(NAME, String.class, String.class);
-                Queue q1 = new ConcurrentLinkedQueue();
+                BlockingQueue q1 = new ArrayBlockingQueue(1);
                 client1.registerSubscriber(NAME, MapEvent.class, q1::add);
 
 
                 map1.put("hello", "world1");
 
                 Assert.assertEquals("world1", map1.get("hello"));
-                final String poll = q1.poll().toString();
+                final String poll = q1.poll(10, TimeUnit.SECONDS).toString();
                 Assert.assertEquals("InsertedEvent{assetName='/test', key=hello, value=world1}",
                         poll);
             }
