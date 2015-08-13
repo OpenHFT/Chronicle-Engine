@@ -433,8 +433,8 @@ public class TcpChannelHub implements View, Closeable {
 
         outBuffer.position(0);
 
-        if (Jvm.isDebug())
-            logToStandardOutMessageSent(outWire, outBuffer);
+
+        logToStandardOutMessageSent(outWire, outBuffer);
 
         updateLargestChunkSoFarSize(outBuffer);
 
