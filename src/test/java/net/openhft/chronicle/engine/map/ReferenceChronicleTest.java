@@ -16,7 +16,8 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Ignore;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -32,7 +33,21 @@ import static org.junit.Assert.assertNotNull;
  * Created by daniel on 16/07/2015. Tests the combination of Reference and Chronicle
  */
 public class ReferenceChronicleTest {
-    @Ignore
+
+
+    private String hostPortToken;
+
+    @Before
+    public void before() throws IOException {
+        hostPortToken = this.getClass().getSimpleName() + ".host.port";
+        TCPRegistry.createServerSocketChannelFor(hostPortToken);
+    }
+
+    @After
+    public void after() {
+        TCPRegistry.reset();
+    }
+
     @Test
     public void testRemoteSubscriptionMUFGChronicle() throws IOException {
 
@@ -40,13 +55,19 @@ public class ReferenceChronicleTest {
         serverAssetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore", VanillaMapView::new, KeyValueStore.class);
         serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
                 new ChronicleMapKeyValueStore(context.basePath(OS.TARGET).entries(50).averageValueSize(2_000_000), asset));
-        TCPRegistry.createServerSocketChannelFor("RemoteSubscriptionModelPerformanceTest.port");
 
-        ServerEndpoint serverEndpoint = new ServerEndpoint("RemoteSubscriptionModelPerformanceTest.port", serverAssetTree, WireType.BINARY);
-        AssetTree clientAssetTree = new VanillaAssetTree().forRemoteAccess("RemoteSubscriptionModelPerformanceTest.port", WireType.BINARY);
+        ServerEndpoint serverEndpoint = new ServerEndpoint(hostPortToken, serverAssetTree, WireType.BINARY);
+        AssetTree clientAssetTree = new VanillaAssetTree().forRemoteAccess(hostPortToken, WireType.BINARY);
 
-        test(clientAssetTree);
-        TCPRegistry.reset();
+        //noinspection TryFinallyCanBeTryWithResources
+        try {
+            test(clientAssetTree);
+        } finally {
+            clientAssetTree.close();
+            serverEndpoint.close();
+            serverAssetTree.close();
+        }
+
     }
 
     @Test
@@ -56,10 +77,8 @@ public class ReferenceChronicleTest {
         serverAssetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore", VanillaMapView::new, KeyValueStore.class);
         serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
                 new ChronicleMapKeyValueStore(context.basePath(OS.TARGET).entries(50).averageValueSize(2_000_000), asset));
-        TCPRegistry.createServerSocketChannelFor("RemoteSubscriptionModelPerformanceTest.port");
-
         test(serverAssetTree);
-        TCPRegistry.reset();
+
     }
 
     public void test(@NotNull AssetTree assetTree) {
