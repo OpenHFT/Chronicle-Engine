@@ -327,8 +327,8 @@ public class TcpChannelHub implements View, Closeable {
         try {
             final boolean await = receivedClosedAcknowledgement.await(1, TimeUnit.SECONDS);
             if (!await)
-                LOG.warn("SERVER IGNORED CLOSE REQUEST : shutting down the client anyway as the " +
-                        "serve did not respond to the close() request.");
+                LOG.warn("SERVER IGNORED CLOSE REQUEST: shutting down the client anyway as the " +
+                        "server did not respond to the close() request.");
         } catch (InterruptedException ignore) {
             //
         }
