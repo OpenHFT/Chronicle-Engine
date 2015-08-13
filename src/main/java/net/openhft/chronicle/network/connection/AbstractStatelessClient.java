@@ -376,8 +376,8 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
             @NotNull final E eventId,
             @NotNull final Collection sequence) {
         final long startTime = Time.currentTimeMillis();
-        return attempt(() -> readBoolean(sendEvent(startTime, eventId, out -> sequence.forEach
-                (out::object)), startTime));
+        return attempt(() -> readBoolean(sendEvent(startTime, eventId, out ->
+                sequence.forEach(out::object)), startTime));
     }
 
     @SuppressWarnings("SameParameterValue")
@@ -386,12 +386,13 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
         return attempt(() -> readBoolean(sendEvent(startTime, eventId, null), startTime));
     }
 
-    private <T> T readWire(long tid, long startTime, @NotNull WireKey reply, @NotNull Function<ValueIn, T> c) throws ConnectionDroppedException {
+    private <T> T readWire(long tid, long startTime,
+                           @NotNull WireKey reply,
+                           @NotNull Function<ValueIn, T> c) throws ConnectionDroppedException {
         assert !hub.outBytesLock().isHeldByCurrentThread();
         final long timeoutTime = startTime + hub.timeoutMs;
 
         // receive
-
         final Wire wire = hub.proxyReply(timeoutTime, tid);
         checkIsData(wire);
         return readReply(wire, reply, c);

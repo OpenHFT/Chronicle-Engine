@@ -122,6 +122,13 @@ public class TcpChannelHub implements View, Closeable {
         this.tcpSocketConsumer = new TcpSocketConsumer(wire);
     }
 
+
+    private void clear(@NotNull final Wire wire) {
+        wire.clear();
+        ((ByteBuffer) wire.bytes().underlyingObject()).clear();
+    }
+
+
     static void logToStandardOutMessageReceived(@NotNull Wire wire) {
         final Bytes<?> bytes = wire.bytes();
 
@@ -302,8 +309,8 @@ public class TcpChannelHub implements View, Closeable {
 
             this.clientChannel = null;
 
-            this.outWire.bytes().clear();
-            this.inWire.bytes().clear();
+            clear(inWire);
+            clear(outWire);
 
             final TcpSocketConsumer tcpSocketConsumer = this.tcpSocketConsumer;
 
@@ -415,6 +422,7 @@ public class TcpChannelHub implements View, Closeable {
         try {
             return tcpSocketConsumer.syncBlockingReadSocket(timeoutTime, tid);
         } catch (@NotNull IORuntimeException | AssertionError | ConnectionDroppedException e) {
+            closeSocket();
             throw e;
         } catch (RuntimeException e) {
             LOG.error("", e);
@@ -922,10 +930,6 @@ public class TcpChannelHub implements View, Closeable {
             return isShutdown;
         }
 
-        private void clear(@NotNull final Wire inWire) {
-            inWire.clear();
-            ((ByteBuffer) inWire.bytes().underlyingObject()).clear();
-        }
 
         /**
          * @param header message size in header form
