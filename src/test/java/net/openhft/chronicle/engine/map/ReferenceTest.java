@@ -45,7 +45,6 @@ public class ReferenceTest {
 
     public ReferenceTest(Object isRemote, Object wireType) {
         ReferenceTest.isRemote = (Boolean) isRemote;
-
         YamlLogging.setAll(true);
     }
 
