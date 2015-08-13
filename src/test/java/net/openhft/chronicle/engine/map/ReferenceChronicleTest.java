@@ -50,7 +50,7 @@ public class ReferenceChronicleTest {
     }
 
     @Ignore("test keeps failing on TC")
-    @Test
+    @Test(timeout = 5000)
     public void testRemoteSubscriptionMUFGChronicle() throws IOException {
 
         AssetTree serverAssetTree = new VanillaAssetTree().forTesting();
@@ -72,7 +72,7 @@ public class ReferenceChronicleTest {
 
     }
 
-    @Test
+    @Test(timeout = 5000)
     public void testLocalSubscriptionMUFGChronicle() throws IOException {
 
         AssetTree serverAssetTree = new VanillaAssetTree().forTesting();
@@ -125,12 +125,16 @@ public class ReferenceChronicleTest {
         map.put(key, "" + count.incrementAndGet());
         map.put(key, "" + count.incrementAndGet());
 
-        Jvm.pause(100);
+        while (events.size() != 3) {
+            Jvm.pause(1);
+        }
 
         assetTree.unregisterSubscriber(_mapName + "/" + key, keyEventSubscriber);
         //serverAssetTree.unregisterTopicSubscriber(_mapName, topicSubscriber);
+        while (events.size() != 4) {
+            Jvm.pause(1);
+        }
 
-        Jvm.pause(100);
         //assertEquals(0, subscription.subscriberCount());
         assertEquals(4, events.size());
     }
