@@ -150,7 +150,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
 
             // do NOT make this value too small, we have to give time of the connection to be
             // re-established
-            Jvm.pause(250);
+            Jvm.pause(500);
         }
 
         throw t;
@@ -349,7 +349,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
 
     private <R> R readReply(@NotNull WireIn wireIn, @NotNull WireKey replyId, @NotNull Function<ValueIn, R> function) {
 
-        StringBuilder eventName = Wires.acquireStringBuilder();
+        final StringBuilder eventName = Wires.acquireStringBuilder();
         final ValueIn event = wireIn.read(eventName);
 
         if (replyId.contentEquals(eventName))

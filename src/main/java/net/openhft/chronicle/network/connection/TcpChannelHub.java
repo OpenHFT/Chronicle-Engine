@@ -1242,6 +1242,12 @@ public class TcpChannelHub implements View, Closeable {
         }
 
         private void attemptConnect() throws IOException {
+
+            tid = 0;
+            omap.clear();
+            clear(inWire);
+            clear(outWire);
+
             long start = System.currentTimeMillis();
             socketAddressSupplier.startAtFirstAddress();
 
@@ -1315,8 +1321,6 @@ public class TcpChannelHub implements View, Closeable {
                         }
                     }
 
-                    tid = 0;
-                    omap.clear();
 
                     // resets the heartbeat timer
                     onMessageReceived();
