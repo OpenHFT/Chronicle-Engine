@@ -118,7 +118,7 @@ public class ThrottledKeySubscriptionEventTest extends ThreadMonitoringTest {
                 final long start = System.currentTimeMillis();
 
                 for (int i = 0; i < 10; i++) {
-                    String actual = eventsQueue.poll(2, SECONDS);
+                    String actual = eventsQueue.poll(5, SECONDS);
                     Assert.assertNotNull(actual);
                     Assert.assertEquals("Hello" + i, actual);
                 }
