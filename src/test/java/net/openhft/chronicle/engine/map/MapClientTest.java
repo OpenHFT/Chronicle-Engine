@@ -374,8 +374,8 @@ public class MapClientTest extends ThreadMonitoringTest {
                 ((Closeable) map).close();
 
             clientAssetTree.close();
-            serverAssetTree.close();
             serverEndpoint.close();
+            serverAssetTree.close();
             TCPRegistry.reset();
         }
 
