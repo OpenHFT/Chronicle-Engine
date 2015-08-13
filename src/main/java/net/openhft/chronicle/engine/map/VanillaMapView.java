@@ -42,13 +42,13 @@ import static net.openhft.chronicle.engine.api.tree.RequestContext.Operation.BOO
  * Created by peter on 22/05/15.
  */
 public class VanillaMapView<K, V> implements MapView<K, V> {
+    protected final Class keyClass;
+    protected final Asset asset;
+    protected final RequestContext context;
     private final boolean putReturnsNull;
     private final boolean removeReturnsNull;
-    protected final Class keyClass;
     private final Class valueType;
-    protected final Asset asset;
     private final KeyValueStore<K, V> kvStore;
-    protected final RequestContext context;
     private AbstractCollection<V> values;
 
     public VanillaMapView(@NotNull RequestContext context,

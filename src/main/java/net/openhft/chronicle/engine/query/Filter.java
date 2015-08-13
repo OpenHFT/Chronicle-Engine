@@ -22,33 +22,43 @@ import java.util.stream.Stream;
  */
 public class Filter<E> implements Marshallable, Iterable<Operation> {
 
-    private static Filter EMPTY = new Filter();
+    static final Filter EMPTY = new Filter() {
+        @Override
+        protected void add(Operation operation) {
+            throw new UnsupportedOperationException("Must be empty");
+        }
+    };
 
-    public static <T> T empty() {
+    private List<Operation> pipeline = new ArrayList<>();
+
+    public static <N> Filter<N> empty() {
         //noinspection unchecked
-        return (T) EMPTY;
+        return EMPTY;
     }
 
-    List<Operation> pipeline = new ArrayList<>();
-
+    public boolean isEmpty() {
+        return pipeline == null || pipeline.isEmpty();
+    }
     @Override
     public void readMarshallable(@NotNull WireIn wireIn) throws IllegalStateException {
+        clearPipeline();
+        wireIn.read(() -> "pipeline").sequence(s -> {
+            while (s.hasNextSequenceItem())
+                add((Operation) s.object(Object.class));
+        });
+    }
+
+    private void clearPipeline() {
         if (pipeline == null)
             pipeline = new ArrayList<>();
         else
             pipeline.clear();
-        wireIn.read(
-                () -> "pipeline").sequence(s -> {
-            while (s.hasNextSequenceItem())
-                pipeline.add((Operation) s.object(Object.class));
-        });
     }
 
     @Override
     public void writeMarshallable(@NotNull WireOut wireOut) {
         wireOut.write(() -> "pipeline")
-                .sequence(
-                        w -> pipeline.forEach(w::object));
+                .sequence(w -> pipeline.forEach(w::object));
     }
 
     @Override
@@ -56,16 +66,20 @@ public class Filter<E> implements Marshallable, Iterable<Operation> {
         return pipeline.iterator();
     }
 
+    protected void add(Operation operation) {
+        pipeline.add(operation);
+    }
+
     void add(SerializablePredicate<? super E> predicate, final Operation.OperationType filter) {
-        pipeline.add(new Operation(filter, predicate));
+        add(new Operation(filter, predicate));
     }
 
     void add(SerializableFunction<? super E, ?> mapper, final Operation.OperationType map) {
-        pipeline.add(new Operation(map, mapper));
+        add(new Operation(map, mapper));
     }
 
     <R> void add(Class<R> rClass, final Operation.OperationType project) {
-        pipeline.add(new Operation(project, rClass));
+        add(new Operation(project, rClass));
     }
 
     @Override
@@ -76,19 +90,19 @@ public class Filter<E> implements Marshallable, Iterable<Operation> {
     }
 
     public void addFilter(SerializablePredicate<? super E> predicate) {
-        pipeline.add(new Operation(Operation.OperationType.FILTER, predicate));
+        add(new Operation(Operation.OperationType.FILTER, predicate));
     }
 
     public <R> void addMap(SerializableFunction<? super E, ? extends R> mapper) {
-        pipeline.add(new Operation(Operation.OperationType.MAP, mapper));
+        add(new Operation(Operation.OperationType.MAP, mapper));
     }
 
     public void addProject(Class rClass) {
-        pipeline.add(new Operation(Operation.OperationType.PROJECT, rClass));
+        add(new Operation(Operation.OperationType.PROJECT, rClass));
     }
 
     public <R> void addFlatMap(SerializableFunction<? super E, ? extends Query<? extends R>> mapper) {
-        pipeline.add(new Operation(Operation.OperationType.FLAT_MAP, mapper));
+        add(new Operation(Operation.OperationType.FLAT_MAP, mapper));
     }
 
     @Override
@@ -105,6 +119,14 @@ public class Filter<E> implements Marshallable, Iterable<Operation> {
     @Override
     public int hashCode() {
         return pipeline != null ? pipeline.hashCode() : 0;
+    }
+
+    public int pipelineSize() {
+        return pipeline == null ? 0 : pipeline.size();
+    }
+
+    public Operation getPipeline(int index) {
+        return pipeline.get(index);
     }
 
     /**

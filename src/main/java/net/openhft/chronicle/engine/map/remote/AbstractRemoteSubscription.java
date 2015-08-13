@@ -79,7 +79,7 @@ abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient imp
             public void onSubscribe(@NotNull final WireOut wireOut) {
                 wireOut.writeEventName(registerSubscriber).
                         typeLiteral(CLASS_ALIASES.nameFor(rc.elementType()));
-                if (!Filter.empty().equals(filter))
+                if (!filter.isEmpty())
                     wireOut.writeEventName(() -> "filter").object(filter);
             }
 

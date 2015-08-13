@@ -77,8 +77,8 @@ public class FilterTest extends ThreadMonitoringTest {
         final Filter actual = wire.read(() -> "filter").object(Filter.class);
 
         assert actual != null;
-        Assert.assertEquals(1, actual.pipeline.size());
-        Assert.assertEquals(Operation.OperationType.FILTER, ((Operation) actual.pipeline.get(0)).op());
+        Assert.assertEquals(1, actual.pipelineSize());
+        Assert.assertEquals(Operation.OperationType.FILTER, actual.getPipeline(0).op());
     }
 
 }
