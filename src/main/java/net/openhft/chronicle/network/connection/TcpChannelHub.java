@@ -299,7 +299,17 @@ public class TcpChannelHub implements View, Closeable {
             } catch (IOException ignored) {
             }
 
+
             this.clientChannel = null;
+
+            this.outWire.bytes().clear();
+            this.inWire.bytes().clear();
+
+            final TcpSocketConsumer tcpSocketConsumer = this.tcpSocketConsumer;
+
+            tcpSocketConsumer.tid = 0;
+            tcpSocketConsumer.omap.clear();
+
             onDisconnected();
         }
     }
