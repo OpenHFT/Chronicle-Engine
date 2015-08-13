@@ -472,7 +472,7 @@ public class TcpChannelHub implements View, Closeable {
     }
 
     private void logToStandardOutMessageSent(@NotNull WireOut wire, @NotNull ByteBuffer outBuffer) {
-        if (!YamlLogging.clientWrites)
+        if (!Jvm.isDebug() || !YamlLogging.clientWrites)
             return;
 
         Bytes<?> bytes = wire.bytes();
@@ -1138,7 +1138,6 @@ public class TcpChannelHub implements View, Closeable {
 
             if (shutdownHere == null)
                 shutdownHere = new Throwable(Thread.currentThread() + " Shutdown here");
-
 
             isShutdown = true;
             executorService.shutdown();
