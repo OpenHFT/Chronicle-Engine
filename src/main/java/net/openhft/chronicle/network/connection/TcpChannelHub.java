@@ -1246,6 +1246,7 @@ public class TcpChannelHub implements View, Closeable {
         private void checkConnectionState() throws IOException {
             if (clientChannel != null)
                 return;
+            Jvm.pause(250);
             attemptConnect();
         }
 
