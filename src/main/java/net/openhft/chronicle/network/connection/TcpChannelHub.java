@@ -57,7 +57,8 @@ import static java.lang.ThreadLocal.withInitial;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static net.openhft.chronicle.bytes.Bytes.elasticByteBuffer;
-import static net.openhft.chronicle.core.Jvm.*;
+import static net.openhft.chronicle.core.Jvm.pause;
+import static net.openhft.chronicle.core.Jvm.rethrow;
 import static net.openhft.chronicle.engine.server.internal.SystemHandler.EventId.*;
 import static net.openhft.chronicle.wire.Wires.*;
 
@@ -124,7 +125,7 @@ public class TcpChannelHub implements View, Closeable {
     static void logToStandardOutMessageReceived(@NotNull Wire wire) {
         final Bytes<?> bytes = wire.bytes();
 
-        if (!Jvm.IS_DEBUG || !YamlLogging.clientReads)
+        if (!Jvm.isDebug() || !YamlLogging.clientReads)
             return;
 
         final long position = bytes.writePosition();
@@ -407,7 +408,7 @@ public class TcpChannelHub implements View, Closeable {
 
         outBuffer.position(0);
 
-        if (IS_DEBUG)
+        if (Jvm.isDebug())
             logToStandardOutMessageSent(outWire, outBuffer);
 
         updateLargestChunkSoFarSize(outBuffer);
