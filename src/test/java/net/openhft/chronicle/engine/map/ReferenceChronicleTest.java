@@ -16,6 +16,7 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -28,10 +29,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 /**
- * Created by daniel on 16/07/2015.
- * Tests the combination of Reference and Chronicle
+ * Created by daniel on 16/07/2015. Tests the combination of Reference and Chronicle
  */
 public class ReferenceChronicleTest {
+    @Ignore
     @Test
     public void testRemoteSubscriptionMUFGChronicle() throws IOException {
 
@@ -47,6 +48,7 @@ public class ReferenceChronicleTest {
         test(clientAssetTree);
         TCPRegistry.reset();
     }
+
     @Test
     public void testLocalSubscriptionMUFGChronicle() throws IOException {
 
@@ -58,7 +60,7 @@ public class ReferenceChronicleTest {
 
         test(serverAssetTree);
         TCPRegistry.reset();
-     }
+    }
 
     public void test(@NotNull AssetTree assetTree) {
         String key = "subject";
