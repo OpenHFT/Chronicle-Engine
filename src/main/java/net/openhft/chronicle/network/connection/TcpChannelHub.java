@@ -259,26 +259,18 @@ public class TcpChannelHub implements View, Closeable {
 
     private synchronized void doHandShaking(@NotNull SocketChannel socketChannel) throws IOException {
 
-        outBytesLock().lock();
-        try {
+        final SessionDetails sessionDetails = sessionDetails();
+        handShakingWire.clear();
+        handShakingWire.bytes().clear();
+        handShakingWire.writeDocument(false, wireOut -> {
+            if (sessionDetails == null)
+                wireOut.writeEventName(userid).text(getProperty("user.name"));
+            else
+                wireOut.writeEventName(userid).text(sessionDetails.userId());
+        });
 
-            clear(inWire);
-            clear(outWire);
+        writeSocket1(handShakingWire, timeoutMs, socketChannel);
 
-            final SessionDetails sessionDetails = sessionDetails();
-            handShakingWire.clear();
-            handShakingWire.bytes().clear();
-            handShakingWire.writeDocument(false, wireOut -> {
-                if (sessionDetails == null)
-                    wireOut.writeEventName(userid).text(getProperty("user.name"));
-                else
-                    wireOut.writeEventName(userid).text(sessionDetails.userId());
-            });
-
-            writeSocket1(handShakingWire, timeoutMs, socketChannel);
-        } finally {
-            outBytesLock().unlock();
-        }
 
     }
 
@@ -711,19 +703,13 @@ public class TcpChannelHub implements View, Closeable {
          */
         private void reconnect() {
 
-            ReentrantLock lock = outBytesLock();
-            lock.lock();
-            try {
-                preventSubscribeUponReconnect.forEach(this::unsubscribe);
-                map.values().forEach(v -> {
-                    if (v instanceof AsyncSubscription) {
-                        if (!(v instanceof AsyncTemporarySubscription))
-                            ((AsyncSubscription) v).applySubscribe();
-                    }
-                });
-            } finally {
-                lock.unlock();
-            }
+            preventSubscribeUponReconnect.forEach(this::unsubscribe);
+            map.values().forEach(v -> {
+                if (v instanceof AsyncSubscription) {
+                    if (!(v instanceof AsyncTemporarySubscription))
+                        ((AsyncSubscription) v).applySubscribe();
+                }
+            });
         }
 
         @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
@@ -1339,25 +1325,35 @@ public class TcpChannelHub implements View, Closeable {
                         }
                     }
 
+                    // this lock prevents the clients attempt to send data before we have
+                    // finished the handshaking
+                    outBytesLock().lock();
+                    try {
+                        clear(inWire);
+                        clear(outWire);
 
-                    // resets the heartbeat timer
-                    onMessageReceived();
+                        // resets the heartbeat timer
+                        onMessageReceived();
 
-                    // the hand-shaking is assigned before setting the clientChannel, so that it can
-                    // be assured to go first
-                    doHandShaking(socketChannel);
+                        // the hand-shaking is assigned before setting the clientChannel, so that it can
+                        // be assured to go first
+                        doHandShaking(socketChannel);
 
-                    synchronized (this) {
-                        clientChannel = socketChannel;
+                        synchronized (this) {
+                            clientChannel = socketChannel;
+                        }
+
+                        eventLoop.addHandler(this);
+                        if (LOG.isDebugEnabled())
+                            LOG.debug("successfully connected to remoteAddress=" +
+                                    socketAddressSupplier);
+
+                        reconnect();
+                        onConnected();
+                    } finally {
+                        outBytesLock().unlock();
                     }
 
-                    eventLoop.addHandler(this);
-                    if (LOG.isDebugEnabled())
-                        LOG.debug("successfully connected to remoteAddress=" +
-                                socketAddressSupplier);
-
-                    reconnect();
-                    onConnected();
                     break;
                 } catch (Exception e) {
                     if (!isShutdown) {
