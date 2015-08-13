@@ -145,8 +145,12 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
             } catch (ConnectionDroppedException e) {
                 t = e;
             }
+
             // pause then resend the request
-            Jvm.pause(i * i * 5);
+
+            // do NOT make this value too small, we have to give time of the connection to be
+            // re-established
+            Jvm.pause(250);
         }
 
         throw t;

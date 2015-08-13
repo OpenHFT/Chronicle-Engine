@@ -507,8 +507,8 @@ public class TcpChannelHub implements View, Closeable {
     }
 
     private void logToStandardOutMessageSent(@NotNull WireOut wire, @NotNull ByteBuffer outBuffer) {
-        //  if (!Jvm.isDebug() || !YamlLogging.clientWrites)
-        //    return;
+        if (!Jvm.isDebug() || !YamlLogging.clientWrites)
+            return;
 
         Bytes<?> bytes = wire.bytes();
 
