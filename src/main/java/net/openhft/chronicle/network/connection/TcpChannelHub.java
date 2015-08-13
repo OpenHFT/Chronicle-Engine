@@ -125,8 +125,8 @@ public class TcpChannelHub implements View, Closeable {
     static void logToStandardOutMessageReceived(@NotNull Wire wire) {
         final Bytes<?> bytes = wire.bytes();
 
-        if (!YamlLogging.clientReads)
-            return;
+        //   if (!YamlLogging.clientReads)
+        //     return;
 
         final long position = bytes.writePosition();
         final long limit = bytes.writeLimit();
@@ -141,8 +141,7 @@ public class TcpChannelHub implements View, Closeable {
                 YamlLogging.writeMessage = "";
             } catch (Exception e) {
 
-                String x = Bytes.toString(bytes);
-                LOG.error(x, e);
+                LOG.error(Bytes.toString(bytes), e);
             }
         } finally {
             bytes.writeLimit(limit);
