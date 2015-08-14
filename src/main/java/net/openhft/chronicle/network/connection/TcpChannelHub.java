@@ -344,7 +344,7 @@ public class TcpChannelHub implements View, Closeable {
             LOG.debug("closing connection to " + socketAddressSupplier);
 
         while (clientChannel != null) {
-            pause(10);
+
             if (LOG.isDebugEnabled())
                 LOG.debug("waiting for disconnect to " + socketAddressSupplier);
         }
@@ -1248,7 +1248,7 @@ public class TcpChannelHub implements View, Closeable {
         private void checkConnectionState() throws IOException {
             if (clientChannel != null)
                 return;
-            Jvm.pause(250);
+
             attemptConnect();
         }
 
@@ -1299,7 +1299,7 @@ public class TcpChannelHub implements View, Closeable {
                             if (socketChannel == null) {
                                 LOG.error("Unable to open socketChannel to remoteAddress=" +
                                         socketAddressSupplier);
-                                pause(1000);
+                                pause(250);
                                 continue;
                             } else {
 
@@ -1319,12 +1319,12 @@ public class TcpChannelHub implements View, Closeable {
 
                             LOG.error("Unable to connect to remoteAddress=" +
                                     socketAddressSupplier);
-                            pause(1000);
+                            pause(250);
 
                         } catch (ConnectException e) {
                             LOG.info("Server is unavailable, ConnectException to " +
                                     "remoteAddress=" + socketAddressSupplier);
-                            pause(1000);
+                            pause(250);
                         }
                     }
 

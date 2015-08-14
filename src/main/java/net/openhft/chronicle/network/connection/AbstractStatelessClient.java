@@ -150,7 +150,7 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
 
             // do NOT make this value too small, we have to give time of the connection to be
             // re-established
-            Jvm.pause(500);
+            Jvm.pause(200);
         }
 
         throw t;
