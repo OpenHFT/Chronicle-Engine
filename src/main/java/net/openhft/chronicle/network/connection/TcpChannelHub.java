@@ -389,7 +389,7 @@ public class TcpChannelHub implements View, Closeable {
         long id = timeMs;
         for (; ; ) {
             long old = transactionID.get();
-            if (old == id)
+            if (old >= id)
                 id = old + 1;
             if (transactionID.compareAndSet(old, id))
                 break;
