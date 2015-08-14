@@ -927,7 +927,7 @@ public class TcpChannelHub implements View, Closeable {
                         clear(inWire);
                     }
                 }
-
+                clear(inWire);
             } catch (Throwable e) {
                 if (!isShutdown())
                     LOG.error("", e);
@@ -1333,7 +1333,7 @@ public class TcpChannelHub implements View, Closeable {
                     // finished the handshaking
                     outBytesLock().lock();
                     try {
-                        clear(inWire);
+
                         clear(outWire);
 
                         // resets the heartbeat timer
