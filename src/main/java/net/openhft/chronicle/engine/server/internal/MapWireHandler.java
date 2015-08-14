@@ -278,6 +278,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                             final Params[] params = applyTo2.params();
                             final SerializableBiFunction function = (SerializableBiFunction) wire.read(params[0]).object(Object.class);
                             final Object arg = wire.read(params[1]).object(Object.class);
+                            //call typed object
                             outWire.writeEventName(reply).object(map.applyTo(function, arg));
                         });
                         return;
