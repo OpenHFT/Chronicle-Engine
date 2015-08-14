@@ -88,6 +88,25 @@ public abstract class AbstractStatelessClient<E extends ParameterizeWireKey> imp
 
 
     @Nullable
+    protected <R> R proxyReturnWireTypedObject(
+            @NotNull final E eventId,
+            @Nullable R usingValue,
+            @NotNull final Class<R> resultType,
+            @NotNull Object... args) {
+
+        Function<ValueIn, R> consumerIn = resultType == CharSequence.class && usingValue != null
+                ? f -> {
+            f.textTo((StringBuilder) usingValue);
+            return usingValue;
+        }
+                : f -> f.object(resultType);
+        return proxyReturnWireConsumerInOut(eventId,
+                CoreFields.reply,
+                toParameters(eventId, args),
+                consumerIn);
+    }
+
+    @Nullable
     protected <R> R proxyReturnTypedObject(
             @NotNull final E eventId,
             @Nullable R usingValue,
