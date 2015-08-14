@@ -44,6 +44,7 @@ import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SocketChannel;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.*;
@@ -762,7 +763,7 @@ public class TcpChannelHub implements View, Closeable {
 
                 bytes.clear();
 
-                put(tid, bytes);
+                registerSubscribe(tid, bytes);
 
 
                 do {
@@ -785,7 +786,7 @@ public class TcpChannelHub implements View, Closeable {
 
         }
 
-        private void put(long tid, Object bytes) {
+        private void registerSubscribe(long tid, Object bytes) {
             // this check ensure that a put does not occur while currently re-subscribing
             outBytesLock().isHeldByCurrentThread();
 
@@ -802,7 +803,7 @@ public class TcpChannelHub implements View, Closeable {
                     // this check ensure that a put does not occur while currently re-subscribing
                     outBytesLock().isHeldByCurrentThread();
 
-                    put(asyncSubscription.tid(), asyncSubscription);
+                    registerSubscribe(asyncSubscription.tid(), asyncSubscription);
                     if (LOG.isDebugEnabled())
                         LOG.debug("deferred subscription tid=" + asyncSubscription.tid() + "," +
                                 "asyncSubscription=" + asyncSubscription);
@@ -822,7 +823,7 @@ public class TcpChannelHub implements View, Closeable {
             }
             try {
 
-                put(asyncSubscription.tid(), asyncSubscription);
+                registerSubscribe(asyncSubscription.tid(), asyncSubscription);
 
                 asyncSubscription.applySubscribe();
             } catch (Exception e) {
@@ -1252,8 +1253,9 @@ public class TcpChannelHub implements View, Closeable {
         }
 
         private void attemptConnect() throws IOException {
-            tid = 0;
-            omap.clear();
+
+            keepSubscriptionsClearEverythingElse();
+
             long start = System.currentTimeMillis();
             socketAddressSupplier.startAtFirstAddress();
 
@@ -1364,6 +1366,22 @@ public class TcpChannelHub implements View, Closeable {
                     }
                 }
             }
+        }
+
+        private void keepSubscriptionsClearEverythingElse() {
+
+            tid = 0;
+            omap.clear();
+
+            final HashSet keys = new HashSet(map.keySet());
+
+            keys.forEach(k -> {
+
+                final Object o = map.get(k);
+                if (o instanceof Bytes || o instanceof AsyncTemporarySubscription)
+                    map.remove(k);
+
+            });
         }
 
 
