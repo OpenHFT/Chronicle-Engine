@@ -448,9 +448,10 @@ public class TcpChannelHub implements View, Closeable {
 
         final ByteBuffer outBuffer = (ByteBuffer) bytes.underlyingObject();
         outBuffer.limit((int) bytes.writePosition());
-
         outBuffer.position(0);
 
+        // this check ensure that a put does not occur while currently re-subscribing
+        outBytesLock().isHeldByCurrentThread();
 
         logToStandardOutMessageSent(outWire, outBuffer);
 
@@ -465,6 +466,7 @@ public class TcpChannelHub implements View, Closeable {
         }
 
         try {
+
             while (outBuffer.remaining() > 0) {
                 int prevRemaining = outBuffer.remaining();
                 int len = socketChannel.write(outBuffer);
@@ -760,11 +762,9 @@ public class TcpChannelHub implements View, Closeable {
 
                 bytes.clear();
 
+                put(tid, bytes);
 
-                // this check ensure that a put does not occur while currently re-subscribing
-                outBytesLock().isHeldByCurrentThread();
 
-                map.put(tid, bytes);
                 do {
                     bytes.wait(timeoutTimeMs);
 
@@ -785,6 +785,14 @@ public class TcpChannelHub implements View, Closeable {
 
         }
 
+        private void put(long tid, Object bytes) {
+            // this check ensure that a put does not occur while currently re-subscribing
+            outBytesLock().isHeldByCurrentThread();
+
+            final Object prev = map.put(tid, bytes);
+            assert prev == null;
+        }
+
         void subscribe(@NotNull final AsyncSubscription asyncSubscription, boolean tryLock) {
             // we add a synchronize to ensure that the asyncSubscription is added before map before
             // the clientChannel is assigned
@@ -794,7 +802,7 @@ public class TcpChannelHub implements View, Closeable {
                     // this check ensure that a put does not occur while currently re-subscribing
                     outBytesLock().isHeldByCurrentThread();
 
-                    map.put(asyncSubscription.tid(), asyncSubscription);
+                    put(asyncSubscription.tid(), asyncSubscription);
                     if (LOG.isDebugEnabled())
                         LOG.debug("deferred subscription tid=" + asyncSubscription.tid() + "," +
                                 "asyncSubscription=" + asyncSubscription);
@@ -814,10 +822,7 @@ public class TcpChannelHub implements View, Closeable {
             }
             try {
 
-                // this check ensure that a put does not occur while currently re-subscribing
-                outBytesLock().isHeldByCurrentThread();
-
-                map.put(asyncSubscription.tid(), asyncSubscription);
+                put(asyncSubscription.tid(), asyncSubscription);
 
                 asyncSubscription.applySubscribe();
             } catch (Exception e) {
