@@ -190,13 +190,13 @@ public class ReferenceTest {
         map.put("subject", "maths");
 
 
-        assetTree.unregisterSubscriber("group" + "/" + "subject", keyEventSubscriber)
-        //assertEquals(0, subscription.subscriberCount());
-        //   assertEquals("cs", events.get(0));
-        //  assertEquals("maths", events.get(1));
-//        assertEquals("END", events.get(2));
+        assetTree.unregisterSubscriber("group" + "/" + "subject", keyEventSubscriber);
+        assertEquals(0, subscription.subscriberCount());
+        assertEquals("cs", events.get(0));
+        assertEquals("maths", events.get(1));
+        assertEquals("END", events.get(2));
 
-        ;
+
     }
 
     @Test
