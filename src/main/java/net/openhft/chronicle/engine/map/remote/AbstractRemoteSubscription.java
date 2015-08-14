@@ -91,6 +91,7 @@ abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient imp
 
                     if (PublisherHandler.EventId.onEndOfSubscription.contentEquals(eventName)) {
                         subscriber.onEndOfSubscription();
+                        subscribersToTid.remove(this);
                         hub.unsubscribe(tid());
                     } else if (CoreFields.reply.contentEquals(eventName)) {
                         final Class aClass = rc.elementType();

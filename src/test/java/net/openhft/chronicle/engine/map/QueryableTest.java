@@ -37,7 +37,6 @@ import static net.openhft.chronicle.engine.Utils.methodName;
 @RunWith(value = Parameterized.class)
 public class QueryableTest extends ThreadMonitoringTest {
 
-
     private static final String NAME = "test";
     public String connection = "QueryableTest.host.port";
     private static MapView<String, String> map;
@@ -55,13 +54,12 @@ public class QueryableTest extends ThreadMonitoringTest {
         this.wireType = wireType;
     }
 
-
     @Parameterized.Parameters
     public static Collection<Object[]> data() throws IOException {
 
         final List<Object[]> list = new ArrayList<>();
         list.add(new Object[]{Boolean.FALSE, WireType.BINARY});
-        //  list.add(new Object[]{Boolean.TRUE, WireType.BINARY});
+        list.add(new Object[]{Boolean.TRUE, WireType.BINARY});
         list.add(new Object[]{Boolean.FALSE, WireType.TEXT});
         list.add(new Object[]{Boolean.TRUE, WireType.TEXT});
 

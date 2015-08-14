@@ -76,6 +76,17 @@ public class ReferenceHandler<E,T> extends AbstractHandler {
                                     .marshallable(m -> m.write(Params.message).object(message)));
                         });
                     }
+
+                    public void onEndOfSubscription() {
+                        if (!publisher.isClosed()) {
+                            publisher.add(publish -> {
+                                publish.writeDocument(true, wire ->
+                                        wire.writeEventName(tid).int64(inputTid));
+                                publish.writeDocument(false, wire ->
+                                        wire.writeEventName(EventId.onEndOfSubscription).text(""));
+                            });
+                        }
+                    }
                 };
 
                 int p = csp.indexOf("bootstrap=");
@@ -90,6 +101,7 @@ public class ReferenceHandler<E,T> extends AbstractHandler {
                 return;
             }
 
+
             if (unregisterSubscriber.contentEquals(eventName)) {
                 long subscriberTid = valueIn.int64();
                 Subscriber<E> listener = (Subscriber) tidToListener.remove(subscriberTid);
@@ -98,16 +110,6 @@ public class ReferenceHandler<E,T> extends AbstractHandler {
                     return;
                 }
                 view.unregisterSubscriber(listener);
-
-                if (!publisher.isClosed()) {
-                    publisher.add(publish -> {
-                        publish.writeDocument(true, wire ->
-                                wire.writeEventName(tid).int64(subscriberTid));
-                        publish.writeDocument(false, wire ->
-                                wire.writeEventName(EventId.onEndOfSubscription).text(""));
-                    });
-                }
-
                 return;
             }
 
