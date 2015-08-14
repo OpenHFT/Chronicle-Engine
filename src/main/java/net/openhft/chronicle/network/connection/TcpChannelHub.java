@@ -894,8 +894,8 @@ public class TcpChannelHub implements View, Closeable {
                         // read the data
                         if (isData(header)) {
                             assert messageSize < Integer.MAX_VALUE;
-                            final boolean clearTid = processData(tid, isReady(header), header, (int) messageSize,
-                                    inWire);
+                            final boolean clearTid = processData(tid, isReady(header), header,
+                                    (int) messageSize, inWire);
                             if (clearTid)
                                 tid = -1;
 
@@ -911,14 +911,12 @@ public class TcpChannelHub implements View, Closeable {
                     } catch (ClosedChannelException e) {
                         tid = -1;
                         break;
-                    } catch (@NotNull IOException | IORuntimeException |
-                            ConnectionDroppedException e) {
+                    } catch (@NotNull Exception e) {
 
                         tid = -1;
                         if (isShutdown()) {
                             break;
                         } else {
-                            closeSocket();
                             if (LOG.isDebugEnabled())
                                 LOG.debug("reconnecting due to unexpected " + e);
                             Thread.sleep(50);
@@ -1267,7 +1265,6 @@ public class TcpChannelHub implements View, Closeable {
                     LOG.debug("attemptConnect remoteAddress=" + socketAddressSupplier);
                 SocketChannel socketChannel;
                 try {
-
 
                     for (; ; ) {
 
