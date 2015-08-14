@@ -70,8 +70,13 @@ public class TestInsertUpdateChronicleMapView {
         TCPRegistry.createServerSocketChannelFor(connection);
         serverEndpoint = new ServerEndpoint(connection, serverAssetTree, wireType);
 
+        serverAssetTree.root().addWrappingRule(MapView.class, "map directly to " + "KeyValueStore",
+                VanillaMapView::new, KeyValueStore.class);
+
         serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
-                new ChronicleMapKeyValueStore(context.basePath(OS.TARGET).entries(100), asset));
+                new ChronicleMapKeyValueStore(context.basePath(OS.TARGET).entries(100)
+                        .putReturnsNull(false), asset));
+
 
         clientAssetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType);
 
