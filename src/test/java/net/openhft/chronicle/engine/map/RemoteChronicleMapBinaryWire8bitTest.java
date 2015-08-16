@@ -16,7 +16,7 @@
 
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
@@ -24,7 +24,10 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestName;
 
 import java.io.IOException;
@@ -119,11 +122,11 @@ public class RemoteChronicleMapBinaryWire8bitTest extends JSR166TestCase {
         ClosableMapSupplier<Integer, CharSequence> supplier = newIntString("test");
         final Map<Integer, CharSequence> map = supplier.get();
         assertTrue(map.isEmpty());
-        map.put(one, Bytes.from("A"));
-        map.put(two, Bytes.from("B"));
-        map.put(three, Bytes.from("C"));
-        map.put(four, Bytes.from("D"));
-        map.put(five, Bytes.from("E"));
+        map.put(one, BytesStore.wrap("A"));
+        map.put(two, BytesStore.wrap("B"));
+        map.put(three, BytesStore.wrap("C"));
+        map.put(four, BytesStore.wrap("D"));
+        map.put(five, BytesStore.wrap("E"));
         assertFalse(map.isEmpty());
         assertEquals(5, map.size());
         return supplier;
@@ -151,9 +154,9 @@ public class RemoteChronicleMapBinaryWire8bitTest extends JSR166TestCase {
             final Map map = supplier.get();
 
             writeMessage = "when the key exists";
-            yamlLoggger(() -> assertTrue(map.containsValue(Bytes.from("A"))));
+            yamlLoggger(() -> assertTrue(map.containsValue(BytesStore.wrap("A"))));
             writeMessage = "when it doesnt exist";
-            yamlLoggger(() -> assertFalse(map.containsValue(Bytes.from("Z"))));
+            yamlLoggger(() -> assertFalse(map.containsValue(BytesStore.wrap("Z"))));
         }
     }
 
@@ -178,8 +181,8 @@ public class RemoteChronicleMapBinaryWire8bitTest extends JSR166TestCase {
         try (ClosableMapSupplier<Integer, CharSequence> supplier = map5()) {
             final Map map = supplier.get();
             writeMessage = "example of containsValue(<value>) returning true";
-            yamlLoggger(() -> assertTrue(map.containsValue(Bytes.from("A"))));
-            assertFalse(map.containsValue(Bytes.from("Z")));
+            yamlLoggger(() -> assertTrue(map.containsValue(BytesStore.wrap("A"))));
+            assertFalse(map.containsValue(BytesStore.wrap("Z")));
         }
     }
 
@@ -387,7 +390,7 @@ public class RemoteChronicleMapBinaryWire8bitTest extends JSR166TestCase {
     public void testPutIfAbsent() throws IOException {
         try (ClosableMapSupplier<Integer, CharSequence> supplier = map5()) {
             final Map map = supplier.get();
-            yamlLoggger(() -> map.putIfAbsent(six, Bytes.from("Z")));
+            yamlLoggger(() -> map.putIfAbsent(six, BytesStore.wrap("Z")));
             assertTrue(map.containsKey(six));
         }
     }
@@ -399,7 +402,7 @@ public class RemoteChronicleMapBinaryWire8bitTest extends JSR166TestCase {
     public void testPutIfAbsent2() throws IOException {
         try (ClosableMapSupplier<Integer, CharSequence> supplier = map5()) {
             final Map map = supplier.get();
-            yamlLoggger(() -> assertEquals("A", map.putIfAbsent(one, Bytes.from("Z"))));
+            yamlLoggger(() -> assertEquals("A", map.putIfAbsent(one, BytesStore.wrap("Z"))));
         }
     }
 
@@ -411,7 +414,7 @@ public class RemoteChronicleMapBinaryWire8bitTest extends JSR166TestCase {
         try (ClosableMapSupplier<Integer, CharSequence> supplier = map5()) {
             final Map map = supplier.get();
             writeMessage = "example of replace where the value is not known";
-            yamlLoggger(() -> assertNull(map.replace(six, Bytes.from("Z"))));
+            yamlLoggger(() -> assertNull(map.replace(six, BytesStore.wrap("Z"))));
             assertFalse(map.containsKey(six));
         }
     }
@@ -425,7 +428,7 @@ public class RemoteChronicleMapBinaryWire8bitTest extends JSR166TestCase {
         try (ClosableMapSupplier<Integer, CharSequence> supplier = map5()) {
             final Map map = supplier.get();
             writeMessage = "example of replace where the value is known";
-            yamlLoggger(() -> assertNotNull(map.replace(one, Bytes.from("Z"))));
+            yamlLoggger(() -> assertNotNull(map.replace(one, BytesStore.wrap("Z"))));
             assertEquals("Z", map.get(one));
         }
     }
@@ -439,7 +442,7 @@ public class RemoteChronicleMapBinaryWire8bitTest extends JSR166TestCase {
             final Map map = supplier.get();
             assertEquals("A", map.get(one));
             writeMessage = "example of when then value was not replaced";
-            yamlLoggger(() -> assertFalse(map.replace(one, Bytes.from("Z"), Bytes.from("Z"))));
+            yamlLoggger(() -> assertFalse(map.replace(one, BytesStore.wrap("Z"), BytesStore.wrap("Z"))));
             assertEquals("A", map.get(one));
         }
     }
@@ -454,7 +457,7 @@ public class RemoteChronicleMapBinaryWire8bitTest extends JSR166TestCase {
             final Map map = supplier.get();
             assertEquals("A", map.get(one));
             writeMessage = "example of replace where the value is known";
-            yamlLoggger(() -> assertTrue(map.replace(one, Bytes.from("A"), Bytes.from("Z"))));
+            yamlLoggger(() -> assertTrue(map.replace(one, BytesStore.wrap("A"), BytesStore.wrap("Z"))));
             assertEquals("Z", map.get(one));
         }
     }

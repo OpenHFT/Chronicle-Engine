@@ -81,26 +81,9 @@ public class RequestContext implements Cloneable {
     private RequestContext() {
     }
 
-    @NotNull
-    public RequestContext cluster(String clusterTwo) {
-        this.cluster = clusterTwo;
-        return this;
-    }
-
-    @NotNull
-    public String cluster() {
-        return this.cluster;
-    }
-
     public RequestContext(String pathName, String name) {
         this.pathName = pathName;
         this.name = name;
-    }
-
-    @NotNull
-    public RequestContext seal() {
-        sealed = true;
-        return this;
     }
 
     private static void addAlias(Class type, @NotNull String aliases) {
@@ -134,6 +117,27 @@ public class RequestContext implements Cloneable {
         return new RequestContext(pathName, name).queryString(query);
     }
 
+    static Class lookupType(@NotNull CharSequence typeName) throws IllegalArgumentException {
+        return CLASS_ALIASES.forName(typeName);
+    }
+
+    @NotNull
+    public RequestContext cluster(String clusterTwo) {
+        this.cluster = clusterTwo;
+        return this;
+    }
+
+    @NotNull
+    public String cluster() {
+        return this.cluster;
+    }
+
+    @NotNull
+    public RequestContext seal() {
+        sealed = true;
+        return this;
+    }
+
     @NotNull
     public Class<Subscription> getSubscriptionType() {
         Class elementType = elementType();
@@ -149,7 +153,7 @@ public class RequestContext implements Cloneable {
         if (queryString.isEmpty())
             return this;
         WireParser parser = getWireParser();
-        Bytes bytes = Bytes.from(queryString);
+        Bytes bytes = Bytes.wrapForRead(queryString);
         QueryWire wire = new QueryWire(bytes);
         while (bytes.readRemaining() > 0)
             parser.parse(wire);
@@ -187,10 +191,6 @@ public class RequestContext implements Cloneable {
             throw new IllegalArgumentException("Unknown view name:" + viewName);
         }
         return this;
-    }
-
-    static Class lookupType(@NotNull CharSequence typeName) throws IllegalArgumentException {
-        return CLASS_ALIASES.forName(typeName);
     }
 
     @NotNull
