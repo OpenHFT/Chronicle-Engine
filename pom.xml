@@ -15,14 +15,15 @@
   ~     along with this program.  If not, see <http://www.gnu.org/licenses />.
   -->
 
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <parent>
         <groupId>net.openhft</groupId>
         <artifactId>java-parent-pom</artifactId>
         <version>1.1.8</version>
-        <relativePath />
+        <relativePath/>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -38,7 +39,7 @@
                 <groupId>net.openhft</groupId>
                 <artifactId>third-party-bom</artifactId>
                 <type>pom</type>
-                <version>3.4.20</version>
+                <version>3.4.23-SNAPSHOT</version>
                 <scope>import</scope>
             </dependency>
 
@@ -83,6 +84,7 @@
             <groupId>net.openhft</groupId>
             <artifactId>lang</artifactId>
         </dependency>
+
         <dependency>
             <groupId>net.openhft</groupId>
             <artifactId>chronicle-map</artifactId>
@@ -91,6 +93,11 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.dcache</groupId>
+            <artifactId>nfs4j-core</artifactId>
         </dependency>
 
         <!-- test dependencies -->
@@ -126,6 +133,15 @@
         </dependency>
 
     </dependencies>
+
+    <repositories>
+        <repository>
+            <id>dcache-releases</id>
+            <name>dCache.ORG maven repository</name>
+            <url>https://download.dcache.org/nexus/content/repositories/releases</url>
+            <layout>default</layout>
+        </repository>
+    </repositories>
 
     <build>
         <plugins>

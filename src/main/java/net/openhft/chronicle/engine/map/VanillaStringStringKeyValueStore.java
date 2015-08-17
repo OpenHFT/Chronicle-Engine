@@ -30,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -152,7 +151,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         List<Map.Entry<String, String>> entries = new ArrayList<>();
         try {
             for (int i = 0, seg = segments(); i < seg; i++)
-                entriesFor(i, e -> entries.add(new SimpleEntry<>(e.key(), e.value())));
+                entriesFor(i, entries::add);
         } catch (InvalidSubscriberException e) {
             throw new AssertionError(e);
         }

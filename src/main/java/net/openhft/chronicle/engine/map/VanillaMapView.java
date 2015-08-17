@@ -37,6 +37,7 @@ import java.util.*;
 
 import static java.util.EnumSet.of;
 import static net.openhft.chronicle.engine.api.tree.RequestContext.Operation.BOOTSTRAP;
+import static net.openhft.chronicle.engine.api.tree.RequestContext.Operation.END_SUBSCRIPTION_AFTER_BOOTSTRAP;
 
 /**
  * Created by peter on 22/05/15.
@@ -148,7 +149,7 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
         try {
             for (int i = 0; i < kvStore.segments(); i++) {
                 kvStore.entriesFor(i, e -> {
-                    if (BytesUtil.equals(e.value(), value))
+                    if (BytesUtil.equals(e.getValue(), value))
                         throw new InvalidSubscriberException();
                 });
 
@@ -321,18 +322,21 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
 
     @Override
     public void registerSubscriber(@NotNull Subscriber<MapEvent<K, V>> subscriber) {
-        KVSSubscription<K, V> subscription = (KVSSubscription<K, V>) asset.subscription(true);
-        subscription.registerSubscriber(RequestContext.requestContext().bootstrap(true).type
-                (MapEvent.class), subscriber, Filter.empty());
+        registerSubscriber(subscriber, Filter.<MapEvent<K, V>>empty(), of
+                (BOOTSTRAP, END_SUBSCRIPTION_AFTER_BOOTSTRAP));
     }
 
     @Override
     public void registerSubscriber(@NotNull Subscriber<MapEvent<K, V>> subscriber,
                                    @NotNull Filter<MapEvent<K, V>> filter,
-                                   @NotNull Set<Operation> contextOperations) {
+                                   @NotNull Set<Operation> operations) {
+
+        final RequestContext rc = context.clone();
+        rc.bootstrap(true).type(MapEvent.class).type2(null);
+        operations.forEach(e -> e.apply(rc));
+
         KVSSubscription<K, V> subscription = (KVSSubscription<K, V>) asset.subscription(true);
-        subscription.registerSubscriber(RequestContext.requestContext().bootstrap(true)
-                .type(MapEvent.class), subscriber, filter);
+        subscription.registerSubscriber(rc, subscriber, filter);
     }
 
     @NotNull
@@ -357,7 +361,7 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
             try {
                 for (int i = 0; i < kvStore.segments(); i++) {
                     kvStore.entriesFor(i, e -> {
-                        if (!BytesUtil.equals(e.value(), map.get(e.key())))
+                        if (!BytesUtil.equals(e.getValue(), map.get(e.getKey())))
                             throw new InvalidSubscriberException();
                     });
 
@@ -377,7 +381,8 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
         sb.append("{");
         try {
             for (int i = 0; i < kvStore.segments(); i++) {
-                kvStore.entriesFor(i, e -> sb.append(e.key()).append("=").append(e.value()).append(", "));
+                kvStore.entriesFor(i, e -> sb.append(e.getKey()).append("=").append(e.getValue())
+                        .append(", "));
             }
             if (sb.length() > 3)
                 sb.setLength(sb.length() - 2);

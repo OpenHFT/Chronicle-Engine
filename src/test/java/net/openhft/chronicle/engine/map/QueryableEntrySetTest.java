@@ -4,7 +4,7 @@ import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.query.Query;
-import net.openhft.chronicle.engine.api.set.KeySetView;
+import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
@@ -20,8 +20,11 @@ import org.junit.runners.Parameterized;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
-import static java.util.stream.Collectors.averagingInt;
 import static net.openhft.chronicle.engine.Utils.methodName;
 
 /**
@@ -35,7 +38,7 @@ import static net.openhft.chronicle.engine.Utils.methodName;
  * @author Rob Austin.
  */
 @RunWith(value = Parameterized.class)
-public class QueryableTest extends ThreadMonitoringTest {
+public class QueryableEntrySetTest extends ThreadMonitoringTest {
 
     private static final String NAME = "test";
     public String connection = "QueryableTest.host.port";
@@ -49,7 +52,7 @@ public class QueryableTest extends ThreadMonitoringTest {
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
-    public QueryableTest(Object isRemote, WireType wireType) {
+    public QueryableEntrySetTest(Object isRemote, WireType wireType) {
         this.isRemote = (Boolean) isRemote;
         this.wireType = wireType;
     }
@@ -100,20 +103,26 @@ public class QueryableTest extends ThreadMonitoringTest {
         TCPRegistry.reset();
     }
 
+
     @Test
     public void testQueryForEach() throws Exception {
 
+
+        Map<String, String> expected = new HashMap<>();
+        expected.put("1", "1");
+        expected.put("2", "2");
+
         final MapView<String, String> map = assetTree.acquireMap("name", String.class, String
                 .class);
+        map.putAll(expected);
 
-        map.put("1", "1");
-        map.put("2", "2");
+        final EntrySetView<String, Object, String> query = map.entrySet();
+        query.query();
+        final Set<Map.Entry<String, String>> actual = new HashSet<>();
+        query.forEach(actual::add);
 
-        final Query<String> query = map.keySet().query();
-        final Set<String> result = new HashSet<>();
-        query.forEach(result::add);
-
-        Assert.assertEquals(new HashSet<>(Arrays.asList("1", "2")), result);
+        System.out.println(actual);
+        Assert.assertEquals(expected.entrySet(), actual);
     }
 
 
@@ -130,42 +139,17 @@ public class QueryableTest extends ThreadMonitoringTest {
         YamlLogging.showServerReads = true;
         YamlLogging.showServerWrites = true;
 
-        final KeySetView<String> remoteSetView = map.keySet();
-        final Query<String> query = remoteSetView.query();
+        final EntrySetView<String, Object, String> entries = map.entrySet();
+        final Query<Map.Entry<String, String>> query = entries.query();
+        final BlockingQueue<Map.Entry> result = new ArrayBlockingQueue<>(1);
+        final Consumer<Map.Entry<String, String>> consumer = result::add;
 
-        final Set<String> result = new HashSet<>();
-        query.filter("1"::equals).forEach(result::add);
-        Assert.assertEquals(new HashSet<>(Arrays.asList("1")), result);
-    }
+        query.filter(o -> "1".equals(o.getKey()) && "1".equals(o.getValue())).forEach(consumer);
 
+        final Map.Entry entry = result.poll(10, TimeUnit.SECONDS);
 
-    @Test
-    public void testQueryForCollect() throws Exception {
-
-        final MapView<Integer, Integer> map = assetTree.acquireMap("name", Integer.class, Integer
-                .class);
-
-        map.put(1, 1);
-        map.put(2, 2);
-        map.put(3, 3);
-
-        final Query<Integer> query = map.keySet().query();
-        Double x = query.filter((obj) -> obj >= 1 && obj <= 2).collect(averagingInt(v -> (int) v));
-        Assert.assertEquals((Double) 1.5, x);
-    }
-
-    @Test
-    public void testForEach() throws Exception {
-
-        final MapView<Integer, Integer> map = assetTree.acquireMap("name", Integer.class, Integer
-                .class);
-
-        map.put(1, 1);
-        map.put(2, 2);
-        map.put(3, 3);
-
-        final Query<Integer> query = map.keySet().query();
-        query.filter((obj) -> obj >= 1 && obj <= 2).forEach(System.out::println);
+        Assert.assertEquals("1", entry.getKey());
+        Assert.assertEquals("1", entry.getValue());
 
     }
 

@@ -107,8 +107,6 @@ public class VanillaAsset implements Asset, Closeable {
         addWrappingRule(Reference.class, LAST + "reference", VanillaReference::new, MapView.class);
         addWrappingRule(Replication.class, LAST + "replication", VanillaReplication::new, MapView.class);
         addWrappingRule(Publisher.class, LAST + "publisher", VanillaReference::new, MapView.class);
-        addWrappingRule(EntrySetView.class, LAST + " entrySet", VanillaEntrySetView::new, MapView.class);
-
         addWrappingRule(ValuesCollection.class, LAST + " values", VanillaValuesCollection::new, MapView.class);
 
         addWrappingRule(MapView.class, LAST + " string key maps", VanillaMapView::new, ObjectKeyValueStore.class);
@@ -134,12 +132,15 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     public void forTesting(boolean daemon) {
+
         standardStack(daemon);
+        addWrappingRule(EntrySetView.class, LAST + " entrySet", VanillaEntrySetView::new, MapView.class);
 
         addWrappingRule(TopicPublisher.class, LAST + " topic publisher", VanillaTopicPublisher::new, MapView.class);
         addWrappingRule(ObjectKeyValueStore.class, LAST + " authenticated",
                 VanillaSubscriptionKeyValueStore::new, AuthenticatedKeyValueStore.class);
         addWrappingRule(KeySetView.class, LAST + " keySet", VanillaKeySetView::new, MapView.class);
+
         addLeafRule(AuthenticatedKeyValueStore.class, LAST + " vanilla", VanillaKeyValueStore::new);
         addLeafRule(SubscriptionKeyValueStore.class, LAST + " vanilla", VanillaKeyValueStore::new);
         addLeafRule(KeyValueStore.class, LAST + " vanilla", VanillaKeyValueStore::new);
@@ -156,12 +157,17 @@ public class VanillaAsset implements Asset, Closeable {
 
     public void forRemoteAccess(@NotNull String[] hostPortDescriptions, @NotNull Function<Bytes, Wire> wire) throws
             AssetNotFoundException {
+
+
         standardStack(true);
+
+        addWrappingRule(EntrySetView.class, LAST + " entrySet", RemoteEntrySetView::new, MapView.class);
 
         addWrappingRule(MapView.class, LAST + " remote key maps", RemoteMapView::new, ObjectKeyValueStore.class);
 
         addWrappingRule(KeySetView.class, LAST + " remote key maps", RemoteKeySetView::new,
                 MapView.class);
+
 
         addLeafRule(ObjectKVSSubscription.class, LAST + " Remote", RemoteKVSSubscription::new);
 

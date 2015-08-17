@@ -26,7 +26,6 @@ import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.lang.model.constraints.Nullable;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -107,7 +106,7 @@ public interface KeyValueStore<K, V> extends Assetted<KeyValueStore<K, V>>, View
         List<Map.Entry<K, V>> entries = new ArrayList<>();
         try {
             for (int i = 0, seg = segments(); i < seg; i++)
-                entriesFor(i, e -> entries.add(new SimpleEntry<>(e.key(), e.value())));
+                entriesFor(i, e -> entries.add(e));
         } catch (InvalidSubscriberException e) {
             throw new AssertionError(e);
         }
@@ -176,7 +175,7 @@ public interface KeyValueStore<K, V> extends Assetted<KeyValueStore<K, V>>, View
         List<V> entries = new ArrayList<>();
         try {
             for (int i = 0, seg = segments(); i < seg; i++)
-                entriesFor(i, e -> entries.add(e.value()));
+                entriesFor(i, e -> entries.add(e.getValue()));
         } catch (InvalidSubscriberException e) {
             throw new AssertionError(e);
         }

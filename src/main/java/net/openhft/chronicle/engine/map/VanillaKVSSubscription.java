@@ -46,12 +46,11 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
         RawKVSSubscription<K, V> {
 
     private static final Logger LOG = LoggerFactory.getLogger(VanillaKVSSubscription.class);
-
-
     private final Set<TopicSubscriber<K, V>> topicSubscribers = new CopyOnWriteArraySet<>();
     private final Set<Subscriber<MapEvent<K, V>>> subscribers = new CopyOnWriteArraySet<>();
     private final Set<Subscriber<K>> keySubscribers = new CopyOnWriteArraySet<>();
     private final Set<EventConsumer<K, V>> downstream = new CopyOnWriteArraySet<>();
+
     @Nullable
     private final Asset asset;
     Map<Subscriber, Subscriber> subscriptionDelegate = new HashMap<>();
@@ -137,10 +136,10 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
     }
 
     private void notifyEvent1(@NotNull MapEvent<K, V> changeEvent) {
-        K key = changeEvent.key();
+        K key = changeEvent.getKey();
 
         if (!topicSubscribers.isEmpty()) {
-            V value = changeEvent.value();
+            V value = changeEvent.getValue();
             notifyEachSubscriber(topicSubscribers, ts -> ts.onMessage(key, value));
         }
         if (!subscribers.isEmpty()) {
@@ -155,7 +154,7 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
     }
 
     private void notifyEventToChild(@NotNull MapEvent<K, V> changeEvent) {
-        K key = changeEvent.key();
+        K key = changeEvent.getKey();
         if (asset.hasChildren() && key instanceof CharSequence) {
             String keyStr = key.toString();
             Asset child = asset.getChild(keyStr);
@@ -163,7 +162,7 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
                 Subscription subscription = child.subscription(false);
                 if (subscription instanceof VanillaSimpleSubscription) {
 //                    System.out.println(changeEvent.toString().substring(0, 100));
-                    ((SimpleSubscription) subscription).notifyMessage(changeEvent.value());
+                    ((SimpleSubscription) subscription).notifyMessage(changeEvent.getValue());
                 }
             }
         }
@@ -177,25 +176,53 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
 
     @Override
     public void registerSubscriber(@NotNull RequestContext rc,
-                                   @NotNull Subscriber<MapEvent<K, V>> subscriber,
-                                   @NotNull Filter<MapEvent<K, V>> filter) {
-        Boolean bootstrap = rc.bootstrap();
+                                   @NotNull Subscriber subscriber,
+                                   @NotNull Filter filter) {
         Class eClass = rc.type();
-        if (eClass == Entry.class || eClass == MapEvent.class) {
-            subscribers.add(subscriber);
-            if (bootstrap != Boolean.FALSE && kvStore != null) {
-                Subscriber<MapEvent<K, V>> sub = subscriber;
-                try {
-                    for (int i = 0; i < kvStore.segments(); i++)
-                        kvStore.entriesFor(i, sub::onMessage);
-                } catch (InvalidSubscriberException e) {
-                    subscribers.remove(subscriber);
+        if (eClass == Entry.class || eClass == MapEvent.class)
+            registerSubscriber0(rc, subscriber, filter);
+        else
+            registerKeySubscriber(rc, subscriber, filter);
+
+    }
+
+    @NotNull
+    private <T> Subscriber<T> subscriber(@NotNull Subscriber<T> subscriber,
+                                         @NotNull Filter<T> filter) {
+        final Subscriber<T> sub;
+        if (filter.isEmpty())
+            sub = subscriber;
+        else {
+            sub = new Filter.FilteredSubscriber<T>(filter, subscriber);
+            subscriptionDelegate.put(subscriber, sub);
+        }
+        return sub;
+    }
+
+    private void registerSubscriber0(@NotNull RequestContext rc,
+                                     @NotNull Subscriber<MapEvent<K, V>> subscriber,
+                                     @NotNull Filter<MapEvent<K, V>> filter) {
+
+        final Subscriber<MapEvent<K, V>> sub = subscriber(subscriber, filter);
+
+        this.subscribers.add(sub);
+        Boolean bootstrap = rc.bootstrap();
+        if (bootstrap != Boolean.FALSE && kvStore != null) {
+            try {
+                for (int i = 0; i < kvStore.segments(); i++)
+                    kvStore.entriesFor(i, sub::onMessage);
+
+                if (TRUE.equals(rc.endSubscriptionAfterBootstrap())) {
+
+                    sub.onEndOfSubscription();
+                    LOG.info("onEndOfSubscription");
+                    this.subscribers.remove(sub);
                 }
+
+            } catch (InvalidSubscriberException e) {
+                this.subscribers.remove(sub);
             }
-
-        } else
-            registerKeySubscriber(rc, (Subscriber) subscriber, (Filter) filter);
-
+        }
     }
 
     @Override
@@ -203,14 +230,7 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
                                       @NotNull Subscriber<K> subscriber,
                                       @NotNull Filter<K> filter) {
         final Boolean bootstrap = rc.bootstrap();
-        final Subscriber<K> sub;
-
-        if (filter.isEmpty())
-            sub = subscriber;
-        else {
-            sub = new Filter.FilteredSubscriber<>(filter, subscriber);
-            subscriptionDelegate.put(subscriber, sub);
-        }
+        final Subscriber<K> sub = subscriber(subscriber, filter);
 
         keySubscribers.add(sub);
         if (bootstrap != Boolean.FALSE && kvStore != null) {
@@ -238,7 +258,7 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
         if (bootstrap != Boolean.FALSE && kvStore != null) {
             try {
                 for (int i = 0; i < kvStore.segments(); i++)
-                    kvStore.entriesFor(i, e -> subscriber.onMessage(e.key(), e.value()));
+                    kvStore.entriesFor(i, e -> subscriber.onMessage(e.getKey(), e.getValue()));
             } catch (InvalidSubscriberException dontAdd) {
                 topicSubscribers.remove(subscriber);
             }

@@ -68,7 +68,7 @@ public class RemovedEvent<K, V> implements MapEvent<K, V> {
     }
 
     @Nullable
-    public K key() {
+    public K getKey() {
         return key;
     }
 
@@ -79,7 +79,7 @@ public class RemovedEvent<K, V> implements MapEvent<K, V> {
     }
 
     @Nullable
-    public V value() {
+    public V getValue() {
         return null;
     }
 

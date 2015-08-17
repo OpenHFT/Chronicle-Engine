@@ -48,7 +48,9 @@ public class VanillaSimpleSubscription<E> implements SimpleSubscription<E> {
     }
 
     @Override
-    public void registerSubscriber(@NotNull RequestContext rc, @NotNull Subscriber<E> subscriber, @NotNull Filter<E> filter) {
+    public void registerSubscriber(@NotNull RequestContext rc,
+                                   @NotNull Subscriber<E> subscriber,
+                                   @NotNull Filter<E> filter) {
         subscribers.add(subscriber);
         if (rc.bootstrap() != Boolean.FALSE)
             try {
