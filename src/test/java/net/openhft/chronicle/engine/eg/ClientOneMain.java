@@ -27,6 +27,24 @@ import java.util.Map;
 /**
  * Created by peter on 17/08/15.
  */
+/* prints
+Funny: hihi
+Funny: haha
+Funny: hehe
+Funny: hoho
+Music: Queen
+Music: Police
+Music: Gun's N Roses
+Music: U2
+InsertedEvent{assetName='/test-map', key=MUSIC, value=U2}
+InsertedEvent{assetName='/test-map', key=DOGS, value=St Bernard}
+InsertedEvent{assetName='/test-map', key=FUNNY, value=hoho}
+InsertedEvent{assetName='/test-map', key=LEADERSHIP, value=Queen}
+UpdatedEvent{assetName='/test-map', key=LEADERSHIP, oldValue=Queen, value=President}
+UpdatedEvent{assetName='/test-map', key=LEADERSHIP, oldValue=President, value=Prime Minister}
+RemovedEvent{assetName='/test-map', key=LEADERSHIP, oldValue=Prime Minister}
+UpdatedEvent{assetName='/test-map', key=DOGS, oldValue=St Bernard, value=Poodle}
+ */
 public class ClientOneMain {
     public static void main(String[] args) {
         YamlLogging.setAll(true);

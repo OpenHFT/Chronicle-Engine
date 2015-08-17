@@ -27,6 +27,19 @@ import net.openhft.chronicle.wire.YamlLogging;
 /**
  * Created by peter on 17/08/15.
  */
+
+/* Prints
+GBPEUR: Price{instrument='GBPEUR', bidPrice=0.71023, bidQuantity=1000000.0, askPrice=0.71024, askQuantity=2000000.0}
+GBPEUR: Price{instrument='GBPEUR', bidPrice=0.71023, bidQuantity=1000000.0, askPrice=0.71024, askQuantity=2000000.0}
+GBPEUR: Price{instrument='GBPEUR', bidPrice=0.71023, bidQuantity=1000000.0, askPrice=0.71027, askQuantity=1.2E7}
+GBPEUR: Price{instrument='GBPEUR', bidPrice=0.71023, bidQuantity=1000000.0, askPrice=0.71025, askQuantity=2000000.0}
+GBPUSD: Price{instrument='GBPEUR', bidPrice=0.64153, bidQuantity=3000000.0, askPrice=0.64154, askQuantity=2000000.0}
+GBPUSD: Price{instrument='GBPEUR', bidPrice=0.64153, bidQuantity=3000000.0, askPrice=0.64154, askQuantity=3000000.0}
+GBPUSD: Price{instrument='GBPEUR', bidPrice=0.64153, bidQuantity=4000000.0, askPrice=0.64154, askQuantity=3000000.0}
+GBPUSD: Price{instrument='GBPEUR', bidPrice=0.64151, bidQuantity=4000000.0, askPrice=0.64154, askQuantity=3000000.0}
+mid: 0.641515
+GBPUSD: Price{instrument='GBPEUR', bidPrice=0.64149, bidQuantity=4000000.0, askPrice=0.64154, askQuantity=3000000.0}
+ */
 public class ClientTwoMain {
     static {
         ClassAliasPool.CLASS_ALIASES.addAlias(Price.class);
