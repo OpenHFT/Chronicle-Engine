@@ -78,7 +78,7 @@ public class QueryableKeySetTest extends ThreadMonitoringTest {
             YamlLogging.showServerWrites = true;
             YamlLogging.showServerReads = true;
 
-            connection = "StreamTest." + name.getMethodName() + ".host.port";
+            connection = "QueryableKeySetTest.host.port";
             TCPRegistry.createServerSocketChannelFor(connection);
             serverEndpoint = new ServerEndpoint(connection, serverAssetTree, wireType);
             assetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType);

@@ -239,9 +239,7 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
                     kvStore.keysFor(i, sub::onMessage);
 
                 if (TRUE.equals(rc.endSubscriptionAfterBootstrap())) {
-
                     sub.onEndOfSubscription();
-                    LOG.info("onEndOfSubscription");
                     keySubscribers.remove(sub);
                 }
 
