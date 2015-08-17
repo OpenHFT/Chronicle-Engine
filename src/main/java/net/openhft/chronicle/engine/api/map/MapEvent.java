@@ -16,19 +16,19 @@
 
 package net.openhft.chronicle.engine.api.map;
 
-import net.openhft.chronicle.engine.api.map.KeyValueStore.Entry;
 import net.openhft.chronicle.engine.api.tree.ChangeEvent;
 import net.openhft.chronicle.wire.WireKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
  * This is an update on a Map.
  */
-public interface MapEvent<K, V> extends Entry<K, V>, ChangeEvent {
+public interface MapEvent<K, V> extends Map.Entry<K, V>, ChangeEvent {
     @Nullable
     V oldValue();
 
@@ -42,5 +42,9 @@ public interface MapEvent<K, V> extends Entry<K, V>, ChangeEvent {
 
     enum MapEventFields implements WireKey {
         assetName, key, oldValue, value
+    }
+
+    default V setValue(V value) {
+        throw new UnsupportedOperationException();
     }
 }

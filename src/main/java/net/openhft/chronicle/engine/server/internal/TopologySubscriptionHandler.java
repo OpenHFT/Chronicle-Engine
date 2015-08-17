@@ -45,21 +45,23 @@ public class TopologySubscriptionHandler extends SubscriptionHandler<TopologySub
         });
     };
 
-    public TopologySubscriptionHandler(final Throttler throttler) {
+    public TopologySubscriptionHandler(@NotNull final Throttler throttler) {
         super(throttler);
     }
 
     void process(@NotNull final WireIn inWire,
-                 final RequestContext requestContext,
-                 final WireOutPublisher publisher,
-                 final AssetTree assetTree, final long tid,
-                 final Wire outWire, final TopologySubscription subscription) {
+                 @NotNull final RequestContext requestContext,
+                 @NotNull final WireOutPublisher publisher,
+                 @NotNull final AssetTree assetTree, final long tid,
+                 @NotNull final Wire outWire,
+                 @NotNull final TopologySubscription subscription) {
         setOutWire(outWire);
         this.outWire = outWire;
         this.subscription = subscription;
         this.requestContext = requestContext;
         this.publisher = publisher;
         this.assetTree = assetTree;
+        assert dataConsumer != null;
         dataConsumer.accept(inWire, tid);
 
     }

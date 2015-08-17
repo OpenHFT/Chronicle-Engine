@@ -90,7 +90,7 @@ public class SubscriptionModelFilePerKeyPerformanceTest {
         //Create subscriber and register
         TestChronicleKeyEventSubscriber keyEventSubscriber = new TestChronicleKeyEventSubscriber(_twoMbTestStringLength);
 
-        Chassis.registerSubscriber(_mapName + "?bootstrap=false", MapEvent.class, me -> keyEventSubscriber.onMessage((String) me.value()));
+        Chassis.registerSubscriber(_mapName + "?bootstrap=false", MapEvent.class, me -> keyEventSubscriber.onMessage((String) me.getValue()));
 
         AtomicInteger counter = new AtomicInteger();
         //Perform test a number of times to allow the JVM to warm up, but verify runtime against average

@@ -68,12 +68,12 @@ public class ConfigurationFS implements MountPoint {
     }
 
     private void onFile(@NotNull MapEvent<String, String> mapEvent) {
-        switch (mapEvent.key()) {
+        switch (mapEvent.getKey()) {
             case FSTAB:
-                processFstab(mapEvent.value());
+                processFstab(mapEvent.getValue());
                 break;
             case CLUSTERS:
-                processClusters(mapEvent.value());
+                processClusters(mapEvent.getValue());
                 break;
         }
     }

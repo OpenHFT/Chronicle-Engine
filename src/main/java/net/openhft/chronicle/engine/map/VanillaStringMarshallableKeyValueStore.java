@@ -179,7 +179,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     @Override
     public void entriesFor(int segment, @NotNull SubscriptionConsumer<MapEvent<String, V>> kvConsumer) throws InvalidSubscriberException {
         kvStore.entriesFor(segment, e -> kvConsumer.accept(
-                InsertedEvent.of(asset.fullName(), e.key(), bytesToValue.apply(e.value(), null))));
+                InsertedEvent.of(asset.fullName(), e.getKey(), bytesToValue.apply(e.getValue(), null))));
     }
 
     @NotNull
@@ -189,7 +189,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
         List<Map.Entry<String, V>> entries = new ArrayList<>();
         try {
             for (int i = 0, seg = segments(); i < seg; i++)
-                entriesFor(i, e -> entries.add(new SimpleEntry<>(e.key(), e.value())));
+                entriesFor(i, e -> entries.add(new SimpleEntry<>(e.getKey(), e.getValue())));
         } catch (InvalidSubscriberException e) {
             throw new AssertionError(e);
         }

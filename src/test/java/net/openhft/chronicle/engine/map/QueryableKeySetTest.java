@@ -35,7 +35,7 @@ import static net.openhft.chronicle.engine.Utils.methodName;
  * @author Rob Austin.
  */
 @RunWith(value = Parameterized.class)
-public class QueryableTest extends ThreadMonitoringTest {
+public class QueryableKeySetTest extends ThreadMonitoringTest {
 
     private static final String NAME = "test";
     public String connection = "QueryableTest.host.port";
@@ -49,7 +49,7 @@ public class QueryableTest extends ThreadMonitoringTest {
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
-    public QueryableTest(Object isRemote, WireType wireType) {
+    public QueryableKeySetTest(Object isRemote, WireType wireType) {
         this.isRemote = (Boolean) isRemote;
         this.wireType = wireType;
     }
@@ -78,7 +78,7 @@ public class QueryableTest extends ThreadMonitoringTest {
             YamlLogging.showServerWrites = true;
             YamlLogging.showServerReads = true;
 
-            connection = "StreamTest." + name.getMethodName() + ".host.port";
+            connection = "QueryableKeySetTest.host.port";
             TCPRegistry.createServerSocketChannelFor(connection);
             serverEndpoint = new ServerEndpoint(connection, serverAssetTree, wireType);
             assetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType);

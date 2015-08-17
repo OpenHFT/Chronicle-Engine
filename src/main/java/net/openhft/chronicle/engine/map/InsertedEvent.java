@@ -63,7 +63,7 @@ public class InsertedEvent<K, V> implements MapEvent<K, V> {
     }
 
     @Nullable
-    public K key() {
+    public K getKey() {
         return key;
     }
 
@@ -74,7 +74,7 @@ public class InsertedEvent<K, V> implements MapEvent<K, V> {
     }
 
     @Nullable
-    public V value() {
+    public V getValue() {
         return value;
     }
 
@@ -86,6 +86,11 @@ public class InsertedEvent<K, V> implements MapEvent<K, V> {
     @Override
     public int hashCode() {
         return Objects.hash("inserted", key, value);
+    }
+
+    @Override
+    public V setValue(V value) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
