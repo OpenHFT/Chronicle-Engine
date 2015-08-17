@@ -39,7 +39,7 @@
                 <groupId>net.openhft</groupId>
                 <artifactId>third-party-bom</artifactId>
                 <type>pom</type>
-                <version>3.4.23-SNAPSHOT</version>
+                <version>3.4.22</version>
                 <scope>import</scope>
             </dependency>
 
@@ -95,10 +95,10 @@
             <artifactId>slf4j-api</artifactId>
         </dependency>
 
-        <!-- <dependency>
+        <dependency>
              <groupId>org.dcache</groupId>
              <artifactId>nfs4j-core</artifactId>
-         </dependency>-->
+        </dependency>
 
         <!-- test dependencies -->
 
