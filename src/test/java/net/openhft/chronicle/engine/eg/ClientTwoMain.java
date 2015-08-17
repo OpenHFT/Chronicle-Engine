@@ -28,7 +28,10 @@ import net.openhft.chronicle.wire.YamlLogging;
  * Created by peter on 17/08/15.
  */
 
-/* Prints
+/*
+Run ServerMain first
+
+Prints
 GBPEUR: Price{instrument='GBPEUR', bidPrice=0.71023, bidQuantity=1000000.0, askPrice=0.71024, askQuantity=2000000.0}
 GBPEUR: Price{instrument='GBPEUR', bidPrice=0.71023, bidQuantity=1000000.0, askPrice=0.71024, askQuantity=2000000.0}
 GBPEUR: Price{instrument='GBPEUR', bidPrice=0.71023, bidQuantity=1000000.0, askPrice=0.71027, askQuantity=1.2E7}

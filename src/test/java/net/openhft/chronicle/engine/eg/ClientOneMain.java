@@ -27,7 +27,10 @@ import java.util.Map;
 /**
  * Created by peter on 17/08/15.
  */
-/* prints
+/*
+Run ServerMain first
+
+prints
 Funny: hihi
 Funny: haha
 Funny: hehe
