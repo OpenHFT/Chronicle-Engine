@@ -18,10 +18,9 @@ package net.openhft.chronicle.engine.fs;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.io.Closeable;
-import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.api.tree.Asset;
-import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.network.TCPRegistry;
+import net.openhft.chronicle.network.api.session.SessionProvider;
 import net.openhft.chronicle.network.connection.SocketAddressSupplier;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.api.EventLoop;
@@ -39,12 +38,12 @@ import java.util.function.Function;
 /**
  * Created by peter.lawrey on 17/06/2015.
  */
-public class HostDetails implements Marshallable, View, Closeable {
+public class HostDetails implements Marshallable, Closeable {
+    private final Map<InetSocketAddress, TcpChannelHub> tcpChannelHubs = new ConcurrentHashMap<>();
     public int hostId;
     public int tcpBufferSize;
     public String connectUri;
     public int timeoutMs;
-    private final Map<InetSocketAddress, TcpChannelHub> tcpChannelHubs = new ConcurrentHashMap<>();
 
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {

@@ -44,11 +44,11 @@ import java.util.concurrent.Future;
 
 public class TcpManyClientConnectionsTest extends ThreadMonitoringTest {
 
-    private static final String NAME = "test";
     public static final WireType WIRE_TYPE = WireType.TEXT;
     public static final int MAX = 50;
-    private static ConcurrentMap[] maps = new ConcurrentMap[MAX];
+    private static final String NAME = "test";
     private static final String CONNECTION = "host.port.TcpManyConnectionsTest";
+    private static ConcurrentMap[] maps = new ConcurrentMap[MAX];
     private AssetTree[] trees = new AssetTree[MAX];
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;

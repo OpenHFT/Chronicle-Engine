@@ -174,11 +174,6 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     }
 
     @Override
-    public boolean keyedView() {
-        return false;
-    }
-
-    @Override
     public void forEachChild(ThrowingAcceptor<Asset, InvalidSubscriberException> childAcceptor) throws InvalidSubscriberException {
     }
 }

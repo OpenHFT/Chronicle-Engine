@@ -17,12 +17,11 @@
 package net.openhft.chronicle.engine.api.map;
 
 import net.openhft.chronicle.engine.api.tree.Asset;
-import net.openhft.chronicle.engine.api.tree.View;
 
 /**
  * This interface represents as Asset which are keyed components of a parent.
  * <p></p>
  * e.g. if the Parent in a Map, this represents on of the entries in that map.
  */
-public interface SubAsset<T> extends View, Asset {
+public interface SubAsset<T> extends Asset {
 }

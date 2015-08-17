@@ -14,31 +14,10 @@
  *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.openhft.chronicle.engine.api.session;
-
-import net.openhft.chronicle.network.api.session.SessionDetails;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package net.openhft.chronicle.engine.api.tree;
 
 /**
- * A holder for the Session speicifc details i.e. for a remote client.
+ * Created by peter on 17/08/15.
  */
-public interface SessionProvider {
-    /**
-     * @return the current session details
-     */
-    @Nullable
-    SessionDetails get();
-
-    /**
-     * Replace the session details
-     *
-     * @param sessionDetails to set to
-     */
-    void set(@NotNull SessionDetails sessionDetails);
-
-    /**
-     * There is no longer any valid session detaisl and get() will return null.
-     */
-    void remove();
+public interface KeyedView {
 }

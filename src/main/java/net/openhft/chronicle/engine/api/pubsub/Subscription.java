@@ -18,14 +18,13 @@ package net.openhft.chronicle.engine.api.pubsub;
 
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
-import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.engine.query.Filter;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Internal API for managing and monitoring subscriptions.
  */
-public interface Subscription<E> extends View, Closeable {
+public interface Subscription<E> extends Closeable {
     void registerSubscriber(@NotNull RequestContext rc,
                             @NotNull Subscriber<E> subscriber,
                             @NotNull Filter<E> filter);

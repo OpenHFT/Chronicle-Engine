@@ -16,15 +16,14 @@
 
 package net.openhft.chronicle.engine.session;
 
-import net.openhft.chronicle.engine.api.session.SessionProvider;
-import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.network.api.session.SessionDetails;
+import net.openhft.chronicle.network.api.session.SessionProvider;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by peter on 01/06/15.
  */
-public class VanillaSessionProvider implements SessionProvider, View {
+public class VanillaSessionProvider implements SessionProvider {
     @NotNull
     private final ThreadLocal<SessionDetails> sessionDetails = new ThreadLocal<>();
 

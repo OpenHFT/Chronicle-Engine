@@ -23,14 +23,13 @@ import net.openhft.chronicle.engine.api.pubsub.Subscription;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
-import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.engine.query.Filter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
 
-public class VanillaReference<E> implements Reference<E>, View {
+public class VanillaReference<E> implements Reference<E> {
     private final String name;
     private final Class<E> eClass;
     private final MapView<String, E> underlyingMap;

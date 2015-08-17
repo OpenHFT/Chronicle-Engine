@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * This a resource associated with an underlying asset.
  */
-public interface Assetted<U> extends View {
+public interface Assetted<U> {
     /**
      * @return The Asset this resource is associated with.
      */

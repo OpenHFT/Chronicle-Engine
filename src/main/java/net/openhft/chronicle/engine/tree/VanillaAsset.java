@@ -26,7 +26,6 @@ import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
 import net.openhft.chronicle.engine.api.map.ValueReader;
 import net.openhft.chronicle.engine.api.pubsub.*;
-import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.api.tree.*;
@@ -43,6 +42,7 @@ import net.openhft.chronicle.engine.session.VanillaSessionProvider;
 import net.openhft.chronicle.engine.set.RemoteKeySetView;
 import net.openhft.chronicle.engine.set.VanillaKeySetView;
 import net.openhft.chronicle.network.VanillaSessionDetails;
+import net.openhft.chronicle.network.api.session.SessionProvider;
 import net.openhft.chronicle.network.connection.SocketAddressSupplier;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.EventGroup;
@@ -69,9 +69,8 @@ import java.util.function.Function;
  */
 public class VanillaAsset implements Asset, Closeable {
 
-    private static final Logger LOG = LoggerFactory.getLogger(VanillaAsset.class);
-
     public static final Comparator<Class> CLASS_COMPARATOR = Comparator.comparing(Class::getName);
+    private static final Logger LOG = LoggerFactory.getLogger(VanillaAsset.class);
     private static final String LAST = "{last}";
     private static final BiPredicate<RequestContext, Asset> ALWAYS = (rc, asset) -> true;
     final Map<Class, Object> viewMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
@@ -306,7 +305,7 @@ public class VanillaAsset implements Asset, Closeable {
 
     @Override
     public <V> V addView(Class<V> viewType, V view) {
-        if (view instanceof View && ((View) view).keyedView()) {
+        if (view instanceof KeyedView) {
             keyedAsset = true;
         }
         viewMap.put(viewType, view);

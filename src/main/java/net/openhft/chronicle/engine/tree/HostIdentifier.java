@@ -16,13 +16,12 @@
 
 package net.openhft.chronicle.engine.tree;
 
-import net.openhft.chronicle.engine.api.tree.View;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by peter.lawrey on 15/06/2015.
  */
-public class HostIdentifier implements View {
+public class HostIdentifier {
     private final byte hostId;
 
     public HostIdentifier(byte hostId) {
