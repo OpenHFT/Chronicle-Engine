@@ -24,7 +24,6 @@ import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
-import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.engine.map.replication.Bootstrap;
 import net.openhft.chronicle.hash.replication.EngineReplicationLangBytesConsumer;
 import net.openhft.chronicle.map.EngineReplicationLangBytes;
@@ -46,17 +45,17 @@ import static net.openhft.lang.io.NativeBytes.wrap;
  * Created by Rob Austin
  */
 public class CMap2EngineReplicator implements EngineReplication,
-        EngineReplicationLangBytesConsumer, View {
-
-    private final RequestContext context;
-    private final ThreadLocal<PointerBytesStore> keyLocal = withInitial(PointerBytesStore::new);
-    private final ThreadLocal<PointerBytesStore> valueLocal = withInitial(PointerBytesStore::new);
-    private EngineReplicationLangBytes engineReplicationLang;
+        EngineReplicationLangBytesConsumer {
 
     static {
         ClassAliasPool.CLASS_ALIASES.addAlias(VanillaReplicatedEntry.class);
         ClassAliasPool.CLASS_ALIASES.addAlias(Bootstrap.class);
     }
+
+    private final RequestContext context;
+    private final ThreadLocal<PointerBytesStore> keyLocal = withInitial(PointerBytesStore::new);
+    private final ThreadLocal<PointerBytesStore> valueLocal = withInitial(PointerBytesStore::new);
+    private EngineReplicationLangBytes engineReplicationLang;
 
     public CMap2EngineReplicator(RequestContext requestContext, @NotNull Asset asset) {
         this(requestContext);
@@ -223,12 +222,12 @@ public class CMap2EngineReplicator implements EngineReplication,
 
     public static class VanillaReplicatedEntry implements ReplicationEntry {
 
+        private final byte remoteIdentifier;
         private BytesStore key;
         @Nullable
         private BytesStore value;
         private long timestamp;
         private byte identifier;
-        private final byte remoteIdentifier;
         private boolean isDeleted;
         private long bootStrapTimeStamp;
 

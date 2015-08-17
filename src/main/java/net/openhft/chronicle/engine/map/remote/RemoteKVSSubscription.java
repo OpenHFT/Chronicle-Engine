@@ -102,10 +102,7 @@ public class RemoteKVSSubscription<K, V> extends AbstractRemoteSubscription<MapE
 
     private void onEvent(K topic, @Nullable V message, @NotNull TopicSubscriber<K, V> subscriber) {
         try {
-            if (message == null)
-                unregisterTopicSubscriber(subscriber);
-            else
-                subscriber.onMessage(topic, message);
+            subscriber.onMessage(topic, message);
         } catch (InvalidSubscriberException noLongerValid) {
             unregisterTopicSubscriber(subscriber);
         }

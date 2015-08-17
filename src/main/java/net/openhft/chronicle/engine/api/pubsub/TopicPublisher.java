@@ -19,12 +19,12 @@ package net.openhft.chronicle.engine.api.pubsub;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.Assetted;
-import net.openhft.chronicle.engine.api.tree.View;
+import net.openhft.chronicle.engine.api.tree.KeyedView;
 
 /**
  * Publish to any topic in an Asset group.
  */
-public interface TopicPublisher<T, M> extends View, Assetted<MapView<T, M>> {
+public interface TopicPublisher<T, M> extends KeyedView, Assetted<MapView<T, M>> {
     /**
      * Publish to a provided topic.
      *

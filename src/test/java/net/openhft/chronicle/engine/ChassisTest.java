@@ -23,7 +23,6 @@ import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
-import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.engine.map.InsertedEvent;
 import net.openhft.chronicle.engine.map.RemovedEvent;
 import net.openhft.chronicle.engine.map.UpdatedEvent;
@@ -324,6 +323,6 @@ todo fix this test
         assertSame(mi, mi2);
     }
 
-    static class MyInterceptor implements View {
+    static class MyInterceptor {
     }
 }

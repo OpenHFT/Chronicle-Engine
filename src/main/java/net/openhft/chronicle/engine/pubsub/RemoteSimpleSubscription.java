@@ -73,11 +73,6 @@ public class RemoteSimpleSubscription<E> implements SimpleSubscription<E> {
     }
 
     @Override
-    public boolean keyedView() {
-        return false;
-    }
-
-    @Override
     public void close() {
     }
 }

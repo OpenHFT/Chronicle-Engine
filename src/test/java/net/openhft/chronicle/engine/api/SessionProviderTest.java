@@ -17,10 +17,10 @@
 package net.openhft.chronicle.engine.api;
 
 import net.openhft.chronicle.engine.Chassis;
-import net.openhft.chronicle.engine.api.session.SessionProvider;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.network.VanillaSessionDetails;
 import net.openhft.chronicle.network.api.session.SessionDetails;
+import net.openhft.chronicle.network.api.session.SessionProvider;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

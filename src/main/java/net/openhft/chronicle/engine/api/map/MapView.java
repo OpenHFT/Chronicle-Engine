@@ -24,8 +24,8 @@ import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.api.tree.Assetted;
+import net.openhft.chronicle.engine.api.tree.KeyedView;
 import net.openhft.chronicle.engine.api.tree.RequestContext.Operation;
-import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.engine.query.Filter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +42,7 @@ public interface MapView<K, V> extends ConcurrentMap<K, V>,
         Updatable<MapView<K, V>>,
         KeyedVisitable<K, V>,
         Function<K, V>,
-        View {
+        KeyedView {
 
     @NotNull
     @Override

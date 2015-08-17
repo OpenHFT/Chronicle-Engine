@@ -20,7 +20,6 @@ import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
-import net.openhft.chronicle.engine.api.tree.View;
 import net.openhft.chronicle.engine.map.replication.Bootstrap;
 import net.openhft.chronicle.engine.server.internal.MapWireHandler;
 import net.openhft.chronicle.engine.server.internal.ReplicationHandler.EventId;
@@ -48,7 +47,7 @@ import static net.openhft.chronicle.engine.server.internal.ReplicationHandler.Ev
 /**
  * Created by Rob Austin
  */
-class ReplicationHub extends AbstractStatelessClient implements View {
+class ReplicationHub extends AbstractStatelessClient {
     private static final Logger LOG = LoggerFactory.getLogger(ChronicleMapKeyValueStore.class);
     private final EventLoop eventLoop;
     private final AtomicBoolean isClosed;

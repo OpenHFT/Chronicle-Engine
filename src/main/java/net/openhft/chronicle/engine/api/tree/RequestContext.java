@@ -440,6 +440,40 @@ public class RequestContext implements Cloneable {
         return this;
     }
 
+    public String toUri() {
+        StringBuilder sb = new StringBuilder();
+        if (pathName != null && !pathName.isEmpty()) {
+            sb.append("/").append(pathName);
+        }
+        sb.append("/").append(name);
+        String sep = "?";
+        if (viewType != null) {
+            sb.append(sep).append("view=").append(CLASS_ALIASES.nameFor(viewType()));
+            sep = "&";
+        }
+        if (keyType() != null && keyType() != String.class) {
+            sb.append(sep).append("keyType=").append(CLASS_ALIASES.nameFor(keyType()));
+            sep = "&";
+        }
+        if (valueType() != null && valueType() != String.class) {
+            sb.append(sep).append("valueType=").append(CLASS_ALIASES.nameFor(valueType()));
+            sep = "&";
+        }
+        if (putReturnsNull() != null) {
+            sb.append(sep).append("putReturnsNull=").append(putReturnsNull);
+            sep = "&";
+        }
+        if (removeReturnsNull() != null) {
+            sb.append(sep).append("removeReturnsNull=").append(putReturnsNull);
+            sep = "&";
+        }
+        if (bootstrap() != null) {
+            sb.append(sep).append("bootstrap=").append(bootstrap);
+            sep = "&";
+        }
+        return sb.toString();
+    }
+
     public enum Operation {
         END_SUBSCRIPTION_AFTER_BOOTSTRAP, BOOTSTRAP;
 

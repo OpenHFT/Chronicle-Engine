@@ -20,7 +20,6 @@ import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
-import net.openhft.chronicle.engine.api.tree.View;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +31,7 @@ import java.util.Objects;
 /**
  * Created by peter on 11/06/15.
  */
-public class VanillaValuesCollection<K, V> extends AbstractCollection<V> implements ValuesCollection<V>, View {
+public class VanillaValuesCollection<K, V> extends AbstractCollection<V> implements ValuesCollection<V> {
     private final Asset asset;
     private final MapView<K, V> mapView;
 

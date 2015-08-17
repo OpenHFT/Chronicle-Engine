@@ -98,11 +98,6 @@ public class VanillaSimpleSubscription<E> implements SimpleSubscription<E> {
     }
 
     @Override
-    public boolean keyedView() {
-        return false;
-    }
-
-    @Override
     public void close() {
         for (Subscriber<E> subscriber : subscribers) {
             try {

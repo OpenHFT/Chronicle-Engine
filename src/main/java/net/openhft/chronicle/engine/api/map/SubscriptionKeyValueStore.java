@@ -16,13 +16,13 @@
 
 package net.openhft.chronicle.engine.api.map;
 
-import net.openhft.chronicle.engine.api.tree.View;
+import net.openhft.chronicle.engine.api.tree.KeyedView;
 import net.openhft.chronicle.engine.map.KVSSubscription;
 
 /**
  * An interface which is a KeyValueStore where you can subscribe to changes.
  */
-public interface SubscriptionKeyValueStore<K, V> extends KeyValueStore<K, V>, View {
+public interface SubscriptionKeyValueStore<K, V> extends KeyValueStore<K, V>, KeyedView {
     KVSSubscription<K, V> subscription(boolean createIfAbsent);
 
 }
