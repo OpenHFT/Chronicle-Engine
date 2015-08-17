@@ -77,7 +77,18 @@ public class VanillaAssetTree implements AssetTree {
 
     @NotNull
     public VanillaAssetTree forTesting(boolean daemon) {
-        root.forTesting(daemon);
+        root.forServer(daemon);
+        return this;
+    }
+
+    @NotNull
+    public VanillaAssetTree forServer() {
+        return forServer(true);
+    }
+
+    @NotNull
+    public VanillaAssetTree forServer(boolean daemon) {
+        root.forServer(daemon);
         return this;
     }
 
