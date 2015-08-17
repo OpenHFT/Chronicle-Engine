@@ -49,7 +49,10 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
     }
 
     private static String toUri(String fullName, Class messageClass) {
-        StringBuilder uri = new StringBuilder("/" + fullName + "?view=reference");
+        StringBuilder uri = new StringBuilder();
+        if (!fullName.startsWith("/"))
+            uri.append("/");
+        uri.append(fullName).append("?view=reference");
 
         if (messageClass != String.class)
             uri.append("&messageType=").append(ClassAliasPool.CLASS_ALIASES.nameFor(messageClass));

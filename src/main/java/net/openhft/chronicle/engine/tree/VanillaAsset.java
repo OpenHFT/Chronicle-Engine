@@ -126,12 +126,11 @@ public class VanillaAsset implements Asset, Closeable {
         addView(SessionProvider.class, new VanillaSessionProvider());
     }
 
-    public void forTesting() {
-        forTesting(true);
+    public void forServer() {
+        forServer(true);
     }
 
-    public void forTesting(boolean daemon) {
-
+    public void forServer(boolean daemon) {
         standardStack(daemon);
         addWrappingRule(EntrySetView.class, LAST + " entrySet", VanillaEntrySetView::new, MapView.class);
 

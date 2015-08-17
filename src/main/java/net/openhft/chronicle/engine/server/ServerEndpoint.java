@@ -44,13 +44,12 @@ public class ServerEndpoint implements Closeable {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChronicleMapKeyValueStore.class);
     @Nullable
     private final EventLoop eg;
-    @Nullable
-    private AcceptorEventHandler eah;
     @NotNull
     private final AtomicBoolean isClosed = new AtomicBoolean();
-
     // set Throttler.maxEventsPreSecond == 0 if you dont want to use the throttler
     private final int maxEventsPreSecond = Integer.getInteger("Throttler.maxEventsPreSecond", 0);
+    @Nullable
+    private AcceptorEventHandler eah;
 
     public ServerEndpoint(String hostPortDescription, @NotNull AssetTree assetTree, @NotNull WireType wire) throws IOException {
         eg = assetTree.root().acquireView(EventLoop.class);
@@ -67,7 +66,7 @@ public class ServerEndpoint implements Closeable {
         assert eg != null;
 
         eg.start();
-        if (LOGGER.isDebugEnabled())
+        if (LOGGER.isInfoEnabled())
             LOGGER.info("starting server=" + hostPortDescription);
 
         final EventLoop eventLoop = asset.root().findOrCreateView(EventLoop.class);
