@@ -44,8 +44,6 @@ import java.util.concurrent.ConcurrentMap;
 @Ignore("Doesn't shutdown cleanly")
 @RunWith(Parameterized.class)
 public class TcpFailoverTest {
-
-
     public static final int MAX = 10;
     public static final String CLUSTER_NAME = "max-cluster";
     public static final WireType WIRE_TYPE = WireType.TEXT;
@@ -53,6 +51,7 @@ public class TcpFailoverTest {
     private static final String CONNECTION_1 = "Test1.host.port";
     private final static String CONNECTION_2 = "Test2.host.port";
     private static ConcurrentMap<String, String> map;
+
     private AssetTree failOverClient;
     private VanillaAssetTree serverAssetTree1;
     private VanillaAssetTree serverAssetTree2;

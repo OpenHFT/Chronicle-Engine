@@ -86,16 +86,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     }
 
     private static String toUri(@NotNull final RequestContext context) {
-        StringBuilder uri = new StringBuilder("/" + context.fullName()
-                + "?view=" + "map");
-
-        if (context.keyType() != String.class)
-            uri.append("&keyType=").append(context.keyType().getName());
-
-        if (context.valueType() != String.class)
-            uri.append("&valueType=").append(context.valueType().getName());
-
-        return uri.toString();
+        return context.viewType(MapView.class).toUri();
     }
 
     @Override

@@ -31,17 +31,23 @@ public class RequestContextTest {
     public void testParsing() {
         String uri = "/chronicleMapString?" +
                 "view=map&" +
-                "keyType=java.lang.String&" +
+                "keyType=java.lang.Integer&" +
                 "valueType=string&" +
                 "putReturnsNull=true&" +
                 "removeReturnsNull=false&" +
                 "bootstrap=true";
 //        System.out.println(uri);
         RequestContext rc = requestContext(uri);
+        assertEquals("/chronicleMapString?" +
+                "view=Map&" +
+                "keyType=int32&" +
+                "putReturnsNull=true&" +
+                "removeReturnsNull=true&" +
+                "bootstrap=true", rc.toUri());
         assertEquals("RequestContext{pathName='',\n" +
                 "name='chronicleMapString',\n" +
                 "viewType=interface net.openhft.chronicle.engine.api.map.MapView,\n" +
-                "type=class java.lang.String,\n" +
+                "type=class java.lang.Integer,\n" +
                 "type2=class java.lang.String,\n" +
                 "basePath='null',\n" +
                 "wireType=TEXT,\n" +
