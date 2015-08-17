@@ -153,12 +153,9 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
 
     private void onEvent(@Nullable E message, @NotNull Subscriber<E> subscriber) {
         try {
-            if (message == null) {
-                // todo
-            } else
-                subscriber.onMessage(message);
+              subscriber.onMessage(message);
         } catch (InvalidSubscriberException noLongerValid) {
-            // todo
+            unregisterSubscriber(subscriber);
         }
     }
 
