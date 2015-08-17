@@ -95,10 +95,10 @@
             <artifactId>slf4j-api</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>org.dcache</groupId>
-            <artifactId>nfs4j-core</artifactId>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>org.dcache</groupId>-->
+            <!--<artifactId>nfs4j-core</artifactId>-->
+        <!--</dependency>-->
 
         <!-- test dependencies -->
 
