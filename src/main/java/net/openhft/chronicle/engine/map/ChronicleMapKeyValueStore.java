@@ -33,10 +33,7 @@ import net.openhft.chronicle.engine.fs.Clusters;
 import net.openhft.chronicle.engine.fs.HostDetails;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.hash.replication.EngineReplicationLangBytesConsumer;
-import net.openhft.chronicle.map.BytesMapEventListener;
-import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ChronicleMapBuilder;
-import net.openhft.chronicle.map.MapEventListener;
+import net.openhft.chronicle.map.*;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.threads.api.EventLoop;
@@ -77,7 +74,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
     @Nullable
     private final EventLoop eventLoop;
     private final AtomicBoolean isClosed = new AtomicBoolean();
-    private final boolean putReturnsNull;
+
 
     public ChronicleMapKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset) {
         String basePath = context.basePath();
@@ -90,8 +87,6 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
         this.subscriptions.setKvStore(this);
         this.eventLoop = asset.findOrCreateView(EventLoop.class);
         assert eventLoop != null;
-
-        this.putReturnsNull = context.putReturnsNull() != Boolean.FALSE;
 
         eventLoop.start();
 
@@ -201,9 +196,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
 
     @Override
     public boolean put(K key, V value) {
-        boolean present = !putReturnsNull && chronicleMap.containsKey(key);
-        getAndPut(key, value);
-        return present;
+        return chronicleMap.update(key, value) != UpdateResult.INSERT;
     }
 
     @Nullable
@@ -213,7 +206,6 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
             return chronicleMap.put(key, value);
         else
             return null;
-
     }
 
     @Nullable

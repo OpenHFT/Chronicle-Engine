@@ -46,7 +46,7 @@ public interface KeyValueStore<K, V> extends Assetted<KeyValueStore<K, V>>, Clos
      *
      * @param key   to set
      * @param value to set
-     * @return true if it was replaced, false if it was added.
+     * @return true if it was replaced or the value is identical, false if it was added.
      */
     default boolean put(K key, V value) {
         return getAndPut(key, value) != null;
