@@ -21,13 +21,13 @@ import java.util.List;
 public class EngineVirtualFileSystem implements VirtualFileSystem {
 
 
-    private AssetTree assetTree;
+    public final Inode root;
+
 
     public EngineVirtualFileSystem(@NotNull final AssetTree assetTree) {
-        this.assetTree = assetTree;
+        root = ChronicleAssetInode.aquireINode(assetTree.root());
     }
 
-    public final Inode ROOT = ChronicleAssetInode.aquireINode(assetTree.root());
 
     @Override
     public int access(Inode inode, int mode) throws IOException {
@@ -52,7 +52,7 @@ public class EngineVirtualFileSystem implements VirtualFileSystem {
             //noinspection unchecked
             view.put(path, "");
 
-            return ChronicleEntryInode.aquireINode(view, path);
+            return ChronicleEntryINode.aquireINode(view, path);
         } else
             throw new UnsupportedOperationException("todo");
     }
@@ -64,7 +64,7 @@ public class EngineVirtualFileSystem implements VirtualFileSystem {
 
     @Override
     public Inode getRootInode() throws IOException {
-        return ROOT;
+        return root;
     }
 
     @Override
@@ -127,8 +127,8 @@ public class EngineVirtualFileSystem implements VirtualFileSystem {
         if (offset > Integer.MAX_VALUE)
             throw new IllegalStateException("offset too large");
         final Asset asset = toAsset(inode);
-        if (inode instanceof ChronicleEntryInode) {
-            final ChronicleEntryInode n = (ChronicleEntryInode) asset;
+        if (inode instanceof ChronicleEntryINode) {
+            final ChronicleEntryINode n = (ChronicleEntryINode) asset;
             final MapView mapView = n.entrySupplier().mapView;
             final String key = n.entrySupplier().key;
             long len = Math.min(count, key.length() - offset);
@@ -175,8 +175,8 @@ public class EngineVirtualFileSystem implements VirtualFileSystem {
     public WriteResult write(Inode inode, byte[] data, long offset, int count, StabilityLevel stabilityLevel) throws IOException {
 
         final Asset asset = toAsset(inode);
-        if (inode instanceof ChronicleEntryInode) {
-            final ChronicleEntryInode n = (ChronicleEntryInode) asset;
+        if (inode instanceof ChronicleEntryINode) {
+            final ChronicleEntryINode n = (ChronicleEntryINode) asset;
             final MapView mapView = n.entrySupplier().mapView;
             final String key = n.entrySupplier().key;
             mapView.put(key, new String(data));

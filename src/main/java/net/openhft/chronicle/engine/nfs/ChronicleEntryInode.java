@@ -9,10 +9,14 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author Rob Austin.
  */
-public class ChronicleEntryInode extends Inode {
+public class ChronicleEntryINode extends Inode {
 
     private EntrySupplier entrySupplier = null;
 
+    /**
+     * holds a reference to the map and the key of interest the reason that we don hold a reference
+     * to the entry is that chronicle map stores its entries off heap
+     */
     static class EntrySupplier {
         MapView mapView;
         String key;
@@ -43,9 +47,9 @@ public class ChronicleEntryInode extends Inode {
         }
     }
 
-    private static final Map<EntrySupplier, ChronicleEntryInode> POOL = new ConcurrentHashMap<>();
+    private static final Map<EntrySupplier, ChronicleEntryINode> POOL = new ConcurrentHashMap<>();
 
-    private ChronicleEntryInode(EntrySupplier entrySupplier) {
+    private ChronicleEntryINode(EntrySupplier entrySupplier) {
         super(new byte[]{});
         this.entrySupplier = entrySupplier;
     }
@@ -96,8 +100,8 @@ public class ChronicleEntryInode extends Inode {
     }
 
 
-    public static ChronicleEntryInode aquireINode(MapView mapView, String key) {
+    public static ChronicleEntryINode aquireINode(MapView mapView, String key) {
         final EntrySupplier key1 = new EntrySupplier(mapView, key);
-        return POOL.computeIfAbsent(key1, k -> new ChronicleEntryInode(key1));
+        return POOL.computeIfAbsent(key1, k -> new ChronicleEntryINode(key1));
     }
 }

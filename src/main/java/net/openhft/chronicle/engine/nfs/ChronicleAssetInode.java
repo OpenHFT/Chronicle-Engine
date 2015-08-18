@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine.nfs;
 
 import net.openhft.chronicle.engine.api.tree.Asset;
+import org.dcache.nfs.vfs.FileHandle;
 import org.dcache.nfs.vfs.Inode;
 
 import java.util.IdentityHashMap;
@@ -16,7 +17,7 @@ public class ChronicleAssetInode extends Inode {
     private static final Map<Asset, ChronicleAssetInode> POOL = new IdentityHashMap<>();
 
     private ChronicleAssetInode(Asset asset) {
-        super(new byte[]{});
+        super(fh());
         this.asset = asset;
     }
 
@@ -66,5 +67,9 @@ public class ChronicleAssetInode extends Inode {
 
     public static ChronicleAssetInode aquireINode(Asset asset) {
         return POOL.computeIfAbsent(asset, k -> new ChronicleAssetInode(asset));
+    }
+
+    private static FileHandle fh() {
+        return new FileHandle(0, 0, 0, new byte[]{});
     }
 }
