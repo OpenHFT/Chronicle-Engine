@@ -39,7 +39,8 @@ public class NfsServer {
                 .build();
 
         // specify file with export entries
-        ExportFile exportFile = new ExportFile(ClassLoader.getSystemResource("exports").toURI());
+        ExportFile exportFile = new ExportFile(ClassLoader.getSystemResource
+                ("exports").toURI().toURL());
 
         // create NFS v4.1 server
         NFSServerV41 nfs4 = new NFSServerV41(
@@ -63,5 +64,9 @@ public class NfsServer {
         System.in.read();
     }
 
-
+    // on mac you must run  "sudo launchctl start com.apple.rpcbind"  also you can run "rpcinfo -p"
+    @Test
+    public void test() throws Exception {
+        NfsServer.main();
+    }
 }
