@@ -44,7 +44,7 @@
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>chronicle-bom</artifactId>
-                <version>1.7.0</version>
+                <version>1.7.1-SNAPSHOT</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -93,10 +93,10 @@
             <artifactId>slf4j-api</artifactId>
         </dependency>
 
-        <!--<dependency>-->
-            <!--<groupId>org.dcache</groupId>-->
-            <!--<artifactId>nfs4j-core</artifactId>-->
-        <!--</dependency>-->
+        <dependency>
+            <groupId>org.dcache</groupId>
+            <artifactId>nfs4j-core</artifactId>
+        </dependency>
 
         <!-- test dependencies -->
 
