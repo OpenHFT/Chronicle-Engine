@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -53,7 +53,7 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
 
     @Nullable
     private final Asset asset;
-    Map<Subscriber, Subscriber> subscriptionDelegate = new HashMap<>();
+    final Map<Subscriber, Subscriber> subscriptionDelegate = new IdentityHashMap<>();
     private KeyValueStore<K, V> kvStore;
 
     public VanillaKVSSubscription(@NotNull RequestContext requestContext, @NotNull Asset asset) {
@@ -231,18 +231,15 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
                                       @NotNull Filter<K> filter) {
         final Boolean bootstrap = rc.bootstrap();
         final Subscriber<K> sub = subscriber(subscriber, filter);
-
         keySubscribers.add(sub);
         if (bootstrap != Boolean.FALSE && kvStore != null) {
             try {
                 for (int i = 0; i < kvStore.segments(); i++)
                     kvStore.keysFor(i, sub::onMessage);
-
                 if (TRUE.equals(rc.endSubscriptionAfterBootstrap())) {
                     sub.onEndOfSubscription();
                     keySubscribers.remove(sub);
                 }
-
             } catch (InvalidSubscriberException e) {
                 keySubscribers.remove(sub);
             }

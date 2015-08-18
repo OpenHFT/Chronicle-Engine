@@ -407,6 +407,8 @@ public class VanillaAsset implements Asset, Closeable {
         return children.get(name);
     }
 
+
+
     @Override
     public void removeChild(String name) {
         Asset removed = children.remove(name);

@@ -84,7 +84,6 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
         serverAssetTree = new VanillaAssetTree().forTesting();
 
         if (isRemote) {
-
             methodName(name.getMethodName());
             TCPRegistry.createServerSocketChannelFor("TopologicalSubscriptionEventTest.host.port");
             serverEndpoint = new ServerEndpoint("TopologicalSubscriptionEventTest.host.port", serverAssetTree, wireType);
