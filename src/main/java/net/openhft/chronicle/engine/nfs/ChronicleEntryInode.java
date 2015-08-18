@@ -11,17 +11,47 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ChronicleEntryInode extends Inode {
 
-    private static final Map<EntrySupplier, ChronicleEntryInode> POOL = new ConcurrentHashMap<>();
     private EntrySupplier entrySupplier = null;
+
+    /**
+     * holds a reference to the map and the key of interest the reason that we don hold a reference
+     * to the entry is that chronicle map stores its entries off heap
+     */
+    static class EntrySupplier {
+        MapView mapView;
+        String key;
+
+        public EntrySupplier(MapView mapView, String key) {
+            this.mapView = mapView;
+            this.key = key;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof EntrySupplier)) return false;
+
+            EntrySupplier that = (EntrySupplier) o;
+
+            if (mapView != null ? !mapView.equals(that.mapView) : that.mapView != null)
+                return false;
+            return !(key != null ? !key.equals(that.key) : that.key != null);
+
+        }
+
+        @Override
+        public int hashCode() {
+            int result = mapView != null ? mapView.hashCode() : 0;
+            result = 31 * result + (key != null ? key.hashCode() : 0);
+            return result;
+        }
+    }
+
+    private static final Map<EntrySupplier, ChronicleEntryInode> POOL = new ConcurrentHashMap<>();
 
     private ChronicleEntryInode(EntrySupplier entrySupplier) {
         super(new byte[]{});
         this.entrySupplier = entrySupplier;
-    }
-
-    public static ChronicleEntryInode aquireINode(MapView mapView, String key) {
-        final EntrySupplier key1 = new EntrySupplier(mapView, key);
-        return POOL.computeIfAbsent(key1, k -> new ChronicleEntryInode(key1));
     }
 
     public EntrySupplier entrySupplier() {
@@ -69,37 +99,9 @@ public class ChronicleEntryInode extends Inode {
         return super.toString();
     }
 
-    /**
-     * holds a reference to the map and the key of interest the reason that we don hold a reference
-     * to the entry is that chronicle map stores its entries off heap
-     */
-    static class EntrySupplier {
-        MapView mapView;
-        String key;
 
-        public EntrySupplier(MapView mapView, String key) {
-            this.mapView = mapView;
-            this.key = key;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof EntrySupplier)) return false;
-
-            EntrySupplier that = (EntrySupplier) o;
-
-            if (mapView != null ? !mapView.equals(that.mapView) : that.mapView != null)
-                return false;
-            return !(key != null ? !key.equals(that.key) : that.key != null);
-
-        }
-
-        @Override
-        public int hashCode() {
-            int result = mapView != null ? mapView.hashCode() : 0;
-            result = 31 * result + (key != null ? key.hashCode() : 0);
-            return result;
-        }
+    public static ChronicleEntryInode aquireINode(MapView mapView, String key) {
+        final EntrySupplier key1 = new EntrySupplier(mapView, key);
+        return POOL.computeIfAbsent(key1, k -> new ChronicleEntryInode(key1));
     }
 }
