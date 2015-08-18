@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author Rob Austin.
  */
-public class ChronicleEntryINode extends Inode {
+public class ChronicleEntryInode extends Inode {
 
     private EntrySupplier entrySupplier = null;
 
@@ -47,9 +47,9 @@ public class ChronicleEntryINode extends Inode {
         }
     }
 
-    private static final Map<EntrySupplier, ChronicleEntryINode> POOL = new ConcurrentHashMap<>();
+    private static final Map<EntrySupplier, ChronicleEntryInode> POOL = new ConcurrentHashMap<>();
 
-    private ChronicleEntryINode(EntrySupplier entrySupplier) {
+    private ChronicleEntryInode(EntrySupplier entrySupplier) {
         super(new byte[]{});
         this.entrySupplier = entrySupplier;
     }
@@ -100,8 +100,8 @@ public class ChronicleEntryINode extends Inode {
     }
 
 
-    public static ChronicleEntryINode aquireINode(MapView mapView, String key) {
+    public static ChronicleEntryInode aquireINode(MapView mapView, String key) {
         final EntrySupplier key1 = new EntrySupplier(mapView, key);
-        return POOL.computeIfAbsent(key1, k -> new ChronicleEntryINode(key1));
+        return POOL.computeIfAbsent(key1, k -> new ChronicleEntryInode(key1));
     }
 }

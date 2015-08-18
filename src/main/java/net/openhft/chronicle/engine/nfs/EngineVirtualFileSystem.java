@@ -52,7 +52,7 @@ public class EngineVirtualFileSystem implements VirtualFileSystem {
             //noinspection unchecked
             view.put(path, "");
 
-            return ChronicleEntryINode.aquireINode(view, path);
+            return ChronicleEntryInode.aquireINode(view, path);
         } else
             throw new UnsupportedOperationException("todo");
     }
@@ -127,8 +127,8 @@ public class EngineVirtualFileSystem implements VirtualFileSystem {
         if (offset > Integer.MAX_VALUE)
             throw new IllegalStateException("offset too large");
         final Asset asset = toAsset(inode);
-        if (inode instanceof ChronicleEntryINode) {
-            final ChronicleEntryINode n = (ChronicleEntryINode) asset;
+        if (inode instanceof ChronicleEntryInode) {
+            final ChronicleEntryInode n = (ChronicleEntryInode) asset;
             final MapView mapView = n.entrySupplier().mapView;
             final String key = n.entrySupplier().key;
             long len = Math.min(count, key.length() - offset);
@@ -175,8 +175,8 @@ public class EngineVirtualFileSystem implements VirtualFileSystem {
     public WriteResult write(Inode inode, byte[] data, long offset, int count, StabilityLevel stabilityLevel) throws IOException {
 
         final Asset asset = toAsset(inode);
-        if (inode instanceof ChronicleEntryINode) {
-            final ChronicleEntryINode n = (ChronicleEntryINode) asset;
+        if (inode instanceof ChronicleEntryInode) {
+            final ChronicleEntryInode n = (ChronicleEntryInode) asset;
             final MapView mapView = n.entrySupplier().mapView;
             final String key = n.entrySupplier().key;
             mapView.put(key, new String(data));
