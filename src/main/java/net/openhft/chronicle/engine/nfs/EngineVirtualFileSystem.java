@@ -131,6 +131,7 @@ public class EngineVirtualFileSystem implements VirtualFileSystem {
             final ChronicleEntryInode n = (ChronicleEntryInode) asset;
             final MapView mapView = n.entrySupplier().mapView;
             final String key = n.entrySupplier().key;
+
             long len = Math.min(count, key.length() - offset);
 
             if (len > Integer.MAX_VALUE)

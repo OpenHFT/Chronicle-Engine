@@ -39,8 +39,7 @@ public class NfsServer {
                 .build();
 
         // specify file with export entries
-        ExportFile exportFile = new ExportFile(ClassLoader.getSystemResource
-                ("exports").toURI());
+        ExportFile exportFile = new ExportFile(ClassLoader.getSystemResource("exports").toURI());
 
         // create NFS v4.1 server
         NFSServerV41 nfs4 = new NFSServerV41(
