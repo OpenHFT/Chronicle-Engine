@@ -11,6 +11,7 @@ import org.dcache.nfs.vfs.VirtualFileSystem;
 import org.dcache.xdr.OncRpcProgram;
 import org.dcache.xdr.OncRpcSvc;
 import org.dcache.xdr.OncRpcSvcBuilder;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -19,16 +20,33 @@ import org.junit.Test;
 public class NfsServer {
 
 
-    // on mac you must run  "sudo launchctl start com.apple.rpcbind"  also you can run "rpcinfo -p"
     @Test
+    @Ignore("nfs service test - not required for CI")
     public void test() throws Exception {
         NfsServer.main();
+
+        //  currently  test using a linux server, to run type
+        //
+        // to mount :
+        // sudo mount -t nfs localhost:/ /mnt
+        //
+        // the following example creates an entry containg key=hello value=world in the asset
+        // called /temp
+        //
+        // $cd /mnt
+        // $mkdir temp
+        // cd temp
+        // echo hello > world
+        //
+        // to unmount :
+        // $sudo umount /mnt
+
     }
 
     public static void main(String... args) throws Exception {
 
         // create an instance of a filesystem to be exported
-        VirtualFileSystem vfs = new EngineVirtualFileSystem(new VanillaAssetTree().forTesting());
+        VirtualFileSystem vfs = new ChronicleNfsVirtualFileSystem(new VanillaAssetTree().forTesting());
 
         // create the RPC service which will handle NFS requests
         OncRpcSvc nfsSvc = new OncRpcSvcBuilder()

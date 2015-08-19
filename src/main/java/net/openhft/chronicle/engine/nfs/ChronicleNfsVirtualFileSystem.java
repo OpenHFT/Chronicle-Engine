@@ -5,7 +5,6 @@ import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
-import net.openhft.chronicle.engine.tree.VanillaAsset;
 import org.dcache.nfs.status.NoEntException;
 import org.dcache.nfs.v4.NfsIdMapping;
 import org.dcache.nfs.v4.xdr.nfsace4;
@@ -16,27 +15,25 @@ import javax.security.auth.Subject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.dcache.nfs.v4.xdr.nfs4_prot.*;
 
 /**
  * @author Rob Austin.
  */
-public class EngineVirtualFileSystem implements VirtualFileSystem {
+public class ChronicleNfsVirtualFileSystem implements VirtualFileSystem {
 
 
-    public final Inode root;
+    private final Inode root;
 
-
-    public EngineVirtualFileSystem(@NotNull final AssetTree assetTree) {
-        root = ChronicleAssetInode.aquireINode(assetTree.root());
+    public ChronicleNfsVirtualFileSystem(@NotNull final AssetTree assetTree) {
+        root = ChronicleNfsAssetINode.acquireINode(assetTree.root());
     }
-
 
     @Override
     public int access(Inode inode, int mode) throws IOException {
         int accessmask = 0;
-
 
         if ((mode & ACCESS4_READ) != 0) {
             if (canAccess(inode, ACE4_READ_DATA)) {
@@ -78,28 +75,25 @@ public class EngineVirtualFileSystem implements VirtualFileSystem {
     }
 
     @Override
-    public Inode create(Inode parent, Stat.Type type, String path, Subject subject, int mode) throws IOException {
+    public Inode create(@NotNull Inode parent, org.dcache.nfs.vfs.Stat.Type type, @NotNull String path, Subject subject, int mode) throws IOException {
 
-        if (type == Stat.Type.DIRECTORY) {
+        if (type == org.dcache.nfs.vfs.Stat.Type.DIRECTORY) {
             final Asset asset = toAsset(parent).acquireAsset(path);
-            return ChronicleAssetInode.aquireINode(asset);
-        } else if (type == Stat.Type.REGULAR) {
+            return ChronicleNfsAssetINode.acquireINode(asset);
+        } else if (type == org.dcache.nfs.vfs.Stat.Type.REGULAR) {
             final MapView view = toAsset(parent).acquireView(MapView.class);
-
-            if (view == null)
-                throw new UnsupportedOperationException("this asset can not be viewed as a MAP");
 
             if (view.keyType() != String.class || view.valueType() != String.class)
                 throw new UnsupportedOperationException("type of map must be string key and value");
 
             //noinspection unchecked
             view.put(path, "");
-
-            return ChronicleEntryInode.aquireINode(view, path);
+            return ChronicleNfsEntryInode.aquireINode(view, path);
         } else
-            throw new UnsupportedOperationException("todo");
+            throw new UnsupportedOperationException("todo type=" + type);
     }
 
+    @NotNull
     @Override
     public FsStat getFsStat() throws IOException {
         return new FsStat(10, 10, 10, 10);
@@ -111,45 +105,47 @@ public class EngineVirtualFileSystem implements VirtualFileSystem {
     }
 
     @Override
-    public Inode lookup(Inode parent, String path) throws IOException {
+    public Inode lookup(@NotNull Inode parent, @NotNull String path) throws IOException {
         final Asset asset = toAsset(parent);
         final Asset child = asset.getChild(path);
         if (child == null) {
             final MapView view = asset.getView(MapView.class);
             if (view == null)
                 throw new NoEntException("MapView not found : path=" + path + " does not exist");
-            final ChronicleEntryInode iNode = ChronicleEntryInode.getINode(view, path);
+            final ChronicleNfsEntryInode iNode = ChronicleNfsEntryInode.getINode(view, path);
             if (iNode == null)
                 throw new NoEntException("Inode not found : path=" + path + " does not exist");
             return iNode;
 
         }
-        return ChronicleAssetInode.aquireINode(child);
+        return ChronicleNfsAssetINode.acquireINode(child);
     }
 
+    @NotNull
     @Override
     public Inode link(Inode parent, Inode link, String path, Subject subject) throws IOException {
         throw new UnsupportedOperationException("todo");
     }
 
+    @NotNull
     @Override
-    public List<DirectoryEntry> list(Inode inode) throws IOException {
-        final ArrayList<ChronicleDirectoryEntry> result = new ArrayList<>();
+    public List<DirectoryEntry> list(@NotNull Inode inode) throws IOException {
+        final List<DirectoryEntry> result = new ArrayList<>();
         try {
             final Asset asset = toAsset(inode);
-            asset.forEachChild(c -> result.add(new ChronicleDirectoryEntry(ChronicleAssetInode.aquireINode(c), c.name())));
+            asset.forEachChild(c -> result.add(new ChronicleNfsDirectoryEntry(ChronicleNfsAssetINode.acquireINode(c), c.name())));
 
             final MapView map = asset.getView(MapView.class);
             if (map != null) {
                 map.forEach((k, v) -> {
 
-                    final ChronicleEntryInode chronicleEntryInode = ChronicleEntryInode.aquireINode(map, k.toString());
-                    final ChronicleDirectoryEntry e = new ChronicleDirectoryEntry(chronicleEntryInode, k.toString());
+                    final ChronicleNfsEntryInode chronicleEntryInode = ChronicleNfsEntryInode.aquireINode(map, k.toString());
+                    final ChronicleNfsDirectoryEntry e = new ChronicleNfsDirectoryEntry(chronicleEntryInode, k.toString());
                     result.add(e);
                 });
             }
 
-            return (List) result;
+            return result;
         } catch (InvalidSubscriberException e) {
             throw Jvm.rethrow(e);
         }
@@ -157,87 +153,90 @@ public class EngineVirtualFileSystem implements VirtualFileSystem {
     }
 
     @Override
-    public Inode mkdir(Inode parent, String path, Subject subject, int mode) throws IOException {
+    public Inode mkdir(@NotNull Inode parent, String path, Subject subject, int mode) throws IOException {
         final Asset asset = toAsset(parent).acquireAsset(path);
-        return ChronicleAssetInode.aquireINode(asset);
+        return ChronicleNfsAssetINode.acquireINode(asset);
     }
 
     @Override
-    public boolean move(Inode src, String oldName, Inode dest, String newName) throws IOException {
-        final Object o = FileHandleLookup.reverseLookup(src.getFileId());
-        final Asset parent = (VanillaAsset) o;
+    public boolean move(@NotNull Inode parent, String oldName, Inode dest, String newName) throws
+            IOException {
+        final Object d = ChronicleNfsFileHandleLookup.reverseLookup(parent.getFileId());
+        if (!(d instanceof Asset))
+            throw new IOException("Unsupported: parent type=" + d);
 
-        final Asset child = parent.acquireAsset(oldName);
+        final Asset asset = (Asset) d;
+        if (asset.getChild(oldName) != null)
+            throw new IOException("Unsupported: can not a directory move");
 
-        parent.removeChild(oldName);
+        final MapView mapView = asset.acquireView(MapView.class);
+        final AtomicBoolean wasReplaced = new AtomicBoolean();
 
-        final Asset newAsset = toAsset(dest).acquireAsset(newName);
+        // we use computeIfAbsent as it can be treated atomically in the future
+        //noinspection unchecked
+        mapView.computeIfAbsent(newName, k -> {
+            //noinspection unchecked
+            Object oldValue = mapView.getAndRemove(oldName);
+            wasReplaced.set(true);
+            return oldValue;
+        });
 
-        // todo move currently will loose the contents of the existing asset it will create a new
-        // todo empty asset
-        return true;
-
-
+        return wasReplaced.get();
     }
 
     @Override
-    public Inode parentOf(Inode inode) throws IOException {
-        final Asset parent = toAsset(inode).parent();
-        return ChronicleAssetInode.aquireINode(parent);
+    public Inode parentOf(@NotNull Inode inode) throws IOException {
+        return ChronicleNfsAssetINode.acquireINode(toAsset(inode).parent());
     }
 
-    private Asset toAsset(Inode inode) {
-        return FileHandleLookup.reverseLookup(inode.getFileId());
+    @NotNull
+    private Asset toAsset(@NotNull Inode inode) {
+        return ChronicleNfsFileHandleLookup.reverseLookup(inode.getFileId());
     }
 
     @Override
-    public int read(Inode inode, byte[] data, long offset, int count) throws IOException {
+    public int read(@NotNull Inode inode, byte[] data, long offset, int count) throws IOException {
         if (offset > Integer.MAX_VALUE)
             throw new IllegalStateException("offset too large");
-        final Object object = FileHandleLookup.reverseLookup(inode.getFileId());
-        if (object instanceof EntryProxy) {
-            final EntryProxy entryProxy = (EntryProxy) object;
+        final Object object = ChronicleNfsFileHandleLookup.reverseLookup(inode.getFileId());
+        if (object instanceof ChronicleNfsEntryProxy) {
+            final ChronicleNfsEntryProxy entryProxy = (ChronicleNfsEntryProxy) object;
 
-            if (count > Integer.MAX_VALUE)
-                throw new IllegalStateException("count too large");
-            final Object o = entryProxy.value();
-
-            if (o == null)
+            final Object value = entryProxy.value();
+            if (value == null)
                 return 0;
 
-            final String value = o.toString();
-            long len = Math.min(count, value.length() - offset);
+            //todo improve this but currently - ensures the object is a string, however this, will
+            // todo corrupt none string data
+            final String valueStr = value.toString();
 
-            final CharSequence charSequence = value.subSequence((int)
+            long len = Math.min(count, valueStr.length() - offset);
+            final CharSequence charSequence = valueStr.subSequence((int)
                     offset, (int) len);
 
             for (int i = 0; i < len; i++) {
                 data[i] = (byte) charSequence.charAt(i);
             }
+
             return (int) len;
-
-
-        } else {
-
+        } else
             throw new UnsupportedOperationException();
-        }
-    }
 
+    }
 
     private boolean canAccess(Inode inode, int mode) {
         return true;
     }
 
-
+    @NotNull
     @Override
     public String readlink(Inode inode) throws IOException {
         throw new UnsupportedOperationException("todo");
     }
 
     @Override
-    public void remove(Inode parent, String path) throws IOException {
-
-        final Asset asset = FileHandleLookup.reverseLookup(parent.getFileId());
+    public void remove(@NotNull Inode parent, String path) throws IOException {
+        final Asset asset = ChronicleNfsFileHandleLookup.reverseLookup(parent.getFileId());
         if (asset.getChild(path) == null) {
             final MapView view = asset.getView(MapView.class);
             if (view != null)
@@ -247,19 +246,22 @@ public class EngineVirtualFileSystem implements VirtualFileSystem {
     }
 
 
+    @NotNull
     @Override
     public Inode symlink(Inode parent, String path, String link, Subject subject, int mode) throws IOException {
         throw new UnsupportedOperationException("todo");
     }
 
+    @NotNull
     @Override
-    public WriteResult write(Inode inode, byte[] data, long offset, int count, StabilityLevel stabilityLevel) throws IOException {
+    public WriteResult write(@NotNull Inode inode, @NotNull byte[] data, long offset, int count, StabilityLevel stabilityLevel) throws IOException {
 
-        final Object object = FileHandleLookup.reverseLookup(inode.getFileId());
-        if (object instanceof EntryProxy) {
-            final EntryProxy entryProxy = (EntryProxy) object;
+        final Object object = ChronicleNfsFileHandleLookup.reverseLookup(inode.getFileId());
+        if (object instanceof ChronicleNfsEntryProxy) {
+            final ChronicleNfsEntryProxy entryProxy = (ChronicleNfsEntryProxy) object;
             final MapView mapView = entryProxy.mapView();
             final String key = entryProxy.key();
+            //noinspection unchecked
             mapView.put(key, new String(data));
             return new WriteResult(StabilityLevel.DATA_SYNC, data.length);
         } else {
@@ -269,25 +271,26 @@ public class EngineVirtualFileSystem implements VirtualFileSystem {
 
     }
 
-
     @Override
     public void commit(Inode inode, long offset, int count) throws IOException {
         throw new UnsupportedOperationException("todo");
     }
 
+    @NotNull
     @Override
-    public Stat getattr(Inode inode) throws IOException {
-        return ChronicleStat.toStat(inode);
+    public org.dcache.nfs.vfs.Stat getattr(@NotNull Inode inode) throws IOException {
+        return ChronicleNfsStat.toStat(inode);
     }
 
     @Override
-    public void setattr(Inode inode, Stat stat) throws IOException {
+    public void setattr(Inode inode, org.dcache.nfs.vfs.Stat stat) throws IOException {
         throw new UnsupportedOperationException("todo");
     }
 
+    @NotNull
     @Override
     public nfsace4[] getAcl(Inode inode) throws IOException {
-        throw new UnsupportedOperationException("todo");
+        return ChronicleNfsAcl.getAcl();
     }
 
     @Override
@@ -300,11 +303,13 @@ public class EngineVirtualFileSystem implements VirtualFileSystem {
         throw new UnsupportedOperationException("todo");
     }
 
+    @NotNull
     @Override
     public AclCheckable getAclCheckable() {
         throw new UnsupportedOperationException("todo");
     }
 
+    @NotNull
     @Override
     public NfsIdMapping getIdMapper() {
         return ChronicleNfsIdMapping.EMPTY;

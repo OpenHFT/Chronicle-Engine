@@ -10,46 +10,48 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @author Rob Austin.
  */
-public class ChronicleStat extends Stat {
-    public static AtomicInteger gen = new AtomicInteger();
-    public static final ChronicleStat EMPTY = new ChronicleStat();
+class ChronicleNfsStat {
+    private static final AtomicInteger gen = new AtomicInteger();
 
-    static {
-        applyDefault(EMPTY);
-    }
-
-    private static void applyDefault(ChronicleStat stat) {
+    /**
+     * applies some default stats
+     *
+     * @param stat the object to apply the stats to
+     */
+    private static void applyDefaults(@NotNull Stat stat) {
         stat.setDev(1);
         stat.setIno(1);
-        stat.setMode(0755 | Stat.S_IFDIR);   // rwxrwxrwx
         stat.setUid(65534);   // 65534 -> nobody
         stat.setGid(65534);   // 65534 -> nobody
         stat.setRdev(0);
-        stat.setSize(100);
         stat.setGeneration(gen.getAndDecrement()); // a hack to always ensure that gen is
         // different,  otherwise the OS will cache the last result ( for example ls -l may stop
         // working if new stuff was added  )
-        stat.setATime(System.currentTimeMillis());
-        stat.setMTime(System.currentTimeMillis());
-        stat.setCTime(System.currentTimeMillis());
+        stat.setATime(System.currentTimeMillis()); // todo set this to a more reasonable time
+        stat.setMTime(System.currentTimeMillis()); // todo set this to a more reasonable time
+        stat.setCTime(System.currentTimeMillis()); // todo set this to a more reasonable time
         stat.setFileid(1);
         stat.setNlink(1);
     }
 
+    @NotNull
     public static Stat toStat(@NotNull Inode inode) {
-        final ChronicleStat result = new ChronicleStat();
-        applyDefault(result);
+        final Stat result = new Stat();
+        applyDefaults(result);
         final byte[] fileId = inode.getFileId();
-        final long l = FileHandleLookup.toLong(fileId);
+        final long l = ChronicleNfsFileHandleLookup.toLong(fileId);
         assert l < Integer.MAX_VALUE;
         result.setIno((int) l);
         result.setFileid((int) l);
-        final Object o = FileHandleLookup.toObject(fileId);
-        if (o instanceof Asset)
-            result.setMode(0777 | Stat.S_IFDIR);
-        else if (o instanceof EntryProxy) {
-            result.setSize(((EntryProxy) o).valueSize());
-            result.setMode(0777 | Stat.S_IFREG);
+        final Object o = ChronicleNfsFileHandleLookup.toObject(fileId);
+        if (o instanceof Asset) {
+            result.setSize(0);
+            result.setMode(0777 | org.dcache.nfs.vfs.Stat.S_IFDIR);
+        } else if (o instanceof ChronicleNfsEntryProxy) {
+            result.setSize(((ChronicleNfsEntryProxy) o).valueSize());
+            result.setMode(0777 | org.dcache.nfs.vfs.Stat.S_IFREG);
+        } else {
+            throw new UnsupportedOperationException("class=" + o.getClass());
         }
         return result;
     }

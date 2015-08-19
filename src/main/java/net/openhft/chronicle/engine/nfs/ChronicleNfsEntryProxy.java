@@ -1,16 +1,18 @@
 package net.openhft.chronicle.engine.nfs;
 
 import net.openhft.chronicle.engine.api.map.MapView;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * holds a reference to the map and the key of interest the reason that we don hold a reference to
- * the entry is that chronicle map stores its entries off heap
+ * holds a reference to the map and the key of interest, the reason that we don hold a reference to
+ * the entry is that chronicle map stores its entries off heap so holding just the entry is unlikely
+ * to work in all cases
  */
-class EntryProxy {
-    MapView mapView;
-    String key;
+class ChronicleNfsEntryProxy {
+    private final MapView mapView;
+    private final String key;
 
-    public EntryProxy(MapView mapView, String key) {
+    public ChronicleNfsEntryProxy(MapView mapView, String key) {
         this.mapView = mapView;
         this.key = key;
     }
@@ -18,13 +20,12 @@ class EntryProxy {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof EntryProxy)) return false;
+        if (!(o instanceof ChronicleNfsEntryProxy)) return false;
 
-        EntryProxy that = (EntryProxy) o;
+        ChronicleNfsEntryProxy that = (ChronicleNfsEntryProxy) o;
 
-        if (mapView != null ? !mapView.equals(that.mapView) : that.mapView != null)
-            return false;
-        return !(key != null ? !key.equals(that.key) : that.key != null);
+        return !(mapView != null ? !mapView.equals(that.mapView) : that.mapView != null)
+                && !(key != null ? !key.equals(that.key) : that.key != null);
 
     }
 
@@ -43,7 +44,6 @@ class EntryProxy {
         return key;
     }
 
-
     public int valueSize() {
         final Object o = value();
         if (o == null)
@@ -51,11 +51,11 @@ class EntryProxy {
         return o.toString().length();
     }
 
+    @Nullable
     public Object value() {
+        //noinspection unchecked
         return mapView.get(key);
     }
 
-    public void remove() {
-        mapView.remove(key);
-    }
+
 }
