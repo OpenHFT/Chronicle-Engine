@@ -64,9 +64,5 @@ public class NfsServer {
         System.in.read();
     }
 
-    // on mac you must run  "sudo launchctl start com.apple.rpcbind"  also you can run "rpcinfo -p"
-    @Test
-    public void test() throws Exception {
-        NfsServer.main();
-    }
+
 }

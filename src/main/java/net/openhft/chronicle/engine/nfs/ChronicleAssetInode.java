@@ -3,6 +3,7 @@ package net.openhft.chronicle.engine.nfs;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import org.dcache.nfs.vfs.FileHandle;
 import org.dcache.nfs.vfs.Inode;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -12,64 +13,19 @@ import java.util.Map;
  */
 public class ChronicleAssetInode extends Inode {
 
-
-    private final Asset asset;
     private static final Map<Asset, ChronicleAssetInode> POOL = new IdentityHashMap<>();
 
-    private ChronicleAssetInode(Asset asset) {
-        super(fh());
-        this.asset = asset;
+    private ChronicleAssetInode(@NotNull Asset asset) {
+        super(fh(asset));
     }
 
-    public Asset getAsset() {
-        return asset;
-    }
-
-    @Override
-    public byte[] getFileId() {
-        return super.getFileId();
-    }
-
-    @Override
-    public byte[] toNfsHandle() {
-        return super.toNfsHandle();
-    }
-
-    @Override
-    public int hashCode() {
-        return super.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return super.equals(obj);
-    }
-
-    @Override
-    public boolean isPesudoInode() {
-        return super.isPesudoInode();
-    }
-
-    @Override
-    public int exportIndex() {
-        return super.exportIndex();
-    }
-
-    @Override
-    public int handleVersion() {
-        return super.handleVersion();
-    }
-
-    @Override
-    public String toString() {
-        return super.toString();
-    }
-
-    public static ChronicleAssetInode aquireINode(Asset asset) {
+    public static ChronicleAssetInode aquireINode(@NotNull Asset asset) {
         return POOL.computeIfAbsent(asset, k -> new ChronicleAssetInode(asset));
     }
 
-    private static FileHandle fh() {
-        return new FileHandle(0, 0, 0, new byte[]{});
+    private static FileHandle fh(@NotNull Asset asset) {
+        return new FileHandle(0, 1, 0, FileHandleLookup.acquireFileId(asset));
     }
+
+
 }

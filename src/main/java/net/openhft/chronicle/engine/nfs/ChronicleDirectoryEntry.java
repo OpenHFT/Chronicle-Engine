@@ -1,15 +1,15 @@
 package net.openhft.chronicle.engine.nfs;
 
-import net.openhft.chronicle.engine.api.tree.Asset;
 import org.dcache.nfs.vfs.DirectoryEntry;
+import org.dcache.nfs.vfs.Inode;
 
 /**
  * @author Rob Austin.
  */
 public class ChronicleDirectoryEntry extends DirectoryEntry {
 
-
-    public ChronicleDirectoryEntry(Asset asset) {
-        super(asset.toString(), ChronicleAssetInode.aquireINode(asset), ChronicleStat.EMPTY);
+    public ChronicleDirectoryEntry(final Inode inode, final String name) {
+        super(name, inode, ChronicleStat.toStat(inode));
     }
+
 }
