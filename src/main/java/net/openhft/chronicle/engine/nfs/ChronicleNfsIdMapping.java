@@ -16,12 +16,12 @@ class ChronicleNfsIdMapping implements NfsIdMapping {
 
     @Override
     public int principalToUid(String principal) throws BadOwnerException {
-        return 65534;  // this is the id of my current unix user via "$id -u <username>"
+        return 1000;  // this is the id of my current unix user via "$id -u <username>"
     }
 
     @Override
     public int principalToGid(String principal) throws BadOwnerException {
-        return 65534;   // this is the id of my current unix user via "$id -u <username>"
+        return 1000;   // this is the id of my current unix user via "$id -u <username>"
     }
 
     @NotNull

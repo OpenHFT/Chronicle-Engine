@@ -21,8 +21,8 @@ class ChronicleNfsStat {
     private static void applyDefaults(@NotNull Stat stat) {
         stat.setDev(1);
         stat.setIno(1);
-        stat.setUid(65534);   // 65534 -> nobody
-        stat.setGid(65534);   // 65534 -> nobody
+        stat.setUid(1000);   // this is the id of my current unix user via "$id -u <username>"
+        stat.setGid(1000);   // this is the id of my current unix user via "$id -u <username>"
         stat.setRdev(0);
         stat.setGeneration(gen.getAndDecrement()); // a hack to always ensure that gen is
         // different,  otherwise the OS will cache the last result ( for example ls -l may stop
