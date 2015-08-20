@@ -160,7 +160,8 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
                 .class);
 
         final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(128);
-        clientAssetTree.registerSubscriber("name", MapEvent.class, events::add);
+        clientAssetTree.registerSubscriber("name?putReturnsNull=true", MapEvent.class,
+                events::add);
         {
             clientMap.put("hello", "world");
 
