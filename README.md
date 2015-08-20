@@ -184,6 +184,32 @@ warmup.start();
 warmup.waitFor();
 ```
 
+### Chronicle Engine can be viewed on a NFS mount
+
+Start chronicle with 
+      
+```   
+-Dnfs=true
+```   
+      
+to mount :
+```  
+sudo mount -t nfs localhost:/ /mnt
+```  
+the following example creates an entry containg key=hello value=world in the asset called /temp
+
+```  
+$cd /mnt
+$mkdir temp
+cd temp
+echo hello > world
+```  
+to unmount :
+```  
+$sudo umount /mnt
+```  
+
+
 # More details to come.
 
 

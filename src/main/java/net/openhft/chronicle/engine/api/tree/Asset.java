@@ -33,6 +33,7 @@ import java.util.function.BiPredicate;
  * BytesStore.
  */
 public interface Asset extends Closeable {
+
     /**
      * @return the name of this asset (not including the group)
      */
