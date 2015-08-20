@@ -313,9 +313,10 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
         }
 
         @Override
-        public void onPut(@NotNull K key, V newValue, @Nullable V replacedValue, boolean replicationEvent) {
+        public void onPut(@NotNull K key, V newValue, @Nullable V replacedValue, boolean
+                replicationEvent, boolean added) {
             if (subscriptions.hasSubscribers())
-                if (replacedValue == null) {
+                if (added) {
                     subscriptions.notifyEvent(InsertedEvent.of(assetFullName, key, newValue));
                 } else {
                     subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, replacedValue, newValue));
