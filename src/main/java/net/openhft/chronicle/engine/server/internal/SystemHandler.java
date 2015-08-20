@@ -11,6 +11,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiConsumer;
 
+import static net.openhft.chronicle.engine.server.internal.SystemHandler.EventId.heartbeat;
+import static net.openhft.chronicle.engine.server.internal.SystemHandler.EventId.onClientClosing;
+
 /**
  * @author Rob Austin.
  */
@@ -38,15 +41,19 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
             return;
         }
 
+        if (!heartbeat.contentEquals(eventName) && !onClientClosing.contentEquals(eventName))
+            return;
+
+
         //noinspection ConstantConditions
         outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
 
         writeData(inWire.bytes(), out -> {
 
-            if (EventId.heartbeat.contentEquals(eventName))
+            if (heartbeat.contentEquals(eventName))
                 outWire.write(EventId.heartbeatReply).int64(valueIn.int64());
 
-            else if (EventId.onClientClosing.contentEquals(eventName)) {
+            else if (onClientClosing.contentEquals(eventName)) {
                 hasClientClosed = true;
                 outWire.write(EventId.onClosingReply).text("");
             }

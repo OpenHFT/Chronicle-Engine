@@ -21,6 +21,7 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.WireType;
+import net.openhft.chronicle.wire.YamlLogging;
 
 import java.io.IOException;
 
@@ -36,6 +37,9 @@ public class ServerMain {
     }
 
     public static void main(String[] args) throws IOException {
+
+        YamlLogging.showServerReads = true;
+        YamlLogging.showServerWrites = true;
         AssetTree serverTree = new VanillaAssetTree().forServer(false);
         endpoint = new ServerEndpoint("localhost:9090", serverTree, WireType.TEXT);
     }

@@ -82,6 +82,9 @@ public class ClientTwoMain {
         double mid = Double.parseDouble((String) gbpusd);
         System.out.println("mid: " + mid);
 
-        Jvm.pause(1000);
+
+        while (true) {
+            Jvm.pause(1000);
+        }
     }
 }

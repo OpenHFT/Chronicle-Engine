@@ -184,7 +184,7 @@ warmup.start();
 warmup.waitFor();
 ```
 
-### Chronicle Engine can be viewed on a NFS mount
+### Chronicle Engine can be viewed on an NFS mount
 
 Start chronicle with 
       
