@@ -60,9 +60,9 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
             return getAndPut(key, value) != null;
         }
         boolean replaced = kvStore.put(key, value);
-            subscriptions.notifyEvent(replaced
-                    ? InsertedEvent.of(asset.fullName(), key, value)
-                    : UpdatedEvent.of(asset.fullName(), key, null, value));
+        subscriptions.notifyEvent(replaced ?
+                UpdatedEvent.of(asset.fullName(), key, null, value) :
+                InsertedEvent.of(asset.fullName(), key, value));
         return replaced;
 
     }
@@ -111,9 +111,9 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     public V getAndPut(K key, V value) {
         V oldValue = kvStore.getAndPut(key, value);
 
-            subscriptions.notifyEvent(oldValue == null
-                    ? InsertedEvent.of(asset.fullName(), key, value)
-                    : UpdatedEvent.of(asset.fullName(), key, oldValue, value));
+        subscriptions.notifyEvent(oldValue == null
+                ? InsertedEvent.of(asset.fullName(), key, value)
+                : UpdatedEvent.of(asset.fullName(), key, oldValue, value));
         return oldValue;
     }
 
