@@ -52,7 +52,7 @@ public class TestInsertUpdateChronicleMapView {
     public static Collection<Object[]> data() throws IOException {
         final List<Object[]> list = new ArrayList<>();
         list.add(new Object[]{WireType.BINARY});
-        //     list.add(new Object[]{WireType.TEXT});
+        //  list.add(new Object[]{WireType.TEXT});
         return list;
     }
 
@@ -91,8 +91,6 @@ public class TestInsertUpdateChronicleMapView {
     }
 
 
-
-/*
     @Test
     public void testInsertFollowedByUpdate() throws Exception {
 
@@ -115,7 +113,7 @@ public class TestInsertUpdateChronicleMapView {
             final MapEvent event = events.poll(10, SECONDS);
             Assert.assertTrue(event instanceof UpdatedEvent);
         }
-    }*/
+    }
 
     @Test
     public void testInsertFollowedByUpdateWhenPutReturnsNullTrue() throws Exception {
@@ -128,8 +126,6 @@ public class TestInsertUpdateChronicleMapView {
         final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(128);
         clientAssetTree.registerSubscriber("name?putReturnsNull=true", MapEvent.class,
                 events::add);
-
-        Thread.sleep(1000);
 
         {
             serverMap.put("hello", "world");

@@ -40,7 +40,7 @@ public class TestInsertUpdateChronicleMapViewOnServer {
     private final WireType wireType;
     @NotNull
 
-    private AssetTree clientAssetTree = new VanillaAssetTree().forTesting();
+    private AssetTree clientAssetTree ;
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
