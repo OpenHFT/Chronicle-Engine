@@ -8,7 +8,6 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
-import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
@@ -32,18 +31,21 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * @author Rob Austin.
  */
 @RunWith(value = Parameterized.class)
-public class TestInsertUpdateChronicleMapView {
+public class TestInsertUpdateChronicleMapViewOnServer {
 
     private static final String NAME = "test";
-    private final WireType wireType;
     public String connection = "RemoteSubscriptionTest.host.port";
+
+
+    private final WireType wireType;
     @NotNull
 
-    private AssetTree clientAssetTree = new VanillaAssetTree().forTesting();
+    private AssetTree clientAssetTree ;
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
-    public TestInsertUpdateChronicleMapView(WireType wireType) {
+    public TestInsertUpdateChronicleMapViewOnServer(WireType wireType) {
+
         this.wireType = wireType;
     }
 
@@ -51,7 +53,7 @@ public class TestInsertUpdateChronicleMapView {
     public static Collection<Object[]> data() throws IOException {
         final List<Object[]> list = new ArrayList<>();
         list.add(new Object[]{WireType.BINARY});
-        //  list.add(new Object[]{WireType.TEXT});
+        list.add(new Object[]{WireType.TEXT});
         return list;
     }
 
@@ -74,7 +76,9 @@ public class TestInsertUpdateChronicleMapView {
                 new ChronicleMapKeyValueStore(context.basePath(null).entries(100)
                         .putReturnsNull(false), asset));
 
-        clientAssetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType);
+
+        clientAssetTree = serverAssetTree;
+
 
     }
 
@@ -86,7 +90,6 @@ public class TestInsertUpdateChronicleMapView {
             serverEndpoint.close();
         serverAssetTree.close();
 
-        TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
     }
 
@@ -126,6 +129,8 @@ public class TestInsertUpdateChronicleMapView {
         final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(128);
         clientAssetTree.registerSubscriber("name?putReturnsNull=true", MapEvent.class,
                 events::add);
+
+        Thread.sleep(1000);
 
         {
             serverMap.put("hello", "world");
