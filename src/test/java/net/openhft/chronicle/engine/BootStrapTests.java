@@ -24,6 +24,7 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import org.junit.After;
 import org.junit.Assert;
@@ -50,26 +51,23 @@ import java.util.concurrent.*;
 public class BootStrapTests {
 
 
-    @Parameterized.Parameters
-    public static List<Object[]> data() {
-        return Arrays.asList(new Object[5][0]);
-    }
+    public static final WireType WIRE_TYPE = WireType.TEXT;
+    private static final String NAME = "test";
+    private static final String CONNECTION_1 = "BootStrapTests.host.port";
+    private static ConcurrentMap<String, String> map1, map2;
+    private AssetTree client1;
+    private AssetTree client2;
+    private VanillaAssetTree serverAssetTree1;
+    private ServerEndpoint serverEndpoint1;
+
 
     public BootStrapTests() {
     }
 
-    private static final String NAME = "test";
-    public static final WireType WIRE_TYPE = WireType.TEXT;
-    private static ConcurrentMap<String, String> map1, map2;
-    private static final String CONNECTION_1 = "BootStrapTests.host.port";
-
-    private AssetTree client1;
-    private AssetTree client2;
-
-
-    private VanillaAssetTree serverAssetTree1;
-    private ServerEndpoint serverEndpoint1;
-
+    @Parameterized.Parameters
+    public static List<Object[]> data() {
+        return Arrays.asList(new Object[5][0]);
+    }
 
     @Before
     public void before() throws IOException {
@@ -102,6 +100,7 @@ public class BootStrapTests {
         if (map1 instanceof Closeable)
             ((Closeable) map1).close();
 
+        TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
     }
 

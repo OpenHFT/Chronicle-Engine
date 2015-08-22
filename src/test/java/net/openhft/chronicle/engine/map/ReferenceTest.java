@@ -10,6 +10,7 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +42,7 @@ public class ReferenceTest {
     VanillaAssetTree serverAssetTree;
     AssetTree assetTree;
     private ServerEndpoint serverEndpoint;
-
+    private String hostPortToken;
 
     public ReferenceTest(Object isRemote, Object wireType) {
         ReferenceTest.isRemote = (Boolean) isRemote;
@@ -57,10 +58,6 @@ public class ReferenceTest {
                 , new Object[]{Boolean.TRUE, WireType.BINARY}
         );
     }
-
-
-    private String hostPortToken;
-
 
     @Before
     public void before() throws IOException {
@@ -85,6 +82,7 @@ public class ReferenceTest {
         if (serverEndpoint != null)
             serverEndpoint.close();
         serverAssetTree.close();
+        TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
         //TCPRegistry.assertAllServersStopped();
     }

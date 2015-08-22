@@ -23,6 +23,7 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.wire.WireType;
 import org.junit.After;
@@ -78,6 +79,7 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
         serverAssetTree.close();
         serverEndpoint.close();
 
+        TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
     }
 

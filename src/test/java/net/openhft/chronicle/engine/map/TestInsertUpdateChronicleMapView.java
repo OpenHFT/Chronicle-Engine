@@ -9,6 +9,7 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
@@ -32,10 +33,8 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public class TestInsertUpdateChronicleMapView {
 
     private static final String NAME = "test";
-    public String connection = "RemoteSubscriptionTest.host.port";
-
-
     private final WireType wireType;
+    public String connection = "RemoteSubscriptionTest.host.port";
     @NotNull
 
     private AssetTree clientAssetTree = new VanillaAssetTree().forTesting();
@@ -88,6 +87,7 @@ public class TestInsertUpdateChronicleMapView {
             serverEndpoint.close();
         serverAssetTree.close();
 
+        TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
     }
 

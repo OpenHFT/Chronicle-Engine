@@ -25,6 +25,7 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.*;
 import net.openhft.chronicle.network.TCPRegistry;
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
@@ -103,6 +104,7 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
         serverAssetTree.close();
 
         //TCPRegistry.assertAllServersStopped();
+        TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
     }
 

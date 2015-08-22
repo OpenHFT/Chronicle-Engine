@@ -33,6 +33,7 @@ import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import org.junit.*;
 
@@ -85,6 +86,15 @@ public class RemoteSubscriptionModelPerformanceTest {
         clientAssetTree = new VanillaAssetTree(13).forRemoteAccess("RemoteSubscriptionModelPerformanceTest.port", WireType.BINARY);
     }
 
+    @AfterClass
+    public static void tearDownAfterClass() throws IOException {
+        clientAssetTree.close();
+        serverEndpoint.close();
+        serverAssetTree.close();
+        TcpChannelHub.closeAllHubs();
+        TCPRegistry.reset();
+    }
+
     @Before
     public void setUp() throws IOException {
         Files.deleteIfExists(Paths.get(OS.TARGET, _mapName));
@@ -99,14 +109,6 @@ public class RemoteSubscriptionModelPerformanceTest {
 //        System.out.println("Native memory used "+OS.memory().nativeMemoryUsed());
 //        System.gc();
 
-    }
-
-    @AfterClass
-    public static void tearDownAfterClass() throws IOException {
-        clientAssetTree.close();
-        serverEndpoint.close();
-        serverAssetTree.close();
-        TCPRegistry.reset();
     }
 
     /**

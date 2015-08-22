@@ -25,6 +25,7 @@ import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
@@ -57,10 +58,10 @@ import static org.junit.Assert.assertEquals;
 public class SubscriptionTest extends ThreadMonitoringTest {
     private static final String NAME = "/test";
     private static ConcurrentMap<String, Factor> map;
+    private final boolean isRemote;
     @NotNull
     @Rule
     public TestName name = new TestName();
-    private final boolean isRemote;
 
     public SubscriptionTest(Boolean isRemote) {
         this.isRemote = isRemote;
@@ -75,15 +76,16 @@ public class SubscriptionTest extends ThreadMonitoringTest {
         });
     }
 
-    @Before
-    public void before() {
-        methodName(name.getMethodName());
-    }
-
     @AfterClass
     public static void tearDownClass() {
         //  TCPRegistry.assertAllServersStopped();
+        TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
+    }
+
+    @Before
+    public void before() {
+        methodName(name.getMethodName());
     }
 
     @Test
@@ -167,6 +169,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
 
 
         verify(listener);
+        TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
     }
 

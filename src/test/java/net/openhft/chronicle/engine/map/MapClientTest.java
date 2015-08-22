@@ -25,6 +25,7 @@ import net.openhft.chronicle.engine.map.remote.RemoteMapView;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,13 +53,13 @@ import static org.junit.Assert.*;
  */
 @RunWith(value = Parameterized.class)
 public class MapClientTest extends ThreadMonitoringTest {
+    public static final WireType WIRE_TYPE = WireType.TEXT;
     private static int i;
     // server has it's own asset tree, to the client.
     @NotNull
     private final AssetTree assetTree = new VanillaAssetTree().forTesting();
     @Nullable
     private Class<? extends CloseableSupplier> supplier = null;
-    public static final WireType WIRE_TYPE = WireType.TEXT;
 
     public MapClientTest(Class<? extends CloseableSupplier> supplier) {
         this.supplier = supplier;
@@ -74,6 +75,7 @@ public class MapClientTest extends ThreadMonitoringTest {
 
     @Before
     public void clearState() {
+        TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
     }
 
@@ -376,6 +378,7 @@ public class MapClientTest extends ThreadMonitoringTest {
             clientAssetTree.close();
             serverEndpoint.close();
             serverAssetTree.close();
+            TcpChannelHub.closeAllHubs();
             TCPRegistry.reset();
         }
 

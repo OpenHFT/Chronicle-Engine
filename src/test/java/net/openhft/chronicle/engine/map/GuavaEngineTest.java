@@ -32,6 +32,7 @@ import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,16 +88,6 @@ public class GuavaEngineTest {
         return tests;
     }
 
-    @AfterClass
-    public void testTearDown() {
-        TCPRegistry.reset();
-    }
-
-    @After
-    public void tearDown() {
-        TCPRegistry.reset();
-    }
-
     @NotNull
     static ConcurrentMap<CharSequence, CharSequence> newStrStrRemoteMap(@NotNull AssetTree assetTree) {
 
@@ -116,6 +107,18 @@ public class GuavaEngineTest {
         } catch (IOException e) {
             throw new IORuntimeException(e);
         }
+    }
+
+    @AfterClass
+    public void testTearDown() {
+        TcpChannelHub.closeAllHubs();
+        TCPRegistry.reset();
+    }
+
+    @After
+    public void tearDown() {
+        TcpChannelHub.closeAllHubs();
+        TCPRegistry.reset();
     }
 
     static abstract class TestGenerator
@@ -208,6 +211,7 @@ public class GuavaEngineTest {
         public void close() throws IOException {
             assetTree.close();
             remoteAssetTree.close();
+            TcpChannelHub.closeAllHubs();
             TCPRegistry.reset();
         }
     }

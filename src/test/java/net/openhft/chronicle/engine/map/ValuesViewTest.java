@@ -7,6 +7,7 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
@@ -35,10 +36,10 @@ import static net.openhft.chronicle.engine.Utils.methodName;
 @RunWith(value = Parameterized.class)
 public class ValuesViewTest extends ThreadMonitoringTest {
     private static final String NAME = "test";
-    public String connection = "SteamTest.host.port";
     private static MapView<String, String> map;
     private final Boolean isRemote;
     private final WireType wireType;
+    public String connection = "SteamTest.host.port";
     @NotNull
     @Rule
     public TestName name = new TestName();
@@ -88,6 +89,7 @@ public class ValuesViewTest extends ThreadMonitoringTest {
         serverAssetTree.close();
         if (map instanceof Closeable)
             ((Closeable) map).close();
+        TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
     }
 
