@@ -29,6 +29,7 @@ import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.junit.*;
@@ -72,6 +73,7 @@ public class SubscriptionModelPerformanceTest {
 
     @AfterClass
     public static void tearDownClass() {
+        TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
     }
 
@@ -109,6 +111,7 @@ public class SubscriptionModelPerformanceTest {
         clientAssetTree.close();
         serverEndpoint.close();
         serverAssetTree.close();
+        TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
     }
 

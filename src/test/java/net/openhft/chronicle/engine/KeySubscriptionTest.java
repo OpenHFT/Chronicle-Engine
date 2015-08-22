@@ -23,6 +23,7 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import org.junit.After;
 import org.junit.Before;
@@ -38,9 +39,8 @@ import java.io.IOException;
 
 public class KeySubscriptionTest extends ThreadMonitoringTest {
 
-    private static final String NAME = "test";
     public static final WireType WIRE_TYPE = WireType.TEXT;
-
+    private static final String NAME = "test";
     private static final String CONNECTION = "host.port.KeySubscriptionTest";
     private AssetTree clientTree;
     private VanillaAssetTree serverAssetTree;
@@ -66,6 +66,7 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
         serverAssetTree.close();
         serverEndpoint.close();
 
+        TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
     }
 

@@ -18,6 +18,7 @@ import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
@@ -55,95 +56,17 @@ public class ReplicationTest10Way {
 
     public static final int MAX = 10;
     public static final String CLUSTER_NAME = "max-cluster";
-
-    @Parameterized.Parameters
-    public static List<Object[]> data() {
-        return Arrays.asList(new Object[10][0]);
-    }
+    public static final WireType WIRE_TYPE = WireType.TEXT;
+    public static final String NAME = "/ChMaps/test";
+    public ServerEndpoint[] serverEndpoints = new ServerEndpoint[MAX];
+    private AssetTree trees[] = new AssetTree[MAX];
 
     public ReplicationTest10Way() {
     }
 
-
-    public static final WireType WIRE_TYPE = WireType.TEXT;
-    public static final String NAME = "/ChMaps/test";
-    public ServerEndpoint[] serverEndpoints = new ServerEndpoint[MAX];
-
-    private AssetTree trees[] = new AssetTree[MAX];
-
-    @Before
-    public void before() throws IOException {
-        YamlLogging.clientWrites = true;
-        YamlLogging.clientReads = true;
-
-        ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
-        ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
-        //Delete any files from the last run
-        Files.deleteIfExists(Paths.get(OS.TARGET, NAME));
-
-
-        WireType writeType = WireType.TEXT;
-
-
-        for (int i = 1; i < MAX; i++) {
-            final String hostPort = "host.port" + i;
-            TCPRegistry.createServerSocketChannelFor(hostPort);
-            trees[i] = create(i, writeType);
-            assert trees[i] != null;
-
-            serverEndpoints[i] = new ServerEndpoint(hostPort, trees[i], writeType);
-
-        }
-    }
-
-    @After
-    public void after() throws IOException {
-
-        shutdownTrees();
-        Jvm.pause(100);
-        shutDownServers();
-
-
-        TCPRegistry.reset();
-        // TODO TCPRegistery.assertAllServersStopped();
-    }
-
-    private void shutdownTrees() {
-        ArrayList<Future> futures = new ArrayList<>();
-
-        ExecutorService c = Executors.newCachedThreadPool(new NamedThreadFactory("Tree Closer",
-                true));
-        for (int i = 1; i < MAX; i++) {
-            final int j = i;
-            futures.add(c.submit(trees[j]::close));
-
-        }
-
-        futures.forEach(f -> {
-            try {
-                f.get();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-    }
-
-    private void shutDownServers() {
-        ArrayList<Future> futures = new ArrayList<>();
-
-        ExecutorService c = Executors.newCachedThreadPool(new NamedThreadFactory("Servers Closer", true));
-        for (int i = 1; i < MAX; i++) {
-            final int j = i;
-            futures.add(c.submit(serverEndpoints[j]::close));
-        }
-
-        futures.forEach(f -> {
-            try {
-                f.get();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
+    @Parameterized.Parameters
+    public static List<Object[]> data() {
+        return Arrays.asList(new Object[10][0]);
     }
 
     @NotNull
@@ -194,6 +117,82 @@ public class ReplicationTest10Way {
         if (path == null)
             return ".";
         return new File(path).getParentFile().getParentFile() + "/src/test/resources";
+    }
+
+    @Before
+    public void before() throws IOException {
+        YamlLogging.clientWrites = true;
+        YamlLogging.clientReads = true;
+
+        ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
+        ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
+        //Delete any files from the last run
+        Files.deleteIfExists(Paths.get(OS.TARGET, NAME));
+
+
+        WireType writeType = WireType.TEXT;
+
+
+        for (int i = 1; i < MAX; i++) {
+            final String hostPort = "host.port" + i;
+            TCPRegistry.createServerSocketChannelFor(hostPort);
+            trees[i] = create(i, writeType);
+            assert trees[i] != null;
+
+            serverEndpoints[i] = new ServerEndpoint(hostPort, trees[i], writeType);
+
+        }
+    }
+
+    @After
+    public void after() throws IOException {
+
+        shutdownTrees();
+        Jvm.pause(100);
+        shutDownServers();
+
+
+        TcpChannelHub.closeAllHubs();
+        TCPRegistry.reset();
+        // TODO TCPRegistery.assertAllServersStopped();
+    }
+
+    private void shutdownTrees() {
+        ArrayList<Future> futures = new ArrayList<>();
+
+        ExecutorService c = Executors.newCachedThreadPool(new NamedThreadFactory("Tree Closer",
+                true));
+        for (int i = 1; i < MAX; i++) {
+            final int j = i;
+            futures.add(c.submit(trees[j]::close));
+
+        }
+
+        futures.forEach(f -> {
+            try {
+                f.get();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    private void shutDownServers() {
+        ArrayList<Future> futures = new ArrayList<>();
+
+        ExecutorService c = Executors.newCachedThreadPool(new NamedThreadFactory("Servers Closer", true));
+        for (int i = 1; i < MAX; i++) {
+            final int j = i;
+            futures.add(c.submit(serverEndpoints[j]::close));
+        }
+
+        futures.forEach(f -> {
+            try {
+                f.get();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     @Test

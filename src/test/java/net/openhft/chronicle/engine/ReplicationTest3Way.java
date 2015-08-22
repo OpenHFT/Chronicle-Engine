@@ -16,6 +16,7 @@ import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
@@ -45,15 +46,6 @@ import static org.junit.Assert.assertNotNull;
 public class ReplicationTest3Way {
 
 
-    @Parameterized.Parameters
-    public static List<Object[]> data() {
-        return Arrays.asList(new Object[10][0]);
-    }
-
-    public ReplicationTest3Way() {
-    }
-
-
     public static final WireType WIRE_TYPE = WireType.TEXT;
     public static final String NAME = "/ChMaps/test";
     public ServerEndpoint serverEndpoint1;
@@ -62,6 +54,42 @@ public class ReplicationTest3Way {
     private AssetTree tree3;
     private AssetTree tree1;
     private AssetTree tree2;
+
+    public ReplicationTest3Way() {
+    }
+
+    @Parameterized.Parameters
+    public static List<Object[]> data() {
+        return Arrays.asList(new Object[10][0]);
+    }
+
+    @NotNull
+    private static AssetTree create(final int hostId, Function<Bytes, Wire> writeType) {
+        AssetTree tree = new VanillaAssetTree((byte) hostId)
+                .forTesting()
+                .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);
+
+        tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
+                VanillaMapView::new,
+                KeyValueStore.class);
+        tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
+                CMap2EngineReplicator::new);
+        tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
+                new ChronicleMapKeyValueStore(context.wireType(writeType),
+                        asset));
+
+        //  VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
+
+        return tree;
+    }
+
+    @NotNull
+    public static String resourcesDir() {
+        String path = ChronicleMapKeyValueStoreTest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        if (path == null)
+            return ".";
+        return new File(path).getParentFile().getParentFile() + "/src/test/resources";
+    }
 
     @Before
     public void before() throws IOException {
@@ -99,36 +127,9 @@ public class ReplicationTest3Way {
             tree2.close();
         if (tree2 != null)
             tree3.close();
+        TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
         // TODO TCPRegistery.assertAllServersStopped();
-    }
-
-    @NotNull
-    private static AssetTree create(final int hostId, Function<Bytes, Wire> writeType) {
-        AssetTree tree = new VanillaAssetTree((byte) hostId)
-                .forTesting()
-                .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);
-
-        tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
-                VanillaMapView::new,
-                KeyValueStore.class);
-        tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
-                CMap2EngineReplicator::new);
-        tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
-                new ChronicleMapKeyValueStore(context.wireType(writeType),
-                        asset));
-
-      //  VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
-
-        return tree;
-    }
-
-    @NotNull
-    public static String resourcesDir() {
-        String path = ChronicleMapKeyValueStoreTest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-        if (path == null)
-            return ".";
-        return new File(path).getParentFile().getParentFile() + "/src/test/resources";
     }
 
     @Test

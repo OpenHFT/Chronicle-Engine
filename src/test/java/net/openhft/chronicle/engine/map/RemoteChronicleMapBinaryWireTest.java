@@ -20,6 +20,7 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
@@ -59,6 +60,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     @AfterClass
     public static void tearDownClass() {
         YamlLogging.setAll(false);
+        TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
     }
 

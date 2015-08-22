@@ -16,6 +16,7 @@ import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
@@ -44,15 +45,6 @@ import static org.junit.Assert.assertNotNull;
 public class ReplicationTest3WayBoostrap {
 
 
-    @Parameterized.Parameters
-    public static List<Object[]> data() {
-        return Arrays.asList(new Object[10][0]);
-    }
-
-    public ReplicationTest3WayBoostrap() {
-    }
-
-
     public static final WireType WIRE_TYPE = WireType.TEXT;
     public static final String NAME = "/ChMaps/test";
     public ServerEndpoint serverEndpoint1;
@@ -62,23 +54,12 @@ public class ReplicationTest3WayBoostrap {
     private AssetTree tree1;
     private AssetTree tree2;
 
+    public ReplicationTest3WayBoostrap() {
+    }
 
-    @After
-    public void after() throws IOException {
-        if (serverEndpoint1 != null)
-            serverEndpoint1.close();
-        if (serverEndpoint2 != null)
-            serverEndpoint2.close();
-        if (serverEndpoint3 != null)
-            serverEndpoint3.close();
-        if (tree1 != null)
-            tree1.close();
-        if (tree2 != null)
-            tree2.close();
-        if (tree2 != null)
-            tree3.close();
-        TCPRegistry.reset();
-        // TODO TCPRegistery.assertAllServersStopped();
+    @Parameterized.Parameters
+    public static List<Object[]> data() {
+        return Arrays.asList(new Object[10][0]);
     }
 
     @NotNull
@@ -107,6 +88,25 @@ public class ReplicationTest3WayBoostrap {
         if (path == null)
             return ".";
         return new File(path).getParentFile().getParentFile() + "/src/test/resources";
+    }
+
+    @After
+    public void after() throws IOException {
+        if (serverEndpoint1 != null)
+            serverEndpoint1.close();
+        if (serverEndpoint2 != null)
+            serverEndpoint2.close();
+        if (serverEndpoint3 != null)
+            serverEndpoint3.close();
+        if (tree1 != null)
+            tree1.close();
+        if (tree2 != null)
+            tree2.close();
+        if (tree2 != null)
+            tree3.close();
+        TcpChannelHub.closeAllHubs();
+        TCPRegistry.reset();
+        // TODO TCPRegistery.assertAllServersStopped();
     }
 
     @Test

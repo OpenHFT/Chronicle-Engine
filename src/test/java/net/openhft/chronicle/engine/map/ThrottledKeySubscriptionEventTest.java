@@ -26,6 +26,7 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
@@ -49,8 +50,8 @@ import static net.openhft.chronicle.engine.Utils.yamlLoggger;
  */
 public class ThrottledKeySubscriptionEventTest extends ThreadMonitoringTest {
 
-    private static final String NAME = "test";
     public static final WireType WIRE_TYPE = WireType.TEXT;
+    private static final String NAME = "test";
     private static MapView<String, String> map;
 
     @NotNull
@@ -84,6 +85,7 @@ public class ThrottledKeySubscriptionEventTest extends ThreadMonitoringTest {
         if (map instanceof Closeable)
             ((Closeable) map).close();
 
+        TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
         System.setProperty("Throttler.maxEventsPreSecond", "0");
     }

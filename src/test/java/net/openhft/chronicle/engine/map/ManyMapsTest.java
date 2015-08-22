@@ -5,6 +5,7 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -23,6 +24,14 @@ public class ManyMapsTest {
 
     public static final String NAME =
             "ManyMapsTest.testConnectToMultipleMapsUsingTheSamePort.host.port";
+
+    public static String getKey(String mapName, int counter) {
+        return String.format("%s-%s", mapName, counter);
+    }
+
+    public static String getValue(String mapName, int counter) {
+        return String.format("Val-%s-%s", mapName, counter);
+    }
 
     @Test
     @Ignore("Long running test")
@@ -74,15 +83,8 @@ public class ManyMapsTest {
             SerializablePredicate<String> stringPredicate1 = v -> !v.contains(key);
             Assert.assertFalse(map.values().stream().anyMatch(stringPredicate1));
         }
+        TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
-    }
-
-    public static String getKey(String mapName, int counter) {
-        return String.format("%s-%s", mapName, counter);
-    }
-
-    public static String getValue(String mapName, int counter) {
-        return String.format("Val-%s-%s", mapName, counter);
     }
 
 }

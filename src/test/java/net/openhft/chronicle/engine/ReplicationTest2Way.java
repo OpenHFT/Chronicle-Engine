@@ -16,6 +16,7 @@ import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
@@ -83,6 +84,7 @@ public class ReplicationTest2Way {
         if (tree2 != null)
             tree2.close();
 
+        TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
         // TODO TCPRegistery.assertAllServersStopped();
     }

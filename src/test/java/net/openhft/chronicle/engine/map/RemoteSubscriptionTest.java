@@ -10,6 +10,7 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
@@ -43,10 +44,9 @@ import static net.openhft.chronicle.engine.Utils.methodName;
 public class RemoteSubscriptionTest extends ThreadMonitoringTest {
 
     private static final String NAME = "test";
-    public String connection = "RemoteSubscriptionTest.host.port";
     private static MapView<String, String> map;
-
     private final WireType wireType;
+    public String connection = "RemoteSubscriptionTest.host.port";
     @NotNull
     @Rule
     public TestName name = new TestName();
@@ -96,6 +96,7 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
         serverAssetTree.close();
         if (map instanceof Closeable)
             ((Closeable) map).close();
+        TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
     }
 

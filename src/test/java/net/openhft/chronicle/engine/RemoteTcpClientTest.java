@@ -23,6 +23,7 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
@@ -45,15 +46,16 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     @NotNull
     private AssetTree assetTree = new VanillaAssetTree().forTesting();
 
-    @Before
-    public void before() {
-        methodName(name.getMethodName());
-    }
-
     @AfterClass
     public static void tearDownClass() {
 //   todo     TCPRegistery.assertAllServersStopped();
+        TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
+    }
+
+    @Before
+    public void before() {
+        methodName(name.getMethodName());
     }
 
     @Test(timeout = 100000)
