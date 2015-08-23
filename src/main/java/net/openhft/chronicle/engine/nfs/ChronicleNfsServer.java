@@ -1,6 +1,6 @@
 package net.openhft.chronicle.engine.nfs;
 
-import net.openhft.chronicle.engine.tree.VanillaAssetTree;
+import net.openhft.chronicle.engine.api.tree.AssetTree;
 import org.dcache.nfs.ExportFile;
 import org.dcache.nfs.v3.MountServer;
 import org.dcache.nfs.v3.NfsServerV3;
@@ -14,15 +14,16 @@ import org.dcache.xdr.OncRpcSvcBuilder;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.net.URL;
 
 /**
  * @author Rob Austin.
  */
 public class ChronicleNfsServer {
 
-    public static void start() throws IOException, URISyntaxException {
+    public static OncRpcSvc start(AssetTree tree) throws IOException, URISyntaxException {
         // create an instance of a filesystem to be exported
-        VirtualFileSystem vfs = new ChronicleNfsVirtualFileSystem(new VanillaAssetTree().forTesting());
+        VirtualFileSystem vfs = new ChronicleNfsVirtualFileSystem(tree);
 
         // create the RPC service which will handle NFS requests
         OncRpcSvc nfsSvc = new OncRpcSvcBuilder()
@@ -33,8 +34,10 @@ public class ChronicleNfsServer {
                 .build();
 
         // specify file with export entries
-        ExportFile exportFile = new ExportFile(ClassLoader.getSystemResource
-                ("exports").toURI().toURL());
+        URL exports = ClassLoader.getSystemResource("exports");
+        if (exports == null)
+            exports = ClassLoader.getSystemResource("default.exports");
+        ExportFile exportFile = new ExportFile(exports.toURI().toURL());
 
         // create NFS v4.1 server
         NFSServerV41 nfs4 = new NFSServerV41(
@@ -54,6 +57,8 @@ public class ChronicleNfsServer {
 
         // start RPC service
         nfsSvc.start();
+
+        return nfsSvc;
     }
 
 }

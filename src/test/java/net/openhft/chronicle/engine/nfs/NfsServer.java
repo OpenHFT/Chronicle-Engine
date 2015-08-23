@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.nfs;
 
+import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -13,7 +14,7 @@ public class NfsServer {
     @Ignore("nfs service test - not required for CI")
     public void test() throws Exception {
 
-        ChronicleNfsServer.start();
+        ChronicleNfsServer.start(new VanillaAssetTree().forTesting(true));
 
         //  currently  test using a linux server, to run type
         //

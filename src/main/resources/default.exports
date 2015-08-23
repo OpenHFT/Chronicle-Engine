@@ -1,0 +1,2 @@
+# sample /etc/exports file
+/               *(rw)
