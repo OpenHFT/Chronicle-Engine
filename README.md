@@ -60,7 +60,7 @@ Chronicle Engine supports serialization of lambdas as well as execution of prede
 String value = map.computeIfAbsent("hello", () -> "world");
 
 Map<String, UUID> map2 = acquireMap("/group1/sub-group/uuids", String.class, UUID.class);
-registerTopicSubscriber(""/group1/sub-group/uuids", String.class, UUID.class, (k, uuid) -> System.out.println("key: " + k + ", uuid: " + uuid);
+registerTopicSubscriber("/group1/sub-group/uuids", String.class, UUID.class, (k, uuid) -> System.out.println("key: " + k + ", uuid: " + uuid);
 
 // for a new uuid the listener prints:
 // key: user1, uuid: e2d9e382-2c98-4027-9019-8536fcee3225
@@ -149,7 +149,7 @@ pub.publish("Hello", "world");
 String world = map.get("Hello");
 ```
 
-### Low latency repsonse time.
+### Low latency response time.
 Chronicle Engine which be design and tested to support sub-milli-second response times.  A single client should be able to achieve 10K requests per second with 99.9% of requests being under a milli-second.
 
 Chronicle Enterprise will be tested to a higher spec and will have more heavily optimised components.  A single client should be able to achieve 100K requests per second with 99% of requests being under 100 micro-seconds.
