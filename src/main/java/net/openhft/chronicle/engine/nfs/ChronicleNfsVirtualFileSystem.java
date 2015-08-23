@@ -10,10 +10,13 @@ import org.dcache.nfs.v4.NfsIdMapping;
 import org.dcache.nfs.v4.xdr.nfsace4;
 import org.dcache.nfs.vfs.*;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.security.auth.Subject;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -24,6 +27,7 @@ import static org.dcache.nfs.v4.xdr.nfs4_prot.*;
  */
 public class ChronicleNfsVirtualFileSystem implements VirtualFileSystem {
 
+    static final Logger LOGGER = LoggerFactory.getLogger(ChronicleNfsVirtualFileSystem.class);
 
     private final Inode root;
 
@@ -284,7 +288,7 @@ public class ChronicleNfsVirtualFileSystem implements VirtualFileSystem {
 
     @Override
     public void setattr(Inode inode, org.dcache.nfs.vfs.Stat stat) throws IOException {
-        throw new UnsupportedOperationException("todo");
+        LOGGER.info("setattr " + inode + " " + stat + " ignored");
     }
 
     @NotNull
@@ -295,7 +299,7 @@ public class ChronicleNfsVirtualFileSystem implements VirtualFileSystem {
 
     @Override
     public void setAcl(Inode inode, nfsace4[] acl) throws IOException {
-        throw new UnsupportedOperationException("todo");
+        LOGGER.info("setAcl " + inode + " " + Arrays.toString(acl) + " ignored");
     }
 
     @Override

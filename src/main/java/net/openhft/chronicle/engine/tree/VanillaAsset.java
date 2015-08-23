@@ -35,7 +35,6 @@ import net.openhft.chronicle.engine.map.remote.RemoteKVSSubscription;
 import net.openhft.chronicle.engine.map.remote.RemoteKeyValueStore;
 import net.openhft.chronicle.engine.map.remote.RemoteMapView;
 import net.openhft.chronicle.engine.map.remote.RemoteTopologySubscription;
-import net.openhft.chronicle.engine.nfs.ChronicleNfsServer;
 import net.openhft.chronicle.engine.pubsub.RemoteTopicPublisher;
 import net.openhft.chronicle.engine.pubsub.VanillaReference;
 import net.openhft.chronicle.engine.pubsub.VanillaTopicPublisher;
@@ -70,18 +69,8 @@ import java.util.function.Function;
  */
 public class VanillaAsset implements Asset, Closeable {
 
-    private static final Logger LOG = LoggerFactory.getLogger(VanillaAsset.class);
-
-    static {
-        if (Boolean.getBoolean("nfs"))
-            try {
-                ChronicleNfsServer.start();
-            } catch (Exception e) {
-                LOG.error("", e);
-            }
-    }
-
     public static final Comparator<Class> CLASS_COMPARATOR = Comparator.comparing(Class::getName);
+    private static final Logger LOG = LoggerFactory.getLogger(VanillaAsset.class);
     private static final String LAST = "{last}";
     private static final BiPredicate<RequestContext, Asset> ALWAYS = (rc, asset) -> true;
     final Map<Class, Object> viewMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
