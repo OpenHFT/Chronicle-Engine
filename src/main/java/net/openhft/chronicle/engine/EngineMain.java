@@ -43,6 +43,7 @@ public class EngineMain {
 
     static final Logger LOGGER = LoggerFactory.getLogger(EngineMain.class);
     static final boolean NFS = Boolean.getBoolean("engine.nfs");
+    static final boolean JMX = Boolean.getBoolean("engine.jmx");
     static final boolean PERSIST = Boolean.getBoolean("engine.persist");
     static final boolean MSG_DUMP = Boolean.getBoolean("engine.messages.dump");
     static final int PORT = Integer.getInteger("engine.port", 8088);
@@ -54,6 +55,8 @@ public class EngineMain {
     public static void main(@NotNull String... args) throws IOException, InterruptedException, URISyntaxException {
 
         VanillaAssetTree assetTree = new VanillaAssetTree().forTesting(false);
+        if (JMX)
+            assetTree.enableManagement();
 
         assetTree.registerSubscriber("", TopologicalEvent.class, System.out::println);
         if (PERSIST) {
