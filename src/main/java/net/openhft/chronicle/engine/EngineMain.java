@@ -58,7 +58,7 @@ public class EngineMain {
         if (JMX)
             assetTree.enableManagement();
 
-        assetTree.registerSubscriber("", TopologicalEvent.class, System.out::println);
+        assetTree.registerSubscriber("", TopologicalEvent.class, e -> LOGGER.info("Tree change ", e));
         if (PERSIST) {
             LOGGER.info("Persistence enabled");
             assetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
