@@ -45,4 +45,11 @@ public class VanillaSessionProvider implements SessionProvider {
     public void remove() {
         sessionDetails.remove();
     }
+
+    @Override
+    public String toString() {
+        return "VanillaSessionProvider{" +
+                "sessionDetails=" + sessionDetails.get() +
+                '}';
+    }
 }
