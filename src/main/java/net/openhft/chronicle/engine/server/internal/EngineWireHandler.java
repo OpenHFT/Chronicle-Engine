@@ -237,15 +237,15 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
 
         logYamlToStandardOut(in);
 
+        if (sessionProvider != null)
+            sessionProvider.set(sessionDetails);
+
         in.readDocument(this.metaDataConsumer, (WireIn wire) -> {
 
             try {
 
                 if (LOG.isDebugEnabled())
                     LOG.debug("received data:\n" + wire.bytes().toHexString());
-
-                if (sessionProvider != null)
-                    sessionProvider.set(sessionDetails);
 
                 if (isSystemMessage) {
                     systemHandler.process(in, out, tid, sessionDetails);

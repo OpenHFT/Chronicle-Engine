@@ -20,36 +20,31 @@ import net.openhft.chronicle.network.api.session.SessionDetails;
 import net.openhft.chronicle.network.api.session.SessionProvider;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by peter on 01/06/15.
- */
-public class VanillaSessionProvider implements SessionProvider {
+public class ClientSessionProvider implements SessionProvider {
     @NotNull
-    private final ThreadLocal<SessionDetails> sessionDetails = new ThreadLocal<>();
+    private SessionDetails sessionDetails;
 
-    public VanillaSessionProvider() {
-
+    public ClientSessionProvider(SessionDetails sessionDetails) {
+        this.sessionDetails = sessionDetails;
     }
 
     @Override
     public SessionDetails get() {
-        return this.sessionDetails.get();
+        return sessionDetails;
     }
 
     @Override
     public void set(@NotNull SessionDetails sessionDetails) {
-        this.sessionDetails.set(sessionDetails);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void remove() {
-        sessionDetails.remove();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public String toString() {
-        return "VanillaSessionProvider{" +
-                "sessionDetails=" + sessionDetails.get() +
-                '}';
+        return "sessionDetails=" + sessionDetails;
     }
 }
