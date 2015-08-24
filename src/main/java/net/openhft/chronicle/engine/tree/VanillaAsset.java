@@ -38,6 +38,7 @@ import net.openhft.chronicle.engine.map.remote.RemoteTopologySubscription;
 import net.openhft.chronicle.engine.pubsub.RemoteTopicPublisher;
 import net.openhft.chronicle.engine.pubsub.VanillaReference;
 import net.openhft.chronicle.engine.pubsub.VanillaTopicPublisher;
+import net.openhft.chronicle.engine.session.ClientSessionProvider;
 import net.openhft.chronicle.engine.session.VanillaSessionProvider;
 import net.openhft.chronicle.engine.set.RemoteKeySetView;
 import net.openhft.chronicle.engine.set.VanillaKeySetView;
@@ -153,7 +154,7 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
 
-    public void forRemoteAccess(@NotNull String[] hostPortDescriptions, @NotNull Function<Bytes, Wire> wire) throws
+    public void forRemoteAccess(@NotNull String[] hostPortDescriptions, @NotNull Function<Bytes, Wire> wire, VanillaSessionDetails sessionDetails1) throws
             AssetNotFoundException {
 
 
@@ -180,16 +181,15 @@ public class VanillaAsset implements Asset, Closeable {
         addLeafRule(TopologySubscription.class, LAST + " vanilla",
                 RemoteTopologySubscription::new);
 
-        SessionProvider sessionProvider = getView(SessionProvider.class);
-        VanillaSessionDetails sessionDetails = new VanillaSessionDetails();
-        sessionDetails.setUserId(System.getProperty("user.name"));
-        sessionProvider.set(sessionDetails);
+
+
+        SessionProvider sessionProvider = new ClientSessionProvider(sessionDetails1);
 
         EventLoop eventLoop = findOrCreateView(EventLoop.class);
         eventLoop.start();
         if (getView(TcpChannelHub.class) == null) {
 
-            // used for client failover
+            // used for client fail-over
             final SocketAddressSupplier socketAddressSupplier = new SocketAddressSupplier(hostPortDescriptions, name);
 
             TcpChannelHub view = Threads.withThreadGroup(findView(ThreadGroup.class),

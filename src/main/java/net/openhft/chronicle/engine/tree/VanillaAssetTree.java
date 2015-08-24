@@ -24,6 +24,7 @@ import net.openhft.chronicle.engine.map.InsertedEvent;
 import net.openhft.chronicle.engine.map.RemovedEvent;
 import net.openhft.chronicle.engine.map.UpdatedEvent;
 import net.openhft.chronicle.engine.map.remote.*;
+import net.openhft.chronicle.network.VanillaSessionDetails;
 import net.openhft.chronicle.threads.Threads;
 import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.wire.Wire;
@@ -94,13 +95,20 @@ public class VanillaAssetTree implements AssetTree {
 
     @NotNull
     public VanillaAssetTree forRemoteAccess(String hostPortDescription, @NotNull Function<Bytes, Wire> wire) {
-        root.forRemoteAccess(new String[]{hostPortDescription}, wire);
+        root.forRemoteAccess(new String[]{hostPortDescription}, wire, clientSession());
         return this;
     }
 
     @NotNull
+    private VanillaSessionDetails clientSession() {
+        final VanillaSessionDetails sessionDetails = new VanillaSessionDetails();
+        sessionDetails.setUserId(System.getProperty("user.name"));
+        return sessionDetails;
+    }
+
+    @NotNull
     public VanillaAssetTree forRemoteAccess(@NotNull String[] hostPortDescription, @NotNull Function<Bytes, Wire> wire) {
-        root.forRemoteAccess(hostPortDescription, wire);
+        root.forRemoteAccess(hostPortDescription, wire, clientSession());
         return this;
     }
 
