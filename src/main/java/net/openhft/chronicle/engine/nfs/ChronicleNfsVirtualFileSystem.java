@@ -5,6 +5,7 @@ import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
+import net.openhft.chronicle.engine.api.tree.AssetTreeStats;
 import org.dcache.nfs.status.NoEntException;
 import org.dcache.nfs.v4.NfsIdMapping;
 import org.dcache.nfs.v4.xdr.nfsace4;
@@ -27,11 +28,17 @@ import static org.dcache.nfs.v4.xdr.nfs4_prot.*;
  */
 public class ChronicleNfsVirtualFileSystem implements VirtualFileSystem {
 
+    public static final int ATTR_TIMEOUT_MS = 10;
     static final Logger LOGGER = LoggerFactory.getLogger(ChronicleNfsVirtualFileSystem.class);
-
     private final Inode root;
+    @NotNull
+    private final AssetTree assetTree;
+    ChronicleNfsStat lastChronicleNfsStat = null;
+    private ChronicleFsStat chronicleFsStat;
+    private long chronicleFsStatMS = 0;
 
     public ChronicleNfsVirtualFileSystem(@NotNull final AssetTree assetTree) {
+        this.assetTree = assetTree;
         root = ChronicleNfsAssetINode.acquireINode(assetTree.root());
     }
 
@@ -100,7 +107,16 @@ public class ChronicleNfsVirtualFileSystem implements VirtualFileSystem {
     @NotNull
     @Override
     public FsStat getFsStat() throws IOException {
-        return new ChronicleFsStat(10, 10, 10, 10);
+        long now = System.currentTimeMillis();
+        if (now != chronicleFsStatMS) {
+            AssetTreeStats usageStats = assetTree.getUsageStats();
+            Runtime rt = Runtime.getRuntime();
+            long freeSpace = rt.totalMemory();
+            chronicleFsStat = new ChronicleFsStat(freeSpace + usageStats.getSizeInBytes(), freeSpace / 1000 + usageStats.getCount(),
+                    usageStats.getSizeInBytes(), usageStats.getCount());
+            chronicleFsStatMS = now;
+        }
+        return chronicleFsStat;
     }
 
     @Override
@@ -249,7 +265,6 @@ public class ChronicleNfsVirtualFileSystem implements VirtualFileSystem {
             asset.removeChild(path);
     }
 
-
     @NotNull
     @Override
     public Inode symlink(Inode parent, String path, String link, Subject subject, int mode) throws IOException {
@@ -277,13 +292,25 @@ public class ChronicleNfsVirtualFileSystem implements VirtualFileSystem {
 
     @Override
     public void commit(Inode inode, long offset, int count) throws IOException {
-        throw new UnsupportedOperationException("todo");
+        LOGGER.info("... commit not supported");
     }
 
     @NotNull
     @Override
     public org.dcache.nfs.vfs.Stat getattr(@NotNull Inode inode) throws IOException {
-        return ChronicleNfsStat.toStat(inode);
+        ChronicleNfsStat lastStat = this.lastChronicleNfsStat;
+        if (lastStat != null) {
+            if (lastStat.getTimeMS() + ATTR_TIMEOUT_MS >= System.currentTimeMillis())
+                if (lastStat.getInode().equals(inode))
+                    return lastStat;
+//                else
+//                    System.out.println("inode");
+//            else
+//                System.out.println("ctms "+ System.currentTimeMillis()%60000);
+        }
+        ChronicleNfsStat ret = ChronicleNfsStat.toStat(inode);
+        lastChronicleNfsStat = ret;
+        return ret;
     }
 
     @Override

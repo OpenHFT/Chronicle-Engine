@@ -10,8 +10,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @author Rob Austin.
  */
-class ChronicleNfsStat {
+class ChronicleNfsStat extends Stat {
     private static final AtomicInteger gen = new AtomicInteger();
+    private final long timeMS = System.currentTimeMillis();
+    private final Inode inode;
+
+    public ChronicleNfsStat(Inode inode) {
+        this.inode = inode;
+    }
 
     /**
      * applies some default stats
@@ -35,8 +41,9 @@ class ChronicleNfsStat {
     }
 
     @NotNull
-    public static Stat toStat(@NotNull Inode inode) {
-        final Stat result = new Stat();
+    public static ChronicleNfsStat toStat(@NotNull Inode inode) {
+//        System.out.println("toStat "+inode);
+        final ChronicleNfsStat result = new ChronicleNfsStat(inode);
         applyDefaults(result);
         final byte[] fileId = inode.getFileId();
         final long l = ChronicleNfsFileHandleLookup.toLong(fileId);
@@ -54,6 +61,14 @@ class ChronicleNfsStat {
             throw new UnsupportedOperationException("class=" + o.getClass());
         }
         return result;
+    }
+
+    public long getTimeMS() {
+        return timeMS;
+    }
+
+    public Inode getInode() {
+        return inode;
     }
 
     /**

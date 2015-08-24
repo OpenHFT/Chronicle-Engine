@@ -176,4 +176,8 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     @Override
     public void forEachChild(ThrowingAcceptor<Asset, InvalidSubscriberException> childAcceptor) throws InvalidSubscriberException {
     }
+
+    @Override
+    public void getUsageStats(AssetTreeStats ats) {
+    }
 }

@@ -19,6 +19,7 @@ package net.openhft.chronicle.engine.tree;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
+import net.openhft.chronicle.engine.api.tree.AssetTreeStats;
 import net.openhft.chronicle.engine.fs.ConfigurationFS;
 import net.openhft.chronicle.engine.map.InsertedEvent;
 import net.openhft.chronicle.engine.map.RemovedEvent;
@@ -68,6 +69,13 @@ public class VanillaAssetTree implements AssetTree {
     public VanillaAssetTree(int hostId) {
         this();
         root.addView(HostIdentifier.class, new HostIdentifier((byte) hostId));
+    }
+
+    @Override
+    public AssetTreeStats getUsageStats() {
+        AssetTreeStats ats = new AssetTreeStats();
+        root.getUsageStats(ats);
+        return ats;
     }
 
     @NotNull

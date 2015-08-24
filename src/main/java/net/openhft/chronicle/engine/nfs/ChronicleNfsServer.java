@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.BindException;
 import java.net.URISyntaxException;
 import java.net.URL;
 
@@ -65,7 +66,12 @@ public class ChronicleNfsServer {
         nfsSvc.register(new OncRpcProgram(100005, 3), mountd);
 
         // start RPC service
-        nfsSvc.start();
+        try {
+            nfsSvc.start();
+        } catch (BindException e) {
+            LOGGER.error("Unable to bind to the NFS port 2049, is your server already acting as an NFS server?");
+            throw e;
+        }
 
         return nfsSvc;
     }

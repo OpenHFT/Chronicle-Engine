@@ -32,6 +32,7 @@ import java.util.function.Consumer;
 public class LoggingVirtualFileSystem extends ForwardingFileSystem {
     private final VirtualFileSystem delegate;
     private final Consumer<String> logger;
+    String lastGettattrMsg = "";
 
     public LoggingVirtualFileSystem(VirtualFileSystem delegate, Consumer<String> logger) {
         this.delegate = delegate;
@@ -41,14 +42,14 @@ public class LoggingVirtualFileSystem extends ForwardingFileSystem {
     @Override
     public int access(Inode inode, int mode) throws IOException {
         int access = super.access(inode, mode);
-        System.out.println("access " + inode + " " + Integer.toOctalString(mode) + " = " + Integer.toOctalString(access));
+        logger.accept("access " + NFSUtils.toString(inode) + " " + Integer.toOctalString(mode) + " = " + Integer.toOctalString(access));
         return access;
     }
 
     @Override
     public Inode create(Inode parent, Stat.Type type, String path, Subject subject, int mode) throws IOException {
         Inode inode = super.create(parent, type, path, subject, mode);
-        logger.accept("create " + parent + " " + type + " " + path + " " + subject + " " + Integer.toOctalString(mode) + " = " + inode);
+        logger.accept("create " + NFSUtils.toString(parent) + " " + type + " " + path + " " + subject.toString().replaceAll("Principal: ", " ").replaceAll("\\s+", " ") + " " + Integer.toOctalString(mode) + " = " + NFSUtils.toString(inode));
         return inode;
     }
 
@@ -62,122 +63,126 @@ public class LoggingVirtualFileSystem extends ForwardingFileSystem {
     @Override
     public Inode getRootInode() throws IOException {
         Inode rootInode = super.getRootInode();
-        logger.accept("getRootInode " + rootInode);
+        logger.accept("getRootInode " + NFSUtils.toString(rootInode));
         return rootInode;
     }
 
     @Override
     public Inode lookup(Inode parent, String path) throws IOException {
         Inode lookup = super.lookup(parent, path);
-        logger.accept("lookup " + parent + " " + path + " = " + lookup);
+        logger.accept("lookup " + NFSUtils.toString(parent) + " " + path + " = " + NFSUtils.toString(lookup));
         return lookup;
     }
 
     @Override
     public Inode link(Inode parent, Inode link, String path, Subject subject) throws IOException {
         Inode link1 = super.link(parent, link, path, subject);
-        logger.accept("link " + parent + " " + link + " " + path + " " + subject + " = " + link1);
+        logger.accept("link " + NFSUtils.toString(parent) + " " + NFSUtils.toString(link) + " " + path + " " + subject + " = " + NFSUtils.toString(link1));
         return link1;
     }
 
     @Override
     public List<DirectoryEntry> list(Inode inode) throws IOException {
         List<DirectoryEntry> list = super.list(inode);
-        logger.accept("list " + inode + " = " + list);
+        logger.accept("list " + NFSUtils.toString(inode) + " = " + list);
         return list;
     }
 
     @Override
     public Inode mkdir(Inode parent, String path, Subject subject, int mode) throws IOException {
         Inode mkdir = super.mkdir(parent, path, subject, mode);
-        logger.accept("mkdir " + parent + " " + path + " " + subject + " " + Integer.toOctalString(mode) + " = " + mkdir);
+        logger.accept("mkdir " + NFSUtils.toString(parent) + " " + path + " " + subject + " " + Integer.toOctalString(mode) + " = " + NFSUtils.toString(mkdir));
         return mkdir;
     }
 
     @Override
     public boolean move(Inode src, String oldName, Inode dest, String newName) throws IOException {
         boolean move = super.move(src, oldName, dest, newName);
-        logger.accept("move " + src + " " + oldName + " " + dest + " " + newName + " = " + move);
+        logger.accept("move " + NFSUtils.toString(src) + " " + oldName + " " + NFSUtils.toString(dest) + " " + newName + " = " + move);
         return move;
     }
 
     @Override
     public Inode parentOf(Inode inode) throws IOException {
         Inode inode1 = super.parentOf(inode);
-        logger.accept("parentOf " + inode + " = " + inode1);
+        logger.accept("parentOf " + NFSUtils.toString(inode) + " = " + inode1);
         return inode1;
     }
 
     @Override
     public int read(Inode inode, byte[] data, long offset, int count) throws IOException {
         int read = super.read(inode, data, offset, count);
-        logger.accept("read " + inode + " byte[" + data.length + "] " + offset + " " + count + " = " + read);
+        logger.accept("read " + NFSUtils.toString(inode) + " byte[" + data.length + "] " + offset + " " + count + " = " + read);
         return read;
     }
 
     @Override
     public String readlink(Inode inode) throws IOException {
         String readlink = super.readlink(inode);
-        logger.accept("readlink " + inode + " = " + readlink);
+        logger.accept("readlink " + NFSUtils.toString(inode) + " = " + readlink);
         return readlink;
     }
 
     @Override
     public void remove(Inode parent, String path) throws IOException {
-        logger.accept("remove " + parent + " " + path);
+        logger.accept("remove " + NFSUtils.toString(parent) + " " + path);
         super.remove(parent, path);
     }
 
     @Override
     public Inode symlink(Inode parent, String path, String link, Subject subject, int mode) throws IOException {
         Inode symlink = super.symlink(parent, path, link, subject, mode);
-        logger.accept("symlink " + parent + " " + path + " " + link + " " + subject + " " + Integer.toOctalString(mode) + " = " + symlink);
+        logger.accept("symlink " + NFSUtils.toString(parent) + " " + path + " " + link + " " + subject + " " + Integer.toOctalString(mode) + " = " + NFSUtils.toString(symlink));
         return symlink;
     }
 
     @Override
     public WriteResult write(Inode inode, byte[] data, long offset, int count, StabilityLevel stabilityLevel) throws IOException {
         WriteResult write = super.write(inode, data, offset, count, stabilityLevel);
-        logger.accept("write " + inode + " byte[" + data.length + "] " + offset + " " + count + " " + stabilityLevel);
+        logger.accept("write " + NFSUtils.toString(inode) + " byte[" + data.length + "] " + offset + " " + count + " " + stabilityLevel);
         return write;
     }
 
     @Override
     public void commit(Inode inode, long offset, int count) throws IOException {
-        logger.accept("commit " + inode + " " + offset + " " + count);
+        logger.accept("commit " + NFSUtils.toString(inode) + " " + offset + " " + count);
         super.commit(inode, offset, count);
     }
 
     @Override
     public Stat getattr(Inode inode) throws IOException {
         Stat getattr = super.getattr(inode);
-        logger.accept("getattr " + inode + " = " + getattr);
+        String getattrMsg = "getattr " + NFSUtils.toString(inode) + " = " + getattr;
+        if (!getattrMsg.equals(lastGettattrMsg)) {
+            logger.accept(getattrMsg);
+            lastGettattrMsg = getattrMsg;
+        }
         return getattr;
     }
 
     @Override
     public void setattr(Inode inode, Stat stat) throws IOException {
-        logger.accept("setattr " + inode + " " + stat);
+        logger.accept("setattr " + NFSUtils.toString(inode) + " " + stat);
         super.setattr(inode, stat);
     }
 
     @Override
     public nfsace4[] getAcl(Inode inode) throws IOException {
         nfsace4[] acl = super.getAcl(inode);
-        logger.accept("getAcl " + inode + " = " + Arrays.toString(acl));
+        logger.accept("getAcl " + NFSUtils.toString(inode) + " = " + Arrays.toString(acl));
         return acl;
     }
 
     @Override
     public void setAcl(Inode inode, nfsace4[] acl) throws IOException {
-        logger.accept("setAcl " + inode + " " + Arrays.toString(acl));
+        logger.accept("setAcl " + NFSUtils.toString(inode) + " " + Arrays.toString(acl));
         super.setAcl(inode, acl);
     }
 
     @Override
     public boolean hasIOLayout(Inode inode) throws IOException {
         boolean b = super.hasIOLayout(inode);
-        logger.accept("hasIOLayout " + inode + " = " + b);
+        logger.accept("hasIOLayout " + NFSUtils.toString(inode) + " = " + b);
         return b;
     }
 

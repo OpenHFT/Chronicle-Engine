@@ -423,6 +423,26 @@ public class VanillaAsset implements Asset, Closeable {
         return fullName();
     }
 
+    @Override
+    public void getUsageStats(AssetTreeStats ats) {
+        ats.addAsset(1, 512);
+        for (Object o : viewMap.values()) {
+            if (o instanceof KeyValueStore) {
+                KeyValueStore kvs = (KeyValueStore) o;
+                if (kvs.underlying() == null) {
+                    long count = kvs.longSize();
+                    ats.addAsset(count, count * 1024);
+                    break;
+                }
+            }
+        }
+        try {
+            forEachChild(ca -> ca.getUsageStats(ats));
+        } catch (InvalidSubscriberException e) {
+            throw new AssertionError(e);
+        }
+    }
+
     static class WrappingViewRecord<W, U> {
         final BiPredicate<RequestContext, Asset> predicate;
         final WrappingViewFactory<W, U> factory;

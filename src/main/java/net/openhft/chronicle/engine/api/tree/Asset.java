@@ -327,4 +327,6 @@ public interface Asset extends Closeable {
      *                                    more children.
      */
     void forEachChild(ThrowingAcceptor<Asset, InvalidSubscriberException> childAcceptor) throws InvalidSubscriberException;
+
+    void getUsageStats(AssetTreeStats ats);
 }

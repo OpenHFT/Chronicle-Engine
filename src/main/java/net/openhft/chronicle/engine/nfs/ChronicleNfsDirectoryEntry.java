@@ -15,4 +15,8 @@ class ChronicleNfsDirectoryEntry extends DirectoryEntry {
         super(name, inode, toStat(inode));
     }
 
+    @Override
+    public String toString() {
+        return "CNDE " + getName() + " " + NFSUtils.toString(getInode()) + " " + getStat();
+    }
 }

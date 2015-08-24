@@ -269,4 +269,6 @@ public interface AssetTree extends Closeable {
         ManagementTools.disableManagement(this);
         return this;
     }
+
+    AssetTreeStats getUsageStats();
 }
