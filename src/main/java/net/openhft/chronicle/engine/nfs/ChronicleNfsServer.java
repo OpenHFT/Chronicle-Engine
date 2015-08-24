@@ -11,6 +11,8 @@ import org.dcache.nfs.vfs.VirtualFileSystem;
 import org.dcache.xdr.OncRpcProgram;
 import org.dcache.xdr.OncRpcSvc;
 import org.dcache.xdr.OncRpcSvcBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -21,9 +23,16 @@ import java.net.URL;
  */
 public class ChronicleNfsServer {
 
+    static final Logger LOGGER = LoggerFactory.getLogger(ChronicleNfsServer.class);
     public static OncRpcSvc start(AssetTree tree) throws IOException, URISyntaxException {
+        return start(tree, false);
+    }
+
+    public static OncRpcSvc start(AssetTree tree, boolean debug) throws IOException, URISyntaxException {
         // create an instance of a filesystem to be exported
         VirtualFileSystem vfs = new ChronicleNfsVirtualFileSystem(tree);
+        if (debug)
+            vfs = new LoggingVirtualFileSystem(vfs, LOGGER::info);
 
         // create the RPC service which will handle NFS requests
         OncRpcSvc nfsSvc = new OncRpcSvcBuilder()

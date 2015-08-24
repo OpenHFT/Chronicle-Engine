@@ -40,18 +40,10 @@ public class FilePerKeyBasedKeyMarshallableValueStore<K, V extends Marshallable>
     @NotNull
     private static final ThreadLocal<Wire> threadLocalValueWire =
             ThreadLocal.withInitial(() -> new TextWire(nativeBytes()));
-
-    private static Wire valueWire() {
-        Wire valueWire = threadLocalValueWire.get();
-        valueWire.bytes().clear();
-        return valueWire;
-    }
-
     private final FilePerKeyValueStore kvStore;
     private final Function<K, String> keyToString;
     private final Function<String, K> stringToKey;
     private final Supplier<V> createValue;
-
     public FilePerKeyBasedKeyMarshallableValueStore(
             FilePerKeyValueStore kvStore, Function<K, String> keyToString,
             Function<String, K> stringToKey, Supplier<V> createValue) {
@@ -59,6 +51,12 @@ public class FilePerKeyBasedKeyMarshallableValueStore<K, V extends Marshallable>
         this.keyToString = keyToString;
         this.stringToKey = stringToKey;
         this.createValue = createValue;
+    }
+
+    private static Wire valueWire() {
+        Wire valueWire = threadLocalValueWire.get();
+        valueWire.bytes().clear();
+        return valueWire;
     }
 
     @Nullable
@@ -74,6 +72,13 @@ public class FilePerKeyBasedKeyMarshallableValueStore<K, V extends Marshallable>
         return ret;
     }
 
+    @Override
+    public boolean put(K key, V value) {
+        Wire valueWire = valueWire();
+        value.writeMarshallable(valueWire);
+        return kvStore.put(keyToString.apply(key), valueWire.bytes());
+    }
+
     @Nullable
     @Override
     public V getAndPut(K key, @NotNull V value) {
@@ -81,6 +86,11 @@ public class FilePerKeyBasedKeyMarshallableValueStore<K, V extends Marshallable>
         value.writeMarshallable(valueWire);
         BytesStore oldValue = kvStore.getAndPut(keyToString.apply(key), valueWire.bytes());
         return bytesToValue(oldValue);
+    }
+
+    @Override
+    public boolean remove(K key) {
+        return kvStore.remove(keyToString.apply(key));
     }
 
     @Nullable

@@ -48,9 +48,7 @@ public interface KeyValueStore<K, V> extends Assetted<KeyValueStore<K, V>>, Clos
      * @param value to set
      * @return true if it was replaced or the value is identical, false if it was added.
      */
-    default boolean put(K key, V value) {
-        return getAndPut(key, value) != null;
-    }
+    boolean put(K key, V value);
 
     @org.jetbrains.annotations.Nullable
     V getAndPut(K key, V value);
@@ -61,9 +59,7 @@ public interface KeyValueStore<K, V> extends Assetted<KeyValueStore<K, V>>, Clos
      * @param key to remove
      * @return true if it was removed, false if not.
      */
-    default boolean remove(K key) {
-        return getAndRemove(key) != null;
-    }
+    boolean remove(K key);
 
     @org.jetbrains.annotations.Nullable
     V getAndRemove(K key);

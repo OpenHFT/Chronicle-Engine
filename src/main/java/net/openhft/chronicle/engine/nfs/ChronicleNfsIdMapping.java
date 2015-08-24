@@ -10,18 +10,20 @@ import org.jetbrains.annotations.NotNull;
 class ChronicleNfsIdMapping implements NfsIdMapping {
 
     public static final NfsIdMapping EMPTY = new ChronicleNfsIdMapping();
+    static final int USERID = Integer.getInteger("engine.nfs.userid", 1000);
+    static final int GROUPID = Integer.getInteger("engine.nfs.groupid", 1000);
 
     private ChronicleNfsIdMapping() {
     }
 
     @Override
     public int principalToUid(String principal) throws BadOwnerException {
-        return 1000;  // this is the id of my current unix user via "$id -u <username>"
+        return USERID;
     }
 
     @Override
     public int principalToGid(String principal) throws BadOwnerException {
-        return 1000;   // this is the id of my current unix user via "$id -u <username>"
+        return GROUPID;
     }
 
     @NotNull
@@ -34,5 +36,10 @@ class ChronicleNfsIdMapping implements NfsIdMapping {
     @Override
     public String gidToPrincipal(int id) {
         return "nogroup";
+    }
+
+    @Override
+    public String toString() {
+        return "ChronicleNfsIdMapping{ userId = " + USERID + ", groupId= " + GROUPID + " }";
     }
 }

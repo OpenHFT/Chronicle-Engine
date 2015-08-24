@@ -43,6 +43,7 @@ public class EngineMain {
 
     static final Logger LOGGER = LoggerFactory.getLogger(EngineMain.class);
     static final boolean NFS = Boolean.getBoolean("engine.nfs");
+    static final boolean NFS_DEBUG = Boolean.getBoolean("engine.nfs.debug");
     static final boolean JMX = Boolean.getBoolean("engine.jmx");
     static final boolean PERSIST = Boolean.getBoolean("engine.persist");
     static final boolean MSG_DUMP = Boolean.getBoolean("engine.messages.dump");
@@ -76,7 +77,7 @@ public class EngineMain {
 
         LOGGER.info("Server port seems to be " + PORT);
         if (NFS) {
-            oncRpcSvc = ChronicleNfsServer.start(assetTree);
+            oncRpcSvc = ChronicleNfsServer.start(assetTree, NFS_DEBUG);
         }
     }
 }

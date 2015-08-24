@@ -100,7 +100,7 @@ public class ChronicleNfsVirtualFileSystem implements VirtualFileSystem {
     @NotNull
     @Override
     public FsStat getFsStat() throws IOException {
-        return new FsStat(10, 10, 10, 10);
+        return new ChronicleFsStat(10, 10, 10, 10);
     }
 
     @Override

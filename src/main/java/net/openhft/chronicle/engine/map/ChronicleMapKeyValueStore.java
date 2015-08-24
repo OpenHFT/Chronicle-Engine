@@ -86,6 +86,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
 
         this.subscriptions.setKvStore(this);
         this.eventLoop = asset.findOrCreateView(EventLoop.class);
+
         assert eventLoop != null;
 
         eventLoop.start();
@@ -206,6 +207,11 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
             return chronicleMap.put(key, value);
         else
             return null;
+    }
+
+    @Override
+    public boolean remove(K key) {
+        return chronicleMap.remove(key) != null;
     }
 
     @Nullable

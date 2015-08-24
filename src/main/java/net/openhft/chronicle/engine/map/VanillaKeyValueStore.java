@@ -54,12 +54,22 @@ public class VanillaKeyValueStore<K, V> implements AuthenticatedKeyValueStore<K,
     }
 
     @Override
+    public boolean put(K key, V value) {
+        return map.put(key, value) != null;
+    }
+
+    @Override
     public V getAndPut(K key, V value) {
         V oldValue = map.put(key, value);
 //        subscriptions.notifyEvent(oldValue == null
 //                ? InsertedEvent.of(asset.fullName(), key, value)
 //                : UpdatedEvent.of(asset.fullName(), key, oldValue, value));
         return oldValue;
+    }
+
+    @Override
+    public boolean remove(K key) {
+        return map.remove(key) != null;
     }
 
     @Override

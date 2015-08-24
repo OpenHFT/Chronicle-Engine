@@ -154,7 +154,7 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
         hub.subscribe(asyncSubscription);
     }
 
-    private void onEvent(@Nullable E message, @NotNull Subscriber<E> subscriber) {
+    void onEvent(@Nullable E message, @NotNull Subscriber<E> subscriber) {
         try {
               subscriber.onMessage(message);
         } catch (InvalidSubscriberException noLongerValid) {

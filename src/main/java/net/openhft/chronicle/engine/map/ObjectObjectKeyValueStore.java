@@ -73,6 +73,14 @@ public class ObjectObjectKeyValueStore<K, V> implements KeyValueStore<K, V> {
         throw new UnsupportedOperationException("todo");
     }
 
+    @Override
+    public boolean put(K key, V value) {
+        Buffers b = BUFFERS.get();
+        Bytes keyBytes = keyToBytes.apply(key, b.keyBuffer);
+        Bytes valueBytes = valueToBytes.apply(value, b.valueBuffer);
+        return kvStore.put(keyBytes, valueBytes);
+    }
+
     @Nullable
     @Override
     public V getAndPut(K key, V value) {
@@ -81,6 +89,13 @@ public class ObjectObjectKeyValueStore<K, V> implements KeyValueStore<K, V> {
         Bytes valueBytes = valueToBytes.apply(value, b.valueBuffer);
         BytesStore retBytes = kvStore.getAndPut(keyBytes, valueBytes);
         return retBytes == null ? null : bytesToValue.apply(retBytes, null);
+    }
+
+    @Override
+    public boolean remove(K key) {
+        Buffers b = BUFFERS.get();
+        Bytes keyBytes = keyToBytes.apply(key, b.keyBuffer);
+        return kvStore.remove(keyBytes);
     }
 
     @Nullable

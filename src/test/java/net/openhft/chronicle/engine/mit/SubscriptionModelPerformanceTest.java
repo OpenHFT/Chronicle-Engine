@@ -50,11 +50,9 @@ import java.util.stream.IntStream;
 @Ignore("Long running test")
 public class SubscriptionModelPerformanceTest {
 
-    //TODO DS test having the server side on another machine
     private static final int _noOfPuts = 50;
     private static final int _noOfRunsToAverage = Boolean.getBoolean("quick") ? 2 : 10;
-    // TODO CHENT-49
-    private static final long _secondInNanos = 9_000_000_000L;
+    private static final long _secondInNanos = 1_000_000_000L;
     private static String _twoMbTestString;
     private static int _twoMbTestStringLength;
 

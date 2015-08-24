@@ -52,12 +52,23 @@ public class FilePerKeyValueStoreBackedKeyValueStore<K, V> implements KeyValueSt
         return outputValue != null ? bytesStoreToValue.apply(outputValue) : null;
     }
 
+    @Override
+    public boolean put(K key, V value) {
+        BytesStore inputValue = valueToBytesStore.apply(value);
+        return filePerKeyValueStore.put(keyToString.apply(key), inputValue);
+    }
+
     @Nullable
     @Override
     public V getAndPut(K key, V value) {
         BytesStore inputValue = valueToBytesStore.apply(value);
         BytesStore outputValue = filePerKeyValueStore.getAndPut(keyToString.apply(key), inputValue);
         return nullableToValue(outputValue);
+    }
+
+    @Override
+    public boolean remove(K key) {
+        return filePerKeyValueStore.remove(keyToString.apply(key));
     }
 
     @Nullable
