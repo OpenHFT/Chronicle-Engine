@@ -157,7 +157,6 @@ public class VanillaAsset implements Asset, Closeable {
     public void forRemoteAccess(@NotNull String[] hostPortDescriptions, @NotNull Function<Bytes, Wire> wire, VanillaSessionDetails sessionDetails1) throws
             AssetNotFoundException {
 
-
         standardStack(true);
 
         addWrappingRule(EntrySetView.class, LAST + " entrySet", RemoteEntrySetView::new, MapView.class);
