@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.engine.redis;
 
-import net.openhft.chronicle.core.util.SerializableBiFunction;
 import net.openhft.chronicle.core.util.SerializableFunction;
 import net.openhft.chronicle.engine.api.Updatable;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -26,9 +25,7 @@ import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import java.util.*;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -57,19 +54,18 @@ public class RedisEmulator {
      * @return Integer reply: the length of the string after the append operation.
      */
     public static int append(MapView<String, String> map, String key, String toAppend) {
-        Object integer =  map.applyTo(m -> {
+        long i = map.applyTo(m -> {
                     String v = m.get(key);
-                    if(v!=null) {
+                    if (v != null) {
                         m.put(key, v + toAppend);
-                        return (v + toAppend).length();
-                    }
-                    else {
+                        return (long) (v + toAppend).length();
+                    } else {
                         m.put(key, toAppend);
-                        return toAppend.length();
+                        return (long) toAppend.length();
                     }
                 }
         );
-        return Integer.parseInt((String)integer);
+        return (int) i;
     }
 
     public static int bitcount(Reference<BitSet> bits) {
@@ -142,7 +138,7 @@ public class RedisEmulator {
      * single one. In such a case, it returns the total number of keys existing.
      * Note that returning 1 or 0 for a single key is just a special case
      * of the variadic usage, so the command is completely backward compatible.
-     * <p/>
+     * <p>
      * The user should be aware that if the same existing key is mentioned
      * in the arguments multiple times, it will be counted multiple times.
      * So if somekey exists, EXISTS somekey somekey will return 2.
@@ -157,24 +153,23 @@ public class RedisEmulator {
      * The number of keys existing among the ones specified as arguments.
      * Keys mentioned multiple times and existing are counted multiple times.
      */
-    public static int exists(MapView<String, ?> map, String... keys) {
+    public static long exists(MapView<String, ?> map, String... keys) {
         if (keys.length == 1) return map.containsKey(keys) ? 1 : 0;
 
-        Object integer =  map.applyTo(m -> {
-                    int count = 0;
-                    for (int i = 0; i < keys.length; i++) {
-                        if (m.containsKey(keys[i])) count++;
-                    }
-                    return count;
-                }
-        );
-        return Integer.parseInt((String)integer);
+        return map.applyTo(m -> {
+            long count = 0;
+            for (int i = 0; i < keys.length; i++) {
+                if (m.containsKey(keys[i])) count++;
+            }
+            return count;
+        });
     }
 
     /**
      * Get the value of key. If the key does not exist the special value nil is returned.
      * An error is returned if the value stored at key is not a string,
      * because GET only handles string values.
+     *
      * @return Bulk string reply: the value of key, or nil when key does not exist.
      */
     public static <V> V get(MapView<String, V> map, String key) {
@@ -201,20 +196,19 @@ public class RedisEmulator {
      * @return Integer reply: the number of fields that were removed from the hash,
      * not including specified but non existing fields.
      */
-    public  static <T> int hdel(MapView<String, T> map, String... keys) {
+    public static <T> long hdel(MapView<String, T> map, String... keys) {
         if (keys.length == 1) {
             return map.getAndRemove(keys[0]) == null ? 0 : 1;
         }
 
         //todo not able to apply return value
-        Object integer = map.applyTo((SerializableFunction<MapView<String, T>, Integer>) m -> {
-            int counter = 0;
+        return map.applyTo((SerializableFunction<MapView<String, T>, Long>) m -> {
+            long counter = 0;
             for (String key : keys) {
                 if (m.getAndRemove(key) != null) counter++;
             }
             return counter;
         });
-        return Integer.parseInt((String)integer);
     }
 
     /**
@@ -242,7 +236,7 @@ public class RedisEmulator {
      * Returns all fields and values of the hash stored at key. In the returned value,
      * every field name is followed by its value,
      * so the length of the reply is twice the size of the hash.
-     * <p/>
+     * <p>
      * Note Redis returns the keys in the same order they were inserted
      * Chronicle returns them in an arbitrary order
      *
@@ -307,6 +301,7 @@ public class RedisEmulator {
      * The time-complexity for this operation is O(N), N being the number of keys in the database.
      */
     public static <V> String flushdb(MapView<String, V> map) {
+        if (map != null)
         map.clear();
         return "OK";
     }
@@ -358,11 +353,11 @@ public class RedisEmulator {
      * Redis stores integers in their integer representation, so for string values
      * that actually hold an integer, there is no overhead for storing
      * the string representation of the integer.
+     *
      * @return Integer reply: the value of key after the increment
      */
     public static long incr(MapView<String, Long> map, String key) {
-        Object integer = map.applyToKey(key, v -> v + 1);
-        return Integer.parseInt((String)integer);
+        return map.applyToKey(key, v -> v + 1);
     }
 
     /**

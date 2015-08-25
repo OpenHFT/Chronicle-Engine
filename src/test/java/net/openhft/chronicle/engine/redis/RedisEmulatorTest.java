@@ -175,19 +175,17 @@ public class RedisEmulatorTest {
     }
 
     @Test
-    @Ignore //Caused by: java.lang.ClassCastException: java.lang.String cannot be cast to java.lang.Long
     public void test_incrby() {
         assertEquals(1, hset(myLongHash, "mykey", 10l));
         assertEquals(15, incrby(myLongHash, "mykey", 5l));
     }
 
     @Test
-    @Ignore //Caused by: java.lang.ClassCastException: java.lang.String cannot be cast to java.lang.Long
     public void test_incrbyfloat() {
         assertEquals(1, hset(myDoubleHash, "mykey", 10.5));
         assertEquals(10.5, hget(myDoubleHash, "mykey"));
         assertEquals(10.6, incrbyfloat(myDoubleHash, "mykey", 0.1),0);
-        assertEquals(1, hset(myDoubleHash, "mykey", 5.0e3));
+        assertEquals(0, hset(myDoubleHash, "mykey", 5.0e3));
         assertEquals(5200, incrbyfloat(myDoubleHash, "mykey", 2.0e2),0);
     }
 
