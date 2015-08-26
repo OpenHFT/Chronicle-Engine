@@ -9,6 +9,7 @@ net.openhft.chronicle.engine.api.query
 net.openhft.chronicle.engine.api.session
 net.openhft.chronicle.engine.api.set
 net.openhft.chronicle.engine.api.tree
+net.openhft.chronicle.engine.cfg
 net.openhft.chronicle.engine.collection
 net.openhft.chronicle.engine.fs
 net.openhft.chronicle.engine.map
