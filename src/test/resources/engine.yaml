@@ -5,7 +5,14 @@ etc: {
     }
   server: !ServerCfg {
     wireType: BINARY,
-    port: 8088
+    port: 8088,
+    dumpWhenInDebug: true,
+    heartbeatIntervalTicks: 1_000,
+    heartbeatIntervalTimeout: 100_000
+    }
+  nfs: !NfsCfg {
+    enabled: true,
+    debug: true
     }
   }
 }

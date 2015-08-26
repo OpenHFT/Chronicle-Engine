@@ -41,19 +41,27 @@ import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
 public class ServerEndpoint implements Closeable {
 
 
+    public static final int HEARTBEAT_INTERVAL_TICKS = Integer.getInteger("heartbeat.interval.ticks", 1_000);
+    public static final int HEARTBEAT_TIME_OUT_TICKS = Integer.getInteger("heartbeat.timeout.ticks", 100_000);
     private static final Logger LOGGER = LoggerFactory.getLogger(ChronicleMapKeyValueStore.class);
-    public static final Integer HEARTBEAT_INTERVAL_TICKS = Integer.getInteger("heartbeat.interval.ticks", 1_000);
-    public static final Integer HEARTBEAT_TIME_OUT_TICKS = Integer.getInteger("heartbeat.timeout.ticks", 100_000);
     @Nullable
     private final EventLoop eg;
     @NotNull
     private final AtomicBoolean isClosed = new AtomicBoolean();
     // set Throttler.maxEventsPreSecond == 0 if you dont want to use the throttler
     private final int maxEventsPreSecond = Integer.getInteger("Throttler.maxEventsPreSecond", 0);
+    private final int heartbeatIntervalTicks;
+    private final int heartbeatIntervalTimeout;
     @Nullable
     private AcceptorEventHandler eah;
 
     public ServerEndpoint(String hostPortDescription, @NotNull AssetTree assetTree, @NotNull WireType wire) throws IOException {
+        this(hostPortDescription, assetTree, wire, HEARTBEAT_INTERVAL_TICKS, HEARTBEAT_TIME_OUT_TICKS);
+    }
+
+    public ServerEndpoint(String hostPortDescription, @NotNull AssetTree assetTree, @NotNull WireType wire, int heartbeatIntervalTicks, int heartbeatIntervalTimeout) throws IOException {
+        this.heartbeatIntervalTicks = heartbeatIntervalTicks;
+        this.heartbeatIntervalTimeout = heartbeatIntervalTimeout;
         eg = assetTree.root().acquireView(EventLoop.class);
         Threads.withThreadGroup(assetTree.root().getView(ThreadGroup.class), () -> {
             start(hostPortDescription, assetTree, wire);
@@ -80,8 +88,8 @@ public class ServerEndpoint implements Closeable {
                     return new EngineWireHandler(wireType, asset, throttler);
                 },
                 VanillaSessionDetails::new,
-                HEARTBEAT_INTERVAL_TICKS,
-                HEARTBEAT_TIME_OUT_TICKS);
+                heartbeatIntervalTicks,
+                heartbeatIntervalTimeout);
 
         eg.addHandler(eah);
         this.eah = eah;

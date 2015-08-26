@@ -20,6 +20,7 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireType;
+import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,19 +34,26 @@ public class ServerCfg implements Installable {
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerCfg.class);
     private int port;
     private WireType wireType;
+    private boolean dumpWhenInDebug;
     private ServerEndpoint serverEndpoint;
+    private int heartbeatIntervalTicks, heartbeatIntervalTimeout;
 
     @Override
     public void install(String path, AssetTree assetTree) throws IOException {
         LOGGER.info(path + ": Starting listener on port " + port);
-        serverEndpoint = new ServerEndpoint("*:" + port, assetTree, wireType);
-
+        serverEndpoint = new ServerEndpoint("*:" + port, assetTree, wireType, heartbeatIntervalTicks, heartbeatIntervalTimeout);
+        if (dumpWhenInDebug)
+            YamlLogging.setAll(true);
     }
 
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         wire.read(() -> "wireType").asEnum(WireType.class, wt -> wireType = wt);
         wire.read(() -> "port").int32(i -> port = i);
+        wire.read(() -> "dumpWhenInDebug").bool(b -> dumpWhenInDebug = b);
+        wire.read(() -> "heartbeatIntervalTicks")
+                .int32(i -> heartbeatIntervalTicks = i);
+        wire.read(() -> "heartbeatIntervalTimeout").int32(i -> heartbeatIntervalTimeout = i);
     }
 
     @Override
@@ -53,7 +61,10 @@ public class ServerCfg implements Installable {
         return "ServerCfg{" +
                 "port=" + port +
                 ", wireType=" + wireType +
+                ", dumpWhenInDebug=" + dumpWhenInDebug +
                 ", serverEndpoint=" + serverEndpoint +
+                ", heartbeatIntervalTicks=" + heartbeatIntervalTicks +
+                ", heartbeatIntervalTimeout=" + heartbeatIntervalTimeout +
                 '}';
     }
 }

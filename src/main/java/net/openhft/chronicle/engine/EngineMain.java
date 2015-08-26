@@ -19,10 +19,7 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
-import net.openhft.chronicle.engine.cfg.EngineCfg;
-import net.openhft.chronicle.engine.cfg.Installable;
-import net.openhft.chronicle.engine.cfg.JmxCfg;
-import net.openhft.chronicle.engine.cfg.ServerCfg;
+import net.openhft.chronicle.engine.cfg.*;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.TextWire;
 import org.slf4j.Logger;
@@ -45,6 +42,7 @@ public class EngineMain {
         addClass(EngineCfg.class);
         addClass(JmxCfg.class);
         addClass(ServerCfg.class);
+        addClass(NfsCfg.class);
 
         String name = args.length > 0 ? args[0] : "engine.yaml";
         TextWire yaml = TextWire.fromFile(name);
