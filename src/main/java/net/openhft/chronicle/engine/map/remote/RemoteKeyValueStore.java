@@ -52,7 +52,8 @@ import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventI
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId.*;
 import static net.openhft.chronicle.network.connection.CoreFields.stringEvent;
 
-public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
+public class
+        RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
         implements Cloneable, ObjectKeyValueStore<K, V> {
 
     private static final Consumer<ValueOut> VOID_PARAMETERS = out -> out.marshallable(WriteMarshallable.EMPTY);

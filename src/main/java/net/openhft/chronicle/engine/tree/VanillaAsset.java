@@ -38,7 +38,7 @@ import net.openhft.chronicle.engine.map.remote.RemoteTopologySubscription;
 import net.openhft.chronicle.engine.pubsub.RemoteTopicPublisher;
 import net.openhft.chronicle.engine.pubsub.VanillaReference;
 import net.openhft.chronicle.engine.pubsub.VanillaTopicPublisher;
-import net.openhft.chronicle.engine.session.ClientSessionProvider;
+import net.openhft.chronicle.network.ClientSessionProvider;
 import net.openhft.chronicle.engine.session.VanillaSessionProvider;
 import net.openhft.chronicle.engine.set.RemoteKeySetView;
 import net.openhft.chronicle.engine.set.VanillaKeySetView;
@@ -192,7 +192,7 @@ public class VanillaAsset implements Asset, Closeable {
             final SocketAddressSupplier socketAddressSupplier = new SocketAddressSupplier(hostPortDescriptions, name);
 
             TcpChannelHub view = Threads.withThreadGroup(findView(ThreadGroup.class),
-                    () -> new TcpChannelHub(sessionProvider, eventLoop, wire, name, socketAddressSupplier));
+                    () -> new TcpChannelHub(sessionProvider, eventLoop, wire, name, socketAddressSupplier, true));
             addView(TcpChannelHub.class, view);
         }
 
