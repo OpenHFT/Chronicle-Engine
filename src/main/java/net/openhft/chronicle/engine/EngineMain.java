@@ -45,6 +45,7 @@ public class EngineMain {
         addClass(ServerCfg.class);
         addClass(NfsCfg.class);
         addClass(ClustersCfg.class);
+        addClass(InMemoryMapCfg.class);
 
         String name = args.length > 0 ? args[0] : "engine.yaml";
         TextWire yaml = TextWire.fromFile(name);

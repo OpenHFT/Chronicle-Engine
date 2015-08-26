@@ -1,19 +1,39 @@
 --- !EngineCfg {
+#
+# Configuration files are being placed in /etc following the Unix convention, but could be anywhere
+#
 etc: {
+  #
+  # Configures JMX supports
+  #
   jmx: !JmxCfg {
     enabled: true
     }
+  #
+  # Configure remote access for Java and C#
+  #
   server: !ServerCfg {
     wireType: BINARY,
     port: 8088,
-    dumpWhenInDebug: true,
-    heartbeatIntervalTicks: 1_000,
+    dumpWhenInDebug: true, # only show when in debug mode on the server
+    heartbeatIntervalTicks: 1_000, # must be lees than the timeout.
     heartbeatIntervalTimeout: 100_000
     }
+  #
+  # Allow access via NFS to this engine.
+  #
   nfs: !NfsCfg {
     enabled: true,
-    debug: true
+    debug: true, # log every NFS request.
+    exports: {
+     # export everything.
+      "/": "*(rw,noacl,anonuid=1000,anongid=1000)"
     }
+  }
+  #
+  # Configure a group of node which form a local cluster.
+  #
+  # Configure a cluster of one for now.
   clusters: !ClustersCfg {
     cluster: {
       host1: {
@@ -35,6 +55,25 @@ etc: {
 #           timeoutMs: 1000,
 #        }
       }
+    }
+  }
+#
+# User space data resources, could be named anything
+#
+data: {
+    # a map which wraps ConcurrentHashMap
+    map: !InMemoryMapCfg {
+      keyType: !type String,
+      valueType: !type String,
+      putReturnsNull: false,
+      removeReturnsNull: false,
+    },
+    # a map which wraps ConcurrentHashMap
+    map2:  !InMemoryMapCfg {
+      keyType: !type String,
+      valueType: !type String,
+      putReturnsNull: false,
+      removeReturnsNull: false,
     }
   }
 }

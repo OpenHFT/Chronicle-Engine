@@ -45,4 +45,11 @@ public class ClustersCfg implements Installable, Marshallable {
     public void writeMarshallable(WireOut wire) {
         clusters.writeMarshallable(wire);
     }
+
+    @Override
+    public String toString() {
+        return "ClustersCfg{" +
+                "clusters=" + clusters +
+                '}';
+    }
 }

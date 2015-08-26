@@ -80,7 +80,7 @@ public class SimpleEngineMain {
 
         LOGGER.info("Server port seems to be " + PORT);
         if (NFS) {
-            oncRpcSvc = ChronicleNfsServer.start(assetTree, NFS_DEBUG);
+            oncRpcSvc = ChronicleNfsServer.start(assetTree, "default.exports", NFS_DEBUG);
         }
     }
 }

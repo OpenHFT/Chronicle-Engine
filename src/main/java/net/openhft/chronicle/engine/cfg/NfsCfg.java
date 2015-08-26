@@ -26,8 +26,12 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.URISyntaxException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 
 /**
@@ -37,13 +41,21 @@ public class NfsCfg implements Installable, Marshallable {
     private static final Logger LOGGER = LoggerFactory.getLogger(NfsCfg.class);
     private boolean enabled;
     private boolean debug;
+    private Map<String, String> exports = new LinkedHashMap<>();
     private OncRpcSvc oncRpcSvc;
 
     @Override
     public NfsCfg install(String path, AssetTree assetTree) throws IOException, URISyntaxException {
         if (enabled) {
             LOGGER.info("Enabling NFS for " + assetTree);
-            oncRpcSvc = ChronicleNfsServer.start(assetTree, debug);
+            File exports = File.createTempFile("exports", "");
+            exports.deleteOnExit();
+            try (PrintWriter pw = new PrintWriter(exports)) {
+                for (Map.Entry<String, String> entry : this.exports.entrySet()) {
+                    pw.append(entry.getKey()).append("    ").append(entry.getValue()).append("\n");
+                }
+            }
+            oncRpcSvc = ChronicleNfsServer.start(assetTree, exports.toString(), debug);
         }
         return this;
     }
@@ -51,13 +63,24 @@ public class NfsCfg implements Installable, Marshallable {
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         wire.read(() -> "enabled").bool(b -> enabled = b)
-                .read(() -> "debug").bool(b -> debug = b);
+                .read(() -> "debug").bool(b -> debug = b)
+                .read(() -> "exports").marshallable(w -> {
+            StringBuilder name = new StringBuilder();
+            while (w.hasMore()) {
+                w.read(name).text(s -> exports.put(name.toString(), s));
+            }
+        });
     }
 
     @Override
     public void writeMarshallable(WireOut wire) {
         wire.write(() -> "enabled").bool(enabled)
-                .write(() -> "debug").bool(debug);
+                .write(() -> "debug").bool(debug)
+                .write(() -> "exports").marshallable(w -> {
+            for (Map.Entry<String, String> entry : exports.entrySet()) {
+                w.write(entry::getKey).text(entry.getValue());
+            }
+        });
     }
 
     @Override
@@ -65,6 +88,7 @@ public class NfsCfg implements Installable, Marshallable {
         return "NfsCfg{" +
                 "enabled=" + enabled +
                 ", debug=" + debug +
+                ", exports=" + exports +
                 '}';
     }
 }

@@ -14,6 +14,7 @@ import org.dcache.xdr.OncRpcSvcBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.BindException;
 import java.net.URISyntaxException;
@@ -26,10 +27,10 @@ public class ChronicleNfsServer {
 
     static final Logger LOGGER = LoggerFactory.getLogger(ChronicleNfsServer.class);
     public static OncRpcSvc start(AssetTree tree) throws IOException, URISyntaxException {
-        return start(tree, false);
+        return start(tree, "default.exports", false);
     }
 
-    public static OncRpcSvc start(AssetTree tree, boolean debug) throws IOException, URISyntaxException {
+    public static OncRpcSvc start(AssetTree tree, String exportsFile, boolean debug) throws IOException, URISyntaxException {
         // create an instance of a filesystem to be exported
         VirtualFileSystem vfs = new ChronicleNfsVirtualFileSystem(tree);
         if (debug)
@@ -46,8 +47,10 @@ public class ChronicleNfsServer {
         // specify file with export entries
         URL exports = ClassLoader.getSystemResource("exports");
         if (exports == null)
-            exports = ClassLoader.getSystemResource("default.exports");
-        ExportFile exportFile = new ExportFile(exports.toURI().toURL());
+            exports = ClassLoader.getSystemResource(exportsFile);
+        if (exports == null)
+            exports = new File(exportsFile).toURL();
+        ExportFile exportFile = new ExportFile(exports);
 
         // create NFS v4.1 server
         NFSServerV41 nfs4 = new NFSServerV41(

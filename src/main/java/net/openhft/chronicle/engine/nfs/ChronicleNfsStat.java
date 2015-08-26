@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.nfs;
 
+import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import org.dcache.nfs.vfs.Inode;
 import org.dcache.nfs.vfs.Stat;
@@ -53,7 +54,12 @@ class ChronicleNfsStat extends Stat {
         final Object o = ChronicleNfsFileHandleLookup.toObject(fileId);
         if (o instanceof Asset) {
             result.setSize(0);
-            result.setMode(0555 | org.dcache.nfs.vfs.Stat.S_IFDIR);
+            Asset asset = (Asset) o;
+            int mode = 0555;
+            MapView view = asset.getView(MapView.class);
+            if (view != null && view.valueType() == String.class)
+                mode = 0777;
+            result.setMode(mode | org.dcache.nfs.vfs.Stat.S_IFDIR);
         } else if (o instanceof ChronicleNfsEntryProxy) {
             ChronicleNfsEntryProxy cnep = (ChronicleNfsEntryProxy) o;
             result.setSize(cnep.valueSize());
