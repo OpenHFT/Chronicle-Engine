@@ -42,6 +42,8 @@ public class ServerEndpoint implements Closeable {
 
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ChronicleMapKeyValueStore.class);
+    public static final Integer HEARTBEAT_INTERVAL_TICKS = Integer.getInteger("heartbeat.interval.ticks", 1_000);
+    public static final Integer HEARTBEAT_TIME_OUT_TICKS = Integer.getInteger("heartbeat.timeout.ticks", 100_000);
     @Nullable
     private final EventLoop eg;
     @NotNull
@@ -77,7 +79,9 @@ public class ServerEndpoint implements Closeable {
                     final Throttler throttler = new Throttler(eventLoop, maxEventsPreSecond);
                     return new EngineWireHandler(wireType, asset, throttler);
                 },
-                VanillaSessionDetails::new);
+                VanillaSessionDetails::new,
+                HEARTBEAT_INTERVAL_TICKS,
+                HEARTBEAT_TIME_OUT_TICKS);
 
         eg.addHandler(eah);
         this.eah = eah;
