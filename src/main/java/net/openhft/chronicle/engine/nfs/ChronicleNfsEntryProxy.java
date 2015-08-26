@@ -1,6 +1,9 @@
 package net.openhft.chronicle.engine.nfs;
 
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.api.map.MapView;
+import net.openhft.chronicle.wire.TextWire;
+import net.openhft.chronicle.wire.WriteMarshallable;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -11,6 +14,9 @@ import org.jetbrains.annotations.Nullable;
 class ChronicleNfsEntryProxy {
     private final MapView mapView;
     private final String key;
+    private CharSequence text;
+    private long lastTimeMS = 0;
+    private boolean readOnly;
 
     public ChronicleNfsEntryProxy(MapView mapView, String key) {
         this.mapView = mapView;
@@ -45,17 +51,35 @@ class ChronicleNfsEntryProxy {
     }
 
     public int valueSize() {
-        final Object o = value();
+        final CharSequence o = value();
         if (o == null)
             return 0;
-        return o.toString().length();
+        return o.length();
     }
 
     @Nullable
-    public Object value() {
-        //noinspection unchecked
-        return mapView.get(key);
+    public CharSequence value() {
+        long now = System.currentTimeMillis();
+        if (lastTimeMS + 1 < now) {
+            Object value = mapView.get(key);
+            if (value instanceof WriteMarshallable) {
+                Bytes bytes = Bytes.elasticByteBuffer();
+                TextWire wire = new TextWire(bytes);
+                wire.writeObject(value);
+                text = bytes;
+            } else if (value instanceof CharSequence) {
+                text = (CharSequence) value;
+            } else if (value == null) {
+                text = null;
+            } else {
+                text = value.toString();
+            }
+            lastTimeMS = now;
+        }
+        return text;
     }
 
-
+    public boolean isReadOnly() {
+        return mapView.valueType() != String.class;
+    }
 }

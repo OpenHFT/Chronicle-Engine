@@ -14,5 +14,27 @@ etc: {
     enabled: true,
     debug: true
     }
+  clusters: !ClustersCfg {
+    cluster: {
+      host1: {
+         hostId: 1,
+         tcpBufferSize: 65536,
+         connectUri: localhost:8088,
+         timeoutMs: 1000,
+      }
+#      host2: {
+#         hostId: 2,
+#         tcpBufferSize: 65536,
+#         connectUri: server2:8088,
+#         timeoutMs: 1000,
+#      },
+#       host3: {
+#           hostId: 3,
+#           tcpBufferSize: 65536,
+#           connectUri: server3:8088,
+#           timeoutMs: 1000,
+#        }
+      }
+    }
   }
 }

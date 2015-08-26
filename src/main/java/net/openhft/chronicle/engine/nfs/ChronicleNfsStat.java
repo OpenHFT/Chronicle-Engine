@@ -53,10 +53,12 @@ class ChronicleNfsStat extends Stat {
         final Object o = ChronicleNfsFileHandleLookup.toObject(fileId);
         if (o instanceof Asset) {
             result.setSize(0);
-            result.setMode(0777 | org.dcache.nfs.vfs.Stat.S_IFDIR);
+            result.setMode(0555 | org.dcache.nfs.vfs.Stat.S_IFDIR);
         } else if (o instanceof ChronicleNfsEntryProxy) {
-            result.setSize(((ChronicleNfsEntryProxy) o).valueSize());
-            result.setMode(0777 | org.dcache.nfs.vfs.Stat.S_IFREG);
+            ChronicleNfsEntryProxy cnep = (ChronicleNfsEntryProxy) o;
+            result.setSize(cnep.valueSize());
+            int mode = cnep.isReadOnly() ? 0555 : 0777;
+            result.setMode(mode | org.dcache.nfs.vfs.Stat.S_IFREG);
         } else {
             throw new UnsupportedOperationException("class=" + o.getClass());
         }

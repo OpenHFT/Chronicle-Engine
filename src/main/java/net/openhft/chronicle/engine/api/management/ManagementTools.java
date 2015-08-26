@@ -147,9 +147,11 @@ public enum ManagementTools {
         Threads.withThreadGroup(tree.root().getView(ThreadGroup.class), () -> {
             ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor(
                     new NamedThreadFactory("tree-watcher", true));
-            tree.registerSubscriber("", TopologicalEvent.class, e ->
-                            // give the collection time to be setup.
-                            ses.schedule(() -> handleTreeUpdate(tree, e, ses), 50, TimeUnit.MILLISECONDS)
+            tree.registerSubscriber("", TopologicalEvent.class, e -> {
+                        // give the collection time to be setup.
+                        if (e.assetName() != null)
+                            ses.schedule(() -> handleTreeUpdate(tree, e, ses), 50, TimeUnit.MILLISECONDS);
+                    }
             );
             return null;
         });

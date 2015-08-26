@@ -23,5 +23,6 @@ import net.openhft.chronicle.wire.ReadMarshallable;
  * Created by peter on 26/08/15.
  */
 public interface Installable extends ReadMarshallable {
-    void install(String path, AssetTree assetTree) throws Exception;
+    Object install(String path, AssetTree assetTree) throws Exception;
 }
+

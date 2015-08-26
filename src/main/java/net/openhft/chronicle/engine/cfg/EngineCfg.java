@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.cfg;
 
+import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.WireIn;
@@ -23,8 +24,11 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * Created by peter on 26/08/15.
@@ -32,14 +36,27 @@ import java.util.Map;
 public class EngineCfg implements Installable {
     static final Logger LOGGER = LoggerFactory.getLogger(EngineCfg.class);
     final Map<String, Installable> installableMap = new LinkedHashMap<>();
+    final List<Consumer<AssetTree>> toInstall = new ArrayList<>();
 
     @Override
-    public void install(String path, AssetTree assetTree) throws Exception {
+    public NfsCfg install(String path, AssetTree assetTree) throws Exception {
         LOGGER.info("Building Engine " + assetTree);
         for (Map.Entry<String, Installable> entry : installableMap.entrySet()) {
-            LOGGER.info("Installing " + entry.getKey() + ": " + entry.getValue());
-            entry.getValue().install(entry.getKey(), assetTree);
+            String path2 = entry.getKey();
+            LOGGER.info("Installing " + path2 + ": " + entry.getValue());
+            Object install = entry.getValue().install(path2, assetTree);
+            if (install != null) {
+                int pos = path2.lastIndexOf('/');
+                String parent = path2.substring(0, pos);
+                MapView<String, Object> map = assetTree.acquireMap(parent, String.class, Object.class);
+                String name = path2.substring(pos + 1);
+                map.put(name, install);
+            }
         }
+        for (Consumer<AssetTree> consumer : toInstall) {
+            consumer.accept(assetTree);
+        }
+        return null;
     }
 
     @Override

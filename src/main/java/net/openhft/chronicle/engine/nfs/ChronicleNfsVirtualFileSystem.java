@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine.nfs;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.Maths;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.tree.Asset;
@@ -222,20 +223,13 @@ public class ChronicleNfsVirtualFileSystem implements VirtualFileSystem {
         if (object instanceof ChronicleNfsEntryProxy) {
             final ChronicleNfsEntryProxy entryProxy = (ChronicleNfsEntryProxy) object;
 
-            final Object value = entryProxy.value();
+            final CharSequence value = entryProxy.value();
             if (value == null)
                 return 0;
 
-            //todo improve this but currently - ensures the object is a string, however this, will
-            // todo corrupt none string data
-            final String valueStr = value.toString();
-
-            long len = Math.min(count, valueStr.length() - offset);
-            final CharSequence charSequence = valueStr.subSequence((int)
-                    offset, (int) len);
-
+            long len = Math.min(count, value.length() - offset);
             for (int i = 0; i < len; i++) {
-                data[i] = (byte) charSequence.charAt(i);
+                data[i] = (byte) value.charAt(Maths.toInt32(offset + i));
             }
 
             return (int) len;
@@ -279,12 +273,15 @@ public class ChronicleNfsVirtualFileSystem implements VirtualFileSystem {
         if (object instanceof ChronicleNfsEntryProxy) {
             final ChronicleNfsEntryProxy entryProxy = (ChronicleNfsEntryProxy) object;
             final MapView mapView = entryProxy.mapView();
-            final String key = entryProxy.key();
-            //noinspection unchecked
-            mapView.put(key, new String(data));
+            if (CharSequence.class.isAssignableFrom(mapView.valueType())) {
+                final String key = entryProxy.key();
+                //noinspection unchecked
+                mapView.put(key, new String(data));
+            } else {
+                throw new UnsupportedOperationException("Cannot convert to text");
+            }
             return new WriteResult(StabilityLevel.DATA_SYNC, data.length);
         } else {
-
             throw new UnsupportedOperationException();
         }
 

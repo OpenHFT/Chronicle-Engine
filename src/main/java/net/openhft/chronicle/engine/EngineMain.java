@@ -20,6 +20,7 @@ package net.openhft.chronicle.engine;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.cfg.*;
+import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.TextWire;
 import org.slf4j.Logger;
@@ -43,11 +44,13 @@ public class EngineMain {
         addClass(JmxCfg.class);
         addClass(ServerCfg.class);
         addClass(NfsCfg.class);
+        addClass(ClustersCfg.class);
 
         String name = args.length > 0 ? args[0] : "engine.yaml";
         TextWire yaml = TextWire.fromFile(name);
         Installable installable = (Installable) yaml.readObject();
         AssetTree assetTree = new VanillaAssetTree(HOST_ID).forServer(false);
+        assetTree.registerSubscriber("", TopologicalEvent.class, e -> LOGGER.info("Tree change " + e));
         try {
             installable.install("/", assetTree);
             LOGGER.info("Engine started");

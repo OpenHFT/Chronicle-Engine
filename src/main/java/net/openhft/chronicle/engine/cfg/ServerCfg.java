@@ -18,9 +18,7 @@ package net.openhft.chronicle.engine.cfg;
 
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
-import net.openhft.chronicle.wire.WireIn;
-import net.openhft.chronicle.wire.WireType;
-import net.openhft.chronicle.wire.YamlLogging;
+import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +28,7 @@ import java.io.IOException;
 /**
  * Created by peter on 26/08/15.
  */
-public class ServerCfg implements Installable {
+public class ServerCfg implements Installable, Marshallable {
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerCfg.class);
     private int port;
     private WireType wireType;
@@ -39,11 +37,12 @@ public class ServerCfg implements Installable {
     private int heartbeatIntervalTicks, heartbeatIntervalTimeout;
 
     @Override
-    public void install(String path, AssetTree assetTree) throws IOException {
+    public ServerCfg install(String path, AssetTree assetTree) throws IOException {
         LOGGER.info(path + ": Starting listener on port " + port);
         serverEndpoint = new ServerEndpoint("*:" + port, assetTree, wireType, heartbeatIntervalTicks, heartbeatIntervalTimeout);
         if (dumpWhenInDebug)
             YamlLogging.setAll(true);
+        return this;
     }
 
     @Override
@@ -51,9 +50,17 @@ public class ServerCfg implements Installable {
         wire.read(() -> "wireType").asEnum(WireType.class, wt -> wireType = wt);
         wire.read(() -> "port").int32(i -> port = i);
         wire.read(() -> "dumpWhenInDebug").bool(b -> dumpWhenInDebug = b);
-        wire.read(() -> "heartbeatIntervalTicks")
-                .int32(i -> heartbeatIntervalTicks = i);
+        wire.read(() -> "heartbeatIntervalTicks").int32(i -> heartbeatIntervalTicks = i);
         wire.read(() -> "heartbeatIntervalTimeout").int32(i -> heartbeatIntervalTimeout = i);
+    }
+
+    @Override
+    public void writeMarshallable(WireOut wire) {
+        wire.write(() -> "wireType").asEnum(wireType);
+        wire.write(() -> "port").int32(port);
+        wire.write(() -> "dumpWhenInDebug").bool(dumpWhenInDebug);
+        wire.write(() -> "heartbeatIntervalTicks").int32(heartbeatIntervalTicks);
+        wire.write(() -> "heartbeatIntervalTimeout").int32(heartbeatIntervalTimeout);
     }
 
     @Override

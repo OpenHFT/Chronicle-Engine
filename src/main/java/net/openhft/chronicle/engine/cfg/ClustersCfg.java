@@ -17,54 +17,32 @@
 package net.openhft.chronicle.engine.cfg;
 
 import net.openhft.chronicle.engine.api.tree.AssetTree;
-import net.openhft.chronicle.engine.nfs.ChronicleNfsServer;
+import net.openhft.chronicle.engine.fs.Clusters;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
-import org.dcache.xdr.OncRpcSvc;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
-
 
 /**
  * Created by peter on 26/08/15.
  */
-public class NfsCfg implements Installable, Marshallable {
-    private static final Logger LOGGER = LoggerFactory.getLogger(NfsCfg.class);
-    private boolean enabled;
-    private boolean debug;
-    private OncRpcSvc oncRpcSvc;
+public class ClustersCfg implements Installable, Marshallable {
+    final Clusters clusters = new Clusters();
 
     @Override
-    public NfsCfg install(String path, AssetTree assetTree) throws IOException, URISyntaxException {
-        if (enabled) {
-            LOGGER.info("Enabling NFS for " + assetTree);
-            oncRpcSvc = ChronicleNfsServer.start(assetTree, debug);
-        }
+    public ClustersCfg install(String path, AssetTree assetTree) throws Exception {
+        assetTree.root().addView(Clusters.class, clusters);
+
         return this;
     }
 
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
-        wire.read(() -> "enabled").bool(b -> enabled = b)
-                .read(() -> "debug").bool(b -> debug = b);
+        clusters.readMarshallable(wire);
     }
 
     @Override
     public void writeMarshallable(WireOut wire) {
-        wire.write(() -> "enabled").bool(enabled)
-                .write(() -> "debug").bool(debug);
-    }
-
-    @Override
-    public String toString() {
-        return "NfsCfg{" +
-                "enabled=" + enabled +
-                ", debug=" + debug +
-                '}';
+        clusters.writeMarshallable(wire);
     }
 }
