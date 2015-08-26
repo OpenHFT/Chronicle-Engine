@@ -22,6 +22,7 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.cfg.EngineCfg;
 import net.openhft.chronicle.engine.cfg.Installable;
 import net.openhft.chronicle.engine.cfg.JmxCfg;
+import net.openhft.chronicle.engine.cfg.ServerCfg;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.TextWire;
 import org.slf4j.Logger;
@@ -43,12 +44,19 @@ public class EngineMain {
     public static void main(String[] args) throws IOException {
         addClass(EngineCfg.class);
         addClass(JmxCfg.class);
+        addClass(ServerCfg.class);
 
         String name = args.length > 0 ? args[0] : "engine.yaml";
         TextWire yaml = TextWire.fromFile(name);
         Installable installable = (Installable) yaml.readObject();
-        AssetTree assetTree = new VanillaAssetTree(HOST_ID);
-        installable.install("/", assetTree);
-        LOGGER.info("Engine started");
+        AssetTree assetTree = new VanillaAssetTree(HOST_ID).forServer(false);
+        try {
+            installable.install("/", assetTree);
+            LOGGER.info("Engine started");
+
+        } catch (Exception e) {
+            LOGGER.error("Error starting a component, stopping", e);
+            assetTree.close();
+        }
     }
 }

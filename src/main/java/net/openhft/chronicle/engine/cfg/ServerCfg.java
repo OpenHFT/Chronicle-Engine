@@ -17,36 +17,43 @@
 package net.openhft.chronicle.engine.cfg;
 
 import net.openhft.chronicle.engine.api.tree.AssetTree;
+import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 
 /**
  * Created by peter on 26/08/15.
  */
-public class JmxCfg implements Installable {
-    private static final Logger LOGGER = LoggerFactory.getLogger(JmxCfg.class);
-    private boolean enabled;
+public class ServerCfg implements Installable {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ServerCfg.class);
+    private int port;
+    private WireType wireType;
+    private ServerEndpoint serverEndpoint;
 
     @Override
-    public void install(String path, AssetTree assetTree) {
-        if (enabled) {
-            LOGGER.info("Enabling JMX for " + assetTree);
-            assetTree.enableManagement();
-        }
+    public void install(String path, AssetTree assetTree) throws IOException {
+        LOGGER.info(path + ": Starting listener on port " + port);
+        serverEndpoint = new ServerEndpoint("*:" + port, assetTree, wireType);
+
     }
 
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
-        wire.read(() -> "enabled").bool(b -> enabled = b);
+        wire.read(() -> "wireType").asEnum(WireType.class, wt -> wireType = wt);
+        wire.read(() -> "port").int32(i -> port = i);
     }
 
     @Override
     public String toString() {
-        return "JmxCfg{" +
-                "enabled=" + enabled +
+        return "ServerCfg{" +
+                "port=" + port +
+                ", wireType=" + wireType +
+                ", serverEndpoint=" + serverEndpoint +
                 '}';
     }
 }

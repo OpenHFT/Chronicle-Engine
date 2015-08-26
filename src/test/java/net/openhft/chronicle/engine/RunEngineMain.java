@@ -14,14 +14,16 @@
  *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.openhft.chronicle.engine.cfg;
+package net.openhft.chronicle.engine;
 
-import net.openhft.chronicle.engine.api.tree.AssetTree;
-import net.openhft.chronicle.wire.ReadMarshallable;
+import java.io.IOException;
 
 /**
+ * Run EngineMain in test mode so slf4j will be imported.
  * Created by peter on 26/08/15.
  */
-public interface Installable extends ReadMarshallable {
-    void install(String path, AssetTree assetTree) throws Exception;
+public class RunEngineMain {
+    public static void main(String[] args) throws IOException {
+        EngineMain.main(args);
+    }
 }

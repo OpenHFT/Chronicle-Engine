@@ -20,6 +20,8 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.WireIn;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -28,11 +30,16 @@ import java.util.Map;
  * Created by peter on 26/08/15.
  */
 public class EngineCfg implements Installable {
+    static final Logger LOGGER = LoggerFactory.getLogger(EngineCfg.class);
     final Map<String, Installable> installableMap = new LinkedHashMap<>();
 
     @Override
-    public void install(String path, AssetTree assetTree) {
-        throw new UnsupportedOperationException("todo");
+    public void install(String path, AssetTree assetTree) throws Exception {
+        LOGGER.info("Building Engine " + assetTree);
+        for (Map.Entry<String, Installable> entry : installableMap.entrySet()) {
+            LOGGER.info("Installing " + entry.getKey() + ": " + entry.getValue());
+            entry.getValue().install(entry.getKey(), assetTree);
+        }
     }
 
     @Override
@@ -56,6 +63,5 @@ public class EngineCfg implements Installable {
                 installableMap.put(path2, (Installable) o);
             }
         }
-        System.out.println(installableMap);
     }
 }
