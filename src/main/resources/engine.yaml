@@ -1,0 +1,7 @@
+--- !EngineCfg {
+etc: {
+  jmx: !JmxCfg {
+    enabled: true
+    }
+  }
+}
