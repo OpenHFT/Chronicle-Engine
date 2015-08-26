@@ -332,7 +332,7 @@ public class CMap2EngineReplicator implements EngineReplication,
         public String toString() {
             final Bytes<ByteBuffer> bytes = Bytes.elasticByteBuffer();
             new TextWire(bytes).writeDocument(false, d -> d.write().typedMarshallable(this));
-            return "\n" + Wires.fromSizePrefixedBinaryToText(bytes);
+            return "\n" + Wires.fromSizePrefixedBlobs(bytes);
 
         }
     }

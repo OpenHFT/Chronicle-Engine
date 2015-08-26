@@ -62,7 +62,7 @@ class AbstractHandler {
         if (Jvm.isDebug() && YamlLogging.showServerWrites)
             try {
                 LOG.info("\nServer Sends:\n" +
-                        Wires.fromSizePrefixedBinaryToText(outWire.bytes()));
+                        Wires.fromSizePrefixedBlobs(outWire.bytes()));
             } catch (Exception e) {
                 LOG.info("\nServer Sends ( corrupted ) :\n" +
                         outWire.bytes().toDebugString());

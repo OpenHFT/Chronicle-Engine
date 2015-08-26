@@ -16,68 +16,47 @@
 
 package net.openhft.chronicle.engine;
 
-import net.openhft.chronicle.core.OS;
-import net.openhft.chronicle.engine.api.map.KeyValueStore;
-import net.openhft.chronicle.engine.api.map.MapView;
-import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
-import net.openhft.chronicle.engine.map.VanillaMapView;
-import net.openhft.chronicle.engine.nfs.ChronicleNfsServer;
-import net.openhft.chronicle.engine.server.ServerEndpoint;
-import net.openhft.chronicle.engine.tree.TopologicalEvent;
+
+import net.openhft.chronicle.core.pool.ClassAliasPool;
+import net.openhft.chronicle.engine.api.tree.AssetTree;
+import net.openhft.chronicle.engine.cfg.EngineCfg;
+import net.openhft.chronicle.engine.cfg.Installable;
+import net.openhft.chronicle.engine.cfg.JmxCfg;
+import net.openhft.chronicle.engine.cfg.ServerCfg;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
-import net.openhft.chronicle.wire.WireType;
-import net.openhft.chronicle.wire.YamlLogging;
-import org.dcache.xdr.OncRpcSvc;
-import org.jetbrains.annotations.NotNull;
+import net.openhft.chronicle.wire.TextWire;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 
 /**
- * @author peter
- * @author andre
+ * This engine main uses a configuration file
  */
 public class EngineMain {
+    static final Logger LOGGER = LoggerFactory.getLogger(SimpleEngineMain.class);
+    static final int HOST_ID = Integer.getInteger("engine.hostId", 0);
 
-    static final Logger LOGGER = LoggerFactory.getLogger(EngineMain.class);
-    static final boolean NFS = Boolean.getBoolean("engine.nfs");
-    static final boolean NFS_DEBUG = Boolean.getBoolean("engine.nfs.debug");
-    static final boolean JMX = Boolean.getBoolean("engine.jmx");
-    static final boolean PERSIST = Boolean.getBoolean("engine.persist");
-    static final boolean MSG_DUMP = Boolean.getBoolean("engine.messages.dump");
-    static final int PORT = Integer.getInteger("engine.port", 8088);
-    static final WireType WIRE_TYPE = WireType.valueOf(System.getProperty("engine.wireType", "BINARY"));
+    static <I extends Installable> void addClass(Class<I>... iClasses) {
+        ClassAliasPool.CLASS_ALIASES.addAlias(iClasses);
+    }
 
-    static ServerEndpoint serverEndpoint;
-    static OncRpcSvc oncRpcSvc;
+    public static void main(String[] args) throws IOException {
+        addClass(EngineCfg.class);
+        addClass(JmxCfg.class);
+        addClass(ServerCfg.class);
 
-    public static void main(@NotNull String... args) throws IOException, InterruptedException, URISyntaxException {
+        String name = args.length > 0 ? args[0] : "engine.yaml";
+        TextWire yaml = TextWire.fromFile(name);
+        Installable installable = (Installable) yaml.readObject();
+        AssetTree assetTree = new VanillaAssetTree(HOST_ID).forServer(false);
+        try {
+            installable.install("/", assetTree);
+            LOGGER.info("Engine started");
 
-        VanillaAssetTree assetTree = new VanillaAssetTree().forTesting(false);
-        if (JMX)
-            assetTree.enableManagement();
-
-        assetTree.registerSubscriber("", TopologicalEvent.class, e -> LOGGER.info("Tree change ", e));
-        if (PERSIST) {
-            LOGGER.info("Persistence enabled");
-            assetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
-                    VanillaMapView::new, KeyValueStore.class);
-            assetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
-                    new ChronicleMapKeyValueStore(context.basePath(OS.TARGET), asset));
-        }
-
-        serverEndpoint = new ServerEndpoint("*:" + PORT, assetTree, WIRE_TYPE);
-
-        if (MSG_DUMP) {
-            LOGGER.info("Enabling message logging");
-            YamlLogging.setAll(true);
-        }
-
-        LOGGER.info("Server port seems to be " + PORT);
-        if (NFS) {
-            oncRpcSvc = ChronicleNfsServer.start(assetTree, NFS_DEBUG);
+        } catch (Exception e) {
+            LOGGER.error("Error starting a component, stopping", e);
+            assetTree.close();
         }
     }
 }

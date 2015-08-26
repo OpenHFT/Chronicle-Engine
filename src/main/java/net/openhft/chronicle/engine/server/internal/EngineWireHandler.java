@@ -341,7 +341,7 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
         if (Jvm.isDebug() && YamlLogging.showServerReads) {
             try {
                 LOG.info("\nServer Receives:\n" +
-                        Wires.fromSizePrefixedBinaryToText(in.bytes()));
+                        Wires.fromSizePrefixedBlobs(in.bytes()));
             } catch (Exception e) {
                 LOG.info("\n\n" +
                         Bytes.toString(in.bytes()));

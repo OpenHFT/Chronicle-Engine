@@ -1,0 +1,11 @@
+--- !EngineCfg {
+etc: {
+  jmx: !JmxCfg {
+    enabled: true
+    }
+  server: !ServerCfg {
+    wireType: BINARY,
+    port: 8088
+    }
+  }
+}
