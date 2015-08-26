@@ -1,0 +1,37 @@
+etc: {
+  exports: !Exports "/ *(rw,noacl,anonuid=1000,anongid=1000)"
+  jmx: !ChronicleManagement
+      enabled: true
+  clusters: !Clusters [
+    cluster: {
+      host1: {
+         hostId: 1,
+         tcpBufferSize: 65536,
+         connectUri: host.port1,
+         timeoutMs: 1000,
+      },
+      host2: {
+         hostId: 2,
+         tcpBufferSize: 65536,
+         connectUri: host.port2,
+         timeoutMs: 1000,
+      }
+    }
+  ]
+data:
+  maps: !ChronicleMapGroupFS {
+         cluster: cluster,
+  }
+  maps2: !ChronicleMapGroupFS {
+         cluster: cluster,
+         maxEntries: 20000,
+         averageValueSize: 2000,
+         putReturnsNull: true,
+         removeReturnsNull: true,
+         nullOldValueOnUpdateEvent: true
+  }
+  realtime:
+    curves: !FilePerKeyFS {
+        valueType: !type String
+      }
+}
