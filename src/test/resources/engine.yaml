@@ -24,10 +24,12 @@ etc: {
   #
   nfs: !NfsCfg {
     enabled: true,
-    debug: true, # log every NFS request.
+    debug: false, # log every NFS request.
     exports: {
      # export everything.
-      "/": "*(rw,noacl,anonuid=1000,anongid=1000)"
+      "/": "*(rw,noacl,anonuid=1000,anongid=1000)",
+      "/data": "*(rw,noacl,anonuid=1000,anongid=1000)"
+      "/stocks": "*(rw,noacl,anonuid=1000,anongid=1000)"
     }
   }
   #
@@ -72,8 +74,24 @@ data: {
     map2:  !InMemoryMapCfg {
       keyType: !type String,
       valueType: !type String,
-      putReturnsNull: false,
-      removeReturnsNull: false,
+      putReturnsNull: true,
+      removeReturnsNull: true,
+    }
+  }
+stocks: {
+  ftse: !InMemoryMapCfg {
+    keyType: !type String,
+    valueType: !type EndOfDayShort,
+    putReturnsNull: true,
+    removeReturnsNull: true,
+    import: ftse350.csv
+    }
+  nyse: !InMemoryMapCfg {
+    keyType: !type String,
+    valueType: !type EndOfDay,
+    putReturnsNull: true,
+    removeReturnsNull: true,
+    import: nyse.csv
     }
   }
 }

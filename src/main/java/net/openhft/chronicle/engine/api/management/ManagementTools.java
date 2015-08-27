@@ -168,7 +168,7 @@ public enum ManagementTools {
                 if (asset == null) {
                     return;
                 }
-                ObjectKeyValueStore view = asset.getView(ObjectKeyValueStore.class);
+                ObjectKeyValueStore<Object, Object> view = asset.getView(ObjectKeyValueStore.class);
                 if (view == null) {
                     //todo keep this for future purpose
                     return;
@@ -178,7 +178,7 @@ public enum ManagementTools {
                     //ObjectName atName = new ObjectName(createObjectNameUri(e.assetName(),e.name(),treeName));
 
                     //start Dynamic MBeans Code
-                    Map m = new HashMap();
+                    Map<String, String> m = new HashMap<>();
                     m.put("size", "" + view.longSize());
                     m.put("keyType", view.keyType().getName());
                     m.put("valueType", view.valueType().getName());
@@ -188,14 +188,13 @@ public enum ManagementTools {
                     m.put("keyStoreValue", objectKVSSubscription.getClass().getName());
                     m.put("path", e.assetName() + "-" + e.name());
 
-                    Iterator<Map.Entry> it = view.entrySetIterator();
-                    for (int i = 0; i < view.longSize(); i++) {
-                        Map.Entry entry = it.next();
-
-                        if (entry.getValue().toString().length() > 128)
-                            m.put("~" + entry.getKey().toString(), entry.getValue().toString().substring(0, 128) + "...");
-                        else
-                            m.put("~" + entry.getKey().toString(), entry.getValue().toString());
+                    for (int i = 0; i < view.segments(); i++) {
+                        view.entriesFor(i, entry -> {
+                            if (entry.getValue().toString().length() > 256)
+                                m.put("~" + entry.getKey().toString(), entry.getValue().toString().substring(0, 256) + "...");
+                            else
+                                m.put("~" + entry.getKey().toString(), entry.getValue().toString());
+                        });
                     }
                     dynamicMBean = new AssetTreeDynamicMBean(m);
                     ObjectName atName = new ObjectName(createObjectNameUri(hostId, e.assetName(), e.name(), treeName));

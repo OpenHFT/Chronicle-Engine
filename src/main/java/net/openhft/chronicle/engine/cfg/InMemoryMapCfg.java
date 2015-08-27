@@ -16,12 +16,16 @@
 
 package net.openhft.chronicle.engine.cfg;
 
+import net.openhft.chronicle.core.util.ObjectUtils;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
+import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireIn;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 
 /**
  * Created by peter on 26/08/15.
@@ -30,11 +34,21 @@ public class InMemoryMapCfg implements Installable {
     private static final Logger LOGGER = LoggerFactory.getLogger(InMemoryMapCfg.class);
     private Class keyType, valueType;
     private boolean putReturnsNull, removeReturnsNull;
+    private String importFile;
 
     @Override
-    public Void install(String path, AssetTree assetTree) {
+    public Void install(String path, AssetTree assetTree) throws IOException {
         String uri = path + "?putReturnsNull=" + putReturnsNull + "&removeReturnsNull=" + removeReturnsNull;
         MapView mapView = assetTree.acquireMap(uri, keyType, valueType);
+        if (importFile != null) {
+            Wire wire = Wire.fromFile(importFile);
+            StringBuilder keyStr = new StringBuilder();
+            while (wire.hasMore()) {
+                Object value = wire.readEventName(keyStr).object(valueType);
+                Object key = ObjectUtils.convertTo(keyType, keyStr);
+                mapView.put(key, value);
+            }
+        }
         LOGGER.info("Added InMemoryMap " + path + ", size: " + mapView.size());
         return null;
     }
@@ -45,6 +59,8 @@ public class InMemoryMapCfg implements Installable {
                 .read(() -> "valueType").typeLiteral(c -> valueType = c)
                 .read(() -> "putReturnsNull").bool(e -> putReturnsNull = e)
                 .read(() -> "removeReturnsNull").bool(e -> removeReturnsNull = e);
+        if (wire.hasMore())
+            wire.read(() -> "import").text(s -> importFile = s);
     }
 
     @Override

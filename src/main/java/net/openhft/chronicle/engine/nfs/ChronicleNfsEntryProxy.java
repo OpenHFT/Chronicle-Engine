@@ -6,6 +6,8 @@ import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.WriteMarshallable;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.WeakReference;
+
 /**
  * holds a reference to the map and the key of interest, the reason that we don hold a reference to
  * the entry is that chronicle map stores its entries off heap so holding just the entry is unlikely
@@ -14,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 class ChronicleNfsEntryProxy {
     private final MapView mapView;
     private final String key;
-    private CharSequence text;
+    private WeakReference<CharSequence> text;
     private long lastTimeMS = 0;
     private boolean readOnly;
 
@@ -60,22 +62,26 @@ class ChronicleNfsEntryProxy {
     @Nullable
     public CharSequence value() {
         long now = System.currentTimeMillis();
-        if (lastTimeMS + 1 < now) {
-            Object value = mapView.get(key);
-            if (value instanceof WriteMarshallable) {
-                Bytes bytes = Bytes.elasticByteBuffer();
-                TextWire wire = new TextWire(bytes);
-                wire.writeObject(value);
-                text = bytes;
-            } else if (value instanceof CharSequence) {
-                text = (CharSequence) value;
-            } else if (value == null) {
-                text = null;
-            } else {
-                text = value.toString();
-            }
-            lastTimeMS = now;
+        WeakReference<CharSequence> textRef = text;
+        CharSequence text = textRef == null ? null : textRef.get();
+        if (text != null && lastTimeMS + 1 >= now) {
+            return text;
         }
+        Object value = mapView.get(key);
+        if (value instanceof WriteMarshallable) {
+            Bytes bytes = Bytes.elasticByteBuffer();
+            TextWire wire = new TextWire(bytes);
+            wire.writeObject(value);
+            text = bytes;
+        } else if (value instanceof CharSequence) {
+            text = (CharSequence) value;
+        } else if (value == null) {
+            text = null;
+        } else {
+            text = value.toString();
+        }
+        lastTimeMS = now;
+        this.text = new WeakReference<>(text);
         return text;
     }
 

@@ -16,6 +16,8 @@
 
 package net.openhft.chronicle.engine;
 
+import net.openhft.chronicle.core.pool.ClassAliasPool;
+
 import java.io.IOException;
 
 /**
@@ -24,6 +26,8 @@ import java.io.IOException;
  */
 public class RunEngineMain {
     public static void main(String[] args) throws IOException {
+        ClassAliasPool.CLASS_ALIASES.addAlias(EndOfDay.class);
+        ClassAliasPool.CLASS_ALIASES.addAlias(EndOfDayShort.class);
         EngineMain.main(args);
     }
 }
