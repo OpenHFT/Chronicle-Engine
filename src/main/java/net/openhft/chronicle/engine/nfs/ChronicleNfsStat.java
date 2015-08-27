@@ -65,7 +65,7 @@ class ChronicleNfsStat extends Stat {
             result.setSize(cnep.valueSize());
             int mode = cnep.isReadOnly() ? 0555 : 0777;
             result.setMode(mode | org.dcache.nfs.vfs.Stat.S_IFREG);
-        } else {
+        } else if (o != null) {
             throw new UnsupportedOperationException("class=" + o.getClass());
         }
         return result;
