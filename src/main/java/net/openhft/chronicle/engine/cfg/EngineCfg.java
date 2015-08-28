@@ -39,7 +39,7 @@ public class EngineCfg implements Installable {
     final List<Consumer<AssetTree>> toInstall = new ArrayList<>();
 
     @Override
-    public NfsCfg install(String path, AssetTree assetTree) throws Exception {
+    public Void install(String path, AssetTree assetTree) throws Exception {
         LOGGER.info("Building Engine " + assetTree);
         for (Map.Entry<String, Installable> entry : installableMap.entrySet()) {
             String path2 = entry.getKey();

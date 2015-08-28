@@ -32,7 +32,7 @@ import java.io.IOException;
  * This engine main uses a configuration file
  */
 public class EngineMain {
-    static final Logger LOGGER = LoggerFactory.getLogger(SimpleEngineMain.class);
+    static final Logger LOGGER = LoggerFactory.getLogger(EngineMain.class);
     static final int HOST_ID = Integer.getInteger("engine.hostId", 0);
 
     static <I extends Installable> void addClass(Class<I>... iClasses) {
