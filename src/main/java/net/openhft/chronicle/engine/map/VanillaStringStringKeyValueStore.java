@@ -18,7 +18,6 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
-import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.map.*;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
@@ -194,7 +193,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         @Nullable
         @Override
         public String apply(@Nullable BytesStore bs) {
-            return bs == null ? null : BytesUtil.to8bitString(bs);
+            return bs == null ? null : bs.to8bitString();
         }
     }
 
@@ -204,7 +203,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         @Nullable
         @Override
         public String apply(@Nullable BytesStore bs) {
-            return bs == null ? null : BytesUtil.to8bitString(bs);
+            return bs == null ? null : bs.to8bitString();
         }
     }
 }

@@ -19,7 +19,6 @@ package net.openhft.chronicle.engine.map;
 import com.sun.nio.file.SensitivityWatchEventModifier;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
-import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.Closeable;
@@ -466,7 +465,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
 //                    }
                     BytesStore prevContents = prev == null ? null : prev.contents();
                     try {
-                        if (BytesUtil.contentEqual(mapVal, prevContents)) {
+                        if (mapVal != null & mapVal.contentEquals(prevContents)) {
 //                            System.out.println("... key: "+mapKey+" equal, last.keys: "+new TreeSet<>(lastFileRecordMap.keySet()));
                             continue;
                         }
