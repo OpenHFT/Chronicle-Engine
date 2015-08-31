@@ -27,8 +27,6 @@ import net.openhft.chronicle.network.connection.AbstractAsyncSubscription;
 import net.openhft.chronicle.network.connection.AbstractAsyncTemporarySubscription;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
-import net.openhft.chronicle.threads.HandlerPriority;
-import net.openhft.chronicle.threads.api.EventHandler;
 import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.threads.api.InvalidEventHandlerException;
 import net.openhft.chronicle.wire.ValueOut;
@@ -167,35 +165,30 @@ class ReplicationHub extends AbstractStatelessClient {
         final TcpChannelHub hub = this.hub;
         mi.setModificationNotifier(eventLoop::unpause);
 
-        eventLoop.addHandler(new EventHandler() {
-            @Override
-            public boolean action() throws InvalidEventHandlerException {
-
-                try {
-                    if (isClosed.get())
-                        throw new InvalidEventHandlerException();
-
-                    // publishes the replication events
-                    hub.lock(() -> mi.forEach(e -> {
-
-                        if (e.identifier() != localIdentifier)
-                            return;
-
-                        sendEventAsyncWithoutLock(replicationEvent,
-                                (Consumer<ValueOut>) v -> v.typedMarshallable(e));
-                    }));
-
-                    return true;
-                } catch (IORuntimeException e) {
-                    LOG.error(e.getMessage());
+        eventLoop.addHandler(() -> {
+            try {
+                if (isClosed.get())
                     throw new InvalidEventHandlerException();
-                }
-            }
 
-            @NotNull
-            @Override
-            public HandlerPriority priority() {
-                return HandlerPriority.MEDIUM;
+                // publishes the replication events
+                hub.lock(() -> mi.forEach(e -> {
+
+                    if (e.identifier() != localIdentifier)
+                        return;
+
+                    sendEventAsyncWithoutLock(replicationEvent,
+                            new Consumer<ValueOut>() {
+                                @Override
+                                public void accept(ValueOut v) {
+                                    v.typedMarshallable(e);
+                                }
+                            });
+                }));
+
+                return true;
+            } catch (IORuntimeException e) {
+                LOG.error(e.getMessage());
+                throw new InvalidEventHandlerException();
             }
         });
 

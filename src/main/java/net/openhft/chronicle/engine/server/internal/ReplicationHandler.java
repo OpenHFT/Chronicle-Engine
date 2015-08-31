@@ -7,7 +7,6 @@ import net.openhft.chronicle.engine.map.replication.Bootstrap;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
-import net.openhft.chronicle.threads.HandlerPriority;
 import net.openhft.chronicle.threads.api.EventHandler;
 import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.threads.api.InvalidEventHandlerException;
@@ -25,10 +24,10 @@ import static net.openhft.chronicle.engine.server.internal.ReplicationHandler.Ev
  * Created by Rob Austin
  */
 public class ReplicationHandler<E> extends AbstractHandler {
+    private static final Logger LOG = LoggerFactory.getLogger(ReplicationHandler.class);
     private final StringBuilder eventName = new StringBuilder();
     private Replication replication;
     private WireOutPublisher publisher;
-    private static final Logger LOG = LoggerFactory.getLogger(ReplicationHandler.class);
     private HostIdentifier hostId;
     private long tid;
 
@@ -54,45 +53,33 @@ public class ReplicationHandler<E> extends AbstractHandler {
                 mi.setModificationNotifier(eventLoop::unpause);
 
                 eventLoop.addHandler(new EventHandler() {
-
                     @Override
                     public boolean action() throws InvalidEventHandlerException {
-
                         if (connectionClosed)
                             throw new InvalidEventHandlerException();
 
                         final AtomicBoolean hadNext = new AtomicBoolean();
 
-                        mi.forEach(e -> {
+                        mi.forEach(e -> publisher.add(publish1 -> {
 
-                            publisher.add(publish1 -> {
+                            if (e.identifier() != hostId.hostId())
+                                return;
 
-                                if (e.identifier() != hostId.hostId())
-                                    return;
+                            hadNext.set(true);
+                            if (LOG.isDebugEnabled())
+                                LOG.debug("publish from server response from iterator " +
+                                        "localIdentifier=" + hostId + " ,remoteIdentifier=" +
+                                        id + " event=" + e);
 
-                                hadNext.set(true);
-                                if (LOG.isDebugEnabled())
-                                    LOG.debug("publish from server response from iterator " +
-                                            "localIdentifier=" + hostId + " ,remoteIdentifier=" +
-                                            id + " event=" + e);
+                            publish1.writeDocument(true,
+                                    wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
 
-                                publish1.writeDocument(true,
-                                        wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
+                            publish1.writeNotReadyDocument(false,
+                                    wire -> wire.write(replicationEvent).typedMarshallable(e));
 
-                                publish1.writeNotReadyDocument(false,
-                                        wire -> wire.write(replicationEvent).typedMarshallable(e));
-
-                            });
-                        });
+                        }));
 
                         return hadNext.get();
-
-                    }
-
-                    @NotNull
-                    @Override
-                    public HandlerPriority priority() {
-                        return HandlerPriority.MEDIUM;
                     }
                 });
 

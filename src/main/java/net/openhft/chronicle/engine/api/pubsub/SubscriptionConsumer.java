@@ -28,10 +28,15 @@ import java.util.Set;
  */
 @FunctionalInterface
 public interface SubscriptionConsumer<T> {
-    final Logger LOG = LoggerFactory.getLogger(SubscriptionConsumer.class);
+    Logger LOG = LoggerFactory.getLogger(SubscriptionConsumer.class);
 
     static <S extends ISubscriber> void notifyEachSubscriber(@NotNull Set<S> subs, @NotNull SubscriptionConsumer<S> doNotify) {
         doNotify.notifyEachSubscriber(subs);
+    }
+
+    static <E> void notifyEachEvent(@NotNull Set<E> subs, @NotNull SubscriptionConsumer<E> doNotify)
+            throws InvalidSubscriberException {
+        doNotify.notifyEachEvent(subs);
     }
 
     default void notifyEachSubscriber(@NotNull Set<T> subs) {
@@ -49,11 +54,6 @@ public interface SubscriptionConsumer<T> {
                 }
             }
         });
-    }
-
-    static <E> void notifyEachEvent(@NotNull Set<E> subs, @NotNull SubscriptionConsumer<E> doNotify)
-            throws InvalidSubscriberException {
-        doNotify.notifyEachEvent(subs);
     }
 
     default void notifyEachEvent(@NotNull Set<T> subs) throws InvalidSubscriberException {

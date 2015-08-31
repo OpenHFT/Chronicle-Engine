@@ -362,7 +362,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
     }
 
     private void createProxy(final String type) {
-        outWire.writeEventName(reply).type("set-proxy")
+        outWire.writeEventName(reply).typePrefix("set-proxy")
                 .marshallable(w -> {
 
                     cpsBuff.setLength(0);
