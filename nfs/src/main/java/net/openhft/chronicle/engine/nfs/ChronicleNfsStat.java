@@ -59,12 +59,12 @@ class ChronicleNfsStat extends Stat {
             MapView view = asset.getView(MapView.class);
             if (view != null && view.valueType() == String.class)
                 mode = 0777;
-            result.setMode(mode | org.dcache.nfs.vfs.Stat.S_IFDIR);
+            result.setMode(mode | S_IFDIR);
         } else if (o instanceof ChronicleNfsEntryProxy) {
             ChronicleNfsEntryProxy cnep = (ChronicleNfsEntryProxy) o;
             result.setSize(cnep.valueSize());
             int mode = cnep.isReadOnly() ? 0555 : 0777;
-            result.setMode(mode | org.dcache.nfs.vfs.Stat.S_IFREG);
+            result.setMode(mode | S_IFREG);
         } else if (o != null) {
             throw new UnsupportedOperationException("class=" + o.getClass());
         }

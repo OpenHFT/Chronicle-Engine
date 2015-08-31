@@ -14,10 +14,10 @@
  *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.openhft.chronicle.engine.cfg;
+package net.openhft.chronicle.engine.nfs;
 
 import net.openhft.chronicle.engine.api.tree.AssetTree;
-import net.openhft.chronicle.engine.nfs.ChronicleNfsServer;
+import net.openhft.chronicle.engine.cfg.Installable;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;

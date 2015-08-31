@@ -21,13 +21,11 @@ import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
-import net.openhft.chronicle.engine.nfs.ChronicleNfsServer;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
-import org.dcache.xdr.OncRpcSvc;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,8 +43,6 @@ public class SimpleEngineMain {
 
     static final Logger LOGGER = LoggerFactory.getLogger(SimpleEngineMain.class);
     static final int HOST_ID = Integer.getInteger("engine.hostId", 0);
-    static final boolean NFS = Boolean.getBoolean("engine.nfs");
-    static final boolean NFS_DEBUG = Boolean.getBoolean("engine.nfs.debug");
     static final boolean JMX = Boolean.getBoolean("engine.jmx");
     static final boolean PERSIST = Boolean.getBoolean("engine.persist");
     static final boolean MSG_DUMP = Boolean.getBoolean("engine.messages.dump");
@@ -54,7 +50,6 @@ public class SimpleEngineMain {
     static final WireType WIRE_TYPE = WireType.valueOf(System.getProperty("engine.wireType", "BINARY"));
 
     static ServerEndpoint serverEndpoint;
-    static OncRpcSvc oncRpcSvc;
 
     public static void main(@NotNull String... args) throws IOException, InterruptedException, URISyntaxException {
 
@@ -79,8 +74,5 @@ public class SimpleEngineMain {
         }
 
         LOGGER.info("Server port seems to be " + PORT);
-        if (NFS) {
-            oncRpcSvc = ChronicleNfsServer.start(assetTree, "default.exports", NFS_DEBUG);
-        }
     }
 }

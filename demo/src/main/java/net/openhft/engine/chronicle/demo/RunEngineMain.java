@@ -18,6 +18,7 @@ package net.openhft.engine.chronicle.demo;
 
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.EngineMain;
+import net.openhft.chronicle.engine.nfs.NfsCfg;
 import net.openhft.engine.chronicle.demo.data.EndOfDay;
 import net.openhft.engine.chronicle.demo.data.EndOfDayShort;
 
@@ -30,8 +31,13 @@ import java.net.URISyntaxException;
  */
 public class RunEngineMain {
     public static void main(String[] args) throws IOException, URISyntaxException, InterruptedException {
-        ClassAliasPool.CLASS_ALIASES.addAlias(EndOfDay.class);
-        ClassAliasPool.CLASS_ALIASES.addAlias(EndOfDayShort.class);
+        addClass(EndOfDay.class);
+        addClass(EndOfDayShort.class);
+        addClass(NfsCfg.class);
         EngineMain.main(args);
+    }
+
+    public static void addClass(Class aClass) {
+        ClassAliasPool.CLASS_ALIASES.addAlias(aClass);
     }
 }

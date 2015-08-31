@@ -12,7 +12,7 @@
   ~     GNU Lesser General Public License for more details.
   ~
   ~     You should have received a copy of the GNU Lesser General Public License
-  ~     along with this program.  If not, see <http://www.gnu.org/licenses />.
+  ~     along with this program.  If not, see <http://www.gnu.org/licenses/>.
   -->
 
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
@@ -22,14 +22,14 @@
         <groupId>net.openhft</groupId>
         <artifactId>java-parent-pom</artifactId>
         <version>1.1.8</version>
-        <relativePath />
+        <relativePath/>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>chronicle-engine</artifactId>
+    <artifactId>chronicle-engine-nfs</artifactId>
     <version>1.7.7-beta-SNAPSHOT</version>
-    <name>OpenHFT/Chronicle-Engine</name>
-    <description>Chronicle Engine Framework</description>
+    <name>OpenHFT/Chronicle-Engine-NFS</name>
+    <description>Chronicle Engine NFS</description>
 
     <dependencyManagement>
         <dependencies>
@@ -56,78 +56,18 @@
     <dependencies>
         <dependency>
             <groupId>net.openhft</groupId>
-            <artifactId>chronicle-core</artifactId>
+            <artifactId>chronicle-engine</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>net.openhft</groupId>
-            <artifactId>chronicle-threads</artifactId>
+            <groupId>org.dcache</groupId>
+            <artifactId>nfs4j-core</artifactId>
         </dependency>
-
-        <dependency>
-            <groupId>net.openhft</groupId>
-            <artifactId>chronicle-bytes</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>net.openhft</groupId>
-            <artifactId>chronicle-wire</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>net.openhft</groupId>
-            <artifactId>chronicle-network</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>net.openhft</groupId>
-            <artifactId>lang</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>net.openhft</groupId>
-            <artifactId>chronicle-map</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-        </dependency>
-
-
-        <!-- test dependencies -->
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <scope>test</scope>
-        </dependency>
-
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
-
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.easymock</groupId>
-            <artifactId>easymock</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava-testlib</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-
     </dependencies>
 
     <repositories>
@@ -141,22 +81,6 @@
 
     <build>
         <plugins>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-scm-publish-plugin</artifactId>
-                <configuration>
-                    <checkoutDirectory>${project.build.directory}/scmpublish/javadoc
-                    </checkoutDirectory>
-                    <checkinComment>Publishing javadoc for ${project.artifactId}:${project.version}
-                    </checkinComment>
-                    <content>${project.reporting.outputDirectory}</content>
-                    <skipDeletedFiles>true</skipDeletedFiles>
-                    <pubScmUrl>scm:git:git@github.com:OpenHFT/Chronicle-Engine</pubScmUrl>
-                    <scmBranch>gh-pages</scmBranch>
-                </configuration>
-            </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -167,7 +91,6 @@
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
-
         </plugins>
     </build>
 

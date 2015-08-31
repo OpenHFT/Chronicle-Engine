@@ -43,7 +43,6 @@ public class EngineMain {
         addClass(EngineCfg.class);
         addClass(JmxCfg.class);
         addClass(ServerCfg.class);
-        addClass(NfsCfg.class);
         addClass(ClustersCfg.class);
         addClass(InMemoryMapCfg.class);
 
