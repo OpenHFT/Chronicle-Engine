@@ -34,6 +34,7 @@ import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Proxy;
 import java.util.function.Function;
 
 import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
@@ -58,6 +59,8 @@ public class RequestContext implements Cloneable {
         addAlias(Heartbeat.class, "Heartbeat");
         addAlias(Filter.class, "Filter");
         addAlias(net.openhft.chronicle.engine.query.Operation.class, "Operation");
+        // TODO replace with a proper implementation.
+        addAlias(Proxy.class, "set-proxy");
     }
 
     private String pathName;

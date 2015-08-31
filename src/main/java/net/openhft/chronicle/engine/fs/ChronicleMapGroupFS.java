@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Created by peter on 12/06/15.
  */
+@Deprecated
 public class ChronicleMapGroupFS implements Marshallable, MountPoint, LeafViewFactory<KeyValueStore> {
     String spec, name, cluster;
     int averageValueSize;
