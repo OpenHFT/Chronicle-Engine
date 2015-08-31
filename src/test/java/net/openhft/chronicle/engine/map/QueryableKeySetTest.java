@@ -11,7 +11,6 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
-import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 import org.junit.rules.TestName;
@@ -76,8 +75,8 @@ public class QueryableKeySetTest extends ThreadMonitoringTest {
 
             methodName(name.getMethodName());
 
-            YamlLogging.showServerWrites = true;
-            YamlLogging.showServerReads = true;
+//            YamlLogging.showServerWrites = true;
+//            YamlLogging.showServerReads = true;
 
             connection = "QueryableKeySetTest.host.port";
             TCPRegistry.createServerSocketChannelFor(connection);
@@ -129,8 +128,8 @@ public class QueryableKeySetTest extends ThreadMonitoringTest {
         map.put("2", "2");
         map.put("3", "3");
 
-        YamlLogging.showServerReads = true;
-        YamlLogging.showServerWrites = true;
+//        YamlLogging.showServerReads = true;
+//        YamlLogging.showServerWrites = true;
 
         final KeySetView<String> remoteSetView = map.keySet();
         final Query<String> query = remoteSetView.query();
