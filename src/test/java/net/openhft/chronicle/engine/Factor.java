@@ -149,18 +149,18 @@ public class Factor implements Marshallable, BytesMarshallable {
 
     @Override
     public void readMarshallable(@NotNull WireIn wireIn) throws IllegalStateException {
-        wireIn.read(() -> "openPDFlag").int8(b -> openPDFlag = b);
-        wireIn.read(() -> "openUCFlag").int8(b -> openUCFlag = b);
-        wireIn.read(() -> "openActiveEMFlag").int8(b -> openActiveEMFlag = b);
-        wireIn.read(() -> "openPastDueEMFlag").int8(b -> openPastDueEMFlag = b);
-        wireIn.read(() -> "accountCloseFlag").int8(b -> accountCloseFlag = b);
-        wireIn.read(() -> "missingPaperFlag").int8(b -> missingPaperFlag = b);
-        wireIn.read(() -> "rMLAgreementCodeFlag").int8(b -> rMLAgreementCodeFlag = b);
-        wireIn.read(() -> "nMEAccountFlag").int8(b -> nMEAccountFlag = b);
-        wireIn.read(() -> "accountClassificationTypeValue").int8(b -> accountClassificationTypeValue = b);
+        wireIn.read(() -> "openPDFlag").int8(this, (o, b) -> o.openPDFlag = b);
+        wireIn.read(() -> "openUCFlag").int8(this, (o, b) -> o.openUCFlag = b);
+        wireIn.read(() -> "openActiveEMFlag").int8(this, (o, b) -> o.openActiveEMFlag = b);
+        wireIn.read(() -> "openPastDueEMFlag").int8(this, (o, b) -> o.openPastDueEMFlag = b);
+        wireIn.read(() -> "accountCloseFlag").int8(this, (o, b) -> o.accountCloseFlag = b);
+        wireIn.read(() -> "missingPaperFlag").int8(this, (o, b) -> o.missingPaperFlag = b);
+        wireIn.read(() -> "rMLAgreementCodeFlag").int8(this, (o, b) -> o.rMLAgreementCodeFlag = b);
+        wireIn.read(() -> "nMEAccountFlag").int8(this, (o, b) -> o.nMEAccountFlag = b);
+        wireIn.read(() -> "accountClassificationTypeValue").int8(this, (o, b) -> o.accountClassificationTypeValue = b);
         wireIn.read(() -> "accountNumber")
-                .text(b -> accountNumber = b);
-        wireIn.read(() -> "firm").text(b -> firm = b);
+                .text(this, (o, b) -> o.accountNumber = b);
+        wireIn.read(() -> "firm").text(this, (o, b) -> o.firm = b);
     }
 
     @Override
