@@ -39,21 +39,21 @@ public class KeyFunctionPair implements Marshallable {
         this.function = function;
     }
 
+    @NotNull
+    public static KeyFunctionPair of(Object key, @NotNull Object function) {
+        return new KeyFunctionPair(key, function);
+    }
+
     @SuppressWarnings("ConstantConditions")
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
-        wire.read(() -> "key").object(Object.class, o -> key = o)
-                .read(() -> "function").object(Object.class, f -> function = f);
+        wire.read(() -> "key").object(Object.class, this, (o, x) -> o.key = x)
+                .read(() -> "function").object(Object.class, this, (o, f) -> o.function = f);
     }
 
     @Override
     public void writeMarshallable(@NotNull WireOut wire) {
         wire.write(() -> "key").object(key)
                 .write(() -> "function").object(function);
-    }
-
-    @NotNull
-    public static KeyFunctionPair of(Object key, @NotNull Object function) {
-        return new KeyFunctionPair(key, function);
     }
 }

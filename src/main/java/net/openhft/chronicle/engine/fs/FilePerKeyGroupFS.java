@@ -32,6 +32,7 @@ import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
 /**
  * Created by peter on 12/06/15.
  */
+@Deprecated
 public class FilePerKeyGroupFS implements Marshallable, MountPoint {
     private String spec;
     private String name;
@@ -50,10 +51,10 @@ public class FilePerKeyGroupFS implements Marshallable, MountPoint {
 
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
-        wire.read(() -> "spec").text(s -> spec = s)
-                .read(() -> "name").text(s -> name = s)
-                .read(() -> "valueType").typeLiteral(CLASS_ALIASES::forName, c -> valueType = c)
-                .read(() -> "recurse").bool(b -> recurse = b);
+        wire.read(() -> "spec").text(this, (o, s) -> o.spec = s)
+                .read(() -> "name").text(this, (o, s) -> o.name = s)
+                .read(() -> "valueType").typeLiteral(this, (o, t) -> o.valueType = t)
+                .read(() -> "recurse").bool(this, (o, b) -> o.recurse = b);
     }
 
     @Override

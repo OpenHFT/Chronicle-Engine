@@ -34,7 +34,6 @@ import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
@@ -163,21 +162,21 @@ public class RequestContext implements Cloneable {
     @NotNull
     public WireParser getWireParser() {
         WireParser parser = new VanillaWireParser();
-        parser.register(() -> "cluster", v -> v.text((Consumer<String>) x -> this.cluster = x));
-        parser.register(() -> "view", v -> v.text((Consumer<String>) this::view));
-        parser.register(() -> "bootstrap", v -> v.bool(b -> this.bootstrap = b));
-        parser.register(() -> "putReturnsNull", v -> v.bool(b -> this.putReturnsNull = b));
-        parser.register(() -> "removeReturnsNull", v -> v.bool(b -> this.removeReturnsNull = b));
+        parser.register(() -> "cluster", v -> v.text(this, (o, x) -> o.cluster = x));
+        parser.register(() -> "view", v -> v.text(this, RequestContext::view));
+        parser.register(() -> "bootstrap", v -> v.bool(this, (o, x) -> o.bootstrap = x));
+        parser.register(() -> "putReturnsNull", v -> v.bool(this, (o, x) -> o.putReturnsNull = x));
+        parser.register(() -> "removeReturnsNull", v -> v.bool(this, (o, x) -> o.removeReturnsNull = x));
         parser.register(() -> "nullOldValueOnUpdateEvent",
-                v -> v.bool(b -> this.nullOldValueOnUpdateEvent = b));
-        parser.register(() -> "basePath", v -> v.text((Consumer<String>) x -> this.basePath = x));
-        parser.register(() -> "viewType", v -> v.typeLiteral(x -> this.viewType = x));
-        parser.register(() -> "topicType", v -> v.typeLiteral(x -> this.type = x));
-        parser.register(() -> "keyType", v -> v.typeLiteral(x -> this.type = x));
-        parser.register(() -> "valueType", v -> v.typeLiteral(x -> this.type2 = x));
-        parser.register(() -> "messageType", v -> v.typeLiteral(x -> this.type2 = x));
-        parser.register(() -> "elementType", v -> v.typeLiteral(x -> this.type = x));
-        parser.register(() -> "endSubscriptionAfterBootstrap", v -> v.bool(b -> this.endSubscriptionAfterBootstrap = b));
+                v -> v.bool(this, (o, x) -> o.nullOldValueOnUpdateEvent = x));
+        parser.register(() -> "basePath", v -> v.text(this, (o, x) -> o.basePath = x));
+        parser.register(() -> "viewType", v -> v.typeLiteral(this, (o, x) -> o.viewType = x));
+        parser.register(() -> "topicType", v -> v.typeLiteral(this, (o, x) -> o.type = x));
+        parser.register(() -> "keyType", v -> v.typeLiteral(this, (o, x) -> o.type = x));
+        parser.register(() -> "valueType", v -> v.typeLiteral(this, (o, x) -> o.type2 = x));
+        parser.register(() -> "messageType", v -> v.typeLiteral(this, (o, x) -> o.type2 = x));
+        parser.register(() -> "elementType", v -> v.typeLiteral(this, (o, x) -> o.type = x));
+        parser.register(() -> "endSubscriptionAfterBootstrap", v -> v.bool(this, (o, x) -> o.endSubscriptionAfterBootstrap = x));
         parser.register(WireParser.DEFAULT, ValueIn.DISCARD);
         return parser;
     }

@@ -53,6 +53,11 @@ public class UpdatedEvent<K, V> implements MapEvent<K, V> {
         return new UpdatedEvent<>(assetName, key, oldValue, value);
     }
 
+    @Override
+    public String assetName() {
+        return assetName;
+    }
+
     @NotNull
     @Override
     public <K2, V2> MapEvent<K2, V2> translate(@NotNull Function<K, K2> keyFunction, @NotNull Function<V, V2> valueFunction) {
@@ -63,11 +68,6 @@ public class UpdatedEvent<K, V> implements MapEvent<K, V> {
     @Override
     public <K2, V2> MapEvent<K2, V2> translate(@NotNull BiFunction<K, K2, K2> keyFunction, @NotNull BiFunction<V, V2, V2> valueFunction) {
         return new UpdatedEvent<>(assetName, keyFunction.apply(key, null), valueFunction.apply(oldValue, null), valueFunction.apply(value, null));
-    }
-
-    @Override
-    public String assetName() {
-        return assetName;
     }
 
     @Nullable
@@ -121,10 +121,10 @@ public class UpdatedEvent<K, V> implements MapEvent<K, V> {
 
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
-        wire.read(MapEventFields.assetName).text(s -> assetName = s);
-        key = (K) wire.read(MapEventFields.key).object(Object.class);
-        oldValue = (V) wire.read(MapEventFields.oldValue).object(Object.class);
-        value = (V) wire.read(MapEventFields.value).object(Object.class);
+        wire.read(MapEventFields.assetName).text(this, (o, s) -> assetName = s);
+        wire.read(MapEventFields.key).object((Class<K>) Object.class, this, (o, x) -> o.key = x);
+        wire.read(MapEventFields.oldValue).object((Class<V>) Object.class, this, (o, x) -> o.oldValue = x);
+        wire.read(MapEventFields.value).object((Class<V>) Object.class, this, (o, x) -> o.value = x);
     }
 
     @Override

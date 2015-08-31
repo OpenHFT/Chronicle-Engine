@@ -158,6 +158,7 @@ public class VanillaAssetTree implements AssetTree {
     }
 
     @NotNull
+    @Deprecated
     public AssetTree withConfig(String etcDir, String baseDir) {
         Threads.withThreadGroup(root.getView(ThreadGroup.class), () -> {
             new ConfigurationFS("/etc", etcDir, baseDir).install(baseDir, this);

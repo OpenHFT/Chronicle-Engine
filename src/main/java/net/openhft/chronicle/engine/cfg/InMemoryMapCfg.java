@@ -55,12 +55,12 @@ public class InMemoryMapCfg implements Installable {
 
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
-        wire.read(() -> "keyType").typeLiteral(c -> keyType = c)
-                .read(() -> "valueType").typeLiteral(c -> valueType = c)
-                .read(() -> "putReturnsNull").bool(e -> putReturnsNull = e)
-                .read(() -> "removeReturnsNull").bool(e -> removeReturnsNull = e);
+        wire.read(() -> "keyType").typeLiteral(this, (o, c) -> o.keyType = c)
+                .read(() -> "valueType").typeLiteral(this, (o, c) -> o.valueType = c)
+                .read(() -> "putReturnsNull").bool(this, (o, e) -> o.putReturnsNull = e)
+                .read(() -> "removeReturnsNull").bool(this, (o, e) -> o.removeReturnsNull = e);
         if (wire.hasMore())
-            wire.read(() -> "import").text(s -> importFile = s);
+            wire.read(() -> "import").text(this, (o, s) -> o.importFile = s);
     }
 
     @Override

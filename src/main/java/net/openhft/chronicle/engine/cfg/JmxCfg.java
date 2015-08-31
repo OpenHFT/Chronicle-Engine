@@ -43,7 +43,7 @@ public class JmxCfg implements Installable, Marshallable {
 
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
-        wire.read(() -> "enabled").bool(b -> enabled = b);
+        wire.read(() -> "enabled").bool(this, (o, b) -> o.enabled = b);
     }
 
     @Override

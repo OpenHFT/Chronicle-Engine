@@ -32,11 +32,11 @@ public class EndOfDayShort implements Marshallable {
 
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
-        wire.read(() -> "name").text(s -> name = s)
-                .read(() -> "price").float64(d -> closingPrice = d)
-                .read(() -> "change").float64(d -> change = d)
-                .read(() -> "changePercent").float64(d -> changePercent = d)
-                .read(() -> "daysVolume").int64(d -> daysVolume = d);
+        wire.read(() -> "name").text(this, (o, s) -> o.name = s)
+                .read(() -> "price").float64(this, (o, d) -> o.closingPrice = d)
+                .read(() -> "change").float64(this, (o, d) -> o.change = d)
+                .read(() -> "changePercent").float64(this, (o, d) -> o.changePercent = d)
+                .read(() -> "daysVolume").int64(this, (o, d) -> o.daysVolume = d);
     }
 
     @Override

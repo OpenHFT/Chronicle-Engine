@@ -303,9 +303,7 @@ public class
         final StringBuilder csp = Wires.acquireStringBuilder();
         long cid = proxyReturnWireConsumer(values, read -> {
 
-            final StringBuilder type = Wires.acquireAnotherStringBuilder(csp);
-
-            read.type(type);
+            read.typePrefix();
             return read.applyToMarshallable(w -> {
                 stringEvent(CoreFields.csp, csp, w);
                 final long cid0 = CoreFields.cid(w);
@@ -327,9 +325,7 @@ public class
 
         long cid = proxyReturnWireConsumer(entrySet, read -> {
 
-            final StringBuilder type = Wires.acquireAnotherStringBuilder(csp);
-
-            read.type(type);
+            read.typePrefix();
             return read.applyToMarshallable(w -> {
                 stringEvent(CoreFields.csp, csp, w);
                 final long cid0 = CoreFields.cid(w);
@@ -381,10 +377,7 @@ public class
         final StringBuilder csp = Wires.acquireStringBuilder();
 
         long cid = proxyReturnWireConsumer(keySet, read -> {
-
-            final StringBuilder type = Wires.acquireAnotherStringBuilder(csp);
-
-            read.type(type);
+            read.typePrefix();
             return read.applyToMarshallable(w -> {
                 stringEvent(CoreFields.csp, csp, w);
                 final long cid0 = CoreFields.cid(w);

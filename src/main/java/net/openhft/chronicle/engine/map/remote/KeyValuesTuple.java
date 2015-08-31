@@ -35,12 +35,17 @@ public class KeyValuesTuple implements Marshallable {
         this.value = value;
     }
 
+    @NotNull
+    public static KeyValuesTuple of(@NotNull Object key, @NotNull Object oldValue, @NotNull Object value) {
+        return new KeyValuesTuple(key, oldValue, value);
+    }
+
     @SuppressWarnings("ConstantConditions")
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
-        wire.read(() -> "key").object(Object.class, o -> key = o)
-                .read(() -> "oldValue").object(Object.class, o -> oldValue = o)
-                .read(() -> "value").object(Object.class, o -> value = o);
+        wire.read(() -> "key").object(Object.class, this, (o, x) -> o.key = x)
+                .read(() -> "oldValue").object(Object.class, this, (o, x) -> o.oldValue = x)
+                .read(() -> "value").object(Object.class, this, (o, x) -> o.value = x);
     }
 
     @Override
@@ -48,10 +53,5 @@ public class KeyValuesTuple implements Marshallable {
         wire.write(() -> "key").object(key)
                 .write(() -> "oldValue").object(oldValue)
                 .write(() -> "value").object(value);
-    }
-
-    @NotNull
-    public static KeyValuesTuple of(@NotNull Object key, @NotNull Object oldValue, @NotNull Object value) {
-        return new KeyValuesTuple(key, oldValue, value);
     }
 }

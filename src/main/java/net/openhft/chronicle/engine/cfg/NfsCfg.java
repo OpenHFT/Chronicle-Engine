@@ -62,12 +62,12 @@ public class NfsCfg implements Installable, Marshallable {
 
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
-        wire.read(() -> "enabled").bool(b -> enabled = b)
-                .read(() -> "debug").bool(b -> debug = b)
+        wire.read(() -> "enabled").bool(this, (o, b) -> o.enabled = b)
+                .read(() -> "debug").bool(this, (o, b) -> o.debug = b)
                 .read(() -> "exports").marshallable(w -> {
             StringBuilder name = new StringBuilder();
             while (w.hasMore()) {
-                w.read(name).text(s -> exports.put(name.toString(), s));
+                w.read(name).text(exports, (e, s) -> e.put(name.toString(), s));
             }
         });
     }

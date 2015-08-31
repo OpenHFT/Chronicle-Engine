@@ -48,10 +48,10 @@ public class ServerCfg implements Installable, Marshallable {
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         wire.read(() -> "wireType").asEnum(WireType.class, wt -> wireType = wt);
-        wire.read(() -> "port").int32(i -> port = i);
-        wire.read(() -> "dumpWhenInDebug").bool(b -> dumpWhenInDebug = b);
-        wire.read(() -> "heartbeatIntervalTicks").int32(i -> heartbeatIntervalTicks = i);
-        wire.read(() -> "heartbeatIntervalTimeout").int32(i -> heartbeatIntervalTimeout = i);
+        wire.read(() -> "port").int32(this, (o, i) -> o.port = i);
+        wire.read(() -> "dumpWhenInDebug").bool(this, (o, b) -> o.dumpWhenInDebug = b);
+        wire.read(() -> "heartbeatIntervalTicks").int32(this, (o, i) -> o.heartbeatIntervalTicks = i);
+        wire.read(() -> "heartbeatIntervalTimeout").int32(this, (o, i) -> o.heartbeatIntervalTimeout = i);
     }
 
     @Override

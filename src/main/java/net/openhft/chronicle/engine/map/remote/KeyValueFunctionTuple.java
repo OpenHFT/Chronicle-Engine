@@ -35,12 +35,17 @@ public class KeyValueFunctionTuple implements Marshallable {
         this.function = function;
     }
 
+    @NotNull
+    public static KeyValueFunctionTuple of(Object key, Object value, Object function) {
+        return new KeyValueFunctionTuple(key, value, function);
+    }
+
     @SuppressWarnings("ConstantConditions")
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
-        wire.read(() -> "key").object(Object.class, o -> key = o)
-                .read(() -> "value").object(Object.class, o -> value = o)
-                .read(() -> "function").object(Object.class, f -> function = f);
+        wire.read(() -> "key").object(Object.class, this, (o, x) -> o.key = x)
+                .read(() -> "value").object(Object.class, this, (o, x) -> o.value = x)
+                .read(() -> "function").object(Object.class, this, (o, f) -> o.function = f);
     }
 
     @Override
@@ -48,10 +53,5 @@ public class KeyValueFunctionTuple implements Marshallable {
         wire.write(() -> "key").object(key)
                 .write(() -> "value").object(value)
                 .write(() -> "function").object(function);
-    }
-
-    @NotNull
-    public static KeyValueFunctionTuple of(Object key, Object value, Object function) {
-        return new KeyValueFunctionTuple(key, value, function);
     }
 }

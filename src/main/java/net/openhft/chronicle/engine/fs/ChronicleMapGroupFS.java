@@ -47,13 +47,13 @@ public class ChronicleMapGroupFS implements Marshallable, MountPoint, LeafViewFa
 
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
-        wire.read(() -> "spec").text(s -> spec = s)
-                .read(() -> "name").text(s -> name = s)
-                .read(() -> "cluster").text(s -> cluster = s)
-                .read(() -> "maxEntries").int64(e -> maxEntries = e)
-                .read(() -> "averageValueSize").int32(e -> averageValueSize = e)
-                .read(() -> "putReturnsNull").bool(e -> putReturnsNull = e)
-                .read(() -> "removeReturnsNull").bool(e -> removeReturnsNull = e);
+        wire.read(() -> "spec").text(this, (o, s) -> o.spec = s)
+                .read(() -> "name").text(this, (o, s) -> o.name = s)
+                .read(() -> "cluster").text(this, (o, s) -> o.cluster = s)
+                .read(() -> "maxEntries").int64(this, (o, e) -> o.maxEntries = e)
+                .read(() -> "averageValueSize").int32(this, (o, e) -> o.averageValueSize = e)
+                .read(() -> "putReturnsNull").bool(this, (o, b) -> o.putReturnsNull = b)
+                .read(() -> "removeReturnsNull").bool(this, (o, b) -> o.removeReturnsNull = b);
     }
 
     @Override

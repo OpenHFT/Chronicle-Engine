@@ -47,10 +47,10 @@ public class HostDetails implements Marshallable, Closeable {
 
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
-        wire.read(() -> "hostId").int32(i -> hostId = i)
-                .read(() -> "tcpBufferSize").int32(i -> tcpBufferSize = i)
-                .read(() -> "connectUri").text(i -> connectUri = i)
-                .read(() -> "timeoutMs").int32(i -> timeoutMs = i);
+        wire.read(() -> "hostId").int32(this, (o, i) -> o.hostId = i)
+                .read(() -> "tcpBufferSize").int32(this, (o, i) -> o.tcpBufferSize = i)
+                .read(() -> "connectUri").text(this, (o, i) -> o.connectUri = i)
+                .read(() -> "timeoutMs").int32(this, (o, i) -> o.timeoutMs = i);
     }
 
     @Override

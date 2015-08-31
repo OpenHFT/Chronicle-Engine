@@ -123,9 +123,9 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                     }
 
                     if (putAll.contentEquals(eventName)) {
-                        valueIn.sequence(v -> {
+                        valueIn.sequence(map, (m, v) -> {
                             while (v.hasNextSequenceItem()) {
-                                valueIn.marshallable(wire -> map.put(
+                                valueIn.marshallable(wire -> m.put(
                                         wireToK.apply(wire.read(put.params()[0])),
                                         wireToV.apply(wire.read(put.params()[1]))));
                             }

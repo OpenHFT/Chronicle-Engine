@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Created by peter on 12/06/15.
  */
+@Deprecated
 public class ConfigurationFS implements MountPoint {
     public static final String FSTAB = "fstab.yaml";
     public static final String CLUSTERS = "clusters.yaml";

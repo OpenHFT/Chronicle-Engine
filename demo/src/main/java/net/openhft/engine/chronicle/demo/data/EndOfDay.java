@@ -33,20 +33,20 @@ public class EndOfDay implements Marshallable {
 
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
-        wire.read(() -> "name").text(s -> name = s)
-                .read(() -> "openingPrice").float64(d -> openingPrice = d)
-                .read(() -> "highPrice").float64(d -> highPrice = d)
-                .read(() -> "lowPrice").float64(d -> lowPrice = d)
-                .read(() -> "closingPrice").float64(d -> closingPrice = d)
-                .read(() -> "change").float64(d -> change = d)
-                .read(() -> "changePercent").float64(d -> changePercent = d)
-                .read(() -> "daysVolume").int64(d -> daysVolume = d)
-                .read(() -> "high52").float64(d -> high52 = d)
-                .read(() -> "low52").float64(d -> low52 = d)
-                .read(() -> "div").float64(d -> div = d)
-                .read(() -> "yield").float64(d -> yield = d)
-                .read(() -> "pe").float64(d -> pe = d)
-                .read(() -> "closingPrice").float64(d -> closingPrice = d)
+        wire.read(() -> "name").text(this, (o, s) -> o.name = s)
+                .read(() -> "openingPrice").float64(this, (o, d) -> o.openingPrice = d)
+                .read(() -> "highPrice").float64(this, (o, d) -> o.highPrice = d)
+                .read(() -> "lowPrice").float64(this, (o, d) -> o.lowPrice = d)
+                .read(() -> "closingPrice").float64(this, (o, d) -> o.closingPrice = d)
+                .read(() -> "change").float64(this, (o, d) -> o.change = d)
+                .read(() -> "changePercent").float64(this, (o, d) -> o.changePercent = d)
+                .read(() -> "daysVolume").int64(this, (o, d) -> o.daysVolume = d)
+                .read(() -> "high52").float64(this, (o, d) -> o.high52 = d)
+                .read(() -> "low52").float64(this, (o, d) -> o.low52 = d)
+                .read(() -> "div").float64(this, (o, d) -> o.div = d)
+                .read(() -> "yield").float64(this, (o, d) -> o.yield = d)
+                .read(() -> "pe").float64(this, (o, d) -> o.pe = d)
+                .read(() -> "closingPrice").float64(this, (o, d) -> o.closingPrice = d)
         ;
     }
 

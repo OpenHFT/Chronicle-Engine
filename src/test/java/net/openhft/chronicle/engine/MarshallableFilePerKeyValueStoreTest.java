@@ -200,9 +200,9 @@ public class MarshallableFilePerKeyValueStoreTest {
         @Override
         public void readMarshallable(@NotNull WireIn wireIn) throws IllegalStateException {
             listDouble.clear();
-            wireIn.read(TestKey.listDouble).sequence(v -> {
+            wireIn.read(TestKey.listDouble).sequence(this, (o, v) -> {
                 while (v.hasNextSequenceItem()) {
-                    v.float64(listDouble::add);
+                    v.float64(o.listDouble, List::add);
                 }
             });
         }

@@ -26,7 +26,7 @@ import java.util.Iterator;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static net.openhft.chronicle.engine.collection.CollectionWireHandler.*;
+import static net.openhft.chronicle.engine.collection.CollectionWireHandler.EventId;
 import static net.openhft.chronicle.engine.collection.CollectionWireHandler.EventId.*;
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
 
@@ -80,13 +80,13 @@ public class ClientWiredStatelessChronicleCollection<U, E extends Collection<U>>
      */
     @NotNull
     private E segmentSet(int segment) {
-        final E e = factory.get();
 
         return proxyReturnWireConsumerInOut(iterator, reply, valueOut -> valueOut.uint16(segment),
                 read -> {
-                    read.sequence(s -> {
+                    final E e = factory.get();
+                    read.sequence(e, (e2, s) -> {
                         while (read.hasNextSequenceItem())
-                            e.add(consumer.apply(read));
+                            e2.add(consumer.apply(read));
                     });
                     return e;
                 });
@@ -106,9 +106,9 @@ public class ClientWiredStatelessChronicleCollection<U, E extends Collection<U>>
         for (long j = 0; j < numberOfSegments; j++) {
             final long i = j;
             proxyReturnWireConsumerInOut(iterator, reply, valueOut -> valueOut.uint16(i),
-                    read -> read.sequence(r -> {
+                    read -> read.sequence(e, (e2, r) -> {
                         while (r.hasNextSequenceItem()) {
-                            e.add(consumer.apply(r));
+                            e2.add(consumer.apply(r));
                         }
                     }));
         }

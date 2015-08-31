@@ -50,6 +50,11 @@ public class InsertedEvent<K, V> implements MapEvent<K, V> {
         return new InsertedEvent<>(assetName, key, value);
     }
 
+    @Override
+    public String assetName() {
+        return assetName;
+    }
+
     @NotNull
     @Override
     public <K2, V2> MapEvent<K2, V2> translate(@NotNull Function<K, K2> keyFunction, @NotNull Function<V, V2> valueFunction) {
@@ -115,15 +120,10 @@ public class InsertedEvent<K, V> implements MapEvent<K, V> {
     }
 
     @Override
-    public String assetName() {
-        return assetName;
-    }
-
-    @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
-        wire.read(MapEventFields.assetName).text(s -> assetName = s);
-        key = (K) wire.read(MapEventFields.key).object(Object.class);
-        value = (V) wire.read(MapEventFields.value).object(Object.class);
+        wire.read(MapEventFields.assetName).text(this, (o, s) -> assetName = s);
+        wire.read(MapEventFields.key).object((Class<K>) Object.class, this, (o, x) -> o.key = x);
+        wire.read(MapEventFields.oldValue).object((Class<V>) Object.class, this, (o, x) -> o.value = x);
     }
 
     @Override

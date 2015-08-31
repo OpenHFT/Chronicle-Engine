@@ -42,9 +42,9 @@ public class Filter<E> implements Marshallable, Iterable<Operation> {
     @Override
     public void readMarshallable(@NotNull WireIn wireIn) throws IllegalStateException {
         clearPipeline();
-        wireIn.read(() -> "pipeline").sequence(s -> {
+        wireIn.read(() -> "pipeline").sequence(pipeline, (p, s) -> {
             while (s.hasNextSequenceItem())
-                add((Operation) s.object(Object.class));
+                p.add(s.object(Operation.class));
         });
     }
 
