@@ -111,7 +111,7 @@ public class ChronicleMapKeyValueStoreTest {
                                 s -> {
                                     Bytes bs = BytesStore.wrap(new byte[s.length()])
                                             .bytesForWrite();
-                                    bs.writeUTFΔ(s);
+                                    bs.writeUtf8(s);
                                     return bs;
                                 },
                                 () -> DataValueClasses.newInstance(ReplicationData.class)
@@ -145,7 +145,7 @@ public class ChronicleMapKeyValueStoreTest {
                         s -> {
                             Bytes bs = BytesStore.wrap(new byte[s.length()])
                                     .bytesForWrite();
-                            bs.writeUTFΔ(s);
+                            bs.writeUtf8(s);
                             return bs;
                         }
                 ));
