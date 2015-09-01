@@ -217,14 +217,14 @@ You will need to an nfs4 client or use Microsoft service for unix and use nfsv3
 the following example creates an entry containg key=hello value=world in the asset called /temp
 
 ```  
-$cd /mnt
+$cd /engine
 $mkdir temp
 cd temp
 echo hello > world
 ```  
 to unmount :
 ```  
-$sudo umount /mnt
+$sudo umount /engine
 ```  
 
 
