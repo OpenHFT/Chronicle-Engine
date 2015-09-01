@@ -208,8 +208,10 @@ apt-get install nfs-common
 ```
 ####Or if you are on a Mac OSX:
 ```
-mount -o vers=4 localhost:/ /engine
+mount -o vers=4 localhost:/ /mnt
 ```
+You should eject the mounted directory before killing the server.
+
 ####Or if you are on Windows:
 You will need to an nfs4 client or use Microsoft service for unix and use nfsv3
 
