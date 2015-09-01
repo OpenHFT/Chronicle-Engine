@@ -143,8 +143,8 @@ public class Factor implements Marshallable, BytesMarshallable {
         rMLAgreementCodeFlag = in.readByte();
         nMEAccountFlag = in.readByte();
         accountClassificationTypeValue = in.readByte();
-        accountNumber = in.readUtf8();
-        firm = in.readUtf8();
+        accountNumber = in.readUTFΔ();
+        firm = in.readUTFΔ();
     }
 
     @Override
@@ -174,8 +174,8 @@ public class Factor implements Marshallable, BytesMarshallable {
         out.writeByte(rMLAgreementCodeFlag);
         out.writeByte(nMEAccountFlag);
         out.writeByte(accountClassificationTypeValue);
-        out.writeUtf8(accountNumber);
-        out.writeUtf8(firm);
+        out.writeUTFΔ(accountNumber);
+        out.writeUTFΔ(firm);
     }
 
     @Override

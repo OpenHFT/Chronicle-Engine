@@ -35,8 +35,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static net.openhft.chronicle.wire.Wires.acquireStringBuilder;
-
 /**
  * @author Rob Austin.
  */
@@ -62,7 +60,7 @@ public class CollectionWireHandler<U, C extends Collection<U>> {
 
             try {
 
-                final StringBuilder eventName = acquireStringBuilder();
+                final StringBuilder eventName = Wires.acquireStringBuilder();
                 @SuppressWarnings("ConstantConditions")
                 final ValueIn valueIn = inWire.readEventName(eventName);
 
