@@ -67,6 +67,7 @@ data: {
     map: !InMemoryMapCfg {
       keyType: !type String,
       valueType: !type String,
+      compression: none,
       putReturnsNull: false,
       removeReturnsNull: false,
     },
@@ -74,6 +75,7 @@ data: {
     map2:  !InMemoryMapCfg {
       keyType: !type String,
       valueType: !type String,
+      compression: none,
       putReturnsNull: true,
       removeReturnsNull: true,
     }
@@ -82,6 +84,7 @@ stocks: {
   ftse: !InMemoryMapCfg {
     keyType: !type String,
     valueType: !type EndOfDayShort,
+    compression: none,
     putReturnsNull: true,
     removeReturnsNull: true,
     import: ftse350.csv
@@ -89,6 +92,7 @@ stocks: {
   nyse: !InMemoryMapCfg {
     keyType: !type String,
     valueType: !type EndOfDay,
+    compression: none,
     putReturnsNull: true,
     removeReturnsNull: true,
     import: nyse.csv

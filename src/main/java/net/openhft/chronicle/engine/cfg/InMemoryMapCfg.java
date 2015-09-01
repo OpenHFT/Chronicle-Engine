@@ -34,6 +34,7 @@ public class InMemoryMapCfg implements Installable {
     private static final Logger LOGGER = LoggerFactory.getLogger(InMemoryMapCfg.class);
     private Class keyType, valueType;
     private boolean putReturnsNull, removeReturnsNull;
+    private String compression;
     private String importFile;
 
     @Override
@@ -57,6 +58,7 @@ public class InMemoryMapCfg implements Installable {
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         wire.read(() -> "keyType").typeLiteral(this, (o, c) -> o.keyType = c)
                 .read(() -> "valueType").typeLiteral(this, (o, c) -> o.valueType = c)
+                .read(() -> "compression").text(this, (o, c) -> o.compression = c)
                 .read(() -> "putReturnsNull").bool(this, (o, e) -> o.putReturnsNull = e)
                 .read(() -> "removeReturnsNull").bool(this, (o, e) -> o.removeReturnsNull = e);
         if (wire.hasMore())
@@ -70,6 +72,8 @@ public class InMemoryMapCfg implements Installable {
                 ", valueType=" + valueType +
                 ", putReturnsNull=" + putReturnsNull +
                 ", removeReturnsNull=" + removeReturnsNull +
+                ", compression='" + compression + '\'' +
+                ", importFile='" + importFile + '\'' +
                 '}';
     }
 }
