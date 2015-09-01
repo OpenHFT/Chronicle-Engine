@@ -40,6 +40,7 @@ public class EngineMain {
     }
 
     public static void main(String[] args) throws IOException {
+        ChronicleConfig.init();
         addClass(EngineCfg.class);
         addClass(JmxCfg.class);
         addClass(ServerCfg.class);

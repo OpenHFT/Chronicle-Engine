@@ -152,7 +152,7 @@ public class CollectionWireHandler<U, C extends Collection<U>> {
                 LOG.error("", e);
             } finally {
 
-                if (Jvm.isDebug() && YamlLogging.showServerWrites) {
+                if (YamlLogging.showServerWrites) {
                     long len = outBytes.writePosition();
                     if (len >= SIZE_OF_SIZE) {
                         String s = Wires.fromSizePrefixedBlobs(outBytes);

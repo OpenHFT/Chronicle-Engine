@@ -59,7 +59,7 @@ class AbstractHandler {
     }
 
     private void logYaml() {
-        if (Jvm.isDebug() && YamlLogging.showServerWrites)
+        if (YamlLogging.showServerWrites)
             try {
                 LOG.info("\nServer Sends:\n" +
                         Wires.fromSizePrefixedBlobs(outWire.bytes()));

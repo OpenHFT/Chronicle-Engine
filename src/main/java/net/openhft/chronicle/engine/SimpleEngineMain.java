@@ -52,7 +52,7 @@ public class SimpleEngineMain {
     static ServerEndpoint serverEndpoint;
 
     public static void main(@NotNull String... args) throws IOException, InterruptedException, URISyntaxException {
-
+        ChronicleConfig.init();
         VanillaAssetTree assetTree = new VanillaAssetTree(HOST_ID).forTesting(false);
         if (JMX)
             assetTree.enableManagement();
