@@ -186,20 +186,17 @@ warmup.waitFor();
 
 ### Chronicle Engine can be viewed on an NFS mount
 
-Start chronicle with 
-      
-```   
--Dnfs=true
-```   
+Start the [Chronicle Engine Demo](https://github.com/OpenHFT/Chronicle-Engine/tree/master/demo)     
       
 to mount :
+
 First create the directory to which you want to mount
 ```
-sudo mkdir /mnt
+sudo mkdir /engine
 ```
 ####Then on Linux
 ```  
-sudo mount -t nfs localhost:/ /mnt
+sudo mount -t nfs localhost:/ /engine
 ```  
 NOTE: If you get this error:
 ```
