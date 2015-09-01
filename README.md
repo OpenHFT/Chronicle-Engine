@@ -186,27 +186,45 @@ warmup.waitFor();
 
 ### Chronicle Engine can be viewed on an NFS mount
 
-Start chronicle with 
-      
-```   
--Dnfs=true
-```   
+Start the [Chronicle Engine Demo](https://github.com/OpenHFT/Chronicle-Engine/tree/master/demo)     
       
 to mount :
+
+First create the directory to which you want to mount
+```
+sudo mkdir /engine
+```
+####Then on Linux
 ```  
-sudo mount -t nfs localhost:/ /mnt
+sudo mount -t nfs localhost:/ /engine
 ```  
+NOTE: If you get this error:
+```
+mount: wrong fs type, bad option, bad superblock on localhost:/
+```
+You need to install nfs-common which you do as below:
+```
+apt-get install nfs-common
+```
+####Or if you are on a Mac OSX:
+```
+mount -o vers=4 localhost:/ /engine
+```
+####Or if you are on Windows:
+You will need to an nfs4 client or use Microsoft service for unix and use nfsv3
+
+
 the following example creates an entry containg key=hello value=world in the asset called /temp
 
 ```  
-$cd /mnt
+$cd /engine
 $mkdir temp
 cd temp
 echo hello > world
 ```  
 to unmount :
 ```  
-$sudo umount /mnt
+$sudo umount /engine
 ```  
 
 
