@@ -197,9 +197,13 @@ to mount :
 sudo mount -t nfs localhost:/ /mnt
 ```  
 NOTE: If you get this error:
-```mount: wrong fs type, bad option, bad superblock on localhost:/
+```
+mount: wrong fs type, bad option, bad superblock on localhost:/
+```
 You need to install nfs-common which you do as below:
-```apt-get install nfs-common
+```
+apt-get install nfs-common
+```
 
 the following example creates an entry containg key=hello value=world in the asset called /temp
 
