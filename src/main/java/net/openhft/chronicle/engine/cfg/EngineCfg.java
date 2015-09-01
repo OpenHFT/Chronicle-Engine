@@ -71,11 +71,11 @@ public class EngineCfg implements Installable {
             long pos = wire.bytes().readPosition();
             String path2 = path + "/" + name;
             if (wire.getValueIn().isTyped()) {
-                in.marshallable(w -> this.readMarshallable(path2, w));
-            } else {
                 wire.bytes().readPosition(pos);
                 Object o = in.typedMarshallable();
                 installableMap.put(path2, (Installable) o);
+            } else {
+                in.marshallable(w -> this.readMarshallable(path2, w));
             }
         }
     }

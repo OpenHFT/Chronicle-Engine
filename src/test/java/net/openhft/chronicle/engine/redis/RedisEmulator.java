@@ -53,8 +53,8 @@ public class RedisEmulator {
      *
      * @return Integer reply: the length of the string after the append operation.
      */
-    public static int append(MapView<String, String> map, String key, String toAppend) {
-        long i = map.applyTo(m -> {
+    public static long append(MapView<String, String> map, String key, String toAppend) {
+        return map.applyTo(m -> {
                     String v = m.get(key);
                     if (v != null) {
                         m.put(key, v + toAppend);
@@ -65,7 +65,6 @@ public class RedisEmulator {
                     }
                 }
         );
-        return (int) i;
     }
 
     public static int bitcount(Reference<BitSet> bits) {
