@@ -3,6 +3,7 @@ package net.openhft.chronicle.engine.query;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.util.SerializablePredicate;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
+import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.Wires;
@@ -36,6 +37,8 @@ public class OperationTest extends ThreadMonitoringTest {
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() throws IOException {
+        // ensure the aliases have been loaded.
+        RequestContext.requestContext();
 
         final List<Object[]> list = new ArrayList<>();
         list.add(new Object[]{WireType.BINARY});
@@ -50,11 +53,13 @@ public class OperationTest extends ThreadMonitoringTest {
         final Wire wire = wireType.apply(b);
 
         final Operation operation = new Operation(Operation.OperationType.FILTER, (SerializablePredicate) o -> true);
-        wire.write(() -> "operation").object(operation);
+        wire.writeDocument(false, w -> w.write(() -> "operation").object(operation));
 
         System.out.println(Wires.fromSizePrefixedBlobs(b));
-        final Object object = wire.read(() -> "operation").object(Object.class);
+        wire.readDocument(null, w -> {
+            final Object object = w.read(() -> "operation").object(Object.class);
 
-        Assert.assertNotNull(object);
+            Assert.assertNotNull(object);
+        });
     }
 }

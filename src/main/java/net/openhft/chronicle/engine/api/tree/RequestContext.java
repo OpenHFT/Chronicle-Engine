@@ -28,6 +28,7 @@ import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
 import net.openhft.chronicle.engine.map.RawKVSSubscription;
 import net.openhft.chronicle.engine.query.Filter;
+import net.openhft.chronicle.engine.query.Operation.OperationType;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.TopologySubscription;
 import net.openhft.chronicle.wire.*;
@@ -61,6 +62,8 @@ public class RequestContext implements Cloneable {
         addAlias(net.openhft.chronicle.engine.query.Operation.class, "Operation");
         // TODO replace with a proper implementation.
         addAlias(Proxy.class, "set-proxy");
+        addAlias(Operation.class, "QueryOperation");
+        addAlias(OperationType.class, "QueryOperationType");
     }
 
     private String pathName;
