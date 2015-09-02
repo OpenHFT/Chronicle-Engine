@@ -27,8 +27,8 @@ import org.jetbrains.annotations.NotNull;
 public class EndOfDayShort implements Marshallable {
     long daysVolume;
     // Symbol,Company,Price,Change,ChangePercent,Day's Volume
-    private String name;
-    private double closingPrice, change, changePercent;
+    public String name;
+    public double closingPrice, change, changePercent;
 
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
