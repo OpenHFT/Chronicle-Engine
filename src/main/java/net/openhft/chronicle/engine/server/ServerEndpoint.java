@@ -55,11 +55,11 @@ public class ServerEndpoint implements Closeable {
     @Nullable
     private AcceptorEventHandler eah;
 
-    public ServerEndpoint(String hostPortDescription, @NotNull AssetTree assetTree, @NotNull WireType wire) throws IOException {
+    public ServerEndpoint(String hostPortDescription, @NotNull AssetTree assetTree, @NotNull WireType wire) {
         this(hostPortDescription, assetTree, wire, HEARTBEAT_INTERVAL_TICKS, HEARTBEAT_TIME_OUT_TICKS);
     }
 
-    public ServerEndpoint(String hostPortDescription, @NotNull AssetTree assetTree, @NotNull WireType wire, int heartbeatIntervalTicks, int heartbeatIntervalTimeout) throws IOException {
+    public ServerEndpoint(String hostPortDescription, @NotNull AssetTree assetTree, @NotNull WireType wire, int heartbeatIntervalTicks, int heartbeatIntervalTimeout) {
         this.heartbeatIntervalTicks = heartbeatIntervalTicks;
         this.heartbeatIntervalTimeout = heartbeatIntervalTimeout;
         eg = assetTree.root().acquireView(EventLoop.class);

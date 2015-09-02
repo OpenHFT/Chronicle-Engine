@@ -119,7 +119,7 @@ public class RequestContext implements Cloneable {
         return new RequestContext(pathName, name).queryString(query);
     }
 
-    static Class lookupType(@NotNull CharSequence typeName) throws IllegalArgumentException {
+    static Class lookupType(@NotNull CharSequence typeName) throws ClassNotFoundException {
         return CLASS_ALIASES.forName(typeName);
     }
 
@@ -189,7 +189,7 @@ public class RequestContext implements Cloneable {
         try {
             Class clazz = lookupType(viewName);
             viewType(clazz);
-        } catch (IllegalArgumentException iae) {
+        } catch (ClassNotFoundException iae) {
             throw new IllegalArgumentException("Unknown view name:" + viewName);
         }
         return this;

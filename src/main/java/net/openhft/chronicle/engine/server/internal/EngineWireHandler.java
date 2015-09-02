@@ -17,7 +17,6 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.*;
@@ -43,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.StreamCorruptedException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.concurrent.RejectedExecutionException;
@@ -232,8 +230,7 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
     @Override
     protected void process(@NotNull final WireIn in,
                            @NotNull final WireOut out,
-                           @NotNull final SessionDetailsProvider sessionDetails)
-            throws StreamCorruptedException {
+                           @NotNull final SessionDetailsProvider sessionDetails) {
 
         logYamlToStandardOut(in);
 

@@ -34,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.StreamCorruptedException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -311,15 +310,13 @@ public class MapWireHandler<K, V> extends AbstractHandler {
      * @param tid            the transaction id of the event
      * @param wireAdapter    adapts keys and values to and from wire
      * @param requestContext the uri of the event
-     * @throws StreamCorruptedException
      */
     public void process(@NotNull final WireIn in,
                         @NotNull final WireOut out,
                         @NotNull MapView map,
                         long tid,
                         @NotNull final WireAdapter wireAdapter,
-                        @NotNull final RequestContext requestContext) throws
-            StreamCorruptedException {
+                        @NotNull final RequestContext requestContext) {
         this.vToWire = wireAdapter.valueToWire();
         this.wireToK = wireAdapter.wireToKey();
         this.wireToV = wireAdapter.wireToValue();

@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.BindException;
-import java.net.URISyntaxException;
 import java.net.URL;
 
 /**
@@ -26,11 +25,12 @@ import java.net.URL;
 public class ChronicleNfsServer {
 
     static final Logger LOGGER = LoggerFactory.getLogger(ChronicleNfsServer.class);
-    public static OncRpcSvc start(AssetTree tree) throws IOException, URISyntaxException {
+
+    public static OncRpcSvc start(AssetTree tree) throws IOException {
         return start(tree, "default.exports", false);
     }
 
-    public static OncRpcSvc start(AssetTree tree, String exportsFile, boolean debug) throws IOException, URISyntaxException {
+    public static OncRpcSvc start(AssetTree tree, String exportsFile, boolean debug) throws IOException {
         // create an instance of a filesystem to be exported
         VirtualFileSystem vfs = new ChronicleNfsVirtualFileSystem(tree);
         if (debug)

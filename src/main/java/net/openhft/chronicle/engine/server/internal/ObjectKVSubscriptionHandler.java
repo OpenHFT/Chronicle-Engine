@@ -1,6 +1,5 @@
 package net.openhft.chronicle.engine.server.internal;
 
-import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscription;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
@@ -41,7 +40,7 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscriptio
                 volatile boolean subscriptionEnded;
 
                 @Override
-                public void onMessage(final Object topic, final Object message) throws InvalidSubscriberException {
+                public void onMessage(final Object topic, final Object message) {
                     assert !subscriptionEnded : "we received this message after the " +
                             "subscription has ended " + message;
                     WriteMarshallable toPublish = publish -> {

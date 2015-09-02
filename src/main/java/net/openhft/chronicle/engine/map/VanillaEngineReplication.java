@@ -53,163 +53,12 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
     public static final int MAX_MODIFICATION_ITERATORS = 127 + RESERVED_MOD_ITER;
     // a long word serve 64 bits
     public static final int DIRTY_WORD_COUNT = (MAX_MODIFICATION_ITERATORS + 63) / 64;
-
-    private static int idToInt(byte identifier) {
-        // if we consider > 127 ids, we should treat ids positively
-        return identifier & 0xFF;
-    }
-
-    public interface ChangeApplier<Store> {
-        void applyChange(Store store, ReplicationEntry replicationEntry);
-    }
-
-    public interface GetValue<Store> {
-        @NotNull
-        BytesStore getValue(Store store, BytesStore key);
-    }
-
-    public interface SegmentForKey<Store> {
-        int segmentForKey(Store store, BytesStore key);
-    }
-
-    public interface ReplicationData extends Copyable<ReplicationData>, Marshallable {
-        boolean getDeleted();
-
-        void setDeleted(boolean deleted);
-
-        long getTimestamp();
-
-        void setTimestamp(long timestamp);
-
-        byte getIdentifier();
-
-        void setIdentifier(byte identifier);
-
-        long getDirtyWordAt(@MaxSize(DIRTY_WORD_COUNT) int index);
-
-        void setDirtyWordAt(@MaxSize(DIRTY_WORD_COUNT) int index, long word);
-
-        @Override
-        default void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
-            setDeleted(wire.read(() -> "deleted").bool());
-            setTimestamp(wire.read(() -> "timestamp").int64());
-            setIdentifier(wire.read(() -> "identifier").int8());
-            for (int i = 0; i < DIRTY_WORD_COUNT; i++) {
-                final int finalI = i;
-                setDirtyWordAt(i, wire.read(() -> "dirtyWord-" + finalI).int64());
-            }
-        }
-
-        @Override
-        default void writeMarshallable(@NotNull WireOut wire) {
-            wire.write(() -> "deleted").bool(getDeleted());
-            wire.write(() -> "timestamp").int64(getTimestamp());
-            wire.write(() -> "identifier").int8(getIdentifier());
-            for (int i = 0; i < DIRTY_WORD_COUNT; i++) {
-                final int finalI = i;
-                wire.write(() -> "dirtyWord-" + finalI).int64(getDirtyWordAt(i));
-            }
-        }
-
-        static void dropChange(@NotNull ReplicationData replicationData) {
-            for (int i = 0; i < DIRTY_WORD_COUNT; i++) {
-                replicationData.setDirtyWordAt(i, 0);
-            }
-        }
-
-        static void raiseChange(@NotNull ReplicationData replicationData) {
-            for (int i = 0; i < DIRTY_WORD_COUNT; i++) {
-                replicationData.setDirtyWordAt(i, ~0L);
-            }
-        }
-
-        static void clearChange(@NotNull ReplicationData replicationData, int identifier) {
-            int index = identifier / 64;
-            long bit = 1L << (identifier % 64);
-            replicationData.setDirtyWordAt(index, replicationData.getDirtyWordAt(index) ^ bit);
-        }
-
-        static void setChange(@NotNull ReplicationData replicationData, int identifier) {
-            int index = identifier / 64;
-            long bit = 1L << (identifier % 64);
-            replicationData.setDirtyWordAt(index, replicationData.getDirtyWordAt(index) | bit);
-        }
-
-        static boolean isChanged(@NotNull ReplicationData replicationData, int identifier) {
-            int index = identifier / 64;
-            long bit = 1L << (identifier % 64);
-            return (replicationData.getDirtyWordAt(index) & bit) != 0L;
-        }
-    }
-
-    public interface RemoteNodeReplicationState
-            extends Copyable<RemoteNodeReplicationState>, Marshallable {
-        long getNextBootstrapTimestamp();
-
-        void setNextBootstrapTimestamp(long nextBootstrapTimestamp);
-
-        long getLastBootstrapTimestamp();
-
-        void setLastBootstrapTimestamp(long lastBootstrapTimestamp);
-
-        long getLastModificationTime();
-
-        void setLastModificationTime(long lastModificationTime);
-
-        @Override
-        default void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
-            setNextBootstrapTimestamp(wire.read(() -> "nextBootstrapTimestamp").int64());
-            setLastBootstrapTimestamp(wire.read(() -> "lastBootstrapTimestamp").int64());
-            setLastModificationTime(wire.read(() -> "lastModificationTime").int64());
-        }
-
-        @Override
-        default void writeMarshallable(@NotNull WireOut wire) {
-            wire.write(() -> "nextBootstrapTimestamp").int64(getNextBootstrapTimestamp());
-            wire.write(() -> "lastBootstrapTimestamp").int64(getLastBootstrapTimestamp());
-            wire.write(() -> "lastModificationTime").int64(getLastModificationTime());
-        }
-    }
-
-    @NotNull
-    private static ATSDirectBitSet createModIterBitSet() {
-        return new ATSDirectBitSet(new DirectStore(null, DIRTY_WORD_COUNT * 8, true).bytes());
-    }
-
-    static class Instances {
-        final IntValue identifier = DataValueClasses.newInstance(IntValue.class);
-
-        @Nullable
-        RemoteNodeReplicationState usingState = null;
-        final RemoteNodeReplicationState copyState =
-                DataValueClasses.newInstance(RemoteNodeReplicationState.class);
-        final RemoteNodeReplicationState zeroState =
-                DataValueClasses.newInstance(RemoteNodeReplicationState.class);
-
-        @Nullable
-        ReplicationData usingData = null;
-        final ReplicationData newData = DataValueClasses.newInstance(ReplicationData.class);
-        final ReplicationData zeroData = DataValueClasses.newInstance(ReplicationData.class);
-    }
-
-    private static void initZeroStateForAllPossibleRemoteIdentifiers(
-            @NotNull KeyValueStore<IntValue, RemoteNodeReplicationState>
-                    modIterState) {
-        Instances i = threadLocalInstances.get();
-        for (int id = 0; id < 256; id++) {
-            i.identifier.setValue(id);
-            modIterState.put(i.identifier, i.zeroState);
-        }
-    }
-
     @NotNull
     private static final ThreadLocal<Instances> threadLocalInstances =
             ThreadLocal.withInitial(Instances::new);
-
     private final KeyValueStore<BytesStore, ReplicationData>[] keyReplicationData;
     private final KeyValueStore<IntValue, RemoteNodeReplicationState>
             modIterState;
-
     private final byte identifier;
     @NotNull
     private final Store store;
@@ -270,13 +119,38 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
         store.subscription(true).registerDownstream(e -> e.apply(eventListener));
     }
 
+    private static int idToInt(byte identifier) {
+        // if we consider > 127 ids, we should treat ids positively
+        return identifier & 0xFF;
+    }
+
+    @NotNull
+    private static ATSDirectBitSet createModIterBitSet() {
+        return new ATSDirectBitSet(new DirectStore(null, DIRTY_WORD_COUNT * 8, true).bytes());
+    }
+
+    private static void initZeroStateForAllPossibleRemoteIdentifiers(
+            @NotNull KeyValueStore<IntValue, RemoteNodeReplicationState>
+                    modIterState) {
+        Instances i = threadLocalInstances.get();
+        for (int id = 0; id < 256; id++) {
+            i.identifier.setValue(id);
+            modIterState.put(i.identifier, i.zeroState);
+        }
+    }
+
+    private static boolean shouldApplyRemoteModification(
+            @NotNull ReplicationEntry remoteEntry, @NotNull ReplicationData localReplicationData) {
+        long remoteTimestamp = remoteEntry.timestamp();
+        long originTimestamp = localReplicationData.getTimestamp();
+        return remoteTimestamp > originTimestamp || (remoteTimestamp == originTimestamp &&
+                remoteEntry.identifier() <= localReplicationData.getIdentifier());
+    }
+
     @Override
     public byte identifier() {
         return identifier;
     }
-
-    ////////////////
-    // Method for working with modIterState
 
     private void resetNextBootstrapTimestamp(int remoteIdentifier) {
         Instances i = threadLocalInstances.get();
@@ -338,6 +212,9 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
         return lastModificationTime(idToInt(remoteIdentifier));
     }
 
+    ////////////////
+    // Method for working with modIterState
+
     private long lastModificationTime(int remoteIdentifier) {
         Instances i = threadLocalInstances.get();
         i.identifier.setValue(remoteIdentifier);
@@ -364,14 +241,6 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
                 return;
             }
         }
-    }
-
-    private static boolean shouldApplyRemoteModification(
-            @NotNull ReplicationEntry remoteEntry, @NotNull ReplicationData localReplicationData) {
-        long remoteTimestamp = remoteEntry.timestamp();
-        long originTimestamp = localReplicationData.getTimestamp();
-        return remoteTimestamp > originTimestamp || (remoteTimestamp == originTimestamp &&
-                remoteEntry.identifier() <= localReplicationData.getIdentifier());
     }
 
     @Override
@@ -475,15 +344,174 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
         }
     }
 
+    @Override
+    public void close() throws IOException {
+        try {
+            Throwable throwable = null;
+            for (KeyValueStore<BytesStore, ReplicationData> keyReplicationData :
+                    this.keyReplicationData) {
+                try {
+                    keyReplicationData.close();
+                } catch (Throwable e) {
+                    if (throwable == null) {
+                        throwable = e;
+                    } else {
+                        throwable.addSuppressed(e);
+                    }
+                }
+            }
+            if (throwable != null) {
+                if (throwable instanceof Error) {
+                    throw (Error) throwable;
+                } else {
+                    throw (RuntimeException) throwable;
+                }
+            }
+        } finally {
+            modIterState.close();
+        }
+    }
+
+    public interface ChangeApplier<Store> {
+        void applyChange(Store store, ReplicationEntry replicationEntry);
+    }
+
+    public interface GetValue<Store> {
+        @NotNull
+        BytesStore getValue(Store store, BytesStore key);
+    }
+
+    public interface SegmentForKey<Store> {
+        int segmentForKey(Store store, BytesStore key);
+    }
+
+    public interface ReplicationData extends Copyable<ReplicationData>, Marshallable {
+        static void dropChange(@NotNull ReplicationData replicationData) {
+            for (int i = 0; i < DIRTY_WORD_COUNT; i++) {
+                replicationData.setDirtyWordAt(i, 0);
+            }
+        }
+
+        static void raiseChange(@NotNull ReplicationData replicationData) {
+            for (int i = 0; i < DIRTY_WORD_COUNT; i++) {
+                replicationData.setDirtyWordAt(i, ~0L);
+            }
+        }
+
+        static void clearChange(@NotNull ReplicationData replicationData, int identifier) {
+            int index = identifier / 64;
+            long bit = 1L << (identifier % 64);
+            replicationData.setDirtyWordAt(index, replicationData.getDirtyWordAt(index) ^ bit);
+        }
+
+        static void setChange(@NotNull ReplicationData replicationData, int identifier) {
+            int index = identifier / 64;
+            long bit = 1L << (identifier % 64);
+            replicationData.setDirtyWordAt(index, replicationData.getDirtyWordAt(index) | bit);
+        }
+
+        static boolean isChanged(@NotNull ReplicationData replicationData, int identifier) {
+            int index = identifier / 64;
+            long bit = 1L << (identifier % 64);
+            return (replicationData.getDirtyWordAt(index) & bit) != 0L;
+        }
+
+        boolean getDeleted();
+
+        void setDeleted(boolean deleted);
+
+        long getTimestamp();
+
+        void setTimestamp(long timestamp);
+
+        byte getIdentifier();
+
+        void setIdentifier(byte identifier);
+
+        long getDirtyWordAt(@MaxSize(DIRTY_WORD_COUNT) int index);
+
+        void setDirtyWordAt(@MaxSize(DIRTY_WORD_COUNT) int index, long word);
+
+        @Override
+        default void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
+            setDeleted(wire.read(() -> "deleted").bool());
+            setTimestamp(wire.read(() -> "timestamp").int64());
+            setIdentifier(wire.read(() -> "identifier").int8());
+            for (int i = 0; i < DIRTY_WORD_COUNT; i++) {
+                final int finalI = i;
+                setDirtyWordAt(i, wire.read(() -> "dirtyWord-" + finalI).int64());
+            }
+        }
+
+        @Override
+        default void writeMarshallable(@NotNull WireOut wire) {
+            wire.write(() -> "deleted").bool(getDeleted());
+            wire.write(() -> "timestamp").int64(getTimestamp());
+            wire.write(() -> "identifier").int8(getIdentifier());
+            for (int i = 0; i < DIRTY_WORD_COUNT; i++) {
+                final int finalI = i;
+                wire.write(() -> "dirtyWord-" + finalI).int64(getDirtyWordAt(i));
+            }
+        }
+    }
+
+    public interface RemoteNodeReplicationState
+            extends Copyable<RemoteNodeReplicationState>, Marshallable {
+        long getNextBootstrapTimestamp();
+
+        void setNextBootstrapTimestamp(long nextBootstrapTimestamp);
+
+        long getLastBootstrapTimestamp();
+
+        void setLastBootstrapTimestamp(long lastBootstrapTimestamp);
+
+        long getLastModificationTime();
+
+        void setLastModificationTime(long lastModificationTime);
+
+        @Override
+        default void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
+            setNextBootstrapTimestamp(wire.read(() -> "nextBootstrapTimestamp").int64());
+            setLastBootstrapTimestamp(wire.read(() -> "lastBootstrapTimestamp").int64());
+            setLastModificationTime(wire.read(() -> "lastModificationTime").int64());
+        }
+
+        @Override
+        default void writeMarshallable(@NotNull WireOut wire) {
+            wire.write(() -> "nextBootstrapTimestamp").int64(getNextBootstrapTimestamp());
+            wire.write(() -> "lastBootstrapTimestamp").int64(getLastBootstrapTimestamp());
+            wire.write(() -> "lastModificationTime").int64(getLastModificationTime());
+        }
+    }
+
+    static class Instances {
+        final IntValue identifier = DataValueClasses.newInstance(IntValue.class);
+        final RemoteNodeReplicationState copyState =
+                DataValueClasses.newInstance(RemoteNodeReplicationState.class);
+        final RemoteNodeReplicationState zeroState =
+                DataValueClasses.newInstance(RemoteNodeReplicationState.class);
+        final ReplicationData newData = DataValueClasses.newInstance(ReplicationData.class);
+        final ReplicationData zeroData = DataValueClasses.newInstance(ReplicationData.class);
+        @Nullable
+        RemoteNodeReplicationState usingState = null;
+        @Nullable
+        ReplicationData usingData = null;
+    }
+
     class VanillaModificationIterator implements ModificationIterator, ReplicationEntry {
 
         private final int identifier;
+        long forEachEntryCount;
+        ModificationNotifier modificationNotifier;
+        // Below methods and fields that implement ModIter as ReplicationEntry
+        @Nullable
+        BytesStore key;
+        @Nullable
+        ReplicationData replicationData;
 
         VanillaModificationIterator(int identifier) {
             this.identifier = identifier;
         }
-
-        long forEachEntryCount;
 
         @Override
         public void forEach(@NotNull Consumer<ReplicationEntry> consumer) {
@@ -533,7 +561,7 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
         }
 
         @Override
-        public void dirtyEntries(long fromTimeStamp) throws InterruptedException {
+        public void dirtyEntries(long fromTimeStamp) {
             Instances i = threadLocalInstances.get();
             for (KeyValueStore<BytesStore, ReplicationData> keyReplicationData :
                     VanillaEngineReplication.this.keyReplicationData) {
@@ -549,8 +577,6 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
             }
         }
 
-        ModificationNotifier modificationNotifier;
-
         @Override
         public void setModificationNotifier(@NotNull ModificationNotifier modificationNotifier) {
             this.modificationNotifier = modificationNotifier;
@@ -560,12 +586,6 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
             if (modificationNotifier != null)
                 modificationNotifier.onChange();
         }
-
-        // Below methods and fields that implement ModIter as ReplicationEntry
-        @Nullable
-        BytesStore key;
-        @Nullable
-        ReplicationData replicationData;
 
         @Nullable
         @Override
@@ -607,34 +627,6 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
         @Override
         public long bootStrapTimeStamp() {
             return bootstrapTimestamp(identifier);
-        }
-    }
-
-    @Override
-    public void close() throws IOException {
-        try {
-            Throwable throwable = null;
-            for (KeyValueStore<BytesStore, ReplicationData> keyReplicationData :
-                    this.keyReplicationData) {
-                try {
-                    keyReplicationData.close();
-                } catch (Throwable e) {
-                    if (throwable == null) {
-                        throwable = e;
-                    } else {
-                        throwable.addSuppressed(e);
-                    }
-                }
-            }
-            if (throwable != null) {
-                if (throwable instanceof Error) {
-                    throw (Error) throwable;
-                } else {
-                    throw (RuntimeException) throwable;
-                }
-            }
-        } finally {
-            modIterState.close();
         }
     }
 }

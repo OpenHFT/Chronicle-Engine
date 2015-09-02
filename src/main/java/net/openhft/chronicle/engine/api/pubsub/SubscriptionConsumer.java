@@ -34,8 +34,7 @@ public interface SubscriptionConsumer<T> {
         doNotify.notifyEachSubscriber(subs);
     }
 
-    static <E> void notifyEachEvent(@NotNull Set<E> subs, @NotNull SubscriptionConsumer<E> doNotify)
-            throws InvalidSubscriberException {
+    static <E> void notifyEachEvent(@NotNull Set<E> subs, @NotNull SubscriptionConsumer<E> doNotify) {
         doNotify.notifyEachEvent(subs);
     }
 
@@ -56,7 +55,7 @@ public interface SubscriptionConsumer<T> {
         });
     }
 
-    default void notifyEachEvent(@NotNull Set<T> subs) throws InvalidSubscriberException {
+    default void notifyEachEvent(@NotNull Set<T> subs) {
         subs.forEach(s -> {
             try {
                 accept(s);

@@ -160,7 +160,7 @@ class ReplicationHub extends AbstractStatelessClient {
      */
     private void publish(@NotNull final ModificationIterator mi,
                          @NotNull final Bootstrap remote,
-                         byte localIdentifier) throws InterruptedException {
+                         byte localIdentifier) {
 
         final TcpChannelHub hub = this.hub;
         mi.setModificationNotifier(eventLoop::unpause);

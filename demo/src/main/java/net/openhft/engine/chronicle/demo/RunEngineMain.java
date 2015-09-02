@@ -23,14 +23,13 @@ import net.openhft.engine.chronicle.demo.data.EndOfDay;
 import net.openhft.engine.chronicle.demo.data.EndOfDayShort;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 
 /**
  * Run EngineMain in test mode so slf4j will be imported.
  * Created by peter on 26/08/15.
  */
 public class RunEngineMain {
-    public static void main(String[] args) throws IOException, URISyntaxException, InterruptedException {
+    public static void main(String[] args) throws IOException {
         addClass(EndOfDay.class);
         addClass(EndOfDayShort.class);
         addClass(NfsCfg.class);

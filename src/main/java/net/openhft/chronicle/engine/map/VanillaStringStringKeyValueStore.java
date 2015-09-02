@@ -99,7 +99,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         Buffers b = BUFFERS.get();
         Bytes<ByteBuffer> bytes = b.valueBuffer;
         bytes.clear();
-        bytes.append(value);
+        bytes.appendUtf8(value);
         BytesStore retBytes = kvStore.getAndPut(key, bytes);
         if (retBytes == null) return null;
         else {

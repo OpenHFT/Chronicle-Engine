@@ -91,7 +91,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
 
     static <T> BiFunction<T, Bytes, Bytes> toBytes(@NotNull Class type, @NotNull Function<Bytes, Wire> wireType) {
         if (type == String.class)
-            return (t, bytes) -> (Bytes) bytes.append((String) t);
+            return (t, bytes) -> (Bytes) bytes.appendUtf8((String) t);
         if (Marshallable.class.isAssignableFrom(type))
             return (t, bytes) -> {
                 t = acquireInstance(type, t);

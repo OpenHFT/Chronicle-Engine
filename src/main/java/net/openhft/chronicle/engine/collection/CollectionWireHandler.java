@@ -21,7 +21,6 @@ package net.openhft.chronicle.engine.collection;
  */
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.StreamCorruptedException;
 import java.util.Collection;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -181,7 +179,7 @@ public class CollectionWireHandler<U, C extends Collection<U>> {
                         @NotNull BiConsumer toWire,
                         @NotNull Function fromWire,
                         @NotNull Supplier factory,
-                        long tid) throws StreamCorruptedException {
+                        long tid) {
 
         this.fromWire = fromWire;
         this.toWire = toWire;

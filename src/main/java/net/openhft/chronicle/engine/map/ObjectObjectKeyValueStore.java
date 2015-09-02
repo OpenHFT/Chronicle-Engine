@@ -63,7 +63,7 @@ public class ObjectObjectKeyValueStore<K, V> implements KeyValueStore<K, V> {
 
     private static <T> BiFunction<T, Bytes, Bytes> toBytes(Class type) {
         if (type == String.class)
-            return (t, bytes) -> (Bytes) bytes.append((String) t);
+            return (t, bytes) -> (Bytes) bytes.appendUtf8((String) t);
         throw new UnsupportedOperationException("todo");
     }
 

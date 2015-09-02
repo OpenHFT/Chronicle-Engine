@@ -135,14 +135,10 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
 
     @Override
     public void keysFor(int segment, @NotNull SubscriptionConsumer<String> stringConsumer) {
-        try {
             keysFor0(stringConsumer);
-        } catch (InvalidSubscriberException ise) {
-            // ignored
-        }
     }
 
-    private void keysFor0(@NotNull SubscriptionConsumer<String> stringConsumer) throws InvalidSubscriberException {
+    private void keysFor0(@NotNull SubscriptionConsumer<String> stringConsumer) {
         getFiles().forEach(p -> {
             try {
                 stringConsumer.accept(p.getFileName().toString());
@@ -154,14 +150,10 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
 
     @Override
     public void entriesFor(int segment, @NotNull SubscriptionConsumer<MapEvent<String, BytesStore>> kvConsumer) throws InvalidSubscriberException {
-        try {
             entriesFor0(kvConsumer);
-        } catch (InvalidSubscriberException ise) {
-            // ignored
-        }
     }
 
-    private void entriesFor0(@NotNull SubscriptionConsumer<MapEvent<String, BytesStore>> kvConsumer) throws InvalidSubscriberException {
+    private void entriesFor0(@NotNull SubscriptionConsumer<MapEvent<String, BytesStore>> kvConsumer) {
         getFiles().forEach(p -> {
             BytesStore fileContents = null;
             try {
@@ -435,7 +427,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         }
 
         @NotNull
-        private WatchKey processKey() throws InterruptedException, IOException, InvalidSubscriberException {
+        private WatchKey processKey() throws InterruptedException {
             WatchKey key = watcher.take();
             for (WatchEvent<?> event : key.pollEvents()) {
                 Kind<?> kind = event.kind();

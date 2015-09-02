@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.management.*;
-import java.io.IOException;
 import java.util.*;
 
 public class AssetTreeDynamicMBean implements DynamicMBean {
@@ -17,7 +16,7 @@ public class AssetTreeDynamicMBean implements DynamicMBean {
     private final Properties properties;
     private final Map attributeList;
 
-    public AssetTreeDynamicMBean(Map attributeList) throws IOException {
+    public AssetTreeDynamicMBean(Map attributeList) {
         this.properties = new Properties();
         this.attributeList = attributeList;
         load();
@@ -80,12 +79,8 @@ public class AssetTreeDynamicMBean implements DynamicMBean {
     @Nullable
     public Object invoke(@NotNull String name, @Nullable Object[] args, @Nullable String[] sig) throws MBeanException, ReflectionException {
         if ((name.equals("reload")) && ((args == null) || (args.length == 0)) && ((sig == null) || (sig.length == 0))) {
-            try {
                 load();
                 return null;
-            } catch (IOException e) {
-                throw new MBeanException(e);
-            }
         }
         throw new ReflectionException(new NoSuchMethodException(name));
     }
@@ -110,7 +105,7 @@ public class AssetTreeDynamicMBean implements DynamicMBean {
         return new MBeanInfo(getClass().getName(), "Property Manager MBean", attrs, null, opers, null);
     }
 
-    private void load() throws IOException {
+    private void load() {
         this.properties.putAll(attributeList);
     }
 }

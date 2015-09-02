@@ -175,7 +175,7 @@ public class CMap2EngineReplicator implements EngineReplication,
             }
 
             @Override
-            public void dirtyEntries(final long fromTimeStamp) throws InterruptedException {
+            public void dirtyEntries(final long fromTimeStamp) {
                 instance.dirtyEntries(fromTimeStamp);
             }
 

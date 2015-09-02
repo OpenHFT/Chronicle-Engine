@@ -48,8 +48,7 @@ public interface EngineReplication extends Replication {
      */
     byte identifier();
 
-    default void forEach(byte remoteIdentifier, @NotNull Consumer<ReplicationEntry> consumer) throws
-            InterruptedException {
+    default void forEach(byte remoteIdentifier, @NotNull Consumer<ReplicationEntry> consumer) {
         final ModificationIterator modificationIterator = acquireModificationIterator(remoteIdentifier);
         if (modificationIterator != null)
             modificationIterator.forEach(consumer);
@@ -113,7 +112,7 @@ public interface EngineReplication extends Replication {
          *
          * @param fromTimeStamp the timestamp from which all entries should be dirty
          */
-        void dirtyEntries(long fromTimeStamp) throws InterruptedException;
+        void dirtyEntries(long fromTimeStamp);
 
         /**
          * the {@code modificationNotifier} is called when ever there is a change applied to the

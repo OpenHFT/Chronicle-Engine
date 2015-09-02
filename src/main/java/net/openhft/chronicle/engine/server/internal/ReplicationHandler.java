@@ -83,11 +83,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
                     }
                 });
 
-                try {
                     mi.dirtyEntries(0);
-                } catch (InterruptedException e) {
-                    LOG.error("", e);
-                }
                 return;
             }
 
@@ -118,12 +114,8 @@ public class ReplicationHandler<E> extends AbstractHandler {
                     final byte id = inBootstrap.identifier();
 
                     final ModificationIterator mi = replication.acquireModificationIterator(id);
-                    try {
                         if (mi != null)
                             mi.dirtyEntries(inBootstrap.lastUpdatedTime());
-                    } catch (InterruptedException e) {
-                        LOG.error("", e);
-                    }
 
                     // send bootstrap
                     final Bootstrap outBootstrap = new Bootstrap();

@@ -1,6 +1,5 @@
 package net.openhft.chronicle.engine.server.internal;
 
-import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
@@ -46,7 +45,7 @@ public class TopicPublisherHandler<T, M> extends AbstractHandler {
                 final TopicSubscriber listener = new TopicSubscriber() {
 
                     @Override
-                    public void onMessage(final Object topic, final Object message) throws InvalidSubscriberException {
+                    public void onMessage(final Object topic, final Object message) {
 
                         publisher.add(publish -> {
                             publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
