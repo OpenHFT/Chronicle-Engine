@@ -10,31 +10,45 @@ import java.lang.management.ManagementFactory;
  * Created by daniel on 01/09/2015.
  */
 public class ChronicleConfig implements ChronicleConfigMBean {
-    private boolean yamlServerLogging;
-    private boolean yamlClientLogging;
 
     @Override
-    public void setYamlServerLogging(boolean yamlServerLogging) {
-        this.yamlServerLogging = yamlServerLogging;
-        YamlLogging.showServerReads = yamlServerLogging;
-        YamlLogging.showServerWrites = yamlServerLogging;
+    public void setYamlServerReadLogging(boolean logging) {
+        YamlLogging.showServerReads = logging;
     }
 
     @Override
-    public boolean getYamlServerLogging() {
-        return yamlServerLogging;
+    public boolean getYamlServerReadLogging() {
+        return YamlLogging.showServerReads;
     }
 
     @Override
-    public void setYamlClientLogging(boolean yamlClientLogging) {
-        YamlLogging.clientReads = yamlClientLogging;
-        YamlLogging.clientWrites = yamlClientLogging;
-        this.yamlClientLogging = yamlClientLogging;
+    public void setYamlClientReadLogging(boolean logging) {
+        YamlLogging.clientReads = logging;
     }
 
     @Override
-    public boolean getYamlClientLogging() {
-        return yamlClientLogging;
+    public boolean getYamlClientReadLogging() {
+        return YamlLogging.clientReads;
+    }
+
+    @Override
+    public void setYamlServerWriteLogging(boolean logging) {
+        YamlLogging.showServerWrites = logging;
+    }
+
+    @Override
+    public boolean getYamlServerWriteLogging() {
+        return YamlLogging.showServerWrites;
+    }
+
+    @Override
+    public void setYamlClientWriteLogging(boolean logging) {
+        YamlLogging.clientWrites = logging;
+    }
+
+    @Override
+    public boolean getYamlClientWriteLogging() {
+        return YamlLogging.clientWrites;
     }
 
     public static void init(){
