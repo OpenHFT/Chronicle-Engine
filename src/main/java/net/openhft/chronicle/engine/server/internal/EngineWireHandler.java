@@ -17,6 +17,7 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.*;
@@ -149,6 +150,7 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
     @NotNull
     private ReadMarshallable wireInConsumer() {
         return (wire) -> {
+            long startWritePosition = outWire.bytes().writePosition();
 
             // if true the next data message will be a system message
             isSystemMessage = wire.bytes().readRemaining() == 0;
@@ -157,9 +159,15 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
                 return;
             }
 
+
             try {
                 readCsp(wire);
                 readTid(wire);
+            } catch (Throwable t) {
+                Jvm.rethrow(t);
+            }
+
+            try {
                 if (hasCspChanged(cspText)) {
 
                     if (LOG.isDebugEnabled())
@@ -199,9 +207,12 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
                         throw new UnsupportedOperationException("unsupported view type");
 
                 }
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 LOG.error("", e);
-                throw rethrow(e);
+                outWire.bytes().writePosition(startWritePosition);
+                outWire.writeDocument(true, w -> w.writeEventName(CoreFields.tid).int64(tid));
+                outWire.writeDocument(false, out -> out.writeEventName(() -> "exception").throwable(e));
+                rethrow(e);
             }
         };
     }
