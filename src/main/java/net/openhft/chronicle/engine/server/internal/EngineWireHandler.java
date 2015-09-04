@@ -212,6 +212,7 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
                 outWire.bytes().writePosition(startWritePosition);
                 outWire.writeDocument(true, w -> w.writeEventName(CoreFields.tid).int64(tid));
                 outWire.writeDocument(false, out -> out.writeEventName(() -> "exception").throwable(e));
+                logYamlToStandardOut(outWire);
                 rethrow(e);
             }
         };
