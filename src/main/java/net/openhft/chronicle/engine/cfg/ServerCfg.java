@@ -32,7 +32,7 @@ public class ServerCfg implements Installable, Marshallable {
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerCfg.class);
     private int port;
     private WireType wireType;
-    private boolean dumpWhenInDebug;
+    private YamlLogging.YamlLoggingLevel logTCPMessages;
     private ServerEndpoint serverEndpoint;
     private int heartbeatIntervalTicks, heartbeatIntervalTimeout;
 
@@ -40,7 +40,6 @@ public class ServerCfg implements Installable, Marshallable {
     public ServerCfg install(String path, AssetTree assetTree) throws IOException {
         LOGGER.info(path + ": Starting listener on port " + port);
         serverEndpoint = new ServerEndpoint("*:" + port, assetTree, wireType, heartbeatIntervalTicks, heartbeatIntervalTimeout);
-        if (dumpWhenInDebug)
             YamlLogging.setAll(true);
         return this;
     }
@@ -49,7 +48,7 @@ public class ServerCfg implements Installable, Marshallable {
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         wire.read(() -> "wireType").asEnum(WireType.class, wt -> wireType = wt);
         wire.read(() -> "port").int32(this, (o, i) -> o.port = i);
-        wire.read(() -> "dumpWhenInDebug").bool(this, (o, b) -> o.dumpWhenInDebug = b);
+        wire.read(() -> "logTCPMessages").asEnum(YamlLogging.YamlLoggingLevel.class, this, (o, b) -> o.logTCPMessages = b);
         wire.read(() -> "heartbeatIntervalTicks").int32(this, (o, i) -> o.heartbeatIntervalTicks = i);
         wire.read(() -> "heartbeatIntervalTimeout").int32(this, (o, i) -> o.heartbeatIntervalTimeout = i);
     }
@@ -58,7 +57,7 @@ public class ServerCfg implements Installable, Marshallable {
     public void writeMarshallable(WireOut wire) {
         wire.write(() -> "wireType").asEnum(wireType);
         wire.write(() -> "port").int32(port);
-        wire.write(() -> "dumpWhenInDebug").bool(dumpWhenInDebug);
+        wire.write(() -> "logTCPMessages").asEnum(logTCPMessages);
         wire.write(() -> "heartbeatIntervalTicks").int32(heartbeatIntervalTicks);
         wire.write(() -> "heartbeatIntervalTimeout").int32(heartbeatIntervalTimeout);
     }
@@ -68,7 +67,7 @@ public class ServerCfg implements Installable, Marshallable {
         return "ServerCfg{" +
                 "port=" + port +
                 ", wireType=" + wireType +
-                ", dumpWhenInDebug=" + dumpWhenInDebug +
+                ", logTCPMessages=" + logTCPMessages +
                 ", serverEndpoint=" + serverEndpoint +
                 ", heartbeatIntervalTicks=" + heartbeatIntervalTicks +
                 ", heartbeatIntervalTimeout=" + heartbeatIntervalTimeout +

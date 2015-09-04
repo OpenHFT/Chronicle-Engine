@@ -15,7 +15,7 @@ etc: {
   server: !ServerCfg {
     wireType: BINARY,
     port: 8088,
-    dumpWhenInDebug: true, # only show when in debug mode on the server
+    logTCPMessages: DEBUG_ONLY, # only show when in debug mode on the server
     heartbeatIntervalTicks: 1_000, # must be lees than the timeout.
     heartbeatIntervalTimeout: 100_000
     }
@@ -23,7 +23,7 @@ etc: {
   # Allow access via NFS to this engine.
   #
   nfs: !NfsCfg {
-    enabled: true,
+    enabled: false,
     debug: false, # log every NFS request.
     exports: {
      # export everything.
@@ -63,6 +63,15 @@ etc: {
 # User space data resources, could be named anything
 #
 data: {
+    # a map with wraps a directory
+    disk: !FilePerKeyMapCfg {
+      keyType: !type String,
+      valueType: !type String,
+      compression: none,
+      putReturnsNull: false,
+      removeReturnsNull: false,
+      diskPath: demo-data
+    },
     # a map which wraps ConcurrentHashMap
     map: !InMemoryMapCfg {
       keyType: !type String,
