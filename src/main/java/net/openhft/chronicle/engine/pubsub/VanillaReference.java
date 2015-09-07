@@ -19,7 +19,7 @@ package net.openhft.chronicle.engine.pubsub;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.Reference;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
-import net.openhft.chronicle.engine.api.pubsub.Subscription;
+import net.openhft.chronicle.engine.api.pubsub.SubscriptionCollection;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
@@ -72,7 +72,7 @@ public class VanillaReference<E> implements Reference<E> {
     public void unregisterSubscriber(Subscriber subscriber) {
         Asset child = underlyingMap.asset().getChild(name);
         if (child != null) {
-            Subscription subscription = child.subscription(false);
+            SubscriptionCollection subscription = child.subscription(false);
             if (subscription != null)
                 subscription.unregisterSubscriber(subscriber);
         }
@@ -82,7 +82,7 @@ public class VanillaReference<E> implements Reference<E> {
     public int subscriberCount() {
         Asset child = underlyingMap.asset().getChild(name);
         if (child != null) {
-            Subscription subscription = child.subscription(false);
+            SubscriptionCollection subscription = child.subscription(false);
             if (subscription != null)
                 return subscription.subscriberCount();
         }

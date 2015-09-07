@@ -38,10 +38,10 @@ import net.openhft.chronicle.engine.map.remote.RemoteTopologySubscription;
 import net.openhft.chronicle.engine.pubsub.RemoteTopicPublisher;
 import net.openhft.chronicle.engine.pubsub.VanillaReference;
 import net.openhft.chronicle.engine.pubsub.VanillaTopicPublisher;
-import net.openhft.chronicle.network.ClientSessionProvider;
 import net.openhft.chronicle.engine.session.VanillaSessionProvider;
 import net.openhft.chronicle.engine.set.RemoteKeySetView;
 import net.openhft.chronicle.engine.set.VanillaKeySetView;
+import net.openhft.chronicle.network.ClientSessionProvider;
 import net.openhft.chronicle.network.VanillaSessionDetails;
 import net.openhft.chronicle.network.api.session.SessionProvider;
 import net.openhft.chronicle.network.connection.SocketAddressSupplier;
@@ -323,7 +323,7 @@ public class VanillaAsset implements Asset, Closeable {
 
     @Nullable
     @Override
-    public Subscription subscription(boolean createIfAbsent) throws AssetNotFoundException {
+    public SubscriptionCollection subscription(boolean createIfAbsent) throws AssetNotFoundException {
         return createIfAbsent ? acquireView(ObjectKVSSubscription.class) : getView(ObjectKVSSubscription.class);
     }
 
