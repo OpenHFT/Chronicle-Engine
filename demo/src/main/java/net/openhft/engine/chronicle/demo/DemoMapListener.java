@@ -1,10 +1,12 @@
 package net.openhft.engine.chronicle.demo;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
+import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.WireType;
@@ -40,6 +42,22 @@ public class DemoMapListener {
         };
         Subscriber<MapEvent> mapEventSubscriber = e -> e.apply(mapEventListener);
         clientAssetTree.registerSubscriber("/data/map", MapEvent.class, mapEventSubscriber);
+
+//        Jvm.pause(1000);
+//
+//        clientAssetTree.unregisterSubscriber("/data/map", mapEventSubscriber);
+//
+//        clientAssetTree.registerSubscriber("/data/map", String.class, s -> {
+//            System.out.println("key sub for " + s);
+//        });
+//
+//        clientAssetTree.registerTopicSubscriber("/data/map", String.class, String.class, new TopicSubscriber<String, String>() {
+//            @Override
+//            public void onMessage(String topic, String message) throws InvalidSubscriberException {
+//                System.out.println("");
+//            }
+//        });
+
 
         Scanner scanner = new Scanner(System.in);
         while(true){

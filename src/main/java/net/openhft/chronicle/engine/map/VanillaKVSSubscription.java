@@ -19,17 +19,22 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.KeyValueStore.Entry;
 import net.openhft.chronicle.engine.api.map.MapEvent;
+import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.pubsub.SimpleSubscription;
+import net.openhft.chronicle.engine.pubsub.SubscriptionStat;
 import net.openhft.chronicle.engine.pubsub.VanillaSimpleSubscription;
 import net.openhft.chronicle.engine.query.Filter;
+import net.openhft.chronicle.network.api.session.SessionDetails;
+import net.openhft.chronicle.network.api.session.SessionProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalTime;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -50,6 +55,7 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
     private final Set<Subscriber<MapEvent<K, V>>> subscribers = new CopyOnWriteArraySet<>();
     private final Set<Subscriber<K>> keySubscribers = new CopyOnWriteArraySet<>();
     private final Set<EventConsumer<K, V>> downstream = new CopyOnWriteArraySet<>();
+    private final SessionProvider sessionProvider;
 
     @Nullable
     private final Asset asset;
@@ -64,6 +70,8 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
         this.asset = asset;
         if (viewType != null && asset != null)
             asset.addView(viewType, this);
+
+        sessionProvider = asset.findView(SessionProvider.class);
     }
 
     @Override
@@ -202,9 +210,8 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
     private void registerSubscriber0(@NotNull RequestContext rc,
                                      @NotNull Subscriber<MapEvent<K, V>> subscriber,
                                      @NotNull Filter<MapEvent<K, V>> filter) {
-
+        addToStats("subscription");
         final Subscriber<MapEvent<K, V>> sub = subscriber(subscriber, filter);
-
         this.subscribers.add(sub);
         Boolean bootstrap = rc.bootstrap();
         if (bootstrap != Boolean.FALSE && kvStore != null) {
@@ -229,6 +236,7 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
     public void registerKeySubscriber(@NotNull RequestContext rc,
                                       @NotNull Subscriber<K> subscriber,
                                       @NotNull Filter<K> filter) {
+        addToStats("keySubscription");
         final Boolean bootstrap = rc.bootstrap();
         final Subscriber<K> sub = subscriber(subscriber, filter);
         keySubscribers.add(sub);
@@ -248,6 +256,7 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
 
     @Override
     public void registerTopicSubscriber(@NotNull RequestContext rc, @NotNull TopicSubscriber subscriber) {
+        addToStats("topicSubscription");
         Boolean bootstrap = rc.bootstrap();
         topicSubscribers.add((TopicSubscriber<K, V>) subscriber);
         if (bootstrap != Boolean.FALSE && kvStore != null) {
@@ -288,5 +297,24 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
         subscriber.onEndOfSubscription();
     }
 
+    private void addToStats(String subType){
+        SessionDetails sessionDetails = sessionProvider.get();
+        if(sessionDetails != null) {
+            String userId = sessionDetails.userId();
 
+            //save to a map <String, Marshallable> making the value Marhsallable
+            MapView<String, SubscriptionStat> subStats = asset.root().getAsset("proc/subscriptions").getView(MapView.class);
+            if (subStats != null) {
+                SubscriptionStat stat = subStats.get(userId + "~" + subType);
+                if(stat==null){
+                    stat=new SubscriptionStat();
+                    stat.setFirstSubscribed(LocalTime.now());
+                }
+                stat.setTotalSubscriptions(stat.getTotalSubscriptions()+1);
+                stat.setActiveSubscriptions(stat.getActiveSubscriptions()+1);
+                stat.setRecentlySubscribed(LocalTime.now());
+                subStats.put(userId + "~" + subType, stat);
+            }
+        }
+    }
 }
