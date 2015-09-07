@@ -28,7 +28,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * The purpose is to provide Redis like command which wrap a MapView or a Reference to an underlying store.
@@ -116,7 +115,7 @@ public class RedisEmulator {
     }
 
     public static long decr(Reference<Long> l) {
-        return l.applyTo(v -> v - 1);
+        return l.syncUpdate(v -> v - 1, v -> v);
     }
 
     public static long decr(MapView<String, Long> map, String key) {
@@ -124,7 +123,7 @@ public class RedisEmulator {
     }
 
     public static void del(MapView<String, ?> map, String... keys) {
-        map.asyncUpdate(m -> Stream.of(keys).forEach(k -> m.remove(k)));
+        map.keySet().removeAll(Arrays.asList(keys));
     }
 
     public static void echo(Updatable updatable, String message) {
@@ -301,7 +300,7 @@ public class RedisEmulator {
      */
     public static <V> String flushdb(MapView<String, V> map) {
         if (map != null)
-        map.clear();
+            map.clear();
         return "OK";
     }
 
@@ -338,7 +337,7 @@ public class RedisEmulator {
     }
 
     public static long incr(Reference<Long> l) {
-        return l.applyTo(v -> v + 1);
+        return l.syncUpdate(v -> v + 1, v -> v);
     }
 
     /**
