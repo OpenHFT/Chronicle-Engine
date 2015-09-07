@@ -302,9 +302,9 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
         if(sessionDetails != null) {
             String userId = sessionDetails.userId();
 
-            //save to a map <String, Marshallable> making the value Marhsallable
-            MapView<String, SubscriptionStat> subStats = asset.root().getAsset("proc/subscriptions").getView(MapView.class);
-            if (subStats != null) {
+            Asset subscriptionAsset = asset.root().getAsset("proc/subscriptions");
+            if (subscriptionAsset != null && subscriptionAsset.getView(MapView.class) != null) {
+                MapView<String, SubscriptionStat> subStats = subscriptionAsset.getView(MapView.class);
                 SubscriptionStat stat = subStats.get(userId + "~" + subType);
                 if(stat==null){
                     stat=new SubscriptionStat();
