@@ -373,7 +373,7 @@ public class RedisEmulator {
 
 
     public static double incrbyfloat(MapView<String, Double> map, String key, double toAdd) {
-        return map.applyToKey(key, v -> v + toAdd);
+        return map.syncUpdateKey(key, v -> v + toAdd, v -> v);
     }
 
     public static Set<String> keys(MapView<String, ?> map, String pattern) {
