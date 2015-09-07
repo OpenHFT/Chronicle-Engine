@@ -72,7 +72,7 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscriptio
                 final Class vClass = m.read(() -> "valueType").typeLiteral();
 
                 tidToListener.put(inputTid, listener);
-                assetTree.registerTopicSubscriber(requestContext.name(), kClass, vClass, listener);
+                assetTree.registerTopicSubscriber(requestContext.fullName(), kClass, vClass, listener);
             });
             return;
         }
