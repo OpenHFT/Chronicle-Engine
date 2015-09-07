@@ -144,7 +144,7 @@ public class RequestContext implements Cloneable {
     }
 
     @NotNull
-    public Class<Subscription> getSubscriptionType() {
+    public Class<SubscriptionCollection> getSubscriptionType() {
         Class elementType = elementType();
         return elementType == TopologicalEvent.class
                 ? (Class) TopologySubscription.class

@@ -27,6 +27,7 @@ import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -377,7 +378,12 @@ public class RedisEmulator {
     }
 
     public static Set<String> keys(MapView<String, ?> map, String pattern) {
-        return map.applyTo(m -> m.keySet().stream().filter(k -> k.matches(pattern)).collect(Collectors.toSet()));
+        return map.applyTo(m -> {
+            Pattern compile = Pattern.compile(pattern);
+            return m.keySet().stream()
+                    .filter(k -> compile.matcher(k).matches())
+                    .collect(Collectors.toSet());
+        });
     }
 
     public static <V> V lindex(MapView<String, List<V>> map, String name, int index) {

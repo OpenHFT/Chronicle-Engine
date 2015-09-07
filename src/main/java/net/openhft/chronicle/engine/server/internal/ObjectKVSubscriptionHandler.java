@@ -1,6 +1,6 @@
 package net.openhft.chronicle.engine.server.internal;
 
-import net.openhft.chronicle.engine.api.pubsub.Subscription;
+import net.openhft.chronicle.engine.api.pubsub.SubscriptionCollection;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
@@ -21,7 +21,7 @@ import static net.openhft.chronicle.network.connection.CoreFields.tid;
 /**
  * Created by Rob Austin
  */
-public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscription> {
+public class ObjectKVSubscriptionHandler extends SubscriptionHandler<SubscriptionCollection> {
     private static final Logger LOG = LoggerFactory.getLogger(ObjectKVSubscriptionHandler.class);
 
     @Nullable
@@ -114,7 +114,7 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscriptio
                  final WireOutPublisher publisher,
                  final AssetTree assetTree, final long tid,
                  final Wire outWire,
-                 final Subscription subscription) {
+                 final SubscriptionCollection subscription) {
         setOutWire(outWire);
         this.outWire = outWire;
         this.subscription = subscription;

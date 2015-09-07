@@ -165,9 +165,9 @@ public interface AssetTree extends Closeable {
      * @throws AssetNotFoundException the view could not be constructed.
      */
     @NotNull
-    default Subscription acquireSubscription(@NotNull RequestContext requestContext) throws AssetNotFoundException {
+    default SubscriptionCollection acquireSubscription(@NotNull RequestContext requestContext) throws AssetNotFoundException {
         Asset asset = acquireAsset(requestContext.fullName());
-        Class<Subscription> subscriptionType = requestContext.getSubscriptionType();
+        Class<SubscriptionCollection> subscriptionType = requestContext.getSubscriptionType();
         requestContext.viewType(subscriptionType);
         return asset.acquireView(subscriptionType, requestContext);
     }
@@ -180,7 +180,7 @@ public interface AssetTree extends Closeable {
      */
     default <E> void unregisterSubscriber(@NotNull String uri, @NotNull Subscriber<E> subscriber) {
         RequestContext rc = requestContext(uri);
-        Subscription subscription = getSubscription(rc);
+        SubscriptionCollection subscription = getSubscription(rc);
         if (subscription == null)
             subscriber.onEndOfSubscription();
         else
@@ -195,7 +195,7 @@ public interface AssetTree extends Closeable {
      */
     default <T, E> void unregisterTopicSubscriber(@NotNull String uri, @NotNull TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
         RequestContext rc = requestContext(uri).viewType(Subscriber.class);
-        Subscription subscription = getSubscription(rc);
+        SubscriptionCollection subscription = getSubscription(rc);
         if (subscription instanceof KVSSubscription)
             ((KVSSubscription) subscription).unregisterTopicSubscriber(subscriber);
         else
@@ -210,9 +210,9 @@ public interface AssetTree extends Closeable {
      * @throws AssetNotFoundException the view could not be constructed.
      */
     @Nullable
-    default Subscription getSubscription(@NotNull RequestContext requestContext) {
+    default SubscriptionCollection getSubscription(@NotNull RequestContext requestContext) {
         Asset asset = getAsset(requestContext.fullName());
-        Class<Subscription> subscriptionType = requestContext.getSubscriptionType();
+        Class<SubscriptionCollection> subscriptionType = requestContext.getSubscriptionType();
         requestContext.viewType(subscriptionType);
         return asset == null ? null : asset.getView(subscriptionType);
     }

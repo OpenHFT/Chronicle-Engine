@@ -293,7 +293,7 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
                     if (viewType == ObjectKVSSubscription.class) {
                         subscriptionHandler.process(in,
                                 requestContext, publisher, assetTree, tid,
-                                outWire, (Subscription) view);
+                                outWire, (SubscriptionCollection) view);
                         return;
                     }
 

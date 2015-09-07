@@ -159,7 +159,7 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
             String keyStr = key.toString();
             Asset child = asset.getChild(keyStr);
             if (child != null) {
-                Subscription subscription = child.subscription(false);
+                SubscriptionCollection subscription = child.subscription(false);
                 if (subscription instanceof VanillaSimpleSubscription) {
 //                    System.out.println(changeEvent.toString().substring(0, 100));
                     ((SimpleSubscription) subscription).notifyMessage(changeEvent.getValue());

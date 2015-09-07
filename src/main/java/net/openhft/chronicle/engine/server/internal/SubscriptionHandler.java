@@ -4,7 +4,7 @@ import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
-import net.openhft.chronicle.engine.api.pubsub.Subscription;
+import net.openhft.chronicle.engine.api.pubsub.SubscriptionCollection;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
@@ -25,7 +25,7 @@ import static net.openhft.chronicle.network.connection.CoreFields.reply;
 /**
  * Created by rob on 28/06/2015.
  */
-public class SubscriptionHandler<T extends Subscription> extends AbstractHandler {
+public class SubscriptionHandler<T extends SubscriptionCollection> extends AbstractHandler {
     private static final Logger LOG = LoggerFactory.getLogger(SubscriptionHandler.class);
 
     final StringBuilder eventName = new StringBuilder();
@@ -92,7 +92,7 @@ public class SubscriptionHandler<T extends Subscription> extends AbstractHandler
             Subscriber<Object> listener = new LocalSubscriber(tid);
             tidToListener.put(tid, listener);
             RequestContext rc = requestContext.clone().type(subscriptionType);
-            final Subscription subscription = assetTree.acquireSubscription(rc);
+            final SubscriptionCollection subscription = assetTree.acquireSubscription(rc);
             subscription.registerSubscriber(rc, listener, filter);
             return true;
         }

@@ -20,7 +20,7 @@ import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.pubsub.ISubscriber;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
-import net.openhft.chronicle.engine.api.pubsub.Subscription;
+import net.openhft.chronicle.engine.api.pubsub.SubscriptionCollection;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.query.Filter;
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Created by peter on 29/05/15.
  */
-public interface KVSSubscription<K, V> extends Subscription<MapEvent<K, V>>, ISubscriber, EventConsumer<K, V> {
+public interface KVSSubscription<K, V> extends SubscriptionCollection<MapEvent<K, V>>, ISubscriber, EventConsumer<K, V> {
 
     /**
      * Add a Subscription for the keys changed on this Map
