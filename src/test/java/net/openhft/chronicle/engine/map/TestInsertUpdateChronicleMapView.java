@@ -93,14 +93,15 @@ public class TestInsertUpdateChronicleMapView {
 
     @Test
     public void testInsertFollowedByUpdate() throws Exception {
-
+        //Note you have to set the bootstrap to false in order for this test to work.
+        //Otherwise it is possible that that you can get 2 insert events.
         final MapView<String, String> serverMap = serverAssetTree.acquireMap
-                ("name?putReturnsNull=false",
+                ("name?putReturnsNull=false&bootstrap=false",
                         String.class, String
                                 .class);
 
         final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(128);
-        clientAssetTree.registerSubscriber("name?putReturnsNull=false", MapEvent.class,
+        clientAssetTree.registerSubscriber("name?putReturnsNull=false&bootstrap=false", MapEvent.class,
                 events::add);
 
         {
