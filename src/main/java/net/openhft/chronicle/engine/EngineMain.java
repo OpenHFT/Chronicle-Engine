@@ -47,6 +47,7 @@ public class EngineMain {
         addClass(ClustersCfg.class);
         addClass(InMemoryMapCfg.class);
         addClass(FilePerKeyMapCfg.class);
+        addClass(ChronicleMapCfg.class);
         addClass(MonitorCfg.class);
 
         String name = args.length > 0 ? args[0] : "engine.yaml";
