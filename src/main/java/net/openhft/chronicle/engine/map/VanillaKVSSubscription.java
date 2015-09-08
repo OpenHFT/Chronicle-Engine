@@ -47,7 +47,7 @@ import static net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer.notif
  * Created by peter on 22/05/15.
  */
 // todo review thread safety
-public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K, V>,
+public class VanillaKVSSubscription<K, V> implements ObjectKVSSubscription<K, V>,
         RawKVSSubscription<K, V> {
 
     private static final Logger LOG = LoggerFactory.getLogger(VanillaKVSSubscription.class);
@@ -59,7 +59,7 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
 
     @Nullable
     private final Asset asset;
-    final Map<Subscriber, Subscriber> subscriptionDelegate = new IdentityHashMap<>();
+    private final Map<Subscriber, Subscriber> subscriptionDelegate = new IdentityHashMap<>();
     private KeyValueStore<K, V> kvStore;
 
     public VanillaKVSSubscription(@NotNull RequestContext requestContext, @NotNull Asset asset) {
@@ -71,7 +71,7 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
         if (viewType != null && asset != null)
             asset.addView(viewType, this);
 
-        sessionProvider = asset.findView(SessionProvider.class);
+        sessionProvider = asset == null ? null : asset.findView(SessionProvider.class);
     }
 
     @Override
@@ -298,6 +298,8 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
     }
 
     private void addToStats(String subType){
+        if(sessionProvider == null)return;
+
         SessionDetails sessionDetails = sessionProvider.get();
         if(sessionDetails != null) {
             String userId = sessionDetails.userId();
