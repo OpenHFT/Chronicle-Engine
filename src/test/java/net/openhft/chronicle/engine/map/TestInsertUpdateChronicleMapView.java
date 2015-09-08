@@ -103,7 +103,7 @@ public class TestInsertUpdateChronicleMapView {
         final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(128);
         clientAssetTree.registerSubscriber("name?putReturnsNull=false&bootstrap=false", MapEvent.class,
                 events::add);
-
+        Jvm.pause(1000);
         {
             serverMap.put("hello", "world");
             final MapEvent event = events.poll(10, SECONDS);
