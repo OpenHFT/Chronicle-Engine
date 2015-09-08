@@ -16,12 +16,15 @@
 
 package net.openhft.chronicle.engine.cfg;
 
+import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.map.AuthenticatedKeyValueStore;
 import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
+import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.tree.VanillaAsset;
 import net.openhft.chronicle.wire.WireIn;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +49,13 @@ public class ChronicleMapCfg implements Installable {
         ((VanillaAsset) asset).enableTranslatingValuesToBytesStore();
         String uri = path + "?putReturnsNull=" + putReturnsNull + "&removeReturnsNull=" + removeReturnsNull;
         RequestContext rc = RequestContext.requestContext(uri);
-        asset.addView(AuthenticatedKeyValueStore.class, new ChronicleMapKeyValueStore<>(rc, asset));
+
+        assetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore", VanillaMapView::new, KeyValueStore.class);
+        assetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, tasset) ->
+                new ChronicleMapKeyValueStore(context.basePath(OS.TARGET).entries(20).averageValueSize(10_000), tasset));
+
+
+        //asset.addView(AuthenticatedKeyValueStore.class, new ChronicleMapKeyValueStore<>(rc, asset));
         MapView mapView = assetTree.acquireMap(uri, keyType, valueType);
         LOGGER.info("Added ChronicleMap " + path + ", size: " + mapView.size());
         return null;
