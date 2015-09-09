@@ -21,10 +21,12 @@ import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Serializable;
+
 /**
  * Created by peter on 27/08/15.
  */
-public class EndOfDay implements Marshallable {
+public class EndOfDay implements Marshallable, Serializable {
     long daysVolume;
     //    Symbol,Name,Open,High,Low,Close,Net Chg,% Chg,Volume,52 Wk High,52 Wk Low,Div,Yield,P/E,YTD % Chg
 //    AIR,AAR Corp.,18.92,19.28,18.74,19.26,0.83,4.5,415272,26.08,14.24,,,11.67,-16.19

@@ -52,7 +52,7 @@ public class ChronicleMapCfg implements Installable {
 
         assetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore", VanillaMapView::new, KeyValueStore.class);
         assetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, tasset) ->
-                new ChronicleMapKeyValueStore(context.basePath(OS.TARGET).entries(20).averageValueSize(10_000), tasset));
+                new ChronicleMapKeyValueStore(context.basePath("/tmp/" + path).entries(2000).averageValueSize(1000), tasset));
 
 
         //asset.addView(AuthenticatedKeyValueStore.class, new ChronicleMapKeyValueStore<>(rc, asset));
@@ -72,7 +72,7 @@ public class ChronicleMapCfg implements Installable {
 
     @Override
     public String toString() {
-        return "FilePerKeyMapCfg{" +
+        return "ChronicleMapCfg{" +
                 "keyType=" + keyType +
                 ", valueType=" + valueType +
                 ", putReturnsNull=" + putReturnsNull +
