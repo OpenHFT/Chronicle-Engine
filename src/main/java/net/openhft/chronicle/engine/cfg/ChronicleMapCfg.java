@@ -16,13 +16,11 @@
 
 package net.openhft.chronicle.engine.cfg;
 
-import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
-import net.openhft.chronicle.engine.map.AuthenticatedKeyValueStore;
 import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.tree.VanillaAsset;
@@ -34,7 +32,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 /**
- * Created by peter on 26/08/15.
+ * Created by daniel on 26/08/15.
  */
 public class ChronicleMapCfg implements Installable {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChronicleMapCfg.class);
@@ -50,12 +48,10 @@ public class ChronicleMapCfg implements Installable {
         String uri = path + "?putReturnsNull=" + putReturnsNull + "&removeReturnsNull=" + removeReturnsNull;
         RequestContext rc = RequestContext.requestContext(uri);
 
-        assetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore", VanillaMapView::new, KeyValueStore.class);
-        assetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, tasset) ->
+        asset.addWrappingRule(MapView.class, "map directly to KeyValueStore", VanillaMapView::new, KeyValueStore.class);
+        asset.addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, tasset) ->
                 new ChronicleMapKeyValueStore(context.basePath("/tmp/" + path).entries(2000).averageValueSize(1000), tasset));
 
-
-        //asset.addView(AuthenticatedKeyValueStore.class, new ChronicleMapKeyValueStore<>(rc, asset));
         MapView mapView = assetTree.acquireMap(uri, keyType, valueType);
         LOGGER.info("Added ChronicleMap " + path + ", size: " + mapView.size());
         return null;
