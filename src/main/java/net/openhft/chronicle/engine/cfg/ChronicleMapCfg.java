@@ -67,8 +67,7 @@ public class ChronicleMapCfg implements Installable {
                 .read(() -> "valueType").typeLiteral(this, (o, c) -> o.valueType = c)
                 .read(() -> "compression").text(this, (o, c) -> o.compression = c)
                 .read(() -> "putReturnsNull").bool(this, (o, e) -> o.putReturnsNull = e)
-                .read(() -> "removeReturnsNull").bool(this, (o, e) -> o.removeReturnsNull = e)
-                .read(() -> "diskPath").text(this, (o, s) -> o.diskPath = s);
+                .read(() -> "removeReturnsNull").bool(this, (o, e) -> o.removeReturnsNull = e);
     }
 
     @Override
@@ -79,7 +78,6 @@ public class ChronicleMapCfg implements Installable {
                 ", putReturnsNull=" + putReturnsNull +
                 ", removeReturnsNull=" + removeReturnsNull +
                 ", compression='" + compression + '\'' +
-                ", diskPath='" + diskPath + '\'' +
                 '}';
     }
 }
