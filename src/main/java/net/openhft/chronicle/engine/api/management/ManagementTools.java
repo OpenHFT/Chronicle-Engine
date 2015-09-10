@@ -150,7 +150,7 @@ public enum ManagementTools {
             tree.registerSubscriber("", TopologicalEvent.class, e -> {
                         // give the collection time to be setup.
                         if (e.assetName() != null)
-                            ses.schedule(() -> handleTreeUpdate(tree, e, ses), 50, TimeUnit.MILLISECONDS);
+                            ses.schedule(() -> handleTreeUpdate(tree, e, ses), 2000, TimeUnit.MILLISECONDS);
                     }
             );
             return null;

@@ -22,6 +22,7 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
+import net.openhft.chronicle.engine.map.ObjectKeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.tree.VanillaAsset;
 import net.openhft.chronicle.wire.WireIn;
@@ -57,7 +58,7 @@ public class ChronicleMapCfg implements Installable {
 
 
         ChronicleMapKeyValueStore chronicleMapKeyValueStore = new ChronicleMapKeyValueStore(rc, asset);
-        asset.addView(KeyValueStore.class, chronicleMapKeyValueStore);
+        asset.addView(ObjectKeyValueStore.class, chronicleMapKeyValueStore);
         asset.addView(MapView.class, new VanillaMapView(rc, asset, chronicleMapKeyValueStore));
 
         return null;
