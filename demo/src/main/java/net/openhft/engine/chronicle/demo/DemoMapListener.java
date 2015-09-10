@@ -41,7 +41,7 @@ public class DemoMapListener {
             }
         };
         Subscriber<MapEvent> mapEventSubscriber = e -> e.apply(mapEventListener);
-        clientAssetTree.registerSubscriber("/data/map", MapEvent.class, mapEventSubscriber);
+        clientAssetTree.registerSubscriber("/data/chronicle", MapEvent.class, mapEventSubscriber);
 
 //        Jvm.pause(1000);
 //

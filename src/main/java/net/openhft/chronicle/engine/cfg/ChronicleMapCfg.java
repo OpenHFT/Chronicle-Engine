@@ -40,30 +40,39 @@ public class ChronicleMapCfg implements Installable {
     private boolean putReturnsNull, removeReturnsNull;
     private String compression;
     private String diskPath;
+    private long entries=-1;
+    private double averageSize=-1;
 
     @Override
     public Void install(String path, AssetTree assetTree) throws IOException {
         Asset asset = assetTree.acquireAsset(path);
         ((VanillaAsset) asset).enableTranslatingValuesToBytesStore();
-        String uri = path + "?putReturnsNull=" + putReturnsNull + "&removeReturnsNull=" + removeReturnsNull;
-        RequestContext rc = RequestContext.requestContext(uri);
+        RequestContext rc = RequestContext.requestContext(path);
+        rc.basePath(diskPath)
+                .putReturnsNull(putReturnsNull)
+                .removeReturnsNull(removeReturnsNull);
 
-        asset.addWrappingRule(MapView.class, "map directly to KeyValueStore", VanillaMapView::new, KeyValueStore.class);
-        asset.addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, tasset) ->
-                new ChronicleMapKeyValueStore(context.basePath("/tmp/" + path).entries(2000).averageValueSize(1000), tasset));
+        if(entries != -1)rc.entries(entries);
+        if(averageSize != -1)rc.averageValueSize(averageSize);
 
-        MapView mapView = assetTree.acquireMap(uri, keyType, valueType);
-        LOGGER.info("Added ChronicleMap " + path + ", size: " + mapView.size());
+
+        ChronicleMapKeyValueStore chronicleMapKeyValueStore = new ChronicleMapKeyValueStore(rc, asset);
+        asset.addView(KeyValueStore.class, chronicleMapKeyValueStore);
+        asset.addView(MapView.class, new VanillaMapView(rc, asset, chronicleMapKeyValueStore));
+
         return null;
     }
 
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
-        wire.read(() -> "keyType").typeLiteral(this, (o, c) -> o.keyType = c)
+        wire.read(() -> "diskPath").text(this, (o, c) -> o.diskPath = c)
+                .read(() -> "keyType").typeLiteral(this, (o, c) -> o.keyType = c)
                 .read(() -> "valueType").typeLiteral(this, (o, c) -> o.valueType = c)
                 .read(() -> "compression").text(this, (o, c) -> o.compression = c)
                 .read(() -> "putReturnsNull").bool(this, (o, e) -> o.putReturnsNull = e)
-                .read(() -> "removeReturnsNull").bool(this, (o, e) -> o.removeReturnsNull = e);
+                .read(() -> "removeReturnsNull").bool(this, (o, e) -> o.removeReturnsNull = e)
+                .read(() -> "entries").int64(this, (o, e) -> o.entries = e)
+                .read(() -> "averageSize").float64(this, (o, e) -> o.averageSize = e);
     }
 
     @Override

@@ -300,6 +300,11 @@ public class RequestContext implements Cloneable {
         return pathName;
     }
 
+    public RequestContext namePath(String pathName) {
+        this.pathName = pathName;
+        return this;
+    }
+
     public String name() {
         return name;
     }
@@ -360,6 +365,12 @@ public class RequestContext implements Cloneable {
     @Nullable
     public Boolean removeReturnsNull() {
         return removeReturnsNull;
+    }
+
+    @Nullable
+    public RequestContext removeReturnsNull(Boolean removeReturnsNull) {
+        this.removeReturnsNull = removeReturnsNull;
+        return this;
     }
 
     @Nullable

@@ -76,11 +76,14 @@ data: {
       diskPath: demo-data
     },
     chronicle: !ChronicleMapCfg {
+          diskPath: /tmp/data,
           keyType: !type String,
           valueType: !type String,
           compression: none,
           putReturnsNull: false,
           removeReturnsNull: false,
+          entries: 2000,
+          averageSize: 1000
         },
     # a map which wraps ConcurrentHashMap
     map: !InMemoryMapCfg {
