@@ -18,6 +18,7 @@ package net.openhft.chronicle.engine;
 
 
 import net.openhft.chronicle.core.pool.ClassAliasPool;
+import net.openhft.chronicle.engine.api.management.mbean.ChronicleConfig;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.cfg.*;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;

@@ -1,4 +1,4 @@
-package net.openhft.chronicle.engine;
+package net.openhft.chronicle.engine.api.management.mbean;
 
 import net.openhft.chronicle.wire.YamlLogging;
 
@@ -49,6 +49,16 @@ public class ChronicleConfig implements ChronicleConfigMBean {
     @Override
     public boolean getYamlClientWriteLogging() {
         return YamlLogging.clientWrites;
+    }
+
+    @Override
+    public void setShowHeartBeats(boolean log) {
+        YamlLogging.showHeartBeats = log;
+    }
+
+    @Override
+    public boolean getShowHeartBeats() {
+        return YamlLogging.showHeartBeats;
     }
 
     public static void init(){

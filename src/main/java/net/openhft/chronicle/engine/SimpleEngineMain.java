@@ -17,6 +17,7 @@
 package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.engine.api.management.mbean.ChronicleConfig;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
