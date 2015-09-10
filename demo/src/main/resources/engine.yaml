@@ -33,7 +33,8 @@ etc: {
     }
   }
   monitoring: !MonitorCfg {
-      enabled: true
+      subscriptionMonitoringEnabled: true
+      userMonitoringEnabled: true
   }
   #
   # Configure a group of node which form a local cluster.

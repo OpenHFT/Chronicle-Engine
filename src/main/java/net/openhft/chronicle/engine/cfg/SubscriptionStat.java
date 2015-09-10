@@ -1,4 +1,4 @@
-package net.openhft.chronicle.engine.pubsub;
+package net.openhft.chronicle.engine.cfg;
 
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.wire.Marshallable;

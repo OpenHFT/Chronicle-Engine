@@ -16,9 +16,7 @@
 
 package net.openhft.chronicle.engine.cfg;
 
-import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
-import net.openhft.chronicle.engine.pubsub.SubscriptionStat;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
@@ -35,33 +33,40 @@ import java.net.URISyntaxException;
  */
 public class MonitorCfg implements Installable, Marshallable {
     private static final Logger LOGGER = LoggerFactory.getLogger(MonitorCfg.class);
-    private boolean enabled;
-    private boolean debug;
+    private boolean subscriptionMonitoringEnabled;
+    private boolean userMonitoringEnabled;
+
 
     @Override
     public MonitorCfg install(String path, AssetTree assetTree) throws IOException, URISyntaxException {
-        if (enabled) {
-            LOGGER.info("Enabling Monitoring for " + assetTree);
-            MapView map = assetTree.acquireMap("/proc/subscriptions", String.class, SubscriptionStat.class);
-            map.size();
+        if (subscriptionMonitoringEnabled) {
+            LOGGER.info("Enabling Subscription Monitoring for " + assetTree);
+            assetTree.acquireMap("/proc/subscriptions", String.class, SubscriptionStat.class);
+        }
+        if (userMonitoringEnabled) {
+            LOGGER.info("Enabling User Monitoring for " + assetTree);
+            assetTree.acquireMap("/proc/users", String.class, UserStat.class);
         }
         return this;
     }
 
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
-        wire.read(() -> "enabled").bool(this, (o, b) -> o.enabled = b);
+        wire.read(() -> "subscriptionMonitoringEnabled").bool(this, (o, b) -> o.subscriptionMonitoringEnabled = b)
+            .read(() -> "userMonitoringEnabled").bool(this, (o, b) -> o.userMonitoringEnabled = b);
     }
 
     @Override
     public void writeMarshallable(WireOut wire) {
-        wire.write(() -> "enabled").bool(enabled);
+        wire.write(() -> "subscriptionMonitoringEnabled").bool(subscriptionMonitoringEnabled)
+            .write(() -> "userMonitoringEnabled").bool(userMonitoringEnabled);
     }
 
     @Override
     public String toString() {
         return "MonitorCfg{" +
-                "enabled=" + enabled +
+                "subscriptionMonitoringEnabled=" + subscriptionMonitoringEnabled +
+                "userMonitoringEnabled=" + userMonitoringEnabled +
                 '}';
     }
 }

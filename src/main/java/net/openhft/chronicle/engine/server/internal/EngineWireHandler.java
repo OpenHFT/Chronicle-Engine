@@ -24,9 +24,12 @@ import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.session.Heartbeat;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
+import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.api.tree.RequestContextInterner;
+import net.openhft.chronicle.engine.cfg.MonitorCfg;
+import net.openhft.chronicle.engine.cfg.UserStat;
 import net.openhft.chronicle.engine.collection.CollectionWireHandler;
 import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
@@ -43,8 +46,10 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.concurrent.RejectedExecutionException;
 
 import static net.openhft.chronicle.core.Jvm.rethrow;
@@ -244,7 +249,31 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
                            @NotNull final WireOut out,
                            @NotNull final SessionDetailsProvider sessionDetails) {
 
-        logYamlToStandardOut(in);
+        if(!isSystemMessage || YamlLogging.showHeartBeats)
+            logYamlToStandardOut(in);
+
+
+        if(!isSystemMessage) {
+            //Not interested in every heartbeat
+            //Why are there 2 interactions for every message?
+            Map<String, UserStat> userMonitoringMap = null;
+            Asset userAsset = assetTree.root().getAsset("proc/users");
+            if (userAsset != null && userAsset.getView(MapView.class) != null) {
+                userMonitoringMap = userAsset.getView(MapView.class);
+            }
+            if (userMonitoringMap != null) {
+                UserStat userStat = userMonitoringMap.get(sessionDetails.userId());
+                if(userStat ==null) {
+                    userStat = new UserStat();
+                    userStat.setLoggedIn(LocalTime.now());
+                }
+                userStat.setRecentInteraction(LocalTime.now());
+                userStat.setTotalInteractions(userStat.getTotalInteractions()+1);
+                userMonitoringMap.put(sessionDetails.userId(), userStat);
+            }
+        }
+
+
 
         if (sessionProvider != null)
             sessionProvider.set(sessionDetails);

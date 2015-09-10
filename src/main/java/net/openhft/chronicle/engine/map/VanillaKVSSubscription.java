@@ -24,7 +24,7 @@ import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.pubsub.SimpleSubscription;
-import net.openhft.chronicle.engine.pubsub.SubscriptionStat;
+import net.openhft.chronicle.engine.cfg.SubscriptionStat;
 import net.openhft.chronicle.engine.pubsub.VanillaSimpleSubscription;
 import net.openhft.chronicle.engine.query.Filter;
 import net.openhft.chronicle.network.api.session.SessionDetails;
@@ -61,6 +61,7 @@ public class VanillaKVSSubscription<K, V> implements ObjectKVSSubscription<K, V>
     private final Asset asset;
     private final Map<Subscriber, Subscriber> subscriptionDelegate = new IdentityHashMap<>();
     private KeyValueStore<K, V> kvStore;
+    private Map<String, SubscriptionStat> subscriptionMonitoringMap = null;
 
     public VanillaKVSSubscription(@NotNull RequestContext requestContext, @NotNull Asset asset) {
         this(requestContext.viewType(), asset);
@@ -297,6 +298,16 @@ public class VanillaKVSSubscription<K, V> implements ObjectKVSSubscription<K, V>
         subscriber.onEndOfSubscription();
     }
 
+    //Needs some refactoring - need a definitive way of knowing when this map should become available
+    private Map getSubscriptionMap(){
+        if(subscriptionMonitoringMap != null)return subscriptionMonitoringMap;
+        Asset subscriptionAsset = asset.root().getAsset("proc/subscriptions");
+        if (subscriptionAsset != null && subscriptionAsset.getView(MapView.class) != null) {
+            subscriptionMonitoringMap = subscriptionAsset.getView(MapView.class);
+        }
+        return subscriptionMonitoringMap;
+    }
+
     private void addToStats(String subType){
         if(sessionProvider == null)return;
 
@@ -304,19 +315,19 @@ public class VanillaKVSSubscription<K, V> implements ObjectKVSSubscription<K, V>
         if(sessionDetails != null) {
             String userId = sessionDetails.userId();
 
-            Asset subscriptionAsset = asset.root().getAsset("proc/subscriptions");
-            if (subscriptionAsset != null && subscriptionAsset.getView(MapView.class) != null) {
-                MapView<String, SubscriptionStat> subStats = subscriptionAsset.getView(MapView.class);
+            Map<String, SubscriptionStat> subStats = getSubscriptionMap();
+            if(subStats != null) {
                 SubscriptionStat stat = subStats.get(userId + "~" + subType);
-                if(stat==null){
-                    stat=new SubscriptionStat();
+                if (stat == null) {
+                    stat = new SubscriptionStat();
                     stat.setFirstSubscribed(LocalTime.now());
                 }
-                stat.setTotalSubscriptions(stat.getTotalSubscriptions()+1);
-                stat.setActiveSubscriptions(stat.getActiveSubscriptions()+1);
+                stat.setTotalSubscriptions(stat.getTotalSubscriptions() + 1);
+                stat.setActiveSubscriptions(stat.getActiveSubscriptions() + 1);
                 stat.setRecentlySubscribed(LocalTime.now());
                 subStats.put(userId + "~" + subType, stat);
             }
+
         }
     }
 }
