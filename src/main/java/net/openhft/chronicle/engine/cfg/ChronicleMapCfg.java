@@ -59,7 +59,6 @@ public class ChronicleMapCfg implements Installable {
 
         ChronicleMapKeyValueStore chronicleMapKeyValueStore = new ChronicleMapKeyValueStore(rc, asset);
         asset.addView(ObjectKeyValueStore.class, chronicleMapKeyValueStore);
-        asset.addView(MapView.class, new VanillaMapView(rc, asset, chronicleMapKeyValueStore));
 
         return null;
     }

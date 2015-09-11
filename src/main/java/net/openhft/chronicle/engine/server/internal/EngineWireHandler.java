@@ -28,7 +28,6 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.api.tree.RequestContextInterner;
-import net.openhft.chronicle.engine.cfg.MonitorCfg;
 import net.openhft.chronicle.engine.cfg.UserStat;
 import net.openhft.chronicle.engine.collection.CollectionWireHandler;
 import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
@@ -114,6 +113,8 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
     @Nullable
     private Class viewType;
     private long tid;
+    private final StringBuilder currentLogMessage = new StringBuilder();
+    private final StringBuilder prevLogMessage = new StringBuilder();
 
     public EngineWireHandler(@NotNull final WireType byteToWire,
                              @NotNull final AssetTree assetTree,
@@ -163,7 +164,6 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
                 if (LOG.isDebugEnabled()) LOG.debug("received system-meta-data");
                 return;
             }
-
 
             try {
                 readCsp(wire);
@@ -249,31 +249,17 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
                            @NotNull final WireOut out,
                            @NotNull final SessionDetailsProvider sessionDetails) {
 
-        if(!isSystemMessage || YamlLogging.showHeartBeats)
+        if(!YamlLogging.showHeartBeats){
+            //save the previous message (the meta-data for printing later)
+            //if the message turns out not to be a system message
+            prevLogMessage.setLength(0);
+            prevLogMessage.append(currentLogMessage);
+            currentLogMessage.setLength(0);
+            logToBuffer(in, currentLogMessage);
+        }else {
+            //log every message
             logYamlToStandardOut(in);
-
-
-        if(!isSystemMessage) {
-            //Not interested in every heartbeat
-            //Why are there 2 interactions for every message?
-            Map<String, UserStat> userMonitoringMap = null;
-            Asset userAsset = assetTree.root().getAsset("proc/users");
-            if (userAsset != null && userAsset.getView(MapView.class) != null) {
-                userMonitoringMap = userAsset.getView(MapView.class);
-            }
-            if (userMonitoringMap != null) {
-                UserStat userStat = userMonitoringMap.get(sessionDetails.userId());
-                if(userStat ==null) {
-                    userStat = new UserStat();
-                    userStat.setLoggedIn(LocalTime.now());
-                }
-                userStat.setRecentInteraction(LocalTime.now());
-                userStat.setTotalInteractions(userStat.getTotalInteractions()+1);
-                userMonitoringMap.put(sessionDetails.userId(), userStat);
-            }
         }
-
-
 
         if (sessionProvider != null)
             sessionProvider.set(sessionDetails);
@@ -286,8 +272,25 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
                     LOG.debug("received data:\n" + wire.bytes().toHexString());
 
                 if (isSystemMessage) {
-                    systemHandler.process(in, out, tid, sessionDetails);
+                    systemHandler.process(in, out, tid, sessionDetails, getMonitoringMap());
                     return;
+                }
+
+                if(!YamlLogging.showHeartBeats) {
+                    logBufferToStandardOut(prevLogMessage);
+                    logBufferToStandardOut(currentLogMessage);
+                }
+
+                Map<String, UserStat> userMonitoringMap = getMonitoringMap();
+                if (userMonitoringMap != null) {
+                    UserStat userStat = userMonitoringMap.get(sessionDetails.userId());
+                    if(userStat==null) {
+                        throw new AssertionError("User should have been logged in");
+                    }
+                    //Use timeInMillis
+                    userStat.setRecentInteraction(LocalTime.now());
+                    userStat.setTotalInteractions(userStat.getTotalInteractions() + 1);
+                    userMonitoringMap.put(sessionDetails.userId(), userStat);
                 }
 
                 if (wireAdapter != null) {
@@ -375,6 +378,15 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
         });
     }
 
+    private Map<String, UserStat> getMonitoringMap() {
+        Map<String, UserStat> userMonitoringMap = null;
+        Asset userAsset = assetTree.root().getAsset("proc/users");
+        if (userAsset != null && userAsset.getView(MapView.class) != null) {
+            userMonitoringMap = userAsset.getView(MapView.class);
+        }
+        return userMonitoringMap;
+    }
+
     private void logYamlToStandardOut(@NotNull WireIn in) {
         if (YamlLogging.showServerReads) {
             try {
@@ -386,6 +398,26 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
             }
         }
     }
+
+    private void logToBuffer(@NotNull WireIn in, StringBuilder logBuffer) {
+        if (YamlLogging.showServerReads) {
+            logBuffer.setLength(0);
+            try {
+                logBuffer.append("\nServer Receives:\n" +
+                        Wires.fromSizePrefixedBlobs(in.bytes()));
+            } catch (Exception e) {
+                logBuffer.append("\n\n" +
+                        Bytes.toString(in.bytes()));
+            }
+        }
+    }
+
+    private void logBufferToStandardOut(StringBuilder logBuffer){
+        if(logBuffer.length() > 0){
+            LOG.info("\n" + logBuffer.toString());
+        }
+    }
+
 
     /**
      * peeks the csp or if it has a cid converts the cid into a Csp and returns that

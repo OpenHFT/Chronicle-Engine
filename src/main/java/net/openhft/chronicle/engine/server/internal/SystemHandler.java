@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.server.internal;
 
+import net.openhft.chronicle.engine.cfg.UserStat;
 import net.openhft.chronicle.network.ClientClosedProvider;
 import net.openhft.chronicle.network.api.session.SessionDetailsProvider;
 import net.openhft.chronicle.network.connection.CoreFields;
@@ -8,7 +9,10 @@ import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireKey;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.time.LocalTime;
+import java.util.Map;
 import java.util.function.BiConsumer;
 
 import static net.openhft.chronicle.engine.server.internal.SystemHandler.EventId.heartbeat;
@@ -20,12 +24,16 @@ import static net.openhft.chronicle.engine.server.internal.SystemHandler.EventId
 public class SystemHandler extends AbstractHandler implements ClientClosedProvider {
     private final StringBuilder eventName = new StringBuilder();
     private SessionDetailsProvider sessionDetails;
+    @Nullable
+    private Map<String, UserStat> monitoringMap;
     private volatile boolean hasClientClosed;
 
     void process(@NotNull final WireIn inWire,
                  @NotNull final WireOut outWire, final long tid,
-                 @NotNull final SessionDetailsProvider sessionDetails) {
+                 @NotNull final SessionDetailsProvider sessionDetails,
+                 @Nullable Map<String, UserStat> monitoringMap) {
         this.sessionDetails = sessionDetails;
+        this.monitoringMap = monitoringMap;
         setOutWire(outWire);
         dataConsumer.accept(inWire, tid);
     }
@@ -38,6 +46,11 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
 
         if (EventId.userid.contentEquals(eventName)) {
             this.sessionDetails.setUserId(valueIn.text());
+            if(this.monitoringMap != null){
+                UserStat userStat = new UserStat();
+                userStat.setLoggedIn(LocalTime.now());
+                monitoringMap.put(sessionDetails.userId(), userStat);
+            }
             return;
         }
 
