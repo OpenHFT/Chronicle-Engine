@@ -27,7 +27,6 @@ import static net.openhft.chronicle.engine.Utils.methodName;
  * @author Rob Austin.
  */
 
-
 /**
  * test using the listener both remotely or locally via the engine
  *
@@ -61,7 +60,6 @@ public class ValuesViewTest extends ThreadMonitoringTest {
                 new Object[]{Boolean.TRUE, WireType.TEXT}
         );
     }
-
 
     @Before
     public void before() throws IOException {
@@ -102,7 +100,6 @@ public class ValuesViewTest extends ThreadMonitoringTest {
         map.put("2", "2");
         map.put("3", "2");
         final Collection<String> values = map.values();
-
 
         final ArrayList<String> result = new ArrayList<>(values);
         result.sort(String::compareTo);

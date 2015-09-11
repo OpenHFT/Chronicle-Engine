@@ -57,7 +57,6 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
         if (!heartbeat.contentEquals(eventName) && !onClientClosing.contentEquals(eventName))
             return;
 
-
         //noinspection ConstantConditions
         outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
 
@@ -73,20 +72,20 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
         });
     };
 
-    public enum EventId implements WireKey {
-        heartbeat,
-        heartbeatReply,
-        onClientClosing,
-        onClosingReply,
-        userid
-    }
-
     /**
      * @return {@code true} if the client has intentionally closed
      */
     @Override
     public boolean hasClientClosed() {
         return hasClientClosed;
+    }
+
+    public enum EventId implements WireKey {
+        heartbeat,
+        heartbeatReply,
+        onClientClosing,
+        onClosingReply,
+        userid
     }
 }
 

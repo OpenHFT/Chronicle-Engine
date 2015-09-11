@@ -54,7 +54,6 @@ public class TcpManyClientConnectionsTest extends ThreadMonitoringTest {
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
-
     @Before
     public void before() throws IOException {
         serverAssetTree = new VanillaAssetTree().forTesting();
@@ -102,7 +101,6 @@ public class TcpManyClientConnectionsTest extends ThreadMonitoringTest {
         });
     }
 
-
     /**
      * test many clients connecting to a single server
      */
@@ -110,7 +108,6 @@ public class TcpManyClientConnectionsTest extends ThreadMonitoringTest {
     public void test() throws IOException, InterruptedException {
 
         final ExecutorService executorService = Executors.newCachedThreadPool();
-
 
         for (int i = 0; i < MAX; i++) {
             final int j = i;
@@ -124,9 +121,5 @@ public class TcpManyClientConnectionsTest extends ThreadMonitoringTest {
 
     }
 
-
 }
-
-
-
 

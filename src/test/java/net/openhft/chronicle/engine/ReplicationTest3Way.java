@@ -45,7 +45,6 @@ import static org.junit.Assert.assertNotNull;
 @RunWith(Parameterized.class)
 public class ReplicationTest3Way {
 
-
     public static final WireType WIRE_TYPE = WireType.TEXT;
     public static final String NAME = "/ChMaps/test";
     public ServerEndpoint serverEndpoint1;
@@ -160,7 +159,6 @@ public class ReplicationTest3Way {
             Jvm.pause(200);
         }
 
-
         Assert.assertEquals("world1", map1.get("hello1"));
         Assert.assertEquals("world2", map1.get("hello2"));
         Assert.assertEquals("world3", map1.get("hello3"));
@@ -175,8 +173,5 @@ public class ReplicationTest3Way {
 
     }
 
-
 }
-
-
 

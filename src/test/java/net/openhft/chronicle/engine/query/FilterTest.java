@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-
 /**
  * @author Rob Austin.
  */
@@ -43,7 +42,6 @@ public class FilterTest extends ThreadMonitoringTest {
         this.wireType = wireType;
     }
 
-
     @Parameterized.Parameters
     public static Collection<Object[]> data() throws IOException {
 
@@ -53,7 +51,6 @@ public class FilterTest extends ThreadMonitoringTest {
         list.add(new Object[]{WireType.BINARY});
         return list;
     }
-
 
     @Test
     public void test() throws Exception {

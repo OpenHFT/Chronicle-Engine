@@ -390,7 +390,6 @@ public class RequestContext implements Cloneable {
         return this;
     }
 
-
     @NotNull
     public RequestContext endSubscriptionAfterBootstrap(boolean endSubscriptionAfterBootstrap) {
         checkSealed();
@@ -398,11 +397,9 @@ public class RequestContext implements Cloneable {
         return this;
     }
 
-
     public Boolean endSubscriptionAfterBootstrap() {
         return endSubscriptionAfterBootstrap;
     }
-
 
     void checkSealed() {
         if (sealed) throw new IllegalStateException();

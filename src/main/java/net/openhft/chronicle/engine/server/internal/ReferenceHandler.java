@@ -27,14 +27,11 @@ import static net.openhft.chronicle.network.connection.CoreFields.tid;
 public class ReferenceHandler<E,T> extends AbstractHandler {
     private static final Logger LOG = LoggerFactory.getLogger(ReferenceHandler.class);
     private final StringBuilder eventName = new StringBuilder();
-
+    private final Map<Long, Object> tidToListener = new ConcurrentHashMap<>();
     private WireOutPublisher publisher;
     private Reference<E> view;
     private StringBuilder csp;
-
     private BiConsumer<ValueOut, E> vToWire;
-    private final Map<Long, Object> tidToListener = new ConcurrentHashMap<>();
-
     @Nullable
     private final BiConsumer<WireIn, Long> dataConsumer = new BiConsumer<WireIn, Long>() {
 
@@ -100,7 +97,6 @@ public class ReferenceHandler<E,T> extends AbstractHandler {
                 view.registerSubscriber(bootstrap, listener);
                 return;
             }
-
 
             if (unregisterSubscriber.contentEquals(eventName)) {
                 long subscriberTid = valueIn.int64();

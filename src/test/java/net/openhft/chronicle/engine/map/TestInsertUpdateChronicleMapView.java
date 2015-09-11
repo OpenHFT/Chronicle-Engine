@@ -55,7 +55,6 @@ public class TestInsertUpdateChronicleMapView {
         return list;
     }
 
-
     @Before
     public void before() throws IOException {
         serverAssetTree = new VanillaAssetTree().forTesting();
@@ -89,7 +88,6 @@ public class TestInsertUpdateChronicleMapView {
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
     }
-
 
     @Test
     public void testInsertFollowedByUpdate() throws Exception {
@@ -139,6 +137,5 @@ public class TestInsertUpdateChronicleMapView {
             Assert.assertTrue(event instanceof UpdatedEvent);
         }
     }
-
 
 }

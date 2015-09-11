@@ -34,10 +34,8 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public class TestInsertUpdateChronicleMapViewOnServer {
 
     private static final String NAME = "test";
-    public String connection = "RemoteSubscriptionTest.host.port";
-
-
     private final WireType wireType;
+    public String connection = "RemoteSubscriptionTest.host.port";
     @NotNull
 
     private AssetTree clientAssetTree ;
@@ -57,7 +55,6 @@ public class TestInsertUpdateChronicleMapViewOnServer {
         return list;
     }
 
-
     @Before
     public void before() throws IOException {
         serverAssetTree = new VanillaAssetTree().forTesting();
@@ -76,9 +73,7 @@ public class TestInsertUpdateChronicleMapViewOnServer {
                 new ChronicleMapKeyValueStore(context.basePath(null).entries(100)
                         .putReturnsNull(false), asset));
 
-
         clientAssetTree = serverAssetTree;
-
 
     }
 
@@ -92,7 +87,6 @@ public class TestInsertUpdateChronicleMapViewOnServer {
 
         TCPRegistry.reset();
     }
-
 
     @Test
     public void testInsertFollowedByUpdate() throws Exception {
@@ -143,6 +137,5 @@ public class TestInsertUpdateChronicleMapViewOnServer {
             Assert.assertTrue(event instanceof UpdatedEvent);
         }
     }
-
 
 }

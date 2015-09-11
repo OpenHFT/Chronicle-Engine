@@ -26,7 +26,6 @@ import static net.openhft.chronicle.engine.Utils.methodName;
  * @author Rob Austin.
  */
 
-
 /**
  * test using the listener both remotely or locally via the engine
  *
@@ -60,7 +59,6 @@ public class StreamTest extends ThreadMonitoringTest {
                 new Object[]{Boolean.TRUE, WireType.TEXT}
         );
     }
-
 
     @Before
     public void before() throws IOException {

@@ -46,12 +46,10 @@ public class RedisEmulatorTest {
         AssetTree clientAssetTree = new VanillaAssetTree()
                 .forRemoteAccess("RemoteSubscriptionModelPerformanceTest.port", WireType.TEXT);
 
-
         myStringHash = clientAssetTree.acquireMap("/myStringHash", String.class, String.class);
         myLongHash = clientAssetTree.acquireMap("/myLongHash", String.class, Long.class);
         myDoubleHash = clientAssetTree.acquireMap("/myDoubleHash", String.class, Double.class);
     }
-
 
     @AfterClass
     public static void down() throws IOException {

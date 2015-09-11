@@ -64,7 +64,6 @@ public class RemoteMapView<K, MV, V> extends VanillaMapView<K, V> {
     }
 */
 
-
     @Override
     public void registerKeySubscriber(@org.jetbrains.annotations.NotNull @NotNull Subscriber<K> subscriber,
                                       @org.jetbrains.annotations.NotNull @NotNull Filter filter,
@@ -77,7 +76,6 @@ public class RemoteMapView<K, MV, V> extends VanillaMapView<K, V> {
         subscription.registerKeySubscriber(rc, subscriber, filter);
 
     }
-
 
     @Override
     public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {

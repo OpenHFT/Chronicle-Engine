@@ -131,7 +131,6 @@ public class SubscriptionTest extends ThreadMonitoringTest {
             assetTree.registerSubscriber(NAME, MapEvent.class, mapEventSubscriber);
         });
 
-
         yamlLoggger(() -> {
             //test an insert
             map.put("testA", factorXYZ);
@@ -167,12 +166,10 @@ public class SubscriptionTest extends ThreadMonitoringTest {
         if (serverEndpoint != null) serverEndpoint.close();
         serverAssetTree.close();
 
-
         verify(listener);
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
     }
-
 
 }
 

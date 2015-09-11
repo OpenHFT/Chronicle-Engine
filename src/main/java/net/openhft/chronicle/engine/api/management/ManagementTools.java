@@ -230,7 +230,6 @@ public enum ManagementTools {
                 list.add(new Attribute("KeySubscriberCount",objectKVSSubscription.keySubscriberCount()));
                 list.add(new Attribute("Dynamic Attribute Key","Dynamic Attribute Value"));
                 mbs.setAttributes(atName,list);*/
-
                 //start Dynamic MBeans Code
                 Map m = new HashMap();
                 m.put("size", "" + view.longSize());

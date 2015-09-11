@@ -59,7 +59,6 @@ public class InsertedEventTest {
         assertEquals(insertedEvent, ie);
     }
 
-
     @Test
     @Ignore("TODO Fix")
     public void testMarshalling3a() {
@@ -107,7 +106,6 @@ public class InsertedEventTest {
         InsertedEvent ie = binaryWire.read(() -> "reply").typedMarshallable();
         assertEquals(insertedEvent, ie);
     }
-
 
     @Test
     public void testMarshalling3B() {

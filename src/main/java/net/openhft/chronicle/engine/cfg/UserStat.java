@@ -40,9 +40,6 @@ public class UserStat implements Marshallable {
         this.totalInteractions = totalInteractions;
     }
 
-
-
-
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IORuntimeException {
         wire.read(() -> "loggedIn").time(this, (o, b) -> o.loggedIn = b)

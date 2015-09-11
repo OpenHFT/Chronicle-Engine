@@ -77,7 +77,6 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
     private Class keyType;
     private Class valueType;
 
-
     public ChronicleMapKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset) {
         String basePath = context.basePath();
         keyType = context.keyType();

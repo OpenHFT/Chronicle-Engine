@@ -26,19 +26,17 @@ public class Throttler<K> implements EventHandler {
     private final int maxEventsPreSecond;
     private final AtomicLong numberOfMessageSent = new AtomicLong(0);
     private final ConcurrentLinkedQueue<Runnable> events = new ConcurrentLinkedQueue<>();
-    private long lastKnownSeconds = System.currentTimeMillis();
     private final ReentrantLock lock = new ReentrantLock();
+    private long lastKnownSeconds = System.currentTimeMillis();
 
     public Throttler(@NotNull final EventLoop eventLoop, int maxEventsPreSecond) {
         this.maxEventsPreSecond = maxEventsPreSecond;
         eventLoop.addHandler(this);
     }
 
-
     public boolean useThrottler() {
         return maxEventsPreSecond > 0;
     }
-
 
     public void add(Runnable r) {
         events.add(r);
@@ -62,7 +60,6 @@ public class Throttler<K> implements EventHandler {
         }
 
     }
-
 
     /**
      * tries to sends all the events in the queue up to the maxEventsPreSecond, unless the lock is

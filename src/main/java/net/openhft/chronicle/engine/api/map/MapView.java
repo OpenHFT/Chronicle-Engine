@@ -79,7 +79,6 @@ public interface MapView<K, V> extends ConcurrentMap<K, V>,
      */
     void registerKeySubscriber(@NotNull Subscriber<K> subscriber);
 
-
     /**
      * Add a Subscription for the keys changed on this Map
      *
@@ -90,14 +89,12 @@ public interface MapView<K, V> extends ConcurrentMap<K, V>,
                                @NotNull Filter filter,
                                @NotNull Set<Operation> contextOperations);
 
-
     /**
      * Add a Subscription for the MapEvents triggered by changes on this Map.
      *
      * @param subscriber the subscriber to the subscription
      */
     void registerSubscriber(@NotNull Subscriber<MapEvent<K, V>> subscriber);
-
 
     /**
      * Add a Subscription for the MapEvents triggered by changes on this Map.

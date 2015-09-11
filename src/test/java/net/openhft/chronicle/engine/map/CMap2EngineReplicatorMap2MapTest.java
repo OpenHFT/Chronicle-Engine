@@ -46,7 +46,6 @@ public class CMap2EngineReplicatorMap2MapTest {
     private final CMap2EngineReplicator replicator3 = new CMap2EngineReplicator(null);
     private final ChronicleMap<String, String> map3 = newMap(3, replicator3, String.class, String.class);
 
-
     private <K, V> ChronicleMap<K, V> newMap(int localIdentifier,
                                              final CMap2EngineReplicator replicator,
                                              @org.jetbrains.annotations.NotNull @NotNull final Class<K> keyClass,
@@ -80,7 +79,6 @@ public class CMap2EngineReplicatorMap2MapTest {
         final ModificationIterator iterator3for2 = replicator3.acquireModificationIterator
                 (replicator2.identifier());
 
-
         map1.put("hello1", "world1");
         map2.put("hello2", "world2");
         map3.put("hello3", "world3");
@@ -102,7 +100,6 @@ public class CMap2EngineReplicatorMap2MapTest {
         }
 
     }
-
 
     /**
      * tests that the updates from one map are replicated to the other and visa versa
@@ -158,9 +155,6 @@ public class CMap2EngineReplicatorMap2MapTest {
         }
 
     }
-
-
-
 
 }
 

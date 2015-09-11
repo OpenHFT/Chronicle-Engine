@@ -137,7 +137,6 @@ public class RemoteKVSSubscription<K, V> extends AbstractRemoteSubscription<MapE
         registerSubscriber0(rc, subscriber, filter);
     }
 
-
     @Override
     public boolean needsPrevious() {
         return true;

@@ -24,5 +24,4 @@ public interface ISubscriber {
     default void onEndOfSubscription() {
     }
 
-
 }

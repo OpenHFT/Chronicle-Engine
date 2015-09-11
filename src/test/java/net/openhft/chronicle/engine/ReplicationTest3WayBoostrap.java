@@ -44,7 +44,6 @@ import static org.junit.Assert.assertNotNull;
 @RunWith(Parameterized.class)
 public class ReplicationTest3WayBoostrap {
 
-
     public static final WireType WIRE_TYPE = WireType.TEXT;
     public static final String NAME = "/ChMaps/test";
     public ServerEndpoint serverEndpoint1;
@@ -112,7 +111,6 @@ public class ReplicationTest3WayBoostrap {
     @Test
     public void test() throws InterruptedException, IOException {
 
-
     //    YamlLogging.clientWrites = true;
       //  YamlLogging.clientReads = true;
 
@@ -161,7 +159,6 @@ public class ReplicationTest3WayBoostrap {
             Jvm.pause(200);
         }
 
-
         Assert.assertEquals("world1", map1.get("hello1"));
         Assert.assertEquals("world2", map1.get("hello2"));
         Assert.assertEquals("world3", map1.get("hello3"));
@@ -176,8 +173,5 @@ public class ReplicationTest3WayBoostrap {
 
     }
 
-
 }
-
-
 
