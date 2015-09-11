@@ -46,10 +46,8 @@ import java.util.concurrent.*;
  * @author Rob Austin.
  */
 
-
 @RunWith(Parameterized.class)
 public class BootStrapTests {
-
 
     public static final WireType WIRE_TYPE = WireType.TEXT;
     private static final String NAME = "test";
@@ -59,7 +57,6 @@ public class BootStrapTests {
     private AssetTree client2;
     private VanillaAssetTree serverAssetTree1;
     private ServerEndpoint serverEndpoint1;
-
 
     public BootStrapTests() {
     }
@@ -75,7 +72,6 @@ public class BootStrapTests {
 
         TCPRegistry.createServerSocketChannelFor(CONNECTION_1);
 
-
         serverEndpoint1 = new ServerEndpoint(CONNECTION_1, serverAssetTree1, WIRE_TYPE);
 
         client1 = new VanillaAssetTree("client1").forRemoteAccess
@@ -83,7 +79,6 @@ public class BootStrapTests {
 
         client2 = new VanillaAssetTree("client2").forRemoteAccess
                 (CONNECTION_1, WIRE_TYPE);
-
 
     }
 
@@ -146,7 +141,6 @@ public class BootStrapTests {
 
     }
 
-
     /**
      * the fail over client connects to  server1 ( server1 is the primary) , server1 is then shut
      * down and the client connects to the secondary
@@ -163,7 +157,6 @@ public class BootStrapTests {
                 map1 = client1.acquireMap(NAME, String.class, String.class);
                 BlockingQueue q1 = new ArrayBlockingQueue(1);
                 client1.registerSubscriber(NAME, MapEvent.class, q1::add);
-
 
                 map1.put("hello", "world1");
 
@@ -193,9 +186,5 @@ public class BootStrapTests {
 
     }
 
-
 }
-
-
-
 

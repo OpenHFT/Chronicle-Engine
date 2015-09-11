@@ -80,7 +80,6 @@ public class AssetSubscriptionsTest {
         tree.registerSubscriber("", TopologicalEvent.class, rootTopoSubscriber0);
         verify(rootTopoSubscriber0);
 
-
         // test removing an asset
         reset(rootTopoSubscriber, rootTopoSubscriber0, rootTopoSubscriber1);
         rootTopoSubscriber.onMessage(RemovedAssetEvent.of("/", "one"));

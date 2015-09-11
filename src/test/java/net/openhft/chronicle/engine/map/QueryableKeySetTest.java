@@ -28,7 +28,6 @@ import static net.openhft.chronicle.engine.Utils.methodName;
  * @author Rob Austin.
  */
 
-
 /**
  * test using the listener both remotely or locally via the engine
  *
@@ -65,7 +64,6 @@ public class QueryableKeySetTest extends ThreadMonitoringTest {
 
         return list;
     }
-
 
     @Before
     public void before() throws IOException {
@@ -117,7 +115,6 @@ public class QueryableKeySetTest extends ThreadMonitoringTest {
         Assert.assertEquals(new HashSet<>(Arrays.asList("1", "2")), result);
     }
 
-
     @Test
     public void testQueryForEachWithPredicate() throws Exception {
 
@@ -138,7 +135,6 @@ public class QueryableKeySetTest extends ThreadMonitoringTest {
         query.filter("1"::equals).forEach(result::add);
         Assert.assertEquals(new HashSet<>(Arrays.asList("1")), result);
     }
-
 
     @Test
     public void testQueryForCollect() throws Exception {
@@ -169,7 +165,6 @@ public class QueryableKeySetTest extends ThreadMonitoringTest {
         query.filter((obj) -> obj >= 1 && obj <= 2).forEach(System.out::println);
 
     }
-
 
 }
 

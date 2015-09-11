@@ -59,7 +59,6 @@ public class MapViewTest {
         assertEquals(new HashSet<>(keys).hashCode(), hc);
     }
 
-
     //    @Test
     public void testRemoteAccess() throws IOException {
         Chassis.resetChassis();
@@ -96,7 +95,6 @@ public class MapViewTest {
                 .filter(e -> e.getValue().usageCounter > 10)
                 .map(e -> e.getKey())
                 .subscribe(System.out::println);
-
 
         Function<UserInfo, String> fullNameFunc = (Function<UserInfo, String> & Serializable) ui -> ui.fullName;
 //String fullName = userInfo.applyToKey("userid", fullNameFunc);

@@ -145,7 +145,6 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
                 p.writeNotReadyDocument(false, wire -> wire.write(reply).object(e));
             });
 
-
             final Class eClass = e.getClass();
 
             if (eClass == KeyValueStore.Entry.class || eClass == MapEvent.class)

@@ -11,7 +11,6 @@ import static org.dcache.nfs.v4.xdr.nfs4_prot.*;
  */
 class ChronicleNfsAcl {
 
-
     @NotNull
     public static nfsace4[] getAcl() {
         return new nfsace4[]{

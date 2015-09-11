@@ -50,7 +50,6 @@ import static org.junit.Assert.*;
 
 public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
 
-
     @NotNull
     private final AssetTree assetTree = new VanillaAssetTree().forTesting();
     @NotNull

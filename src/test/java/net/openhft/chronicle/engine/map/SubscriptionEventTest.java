@@ -89,7 +89,6 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
         );
     }
 
-
     @Before
     public void before() throws IOException {
         serverAssetTree = new VanillaAssetTree().forTesting();
@@ -127,7 +126,6 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
         final BlockingQueue<MapEvent> eventsQueue = new LinkedBlockingQueue<>();
 
-
         YamlLogging.showServerWrites = true;
         YamlLogging.showServerReads = true;
 
@@ -154,7 +152,6 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
         });
     }
 
-
     /**
      * REMOTE ONLY TEST
      *
@@ -168,7 +165,6 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
             return;
 
         final BlockingQueue<MapEvent> eventsQueue = new LinkedBlockingQueue<>();
-
 
         yamlLoggger(() -> {
             try {
@@ -200,7 +196,6 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
             }
         });
     }
-
 
     @Test
     public void testTopicSubscribe() throws InvalidSubscriberException {
@@ -260,7 +255,6 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
         });
 
     }
-
 
     @Test
     public void testUnsubscribeToMapEvents() throws IOException, InterruptedException {
@@ -328,10 +322,8 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
     }
 
-
     @Test
     public void testSubscribeToValueBasedOnKeys() throws IOException, InterruptedException, InvalidSubscriberException {
-
 
         yamlLoggger(() -> {
             try {
@@ -472,6 +464,4 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
         });
     }
 }
-
-
 

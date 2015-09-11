@@ -28,7 +28,6 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.api.tree.RequestContextInterner;
-import net.openhft.chronicle.engine.cfg.MonitorCfg;
 import net.openhft.chronicle.engine.cfg.UserStat;
 import net.openhft.chronicle.engine.collection.CollectionWireHandler;
 import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
@@ -164,7 +163,6 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
                 return;
             }
 
-
             try {
                 readCsp(wire);
                 readTid(wire);
@@ -252,7 +250,6 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
         if(!isSystemMessage || YamlLogging.showHeartBeats)
             logYamlToStandardOut(in);
 
-
         if(!isSystemMessage) {
             //Not interested in every heartbeat
             //Why are there 2 interactions for every message?
@@ -272,8 +269,6 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
                 userMonitoringMap.put(sessionDetails.userId(), userStat);
             }
         }
-
-
 
         if (sessionProvider != null)
             sessionProvider.set(sessionDetails);

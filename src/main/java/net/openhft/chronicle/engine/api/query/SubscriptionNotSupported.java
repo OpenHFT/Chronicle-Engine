@@ -6,7 +6,6 @@ package net.openhft.chronicle.engine.api.query;
 public enum SubscriptionNotSupported implements Subscription {
     INSTANCE;
 
-
     @Override
     public void cancel() {
         throw new UnsupportedOperationException("todo");

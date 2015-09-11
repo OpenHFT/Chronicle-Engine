@@ -24,7 +24,6 @@ public class RemoteEntrySetView<K, MV, V> extends VanillaEntrySetView<K, MV, V> 
         super(context, asset, mapView);
     }
 
-
     @Override
     @NotNull
     public Query<Map.Entry<K, V>> query() {

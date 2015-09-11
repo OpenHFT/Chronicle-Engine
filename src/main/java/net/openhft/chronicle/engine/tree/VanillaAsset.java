@@ -153,7 +153,6 @@ public class VanillaAsset implements Asset, Closeable {
                 VanillaTopologySubscription::new);
     }
 
-
     public void forRemoteAccess(@NotNull String[] hostPortDescriptions, @NotNull Function<Bytes, Wire> wire, VanillaSessionDetails sessionDetails1) throws
             AssetNotFoundException {
 
@@ -165,7 +164,6 @@ public class VanillaAsset implements Asset, Closeable {
 
         addWrappingRule(KeySetView.class, LAST + " remote key maps", RemoteKeySetView::new,
                 MapView.class);
-
 
         addLeafRule(ObjectKVSSubscription.class, LAST + " Remote", RemoteKVSSubscription::new);
 
@@ -179,8 +177,6 @@ public class VanillaAsset implements Asset, Closeable {
                 MapView.class);
         addLeafRule(TopologySubscription.class, LAST + " vanilla",
                 RemoteTopologySubscription::new);
-
-
 
         SessionProvider sessionProvider = new ClientSessionProvider(sessionDetails1);
 
@@ -405,7 +401,6 @@ public class VanillaAsset implements Asset, Closeable {
     public Asset getChild(String name) {
         return children.get(name);
     }
-
 
     @Override
     public void removeChild(String name) {

@@ -129,7 +129,6 @@ public class RemoteSubscriptionModelPerformanceTest {
         }, _noOfRunsToAverage, _secondInNanos * 3 / 2);
     }
 
-
     /**
      * Test that 50 updates per second of 2 MB string values completes in 1 second.
      */

@@ -53,7 +53,6 @@ import static net.openhft.chronicle.engine.Utils.yamlLoggger;
 @RunWith(value = Parameterized.class)
 public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
 
-
     private static final String NAME = "test";
 
     private static Boolean isRemote;
@@ -93,7 +92,6 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
         } else
             clientAssetTree = serverAssetTree;
 
-
     }
 
     @After
@@ -107,7 +105,6 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
     }
-
 
     @Test
     public void testTopologicalEvents() throws IOException, InterruptedException {
@@ -155,8 +152,5 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
         });
     }
 
-
 }
-
-
 

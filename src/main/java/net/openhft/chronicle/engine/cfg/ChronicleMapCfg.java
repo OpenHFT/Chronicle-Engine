@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.engine.cfg;
 
-import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
@@ -55,7 +54,6 @@ public class ChronicleMapCfg implements Installable {
 
         if(entries != -1)rc.entries(entries);
         if(averageSize != -1)rc.averageValueSize(averageSize);
-
 
         ChronicleMapKeyValueStore chronicleMapKeyValueStore = new ChronicleMapKeyValueStore(rc, asset);
         asset.addView(ObjectKeyValueStore.class, chronicleMapKeyValueStore);

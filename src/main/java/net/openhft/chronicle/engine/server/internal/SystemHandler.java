@@ -21,15 +21,6 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
     private final StringBuilder eventName = new StringBuilder();
     private SessionDetailsProvider sessionDetails;
     private volatile boolean hasClientClosed;
-
-    void process(@NotNull final WireIn inWire,
-                 @NotNull final WireOut outWire, final long tid,
-                 @NotNull final SessionDetailsProvider sessionDetails) {
-        this.sessionDetails = sessionDetails;
-        setOutWire(outWire);
-        dataConsumer.accept(inWire, tid);
-    }
-
     @NotNull
     private final BiConsumer<WireIn, Long> dataConsumer = (inWire, tid) -> {
 
@@ -43,7 +34,6 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
 
         if (!heartbeat.contentEquals(eventName) && !onClientClosing.contentEquals(eventName))
             return;
-
 
         //noinspection ConstantConditions
         outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
@@ -60,12 +50,12 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
         });
     };
 
-    public enum EventId implements WireKey {
-        heartbeat,
-        heartbeatReply,
-        onClientClosing,
-        onClosingReply,
-        userid
+    void process(@NotNull final WireIn inWire,
+                 @NotNull final WireOut outWire, final long tid,
+                 @NotNull final SessionDetailsProvider sessionDetails) {
+        this.sessionDetails = sessionDetails;
+        setOutWire(outWire);
+        dataConsumer.accept(inWire, tid);
     }
 
     /**
@@ -74,6 +64,14 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
     @Override
     public boolean hasClientClosed() {
         return hasClientClosed;
+    }
+
+    public enum EventId implements WireKey {
+        heartbeat,
+        heartbeatReply,
+        onClientClosing,
+        onClosingReply,
+        userid
     }
 }
 

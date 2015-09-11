@@ -187,13 +187,11 @@ public class ReferenceTest {
         map.put("subject", "cs");
         map.put("subject", "maths");
 
-
         assetTree.unregisterSubscriber("group" + "/" + "subject", keyEventSubscriber);
         assertEquals(0, subscription.subscriberCount());
         assertEquals("cs", events.get(0));
         assertEquals("maths", events.get(1));
         assertEquals("END", events.get(2));
-
 
     }
 
@@ -239,7 +237,6 @@ public class ReferenceTest {
         assertEquals("maths", events.get(2));
         assertEquals("END", events.get(3));
     }
-
 
     @Ignore("test fails")
     @Test

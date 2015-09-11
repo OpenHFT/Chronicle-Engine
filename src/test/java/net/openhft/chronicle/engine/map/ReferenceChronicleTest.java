@@ -36,7 +36,6 @@ import static org.junit.Assert.assertNotNull;
  */
 public class ReferenceChronicleTest {
 
-
     private String hostPortToken;
 
     @Before

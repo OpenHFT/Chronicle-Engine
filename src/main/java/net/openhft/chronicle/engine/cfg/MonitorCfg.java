@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-
 /**
  * Created by peter on 26/08/15.
  */
@@ -35,7 +34,6 @@ public class MonitorCfg implements Installable, Marshallable {
     private static final Logger LOGGER = LoggerFactory.getLogger(MonitorCfg.class);
     private boolean subscriptionMonitoringEnabled;
     private boolean userMonitoringEnabled;
-
 
     @Override
     public MonitorCfg install(String path, AssetTree assetTree) throws IOException, URISyntaxException {

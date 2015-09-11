@@ -90,7 +90,6 @@ public class ThrottledKeySubscriptionEventTest extends ThreadMonitoringTest {
         System.setProperty("Throttler.maxEventsPreSecond", "0");
     }
 
-
     /**
      * because we have set System.setProperty("Throttler.maxEventsPreSecond", "1"); in the static
      * above, we will only get one event per second, this test also checks that the messages still
@@ -137,10 +136,5 @@ public class ThrottledKeySubscriptionEventTest extends ThreadMonitoringTest {
 
     }
 
-
 }
-
-
-
-
 

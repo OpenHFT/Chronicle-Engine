@@ -64,7 +64,6 @@ class ChronicleNfsFileHandleLookup {
         return wrap.getLong();
     }
 
-
     public static Object toObject(@NotNull final byte[] fileId) {
         final long i = toLong(fileId);
         return reverseLookup.get(i);

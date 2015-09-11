@@ -123,7 +123,6 @@ public class RemoteQuery<E> implements Query<E> {
                 filter,
                 of(BOOTSTRAP, END_SUBSCRIPTION_AFTER_BOOTSTRAP));
 
-
         while (!finished.get()) {
             try {
 
