@@ -126,7 +126,6 @@ public class MapClientTest extends ThreadMonitoringTest {
             }
         });
     }*/
-
     @Test(timeout = 50000)
     public void testEntrySetIsEmpty() throws IOException, InterruptedException {
 

@@ -70,7 +70,6 @@ public class VanillaAssetTreeEgMain {
         map4.put("4-keyC", "value1");
         /*tree.registerTopicSubscriber("group2/subgroup/map4", String.class, String.class,
                 (k, v) -> System.out.println("key: " + k + ", value: " + v));*/
-
         // give the listener time to see the collection before we delete it.
         //Jvm.pause(200);
 

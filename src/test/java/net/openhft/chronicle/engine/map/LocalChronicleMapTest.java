@@ -43,14 +43,10 @@ import static org.junit.Assert.*;
  */
 @Ignore
 public class LocalChronicleMapTest extends JSR166TestCase {
+    private static int s_port = 11050;
     @NotNull
     @Rule
     public TestName name = new TestName();
-
-    @Before
-    public void before() {
-        methodName(name.getMethodName());
-    }
 
     @NotNull
     private static ClosableMapSupplier<Integer, String> newIntString() throws IOException {
@@ -94,6 +90,11 @@ public class LocalChronicleMapTest extends JSR166TestCase {
         };
     }
 
+    @Before
+    public void before() {
+        methodName(name.getMethodName());
+    }
+
     /**
      * Returns a new map from Integers 1-5 to Strings "A"-"E".
      */
@@ -112,8 +113,6 @@ public class LocalChronicleMapTest extends JSR166TestCase {
         assertEquals(5, map.size());
         return supplier;
     }
-
-    private static int s_port = 11050;
 
     /**
      * clear removes all pairs
@@ -213,7 +212,6 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * keySet returns a Set containing all the keys
      */
-
     @Test(timeout = 50000)
     public void testKeySet() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
@@ -431,7 +429,6 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     /**
      * replace value succeeds when the given key mapped to expected value
      */
-
     @Test(timeout = 50000)
     public void testReplaceValue2() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {

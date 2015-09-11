@@ -161,7 +161,6 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
      * @throws IOException
      * @throws InterruptedException
      */
-
     @Test
     public void testPushingEntriesToTheServerDirectly() throws IOException, InterruptedException {
 
