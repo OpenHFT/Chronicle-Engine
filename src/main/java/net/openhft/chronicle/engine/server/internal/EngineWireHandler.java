@@ -273,12 +273,16 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
 
                 if (isSystemMessage) {
                     systemHandler.process(in, out, tid, sessionDetails, getMonitoringMap());
+                    if(!systemHandler.wasHeartBeat()){
+                        if(!YamlLogging.showHeartBeats) {
+                            logBufferToStandardOut(prevLogMessage.append(currentLogMessage));
+                        }
+                    }
                     return;
                 }
 
                 if(!YamlLogging.showHeartBeats) {
-                    logBufferToStandardOut(prevLogMessage);
-                    logBufferToStandardOut(currentLogMessage);
+                    logBufferToStandardOut(prevLogMessage.append(currentLogMessage));
                 }
 
                 Map<String, UserStat> userMonitoringMap = getMonitoringMap();

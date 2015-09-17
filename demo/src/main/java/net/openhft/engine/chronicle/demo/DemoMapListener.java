@@ -21,17 +21,17 @@ public class DemoMapListener {
         MapEventListener<String, String> mapEventListener = new MapEventListener<String, String>() {
             @Override
             public void update(String assetName, String key, String oldValue, String newValue) {
-                System.out.println("Update received " +  key + ":" + newValue);
+                System.out.println("Update received for " + assetName +  " " + key + ":" + newValue);
             }
 
             @Override
             public void insert(String assetName, String key, String value) {
-                System.out.println("Insert received " + key + ":" + value);
+                System.out.println("Insert received for " + assetName +  " "  + key + ":" + value);
             }
 
             @Override
             public void remove(String assetName, String key, String value) {
-                System.out.println("Remove received " + key + ":" + value);
+                System.out.println("Remove received for " + assetName +  " "  + key + ":" + value);
             }
         };
         Subscriber<MapEvent> mapEventSubscriber = e -> e.apply(mapEventListener);

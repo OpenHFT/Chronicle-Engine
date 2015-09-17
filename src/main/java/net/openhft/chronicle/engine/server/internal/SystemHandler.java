@@ -27,11 +27,17 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
     @Nullable
     private Map<String, UserStat> monitoringMap;
     private volatile boolean hasClientClosed;
+    private boolean wasHeartBeat;
+
+    public boolean wasHeartBeat() {
+        return wasHeartBeat;
+    }
 
     void process(@NotNull final WireIn inWire,
                  @NotNull final WireOut outWire, final long tid,
                  @NotNull final SessionDetailsProvider sessionDetails,
                  @Nullable Map<String, UserStat> monitoringMap) {
+        wasHeartBeat = false;
         this.sessionDetails = sessionDetails;
         this.monitoringMap = monitoringMap;
         setOutWire(outWire);
@@ -40,7 +46,6 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
 
     @NotNull
     private final BiConsumer<WireIn, Long> dataConsumer = (inWire, tid) -> {
-
         eventName.setLength(0);
         final ValueIn valueIn = inWire.readEventName(eventName);
 
@@ -54,8 +59,10 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
             return;
         }
 
-        if (!heartbeat.contentEquals(eventName) && !onClientClosing.contentEquals(eventName))
+        if (!heartbeat.contentEquals(eventName) && !onClientClosing.contentEquals(eventName)){
+            wasHeartBeat = true;
             return;
+        }
 
         //noinspection ConstantConditions
         outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
