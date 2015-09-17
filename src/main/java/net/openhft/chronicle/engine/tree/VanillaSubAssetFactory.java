@@ -22,7 +22,7 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 /**
  * Created by peter on 17/09/15.
  */
-public class VanillaSubAssetFactory implements SubAssertFactory {
+public class VanillaSubAssetFactory implements SubAssetFactory {
     @Override
     public <E> Asset createSubAsset(VanillaAsset asset, String name, Class<E> valueType) {
         @SuppressWarnings("unchecked")

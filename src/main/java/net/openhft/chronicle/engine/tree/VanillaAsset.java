@@ -109,7 +109,7 @@ public class VanillaAsset implements Asset, Closeable {
         addWrappingRule(ValuesCollection.class, LAST + " values", VanillaValuesCollection::new, MapView.class);
 
         addWrappingRule(MapView.class, LAST + " string key maps", VanillaMapView::new, ObjectKeyValueStore.class);
-        addView(SubAssertFactory.class, new VanillaSubAssetFactory());
+        addView(SubAssetFactory.class, new VanillaSubAssetFactory());
         String fullName = fullName();
         HostIdentifier hostIdentifier = findView(HostIdentifier.class);
         if (hostIdentifier != null)
@@ -391,7 +391,7 @@ public class VanillaAsset implements Asset, Closeable {
                 throw new IllegalStateException("You can only have a SubAsset of a Map");
             if (map.keyType() != String.class)
                 throw new IllegalStateException("You can only have a SubAsset of a Map with a String key.");
-            SubAssertFactory saFactory = findOrCreateView(SubAssertFactory.class);
+            SubAssetFactory saFactory = findOrCreateView(SubAssetFactory.class);
             return saFactory.createSubAsset(this, name, map.valueType());
         });
     }

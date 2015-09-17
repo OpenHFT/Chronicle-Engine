@@ -21,6 +21,6 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 /**
  * Created by peter on 17/09/15.
  */
-public interface SubAssertFactory {
+public interface SubAssetFactory {
     <E> Asset createSubAsset(VanillaAsset vanillaAsset, String name, Class<E> valueType);
 }
