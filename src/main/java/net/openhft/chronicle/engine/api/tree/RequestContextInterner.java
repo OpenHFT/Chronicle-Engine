@@ -35,7 +35,7 @@ public class RequestContextInterner {
     }
 
     public RequestContext intern(@NotNull CharSequence cs) {
-        int h = Maths.hash(cs) & mask;
+        int h = Maths.hash32(cs) & mask;
         StringToRequestContext s = interner[h];
         if (s != null && StringUtils.isEqual(s.name, cs))
             return s.requestContext;
