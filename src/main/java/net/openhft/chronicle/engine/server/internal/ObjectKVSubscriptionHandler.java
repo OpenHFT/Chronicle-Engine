@@ -83,7 +83,7 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscriptio
                 LOG.warn("No subscriber to present to unsubscribe (" + inputTid + ")");
                 return;
             }
-            assetTree.unregisterTopicSubscriber(requestContext.name(), listener);
+            assetTree.unregisterTopicSubscriber(requestContext.fullName(), listener);
 
             return;
         }

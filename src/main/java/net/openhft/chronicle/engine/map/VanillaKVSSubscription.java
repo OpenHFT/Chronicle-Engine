@@ -286,17 +286,17 @@ public class VanillaKVSSubscription<K, V> implements ObjectKVSSubscription<K, V>
     public void unregisterSubscriber(@NotNull Subscriber subscriber) {
         final Subscriber delegate = subscriptionDelegate.get(subscriber);
         final Subscriber s = delegate != null ? delegate : subscriber;
-        subscribers.remove(s);
-        keySubscribers.remove(s);
-        //todo distinguish between keySubscribers and subscribers
-        removeFromStats("subscription");
+        boolean subscription = subscribers.remove(s);
+        boolean keySubscription = keySubscribers.remove(s);
+        if(subscription)removeFromStats("subscription");
+        if(keySubscription)removeFromStats("keySubscription");
         s.onEndOfSubscription();
     }
 
     @Override
     public void unregisterTopicSubscriber(@NotNull TopicSubscriber subscriber) {
         topicSubscribers.remove(subscriber);
-
+        removeFromStats("topicSubscription");
         subscriber.onEndOfSubscription();
     }
 
@@ -330,7 +330,6 @@ public class VanillaKVSSubscription<K, V> implements ObjectKVSSubscription<K, V>
                 stat.setRecentlySubscribed(LocalTime.now());
                 subStats.put(userId + "~" + subType, stat);
             }
-
         }
     }
 

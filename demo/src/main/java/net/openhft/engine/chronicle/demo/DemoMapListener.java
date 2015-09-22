@@ -1,6 +1,5 @@
 package net.openhft.engine.chronicle.demo;
 
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
@@ -37,28 +36,47 @@ public class DemoMapListener {
                 System.out.println("Remove received for " + assetName +  " "  + key + ":" + value);
             }
         };
+
+        //Create 3 types of subscribers
+        TopicSubscriber<String, String> topicSubscriber = (topic, message) -> System.out.println("");
+
         Subscriber<MapEvent> mapEventSubscriber = e -> e.apply(mapEventListener);
-        clientAssetTree.registerSubscriber("/data/map", MapEvent.class, mapEventSubscriber);
 
-        Jvm.pause(1000);
-
-        clientAssetTree.unregisterSubscriber("/data/map", mapEventSubscriber);
-
-        clientAssetTree.registerSubscriber("/data/map", String.class, s -> {
-            System.out.println("key sub for " + s);
-        });
-
-        clientAssetTree.registerTopicSubscriber("/data/map", String.class, String.class, new TopicSubscriber<String, String>() {
+        Subscriber keySubscriber = new Subscriber<String>() {
             @Override
-            public void onMessage(String topic, String message) throws InvalidSubscriberException {
-                System.out.println("");
+            public void onMessage(String s) throws InvalidSubscriberException {
+                System.out.println("key sub for " + s);
             }
-        });
+        };
+
+        //Initial registration
+        clientAssetTree.registerSubscriber("/data/map", String.class, keySubscriber);
+        clientAssetTree.registerSubscriber("/data/map", MapEvent.class, mapEventSubscriber);
+        clientAssetTree.registerTopicSubscriber("/data/map", String.class, String.class, topicSubscriber);
 
         Scanner scanner = new Scanner(System.in);
         while(true){
             String line = scanner.nextLine();
             if(line.equalsIgnoreCase("quit"))System.exit(0);
+            else if(line.equalsIgnoreCase("unregister subscriber")){
+                System.out.println("Unregistering subscriber");
+                clientAssetTree.unregisterSubscriber("/data/map", mapEventSubscriber);
+            }else if(line.equalsIgnoreCase("unregister keySubscriber")){
+                System.out.println("Unregistering key subscriber");
+                clientAssetTree.unregisterSubscriber("/data/map", keySubscriber);
+            }else if(line.equalsIgnoreCase("unregister topicSubscriber")){
+                System.out.println("Unregistering topic subscriber");
+                clientAssetTree.unregisterTopicSubscriber("/data/map", topicSubscriber);
+            }else if(line.equalsIgnoreCase("register subscriber")){
+                System.out.println("Registering subscriber");
+                clientAssetTree.registerSubscriber("/data/map", MapEvent.class, mapEventSubscriber);
+            }else if(line.equalsIgnoreCase("register keySubscriber")){
+                System.out.println("Registering key subscriber");
+                clientAssetTree.registerSubscriber("/data/map", String.class, keySubscriber);
+            }else if(line.equalsIgnoreCase("register topicSubscriber")){
+                System.out.println("Registering topic subscriber");
+                clientAssetTree.registerTopicSubscriber("/data/map", String.class, String.class, topicSubscriber);
+            }
         }
     }
 }
