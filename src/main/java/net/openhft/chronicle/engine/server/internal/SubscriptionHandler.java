@@ -102,7 +102,7 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
                 SubscriptionHandler.LOG.warn("No subscriber to present to unregisterSubscriber (" + tid + ")");
                 return true;
             }
-            assetTree.unregisterSubscriber(requestContext.name(), listener);
+            assetTree.unregisterSubscriber(requestContext.fullName(), listener);
 
             return true;
         }

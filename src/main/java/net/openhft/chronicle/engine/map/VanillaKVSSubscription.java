@@ -288,6 +288,8 @@ public class VanillaKVSSubscription<K, V> implements ObjectKVSSubscription<K, V>
         final Subscriber s = delegate != null ? delegate : subscriber;
         subscribers.remove(s);
         keySubscribers.remove(s);
+        //todo distinguish between keySubscribers and subscribers
+        removeFromStats("subscription");
         s.onEndOfSubscription();
     }
 
@@ -299,6 +301,7 @@ public class VanillaKVSSubscription<K, V> implements ObjectKVSSubscription<K, V>
     }
 
     //Needs some refactoring - need a definitive way of knowing when this map should become available
+    //3 combinations, not lookedUP, exists or does not exist
     private Map getSubscriptionMap(){
         if(subscriptionMonitoringMap != null)return subscriptionMonitoringMap;
         Asset subscriptionAsset = asset.root().getAsset("proc/subscriptions");
@@ -324,6 +327,27 @@ public class VanillaKVSSubscription<K, V> implements ObjectKVSSubscription<K, V>
                 }
                 stat.setTotalSubscriptions(stat.getTotalSubscriptions() + 1);
                 stat.setActiveSubscriptions(stat.getActiveSubscriptions() + 1);
+                stat.setRecentlySubscribed(LocalTime.now());
+                subStats.put(userId + "~" + subType, stat);
+            }
+
+        }
+    }
+
+    private void removeFromStats(String subType){
+        if(sessionProvider == null)return;
+
+        SessionDetails sessionDetails = sessionProvider.get();
+        if(sessionDetails != null) {
+            String userId = sessionDetails.userId();
+
+            Map<String, SubscriptionStat> subStats = getSubscriptionMap();
+            if(subStats != null) {
+                SubscriptionStat stat = subStats.get(userId + "~" + subType);
+                if (stat == null) {
+                    throw new AssertionError("There should be an active subscription");
+                }
+                stat.setActiveSubscriptions(stat.getActiveSubscriptions() - 1);
                 stat.setRecentlySubscribed(LocalTime.now());
                 subStats.put(userId + "~" + subType, stat);
             }

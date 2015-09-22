@@ -59,7 +59,11 @@ public class RemoteKVSSubscription<K, V> extends AbstractRemoteSubscription<MapE
 
     @NotNull
     private static String toUri(@NotNull final RequestContext context) {
-        return "/" + context.fullName() + "?view=subscription";
+        String addSlash = "";
+        if(context.fullName().indexOf('/')!=0){
+            addSlash = "/";
+        }
+        return addSlash + context.fullName() + "?view=subscription";
     }
 
     @Override
