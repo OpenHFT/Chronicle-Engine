@@ -6,6 +6,7 @@ import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
+import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.WireType;
 
@@ -38,7 +39,8 @@ public class DemoMapListener {
         };
 
         //Create 3 types of subscribers
-        TopicSubscriber<String, String> topicSubscriber = (topic, message) -> System.out.println("");
+        TopicSubscriber<String, String> topicSubscriber =
+                (topic, message) -> System.out.println("Topic " + topic + " message " + message);
 
         Subscriber<MapEvent> mapEventSubscriber = e -> e.apply(mapEventListener);
 
@@ -49,10 +51,18 @@ public class DemoMapListener {
             }
         };
 
+        Subscriber topologicalSubscriber = new Subscriber<TopologicalEvent>() {
+            @Override
+            public void onMessage(TopologicalEvent s) throws InvalidSubscriberException {
+                System.out.println(s.getClass() + " top sub for " + s);
+            }
+        };
+
         //Initial registration
-        clientAssetTree.registerSubscriber("/data/map", String.class, keySubscriber);
-        clientAssetTree.registerSubscriber("/data/map", MapEvent.class, mapEventSubscriber);
-        clientAssetTree.registerTopicSubscriber("/data/map", String.class, String.class, topicSubscriber);
+        clientAssetTree.registerSubscriber("/data/map3", String.class, keySubscriber);
+        clientAssetTree.registerSubscriber("/data/map3", MapEvent.class, mapEventSubscriber);
+        clientAssetTree.registerTopicSubscriber("/data/map3", String.class, String.class, topicSubscriber);
+        clientAssetTree.registerSubscriber("/data", TopologicalEvent.class, topologicalSubscriber);
 
         Scanner scanner = new Scanner(System.in);
         while(true){
