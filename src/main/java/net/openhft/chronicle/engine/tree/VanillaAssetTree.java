@@ -28,7 +28,9 @@ import net.openhft.chronicle.engine.map.remote.*;
 import net.openhft.chronicle.network.VanillaSessionDetails;
 import net.openhft.chronicle.threads.Threads;
 import net.openhft.chronicle.threads.api.EventLoop;
+import net.openhft.chronicle.wire.BinaryWire;
 import net.openhft.chronicle.wire.Wire;
+import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,6 +107,11 @@ public class VanillaAssetTree implements AssetTree {
     public VanillaAssetTree forRemoteAccess(String hostPortDescription, @NotNull Function<Bytes, Wire> wire) {
         root.forRemoteAccess(new String[]{hostPortDescription}, wire, clientSession());
         return this;
+    }
+
+    @NotNull
+    public VanillaAssetTree forRemoteAccess(String hostPortDescription) {
+        return forRemoteAccess(hostPortDescription, WireType.BINARY);
     }
 
     @NotNull
