@@ -70,34 +70,36 @@ public class MapBootstrapTest extends ThreadMonitoringTest {
 
     /**
      * simple test for bootstrap==false test
+     *
+     * this test was written due to :
+     *
+     * CE-156 Disable bootstrapping on topic subscriptions doesn’t work in Java (?bootstrap=false).
      */
     @Test
     public void testSimpleMapBootstrapFalse() throws InterruptedException {
 
-        {
-            Map<String, String> map1 = client.acquireMap(NAME, String.class, String.class);
-            map1.put("pre-boostrap", "value");
 
-            final MapView<String, String> clientMap = client.acquireMap(
-                    NAME + "?bootstrap=false", String.class, String.class);
+        Map<String, String> map1 = client.acquireMap(NAME, String.class, String.class);
+        map1.put("pre-boostrap", "value");
 
-            BlockingQueue q2 = new ArrayBlockingQueue(1);
-            Assert.assertEquals(null, clientMap.get("pre-boostrap"));
+        final MapView<String, String> clientMap = client.acquireMap(
+                NAME + "?bootstrap=false", String.class, String.class);
 
-
-            client.registerSubscriber(NAME + "?bootstrap=false", MapEvent.class, q2::add);
-
-            map1.put("post-boostrap", "value");
-
-            // wait for an event
-            final Object poll = q2.poll(20, TimeUnit.SECONDS);
-            Assert.assertTrue(poll instanceof InsertedEvent);
-            Assert.assertEquals("post-boostrap", ((InsertedEvent<String, String>) poll).getKey());
+        BlockingQueue q2 = new ArrayBlockingQueue(1);
+        Assert.assertEquals(null, clientMap.get("pre-boostrap"));
 
 
-            Assert.assertEquals("value", clientMap.get("post-boostrap"));
-        }
+        client.registerSubscriber(NAME + "?bootstrap=false", MapEvent.class, q2::add);
 
+        map1.put("post-boostrap", "value");
+
+        // wait for an event
+        final Object poll = q2.poll(20, TimeUnit.SECONDS);
+        Assert.assertTrue(poll instanceof InsertedEvent);
+        Assert.assertEquals("post-boostrap", ((InsertedEvent<String, String>) poll).getKey());
+
+
+        Assert.assertEquals("value", clientMap.get("post-boostrap"));
 
     }
 }
