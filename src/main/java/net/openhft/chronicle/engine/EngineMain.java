@@ -16,8 +16,8 @@
 
 package net.openhft.chronicle.engine;
 
-
 import net.openhft.chronicle.core.pool.ClassAliasPool;
+import net.openhft.chronicle.engine.api.management.mbean.ChronicleConfig;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.cfg.*;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
@@ -47,6 +47,8 @@ public class EngineMain {
         addClass(ClustersCfg.class);
         addClass(InMemoryMapCfg.class);
         addClass(FilePerKeyMapCfg.class);
+        addClass(ChronicleMapCfg.class);
+        addClass(MonitorCfg.class);
 
         String name = args.length > 0 ? args[0] : "engine.yaml";
         TextWire yaml = TextWire.fromFile(name);

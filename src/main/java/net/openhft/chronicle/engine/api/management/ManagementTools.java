@@ -150,7 +150,7 @@ public enum ManagementTools {
             tree.registerSubscriber("", TopologicalEvent.class, e -> {
                         // give the collection time to be setup.
                         if (e.assetName() != null)
-                            ses.schedule(() -> handleTreeUpdate(tree, e, ses), 50, TimeUnit.MILLISECONDS);
+                            ses.schedule(() -> handleTreeUpdate(tree, e, ses), 2000, TimeUnit.MILLISECONDS);
                     }
             );
             return null;
@@ -230,7 +230,6 @@ public enum ManagementTools {
                 list.add(new Attribute("KeySubscriberCount",objectKVSSubscription.keySubscriberCount()));
                 list.add(new Attribute("Dynamic Attribute Key","Dynamic Attribute Value"));
                 mbs.setAttributes(atName,list);*/
-
                 //start Dynamic MBeans Code
                 Map m = new HashMap();
                 m.put("size", "" + view.longSize());

@@ -24,5 +24,4 @@ public class ChronicleNfsAssetINode extends Inode {
         return POOL.computeIfAbsent(asset, k -> new ChronicleNfsAssetINode(asset));
     }
 
-
 }

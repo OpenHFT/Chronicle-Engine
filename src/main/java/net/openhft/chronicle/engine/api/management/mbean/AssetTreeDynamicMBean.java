@@ -22,7 +22,6 @@ public class AssetTreeDynamicMBean implements DynamicMBean {
         load();
     }
 
-
     public synchronized String getAttribute(@NotNull String name) throws AttributeNotFoundException {
         String value = this.properties.getProperty(name);
         if (value != null) {

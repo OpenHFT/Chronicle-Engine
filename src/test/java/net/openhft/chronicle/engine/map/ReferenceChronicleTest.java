@@ -6,7 +6,7 @@ import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
-import net.openhft.chronicle.engine.api.pubsub.Subscription;
+import net.openhft.chronicle.engine.api.pubsub.SubscriptionCollection;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
@@ -35,7 +35,6 @@ import static org.junit.Assert.assertNotNull;
  * Created by daniel on 16/07/2015. Tests the combination of Reference and Chronicle
  */
 public class ReferenceChronicleTest {
-
 
     private String hostPortToken;
 
@@ -117,7 +116,7 @@ public class ReferenceChronicleTest {
         //Asset child = serverAssetTree.getAsset(_mapName);
 
         assertNotNull(child);
-        Subscription subscription = child.subscription(false);
+        SubscriptionCollection subscription = child.subscription(false);
         assertEquals(1, subscription.subscriberCount());
 
         YamlLogging.showServerWrites = true;

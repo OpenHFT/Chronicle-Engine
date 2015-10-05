@@ -16,7 +16,7 @@ public class UpdateMap {
     public static void main(String[] args) {
         AssetTree clientAssetTree = new VanillaAssetTree().
                 forRemoteAccess("localhost:8088", WireType.BINARY);
-        MapView<String, String> dataMap = clientAssetTree.acquireMap("/data/map", String.class, String.class);
+        MapView<String, String> dataMap = clientAssetTree.acquireMap("/data/chronicle", String.class, String.class);
         dataMap.put("Hello", "World");
 
         Scanner scanner = new Scanner(System.in);

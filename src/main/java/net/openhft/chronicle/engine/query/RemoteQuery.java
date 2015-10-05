@@ -6,6 +6,8 @@ import net.openhft.chronicle.core.util.SerializablePredicate;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.query.Query;
+import net.openhft.chronicle.engine.api.query.Subscription;
+import net.openhft.chronicle.engine.api.query.SubscriptionNotSupported;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -70,11 +72,12 @@ public class RemoteQuery<E> implements Query<E> {
     }
 
     @Override
-    public void subscribe(Consumer<? super E> action) {
+    public Subscription subscribe(Consumer<? super E> action) {
         subscribable.subscribe(
                 action::accept,
                 filter,
                 of(BOOTSTRAP));
+        return SubscriptionNotSupported.INSTANCE;
     }
 
     @Override
@@ -119,7 +122,6 @@ public class RemoteQuery<E> implements Query<E> {
                 accept,
                 filter,
                 of(BOOTSTRAP, END_SUBSCRIPTION_AFTER_BOOTSTRAP));
-
 
         while (!finished.get()) {
             try {

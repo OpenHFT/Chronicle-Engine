@@ -59,7 +59,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
 
     @NotNull
     @Override
-    public Subscription subscription(boolean createIfAbsent) {
+    public SubscriptionCollection subscription(boolean createIfAbsent) {
         return subscription;
     }
 
@@ -68,7 +68,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     public <V> V getView(Class<V> viewType) {
         if (viewType == Reference.class || viewType == Publisher.class || viewType == Supplier.class)
             return (V) reference;
-        if (viewType == Subscription.class || viewType == VanillaSimpleSubscription.class
+        if (viewType == SubscriptionCollection.class || viewType == VanillaSimpleSubscription.class
                 || viewType == ObjectKVSSubscription.class)
             return (V) subscription;
         throw new UnsupportedOperationException("Unable to classify view type " + viewType);

@@ -14,33 +14,13 @@
  *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.openhft.chronicle.engine.api.pubsub;
+package net.openhft.chronicle.engine.tree;
 
-import net.openhft.chronicle.core.Jvm;
-
-import java.util.function.Consumer;
+import net.openhft.chronicle.engine.api.tree.Asset;
 
 /**
- * Subscriber to events of a specific topic/key.
+ * Created by peter on 17/09/15.
  */
-@FunctionalInterface
-public interface Subscriber<E> extends ISubscriber, Consumer<E> {
-
-    /**
-     * Called when there is an event.
-     *
-     * @param e event
-     * @throws InvalidSubscriberException to throw when this subscriber is no longer valid.
-     */
-    void onMessage(E e) throws InvalidSubscriberException;
-
-    @Override
-    default void accept(E e) {
-        try {
-            onMessage(e);
-        } catch (InvalidSubscriberException ise) {
-            throw Jvm.rethrow(ise);
-        }
-    }
-
+public interface SubAssetFactory {
+    <E> Asset createSubAsset(VanillaAsset vanillaAsset, String name, Class<E> valueType);
 }

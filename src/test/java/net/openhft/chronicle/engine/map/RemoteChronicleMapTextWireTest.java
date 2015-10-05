@@ -23,7 +23,10 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestName;
 
 import java.io.IOException;
@@ -35,15 +38,19 @@ import static net.openhft.chronicle.engine.Utils.yamlLoggger;
 import static net.openhft.chronicle.wire.YamlLogging.writeMessage;
 import static org.junit.Assert.*;
 
-
 public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
 
     private static int s_port = 11050;
     @NotNull
+    private final AssetTree assetTree = new VanillaAssetTree().forTesting();
+    @NotNull
     @Rule
     public TestName name = new TestName();
-    @NotNull
-    private final AssetTree assetTree = new VanillaAssetTree().forTesting();
+
+    @AfterClass
+    public static void testTearDown() {
+        TCPRegistry.assertAllServersStopped();
+    }
 
     @Before
     public void before() {
@@ -52,11 +59,6 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
         YamlLogging.clientReads = true;
         YamlLogging.clientWrites = true;
 
-    }
-
-    @AfterClass
-    public static void testTearDown() {
-        TCPRegistry.assertAllServersStopped();
     }
 
     @NotNull
@@ -152,7 +154,6 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     /**
      * containsKey returns true for contained key
      */
-
     @Test(timeout = 50000)
     public void testContainsKey() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
@@ -220,7 +221,6 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     /**
      * keySet returns a Set containing all the keys
      */
-
     @Test(timeout = 50000)
     public void testKeySet() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
@@ -259,7 +259,6 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     /**
      * Values.toArray contains all values
      */
-
     @Test(timeout = 50000)
     public void testValuesToArray() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
@@ -439,7 +438,6 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     /**
      * replace value succeeds when the given key mapped to expected value
      */
-
     @Test(timeout = 50000)
     public void testReplaceValue2() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {

@@ -4,7 +4,7 @@ import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Reference;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
-import net.openhft.chronicle.engine.api.pubsub.Subscription;
+import net.openhft.chronicle.engine.api.pubsub.SubscriptionCollection;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
@@ -180,20 +180,18 @@ public class ReferenceTest {
         // Jvm.pause(100);
         Asset child = assetTree.getAsset("group").getChild("subject");
         assertNotNull(child);
-        Subscription subscription = child.subscription(false);
+        SubscriptionCollection subscription = child.subscription(false);
 
         assertEquals(1, subscription.subscriberCount());
 
         map.put("subject", "cs");
         map.put("subject", "maths");
 
-
         assetTree.unregisterSubscriber("group" + "/" + "subject", keyEventSubscriber);
         assertEquals(0, subscription.subscriberCount());
         assertEquals("cs", events.get(0));
         assertEquals("maths", events.get(1));
         assertEquals("END", events.get(2));
-
 
     }
 
@@ -222,7 +220,7 @@ public class ReferenceTest {
         Jvm.pause(100);
         Asset child = assetTree.getAsset("group").getChild("subject");
         assertNotNull(child);
-        Subscription subscription = child.subscription(false);
+        SubscriptionCollection subscription = child.subscription(false);
 
         assertEquals(1, subscription.subscriberCount());
 
@@ -239,7 +237,6 @@ public class ReferenceTest {
         assertEquals("maths", events.get(2));
         assertEquals("END", events.get(3));
     }
-
 
     @Ignore("test fails")
     @Test
@@ -261,7 +258,7 @@ public class ReferenceTest {
         Jvm.pause(100);
         Asset child = assetTree.getAsset(_mapName).getChild(key);
         assertNotNull(child);
-        Subscription subscription = child.subscription(false);
+        SubscriptionCollection subscription = child.subscription(false);
         assertEquals(1, subscription.subscriberCount());
 
         YamlLogging.showServerWrites = true;

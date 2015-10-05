@@ -48,7 +48,6 @@ import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
 
-
 /**
  * Created by daniel on 28/05/15.
  */
@@ -164,6 +163,5 @@ public class ChronicleMapKeyValueStoreTest {
         String resources = new File(path).getParentFile().getParentFile() + "/src/test/resources";
         return resources;
     }
-
 
 }

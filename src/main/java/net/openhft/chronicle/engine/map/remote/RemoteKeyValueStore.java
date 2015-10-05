@@ -390,14 +390,12 @@ public class
                 csp.toString(), cid, valueIn -> valueIn.object(kClass));
     }
 
-
     @SuppressWarnings("SameParameterValue")
     private boolean proxyReturnBoolean(@NotNull final EventId eventId,
                                        @Nullable final Consumer<ValueOut> consumer) {
         final long startTime = Time.currentTimeMillis();
         return attempt(() -> readBoolean(sendEvent(startTime, eventId, consumer), startTime));
     }
-
 
     @SuppressWarnings("SameParameterValue")
     private int proxyReturnInt(@NotNull final EventId eventId) {

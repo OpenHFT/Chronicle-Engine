@@ -192,7 +192,6 @@ public class CMap2EngineReplicator implements EngineReplication,
      * @return the last time that host denoted by the {@code remoteIdentifier} was updated in
      * milliseconds.
      */
-
     @Override
     public long lastModificationTime(final byte remoteIdentifier) {
         return engineReplicationLang.lastModificationTime(remoteIdentifier);

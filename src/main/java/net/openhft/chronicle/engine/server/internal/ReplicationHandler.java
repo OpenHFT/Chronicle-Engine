@@ -128,7 +128,6 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
     };
 
-
     void process(@NotNull final WireIn inWire,
                  final WireOutPublisher publisher,
                  final long tid,
@@ -172,6 +171,5 @@ public class ReplicationHandler<E> extends AbstractHandler {
             return (P[]) this.params;
         }
     }
-
 
 }

@@ -19,7 +19,7 @@ package net.openhft.chronicle.engine.api.tree;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.util.ThrowingAcceptor;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
-import net.openhft.chronicle.engine.api.pubsub.Subscription;
+import net.openhft.chronicle.engine.api.pubsub.SubscriptionCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,7 +67,7 @@ public interface Asset extends Closeable {
      * @throws AssetNotFoundException if the Subscription doesn't exist and the tree is not able to
      *                                create the Subscription.
      */
-    Subscription subscription(boolean createIfAbsent) throws AssetNotFoundException;
+    SubscriptionCollection subscription(boolean createIfAbsent) throws AssetNotFoundException;
 
     /**
      * Navigate down the tree to find an asset.

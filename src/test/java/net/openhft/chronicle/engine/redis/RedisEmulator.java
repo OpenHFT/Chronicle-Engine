@@ -27,8 +27,8 @@ import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * The purpose is to provide Redis like command which wrap a MapView or a Reference to an underlying store.
@@ -116,7 +116,7 @@ public class RedisEmulator {
     }
 
     public static long decr(Reference<Long> l) {
-        return l.applyTo(v -> v - 1);
+        return l.syncUpdate(v -> v - 1, v -> v);
     }
 
     public static long decr(MapView<String, Long> map, String key) {
@@ -124,7 +124,7 @@ public class RedisEmulator {
     }
 
     public static void del(MapView<String, ?> map, String... keys) {
-        map.asyncUpdate(m -> Stream.of(keys).forEach(k -> m.remove(k)));
+        map.keySet().removeAll(Arrays.asList(keys));
     }
 
     public static void echo(Updatable updatable, String message) {
@@ -301,7 +301,7 @@ public class RedisEmulator {
      */
     public static <V> String flushdb(MapView<String, V> map) {
         if (map != null)
-        map.clear();
+            map.clear();
         return "OK";
     }
 
@@ -338,7 +338,7 @@ public class RedisEmulator {
     }
 
     public static long incr(Reference<Long> l) {
-        return l.applyTo(v -> v + 1);
+        return l.syncUpdate(v -> v + 1, v -> v);
     }
 
     /**
@@ -372,13 +372,17 @@ public class RedisEmulator {
         return map.applyToKey(key, v -> v + toAdd);
     }
 
-
     public static double incrbyfloat(MapView<String, Double> map, String key, double toAdd) {
-        return map.applyToKey(key, v -> v + toAdd);
+        return map.syncUpdateKey(key, v -> v + toAdd, v -> v);
     }
 
     public static Set<String> keys(MapView<String, ?> map, String pattern) {
-        return map.applyTo(m -> m.keySet().stream().filter(k -> k.matches(pattern)).collect(Collectors.toSet()));
+        return map.applyTo(m -> {
+            Pattern compile = Pattern.compile(pattern);
+            return m.keySet().stream()
+                    .filter(k -> compile.matcher(k).matches())
+                    .collect(Collectors.toSet());
+        });
     }
 
     public static <V> V lindex(MapView<String, List<V>> map, String name, int index) {

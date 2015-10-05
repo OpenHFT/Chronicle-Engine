@@ -23,7 +23,7 @@ etc: {
   # Allow access via NFS to this engine.
   #
   nfs: !NfsCfg {
-    enabled: false,
+    enabled: true,
     debug: false, # log every NFS request.
     exports: {
      # export everything.
@@ -31,6 +31,10 @@ etc: {
       "/data": "*(rw,noacl,anonuid=1000,anongid=1000)"
       "/stocks": "*(rw,noacl,anonuid=1000,anongid=1000)"
     }
+  }
+  monitoring: !MonitorCfg {
+      subscriptionMonitoringEnabled: true
+      userMonitoringEnabled: true
   }
   #
   # Configure a group of node which form a local cluster.
@@ -72,6 +76,16 @@ data: {
       removeReturnsNull: false,
       diskPath: demo-data
     },
+    chronicle: !ChronicleMapCfg {
+          diskPath: /tmp/data,
+          keyType: !type String,
+          valueType: !type String,
+          compression: none,
+          putReturnsNull: false,
+          removeReturnsNull: false,
+          entries: 2000,
+          averageSize: 1000
+        },
     # a map which wraps ConcurrentHashMap
     map: !InMemoryMapCfg {
       keyType: !type String,

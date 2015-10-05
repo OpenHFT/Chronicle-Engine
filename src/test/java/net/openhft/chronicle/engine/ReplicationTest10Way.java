@@ -53,7 +53,6 @@ import static org.junit.Assert.assertNotNull;
 @RunWith(Parameterized.class)
 public class ReplicationTest10Way {
 
-
     public static final int MAX = 10;
     public static final String CLUSTER_NAME = "max-cluster";
     public static final WireType WIRE_TYPE = WireType.TEXT;
@@ -107,7 +106,6 @@ public class ReplicationTest10Way {
         }
         localCluster.readMarshallable(t);
 
-
         clusters.put(CLUSTER_NAME, localCluster);
     }
 
@@ -129,9 +127,7 @@ public class ReplicationTest10Way {
         //Delete any files from the last run
         Files.deleteIfExists(Paths.get(OS.TARGET, NAME));
 
-
         WireType writeType = WireType.TEXT;
-
 
         for (int i = 1; i < MAX; i++) {
             final String hostPort = "host.port" + i;
@@ -150,7 +146,6 @@ public class ReplicationTest10Way {
         shutdownTrees();
         Jvm.pause(100);
         shutDownServers();
-
 
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
@@ -211,7 +206,6 @@ public class ReplicationTest10Way {
             maps[i].put("hello" + i, "world" + i);
         }
 
-
         OUTER:
         for (int i = 1; i <= 100; i++) {
 
@@ -227,16 +221,11 @@ public class ReplicationTest10Way {
 
         }
 
-
         for (int i = 1; i < MAX; i++) {
             Assert.assertEquals("world" + i, maps[i].get("hello" + i));
         }
 
-
     }
 
-
 }
-
-
 

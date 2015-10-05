@@ -107,7 +107,6 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
 
         sendEventAsync(unregisterSubscriber, valueOut -> valueOut.int64(tid), false);
 
-
     }
 
     @Override

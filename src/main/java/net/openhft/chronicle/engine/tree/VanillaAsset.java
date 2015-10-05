@@ -24,7 +24,6 @@ import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
-import net.openhft.chronicle.engine.api.map.ValueReader;
 import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
@@ -38,10 +37,10 @@ import net.openhft.chronicle.engine.map.remote.RemoteTopologySubscription;
 import net.openhft.chronicle.engine.pubsub.RemoteTopicPublisher;
 import net.openhft.chronicle.engine.pubsub.VanillaReference;
 import net.openhft.chronicle.engine.pubsub.VanillaTopicPublisher;
-import net.openhft.chronicle.network.ClientSessionProvider;
 import net.openhft.chronicle.engine.session.VanillaSessionProvider;
 import net.openhft.chronicle.engine.set.RemoteKeySetView;
 import net.openhft.chronicle.engine.set.VanillaKeySetView;
+import net.openhft.chronicle.network.ClientSessionProvider;
 import net.openhft.chronicle.network.VanillaSessionDetails;
 import net.openhft.chronicle.network.api.session.SessionProvider;
 import net.openhft.chronicle.network.connection.SocketAddressSupplier;
@@ -110,7 +109,7 @@ public class VanillaAsset implements Asset, Closeable {
         addWrappingRule(ValuesCollection.class, LAST + " values", VanillaValuesCollection::new, MapView.class);
 
         addWrappingRule(MapView.class, LAST + " string key maps", VanillaMapView::new, ObjectKeyValueStore.class);
-
+        addView(SubAssetFactory.class, new VanillaSubAssetFactory());
         String fullName = fullName();
         HostIdentifier hostIdentifier = findView(HostIdentifier.class);
         if (hostIdentifier != null)
@@ -153,7 +152,6 @@ public class VanillaAsset implements Asset, Closeable {
                 VanillaTopologySubscription::new);
     }
 
-
     public void forRemoteAccess(@NotNull String[] hostPortDescriptions, @NotNull Function<Bytes, Wire> wire, VanillaSessionDetails sessionDetails1) throws
             AssetNotFoundException {
 
@@ -165,7 +163,6 @@ public class VanillaAsset implements Asset, Closeable {
 
         addWrappingRule(KeySetView.class, LAST + " remote key maps", RemoteKeySetView::new,
                 MapView.class);
-
 
         addLeafRule(ObjectKVSSubscription.class, LAST + " Remote", RemoteKVSSubscription::new);
 
@@ -179,8 +176,6 @@ public class VanillaAsset implements Asset, Closeable {
                 MapView.class);
         addLeafRule(TopologySubscription.class, LAST + " vanilla",
                 RemoteTopologySubscription::new);
-
-
 
         SessionProvider sessionProvider = new ClientSessionProvider(sessionDetails1);
 
@@ -323,7 +318,7 @@ public class VanillaAsset implements Asset, Closeable {
 
     @Nullable
     @Override
-    public Subscription subscription(boolean createIfAbsent) throws AssetNotFoundException {
+    public SubscriptionCollection subscription(boolean createIfAbsent) throws AssetNotFoundException {
         return createIfAbsent ? acquireView(ObjectKVSSubscription.class) : getView(ObjectKVSSubscription.class);
     }
 
@@ -396,8 +391,8 @@ public class VanillaAsset implements Asset, Closeable {
                 throw new IllegalStateException("You can only have a SubAsset of a Map");
             if (map.keyType() != String.class)
                 throw new IllegalStateException("You can only have a SubAsset of a Map with a String key.");
-            ValueReader vr = getView(ValueReader.class);
-            return new VanillaSubAsset(this, name, map.valueType(), vr);
+            SubAssetFactory saFactory = findOrCreateView(SubAssetFactory.class);
+            return saFactory.createSubAsset(this, name, map.valueType());
         });
     }
 
@@ -405,7 +400,6 @@ public class VanillaAsset implements Asset, Closeable {
     public Asset getChild(String name) {
         return children.get(name);
     }
-
 
     @Override
     public void removeChild(String name) {

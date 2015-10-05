@@ -3,6 +3,7 @@ package net.openhft.chronicle.engine.query;
 import net.openhft.chronicle.core.util.SerializableFunction;
 import net.openhft.chronicle.core.util.SerializablePredicate;
 import net.openhft.chronicle.engine.api.query.Query;
+import net.openhft.chronicle.engine.api.query.Subscription;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
@@ -49,7 +50,7 @@ public class VanillaQuery<E> implements Query<E> {
     }
 
     @Override
-    public void subscribe(Consumer<? super E> action) {
+    public Subscription subscribe(Consumer<? super E> action) {
         throw new UnsupportedOperationException("todo");
     }
 

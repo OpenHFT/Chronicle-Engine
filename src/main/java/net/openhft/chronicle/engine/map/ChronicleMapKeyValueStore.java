@@ -57,7 +57,7 @@ import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
 import static net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer.notifyEachEvent;
 import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplication.builder;
 
-public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValueStore<K, V>,
+public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<K, V>,
         Closeable, Supplier<EngineReplication> {
 
     private static final ScheduledExecutorService DELAYED_CLOSER = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("ChronicleMapKeyValueStore Closer", true));
@@ -74,10 +74,13 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
     @Nullable
     private final EventLoop eventLoop;
     private final AtomicBoolean isClosed = new AtomicBoolean();
-
+    private Class keyType;
+    private Class valueType;
 
     public ChronicleMapKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset) {
         String basePath = context.basePath();
+        keyType = context.keyType();
+        valueType = context.valueType();
         double averageValueSize = context.getAverageValueSize();
         long maxEntries = context.getEntries();
         this.asset = asset;
@@ -309,6 +312,16 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements AuthenticatedKeyValu
     @Override
     public EngineReplication get() {
         return engineReplicator;
+    }
+
+    @Override
+    public Class<K> keyType() {
+        return keyType;
+    }
+
+    @Override
+    public Class<V> valueType() {
+        return valueType;
     }
 
     private class PublishingOperations extends MapEventListener<K, V> {

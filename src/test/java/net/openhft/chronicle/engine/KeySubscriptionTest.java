@@ -46,7 +46,6 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
-
     @Before
     public void before() throws IOException {
         serverAssetTree = new VanillaAssetTree().forTesting();
@@ -54,7 +53,6 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
         TCPRegistry.createServerSocketChannelFor(CONNECTION);
         serverEndpoint = new ServerEndpoint(CONNECTION, serverAssetTree, WIRE_TYPE);
         clientTree = new VanillaAssetTree().forRemoteAccess(CONNECTION, WIRE_TYPE);
-
 
     }
 
@@ -69,7 +67,6 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
     }
-
 
     /**
      * test many clients connecting to a single server
@@ -88,9 +85,5 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
         map.registerKeySubscriber(System.out::println);
     }
 
-
 }
-
-
-
 

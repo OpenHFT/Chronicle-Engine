@@ -3,7 +3,7 @@ package net.openhft.chronicle.engine.map.remote;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
-import net.openhft.chronicle.engine.api.pubsub.Subscription;
+import net.openhft.chronicle.engine.api.pubsub.SubscriptionCollection;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.query.Filter;
 import net.openhft.chronicle.engine.server.internal.MapWireHandler;
@@ -31,7 +31,7 @@ import static net.openhft.chronicle.engine.server.internal.SubscriptionHandler.S
 /**
  * Created by rob on 27/06/2015.
  */
-abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient implements Subscription<E> {
+abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient implements SubscriptionCollection<E> {
 
     private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
     final Map<Object, Long> subscribersToTid = new ConcurrentHashMap<>();
@@ -68,7 +68,6 @@ abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient imp
             csp = csp + "&bootstrap=" + bootstrap;
         if (endSubscriptionAfterBootstrap != null)
             csp = csp + "&endSubscriptionAfterBootstrap=" + endSubscriptionAfterBootstrap;
-
 
         hub.subscribe(new AbstractAsyncSubscription(hub, csp, this.getClass().getSimpleName()) {
             {

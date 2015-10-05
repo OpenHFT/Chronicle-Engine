@@ -22,7 +22,7 @@ public interface Query<T> {
 
     Stream<T> stream();
 
-    void subscribe(Consumer<? super T> action);
+    Subscription subscribe(Consumer<? super T> action);
 
     <R, A> R collect(Collector<? super T, A, R> collector);
 

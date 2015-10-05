@@ -32,7 +32,6 @@ import static net.openhft.chronicle.engine.Utils.methodName;
  * @author Rob Austin.
  */
 
-
 /**
  * test using the listener both remotely or locally via the engine
  *
@@ -70,7 +69,6 @@ public class QueryableEntrySetTest extends ThreadMonitoringTest {
         return list;
     }
 
-
     @Before
     public void before() throws IOException {
         serverAssetTree = new VanillaAssetTree().forTesting();
@@ -105,10 +103,8 @@ public class QueryableEntrySetTest extends ThreadMonitoringTest {
         TCPRegistry.reset();
     }
 
-
     @Test
     public void testQueryForEach() throws Exception {
-
 
         Map<String, String> expected = new HashMap<>();
         expected.put("1", "1");
@@ -126,7 +122,6 @@ public class QueryableEntrySetTest extends ThreadMonitoringTest {
         System.out.println(actual);
         Assert.assertEquals(expected.entrySet(), actual);
     }
-
 
     @Test
     public void testQueryForEachWithPredicate() throws Exception {
@@ -154,7 +149,6 @@ public class QueryableEntrySetTest extends ThreadMonitoringTest {
         Assert.assertEquals("1", entry.getValue());
 
     }
-
 
 }
 

@@ -21,10 +21,12 @@ import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Serializable;
+
 /**
  * Created by peter on 27/08/15.
  */
-public class EndOfDayShort implements Marshallable {
+public class EndOfDayShort implements Marshallable, Serializable {
     long daysVolume;
     // Symbol,Company,Price,Change,ChangePercent,Day's Volume
     public String name;

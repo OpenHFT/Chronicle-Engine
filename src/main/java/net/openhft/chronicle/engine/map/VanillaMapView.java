@@ -64,7 +64,6 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
         this.removeReturnsNull = context.removeReturnsNull() != Boolean.FALSE;
     }
 
-
     @Override
     public Class<K> keyType() {
         return keyClass;
@@ -249,7 +248,6 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
         return kvStore.getAndRemove(key);
     }
 
-
     @NotNull
     @Override
     public EntrySetView<K, Object, V> entrySet() {
@@ -318,7 +316,6 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
         KVSSubscription<K, V> subscription = (KVSSubscription<K, V>) asset.subscription(true);
         subscription.registerKeySubscriber(rc.type(keyClass), subscriber, filter);
     }
-
 
     @Override
     public void registerSubscriber(@NotNull Subscriber<MapEvent<K, V>> subscriber) {

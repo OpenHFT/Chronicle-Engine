@@ -117,10 +117,8 @@ public class ReplicationTest2Way {
         return new File(path).getParentFile().getParentFile() + "/src/test/resources";
     }
 
-
     @Test
     public void testBootstrap() throws InterruptedException {
-
 
         final ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME, String.class, String
                 .class);
@@ -128,20 +126,17 @@ public class ReplicationTest2Way {
 
         map1.put("hello1", "world1");
 
-
         final ConcurrentMap<String, String> map2 = tree2.acquireMap(NAME, String.class, String
                 .class);
         assertNotNull(map2);
 
         map2.put("hello2", "world2");
 
-
         for (int i = 1; i <= 50; i++) {
             if (map1.size() == 2 && map2.size() == 2)
                 break;
             Jvm.pause(200);
         }
-
 
         for (Map m : new Map[]{map1, map2}) {
             Assert.assertEquals("world1", m.get("hello1"));

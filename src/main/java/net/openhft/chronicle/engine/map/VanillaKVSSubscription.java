@@ -19,17 +19,22 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.KeyValueStore.Entry;
 import net.openhft.chronicle.engine.api.map.MapEvent;
+import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.pubsub.SimpleSubscription;
+import net.openhft.chronicle.engine.cfg.SubscriptionStat;
 import net.openhft.chronicle.engine.pubsub.VanillaSimpleSubscription;
 import net.openhft.chronicle.engine.query.Filter;
+import net.openhft.chronicle.network.api.session.SessionDetails;
+import net.openhft.chronicle.network.api.session.SessionProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalTime;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -42,7 +47,7 @@ import static net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer.notif
  * Created by peter on 22/05/15.
  */
 // todo review thread safety
-public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K, V>,
+public class VanillaKVSSubscription<K, V> implements ObjectKVSSubscription<K, V>,
         RawKVSSubscription<K, V> {
 
     private static final Logger LOG = LoggerFactory.getLogger(VanillaKVSSubscription.class);
@@ -50,11 +55,13 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
     private final Set<Subscriber<MapEvent<K, V>>> subscribers = new CopyOnWriteArraySet<>();
     private final Set<Subscriber<K>> keySubscribers = new CopyOnWriteArraySet<>();
     private final Set<EventConsumer<K, V>> downstream = new CopyOnWriteArraySet<>();
+    private final SessionProvider sessionProvider;
 
     @Nullable
     private final Asset asset;
-    final Map<Subscriber, Subscriber> subscriptionDelegate = new IdentityHashMap<>();
+    private final Map<Subscriber, Subscriber> subscriptionDelegate = new IdentityHashMap<>();
     private KeyValueStore<K, V> kvStore;
+    private Map<String, SubscriptionStat> subscriptionMonitoringMap = null;
 
     public VanillaKVSSubscription(@NotNull RequestContext requestContext, @NotNull Asset asset) {
         this(requestContext.viewType(), asset);
@@ -64,6 +71,8 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
         this.asset = asset;
         if (viewType != null && asset != null)
             asset.addView(viewType, this);
+
+        sessionProvider = asset == null ? null : asset.findView(SessionProvider.class);
     }
 
     @Override
@@ -159,7 +168,7 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
             String keyStr = key.toString();
             Asset child = asset.getChild(keyStr);
             if (child != null) {
-                Subscription subscription = child.subscription(false);
+                SubscriptionCollection subscription = child.subscription(false);
                 if (subscription instanceof VanillaSimpleSubscription) {
 //                    System.out.println(changeEvent.toString().substring(0, 100));
                     ((SimpleSubscription) subscription).notifyMessage(changeEvent.getValue());
@@ -202,9 +211,8 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
     private void registerSubscriber0(@NotNull RequestContext rc,
                                      @NotNull Subscriber<MapEvent<K, V>> subscriber,
                                      @NotNull Filter<MapEvent<K, V>> filter) {
-
+        addToStats("subscription");
         final Subscriber<MapEvent<K, V>> sub = subscriber(subscriber, filter);
-
         this.subscribers.add(sub);
         Boolean bootstrap = rc.bootstrap();
         if (bootstrap != Boolean.FALSE && kvStore != null) {
@@ -229,6 +237,7 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
     public void registerKeySubscriber(@NotNull RequestContext rc,
                                       @NotNull Subscriber<K> subscriber,
                                       @NotNull Filter<K> filter) {
+        addToStats("keySubscription");
         final Boolean bootstrap = rc.bootstrap();
         final Subscriber<K> sub = subscriber(subscriber, filter);
         keySubscribers.add(sub);
@@ -248,6 +257,7 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
 
     @Override
     public void registerTopicSubscriber(@NotNull RequestContext rc, @NotNull TopicSubscriber subscriber) {
+        addToStats("topicSubscription");
         Boolean bootstrap = rc.bootstrap();
         topicSubscribers.add((TopicSubscriber<K, V>) subscriber);
         if (bootstrap != Boolean.FALSE && kvStore != null) {
@@ -276,17 +286,71 @@ public class VanillaKVSSubscription<K, MV, V> implements ObjectKVSSubscription<K
     public void unregisterSubscriber(@NotNull Subscriber subscriber) {
         final Subscriber delegate = subscriptionDelegate.get(subscriber);
         final Subscriber s = delegate != null ? delegate : subscriber;
-        subscribers.remove(s);
-        keySubscribers.remove(s);
+        boolean subscription = subscribers.remove(s);
+        boolean keySubscription = keySubscribers.remove(s);
+        if(subscription)removeFromStats("subscription");
+        if(keySubscription)removeFromStats("keySubscription");
         s.onEndOfSubscription();
     }
 
     @Override
     public void unregisterTopicSubscriber(@NotNull TopicSubscriber subscriber) {
         topicSubscribers.remove(subscriber);
-
+        removeFromStats("topicSubscription");
         subscriber.onEndOfSubscription();
     }
 
+    //Needs some refactoring - need a definitive way of knowing when this map should become available
+    //3 combinations, not lookedUP, exists or does not exist
+    private Map getSubscriptionMap(){
+        if(subscriptionMonitoringMap != null)return subscriptionMonitoringMap;
+        Asset subscriptionAsset = asset.root().getAsset("proc/subscriptions");
+        if (subscriptionAsset != null && subscriptionAsset.getView(MapView.class) != null) {
+            subscriptionMonitoringMap = subscriptionAsset.getView(MapView.class);
+        }
+        return subscriptionMonitoringMap;
+    }
 
+    private void addToStats(String subType){
+        if(sessionProvider == null)return;
+
+        SessionDetails sessionDetails = sessionProvider.get();
+        if(sessionDetails != null) {
+            String userId = sessionDetails.userId();
+
+            Map<String, SubscriptionStat> subStats = getSubscriptionMap();
+            if(subStats != null) {
+                SubscriptionStat stat = subStats.get(userId + "~" + subType);
+                if (stat == null) {
+                    stat = new SubscriptionStat();
+                    stat.setFirstSubscribed(LocalTime.now());
+                }
+                stat.setTotalSubscriptions(stat.getTotalSubscriptions() + 1);
+                stat.setActiveSubscriptions(stat.getActiveSubscriptions() + 1);
+                stat.setRecentlySubscribed(LocalTime.now());
+                subStats.put(userId + "~" + subType, stat);
+            }
+        }
+    }
+
+    private void removeFromStats(String subType){
+        if(sessionProvider == null)return;
+
+        SessionDetails sessionDetails = sessionProvider.get();
+        if(sessionDetails != null) {
+            String userId = sessionDetails.userId();
+
+            Map<String, SubscriptionStat> subStats = getSubscriptionMap();
+            if(subStats != null) {
+                SubscriptionStat stat = subStats.get(userId + "~" + subType);
+                if (stat == null) {
+                    throw new AssertionError("There should be an active subscription");
+                }
+                stat.setActiveSubscriptions(stat.getActiveSubscriptions() - 1);
+                stat.setRecentlySubscribed(LocalTime.now());
+                subStats.put(userId + "~" + subType, stat);
+            }
+
+        }
+    }
 }

@@ -30,7 +30,6 @@ import java.io.IOException;
 
 import static net.openhft.chronicle.engine.Utils.methodName;
 
-
 public class RemoteRpc extends JSR166TestCase {
 
     public static final net.openhft.chronicle.wire.WireType WIRE_TYPE = net.openhft.chronicle.wire.WireType.TEXT;
@@ -40,17 +39,17 @@ public class RemoteRpc extends JSR166TestCase {
     public TestName name = new TestName();
     AssetTree assetTree;
 
+    @AfterClass
+    public static void tearDownClass() {
+        TCPRegistry.assertAllServersStopped();
+    }
+
     @NotNull
 
     @Before
     public void before() {
         System.out.println("\t... test " + name.getMethodName());
         methodName(name.getMethodName());
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-        TCPRegistry.assertAllServersStopped();
     }
 
     /**
@@ -90,7 +89,6 @@ public class RemoteRpc extends JSR166TestCase {
             Thread.sleep(1000);
         }
 
-
     }
 
     /**
@@ -108,7 +106,6 @@ public class RemoteRpc extends JSR166TestCase {
         MapView<String, String> map2 = assetTree.acquireMap("/test2", String.class, String
                 .class);
         map.put("hello", "world");
-
 
         assetTree.registerSubscriber("/test", String.class, (x) -> System.out.println
                 ("******************+" + x));
@@ -128,9 +125,7 @@ public class RemoteRpc extends JSR166TestCase {
             Thread.sleep(1000);
         }
 
-
     }
-
 
     @After
     public void after() throws IOException {

@@ -86,7 +86,6 @@ public class SubscriptionModelPerformanceTest {
 //        YamlLogging.clientReads = YamlLogging.clientWrites= true;
         YamlLogging.clientReads = YamlLogging.clientWrites = false;
 
-
         String hostPortDescription = "SubscriptionModelPerformanceTest-" + System.nanoTime();
         WireType wireType = WireType.BINARY;
 
@@ -292,7 +291,6 @@ public class SubscriptionModelPerformanceTest {
             Assert.assertEquals(_noOfPuts, mapEventListener.getNoOfRemoveEvents().get());
             Assert.assertEquals(0, mapEventListener.getNoOfUpdateEvents().get());
         }
-
 
         Assert.assertTrue((runtimeInNanos / (_noOfPuts * _noOfRunsToAverage)) <= _secondInNanos);
         clientAssetTree.unregisterSubscriber(_mapName + "?bootstrap=false", mapEventSubscriber);

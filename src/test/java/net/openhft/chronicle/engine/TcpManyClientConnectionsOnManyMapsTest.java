@@ -57,7 +57,6 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
-
     @Before
     public void before() throws IOException {
         serverAssetTree = new VanillaAssetTree().forTesting();
@@ -103,7 +102,6 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
         });
     }
 
-
     /**
      * test many clients connecting to a single server
      */
@@ -145,7 +143,6 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
             }));
         }
 
-
         final Iterator<Future<String>> iterator = futures2.iterator();
         for (int i = 0; i < MAX; i++) {
 
@@ -163,7 +160,6 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
         }
 
     }
-
 
     /**
      * test many clients connecting to a single server
@@ -200,11 +196,7 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
             });
         }
 
-
     }
 
-
 }
-
-
 

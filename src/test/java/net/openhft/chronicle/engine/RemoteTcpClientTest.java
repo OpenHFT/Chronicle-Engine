@@ -207,7 +207,6 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
             Arrays.sort(dataValues);
             assertArrayEquals(dataValues, values.toArray());
 
-
 /*    MapView<String, ?, String> map = acquireMap("my-map", String.class, String.class);
 
     Set<String> set =...

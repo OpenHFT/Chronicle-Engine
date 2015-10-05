@@ -144,7 +144,7 @@ public class RequestContext implements Cloneable {
     }
 
     @NotNull
-    public Class<Subscription> getSubscriptionType() {
+    public Class<SubscriptionCollection> getSubscriptionType() {
         Class elementType = elementType();
         return elementType == TopologicalEvent.class
                 ? (Class) TopologySubscription.class
@@ -300,6 +300,11 @@ public class RequestContext implements Cloneable {
         return pathName;
     }
 
+    public RequestContext namePath(String pathName) {
+        this.pathName = pathName;
+        return this;
+    }
+
     public String name() {
         return name;
     }
@@ -363,6 +368,12 @@ public class RequestContext implements Cloneable {
     }
 
     @Nullable
+    public RequestContext removeReturnsNull(Boolean removeReturnsNull) {
+        this.removeReturnsNull = removeReturnsNull;
+        return this;
+    }
+
+    @Nullable
     public Boolean nullOldValueOnUpdateEvent() {
         return nullOldValueOnUpdateEvent;
     }
@@ -379,7 +390,6 @@ public class RequestContext implements Cloneable {
         return this;
     }
 
-
     @NotNull
     public RequestContext endSubscriptionAfterBootstrap(boolean endSubscriptionAfterBootstrap) {
         checkSealed();
@@ -387,11 +397,9 @@ public class RequestContext implements Cloneable {
         return this;
     }
 
-
     public Boolean endSubscriptionAfterBootstrap() {
         return endSubscriptionAfterBootstrap;
     }
-
 
     void checkSealed() {
         if (sealed) throw new IllegalStateException();

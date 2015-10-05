@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Internal API for managing and monitoring subscriptions.
  */
-public interface Subscription<E> extends Closeable {
+public interface SubscriptionCollection<E> extends Closeable {
     void registerSubscriber(@NotNull RequestContext rc,
                             @NotNull Subscriber<E> subscriber,
                             @NotNull Filter<E> filter);

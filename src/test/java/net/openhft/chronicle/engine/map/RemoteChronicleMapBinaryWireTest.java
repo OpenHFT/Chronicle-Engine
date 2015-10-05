@@ -50,7 +50,6 @@ import static org.junit.Assert.*;
 
 public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
 
-
     @NotNull
     private final AssetTree assetTree = new VanillaAssetTree().forTesting();
     @NotNull
@@ -234,7 +233,6 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     /**
      * keySet returns a Set containing all the keys
      */
-
     @Test(timeout = 50000)
     public void testKeySet() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
@@ -257,7 +255,6 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     /**
      * keySet.toArray returns contains all keys
      */
-
     @Test(timeout = 50000)
     public void testKeySetToArray() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
@@ -274,7 +271,6 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     /**
      * Values.toArray contains all values
      */
-
     @Test(timeout = 50000)
     public void testValuesToArray() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
@@ -452,7 +448,6 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     /**
      * replace value succeeds when the given key mapped to expected value
      */
-
     @Test(timeout = 50000)
     public void testReplaceValue2() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {

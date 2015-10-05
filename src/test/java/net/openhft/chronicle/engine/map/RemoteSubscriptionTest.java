@@ -34,7 +34,6 @@ import static net.openhft.chronicle.engine.Utils.methodName;
  * @author Rob Austin.
  */
 
-
 /**
  * test using the listener both remotely or locally via the engine
  *
@@ -67,11 +66,9 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
         return list;
     }
 
-
     @Before
     public void before() throws IOException {
         serverAssetTree = new VanillaAssetTree().forTesting();
-
 
         methodName(name.getMethodName());
 
@@ -82,7 +79,6 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
         TCPRegistry.createServerSocketChannelFor(connection);
         serverEndpoint = new ServerEndpoint(connection, serverAssetTree, wireType);
         clientAssetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType);
-
 
         map = clientAssetTree.acquireMap(NAME, String.class, String.class);
     }
@@ -99,7 +95,6 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
     }
-
 
     /**
      * doing a put on the server, listening for the event on the client
@@ -121,9 +116,7 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
 
         Assert.assertTrue(event instanceof InsertedEvent);
 
-
     }
-
 
     /**
      * doing a put on the client, listening for the event on the server
@@ -145,9 +138,7 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
 
         Assert.assertTrue(event instanceof InsertedEvent);
 
-
     }
-
 
     /**
      * doing a put on the client, listening for the event on the server
@@ -178,7 +169,6 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
             Assert.assertTrue(event instanceof UpdatedEvent);
         }
     }
-
 
     /**
      * doing a put on the client, listening for the event on the server
@@ -211,7 +201,6 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
 
         Assert.assertTrue(onEndOfSubscription);
     }
-
 
 }
 
