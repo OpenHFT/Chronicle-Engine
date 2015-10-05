@@ -63,7 +63,7 @@ public interface AssetTree extends Closeable {
     /**
      * Acquire a set view for a URI.
      *
-     * @param uri to search for
+     * @param uri    to search for
      * @param eClass element class.
      * @return the Set.
      * @throws AssetNotFoundException the view could not be constructed.
@@ -76,7 +76,7 @@ public interface AssetTree extends Closeable {
     /**
      * Acquire a map view for a URI.
      *
-     * @param uri to search for
+     * @param uri    to search for
      * @param kClass key class of the map.
      * @param vClass value class of the map.
      * @return the Map.
@@ -84,13 +84,19 @@ public interface AssetTree extends Closeable {
      */
     @NotNull
     default <K, V> MapView<K, V> acquireMap(@NotNull String uri, Class<K> kClass, Class<V> vClass) throws AssetNotFoundException {
-        return acquireView(requestContext(uri).view("map").type(kClass).type2(vClass));
+        final RequestContext requestContext = requestContext(uri);
+
+        if (requestContext.bootstrap() != null)
+            throw new UnsupportedOperationException("Its not possible to set the bootstrap when " +
+                    "acquiring a map");
+
+        return acquireView(requestContext.view("map").type(kClass).type2(vClass));
     }
 
     /**
      * Acquire a publisher to a single URI.
      *
-     * @param uri to search for
+     * @param uri    to search for
      * @param eClass element class.
      * @return the Set.
      * @throws AssetNotFoundException the view could not be constructed.
@@ -103,7 +109,7 @@ public interface AssetTree extends Closeable {
     /**
      * Acquire a reference to a single URI
      *
-     * @param uri to search for
+     * @param uri    to search for
      * @param eClass type of the state referenced
      * @return a reference to that state.
      * @throws AssetNotFoundException the view could not be constructed.
@@ -114,10 +120,11 @@ public interface AssetTree extends Closeable {
     }
 
     /**
-     * Acquire a Topic Publisher view for a URI. A Topic Publisher can publish to any topic in a group by passing the topic as an additional argument.
+     * Acquire a Topic Publisher view for a URI. A Topic Publisher can publish to any topic in a
+     * group by passing the topic as an additional argument.
      *
-     * @param uri to search for
-     * @param topicClass class of topic descriptions e.g. String.class.
+     * @param uri          to search for
+     * @param topicClass   class of topic descriptions e.g. String.class.
      * @param messageClass class of messages to send on that topic..
      * @return the TopicPublisher
      * @throws AssetNotFoundException the view could not be constructed.
@@ -128,9 +135,9 @@ public interface AssetTree extends Closeable {
     }
 
     /**
-     * Register a subscriber to a URI with an expected type of message by class.
-     * <p></p>
-     * e.g. if you subscribe to a type of String.class you get the keys which changed, if you subscribe to MapEvent.class you get all the changes to the map.
+     * Register a subscriber to a URI with an expected type of message by class. <p></p> e.g. if you
+     * subscribe to a type of String.class you get the keys which changed, if you subscribe to
+     * MapEvent.class you get all the changes to the map.
      *
      * @param uri        of the asset to subscribe to.
      * @param eClass     the type of event/message to subscribe to
@@ -139,12 +146,14 @@ public interface AssetTree extends Closeable {
      */
     default <E> void registerSubscriber(@NotNull String uri, Class<E> eClass, Subscriber<E> subscriber) throws AssetNotFoundException {
         RequestContext rc = requestContext(uri).type(eClass);
+
         acquireSubscription(rc)
                 .registerSubscriber(rc, subscriber, Filter.empty());
     }
 
     /**
-     * Register a topic subscriber to a URI with an expected type of message by topic class and message class
+     * Register a topic subscriber to a URI with an expected type of message by topic class and
+     * message class
      *
      * @param uri          of the asset to subscribe to.
      * @param topicClass   the type of topic to subscribe to
@@ -173,7 +182,8 @@ public interface AssetTree extends Closeable {
     }
 
     /**
-     * Remove a subscription.  The alternative is for the Subscription to throw an IllegalSubscriberException.
+     * Remove a subscription.  The alternative is for the Subscription to throw an
+     * IllegalSubscriberException.
      *
      * @param uri        of the asset subscribed to.
      * @param subscriber to remove
@@ -188,7 +198,8 @@ public interface AssetTree extends Closeable {
     }
 
     /**
-     * Remove a topic subscription.  The alternative is for the Subscription to throw an IllegalSubscriberException.
+     * Remove a topic subscription.  The alternative is for the Subscription to throw an
+     * IllegalSubscriberException.
      *
      * @param uri        of the asset subscribed to.
      * @param subscriber to remove
@@ -253,7 +264,8 @@ public interface AssetTree extends Closeable {
 
     /**
      * Enable JMX management of this Asset Tree
-     * @param  port to enable a simple web service on
+     *
+     * @param port to enable a simple web service on
      */
     @NotNull
     default AssetTree enableManagement(int port) {
@@ -265,7 +277,7 @@ public interface AssetTree extends Closeable {
      * Disable JMX management of this Asset Tree
      */
     @NotNull
-    default AssetTree disableManagement(){
+    default AssetTree disableManagement() {
         ManagementTools.disableManagement(this);
         return this;
     }

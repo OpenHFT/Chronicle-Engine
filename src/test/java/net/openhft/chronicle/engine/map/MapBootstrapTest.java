@@ -1,8 +1,6 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
-import net.openhft.chronicle.engine.api.map.MapEvent;
-import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
@@ -63,31 +61,42 @@ public class MapBootstrapTest extends ThreadMonitoringTest {
 
     /**
      * simple test for bootstrap == FALSE
+     */
+    @Test(expected = java.lang.UnsupportedOperationException.class)
+    public void testAcquireMapBootstrap() throws InterruptedException {
+        final Map<String, String> map1 = client.acquireMap(NAME, String.class, String.class);
+        map1.put("pre-boostrap", "value");
+        client.acquireMap(NAME + "?bootstrap=false", String.class, String.class);
+    }
+
+
+    /**
+     * simple test for bootstrap == FALSE
      *
      * this test was written due to :
      *
      * CE-156 Disable bootstrapping on topic subscriptions doesn’t work in Java (?bootstrap=false).
      */
     @Test
-    public void testSimpleMapBootstrapFalse() throws InterruptedException {
+    public void testTopicSubscriptionBootstrapFalse() throws InterruptedException {
 
         final Map<String, String> map1 = client.acquireMap(NAME, String.class, String.class);
-        map1.put("pre-boostrap", "value");
+        map1.put("pre-boostrap", "pre-boostrap");
 
-        final MapView<String, String> clientMap = client.acquireMap(
-                NAME + "?bootstrap=false", String.class, String.class);
+        final BlockingQueue<String> q2 = new ArrayBlockingQueue<>(2);
 
-        final BlockingQueue q2 = new ArrayBlockingQueue(1);
-        Assert.assertEquals(null, clientMap.get("pre-boostrap"));
+        client.registerTopicSubscriber(NAME + "?bootstrap=false",
+                String.class,
+                String.class,
+                (topic, message) -> {
+                    q2.add(message);
+                });
 
-        client.registerSubscriber(NAME + "?bootstrap=false", MapEvent.class, q2::add);
-        map1.put("post-boostrap", "value");
+        map1.put("post-boostrap", "post-boostrap");
 
         // wait for an event
-        final Object poll = q2.poll(20, TimeUnit.SECONDS);
-        Assert.assertTrue(poll instanceof InsertedEvent);
-        Assert.assertEquals("post-boostrap", ((InsertedEvent<String, String>) poll).getKey());
+        Assert.assertEquals("post-boostrap", q2.poll(20, TimeUnit.SECONDS));
 
-        Assert.assertEquals("value", clientMap.get("post-boostrap"));
     }
+
 }
