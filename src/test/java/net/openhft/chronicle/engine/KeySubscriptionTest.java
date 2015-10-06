@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.engine;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
@@ -25,6 +26,7 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
+import net.openhft.chronicle.wire.YamlLogging;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -34,6 +36,8 @@ import java.io.IOException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+
+import static net.openhft.chronicle.engine.Utils.yamlLoggger;
 
 /**
  * test using the listener both remotely or locally via the engine
@@ -110,6 +114,50 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
 
         Assert.assertEquals("hello", q.poll(10, TimeUnit.SECONDS));
 
+    }
+
+    @Test
+    public void testSubscriptionOnKey() throws InterruptedException {
+
+        //Enable Yaml logging when running in debug.
+        YamlLogging.showServerWrites = true;
+        YamlLogging.showServerReads = true;
+        YamlLogging.clientWrites = true;
+        YamlLogging.clientReads = true;
+
+        String key = "key";
+        String keyUri = NAME + "/" + key + "?bootstrap=false";
+
+        BlockingQueue<String> q = new ArrayBlockingQueue<>(2);
+
+        yamlLoggger(() -> {
+
+            final MapView<String, String> server = clientTree.acquireMap(NAME, String.class,
+                    String.class);
+
+            // we have to call an action on the server map because it lazily created
+            server.size();
+
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                Jvm.rethrow(e);
+            }
+
+            clientTree.registerSubscriber(keyUri, String.class, q::add);
+
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                Jvm.rethrow(e);
+            }
+
+            server.put(key, "val1");
+            server.put(key, "val2");
+        });
+
+        Assert.assertEquals("val1", q.poll(10, TimeUnit.SECONDS));
+        Assert.assertEquals("val2", q.poll(10, TimeUnit.SECONDS));
     }
 
 }
