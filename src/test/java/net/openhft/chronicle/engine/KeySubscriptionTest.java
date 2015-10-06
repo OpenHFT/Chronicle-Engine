@@ -26,10 +26,14 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * test using the listener both remotely or locally via the engine
@@ -83,6 +87,29 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
                 String.class);
 
         map.registerKeySubscriber(System.out::println);
+    }
+
+
+    /**
+     * test registerKeySubscriber before doing an operation ont the map
+     */
+    @Test
+    public void testKey() throws IOException, InterruptedException {
+
+        BlockingQueue<String> q = new ArrayBlockingQueue<>(1);
+
+        clientTree.acquireMap(NAME, String.class,
+                String.class).registerKeySubscriber(q::add);
+
+        Thread.sleep(1000);
+
+        final MapView<String, String> serverMap = serverAssetTree.acquireMap(NAME,
+                String.class, String.class);
+
+        serverMap.put("hello", "world");
+
+        Assert.assertEquals("hello", q.poll(10, TimeUnit.SECONDS));
+
     }
 
 }
