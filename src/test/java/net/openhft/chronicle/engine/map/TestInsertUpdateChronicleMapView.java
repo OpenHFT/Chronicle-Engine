@@ -94,7 +94,7 @@ public class TestInsertUpdateChronicleMapView {
         //Note you have to set the bootstrap to false in order for this test to work.
         //Otherwise it is possible that that you can get 2 insert events.
         final MapView<String, String> serverMap = serverAssetTree.acquireMap
-                ("name?putReturnsNull=false&bootstrap=false",
+                ("name?putReturnsNull=false",
                         String.class, String
                                 .class);
 
