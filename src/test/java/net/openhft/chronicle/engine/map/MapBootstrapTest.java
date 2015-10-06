@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
@@ -7,6 +8,7 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
+import net.openhft.chronicle.wire.YamlLogging;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -17,6 +19,8 @@ import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+
+import static net.openhft.chronicle.engine.Utils.yamlLoggger;
 
 /**
  * @author Rob Austin.
@@ -80,23 +84,42 @@ public class MapBootstrapTest extends ThreadMonitoringTest {
     @Test
     public void testTopicSubscriptionBootstrapFalse() throws InterruptedException {
 
+
         final Map<String, String> map1 = client.acquireMap(NAME, String.class, String.class);
         map1.put("pre-boostrap", "pre-boostrap");
 
         final BlockingQueue<String> q2 = new ArrayBlockingQueue<>(2);
 
-        client.registerTopicSubscriber(NAME + "?bootstrap=false",
-                String.class,
-                String.class,
-                (topic, message) -> {
-                    q2.add(message);
-                });
+        YamlLogging.showServerWrites = true;
+        YamlLogging.showServerReads = true;
 
-        map1.put("post-boostrap", "post-boostrap");
+        YamlLogging.clientReads = true;
+        YamlLogging.clientWrites = true;
 
-        // wait for an event
-        Assert.assertEquals("post-boostrap", q2.poll(20, TimeUnit.SECONDS));
+        yamlLoggger(() -> {
+            client.registerTopicSubscriber(NAME + "?bootstrap=false",
+                    String.class,
+                    String.class,
+                    (topic, message) -> {
+                        q2.add(message);
+                    });
 
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                Jvm.rethrow(e);
+            }
+
+            map1.put("post-boostrap", "post-boostrap");
+
+            // wait for an event
+            try {
+                Assert.assertEquals("post-boostrap", q2.poll(20, TimeUnit.SECONDS));
+            } catch (InterruptedException e) {
+                Jvm.rethrow(e);
+            }
+
+        });
     }
 
 }
