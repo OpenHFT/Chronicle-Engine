@@ -60,9 +60,10 @@ public class RemoteKVSSubscription<K, V> extends AbstractRemoteSubscription<MapE
     @NotNull
     private static String toUri(@NotNull final RequestContext context) {
         String addSlash = "";
-        if(context.fullName().indexOf('/')!=0){
+        if (context.fullName().indexOf('/') != 0) {
             addSlash = "/";
         }
+
         return addSlash + context.fullName() + "?view=subscription";
     }
 
@@ -77,8 +78,13 @@ public class RemoteKVSSubscription<K, V> extends AbstractRemoteSubscription<MapE
             public void onSubscribe(@NotNull final WireOut wireOut) {
                 subscribersToTid.put(subscriber, tid());
                 wireOut.writeEventName(registerTopicSubscriber).marshallable(m -> {
+
                     m.write(() -> "keyType").typeLiteral(kClass);
                     m.write(() -> "valueType").typeLiteral(vClass);
+
+                    if (rc.bootstrap() != null)
+                        m.writeEventName(() -> "bootstrap").bool(rc.bootstrap());
+
                 });
             }
 

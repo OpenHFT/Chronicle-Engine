@@ -67,12 +67,21 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscriptio
                 }
             };
 
+
             valueIn.marshallable(m -> {
                 final Class kClass = m.read(() -> "keyType").typeLiteral();
                 final Class vClass = m.read(() -> "valueType").typeLiteral();
 
+                final StringBuilder eventName = Wires.acquireStringBuilder();
+
+                final ValueIn bootstrap = m.readEventName(eventName);
                 tidToListener.put(inputTid, listener);
-                assetTree.registerTopicSubscriber(requestContext.fullName(), kClass, vClass, listener);
+
+                if ("bootstrap".contentEquals(eventName))
+                    assetTree.registerTopicSubscriber(requestContext.fullName()
+                            + "?bootstrap=" + bootstrap.bool(), kClass, vClass, listener);
+                else
+                    assetTree.registerTopicSubscriber(requestContext.fullName(), kClass, vClass, listener);
             });
             return;
         }

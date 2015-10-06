@@ -84,9 +84,8 @@ public class MapBootstrapTest extends ThreadMonitoringTest {
     @Test
     public void testTopicSubscriptionBootstrapFalse() throws InterruptedException {
 
-
         final Map<String, String> map1 = client.acquireMap(NAME, String.class, String.class);
-        map1.put("pre-boostrap", "pre-boostrap");
+        map1.put("pre-bootstrap", "pre-bootstrap");
 
         final BlockingQueue<String> q2 = new ArrayBlockingQueue<>(2);
 
@@ -110,11 +109,11 @@ public class MapBootstrapTest extends ThreadMonitoringTest {
                 Jvm.rethrow(e);
             }
 
-            map1.put("post-boostrap", "post-boostrap");
+            map1.put("post-bootstrap", "post-bootstrap");
 
-            // wait for an event
+            // wait for the post-bootstrap event
             try {
-                Assert.assertEquals("post-boostrap", q2.poll(20, TimeUnit.SECONDS));
+                Assert.assertEquals("post-bootstrap", q2.poll(20, TimeUnit.SECONDS));
             } catch (InterruptedException e) {
                 Jvm.rethrow(e);
             }
