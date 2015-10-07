@@ -38,7 +38,7 @@ public class InsertedEventTest {
     @Test
     public void testMarshalling() {
         Bytes bytes = Bytes.elasticByteBuffer();
-        InsertedEvent<String, String> insertedEvent = InsertedEvent.of("asset", "key", "name");
+        InsertedEvent<String, String> insertedEvent = InsertedEvent.of("asset", "key", "name",false);
         TextWire textWire = new TextWire(bytes);
         textWire.write(() -> "reply")
                 .typedMarshallable(insertedEvent);
@@ -50,7 +50,7 @@ public class InsertedEventTest {
     @Test
     public void testMarshalling2() {
         Bytes bytes = Bytes.elasticByteBuffer();
-        InsertedEvent<String, Factor> insertedEvent = InsertedEvent.of("asset", "key", new Factor());
+        InsertedEvent<String, Factor> insertedEvent = InsertedEvent.of("asset", "key", new Factor(),false);
         TextWire textWire = new TextWire(bytes);
         textWire.write(() -> "reply")
                 .typedMarshallable(insertedEvent);
@@ -63,7 +63,7 @@ public class InsertedEventTest {
     @Ignore("TODO Fix")
     public void testMarshalling3a() {
         Bytes bytes = Bytes.elasticByteBuffer();
-        InsertedEvent<String, BytesStore> insertedEvent = InsertedEvent.of("asset", "key", BytesStore.wrap("£Hello World".getBytes()));
+        InsertedEvent<String, BytesStore> insertedEvent = InsertedEvent.of("asset", "key", BytesStore.wrap("£Hello World".getBytes()),false);
         TextWire textWire = new TextWire(bytes);
         textWire.write(() -> "reply")
                 .typedMarshallable(insertedEvent);
@@ -75,7 +75,7 @@ public class InsertedEventTest {
     @Test
     public void testMarshalling3() {
         Bytes bytes = Bytes.elasticByteBuffer();
-        InsertedEvent<String, BytesStore> insertedEvent = InsertedEvent.of("asset", "key", BytesStore.wrap("Hello World".getBytes()));
+        InsertedEvent<String, BytesStore> insertedEvent = InsertedEvent.of("asset", "key", BytesStore.wrap("Hello World".getBytes()),false);
         TextWire textWire = new TextWire(bytes);
         textWire.write(() -> "reply")
                 .typedMarshallable(insertedEvent);
@@ -87,7 +87,7 @@ public class InsertedEventTest {
     @Test
     public void testMarshallingB() {
         Bytes bytes = Bytes.elasticByteBuffer();
-        InsertedEvent<String, String> insertedEvent = InsertedEvent.of("asset", "key", "name");
+        InsertedEvent<String, String> insertedEvent = InsertedEvent.of("asset", "key", "name",false);
         BinaryWire binaryWire = new BinaryWire(bytes);
         binaryWire.write(() -> "reply").typedMarshallable(insertedEvent);
         System.out.println("text: " + bytes);
@@ -98,7 +98,7 @@ public class InsertedEventTest {
     @Test
     public void testMarshalling2B() {
         Bytes bytes = Bytes.elasticByteBuffer();
-        InsertedEvent<String, Factor> insertedEvent = InsertedEvent.of("asset", "key", new Factor());
+        InsertedEvent<String, Factor> insertedEvent = InsertedEvent.of("asset", "key", new Factor(),false);
         BinaryWire binaryWire = new BinaryWire(bytes);
         binaryWire.write(() -> "reply")
                 .typedMarshallable(insertedEvent);
@@ -110,7 +110,7 @@ public class InsertedEventTest {
     @Test
     public void testMarshalling3B() {
         Bytes bytes = Bytes.elasticByteBuffer();
-        InsertedEvent<String, BytesStore> insertedEvent = InsertedEvent.of("asset", "key", BytesStore.wrap("Hello World".getBytes()));
+        InsertedEvent<String, BytesStore> insertedEvent = InsertedEvent.of("asset", "key", BytesStore.wrap("Hello World".getBytes()),false);
         BinaryWire binaryWire = new BinaryWire(bytes);
         binaryWire.write(() -> "reply")
                 .typedMarshallable(insertedEvent);

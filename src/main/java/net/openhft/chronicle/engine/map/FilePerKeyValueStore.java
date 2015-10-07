@@ -160,7 +160,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
                 // in case the file has been deleted in the meantime.
                 fileContents = getFileContents(p, null);
                 if (fileContents != null) {
-                    InsertedEvent e = InsertedEvent.of(asset.fullName(), p.getFileName().toString(), fileContents);
+                    InsertedEvent e = InsertedEvent.of(asset.fullName(), p.getFileName().toString(), fileContents,false);
                     kvConsumer.accept(e);
                 }
             } catch (InvalidSubscriberException ise) {
@@ -472,9 +472,9 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
                             lastFileRecordMap.put(p.toFile(), new FileRecord<>(p.toFile().lastModified(), mapVal.copy()));
                         }
                         if (prev == null) {
-                            subscriptions.notifyEvent(InsertedEvent.of(asset.fullName(), p.toFile().getName(), mapVal));
+                            subscriptions.notifyEvent(InsertedEvent.of(asset.fullName(), p.toFile().getName(), mapVal,false));
                         } else {
-                            subscriptions.notifyEvent(UpdatedEvent.of(asset.fullName(), p.toFile().getName(), prevContents, mapVal));
+                            subscriptions.notifyEvent(UpdatedEvent.of(asset.fullName(), p.toFile().getName(), prevContents, mapVal,false));
                         }
                     } finally {
                         if (prevContents != null)
@@ -487,7 +487,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
                     FileRecord<BytesStore> prev = lastFileRecordMap.remove(p.toFile());
                     BytesStore lastVal = prev == null ? null : prev.contents();
                     try {
-                        subscriptions.notifyEvent(RemovedEvent.of(asset.fullName(), p.toFile().getName(), lastVal));
+                        subscriptions.notifyEvent(RemovedEvent.of(asset.fullName(), p.toFile().getName(), lastVal,false));
                     } finally {
                         if (lastVal != null)
                             lastVal.release();

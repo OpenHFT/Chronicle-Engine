@@ -132,7 +132,7 @@ public class BootStrapTests {
                 map2.put("hello", "world2");
                 Assert.assertEquals("world2", map2.get("hello"));
                 final String poll = q2.poll().toString();
-                Assert.assertEquals("UpdatedEvent{assetName='/test', key=hello, oldValue=world1, value=world2}", poll);
+                Assert.assertEquals("UpdatedEvent{assetName='/test', key=hello, oldValue=world1, value=world2, isReplicationEvent=false}", poll);
             }
 
         } catch (Exception e) {
@@ -177,7 +177,7 @@ public class BootStrapTests {
                 // shutting server1 down should cause the failover client to connect to server 2
                 Assert.assertEquals("world2", map2.get("hello"));
                 final String poll = q2.poll().toString();
-                Assert.assertEquals("UpdatedEvent{assetName='/test', key=hello, oldValue=world1, value=world2}", poll);
+                Assert.assertEquals("UpdatedEvent{assetName='/test', key=hello, oldValue=world1, value=world2, isReplicationEvent=false}", poll);
             }
 
         } catch (Exception e) {

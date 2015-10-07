@@ -22,7 +22,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class Throttler<K> implements EventHandler, Runnable {
 
-    private static  final ScheduledExecutorService SCHEDULED_EXECUTOR_SERVICE = Executors.newScheduledThreadPool(1);
+    private static final ScheduledExecutorService SCHEDULED_EXECUTOR_SERVICE = Executors.newScheduledThreadPool(1);
     private final int maxEventsPreSecond;
     private final AtomicLong numberOfMessageSent = new AtomicLong(0);
     private final ConcurrentLinkedQueue<Runnable> events = new ConcurrentLinkedQueue<>();
@@ -34,7 +34,7 @@ public class Throttler<K> implements EventHandler, Runnable {
 
         // the event loop was not working so replaced it with a scheduledExecutorService
         // eventLoop.addHandler(this);
-        ScheduledFuture<?> scheduledFuture = SCHEDULED_EXECUTOR_SERVICE.scheduleWithFixedDelay(this, 0, 1, TimeUnit.SECONDS);
+        SCHEDULED_EXECUTOR_SERVICE.scheduleWithFixedDelay(this, 0, 1, TimeUnit.SECONDS);
     }
 
     public boolean useThrottler() {
