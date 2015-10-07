@@ -109,8 +109,8 @@ public class ThrottledKeySubscriptionEventTest extends ThreadMonitoringTest {
         yamlLoggger(() -> {
             try {
 
-                Subscriber<String> add = eventsQueue::add;
-                assetTree.registerSubscriber(NAME, String.class, add);
+                Subscriber<String> queue = eventsQueue::add;
+                assetTree.registerSubscriber(NAME, String.class, queue);
 
                 Thread.sleep(1000);
 
