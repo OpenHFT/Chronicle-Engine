@@ -119,6 +119,7 @@ public class InsertedEvent<K, V> implements MapEvent<K, V> {
                 "assetName='" + assetName + '\'' +
                 ", key=" + key +
                 ", value=" + value +
+                ", isReplicationEvent=" + isReplicationEvent +
                 '}';
     }
 
