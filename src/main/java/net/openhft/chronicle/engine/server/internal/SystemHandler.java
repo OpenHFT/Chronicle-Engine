@@ -10,6 +10,7 @@ import net.openhft.chronicle.wire.WireKey;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import net.openhft.chronicle.network.SessionMode;
 
 import java.time.LocalTime;
 import java.util.Map;
@@ -49,13 +50,28 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
         eventName.setLength(0);
         final ValueIn valueIn = inWire.readEventName(eventName);
 
-        if (EventId.userid.contentEquals(eventName)) {
+        if (EventId.userId.contentEquals(eventName)) {
             this.sessionDetails.setUserId(valueIn.text());
             if(this.monitoringMap != null){
                 UserStat userStat = new UserStat();
                 userStat.setLoggedIn(LocalTime.now());
                 monitoringMap.put(sessionDetails.userId(), userStat);
             }
+            return;
+        }
+
+        if (EventId.domain.contentEquals(eventName)) {
+            this.sessionDetails.setDomain(valueIn.text());
+            return;
+        }
+
+        if (EventId.sessionMode.contentEquals(eventName)) {
+            this.sessionDetails.setSessionMode(SessionMode.valueOf(valueIn.text()));
+            return;
+        }
+
+        if (EventId.securityToken.contentEquals(eventName)) {
+            this.sessionDetails.setSecurityToken(valueIn.text());
             return;
         }
 
@@ -92,7 +108,10 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
         heartbeatReply,
         onClientClosing,
         onClosingReply,
-        userid
+        userId,
+        sessionMode,
+        domain,
+        securityToken
     }
 }
 

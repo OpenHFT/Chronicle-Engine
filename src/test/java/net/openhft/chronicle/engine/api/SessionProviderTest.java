@@ -35,6 +35,7 @@ public class SessionProviderTest {
 
         MyInfo info0 = new MyInfo();
         sessionDetails0.setUserId("userId");
+        sessionDetails0.setDomain("TEST-DOMAIN");
         sessionDetails0.set(MyInfo.class, info0);
         sessionProvider.set(sessionDetails0);
 
