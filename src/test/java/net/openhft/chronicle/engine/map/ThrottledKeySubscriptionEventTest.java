@@ -52,12 +52,12 @@ public class ThrottledKeySubscriptionEventTest extends ThreadMonitoringTest {
 
     public static final WireType WIRE_TYPE = WireType.TEXT;
     private static final String NAME = "test";
-    private static MapView<String, String> map;
+    private static MapView<String, String> serverMap;
 
     @NotNull
     @Rule
     public TestName name = new TestName();
-    private AssetTree assetTree = new VanillaAssetTree().forTesting();
+    private AssetTree assetTree;
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
@@ -73,7 +73,7 @@ public class ThrottledKeySubscriptionEventTest extends ThreadMonitoringTest {
         serverEndpoint = new ServerEndpoint(hostPort, serverAssetTree, WIRE_TYPE);
         assetTree = new VanillaAssetTree().forRemoteAccess(hostPort, WIRE_TYPE);
 
-        map = assetTree.acquireMap(NAME, String.class, String.class);
+        serverMap = serverAssetTree.acquireMap(NAME, String.class, String.class);
     }
 
     @After
@@ -82,8 +82,8 @@ public class ThrottledKeySubscriptionEventTest extends ThreadMonitoringTest {
         if (serverEndpoint != null)
             serverEndpoint.close();
         serverAssetTree.close();
-        if (map instanceof Closeable)
-            ((Closeable) map).close();
+        if (serverMap instanceof Closeable)
+            ((Closeable) serverMap).close();
 
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
@@ -99,7 +99,6 @@ public class ThrottledKeySubscriptionEventTest extends ThreadMonitoringTest {
      * @throws InterruptedException
      */
     @Test
-    @Ignore("todo fix")
     public void testReceivingThrottledEventsInOrder() throws IOException, InterruptedException {
 
         final BlockingQueue<String> eventsQueue = new LinkedBlockingDeque<>();
@@ -110,17 +109,19 @@ public class ThrottledKeySubscriptionEventTest extends ThreadMonitoringTest {
         yamlLoggger(() -> {
             try {
 
-                Subscriber<String> add = eventsQueue::add;
-                assetTree.registerSubscriber(NAME, String.class, add);
+                Subscriber<String> queue = eventsQueue::add;
+                assetTree.registerSubscriber(NAME, String.class, queue);
+
+                Thread.sleep(1000);
 
                 for (int i = 0; i < 10; i++) {
-                    map.put("Hello" + i, "World" + i);
+                    serverMap.put("Hello" + i, "World" + i);
                 }
 
                 final long start = System.currentTimeMillis();
 
                 for (int i = 0; i < 10; i++) {
-                    String actual = eventsQueue.poll(5, SECONDS);
+                    String actual = eventsQueue.poll(2, SECONDS);
                     Assert.assertNotNull(actual);
                     Assert.assertEquals("Hello" + i, actual);
                 }

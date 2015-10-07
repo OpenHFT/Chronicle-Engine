@@ -127,7 +127,7 @@ public class FilePerKeyBasedKeyMarshallableValueStore<K, V extends Marshallable>
             throws InvalidSubscriberException {
         String assetName = asset().fullName();
         kvStore.entriesFor(segment, event -> kvConsumer.accept(InsertedEvent.of(assetName,
-                stringToKey.apply(event.getKey()), bytesToValue(event.getValue()))));
+                stringToKey.apply(event.getKey()), bytesToValue(event.getValue()),false)));
     }
 
     @Override

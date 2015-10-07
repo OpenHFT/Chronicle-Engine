@@ -173,7 +173,7 @@ public class
         String assetName = asset.fullName();
         entrySet().forEach(entry -> {
             try {
-                kvConsumer.accept(InsertedEvent.of(assetName, entry.getKey(), entry.getValue()));
+                kvConsumer.accept(InsertedEvent.of(assetName, entry.getKey(), entry.getValue(),false));
             } catch (InvalidSubscriberException e) {
                 throw Jvm.rethrow(e);
             }
