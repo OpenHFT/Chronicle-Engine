@@ -6,23 +6,23 @@ import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.threads.api.InvalidEventHandlerException;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- *
  * Throttles and limits the number of messages send in any second, this code does not consolidate
  * the updates, all updates will eventually be sent.
-
+ * <p/>
  * This code is focusing mainly on message order, It attempts not to exceed the {@code
  * maxEventsPreSecond}, in other words in rare cases, a few more messages, maybe send in any second than
  * the {@code maxEventsPreSecond } this is due to the use of lazySet() amongst other things.
  *
  * @author Rob Austin.
  */
-public class Throttler<K> implements EventHandler {
+public class Throttler<K> implements EventHandler, Runnable {
+
+    private static  final ScheduledExecutorService SCHEDULED_EXECUTOR_SERVICE = Executors.newScheduledThreadPool(1);
     private final int maxEventsPreSecond;
     private final AtomicLong numberOfMessageSent = new AtomicLong(0);
     private final ConcurrentLinkedQueue<Runnable> events = new ConcurrentLinkedQueue<>();
@@ -31,7 +31,10 @@ public class Throttler<K> implements EventHandler {
 
     public Throttler(@NotNull final EventLoop eventLoop, int maxEventsPreSecond) {
         this.maxEventsPreSecond = maxEventsPreSecond;
-        eventLoop.addHandler(this);
+
+        // the event loop was not working so replaced it with a scheduledExecutorService
+        // eventLoop.addHandler(this);
+        ScheduledFuture<?> scheduledFuture = SCHEDULED_EXECUTOR_SERVICE.scheduleWithFixedDelay(this, 0, 1, TimeUnit.SECONDS);
     }
 
     public boolean useThrottler() {
@@ -131,5 +134,17 @@ public class Throttler<K> implements EventHandler {
 
         return true;
 
+    }
+
+    @Override
+    public void run() {
+        final long currentSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+        // this may not successes if the lock is already held
+        final int secondsPassed = (int) (currentSeconds - lastKnownSeconds);
+        final long v = this.numberOfMessageSent.get() - (secondsPassed * maxEventsPreSecond);
+
+        lastKnownSeconds = currentSeconds;
+        this.numberOfMessageSent.lazySet(v <= 0 ? 0 : v);
+        trySendEvents();
     }
 }
