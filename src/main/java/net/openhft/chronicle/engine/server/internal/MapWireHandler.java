@@ -363,7 +363,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                 .marshallable(w -> {
 
                     cpsBuff.setLength(0);
-                    cpsBuff.append("/").append(requestContext.name());
+                    cpsBuff.append(requestContext.fullName());
                     cpsBuff.append("?");
                     cpsBuff.append("view=").append(type);
 
