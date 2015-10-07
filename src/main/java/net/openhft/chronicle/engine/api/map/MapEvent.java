@@ -29,6 +29,11 @@ import java.util.function.Function;
  * This is an update on a Map.
  */
 public interface MapEvent<K, V> extends Map.Entry<K, V>, ChangeEvent {
+
+    default boolean isReplicationEvent() {
+        return false;
+    }
+
     @Nullable
     V oldValue();
 
@@ -41,7 +46,7 @@ public interface MapEvent<K, V> extends Map.Entry<K, V>, ChangeEvent {
     <K2, V2> MapEvent<K2, V2> translate(BiFunction<K, K2, K2> keyFunction, BiFunction<V, V2, V2> valueFunction);
 
     enum MapEventFields implements WireKey {
-        assetName, key, oldValue, value
+        assetName, key, oldValue, value, isReplicationEvent
     }
 
     default V setValue(V value) {

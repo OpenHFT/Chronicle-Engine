@@ -38,16 +38,18 @@ public class RemovedEvent<K, V> implements MapEvent<K, V> {
     private K key;
     @Nullable
     private V oldValue;
+    private boolean isReplicationEvent;
 
-    private RemovedEvent(String assetName, @NotNull K key, @Nullable V oldValue) {
+    private RemovedEvent(String assetName, @NotNull K key, @Nullable V oldValue, boolean isReplicationEvent) {
         this.assetName = assetName;
         this.key = key;
         this.oldValue = oldValue;
+        this.isReplicationEvent = isReplicationEvent;
     }
 
     @NotNull
-    public static <K, V> RemovedEvent<K, V> of(String assetName, K key, V value) {
-        return new RemovedEvent<>(assetName, key, value);
+    public static <K, V> RemovedEvent<K, V> of(String assetName, K key, V value,boolean isReplicationEvent) {
+        return new RemovedEvent<>(assetName, key, value, isReplicationEvent);
     }
 
     @Override
@@ -58,13 +60,13 @@ public class RemovedEvent<K, V> implements MapEvent<K, V> {
     @NotNull
     @Override
     public <K2, V2> MapEvent<K2, V2> translate(@NotNull Function<K, K2> keyFunction, @NotNull Function<V, V2> valueFunction) {
-        return new RemovedEvent<>(assetName, keyFunction.apply(key), valueFunction.apply(oldValue));
+        return new RemovedEvent<>(assetName, keyFunction.apply(key), valueFunction.apply(oldValue), isReplicationEvent);
     }
 
     @NotNull
     @Override
     public <K2, V2> MapEvent<K2, V2> translate(@NotNull BiFunction<K, K2, K2> keyFunction, @NotNull BiFunction<V, V2, V2> valueFunction) {
-        return new RemovedEvent<>(assetName, keyFunction.apply(key, null), valueFunction.apply(oldValue, null));
+        return new RemovedEvent<>(assetName, keyFunction.apply(key, null), valueFunction.apply(oldValue, null), isReplicationEvent);
     }
 
     @Nullable
@@ -101,6 +103,7 @@ public class RemovedEvent<K, V> implements MapEvent<K, V> {
                 .filter(e -> Objects.equals(assetName, e.assetName))
                 .filter(e -> BytesUtil.equals(key, e.key))
                 .filter(e -> BytesUtil.equals(oldValue, e.oldValue))
+                .filter(e -> BytesUtil.equals(isReplicationEvent, e.isReplicationEvent))
                 .isPresent();
     }
 
@@ -111,6 +114,7 @@ public class RemovedEvent<K, V> implements MapEvent<K, V> {
                 "assetName='" + assetName + '\'' +
                 ", key=" + key +
                 ", oldValue=" + oldValue +
+                ", isReplicationEvent=" + isReplicationEvent +
                 '}';
     }
 
@@ -119,6 +123,7 @@ public class RemovedEvent<K, V> implements MapEvent<K, V> {
         wire.read(MapEventFields.assetName).text(this, (o, s) -> assetName = s);
         wire.read(MapEventFields.key).object((Class<K>) Object.class, this, (o, x) -> o.key = x);
         wire.read(MapEventFields.oldValue).object((Class<V>) Object.class, this, (o, x) -> o.oldValue = x);
+        wire.read(MapEventFields.isReplicationEvent).bool(this, (o, x) -> o.isReplicationEvent = x);
     }
 
     @Override
@@ -126,5 +131,6 @@ public class RemovedEvent<K, V> implements MapEvent<K, V> {
         wire.write(MapEventFields.assetName).text(assetName);
         wire.write(MapEventFields.key).object(key);
         wire.write(MapEventFields.oldValue).object(oldValue);
+        wire.write(MapEventFields.isReplicationEvent).object(isReplicationEvent);
     }
 }

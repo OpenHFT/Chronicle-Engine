@@ -33,21 +33,23 @@ import java.util.function.Function;
  * Created by peter on 22/05/15.
  */
 public class InsertedEvent<K, V> implements MapEvent<K, V> {
+    private boolean isReplicationEvent;
     private String assetName;
     @NotNull
     private K key;
     @NotNull
     private V value;
 
-    private InsertedEvent(String assetName, @NotNull K key, @NotNull V value) {
+    private InsertedEvent(String assetName, @NotNull K key, @NotNull V value, boolean isReplicationEvent) {
         this.assetName = assetName;
         this.key = key;
         this.value = value;
+        this.isReplicationEvent = isReplicationEvent;
     }
 
     @NotNull
-    public static <K, V> InsertedEvent<K, V> of(String assetName, K key, V value) {
-        return new InsertedEvent<>(assetName, key, value);
+    public static <K, V> InsertedEvent<K, V> of(String assetName, K key, V value, boolean isReplicationEvent) {
+        return new InsertedEvent<>(assetName, key, value, isReplicationEvent);
     }
 
     @Override
@@ -58,13 +60,13 @@ public class InsertedEvent<K, V> implements MapEvent<K, V> {
     @NotNull
     @Override
     public <K2, V2> MapEvent<K2, V2> translate(@NotNull Function<K, K2> keyFunction, @NotNull Function<V, V2> valueFunction) {
-        return new InsertedEvent<>(assetName, keyFunction.apply(key), valueFunction.apply(value));
+        return new InsertedEvent<>(assetName, keyFunction.apply(key), valueFunction.apply(value), isReplicationEvent);
     }
 
     @NotNull
     @Override
     public <K2, V2> MapEvent<K2, V2> translate(@NotNull BiFunction<K, K2, K2> keyFunction, @NotNull BiFunction<V, V2, V2> valueFunction) {
-        return new InsertedEvent<>(assetName, keyFunction.apply(key, null), valueFunction.apply(value, null));
+        return new InsertedEvent<>(assetName, keyFunction.apply(key, null), valueFunction.apply(value, null), isReplicationEvent);
     }
 
     @Nullable
@@ -106,6 +108,7 @@ public class InsertedEvent<K, V> implements MapEvent<K, V> {
                 .filter(e -> Objects.equals(assetName, e.assetName))
                 .filter(e -> BytesUtil.equals(key, e.key))
                 .filter(e -> BytesUtil.equals(value, e.value))
+                .filter(e -> BytesUtil.equals(isReplicationEvent, e.isReplicationEvent))
                 .isPresent();
     }
 
@@ -124,6 +127,7 @@ public class InsertedEvent<K, V> implements MapEvent<K, V> {
         wire.read(MapEventFields.assetName).text(this, (o, s) -> assetName = s);
         wire.read(MapEventFields.key).object((Class<K>) Object.class, this, (o, x) -> o.key = x);
         wire.read(MapEventFields.value).object((Class<V>) Object.class, this, (o, x) -> o.value = x);
+        wire.read(MapEventFields.isReplicationEvent).bool(this, (o, x) -> o.isReplicationEvent = x);
     }
 
     @Override
@@ -131,5 +135,6 @@ public class InsertedEvent<K, V> implements MapEvent<K, V> {
         wire.write(MapEventFields.assetName).text(assetName);
         wire.write(MapEventFields.key).object(key);
         wire.write(MapEventFields.value).object(value);
+        wire.write(MapEventFields.isReplicationEvent).bool(isReplicationEvent);
     }
 }

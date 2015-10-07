@@ -240,8 +240,8 @@ todo fix this test
 
         // test the bootstrap finds old keys
         Subscriber<MapEvent<String, String>> subscriber = createMock(Subscriber.class);
-        subscriber.onMessage(InsertedEvent.of("/map-name", "Key-1", "Value-1"));
-        subscriber.onMessage(InsertedEvent.of("/map-name", "Key-2", "Value-2"));
+        subscriber.onMessage(InsertedEvent.of("/map-name", "Key-1", "Value-1",false));
+        subscriber.onMessage(InsertedEvent.of("/map-name", "Key-2", "Value-2",false));
         replay(subscriber);
         registerSubscriber("map-name?bootstrap=true", MapEvent.class, (Subscriber) subscriber);
         verify(subscriber);
@@ -250,8 +250,8 @@ todo fix this test
         assertEquals(2, map.size());
 
         // test the topic publish triggers events
-        subscriber.onMessage(UpdatedEvent.of("/map-name", "Key-1", "Value-1", "Message-1"));
-        subscriber.onMessage(InsertedEvent.of("/map-name", "Topic-1", "Message-1"));
+        subscriber.onMessage(UpdatedEvent.of("/map-name", "Key-1", "Value-1", "Message-1",false));
+        subscriber.onMessage(InsertedEvent.of("/map-name", "Topic-1", "Message-1",false));
         replay(subscriber);
 
         TopicPublisher<String, String> publisher = acquireTopicPublisher("map-name", String.class, String.class);
@@ -261,9 +261,9 @@ todo fix this test
         reset(subscriber);
         assertEquals(3, map.size());
 
-        subscriber.onMessage(InsertedEvent.of("/map-name", "Hello", "World"));
-        subscriber.onMessage(InsertedEvent.of("/map-name", "Bye", "soon"));
-        subscriber.onMessage(RemovedEvent.of("/map-name", "Key-1", "Message-1"));
+        subscriber.onMessage(InsertedEvent.of("/map-name", "Hello", "World",false));
+        subscriber.onMessage(InsertedEvent.of("/map-name", "Bye", "soon",false));
+        subscriber.onMessage(RemovedEvent.of("/map-name", "Key-1", "Message-1",false));
         replay(subscriber);
 
         // test plain puts trigger events

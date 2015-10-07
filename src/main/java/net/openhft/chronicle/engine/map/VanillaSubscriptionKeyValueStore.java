@@ -49,7 +49,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     public V replace(K key, V value) {
         V oldValue = kvStore.replace(key, value);
         if (oldValue != null) {
-            subscriptions.notifyEvent(UpdatedEvent.of(asset.fullName(), key, oldValue, value));
+            subscriptions.notifyEvent(UpdatedEvent.of(asset.fullName(), key, oldValue, value,false));
         }
         return oldValue;
     }
@@ -61,8 +61,8 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
         }
         boolean replaced = kvStore.put(key, value);
         subscriptions.notifyEvent(replaced ?
-                UpdatedEvent.of(asset.fullName(), key, null, value) :
-                InsertedEvent.of(asset.fullName(), key, value));
+                UpdatedEvent.of(asset.fullName(), key, null, value,false) :
+                InsertedEvent.of(asset.fullName(), key, value,false));
         return replaced;
 
     }
@@ -73,7 +73,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
             return getAndRemove(key) != null;
         }
         if (kvStore.remove(key)) {
-            subscriptions.notifyEvent(RemovedEvent.of(asset.fullName(), key, null));
+            subscriptions.notifyEvent(RemovedEvent.of(asset.fullName(), key, null,false));
             return true;
         }
         return false;
@@ -82,7 +82,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     @Override
     public boolean replaceIfEqual(K key, V oldValue, V newValue) {
         if (kvStore.replaceIfEqual(key, oldValue, newValue)) {
-            subscriptions.notifyEvent(UpdatedEvent.of(asset.fullName(), key, oldValue, newValue));
+            subscriptions.notifyEvent(UpdatedEvent.of(asset.fullName(), key, oldValue, newValue,false));
             return true;
         }
         return false;
@@ -91,7 +91,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     @Override
     public boolean removeIfEqual(K key, V value) {
         if (kvStore.removeIfEqual(key, value)) {
-            subscriptions.notifyEvent(RemovedEvent.of(asset.fullName(), key, value));
+            subscriptions.notifyEvent(RemovedEvent.of(asset.fullName(), key, value,false));
             return true;
         }
         return false;
@@ -102,7 +102,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     public V putIfAbsent(K key, V value) {
         V ret = kvStore.putIfAbsent(key, value);
         if (ret == null)
-            subscriptions.notifyEvent(InsertedEvent.of(asset.fullName(), key, value));
+            subscriptions.notifyEvent(InsertedEvent.of(asset.fullName(), key, value,false));
         return ret;
     }
 
@@ -112,8 +112,8 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
         V oldValue = kvStore.getAndPut(key, value);
 
         subscriptions.notifyEvent(oldValue == null
-                ? InsertedEvent.of(asset.fullName(), key, value)
-                : UpdatedEvent.of(asset.fullName(), key, oldValue, value));
+                ? InsertedEvent.of(asset.fullName(), key, value,false)
+                : UpdatedEvent.of(asset.fullName(), key, oldValue, value,false));
         return oldValue;
     }
 
@@ -122,7 +122,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     public V getAndRemove(K key) {
         V oldValue = kvStore.getAndRemove(key);
         if (oldValue != null)
-            subscriptions.notifyEvent(RemovedEvent.of(asset.fullName(), key, oldValue));
+            subscriptions.notifyEvent(RemovedEvent.of(asset.fullName(), key, oldValue,false));
         return oldValue;
     }
 }

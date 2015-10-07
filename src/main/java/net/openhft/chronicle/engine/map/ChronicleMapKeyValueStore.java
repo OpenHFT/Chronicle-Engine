@@ -248,7 +248,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
     @Override
     public void entriesFor(int segment, @NotNull SubscriptionConsumer<MapEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
         //Ignore the segments and return entriesFor the whole map
-        chronicleMap.entrySet().stream().map(e -> InsertedEvent.of(assetFullName, e.getKey(), e.getValue())).forEach(e -> {
+        chronicleMap.entrySet().stream().map(e -> InsertedEvent.of(assetFullName, e.getKey(), e.getValue(),false)).forEach(e -> {
             try {
                 kvConsumer.accept(e);
             } catch (InvalidSubscriberException t) {
@@ -328,7 +328,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
         @Override
         public void onRemove(@NotNull K key, V value, boolean replicationEven) {
             if (subscriptions.hasSubscribers())
-                subscriptions.notifyEvent(RemovedEvent.of(assetFullName, key, value));
+                subscriptions.notifyEvent(RemovedEvent.of(assetFullName, key, value,false));
         }
 
         @Override
@@ -336,9 +336,9 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
                           boolean replicationEvent, boolean added) {
             if (subscriptions.hasSubscribers())
                 if (added) {
-                    subscriptions.notifyEvent(InsertedEvent.of(assetFullName, key, newValue));
+                    subscriptions.notifyEvent(InsertedEvent.of(assetFullName, key, newValue,replicationEvent));
                 } else {
-                    subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, replacedValue, newValue));
+                    subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, replacedValue, newValue,replicationEvent));
                 }
         }
     }
@@ -350,7 +350,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
             if (subscriptions.hasSubscribers()) {
                 K key = chronicleMap.readKey(entry, keyPos);
                 V value = chronicleMap.readValue(entry, valuePos);
-                subscriptions.notifyEvent(RemovedEvent.of(assetFullName, key, value));
+                subscriptions.notifyEvent(RemovedEvent.of(assetFullName, key, value,replicationEvent));
             }
         }
 
@@ -361,9 +361,9 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
                 K key = chronicleMap.readKey(entry, keyPos);
                 V value = chronicleMap.readValue(entry, valuePos);
                 if (added) {
-                    subscriptions.notifyEvent(InsertedEvent.of(assetFullName, key, value));
+                    subscriptions.notifyEvent(InsertedEvent.of(assetFullName, key, value,replicationEvent));
                 } else {
-                    subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, null, value));
+                    subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, null, value,replicationEvent));
                 }
             }
         }
