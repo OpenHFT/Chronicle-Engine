@@ -14,6 +14,7 @@ import net.openhft.chronicle.network.SessionMode;
 
 import java.time.LocalTime;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.BiConsumer;
 
 import static net.openhft.chronicle.engine.server.internal.SystemHandler.EventId.heartbeat;
@@ -80,6 +81,11 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
             return;
         }
 
+        if (EventId.clientId.contentEquals(eventName)) {
+            this.sessionDetails.setClientId(UUID.fromString(valueIn.text()));
+            return;
+        }
+
         //noinspection ConstantConditions
         outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
 
@@ -111,7 +117,8 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
         userId,
         sessionMode,
         domain,
-        securityToken
+        securityToken,
+        clientId
     }
 }
 
