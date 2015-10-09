@@ -1,6 +1,5 @@
 package net.openhft.chronicle.engine.server.internal;
 
-import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
@@ -21,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static net.openhft.chronicle.engine.server.internal.SubscriptionHandler.SubscriptionEventID.*;
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
+import static net.openhft.chronicle.network.connection.WireOutPublisher.newThrottledWireOutPublisher;
 
 /**
  * Created by rob on 28/06/2015.
@@ -31,16 +31,13 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
     final StringBuilder eventName = new StringBuilder();
     final Map<Long, Object> tidToListener = new ConcurrentHashMap<>();
 
-    private final Throttler throttler;
+
     Wire outWire;
     T subscription;
     RequestContext requestContext;
     WireOutPublisher publisher;
     AssetTree assetTree;
 
-    public SubscriptionHandler(@NotNull final Throttler throttler) {
-        this.throttler = throttler;
-    }
 
     /**
      * after writing the tid to the wire
@@ -89,7 +86,13 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
                 LOG.info("Duplicate registration for tid " + tid);
                 return true;
             }
-            Subscriber<Object> listener = new LocalSubscriber(tid);
+
+            final WireOutPublisher pub =
+                    (requestContext.throttlePeriodMs() == 0) ?
+                            publisher :
+                            newThrottledWireOutPublisher(requestContext.throttlePeriodMs(), publisher);
+
+            Subscriber<Object> listener = new LocalSubscriber(tid, pub);
             tidToListener.put(tid, listener);
             RequestContext rc = requestContext.clone().type(subscriptionType);
             final SubscriptionCollection subscription = assetTree.acquireSubscription(rc);
@@ -102,8 +105,8 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
                 SubscriptionHandler.LOG.warn("No subscriber to present to unregisterSubscriber (" + tid + ")");
                 return true;
             }
-            assetTree.unregisterSubscriber(requestContext.fullName(), listener);
 
+            assetTree.unregisterSubscriber(requestContext.fullName(), listener);
             return true;
         }
         return false;
@@ -131,30 +134,25 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
 
     class LocalSubscriber implements Subscriber<Object> {
         private final Long tid;
+        private final WireOutPublisher publisher;
         volatile boolean subscriptionEnded;
-        LocalSubscriber(Long tid) {
+
+        LocalSubscriber(Long tid, WireOutPublisher publisher) {
             this.tid = tid;
+            this.publisher = publisher;
         }
 
         @Override
         public void onMessage(Object e) throws InvalidSubscriberException {
             assert !subscriptionEnded : "we received this message after the " +
                     "subscription has ended " + e;
-            final Runnable r = () -> publisher.add(p -> {
+
+            final Object key = (e instanceof MapEvent) ? ((MapEvent) e).getKey() : null;
+
+            publisher.put(key, p -> {
                 p.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(tid));
                 p.writeNotReadyDocument(false, wire -> wire.write(reply).object(e));
             });
-
-            final Class eClass = e.getClass();
-
-            if (eClass == KeyValueStore.Entry.class || eClass == MapEvent.class)
-                r.run();
-            else
-                // key subscription
-                if (throttler.useThrottler())
-                    throttler.add(r);
-                else
-                    r.run();
 
         }
 
@@ -169,7 +167,7 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
                             wire.writeEventName(ObjectKVSubscriptionHandler.EventId.onEndOfSubscription).text(""));
                 };
 
-                publisher.add(toPublish);
+                publisher.put(null, toPublish);
             }
         }
 

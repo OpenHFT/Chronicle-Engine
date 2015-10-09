@@ -82,6 +82,7 @@ public class RequestContext implements Cloneable {
     private Boolean recurse;
     private boolean sealed = false;
     private String cluster = "cluster";
+    private int throttlePeriodMs = 0;
 
     private RequestContext() {
     }
@@ -183,6 +184,8 @@ public class RequestContext implements Cloneable {
         parser.register(() -> "messageType", v -> v.typeLiteral(this, (o, x) -> o.type2 = x));
         parser.register(() -> "elementType", v -> v.typeLiteral(this, (o, x) -> o.type = x));
         parser.register(() -> "endSubscriptionAfterBootstrap", v -> v.bool(this, (o, x) -> o.endSubscriptionAfterBootstrap = x));
+        parser.register(() -> "throttlePeriodMs", v -> v.int32(this, (o, x) -> o.throttlePeriodMs = x));
+
         parser.register(WireParser.DEFAULT, ValueIn.DISCARD);
         return parser;
     }
@@ -423,6 +426,7 @@ public class RequestContext implements Cloneable {
                 ", entries=" + entries +
                 ", recurse=" + recurse +
                 ", endSubscriptionAfterBootstrap=" + endSubscriptionAfterBootstrap +
+                ", throttlePeriodMs=" + throttlePeriodMs +
                 '}';
     }
 
@@ -484,7 +488,19 @@ public class RequestContext implements Cloneable {
             sb.append(sep).append("bootstrap=").append(bootstrap);
             sep = "&";
         }
+        if (bootstrap() != null) {
+            sb.append(sep).append("throttlePeriodMs=").append(throttlePeriodMs);
+            sep = "&";
+        }
         return sb.toString();
+    }
+
+    public int throttlePeriodMs() {
+        return throttlePeriodMs;
+    }
+
+    public void throttlePeriodMs(int throttlePeriodMs) {
+        this.throttlePeriodMs = throttlePeriodMs;
     }
 
     public enum Operation {

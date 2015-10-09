@@ -118,7 +118,8 @@ public class BootStrapTests {
                 map1.put("hello", "world1");
                 Assert.assertEquals("world1", map1.get("hello"));
                 final String poll = q1.poll().toString();
-                Assert.assertEquals("InsertedEvent{assetName='/test', key=hello, value=world1}",
+                Assert.assertEquals("InsertedEvent{assetName='/test', key=hello, value=world1, " +
+                                "isReplicationEvent=false}",
                         poll);
             }
 
@@ -162,7 +163,7 @@ public class BootStrapTests {
 
                 Assert.assertEquals("world1", map1.get("hello"));
                 final String poll = q1.poll(10, TimeUnit.SECONDS).toString();
-                Assert.assertEquals("InsertedEvent{assetName='/test', key=hello, value=world1}",
+                Assert.assertEquals("InsertedEvent{assetName='/test', key=hello, value=world1, isReplicationEvent=false}",
                         poll);
             }
 

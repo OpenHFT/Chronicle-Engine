@@ -8,7 +8,6 @@ import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,6 +16,7 @@ import java.util.function.BiConsumer;
 import static net.openhft.chronicle.engine.server.internal.ObjectKVSubscriptionHandler.EventId.registerTopicSubscriber;
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
 import static net.openhft.chronicle.network.connection.CoreFields.tid;
+import static net.openhft.chronicle.network.connection.WireOutPublisher.newThrottledWireOutPublisher;
 
 /**
  * Created by Rob Austin
@@ -24,7 +24,7 @@ import static net.openhft.chronicle.network.connection.CoreFields.tid;
 public class ObjectKVSubscriptionHandler extends SubscriptionHandler<SubscriptionCollection> {
     private static final Logger LOG = LoggerFactory.getLogger(ObjectKVSubscriptionHandler.class);
 
-    @Nullable
+    @NotNull
     private final BiConsumer<WireIn, Long> dataConsumer = (inWire, inputTid) -> {
 
         eventName.setLength(0);
@@ -35,6 +35,8 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscriptio
                 LOG.info("Duplicate topic registration for tid " + tid);
                 return;
             }
+
+            final WireOutPublisher publisher0 = publisher();
 
             final TopicSubscriber listener = new TopicSubscriber() {
                 volatile boolean subscriptionEnded;
@@ -51,13 +53,13 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscriptio
                                     m.write(() -> "message").object(message);
                                 }));
                     };
-                    publisher.add(toPublish);
+                    publisher0.put(topic, toPublish);
                 }
 
                 public void onEndOfSubscription() {
                     subscriptionEnded = true;
                     if (!publisher.isClosed()) {
-                        publisher.add(publish -> {
+                        publisher0.put(null, publish -> {
                             publish.writeDocument(true, wire ->
                                     wire.writeEventName(tid).int64(inputTid));
                             publish.writeDocument(false, wire ->
@@ -114,16 +116,21 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscriptio
 
     };
 
-    public ObjectKVSubscriptionHandler(final Throttler throttler) {
-        super(throttler);
+    /**
+     * @return If the throttlePeriodMs is set returns a throttled wire out publisher
+     */
+    private WireOutPublisher publisher() {
+        return requestContext.throttlePeriodMs() == 0 ?
+                publisher :
+                newThrottledWireOutPublisher(requestContext.throttlePeriodMs(), publisher);
     }
 
     void process(@NotNull final WireIn inWire,
-                 final RequestContext requestContext,
-                 final WireOutPublisher publisher,
-                 final AssetTree assetTree, final long tid,
-                 final Wire outWire,
-                 final SubscriptionCollection subscription) {
+                 @NotNull final RequestContext requestContext,
+                 @NotNull final WireOutPublisher publisher,
+                 @NotNull final AssetTree assetTree, final long tid,
+                 @NotNull final Wire outWire,
+                 @NotNull final SubscriptionCollection subscription) {
         setOutWire(outWire);
         this.outWire = outWire;
         this.subscription = subscription;

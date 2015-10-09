@@ -43,7 +43,8 @@ public class RequestContextTest {
                 "keyType=int32&" +
                 "putReturnsNull=true&" +
                 "removeReturnsNull=true&" +
-                "bootstrap=true", rc.toUri());
+                "bootstrap=true&" +
+                "throttlePeriodMs=0", rc.toUri());
         assertEquals("RequestContext{pathName='',\n" +
                 "name='chronicleMapString',\n" +
                 "viewType=interface net.openhft.chronicle.engine.api.map.MapView,\n" +
@@ -57,21 +58,22 @@ public class RequestContextTest {
                 "averageValueSize=0.0,\n" +
                 "entries=0,\n" +
                 "recurse=null,\n" +
-                "endSubscriptionAfterBootstrap=null}", rc.toString().replaceAll(", ", ",\n"));
+                "endSubscriptionAfterBootstrap=null,\n" +
+                "throttlePeriodMs=0}", rc.toString().replaceAll(", ", ",\n"));
         assertEquals(Boolean.TRUE, rc.putReturnsNull());
         assertEquals(Boolean.FALSE, rc.removeReturnsNull());
         assertEquals(Boolean.TRUE, rc.bootstrap());
     }
 
     @Test
-    public void parseDirectory(){
+    public void parseDirectory() {
         String uri = "/grandparent/parent/child/";
         RequestContext rc = requestContext(uri);
         assertEquals("child", rc.name());
     }
 
     @Test
-    public void parseEmptyString(){
+    public void parseEmptyString() {
         String uri = "";
         RequestContext rc = requestContext(uri);
         assertEquals("", rc.name());

@@ -64,10 +64,13 @@ abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient imp
         final Boolean bootstrap = rc.bootstrap();
         final Boolean endSubscriptionAfterBootstrap = rc.endSubscriptionAfterBootstrap();
         String csp = this.csp;
+
         if (bootstrap != null)
             csp = csp + "&bootstrap=" + bootstrap;
         if (endSubscriptionAfterBootstrap != null)
             csp = csp + "&endSubscriptionAfterBootstrap=" + endSubscriptionAfterBootstrap;
+        if (rc.throttlePeriodMs() > 0)
+            csp = csp + "&throttlePeriodMs=" + rc.throttlePeriodMs();
 
         hub.subscribe(new AbstractAsyncSubscription(hub, csp, this.getClass().getSimpleName()) {
             {

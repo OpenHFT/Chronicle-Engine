@@ -19,7 +19,6 @@ import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
-import net.openhft.chronicle.engine.server.internal.Throttler;
 import net.openhft.chronicle.network.AcceptorEventHandler;
 import net.openhft.chronicle.network.VanillaSessionDetails;
 import net.openhft.chronicle.threads.Threads;
@@ -47,8 +46,6 @@ public class ServerEndpoint implements Closeable {
     private final EventLoop eg;
     @NotNull
     private final AtomicBoolean isClosed = new AtomicBoolean();
-    // set Throttler.maxEventsPreSecond == 0 if you dont want to use the throttler
-    private final int maxEventsPreSecond = Integer.getInteger("Throttler.maxEventsPreSecond", 0);
     private final int heartbeatIntervalTicks;
     private final int heartbeatIntervalTimeout;
     @Nullable
@@ -58,7 +55,11 @@ public class ServerEndpoint implements Closeable {
         this(hostPortDescription, assetTree, wire, HEARTBEAT_INTERVAL_TICKS, HEARTBEAT_TIME_OUT_TICKS);
     }
 
-    public ServerEndpoint(String hostPortDescription, @NotNull AssetTree assetTree, @NotNull WireType wire, int heartbeatIntervalTicks, int heartbeatIntervalTimeout) {
+    public ServerEndpoint(@NotNull String hostPortDescription,
+                          @NotNull AssetTree assetTree,
+                          @NotNull WireType wire,
+                          int heartbeatIntervalTicks,
+                          int heartbeatIntervalTimeout) {
         this.heartbeatIntervalTicks = heartbeatIntervalTicks;
         this.heartbeatIntervalTimeout = heartbeatIntervalTimeout;
         eg = assetTree.root().acquireView(EventLoop.class);
@@ -82,10 +83,7 @@ public class ServerEndpoint implements Closeable {
         assert eventLoop != null;
 
         final AcceptorEventHandler eah = new AcceptorEventHandler(hostPortDescription,
-                () -> {
-                    final Throttler throttler = new Throttler(eventLoop, maxEventsPreSecond);
-                    return new EngineWireHandler(wireType, asset, throttler);
-                },
+                () -> new EngineWireHandler(wireType, asset),
                 VanillaSessionDetails::new,
                 heartbeatIntervalTicks,
                 heartbeatIntervalTimeout);

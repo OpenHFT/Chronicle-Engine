@@ -47,7 +47,7 @@ public class TopicPublisherHandler<T, M> extends AbstractHandler {
                     @Override
                     public void onMessage(final Object topic, final Object message) {
 
-                        publisher.add(publish -> {
+                        publisher.put(topic, publish -> {
                             publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
                                     (inputTid));
                             publish.writeNotReadyDocument(false, wire -> wire.writeEventName(reply)
@@ -59,7 +59,7 @@ public class TopicPublisherHandler<T, M> extends AbstractHandler {
                     }
 
                     public void onEndOfSubscription() {
-                        publisher.add(publish -> {
+                        publisher.put(null, publish -> {
                             publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
                                     (inputTid));
                             publish.writeNotReadyDocument(false, wire -> wire.writeEventName

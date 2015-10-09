@@ -41,7 +41,7 @@ public class PublisherHandler<E> extends AbstractHandler {
 
                     @Override
                     public void onMessage(final Object message) throws InvalidSubscriberException {
-                        publisher.add(publish -> {
+                        publisher.put(null, publish -> {
                             publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
                                     (inputTid));
                             publish.writeNotReadyDocument(false, wire -> wire.writeEventName(reply)

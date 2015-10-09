@@ -60,7 +60,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
                         final AtomicBoolean hadNext = new AtomicBoolean();
 
-                        mi.forEach(e -> publisher.add(publish1 -> {
+                        mi.forEach(e -> publisher.put(null, publish1 -> {
 
                             if (e.identifier() != hostId.hostId())
                                 return;

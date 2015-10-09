@@ -45,9 +45,6 @@ public class TopologySubscriptionHandler extends SubscriptionHandler<TopologySub
         });
     };
 
-    public TopologySubscriptionHandler(@NotNull final Throttler throttler) {
-        super(throttler);
-    }
 
     void process(@NotNull final WireIn inWire,
                  @NotNull final RequestContext requestContext,
@@ -63,7 +60,6 @@ public class TopologySubscriptionHandler extends SubscriptionHandler<TopologySub
         this.assetTree = assetTree;
         assert dataConsumer != null;
         dataConsumer.accept(inWire, tid);
-
     }
 
     public enum EventId implements ParameterizeWireKey {

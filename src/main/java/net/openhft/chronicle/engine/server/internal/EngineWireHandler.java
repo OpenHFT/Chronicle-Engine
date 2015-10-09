@@ -76,6 +76,7 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
     @NotNull
     private final ObjectKVSubscriptionHandler subscriptionHandler;
 
+
     @NotNull
     private final TopologySubscriptionHandler topologySubscriptionHandler;
     @NotNull
@@ -117,9 +118,9 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
     private final StringBuilder prevLogMessage = new StringBuilder();
 
     public EngineWireHandler(@NotNull final WireType byteToWire,
-                             @NotNull final AssetTree assetTree,
-                             @NotNull final Throttler throttler) {
+                             @NotNull final AssetTree assetTree) {
         super(byteToWire);
+
         this.sessionProvider = assetTree.root().getView(SessionProvider.class);
         this.eventLoop = assetTree.root().findOrCreateView(EventLoop.class);
         assert eventLoop != null;
@@ -135,8 +136,8 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
         this.keySetHandler = new CollectionWireHandler();
         this.entrySetHandler = new CollectionWireHandler();
         this.valuesHandler = new CollectionWireHandler();
-        this.subscriptionHandler = new ObjectKVSubscriptionHandler(throttler);
-        this.topologySubscriptionHandler = new TopologySubscriptionHandler(throttler);
+        this.subscriptionHandler = new ObjectKVSubscriptionHandler();
+        this.topologySubscriptionHandler = new TopologySubscriptionHandler();
         this.topicPublisherHandler = new TopicPublisherHandler();
         this.publisherHandler = new PublisherHandler();
         this.referenceHandler = new ReferenceHandler();
@@ -249,14 +250,14 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
                            @NotNull final WireOut out,
                            @NotNull final SessionDetailsProvider sessionDetails) {
 
-        if(!YamlLogging.showHeartBeats){
+        if (!YamlLogging.showHeartBeats) {
             //save the previous message (the meta-data for printing later)
             //if the message turns out not to be a system message
             prevLogMessage.setLength(0);
             prevLogMessage.append(currentLogMessage);
             currentLogMessage.setLength(0);
             logToBuffer(in, currentLogMessage);
-        }else {
+        } else {
             //log every message
             logYamlToStandardOut(in);
         }
@@ -273,22 +274,22 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
 
                 if (isSystemMessage) {
                     systemHandler.process(in, out, tid, sessionDetails, getMonitoringMap());
-                    if(!systemHandler.wasHeartBeat()){
-                        if(!YamlLogging.showHeartBeats) {
+                    if (!systemHandler.wasHeartBeat()) {
+                        if (!YamlLogging.showHeartBeats) {
                             logBufferToStandardOut(prevLogMessage.append(currentLogMessage));
                         }
                     }
                     return;
                 }
 
-                if(!YamlLogging.showHeartBeats) {
+                if (!YamlLogging.showHeartBeats) {
                     logBufferToStandardOut(prevLogMessage.append(currentLogMessage));
                 }
 
                 Map<String, UserStat> userMonitoringMap = getMonitoringMap();
                 if (userMonitoringMap != null) {
                     UserStat userStat = userMonitoringMap.get(sessionDetails.userId());
-                    if(userStat==null) {
+                    if (userStat == null) {
                         throw new AssertionError("User should have been logged in");
                     }
                     //Use timeInMillis
@@ -416,8 +417,8 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
         }
     }
 
-    private void logBufferToStandardOut(StringBuilder logBuffer){
-        if(logBuffer.length() > 0){
+    private void logBufferToStandardOut(StringBuilder logBuffer) {
+        if (logBuffer.length() > 0) {
             LOG.info("\n" + logBuffer.toString());
         }
     }
