@@ -86,7 +86,6 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
         this.asset = asset;
         this.assetFullName = asset.fullName();
         this.subscriptions = asset.acquireView(ObjectKVSSubscription.class, context);
-
         this.subscriptions.setKvStore(this);
         this.eventLoop = asset.findOrCreateView(EventLoop.class);
 

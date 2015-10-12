@@ -43,6 +43,7 @@ import net.openhft.chronicle.engine.set.VanillaKeySetView;
 import net.openhft.chronicle.network.ClientSessionProvider;
 import net.openhft.chronicle.network.VanillaSessionDetails;
 import net.openhft.chronicle.network.api.session.SessionProvider;
+import net.openhft.chronicle.network.connection.ClientConnectionMonitor;
 import net.openhft.chronicle.network.connection.SocketAddressSupplier;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.EventGroup;
@@ -152,7 +153,10 @@ public class VanillaAsset implements Asset, Closeable {
                 VanillaTopologySubscription::new);
     }
 
-    public void forRemoteAccess(@NotNull String[] hostPortDescriptions, @NotNull Function<Bytes, Wire> wire, VanillaSessionDetails sessionDetails1) throws
+    public void forRemoteAccess(@NotNull String[] hostPortDescriptions,
+                                @NotNull Function<Bytes, Wire> wire,
+                                @NotNull VanillaSessionDetails sessionDetails,
+                                @Nullable ClientConnectionMonitor clientConnectionMonitor) throws
             AssetNotFoundException {
 
         standardStack(true);
@@ -177,7 +181,7 @@ public class VanillaAsset implements Asset, Closeable {
         addLeafRule(TopologySubscription.class, LAST + " vanilla",
                 RemoteTopologySubscription::new);
 
-        SessionProvider sessionProvider = new ClientSessionProvider(sessionDetails1);
+        SessionProvider sessionProvider = new ClientSessionProvider(sessionDetails);
 
         EventLoop eventLoop = findOrCreateView(EventLoop.class);
         eventLoop.start();
@@ -187,7 +191,8 @@ public class VanillaAsset implements Asset, Closeable {
             final SocketAddressSupplier socketAddressSupplier = new SocketAddressSupplier(hostPortDescriptions, name);
 
             TcpChannelHub view = Threads.withThreadGroup(findView(ThreadGroup.class),
-                    () -> new TcpChannelHub(sessionProvider, eventLoop, wire, name, socketAddressSupplier, true));
+                    () -> new TcpChannelHub(sessionProvider, eventLoop, wire, name,
+                            socketAddressSupplier, true, clientConnectionMonitor));
             addView(TcpChannelHub.class, view);
         }
 

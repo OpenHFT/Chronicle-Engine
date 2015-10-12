@@ -26,9 +26,9 @@ import net.openhft.chronicle.engine.map.RemovedEvent;
 import net.openhft.chronicle.engine.map.UpdatedEvent;
 import net.openhft.chronicle.engine.map.remote.*;
 import net.openhft.chronicle.network.VanillaSessionDetails;
+import net.openhft.chronicle.network.connection.ClientConnectionMonitor;
 import net.openhft.chronicle.threads.Threads;
 import net.openhft.chronicle.threads.api.EventLoop;
-import net.openhft.chronicle.wire.BinaryWire;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
@@ -105,7 +105,31 @@ public class VanillaAssetTree implements AssetTree {
 
     @NotNull
     public VanillaAssetTree forRemoteAccess(String hostPortDescription, @NotNull Function<Bytes, Wire> wire) {
-        root.forRemoteAccess(new String[]{hostPortDescription}, wire, clientSession());
+        root.forRemoteAccess(new String[]{hostPortDescription}, wire, clientSession(), null);
+        return this;
+    }
+
+    @NotNull
+    public VanillaAssetTree forRemoteAccess(@NotNull String[] hostPortDescription, @NotNull Function<Bytes, Wire> wire) {
+        root.forRemoteAccess(hostPortDescription, wire, clientSession(), null);
+        return this;
+    }
+
+    /**
+     * @param hostPortDescription     the primary host and other failover hosts
+     * @param wire                    the type of wire
+     * @param clientConnectionMonitor used to monitor client failove
+     * @return an instance of VanillaAssetTree
+     */
+    @NotNull
+    public VanillaAssetTree forRemoteAccess(@NotNull String[] hostPortDescription,
+                                            @NotNull Function<Bytes, Wire> wire,
+                                            @Nullable ClientConnectionMonitor clientConnectionMonitor) {
+
+        if (clientConnectionMonitor != null)
+            root.viewMap.put(ClientConnectionMonitor.class, clientConnectionMonitor);
+
+        root.forRemoteAccess(hostPortDescription, wire, clientSession(), clientConnectionMonitor);
         return this;
     }
 
@@ -121,11 +145,6 @@ public class VanillaAssetTree implements AssetTree {
         return sessionDetails;
     }
 
-    @NotNull
-    public VanillaAssetTree forRemoteAccess(@NotNull String[] hostPortDescription, @NotNull Function<Bytes, Wire> wire) {
-        root.forRemoteAccess(hostPortDescription, wire, clientSession());
-        return this;
-    }
 
     @NotNull
     @Override

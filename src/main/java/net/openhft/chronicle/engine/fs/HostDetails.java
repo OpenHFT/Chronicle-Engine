@@ -21,6 +21,7 @@ import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.api.session.SessionProvider;
+import net.openhft.chronicle.network.connection.ClientConnectionMonitor;
 import net.openhft.chronicle.network.connection.SocketAddressSupplier;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.api.EventLoop;
@@ -69,7 +70,9 @@ public class HostDetails implements Marshallable, Closeable {
         return tcpChannelHubs.computeIfAbsent(addr, hostPort -> {
             String[] connectURIs = new String[]{connectUri};
             final SocketAddressSupplier socketAddressSupplier = new SocketAddressSupplier(connectURIs, "hostId=" + hostId + ",connectUri=" + connectUri);
-            return new TcpChannelHub(sessionProvider, eventLoop, wire, "hostId=" + hostId + ",connectUri=" + connectUri, socketAddressSupplier, true);
+            final ClientConnectionMonitor view = asset.findView(ClientConnectionMonitor.class);
+            return new TcpChannelHub(sessionProvider, eventLoop, wire, "hostId=" + hostId + ",connectUri=" + connectUri,
+                    socketAddressSupplier, true, null);
         });
     }
 
