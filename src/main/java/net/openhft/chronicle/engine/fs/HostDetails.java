@@ -70,9 +70,9 @@ public class HostDetails implements Marshallable, Closeable {
         return tcpChannelHubs.computeIfAbsent(addr, hostPort -> {
             String[] connectURIs = new String[]{connectUri};
             final SocketAddressSupplier socketAddressSupplier = new SocketAddressSupplier(connectURIs, "hostId=" + hostId + ",connectUri=" + connectUri);
-            final ClientConnectionMonitor view = asset.findView(ClientConnectionMonitor.class);
+            final ClientConnectionMonitor clientConnectionMonitor = asset.findView(ClientConnectionMonitor.class);
             return new TcpChannelHub(sessionProvider, eventLoop, wire, "hostId=" + hostId + ",connectUri=" + connectUri,
-                    socketAddressSupplier, true, null);
+                    socketAddressSupplier, true, clientConnectionMonitor);
         });
     }
 
