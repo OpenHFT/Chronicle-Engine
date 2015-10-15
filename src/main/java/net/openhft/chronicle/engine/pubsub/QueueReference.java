@@ -23,11 +23,10 @@ import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.tree.ChronicleQueueView;
 import net.openhft.chronicle.queue.ChronicleQueue;
-import net.openhft.chronicle.wire.Marshallable;
 import org.jetbrains.annotations.Nullable;
 
 
-public class QueueReference<E extends Marshallable> implements Reference<E> {
+public class QueueReference<E> implements Reference<E> {
 
     private final Class<E> eClass;
     private final ChronicleQueueView<E> chronicleQueue;
