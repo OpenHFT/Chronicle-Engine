@@ -30,7 +30,7 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.api.tree.RequestContextInterner;
 import net.openhft.chronicle.engine.cfg.UserStat;
 import net.openhft.chronicle.engine.collection.CollectionWireHandler;
-import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
+import net.openhft.chronicle.engine.map.ObjectSubscription;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.engine.tree.TopologySubscription;
 import net.openhft.chronicle.network.ClientClosedProvider;
@@ -193,7 +193,7 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
                             viewType == EntrySetView.class ||
                             viewType == ValuesCollection.class ||
                             viewType == KeySetView.class ||
-                            viewType == ObjectKVSSubscription.class ||
+                            viewType == ObjectSubscription.class ||
                             viewType == TopicPublisher.class ||
                             viewType == Publisher.class ||
                             viewType == Reference.class ||
@@ -327,7 +327,7 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
                         return;
                     }
 
-                    if (viewType == ObjectKVSSubscription.class) {
+                    if (viewType == ObjectSubscription.class) {
                         subscriptionHandler.process(in,
                                 requestContext, publisher, assetTree, tid,
                                 outWire, (SubscriptionCollection) view);

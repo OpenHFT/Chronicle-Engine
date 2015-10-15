@@ -25,7 +25,7 @@ import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.session.Heartbeat;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
-import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
+import net.openhft.chronicle.engine.map.ObjectSubscription;
 import net.openhft.chronicle.engine.map.RawKVSSubscription;
 import net.openhft.chronicle.engine.query.Filter;
 import net.openhft.chronicle.engine.query.Operation.OperationType;
@@ -54,7 +54,7 @@ public class RequestContext implements Cloneable {
         addAlias(Replication.class, "Replication");
         addAlias(Publisher.class, "Publisher, Pub");
         addAlias(TopicPublisher.class, "TopicPublisher, TopicPub");
-        addAlias(ObjectKVSSubscription.class, "Subscription");
+        addAlias(ObjectSubscription.class, "Subscription");
         addAlias(TopologySubscription.class, "topologySubscription");
         addAlias(Reference.class, "Reference, Ref");
         addAlias(Heartbeat.class, "Heartbeat");
@@ -151,7 +151,7 @@ public class RequestContext implements Cloneable {
                 ? (Class) TopologySubscription.class
                 : elementType == BytesStore.class
                 ? (Class) RawKVSSubscription.class
-                : (Class) ObjectKVSSubscription.class;
+                : (Class) ObjectSubscription.class;
     }
 
     @NotNull

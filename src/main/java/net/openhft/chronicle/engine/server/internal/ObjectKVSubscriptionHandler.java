@@ -4,7 +4,7 @@ import net.openhft.chronicle.engine.api.pubsub.SubscriptionCollection;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
-import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
+import net.openhft.chronicle.engine.map.ObjectSubscription;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
@@ -108,7 +108,7 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscriptio
             if (after(eventName)) return;
 
             if (EventId.notifyEvent.contentEquals(eventName)) {
-                ((ObjectKVSSubscription) subscription).notifyEvent(valueIn.typedMarshallable());
+                ((ObjectSubscription) subscription).notifyEvent(valueIn.typedMarshallable());
                 outWire.writeEventName(reply).int8(subscription.entrySubscriberCount());
             }
 

@@ -64,7 +64,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
     private static final Logger LOG = LoggerFactory.getLogger(ChronicleMapKeyValueStore.class);
     private final ChronicleMap<K, V> chronicleMap;
     @NotNull
-    private final ObjectKVSSubscription<K, V> subscriptions;
+    private final ObjectSubscription<K, V> subscriptions;
     @Nullable
     private final EngineReplication engineReplicator;
     @NotNull
@@ -85,7 +85,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
         long maxEntries = context.getEntries();
         this.asset = asset;
         this.assetFullName = asset.fullName();
-        this.subscriptions = asset.acquireView(ObjectKVSSubscription.class, context);
+        this.subscriptions = asset.acquireView(ObjectSubscription.class, context);
         this.subscriptions.setKvStore(this);
         this.eventLoop = asset.findOrCreateView(EventLoop.class);
 

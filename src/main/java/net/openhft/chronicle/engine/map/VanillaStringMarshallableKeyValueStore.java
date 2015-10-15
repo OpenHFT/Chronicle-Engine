@@ -60,18 +60,18 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     @NotNull
     private final BiFunction<BytesStore, V, V> bytesToValue;
     @NotNull
-    private final ObjectKVSSubscription<String, V> subscriptions;
+    private final ObjectSubscription<String, V> subscriptions;
     private final SubscriptionKeyValueStore<String, BytesStore> kvStore;
     private final Asset asset;
     private final Class<V> valueType;
 
     public VanillaStringMarshallableKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset,
                                                   @NotNull SubscriptionKeyValueStore<String, BytesStore> kvStore) throws AssetNotFoundException {
-        this(asset.acquireView(ObjectKVSSubscription.class, context), asset, context.valueType(),
+        this(asset.acquireView(ObjectSubscription.class, context), asset, context.valueType(),
                 kvStore, context.wireType());
     }
 
-    VanillaStringMarshallableKeyValueStore(@NotNull ObjectKVSSubscription<String, V>
+    VanillaStringMarshallableKeyValueStore(@NotNull ObjectSubscription<String, V>
                                                    subscriptions, @NotNull Asset asset, @NotNull Class valueType,
                                            @NotNull SubscriptionKeyValueStore<String, BytesStore> kvStore,
                                            @NotNull Function<Bytes, Wire> wireType) {
@@ -129,7 +129,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
 
     @NotNull
     @Override
-    public ObjectKVSSubscription<String, V> subscription(boolean createIfAbsent) {
+    public ObjectSubscription<String, V> subscription(boolean createIfAbsent) {
         return subscriptions;
     }
 

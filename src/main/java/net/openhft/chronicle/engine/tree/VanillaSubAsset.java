@@ -22,7 +22,7 @@ import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.map.SubAsset;
 import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.tree.*;
-import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
+import net.openhft.chronicle.engine.map.ObjectSubscription;
 import net.openhft.chronicle.engine.pubsub.*;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +69,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
         if (viewType == Reference.class || viewType == Publisher.class || viewType == Supplier.class)
             return (V) reference;
         if (viewType == SubscriptionCollection.class || viewType == VanillaSimpleSubscription.class
-                || viewType == ObjectKVSSubscription.class)
+                || viewType == ObjectSubscription.class)
             return (V) subscription;
         throw new UnsupportedOperationException("Unable to classify view type " + viewType);
     }
@@ -90,7 +90,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
                 return acquireViewFor(viewType, rc);
             return (V) reference;
         }
-        if (viewType == VanillaSimpleSubscription.class || viewType == ObjectKVSSubscription.class) {
+        if (viewType == VanillaSimpleSubscription.class || viewType == ObjectSubscription.class) {
             return (V) subscription;
         }
         throw new UnsupportedOperationException("todo vClass: " + viewType + ", rc: " + rc);

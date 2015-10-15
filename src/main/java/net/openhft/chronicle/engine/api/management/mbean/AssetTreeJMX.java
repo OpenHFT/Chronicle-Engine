@@ -1,8 +1,8 @@
 package net.openhft.chronicle.engine.api.management.mbean;
 
 import net.openhft.chronicle.engine.api.management.ManagementTools;
-import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
 import net.openhft.chronicle.engine.map.ObjectKeyValueStore;
+import net.openhft.chronicle.engine.map.ObjectSubscription;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,17 +30,17 @@ public class AssetTreeJMX implements AssetTreeJMXMBean {
 
     }
 
-    public AssetTreeJMX(@NotNull ObjectKeyValueStore view, @NotNull ObjectKVSSubscription objectKVSSubscription, String path, String entries) {
+    public AssetTreeJMX(@NotNull ObjectKeyValueStore view, @NotNull ObjectSubscription objectSubscription, String path, String entries) {
         this.size = view.longSize();
         this.entries = entries;
         this.keyTypeClass = view.keyType();
         this.keyType = keyTypeClass.getName();
         this.valueTypeClass = view.valueType();
         this.valueType = valueTypeClass.getName();
-        this.topicSubscriberCount = objectKVSSubscription.topicSubscriberCount();
-        this.keySubscriberCount = objectKVSSubscription.keySubscriberCount();
-        this.entrySubscriberCount = objectKVSSubscription.entrySubscriberCount();
-        this.keyStoreValue = objectKVSSubscription.getClass().getName();
+        this.topicSubscriberCount = objectSubscription.topicSubscriberCount();
+        this.keySubscriberCount = objectSubscription.keySubscriberCount();
+        this.entrySubscriberCount = objectSubscription.entrySubscriberCount();
+        this.keyStoreValue = objectSubscription.getClass().getName();
         this.path = path;
     }
 

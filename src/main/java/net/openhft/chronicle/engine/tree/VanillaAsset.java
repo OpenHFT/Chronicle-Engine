@@ -34,6 +34,7 @@ import net.openhft.chronicle.engine.map.remote.RemoteKVSSubscription;
 import net.openhft.chronicle.engine.map.remote.RemoteKeyValueStore;
 import net.openhft.chronicle.engine.map.remote.RemoteMapView;
 import net.openhft.chronicle.engine.map.remote.RemoteTopologySubscription;
+import net.openhft.chronicle.engine.pubsub.QueueReference;
 import net.openhft.chronicle.engine.pubsub.RemoteTopicPublisher;
 import net.openhft.chronicle.engine.pubsub.VanillaReference;
 import net.openhft.chronicle.engine.pubsub.VanillaTopicPublisher;
@@ -104,6 +105,15 @@ public class VanillaAsset implements Asset, Closeable {
 
     public void standardStack(boolean daemon) {
 
+        final Asset queue = acquireAsset("/queue");
+        queue.addWrappingRule(Publisher.class, LAST + "reference to a ChronicleQueue",
+                QueueReference::new, QueueView.class);
+
+        queue.addLeafRule(ObjectSubscription.class, LAST + " vanilla queue subscription",
+                QueueObjectSubscription::new);
+
+        addLeafRule(QueueView.class, LAST + "chronicle queue", ChronicleQueueView::new);
+
         addWrappingRule(Reference.class, LAST + "reference", VanillaReference::new, MapView.class);
         addWrappingRule(Replication.class, LAST + "replication", VanillaReplication::new, MapView.class);
         addWrappingRule(Publisher.class, LAST + "publisher", VanillaReference::new, MapView.class);
@@ -133,6 +143,8 @@ public class VanillaAsset implements Asset, Closeable {
 
     public void forServer(boolean daemon) {
         standardStack(daemon);
+
+
         addWrappingRule(EntrySetView.class, LAST + " entrySet", VanillaEntrySetView::new, MapView.class);
 
         addWrappingRule(TopicPublisher.class, LAST + " topic publisher", VanillaTopicPublisher::new, MapView.class);
@@ -144,7 +156,7 @@ public class VanillaAsset implements Asset, Closeable {
         addLeafRule(SubscriptionKeyValueStore.class, LAST + " vanilla", VanillaKeyValueStore::new);
         addLeafRule(KeyValueStore.class, LAST + " vanilla", VanillaKeyValueStore::new);
 
-        addLeafRule(ObjectKVSSubscription.class, LAST + " vanilla",
+        addLeafRule(ObjectSubscription.class, LAST + " vanilla",
                 VanillaKVSSubscription::new);
         addLeafRule(RawKVSSubscription.class, LAST + " vanilla",
                 VanillaKVSSubscription::new);
@@ -168,7 +180,7 @@ public class VanillaAsset implements Asset, Closeable {
         addWrappingRule(KeySetView.class, LAST + " remote key maps", RemoteKeySetView::new,
                 MapView.class);
 
-        addLeafRule(ObjectKVSSubscription.class, LAST + " Remote", RemoteKVSSubscription::new);
+        addLeafRule(ObjectSubscription.class, LAST + " Remote", RemoteKVSSubscription::new);
 
         //TODO This is incorrect should be RemoteKVSSubscription
         addLeafRule(RawKVSSubscription.class, LAST + " vanilla",
@@ -324,7 +336,7 @@ public class VanillaAsset implements Asset, Closeable {
     @Nullable
     @Override
     public SubscriptionCollection subscription(boolean createIfAbsent) throws AssetNotFoundException {
-        return createIfAbsent ? acquireView(ObjectKVSSubscription.class) : getView(ObjectKVSSubscription.class);
+        return createIfAbsent ? acquireView(ObjectSubscription.class) : getView(ObjectSubscription.class);
     }
 
     @Override

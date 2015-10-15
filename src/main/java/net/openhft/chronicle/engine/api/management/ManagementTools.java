@@ -20,8 +20,8 @@ import net.openhft.chronicle.engine.api.management.mbean.AssetTreeDynamicMBean;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
-import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
 import net.openhft.chronicle.engine.map.ObjectKeyValueStore;
+import net.openhft.chronicle.engine.map.ObjectSubscription;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.threads.Threads;
@@ -174,7 +174,7 @@ public enum ManagementTools {
                     return;
                 } else {
 
-                    ObjectKVSSubscription objectKVSSubscription = asset.getView(ObjectKVSSubscription.class);
+                    ObjectSubscription objectSubscription = asset.getView(ObjectSubscription.class);
                     //ObjectName atName = new ObjectName(createObjectNameUri(e.assetName(),e.name(),treeName));
 
                     //start Dynamic MBeans Code
@@ -182,10 +182,10 @@ public enum ManagementTools {
                     m.put("size", "" + view.longSize());
                     m.put("keyType", view.keyType().getName());
                     m.put("valueType", view.valueType().getName());
-                    m.put("topicSubscriberCount", "" + objectKVSSubscription.topicSubscriberCount());
-                    m.put("keySubscriberCount", "" + objectKVSSubscription.keySubscriberCount());
-                    m.put("entrySubscriberCount", "" + objectKVSSubscription.entrySubscriberCount());
-                    m.put("keyStoreValue", objectKVSSubscription.getClass().getName());
+                    m.put("topicSubscriberCount", "" + objectSubscription.topicSubscriberCount());
+                    m.put("keySubscriberCount", "" + objectSubscription.keySubscriberCount());
+                    m.put("entrySubscriberCount", "" + objectSubscription.entrySubscriberCount());
+                    m.put("keyStoreValue", objectSubscription.getClass().getName());
                     m.put("path", e.assetName() + "-" + e.name());
 
                     for (int i = 0; i < view.segments(); i++) {
@@ -202,7 +202,7 @@ public enum ManagementTools {
                     //end Dynamic MBeans Code
 
                     tree.registerSubscriber(e.fullName(), MapEvent.class, (MapEvent me) ->
-                            ses.schedule(() -> handleAssetUpdate(view, atName, objectKVSSubscription, e.assetName() + "-" + e.name()), 100, TimeUnit.MILLISECONDS));
+                            ses.schedule(() -> handleAssetUpdate(view, atName, objectSubscription, e.assetName() + "-" + e.name()), 100, TimeUnit.MILLISECONDS));
 
                     //AssetTreeJMX atBean = new AssetTreeJMX(view,objectKVSSubscription,e.assetName() + "-" + e.name(),getMapAsString(view));
                     //registerTreeWithMBean(atBean, atName);
@@ -217,7 +217,7 @@ public enum ManagementTools {
         }
     }
 
-    private static void handleAssetUpdate(@NotNull ObjectKeyValueStore view, ObjectName atName, @NotNull ObjectKVSSubscription objectKVSSubscription, String path) {
+    private static void handleAssetUpdate(@NotNull ObjectKeyValueStore view, ObjectName atName, @NotNull ObjectSubscription objectSubscription, String path) {
         try {
             if (mbs != null && mbs.isRegistered(atName)) {
                 /*AttributeList list = new AttributeList();
@@ -235,10 +235,10 @@ public enum ManagementTools {
                 m.put("size", "" + view.longSize());
                 m.put("keyType", view.keyType().getName());
                 m.put("valueType", view.valueType().getName());
-                m.put("topicSubscriberCount", "" + objectKVSSubscription.topicSubscriberCount());
-                m.put("keySubscriberCount", "" + objectKVSSubscription.keySubscriberCount());
-                m.put("entrySubscriberCount", "" + objectKVSSubscription.entrySubscriberCount());
-                m.put("keyStoreValue", objectKVSSubscription.getClass().getName());
+                m.put("topicSubscriberCount", "" + objectSubscription.topicSubscriberCount());
+                m.put("keySubscriberCount", "" + objectSubscription.keySubscriberCount());
+                m.put("entrySubscriberCount", "" + objectSubscription.entrySubscriberCount());
+                m.put("keyStoreValue", objectSubscription.getClass().getName());
                 m.put("path", path);
 
                 Iterator<Map.Entry> it = view.entrySetIterator();

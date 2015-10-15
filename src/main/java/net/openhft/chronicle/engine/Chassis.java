@@ -110,7 +110,8 @@ public enum Chassis {
     /**
      * Get or create a TopicPublisher. A Topic Publisher can specify the topic to publish to.
      *
-     * @param uri    of the group to publish to.  When you specify a tipuc, in will be immediately under that group.
+     * @param uri    of the group to publish to.  When you specify a topic, in will be immediately
+     *               under that group.
      * @param tClass class of the topic.  Typically String.class
      * @param eClass class of the messages to publish on that topic.
      * @return a TopicPublisher for the group uri.

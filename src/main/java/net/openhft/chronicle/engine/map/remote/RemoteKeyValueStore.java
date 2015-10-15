@@ -31,8 +31,8 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.collection.ClientWiredStatelessChronicleCollection;
 import net.openhft.chronicle.engine.collection.ClientWiredStatelessChronicleSet;
 import net.openhft.chronicle.engine.map.InsertedEvent;
-import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
 import net.openhft.chronicle.engine.map.ObjectKeyValueStore;
+import net.openhft.chronicle.engine.map.ObjectSubscription;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
@@ -67,7 +67,7 @@ public class
     private final Asset asset;
     // todo
     @NotNull
-    private final ObjectKVSSubscription<K, V> subscriptions;
+    private final ObjectSubscription<K, V> subscriptions;
 
     public RemoteKeyValueStore(@NotNull final RequestContext context,
                                @NotNull Asset asset,
@@ -78,7 +78,7 @@ public class
         this.vClass = context.valueType();
         this.context = context;
 
-        subscriptions = asset.acquireView(ObjectKVSSubscription.class, context);
+        subscriptions = asset.acquireView(ObjectSubscription.class, context);
         subscriptions.setKvStore(this);
     }
 
@@ -417,7 +417,7 @@ public class
 
     @NotNull
     @Override
-    public ObjectKVSSubscription<K, V> subscription(boolean createIfAbsent) {
+    public ObjectSubscription<K, V> subscription(boolean createIfAbsent) {
         return subscriptions;
     }
 

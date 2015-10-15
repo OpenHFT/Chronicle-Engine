@@ -25,7 +25,7 @@ import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.map.EventConsumer;
-import net.openhft.chronicle.engine.map.ObjectKVSSubscription;
+import net.openhft.chronicle.engine.map.ObjectSubscription;
 import net.openhft.chronicle.engine.query.Filter;
 import net.openhft.chronicle.engine.server.internal.MapWireHandler;
 import net.openhft.chronicle.network.connection.AbstractAsyncSubscription;
@@ -43,7 +43,7 @@ import static net.openhft.chronicle.engine.server.internal.ObjectKVSubscriptionH
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
 
 public class RemoteKVSSubscription<K, V> extends AbstractRemoteSubscription<MapEvent<K, V>>
-        implements ObjectKVSSubscription<K, V>, Closeable {
+        implements ObjectSubscription<K, V>, Closeable {
 
     private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
     private final Class<K> kClass;

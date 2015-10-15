@@ -42,17 +42,17 @@ import static net.openhft.chronicle.engine.map.Buffers.BUFFERS;
  */
 public class VanillaStringStringKeyValueStore implements StringStringKeyValueStore {
     @NotNull
-    private final ObjectKVSSubscription<String, String> subscriptions;
+    private final ObjectSubscription<String, String> subscriptions;
 
     private final SubscriptionKeyValueStore<String, BytesStore> kvStore;
     private final Asset asset;
 
     public VanillaStringStringKeyValueStore(RequestContext context, @NotNull Asset asset,
                                             @NotNull SubscriptionKeyValueStore<String, BytesStore> kvStore) throws AssetNotFoundException {
-        this(asset.acquireView(ObjectKVSSubscription.class, context), asset, kvStore);
+        this(asset.acquireView(ObjectSubscription.class, context), asset, kvStore);
     }
 
-    VanillaStringStringKeyValueStore(@NotNull ObjectKVSSubscription<String, String> subscriptions,
+    VanillaStringStringKeyValueStore(@NotNull ObjectSubscription<String, String> subscriptions,
                                      @NotNull Asset asset,
                                      @NotNull SubscriptionKeyValueStore<String, BytesStore> kvStore) throws AssetNotFoundException {
         this.asset = asset;
@@ -80,7 +80,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
 
     @NotNull
     @Override
-    public ObjectKVSSubscription<String, String> subscription(boolean createIfAbsent) {
+    public ObjectSubscription<String, String> subscription(boolean createIfAbsent) {
         return subscriptions;
     }
 

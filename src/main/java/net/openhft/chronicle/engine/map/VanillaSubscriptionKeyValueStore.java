@@ -29,19 +29,19 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
         implements ObjectKeyValueStore<K, V>, AuthenticatedKeyValueStore<K, V> {
 
     @NotNull
-    private final ObjectKVSSubscription<K, V> subscriptions;
+    private final ObjectSubscription<K, V> subscriptions;
 
     public VanillaSubscriptionKeyValueStore(@NotNull RequestContext context,
                                             @NotNull Asset asset,
                                             @NotNull KeyValueStore<K, V> item) {
         super(context, asset, item);
-        this.subscriptions = asset.acquireView(ObjectKVSSubscription.class, context);
+        this.subscriptions = asset.acquireView(ObjectSubscription.class, context);
         subscriptions.setKvStore(this);
     }
 
     @NotNull
     @Override
-    public ObjectKVSSubscription<K, V> subscription(boolean createIfAbsent) {
+    public ObjectSubscription<K, V> subscription(boolean createIfAbsent) {
         return subscriptions;
     }
 
