@@ -94,7 +94,7 @@ public class SimpleTest extends ThreadMonitoringTest {
     }
 
     @Test
-    public void publishToATopic() throws InterruptedException {
+    public void testMarshablePublishToATopic() throws InterruptedException {
 
         Publisher<MyMarshallable> publisher = acquirePublisher("/queue", MyMarshallable.class);
         BlockingQueue<MyMarshallable> values = new ArrayBlockingQueue<>(1);
@@ -109,6 +109,21 @@ public class SimpleTest extends ThreadMonitoringTest {
 
     }
 
+    @Test
+    public void testStringPublishToATopic() throws InterruptedException {
+
+        Publisher<String> publisher = acquirePublisher("/queue", String.class);
+        BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
+        Subscriber<String> subscriber = values::add;
+        registerSubscriber("/queue", String.class, subscriber);
+
+        publisher.publish("Message-1");
+        assertEquals("Message-1", values.poll(2, SECONDS).toString());
+
+        // Publisher<MyMarshallable> publisher = acquireTopicPublisher("/queue", MyMarshallable
+        //      .class);
+
+    }
 
 }
 
