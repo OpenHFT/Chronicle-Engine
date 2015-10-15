@@ -46,9 +46,10 @@ public interface Reference<E> extends Publisher<E>, Supplier<E>, Visitable<E> {
 
     /**
      * Set the new value
+     *
      * @param e replace value
      */
-    void set(E e);
+    long set(E e);
 
     /**
      * Remove the topic/key
@@ -57,6 +58,7 @@ public interface Reference<E> extends Publisher<E>, Supplier<E>, Visitable<E> {
 
     /**
      * Remove the topic/key and return the old value
+     *
      * @return the old value.
      */
     @Nullable
@@ -68,13 +70,14 @@ public interface Reference<E> extends Publisher<E>, Supplier<E>, Visitable<E> {
 
     /**
      * Publish to this topic/key.
+     *
      * @param e value to publish/set
      */
-    default void publish(E e) {
-        set(e);
+    default long publish(E e) {
+        return set(e);
     }
 
-    default Class getType(){
+    default Class getType() {
         throw new UnsupportedOperationException();
     }
 }

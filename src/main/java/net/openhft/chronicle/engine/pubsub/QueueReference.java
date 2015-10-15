@@ -26,24 +26,24 @@ import net.openhft.chronicle.queue.ChronicleQueue;
 import org.jetbrains.annotations.Nullable;
 
 
-public class QueueReference<E> implements Reference<E> {
+public class QueueReference<T, M> implements Reference<M> {
 
-    private final Class<E> eClass;
-    private final ChronicleQueueView<E> chronicleQueue;
+    private final Class<M> eClass;
+    private final ChronicleQueueView<T, M> chronicleQueue;
 
     public QueueReference(RequestContext requestContext, Asset asset, ChronicleQueue chronicleQueue) {
         this.eClass = requestContext.type();
-        this.chronicleQueue = (ChronicleQueueView<E>) chronicleQueue;
+        this.chronicleQueue = (ChronicleQueueView<T, M>) chronicleQueue;
     }
 
     @Override
-    public void set(E event) {
-        chronicleQueue.set(event);
+    public long set(M event) {
+        return chronicleQueue.set(event);
     }
 
     @Nullable
     @Override
-    public E get() {
+    public M get() {
         return chronicleQueue.get();
     }
 
@@ -53,7 +53,7 @@ public class QueueReference<E> implements Reference<E> {
     }
 
     @Override
-    public void registerSubscriber(boolean bootstrap, Subscriber<E> subscriber) throws AssetNotFoundException {
+    public void registerSubscriber(boolean bootstrap, Subscriber<M> subscriber) throws AssetNotFoundException {
         throw new UnsupportedOperationException();
     }
 

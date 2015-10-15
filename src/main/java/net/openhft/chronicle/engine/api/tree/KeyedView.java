@@ -20,4 +20,10 @@ package net.openhft.chronicle.engine.api.tree;
  * Created by peter on 17/08/15.
  */
 public interface KeyedView {
+    /**
+     * @return this represents a keyed asset, i.e. anything under this must be a SubAsset.
+     */
+    default boolean keyedView() {
+        return true;
+    }
 }

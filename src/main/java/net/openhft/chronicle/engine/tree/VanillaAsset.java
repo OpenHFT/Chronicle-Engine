@@ -157,9 +157,9 @@ public class VanillaAsset implements Asset, Closeable {
         addLeafRule(KeyValueStore.class, LAST + " vanilla", VanillaKeyValueStore::new);
 
         addLeafRule(ObjectSubscription.class, LAST + " vanilla",
-                VanillaKVSSubscription::new);
+                MapKVSSubscription::new);
         addLeafRule(RawKVSSubscription.class, LAST + " vanilla",
-                VanillaKVSSubscription::new);
+                MapKVSSubscription::new);
 
         addLeafRule(TopologySubscription.class, LAST + " vanilla",
                 VanillaTopologySubscription::new);
@@ -184,7 +184,7 @@ public class VanillaAsset implements Asset, Closeable {
 
         //TODO This is incorrect should be RemoteKVSSubscription
         addLeafRule(RawKVSSubscription.class, LAST + " vanilla",
-                VanillaKVSSubscription::new);
+                MapKVSSubscription::new);
 
         addLeafRule(ObjectKeyValueStore.class, LAST + " Remote AKVS",
                 RemoteKeyValueStore::new);
@@ -219,7 +219,7 @@ public class VanillaAsset implements Asset, Closeable {
                 VanillaStringMarshallableKeyValueStore::new, AuthenticatedKeyValueStore.class);
 
         addLeafRule(RawKVSSubscription.class, LAST + " vanilla",
-                VanillaKVSSubscription::new);
+                MapKVSSubscription::new);
     }
 
     @Override
@@ -321,9 +321,10 @@ public class VanillaAsset implements Asset, Closeable {
 
     @Override
     public <V> V addView(Class<V> viewType, V view) {
-        if (view instanceof KeyedView) {
-            keyedAsset = true;
-        }
+
+        if (view instanceof KeyedView)
+            keyedAsset = ((KeyedView) view).keyedView();
+
         viewMap.put(viewType, view);
         return view;
     }

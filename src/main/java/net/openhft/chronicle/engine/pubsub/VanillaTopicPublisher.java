@@ -17,10 +17,13 @@
 package net.openhft.chronicle.engine.pubsub;
 
 import net.openhft.chronicle.engine.api.map.MapView;
+import net.openhft.chronicle.engine.api.pubsub.Publisher;
+import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
+import net.openhft.chronicle.engine.api.tree.Assetted;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.map.KVSSubscription;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Created by peter on 23/05/15.
  */
-public class VanillaTopicPublisher<T, M> implements TopicPublisher<T, M> {
+public class VanillaTopicPublisher<T, M> implements TopicPublisher<T, M>, Assetted<MapView<T, M>> {
     private final Class<T> tClass;
     private final Class<M> mClass;
     private final Asset asset;
@@ -46,7 +49,7 @@ public class VanillaTopicPublisher<T, M> implements TopicPublisher<T, M> {
     }
 
     @Override
-    public void publish(T topic, M message) {
+    public void publish(@NotNull T topic, @NotNull M message) {
         underlying.set(topic, message);
     }
 
@@ -61,15 +64,25 @@ public class VanillaTopicPublisher<T, M> implements TopicPublisher<T, M> {
     }
 
     @Override
-    public void registerTopicSubscriber(TopicSubscriber<T, M> topicSubscriber) throws AssetNotFoundException {
+    public void registerTopicSubscriber(@NotNull TopicSubscriber<T, M> topicSubscriber) throws AssetNotFoundException {
         KVSSubscription<T, M> subscription = (KVSSubscription) asset.subscription(true);
         subscription.registerTopicSubscriber(RequestContext.requestContext().bootstrap(true).type(tClass).type2(mClass), topicSubscriber);
     }
 
     @Override
-    public void unregisterTopicSubscriber(TopicSubscriber<T, M> topicSubscriber) {
+    public void unregisterTopicSubscriber(@NotNull TopicSubscriber<T, M> topicSubscriber) {
         KVSSubscription<T, M> subscription = (KVSSubscription) asset.subscription(false);
         if (subscription != null)
             subscription.unregisterTopicSubscriber(topicSubscriber);
+    }
+
+    @Override
+    public Publisher<M> publisher(@NotNull T topic) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public void registerSubscriber(@NotNull T topic, @NotNull Subscriber<M> subscriber) {
+        throw new UnsupportedOperationException("todo");
     }
 }

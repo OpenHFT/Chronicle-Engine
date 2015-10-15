@@ -43,18 +43,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-import static net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer.notifyEachSubscriber;
-
 /**
  * Created by peter on 22/05/15.
  */
 // todo review thread safety
-public class QueueObjectSubscription<K, V> implements ObjectSubscription<K, V> {
+public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
 
     private static final Logger LOG = LoggerFactory.getLogger(QueueObjectSubscription.class);
-    private final Set<TopicSubscriber<K, V>> topicSubscribers = new CopyOnWriteArraySet<>();
+    private final Set<TopicSubscriber<T,M>> topicSubscribers = new CopyOnWriteArraySet<>();
     private final Set<Subscriber<Excerpt>> subscribers = new CopyOnWriteArraySet<>();
-    private final Set<EventConsumer<K, V>> downstream = new CopyOnWriteArraySet<>();
+    private final Set<EventConsumer<T,M>> downstream = new CopyOnWriteArraySet<>();
     private final SessionProvider sessionProvider;
 
     @Nullable
@@ -106,23 +104,23 @@ public class QueueObjectSubscription<K, V> implements ObjectSubscription<K, V> {
 
     @Override
     public boolean keyedView() {
+        return true;
+    }
+
+    @Override
+    public void setKvStore(KeyValueStore<T,M> kvStore) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void setKvStore(KeyValueStore<K, V> kvStore) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void notifyEvent(MapEvent<K, V> changeEvent) {
-        throw new UnsupportedOperationException();
+    public void notifyEvent(MapEvent<T,M> changeEvent) {
+        throw new UnsupportedOperationException("todo");
     }
 
 
     @Override
     public int entrySubscriberCount() {
-        throw new UnsupportedOperationException();
+       return 0;
     }
 
     @Override
@@ -138,22 +136,6 @@ public class QueueObjectSubscription<K, V> implements ObjectSubscription<K, V> {
     }
 
 
-    private void notifyEvent1(@NotNull MapEvent<K, V> changeEvent) {
-        K key = changeEvent.getKey();
-
-        if (!topicSubscribers.isEmpty()) {
-            V value = changeEvent.getValue();
-            notifyEachSubscriber(topicSubscribers, ts -> ts.onMessage(key, value));
-        }
-        //      if (!subscribers.isEmpty()) {
-        //          notifyEachSubscriber(subscribers, s -> s.onMessage(changeEvent));
-        //    }
-
-        ///  if (!downstream.isEmpty()) {
-        //     notifyEachSubscriber(downstream, d -> d.notifyEvent(changeEvent));
-        // }
-    }
-
 
     @Override
     public boolean needsPrevious() {
@@ -167,11 +149,11 @@ public class QueueObjectSubscription<K, V> implements ObjectSubscription<K, V> {
                                    @NotNull Filter filter) {
 
         try {
-            final QueueView<V> chronicleQueue = asset.acquireView
+            final QueueView<T,M> chronicleQueue = asset.acquireView
                     (QueueView.class);
 
             eventLoop.addHandler(() -> {
-                final V e = chronicleQueue.get();
+                final M e = chronicleQueue.get();
                 if (e != null)
                     subscriber.accept(e);
                 return true;
@@ -185,27 +167,17 @@ public class QueueObjectSubscription<K, V> implements ObjectSubscription<K, V> {
 
 
     @Override
-    public void registerKeySubscriber(@NotNull RequestContext rc,
-                                      @NotNull Subscriber<K> subscriber,
-                                      @NotNull Filter<K> filter) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public void registerTopicSubscriber(@NotNull RequestContext rc, @NotNull TopicSubscriber subscriber) {
-        throw new UnsupportedOperationException();
-
+        throw new UnsupportedOperationException("todo");
     }
 
     @Override
-    public void registerDownstream(@NotNull EventConsumer<K, V> subscription) {
+    public void registerDownstream(@NotNull EventConsumer<T,M> subscription) {
         downstream.add(subscription);
-
     }
 
-    public void unregisterDownstream(EventConsumer<K, V> subscription) {
+    public void unregisterDownstream(EventConsumer<T,M> subscription) {
         downstream.remove(subscription);
-
     }
 
     @Override
@@ -221,6 +193,11 @@ public class QueueObjectSubscription<K, V> implements ObjectSubscription<K, V> {
 
     @Override
     public int keySubscriberCount() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void registerKeySubscriber(@NotNull RequestContext rc, @NotNull Subscriber<T> subscriber, @NotNull Filter<T> filter) {
         throw new UnsupportedOperationException();
     }
 

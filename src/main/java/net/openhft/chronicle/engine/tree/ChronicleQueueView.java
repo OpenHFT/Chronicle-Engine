@@ -1,40 +1,75 @@
 package net.openhft.chronicle.engine.tree;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.engine.api.pubsub.Publisher;
+import net.openhft.chronicle.engine.api.pubsub.Subscriber;
+import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
+import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.Excerpt;
 import net.openhft.chronicle.queue.ExcerptAppender;
 import net.openhft.chronicle.queue.ExcerptTailer;
 import net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder;
+import net.openhft.chronicle.wire.WireKey;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * @author Rob Austin.
  */
-public class ChronicleQueueView<E> implements QueueView<E> {
+public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
     private final ChronicleQueue chronicleQueue;
-    private final Class<E> type;
+    private final Class<M> type;
 
     private final ThreadLocal<ThreadLocalData> threadLocal;
+
+    @Override
+    public void publish(@NotNull T topic, @NotNull M message) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public void registerTopicSubscriber(@NotNull TopicSubscriber<T, M> topicSubscriber) throws AssetNotFoundException {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public void unregisterTopicSubscriber(@NotNull TopicSubscriber<T, M> topicSubscriber) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public Publisher<M> publisher(@NotNull T topic) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public void registerSubscriber(@NotNull T topic, @NotNull Subscriber<M> subscriber) {
+        throw new UnsupportedOperationException("todo");
+    }
 
     public class ThreadLocalData {
 
         public final ExcerptAppender appender;
         public final ExcerptTailer tailer;
-        public E element;
+        public M element;
+        public final ExcerptTailer replayTailer;
 
         public ThreadLocalData(ChronicleQueue chronicleQueue) {
             try {
                 appender = chronicleQueue.createAppender();
                 tailer = chronicleQueue.createTailer();
+                replayTailer = chronicleQueue.createTailer();
             } catch (IOException e) {
                 throw Jvm.rethrow(e);
             }
@@ -48,13 +83,13 @@ public class ChronicleQueueView<E> implements QueueView<E> {
     }
 
 
-    private ChronicleQueue newInstance(String fullName, String basePath) {
+    private ChronicleQueue newInstance(String name, String basePath) {
         ChronicleQueue chronicleQueue;
         File baseFilePath;
         try {
 
             if (basePath != null) {
-                baseFilePath = new File(basePath + fullName);
+                baseFilePath = new File(basePath + name);
                 //noinspection ResultOfMethodCallIgnored
                 baseFilePath.mkdirs();
             } else {
@@ -85,19 +120,24 @@ public class ChronicleQueueView<E> implements QueueView<E> {
         return threadLocal.get().tailer;
     }
 
+    private ExcerptTailer theadLocalReplayTailer() {
+        return threadLocal.get().replayTailer;
+    }
+
+
     @Override
     public ExcerptAppender threadLocalAppender() {
         return threadLocal.get().appender;
     }
 
     @Override
-    public void threadLocalElement(E e) {
+    public void threadLocalElement(M e) {
         threadLocal.get().element = e;
     }
 
     @Override
-    public E threadLocalElement() {
-        return (E) threadLocal.get().element;
+    public M threadLocalElement() {
+        return (M) threadLocal.get().element;
     }
 
 
@@ -106,7 +146,7 @@ public class ChronicleQueueView<E> implements QueueView<E> {
      * @return the except
      */
     @Override
-    public E get(int index) {
+    public M get(int index) {
         try {
             final ExcerptTailer tailer = theadLocalTailer();
             if (!tailer.index(index))
@@ -124,7 +164,7 @@ public class ChronicleQueueView<E> implements QueueView<E> {
      * @return the last except or {@code null} if there are no more excepts available
      */
     @Override
-    public E get() {
+    public M get() {
         try {
             final ExcerptTailer tailer = theadLocalTailer();
             return tailer.readDocument(
@@ -135,16 +175,25 @@ public class ChronicleQueueView<E> implements QueueView<E> {
         }
     }
 
-
     @Override
-    public void set(E event) {
+    public void set(@NotNull M event, @NotNull T messageType) {
         try {
-            threadLocalAppender().writeDocument(w -> w.write().object(event));
+            final WireKey wireKey = messageType instanceof WireKey ? (WireKey) messageType : () -> messageType.toString();
+            threadLocalAppender().writeDocument(w -> w.writeEventName(wireKey).object(event));
         } catch (IOException e) {
             throw Jvm.rethrow(e);
         }
     }
 
+
+    @Override
+    public long set(@NotNull M event) {
+        try {
+            return threadLocalAppender().writeDocument(w -> w.writeEventName(() -> "").object(event));
+        } catch (IOException e) {
+            throw Jvm.rethrow(e);
+        }
+    }
 
     @NotNull
     @Override
@@ -181,6 +230,18 @@ public class ChronicleQueueView<E> implements QueueView<E> {
     @Override
     public void close() throws IOException {
         chronicleQueue.close();
+    }
+
+    @Override
+    public void replay(long index, @NotNull BiConsumer<T, M> consumer, @Nullable Consumer<Exception> isAbsent) {
+        ExcerptTailer excerptTailer = theadLocalReplayTailer();
+        try {
+            excerptTailer.index(index);
+            excerptTailer.readDocument(w -> w.read());
+        } catch (Exception e) {
+            isAbsent.accept(e);
+        }
+
     }
 
 }

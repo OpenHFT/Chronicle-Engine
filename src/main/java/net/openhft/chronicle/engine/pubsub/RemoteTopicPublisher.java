@@ -1,11 +1,10 @@
 package net.openhft.chronicle.engine.pubsub;
 
 import net.openhft.chronicle.engine.api.map.MapView;
-import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
-import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
-import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
+import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
+import net.openhft.chronicle.engine.api.tree.Assetted;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.server.internal.TopicPublisherHandler.EventId;
 import net.openhft.chronicle.engine.server.internal.TopicPublisherHandler.Params;
@@ -28,7 +27,7 @@ import static net.openhft.chronicle.engine.server.internal.TopicPublisherHandler
  * Created by Rob Austin
  */
 public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId> implements
-        TopicPublisher<T, M> {
+        TopicPublisher<T, M> , Assetted<MapView<T, M>> {
 
     private final MapView<T, M> underlying;
     private final Class<T> topicClass;
@@ -59,7 +58,7 @@ public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId>
     }
 
     @Override
-    public void publish(final T topic, final M message) {
+    public void publish(@NotNull final T topic, @NotNull final M message) {
         checkTopic(topic);
         checkMessage(message);
         sendEventAsync(publish, valueOut -> valueOut.marshallable(m -> {
@@ -116,9 +115,19 @@ public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId>
     }
 
     @Override
-    public void unregisterTopicSubscriber(TopicSubscriber<T, M> topicSubscriber) {
+    public void unregisterTopicSubscriber(@NotNull TopicSubscriber<T, M> topicSubscriber) {
         // TODO CE-101
         throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public Publisher<M> publisher(@NotNull T topic) {
+        throw new UnsupportedOperationException("tood");
+    }
+
+    @Override
+    public void registerSubscriber(@NotNull T topic, @NotNull Subscriber<M> subscriber) {
+
     }
 
     private void onEvent(T topic, @Nullable M message, @NotNull TopicSubscriber<T, M> topicSubscriber) {

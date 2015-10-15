@@ -124,17 +124,24 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
                 {
                     clientAssetTree.acquireMap("/group/" + NAME, String.class, String.class).size();
 
-                    TopologicalEvent take1 = eventsQueue.poll(1, SECONDS);
-                    Assert.assertEquals(AddedAssetEvent.of("/", "group"), take1);
-
-                    TopologicalEvent take2 = eventsQueue.poll(1, SECONDS);
-                    Assert.assertEquals(AddedAssetEvent.of("/group", NAME), take2);
-
+                    {
+                        TopologicalEvent take = eventsQueue.poll(1, SECONDS);
+                        Assert.assertEquals(ExistingAssetEvent.of("/", "queue"), take);
+                    }
+                    {
+                        TopologicalEvent take = eventsQueue.poll(1, SECONDS);
+                        Assert.assertEquals(AddedAssetEvent.of("/", "group"), take);
+                    }
+                    {
+                        TopologicalEvent take = eventsQueue.poll(1, SECONDS);
+                        Assert.assertEquals(AddedAssetEvent.of("/group", NAME), take);
+                    }
                 }
                 {
                     serverAssetTree.acquireMap("/group/" + NAME + 2, String.class, String.class);
 
                     TopologicalEvent take3 = eventsQueue.poll(1, SECONDS);
+
                     Assert.assertEquals(AddedAssetEvent.of("/group", NAME + 2), take3);
                 }
                 {

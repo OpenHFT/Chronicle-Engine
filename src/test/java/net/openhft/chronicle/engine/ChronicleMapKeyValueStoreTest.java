@@ -96,7 +96,7 @@ public class ChronicleMapKeyValueStoreTest {
                 FilePerKeyValueStore::new);
 
         tree.root().addLeafRule(RawKVSSubscription.class, " vanilla",
-                VanillaKVSSubscription::new);
+                MapKVSSubscription::new);
 
         tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
                 (RequestContext requestContext, Asset asset) -> new VanillaEngineReplication<>(

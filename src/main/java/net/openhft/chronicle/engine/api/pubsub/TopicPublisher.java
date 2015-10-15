@@ -16,41 +16,39 @@
 
 package net.openhft.chronicle.engine.api.pubsub;
 
-import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
-import net.openhft.chronicle.engine.api.tree.Assetted;
 import net.openhft.chronicle.engine.api.tree.KeyedView;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Publish to any topic in an Asset group.
  */
-public interface TopicPublisher<T, M> extends KeyedView, Assetted<MapView<T, M>> {
+public interface TopicPublisher<T, M> extends KeyedView {
     /**
      * Publish to a provided topic.
      *
      * @param topic   to publish to
      * @param message to publish.
      */
-    void publish(T topic, M message);
+    void publish(@NotNull T topic, @NotNull M message);
 
     /**
      * Add a subscription to this group.
+     *
      * @param topicSubscriber to listen to events.
      * @throws AssetNotFoundException if the Asset is no longer valid.
      */
-    void registerTopicSubscriber(TopicSubscriber<T, M> topicSubscriber) throws AssetNotFoundException;
+    void registerTopicSubscriber(@NotNull TopicSubscriber<T, M> topicSubscriber) throws AssetNotFoundException;
 
     /**
      * Unregister a TopicSubscriber
      *
      * @param topicSubscriber to unregister
      */
-    void unregisterTopicSubscriber(TopicSubscriber<T, M> topicSubscriber);
+    void unregisterTopicSubscriber(@NotNull TopicSubscriber<T, M> topicSubscriber);
 
-    /**
-     * @return this represents a keyed asset, i.e. anything under this must be a SubAsset.
-     */
-    default boolean keyedView() {
-        return true;
-    }
+    Publisher<M> publisher(@NotNull T topic);
+
+    void registerSubscriber(@NotNull T topic, @NotNull Subscriber<M> subscriber);
+
 }

@@ -61,9 +61,10 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
     }
 
     @Override
-    public void set(final E event) {
+    public long set(final E event) {
         checkEvent(event);
         sendEventAsync(set, valueOut -> valueOut.object(event), true);
+        return 0;
     }
 
     @Nullable

@@ -4,16 +4,16 @@ import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
+import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
+import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
+import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -25,8 +25,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static net.openhft.chronicle.engine.Chassis.acquirePublisher;
-import static net.openhft.chronicle.engine.Chassis.registerSubscriber;
+import static net.openhft.chronicle.engine.Chassis.*;
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static org.junit.Assert.assertEquals;
 
@@ -35,7 +34,6 @@ import static org.junit.Assert.assertEquals;
  */
 @RunWith(value = Parameterized.class)
 public class SimpleTest extends ThreadMonitoringTest {
-
 
     private static final String NAME = "/test";
 
@@ -95,35 +93,89 @@ public class SimpleTest extends ThreadMonitoringTest {
 
     @Test
     public void testMarshablePublishToATopic() throws InterruptedException {
-
-        Publisher<MyMarshallable> publisher = acquirePublisher("/queue", MyMarshallable.class);
+        String uri = "/queue/1";
+        Publisher<MyMarshallable> publisher = acquirePublisher(uri, MyMarshallable.class);
         BlockingQueue<MyMarshallable> values = new ArrayBlockingQueue<>(1);
         Subscriber<MyMarshallable> subscriber = values::add;
-        registerSubscriber("/queue", MyMarshallable.class, subscriber);
-
+        registerSubscriber(uri, MyMarshallable.class, subscriber);
         publisher.publish(new MyMarshallable("Message-1"));
         assertEquals("Message-1", values.poll(2, SECONDS).toString());
-
-        // Publisher<MyMarshallable> publisher = acquireTopicPublisher("/queue", MyMarshallable
-        //      .class);
-
     }
 
     @Test
     public void testStringPublishToATopic() throws InterruptedException {
-
-        Publisher<String> publisher = acquirePublisher("/queue", String.class);
+        String uri = "/queue/3";
+        Publisher<String> publisher = acquirePublisher(uri, String.class);
         BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
         Subscriber<String> subscriber = values::add;
-        registerSubscriber("/queue", String.class, subscriber);
-
+        registerSubscriber(uri, String.class, subscriber);
         publisher.publish("Message-1");
         assertEquals("Message-1", values.poll(2, SECONDS).toString());
-
-        // Publisher<MyMarshallable> publisher = acquireTopicPublisher("/queue", MyMarshallable
-        //      .class);
-
     }
+
+    @Ignore
+    @Test
+    public void testStringTopicPublisherString() throws InterruptedException {
+        String uri = "/queue/2";
+        String messageType = "topic";
+        TopicPublisher<String, String> publisher = acquireTopicPublisher(uri, String.class, String.class);
+        BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
+        TopicSubscriber<String, String> subscriber = (topic, message) -> values.add(topic + " " + message);
+        registerTopicSubscriber(uri, String.class, String.class, subscriber);
+        publisher.publish(messageType, "Message-1");
+        assertEquals("Message-1", values.poll(2, SECONDS).toString());
+    }
+
+    @Ignore
+    @Test
+    public void testStringTopicPublisherWithSubscribe() throws InterruptedException {
+        String uri = "/queue/2";
+        String messageType = "topic";
+        TopicPublisher<String, String> publisher = acquireTopicPublisher(uri, String.class, String.class);
+        BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
+        Subscriber<String> subscriber = values::add;
+        registerSubscriber(uri + "/" + messageType, String.class, subscriber);
+        publisher.publish(messageType, "Message-1");
+        assertEquals("Message-1", values.poll(2, SECONDS).toString());
+    }
+
+    @Ignore
+    @Test
+    public void testStringPublishWithTopicSubscribe() throws InterruptedException {
+        String uri = "/queue/2";
+        String messageType = "topic";
+        Publisher<String> publisher = acquirePublisher(uri + "/" + messageType, String.class);
+        BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
+
+        TopicSubscriber<String, String> subscriber = (topic, message) -> values.add(topic + " " + message);
+        registerTopicSubscriber(uri, String.class, String.class, subscriber);
+        publisher.publish("Message-1");
+        assertEquals("Message-1", values.poll(2, SECONDS).toString());
+    }
+
+
+    @Ignore
+    @Test
+    public void testStringPublishWithIndex() throws InterruptedException {
+        String uri = "/queue/2";
+        String messageType = "topic";
+        Publisher<String> publisher = acquirePublisher(uri + "/" + messageType, String.class);
+        BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
+
+        long index = publisher.publish("Message-1");
+
+
+        TopicSubscriber<String, String> subscriber = (topic, message) -> values.add(topic + " " + message);
+        registerTopicSubscriber(uri, String.class, String.class, subscriber);
+
+
+        QueueView<String, String> queue = acquireQueue(uri, String.class, String.class);
+
+        queue.replay(index, (topic, message) -> values.add(topic + " " + message),null);
+
+        assertEquals("Message-1", values.poll(2, SECONDS).toString());
+    }
+
 
 }
 

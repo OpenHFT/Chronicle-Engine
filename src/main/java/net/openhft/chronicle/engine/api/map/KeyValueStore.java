@@ -22,6 +22,7 @@ import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.tree.Assetted;
+import net.openhft.chronicle.engine.api.tree.KeyedView;
 import net.openhft.lang.model.constraints.Nullable;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,12 +35,12 @@ import java.util.function.Consumer;
 /**
  * Internal API for creating new data stores.
  *
- * @param <K>  key type
- * @param <V>  immutable value type
+ * @param <K> key type
+ * @param <V> immutable value type
  */
 
 public interface KeyValueStore<K, V> extends Assetted<KeyValueStore<K, V>>, Closeable,
-        Consumer<ReplicationEntry> {
+        Consumer<ReplicationEntry>, KeyedView {
 
     /**
      * put an entry
@@ -160,9 +161,6 @@ public interface KeyValueStore<K, V> extends Assetted<KeyValueStore<K, V>>, Clos
         return value2 == null ? getAndPut(key, value) : value2;
     }
 
-    default boolean keyedView() {
-        return true;
-    }
 
     @NotNull
     default Iterator<V> valuesIterator() {
@@ -178,6 +176,7 @@ public interface KeyValueStore<K, V> extends Assetted<KeyValueStore<K, V>>, Clos
     }
 
     boolean containsValue(V value);
+
 
     interface Entry<K, V> {
         @org.jetbrains.annotations.Nullable

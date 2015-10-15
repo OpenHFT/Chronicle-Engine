@@ -45,8 +45,9 @@ public class VanillaReference<E> implements Reference<E> {
     }
 
     @Override
-    public void set(E event) {
+    public long set(E event) {
         underlyingMap.set(name, event);
+        return 0;
     }
 
     @Nullable

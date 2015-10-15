@@ -42,6 +42,7 @@ public class AssetSubscriptionsTest {
         // the root asset
         rootTopoSubscriber.onMessage(ExistingAssetEvent.of(null, ""));
         // the one added
+        rootTopoSubscriber.onMessage(ExistingAssetEvent.of("/", "queue"));
         rootTopoSubscriber.onMessage(AddedAssetEvent.of("/", "one"));
         // rootMapSubscriber - none
         // rootNameSubscriber - none
@@ -75,6 +76,7 @@ public class AssetSubscriptionsTest {
 
         Subscriber<TopologicalEvent> rootTopoSubscriber0 = createMock("sub0", Subscriber.class);
         rootTopoSubscriber0.onMessage(ExistingAssetEvent.of(null, ""));
+        rootTopoSubscriber0.onMessage(ExistingAssetEvent.of("/", "queue"));
         rootTopoSubscriber0.onMessage(ExistingAssetEvent.of("/", "one"));
         replay(rootTopoSubscriber0);
         tree.registerSubscriber("", TopologicalEvent.class, rootTopoSubscriber0);

@@ -21,6 +21,7 @@ import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
+import net.openhft.chronicle.engine.tree.ChronicleQueueView;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -107,6 +108,14 @@ public enum Chassis {
         return assetTree.acquirePublisher(uri, eClass);
     }
 
+
+    public static <T, M> ChronicleQueueView<T, M> acquireQueue(String uri, Class<T> typeClass, Class<M> messageClass) {
+        //    return assetTree.vi
+
+        throw new UnsupportedOperationException("todo");
+    }
+
+
     /**
      * Get or create a TopicPublisher. A Topic Publisher can specify the topic to publish to.
      *
@@ -180,6 +189,7 @@ public enum Chassis {
 
     /**
      * Get an existing Asset or return null
+     *
      * @param uri of the asset
      * @return the Asset or null if not found
      */

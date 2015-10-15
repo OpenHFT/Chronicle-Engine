@@ -40,7 +40,7 @@ public interface Visitable<E> {
     /**
      * @param e replace the current state of the visitable Asset
      */
-    void set(E e);
+    long set(E e);
 
     /**
      * Apply a function to the visitable and return the result.  This function is assumed to not change the value in any significant way.
