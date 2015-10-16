@@ -37,7 +37,6 @@ import java.util.function.Function;
 public class VanillaSimpleSubscription<E> implements SimpleSubscription<E> {
 
     private static final Logger LOG = LoggerFactory.getLogger(VanillaSimpleSubscription.class);
-
     private final Set<Subscriber<E>> subscribers = new CopyOnWriteArraySet<>();
     private final Reference<E> currentValue;
     private final Function<Object, E> valueReader;
@@ -46,6 +45,7 @@ public class VanillaSimpleSubscription<E> implements SimpleSubscription<E> {
         this.currentValue = reference;
         this.valueReader = valueReader;
     }
+
 
     @Override
     public void registerSubscriber(@NotNull RequestContext rc,
