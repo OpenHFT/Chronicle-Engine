@@ -31,17 +31,17 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Created by peter on 23/05/15.
  */
-public class VanillaTopicPublisher<T, M> implements TopicPublisher<T, M>, Assetted<MapView<T, M>> {
+public class MapTopicPublisher<T, M> implements TopicPublisher<T, M>, Assetted<MapView<T, M>> {
     private final Class<T> tClass;
     private final Class<M> mClass;
     private final Asset asset;
     private final MapView<T, M> underlying;
 
-    public VanillaTopicPublisher(@NotNull RequestContext context, Asset asset, @NotNull MapView<T, M> underlying) throws AssetNotFoundException {
+    public MapTopicPublisher(@NotNull RequestContext context, Asset asset, @NotNull MapView<T, M> underlying) throws AssetNotFoundException {
         this(asset, context.type(), context.type2(), underlying);
     }
 
-    VanillaTopicPublisher(Asset asset, Class<T> tClass, Class<M> mClass, MapView<T, M> underlying) {
+    MapTopicPublisher(Asset asset, Class<T> tClass, Class<M> mClass, MapView<T, M> underlying) {
         this.asset = asset;
         this.tClass = tClass;
         this.mClass = mClass;

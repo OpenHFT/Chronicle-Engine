@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine.tree;
 
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
+import net.openhft.chronicle.engine.api.tree.KeyedView;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ExcerptAppender;
 import net.openhft.chronicle.queue.ExcerptTailer;
@@ -14,7 +15,7 @@ import java.util.function.Consumer;
 /**
  * @author Rob Austin.
  */
-public interface QueueView<T, M> extends ChronicleQueue, TopicPublisher<T, M> {
+public interface QueueView<T, M> extends ChronicleQueue, TopicPublisher<T, M>, KeyedView {
     ExcerptTailer theadLocalTailer();
 
     ExcerptAppender threadLocalAppender();
@@ -31,11 +32,16 @@ public interface QueueView<T, M> extends ChronicleQueue, TopicPublisher<T, M> {
     M get();
 
     /**
-     * @param except      the except to add
+     * @param consumer a consumer that provides that name of the event and value contained within the except
+     */
+    void get(BiConsumer<CharSequence, M> consumer);
+
+    /**
      * @param messageType the type of the  except
+     * @param except      the except to add
      * @return the index of the new except added to the chronicle queue
      */
-    void set(@NotNull M except, @NotNull T messageType);
+    void set(@NotNull T messageType, @NotNull M except);
 
     /**
      * @param except the except to add
@@ -71,7 +77,7 @@ public interface QueueView<T, M> extends ChronicleQueue, TopicPublisher<T, M> {
      */
     void replay(long index, @NotNull BiConsumer<T, M> consumer, @Nullable Consumer<Exception> isAbsent);
 
+    Class<T> messageType();
 
-
-
+    Class<M> elementTypeClass();
 }

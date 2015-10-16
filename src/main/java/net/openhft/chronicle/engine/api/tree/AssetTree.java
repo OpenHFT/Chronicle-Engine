@@ -22,6 +22,7 @@ import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.map.KVSSubscription;
 import net.openhft.chronicle.engine.query.Filter;
+import net.openhft.chronicle.engine.tree.QueueView;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -283,4 +284,15 @@ public interface AssetTree extends Closeable {
     }
 
     AssetTreeStats getUsageStats();
+
+    default <T, M> QueueView<T, M> acquireQueue(String uri, Class<T> typeClass, Class<M> messageClass) {
+
+        final RequestContext requestContext = requestContext(uri);
+
+        if (requestContext.bootstrap() != null)
+            throw new UnsupportedOperationException("Its not possible to set the bootstrap when " +
+                    "acquiring a queue");
+
+        return acquireView(requestContext.view("queue").type(typeClass).type2(messageClass));
+    }
 }

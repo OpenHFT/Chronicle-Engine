@@ -12,7 +12,9 @@ import net.openhft.chronicle.queue.Excerpt;
 import net.openhft.chronicle.queue.ExcerptAppender;
 import net.openhft.chronicle.queue.ExcerptTailer;
 import net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder;
+import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.WireKey;
+import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +31,9 @@ import java.util.function.Consumer;
 public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
     private final ChronicleQueue chronicleQueue;
-    private final Class<M> type;
+
+    private final Class<T> messageTypeClass;
+    private final Class<M> elementTypeClass;
 
     private final ThreadLocal<ThreadLocalData> threadLocal;
 
@@ -78,7 +82,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
     public ChronicleQueueView(RequestContext requestContext, Asset asset) {
         chronicleQueue = newInstance(requestContext.name(), requestContext.basePath());
-        type = requestContext.type();
+        messageTypeClass = requestContext.type();
+        elementTypeClass = requestContext.elementType();
         threadLocal = ThreadLocal.withInitial(() -> new ThreadLocalData(chronicleQueue));
     }
 
@@ -152,7 +157,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
             if (!tailer.index(index))
                 return null;
             return tailer.readDocument(
-                    wire -> threadLocalElement(wire.read().object(type))) ?
+                    wire -> threadLocalElement(wire.read().object(elementTypeClass))) ?
                     threadLocalElement() : null;
         } catch (Exception e) {
             throw Jvm.rethrow(e);
@@ -168,15 +173,31 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         try {
             final ExcerptTailer tailer = theadLocalTailer();
             return tailer.readDocument(
-                    wire -> threadLocalElement(wire.read().object(type))) ?
+                    wire -> threadLocalElement(wire.readEventName(Wires.acquireStringBuilder()).object(elementTypeClass))) ?
                     threadLocalElement() : null;
         } catch (Exception e) {
             throw Jvm.rethrow(e);
         }
     }
 
+    /**
+     * @param consumer a consumer that provides that name of the event and value contained within the except
+     */
+    public void get(BiConsumer<CharSequence, M> consumer) {
+        try {
+            final ExcerptTailer tailer = theadLocalTailer();
+            tailer.readDocument(w -> {
+                final StringBuilder eventName = Wires.acquireStringBuilder();
+                final ValueIn valueIn = w.readEventName(eventName);
+                consumer.accept(eventName, valueIn.object(elementTypeClass));
+            });
+        } catch (Exception e) {
+            throw Jvm.rethrow(e);
+        }
+    }
+
     @Override
-    public void set(@NotNull M event, @NotNull T messageType) {
+    public void set(@NotNull T messageType, @NotNull M event) {
         try {
             final WireKey wireKey = messageType instanceof WireKey ? (WireKey) messageType : () -> messageType.toString();
             threadLocalAppender().writeDocument(w -> w.writeEventName(wireKey).object(event));
@@ -242,6 +263,16 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
             isAbsent.accept(e);
         }
 
+    }
+
+    @Override
+    public Class<T> messageType() {
+        return messageTypeClass;
+    }
+
+    @Override
+    public Class<M> elementTypeClass() {
+        return elementTypeClass;
     }
 
 }

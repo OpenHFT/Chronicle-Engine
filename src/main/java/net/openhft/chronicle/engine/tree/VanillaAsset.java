@@ -34,10 +34,7 @@ import net.openhft.chronicle.engine.map.remote.RemoteKVSSubscription;
 import net.openhft.chronicle.engine.map.remote.RemoteKeyValueStore;
 import net.openhft.chronicle.engine.map.remote.RemoteMapView;
 import net.openhft.chronicle.engine.map.remote.RemoteTopologySubscription;
-import net.openhft.chronicle.engine.pubsub.QueueReference;
-import net.openhft.chronicle.engine.pubsub.RemoteTopicPublisher;
-import net.openhft.chronicle.engine.pubsub.VanillaReference;
-import net.openhft.chronicle.engine.pubsub.VanillaTopicPublisher;
+import net.openhft.chronicle.engine.pubsub.*;
 import net.openhft.chronicle.engine.session.VanillaSessionProvider;
 import net.openhft.chronicle.engine.set.RemoteKeySetView;
 import net.openhft.chronicle.engine.set.VanillaKeySetView;
@@ -109,6 +106,9 @@ public class VanillaAsset implements Asset, Closeable {
         queue.addWrappingRule(Publisher.class, LAST + "reference to a ChronicleQueue",
                 QueueReference::new, QueueView.class);
 
+        queue.addWrappingRule(TopicPublisher.class, LAST + "reference to a ChronicleQueue",
+                QueueTopicPublisher::new, QueueView.class);
+
         queue.addLeafRule(ObjectSubscription.class, LAST + " vanilla queue subscription",
                 QueueObjectSubscription::new);
 
@@ -147,7 +147,7 @@ public class VanillaAsset implements Asset, Closeable {
 
         addWrappingRule(EntrySetView.class, LAST + " entrySet", VanillaEntrySetView::new, MapView.class);
 
-        addWrappingRule(TopicPublisher.class, LAST + " topic publisher", VanillaTopicPublisher::new, MapView.class);
+        addWrappingRule(TopicPublisher.class, LAST + " topic publisher", MapTopicPublisher::new, MapView.class);
         addWrappingRule(ObjectKeyValueStore.class, LAST + " authenticated",
                 VanillaSubscriptionKeyValueStore::new, AuthenticatedKeyValueStore.class);
         addWrappingRule(KeySetView.class, LAST + " keySet", VanillaKeySetView::new, MapView.class);
@@ -402,16 +402,30 @@ public class VanillaAsset implements Asset, Closeable {
     protected Asset createAsset(@NotNull String name) {
         assert name.length() > 0;
         return children.computeIfAbsent(name, keyedAsset != Boolean.TRUE
-                ? n -> new VanillaAsset(this, name)
-                : n -> {
-            MapView map = getView(MapView.class);
-            if (map == null)
-                throw new IllegalStateException("You can only have a SubAsset of a Map");
-            if (map.keyType() != String.class)
-                throw new IllegalStateException("You can only have a SubAsset of a Map with a String key.");
-            SubAssetFactory saFactory = findOrCreateView(SubAssetFactory.class);
-            return saFactory.createSubAsset(this, name, map.valueType());
-        });
+                        ? n -> new VanillaAsset(this, name)
+                        : n -> {
+                    MapView map = getView(MapView.class);
+
+                    if (map != null) {
+                        if (map.keyType() != String.class)
+                            throw new IllegalStateException("You can only have a SubAsset of a Map with a String key.");
+
+                        SubAssetFactory saFactory = findOrCreateView(SubAssetFactory.class);
+                        return saFactory.createSubAsset(this, name, map.valueType());
+                    }
+
+                    QueueView queue = getView(QueueView.class);
+
+                    if (queue == null) {
+                        throw new IllegalStateException("You can only have a SubAsset of a Map or Queue");
+                    }
+
+                    SubAssetFactory saFactory = findOrCreateView(SubAssetFactory.class);
+                    return saFactory.createSubAsset(this, name, queue.messageType());
+
+                }
+
+        );
     }
 
     @Override

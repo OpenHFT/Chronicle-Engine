@@ -29,6 +29,7 @@ import net.openhft.chronicle.engine.map.ObjectSubscription;
 import net.openhft.chronicle.engine.map.RawKVSSubscription;
 import net.openhft.chronicle.engine.query.Filter;
 import net.openhft.chronicle.engine.query.Operation.OperationType;
+import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.TopologySubscription;
 import net.openhft.chronicle.wire.*;
@@ -45,6 +46,7 @@ import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
  */
 public class RequestContext implements Cloneable {
     static {
+        addAlias(QueueView.class, "Queue");
         addAlias(MapView.class, "Map");
         addAlias(MapEvent.class, "MapEvent");
         addAlias(TopologicalEvent.class, "TopologicalEvent");

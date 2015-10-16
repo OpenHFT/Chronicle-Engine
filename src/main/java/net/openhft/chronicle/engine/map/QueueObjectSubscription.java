@@ -21,6 +21,7 @@ import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.ISubscriber;
+import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
@@ -32,6 +33,8 @@ import net.openhft.chronicle.network.api.session.SessionDetails;
 import net.openhft.chronicle.network.api.session.SessionProvider;
 import net.openhft.chronicle.queue.Excerpt;
 import net.openhft.chronicle.threads.api.EventLoop;
+import net.openhft.chronicle.threads.api.InvalidEventHandlerException;
+import net.openhft.chronicle.wire.WireKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -42,6 +45,7 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Created by peter on 22/05/15.
@@ -50,23 +54,25 @@ import java.util.concurrent.CopyOnWriteArraySet;
 public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
 
     private static final Logger LOG = LoggerFactory.getLogger(QueueObjectSubscription.class);
-    private final Set<TopicSubscriber<T,M>> topicSubscribers = new CopyOnWriteArraySet<>();
+    private final Set<TopicSubscriber<T, M>> topicSubscribers = new CopyOnWriteArraySet<>();
     private final Set<Subscriber<Excerpt>> subscribers = new CopyOnWriteArraySet<>();
-    private final Set<EventConsumer<T,M>> downstream = new CopyOnWriteArraySet<>();
+    private final Set<EventConsumer<T, M>> downstream = new CopyOnWriteArraySet<>();
     private final SessionProvider sessionProvider;
 
     @Nullable
     private final Asset asset;
     private final Map<Subscriber, Subscriber> subscriptionDelegate = new IdentityHashMap<>();
+    private final Class<T> topicType;
 
     private Map<String, SubscriptionStat> subscriptionMonitoringMap = null;
     private EventLoop eventLoop;
+    private KeyValueStore<T, M> kvStore;
 
     public QueueObjectSubscription(@NotNull RequestContext requestContext, @NotNull Asset asset) {
-        this(requestContext.viewType(), asset);
+        this(requestContext.topicType(), requestContext.viewType(), asset);
     }
 
-    public QueueObjectSubscription(@Nullable Class viewType, @Nullable Asset asset) {
+    public QueueObjectSubscription(Class topicType, @Nullable Class viewType, @Nullable Asset asset) {
         this.asset = asset;
         if (viewType != null && asset != null)
             asset.addView(viewType, this);
@@ -74,7 +80,10 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
         sessionProvider = asset == null ? null : asset.findView(SessionProvider.class);
 
         eventLoop = asset.root().acquireView(EventLoop.class);
+        this.topicType = topicType;
     }
+
+
 
     @Override
     public void close() {
@@ -108,19 +117,19 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
     }
 
     @Override
-    public void setKvStore(KeyValueStore<T,M> kvStore) {
-        throw new UnsupportedOperationException();
+    public void setKvStore(KeyValueStore<T, M> kvStore) {
+        this.kvStore = kvStore;
     }
 
     @Override
-    public void notifyEvent(MapEvent<T,M> changeEvent) {
+    public void notifyEvent(MapEvent<T, M> changeEvent) {
         throw new UnsupportedOperationException("todo");
     }
 
 
     @Override
     public int entrySubscriberCount() {
-       return 0;
+        return 0;
     }
 
     @Override
@@ -136,7 +145,6 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
     }
 
 
-
     @Override
     public boolean needsPrevious() {
         // todo optimise this to reduce false positives.
@@ -149,7 +157,7 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
                                    @NotNull Filter filter) {
 
         try {
-            final QueueView<T,M> chronicleQueue = asset.acquireView
+            final QueueView<T, M> chronicleQueue = asset.acquireView
                     (QueueView.class);
 
             eventLoop.addHandler(() -> {
@@ -166,17 +174,54 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
     }
 
 
-    @Override
-    public void registerTopicSubscriber(@NotNull RequestContext rc, @NotNull TopicSubscriber subscriber) {
-        throw new UnsupportedOperationException("todo");
-    }
 
     @Override
-    public void registerDownstream(@NotNull EventConsumer<T,M> subscription) {
+    public void registerTopicSubscriber(@NotNull RequestContext rc, @NotNull final TopicSubscriber<T, M> subscriber) {
+        addToStats("topicSubscription");
+
+        topicSubscribers.add(subscriber);
+        AtomicBoolean terminate = new AtomicBoolean();
+
+        final QueueView<T, M> chronicleQueue = asset.acquireView(QueueView.class);
+
+        eventLoop.addHandler(() -> {
+
+            // this will be set to true if onMessage throws InvalidSubscriberException
+            if (terminate.get())
+                throw new InvalidEventHandlerException();
+
+            chronicleQueue.get((eventName, m) -> {
+
+                try {
+                    subscriber.onMessage(toT(eventName), m);
+                } catch (InvalidSubscriberException e) {
+                    terminate.set(true);
+                }
+            });
+
+            return true;
+        });
+
+    }
+
+    private T toT(CharSequence eventName) {
+        if (topicType == CharSequence.class)
+            return (T) eventName;
+        else if (topicType == String.class)
+            return (T) eventName.toString();
+        else if (topicType == WireKey.class)
+            return (T) (WireKey) (() -> eventName.toString());
+        else
+            throw new UnsupportedOperationException("unable to convert " + eventName + " to type " + topicType);
+    }
+
+
+    @Override
+    public void registerDownstream(@NotNull EventConsumer<T, M> subscription) {
         downstream.add(subscription);
     }
 
-    public void unregisterDownstream(EventConsumer<T,M> subscription) {
+    public void unregisterDownstream(EventConsumer<T, M> subscription) {
         downstream.remove(subscription);
     }
 
