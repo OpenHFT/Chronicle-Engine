@@ -93,7 +93,7 @@ public class SimpleTest extends ThreadMonitoringTest {
 
     @Test
     public void testMarshablePublishToATopic() throws InterruptedException {
-        String uri = "/queue/1";
+        String uri = "/queue/" + name;
         Publisher<MyMarshallable> publisher = acquirePublisher(uri, MyMarshallable.class);
         BlockingQueue<MyMarshallable> values = new ArrayBlockingQueue<>(1);
         Subscriber<MyMarshallable> subscriber = values::add;
@@ -104,7 +104,8 @@ public class SimpleTest extends ThreadMonitoringTest {
 
     @Test
     public void testStringPublishToATopic() throws InterruptedException {
-        String uri = "/queue/3";
+        String uri = "/queue/" + name;
+        acquireQueue(uri, String.class, String.class);
         Publisher<String> publisher = acquirePublisher(uri, String.class);
         BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
         Subscriber<String> subscriber = values::add;
@@ -115,25 +116,42 @@ public class SimpleTest extends ThreadMonitoringTest {
 
     @Ignore
     @Test
+    public void testStringPublishToAKeyTopic() throws InterruptedException {
+        String uri = "/queue/" + name + "/key";
+        acquireQueue("/queue/" + name, String.class, String.class);
+        Publisher<String> publisher = acquirePublisher(uri, String.class);
+        BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
+        Subscriber<String> subscriber = values::add;
+        registerSubscriber(uri, String.class, subscriber);
+        publisher.publish("Message-1");
+        assertEquals("Message-1", values.poll(2, SECONDS).toString());
+    }
+
+@Ignore
+    @Test
     public void testStringTopicPublisherString() throws InterruptedException {
-        String uri = "/queue/2";
+        String uri = "/queue/" + name;
         String messageType = "topic";
         TopicPublisher<String, String> publisher = acquireTopicPublisher(uri, String.class, String.class);
         BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
         TopicSubscriber<String, String> subscriber = (topic, message) -> values.add(topic + " " + message);
         registerTopicSubscriber(uri, String.class, String.class, subscriber);
         publisher.publish(messageType, "Message-1");
-        assertEquals("Message-1", values.poll(2, SECONDS).toString());
+        assertEquals("topic Message-1", values.poll(2, SECONDS).toString());
     }
 
     @Ignore
     @Test
     public void testStringTopicPublisherWithSubscribe() throws InterruptedException {
-        String uri = "/queue/2";
+        String uri = "/queue/" + name;
         String messageType = "topic";
         TopicPublisher<String, String> publisher = acquireTopicPublisher(uri, String.class, String.class);
         BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
-        Subscriber<String> subscriber = values::add;
+        Subscriber<String> subscriber = e -> {
+            if (e != null)
+                values.add(e);
+        };
+
         registerSubscriber(uri + "/" + messageType, String.class, subscriber);
         publisher.publish(messageType, "Message-1");
         assertEquals("Message-1", values.poll(2, SECONDS).toString());
@@ -142,7 +160,7 @@ public class SimpleTest extends ThreadMonitoringTest {
     @Ignore
     @Test
     public void testStringPublishWithTopicSubscribe() throws InterruptedException {
-        String uri = "/queue/2";
+        String uri = "/queue/" + name;
         String messageType = "topic";
         Publisher<String> publisher = acquirePublisher(uri + "/" + messageType, String.class);
         BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
@@ -157,7 +175,7 @@ public class SimpleTest extends ThreadMonitoringTest {
     @Ignore
     @Test
     public void testStringPublishWithIndex() throws InterruptedException {
-        String uri = "/queue/2";
+        String uri = "/queue/" + name;
         String messageType = "topic";
         Publisher<String> publisher = acquirePublisher(uri + "/" + messageType, String.class);
         BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
@@ -171,7 +189,7 @@ public class SimpleTest extends ThreadMonitoringTest {
 
         QueueView<String, String> queue = acquireQueue(uri, String.class, String.class);
 
-        queue.replay(index, (topic, message) -> values.add(topic + " " + message),null);
+        queue.replay(index, (topic, message) -> values.add(topic + " " + message), null);
 
         assertEquals("Message-1", values.poll(2, SECONDS).toString());
     }
