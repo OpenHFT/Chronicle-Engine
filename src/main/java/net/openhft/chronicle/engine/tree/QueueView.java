@@ -16,7 +16,7 @@ import java.util.function.Consumer;
  * @author Rob Austin.
  */
 public interface QueueView<T, M> extends ChronicleQueue, TopicPublisher<T, M>, KeyedView {
-    ExcerptTailer theadLocalTailer();
+    ExcerptTailer threadLocalTailer();
 
     ExcerptAppender threadLocalAppender();
 
@@ -28,8 +28,12 @@ public interface QueueView<T, M> extends ChronicleQueue, TopicPublisher<T, M>, K
     @NotNull
     M get(int index);
 
-    @NotNull
-    M get();
+    /**
+     * @param eventName {@code null} if you wish to receive all events, otherwise the name of the event that you wish to receive
+     * @return the element that is stored under then {@code eventName} or {@code null} if none can be found
+     */
+    @Nullable
+    M get(@Nullable String eventName);
 
     /**
      * @param consumer a consumer that provides that name of the event and value contained within the except
@@ -37,11 +41,11 @@ public interface QueueView<T, M> extends ChronicleQueue, TopicPublisher<T, M>, K
     void get(BiConsumer<CharSequence, M> consumer);
 
     /**
-     * @param messageType the type of the  except
-     * @param except      the except to add
+     * @param name    the type of the  except
+     * @param message the except to add
      * @return the index of the new except added to the chronicle queue
      */
-    void set(@NotNull T messageType, @NotNull M except);
+    long set(@NotNull T name, @NotNull M message);
 
     /**
      * @param except the except to add

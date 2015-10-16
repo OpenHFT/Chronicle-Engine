@@ -121,11 +121,11 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     }
 
     @Override
-    public ExcerptTailer theadLocalTailer() {
+    public ExcerptTailer threadLocalTailer() {
         return threadLocal.get().tailer;
     }
 
-    private ExcerptTailer theadLocalReplayTailer() {
+    private ExcerptTailer threadLocalReplayTailer() {
         return threadLocal.get().replayTailer;
     }
 
@@ -153,7 +153,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     @Override
     public M get(int index) {
         try {
-            final ExcerptTailer tailer = theadLocalTailer();
+            final ExcerptTailer tailer = threadLocalTailer();
             if (!tailer.index(index))
                 return null;
             return tailer.readDocument(
@@ -166,15 +166,23 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
 
     /**
+     * @param name
      * @return the last except or {@code null} if there are no more excepts available
      */
     @Override
-    public M get() {
+    public M get(String name) {
         try {
-            final ExcerptTailer tailer = theadLocalTailer();
+            final ExcerptTailer tailer = threadLocalTailer();
             return tailer.readDocument(
-                    wire -> threadLocalElement(wire.readEventName(Wires.acquireStringBuilder()).object(elementTypeClass))) ?
-                    threadLocalElement() : null;
+                    wire -> {
+
+                        final StringBuilder eventName = Wires.acquireStringBuilder();
+                        final ValueIn valueIn = wire.readEventName(eventName);
+
+                        if (name == null || name.isEmpty() || name.contentEquals(eventName))
+                            threadLocalElement(valueIn.object(elementTypeClass));
+
+                    }) ? threadLocalElement() : null;
         } catch (Exception e) {
             throw Jvm.rethrow(e);
         }
@@ -185,7 +193,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
      */
     public void get(BiConsumer<CharSequence, M> consumer) {
         try {
-            final ExcerptTailer tailer = theadLocalTailer();
+            final ExcerptTailer tailer = threadLocalTailer();
             tailer.readDocument(w -> {
                 final StringBuilder eventName = Wires.acquireStringBuilder();
                 final ValueIn valueIn = w.readEventName(eventName);
@@ -197,10 +205,10 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     }
 
     @Override
-    public void set(@NotNull T messageType, @NotNull M event) {
+    public long set(@NotNull T name, @NotNull M message) {
         try {
-            final WireKey wireKey = messageType instanceof WireKey ? (WireKey) messageType : () -> messageType.toString();
-            threadLocalAppender().writeDocument(w -> w.writeEventName(wireKey).object(event));
+            final WireKey wireKey = name instanceof WireKey ? (WireKey) name : () -> name.toString();
+            return threadLocalAppender().writeDocument(w -> w.writeEventName(wireKey).object(message));
         } catch (IOException e) {
             throw Jvm.rethrow(e);
         }
@@ -255,7 +263,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
     @Override
     public void replay(long index, @NotNull BiConsumer<T, M> consumer, @Nullable Consumer<Exception> isAbsent) {
-        ExcerptTailer excerptTailer = theadLocalReplayTailer();
+        ExcerptTailer excerptTailer = threadLocalReplayTailer();
         try {
             excerptTailer.index(index);
             excerptTailer.readDocument(w -> w.read());
@@ -274,5 +282,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     public Class<M> elementTypeClass() {
         return elementTypeClass;
     }
+
 
 }

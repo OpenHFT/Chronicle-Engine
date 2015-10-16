@@ -29,25 +29,29 @@ public class QueueReference<T, M> implements Reference<M> {
 
     private final Class<M> eClass;
     private final QueueView<T, M> chronicleQueue;
+    private final T name;
 
-    public QueueReference(RequestContext requestContext, Asset asset, QueueView<T, M> chronicleQueue) {
-        this(requestContext.type(), chronicleQueue);
-    }
 
-    public QueueReference(Class type, QueueView<T, M> chronicleQueue) {
+
+    public QueueReference(Class type, QueueView<T, M> chronicleQueue, T name) {
         this.eClass = type;
         this.chronicleQueue = chronicleQueue;
+        this.name = name;
+    }
+
+    public QueueReference(RequestContext requestContext, Asset asset, QueueView<T, M>  queueView) {
+        this(requestContext.type(), queueView, (T)requestContext.name());
     }
 
     @Override
     public long set(M event) {
-        return chronicleQueue.set(event);
+        return chronicleQueue.set(name, event);
     }
 
     @Nullable
     @Override
     public M get() {
-        return chronicleQueue.get();
+        return chronicleQueue.get("");
     }
 
     @Override

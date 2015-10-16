@@ -161,7 +161,7 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
                     (QueueView.class);
 
             eventLoop.addHandler(() -> {
-                final M e = chronicleQueue.get();
+                final M e = chronicleQueue.get(rc.name());
                 if (e != null)
                     subscriber.accept(e);
                 return true;

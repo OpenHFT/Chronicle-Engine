@@ -33,7 +33,7 @@ import static org.junit.Assert.assertEquals;
  * @author Rob Austin.
  */
 @RunWith(value = Parameterized.class)
-public class SimpleTest extends ThreadMonitoringTest {
+public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
     private static final String NAME = "/test";
 
@@ -42,7 +42,7 @@ public class SimpleTest extends ThreadMonitoringTest {
     @Rule
     public TestName name = new TestName();
 
-    public SimpleTest(Boolean isRemote) {
+    public SimpleQueueViewTest(Boolean isRemote) {
         this.isRemote = isRemote;
     }
 
@@ -89,7 +89,7 @@ public class SimpleTest extends ThreadMonitoringTest {
         assertEquals("Message-1", values.poll(2, SECONDS).toString());
     }
 
-    //    @Ignore
+
     @Test
     public void testStringPublishToAKeyTopic() throws InterruptedException {
         String uri = "/queue/" + name + "/key";
@@ -102,7 +102,20 @@ public class SimpleTest extends ThreadMonitoringTest {
         assertEquals("Message-1", values.poll(2, SECONDS).toString());
     }
 
-    @Ignore
+
+    @Test
+    public void testStringPublishToAKeyTopicNotForMe() throws InterruptedException {
+        String uri = "/queue/" + name + "/key";
+        acquireQueue("/queue/" + name, String.class, String.class);
+        Publisher<String> publisher = acquirePublisher(uri, String.class);
+        BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
+        Subscriber<String> subscriber = values::add;
+        registerSubscriber(uri + "KeyNotForMe", String.class, subscriber);
+        publisher.publish("Message-1");
+        assertEquals(null, values.poll(1, SECONDS));
+    }
+
+
     @Test
     public void testStringTopicPublisherString() throws InterruptedException {
         String uri = "/queue/" + name;
@@ -115,7 +128,7 @@ public class SimpleTest extends ThreadMonitoringTest {
         assertEquals("topic Message-1", values.poll(2, SECONDS).toString());
     }
 
-    @Ignore
+
     @Test
     public void testStringTopicPublisherWithSubscribe() throws InterruptedException {
         String uri = "/queue/" + name;
@@ -132,18 +145,19 @@ public class SimpleTest extends ThreadMonitoringTest {
         assertEquals("Message-1", values.poll(2, SECONDS).toString());
     }
 
-    @Ignore
+
     @Test
     public void testStringPublishWithTopicSubscribe() throws InterruptedException {
         String uri = "/queue/" + name;
         String messageType = "topic";
+        acquireQueue(uri, String.class, String.class);
         Publisher<String> publisher = acquirePublisher(uri + "/" + messageType, String.class);
         BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
 
         TopicSubscriber<String, String> subscriber = (topic, message) -> values.add(topic + " " + message);
         registerTopicSubscriber(uri, String.class, String.class, subscriber);
         publisher.publish("Message-1");
-        assertEquals("Message-1", values.poll(2, SECONDS).toString());
+        assertEquals("topic Message-1", values.poll(2, SECONDS).toString());
     }
 
     @Ignore
