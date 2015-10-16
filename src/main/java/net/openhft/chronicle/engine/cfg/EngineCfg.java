@@ -24,11 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 /**
  * Created by peter on 26/08/15.
@@ -36,7 +33,6 @@ import java.util.function.Consumer;
 public class EngineCfg implements Installable {
     static final Logger LOGGER = LoggerFactory.getLogger(EngineCfg.class);
     final Map<String, Installable> installableMap = new LinkedHashMap<>();
-    final List<Consumer<AssetTree>> toInstall = new ArrayList<>();
 
     @Override
     public Void install(String path, AssetTree assetTree) throws Exception {
@@ -52,9 +48,6 @@ public class EngineCfg implements Installable {
                 String name = path2.substring(pos + 1);
                 map.put(name, install);
             }
-        }
-        for (Consumer<AssetTree> consumer : toInstall) {
-            consumer.accept(assetTree);
         }
         return null;
     }

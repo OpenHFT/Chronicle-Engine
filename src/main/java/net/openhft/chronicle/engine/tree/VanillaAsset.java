@@ -80,7 +80,7 @@ public class VanillaAsset implements Asset, Closeable {
     private final Map<Class, SortedMap<String, WrappingViewRecord>> wrappingViewFactoryMap =
             new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
     private final Map<Class, LeafViewFactory> leafViewFactoryMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
-
+    private String fullName = null;
     private Boolean keyedAsset;
 
     public VanillaAsset(Asset asset, @NotNull String name) {
@@ -102,7 +102,7 @@ public class VanillaAsset implements Asset, Closeable {
 
     public void standardStack(boolean daemon) {
 
-        final Asset queue = acquireAsset("/queue");
+        final Asset queue = acquireAsset("queue");
         queue.addWrappingRule(Publisher.class, LAST + "reference to a ChronicleQueue",
                 QueueReference::new, QueueView.class);
 
@@ -296,6 +296,14 @@ public class VanillaAsset implements Asset, Closeable {
     @ForceInline
     public String name() {
         return name;
+    }
+
+    @NotNull
+    @Override
+    public String fullName() {
+        if (fullName == null)
+            fullName = Asset.super.fullName();
+        return fullName;
     }
 
     @NotNull
