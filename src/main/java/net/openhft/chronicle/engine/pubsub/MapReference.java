@@ -29,16 +29,16 @@ import org.jetbrains.annotations.Nullable;
 
 import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
 
-public class VanillaReference<E> implements Reference<E> {
+public class MapReference<E> implements Reference<E> {
     private final String name;
     private final Class<E> eClass;
     private final MapView<String, E> underlyingMap;
 
-    public VanillaReference(@NotNull RequestContext context, Asset asset, MapView<String, E> underlying) throws AssetNotFoundException {
+    public MapReference(@NotNull RequestContext context, Asset asset, MapView<String, E> underlying) throws AssetNotFoundException {
         this(context.name(), context.type(), underlying);
     }
 
-    public VanillaReference(String name, Class<E> type, MapView<String, E> mapView) {
+    public MapReference(String name, Class<E> type, MapView<String, E> mapView) {
         this.name = name;
         this.eClass = type;
         this.underlyingMap = mapView;

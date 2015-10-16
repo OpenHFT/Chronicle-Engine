@@ -114,9 +114,9 @@ public class VanillaAsset implements Asset, Closeable {
 
         addLeafRule(QueueView.class, LAST + "chronicle queue", ChronicleQueueView::new);
 
-        addWrappingRule(Reference.class, LAST + "reference", VanillaReference::new, MapView.class);
+        addWrappingRule(Reference.class, LAST + "reference", MapReference::new, MapView.class);
         addWrappingRule(Replication.class, LAST + "replication", VanillaReplication::new, MapView.class);
-        addWrappingRule(Publisher.class, LAST + "publisher", VanillaReference::new, MapView.class);
+        addWrappingRule(Publisher.class, LAST + "publisher", MapReference::new, MapView.class);
         addWrappingRule(ValuesCollection.class, LAST + " values", VanillaValuesCollection::new, MapView.class);
 
         addWrappingRule(MapView.class, LAST + " string key maps", VanillaMapView::new, ObjectKeyValueStore.class);
