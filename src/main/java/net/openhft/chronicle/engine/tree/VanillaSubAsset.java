@@ -49,7 +49,11 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
         this.name = name;
         TcpChannelHub tcpChannelHub = parent.findView(TcpChannelHub.class);
         if (tcpChannelHub == null) {
-            reference = new VanillaReference<>(name, type, parent.acquireView(MapView.class));
+            QueueView queueView = parent.getView(QueueView.class);
+            if (queueView == null)
+                reference = new VanillaReference<>(name, type, parent.acquireView(MapView.class));
+            else
+                reference = new QueueReference<>(type, queueView);
             subscription = new VanillaSimpleSubscription<>(reference, valueReader);
         } else {
             reference = new RemoteReference<>(tcpChannelHub, type, parent.fullName() + "/" + name);

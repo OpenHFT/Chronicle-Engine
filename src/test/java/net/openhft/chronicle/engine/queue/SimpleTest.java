@@ -66,31 +66,6 @@ public class SimpleTest extends ThreadMonitoringTest {
         methodName(name.getMethodName());
     }
 
-
-    class MyMarshallable implements Marshallable {
-
-        String s;
-
-        public MyMarshallable(String s) {
-            this.s = s;
-        }
-
-        @Override
-        public void readMarshallable(@NotNull WireIn wire) throws IORuntimeException {
-            s = wire.read().text();
-        }
-
-        @Override
-        public void writeMarshallable(@NotNull WireOut wire) {
-            wire.write().text(s);
-        }
-
-        @Override
-        public String toString() {
-            return s;
-        }
-    }
-
     @Test
     public void testMarshablePublishToATopic() throws InterruptedException {
         String uri = "/queue/" + name;
@@ -114,7 +89,7 @@ public class SimpleTest extends ThreadMonitoringTest {
         assertEquals("Message-1", values.poll(2, SECONDS).toString());
     }
 
-    @Ignore
+    //    @Ignore
     @Test
     public void testStringPublishToAKeyTopic() throws InterruptedException {
         String uri = "/queue/" + name + "/key";
@@ -127,7 +102,7 @@ public class SimpleTest extends ThreadMonitoringTest {
         assertEquals("Message-1", values.poll(2, SECONDS).toString());
     }
 
-@Ignore
+    @Ignore
     @Test
     public void testStringTopicPublisherString() throws InterruptedException {
         String uri = "/queue/" + name;
@@ -171,7 +146,6 @@ public class SimpleTest extends ThreadMonitoringTest {
         assertEquals("Message-1", values.poll(2, SECONDS).toString());
     }
 
-
     @Ignore
     @Test
     public void testStringPublishWithIndex() throws InterruptedException {
@@ -192,6 +166,30 @@ public class SimpleTest extends ThreadMonitoringTest {
         queue.replay(index, (topic, message) -> values.add(topic + " " + message), null);
 
         assertEquals("Message-1", values.poll(2, SECONDS).toString());
+    }
+
+    class MyMarshallable implements Marshallable {
+
+        String s;
+
+        public MyMarshallable(String s) {
+            this.s = s;
+        }
+
+        @Override
+        public void readMarshallable(@NotNull WireIn wire) throws IORuntimeException {
+            s = wire.read().text();
+        }
+
+        @Override
+        public void writeMarshallable(@NotNull WireOut wire) {
+            wire.write().text(s);
+        }
+
+        @Override
+        public String toString() {
+            return s;
+        }
     }
 
 

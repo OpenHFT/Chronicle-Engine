@@ -21,19 +21,22 @@ import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
-import net.openhft.chronicle.engine.tree.ChronicleQueueView;
-import net.openhft.chronicle.queue.ChronicleQueue;
+import net.openhft.chronicle.engine.tree.QueueView;
 import org.jetbrains.annotations.Nullable;
 
 
 public class QueueReference<T, M> implements Reference<M> {
 
     private final Class<M> eClass;
-    private final ChronicleQueueView<T, M> chronicleQueue;
+    private final QueueView<T, M> chronicleQueue;
 
-    public QueueReference(RequestContext requestContext, Asset asset, ChronicleQueue chronicleQueue) {
-        this.eClass = requestContext.type();
-        this.chronicleQueue = (ChronicleQueueView<T, M>) chronicleQueue;
+    public QueueReference(RequestContext requestContext, Asset asset, QueueView<T, M> chronicleQueue) {
+        this(requestContext.type(), chronicleQueue);
+    }
+
+    public QueueReference(Class type, QueueView<T, M> chronicleQueue) {
+        this.eClass = type;
+        this.chronicleQueue = chronicleQueue;
     }
 
     @Override

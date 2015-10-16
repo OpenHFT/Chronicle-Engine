@@ -52,7 +52,7 @@ public class VanillaSimpleSubscription<E> implements SimpleSubscription<E> {
                                    @NotNull Subscriber<E> subscriber,
                                    @NotNull Filter<E> filter) {
         subscribers.add(subscriber);
-        if (rc.bootstrap() != Boolean.FALSE)
+        if (rc.bootstrap() == Boolean.TRUE)
             try {
                 subscriber.onMessage(currentValue.get());
             } catch (InvalidSubscriberException e) {
