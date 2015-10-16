@@ -144,7 +144,7 @@ public class ReferenceTest {
         Subscriber<String> subscriber = s -> {
             events.add(s);
         };
-        assetTree.registerSubscriber("group/subject", String.class, subscriber);
+        assetTree.registerSubscriber("group/subject?bootstrap=true", String.class, subscriber);
 
         ref.set("maths");
         ref.set("cs");
@@ -238,7 +238,6 @@ public class ReferenceTest {
         assertEquals("END", events.get(3));
     }
 
-    @Ignore("test fails")
     @Test
     public void testSubscriptionMUFG() {
         String key = "subject";

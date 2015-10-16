@@ -52,7 +52,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
             QueueView queueView = parent.getView(QueueView.class);
             if (queueView == null) {
                 reference = new MapReference<>(name, type, parent.acquireView(MapView.class));
-                subscription = new VanillaSimpleSubscription<>(reference, valueReader);
+                subscription = new MapSimpleSubscription<>(reference, valueReader);
             }  else {
                 reference = new QueueReference<>(type, queueView,name);
                 subscription = new QueueSimpleSubscription<>(reference, valueReader,parent,name);
@@ -74,7 +74,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     public <V> V getView(Class<V> viewType) {
         if (viewType == Reference.class || viewType == Publisher.class || viewType == Supplier.class)
             return (V) reference;
-        if (viewType == SubscriptionCollection.class || viewType == VanillaSimpleSubscription.class
+        if (viewType == SubscriptionCollection.class || viewType == MapSimpleSubscription.class
                 || viewType == ObjectSubscription.class)
             return (V) subscription;
         throw new UnsupportedOperationException("Unable to classify view type " + viewType);
@@ -96,7 +96,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
                 return acquireViewFor(viewType, rc);
             return (V) reference;
         }
-        if (viewType == VanillaSimpleSubscription.class || viewType == ObjectSubscription.class) {
+        if (viewType == MapSimpleSubscription.class || viewType == ObjectSubscription.class) {
             return (V) subscription;
         }
         throw new UnsupportedOperationException("todo vClass: " + viewType + ", rc: " + rc);

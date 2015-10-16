@@ -169,16 +169,11 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
 
         long index = publisher.publish("Message-1");
-
-
         TopicSubscriber<String, String> subscriber = (topic, message) -> values.add(topic + " " + message);
         registerTopicSubscriber(uri, String.class, String.class, subscriber);
 
-
         QueueView<String, String> queue = acquireQueue(uri, String.class, String.class);
-
         queue.replay(index, (topic, message) -> values.add(topic + " " + message), null);
-
         assertEquals("Message-1", values.poll(2, SECONDS).toString());
     }
 

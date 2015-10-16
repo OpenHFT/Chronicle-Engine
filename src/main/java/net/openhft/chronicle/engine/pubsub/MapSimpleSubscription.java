@@ -34,14 +34,14 @@ import java.util.function.Function;
 /**
  * Created by peter on 29/05/15.
  */
-public class VanillaSimpleSubscription<E> implements SimpleSubscription<E> {
+public class MapSimpleSubscription<E> implements SimpleSubscription<E> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(VanillaSimpleSubscription.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MapSimpleSubscription.class);
     private final Set<Subscriber<E>> subscribers = new CopyOnWriteArraySet<>();
     private final Reference<E> currentValue;
     private final Function<Object, E> valueReader;
 
-    public VanillaSimpleSubscription(Reference<E> reference, Function<Object, E> valueReader) {
+    public MapSimpleSubscription(Reference<E> reference, Function<Object, E> valueReader) {
         this.currentValue = reference;
         this.valueReader = valueReader;
     }
@@ -52,7 +52,7 @@ public class VanillaSimpleSubscription<E> implements SimpleSubscription<E> {
                                    @NotNull Subscriber<E> subscriber,
                                    @NotNull Filter<E> filter) {
         subscribers.add(subscriber);
-        if (rc.bootstrap() == Boolean.TRUE)
+        if (rc.bootstrap() != Boolean.FALSE)
             try {
                 subscriber.onMessage(currentValue.get());
             } catch (InvalidSubscriberException e) {
