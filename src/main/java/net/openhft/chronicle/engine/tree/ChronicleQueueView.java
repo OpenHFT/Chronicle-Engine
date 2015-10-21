@@ -150,6 +150,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
      * @param index gets the except at the given index  or {@code null} if the index is not valid
      * @return the except
      */
+    @NotNull
     @Override
     public M get(int index) {
         try {

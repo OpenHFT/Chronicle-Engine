@@ -34,6 +34,7 @@ import net.openhft.chronicle.engine.fs.HostDetails;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.hash.replication.EngineReplicationLangBytesConsumer;
 import net.openhft.chronicle.map.*;
+import net.openhft.chronicle.network.api.session.SessionDetails;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.threads.api.EventLoop;
@@ -56,6 +57,7 @@ import java.util.function.Supplier;
 import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
 import static net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer.notifyEachEvent;
 import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplication.builder;
+import static net.openhft.chronicle.network.VanillaSessionDetails.of;
 
 public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<K, V>,
         Closeable, Supplier<EngineReplication> {
@@ -175,16 +177,19 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
                 if (remoteIdentifier <= localIdentifier) {
 
                     if (LOG.isDebugEnabled())
-                        LOG.debug("skipping : attempting to connect to localIdentifier=" + localIdentifier + ",remoteIdentifier=" + remoteIdentifier);
+                        LOG.debug("skipping : attempting to connect to localIdentifier=" +
+                                localIdentifier + ", remoteIdentifier=" + remoteIdentifier);
 
                     continue;
                 }
 
                 if (LOG.isDebugEnabled())
-                    LOG.debug("attempting to connect to localIdentifier=" + localIdentifier + ",remoteIdentifier=" + remoteIdentifier);
+                    LOG.debug("attempting to connect to localIdentifier=" + localIdentifier + ", " +
+                            "remoteIdentifier=" + remoteIdentifier);
 
-                final TcpChannelHub tcpChannelHub = hostDetails.acquireTcpChannelHub(asset, eventLoop, context.wireType());
-                ReplicationHub replicationHub = new ReplicationHub(context, tcpChannelHub, eventLoop, isClosed);
+                final SessionDetails sessionDetails = of("replicationNode", "<token>", "<domain>");
+                final TcpChannelHub tcpChannelHub = hostDetails.acquireTcpChannelHub(asset, eventLoop, context.wireType(), sessionDetails);
+                final ReplicationHub replicationHub = new ReplicationHub(context, tcpChannelHub, eventLoop, isClosed);
                 replicationHub.bootstrap(engineReplicator1, localIdentifier, (byte) remoteIdentifier);
             }
 
@@ -247,7 +252,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
     @Override
     public void entriesFor(int segment, @NotNull SubscriptionConsumer<MapEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
         //Ignore the segments and return entriesFor the whole map
-        chronicleMap.entrySet().stream().map(e -> InsertedEvent.of(assetFullName, e.getKey(), e.getValue(),false)).forEach(e -> {
+        chronicleMap.entrySet().stream().map(e -> InsertedEvent.of(assetFullName, e.getKey(), e.getValue(), false)).forEach(e -> {
             try {
                 kvConsumer.accept(e);
             } catch (InvalidSubscriberException t) {
@@ -327,7 +332,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
         @Override
         public void onRemove(@NotNull K key, V value, boolean replicationEven) {
             if (subscriptions.hasSubscribers())
-                subscriptions.notifyEvent(RemovedEvent.of(assetFullName, key, value,false));
+                subscriptions.notifyEvent(RemovedEvent.of(assetFullName, key, value, false));
         }
 
         @Override
@@ -335,9 +340,9 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
                           boolean replicationEvent, boolean added) {
             if (subscriptions.hasSubscribers())
                 if (added) {
-                    subscriptions.notifyEvent(InsertedEvent.of(assetFullName, key, newValue,replicationEvent));
+                    subscriptions.notifyEvent(InsertedEvent.of(assetFullName, key, newValue, replicationEvent));
                 } else {
-                    subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, replacedValue, newValue,replicationEvent));
+                    subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, replacedValue, newValue, replicationEvent));
                 }
         }
     }
@@ -349,7 +354,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
             if (subscriptions.hasSubscribers()) {
                 K key = chronicleMap.readKey(entry, keyPos);
                 V value = chronicleMap.readValue(entry, valuePos);
-                subscriptions.notifyEvent(RemovedEvent.of(assetFullName, key, value,replicationEvent));
+                subscriptions.notifyEvent(RemovedEvent.of(assetFullName, key, value, replicationEvent));
             }
         }
 
@@ -360,9 +365,9 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
                 K key = chronicleMap.readKey(entry, keyPos);
                 V value = chronicleMap.readValue(entry, valuePos);
                 if (added) {
-                    subscriptions.notifyEvent(InsertedEvent.of(assetFullName, key, value,replicationEvent));
+                    subscriptions.notifyEvent(InsertedEvent.of(assetFullName, key, value, replicationEvent));
                 } else {
-                    subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, null, value,replicationEvent));
+                    subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, null, value, replicationEvent));
                 }
             }
         }

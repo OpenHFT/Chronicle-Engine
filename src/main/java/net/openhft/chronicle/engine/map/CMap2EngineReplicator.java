@@ -76,7 +76,18 @@ public class CMap2EngineReplicator implements EngineReplication,
         if (b.underlyingObject() == null)
             return wrap(b.address(b.start()), b.readRemaining());
         else {
-            ByteBuffer buffer = ByteBuffer.wrap((byte[]) b.underlyingObject());
+
+            final ByteBuffer buffer;
+
+            if (b.underlyingObject() instanceof byte[])
+                buffer = ByteBuffer.wrap((byte[]) b.underlyingObject());
+            else if (b.underlyingObject() instanceof ByteBuffer)
+                buffer = (ByteBuffer) b.underlyingObject();
+            else
+                throw new UnsupportedOperationException("type not supported, b.underlyingObject()" +
+                        ".class=" + b
+                        .underlyingObject().getClass());
+
             IByteBufferBytes wrap = ByteBufferBytes.wrap(buffer);
             wrap.limit((int) b.readLimit());
             return wrap;

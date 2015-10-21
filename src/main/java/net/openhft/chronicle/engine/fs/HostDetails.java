@@ -20,6 +20,7 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.network.TCPRegistry;
+import net.openhft.chronicle.network.api.session.SessionDetails;
 import net.openhft.chronicle.network.api.session.SessionProvider;
 import net.openhft.chronicle.network.connection.ClientConnectionMonitor;
 import net.openhft.chronicle.network.connection.SocketAddressSupplier;
@@ -30,15 +31,13 @@ import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-/**
- * Created by peter.lawrey on 17/06/2015.
- */
 public class HostDetails implements Marshallable, Closeable {
     private final Map<InetSocketAddress, TcpChannelHub> tcpChannelHubs = new ConcurrentHashMap<>();
     public int hostId;
@@ -62,16 +61,25 @@ public class HostDetails implements Marshallable, Closeable {
                 .write(() -> "timeoutMs").int32(timeoutMs);
     }
 
-    public TcpChannelHub acquireTcpChannelHub(@NotNull Asset asset, @NotNull EventLoop eventLoop, @NotNull Function<Bytes, Wire> wire) {
-        InetSocketAddress addr = TCPRegistry.lookup(connectUri);
-        SessionProvider sessionProvider = asset.findOrCreateView(SessionProvider.class);
-        assert sessionProvider != null;
+
+    /**
+     * @param asset          a point in the asset tree, used to fine the ClientConnectionMonitor
+     * @param eventLoop      used to process events
+     * @param wire           the tyoe of wire used
+     * @param sessionDetails the session details used by the TcpChannelHub
+     * @return a new or existing instance of the TcpChannelHub
+     */
+    public TcpChannelHub acquireTcpChannelHub(@NotNull final Asset asset,
+                                              @NotNull final EventLoop eventLoop,
+                                              @NotNull final Function<Bytes, Wire> wire,
+                                              @NotNull final SessionDetails sessionDetails) {
+        final InetSocketAddress addr = TCPRegistry.lookup(connectUri);
 
         return tcpChannelHubs.computeIfAbsent(addr, hostPort -> {
             String[] connectURIs = new String[]{connectUri};
             final SocketAddressSupplier socketAddressSupplier = new SocketAddressSupplier(connectURIs, "hostId=" + hostId + ",connectUri=" + connectUri);
             final ClientConnectionMonitor clientConnectionMonitor = asset.findView(ClientConnectionMonitor.class);
-            return new TcpChannelHub(sessionProvider, eventLoop, wire, "hostId=" + hostId + ",connectUri=" + connectUri,
+            return new TcpChannelHub(new SimpleSessionProvider(sessionDetails), eventLoop, wire, "hostId=" + hostId + ",connectUri=" + connectUri,
                     socketAddressSupplier, true, clientConnectionMonitor);
         });
     }
@@ -88,5 +96,37 @@ public class HostDetails implements Marshallable, Closeable {
                 "hostId=" + hostId +
                 ", connectUri='" + connectUri +
                 '}';
+    }
+
+    private class SimpleSessionProvider implements SessionProvider {
+        private final SessionDetails sessionDetails;
+
+        public SimpleSessionProvider(SessionDetails sessionDetails) {
+            this.sessionDetails = sessionDetails;
+        }
+
+        /**
+         * @return the current session details
+         */
+        @Nullable
+        public SessionDetails get() {
+            return sessionDetails;
+        }
+
+        /**
+         * Replace the session details
+         *
+         * @param sessionDetails to set to
+         */
+        public void set(@NotNull SessionDetails sessionDetails) {
+            throw new UnsupportedOperationException();
+        }
+
+        /**
+         * There is no longer any valid session detaisl and get() will return null.
+         */
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
     }
 }
