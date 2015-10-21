@@ -76,7 +76,7 @@ public class CMap2EngineReplicator implements EngineReplication,
         if (b.underlyingObject() == null)
             return wrap(b.address(b.start()), b.readRemaining());
         else {
-            ByteBuffer buffer = (ByteBuffer) b.underlyingObject();
+            ByteBuffer buffer = ByteBuffer.wrap((byte[]) b.underlyingObject());
             IByteBufferBytes wrap = ByteBufferBytes.wrap(buffer);
             wrap.limit((int) b.readLimit());
             return wrap;
@@ -238,7 +238,8 @@ public class CMap2EngineReplicator implements EngineReplication,
          * @param identifier         the identifier of the remote server
          * @param bootStrapTimeStamp sent to the client on every update this is the timestamp that
          *                           the remote client should bootstrap from when there has been a
-         * @param remoteIdentifier   the identifier of the server we are sending data to ( only used as a comment )
+         * @param remoteIdentifier   the identifier of the server we are sending data to ( only used
+         *                           as a comment )
          */
         VanillaReplicatedEntry(@NotNull final BytesStore key,
                                @Nullable final BytesStore value,
