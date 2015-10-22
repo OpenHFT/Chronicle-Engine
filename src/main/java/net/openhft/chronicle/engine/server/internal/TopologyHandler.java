@@ -55,7 +55,7 @@ public class TopologyHandler<E> extends AbstractHandler {
                 // TODO CE-101
                 boolean bootstrap = true;
 
-                valueIn.marshallable(m -> view.registerSubscriber(bootstrap, listener));
+                valueIn.marshallable(m -> view.registerSubscriber(bootstrap, requestContext.throttlePeriodMs(), listener));
                 return;
             }
 

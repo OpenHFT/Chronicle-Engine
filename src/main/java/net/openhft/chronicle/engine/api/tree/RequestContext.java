@@ -501,8 +501,9 @@ public class RequestContext implements Cloneable {
         return throttlePeriodMs;
     }
 
-    public void throttlePeriodMs(int throttlePeriodMs) {
+    public RequestContext throttlePeriodMs(int throttlePeriodMs) {
         this.throttlePeriodMs = throttlePeriodMs;
+        return this;
     }
 
     public enum Operation {

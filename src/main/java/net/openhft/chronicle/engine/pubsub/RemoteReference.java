@@ -116,12 +116,18 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
     }
 
     @Override
-    public void registerSubscriber(boolean bootstrap, @NotNull final Subscriber subscriber) throws AssetNotFoundException {
+    public void registerSubscriber(boolean bootstrap,
+                                   int throttlePeriodMs,
+                                   @NotNull final Subscriber subscriber)
+            throws AssetNotFoundException {
 
         if (hub.outBytesLock().isHeldByCurrentThread())
             throw new IllegalStateException("Cannot view map while debugging");
 
-        final AbstractAsyncSubscription asyncSubscription = new AbstractAsyncSubscription(hub, csp + "&bootstrap=" + bootstrap, "Remote Ref registerSubscriber") {
+
+        final AbstractAsyncSubscription asyncSubscription = new AbstractAsyncSubscription(hub,
+                csp + "&bootstrap=" + bootstrap + "&throttlePeriodMs=" + throttlePeriodMs,
+                "Remote Ref registerSubscriber") {
 
             @Override
             public void onSubscribe(@NotNull final WireOut wireOut) {
@@ -156,7 +162,7 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
 
     void onEvent(@Nullable E message, @NotNull Subscriber<E> subscriber) {
         try {
-              subscriber.onMessage(message);
+            subscriber.onMessage(message);
         } catch (InvalidSubscriberException noLongerValid) {
             unregisterSubscriber(subscriber);
         }

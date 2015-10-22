@@ -65,7 +65,7 @@ public class HostDetails implements Marshallable, Closeable {
     /**
      * @param asset          a point in the asset tree, used to fine the ClientConnectionMonitor
      * @param eventLoop      used to process events
-     * @param wire           the tyoe of wire used
+     * @param wire           converts from bytes to wire for the type of the wire used
      * @param sessionDetails the session details used by the TcpChannelHub
      * @return a new or existing instance of the TcpChannelHub
      */

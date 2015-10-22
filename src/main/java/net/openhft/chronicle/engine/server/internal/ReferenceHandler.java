@@ -4,6 +4,7 @@ import net.openhft.chronicle.core.util.SerializableBiFunction;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Reference;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
+import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.EventId.*;
 import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.Params.*;
@@ -24,7 +24,7 @@ import static net.openhft.chronicle.network.connection.CoreFields.tid;
 /**
  * Created by Rob Austin
  */
-public class ReferenceHandler<E,T> extends AbstractHandler {
+public class ReferenceHandler<E, T> extends AbstractHandler {
     private static final Logger LOG = LoggerFactory.getLogger(ReferenceHandler.class);
     private final StringBuilder eventName = new StringBuilder();
     private final Map<Long, Object> tidToListener = new ConcurrentHashMap<>();
@@ -66,7 +66,7 @@ public class ReferenceHandler<E,T> extends AbstractHandler {
                 final Subscriber listener = new Subscriber() {
                     @Override
                     public void onMessage(final Object message) throws InvalidSubscriberException {
-                        publisher.put(null, publish -> {
+                        publisher.put("", publish -> {
                             publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
                                     (inputTid));
                             publish.writeNotReadyDocument(false, wire -> wire.writeEventName(reply)
@@ -76,7 +76,7 @@ public class ReferenceHandler<E,T> extends AbstractHandler {
 
                     public void onEndOfSubscription() {
                         if (!publisher.isClosed()) {
-                            publisher.put(null, publish -> {
+                            publisher.put("", publish -> {
                                 publish.writeDocument(true, wire ->
                                         wire.writeEventName(tid).int64(inputTid));
                                 publish.writeDocument(false, wire ->
@@ -88,13 +88,13 @@ public class ReferenceHandler<E,T> extends AbstractHandler {
 
                 int p = csp.indexOf("bootstrap=");
                 boolean bootstrap = true;
-                if(p!=-1){
-                    char e = csp.charAt(p+10);
-                    if('f'==e)bootstrap=false;
+                if (p != -1) {
+                    char e = csp.charAt(p + 10);
+                    if ('f' == e) bootstrap = false;
                 }
 
                 tidToListener.put(inputTid, listener);
-                view.registerSubscriber(bootstrap, listener);
+                view.registerSubscriber(bootstrap, requestContext.throttlePeriodMs(), listener);
                 return;
             }
 
@@ -156,7 +156,9 @@ public class ReferenceHandler<E,T> extends AbstractHandler {
         }
     };
 
+
     void process(@NotNull final WireIn inWire,
+                 final RequestContext requestContext,
                  final WireOutPublisher publisher,
                  final long tid,
                  Reference view,
@@ -165,11 +167,12 @@ public class ReferenceHandler<E,T> extends AbstractHandler {
                  final @NotNull WireAdapter wireAdapter) {
         this.csp = csp;
         this.vToWire = wireAdapter.valueToWire();
+        this.requestContext = requestContext;
+        this.publisher = publisher(publisher);
+
         setOutWire(outWire);
         this.outWire = outWire;
-        this.publisher = publisher;
         this.view = view;
-        Function<ValueIn, E> wireToE = wireAdapter.wireToValue();
         dataConsumer.accept(inWire, tid);
     }
 

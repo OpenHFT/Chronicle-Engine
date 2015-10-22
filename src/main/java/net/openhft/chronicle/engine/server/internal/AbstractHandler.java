@@ -1,7 +1,8 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.wire.WireOut;
 import net.openhft.chronicle.wire.Wires;
 import net.openhft.chronicle.wire.WriteMarshallable;
@@ -12,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
+import static net.openhft.chronicle.network.connection.WireOutPublisher.newThrottledWireOutPublisher;
 import static net.openhft.chronicle.wire.WriteMarshallable.EMPTY;
 
 /**
@@ -23,6 +25,7 @@ class AbstractHandler {
     @Nullable
     WireOut outWire = null;
     volatile boolean connectionClosed = false;
+    RequestContext requestContext;
 
     static void nullCheck(@Nullable Object o) {
         if (o == null)
@@ -44,7 +47,9 @@ class AbstractHandler {
                 c.writeMarshallable(outWire);
             } catch (Throwable t) {
                 inBytes.readPosition(readPosition);
-                LOG.info("While reading " + inBytes.toDebugString(), " processing wire " + c, t);
+                if (LOG.isInfoEnabled())
+                    LOG.info("While reading " + inBytes.toDebugString(),
+                            " processing wire " + c, t);
                 outWire.bytes().writePosition(position);
                 outWire.writeEventName(() -> "exception").throwable(t);
             }
@@ -71,5 +76,16 @@ class AbstractHandler {
 
     public void onEndOfConnection(boolean heartbeatTimeOut) {
         connectionClosed = true;
+    }
+
+    /**
+     * @param publisher
+     * @return If the throttlePeriodMs is set returns a throttled wire out publisher, otherwise the
+     * origional
+     */
+    WireOutPublisher publisher(final WireOutPublisher publisher) {
+        return requestContext.throttlePeriodMs() == 0 ?
+                publisher :
+                newThrottledWireOutPublisher(requestContext.throttlePeriodMs(), publisher);
     }
 }

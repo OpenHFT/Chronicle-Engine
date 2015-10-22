@@ -342,7 +342,7 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
                     }
 
                     if (viewType == Reference.class) {
-                        referenceHandler.process(in,
+                        referenceHandler.process(in, requestContext,
                                 publisher, tid,
                                 (Reference) view, cspText, outWire, wireAdapter);
                         return;
@@ -355,7 +355,7 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
                     }
 
                     if (viewType == Publisher.class) {
-                        publisherHandler.process(in,
+                        publisherHandler.process(in, requestContext,
                                 publisher, tid,
                                 (Publisher) view, outWire, wireAdapter);
                         return;

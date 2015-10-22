@@ -34,7 +34,6 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
 
     Wire outWire;
     T subscription;
-    RequestContext requestContext;
     WireOutPublisher publisher;
     AssetTree assetTree;
 

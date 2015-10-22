@@ -119,7 +119,7 @@ public class ChassisRFCTest {
 
         List<String> values2 = new ArrayList<>();
         Subscriber<String> subscriber2 = values2::add;
-        reference.registerSubscriber(true, subscriber2);
+        reference.registerSubscriber(true, 0, subscriber2);
 
         reference.set("Message-1");
         assertEquals("Message-1", reference.get());

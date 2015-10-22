@@ -62,10 +62,15 @@ public class MapReference<E> implements Reference<E> {
     }
 
     @Override
-    public void registerSubscriber(boolean bootstrap, Subscriber<E> subscriber) throws AssetNotFoundException {
+    public void registerSubscriber(boolean bootstrap, int throttlePeriodMs, Subscriber<E> subscriber) throws AssetNotFoundException {
+
+
         underlyingMap.asset().acquireAsset(name)
                 .subscription(true)
-                .registerSubscriber(requestContext().bootstrap(bootstrap).type(eClass),
+                .registerSubscriber(requestContext()
+                                .bootstrap(bootstrap)
+                                .throttlePeriodMs(throttlePeriodMs)
+                                .type(eClass),
                         subscriber, Filter.empty());
     }
 

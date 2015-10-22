@@ -3,6 +3,7 @@ package net.openhft.chronicle.engine.server.internal;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
+import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +54,9 @@ public class PublisherHandler<E> extends AbstractHandler {
 
                 // TODO CE-101 get the true value from the CSP
                 boolean bootstrap = true;
-                valueIn.marshallable(m -> view.registerSubscriber(bootstrap, listener));
+                valueIn.marshallable(m -> view.registerSubscriber(bootstrap,
+                        requestContext.throttlePeriodMs(),
+                        listener));
                 return;
             }
 
@@ -79,15 +82,18 @@ public class PublisherHandler<E> extends AbstractHandler {
     };
 
     void process(@NotNull final WireIn inWire,
-                 final WireOutPublisher publisher,
+                 @NotNull final RequestContext requestContext,
+                 @NotNull final WireOutPublisher publisher,
                  final long tid,
-                 Publisher view, final Wire outWire,
-                 final @NotNull WireAdapter wireAdapter) {
+                 @NotNull final Publisher view,
+                 @NotNull final Wire outWire,
+                 @NotNull final WireAdapter wireAdapter) {
         setOutWire(outWire);
         this.outWire = outWire;
         this.publisher = publisher;
         this.view = view;
         this.wireToE = wireAdapter.wireToValue();
+        this.requestContext = requestContext;
         dataConsumer.accept(inWire, tid);
     }
 

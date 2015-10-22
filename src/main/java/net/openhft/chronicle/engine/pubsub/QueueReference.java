@@ -60,7 +60,9 @@ public class QueueReference<T, M> implements Reference<M> {
     }
 
     @Override
-    public void registerSubscriber(boolean bootstrap, Subscriber<M> subscriber) throws AssetNotFoundException {
+    public void registerSubscriber(boolean bootstrap,
+                                   int throttlePeriodMs,
+                                   Subscriber<M> subscriber) throws AssetNotFoundException {
         throw new UnsupportedOperationException();
     }
 

@@ -37,7 +37,9 @@ public class RemoteSimpleSubscription<E> implements SimpleSubscription<E> {
     public void registerSubscriber(@NotNull RequestContext rc,
                                    @NotNull Subscriber<E> subscriber,
                                    @NotNull Filter<E> filter) {
-        reference.registerSubscriber(rc.bootstrap() != Boolean.FALSE, subscriber);
+        reference.registerSubscriber(rc.bootstrap() != Boolean.FALSE,
+                rc.throttlePeriodMs(),
+                subscriber);
     }
 
     @Override

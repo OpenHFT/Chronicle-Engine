@@ -33,11 +33,14 @@ public interface Publisher<E> {
     /**
      * Add a subscription to this specific topic
      *
-     * @param bootstrap  to bootstrap
-     * @param subscriber to register
-     * @throws AssetNotFoundException if the topic no longer exists.
+     * @param bootstrap        to bootstrap
+     * @param throttlePeriodMs {@code 0} for no throttling, otherwise the period of
+     *                         throttling in milliseconds
+     * @param subscriber       to register  @throws AssetNotFoundException if the topic no longer
      */
-    void registerSubscriber(boolean bootstrap, Subscriber<E> subscriber) throws AssetNotFoundException;
+    void registerSubscriber(boolean bootstrap,
+                            int throttlePeriodMs,
+                            Subscriber<E> subscriber) throws AssetNotFoundException;
 
     /**
      * Remove a subscriber
