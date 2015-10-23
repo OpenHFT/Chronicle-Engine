@@ -22,7 +22,10 @@ import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -221,7 +224,40 @@ public class ReplicationTestBootstrapingAfterLostConnection {
 
     }
 
-    @Ignore
+
+    @Test
+    public void testCheckDataIsLoadedFromPersistredFile() throws InterruptedException,
+            IOException {
+
+        final Path basePath = Files.createTempDirectory("");
+        {
+            ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME + "?basePath=" + basePath
+                    , String.class,
+                    String
+                            .class);
+            assertNotNull(map1);
+
+            map1.put("hello1", "world1");
+        }
+
+
+        serverEndpoint1.close();
+        if (tree1 != null)
+            tree1.close();
+        {
+
+        }
+        tree1 = create(1, WireType.TEXT, "clusterTwo");
+        serverEndpoint1 = new ServerEndpoint("host.port1", tree1, WireType.TEXT);
+        ConcurrentMap<String, String> map1a = tree1.acquireMap(NAME + "?basePath=" + basePath
+                , String.class,
+                String
+                        .class);
+        assertNotNull(map1a);
+        Assert.assertEquals(1, map1a.size());
+    }
+
+
     @Test
     public void testBootstrapWhenTheServerIsKilledUsingPersistedFile() throws InterruptedException,
             IOException {
