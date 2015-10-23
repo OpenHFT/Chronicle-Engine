@@ -62,9 +62,6 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
                         mi.forEach(e -> publisher.put(null, publish1 -> {
 
-                            if (e.identifier() != hostId.hostId())
-                                return;
-
                             hadNext.set(true);
                             if (LOG.isDebugEnabled())
                                 LOG.debug("publish from server response from iterator " +
@@ -83,7 +80,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
                     }
                 });
 
-                    mi.dirtyEntries(0);
+
                 return;
             }
 

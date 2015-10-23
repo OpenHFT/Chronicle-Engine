@@ -84,6 +84,13 @@ public class HostDetails implements Marshallable, Closeable {
         });
     }
 
+    /**
+     * @return the {@code TcpChannelHub} if it exists, otherwise {@code null}
+     */
+    public TcpChannelHub tcpChannelHub() {
+        return tcpChannelHubs.get(TCPRegistry.lookup(connectUri));
+    }
+
     @Override
     public void close() {
         tcpChannelHubs.values().forEach(Closeable::closeQuietly);
