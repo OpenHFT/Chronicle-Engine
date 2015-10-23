@@ -22,10 +22,7 @@ import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -224,6 +221,7 @@ public class ReplicationTestBootstrapingAfterLostConnection {
 
     }
 
+    @Ignore
     @Test
     public void testBootstrapWhenTheServerIsKilledUsingPersistedFile() throws InterruptedException,
             IOException {
