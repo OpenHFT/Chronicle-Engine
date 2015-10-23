@@ -44,7 +44,7 @@ import static org.junit.Assert.assertNotNull;
  * Created by Rob Austin
  */
 
-public class ReplicationTestBootstrapingAfterLostConnection {
+public class ReplicationTestBootstrappingAfterLostConnection {
     public static final WireType WIRE_TYPE = WireType.TEXT;
     public static final String NAME = "/ChMaps/test";
     public static ServerEndpoint serverEndpoint1;
@@ -59,15 +59,11 @@ public class ReplicationTestBootstrapingAfterLostConnection {
         YamlLogging.clientWrites = true;
         YamlLogging.clientReads = true;
 
-        //YamlLogging.showServerWrites = true;
-
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
         ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
         //Delete any files from the last run
         Files.deleteIfExists(Paths.get(OS.TARGET, NAME));
-
         TCPRegistry.createServerSocketChannelFor("host.port1", "host.port2");
-
         WireType writeType = WireType.TEXT;
 
         tree1 = create(1, writeType, "clusterTwo");
@@ -130,16 +126,11 @@ public class ReplicationTestBootstrapingAfterLostConnection {
         assertNotNull(map1);
 
         map1.put("hello1", "world1");
-
-
         final ConcurrentMap<String, String> map2 = tree1.acquireMap(NAME, String.class, String
                 .class);
         assertNotNull(map2);
-
         map2.put("hello2", "world2");
-
         checkEqual(map1, map2, 2);
-
 
         simulateSomeonePullingOutTheNetworkCableAndPluginItBackIn();
 
@@ -189,18 +180,15 @@ public class ReplicationTestBootstrapingAfterLostConnection {
                 String
                         .class);
         assertNotNull(map1);
-
         map1.put("hello1", "world1");
 
 
         final ConcurrentMap<String, String> map2 = tree2.acquireMap(NAME, String.class, String
                 .class);
         assertNotNull(map2);
-
         map2.put("hello2", "world2");
 
         checkEqual(map1, map2, 2);
-
 
         serverEndpoint1.close();
         if (tree1 != null)
@@ -226,35 +214,33 @@ public class ReplicationTestBootstrapingAfterLostConnection {
 
 
     @Test
-    public void testCheckDataIsLoadedFromPersistredFile() throws InterruptedException,
+    public void testCheckDataIsLoadedFromPersistedFile() throws InterruptedException,
             IOException {
 
         final Path basePath = Files.createTempDirectory("");
-        {
-            ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME + "?basePath=" + basePath
-                    , String.class,
-                    String
-                            .class);
-            assertNotNull(map1);
 
-            map1.put("hello1", "world1");
-        }
-
-
-        serverEndpoint1.close();
-        if (tree1 != null)
-            tree1.close();
-        {
-
-        }
-        tree1 = create(1, WireType.TEXT, "clusterTwo");
-        serverEndpoint1 = new ServerEndpoint("host.port1", tree1, WireType.TEXT);
-        ConcurrentMap<String, String> map1a = tree1.acquireMap(NAME + "?basePath=" + basePath
+        //create the map with a single entry
+        ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME + "?basePath=" + basePath
                 , String.class,
                 String
                         .class);
+        assertNotNull(map1);
+
+        map1.put("hello1", "world1");
+
+        //close the map
+        serverEndpoint1.close();
+        tree1.close();
+
+        //recreate the map and load off the persisted file
+        tree1 = create(1, WireType.TEXT, "clusterTwo");
+        serverEndpoint1 = new ServerEndpoint("host.port1", tree1, WireType.TEXT);
+        ConcurrentMap<String, String> map1a = tree1.acquireMap(NAME + "?basePath=" + basePath
+                , String.class, String.class);
         assertNotNull(map1a);
+        Thread.sleep(100);
         Assert.assertEquals(1, map1a.size());
+
     }
 
 
@@ -265,9 +251,7 @@ public class ReplicationTestBootstrapingAfterLostConnection {
         final Path basePath = Files.createTempDirectory("");
 
         ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME + "?basePath=" + basePath
-                , String.class,
-                String
-                        .class);
+                , String.class, String.class);
         assertNotNull(map1);
 
         map1.put("hello1", "world1");
@@ -278,9 +262,7 @@ public class ReplicationTestBootstrapingAfterLostConnection {
         assertNotNull(map2);
 
         map2.put("hello2", "world2");
-
         checkEqual(map1, map2, 2);
-
 
         serverEndpoint1.close();
         if (tree1 != null)
