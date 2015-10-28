@@ -27,7 +27,7 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
     private Map<String, UserStat> monitoringMap;
     private volatile boolean hasClientClosed;
     private boolean wasHeartBeat;
-    WireParser wireParser = wireParser();
+    private final WireParser wireParser = wireParser();
 
     public boolean wasHeartBeat() {
         return wasHeartBeat;
