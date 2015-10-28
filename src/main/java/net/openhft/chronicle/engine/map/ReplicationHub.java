@@ -154,9 +154,10 @@ class ReplicationHub extends AbstractStatelessClient {
 
     /**
      * publishes changes - this method pushes the replication events
-     *  @param mi               the modification iterator that notifies us of changes
-     * @param remote           details about the remote connection
-     * @param localIdentifier  the identifier of this host or client
+     *
+     * @param mi              the modification iterator that notifies us of changes
+     * @param remote          details about the remote connection
+     * @param localIdentifier the identifier of this host or client
      */
     private void publish(@NotNull final ModificationIterator mi,
                          @NotNull final Bootstrap remote,
@@ -171,16 +172,8 @@ class ReplicationHub extends AbstractStatelessClient {
                     throw new InvalidEventHandlerException();
 
                 // publishes the replication events
-                hub.lock(() -> mi.forEach(e -> {
-
-                    sendEventAsyncWithoutLock(replicationEvent,
-                            new Consumer<ValueOut>() {
-                                @Override
-                                public void accept(ValueOut v) {
-                                    v.typedMarshallable(e);
-                                }
-                            });
-                }));
+                hub.lock(() -> mi.forEach(e -> sendEventAsyncWithoutLock(replicationEvent,
+                        (Consumer<ValueOut>) v -> v.typedMarshallable(e))));
 
                 return true;
             } catch (IORuntimeException e) {
