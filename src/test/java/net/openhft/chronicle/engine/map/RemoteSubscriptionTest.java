@@ -196,7 +196,7 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
         clientAssetTree.registerSubscriber("name", MapEvent.class, eventHandler);
         clientAssetTree.unregisterSubscriber("name", eventHandler);
 
-        final Boolean onEndOfSubscription = endSub.poll(10, SECONDS);
+        final Boolean onEndOfSubscription = endSub.poll(20, SECONDS);
 
         Assert.assertTrue(onEndOfSubscription);
     }

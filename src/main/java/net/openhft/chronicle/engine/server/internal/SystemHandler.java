@@ -80,9 +80,10 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
 
 
         if (!heartbeat.contentEquals(eventName) && !onClientClosing.contentEquals(eventName)) {
-            wasHeartBeat = true;
             return;
         }
+
+        wasHeartBeat = true;
 
         //noinspection ConstantConditions
         outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
