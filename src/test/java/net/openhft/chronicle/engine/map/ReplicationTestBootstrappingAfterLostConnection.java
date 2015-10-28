@@ -247,49 +247,11 @@ public class ReplicationTestBootstrappingAfterLostConnection {
         map2.put("hello4", "world4");
         map1.put("hello5", "world5");
 
-
         checkEqual(map1, map2, 6);
-
     }
 
 
-    @Test
-    public void testBootstrapWhenTheClientIsKilledSimple() throws InterruptedException,
-            IOException {
 
-        ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME
-                , String.class,
-                String
-                        .class);
-        assertNotNull(map1);
-
-
-        ConcurrentMap<String, String> map2 = tree2.acquireMap(NAME, String.class, String
-                .class);
-        assertNotNull(map2);
-        map2.put("hello2", "world2");
-
-        checkEqual(map1, map2, 2);
-
-        serverEndpoint2.close();
-        if (tree2 != null)
-            tree2.close();
-
-
-        tree2 = create(2, WireType.TEXT, "clusterTwo");
-        serverEndpoint2 = new ServerEndpoint("host.port2", tree2, WireType.TEXT);
-
-        map2 = tree2.acquireMap(NAME, String.class, String.class);
-
-        // given that the old map1 has been shut down this will cause and exception to be thrown
-        // and map2 will attempt a reconnect to map1
-        //  map2.put("hello4", "world4");
-        //  map1.put("hello5", "world5");
-
-
-        checkEqual(map1, map2, 6);
-
-    }
     @Test
     public void testCheckDataIsLoadedFromPersistedFile() throws InterruptedException,
             IOException {

@@ -54,7 +54,6 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
     private ServerEndpoint serverEndpoint;
 
     public RemoteSubscriptionTest(WireType wireType) {
-
         this.wireType = wireType;
     }
 
