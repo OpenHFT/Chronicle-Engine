@@ -101,7 +101,6 @@ public class ReplicationTestBootstrappingAfterLostConnection {
         tree1.root().addView(SessionDetails.class, VanillaSessionDetails.of(userId,
                 securityToken, domain));
 
-
         final SessionDetails view = tree1.root().findView(SessionDetails.class);
         Assert.assertNotNull(view);
         Assert.assertEquals(userId, view.userId());
