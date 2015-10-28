@@ -49,7 +49,7 @@ public class ReplicationTestBootstrappingAfterLostConnection {
     public static final String NAME = "/ChMaps/test";
     public static ServerEndpoint serverEndpoint1;
     public static ServerEndpoint serverEndpoint2;
-    public static ServerEndpoint serverEndpoint3;
+
     private static AssetTree tree3;
     private static AssetTree tree1;
     private static AssetTree tree2;
@@ -63,7 +63,7 @@ public class ReplicationTestBootstrappingAfterLostConnection {
         ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
         //Delete any files from the last run
         Files.deleteIfExists(Paths.get(OS.TARGET, NAME));
-        TCPRegistry.createServerSocketChannelFor("host.port1", "host.port2");
+        TCPRegistry.createServerSocketChannelFor("host.port1", "host.port2", "host.port3");
         WireType writeType = WireType.TEXT;
 
         tree1 = create(1, writeType, "clusterTwo");
@@ -214,28 +214,106 @@ public class ReplicationTestBootstrappingAfterLostConnection {
 
 
     @Test
+    public void testBootstrapWhenTheClientIsKilled() throws InterruptedException, IOException {
+
+        ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME
+                , String.class,
+                String
+                        .class);
+        assertNotNull(map1);
+        map1.put("hello1", "world1");
+
+
+        ConcurrentMap<String, String> map2 = tree2.acquireMap(NAME, String.class, String
+                .class);
+        assertNotNull(map2);
+        map2.put("hello2", "world2");
+
+        checkEqual(map1, map2, 2);
+
+        serverEndpoint2.close();
+        if (tree2 != null)
+            tree2.close();
+
+        map1.put("hello3", "world3");
+
+        tree2 = create(2, WireType.TEXT, "clusterTwo");
+        serverEndpoint2 = new ServerEndpoint("host.port2", tree2, WireType.TEXT);
+
+        map2 = tree2.acquireMap(NAME, String.class, String.class);
+
+        // given that the old map1 has been shut down this will cause and exception to be thrown
+        // and map2 will attempt a reconnect to map1
+        map2.put("hello4", "world4");
+        map1.put("hello5", "world5");
+
+
+        checkEqual(map1, map2, 6);
+
+    }
+
+
+    @Test
+    public void testBootstrapWhenTheClientIsKilledSimple() throws InterruptedException,
+            IOException {
+
+        ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME
+                , String.class,
+                String
+                        .class);
+        assertNotNull(map1);
+
+
+        ConcurrentMap<String, String> map2 = tree2.acquireMap(NAME, String.class, String
+                .class);
+        assertNotNull(map2);
+        map2.put("hello2", "world2");
+
+        checkEqual(map1, map2, 2);
+
+        serverEndpoint2.close();
+        if (tree2 != null)
+            tree2.close();
+
+
+        tree2 = create(2, WireType.TEXT, "clusterTwo");
+        serverEndpoint2 = new ServerEndpoint("host.port2", tree2, WireType.TEXT);
+
+        map2 = tree2.acquireMap(NAME, String.class, String.class);
+
+        // given that the old map1 has been shut down this will cause and exception to be thrown
+        // and map2 will attempt a reconnect to map1
+        //  map2.put("hello4", "world4");
+        //  map1.put("hello5", "world5");
+
+
+        checkEqual(map1, map2, 6);
+
+    }
+    @Test
     public void testCheckDataIsLoadedFromPersistedFile() throws InterruptedException,
             IOException {
 
-        final Path basePath = Files.createTempDirectory("");
+        final Path basePath = Files.createTempDirectory("temp");
 
         //create the map with a single entry
-        ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME + "?basePath=" + basePath
+        ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME + "unique" + "?basePath=" + basePath
                 , String.class,
                 String
                         .class);
         assertNotNull(map1);
 
         map1.put("hello1", "world1");
-
+        Thread.sleep(100);
         //close the map
         serverEndpoint1.close();
         tree1.close();
 
         //recreate the map and load off the persisted file
         tree1 = create(1, WireType.TEXT, "clusterTwo");
-        serverEndpoint1 = new ServerEndpoint("host.port1", tree1, WireType.TEXT);
-        ConcurrentMap<String, String> map1a = tree1.acquireMap(NAME + "?basePath=" + basePath
+        serverEndpoint1 = new ServerEndpoint("host.port3", tree1, WireType.TEXT);
+        ConcurrentMap<String, String> map1a = tree1.acquireMap(NAME + "unique" + "?basePath=" +
+                basePath
                 , String.class, String.class);
         assertNotNull(map1a);
         Thread.sleep(100);

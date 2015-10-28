@@ -173,9 +173,6 @@ class ReplicationHub extends AbstractStatelessClient {
                 // publishes the replication events
                 hub.lock(() -> mi.forEach(e -> {
 
-                    if (e.identifier() != localIdentifier)
-                        return;
-
                     sendEventAsyncWithoutLock(replicationEvent,
                             new Consumer<ValueOut>() {
                                 @Override
