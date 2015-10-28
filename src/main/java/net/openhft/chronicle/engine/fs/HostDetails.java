@@ -38,6 +38,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
+import static net.openhft.chronicle.network.VanillaSessionDetails.of;
+
 public class HostDetails implements Marshallable, Closeable {
     private final Map<InetSocketAddress, TcpChannelHub> tcpChannelHubs = new ConcurrentHashMap<>();
     public int hostId;
@@ -66,13 +68,15 @@ public class HostDetails implements Marshallable, Closeable {
      * @param asset          a point in the asset tree, used to fine the ClientConnectionMonitor
      * @param eventLoop      used to process events
      * @param wire           converts from bytes to wire for the type of the wire used
-     * @param sessionDetails the session details used by the TcpChannelHub
      * @return a new or existing instance of the TcpChannelHub
      */
     public TcpChannelHub acquireTcpChannelHub(@NotNull final Asset asset,
                                               @NotNull final EventLoop eventLoop,
-                                              @NotNull final Function<Bytes, Wire> wire,
-                                              @NotNull final SessionDetails sessionDetails) {
+                                              @NotNull final Function<Bytes, Wire> wire) {
+
+        @Nullable
+        final SessionDetails sessionDetails = asset.root().findView(SessionDetails.class);
+
         final InetSocketAddress addr = TCPRegistry.lookup(connectUri);
 
         return tcpChannelHubs.computeIfAbsent(addr, hostPort -> {
@@ -105,11 +109,14 @@ public class HostDetails implements Marshallable, Closeable {
                 '}';
     }
 
+    /**
+     * implements SessionProvider but always returns the same session details regardless of thread
+     */
     private class SimpleSessionProvider implements SessionProvider {
         private final SessionDetails sessionDetails;
 
-        public SimpleSessionProvider(SessionDetails sessionDetails) {
-            this.sessionDetails = sessionDetails;
+        public SimpleSessionProvider(@Nullable SessionDetails sessionDetails) {
+            this.sessionDetails = (sessionDetails == null) ? of("", "", "") : sessionDetails;
         }
 
         /**

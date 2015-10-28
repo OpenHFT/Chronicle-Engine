@@ -34,7 +34,6 @@ import net.openhft.chronicle.engine.fs.HostDetails;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.hash.replication.EngineReplicationLangBytesConsumer;
 import net.openhft.chronicle.map.*;
-import net.openhft.chronicle.network.api.session.SessionDetails;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.threads.api.EventLoop;
@@ -57,7 +56,6 @@ import java.util.function.Supplier;
 import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
 import static net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer.notifyEachEvent;
 import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplication.builder;
-import static net.openhft.chronicle.network.VanillaSessionDetails.of;
 
 public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<K, V>,
         Closeable, Supplier<EngineReplication> {
@@ -185,8 +183,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
                     LOG.debug("attempting to connect to localIdentifier=" + localIdentifier + ", " +
                             "remoteIdentifier=" + remoteIdentifier);
 
-                final SessionDetails sessionDetails = of("replicationNode", "<token>", "<domain>");
-                final TcpChannelHub tcpChannelHub = hostDetails.acquireTcpChannelHub(asset, eventLoop, context.wireType(), sessionDetails);
+                final TcpChannelHub tcpChannelHub = hostDetails.acquireTcpChannelHub(asset, eventLoop, context.wireType());
                 final ReplicationHub replicationHub = new ReplicationHub(context, tcpChannelHub, eventLoop, isClosed);
                 replicationHub.bootstrap(engineReplicator1, localIdentifier, (byte) remoteIdentifier);
             }

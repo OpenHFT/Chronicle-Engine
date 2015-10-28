@@ -141,7 +141,7 @@ class ReplicationHub extends AbstractStatelessClient {
 
                     // publishes changes - pushes the replication events
                     try {
-                        publish(mi, b, localIdentifier);
+                        publish(mi, b);
                     } catch (Exception e) {
                         LOG.error("", e);
                     }
@@ -157,11 +157,9 @@ class ReplicationHub extends AbstractStatelessClient {
      *
      * @param mi              the modification iterator that notifies us of changes
      * @param remote          details about the remote connection
-     * @param localIdentifier the identifier of this host or client
      */
     private void publish(@NotNull final ModificationIterator mi,
-                         @NotNull final Bootstrap remote,
-                         byte localIdentifier) {
+                         @NotNull final Bootstrap remote) {
 
         final TcpChannelHub hub = this.hub;
         mi.setModificationNotifier(eventLoop::unpause);
@@ -194,8 +192,7 @@ class ReplicationHub extends AbstractStatelessClient {
     private void subscribe(@NotNull final EngineReplication replication, final byte localIdentifier, final byte remoteIdentifier) {
 
         // the only has to be a temporary subscription because the onConnected() will be called upon a reconnect
-        hub.subscribe(new AbstractAsyncTemporarySubscription(hub, csp, localIdentifier,
-                "replication subscribe") {
+        hub.subscribe(new AbstractAsyncTemporarySubscription(hub, csp, localIdentifier, "replication subscribe") {
             @Override
             public void onSubscribe(@NotNull final WireOut wireOut) {
                 wireOut.writeEventName(replicationSubscribe).int8(localIdentifier).writeComment("remoteIdentifier=" + remoteIdentifier);

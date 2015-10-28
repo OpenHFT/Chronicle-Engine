@@ -17,6 +17,8 @@ import net.openhft.chronicle.engine.fs.HostDetails;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
+import net.openhft.chronicle.network.VanillaSessionDetails;
+import net.openhft.chronicle.network.api.session.SessionDetails;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
@@ -87,7 +89,25 @@ public class ReplicationTestBootstrappingAfterLostConnection {
 
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
-        // TODO TCPRegistery.assertAllServersStopped();
+    }
+
+    @Test
+    public void testCreateAndThenFindView() {
+
+        final String userId = "myUser";
+        final String securityToken = "myToken";
+        final String domain = "myDomain";
+
+        tree1.root().addView(SessionDetails.class, VanillaSessionDetails.of(userId,
+                securityToken, domain));
+
+
+        final SessionDetails view = tree1.root().findView(SessionDetails.class);
+        Assert.assertNotNull(view);
+        Assert.assertEquals(userId, view.userId());
+        Assert.assertEquals(securityToken, view.securityToken());
+        Assert.assertEquals(domain, view.domain());
+
     }
 
     @NotNull
@@ -249,7 +269,6 @@ public class ReplicationTestBootstrappingAfterLostConnection {
 
         checkEqual(map1, map2, 6);
     }
-
 
 
     @Test
