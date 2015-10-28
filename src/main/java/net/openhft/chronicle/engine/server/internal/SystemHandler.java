@@ -2,15 +2,12 @@ package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.engine.cfg.UserStat;
 import net.openhft.chronicle.network.ClientClosedProvider;
+import net.openhft.chronicle.network.SessionMode;
 import net.openhft.chronicle.network.api.session.SessionDetailsProvider;
 import net.openhft.chronicle.network.connection.CoreFields;
-import net.openhft.chronicle.wire.ValueIn;
-import net.openhft.chronicle.wire.WireIn;
-import net.openhft.chronicle.wire.WireKey;
-import net.openhft.chronicle.wire.WireOut;
+import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import net.openhft.chronicle.network.SessionMode;
 
 import java.time.LocalTime;
 import java.util.Map;
@@ -30,6 +27,7 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
     private Map<String, UserStat> monitoringMap;
     private volatile boolean hasClientClosed;
     private boolean wasHeartBeat;
+    WireParser wireParser = wireParser();
 
     public boolean wasHeartBeat() {
         return wasHeartBeat;
@@ -46,6 +44,21 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
         dataConsumer.accept(inWire, tid);
     }
 
+
+    private WireParser wireParser() {
+        final WireParser parser = new VanillaWireParser();
+        parser.register(() -> EventId.domain.toString(), v -> v.text(this, (o, x) -> o.sessionDetails.setDomain(x)));
+        parser.register(() -> EventId.sessionMode.toString(), v -> v.text(this, (o, x) -> o
+                .sessionDetails.setSessionMode(SessionMode.valueOf(x))));
+        parser.register(() -> EventId.securityToken.toString(), v -> v.text(this, (o, x) -> o
+                .sessionDetails.setSecurityToken(x)));
+        parser.register(() -> EventId.clientId.toString(), v -> v.text(this, (o, x) -> o
+                .sessionDetails.setClientId(UUID.fromString(x))));
+        parser.register(() -> "", v -> {
+        });
+        return parser;
+    }
+
     @NotNull
     private final BiConsumer<WireIn, Long> dataConsumer = (inWire, tid) -> {
         eventName.setLength(0);
@@ -53,36 +66,21 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
 
         if (EventId.userId.contentEquals(eventName)) {
             this.sessionDetails.setUserId(valueIn.text());
-            if(this.monitoringMap != null){
+            if (this.monitoringMap != null) {
                 UserStat userStat = new UserStat();
                 userStat.setLoggedIn(LocalTime.now());
                 monitoringMap.put(sessionDetails.userId(), userStat);
             }
+
+            while (inWire.bytes().readRemaining() > 0)
+                wireParser.parse(inWire);
+
             return;
         }
 
-        if (EventId.domain.contentEquals(eventName)) {
-            this.sessionDetails.setDomain(valueIn.text());
-            return;
-        }
 
-        if (EventId.sessionMode.contentEquals(eventName)) {
-            this.sessionDetails.setSessionMode(SessionMode.valueOf(valueIn.text()));
-            return;
-        }
-
-        if (EventId.securityToken.contentEquals(eventName)) {
-            this.sessionDetails.setSecurityToken(valueIn.text());
-            return;
-        }
-
-        if (!heartbeat.contentEquals(eventName) && !onClientClosing.contentEquals(eventName)){
+        if (!heartbeat.contentEquals(eventName) && !onClientClosing.contentEquals(eventName)) {
             wasHeartBeat = true;
-            return;
-        }
-
-        if (EventId.clientId.contentEquals(eventName)) {
-            this.sessionDetails.setClientId(UUID.fromString(valueIn.text()));
             return;
         }
 
