@@ -14,6 +14,7 @@ import net.openhft.chronicle.queue.ExcerptTailer;
 import net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.WireKey;
+import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -255,6 +256,11 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     @Override
     public long lastWrittenIndex() {
         return chronicleQueue.lastWrittenIndex();
+    }
+
+    @Override
+    public WireType wireType() {
+        throw new UnsupportedOperationException("todo");
     }
 
     @Override
