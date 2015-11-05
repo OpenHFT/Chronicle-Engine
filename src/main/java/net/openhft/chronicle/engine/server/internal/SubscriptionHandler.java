@@ -58,6 +58,7 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
 
         if (entrySubscriberCount.contentEquals(eventName)) {
             outWire.writeEventName(reply).int8(subscription.entrySubscriberCount());
+            return true;
         }
 
         return false;

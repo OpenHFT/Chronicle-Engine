@@ -446,4 +446,9 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
     public boolean hasClientClosed() {
         return systemHandler.hasClientClosed();
     }
+
+
+    public void close() {
+        publisher.close();
+    }
 }
