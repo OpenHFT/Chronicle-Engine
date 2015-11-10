@@ -17,13 +17,13 @@
 package net.openhft.chronicle.engine.api.management;
 
 import net.openhft.chronicle.engine.api.management.mbean.AssetTreeDynamicMBean;
-import net.openhft.chronicle.engine.api.map.MapEvent;
+import net.openhft.chronicle.engine.api.map.*;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
-import net.openhft.chronicle.engine.map.ObjectKeyValueStore;
-import net.openhft.chronicle.engine.map.ObjectSubscription;
+import net.openhft.chronicle.engine.map.*;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
+import net.openhft.chronicle.network.api.session.*;
 import net.openhft.chronicle.threads.Threads;
 import net.openhft.lang.thread.NamedThreadFactory;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +49,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by peter.lawrey on 16/06/2015.
  */
-public enum ManagementTools {
+public enum ManagementTools
+{
     ;
 
     private static final Logger LOG = LoggerFactory.getLogger(ManagementTools.class);
@@ -66,12 +67,15 @@ public enum ManagementTools {
     //number of AssetTree enabled for management.
     private static int count = 0;
 
-    public static int getCount() {
+    public static int getCount()
+    {
         return count;
     }
 
-    private static void startJMXRemoteService() throws IOException {
-        if (jmxServer == null) {
+    private static void startJMXRemoteService() throws IOException
+    {
+        if (jmxServer == null)
+        {
             mbs = ManagementFactory.getPlatformMBeanServer();
 
             // Create the RMI registry on port 9000
@@ -89,8 +93,10 @@ public enum ManagementTools {
         }
     }
 
-    private static void stopJMXRemoteService() throws IOException {
-        if (jmxServer != null) {
+    private static void stopJMXRemoteService() throws IOException
+    {
+        if (jmxServer != null)
+        {
             mbs = null;
             jmxServer.stop();
         }
@@ -102,124 +108,184 @@ public enum ManagementTools {
      *
      * @param assetTree the object of AssetTree type for enable management
      */
-    public static void enableManagement(@NotNull AssetTree assetTree) {
-        try {
+    public static void enableManagement(@NotNull AssetTree assetTree)
+    {
+        try
+        {
             startJMXRemoteService();
             count++;
-        } catch (IOException ie) {
+        }
+        catch (IOException ie)
+        {
             LOG.error("Error while enable management", ie);
         }
         registerViewofTree(assetTree);
     }
 
-    public static void enableManagement(@NotNull AssetTree assetTree, int port) {
-        try {
+    public static void enableManagement(@NotNull AssetTree assetTree, int port)
+    {
+        try
+        {
             startJMXRemoteService();
 
             count++;
-        } catch (IOException ie) {
+        }
+        catch (IOException ie)
+        {
             LOG.error("Error while enable management", ie);
         }
         registerViewofTree(assetTree);
     }
 
-    public static void disableManagement(@NotNull AssetTree assetTree) {
+    public static void disableManagement(@NotNull AssetTree assetTree)
+    {
 
         String treeName = assetTree.toString();
-        try {
+        try
+        {
             Set<ObjectName> objNames = mbs.queryNames(new ObjectName("*:type=" + treeName + ",*"), null);
             objNames.forEach((atName) -> ManagementTools.unregisterTreeWithMBean(atName));
-        } catch (MalformedObjectNameException e) {
+        }
+        catch (MalformedObjectNameException e)
+        {
             LOG.error("Error while disable management", e);
         }
         count--;
 
-        try {
-            if (count == 0) {
+        try
+        {
+            if (count == 0)
+            {
                 stopJMXRemoteService();
             }
-        } catch (IOException e) {
+        }
+        catch (IOException e)
+        {
             LOG.error("Error while stopping JMX remote service", e);
         }
     }
 
-    private static void registerViewofTree(@NotNull AssetTree tree) {
+    private static void registerViewofTree(@NotNull AssetTree tree)
+    {
         Threads.withThreadGroup(tree.root().getView(ThreadGroup.class), () -> {
             ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor(
                     new NamedThreadFactory("tree-watcher", true));
+
+
+            SessionProvider view = tree.root().findView(SessionProvider.class);
+            final SessionDetails sessionDetails = view.get();
+
+            ses.submit(()->{
+                // set the session details on the JMX thread, to the same as the server system session details.
+                final SessionProvider view0 = tree.root().findView(SessionProvider.class);
+                view0.set(sessionDetails);
+            });
+
             tree.registerSubscriber("", TopologicalEvent.class, e -> {
                         // give the collection time to be setup.
                         if (e.assetName() != null)
+                        {
                             ses.schedule(() -> handleTreeUpdate(tree, e, ses), 2000, TimeUnit.MILLISECONDS);
+                        }
                     }
             );
             return null;
         });
     }
 
-    private static void handleTreeUpdate(@NotNull AssetTree tree, @NotNull TopologicalEvent e, @NotNull ScheduledExecutorService ses) {
-        try {
+    private static void handleTreeUpdate(@NotNull AssetTree tree, @NotNull TopologicalEvent e, @NotNull ScheduledExecutorService ses)
+    {
+        try
+        {
             HostIdentifier hostIdentifier = tree.root().getView(HostIdentifier.class);
             int hostId = hostIdentifier == null ? 0 : hostIdentifier.hostId();
             String treeName = tree.toString();
-            if (e.added()) {
+            if (e.added())
+            {
                 String assetFullName = e.fullName();
                 Asset asset = tree.getAsset(assetFullName);
-                if (asset == null) {
+                if (asset == null)
+                {
                     return;
                 }
-                ObjectKeyValueStore<Object, Object> view = asset.getView(ObjectKeyValueStore.class);
-                if (view == null) {
-                    //todo keep this for future purpose
-                    return;
-                } else {
 
-                    ObjectSubscription objectSubscription = asset.getView(ObjectSubscription.class);
-                    //ObjectName atName = new ObjectName(createObjectNameUri(e.assetName(),e.name(),treeName));
+                ObjectKeyValueStore<Object, Object> view = null;
 
-                    //start Dynamic MBeans Code
-                    Map<String, String> m = new HashMap<>();
-                    m.put("size", "" + view.longSize());
-                    m.put("keyType", view.keyType().getName());
-                    m.put("valueType", view.valueType().getName());
-                    m.put("topicSubscriberCount", "" + objectSubscription.topicSubscriberCount());
-                    m.put("keySubscriberCount", "" + objectSubscription.keySubscriberCount());
-                    m.put("entrySubscriberCount", "" + objectSubscription.entrySubscriberCount());
-                    m.put("keyStoreValue", objectSubscription.getClass().getName());
-                    m.put("path", e.assetName() + "-" + e.name());
+                for (Class c : new Class[]{ObjectKeyValueStore.class, SubscriptionKeyValueStore.class})
+                {
 
-                    for (int i = 0; i < view.segments(); i++) {
-                        view.entriesFor(i, entry -> {
-                            if (entry.getValue().toString().length() > 256)
-                                m.put("~" + entry.getKey().toString(), entry.getValue().toString().substring(0, 256) + "...");
-                            else
-                                m.put("~" + entry.getKey().toString(), entry.getValue().toString());
-                        });
+                    view = (ObjectKeyValueStore) asset.getView(c);
+                    if (view != null)
+                    {
+                        break;
                     }
-                    dynamicMBean = new AssetTreeDynamicMBean(m);
-                    ObjectName atName = new ObjectName(createObjectNameUri(hostId, e.assetName(), e.name(), treeName));
-                    registerTreeWithMBean(dynamicMBean, atName);
-                    //end Dynamic MBeans Code
-
-                    tree.registerSubscriber(e.fullName(), MapEvent.class, (MapEvent me) ->
-                            ses.schedule(() -> handleAssetUpdate(view, atName, objectSubscription, e.assetName() + "-" + e.name()), 100, TimeUnit.MILLISECONDS));
-
-                    //AssetTreeJMX atBean = new AssetTreeJMX(view,objectKVSSubscription,e.assetName() + "-" + e.name(),getMapAsString(view));
-                    //registerTreeWithMBean(atBean, atName);
-
                 }
-            } else {
+
+                if (view == null)
+                {
+                    return;
+                }
+
+
+                final ObjectKeyValueStore view0 = view;
+                ObjectSubscription objectSubscription = asset.getView(ObjectSubscription.class);
+                //ObjectName atName = new ObjectName(createObjectNameUri(e.assetName(),e.name(),treeName));
+
+                //start Dynamic MBeans Code
+                Map<String, String> m = new HashMap<>();
+                m.put("size", "" + view.longSize());
+                m.put("keyType", view.keyType().getName());
+                m.put("valueType", view.valueType().getName());
+                m.put("topicSubscriberCount", "" + objectSubscription.topicSubscriberCount());
+                m.put("keySubscriberCount", "" + objectSubscription.keySubscriberCount());
+                m.put("entrySubscriberCount", "" + objectSubscription.entrySubscriberCount());
+                m.put("keyStoreValue", objectSubscription.getClass().getName());
+                m.put("path", e.assetName() + "-" + e.name());
+
+                for (int i = 0; i < view.segments(); i++)
+                {
+                    view.entriesFor(i, entry -> {
+                        if (entry.getValue().toString().length() > 256)
+                        {
+                            m.put("~" + entry.getKey().toString(), entry.getValue().toString().substring(0, 256) + "...");
+                        }
+                        else
+                        {
+                            m.put("~" + entry.getKey().toString(), entry.getValue().toString());
+                        }
+                    });
+                }
+                dynamicMBean = new AssetTreeDynamicMBean(m);
+                ObjectName atName = new ObjectName(createObjectNameUri(hostId, e.assetName(), e.name(), treeName));
+                registerTreeWithMBean(dynamicMBean, atName);
+                //end Dynamic MBeans Code
+
+                tree.registerSubscriber(e.fullName(), MapEvent.class, (MapEvent me) ->
+                        ses.schedule(() -> handleAssetUpdate(view0, atName, objectSubscription, e.assetName() + "-" + e.name()), 100, TimeUnit.MILLISECONDS));
+
+                //AssetTreeJMX atBean = new AssetTreeJMX(view,objectKVSSubscription,e.assetName() + "-" + e.name(),getMapAsString(view));
+                //registerTreeWithMBean(atBean, atName);
+
+
+            }
+            else
+            {
                 ObjectName atName = new ObjectName(createObjectNameUri(hostId, e.assetName(), e.name(), treeName));
                 unregisterTreeWithMBean(atName);
             }
-        } catch (Throwable t) {
+        }
+        catch (Throwable t)
+        {
             LOG.error("Error while handle AssetTree update", t);
         }
     }
 
-    private static void handleAssetUpdate(@NotNull ObjectKeyValueStore view, ObjectName atName, @NotNull ObjectSubscription objectSubscription, String path) {
-        try {
-            if (mbs != null && mbs.isRegistered(atName)) {
+    private static void handleAssetUpdate(@NotNull ObjectKeyValueStore view, ObjectName atName, @NotNull ObjectSubscription objectSubscription, String path)
+    {
+        try
+        {
+            if (mbs != null && mbs.isRegistered(atName))
+            {
                 /*AttributeList list = new AttributeList();
                 list.add(new Attribute("Size",view.longSize()));
                 list.add(new Attribute("Entries",getMapAsString(view)));
@@ -242,26 +308,36 @@ public enum ManagementTools {
                 m.put("path", path);
 
                 Iterator<Map.Entry> it = view.entrySetIterator();
-                for (int i = 0; i < view.longSize(); i++) {
+                for (int i = 0; i < view.longSize(); i++)
+                {
                     Map.Entry entry = it.next();
                     if (entry.getValue().toString().length() > 128)
+                    {
                         m.put("~" + entry.getKey().toString(), entry.getValue().toString().substring(0, 128) + "...");
+                    }
                     else
+                    {
                         m.put("~" + entry.getKey().toString(), entry.getValue().toString());
+                    }
                 }
                 dynamicMBean = new AssetTreeDynamicMBean(m);
                 unregisterTreeWithMBean(atName);
                 registerTreeWithMBean(dynamicMBean, atName);
                 //end Dynamic MBeans Code
             }
-        } catch (Throwable t) {
+        }
+        catch (Throwable t)
+        {
             LOG.error("Error while handle Asset update", t);
         }
     }
 
-    private static String createObjectNameUri(int hostId, @NotNull String assetName, String eventName, @NotNull String treeName) {
+    private static String createObjectNameUri(int hostId, @NotNull String assetName, String eventName, @NotNull String treeName)
+    {
         if (LOG.isDebugEnabled())
+        {
             LOG.debug("treeName=" + treeName);
+        }
         StringBuilder sb = new StringBuilder(256);
         sb.append("net.openhft.chronicle.engine:tree=");
         sb.append(hostId);
@@ -270,44 +346,59 @@ public enum ManagementTools {
         //sb.append("net.openhft.chronicle.engine.api.tree:type=AssetTree");
 
         String[] names = assetName.split("/");
-        for (int i = 1; i < names.length; i++) {
+        for (int i = 1; i < names.length; i++)
+        {
             sb.append(",side").append(i).append("=").append(names[i]);
         }
         sb.append(",name=").append(eventName);
         return sb.toString();
     }
 
-    private static void registerTreeWithMBean(AssetTreeDynamicMBean atBean, ObjectName atName) {
-        try {
-            if (mbs != null && !mbs.isRegistered(atName)) {
+    private static void registerTreeWithMBean(AssetTreeDynamicMBean atBean, ObjectName atName)
+    {
+        try
+        {
+            if (mbs != null && !mbs.isRegistered(atName))
+            {
                 mbs.registerMBean(atBean, atName);
             }
-        } catch (@NotNull InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException e) {
+        }
+        catch (@NotNull InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException e)
+        {
             LOG.error("Error register AssetTree with MBean", e);
         }
     }
 
-    private static void unregisterTreeWithMBean(ObjectName atName) {
-        try {
-            if (mbs != null && mbs.isRegistered(atName)) {
+    private static void unregisterTreeWithMBean(ObjectName atName)
+    {
+        try
+        {
+            if (mbs != null && mbs.isRegistered(atName))
+            {
                 mbs.unregisterMBean(atName);
             }
-        } catch (@NotNull InstanceNotFoundException | MBeanRegistrationException e) {
+        }
+        catch (@NotNull InstanceNotFoundException | MBeanRegistrationException e)
+        {
             LOG.error("Error unregister AssetTree with MBean", e);
         }
     }
 
-    private static String getMapAsString(@NotNull ObjectKeyValueStore view) {
+    private static String getMapAsString(@NotNull ObjectKeyValueStore view)
+    {
 
         long max = view.longSize() - 1;
         if (max == -1)
+        {
             return "{}";
+        }
 
         StringBuilder sb = new StringBuilder();
 
         Iterator<Map.Entry> it = view.entrySetIterator();
         sb.append('{');
-        for (int i = 0; ; i++) {
+        for (int i = 0; ; i++)
+        {
             Map.Entry e = it.next();
 
             String key = e.getKey().toString();
@@ -317,12 +408,18 @@ public enum ManagementTools {
             sb.append('=');
 
             if (value.length() > 128)
+            {
                 sb.append(value.substring(0, 128)).append("...");
+            }
             else
+            {
                 sb.append(value);
+            }
 
             if (i == max)
+            {
                 return sb.append('}').toString();
+            }
             sb.append(", ");
         }
     }
