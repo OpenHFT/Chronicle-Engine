@@ -62,7 +62,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
                         mi.forEach(e -> publisher.put(null, publish1 -> {
 
-                            if (e.identifier() == hostId.hostId())
+                            if (e.remoteIdentifier() == hostId.hostId())
                                 return;
 
                             hadNext.set(true);
@@ -114,8 +114,8 @@ public class ReplicationHandler<E> extends AbstractHandler {
                     final byte id = inBootstrap.identifier();
 
                     final ModificationIterator mi = replication.acquireModificationIterator(id);
-                        if (mi != null)
-                            mi.dirtyEntries(inBootstrap.lastUpdatedTime());
+                    if (mi != null)
+                        mi.dirtyEntries(inBootstrap.lastUpdatedTime());
 
                     // send bootstrap
                     final Bootstrap outBootstrap = new Bootstrap();
