@@ -1,6 +1,5 @@
 package net.openhft.chronicle.engine.server.internal;
 
-import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
@@ -37,47 +36,53 @@ public class PublisherHandler<E> extends AbstractHandler {
             final ValueIn valueIn = inWire.readEventName(eventName);
 
             if (registerSubscriber.contentEquals(eventName)) {
+                final Object key = view;
+                final Subscriber listener = message ->
+                        publisher.put(key, publish -> {
 
-                final Subscriber listener = new Subscriber() {
-
-                    @Override
-                    public void onMessage(final Object message) throws InvalidSubscriberException {
-                        publisher.put(null, publish -> {
                             publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
                                     (inputTid));
                             publish.writeNotReadyDocument(false, wire -> wire.writeEventName(reply)
                                     .marshallable(m -> m.write(Params.message).object(message)));
                         });
-                    }
-
-                };
 
                 // TODO CE-101 get the true value from the CSP
                 boolean bootstrap = true;
+
                 valueIn.marshallable(m -> view.registerSubscriber(bootstrap,
                         requestContext.throttlePeriodMs(),
                         listener));
                 return;
             }
 
-            outWire.writeDocument(true, wire -> outWire.writeEventName(tid).int64(inputTid));
+            outWire.writeDocument(true, wire -> outWire.writeEventName(tid).
 
-            writeData(inWire.bytes(), out -> {
+                            int64(inputTid)
 
-                if (publish.contentEquals(eventName)) {
+            );
 
-                    valueIn.marshallable(wire -> {
-                        final Params[] params = publish.params();
+            writeData(inWire.bytes(), out
 
-                        final E message = wireToE.apply(wire.read(params[1]));
+                            ->
 
-                        nullCheck(message);
-                        view.publish(message);
-                    });
+                    {
 
-                }
+                        if (publish.contentEquals(eventName)) {
 
-            });
+                            valueIn.marshallable(wire -> {
+                                final Params[] params = publish.params();
+
+                                final E message = wireToE.apply(wire.read(params[1]));
+
+                                nullCheck(message);
+                                view.publish(message);
+                            });
+
+                        }
+
+                    }
+
+            );
         }
     };
 

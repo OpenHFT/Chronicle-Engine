@@ -162,7 +162,6 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
             };
 
             final Object key = (e instanceof MapEvent) ? ((MapEvent) e).getKey() : e;
-
             publisher.put(key, event);
 
         }

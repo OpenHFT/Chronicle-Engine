@@ -64,7 +64,6 @@ public class MapReference<E> implements Reference<E> {
     @Override
     public void registerSubscriber(boolean bootstrap, int throttlePeriodMs, Subscriber<E> subscriber) throws AssetNotFoundException {
 
-
         underlyingMap.asset().acquireAsset(name)
                 .subscription(true)
                 .registerSubscriber(requestContext()
@@ -98,5 +97,14 @@ public class MapReference<E> implements Reference<E> {
     @Override
     public Class getType() {
         return eClass;
+    }
+
+
+    @Override
+    public String toString() {
+        return "MapReference{" +
+                "name='" + name + '\'' +
+                ", eClass=" + eClass +
+                '}';
     }
 }

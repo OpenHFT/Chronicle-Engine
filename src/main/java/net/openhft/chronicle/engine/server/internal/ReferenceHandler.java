@@ -65,10 +65,11 @@ public class ReferenceHandler<E, T> extends AbstractHandler {
 
             if (registerSubscriber.contentEquals(eventName)) {
 
+                final Reference<E> key = view;
                 final Subscriber listener = new Subscriber() {
                     @Override
                     public void onMessage(final Object message) throws InvalidSubscriberException {
-                        publisher.put("", publish -> {
+                        publisher.put(key, publish -> {
                             publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
                                     (inputTid));
                             publish.writeNotReadyDocument(false, wire -> wire.writeEventName(reply)
@@ -78,7 +79,7 @@ public class ReferenceHandler<E, T> extends AbstractHandler {
 
                     public void onEndOfSubscription() {
                         if (!publisher.isClosed()) {
-                            publisher.put("", publish -> {
+                            publisher.put(null, publish -> {
                                 publish.writeDocument(true, wire ->
                                         wire.writeEventName(tid).int64(inputTid));
                                 publish.writeDocument(false, wire ->
