@@ -32,6 +32,8 @@ public class ReferenceHandler<E, T> extends AbstractHandler {
     private Reference<E> view;
     private StringBuilder csp;
     private BiConsumer<ValueOut, E> vToWire;
+
+
     @Nullable
     private final BiConsumer<WireIn, Long> dataConsumer = new BiConsumer<WireIn, Long>() {
 
@@ -109,6 +111,7 @@ public class ReferenceHandler<E, T> extends AbstractHandler {
                 return;
             }
 
+
             outWire.writeDocument(true, wire -> outWire.writeEventName(tid).int64(inputTid));
 
             writeData(inWire.bytes(), out -> {
@@ -156,6 +159,12 @@ public class ReferenceHandler<E, T> extends AbstractHandler {
         }
     };
 
+
+    @Override
+    protected void unregisterAll() {
+        tidToListener.forEach((k, listener) -> view.unregisterSubscriber((Subscriber) listener));
+        tidToListener.clear();
+    }
 
     void process(@NotNull final WireIn inWire,
                  final RequestContext requestContext,

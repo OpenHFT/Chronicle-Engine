@@ -22,4 +22,7 @@ package net.openhft.chronicle.engine.api.pubsub;
  * Created by peter on 02/06/15.
  */
 public class InvalidSubscriberException extends Exception {
+
+    public InvalidSubscriberException() {
+    }
 }

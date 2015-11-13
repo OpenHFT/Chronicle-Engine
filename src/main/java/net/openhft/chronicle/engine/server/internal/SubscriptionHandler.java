@@ -31,7 +31,6 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
     final StringBuilder eventName = new StringBuilder();
     final Map<Long, Object> tidToListener = new ConcurrentHashMap<>();
 
-
     Wire outWire;
     T subscription;
     WireOutPublisher publisher;
@@ -110,6 +109,15 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
             return true;
         }
         return false;
+    }
+
+    @Override
+    protected void unregisterAll() {
+
+        tidToListener.forEach((k, listener) -> {
+            assetTree.unregisterSubscriber(requestContext.fullName(), (Subscriber<Object>) listener);
+        });
+        tidToListener.clear();
     }
 
     public enum SubscriptionEventID implements ParameterizeWireKey {

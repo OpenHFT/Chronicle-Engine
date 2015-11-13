@@ -23,6 +23,16 @@ import static net.openhft.chronicle.network.connection.CoreFields.tid;
 public class ObjectKVSubscriptionHandler extends SubscriptionHandler<SubscriptionCollection> {
     private static final Logger LOG = LoggerFactory.getLogger(ObjectKVSubscriptionHandler.class);
 
+
+    @Override
+    protected void unregisterAll() {
+
+        tidToListener.forEach((k, listener) -> {
+            assetTree.unregisterTopicSubscriber(requestContext.fullName(), (TopicSubscriber) listener);
+        });
+        tidToListener.clear();
+    }
+
     @NotNull
     private final BiConsumer<WireIn, Long> dataConsumer = (inWire, inputTid) -> {
 
@@ -40,17 +50,16 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscriptio
 
                 @Override
                 public void onMessage(final Object topic, final Object message) {
-                    assert !subscriptionEnded : "we received this message after the " +
-                            "subscription has ended " + message;
-                    WriteMarshallable toPublish = publish -> {
+
+                    publisher.put(topic, publish -> {
                         publish.writeDocument(true, wire -> wire.writeEventName(tid).int64(inputTid));
                         publish.writeNotReadyDocument(false, wire -> wire.writeEventName(reply)
                                 .marshallable(m -> {
                                     m.write(() -> "topic").object(topic);
                                     m.write(() -> "message").object(message);
                                 }));
-                    };
-                    publisher.put(topic, toPublish);
+                    });
+
                 }
 
                 public void onEndOfSubscription() {
@@ -112,7 +121,6 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscriptio
         });
 
     };
-
 
 
     void process(@NotNull final WireIn inWire,

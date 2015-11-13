@@ -449,6 +449,7 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
 
 
     public void close() {
+        onEndOfConnection(false);
         publisher.close();
     }
 }

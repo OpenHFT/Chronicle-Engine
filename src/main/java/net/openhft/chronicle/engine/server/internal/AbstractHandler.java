@@ -19,7 +19,7 @@ import static net.openhft.chronicle.wire.WriteMarshallable.EMPTY;
 /**
  * Created by Rob Austin
  */
-class AbstractHandler {
+abstract class AbstractHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractHandler.class);
     @Nullable
@@ -74,8 +74,19 @@ class AbstractHandler {
             }
     }
 
+    /**
+     * called when the connection is closed
+     */
     public void onEndOfConnection(boolean heartbeatTimeOut) {
         connectionClosed = true;
+        unregisterAll();
+    }
+
+    /**
+     * called when the connection is closed
+     */
+    protected void unregisterAll() {
+
     }
 
     /**
