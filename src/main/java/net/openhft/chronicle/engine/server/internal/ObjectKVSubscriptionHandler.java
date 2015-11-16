@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.server.internal;
 
+import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionCollection;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
@@ -20,7 +21,7 @@ import static net.openhft.chronicle.network.connection.CoreFields.tid;
 /**
  * Created by Rob Austin
  */
-public class ObjectKVSubscriptionHandler extends SubscriptionHandler<SubscriptionCollection> {
+public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<SubscriptionCollection> {
     private static final Logger LOG = LoggerFactory.getLogger(ObjectKVSubscriptionHandler.class);
 
 
@@ -28,7 +29,10 @@ public class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subscriptio
     protected void unregisterAll() {
 
         tidToListener.forEach((k, listener) -> {
-            assetTree.unregisterTopicSubscriber(requestContext.fullName(), (TopicSubscriber) listener);
+            if (listener instanceof TopicSubscriber)
+                assetTree.unregisterTopicSubscriber(requestContext.fullName(), (TopicSubscriber) listener);
+            else
+                assetTree.unregisterSubscriber(requestContext.fullName(), (Subscriber) listener);
         });
         tidToListener.clear();
     }
