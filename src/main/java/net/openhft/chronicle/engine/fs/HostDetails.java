@@ -25,6 +25,7 @@ import net.openhft.chronicle.network.api.session.SessionProvider;
 import net.openhft.chronicle.network.connection.ClientConnectionMonitor;
 import net.openhft.chronicle.network.connection.SocketAddressSupplier;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
+import net.openhft.chronicle.threads.HandlerPriority;
 import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.Wire;
@@ -65,9 +66,9 @@ public class HostDetails implements Marshallable, Closeable {
 
 
     /**
-     * @param asset          a point in the asset tree, used to fine the ClientConnectionMonitor
-     * @param eventLoop      used to process events
-     * @param wire           converts from bytes to wire for the type of the wire used
+     * @param asset     a point in the asset tree, used to fine the ClientConnectionMonitor
+     * @param eventLoop used to process events
+     * @param wire      converts from bytes to wire for the type of the wire used
      * @return a new or existing instance of the TcpChannelHub
      */
     public TcpChannelHub acquireTcpChannelHub(@NotNull final Asset asset,
@@ -84,7 +85,7 @@ public class HostDetails implements Marshallable, Closeable {
             final SocketAddressSupplier socketAddressSupplier = new SocketAddressSupplier(connectURIs, "hostId=" + hostId + ",connectUri=" + connectUri);
             final ClientConnectionMonitor clientConnectionMonitor = asset.findView(ClientConnectionMonitor.class);
             return new TcpChannelHub(new SimpleSessionProvider(sessionDetails), eventLoop, wire, "hostId=" + hostId + ",connectUri=" + connectUri,
-                    socketAddressSupplier, true, clientConnectionMonitor);
+                    socketAddressSupplier, true, clientConnectionMonitor, HandlerPriority.REPLICATION);
         });
     }
 

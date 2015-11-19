@@ -45,6 +45,7 @@ import net.openhft.chronicle.network.connection.ClientConnectionMonitor;
 import net.openhft.chronicle.network.connection.SocketAddressSupplier;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.EventGroup;
+import net.openhft.chronicle.threads.HandlerPriority;
 import net.openhft.chronicle.threads.Threads;
 import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.wire.Marshallable;
@@ -207,7 +208,7 @@ public class VanillaAsset implements Asset, Closeable {
 
             TcpChannelHub view = Threads.withThreadGroup(findView(ThreadGroup.class),
                     () -> new TcpChannelHub(sessionProvider, eventLoop, wire, name,
-                            socketAddressSupplier, true, clientConnectionMonitor));
+                            socketAddressSupplier, true, clientConnectionMonitor, HandlerPriority.MONITOR));
             addView(TcpChannelHub.class, view);
         }
 
