@@ -135,17 +135,16 @@ public class ReplicationTest2Way {
         for (int i = 1; i <= 50; i++) {
             if (map1.size() == 2 && map2.size() == 2)
                 break;
-            Jvm.pause(200);
+            Jvm.pause(300);
         }
 
         for (Map m : new Map[]{map1, map2}) {
             Assert.assertEquals("world1", m.get("hello1"));
             Assert.assertEquals("world2", m.get("hello2"));
-
             Assert.assertEquals(2, m.size());
         }
 
-    }
 
+    }
 }
 

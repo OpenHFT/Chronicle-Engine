@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.bytes.ConnectionDroppedException;
 import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
@@ -27,6 +28,8 @@ import net.openhft.chronicle.network.connection.AbstractAsyncSubscription;
 import net.openhft.chronicle.network.connection.AbstractAsyncTemporarySubscription;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
+import net.openhft.chronicle.threads.HandlerPriority;
+import net.openhft.chronicle.threads.api.EventHandler;
 import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.threads.api.InvalidEventHandlerException;
 import net.openhft.chronicle.wire.ValueOut;
@@ -50,7 +53,10 @@ class ReplicationHub extends AbstractStatelessClient {
     private final EventLoop eventLoop;
     private final AtomicBoolean isClosed;
 
-    public ReplicationHub(@NotNull RequestContext context, @NotNull final TcpChannelHub hub, EventLoop eventLoop, AtomicBoolean isClosed) {
+    public ReplicationHub(@NotNull RequestContext context,
+                          @NotNull final TcpChannelHub hub,
+                          @NotNull EventLoop eventLoop,
+                          @NotNull AtomicBoolean isClosed) {
         super(hub, (long) 0, toUri(context));
 
         this.eventLoop = eventLoop;
@@ -155,8 +161,8 @@ class ReplicationHub extends AbstractStatelessClient {
     /**
      * publishes changes - this method pushes the replication events
      *
-     * @param mi              the modification iterator that notifies us of changes
-     * @param remote          details about the remote connection
+     * @param mi     the modification iterator that notifies us of changes
+     * @param remote details about the remote connection
      */
     private void publish(@NotNull final ModificationIterator mi,
                          @NotNull final Bootstrap remote) {
@@ -164,20 +170,31 @@ class ReplicationHub extends AbstractStatelessClient {
         final TcpChannelHub hub = this.hub;
         mi.setModificationNotifier(eventLoop::unpause);
 
-        eventLoop.addHandler(() -> {
-            try {
-                if (isClosed.get())
+        eventLoop.addHandler(new EventHandler() {
+
+            @Override
+            public boolean action() throws InvalidEventHandlerException {
+                try {
+                    if (ReplicationHub.this.isClosed.get())
+                        throw new InvalidEventHandlerException();
+
+                    // publishes the replication events
+                    hub.lock(() -> mi.forEach(e -> ReplicationHub.this.sendEventAsyncWithoutLock(replicationEvent,
+                            (Consumer<ValueOut>) v -> v.typedMarshallable(e))));
+
+                    return true;
+                } catch (ConnectionDroppedException e) {
                     throw new InvalidEventHandlerException();
-
-                // publishes the replication events
-                hub.lock(() -> mi.forEach(e -> sendEventAsyncWithoutLock(replicationEvent,
-                        (Consumer<ValueOut>) v -> v.typedMarshallable(e))));
-
-                return true;
-            } catch (IORuntimeException e) {
-                LOG.error(e.getMessage());
-                throw new InvalidEventHandlerException();
+                } catch (IORuntimeException e) {
+                    LOG.error(e.getMessage());
+                    throw new InvalidEventHandlerException();
+                }
             }
+
+            public HandlerPriority priority() {
+                return HandlerPriority.REPLICATION;
+            }
+
         });
 
         mi.dirtyEntries(remote.lastUpdatedTime());
