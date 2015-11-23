@@ -67,6 +67,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     }
 
     @Test
+    @Ignore
     public void testMarshablePublishToATopic() throws InterruptedException {
         String uri = "/queue/" + name;
         Publisher<MyMarshallable> publisher = acquirePublisher(uri, MyMarshallable.class);
@@ -78,6 +79,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     }
 
     @Test
+    @Ignore
     public void testStringPublishToATopic() throws InterruptedException {
         String uri = "/queue/" + name;
         acquireQueue(uri, String.class, String.class);
@@ -91,6 +93,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
 
     @Test
+    @Ignore
     public void testStringPublishToAKeyTopic() throws InterruptedException {
         String uri = "/queue/" + name + "/key";
         acquireQueue("/queue/" + name, String.class, String.class);
@@ -104,6 +107,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
 
     @Test
+    @Ignore
     public void testStringPublishToAKeyTopicNotForMe() throws InterruptedException {
         String uri = "/queue/" + name + "/key";
         acquireQueue("/queue/" + name, String.class, String.class);
@@ -117,6 +121,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
 
     @Test
+    @Ignore
     public void testStringTopicPublisherString() throws InterruptedException {
         String uri = "/queue/" + name;
         String messageType = "topic";
@@ -130,6 +135,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
 
     @Test
+    @Ignore
     public void testStringTopicPublisherWithSubscribe() throws InterruptedException {
         String uri = "/queue/" + name;
         String messageType = "topic";
@@ -147,6 +153,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
 
     @Test
+    @Ignore
     public void testStringPublishWithTopicSubscribe() throws InterruptedException {
         String uri = "/queue/" + name;
         String messageType = "topic";

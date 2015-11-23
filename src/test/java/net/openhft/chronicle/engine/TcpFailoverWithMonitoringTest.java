@@ -163,7 +163,7 @@ public class TcpFailoverWithMonitoringTest {
         final MapView<String, String> map1 = serverAssetTree1.acquireMap(NAME, String.class,
                 String.class);
 
-        Assert.assertEquals("connected " + toString(connection1), activity.poll(2, SECONDS));
+        Assert.assertEquals("connected " + toString(connection1), activity.poll(5, SECONDS));
 
         final MapView<String, String> map2 = serverAssetTree2.acquireMap(NAME, String.class,
                 String.class);
@@ -176,7 +176,7 @@ public class TcpFailoverWithMonitoringTest {
         // we are now going to shut down server 1
         serverAssetTree1.close();
 
-        Assert.assertEquals("disconnected " + toString(connection1), activity.poll(2, SECONDS));
+        Assert.assertEquals("disconnected " + toString(connection1), activity.poll(4, SECONDS));
 
 
         Assert.assertEquals("connected " + toString(connection2), activity.poll(4, SECONDS));
