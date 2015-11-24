@@ -1,35 +1,16 @@
-cluster: {
-  host1: {
-     hostId: 1,
-     tcpBufferSize: 65536,
-     connectUri: host.port1,
-     timeoutMs: 1000,
-  },
-  host2: {
-     hostId: 2,
-     tcpBufferSize: 65536,
-     connectUri: host.port2,
-     timeoutMs: 1000,
-  },
-   host3: {
-       hostId: 3,
-       tcpBufferSize: 65536,
-       connectUri: host.port3,
-       timeoutMs: 1000,
-    }
-}
+
 clusterTwo: {
   host1: {
      hostId: 1,
      tcpBufferSize: 65536,
-     connectUri: host.port1,
+     connectUri: localhost:8081,
      timeoutMs: 1000,
   },
   host2: {
      hostId: 2,
      tcpBufferSize: 65536,
-        connectUri: host.port2,
+     connectUri: localhost:8082,
      timeoutMs: 1000,
-  },
+  }
 
 }
