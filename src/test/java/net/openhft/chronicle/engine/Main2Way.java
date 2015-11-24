@@ -22,6 +22,7 @@ import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -116,6 +117,7 @@ public class Main2Way {
         return new File(path).getParentFile().getParentFile() + "/src/test/resources";
     }
 
+    @Ignore
     @Test
     public void test() throws InterruptedException {
 
