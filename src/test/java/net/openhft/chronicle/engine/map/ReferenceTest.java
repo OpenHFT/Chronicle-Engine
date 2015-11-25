@@ -157,7 +157,6 @@ public class ReferenceTest {
         };
 
         assetTree.registerSubscriber("group/subject?bootstrap=true", String.class, subscriber);
-
         lacth1.await(20, TimeUnit.SECONDS);
         assertEquals("sport", events.get(0));//bootstrap
 
