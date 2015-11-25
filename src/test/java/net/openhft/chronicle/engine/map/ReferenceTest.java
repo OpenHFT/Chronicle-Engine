@@ -14,13 +14,18 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.openhft.chronicle.engine.Utils.methodName;
@@ -129,7 +134,7 @@ public class ReferenceTest {
     }
 
     @Test
-    public void testReferenceSubscriptions() {
+    public void testReferenceSubscriptions() throws InterruptedException {
         Map map = assetTree.acquireMap("group", String.class, String.class);
 
         map.put("subject", "cs");
@@ -139,19 +144,29 @@ public class ReferenceTest {
         ref.set("sport");
         assertEquals("sport", map.get("subject"));
         assertEquals("sport", ref.get());
+        CountDownLatch lacth1 = new CountDownLatch(1);
 
+        CountDownLatch lacth2 = new CountDownLatch(2);
+        CountDownLatch lacth3 = new CountDownLatch(3);
         List<String> events = new ArrayList<>();
         Subscriber<String> subscriber = s -> {
             events.add(s);
+            lacth1.countDown();
+            lacth2.countDown();
+            lacth3.countDown();
         };
+
         assetTree.registerSubscriber("group/subject?bootstrap=true", String.class, subscriber);
 
-        ref.set("maths");
-        ref.set("cs");
-
-        Jvm.pause(200);
+        lacth1.await(20, TimeUnit.SECONDS);
         assertEquals("sport", events.get(0));//bootstrap
+
+        ref.set("maths");
+        lacth2.await(20, TimeUnit.SECONDS);
         assertEquals("maths", events.get(1));
+
+        ref.set("cs");
+        lacth3.await(20, TimeUnit.SECONDS);
         assertEquals("cs", events.get(2));
     }
 
