@@ -13,7 +13,8 @@ import org.junit.Test;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class RestartClosedPublisherTest {
     public static final WireType WIRE_TYPE = WireType.TEXT;
@@ -64,11 +65,13 @@ public class RestartClosedPublisherTest {
         String keySubUri = _testMapUri + "/" + testKey + "?bootstrap=false";
         Map<String, String> map = _remote.acquireMap(_testMapUri, String.class, String.class);
         map.size();
-        _remote.registerSubscriber(keySubUri + "?bootstrap=false", String.class, eventQueue::add);
+        _remote.registerSubscriber(keySubUri + "?bootstrap=false", String.class, (e) -> eventQueue.add(e));
+
+        // wait for the subscription to be read by the server
+        Thread.sleep(100);
 
         map.put(testKey, value);
-
-        Assert.assertEquals(value, eventQueue.poll(200, TimeUnit.MILLISECONDS));
+        Assert.assertEquals(value, eventQueue.poll(20, SECONDS));
         String getValue = map.get(testKey);
         Assert.assertEquals(value, getValue);
     }
