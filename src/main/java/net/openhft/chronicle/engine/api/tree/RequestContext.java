@@ -188,6 +188,9 @@ public class RequestContext implements Cloneable {
         parser.register(() -> "endSubscriptionAfterBootstrap", v -> v.bool(this, (o, x) -> o.endSubscriptionAfterBootstrap = x));
         parser.register(() -> "throttlePeriodMs", v -> v.int32(this, (o, x) -> o.throttlePeriodMs = x));
 
+        parser.register(() -> "entries", v -> v.int64(this, (o, x) -> o.entries = x));
+        parser.register(() -> "averageValueSize", v -> v.int64(this, (o, x) -> o.averageValueSize = x));
+
         parser.register(WireParser.DEFAULT, ValueIn.DISCARD);
         return parser;
     }

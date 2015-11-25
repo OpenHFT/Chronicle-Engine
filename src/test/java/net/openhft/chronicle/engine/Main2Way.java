@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 
@@ -38,7 +39,7 @@ import java.util.function.Function;
 
 public class Main2Way {
     public static final WireType WIRE_TYPE = WireType.TEXT;
-    public static final String NAME = "/ChMaps/test";
+    public static final String NAME = "/ChMaps/test?entries=50&averageValueSize=" + (2 << 20);
     public static ServerEndpoint serverEndpoint1;
     public static ServerEndpoint serverEndpoint2;
 
@@ -121,6 +122,10 @@ public class Main2Way {
     @Test
     public void test() throws InterruptedException {
 
+        YamlLogging.setAll(false);
+        char[] chars = new char[1048576 * 2];
+        Arrays.fill(chars, 'X');
+        String data = new String(chars);
 
         final ConcurrentMap<String, String> map;
         final String type = System.getProperty("server", "one");
@@ -131,10 +136,14 @@ public class Main2Way {
         }
 
 
-        map.put(type, type);
+    //    entries(50).averageValueSize(2 << 20)
+
+        for (int i = 0; i < 50; i++) {
+            map.put("key" + i, data);
+        }
+
 
         for (; ; ) {
-            System.out.println(map.entrySet().toString());
             Thread.sleep(5000);
         }
 
