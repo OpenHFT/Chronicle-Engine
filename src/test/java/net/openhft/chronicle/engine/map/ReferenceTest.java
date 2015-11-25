@@ -196,16 +196,21 @@ public class ReferenceTest {
         assertNotNull(child);
         SubscriptionCollection subscription = child.subscription(false);
 
+        while (subscription.subscriberCount() == 0) {
+
+        }
+
+
         assertEquals(1, subscription.subscriberCount());
 
-        map.put("subject", "cs");
-        map.put("subject", "maths");
 
         assetTree.unregisterSubscriber("group" + "/" + "subject", keyEventSubscriber);
+
+        while (subscription.subscriberCount() != 0) {
+
+        }
         assertEquals(0, subscription.subscriberCount());
-        assertEquals("cs", events.get(0));
-        assertEquals("maths", events.get(1));
-        assertEquals("END", events.get(2));
+
 
     }
 
