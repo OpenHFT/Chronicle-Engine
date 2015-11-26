@@ -178,14 +178,28 @@ class ReplicationHub extends AbstractStatelessClient {
                     if (ReplicationHub.this.isClosed.get())
                         throw new InvalidEventHandlerException();
 
-                    // publishes the replication events
-                    hub.lock(() -> mi.forEach(e -> ReplicationHub.this.sendEventAsyncWithoutLock(replicationEvent,
-                            (Consumer<ValueOut>) v -> v.typedMarshallable(e))));
+                    // publishes single events to free up the event loop, we used to publish all the
+                    // changes but this can lead to this iterator never completing if updates are
+                    // coming in from end users that touch these entries
+                    // the code used to be this
+                    //  hub.lock(() -> mi.forEach(e -> ReplicationHub.this.sendEventAsyncWithoutLock
+                    //         (replicationEvent, (Consumer<ValueOut>) v -> v.typedMarshallable(e)
+                    // )));
+
+                    mi.nextEntry(e -> {
+                        ReplicationHub.this.sendEventAsync(replicationEvent,
+                                (Consumer<ValueOut>) v -> v.typedMarshallable(e), false);
+                    });
+
 
                     return true;
                 } catch (ConnectionDroppedException e) {
                     throw new InvalidEventHandlerException();
-                } catch (IORuntimeException e) {
+                } catch (
+                        IORuntimeException e
+                        )
+
+                {
                     LOG.error(e.getMessage());
                     throw new InvalidEventHandlerException();
                 }

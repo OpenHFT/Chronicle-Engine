@@ -148,7 +148,15 @@ public class CMap2EngineReplicator implements EngineReplication,
                 return instance.hasNext();
             }
 
-            private boolean nextEntry(@NotNull final EntryCallback callback) {
+            public boolean nextEntry(@NotNull Consumer<ReplicationEntry> consumer) {
+                return nextEntry(entry -> {
+                    consumer.accept(entry);
+                    return true;
+                });
+            }
+
+
+            boolean nextEntry(@NotNull final EntryCallback callback) {
                 return instance.nextEntry((key, value, timestamp,
                                            identifier, isDeleted,
                                            bootStrapTimeStamp) ->

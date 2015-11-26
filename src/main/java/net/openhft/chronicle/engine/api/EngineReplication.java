@@ -105,6 +105,12 @@ public interface EngineReplication extends Replication {
         boolean hasNext();
 
         /**
+         * @param consumer gets called with the next entry
+         * @return {@code true} if the entry was read
+         */
+        boolean nextEntry(Consumer<ReplicationEntry> consumer);
+
+        /**
          * Dirties all entries with a modification time equal to {@code fromTimeStamp} or newer. It
          * means all these entries will be considered as "new" by this ModificationIterator and
          * iterated once again no matter if they have already been.  <p>This functionality is used

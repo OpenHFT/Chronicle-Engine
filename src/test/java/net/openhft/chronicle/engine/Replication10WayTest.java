@@ -51,7 +51,7 @@ import static org.junit.Assert.assertNotNull;
  * Created by Rob Austin
  */
 @RunWith(Parameterized.class)
-public class ReplicationTest10Way {
+public class Replication10WayTest {
 
     public static final int MAX = 10;
     public static final String CLUSTER_NAME = "max-cluster";
@@ -60,7 +60,7 @@ public class ReplicationTest10Way {
     public ServerEndpoint[] serverEndpoints = new ServerEndpoint[MAX];
     private AssetTree trees[] = new AssetTree[MAX];
 
-    public ReplicationTest10Way() {
+    public Replication10WayTest() {
     }
 
     @Parameterized.Parameters

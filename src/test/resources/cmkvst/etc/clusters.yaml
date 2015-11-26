@@ -1,4 +1,17 @@
-
+cluster: {
+  host1: {
+     hostId: 1,
+     tcpBufferSize: 65536,
+     connectUri: host.port1,
+     timeoutMs: 1000,
+  },
+  host2: {
+     hostId: 2,
+     tcpBufferSize: 65536,
+     connectUri: host.port2,
+     timeoutMs: 1000,
+  }
+}
 clusterTwo: {
   host1: {
      hostId: 1,
@@ -9,8 +22,7 @@ clusterTwo: {
   host2: {
      hostId: 2,
      tcpBufferSize: 65536,
-        connectUri: host.port2,
+     connectUri: host.port2,
      timeoutMs: 1000,
   }
-
 }

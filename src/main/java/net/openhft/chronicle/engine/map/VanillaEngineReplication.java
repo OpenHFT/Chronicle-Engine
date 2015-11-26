@@ -544,6 +544,45 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
             }
         }
 
+
+        @Override
+        public boolean nextEntry(Consumer<ReplicationEntry> consumer) {
+            boolean itemRead = false;
+            Instances i = threadLocalInstances.get();
+            for (KeyValueStore<BytesStore, ReplicationData> keyReplicationData :
+                    VanillaEngineReplication.this.keyReplicationData) {
+                final Iterator<BytesStore> keySetIterator = keyReplicationData.keySetIterator();
+                if (!keySetIterator.hasNext())
+                    continue;
+                BytesStore key = keySetIterator.next();
+                i.usingData = keyReplicationData.getUsing(key, i.usingData);
+                if (isChanged(i.usingData, identifier)) {
+                    this.key = key;
+                    this.replicationData = i.usingData;
+                    try {
+                        consumer.accept(this);
+                        i.newData.copyFrom(i.usingData);
+                        clearChange(i.newData, identifier);
+                        if (!keyReplicationData.replaceIfEqual(key, i.usingData, i.newData))
+                            throw new AssertionError();
+                        itemRead = true;
+                        break;
+                    } finally {
+                        this.key = null;
+                        this.replicationData = null;
+                    }
+                }
+
+            }
+            if (forEachEntryCount == 0) {
+                modificationIteratorsRequiringSettingBootstrapTimestamp.set(identifier);
+                resetNextBootstrapTimestamp(identifier);
+            }
+
+            return itemRead;
+        }
+
+
         @Override
         public boolean hasNext() {
             Instances i = threadLocalInstances.get();

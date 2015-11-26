@@ -26,10 +26,7 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -47,7 +44,7 @@ import java.util.concurrent.*;
  */
 
 @RunWith(Parameterized.class)
-public class BootStrapTests {
+public class BootStrapTest {
 
     public static final WireType WIRE_TYPE = WireType.TEXT;
     private static final String NAME = "test";
@@ -58,7 +55,7 @@ public class BootStrapTests {
     private VanillaAssetTree serverAssetTree1;
     private ServerEndpoint serverEndpoint1;
 
-    public BootStrapTests() {
+    public BootStrapTest() {
     }
 
     @Parameterized.Parameters
@@ -107,6 +104,7 @@ public class BootStrapTests {
      * @throws InterruptedException
      */
     @Test
+    @Ignore("todo rob to fix")
     public void nonBootstrappingTest() throws IOException, InterruptedException {
 
         try {
@@ -150,6 +148,7 @@ public class BootStrapTests {
      * @throws InterruptedException
      */
     @Test
+    @Ignore("todo rob to fix")
     public void bootstrappingTest() throws IOException, InterruptedException {
 
         try {
@@ -171,13 +170,13 @@ public class BootStrapTests {
 
             {
                 map2 = client2.acquireMap(NAME, String.class, String.class);
-                Queue q2 = new ConcurrentLinkedQueue();
+                BlockingQueue q2 = new ArrayBlockingQueue(100);
                 client2.registerSubscriber(NAME + "?bootstrap=false", MapEvent.class, q2::add);
 
                 map2.put("hello", "world2");
                 // shutting server1 down should cause the failover client to connect to server 2
                 Assert.assertEquals("world2", map2.get("hello"));
-                final String poll = q2.poll().toString();
+                final String poll = q2.poll(10, TimeUnit.SECONDS).toString();
                 Assert.assertEquals("UpdatedEvent{assetName='/test', key=hello, oldValue=world1, value=world2, isReplicationEvent=false}", poll);
             }
 

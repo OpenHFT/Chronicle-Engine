@@ -40,7 +40,7 @@ import static org.junit.Assert.assertNotNull;
  * Created by Rob Austin
  */
 
-public class ReplicationTest2Way {
+public class Replication2WayTest {
     public static final WireType WIRE_TYPE = WireType.TEXT;
     public static final String NAME = "/ChMaps/test";
     public static ServerEndpoint serverEndpoint1;
