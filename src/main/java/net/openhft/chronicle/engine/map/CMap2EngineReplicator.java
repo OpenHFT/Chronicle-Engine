@@ -119,10 +119,13 @@ public class CMap2EngineReplicator implements EngineReplication,
 
     @Override
     public void applyReplication(@NotNull final ReplicationEntry entry) {
+        System.out.println("applyReplication");
         if (entry.isDeleted())
             remove(entry);
         else
             put(entry);
+
+        System.out.println("finished replication");
 
         setLastModificationTime(entry.identifier(), entry.bootStrapTimeStamp());
     }

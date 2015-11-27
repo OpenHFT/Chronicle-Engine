@@ -16,8 +16,7 @@
 
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.bytes.ConnectionDroppedException;
-import net.openhft.chronicle.bytes.IORuntimeException;
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
@@ -32,7 +31,7 @@ import net.openhft.chronicle.threads.HandlerPriority;
 import net.openhft.chronicle.threads.api.EventHandler;
 import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.threads.api.InvalidEventHandlerException;
-import net.openhft.chronicle.wire.ValueOut;
+import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import net.openhft.chronicle.wire.WriteMarshallable;
@@ -41,7 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.server.internal.ReplicationHandler.EventId.*;
 
@@ -52,15 +51,18 @@ class ReplicationHub extends AbstractStatelessClient {
     private static final Logger LOG = LoggerFactory.getLogger(ChronicleMapKeyValueStore.class);
     private final EventLoop eventLoop;
     private final AtomicBoolean isClosed;
+    private final Function<Bytes, Wire> wireType;
 
     public ReplicationHub(@NotNull RequestContext context,
                           @NotNull final TcpChannelHub hub,
                           @NotNull EventLoop eventLoop,
-                          @NotNull AtomicBoolean isClosed) {
+                          @NotNull AtomicBoolean isClosed,
+                          @NotNull Function<Bytes, Wire> wireType) {
         super(hub, (long) 0, toUri(context));
 
         this.eventLoop = eventLoop;
         this.isClosed = isClosed;
+        this.wireType = wireType;
     }
 
     private static String toUri(@NotNull final RequestContext context) {
@@ -172,37 +174,33 @@ class ReplicationHub extends AbstractStatelessClient {
 
         eventLoop.addHandler(new EventHandler() {
 
+            final Bytes bytes = Bytes.elasticByteBuffer();
+            final Wire wire = wireType.apply(bytes);
+
             @Override
             public boolean action() throws InvalidEventHandlerException {
-                try {
-                    if (ReplicationHub.this.isClosed.get())
-                        throw new InvalidEventHandlerException();
 
-                    // publishes single events to free up the event loop, we used to publish all the
-                    // changes but this can lead to this iterator never completing if updates are
-                    // coming in from end users that touch these entries
-                    // the code used to be this
-                    //  hub.lock(() -> mi.forEach(e -> ReplicationHub.this.sendEventAsyncWithoutLock
-                    //         (replicationEvent, (Consumer<ValueOut>) v -> v.typedMarshallable(e)
-                    // )));
-
-                    mi.nextEntry(e -> {
-                        ReplicationHub.this.sendEventAsync(replicationEvent,
-                                (Consumer<ValueOut>) v -> v.typedMarshallable(e), false);
-                    });
-
-
-                    return true;
-                } catch (ConnectionDroppedException e) {
+                if (ReplicationHub.this.isClosed.get())
                     throw new InvalidEventHandlerException();
-                } catch (
-                        IORuntimeException e
-                        )
 
-                {
-                    LOG.error(e.getMessage());
-                    throw new InvalidEventHandlerException();
-                }
+                bytes.clear();
+
+                // publishes single events to free up the event loop, we used to publish all the
+                // changes but this can lead to this iterator never completing if updates are
+                // coming in from end users that touch these entries
+                // the code used to be this
+                // hub.lock(() -> mi.forEach(e -> ReplicationHub.this.sendEventAsyncWithoutLock
+                //         (replicationEvent, (Consumer<ValueOut>) v -> v.typedMarshallable(e)
+                // )));
+
+                // also we have to write the data into a buffer, to free the map lock
+                // asap, the old code use to pass the entry to the hub, this was leaving the
+                // segment locked and cause deadlocks with the read thread
+                mi.nextEntry(e -> wire.writeDocument(false, wireOut ->
+                        wireOut.writeEventName(replicationEvent).typedMarshallable(e)));
+
+                ReplicationHub.this.sendBytes(bytes, true);
+                return true;
             }
 
             public HandlerPriority priority() {
@@ -220,6 +218,7 @@ class ReplicationHub extends AbstractStatelessClient {
      * @param replication     the event will be applied to the EngineReplication
      * @param localIdentifier our local identifier
      */
+
     private void subscribe(@NotNull final EngineReplication replication, final byte localIdentifier, final byte remoteIdentifier) {
 
         // the only has to be a temporary subscription because the onConnected() will be called upon a reconnect

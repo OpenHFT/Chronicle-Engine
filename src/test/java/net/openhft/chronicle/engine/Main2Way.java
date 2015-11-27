@@ -22,7 +22,6 @@ import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -39,7 +38,7 @@ import java.util.function.Function;
 
 public class Main2Way {
     public static final WireType WIRE_TYPE = WireType.TEXT;
-    public static final String NAME = "/ChMaps/test?entries=50&averageValueSize=" + (2 << 20);
+    public static final String NAME = "/ChMaps/test?entries=1000&averageValueSize=" + (2 << 20);
     public static ServerEndpoint serverEndpoint1;
     public static ServerEndpoint serverEndpoint2;
 
@@ -63,10 +62,10 @@ public class Main2Way {
         WireType writeType = WireType.TEXT;
 
         if ("one".equals(System.getProperty("server", "one"))) {
-            tree1 = create(1, writeType, "clusterTwo");
+            tree1 = create(1, writeType, "clusterThree");
             serverEndpoint1 = new ServerEndpoint("localhost:8081", tree1, writeType);
         } else {
-            tree2 = create(2, writeType, "clusterTwo");
+            tree2 = create(2, writeType, "clusterThree");
             serverEndpoint2 = new ServerEndpoint("localhost:8082", tree2, writeType);
         }
     }
@@ -118,12 +117,12 @@ public class Main2Way {
         return new File(path).getParentFile().getParentFile() + "/src/test/resources";
     }
 
-    @Ignore
+
     @Test
     public void test() throws InterruptedException {
 
         YamlLogging.setAll(false);
-        char[] chars = new char[1048576 * 2];
+        char[] chars = new char[(1 << 20) * 2];
         Arrays.fill(chars, 'X');
         String data = new String(chars);
 
@@ -136,9 +135,9 @@ public class Main2Way {
         }
 
 
-    //    entries(50).averageValueSize(2 << 20)
+        //    entries(50).averageValueSize(2 << 20)
 
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < 500; i++) {
             map.put("key" + i, data);
         }
 

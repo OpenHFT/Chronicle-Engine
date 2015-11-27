@@ -184,7 +184,8 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
                             "remoteIdentifier=" + remoteIdentifier);
 
                 final TcpChannelHub tcpChannelHub = hostDetails.acquireTcpChannelHub(asset, eventLoop, context.wireType());
-                final ReplicationHub replicationHub = new ReplicationHub(context, tcpChannelHub, eventLoop, isClosed);
+                final ReplicationHub replicationHub = new ReplicationHub(context, tcpChannelHub,
+                        eventLoop, isClosed, context.wireType());
                 replicationHub.bootstrap(engineReplicator1, localIdentifier, (byte) remoteIdentifier);
             }
 
