@@ -199,7 +199,7 @@ class ReplicationHub extends AbstractStatelessClient {
                 mi.nextEntry(e -> wire.writeDocument(false, wireOut ->
                         wireOut.writeEventName(replicationEvent).typedMarshallable(e)));
 
-                ReplicationHub.this.sendBytes(bytes, true);
+                ReplicationHub.this.sendBytes(bytes, false);
                 return true;
             }
 
