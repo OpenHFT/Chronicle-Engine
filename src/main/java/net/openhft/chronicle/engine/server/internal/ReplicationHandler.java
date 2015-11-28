@@ -15,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 
 import static net.openhft.chronicle.engine.server.internal.ReplicationHandler.EventId.*;
@@ -30,6 +29,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
     private WireOutPublisher publisher;
     private HostIdentifier hostId;
     private long tid;
+    private WireType wireType;
 
     private EventLoop eventLoop;
 
@@ -53,33 +53,41 @@ public class ReplicationHandler<E> extends AbstractHandler {
                 mi.setModificationNotifier(eventLoop::unpause);
 
                 eventLoop.addHandler(new EventHandler() {
+
+
                     @Override
                     public boolean action() throws InvalidEventHandlerException {
                         if (connectionClosed)
                             throw new InvalidEventHandlerException();
 
-                        final AtomicBoolean hadNext = new AtomicBoolean();
+                        synchronized (publisher) {
+                            // given the sending an event to the publish hold the chronicle map lock
+                            // we will send only one at a time
+                            if (!publisher.isEmpty()) {
+                                Thread.yield();
+                                return true;
+                            }
 
-                        mi.forEach(e -> publisher.put(null, publish1 -> {
+                            mi.nextEntry(e -> publisher.put(null, publish1 -> {
 
-                            if (e.remoteIdentifier() == hostId.hostId())
-                                return;
+                                if (e.remoteIdentifier() == hostId.hostId())
+                                    return;
 
-                            hadNext.set(true);
-                            if (LOG.isDebugEnabled())
-                                LOG.debug("publish from server response from iterator " +
-                                        "localIdentifier=" + hostId + " ,remoteIdentifier=" +
-                                        id + " event=" + e);
+                                if (LOG.isDebugEnabled())
+                                    LOG.debug("publish from server response from iterator " +
+                                            "localIdentifier=" + hostId + " ,remoteIdentifier=" +
+                                            id + " event=" + e);
 
-                            publish1.writeDocument(true,
-                                    wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
 
-                            publish1.writeNotReadyDocument(false,
-                                    wire -> wire.write(replicationEvent).typedMarshallable(e));
+                                publish1.writeDocument(true,
+                                        wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
 
-                        }));
+                                publish1.writeNotReadyDocument(false,
+                                        wire -> wire.write(replicationEvent).typedMarshallable(e));
 
-                        return hadNext.get();
+                            }));
+                        }
+                        return true;
                     }
                 });
 
