@@ -63,10 +63,8 @@ public class ReplicationHandler<E> extends AbstractHandler {
                         synchronized (publisher) {
                             // given the sending an event to the publish hold the chronicle map lock
                             // we will send only one at a time
-                            if (!publisher.isEmpty()) {
-                                Thread.yield();
-                                return true;
-                            }
+                            if (!publisher.isEmpty())
+                                return false;
 
                             mi.nextEntry(e -> publisher.put(null, publish1 -> {
 
@@ -77,7 +75,6 @@ public class ReplicationHandler<E> extends AbstractHandler {
                                     LOG.debug("publish from server response from iterator " +
                                             "localIdentifier=" + hostId + " ,remoteIdentifier=" +
                                             id + " event=" + e);
-
 
                                 publish1.writeDocument(true,
                                         wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));

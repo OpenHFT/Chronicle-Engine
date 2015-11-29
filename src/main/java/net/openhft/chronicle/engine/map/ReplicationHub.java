@@ -180,6 +180,9 @@ class ReplicationHub extends AbstractStatelessClient {
             @Override
             public boolean action() throws InvalidEventHandlerException {
 
+                if (!hub.outWireIsEmpty())
+                    return true;
+
                 if (ReplicationHub.this.isClosed.get())
                     throw new InvalidEventHandlerException();
 
@@ -199,8 +202,12 @@ class ReplicationHub extends AbstractStatelessClient {
                 mi.nextEntry(e -> wire.writeDocument(false, wireOut ->
                         wireOut.writeEventName(replicationEvent).typedMarshallable(e)));
 
-                ReplicationHub.this.sendBytes(bytes, false);
-                return true;
+                if (bytes.readRemaining() > 0) {
+                    ReplicationHub.this.sendBytes(bytes, false);
+                    return true;
+                }
+
+                return false;
             }
 
             public HandlerPriority priority() {
@@ -221,6 +228,7 @@ class ReplicationHub extends AbstractStatelessClient {
 
     private void subscribe(@NotNull final EngineReplication replication, final byte localIdentifier, final byte remoteIdentifier) {
 
+
         // the only has to be a temporary subscription because the onConnected() will be called upon a reconnect
         hub.subscribe(new AbstractAsyncTemporarySubscription(hub, csp, localIdentifier, "replication subscribe") {
             @Override
@@ -231,10 +239,13 @@ class ReplicationHub extends AbstractStatelessClient {
             @Override
             public void onConsumer(@NotNull final WireIn d) {
 
+
                 // receives the replication events and applies them
                 //noinspection ConstantConditions
                 d.readDocument(null, w -> replication.applyReplication(
                         w.read(replicationEvent).typedMarshallable()));
+
+
             }
 
         });
