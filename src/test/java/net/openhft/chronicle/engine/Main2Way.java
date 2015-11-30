@@ -22,8 +22,6 @@ import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,7 +36,7 @@ import java.util.function.Function;
  */
 
 public class Main2Way {
-    public static final WireType WIRE_TYPE = WireType.TEXT;
+    public static final WireType WIRE_TYPE = WireType.BINARY;
     public static final String NAME = "/ChMaps/test?entries=1000&averageValueSize=" + (2 << 20);
     public static ServerEndpoint serverEndpoint1;
     public static ServerEndpoint serverEndpoint2;
@@ -118,9 +116,12 @@ public class Main2Way {
         return new File(path).getParentFile().getParentFile() + "/src/test/resources";
     }
 
+    public static void main(String[] args) throws IOException, InterruptedException {
+        before();
+        new Main2Way().test();
+        after();
+    }
 
-    @Test
-    @Ignore
     public void test() throws InterruptedException {
 
         YamlLogging.setAll(false);
