@@ -17,6 +17,7 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
@@ -98,6 +99,9 @@ class ReplicationHub extends AbstractStatelessClient {
 
             @Override
             public void onConsumer(@NotNull WireIn inWire) {
+                if (Jvm.isDebug())
+                    System.out.println("client : bootstrap");
+
                 inWire.readDocument(null, d -> {
                     byte remoteIdentifier = d.read(identifierReply).int8();
                     onConnected(localIdentifier, remoteIdentifier, replication);
@@ -144,6 +148,11 @@ class ReplicationHub extends AbstractStatelessClient {
 
             @Override
             public void onConsumer(@NotNull WireIn inWire) {
+                if (Jvm.isDebug())
+
+                    System.out.println("client : onConnected - publishing updates");
+
+
                 inWire.readDocument(null, d -> {
                     Bootstrap b = d.read(EventId.bootstrap).typedMarshallable();
 

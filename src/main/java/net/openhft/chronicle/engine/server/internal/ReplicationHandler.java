@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.server.internal;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.pubsub.Replication;
@@ -44,6 +45,9 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
             if (replicationSubscribe.contentEquals(eventName)) {
 
+                if (Jvm.isDebug())
+                    System.out.println("server : received replicationSubscribe");
+
                 // receive bootstrap
                 final byte id = valueIn.int8();
                 final ModificationIterator mi = replication.acquireModificationIterator(id);
@@ -63,6 +67,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
                         synchronized (publisher) {
                             // given the sending an event to the publish hold the chronicle map lock
                             // we will send only one at a time
+
                             if (!publisher.isEmpty())
                                 return false;
 
@@ -84,7 +89,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
                             }));
                         }
-                        return true;
+                        return false;
                     }
                 });
 
@@ -94,6 +99,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
             // receives replication events
             if (replicationEvent.contentEquals(eventName)) {
+                System.out.println("server : received replicationEvent");
                 ReplicationEntry replicatedEntry = valueIn.typedMarshallable();
                 assert replicatedEntry != null;
                 replication.applyReplication(replicatedEntry);
@@ -111,6 +117,8 @@ public class ReplicationHandler<E> extends AbstractHandler {
                 }
 
                 if (bootstrap.contentEquals(eventName)) {
+
+                    System.out.println("server : received bootstrap request");
 
                     // receive bootstrap
                     final Bootstrap inBootstrap = valueIn.typedMarshallable();
