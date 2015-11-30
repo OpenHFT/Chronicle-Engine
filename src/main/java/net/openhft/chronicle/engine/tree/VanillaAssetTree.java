@@ -18,6 +18,7 @@ package net.openhft.chronicle.engine.tree;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.AssetTreeStats;
@@ -179,8 +180,7 @@ public class VanillaAssetTree implements AssetTree {
         // ensure that the event loop get shutdown first
         try {
             EventLoop view = root().findView(EventLoop.class);
-            if (view != null)
-                view.close();
+            Closeable.closeQuietly(view);
         } catch (Exception e) {
             //
         }
