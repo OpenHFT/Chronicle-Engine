@@ -25,10 +25,7 @@ import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -51,6 +48,7 @@ import static org.junit.Assert.assertNotNull;
  * Created by Rob Austin
  */
 @RunWith(Parameterized.class)
+@Ignore("Long running test")
 public class Replication10WayTest {
 
     public static final int MAX = 10;

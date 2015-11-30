@@ -16,8 +16,11 @@
 
 package net.openhft.chronicle.engine;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.BooleanSupplier;
 
 /**
  * Created by Rob Austin
@@ -58,6 +61,14 @@ public class Utils {
             YamlLogging.clientReads = false;
             YamlLogging.showServerWrites = false;
             YamlLogging.showServerReads = false;
+        }
+    }
+
+    public static void waitFor(BooleanSupplier test) {
+        for (int i = 1; i < 30; i++) {
+            if (test.getAsBoolean())
+                break;
+            Jvm.pause(i * i);
         }
     }
 }

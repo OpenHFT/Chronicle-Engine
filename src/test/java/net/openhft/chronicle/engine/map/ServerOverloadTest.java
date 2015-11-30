@@ -46,18 +46,17 @@ public class ServerOverloadTest extends ThreadMonitoringTest {
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
-    public ServerOverloadTest(Object isRemote, WireType wireType) {
-        this.isRemote = (Boolean) isRemote;
+    public ServerOverloadTest(boolean isRemote, WireType wireType) {
+        this.isRemote = isRemote;
         this.wireType = wireType;
     }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() throws IOException {
         return Arrays.asList(
-                new Object[]{Boolean.TRUE, WireType.BINARY},
-                new Object[]{Boolean.TRUE, WireType.TEXT},
-                new Object[]{Boolean.FALSE, WireType.BINARY},
-                new Object[]{Boolean.TRUE, WireType.TEXT}
+                new Object[]{false, null},
+                new Object[]{true, WireType.TEXT},
+        new Object[]{true, WireType.BINARY}
         );
     }
 

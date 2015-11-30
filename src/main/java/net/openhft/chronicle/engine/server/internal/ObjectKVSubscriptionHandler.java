@@ -23,20 +23,6 @@ import static net.openhft.chronicle.network.connection.CoreFields.tid;
  */
 public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<SubscriptionCollection> {
     private static final Logger LOG = LoggerFactory.getLogger(ObjectKVSubscriptionHandler.class);
-
-
-    @Override
-    protected void unregisterAll() {
-
-        tidToListener.forEach((k, listener) -> {
-            if (listener instanceof TopicSubscriber)
-                assetTree.unregisterTopicSubscriber(requestContext.fullName(), (TopicSubscriber) listener);
-            else
-                assetTree.unregisterSubscriber(requestContext.fullName(), (Subscriber) listener);
-        });
-        tidToListener.clear();
-    }
-
     @NotNull
     private final BiConsumer<WireIn, Long> dataConsumer = (inWire, inputTid) -> {
 
@@ -54,27 +40,30 @@ public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subsc
 
                 @Override
                 public void onMessage(final Object topic, final Object message) {
-
-                    publisher.put(topic, publish -> {
-                        publish.writeDocument(true, wire -> wire.writeEventName(tid).int64(inputTid));
-                        publish.writeNotReadyDocument(false, wire -> wire.writeEventName(reply)
-                                .marshallable(m -> {
-                                    m.write(() -> "topic").object(topic);
-                                    m.write(() -> "message").object(message);
-                                }));
-                    });
+                    synchronized (publisher) {
+                        publisher.put(topic, publish -> {
+                            publish.writeDocument(true, wire -> wire.writeEventName(tid).int64(inputTid));
+                            publish.writeNotReadyDocument(false, wire -> wire.writeEventName(reply)
+                                    .marshallable(m -> {
+                                        m.write(() -> "topic").object(topic);
+                                        m.write(() -> "message").object(message);
+                                    }));
+                        });
+                    }
 
                 }
 
                 public void onEndOfSubscription() {
                     subscriptionEnded = true;
-                    if (!publisher.isClosed()) {
-                        publisher.put(null, publish -> {
-                            publish.writeDocument(true, wire ->
-                                    wire.writeEventName(tid).int64(inputTid));
-                            publish.writeDocument(false, wire ->
-                                    wire.writeEventName(EventId.onEndOfSubscription).text(""));
-                        });
+                    synchronized (publisher) {
+                        if (!publisher.isClosed()) {
+                            publisher.put(null, publish -> {
+                                publish.writeDocument(true, wire ->
+                                        wire.writeEventName(tid).int64(inputTid));
+                                publish.writeDocument(false, wire ->
+                                        wire.writeEventName(EventId.onEndOfSubscription).text(""));
+                            });
+                        }
                     }
                 }
             };
@@ -126,6 +115,17 @@ public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subsc
 
     };
 
+    @Override
+    protected void unregisterAll() {
+
+        tidToListener.forEach((k, listener) -> {
+            if (listener instanceof TopicSubscriber)
+                assetTree.unregisterTopicSubscriber(requestContext.fullName(), (TopicSubscriber) listener);
+            else
+                assetTree.unregisterSubscriber(requestContext.fullName(), (Subscriber) listener);
+        });
+        tidToListener.clear();
+    }
 
     void process(@NotNull final WireIn inWire,
                  @NotNull final RequestContext requestContext,

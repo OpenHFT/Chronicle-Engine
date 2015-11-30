@@ -97,7 +97,7 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
     /**
      * test registerKeySubscriber before doing an operation ont the map
      */
-    @Test
+    @Test(timeout = 10000)
     public void testKey() throws IOException, InterruptedException {
 
         BlockingQueue<String> q = new ArrayBlockingQueue<>(1);
@@ -116,7 +116,7 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
 
     }
 
-    @Test
+    @Test(timeout = 10000)
     public void testSubscriptionOnKey() throws InterruptedException {
 
         //Enable Yaml logging when running in debug.

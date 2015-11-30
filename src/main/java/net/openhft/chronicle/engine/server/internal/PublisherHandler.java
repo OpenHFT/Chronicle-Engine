@@ -37,7 +37,8 @@ public class PublisherHandler<E> extends AbstractHandler {
 
             if (registerSubscriber.contentEquals(eventName)) {
                 final Object key = view;
-                final Subscriber listener = message ->
+                final Subscriber listener = message -> {
+                    synchronized (publisher) {
                         publisher.put(key, publish -> {
 
                             publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
@@ -45,6 +46,8 @@ public class PublisherHandler<E> extends AbstractHandler {
                             publish.writeNotReadyDocument(false, wire -> wire.writeEventName(reply)
                                     .marshallable(m -> m.write(Params.message).object(message)));
                         });
+                    }
+                };
 
                 // TODO CE-101 get the true value from the CSP
                 boolean bootstrap = true;

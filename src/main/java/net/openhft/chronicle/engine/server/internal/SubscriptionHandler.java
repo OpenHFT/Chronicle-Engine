@@ -162,22 +162,26 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
             };
 
             final Object key = (e instanceof MapEvent) ? ((MapEvent) e).getKey() : e;
-            publisher.put(key, event);
+            synchronized (publisher) {
+                publisher.put(key, event);
+            }
 
         }
 
         @Override
         public void onEndOfSubscription() {
             subscriptionEnded = true;
-            if (!publisher.isClosed()) {
-                // no more data.
-                WriteMarshallable toPublish = publish -> {
-                    publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(tid));
-                    publish.writeDocument(false, wire ->
-                            wire.writeEventName(ObjectKVSubscriptionHandler.EventId.onEndOfSubscription).text(""));
-                };
+            synchronized (publisher) {
+                if (!publisher.isClosed()) {
+                    // no more data.
+                    WriteMarshallable toPublish = publish -> {
+                        publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(tid));
+                        publish.writeDocument(false, wire ->
+                                wire.writeEventName(ObjectKVSubscriptionHandler.EventId.onEndOfSubscription).text(""));
+                    };
 
-                publisher.put(null, toPublish);
+                    publisher.put(null, toPublish);
+                }
             }
         }
 

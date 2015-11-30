@@ -69,22 +69,26 @@ public class ReferenceHandler<E, T> extends AbstractHandler {
                 final Subscriber listener = new Subscriber() {
                     @Override
                     public void onMessage(final Object message) throws InvalidSubscriberException {
-                        publisher.put(key, publish -> {
-                            publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
-                                    (inputTid));
-                            publish.writeNotReadyDocument(false, wire -> wire.writeEventName(reply)
-                                    .marshallable(m -> m.write(Params.message).object(message)));
-                        });
+                        synchronized (publisher) {
+                            publisher.put(key, publish -> {
+                                publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
+                                        (inputTid));
+                                publish.writeNotReadyDocument(false, wire -> wire.writeEventName(reply)
+                                        .marshallable(m -> m.write(Params.message).object(message)));
+                            });
+                        }
                     }
 
                     public void onEndOfSubscription() {
-                        if (!publisher.isClosed()) {
-                            publisher.put(null, publish -> {
-                                publish.writeDocument(true, wire ->
-                                        wire.writeEventName(tid).int64(inputTid));
-                                publish.writeDocument(false, wire ->
-                                        wire.writeEventName(EventId.onEndOfSubscription).text(""));
-                            });
+                        synchronized (publisher) {
+                            if (!publisher.isClosed()) {
+                                publisher.put(null, publish -> {
+                                    publish.writeDocument(true, wire ->
+                                            wire.writeEventName(tid).int64(inputTid));
+                                    publish.writeDocument(false, wire ->
+                                            wire.writeEventName(EventId.onEndOfSubscription).text(""));
+                                });
+                            }
                         }
                     }
                 };

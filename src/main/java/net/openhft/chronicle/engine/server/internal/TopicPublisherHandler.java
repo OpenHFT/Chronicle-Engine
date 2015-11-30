@@ -47,25 +47,29 @@ public class TopicPublisherHandler<T, M> extends AbstractHandler {
                     @Override
                     public void onMessage(final Object topic, final Object message) {
 
-                        publisher.put(topic, publish -> {
-                            publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
-                                    (inputTid));
-                            publish.writeNotReadyDocument(false, wire -> wire.writeEventName(reply)
-                                    .marshallable(m -> {
-                                        m.write(() -> "topic").object(topic);
-                                        m.write(() -> "message").object(message);
-                                    }));
-                        });
+                        synchronized (publisher) {
+                            publisher.put(topic, publish -> {
+                                publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
+                                        (inputTid));
+                                publish.writeNotReadyDocument(false, wire -> wire.writeEventName(reply)
+                                        .marshallable(m -> {
+                                            m.write(() -> "topic").object(topic);
+                                            m.write(() -> "message").object(message);
+                                        }));
+                            });
+                        }
                     }
 
                     public void onEndOfSubscription() {
-                        publisher.put(null, publish -> {
-                            publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
-                                    (inputTid));
-                            publish.writeNotReadyDocument(false, wire -> wire.writeEventName
-                                    (EventId.onEndOfSubscription).text(""));
+                        synchronized (publisher) {
+                            publisher.put(null, publish -> {
+                                publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
+                                        (inputTid));
+                                publish.writeNotReadyDocument(false, wire -> wire.writeEventName
+                                        (EventId.onEndOfSubscription).text(""));
 
-                        });
+                            });
+                        }
                     }
 
                 };

@@ -55,7 +55,7 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
 
     private static final String NAME = "test";
 
-    private static Boolean isRemote;
+    private final boolean isRemote;
     private final WireType wireType;
     @NotNull
     @Rule
@@ -64,18 +64,17 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
-    public TopologicalSubscriptionEventTest(Object isRemote, WireType wireType) {
-        TopologicalSubscriptionEventTest.isRemote = (Boolean) isRemote;
+    public TopologicalSubscriptionEventTest(boolean isRemote, WireType wireType) {
+        this.isRemote = isRemote;
         this.wireType = wireType;
     }
 
     @Parameters
     public static Collection<Object[]> data() throws IOException {
         return Arrays.asList(
-                new Object[]{Boolean.FALSE, WireType.TEXT}
-                , new Object[]{Boolean.FALSE, WireType.BINARY}
-                , new Object[]{Boolean.TRUE, WireType.TEXT}
-                , new Object[]{Boolean.TRUE, WireType.BINARY}
+                new Object[]{false, null}
+                , new Object[]{true, WireType.TEXT}
+                , new Object[]{true, WireType.BINARY}
         );
     }
 
