@@ -90,7 +90,6 @@ public class ServerOverloadTest extends ThreadMonitoringTest {
         TCPRegistry.reset();
     }
 
-    @Ignore
     @Test
     public void testThatSendingAlotOfDataToTheServer() throws Exception {
 

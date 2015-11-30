@@ -61,7 +61,6 @@ import static org.junit.Assert.assertTrue;
  * @author Rob Austin.
  */
 @RunWith(value = Parameterized.class)
-@Ignore("Failing tests CE-187")
 public class SubscriptionEventTest extends ThreadMonitoringTest {
     private static final String NAME = "test";
 
@@ -84,7 +83,10 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     public static Collection<Object[]> data() throws IOException {
         return Arrays.asList(
                 new Object[]{false, null}
+                // check connection is fine after a reconnect CE-187
                 , new Object[]{true, WireType.TEXT}
+                , new Object[]{true, WireType.TEXT}
+                , new Object[]{true, WireType.BINARY}
                 , new Object[]{true, WireType.BINARY}
         );
     }
@@ -110,7 +112,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     @After
     public void after() throws IOException {
         assetTree.close();
-        Jvm.pause(1000);
+        Jvm.pause(100);
         if (serverEndpoint != null)
             serverEndpoint.close();
         serverAssetTree.close();
@@ -141,9 +143,10 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                 YamlLogging.writeMessage = "puts an entry into the map so that an event will be " +
                         "triggered";
                 map.put("Hello", "World");
+                assertEquals(1, map.size());
 
-                Object object = eventsQueue.take();
-                Assert.assertTrue(object instanceof InsertedEvent);
+                MapEvent object = eventsQueue.poll(2, SECONDS);
+                Assert.assertTrue("Object was " + object, object instanceof InsertedEvent);
 
                 assetTree.unregisterSubscriber(NAME, add);
             } catch (Exception e) {

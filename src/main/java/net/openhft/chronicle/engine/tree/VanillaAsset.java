@@ -55,7 +55,6 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.SortedMap;
@@ -354,17 +353,26 @@ public class VanillaAsset implements Asset, Closeable {
 
     @Override
     public void close() {
-        // do nothing
-        viewMap.values().stream().filter(v -> v instanceof Closeable).forEach(v -> {
-            try {
-                ((java.io.Closeable) v).close();
-            } catch (IOException e) {
-                // do nothing
-            }
-        });
+        viewMap.values().stream()
+                .filter(v -> v instanceof java.io.Closeable)
+                .forEach(Closeable::closeQuietly);
 
         try {
             forEachChild(Closeable::close);
+        } catch (InvalidSubscriberException e) {
+            LOG.error("", e);
+        }
+    }
+
+    @Override
+    public void notifyClosing() {
+        viewMap.values().stream()
+                .filter(v -> v instanceof Closeable)
+                .map(v -> (Closeable) v)
+                .forEach(Closeable::notifyClosing);
+
+        try {
+            forEachChild(Closeable::notifyClosing);
         } catch (InvalidSubscriberException e) {
             LOG.error("", e);
         }

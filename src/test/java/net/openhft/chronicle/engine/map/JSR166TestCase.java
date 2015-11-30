@@ -114,13 +114,6 @@ public class JSR166TestCase extends ThreadMonitoringTest {
      * The number of elements to place in collections, arrays, etc.
      */
     public static final int SIZE = 20;
-    static final Integer zero = 0;
-    static final Integer one = 1;
-    static final Integer two = 2;
-    static final Integer three = 3;
-    static final Integer four = 4;
-    static final Integer five = 5;
-    static final Integer six = 6;
     public static final Integer seven = 7;
     public static final Integer eight = 8;
     public static final Integer nine = 9;
@@ -130,10 +123,17 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     public static final Integer m4 = -4;
     public static final Integer m5 = -5;
     public static final Integer m6 = -6;
+    protected static final boolean expensiveTests = false;
+    static final Integer zero = 0;
+    static final Integer one = 1;
+    static final Integer two = 2;
+    static final Integer three = 3;
+    static final Integer four = 4;
+    static final Integer five = 5;
+    static final Integer six = 6;
     static final Integer m10 = -10;
     static final Integer notPresent = 42;
     private static final String TEST_STRING = "a test string";
-    protected static final boolean expensiveTests = false;
     private static long SHORT_DELAY_MS;
     private static long SMALL_DELAY_MS;
     private static long MEDIUM_DELAY_MS;
@@ -200,6 +200,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
                     delay(timeoutMillis);
                     done = true;
                 } catch (InterruptedException ok) {
+                    Thread.currentThread().interrupt();
                 }
             }
         };
@@ -653,6 +654,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
                 try {
                     latch.await();
                 } catch (InterruptedException quittingTime) {
+                    Thread.currentThread().interrupt();
                 }
                 return TEST_STRING;
             }
@@ -691,6 +693,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
                 try {
                     delay(timeoutMillis);
                 } catch (InterruptedException ok) {
+                    Thread.currentThread().interrupt();
                 }
             }
         };
@@ -1067,6 +1070,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
             try {
                 delay(SMALL_DELAY_MS);
             } catch (InterruptedException ok) {
+                Thread.currentThread().interrupt();
             }
         }
     }
@@ -1095,6 +1099,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
             try {
                 delay(MEDIUM_DELAY_MS);
             } catch (InterruptedException ok) {
+                Thread.currentThread().interrupt();
             }
         }
     }
@@ -1104,6 +1109,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
             try {
                 delay(LONG_DELAY_MS);
             } catch (InterruptedException ok) {
+                Thread.currentThread().interrupt();
             }
         }
     }

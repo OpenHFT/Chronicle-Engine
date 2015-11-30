@@ -39,7 +39,6 @@ import static net.openhft.chronicle.engine.Utils.methodName;
  * @author Rob Austin.
  */
 @RunWith(value = Parameterized.class)
-@Ignore("Some tests fail CE-187")
 public class QueryableEntrySetTest extends ThreadMonitoringTest {
 
     private static final String NAME = "test";

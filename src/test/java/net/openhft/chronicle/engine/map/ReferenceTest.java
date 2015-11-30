@@ -14,7 +14,10 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -33,7 +36,6 @@ import static org.junit.Assert.assertNotNull;
  * Created by daniel on 13/07/2015.
  */
 @RunWith(value = Parameterized.class)
-@Ignore("Failing tests CE-187")
 public class ReferenceTest {
     @NotNull
     @Rule

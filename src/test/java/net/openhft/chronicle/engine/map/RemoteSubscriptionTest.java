@@ -40,7 +40,6 @@ import static net.openhft.chronicle.engine.Utils.methodName;
  * @author Rob Austin.
  */
 @RunWith(value = Parameterized.class)
-@Ignore("Failing tests CE-187")
 public class RemoteSubscriptionTest extends ThreadMonitoringTest {
 
     private static final String NAME = "test";

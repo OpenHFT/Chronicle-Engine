@@ -28,8 +28,8 @@ import net.openhft.chronicle.engine.map.VanillaStringMarshallableKeyValueStore;
 import net.openhft.chronicle.engine.tree.VanillaAsset;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -50,10 +50,10 @@ import static org.junit.Assert.assertEquals;
  */
 public class MarshallableFilePerKeyValueStoreTest {
     public static final String NAME = "marsfileperkvstoretests";
-    private static Map<String, TestMarshallable> map;
+    private Map<String, TestMarshallable> map;
 
-    @BeforeClass
-    public static void createMap() throws IOException {
+    @Before
+    public void createMap() throws IOException {
         resetChassis();
         Function<Bytes, Wire> writeType = WireType.TEXT;
         ((VanillaAsset) assetTree().root()).enableTranslatingValuesToBytesStore();
@@ -72,8 +72,8 @@ public class MarshallableFilePerKeyValueStoreTest {
         pause(50);
     }
 
-    @AfterClass
-    public static void cleanUp() {
+    @After
+    public void cleanUp() {
         map.clear();
     }
 
@@ -115,6 +115,8 @@ public class MarshallableFilePerKeyValueStoreTest {
         private String s1, s2;
         private Nested nested;
 
+        // used via reflection
+        @SuppressWarnings("unused")
         public TestMarshallable() {
             nested = new Nested();
         }

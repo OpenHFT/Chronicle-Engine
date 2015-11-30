@@ -29,7 +29,10 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -52,10 +55,8 @@ import static org.junit.Assert.assertEquals;
  * @author Rob Austin.
  */
 @RunWith(value = Parameterized.class)
-@Ignore("Failing tests CE-187")
 public class SubscriptionTest extends ThreadMonitoringTest {
     private static final String NAME = "/test";
-    private static ConcurrentMap<String, Factor> map;
     private final boolean isRemote;
     private final WireType wireType;
     @NotNull

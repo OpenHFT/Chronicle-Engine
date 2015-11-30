@@ -416,6 +416,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
                     try {
                         key = processKey();
                     } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
                         return;
                     } finally {
                         if (key != null) key.reset();

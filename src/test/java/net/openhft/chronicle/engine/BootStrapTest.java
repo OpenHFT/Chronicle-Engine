@@ -26,7 +26,10 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -104,14 +107,13 @@ public class BootStrapTest {
      * @throws InterruptedException
      */
     @Test
-    @Ignore("todo rob to fix")
     public void nonBootstrappingTest() throws IOException, InterruptedException {
 
         try {
 
             {
                 map1 = client1.acquireMap(NAME, String.class, String.class);
-                Queue q1 = new ConcurrentLinkedQueue();
+                Queue<MapEvent> q1 = new ConcurrentLinkedQueue();
                 client1.registerSubscriber(NAME, MapEvent.class, q1::add);
                 map1.put("hello", "world1");
                 Assert.assertEquals("world1", map1.get("hello"));
@@ -125,7 +127,7 @@ public class BootStrapTest {
 
             {
                 map2 = client2.acquireMap(NAME, String.class, String.class);
-                Queue q2 = new ConcurrentLinkedQueue();
+                Queue<MapEvent> q2 = new ConcurrentLinkedQueue();
                 client2.registerSubscriber(NAME + "?bootstrap=false", MapEvent.class, q2::add);
 
                 map2.put("hello", "world2");
@@ -148,14 +150,13 @@ public class BootStrapTest {
      * @throws InterruptedException
      */
     @Test
-    @Ignore("todo rob to fix")
     public void bootstrappingTest() throws IOException, InterruptedException {
 
         try {
 
             {
                 map1 = client1.acquireMap(NAME, String.class, String.class);
-                BlockingQueue q1 = new ArrayBlockingQueue(1);
+                BlockingQueue<MapEvent> q1 = new ArrayBlockingQueue(1);
                 client1.registerSubscriber(NAME, MapEvent.class, q1::add);
 
                 map1.put("hello", "world1");
@@ -170,7 +171,7 @@ public class BootStrapTest {
 
             {
                 map2 = client2.acquireMap(NAME, String.class, String.class);
-                BlockingQueue q2 = new ArrayBlockingQueue(100);
+                BlockingQueue<MapEvent> q2 = new ArrayBlockingQueue(100);
                 client2.registerSubscriber(NAME + "?bootstrap=false", MapEvent.class, q2::add);
 
                 map2.put("hello", "world2");

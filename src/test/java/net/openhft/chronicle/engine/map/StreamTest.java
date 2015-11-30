@@ -32,7 +32,6 @@ import static net.openhft.chronicle.engine.Utils.methodName;
  * @author Rob Austin.
  */
 @RunWith(value = Parameterized.class)
-@Ignore("Failing test CE-187")
 public class StreamTest extends ThreadMonitoringTest {
     private static final String NAME = "test";
     private static MapView<String, String> map;

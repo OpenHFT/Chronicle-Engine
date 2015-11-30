@@ -44,8 +44,6 @@ public class RemoteRpc extends JSR166TestCase {
         TCPRegistry.assertAllServersStopped();
     }
 
-    @NotNull
-
     @Before
     public void before() {
         System.out.println("\t... test " + name.getMethodName());
@@ -55,7 +53,7 @@ public class RemoteRpc extends JSR166TestCase {
     /**
      * clear removes all pairs
      */
-    @Ignore
+    @Ignore("Long running")
     @Test
     public void testRpc() throws IOException, InterruptedException {
 
@@ -94,7 +92,7 @@ public class RemoteRpc extends JSR166TestCase {
     /**
      * clear removes all pairs
      */
-    @Ignore
+    @Ignore("Long running")
     @Test
     public void testSub() throws IOException, InterruptedException {
 

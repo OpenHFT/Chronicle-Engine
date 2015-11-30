@@ -93,7 +93,7 @@ public class AssetTreeJMXTest {
         Jvm.pause(20000);
     }
 
-    @Ignore("todo")
+    @Ignore("todo add assertions")
     @Test
     public void addMarshallableValuesMapIntoTree(){
         AssetTree tree = new VanillaAssetTree().forTesting();
@@ -111,7 +111,7 @@ public class AssetTreeJMXTest {
         map.put("1",m);
         map.put("2",m);
         map.put("3",m);
-        Jvm.pause(20000);
+        Jvm.pause(200);
     }
 
     /**

@@ -29,8 +29,8 @@ import net.openhft.chronicle.engine.tree.VanillaAsset;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -50,10 +50,10 @@ import static org.junit.Assert.assertEquals;
  */
 public class FilePerKeyValueStoreTest {
     public static final String NAME = "fileperkvstoretests";
-    private static Map<String, String> map;
+    private Map<String, String> map;
 
-    @BeforeClass
-    public static void createMap() throws IOException {
+    @Before
+    public void createMap() throws IOException {
         resetChassis();
         Function<Bytes, Wire> writeType = WireType.TEXT;
         ((VanillaAsset) assetTree().root()).enableTranslatingValuesToBytesStore();
@@ -72,8 +72,8 @@ public class FilePerKeyValueStoreTest {
         pause(50);
     }
 
-    @AfterClass
-    public static void cleanUp() {
+    @After
+    public void cleanUp() {
         map.clear();
     }
 
