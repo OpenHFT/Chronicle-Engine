@@ -175,8 +175,8 @@ class ReplicationHub extends AbstractStatelessClient {
      * @param mi     the modification iterator that notifies us of changes
      * @param remote details about the remote connection
      */
-    private void publish(@NotNull final ModificationIterator mi,
-                         @NotNull final Bootstrap remote) {
+    void publish(@NotNull final ModificationIterator mi,
+                 @NotNull final Bootstrap remote) {
 
         final TcpChannelHub hub = this.hub;
         mi.setModificationNotifier(eventLoop::unpause);
