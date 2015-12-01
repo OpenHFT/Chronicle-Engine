@@ -191,8 +191,8 @@ public class CMap2EngineReplicator implements EngineReplication,
                 if (value == null)
                     return null;
 
-                NativeBytesStore<Void> byteStore = NativeBytesStore.nativeStoreWithFixedCapacity(value
-                        .remaining());
+                NativeBytesStore<Void> byteStore = NativeBytesStore.lazyNativeBytesStoreWithFixedCapacity(
+                        value.remaining());
                 PointerBytesStore result = valueLocal.get();
                 result.set(value.address(), value.capacity());
                 result.copyTo(byteStore);

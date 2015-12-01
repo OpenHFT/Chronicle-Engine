@@ -99,6 +99,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
             // receives replication events
             if (replicationEvent.contentEquals(eventName)) {
+                if (Jvm.isDebug())
                 System.out.println("server : received replicationEvent");
                 ReplicationEntry replicatedEntry = valueIn.typedMarshallable();
                 assert replicatedEntry != null;

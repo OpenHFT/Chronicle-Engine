@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Random;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 
@@ -37,7 +38,8 @@ import java.util.function.Function;
 
 public class Main2Way {
     public static final WireType WIRE_TYPE = WireType.BINARY;
-    public static final String NAME = "/ChMaps/test?entries=1000&averageValueSize=" + (2 << 20);
+    public static final int entries = 300;
+    public static final String NAME = "/ChMaps/test?entries=" + entries + "&averageValueSize=" + (2 << 20);
     public static ServerEndpoint serverEndpoint1;
     public static ServerEndpoint serverEndpoint2;
 
@@ -58,7 +60,7 @@ public class Main2Way {
         Files.deleteIfExists(Paths.get(OS.TARGET, NAME));
 
         //    TCPRegistry.createServerSocketChannelFor("host.port1", "host.port2");
-        WireType writeType = WireType.TEXT;
+        WireType writeType = WireType.BINARY;
 
         if ("one".equals(System.getProperty("server", "one"))) {
             tree1 = create(1, writeType, "clusterThree");
@@ -127,6 +129,12 @@ public class Main2Way {
         YamlLogging.setAll(false);
         char[] chars = new char[(1 << 20) * 2];
         Arrays.fill(chars, 'X');
+
+        // with snappy this results in about 10:1 compression.
+        Random rand = new Random();
+        for (int i = 0; i < chars.length; i += 45)
+            chars[rand.nextInt(chars.length)] = '.';
+
         String data = new String(chars);
 
         final ConcurrentMap<String, String> map;
@@ -138,9 +146,7 @@ public class Main2Way {
         }
 
 
-        //    entries(50).averageValueSize(2 << 20)
-
-        for (int i = 0; i < 500; i++) {
+        for (int i = 0; i < entries; i++) {
             map.put("key" + i, data);
         }
 

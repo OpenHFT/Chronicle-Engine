@@ -107,6 +107,8 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
     @Nullable
     private final EventLoop eventLoop;
     private final RequestContextInterner requestContextInterner = new RequestContextInterner(128);
+    private final StringBuilder currentLogMessage = new StringBuilder();
+    private final StringBuilder prevLogMessage = new StringBuilder();
     private WireAdapter wireAdapter;
     private Object view;
     private boolean isSystemMessage = true;
@@ -114,8 +116,6 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
     @Nullable
     private Class viewType;
     private long tid;
-    private final StringBuilder currentLogMessage = new StringBuilder();
-    private final StringBuilder prevLogMessage = new StringBuilder();
 
     public EngineWireHandler(@NotNull final WireType byteToWire,
                              @NotNull final AssetTree assetTree) {
@@ -408,8 +408,8 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
         if (YamlLogging.showServerReads) {
             logBuffer.setLength(0);
             try {
-                logBuffer.append("\nServer Receives:\n" +
-                        Wires.fromSizePrefixedBlobs(in.bytes()));
+                logBuffer.append("\nServer Receives:\n")
+                        .append(Wires.fromSizePrefixedBlobs(in.bytes()));
             } catch (Exception e) {
                 logBuffer.append("\n\n" +
                         Bytes.toString(in.bytes()));
