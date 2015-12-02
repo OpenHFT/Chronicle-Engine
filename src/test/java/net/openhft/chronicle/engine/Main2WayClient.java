@@ -35,7 +35,7 @@ public class Main2WayClient {
                 for (int j = 0; j < 10; j++) {
                     long start = System.currentTimeMillis();
                     map.put(Main2Way.getKey(i + j), data);
-                    System.out.println("Size: " + map.size());
+                    map.size();
                     long time = System.currentTimeMillis() - start;
                     Jvm.pause(100);
                     max = Math.max(max, time);
