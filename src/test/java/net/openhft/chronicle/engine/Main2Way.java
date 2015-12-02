@@ -124,18 +124,27 @@ public class Main2Way {
         after();
     }
 
-    public void test() throws InterruptedException {
+    @NotNull
+    public static String getKey(int i) {
+        return "key" + i;
+    }
 
-        YamlLogging.setAll(false);
-        char[] chars = new char[(1 << 20) * 2];
+    public static String generateValue() {
+        char[] chars = new char[2 << 20];
         Arrays.fill(chars, 'X');
 
         // with snappy this results in about 10:1 compression.
         Random rand = new Random();
         for (int i = 0; i < chars.length; i += 45)
             chars[rand.nextInt(chars.length)] = '.';
+        return new String(chars);
+    }
 
-        String data = new String(chars);
+    public void test() throws InterruptedException, IOException {
+
+        YamlLogging.setAll(false);
+
+        String data = generateValue();
 
         final ConcurrentMap<String, String> map;
         final String type = System.getProperty("server", "one");
@@ -147,14 +156,10 @@ public class Main2Way {
 
 
         for (int i = 0; i < entries; i++) {
-            map.put("key" + i, data);
+            map.put(getKey(i), data);
         }
 
-
-        for (; ; ) {
-            Thread.sleep(5000);
-        }
-
+        System.in.read();
     }
 }
 
