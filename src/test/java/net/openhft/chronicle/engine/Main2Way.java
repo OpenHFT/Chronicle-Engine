@@ -37,7 +37,7 @@ import java.util.function.Function;
  */
 
 public class Main2Way {
-    public static final WireType WIRE_TYPE = WireType.BINARY;
+    public static final WireType WIRE_TYPE = WireType.COMPRESSED_BINARY;
     public static final int entries = 2000;
     public static final String NAME = "/ChMaps/test?entries=" + entries + "&averageValueSize=" + (2 << 20);
     public static ServerEndpoint serverEndpoint1;
