@@ -459,7 +459,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
 //                    }
                     BytesStore prevContents = prev == null ? null : prev.contents();
                     try {
-                        if (mapVal != null & mapVal.contentEquals(prevContents)) {
+                        if (mapVal != null && mapVal.contentEquals(prevContents)) {
 //                            System.out.println("... key: "+mapKey+" equal, last.keys: "+new TreeSet<>(lastFileRecordMap.keySet()));
                             continue;
                         }
