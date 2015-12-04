@@ -104,7 +104,7 @@ public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId>
                         hub.unsubscribe(tid());
                     } else if (CoreFields.reply.contentEquals(eventname)) {
                         valueIn.marshallable(m -> {
-                            final T topic = m.read(() -> "message").object(topicClass);
+                            final T topic = m.read(() -> "topic").object(topicClass);
                             final M message = m.read(() -> "message").object(messageClass);
                             RemoteTopicPublisher.this.onEvent(topic, message, topicSubscriber);
                         });
