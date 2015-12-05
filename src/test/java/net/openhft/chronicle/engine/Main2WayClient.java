@@ -25,7 +25,9 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
  */
 public class Main2WayClient {
     public static void main(String[] args) {
-        ((VanillaAssetTree) Chassis.assetTree()).forRemoteAccess("localhost:8081, localhost:8082".split(", "), Main2Way.WIRE_TYPE);
+        String s = Math.random() < 0.5 ? "localhost:8081, localhost:8082" : "localhost:8082, localhost:8081";
+        System.out.println(s);
+        ((VanillaAssetTree) Chassis.assetTree()).forRemoteAccess(s.split(", "), Main2Way.WIRE_TYPE);
         MapView<String, String> map = Chassis.acquireMap("/ChMaps/test?putReturnsNull=true", String.class, String.class);
         String data = Main2Way.generateValue();
 
