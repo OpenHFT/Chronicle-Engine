@@ -356,7 +356,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
 
         public void onRemove0(@NotNull K key, V value, boolean replicationEven) {
             if (subscriptions.hasSubscribers())
-                subscriptions.notifyEvent(RemovedEvent.of(assetFullName, key, value, false));
+                subscriptions.notifyEvent(RemovedEvent.of(assetFullName, key, value, replicationEven));
         }
 
 
