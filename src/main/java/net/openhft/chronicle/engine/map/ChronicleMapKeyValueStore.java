@@ -34,6 +34,8 @@ import net.openhft.chronicle.engine.fs.HostDetails;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.hash.replication.EngineReplicationLangBytesConsumer;
 import net.openhft.chronicle.map.*;
+import net.openhft.chronicle.network.api.session.SessionDetails;
+import net.openhft.chronicle.network.api.session.SessionProvider;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.threads.api.EventLoop;
@@ -76,6 +78,8 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
     private final AtomicBoolean isClosed = new AtomicBoolean();
     private Class keyType;
     private Class valueType;
+    private final SessionProvider sessionProvider;
+    private SessionDetails replicationSessionDetails;
 
     public ChronicleMapKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset) {
         String basePath = context.basePath();
@@ -89,7 +93,11 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
         this.subscriptions.setKvStore(this);
         this.eventLoop = asset.findOrCreateView(EventLoop.class);
         assert eventLoop != null;
+        sessionProvider = asset.findView(SessionProvider.class);
         eventLoop.start();
+
+
+        replicationSessionDetails = asset.root().findView(SessionDetails.class);
 
         ChronicleMapBuilder<K, V> builder = ChronicleMapBuilder.of(context.keyType(), context.valueType());
         HostIdentifier hostIdentifier = null;
@@ -186,6 +194,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
                 final TcpChannelHub tcpChannelHub = hostDetails.acquireTcpChannelHub(asset, eventLoop, context.wireType());
                 final ReplicationHub replicationHub = new ReplicationHub(context, tcpChannelHub,
                         eventLoop, isClosed, context.wireType());
+
                 replicationHub.bootstrap(engineReplicator1, localIdentifier, (byte) remoteIdentifier);
             }
 
@@ -326,20 +335,63 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
 
     private class PublishingOperations extends MapEventListener<K, V> {
         @Override
-        public void onRemove(@NotNull K key, V value, boolean replicationEven) {
+        public void onRemove(@NotNull K key, V value, boolean replicationEvent) {
+            if (replicationEvent &&
+                    replicationSessionDetails != null &&
+                    sessionProvider.get() == null) {
+
+                // todo - this is a bit of a hack, to prevent the AuthenticationKeyValueSubscription
+                // from throwing an exception that there is has no session details from a replication event
+                /// the reason that this was failing, is that client connection "don't and should not hold"
+                // session details of their servers, however in a replication cluster replication events are being authenticated
+                // event thought they originate from a client connect
+                sessionProvider.set(replicationSessionDetails);
+            }
+
+            onRemove0(key, value, replicationEvent);
+
+
+        }
+
+
+        public void onRemove0(@NotNull K key, V value, boolean replicationEven) {
             if (subscriptions.hasSubscribers())
                 subscriptions.notifyEvent(RemovedEvent.of(assetFullName, key, value, false));
         }
 
-        @Override
-        public void onPut(@NotNull K key, V newValue, @Nullable V replacedValue,
-                          boolean replicationEvent, boolean added) {
+
+        private void onPut0(@NotNull K key, V newValue, @Nullable V replacedValue,
+                            boolean replicationEvent, boolean added) {
+
+
             if (subscriptions.hasSubscribers())
                 if (added) {
                     subscriptions.notifyEvent(InsertedEvent.of(assetFullName, key, newValue, replicationEvent));
                 } else {
                     subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, replacedValue, newValue, replicationEvent));
                 }
+        }
+
+
+        @Override
+        public void onPut(@NotNull K key, V newValue, @Nullable V replacedValue,
+                          boolean replicationEvent, boolean added) {
+
+
+            if (replicationEvent &&
+                    replicationSessionDetails != null &&
+                    sessionProvider.get() == null) {
+
+                // todo - this is a bit of a hack, to prevent the AuthenticationKeyValueSubscription
+                // from throwing an exception that there is has no session details from a replication event
+                /// the reason that this was failing, is that client connection "don't and should not hold"
+                // session details of their servers, however in a replication cluster replication events are being authenticated
+                // event thought they originate from a client connect
+                sessionProvider.set(replicationSessionDetails);
+
+            }
+
+            onPut0(key, newValue, replacedValue, replicationEvent, added);
         }
     }
 
@@ -370,3 +422,4 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
     }
 
 }
+
