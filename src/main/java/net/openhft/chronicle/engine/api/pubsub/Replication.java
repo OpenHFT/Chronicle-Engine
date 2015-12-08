@@ -19,4 +19,6 @@ public interface Replication {
     ModificationIterator acquireModificationIterator(byte id);
 
     long lastModificationTime(byte id);
+
+    void setLastModificationTime(final byte identifier, final long timestamp);
 }

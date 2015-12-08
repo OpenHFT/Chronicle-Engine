@@ -127,10 +127,6 @@ public class CMap2EngineReplicator implements EngineReplication,
         else
             put(entry);
 
-        if (Jvm.isDebug())
-            System.out.println("finished replication");
-
-        setLastModificationTime(entry.identifier(), entry.bootStrapTimeStamp());
     }
 
     @Nullable

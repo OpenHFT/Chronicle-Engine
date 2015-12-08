@@ -30,7 +30,6 @@ public class ReplicationHandler<E> extends AbstractHandler {
     private WireOutPublisher publisher;
     private HostIdentifier hostId;
     private long tid;
-    private WireType wireType;
 
     private EventLoop eventLoop;
 
@@ -58,6 +57,9 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
                 eventLoop.addHandler(new EventHandler() {
 
+                    boolean hasSentLastUpdateTime;
+                    long lastUpdateTime = 0;
+                    boolean hasLogged = false;
 
                     @Override
                     public boolean action() throws InvalidEventHandlerException {
@@ -71,10 +73,44 @@ public class ReplicationHandler<E> extends AbstractHandler {
                             if (!publisher.isEmpty())
                                 return false;
 
+                            if (!mi.hasNext()) {
+
+                                // because events arrive in a bitset ( aka random ) order ( not necessary in
+                                // time order ) we can only be assured that the latest time of
+                                // the last event is really the latest time, once all the events
+                                // have been received, we know when we have received all events
+                                // when there are no more events to process.
+                                if (!hasSentLastUpdateTime) {
+                                    publisher.put(null, publish -> publish.writeNotReadyDocument(false,
+                                            wire -> {
+                                                wire.writeEventName(CoreFields.lastUpdateTime).int64(lastUpdateTime);
+                                                wire.write(() -> "id").int8(id);
+                                            }
+                                    ));
+
+                                    hasSentLastUpdateTime = true;
+
+                                    if (!hasLogged) {
+                                        System.out.println("received ALL replication the EVENTS for " +
+                                                "id=" + id);
+                                        hasLogged = true;
+                                    }
+
+                                    return false;
+                                }
+                            }
+
                             mi.nextEntry(e -> publisher.put(null, publish1 -> {
 
                                 if (e.remoteIdentifier() == hostId.hostId())
                                     return;
+
+                                long newlastUpdateTime = Math.max(lastUpdateTime, e.timestamp());
+
+                                if (newlastUpdateTime > lastUpdateTime) {
+                                    hasSentLastUpdateTime = false;
+                                    lastUpdateTime = newlastUpdateTime;
+                                }
 
                                 if (LOG.isDebugEnabled())
                                     LOG.debug("publish from server response from iterator " +
@@ -85,7 +121,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
                                         wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
 
                                 publish1.writeNotReadyDocument(false,
-                                        wire -> wire.write(replicationEvent).typedMarshallable(e));
+                                        wire -> wire.writeEventName(replicationEvent).typedMarshallable(e));
 
                             }));
                         }
@@ -97,10 +133,23 @@ public class ReplicationHandler<E> extends AbstractHandler {
                 return;
             }
 
+
+            // receives replication events
+            if (CoreFields.lastUpdateTime.contentEquals(eventName)) {
+                if (Jvm.isDebug())
+                    System.out.println("server : received lastUpdateTime");
+                final long time = valueIn.int64();
+                final byte id = inWire.read(() -> "id").int8();
+                System.out.println("lastUpdateTime id=" + id + ",time=" + time);
+                replication.setLastModificationTime(id, time);
+                return;
+            }
+
+
             // receives replication events
             if (replicationEvent.contentEquals(eventName)) {
                 if (Jvm.isDebug())
-                System.out.println("server : received replicationEvent");
+                    System.out.println("server : received replicationEvent");
                 ReplicationEntry replicatedEntry = valueIn.typedMarshallable();
                 assert replicatedEntry != null;
                 replication.applyReplication(replicatedEntry);

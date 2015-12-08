@@ -24,18 +24,12 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.map.replication.Bootstrap;
 import net.openhft.chronicle.engine.server.internal.MapWireHandler;
 import net.openhft.chronicle.engine.server.internal.ReplicationHandler.EventId;
-import net.openhft.chronicle.network.connection.AbstractAsyncSubscription;
-import net.openhft.chronicle.network.connection.AbstractAsyncTemporarySubscription;
-import net.openhft.chronicle.network.connection.AbstractStatelessClient;
-import net.openhft.chronicle.network.connection.TcpChannelHub;
+import net.openhft.chronicle.network.connection.*;
 import net.openhft.chronicle.threads.HandlerPriority;
 import net.openhft.chronicle.threads.api.EventHandler;
 import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.threads.api.InvalidEventHandlerException;
-import net.openhft.chronicle.wire.Wire;
-import net.openhft.chronicle.wire.WireIn;
-import net.openhft.chronicle.wire.WireOut;
-import net.openhft.chronicle.wire.WriteMarshallable;
+import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -158,7 +152,7 @@ class ReplicationHub extends AbstractStatelessClient {
 
                     // publishes changes - pushes the replication events
                     try {
-                        publish(mi, b);
+                        publish(mi, b, remoteIdentifier);
                     } catch (Exception e) {
                         LOG.error("", e);
                     }
@@ -172,11 +166,12 @@ class ReplicationHub extends AbstractStatelessClient {
     /**
      * publishes changes - this method pushes the replication events
      *
-     * @param mi     the modification iterator that notifies us of changes
-     * @param remote details about the remote connection
+     * @param mi               the modification iterator that notifies us of changes
+     * @param remote           details about the remote connection
+     * @param remoteIdentifier
      */
     void publish(@NotNull final ModificationIterator mi,
-                 @NotNull final Bootstrap remote) {
+                 @NotNull final Bootstrap remote, byte remoteIdentifier) {
 
         final TcpChannelHub hub = this.hub;
         mi.setModificationNotifier(eventLoop::unpause);
@@ -185,6 +180,9 @@ class ReplicationHub extends AbstractStatelessClient {
 
             final Bytes bytes = Bytes.elasticByteBuffer();
             final Wire wire = wireType.apply(bytes);
+            boolean hasSentLastUpdateTime = false;
+            long lastUpdateTime = 0;
+            boolean hasLogged;
 
             @Override
             public boolean action() throws InvalidEventHandlerException {
@@ -197,6 +195,38 @@ class ReplicationHub extends AbstractStatelessClient {
 
                 bytes.clear();
 
+
+                if (!mi.hasNext()) {
+
+                    // because events arrive in a bitset ( aka random ) order ( not necessary in
+                    // time order ) we can only be assured that the latest time of
+                    // the last event is really the latest time, once all the events
+                    // have been received, we know when we have received all events
+                    // when there are no more events to process.
+                    if (!hasSentLastUpdateTime) {
+                        wire.writeNotReadyDocument(false,
+                                wire -> {
+                                    wire.writeEventName(CoreFields.lastUpdateTime).int64(lastUpdateTime);
+                                    wire.write(() -> "id").int8(remoteIdentifier);
+                                }
+                        );
+
+                        hasSentLastUpdateTime = true;
+
+                        if (!hasLogged) {
+                            System.out.println("received ALL replication the EVENTS for " +
+                                    "id=" + remoteIdentifier);
+                            hasLogged = true;
+                        }
+
+                        if (bytes.readRemaining() > 0) {
+                            ReplicationHub.this.sendBytes(bytes, false);
+                            return true;
+                        }
+                        return false;
+                    }
+                }
+
                 // publishes single events to free up the event loop, we used to publish all the
                 // changes but this can lead to this iterator never completing if updates are
                 // coming in from end users that touch these entries
@@ -208,8 +238,17 @@ class ReplicationHub extends AbstractStatelessClient {
                 // also we have to write the data into a buffer, to free the map lock
                 // asap, the old code use to pass the entry to the hub, this was leaving the
                 // segment locked and cause deadlocks with the read thread
-                mi.nextEntry(e -> wire.writeDocument(false, wireOut ->
-                        wireOut.writeEventName(replicationEvent).typedMarshallable(e)));
+                mi.nextEntry(e -> {
+                    long updateTime = Math.max(lastUpdateTime, e.timestamp());
+                    if (updateTime > lastUpdateTime) {
+                        hasSentLastUpdateTime = false;
+                        lastUpdateTime = updateTime;
+                    }
+
+                    wire.writeDocument(false, wireOut ->
+                            wireOut.writeEventName(replicationEvent).typedMarshallable(e));
+
+                });
 
                 if (bytes.readRemaining() > 0) {
                     ReplicationHub.this.sendBytes(bytes, false);
@@ -249,8 +288,30 @@ class ReplicationHub extends AbstractStatelessClient {
             public void onConsumer(@NotNull final WireIn d) {
                 // receives the replication events and applies them
                 //noinspection ConstantConditions
-                d.readDocument(null, w -> replication.applyReplication(
-                        w.read(replicationEvent).typedMarshallable()));
+                d.readDocument(null, w -> {
+
+                    StringBuilder eventName = Wires.acquireStringBuilder();
+                    final ValueIn read = w.readEventName(eventName);
+
+                    if (replicationEvent.contentEquals(eventName))
+                        replication.applyReplication(read.typedMarshallable());
+
+                        // receives replication events
+                    else if (CoreFields.lastUpdateTime.contentEquals(eventName)) {
+
+                        if (Jvm.isDebug())
+                            System.out.println("server : received lastUpdateTime");
+
+                        final long time = read.int64();
+                        final byte id = w.read(() -> "id").int8();
+
+                        System.out.println("lastUpdateTime id=" + id + ",time=" + time);
+                        replication.setLastModificationTime(id, time);
+
+                    }
+
+
+                });
             }
 
         });

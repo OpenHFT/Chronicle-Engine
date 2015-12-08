@@ -41,4 +41,10 @@ public class VanillaReplication implements Replication {
         EngineReplication engineReplication = ((Supplier<EngineReplication>) mapView.underlying()).get();
         return engineReplication.lastModificationTime(id);
     }
+
+    @Override
+    public void setLastModificationTime(byte identifier, long timestamp) {
+        EngineReplication engineReplication = ((Supplier<EngineReplication>) mapView.underlying()).get();
+        engineReplication.setLastModificationTime(identifier, timestamp);
+    }
 }
