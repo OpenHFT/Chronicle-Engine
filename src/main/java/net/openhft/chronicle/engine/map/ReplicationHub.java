@@ -234,7 +234,7 @@ class ReplicationHub extends AbstractStatelessClient {
                     // the last event is really the latest time, once all the events
                     // have been received, we know when we have received all events
                     // when there are no more events to process.
-                    if (!hasSentLastUpdateTime) {
+                    if (!hasSentLastUpdateTime && lastUpdateTime > 0) {
                         wire.writeNotReadyDocument(false,
                                 wire -> {
                                     wire.writeEventName(CoreFields.lastUpdateTime).int64(lastUpdateTime);
@@ -297,7 +297,6 @@ class ReplicationHub extends AbstractStatelessClient {
 
         mi.dirtyEntries(remote.lastUpdatedTime());
     }
-
 
 
 }
