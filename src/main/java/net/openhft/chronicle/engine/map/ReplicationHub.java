@@ -251,7 +251,6 @@ class ReplicationHub extends AbstractStatelessClient {
                 //noinspection ConstantConditions
                 d.readDocument(null, w -> replication.applyReplication(
                         w.read(replicationEvent).typedMarshallable()));
-
             }
 
         });
