@@ -84,7 +84,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
                                     publisher.put(null, publish -> publish.writeNotReadyDocument(false,
                                             wire -> {
                                                 wire.writeEventName(CoreFields.lastUpdateTime).int64(lastUpdateTime);
-                                                wire.write(() -> "id").int8(id);
+                                                wire.write(() -> "id").int8(hostId.hostId());
                                             }
                                     ));
 

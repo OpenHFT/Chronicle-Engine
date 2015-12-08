@@ -152,7 +152,7 @@ class ReplicationHub extends AbstractStatelessClient {
 
                     // publishes changes - pushes the replication events
                     try {
-                        publish(mi, b, remoteIdentifier);
+                        publish(mi, b, remoteIdentifier,localIdentifier);
                     } catch (Exception e) {
                         LOG.error("", e);
                     }
@@ -165,13 +165,13 @@ class ReplicationHub extends AbstractStatelessClient {
 
     /**
      * publishes changes - this method pushes the replication events
-     *
-     * @param mi               the modification iterator that notifies us of changes
+     *  @param mi               the modification iterator that notifies us of changes
      * @param remote           details about the remote connection
+     * @param remoteIdentifier
      * @param remoteIdentifier
      */
     void publish(@NotNull final ModificationIterator mi,
-                 @NotNull final Bootstrap remote, byte remoteIdentifier) {
+                 @NotNull final Bootstrap remote, byte remoteIdentifier, byte localIdentifier) {
 
         final TcpChannelHub hub = this.hub;
         mi.setModificationNotifier(eventLoop::unpause);
@@ -207,7 +207,7 @@ class ReplicationHub extends AbstractStatelessClient {
                         wire.writeNotReadyDocument(false,
                                 wire -> {
                                     wire.writeEventName(CoreFields.lastUpdateTime).int64(lastUpdateTime);
-                                    wire.write(() -> "id").int8(remoteIdentifier);
+                                    wire.write(() -> "id").int8(localIdentifier);
                                 }
                         );
 
