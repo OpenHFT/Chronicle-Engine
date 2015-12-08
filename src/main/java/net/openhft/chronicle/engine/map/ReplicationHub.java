@@ -189,8 +189,8 @@ class ReplicationHub extends AbstractStatelessClient {
             @Override
             public boolean action() throws InvalidEventHandlerException {
 
-                if (!hub.outWireIsEmpty())
-                    return true;
+                if (hub.isOutBytesLocked())
+                    return false;
 
                 if (ReplicationHub.this.isClosed.get())
                     throw new InvalidEventHandlerException();
