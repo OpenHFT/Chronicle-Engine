@@ -42,97 +42,6 @@ public class ReplicationHandler<E> extends AbstractHandler {
             eventName.setLength(0);
             final ValueIn valueIn = inWire.readEventName(eventName);
 
-            if (replicationSubscribe.contentEquals(eventName)) {
-
-                if (Jvm.isDebug())
-                    System.out.println("server : received replicationSubscribe");
-
-                // receive bootstrap
-                final byte id = valueIn.int8();
-                final ModificationIterator mi = replication.acquireModificationIterator(id);
-                if (mi == null)
-                    return;
-                // sends replication events back to the remote client
-                mi.setModificationNotifier(eventLoop::unpause);
-
-                eventLoop.addHandler(new EventHandler() {
-
-                    boolean hasSentLastUpdateTime;
-                    long lastUpdateTime = 0;
-                    boolean hasLogged = false;
-
-                    @Override
-                    public boolean action() throws InvalidEventHandlerException {
-                        if (connectionClosed)
-                            throw new InvalidEventHandlerException();
-
-                        synchronized (publisher) {
-                            // given the sending an event to the publish hold the chronicle map lock
-                            // we will send only one at a time
-
-                            if (!publisher.isEmpty())
-                                return false;
-
-                            if (!mi.hasNext()) {
-
-                                // because events arrive in a bitset ( aka random ) order ( not necessary in
-                                // time order ) we can only be assured that the latest time of
-                                // the last event is really the latest time, once all the events
-                                // have been received, we know when we have received all events
-                                // when there are no more events to process.
-                                if (!hasSentLastUpdateTime) {
-                                    publisher.put(null, publish -> publish.writeNotReadyDocument(false,
-                                            wire -> {
-                                                wire.writeEventName(CoreFields.lastUpdateTime).int64(lastUpdateTime);
-                                                wire.write(() -> "id").int8(id);
-                                            }
-                                    ));
-
-                                    hasSentLastUpdateTime = true;
-
-                                    if (!hasLogged) {
-                                        System.out.println("received ALL replication the EVENTS for " +
-                                                "id=" + id);
-                                        hasLogged = true;
-                                    }
-
-                                    return false;
-                                }
-                            }
-
-                            mi.nextEntry(e -> publisher.put(null, publish1 -> {
-
-                                if (e.remoteIdentifier() == hostId.hostId())
-                                    return;
-
-                                long newlastUpdateTime = Math.max(lastUpdateTime, e.timestamp());
-
-                                if (newlastUpdateTime > lastUpdateTime) {
-                                    hasSentLastUpdateTime = false;
-                                    lastUpdateTime = newlastUpdateTime;
-                                }
-
-                                if (LOG.isDebugEnabled())
-                                    LOG.debug("publish from server response from iterator " +
-                                            "localIdentifier=" + hostId + " ,remoteIdentifier=" +
-                                            id + " event=" + e);
-
-                                publish1.writeDocument(true,
-                                        wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
-
-                                publish1.writeNotReadyDocument(false,
-                                        wire -> wire.writeEventName(replicationEvent).typedMarshallable(e));
-
-                            }));
-                        }
-                        return false;
-                    }
-                });
-
-
-                return;
-            }
-
 
             // receives replication events
             if (CoreFields.lastUpdateTime.contentEquals(eventName)) {
@@ -184,7 +93,91 @@ public class ReplicationHandler<E> extends AbstractHandler {
                     final Bootstrap outBootstrap = new Bootstrap();
                     outBootstrap.identifier(hostId.hostId());
                     outBootstrap.lastUpdatedTime(replication.lastModificationTime(id));
-                    outWire.write(bootstrap).typedMarshallable(outBootstrap);
+                    outWire.writeEventName(bootstrap).typedMarshallable(outBootstrap);
+
+                    if (Jvm.isDebug())
+                        System.out.println("server : received replicationSubscribe");
+
+                    // receive bootstrap
+                    if (mi == null)
+                        return;
+                    // sends replication events back to the remote client
+                    mi.setModificationNotifier(eventLoop::unpause);
+
+                    eventLoop.addHandler(new EventHandler() {
+
+                        boolean hasSentLastUpdateTime;
+                        long lastUpdateTime = 0;
+                        boolean hasLogged = false;
+
+                        @Override
+                        public boolean action() throws InvalidEventHandlerException {
+                            if (connectionClosed)
+                                throw new InvalidEventHandlerException();
+
+                            synchronized (publisher) {
+                                // given the sending an event to the publish hold the chronicle map lock
+                                // we will send only one at a time
+
+                                if (!publisher.isEmpty())
+                                    return false;
+
+                                if (!mi.hasNext()) {
+
+                                    // because events arrive in a bitset ( aka random ) order ( not necessary in
+                                    // time order ) we can only be assured that the latest time of
+                                    // the last event is really the latest time, once all the events
+                                    // have been received, we know when we have received all events
+                                    // when there are no more events to process.
+                                    if (!hasSentLastUpdateTime) {
+                                        publisher.put(null, publish -> publish.writeNotReadyDocument(false,
+                                                wire -> {
+                                                    wire.writeEventName(CoreFields.lastUpdateTime).int64(lastUpdateTime);
+                                                    wire.write(() -> "id").int8(id);
+                                                }
+                                        ));
+
+                                        hasSentLastUpdateTime = true;
+
+                                        if (!hasLogged) {
+                                            System.out.println("received ALL replication the EVENTS for " +
+                                                    "id=" + id);
+                                            hasLogged = true;
+                                        }
+
+                                        return false;
+                                    }
+                                }
+
+                                mi.nextEntry(e -> publisher.put(null, publish1 -> {
+
+                                    if (e.remoteIdentifier() == hostId.hostId())
+                                        return;
+
+                                    long newlastUpdateTime = Math.max(lastUpdateTime, e.timestamp());
+
+                                    if (newlastUpdateTime > lastUpdateTime) {
+                                        hasSentLastUpdateTime = false;
+                                        lastUpdateTime = newlastUpdateTime;
+                                    }
+
+                                    if (LOG.isDebugEnabled())
+                                        LOG.debug("publish from server response from iterator " +
+                                                "localIdentifier=" + hostId + " ,remoteIdentifier=" +
+                                                id + " event=" + e);
+
+                                    publish1.writeDocument(true,
+                                            wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
+
+                                    publish1.writeNotReadyDocument(false,
+                                            wire -> wire.writeEventName(replicationEvent).typedMarshallable(e));
+
+                                }));
+                            }
+                            return false;
+                        }
+                    });
+
                 }
             });
         }
@@ -216,7 +209,6 @@ public class ReplicationHandler<E> extends AbstractHandler {
         onEndOfSubscription,
         apply,
         replicationEvent,
-        replicationSubscribe,
         bootstrap,
         identifierReply,
         identifier;

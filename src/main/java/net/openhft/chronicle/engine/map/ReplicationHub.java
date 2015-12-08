@@ -24,7 +24,10 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.map.replication.Bootstrap;
 import net.openhft.chronicle.engine.server.internal.MapWireHandler;
 import net.openhft.chronicle.engine.server.internal.ReplicationHandler.EventId;
-import net.openhft.chronicle.network.connection.*;
+import net.openhft.chronicle.network.connection.AbstractAsyncSubscription;
+import net.openhft.chronicle.network.connection.AbstractStatelessClient;
+import net.openhft.chronicle.network.connection.CoreFields;
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.HandlerPriority;
 import net.openhft.chronicle.threads.api.EventHandler;
 import net.openhft.chronicle.threads.api.EventLoop;
@@ -129,39 +132,67 @@ class ReplicationHub extends AbstractStatelessClient {
         bootstrap.identifier(localIdentifier);
 
         // subscribes to updates - receives the replication events
-        subscribe(replication, localIdentifier, remoteIdentifier);
+        //  subscribe(replication, localIdentifier, remoteIdentifier);
 
         // a non block call to get the identifier from the remote host
         hub.subscribe(new AbstractAsyncSubscription(hub, csp, localIdentifier, "replication " +
-                "onConnected") {
+                              "onConnected") {
 
-            @Override
-            public void onSubscribe(@NotNull WireOut wireOut) {
-                wireOut.writeEventName(MapWireHandler.EventId.bootstrap).typedMarshallable(bootstrap);
-            }
+                          @Override
+                          public void onSubscribe(@NotNull WireOut wireOut) {
+                              wireOut.writeEventName(MapWireHandler.EventId.bootstrap).typedMarshallable(bootstrap);
+                          }
 
-            @Override
-            public void onConsumer(@NotNull WireIn inWire) {
-                if (Jvm.isDebug())
+                          @Override
+                          public void onConsumer(@NotNull WireIn inWire) {
+                              if (Jvm.isDebug())
 
-                    System.out.println("client : onConnected - publishing updates");
+                                  System.out.println("client : onConnected - publishing updates");
 
 
-                inWire.readDocument(null, d -> {
-                    Bootstrap b = d.read(EventId.bootstrap).typedMarshallable();
+                              inWire.readDocument(null, d -> {
 
-                    // publishes changes - pushes the replication events
-                    try {
-                        publish(mi, b, remoteIdentifier);
-                    } catch (Exception e) {
-                        LOG.error("", e);
-                    }
-                });
-            }
+                                  StringBuilder eventName = Wires.acquireStringBuilder();
 
-        });
+                                  final ValueIn valueIn = d.readEventName(eventName);
 
+                                  if (EventId.bootstrap.contentEquals(eventName)) {
+                                      Bootstrap b = valueIn.typedMarshallable();
+
+                                      // publishes changes - pushes the replication events
+                                      try {
+                                          publish(mi, b, remoteIdentifier);
+                                      } catch (Exception e) {
+                                          LOG.error("", e);
+                                      }
+                                      return;
+
+                                  }
+                                  if (replicationEvent.contentEquals(eventName))
+                                      replication.applyReplication(valueIn.typedMarshallable());
+
+                                      // receives replication events
+                                  else if (CoreFields.lastUpdateTime.contentEquals(eventName)) {
+
+                                      if (Jvm.isDebug())
+                                          System.out.println("server : received lastUpdateTime");
+
+                                      final long time = valueIn.int64();
+                                      final byte id = d.read(() -> "id").int8();
+
+                                      System.out.println("lastUpdateTime id=" + id + ",time=" + time);
+                                      replication.setLastModificationTime(id, time);
+
+                                  }
+
+
+                              });
+                          }
+                      }
+
+        );
     }
+
 
     /**
      * publishes changes - this method pushes the replication events
@@ -267,55 +298,6 @@ class ReplicationHub extends AbstractStatelessClient {
         mi.dirtyEntries(remote.lastUpdatedTime());
     }
 
-    /**
-     * subscribes to updates
-     *
-     * @param replication     the event will be applied to the EngineReplication
-     * @param localIdentifier our local identifier
-     */
 
-    private void subscribe(@NotNull final EngineReplication replication, final byte localIdentifier, final byte remoteIdentifier) {
-
-
-        // the only has to be a temporary subscription because the onConnected() will be called upon a reconnect
-        hub.subscribe(new AbstractAsyncTemporarySubscription(hub, csp, localIdentifier, "replication subscribe") {
-            @Override
-            public void onSubscribe(@NotNull final WireOut wireOut) {
-                wireOut.writeEventName(replicationSubscribe).int8(localIdentifier).writeComment("remoteIdentifier=" + remoteIdentifier);
-            }
-
-            @Override
-            public void onConsumer(@NotNull final WireIn d) {
-                // receives the replication events and applies them
-                //noinspection ConstantConditions
-                d.readDocument(null, w -> {
-
-                    StringBuilder eventName = Wires.acquireStringBuilder();
-                    final ValueIn read = w.readEventName(eventName);
-
-                    if (replicationEvent.contentEquals(eventName))
-                        replication.applyReplication(read.typedMarshallable());
-
-                        // receives replication events
-                    else if (CoreFields.lastUpdateTime.contentEquals(eventName)) {
-
-                        if (Jvm.isDebug())
-                            System.out.println("server : received lastUpdateTime");
-
-                        final long time = read.int64();
-                        final byte id = w.read(() -> "id").int8();
-
-                        System.out.println("lastUpdateTime id=" + id + ",time=" + time);
-                        replication.setLastModificationTime(id, time);
-
-                    }
-
-
-                });
-            }
-
-        });
-
-    }
 
 }
