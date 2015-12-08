@@ -247,13 +247,10 @@ class ReplicationHub extends AbstractStatelessClient {
 
             @Override
             public void onConsumer(@NotNull final WireIn d) {
-
-
                 // receives the replication events and applies them
                 //noinspection ConstantConditions
                 d.readDocument(null, w -> replication.applyReplication(
                         w.read(replicationEvent).typedMarshallable()));
-
 
             }
 
