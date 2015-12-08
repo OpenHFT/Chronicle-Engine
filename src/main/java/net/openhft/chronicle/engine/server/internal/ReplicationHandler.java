@@ -176,15 +176,15 @@ public class ReplicationHandler<E> extends AbstractHandler {
                         return;
                     final byte id = inBootstrap.identifier();
 
-                    final ModificationIterator mi = replication.acquireModificationIterator(id);
-                    if (mi != null)
-                        mi.dirtyEntries(inBootstrap.lastUpdatedTime());
-
                     // send bootstrap
                     final Bootstrap outBootstrap = new Bootstrap();
                     outBootstrap.identifier(hostId.hostId());
                     outBootstrap.lastUpdatedTime(replication.lastModificationTime(id));
                     outWire.write(bootstrap).typedMarshallable(outBootstrap);
+
+                    final ModificationIterator mi = replication.acquireModificationIterator(id);
+                    if (mi != null)
+                        mi.dirtyEntries(inBootstrap.lastUpdatedTime());
                 }
             });
         }
