@@ -6,7 +6,10 @@ import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
+import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
+import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
+import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.fs.ChronicleMapGroupFS;
 import net.openhft.chronicle.engine.fs.FilePerKeyGroupFS;
@@ -30,8 +33,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import static org.junit.Assert.assertNotNull;
@@ -40,7 +45,7 @@ import static org.junit.Assert.assertNotNull;
  * Created by Rob Austin
  */
 
-public class Replication3WayTest {
+public class Replication3WayTestWithClientConnections {
     public static final WireType WIRE_TYPE = WireType.TEXT;
     public static final String NAME = "/ChMaps/test";
     public static ServerEndpoint serverEndpoint1;
@@ -49,6 +54,8 @@ public class Replication3WayTest {
     private static AssetTree tree3;
     private static AssetTree tree1;
     private static AssetTree tree2;
+    private static AssetTree clientEndpoint2;
+
 
     @BeforeClass
     public static void before() throws IOException {
@@ -72,6 +79,8 @@ public class Replication3WayTest {
         serverEndpoint1 = new ServerEndpoint("host.port1", tree1, writeType);
         serverEndpoint2 = new ServerEndpoint("host.port2", tree2, writeType);
         serverEndpoint3 = new ServerEndpoint("host.port3", tree3, writeType);
+        clientEndpoint2 = new VanillaAssetTree("client1").forRemoteAccess
+                ("host.port2", WIRE_TYPE);
     }
 
     @AfterClass
@@ -82,6 +91,8 @@ public class Replication3WayTest {
             serverEndpoint2.close();
         if (serverEndpoint3 != null)
             serverEndpoint3.close();
+        if (clientEndpoint2 != null)
+            clientEndpoint2.close();
 
         if (tree1 != null)
             tree1.close();
@@ -126,27 +137,38 @@ public class Replication3WayTest {
 
 
     @Test
-    public void testThreeWay() throws InterruptedException {
+    public void testThreeWayCheckClientSubscribeCount() throws InterruptedException {
+
+        final char[] chars = new char[2 << 20];
+        Arrays.fill(chars, 'X');
+        final String largeString = new String(chars);
 
         final ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME, String.class, String
                 .class);
         assertNotNull(map1);
 
-        map1.put("hello1", "world1");
-
         final ConcurrentMap<String, String> map2 = tree2.acquireMap(NAME, String.class, String
                 .class);
         assertNotNull(map2);
 
-        map2.put("hello2", "world2");
 
+        AtomicInteger countUpdates = new AtomicInteger();
+        clientEndpoint2.registerSubscriber(NAME, MapEvent.class, new Subscriber<MapEvent>() {
+            @Override
+            public void onMessage(MapEvent mapEvent) throws InvalidSubscriberException {
+                countUpdates.incrementAndGet();
+            }
+        });
+
+        Thread.sleep(500);
+
+        map2.put("hello2", largeString);
+        map2.put("hello1", largeString);
+        map2.put("hello3", largeString);
 
         final ConcurrentMap<String, String> map3 = tree2.acquireMap(NAME, String.class, String
                 .class);
         assertNotNull(map2);
-
-        map2.put("hello3", "world3");
-
 
         for (int i = 1; i <= 50; i++) {
             if (map1.size() == 3 &&
@@ -157,12 +179,14 @@ public class Replication3WayTest {
         }
 
         for (Map m : new Map[]{map1, map2, map3}) {
-            Assert.assertEquals("world1", m.get("hello1"));
-            Assert.assertEquals("world2", m.get("hello2"));
-            Assert.assertEquals("world3", m.get("hello3"));
+            Assert.assertEquals(largeString, m.get("hello1"));
+            Assert.assertEquals(largeString, m.get("hello2"));
+            Assert.assertEquals(largeString, m.get("hello3"));
             Assert.assertEquals(3, m.size());
         }
 
+        Assert.assertEquals(3, countUpdates.get());
     }
+
 }
 

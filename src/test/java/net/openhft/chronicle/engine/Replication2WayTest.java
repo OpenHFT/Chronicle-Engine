@@ -6,6 +6,7 @@ import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
+import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.fs.ChronicleMapGroupFS;
@@ -32,6 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import static org.junit.Assert.assertNotNull;
@@ -144,7 +146,165 @@ public class Replication2WayTest {
             Assert.assertEquals(2, m.size());
         }
 
-
     }
+
+
+    @Test
+    public void testBootstrapAllFromMap1() throws InterruptedException {
+
+
+        final ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME, String.class, String
+                .class);
+        assertNotNull(map1);
+
+        map1.put("hello1", "world1");
+        map1.put("hello2", "world2");
+
+        final ConcurrentMap<String, String> map2 = tree2.acquireMap(NAME, String.class, String
+                .class);
+        assertNotNull(map2);
+
+
+        for (int i = 1; i <= 50; i++) {
+            if (map1.size() == 2 && map2.size() == 2)
+                break;
+            Jvm.pause(300);
+        }
+
+        for (Map m : new Map[]{map1, map2}) {
+            Assert.assertEquals("world1", m.get("hello1"));
+            Assert.assertEquals("world2", m.get("hello2"));
+            Assert.assertEquals(2, m.size());
+        }
+    }
+
+    @Test
+    public void testBootstrapAllFromMap2() throws InterruptedException {
+
+
+        final ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME, String.class, String
+                .class);
+        assertNotNull(map1);
+
+
+        final ConcurrentMap<String, String> map2 = tree2.acquireMap(NAME, String.class, String
+                .class);
+
+        map2.put("hello1", "world1");
+        map2.put("hello2", "world2");
+
+
+        assertNotNull(map2);
+
+
+        for (int i = 1; i <= 50; i++) {
+            if (map1.size() == 2 && map2.size() == 2)
+                break;
+            Jvm.pause(300);
+        }
+
+        for (Map m : new Map[]{map1, map2}) {
+            Assert.assertEquals("world1", m.get("hello1"));
+            Assert.assertEquals("world2", m.get("hello2"));
+            Assert.assertEquals(2, m.size());
+        }
+    }
+
+    @Test
+    public void testBootstrapAllFromMap1WithSubscription() throws InterruptedException {
+
+        AtomicInteger map1Updates = new AtomicInteger();
+
+        AtomicInteger map2Updates = new AtomicInteger();
+
+        final ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME, String.class, String
+                .class);
+        assertNotNull(map1);
+        tree1.registerSubscriber(NAME, MapEvent.class, f -> {
+            map1Updates.incrementAndGet();
+        });
+        Thread.sleep(1);
+        map1.put("hello1", "world1");
+        Thread.sleep(1);
+        map1.put("hello2", "world2");
+        Thread.sleep(1);
+
+
+        final ConcurrentMap<String, String> map2 = tree2.acquireMap(NAME, String.class, String
+                .class);
+        tree1.registerSubscriber(NAME, MapEvent.class, f -> {
+            map2Updates.incrementAndGet();
+        });
+
+        assertNotNull(map2);
+
+
+        for (int i = 1; i <= 50; i++) {
+            if (map1.size() == 2 && map2.size() == 2)
+                break;
+            Jvm.pause(300);
+        }
+
+        for (Map m : new Map[]{map1, map2}) {
+            Assert.assertEquals("world1", m.get("hello1"));
+            Assert.assertEquals("world2", m.get("hello2"));
+            Assert.assertEquals(2, m.size());
+        }
+
+        Assert.assertEquals(2, map1Updates.get());
+        Assert.assertEquals(2, map2Updates.get());
+    }
+
+
+    @Test
+    public void testBootstrapAllFromMap1WithSubscription2() throws InterruptedException {
+
+        AtomicInteger map1Updates = new AtomicInteger();
+
+        AtomicInteger map2Updates = new AtomicInteger();
+
+        final ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME, String.class, String
+                .class);
+        assertNotNull(map1);
+        tree1.registerSubscriber(NAME, MapEvent.class, f -> {
+            map1Updates.incrementAndGet();
+        });
+
+        map1.put("hello1", "world1");
+
+        map1.put("hello2", "world2");
+        Thread.sleep(1);
+
+
+        final ConcurrentMap<String, String> map2 = tree2.acquireMap(NAME, String.class, String
+                .class);
+        tree2.registerSubscriber(NAME, MapEvent.class, f -> {
+            map2Updates.incrementAndGet();
+        });
+
+
+        map2.put("hello1", "world1");
+        map2.put("hello2", "world2");
+
+        assertNotNull(map2);
+
+
+        for (int i = 1; i <= 50; i++) {
+            if (map1.size() == 2 && map2.size() == 2)
+                break;
+            Jvm.pause(300);
+        }
+
+        for (Map m : new Map[]{map1, map2}) {
+            Assert.assertEquals("world1", m.get("hello1"));
+            Assert.assertEquals("world2", m.get("hello2"));
+            Assert.assertEquals(2, m.size());
+        }
+
+        Assert.assertEquals(2, map1Updates.get());
+        Assert.assertEquals(2, map2Updates.get());
+    }
+
+
 }
 
