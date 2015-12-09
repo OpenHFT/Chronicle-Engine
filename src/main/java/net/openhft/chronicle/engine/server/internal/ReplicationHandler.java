@@ -104,7 +104,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
                     // sends replication events back to the remote client
                     mi.setModificationNotifier(eventLoop::unpause);
 
-                    eventLoop.addHandler(new EventHandler() {
+                    eventLoop.addHandler(true, new EventHandler() {
 
                         boolean hasSentLastUpdateTime;
                         long lastUpdateTime = 0;

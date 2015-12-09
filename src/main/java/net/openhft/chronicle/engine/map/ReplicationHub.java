@@ -207,7 +207,7 @@ class ReplicationHub extends AbstractStatelessClient {
         final TcpChannelHub hub = this.hub;
         mi.setModificationNotifier(eventLoop::unpause);
 
-        eventLoop.addHandler(new EventHandler() {
+        eventLoop.addHandler(true, new EventHandler() {
 
             final Bytes bytes = Bytes.elasticByteBuffer();
             final Wire wire = wireType.apply(bytes);
@@ -221,11 +221,13 @@ class ReplicationHub extends AbstractStatelessClient {
                 if (hub.isOutBytesLocked())
                     return false;
 
+                if (!hub.isOutBytesEmpty())
+                    return false;
+
                 if (ReplicationHub.this.isClosed.get())
                     throw new InvalidEventHandlerException();
 
                 bytes.clear();
-
 
                 if (!mi.hasNext()) {
 
