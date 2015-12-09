@@ -24,10 +24,7 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.map.replication.Bootstrap;
 import net.openhft.chronicle.engine.server.internal.MapWireHandler;
 import net.openhft.chronicle.engine.server.internal.ReplicationHandler.EventId;
-import net.openhft.chronicle.network.connection.AbstractAsyncSubscription;
-import net.openhft.chronicle.network.connection.AbstractStatelessClient;
-import net.openhft.chronicle.network.connection.CoreFields;
-import net.openhft.chronicle.network.connection.TcpChannelHub;
+import net.openhft.chronicle.network.connection.*;
 import net.openhft.chronicle.threads.HandlerPriority;
 import net.openhft.chronicle.threads.api.EventHandler;
 import net.openhft.chronicle.threads.api.EventLoop;
@@ -135,7 +132,7 @@ class ReplicationHub extends AbstractStatelessClient {
         //  subscribe(replication, localIdentifier, remoteIdentifier);
 
         // a non block call to get the identifier from the remote host
-        hub.subscribe(new AbstractAsyncSubscription(hub, csp, localIdentifier, "replication " +
+        hub.subscribe(new AbstractAsyncTemporarySubscription(hub, csp, localIdentifier, "replication " +
                               "onConnected") {
 
                           @Override
