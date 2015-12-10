@@ -18,6 +18,7 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.engine.api.map.MapView;
+import net.openhft.chronicle.engine.api.query.Subscription;
 import net.openhft.chronicle.engine.api.set.KeySetView;
 import org.junit.Before;
 import org.junit.Test;
@@ -91,10 +92,11 @@ public class MapViewTest {
                 .collect(Collectors.groupingBy(u -> u.usageCounter));
 
 // print userid which have a usageCounter > 10 each time it is incremented.
-        userMap.entrySet().query()
+        Subscription subscription = userMap.entrySet().query()
                 .filter(e -> e.getValue().usageCounter > 10)
                 .map(e -> e.getKey())
                 .subscribe(System.out::println);
+        subscription.cancel();
 
         Function<UserInfo, String> fullNameFunc = (Function<UserInfo, String> & Serializable) ui -> ui.fullName;
 //String fullName = userInfo.applyToKey("userid", fullNameFunc);
