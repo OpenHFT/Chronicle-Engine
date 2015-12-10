@@ -63,6 +63,40 @@ abstract class AbstractHandler {
         logYaml();
     }
 
+    /**
+     * write and exceptions and rolls back if no data was written
+     */
+    void writeData(boolean isNotReady, @NotNull Bytes inBytes, @NotNull WriteMarshallable c) {
+
+        final WriteMarshallable marshallable = out -> {
+            final long readPosition = inBytes.readPosition();
+            final long position = outWire.bytes().writePosition();
+            try {
+                c.writeMarshallable(outWire);
+            } catch (Throwable t) {
+                inBytes.readPosition(readPosition);
+                if (LOG.isInfoEnabled())
+                    LOG.info("While reading " + inBytes.toDebugString(),
+                            " processing wire " + c, t);
+                outWire.bytes().writePosition(position);
+                outWire.writeEventName(() -> "exception").throwable(t);
+            }
+
+            // write 'reply : {} ' if no data was sent
+            if (position == outWire.bytes().writePosition()) {
+                outWire.writeEventName(reply).marshallable(EMPTY);
+            }
+        };
+
+        if (isNotReady)
+            outWire.writeNotReadyDocument(false, marshallable);
+        else
+            outWire.writeDocument(false, marshallable);
+
+        logYaml();
+    }
+
+
     private void logYaml() {
         if (YamlLogging.showServerWrites)
             try {

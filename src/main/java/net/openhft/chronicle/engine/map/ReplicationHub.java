@@ -275,7 +275,7 @@ class ReplicationHub extends AbstractStatelessClient {
                         lastUpdateTime = updateTime;
                     }
 
-                    wire.writeDocument(false, wireOut ->
+                    wire.writeNotReadyDocument(false, wireOut ->
                             wireOut.writeEventName(replicationEvent).typedMarshallable(e));
 
                 });

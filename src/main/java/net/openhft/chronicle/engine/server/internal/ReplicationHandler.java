@@ -68,15 +68,11 @@ public class ReplicationHandler<E> extends AbstractHandler {
             assert outWire != null;
             outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
 
-            writeData(inWire.bytes(), out -> {
+            if (identifier.contentEquals(eventName))
+                writeData(inWire.bytes(), out -> outWire.write(identifierReply).int8(hostId.hostId()));
 
-                if (identifier.contentEquals(eventName)) {
-                    outWire.write(identifierReply).int8(hostId.hostId());
-                    return;
-                }
-
-                if (bootstrap.contentEquals(eventName)) {
-
+            if (bootstrap.contentEquals(eventName)) {
+                writeData(true, inWire.bytes(), out -> {
                     System.out.println("server : received bootstrap request");
 
                     // receive bootstrap
@@ -166,7 +162,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
                                                 "localIdentifier=" + hostId + " ,remoteIdentifier=" +
                                                 id + " event=" + e);
 
-                                    publish1.writeDocument(true,
+                                    publish1.writeNotReadyDocument(true,
                                             wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
 
                                     publish1.writeNotReadyDocument(false,
@@ -178,8 +174,9 @@ public class ReplicationHandler<E> extends AbstractHandler {
                         }
                     });
 
-                }
-            });
+
+                });
+            }
         }
 
     };

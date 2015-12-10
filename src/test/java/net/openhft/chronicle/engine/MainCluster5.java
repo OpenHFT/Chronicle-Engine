@@ -38,18 +38,17 @@ import java.util.function.Function;
 public class MainCluster5 {
     public static final WireType WIRE_TYPE = WireType.COMPRESSED_BINARY;
     public static final int entries = 10;
-    public static final String NAME = "/ChMaps/test?entries=" + entries + "&averageValueSize=" + (2 << 20);
+    public static final String NAME = "/ChMaps/test?entries=" + entries + "&averageValueSize=" +
+            (2 << 20) + "&basePath=/Users/robaustin/tmp/" + System.getProperty("server", "one");
     public static ServerEndpoint serverEndpoint;
-    public static ServerEndpoint serverEndpoint2;
-
 
     private static AssetTree tree;
 
 
     @BeforeClass
     public static void before() throws IOException {
-        YamlLogging.clientWrites = true;
-        YamlLogging.clientReads = true;
+        YamlLogging.clientWrites = false;
+        YamlLogging.clientReads = false;
 
         //YamlLogging.showServerWrites = true;
 
@@ -168,7 +167,7 @@ public class MainCluster5 {
 
     public void test() throws InterruptedException, IOException {
 
-        YamlLogging.setAll(false);
+        //  YamlLogging.setAll(true);
 
         String data = generateValue();
 
@@ -176,7 +175,7 @@ public class MainCluster5 {
         final String type = System.getProperty("server", "one");
 
         map = tree.acquireMap(NAME, String.class, String.class);
-        if ("one".equals(type)) {
+        if ("five".equals(type) || "one".equals(type)) {
             for (int i = 0; i < entries; i++) {
                 map.put(getKey(i), data);
             }

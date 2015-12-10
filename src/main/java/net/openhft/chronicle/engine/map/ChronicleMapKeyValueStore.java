@@ -96,7 +96,6 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
         sessionProvider = asset.findView(SessionProvider.class);
         eventLoop.start();
 
-
         replicationSessionDetails = asset.root().findView(SessionDetails.class);
 
         ChronicleMapBuilder<K, V> builder = ChronicleMapBuilder.of(context.keyType(), context.valueType());
@@ -386,9 +385,8 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
                 // from throwing an exception that there is has no session details from a replication event
                 /// the reason that this was failing, is that client connection "don't and should not hold"
                 // session details of their servers, however in a replication cluster replication events are being authenticated
-                // event thought they originate from a client connect
+                // event thought they originate from a client connection
                 sessionProvider.set(replicationSessionDetails);
-
             }
 
             onPut0(key, newValue, replacedValue, replicationEvent, added);
