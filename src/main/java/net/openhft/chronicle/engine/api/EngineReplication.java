@@ -194,7 +194,7 @@ public interface EngineReplication extends Replication {
         @Override
         default void writeMarshallable(@NotNull final WireOut wire) {
             wire.write(() -> "key").bytes(key());
-            wire.write(() -> "value").compress("snappy", value());
+            wire.write(() -> "value").compress("lzw", value().bytesForRead());
             wire.write(() -> "timestamp").int64(timestamp());
             wire.write(() -> "identifier").int8(identifier());
             wire.write(() -> "isDeleted").bool(isDeleted());
