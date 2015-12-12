@@ -372,10 +372,43 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
         }
 
 
-        @Override
-        public void onPut(@NotNull K key, V newValue, @Nullable V replacedValue,
-                          boolean replicationEvent, boolean added) {
+        public void onPut(K key,
+                          V newValue,
+                          @Nullable V replacedValue,
+                          boolean replicationEvent,
+                          boolean added) {
 
+            if (replicationEvent &&
+                    replicationSessionDetails != null &&
+                    sessionProvider.get() == null) {
+
+                // todo - this is a bit of a hack, to prevent the AuthenticationKeyValueSubscription
+                // from throwing an exception that there is has no session details from a replication event
+                /// the reason that this was failing, is that client connection "don't and should not hold"
+                // session details of their servers, however in a replication cluster replication events are being authenticated
+                // event thought they originate from a client connection
+                sessionProvider.set(replicationSessionDetails);
+            }
+
+            onPut0(key, newValue, replacedValue, replicationEvent, added);
+        }
+
+
+        public void onPut(K key,
+                          V newValue,
+                          @Nullable V replacedValue,
+                          boolean replicationEvent,
+                          boolean added,
+                          long timestamp, long replacedTimestamp,
+                          byte identifier, byte replacedIdentifier,
+                          boolean hasValueChanged) {
+
+
+            //     if (!added && !hasValueChanged && replacedTimestamp == timestamp && identifier ==
+            //             replacedIdentifier) {
+            //        LOG.debug("ignore update as nothing has changed");
+            //        return;
+            //   }
 
             if (replicationEvent &&
                     replicationSessionDetails != null &&
