@@ -22,10 +22,8 @@ import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
+import org.junit.rules.TestName;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,11 +42,10 @@ import static org.junit.Assert.assertNotNull;
 
 public class Replication2WayTest {
     public static final WireType WIRE_TYPE = WireType.TEXT;
-    public static final String NAME = "/ChMaps/test";
+
     public static ServerEndpoint serverEndpoint1;
     public static ServerEndpoint serverEndpoint2;
-    public static ServerEndpoint serverEndpoint3;
-    private static AssetTree tree3;
+
     private static AssetTree tree1;
     private static AssetTree tree2;
 
@@ -62,7 +59,6 @@ public class Replication2WayTest {
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
         ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
         //Delete any files from the last run
-        Files.deleteIfExists(Paths.get(OS.TARGET, NAME));
 
         TCPRegistry.createServerSocketChannelFor("host.port1", "host.port2");
 
@@ -90,6 +86,17 @@ public class Replication2WayTest {
         TCPRegistry.reset();
         // TODO TCPRegistery.assertAllServersStopped();
     }
+
+    @Rule
+    public TestName testName = new TestName();
+    public String name;
+
+    @Before
+    public void beforeTest() throws IOException {
+        name = testName.getMethodName();
+        Files.deleteIfExists(Paths.get(OS.TARGET, name.toString()));
+    }
+
 
     @NotNull
     private static AssetTree create(final int hostId, Function<Bytes, Wire> writeType, final String clusterTwo) {
@@ -122,13 +129,13 @@ public class Replication2WayTest {
     @Test
     public void testBootstrap() throws InterruptedException {
 
-        final ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME, String.class, String
+        final ConcurrentMap<String, String> map1 = tree1.acquireMap(name, String.class, String
                 .class);
         assertNotNull(map1);
 
         map1.put("hello1", "world1");
 
-        final ConcurrentMap<String, String> map2 = tree2.acquireMap(NAME, String.class, String
+        final ConcurrentMap<String, String> map2 = tree2.acquireMap(name, String.class, String
                 .class);
         assertNotNull(map2);
 
@@ -153,14 +160,14 @@ public class Replication2WayTest {
     public void testBootstrapAllFromMap1() throws InterruptedException {
 
 
-        final ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME, String.class, String
+        final ConcurrentMap<String, String> map1 = tree1.acquireMap(name, String.class, String
                 .class);
         assertNotNull(map1);
 
         map1.put("hello1", "world1");
         map1.put("hello2", "world2");
 
-        final ConcurrentMap<String, String> map2 = tree2.acquireMap(NAME, String.class, String
+        final ConcurrentMap<String, String> map2 = tree2.acquireMap(name, String.class, String
                 .class);
         assertNotNull(map2);
 
@@ -176,18 +183,19 @@ public class Replication2WayTest {
             Assert.assertEquals("world2", m.get("hello2"));
             Assert.assertEquals(2, m.size());
         }
+
     }
 
     @Test
     public void testBootstrapAllFromMap2() throws InterruptedException {
 
 
-        final ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME, String.class, String
+        final ConcurrentMap<String, String> map1 = tree1.acquireMap(name, String.class, String
                 .class);
         assertNotNull(map1);
 
 
-        final ConcurrentMap<String, String> map2 = tree2.acquireMap(NAME, String.class, String
+        final ConcurrentMap<String, String> map2 = tree2.acquireMap(name, String.class, String
                 .class);
 
         map2.put("hello1", "world1");
@@ -216,10 +224,10 @@ public class Replication2WayTest {
         AtomicInteger map1Updates = new AtomicInteger();
         AtomicInteger map2Updates = new AtomicInteger();
 
-        final ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME, String.class, String
+        final ConcurrentMap<String, String> map1 = tree1.acquireMap(name, String.class, String
                 .class);
         assertNotNull(map1);
-        tree1.registerSubscriber(NAME, MapEvent.class, f -> {
+        tree1.registerSubscriber(name, MapEvent.class, f -> {
             map1Updates.incrementAndGet();
         });
         Thread.sleep(1);
@@ -229,9 +237,9 @@ public class Replication2WayTest {
         Thread.sleep(1);
 
 
-        final ConcurrentMap<String, String> map2 = tree2.acquireMap(NAME, String.class, String
+        final ConcurrentMap<String, String> map2 = tree2.acquireMap(name, String.class, String
                 .class);
-        tree1.registerSubscriber(NAME, MapEvent.class, f -> {
+        tree1.registerSubscriber(name, MapEvent.class, f -> {
             map2Updates.incrementAndGet();
         });
 
@@ -262,10 +270,10 @@ public class Replication2WayTest {
 
         AtomicInteger map2Updates = new AtomicInteger();
 
-        final ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME, String.class, String
+        final ConcurrentMap<String, String> map1 = tree1.acquireMap(name, String.class, String
                 .class);
         assertNotNull(map1);
-        tree1.registerSubscriber(NAME, MapEvent.class, f -> {
+        tree1.registerSubscriber(name, MapEvent.class, f -> {
             map1Updates.incrementAndGet();
         });
 
@@ -275,9 +283,9 @@ public class Replication2WayTest {
         Thread.sleep(1);
 
 
-        final ConcurrentMap<String, String> map2 = tree2.acquireMap(NAME, String.class, String
+        final ConcurrentMap<String, String> map2 = tree2.acquireMap(name, String.class, String
                 .class);
-        tree2.registerSubscriber(NAME, MapEvent.class, f -> {
+        tree2.registerSubscriber(name, MapEvent.class, f -> {
             map2Updates.incrementAndGet();
         });
 

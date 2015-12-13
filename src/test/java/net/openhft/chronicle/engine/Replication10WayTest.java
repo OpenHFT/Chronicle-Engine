@@ -25,7 +25,10 @@ import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -47,7 +50,6 @@ import static org.junit.Assert.assertNotNull;
 /**
  * Created by Rob Austin
  */
-@Ignore("long running test")
 @RunWith(Parameterized.class)
 public class Replication10WayTest {
 
@@ -63,7 +65,7 @@ public class Replication10WayTest {
 
     @Parameterized.Parameters
     public static List<Object[]> data() {
-        return Arrays.asList(new Object[10][0]);
+        return Arrays.asList(new Object[3][0]);
     }
 
     @NotNull
