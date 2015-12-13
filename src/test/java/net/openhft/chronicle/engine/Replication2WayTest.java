@@ -214,7 +214,6 @@ public class Replication2WayTest {
     public void testBootstrapAllFromMap1WithSubscription() throws InterruptedException {
 
         AtomicInteger map1Updates = new AtomicInteger();
-
         AtomicInteger map2Updates = new AtomicInteger();
 
         final ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME, String.class, String
