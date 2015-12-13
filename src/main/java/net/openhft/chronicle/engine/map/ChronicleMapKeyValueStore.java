@@ -334,7 +334,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
 
     private class PublishingOperations extends MapEventListener<K, V> {
         @Override
-        public void onRemove(@NotNull K key, V value, boolean replicationEvent) {
+        public void onRemove(@NotNull K key, V value, boolean replicationEvent, byte identifier, byte replacedIdentifier, long timestamp, long replacedTimeStamp) {
             if (replicationEvent &&
                     replicationSessionDetails != null &&
                     sessionProvider.get() == null) {
@@ -393,22 +393,21 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
             onPut0(key, newValue, replacedValue, replicationEvent, added);
         }
 
-
+        @Override
         public void onPut(K key,
                           V newValue,
                           @Nullable V replacedValue,
                           boolean replicationEvent,
                           boolean added,
-                          long timestamp, long replacedTimestamp,
-                          byte identifier, byte replacedIdentifier,
-                          boolean hasValueChanged) {
+                          boolean hasValueChanged,
+                          byte identifier,
+                          byte replacedIdentifier, long timestamp, long replacedTimestamp) {
 
-
-            //     if (!added && !hasValueChanged && replacedTimestamp == timestamp && identifier ==
-            //             replacedIdentifier) {
-            //        LOG.debug("ignore update as nothing has changed");
-            //        return;
-            //   }
+            if (!added && !hasValueChanged && replacedTimestamp == timestamp
+                    && identifier == replacedIdentifier) {
+                LOG.debug("ignore update as nothing has changed");
+                return;
+            }
 
             if (replicationEvent &&
                     replicationSessionDetails != null &&
