@@ -250,7 +250,8 @@ todo fix this test
         assertEquals(2, map.size());
 
         // test the topic publish triggers events
-        subscriber.onMessage(UpdatedEvent.of("/map-name", "Key-1", "Value-1", "Message-1",false));
+        subscriber.onMessage(UpdatedEvent.of("/map-name", "Key-1", "Value-1", "Message-1", false,
+                false));
         subscriber.onMessage(InsertedEvent.of("/map-name", "Topic-1", "Message-1",false));
         replay(subscriber);
 

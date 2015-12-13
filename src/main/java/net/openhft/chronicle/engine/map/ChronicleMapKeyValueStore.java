@@ -360,38 +360,18 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
 
 
         private void onPut0(@NotNull K key, V newValue, @Nullable V replacedValue,
-                            boolean replicationEvent, boolean added) {
+                            boolean replicationEvent, boolean added, boolean hasValueChanged) {
 
 
             if (subscriptions.hasSubscribers())
                 if (added) {
                     subscriptions.notifyEvent(InsertedEvent.of(assetFullName, key, newValue, replicationEvent));
                 } else {
-                    subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, replacedValue, newValue, replicationEvent));
+                    subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, replacedValue,
+                            newValue, replicationEvent, hasValueChanged));
                 }
         }
 
-
-        public void onPut(K key,
-                          V newValue,
-                          @Nullable V replacedValue,
-                          boolean replicationEvent,
-                          boolean added) {
-
-            if (replicationEvent &&
-                    replicationSessionDetails != null &&
-                    sessionProvider.get() == null) {
-
-                // todo - this is a bit of a hack, to prevent the AuthenticationKeyValueSubscription
-                // from throwing an exception that there is has no session details from a replication event
-                /// the reason that this was failing, is that client connection "don't and should not hold"
-                // session details of their servers, however in a replication cluster replication events are being authenticated
-                // event thought they originate from a client connection
-                sessionProvider.set(replicationSessionDetails);
-            }
-
-            onPut0(key, newValue, replacedValue, replicationEvent, added);
-        }
 
         @Override
         public void onPut(K key,
@@ -421,7 +401,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
                 sessionProvider.set(replicationSessionDetails);
             }
 
-            onPut0(key, newValue, replacedValue, replicationEvent, added);
+            onPut0(key, newValue, replacedValue, replicationEvent, added, hasValueChanged);
         }
     }
 
@@ -438,14 +418,15 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
 
         @Override
         public void onPut(Bytes entry, long metaDataPos, long keyPos, long valuePos,
-                          boolean added, boolean replicationEvent) {
+                          boolean added, boolean replicationEvent, boolean hasValueChanged) {
             if (subscriptions.hasSubscribers()) {
                 K key = chronicleMap.readKey(entry, keyPos);
                 V value = chronicleMap.readValue(entry, valuePos);
                 if (added) {
                     subscriptions.notifyEvent(InsertedEvent.of(assetFullName, key, value, replicationEvent));
                 } else {
-                    subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, null, value, replicationEvent));
+                    subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, null, value,
+                            replicationEvent, hasValueChanged));
                 }
             }
         }

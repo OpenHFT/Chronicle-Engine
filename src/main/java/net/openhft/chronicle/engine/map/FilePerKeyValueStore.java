@@ -62,7 +62,7 @@ import static net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntr
  * Updates will be fired every time the file is saved but will be suppressed if the value has not
  * changed.  To avoid temporary files (e.g. if edited in vi) being included in the map, any file
  * starting with a '.' will be ignored. <p> Note the {@link WatchService} is extremely OS dependant.
- *  Mas OSX registers very few events if they are done quickly and there is a significant delay
+ * Mas OSX registers very few events if they are done quickly and there is a significant delay
  * between the event and the event being triggered.
  */
 public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Closeable {
@@ -135,7 +135,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
 
     @Override
     public void keysFor(int segment, @NotNull SubscriptionConsumer<String> stringConsumer) {
-            keysFor0(stringConsumer);
+        keysFor0(stringConsumer);
     }
 
     private void keysFor0(@NotNull SubscriptionConsumer<String> stringConsumer) {
@@ -150,7 +150,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
 
     @Override
     public void entriesFor(int segment, @NotNull SubscriptionConsumer<MapEvent<String, BytesStore>> kvConsumer) throws InvalidSubscriberException {
-            entriesFor0(kvConsumer);
+        entriesFor0(kvConsumer);
     }
 
     private void entriesFor0(@NotNull SubscriptionConsumer<MapEvent<String, BytesStore>> kvConsumer) {
@@ -160,7 +160,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
                 // in case the file has been deleted in the meantime.
                 fileContents = getFileContents(p, null);
                 if (fileContents != null) {
-                    InsertedEvent e = InsertedEvent.of(asset.fullName(), p.getFileName().toString(), fileContents,false);
+                    InsertedEvent e = InsertedEvent.of(asset.fullName(), p.getFileName().toString(), fileContents, false);
                     kvConsumer.accept(e);
                 }
             } catch (InvalidSubscriberException ise) {
@@ -473,9 +473,11 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
                             lastFileRecordMap.put(p.toFile(), new FileRecord<>(p.toFile().lastModified(), mapVal.copy()));
                         }
                         if (prev == null) {
-                            subscriptions.notifyEvent(InsertedEvent.of(asset.fullName(), p.toFile().getName(), mapVal,false));
+                            subscriptions.notifyEvent(InsertedEvent.of(asset.fullName(), p.toFile().getName(), mapVal, false));
                         } else {
-                            subscriptions.notifyEvent(UpdatedEvent.of(asset.fullName(), p.toFile().getName(), prevContents, mapVal,false));
+                            subscriptions.notifyEvent(UpdatedEvent.of(asset.fullName(), p.toFile
+                                    ().getName(), prevContents, mapVal, false, prevContents ==
+                                    null ? true :  prevContents.equals(mapVal)));
                         }
                     } finally {
                         if (prevContents != null)
@@ -488,7 +490,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
                     FileRecord<BytesStore> prev = lastFileRecordMap.remove(p.toFile());
                     BytesStore lastVal = prev == null ? null : prev.contents();
                     try {
-                        subscriptions.notifyEvent(RemovedEvent.of(asset.fullName(), p.toFile().getName(), lastVal,false));
+                        subscriptions.notifyEvent(RemovedEvent.of(asset.fullName(), p.toFile().getName(), lastVal, false));
                     } finally {
                         if (lastVal != null)
                             lastVal.release();

@@ -41,8 +41,11 @@ public class UpdatedEvent<K, V> implements MapEvent<K, V> {
     @Nullable
     private V value;
     private boolean isReplicationEvent;
+    private boolean hasValueChanged;
 
-    private UpdatedEvent(String assetName, @NotNull K key, V oldValue, V value, boolean isReplicationEvent) {
+    private UpdatedEvent(String assetName, @NotNull K key, V oldValue, V value,
+                         boolean replicationEvent, boolean isReplicationEvent,
+                         boolean hasValueChanged) {
         this.assetName = assetName;
         this.key = key;
         this.oldValue = oldValue;
@@ -50,8 +53,9 @@ public class UpdatedEvent<K, V> implements MapEvent<K, V> {
     }
 
     @NotNull
-    public static <K, V> UpdatedEvent<K, V> of(String assetName, K key, V oldValue, V value, boolean isReplicationEvent) {
-        return new UpdatedEvent<>(assetName, key, oldValue, value, isReplicationEvent);
+    public static <K, V> UpdatedEvent<K, V> of(String assetName, K key, V oldValue, V value,
+                                               boolean isReplicationEvent, boolean hasValueChanged) {
+        return new UpdatedEvent<>(assetName, key, oldValue, value, isReplicationEvent, hasValueChanged, hasValueChanged);
     }
 
     @Override
@@ -62,13 +66,13 @@ public class UpdatedEvent<K, V> implements MapEvent<K, V> {
     @NotNull
     @Override
     public <K2, V2> MapEvent<K2, V2> translate(@NotNull Function<K, K2> keyFunction, @NotNull Function<V, V2> valueFunction) {
-        return new UpdatedEvent<>(assetName, keyFunction.apply(key), valueFunction.apply(oldValue), valueFunction.apply(value), isReplicationEvent);
+        return new UpdatedEvent<>(assetName, keyFunction.apply(key), valueFunction.apply(oldValue), valueFunction.apply(value), isReplicationEvent, isReplicationEvent, hasValueChanged);
     }
 
     @NotNull
     @Override
     public <K2, V2> MapEvent<K2, V2> translate(@NotNull BiFunction<K, K2, K2> keyFunction, @NotNull BiFunction<V, V2, V2> valueFunction) {
-        return new UpdatedEvent<>(assetName, keyFunction.apply(key, null), valueFunction.apply(oldValue, null), valueFunction.apply(value, null), isReplicationEvent);
+        return new UpdatedEvent<>(assetName, keyFunction.apply(key, null), valueFunction.apply(oldValue, null), valueFunction.apply(value, null), isReplicationEvent, isReplicationEvent, hasValueChanged);
     }
 
     @Nullable
@@ -129,6 +133,7 @@ public class UpdatedEvent<K, V> implements MapEvent<K, V> {
         wire.read(MapEventFields.oldValue).object((Class<V>) Object.class, this, (o, x) -> o.oldValue = x);
         wire.read(MapEventFields.value).object((Class<V>) Object.class, this, (o, x) -> o.value = x);
         wire.read(MapEventFields.isReplicationEvent).bool(this, (o, x) -> o.isReplicationEvent = x);
+        wire.read(MapEventFields.hasValueChanged).bool(this, (o, x) -> o.hasValueChanged = x);
     }
 
     @Override
@@ -138,5 +143,6 @@ public class UpdatedEvent<K, V> implements MapEvent<K, V> {
         wire.write(MapEventFields.oldValue).object(oldValue);
         wire.write(MapEventFields.value).object(value);
         wire.write(MapEventFields.isReplicationEvent).object(isReplicationEvent);
+        wire.write(MapEventFields.hasValueChanged).object(hasValueChanged);
     }
 }
