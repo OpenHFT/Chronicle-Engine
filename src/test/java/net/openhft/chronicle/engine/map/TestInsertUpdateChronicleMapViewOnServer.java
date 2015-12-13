@@ -106,7 +106,7 @@ public class TestInsertUpdateChronicleMapViewOnServer {
             Assert.assertTrue(event instanceof InsertedEvent);
         }
         {
-            serverMap.put("hello", "world");
+            serverMap.put("hello", "world2");
             final MapEvent event = events.poll(10, SECONDS);
             Assert.assertTrue(event instanceof UpdatedEvent);
         }

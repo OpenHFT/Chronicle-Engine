@@ -108,7 +108,7 @@ public class TestInsertUpdateChronicleMapView {
             Assert.assertTrue(event instanceof InsertedEvent);
         }
         {
-            serverMap.put("hello", "world");
+            serverMap.put("hello", "world2");
             final MapEvent event = events.poll(10, SECONDS);
             Assert.assertTrue(event instanceof UpdatedEvent);
         }
@@ -125,7 +125,7 @@ public class TestInsertUpdateChronicleMapView {
         final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(128);
         clientAssetTree.registerSubscriber("name?putReturnsNull=true", MapEvent.class,
                 events::add);
-
+        Jvm.pause(1000);
         {
             serverMap.put("hello", "world");
             final MapEvent event = events.poll(10, SECONDS);
