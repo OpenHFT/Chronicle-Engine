@@ -20,7 +20,6 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.NativeBytesStore;
 import net.openhft.chronicle.bytes.PointerBytesStore;
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.tree.Asset;
@@ -35,6 +34,8 @@ import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.IByteBufferBytes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.function.Consumer;
@@ -47,6 +48,9 @@ import static net.openhft.lang.io.NativeBytes.wrap;
  */
 public class CMap2EngineReplicator implements EngineReplication,
         EngineReplicationLangBytesConsumer {
+
+
+    private static final Logger LOG = LoggerFactory.getLogger(CMap2EngineReplicator.class);
 
     static {
         ClassAliasPool.CLASS_ALIASES.addAlias(VanillaReplicatedEntry.class);
@@ -120,8 +124,10 @@ public class CMap2EngineReplicator implements EngineReplication,
 
     @Override
     public void applyReplication(@NotNull final ReplicationEntry entry) {
-        if (Jvm.isDebug())
-            System.out.println("applyReplication");
+
+        if (LOG.isDebugEnabled())
+            LOG.debug("applyReplication entry=" + entry);
+
         if (entry.isDeleted())
             remove(entry);
         else

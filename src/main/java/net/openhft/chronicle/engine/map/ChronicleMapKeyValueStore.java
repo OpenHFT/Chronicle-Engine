@@ -406,9 +406,15 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
     }
 
     private class NullOldValuePublishingOperations extends BytesMapEventListener {
+
         @Override
         public void onRemove(Bytes entry, long metaDataPos, long keyPos, long valuePos,
-                             boolean replicationEvent) {
+                             boolean replicationEvent, byte identifier, byte replacedIdentifier,
+                             long timeStamp, long replacedTimeStamp) {
+
+            if (identifier == replacedIdentifier && timeStamp == replacedTimeStamp)
+                return;
+
             if (subscriptions.hasSubscribers()) {
                 K key = chronicleMap.readKey(entry, keyPos);
                 V value = chronicleMap.readValue(entry, valuePos);
@@ -417,8 +423,12 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
         }
 
         @Override
-        public void onPut(Bytes entry, long metaDataPos, long keyPos, long valuePos,
-                          boolean added, boolean replicationEvent, boolean hasValueChanged) {
+        public void onPut(Bytes entry, long metaDataPos, long keyPos, long valuePos, boolean added, boolean replicationEvent, boolean hasValueChanged, byte identifier, byte replacedIdentifier, long timeStamp, long replacedTimeStamp) {
+
+            if (identifier == replacedIdentifier && timeStamp == replacedTimeStamp &&
+                    !hasValueChanged)
+                return;
+
             if (subscriptions.hasSubscribers()) {
                 K key = chronicleMap.readKey(entry, keyPos);
                 V value = chronicleMap.readValue(entry, valuePos);
@@ -430,6 +440,8 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
                 }
             }
         }
+
+
     }
 
 }
