@@ -50,7 +50,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
         V oldValue = kvStore.replace(key, value);
         if (oldValue != null) {
             subscriptions.notifyEvent(UpdatedEvent.of(asset.fullName(), key, oldValue, value,
-                    false, value.equals(oldValue)));
+                    false, !value.equals(oldValue)));
         }
         return oldValue;
     }
@@ -115,8 +115,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
 
         subscriptions.notifyEvent(oldValue == null
                 ? InsertedEvent.of(asset.fullName(), key, value, false)
-                : UpdatedEvent.of(asset.fullName(), key, oldValue, value, false, oldValue.equals
-                (value)));
+                : UpdatedEvent.of(asset.fullName(), key, oldValue, value, false, !oldValue.equals(value)));
         return oldValue;
     }
 
