@@ -76,7 +76,6 @@ public class CMap2EngineReplicator implements EngineReplication,
     }
 
 
-
     @NotNull
     private net.openhft.lang.io.Bytes toLangBytes(@NotNull BytesStore b) {
         long l = b.readRemaining();
@@ -177,17 +176,21 @@ public class CMap2EngineReplicator implements EngineReplication,
 
             private Bytes toKey(final @NotNull net.openhft.lang.io.Bytes key) {
 
+                final long position = key.position();
+                try {
+                    NativeBytesStore<Void> byteStore = NativeBytesStore.nativeStoreWithFixedCapacity(key
+                            .remaining());
 
-                NativeBytesStore<Void> byteStore = NativeBytesStore.nativeStoreWithFixedCapacity(key
-                        .remaining());
+                    int i = (int) key.position();
+                    while (key.remaining() > 0) {
+                        byteStore.writeByte(i++, key.readByte());
+                    }
 
-                int i = (int) key.position();
-                while (key.remaining() > 0) {
-                    byteStore.writeByte(i++, (byte) key.readByte());
+
+                    return byteStore.bytesForRead();
+                } finally {
+                    key.position(position);
                 }
-
-
-                return byteStore.bytesForRead();
             }
 
             @Nullable
@@ -195,16 +198,23 @@ public class CMap2EngineReplicator implements EngineReplication,
                 if (value == null)
                     return null;
 
-                NativeBytesStore<Void> byteStore = NativeBytesStore.nativeStoreWithFixedCapacity(value
-                        .remaining());
+                final long position = value.position();
+                try {
 
-                int i = (int) value.position();
-                while (value.remaining() > 0) {
-                    byteStore.writeByte(i++, (byte) value.readByte());
+
+                    NativeBytesStore<Void> byteStore = NativeBytesStore.nativeStoreWithFixedCapacity(value
+                            .remaining());
+
+                    int i = (int) value.position();
+                    while (value.remaining() > 0) {
+                        byteStore.writeByte(i++, value.readByte());
+                    }
+
+
+                    return byteStore.bytesForRead();
+                } finally {
+                    value.position(position);
                 }
-
-
-                return byteStore.bytesForRead();
             }
 
             @Override

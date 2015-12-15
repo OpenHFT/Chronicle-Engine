@@ -36,7 +36,7 @@ import java.util.function.Function;
  */
 
 public class MainCluster5 {
-    public static final WireType WIRE_TYPE = WireType.COMPRESSED_BINARY;
+    public static final WireType WIRE_TYPE = WireType.BINARY;
     public static final int entries = 10;
     public static final String NAME = "/ChMaps/test?entries=" + entries + "&averageValueSize=" +
             (2 << 20) + "&basePath=/Users/robaustin/tmp/" + System.getProperty("server", "one");
@@ -154,9 +154,9 @@ public class MainCluster5 {
         return "key" + i;
     }
 
-    public static String generateValue() {
-        char[] chars = new char[10];
-        Arrays.fill(chars, 'X');
+    public static String generateValue(char c) {
+        char[] chars = new char[100];
+        Arrays.fill(chars, c);
 
         // with snappy this results in about 10:1 compression.
         //Random rand = new Random();
@@ -169,22 +169,32 @@ public class MainCluster5 {
 
         //  YamlLogging.setAll(true);
 
-        String data = generateValue();
 
         final ConcurrentMap<String, String> map;
         final String type = System.getProperty("server", "one");
 
         map = tree.acquireMap(NAME, String.class, String.class);
-        if ("five".equals(type) || "one".equals(type)) {
+        if ("one".equals(type)) {
             for (int i = 0; i < entries; i++) {
-                map.put(getKey(i), data);
+                map.put(getKey(i), generateValue('1'));
             }
 
             //   System.in.read();
         }
 
+
+        if ("five".equals(type)) {
+            for (int i = 0; i < entries; i++) {
+                map.put(getKey(i), generateValue('5'));
+            }
+
+            //   System.in.read();
+        }
+
+
         for (; ; ) {
-            map.forEach((k, v) -> System.out.println("k=" + k + ", v=" + v));
+            map.forEach((k, v) -> System.out.println("k=" + k + ", v=" + (v == null ? "null" : v
+                    .substring(1, v.length() < 50 ? v.length() : 50))));
             System.out.println("\n\n");
             Thread.sleep(5000);
         }
