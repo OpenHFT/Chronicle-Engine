@@ -177,7 +177,6 @@ class ReplicationHub extends AbstractStatelessClient {
                                       final long time = valueIn.int64();
                                       final byte id = d.read(() -> "id").int8();
 
-                                      System.out.println("lastUpdateTime id=" + id + ",time=" + time);
                                       replication.setLastModificationTime(id, time);
 
                                   }
