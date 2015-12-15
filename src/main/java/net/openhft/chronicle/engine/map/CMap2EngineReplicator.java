@@ -41,7 +41,6 @@ import java.nio.ByteBuffer;
 import java.util.function.Consumer;
 
 import static java.lang.ThreadLocal.withInitial;
-import static net.openhft.lang.io.NativeBytes.wrap;
 
 /**
  * Created by Rob Austin
@@ -76,28 +75,25 @@ public class CMap2EngineReplicator implements EngineReplication,
         this.engineReplicationLang = engineReplicationLangBytes;
     }
 
+
+
     @NotNull
     private net.openhft.lang.io.Bytes toLangBytes(@NotNull BytesStore b) {
-        if (b.underlyingObject() == null)
-            return wrap(b.address(b.start()), b.readRemaining());
-        else {
+        long l = b.readRemaining();
+        int i = (int) b.readPosition();
 
-            final ByteBuffer buffer;
+        IByteBufferBytes wrap = ByteBufferBytes.wrap(ByteBuffer.allocate((int) l));
 
-            if (b.underlyingObject() instanceof byte[])
-                buffer = ByteBuffer.wrap((byte[]) b.underlyingObject());
-            else if (b.underlyingObject() instanceof ByteBuffer)
-                buffer = (ByteBuffer) b.underlyingObject();
-            else
-                throw new UnsupportedOperationException("type not supported, b.underlyingObject()" +
-                        ".class=" + b
-                        .underlyingObject().getClass());
+        wrap.clear();
 
-            IByteBufferBytes wrap = ByteBufferBytes.wrap(buffer);
-            wrap.limit((int) b.readLimit());
-            return wrap;
+        while (wrap.remaining() > 0) {
+            wrap.writeByte(b.readByte(i++));
         }
+
+        wrap.flip();
+        return wrap;
     }
+
 
     public void put(@NotNull final BytesStore key, @NotNull final BytesStore value,
                     final byte remoteIdentifier,
@@ -180,11 +176,17 @@ public class CMap2EngineReplicator implements EngineReplication,
             }
 
             private Bytes toKey(final @NotNull net.openhft.lang.io.Bytes key) {
+
+
                 NativeBytesStore<Void> byteStore = NativeBytesStore.nativeStoreWithFixedCapacity(key
                         .remaining());
-                PointerBytesStore result = keyLocal.get();
-                result.set(key.address(), key.capacity());
-                result.copyTo(byteStore);
+
+                int i = (int) key.position();
+                while (key.remaining() > 0) {
+                    byteStore.writeByte(i++, (byte) key.readByte());
+                }
+
+
                 return byteStore.bytesForRead();
             }
 
@@ -193,11 +195,15 @@ public class CMap2EngineReplicator implements EngineReplication,
                 if (value == null)
                     return null;
 
-                NativeBytesStore<Void> byteStore = NativeBytesStore.lazyNativeBytesStoreWithFixedCapacity(
-                        value.remaining());
-                PointerBytesStore result = valueLocal.get();
-                result.set(value.address(), value.capacity());
-                result.copyTo(byteStore);
+                NativeBytesStore<Void> byteStore = NativeBytesStore.nativeStoreWithFixedCapacity(value
+                        .remaining());
+
+                int i = (int) value.position();
+                while (value.remaining() > 0) {
+                    byteStore.writeByte(i++, (byte) value.readByte());
+                }
+
+
                 return byteStore.bytesForRead();
             }
 
