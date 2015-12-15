@@ -49,7 +49,6 @@ public class ReplicationHandler<E> extends AbstractHandler {
                     System.out.println("server : received lastUpdateTime");
                 final long time = valueIn.int64();
                 final byte id = inWire.read(() -> "id").int8();
-                System.out.println("lastUpdateTime id=" + id + ",time=" + time);
                 replication.setLastModificationTime(id, time);
                 return;
             }
