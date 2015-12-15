@@ -243,11 +243,8 @@ class ReplicationHub extends AbstractStatelessClient {
 
                         hasSentLastUpdateTime = true;
 
-                        if (!hasLogged) {
-                            System.out.println("received ALL replication the EVENTS for " +
-                                    "id=" + remoteIdentifier);
+                        if (!hasLogged)
                             hasLogged = true;
-                        }
 
                         if (bytes.readRemaining() > 0) {
                             ReplicationHub.this.sendBytes(bytes, false);
