@@ -23,7 +23,7 @@ import java.util.concurrent.Executors;
 
 public class MainClusterClient {
     public static final WireType WIRE_TYPE = WireType.COMPRESSED_BINARY;
-    public static final int entries = 10;
+    public static final int entries = 150;
     public static final String NAME = "/ChMaps/test?entries=" + entries + "&averageValueSize=" + (2 << 20);
 
 
@@ -42,7 +42,7 @@ public class MainClusterClient {
         WireType writeType = WireType.BINARY;
 
 
-        char[] x = new char[1 << 20];
+        char[] x = new char[1024];
         Arrays.fill(x, 'X');
         final String s = new String(x);
         Executors.newSingleThreadExecutor().submit(() -> {
@@ -50,8 +50,9 @@ public class MainClusterClient {
             final ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME, String.class,
                     String.class);
             for (; ; ) {
-                for (int i = 0; i < 50; i++) {
+                for (int i = 0; i < entries; i++) {
                     map1.put("" + i, s);
+                    Thread.sleep(2);
                 }
             }
 

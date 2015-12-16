@@ -197,10 +197,11 @@ public class CMap2EngineReplicator implements EngineReplication,
             private Bytes<Void> toValue(final @Nullable net.openhft.lang.io.Bytes value) {
                 if (value == null)
                     return null;
+                if (value.remaining() == 0)
+                    return null;
 
                 final long position = value.position();
                 try {
-
 
                     NativeBytesStore<Void> byteStore = NativeBytesStore.nativeStoreWithFixedCapacity(value
                             .remaining());

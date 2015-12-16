@@ -37,7 +37,7 @@ import java.util.function.Function;
 
 public class MainCluster5 {
     public static final WireType WIRE_TYPE = WireType.BINARY;
-    public static final int entries = 10;
+    public static final int entries = 150;
     public static final String NAME = "/ChMaps/test?entries=" + entries + "&averageValueSize=" +
             (2 << 20) + "&basePath=/Users/robaustin/tmp/" + System.getProperty("server", "one");
     public static ServerEndpoint serverEndpoint;
