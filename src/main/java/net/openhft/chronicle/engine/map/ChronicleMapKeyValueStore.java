@@ -407,24 +407,9 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
 
     private class NullOldValuePublishingOperations extends BytesMapEventListener {
 
-        @Override
-        public void onRemove(Bytes entry, long metaDataPos, long keyPos, long valuePos,
-                             boolean replicationEvent, byte identifier, byte replacedIdentifier,
-                             long timeStamp, long replacedTimeStamp) {
-
-            if (identifier == replacedIdentifier && timeStamp == replacedTimeStamp)
-                return;
-
-            if (subscriptions.hasSubscribers()) {
-                K key = chronicleMap.readKey(entry, keyPos);
-                V value = chronicleMap.readValue(entry, valuePos);
-                subscriptions.notifyEvent(RemovedEvent.of(assetFullName, key, value, replicationEvent));
-            }
-        }
 
         @Override
-        public void onPut(Bytes entry, long metaDataPos, long keyPos, long valuePos, boolean added, boolean replicationEvent, boolean hasValueChanged, byte identifier, byte replacedIdentifier, long timeStamp, long replacedTimeStamp) {
-
+        public void onPut(Bytes entry, long metaDataPos, long keyPos, long valuePos, boolean added, boolean replicationEvent, boolean hasValueChanged, byte identifier, byte replacedIdentifier, long timeStamp, long replacedTimeStamp, SharedSegment segment) {
             if (identifier == replacedIdentifier && timeStamp == replacedTimeStamp &&
                     !hasValueChanged)
                 return;
@@ -432,11 +417,35 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
             if (subscriptions.hasSubscribers()) {
                 K key = chronicleMap.readKey(entry, keyPos);
                 V value = chronicleMap.readValue(entry, valuePos);
-                if (added) {
-                    subscriptions.notifyEvent(InsertedEvent.of(assetFullName, key, value, replicationEvent));
-                } else {
-                    subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, null, value,
-                            replicationEvent, hasValueChanged));
+
+                segment.writeUnlock();
+                try {
+                    if (added) {
+                        subscriptions.notifyEvent(InsertedEvent.of(assetFullName, key, value, replicationEvent));
+                    } else {
+                        subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, null, value,
+                                replicationEvent, hasValueChanged));
+                    }
+                } finally {
+                    segment.writeLock();
+                }
+            }
+        }
+
+        @Override
+        public void onRemove(Bytes entry, long metaDataPos, long keyPos, long valuePos, boolean replicationEvent, byte identifier, byte replacedIdentifier, long timeStamp, long replacedTimeStamp, SharedSegment segment) {
+            if (identifier == replacedIdentifier && timeStamp == replacedTimeStamp)
+                return;
+
+            if (subscriptions.hasSubscribers()) {
+                K key = chronicleMap.readKey(entry, keyPos);
+                V value = chronicleMap.readValue(entry, valuePos);
+
+                segment.writeUnlock();
+                try {
+                    subscriptions.notifyEvent(RemovedEvent.of(assetFullName, key, value, replicationEvent));
+                } finally {
+                    segment.writeLock();
                 }
             }
         }
