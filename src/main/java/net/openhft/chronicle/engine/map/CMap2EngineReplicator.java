@@ -90,6 +90,7 @@ public class CMap2EngineReplicator implements EngineReplication,
         }
 
         wrap.flip();
+//        System.out.println("toLangBytes "+wrap.toHexString(32));
         return wrap;
     }
 

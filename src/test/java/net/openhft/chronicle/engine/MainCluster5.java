@@ -38,8 +38,10 @@ import java.util.function.Function;
 public class MainCluster5 {
     public static final WireType WIRE_TYPE = WireType.BINARY;
     public static final int entries = 150;
-    public static final String NAME = "/ChMaps/test?entries=" + entries + "&averageValueSize=" +
-            (2 << 20) + "&basePath=/Users/robaustin/tmp/" + System.getProperty("server", "one");
+    public static final String basePath = OS.TARGET + '/' + System.getProperty("server", "one");
+    public static final String NAME = "/ChMaps/test?entries=" + entries +
+            "&averageValueSize=" + (4 << 10) +
+            "&basePath=/" + basePath;
     public static ServerEndpoint serverEndpoint;
 
     private static AssetTree tree;
@@ -55,7 +57,7 @@ public class MainCluster5 {
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
         ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
         //Delete any files from the last run
-        Files.deleteIfExists(Paths.get(OS.TARGET, NAME));
+        Files.deleteIfExists(Paths.get(basePath, "test"));
 
         //    TCPRegistry.createServerSocketChannelFor("host.port1", "host.port2");
         WireType writeType = WireType.BINARY;
