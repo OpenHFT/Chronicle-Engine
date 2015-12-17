@@ -38,7 +38,7 @@ public class MainClusterClient {
         char[] x = new char[1024];
         Arrays.fill(x, 'X');
         final String s = new String(x);
-        VanillaAssetTree tree1 = new VanillaAssetTree("tree1").forRemoteAccess("localhost:8083", WIRE_TYPE);
+        VanillaAssetTree tree1 = new VanillaAssetTree("tree1").forRemoteAccess("localhost:9093", WIRE_TYPE);
         Executors.newSingleThreadExecutor().submit(() -> {
             final ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME, String.class,
                     String.class);
@@ -53,26 +53,23 @@ public class MainClusterClient {
         YamlLogging.setAll(false);
 
         final ConcurrentMap<String, String> map;
-//        AssetTree tree3 = new VanillaAssetTree("tree3").forRemoteAccess("localhost:8083", WIRE_TYPE);
+//        AssetTree tree3 = new VanillaAssetTree("tree3").forRemoteAccess("localhost:9093", WIRE_TYPE);
 
 //        map = tree3.acquireMap(NAME, String.class, String.class);
 
+        int[] count = {0};
+        tree1.registerSubscriber(NAME, MapEvent.class, me -> {
+                    System.out.print((me == null) ? "null" : me.getKey());
+                    if (++count[0] >= 20) {
+                        System.out.println();
+                        count[0] = 0;
+                    } else {
+                        System.out.print("\t");
+                    }
+                }
+        );
 
-        tree1.registerSubscriber(NAME, MapEvent.class, o ->
-
-        {
-            System.out.println((o == null) ? "null" : (o.toString()
-                    .length() > 50 ? o.toString().substring(0, 50) : "XXXX"));
-        });
-
-        for (; ; ) {
-            try {
-                Thread.sleep(5000);
-            } catch (Exception ignore) {
-            }
-        }
+        System.in.read();
     }
-
-
 }
 

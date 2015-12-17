@@ -67,35 +67,35 @@ public class MainCluster5 {
             case "one":
 
                 tree = create(1, writeType, "clusterFive");
-                serverEndpoint = new ServerEndpoint("localhost:8081", tree, writeType);
+                serverEndpoint = new ServerEndpoint("localhost:9091", tree, writeType);
                 break;
 
             case "two":
                 tree = create(2, writeType, "clusterFive");
-                serverEndpoint = new ServerEndpoint("localhost:8082", tree, writeType);
+                serverEndpoint = new ServerEndpoint("localhost:9092", tree, writeType);
                 break;
 
 
             case "three":
                 tree = create(3, writeType, "clusterFive");
-                serverEndpoint = new ServerEndpoint("localhost:8083", tree, writeType);
+                serverEndpoint = new ServerEndpoint("localhost:9093", tree, writeType);
                 break;
 
 
             case "four":
                 tree = create(4, writeType, "clusterFive");
-                serverEndpoint = new ServerEndpoint("localhost:8084", tree, writeType);
+                serverEndpoint = new ServerEndpoint("localhost:9094", tree, writeType);
                 break;
 
 
             case "five":
                 tree = create(5, writeType, "clusterFive");
-                serverEndpoint = new ServerEndpoint("localhost:8085", tree, writeType);
+                serverEndpoint = new ServerEndpoint("localhost:9095", tree, writeType);
                 break;
 
             case "client":
                 tree = new VanillaAssetTree("/").forRemoteAccess
-                        ("localhost:8083", WIRE_TYPE);
+                        ("localhost:9093", WIRE_TYPE);
 
         }
 
