@@ -21,6 +21,7 @@ public class MainClusterClient {
     public static final WireType WIRE_TYPE = WireType.COMPRESSED_BINARY;
     public static final int entries = MainCluster5.entries;
     public static final String NAME = "/ChMaps/test";
+    public static final int ENTRY_SIZE = 2 << 20;
 
     public static void main(String[] args) throws IOException, InterruptedException {
         YamlLogging.clientWrites = true;
@@ -35,11 +36,13 @@ public class MainClusterClient {
         WireType writeType = WireType.BINARY;
 
 
-        char[] x = new char[1024];
+        char[] x = new char[ENTRY_SIZE];
         Arrays.fill(x, 'X');
         final String s = new String(x);
-        VanillaAssetTree tree1 = new VanillaAssetTree("tree1").forRemoteAccess("localhost:9093", WIRE_TYPE);
+
         Executors.newSingleThreadExecutor().submit(() -> {
+            VanillaAssetTree tree1 = new VanillaAssetTree("tree1").forRemoteAccess
+                    ("localhost:9091", WIRE_TYPE);
             final ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME, String.class,
                     String.class);
             for (; ; ) {
@@ -57,8 +60,10 @@ public class MainClusterClient {
 
 //        map = tree3.acquireMap(NAME, String.class, String.class);
 
+        VanillaAssetTree tree3 = new VanillaAssetTree("tree3").forRemoteAccess("localhost:9093",
+                WIRE_TYPE);
         int[] count = {0};
-        tree1.registerSubscriber(NAME, MapEvent.class, me -> {
+        tree3.registerSubscriber(NAME, MapEvent.class, me -> {
                     System.out.print((me == null) ? "null" : me.getKey());
                     if (++count[0] >= 20) {
                         System.out.println();

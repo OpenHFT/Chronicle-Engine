@@ -40,7 +40,7 @@ public class MainCluster5 {
     public static final int entries = 150;
     public static final String basePath = OS.TARGET + '/' + System.getProperty("server", "one");
     public static final String NAME = "/ChMaps/test?entries=" + entries +
-            "&averageValueSize=" + (4 << 10) +
+            "&averageValueSize=" + MainClusterClient.ENTRY_SIZE +
             "&basePath=/" + basePath;
     public static ServerEndpoint serverEndpoint;
 
@@ -153,7 +153,7 @@ public class MainCluster5 {
 
     @NotNull
     public static String getKey(int i) {
-        return "key" + i;
+        return "" + i;
     }
 
     public static String generateValue(char c) {

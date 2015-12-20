@@ -136,7 +136,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
         if (averageValueSize > 0)
             builder.averageValueSize(averageValueSize);
         if (maxEntries > 0)
-            builder.entries(maxEntries);
+            builder.entries(maxEntries + 1); // we have to add a head room of 1
 
         if (basePath == null)
             chronicleMap = builder.create();
