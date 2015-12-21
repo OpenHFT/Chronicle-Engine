@@ -172,7 +172,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
         String assetName = asset.fullName();
         entrySet().forEach(entry -> {
             try {
-                kvConsumer.accept(InsertedEvent.of(assetName, entry.getKey(), entry.getValue(),false));
+                kvConsumer.accept(InsertedEvent.of(assetName, entry.getKey(), entry.getValue(), false));
             } catch (InvalidSubscriberException e) {
                 throw Jvm.rethrow(e);
             }

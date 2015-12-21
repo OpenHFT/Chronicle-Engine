@@ -41,6 +41,7 @@ import java.nio.ByteBuffer;
 import java.util.function.Consumer;
 
 import static java.lang.ThreadLocal.withInitial;
+import static net.openhft.lang.io.NativeBytes.wrap;
 
 /**
  * Created by Rob Austin
@@ -75,25 +76,28 @@ public class CMap2EngineReplicator implements EngineReplication,
         this.engineReplicationLang = engineReplicationLangBytes;
     }
 
-
     @NotNull
     private net.openhft.lang.io.Bytes toLangBytes(@NotNull BytesStore b) {
-        long l = b.readRemaining();
-        int i = (int) b.readPosition();
+        if (b.underlyingObject() == null)
+            return wrap(b.address(b.start()), b.readRemaining());
+        else {
 
-        IByteBufferBytes wrap = ByteBufferBytes.wrap(ByteBuffer.allocate((int) l));
+            final ByteBuffer buffer;
 
-        wrap.clear();
+            if (b.underlyingObject() instanceof byte[])
+                buffer = ByteBuffer.wrap((byte[]) b.underlyingObject());
+            else if (b.underlyingObject() instanceof ByteBuffer)
+                buffer = (ByteBuffer) b.underlyingObject();
+            else
+                throw new UnsupportedOperationException("type not supported, b.underlyingObject()" +
+                        ".class=" + b
+                        .underlyingObject().getClass());
 
-        while (wrap.remaining() > 0) {
-            wrap.writeByte(b.readByte(i++));
+            IByteBufferBytes wrap = ByteBufferBytes.wrap(buffer);
+            wrap.limit((int) b.readLimit());
+            return wrap;
         }
-
-        wrap.flip();
-//        System.out.println("toLangBytes "+wrap.toHexString(32));
-        return wrap;
     }
-
 
     public void put(@NotNull final BytesStore key, @NotNull final BytesStore value,
                     final byte remoteIdentifier,
@@ -176,47 +180,25 @@ public class CMap2EngineReplicator implements EngineReplication,
             }
 
             private Bytes toKey(final @NotNull net.openhft.lang.io.Bytes key) {
-
-                final long position = key.position();
-                try {
-                    NativeBytesStore<Void> byteStore = NativeBytesStore.nativeStoreWithFixedCapacity(key
-                            .remaining());
-
-                    int i = (int) key.position();
-                    while (key.remaining() > 0) {
-                        byteStore.writeByte(i++, key.readByte());
-                    }
-
-
-                    return byteStore.bytesForRead();
-                } finally {
-                    key.position(position);
-                }
+                NativeBytesStore<Void> byteStore = NativeBytesStore.nativeStoreWithFixedCapacity(key
+                        .remaining());
+                PointerBytesStore result = keyLocal.get();
+                result.set(key.address(), key.capacity());
+                result.copyTo(byteStore);
+                return byteStore.bytesForRead();
             }
 
             @Nullable
             private Bytes<Void> toValue(final @Nullable net.openhft.lang.io.Bytes value) {
                 if (value == null)
                     return null;
-                if (value.remaining() == 0)
-                    return null;
 
-                final long position = value.position();
-                try {
-
-                    NativeBytesStore<Void> byteStore = NativeBytesStore.nativeStoreWithFixedCapacity(value
-                            .remaining());
-
-                    int i = (int) value.position();
-                    while (value.remaining() > 0) {
-                        byteStore.writeByte(i++, value.readByte());
-                    }
-
-
-                    return byteStore.bytesForRead();
-                } finally {
-                    value.position(position);
-                }
+                NativeBytesStore<Void> byteStore = NativeBytesStore.lazyNativeBytesStoreWithFixedCapacity(
+                        value.remaining());
+                PointerBytesStore result = valueLocal.get();
+                result.set(value.address(), value.capacity());
+                result.copyTo(byteStore);
+                return byteStore.bytesForRead();
             }
 
             @Override

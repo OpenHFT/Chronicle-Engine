@@ -181,11 +181,9 @@ class ReplicationHub extends AbstractStatelessClient {
 
                                   }
 
-
                               });
                           }
                       }
-
         );
     }
 
@@ -270,10 +268,8 @@ class ReplicationHub extends AbstractStatelessClient {
                         hasSentLastUpdateTime = false;
                         lastUpdateTime = updateTime;
                     }
-
                     wire.writeNotReadyDocument(false, wireOut ->
                             wireOut.writeEventName(replicationEvent).typedMarshallable(e));
-
                 });
 
                 if (bytes.readRemaining() > 0) {

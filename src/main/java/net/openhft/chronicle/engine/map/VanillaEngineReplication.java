@@ -496,6 +496,25 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
         RemoteNodeReplicationState usingState = null;
         @Nullable
         ReplicationData usingData = null;
+
+
+        int keyReplicationDataIndex = -1;
+        KeyValueStore<BytesStore, ReplicationData> keyReplicationData;
+        Iterator<BytesStore> keySetIterator;
+
+        public Iterator<BytesStore> keySetIterator(KeyValueStore<BytesStore, ReplicationData>[] keyReplicationData) {
+            if (keySetIterator != null && keySetIterator.hasNext())
+                return keySetIterator;
+
+            keySetIterator = null;
+
+            keyReplicationDataIndex++;
+            if (keyReplicationDataIndex == keyReplicationData.length)
+                keyReplicationDataIndex = 0;
+
+            keySetIterator = keyReplicationData[keyReplicationDataIndex].keySetIterator();
+            return keySetIterator;
+        }
     }
 
     class VanillaModificationIterator implements ModificationIterator, ReplicationEntry {
@@ -547,39 +566,46 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
 
         @Override
         public boolean nextEntry(Consumer<ReplicationEntry> consumer) {
-            boolean itemRead = false;
+
             Instances i = threadLocalInstances.get();
-            for (KeyValueStore<BytesStore, ReplicationData> keyReplicationData :
-                    VanillaEngineReplication.this.keyReplicationData) {
-                final Iterator<BytesStore> keySetIterator = keyReplicationData.keySetIterator();
-                if (!keySetIterator.hasNext())
-                    continue;
-                BytesStore key = keySetIterator.next();
-                i.usingData = keyReplicationData.getUsing(key, i.usingData);
-                if (isChanged(i.usingData, identifier)) {
-                    this.key = key;
-                    this.replicationData = i.usingData;
-                    try {
-                        consumer.accept(this);
-                        i.newData.copyFrom(i.usingData);
-                        clearChange(i.newData, identifier);
-                        if (!keyReplicationData.replaceIfEqual(key, i.usingData, i.newData))
-                            throw new AssertionError();
-                        itemRead = true;
-                        break;
-                    } finally {
-                        this.key = null;
-                        this.replicationData = null;
-                    }
+            int count = keyReplicationData.length;
+            Iterator<BytesStore> keySetIterator;
+
+            for (; ; ) {
+                keySetIterator = i.keySetIterator(keyReplicationData);
+
+
+                if (count == 0) {
+                    modificationIteratorsRequiringSettingBootstrapTimestamp.set(identifier);
+                    resetNextBootstrapTimestamp(identifier);
+                    return false;
                 }
+                count--;
 
-            }
-            if (forEachEntryCount == 0) {
-                modificationIteratorsRequiringSettingBootstrapTimestamp.set(identifier);
-                resetNextBootstrapTimestamp(identifier);
-            }
+                for (Iterator<BytesStore> keyIt = keySetIterator;
+                     keyIt.hasNext(); ) {
+                    BytesStore key = keyIt.next();
+                    i.usingData = i.keyReplicationData.getUsing(key, i.usingData);
+                    if (isChanged(i.usingData, identifier)) {
+                        this.key = key;
+                        this.replicationData = i.usingData;
+                        try {
+                            consumer.accept(this);
+                            i.newData.copyFrom(i.usingData);
+                            clearChange(i.newData, identifier);
+                            if (!i.keyReplicationData.replaceIfEqual(key, i.usingData, i.newData))
+                                throw new AssertionError();
+                            return true;
+                        } finally {
+                            this.key = null;
+                            this.replicationData = null;
+                        }
 
-            return itemRead;
+
+                    }
+
+                }
+            }
         }
 
 

@@ -86,10 +86,15 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                 if (put.contentEquals(eventName)) {
                     valueIn.marshallable(wire -> {
                         final Params[] params = put.params();
+
+
                         final K key = wireToK.apply(wire.read(params[0]));
                         final V value = wireToV.apply(wire.read(params[1]));
                         nullCheck(key);
                         nullCheck(value);
+                        if (LOG.isDebugEnabled())
+                            LOG.debug("putting key=" + key);
+
                         map.put(key, value);
                     });
                     return;

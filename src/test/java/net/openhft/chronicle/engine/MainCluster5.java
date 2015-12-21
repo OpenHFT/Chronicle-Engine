@@ -21,7 +21,6 @@ import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.AfterClass;
-import org.junit.BeforeClass;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,14 +39,13 @@ public class MainCluster5 {
     public static final int entries = 150;
     public static final String basePath = OS.TARGET + '/' + System.getProperty("server", "one");
     public static final String NAME = "/ChMaps/test?entries=" + entries +
-            "&averageValueSize=" + MainClusterClient.ENTRY_SIZE +
-            "&basePath=/" + basePath;
+            "&averageValueSize=" + MainClusterClient.VALUE_SIZE;
+    //+    //"&basePath=/" + basePath;
     public static ServerEndpoint serverEndpoint;
 
     private static AssetTree tree;
 
 
-    @BeforeClass
     public static void before() throws IOException {
         YamlLogging.clientWrites = false;
         YamlLogging.clientReads = false;
@@ -67,35 +65,41 @@ public class MainCluster5 {
             case "one":
 
                 tree = create(1, writeType, "clusterFive");
-                serverEndpoint = new ServerEndpoint("localhost:9091", tree, writeType);
+                serverEndpoint = new ServerEndpoint("localhost:8081", tree, writeType);
+                tree.acquireMap(NAME, String.class, String.class).size();
                 break;
 
             case "two":
                 tree = create(2, writeType, "clusterFive");
-                serverEndpoint = new ServerEndpoint("localhost:9092", tree, writeType);
+                serverEndpoint = new ServerEndpoint("localhost:8082", tree, writeType);
+                tree.acquireMap(NAME, String.class, String.class).size();
                 break;
 
 
             case "three":
                 tree = create(3, writeType, "clusterFive");
-                serverEndpoint = new ServerEndpoint("localhost:9093", tree, writeType);
+                serverEndpoint = new ServerEndpoint("localhost:8083", tree, writeType);
+                tree.acquireMap(NAME, String.class, String.class).size();
                 break;
 
 
             case "four":
                 tree = create(4, writeType, "clusterFive");
-                serverEndpoint = new ServerEndpoint("localhost:9094", tree, writeType);
+                serverEndpoint = new ServerEndpoint("localhost:8084", tree, writeType);
+                tree.acquireMap(NAME, String.class, String.class).size();
                 break;
 
 
             case "five":
                 tree = create(5, writeType, "clusterFive");
-                serverEndpoint = new ServerEndpoint("localhost:9095", tree, writeType);
+                serverEndpoint = new ServerEndpoint("localhost:8085", tree, writeType);
+                tree.acquireMap(NAME, String.class, String.class).size();
                 break;
 
             case "client":
                 tree = new VanillaAssetTree("/").forRemoteAccess
                         ("localhost:9093", WIRE_TYPE);
+                tree.acquireMap(NAME, String.class, String.class).size();
 
         }
 
@@ -145,11 +149,6 @@ public class MainCluster5 {
         return new File(path).getParentFile().getParentFile() + "/src/test/resources";
     }
 
-    public static void main(String[] args) throws IOException, InterruptedException {
-        before();
-        new MainCluster5().test();
-        after();
-    }
 
     @NotNull
     public static String getKey(int i) {
@@ -178,7 +177,7 @@ public class MainCluster5 {
         map = tree.acquireMap(NAME, String.class, String.class);
         if ("one".equals(type)) {
             for (int i = 0; i < entries; i++) {
-                map.put(getKey(i), generateValue('1'));
+//                map.put(getKey(i), generateValue('1'));
             }
 
             //   System.in.read();
@@ -187,7 +186,7 @@ public class MainCluster5 {
 
         if ("five".equals(type)) {
             for (int i = 0; i < entries; i++) {
-                map.put(getKey(i), generateValue('5'));
+                //         map.put(getKey(i), generateValue('5'));
             }
 
             //   System.in.read();
@@ -204,5 +203,10 @@ public class MainCluster5 {
     }
 
 
+    public static void main(String[] args) throws IOException, InterruptedException {
+        before();
+        new MainCluster5().test();
+        after();
+    }
 }
 

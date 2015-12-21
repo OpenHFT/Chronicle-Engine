@@ -56,8 +56,8 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
             // receives replication events
             if (replicationEvent.contentEquals(eventName)) {
-                if (Jvm.isDebug())
-                    System.out.println("server : received replicationEvent");
+                if (Jvm.isDebug() & LOG.isDebugEnabled())
+                    LOG.debug("server : received replicationEvent");
                 ReplicationEntry replicatedEntry = valueIn.typedMarshallable();
                 assert replicatedEntry != null;
                 replication.applyReplication(replicatedEntry);
@@ -160,7 +160,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
                                         LOG.debug("publish from server response from iterator " +
                                                 "localIdentifier=" + hostId + " ,remoteIdentifier=" +
                                                 id + " event=" + e);
-
+                                    System.out.println("publish=" + e.key());
                                     publish1.writeNotReadyDocument(true,
                                             wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
 
