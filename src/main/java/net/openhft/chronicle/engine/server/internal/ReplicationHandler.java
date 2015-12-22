@@ -125,12 +125,13 @@ public class ReplicationHandler<E> extends AbstractHandler {
                                     // have been received, we know when we have received all events
                                     // when there are no more events to process.
                                     if (!hasSentLastUpdateTime && lastUpdateTime > 0) {
-                                        publisher.put(null, publish -> publish.writeNotReadyDocument(false,
-                                                wire -> {
-                                                    wire.writeEventName(CoreFields.lastUpdateTime).int64(lastUpdateTime);
-                                                    wire.write(() -> "id").int8(id);
-                                                }
-                                        ));
+                                        publisher.put(null, publish -> publish
+                                                .writeNotReadyDocument(false,
+                                                        wire -> {
+                                                            wire.writeEventName(CoreFields.lastUpdateTime).int64(lastUpdateTime);
+                                                            wire.write(() -> "id").int8(id);
+                                                        }
+                                                ));
 
                                         hasSentLastUpdateTime = true;
 
@@ -160,7 +161,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
                                         LOG.debug("publish from server response from iterator " +
                                                 "localIdentifier=" + hostId + " ,remoteIdentifier=" +
                                                 id + " event=" + e);
-                                    System.out.println("publish=" + e.key());
+
                                     publish1.writeNotReadyDocument(true,
                                             wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
 

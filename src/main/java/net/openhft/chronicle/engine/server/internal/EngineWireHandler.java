@@ -152,6 +152,14 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
                 publisherHandler, replicationHandler}) {
             abstractHandler.onEndOfConnection(heartbeatTimeOut);
         }
+
+
+        // allow time for outbound onEndOfConnection message to be sent
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     @NotNull

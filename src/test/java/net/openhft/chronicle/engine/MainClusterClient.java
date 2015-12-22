@@ -24,7 +24,7 @@ public class MainClusterClient {
     public static final String NAME = "/ChMaps/test?entries=" + entries +
             "&averageValueSize=" + MainClusterClient.VALUE_SIZE;
 
-    public static final int VALUE_SIZE = 1024;
+    public static final int VALUE_SIZE = 1 << 20;
 
     public static void main(String[] args) throws IOException, InterruptedException {
         YamlLogging.clientWrites = false;
@@ -42,15 +42,17 @@ public class MainClusterClient {
         char[] x = new char[VALUE_SIZE];
         Arrays.fill(x, 'X');
         final String s = new String(x);
-        VanillaAssetTree tree1 = new VanillaAssetTree("tree1").forRemoteAccess("localhost:8081",
-                WIRE_TYPE);
+
         Executors.newSingleThreadExecutor().submit(() -> {
-            final ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME, String.class,
+            VanillaAssetTree tree5 = new VanillaAssetTree("tree1").forRemoteAccess("localhost:8085",
+                    WIRE_TYPE);
+            final ConcurrentMap<String, String> map1 = tree5.acquireMap(NAME, String.class,
                     String.class);
             for (; ; ) {
                 for (int i = 0; i < entries; i++) {
                     try {
                         map1.put("" + i, s);
+                        Thread.sleep(20);
                     } catch (Throwable t) {
                         t.printStackTrace();
                     }

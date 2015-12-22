@@ -58,11 +58,7 @@ public class PublisherHandler<E> extends AbstractHandler {
                 return;
             }
 
-            outWire.writeDocument(true, wire -> outWire.writeEventName(tid).
-
-                            int64(inputTid)
-
-            );
+            outWire.writeDocument(true, wire -> outWire.writeEventName(tid).int64(inputTid));
 
             writeData(inWire.bytes(), out
 

@@ -144,7 +144,7 @@ class ReplicationHub extends AbstractStatelessClient {
                           public void onConsumer(@NotNull WireIn inWire) {
                               if (Jvm.isDebug())
 
-                                  System.out.println("client : onConnected - publishing updates");
+                                  System.out.println("client : onConsumer - publishing updates");
 
 
                               inWire.readDocument(null, d -> {
