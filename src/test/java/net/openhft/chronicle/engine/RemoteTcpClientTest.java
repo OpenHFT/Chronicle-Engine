@@ -17,6 +17,7 @@
 package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
@@ -32,6 +33,7 @@ import org.junit.rules.TestName;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 import static net.openhft.chronicle.engine.Utils.methodName;
@@ -40,11 +42,19 @@ import static org.junit.Assert.assertEquals;
 
 public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
+
     @NotNull
     @Rule
     public TestName name = new TestName();
     @NotNull
-    private AssetTree assetTree = new VanillaAssetTree().forTesting();
+    private AssetTree assetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
 
     @AfterClass
     public static void tearDownClass() {
@@ -164,7 +174,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
             final ConcurrentMap<String, String> map = remote.get();
             maps.add(map);
             for (int i = 1; i < Runtime.getRuntime().availableProcessors(); i++) {
-                AssetTree assetTree2 = new VanillaAssetTree().forRemoteAccess("testLargeUpdates.host.port", WireType.BINARY);
+                AssetTree assetTree2 = new VanillaAssetTree().forRemoteAccess("testLargeUpdates.host.port", WireType.BINARY, x -> t.set(x));
                 Map<String, String> map2 = assetTree2.acquireMap("test", String.class, String.class);
                 maps.add(map2);
                 closeables.add(assetTree2);

@@ -23,6 +23,9 @@ import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
+import org.junit.After;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Created by peter on 17/08/15.
@@ -49,9 +52,18 @@ public class ClientTwoMain {
         ClassAliasPool.CLASS_ALIASES.addAlias(PriceUpdater.class);
     }
 
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
+
     public static void main(String[] args) {
         YamlLogging.setAll(true);
-        VanillaAssetTree assetTree = new VanillaAssetTree().forRemoteAccess("localhost:9090", WireType.TEXT);
+        VanillaAssetTree assetTree = new VanillaAssetTree().forRemoteAccess("localhost:9090",
+                WireType.TEXT, x -> t.set(x));
 
         MapView<String, Price> map = assetTree.acquireMap("/fx", String.class, Price.class);
         map.put("GBPEUR", new Price("GBPEUR", 0.71023, 1e6, 0.71024, 2e6));

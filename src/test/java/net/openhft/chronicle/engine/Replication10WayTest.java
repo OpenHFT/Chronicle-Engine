@@ -43,6 +43,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import static org.junit.Assert.assertNotNull;
@@ -68,10 +69,22 @@ public class Replication10WayTest {
         return Arrays.asList(new Object[3][0]);
     }
 
+
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null)
+            Jvm.rethrow(th);
+
+    }
+
+
     @NotNull
     private static AssetTree create(final int hostId, Function<Bytes, Wire> writeType) {
         AssetTree tree = new VanillaAssetTree((byte) hostId)
-                .forTesting()
+                .forTesting(x -> t.set(x))
                 .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);
 
         tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
@@ -119,8 +132,7 @@ public class Replication10WayTest {
 
     @Before
     public void before() throws IOException {
-        YamlLogging.clientWrites = true;
-        YamlLogging.clientReads = true;
+        YamlLogging.setAll(false);
 
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
         ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);

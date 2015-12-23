@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.util.SerializablePredicate;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
@@ -7,6 +8,7 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -15,6 +17,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 /**
@@ -33,20 +36,29 @@ public class ManyMapsTest {
         return String.format("Val-%s-%s", mapName, counter);
     }
 
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
+
+
     @Test
     @Ignore("Long running test")
     public void testConnectToMultipleMapsUsingTheSamePort() throws IOException {
         int noOfMaps = 100;
         int noOfKvps = 100;
         String mapBaseName = "ManyMapsTest-";
-        AssetTree assetTree = new VanillaAssetTree().forTesting();
+        AssetTree assetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
 
         Map<String, Map<String, String>> _clientMaps = new HashMap<>();
         TCPRegistry.createServerSocketChannelFor(NAME);
         //TODO CHENT-68 Only works with BINARY NOT TEXT.
         ServerEndpoint serverEndpoint = new ServerEndpoint(NAME, assetTree, WireType.BINARY);
 
-        AssetTree clientAssetTree = new VanillaAssetTree().forRemoteAccess(NAME, WireType.BINARY);
+        AssetTree clientAssetTree = new VanillaAssetTree().forRemoteAccess(NAME, WireType.BINARY, x -> t.set(x));
         System.out.println("Creating maps.");
         AtomicInteger count = new AtomicInteger();
         IntStream.rangeClosed(1, noOfMaps).forEach(i -> {

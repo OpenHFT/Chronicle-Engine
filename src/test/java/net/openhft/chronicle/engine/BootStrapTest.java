@@ -39,6 +39,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * test using the listener both remotely or locally via the engine
@@ -66,19 +67,28 @@ public class BootStrapTest {
         return Arrays.asList(new Object[5][0]);
     }
 
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
+
+
     @Before
     public void before() throws IOException {
-        serverAssetTree1 = new VanillaAssetTree().forTesting();
+        serverAssetTree1 = new VanillaAssetTree().forTesting(x -> t.set(x));
 
         TCPRegistry.createServerSocketChannelFor(CONNECTION_1);
 
         serverEndpoint1 = new ServerEndpoint(CONNECTION_1, serverAssetTree1, WIRE_TYPE);
 
         client1 = new VanillaAssetTree("client1").forRemoteAccess
-                (CONNECTION_1, WIRE_TYPE);
+                (CONNECTION_1, WIRE_TYPE, x -> t.set(x));
 
         client2 = new VanillaAssetTree("client2").forRemoteAccess
-                (CONNECTION_1, WIRE_TYPE);
+                (CONNECTION_1, WIRE_TYPE, x -> t.set(x));
 
     }
 

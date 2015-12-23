@@ -16,13 +16,17 @@
 
 package net.openhft.chronicle.engine;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.tree.*;
+import org.junit.After;
 import org.junit.Test;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.easymock.EasyMock.*;
 
@@ -30,10 +34,19 @@ import static org.easymock.EasyMock.*;
  * Created by peter on 11/06/15.
  */
 public class AssetSubscriptionsTest {
+
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
+
     @Test
     public void testSubscriptionsAtEachLevel() throws InvalidSubscriberException {
         // start at the top.
-        AssetTree tree = new VanillaAssetTree().forTesting();
+        AssetTree tree = new VanillaAssetTree().forTesting(x -> t.set(x));
         Subscriber<TopologicalEvent> rootTopoSubscriber = createMock("sub", Subscriber.class);
         Subscriber<MapEvent> rootMapSubscriber = createMock(Subscriber.class);
         Subscriber<String> rootNameSubscriber = createMock(Subscriber.class);

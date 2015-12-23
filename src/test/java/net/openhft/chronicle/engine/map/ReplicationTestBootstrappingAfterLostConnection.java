@@ -24,10 +24,7 @@ import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,6 +35,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import static org.junit.Assert.assertNotNull;
@@ -58,9 +56,7 @@ public class ReplicationTestBootstrappingAfterLostConnection {
 
     @BeforeClass
     public static void before() throws IOException {
-        YamlLogging.clientWrites = true;
-        YamlLogging.clientReads = true;
-
+        YamlLogging.setAll(false);
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
         ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
         //Delete any files from the last run
@@ -109,10 +105,19 @@ public class ReplicationTestBootstrappingAfterLostConnection {
 
     }
 
+
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
+
     @NotNull
     private static AssetTree create(final int hostId, Function<Bytes, Wire> writeType, final String clusterName) {
         AssetTree tree = new VanillaAssetTree((byte) hostId)
-                .forTesting()
+                .forTesting(x -> t.set(x))
                 .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);
 
         tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",

@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -55,9 +56,18 @@ public class TestInsertUpdateChronicleMapViewOnServer {
         return list;
     }
 
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
+
+
     @Before
     public void before() throws IOException {
-        serverAssetTree = new VanillaAssetTree().forTesting();
+        serverAssetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
 
         YamlLogging.showServerWrites = true;
         YamlLogging.showServerReads = true;

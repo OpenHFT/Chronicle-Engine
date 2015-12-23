@@ -59,7 +59,7 @@ public class GuavaEngineTest {
     public static Test suite() throws IOException {
 
         MapTestSuiteBuilder using = MapTestSuiteBuilder.using(new RemoteTestGenerator(new
-                VanillaAssetTree().forTesting()));
+                VanillaAssetTree().forTesting(t -> t.printStackTrace())));
 
         TestSuite remoteMapTests = using.named("Chronicle RemoteEngine Guava tests")
                 .withFeatures(GENERAL_PURPOSE)
@@ -103,7 +103,8 @@ public class GuavaEngineTest {
     static ConcurrentMap<CharSequence, CharSequence> newStrStrLocalMap() {
 
         try {
-            return new LocalMapSupplier(CharSequence.class, CharSequence.class, new VanillaAssetTree().forTesting()).get();
+            return new LocalMapSupplier(CharSequence.class, CharSequence.class, new
+                    VanillaAssetTree().forTesting(t -> t.printStackTrace())).get();
         } catch (IOException e) {
             throw new IORuntimeException(e);
         }
@@ -198,7 +199,8 @@ public class GuavaEngineTest {
             final ServerEndpoint serverEndpoint = new ServerEndpoint("guava.test.host.port", assetTree, WIRE_TYPE);
 
             final String hostname = "localhost";
-            this.remoteAssetTree = ((VanillaAssetTree) assetTree).forRemoteAccess("guava.test.host.port", WIRE_TYPE);
+            this.remoteAssetTree = ((VanillaAssetTree) assetTree).forRemoteAccess("guava.test" +
+                    ".host.port", WIRE_TYPE, t -> t.printStackTrace());
         }
 
         @NotNull

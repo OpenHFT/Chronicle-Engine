@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine;
 
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
@@ -15,6 +16,7 @@ import org.junit.Test;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -26,11 +28,20 @@ public class RestartClosedPublisherTest {
     private VanillaAssetTree _remote;
     private String _testMapUri = "/test/map";
 
+
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
+
     @Before
     public void setUp() throws Exception {
         TCPRegistry.createServerSocketChannelFor(CONNECTION_1);
         YamlLogging.setAll(true);
-        _server = new VanillaAssetTree().forServer();
+        _server = new VanillaAssetTree().forServer(x -> t.set(x));
 
         _serverEndpoint1 = new ServerEndpoint(CONNECTION_1, _server, WIRE_TYPE);
 
@@ -67,7 +78,7 @@ public class RestartClosedPublisherTest {
 
 
     private void connectClientAndPerformPutGetTest(String testKey, String value, BlockingQueue<String> eventQueue) throws InterruptedException {
-        VanillaAssetTree remote = new VanillaAssetTree().forRemoteAccess(CONNECTION_1, WIRE_TYPE);
+        VanillaAssetTree remote = new VanillaAssetTree().forRemoteAccess(CONNECTION_1, WIRE_TYPE, x -> t.set(x));
 
 
         String keySubUri = _testMapUri + "/" + testKey + "?bootstrap=false";

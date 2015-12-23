@@ -47,9 +47,7 @@ public class MainCluster5 {
 
 
     public static void before() throws IOException {
-        YamlLogging.clientWrites = false;
-        YamlLogging.clientReads = false;
-
+        YamlLogging.setAll(false);
         //YamlLogging.showServerWrites = true;
 
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
@@ -98,7 +96,7 @@ public class MainCluster5 {
 
             case "client":
                 tree = new VanillaAssetTree("/").forRemoteAccess
-                        ("localhost:9093", WIRE_TYPE);
+                        ("localhost:9093", WIRE_TYPE, t -> t.printStackTrace());
                 tree.acquireMap(NAME, String.class, String.class).size();
 
         }
@@ -124,7 +122,7 @@ public class MainCluster5 {
     @NotNull
     static AssetTree create(final int hostId, Function<Bytes, Wire> writeType, final String clusterTwo) {
         AssetTree tree = new VanillaAssetTree((byte) hostId)
-                .forTesting()
+                .forTesting(t -> t.printStackTrace())
                 .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);
 
         tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",

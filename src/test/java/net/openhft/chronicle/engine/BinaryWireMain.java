@@ -34,7 +34,7 @@ public class BinaryWireMain {
     public static void main(@NotNull String[] args) throws IOException, InterruptedException {
         int port = 8088;
 
-        VanillaAssetTree assetTree = new VanillaAssetTree().forTesting(false);
+        VanillaAssetTree assetTree = new VanillaAssetTree().forTesting(false, t -> t.printStackTrace());
         final ServerEndpoint serverEndpoint = new ServerEndpoint("*:" + port, assetTree, WIRE_TYPE);
 
         if (args.length == 1 && args[0].compareTo("-debug") == 0) {

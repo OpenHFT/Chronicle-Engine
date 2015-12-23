@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static net.openhft.chronicle.engine.redis.RedisEmulator.*;
@@ -28,13 +29,22 @@ public class RedisEmulatorTest {
     private static MapView myLongHash;
     private static MapView myDoubleHash;
 
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
+
+
     @BeforeClass
     public static void setup() throws IOException{
         System.out.println("Hello");
         YamlLogging.showServerReads=true;
         //For this test we can use a VanillaMapKeyValueStore
         //To test with a ChronicleMapKeyValueStore uncomment lines below
-        AssetTree serverAssetTree = new VanillaAssetTree().forTesting();
+        AssetTree serverAssetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
 //        serverAssetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
 //                VanillaMapView::new, KeyValueStore.class);
 //        serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
@@ -44,7 +54,7 @@ public class RedisEmulatorTest {
         ServerEndpoint serverEndpoint = new ServerEndpoint("RemoteSubscriptionModelPerformanceTest.port",
                 serverAssetTree, WireType.TEXT);
         AssetTree clientAssetTree = new VanillaAssetTree()
-                .forRemoteAccess("RemoteSubscriptionModelPerformanceTest.port", WireType.TEXT);
+                .forRemoteAccess("RemoteSubscriptionModelPerformanceTest.port", WireType.TEXT, x -> t.set(x));
 
         myStringHash = clientAssetTree.acquireMap("/myStringHash", String.class, String.class);
         myLongHash = clientAssetTree.acquireMap("/myLongHash", String.class, Long.class);

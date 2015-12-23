@@ -6,10 +6,12 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.TextWire;
+import org.junit.After;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static net.openhft.chronicle.bytes.NativeBytes.nativeBytes;
 import static org.junit.Assert.assertTrue;
@@ -57,9 +59,17 @@ public class AssetTreeJMXTest {
         addMapIntoTree(1000000);
     }
 
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
+
     @Test
     public void addStringValuesMapIntoTree(){
-        AssetTree tree = new VanillaAssetTree().forTesting();
+        AssetTree tree = new VanillaAssetTree().forTesting(x -> t.set(x));
         tree.enableManagement();
         ConcurrentMap<String, String> map = tree.acquireMap("group/map", String.class, String.class);
         map.put("key1", "value1");
@@ -71,7 +81,7 @@ public class AssetTreeJMXTest {
 
     @Test
     public void addDoubleValuesMapIntoTree(){
-        AssetTree tree = new VanillaAssetTree().forTesting();
+        AssetTree tree = new VanillaAssetTree().forTesting(x -> t.set(x));
         tree.enableManagement();
         ConcurrentMap<Double, Double> map = tree.acquireMap("group/map", Double.class, Double.class);
         map.put(1.1, 1.1);
@@ -83,7 +93,7 @@ public class AssetTreeJMXTest {
 
     @Test
     public void addIntegerValuesMapIntoTree(){
-        AssetTree tree = new VanillaAssetTree().forTesting();
+        AssetTree tree = new VanillaAssetTree().forTesting(x -> t.set(x));
         tree.enableManagement();
         ConcurrentMap<Integer, Integer> map = tree.acquireMap("group/map", Integer.class, Integer.class);
         map.put(1, 1);
@@ -96,7 +106,7 @@ public class AssetTreeJMXTest {
     @Ignore("todo add assertions")
     @Test
     public void addMarshallableValuesMapIntoTree(){
-        AssetTree tree = new VanillaAssetTree().forTesting();
+        AssetTree tree = new VanillaAssetTree().forTesting(x -> t.set(x));
         tree.enableManagement();
 
         Marshallable m = new MyTypes();
@@ -121,7 +131,7 @@ public class AssetTreeJMXTest {
      */
     private void addMapIntoTree(int number) throws InterruptedException {
 
-        AssetTree tree = new VanillaAssetTree().forTesting();
+        AssetTree tree = new VanillaAssetTree().forTesting(x -> t.set(x));
         tree.enableManagement();
 
         for (int i = 1; i <= number ; i++) {
@@ -139,7 +149,7 @@ public class AssetTreeJMXTest {
      */
     private void testAssetUpdate(long milliSeconds) throws InterruptedException {
 
-        AssetTree tree = new VanillaAssetTree().forTesting();
+        AssetTree tree = new VanillaAssetTree().forTesting(x -> t.set(x));
         tree.enableManagement();
 
         long timeToStop = System.currentTimeMillis() + 3600000;  //3600000 = 60*60*1000 milliseconds = 1 Hour

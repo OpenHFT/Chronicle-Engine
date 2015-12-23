@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.stream.Collectors.averagingInt;
 import static net.openhft.chronicle.engine.Utils.methodName;
@@ -39,6 +40,13 @@ import static net.openhft.chronicle.engine.Utils.methodName;
 @RunWith(value = Parameterized.class)
 public class QueryableKeySetTest extends ThreadMonitoringTest {
 
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
     private static final String NAME = "test";
     private static MapView<String, String> map;
     private final Boolean isRemote;
@@ -47,7 +55,7 @@ public class QueryableKeySetTest extends ThreadMonitoringTest {
     @NotNull
     @Rule
     public TestName name = new TestName();
-    private AssetTree assetTree = new VanillaAssetTree().forTesting();
+    private AssetTree assetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
@@ -65,9 +73,10 @@ public class QueryableKeySetTest extends ThreadMonitoringTest {
         );
     }
 
+
     @Before
     public void before() throws IOException {
-        serverAssetTree = new VanillaAssetTree().forTesting();
+        serverAssetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
 
         if (isRemote) {
 
@@ -79,7 +88,7 @@ public class QueryableKeySetTest extends ThreadMonitoringTest {
             connection = "QueryableKeySetTest.host.port";
             TCPRegistry.createServerSocketChannelFor(connection);
             serverEndpoint = new ServerEndpoint(connection, serverAssetTree, wireType);
-            assetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType);
+            assetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType, x -> t.set(x));
         } else
             assetTree = serverAssetTree;
 

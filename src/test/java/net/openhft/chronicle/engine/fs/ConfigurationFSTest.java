@@ -23,20 +23,31 @@ import net.openhft.chronicle.engine.VanillaAssetTreeEgMain;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
+import org.junit.After;
 import org.junit.Test;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Created by peter on 12/06/15.
  */
 public class ConfigurationFSTest {
+
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
+
     @Test
     public void addMountPoints() {
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
         ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
 
-        AssetTree at = new VanillaAssetTree().forTesting();
+        AssetTree at = new VanillaAssetTree().forTesting(x -> t.set(x));
         at.registerSubscriber("", TopologicalEvent.class, System.out::println);
         at.registerSubscriber("/Data", TopologicalEvent.class, System.out::println);
 

@@ -51,7 +51,8 @@ UpdatedEvent{assetName='/test-map', key=DOGS, oldValue=St Bernard, value=Poodle}
 public class ClientOneMain {
     public static void main(String[] args) {
         YamlLogging.setAll(true);
-        VanillaAssetTree assetTree = new VanillaAssetTree().forRemoteAccess("localhost:9090", WireType.TEXT);
+        VanillaAssetTree assetTree = new VanillaAssetTree().forRemoteAccess("localhost:9090",
+                WireType.TEXT, t -> t.printStackTrace());
 
         Map<String, String> map = assetTree.acquireMap("/test-map", String.class, String.class);
         map.put("FUNNY", "hihi");

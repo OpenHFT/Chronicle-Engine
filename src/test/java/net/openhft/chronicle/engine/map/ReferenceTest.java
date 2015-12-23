@@ -27,6 +27,7 @@ import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static org.junit.Assert.assertEquals;
@@ -63,10 +64,23 @@ public class ReferenceTest {
         );
     }
 
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
+
+
+
+
+
+
     @Before
     public void before() throws IOException {
         hostPortToken = "ReferenceTest.host.port";
-        serverAssetTree = new VanillaAssetTree().forTesting();
+        serverAssetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
 
         if (isRemote) {
 
@@ -74,7 +88,8 @@ public class ReferenceTest {
             TCPRegistry.createServerSocketChannelFor(hostPortToken);
             serverEndpoint = new ServerEndpoint(hostPortToken, serverAssetTree, wireType);
 
-            assetTree = new VanillaAssetTree().forRemoteAccess(hostPortToken, wireType);
+            assetTree = new VanillaAssetTree().forRemoteAccess(hostPortToken, wireType, x -> t.set
+                    (x));
         } else
             assetTree = serverAssetTree;
 
@@ -89,6 +104,9 @@ public class ReferenceTest {
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
         //TCPRegistry.assertAllServersStopped();
+
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
     }
 
     @Test

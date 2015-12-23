@@ -29,9 +29,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 
 /**
- * This class is the starting point for a simple client or server configuration.  It defines how to obtain some common resource types.
- * <p></p>
- * If you need a more complex environment or tests case you can create one or more AssetTrees directly.
+ * This class is the starting point for a simple client or server configuration.  It defines how to
+ * obtain some common resource types. <p></p> If you need a more complex environment or tests case
+ * you can create one or more AssetTrees directly.
  */
 public enum Chassis {
     /* no instances */;
@@ -45,7 +45,7 @@ public enum Chassis {
      * Replace the underlying
      */
     public static void resetChassis() {
-        assetTree = new VanillaAssetTree().forTesting();
+        assetTree = new VanillaAssetTree().forTesting(t -> t.printStackTrace());
     }
 
     /**
@@ -83,7 +83,8 @@ public enum Chassis {
     }
 
     /**
-     * Obtain a reference to an element or value of Map.  Once this has been obtained you can perform a number of operation on this specific value would looking it up again.
+     * Obtain a reference to an element or value of Map.  Once this has been obtained you can
+     * perform a number of operation on this specific value would looking it up again.
      *
      * @param uri    of the resource
      * @param eClass the type of the element
@@ -130,7 +131,10 @@ public enum Chassis {
     }
 
     /**
-     * Register a Subscriber to events on an Asset.  The rule of the AssetTree might allow different behaviour depending on the eClass subscribed to. e.g. if you subscribe to MapEvent you may get MapEvent updates, however, if you subscribe to the key type you may get just the keys which changed.
+     * Register a Subscriber to events on an Asset.  The rule of the AssetTree might allow different
+     * behaviour depending on the eClass subscribed to. e.g. if you subscribe to MapEvent you may
+     * get MapEvent updates, however, if you subscribe to the key type you may get just the keys
+     * which changed.
      *
      * @param uri        of the asset to subscribe to event for.
      * @param eClass     of the subscription
@@ -142,7 +146,9 @@ public enum Chassis {
     }
 
     /**
-     * Unregister a subscriber.  Note: the subscriber must be equals() to the subscriber registered otherwise this will silently fail. e.g. two lambdas which capture the same object are never equals()
+     * Unregister a subscriber.  Note: the subscriber must be equals() to the subscriber registered
+     * otherwise this will silently fail. e.g. two lambdas which capture the same object are never
+     * equals()
      *
      * @param uri        of the asset to unsubscribe from.
      * @param subscriber to unregister
@@ -152,7 +158,8 @@ public enum Chassis {
     }
 
     /**
-     * Register a Topic Subscription to a group.  This subscriber will be give the topic and the message for each event.
+     * Register a Topic Subscription to a group.  This subscriber will be give the topic and the
+     * message for each event.
      *
      * @param uri        of the group of Assets to listen to.
      * @param tClass     topic class
@@ -165,7 +172,9 @@ public enum Chassis {
     }
 
     /**
-     * Unregister a TopicSubscriber.   Note: the subscriber must be equals() to the subscriber registered otherwise this will silently fail. e.g. two lambdas which capture the same object are never equals()
+     * Unregister a TopicSubscriber.   Note: the subscriber must be equals() to the subscriber
+     * registered otherwise this will silently fail. e.g. two lambdas which capture the same object
+     * are never equals()
      *
      * @param uri        of the group of Assets to unregister from
      * @param subscriber to remove.

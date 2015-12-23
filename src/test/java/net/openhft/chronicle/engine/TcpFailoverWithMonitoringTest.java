@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.engine;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.annotation.Nullable;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
@@ -44,6 +45,7 @@ import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -81,10 +83,18 @@ public class TcpFailoverWithMonitoringTest {
         return Arrays.asList(new Object[10][0]);
     }
 
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
+
     @Before
     public void before() throws IOException {
-        serverAssetTree1 = new VanillaAssetTree().forTesting();
-        serverAssetTree2 = new VanillaAssetTree().forTesting();
+        serverAssetTree1 = new VanillaAssetTree().forTesting(x -> t.set(x));
+        serverAssetTree2 = new VanillaAssetTree().forTesting(x -> t.set(x));
 
         TCPRegistry.createServerSocketChannelFor(CONNECTION_1);
         TCPRegistry.createServerSocketChannelFor(CONNECTION_2);
@@ -98,7 +108,7 @@ public class TcpFailoverWithMonitoringTest {
         final String[] connection = {CONNECTION_1, CONNECTION_2};
 
         failOverClient = new VanillaAssetTree("failoverClient").forRemoteAccess(connection,
-                WIRE_TYPE, clientConnectionMonitor());
+                WIRE_TYPE, clientConnectionMonitor(), x -> t.set(x));
 
         map = failOverClient.acquireMap(NAME, String.class, String.class);
     }

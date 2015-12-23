@@ -26,9 +26,8 @@ public class MainClusterClient {
 
     public static final int VALUE_SIZE = 1 << 20;
 
+
     public static void main(String[] args) throws IOException, InterruptedException {
-        YamlLogging.clientWrites = false;
-        YamlLogging.clientReads = false;
         YamlLogging.setAll(false);
         //YamlLogging.showServerWrites = true;
 
@@ -41,7 +40,7 @@ public class MainClusterClient {
 
         Executors.newSingleThreadExecutor().submit(() -> {
             VanillaAssetTree tree5 = new VanillaAssetTree("tree1").forRemoteAccess("localhost:8085",
-                    WIRE_TYPE);
+                    WIRE_TYPE, x -> x.printStackTrace());
             final ConcurrentMap<String, String> map1 = tree5.acquireMap(NAME, String.class,
                     String.class);
             for (; ; ) {
@@ -64,7 +63,7 @@ public class MainClusterClient {
 
         Executors.newSingleThreadExecutor().submit(() -> {
             VanillaAssetTree tree5 = new VanillaAssetTree("tree1").forRemoteAccess("localhost:8083",
-                    WIRE_TYPE);
+                    WIRE_TYPE, x -> x.printStackTrace());
             final ConcurrentMap<String, String> map1 = tree5.acquireMap(NAME, String.class,
                     String.class);
             for (; ; ) {
@@ -84,7 +83,7 @@ public class MainClusterClient {
 
         final ConcurrentMap<String, String> map;
         AssetTree tree3 = new VanillaAssetTree("tree3").forRemoteAccess("localhost:8083",
-                WIRE_TYPE);
+                WIRE_TYPE, z -> z.printStackTrace());
 
         tree3.acquireMap(NAME, String.class, String.class).size();
 

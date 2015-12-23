@@ -45,6 +45,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.stream.IntStream;
@@ -65,17 +66,24 @@ public class RemoteSubscriptionModelPerformanceTest {
 
     private final String _mapName = "PerfTestMap" + counter.incrementAndGet();
 
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
+
     @BeforeClass
     public static void setUpBeforeClass() throws IOException, URISyntaxException {
-//        YamlLogging.showServerReads = true;
-//        YamlLogging.clientReads = true;
+        YamlLogging.setAll(false);
 
         char[] chars = new char[2 << 20];
         Arrays.fill(chars, '~');
         _twoMbTestString = new String(chars);
         _twoMbTestStringLength = _twoMbTestString.length();
 
-        serverAssetTree = new VanillaAssetTree(1).forTesting();
+        serverAssetTree = new VanillaAssetTree(1).forTesting(x -> t.set(x));
         //The following line doesn't add anything and breaks subscriptions
         serverAssetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore", VanillaMapView::new, KeyValueStore.class);
         serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
@@ -83,7 +91,7 @@ public class RemoteSubscriptionModelPerformanceTest {
         TCPRegistry.createServerSocketChannelFor("RemoteSubscriptionModelPerformanceTest.port");
         serverEndpoint = new ServerEndpoint("RemoteSubscriptionModelPerformanceTest.port", serverAssetTree, WireType.BINARY);
 
-        clientAssetTree = new VanillaAssetTree(13).forRemoteAccess("RemoteSubscriptionModelPerformanceTest.port", WireType.BINARY);
+        clientAssetTree = new VanillaAssetTree(13).forRemoteAccess("RemoteSubscriptionModelPerformanceTest.port", WireType.BINARY, x -> t.set(x));
 
     }
 

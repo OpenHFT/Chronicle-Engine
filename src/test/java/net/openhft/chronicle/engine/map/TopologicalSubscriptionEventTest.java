@@ -40,6 +40,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.engine.Utils.methodName;
@@ -55,12 +56,20 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
 
     private static final String NAME = "test";
 
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
+
     private final boolean isRemote;
     private final WireType wireType;
     @NotNull
     @Rule
     public TestName name = new TestName();
-    private AssetTree clientAssetTree = new VanillaAssetTree().forTesting();
+    private AssetTree clientAssetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
@@ -80,14 +89,14 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
 
     @Before
     public void before() throws IOException {
-        serverAssetTree = new VanillaAssetTree().forTesting();
+        serverAssetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
 
         if (isRemote) {
             methodName(name.getMethodName());
             TCPRegistry.createServerSocketChannelFor("TopologicalSubscriptionEventTest.host.port");
             serverEndpoint = new ServerEndpoint("TopologicalSubscriptionEventTest.host.port", serverAssetTree, wireType);
 
-            clientAssetTree = new VanillaAssetTree().forRemoteAccess("TopologicalSubscriptionEventTest.host.port", wireType);
+            clientAssetTree = new VanillaAssetTree().forRemoteAccess("TopologicalSubscriptionEventTest.host.port", wireType, x -> t.set(x));
         } else
             clientAssetTree = serverAssetTree;
 

@@ -29,10 +29,7 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -43,6 +40,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
@@ -89,6 +87,15 @@ public class SubscriptionTest extends ThreadMonitoringTest {
         methodName(name.getMethodName());
     }
 
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
+
+
     @Test
     public void testSubscriptionTest() throws IOException, InterruptedException {
         MapEventListener<String, Factor> listener;
@@ -111,7 +118,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
 
         replay(listener);
 
-        VanillaAssetTree serverAssetTree = new VanillaAssetTree().forTesting();
+        VanillaAssetTree serverAssetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
         ServerEndpoint serverEndpoint = null;
         Subscriber<MapEvent> mapEventSubscriber = e -> e.apply(listener);
         VanillaAssetTree assetTree;
@@ -119,7 +126,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
             TCPRegistry.createServerSocketChannelFor("testSubscriptionTest.host.port");
             serverEndpoint = new ServerEndpoint("testSubscriptionTest.host.port", serverAssetTree, wireType);
 
-            assetTree = new VanillaAssetTree().forRemoteAccess("testSubscriptionTest.host.port", wireType);
+            assetTree = new VanillaAssetTree().forRemoteAccess("testSubscriptionTest.host.port", wireType, x -> t.set(x));
         } else {
             assetTree = serverAssetTree;
         }

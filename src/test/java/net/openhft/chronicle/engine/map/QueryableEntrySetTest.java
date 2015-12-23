@@ -25,6 +25,7 @@ import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static net.openhft.chronicle.engine.Utils.methodName;
@@ -47,9 +48,18 @@ public class QueryableEntrySetTest extends ThreadMonitoringTest {
     private final WireType wireType;
     public String connection = "QueryableTest.host.port";
     @NotNull
+
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
+
     @Rule
     public TestName name = new TestName();
-    private AssetTree assetTree = new VanillaAssetTree().forTesting();
+    private AssetTree assetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
@@ -69,7 +79,7 @@ public class QueryableEntrySetTest extends ThreadMonitoringTest {
 
     @Before
     public void before() throws IOException {
-        serverAssetTree = new VanillaAssetTree().forTesting();
+        serverAssetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
 
         if (isRemote) {
 
@@ -81,7 +91,7 @@ public class QueryableEntrySetTest extends ThreadMonitoringTest {
             connection = "StreamTest." + name.getMethodName() + ".host.port";
             TCPRegistry.createServerSocketChannelFor(connection);
             serverEndpoint = new ServerEndpoint(connection, serverAssetTree, wireType);
-            assetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType);
+            assetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType, x -> t.set(x));
         } else
             assetTree = serverAssetTree;
 

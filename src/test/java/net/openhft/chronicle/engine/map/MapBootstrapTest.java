@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
 
@@ -37,16 +38,25 @@ public class MapBootstrapTest extends ThreadMonitoringTest {
     private VanillaAssetTree serverAssetTree1;
     private ServerEndpoint serverEndpoint1;
 
+
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
+
     @Before
     public void before() throws IOException {
-        serverAssetTree1 = new VanillaAssetTree().forTesting();
+        serverAssetTree1 = new VanillaAssetTree().forTesting(x -> t.set(x));
 
         TCPRegistry.createServerSocketChannelFor(CONNECTION_1);
 
         serverEndpoint1 = new ServerEndpoint(CONNECTION_1, serverAssetTree1, WIRE_TYPE);
 
         client = new VanillaAssetTree("client1").forRemoteAccess
-                (CONNECTION_1, WIRE_TYPE);
+                (CONNECTION_1, WIRE_TYPE, x -> t.set(x));
     }
 
     @After
@@ -89,11 +99,7 @@ public class MapBootstrapTest extends ThreadMonitoringTest {
 
         final BlockingQueue<String> q2 = new ArrayBlockingQueue<>(2);
 
-        YamlLogging.showServerWrites = true;
-        YamlLogging.showServerReads = true;
-
-        YamlLogging.clientReads = true;
-        YamlLogging.clientWrites = true;
+        YamlLogging.setAll(false);
 
         yamlLoggger(() -> {
             client.registerTopicSubscriber(NAME + "?bootstrap=false",

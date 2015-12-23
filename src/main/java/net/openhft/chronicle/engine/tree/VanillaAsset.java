@@ -61,6 +61,7 @@ import java.util.SortedMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -100,7 +101,7 @@ public class VanillaAsset implements Asset, Closeable {
         }
     }
 
-    public void standardStack(boolean daemon) {
+    public void standardStack(boolean daemon, final Consumer<Throwable> onThrowable) {
 
         final Asset queue = acquireAsset("queue");
         queue.addWrappingRule(Publisher.class, LAST + "reference to a ChronicleQueue",
@@ -133,19 +134,19 @@ public class VanillaAsset implements Asset, Closeable {
         addView(ThreadGroup.class, threadGroup);
         addLeafRule(EventLoop.class, LAST + " event group", (rc, asset) ->
                 Threads.withThreadGroup(threadGroup, () -> {
-                    EventLoop eg = new EventGroup(daemon);
+                    EventLoop eg = new EventGroup(daemon, onThrowable);
                     eg.start();
                     return eg;
                 }));
         addView(SessionProvider.class, new VanillaSessionProvider());
     }
 
-    public void forServer() {
-        forServer(true);
+    public void forServer(final Consumer<Throwable> onThrowable) {
+        forServer(true, onThrowable);
     }
 
-    public void forServer(boolean daemon) {
-        standardStack(daemon);
+    public void forServer(boolean daemon, final Consumer<Throwable> onThrowable) {
+        standardStack(daemon, onThrowable);
 
 
         addWrappingRule(EntrySetView.class, LAST + " entrySet", VanillaEntrySetView::new, MapView.class);
@@ -171,10 +172,11 @@ public class VanillaAsset implements Asset, Closeable {
     public void forRemoteAccess(@NotNull String[] hostPortDescriptions,
                                 @NotNull Function<Bytes, Wire> wire,
                                 @NotNull VanillaSessionDetails sessionDetails,
-                                @Nullable ClientConnectionMonitor clientConnectionMonitor) throws
+                                @Nullable ClientConnectionMonitor clientConnectionMonitor,
+                                final Consumer<Throwable> onThrowable) throws
             AssetNotFoundException {
 
-        standardStack(true);
+        standardStack(true, onThrowable);
 
         addWrappingRule(EntrySetView.class, LAST + " entrySet", RemoteEntrySetView::new, MapView.class);
 

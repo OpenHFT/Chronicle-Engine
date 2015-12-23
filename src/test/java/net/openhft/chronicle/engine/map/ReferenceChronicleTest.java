@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -50,17 +51,26 @@ public class ReferenceChronicleTest {
         TCPRegistry.reset();
     }
 
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
+
+
     @Ignore("test keeps failing on TC")
     @Test(timeout = 5000)
     public void testRemoteSubscriptionMUFGChronicle() throws IOException {
 
-        AssetTree serverAssetTree = new VanillaAssetTree().forTesting();
+        AssetTree serverAssetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
         serverAssetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore", VanillaMapView::new, KeyValueStore.class);
         serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
                 new ChronicleMapKeyValueStore(context.basePath(OS.TARGET).entries(50).averageValueSize(2_000_000), asset));
 
         ServerEndpoint serverEndpoint = new ServerEndpoint(hostPortToken, serverAssetTree, WireType.BINARY);
-        AssetTree clientAssetTree = new VanillaAssetTree().forRemoteAccess(hostPortToken, WireType.BINARY);
+        AssetTree clientAssetTree = new VanillaAssetTree().forRemoteAccess(hostPortToken, WireType.BINARY, x -> t.set(x));
 
         //noinspection TryFinallyCanBeTryWithResources
         try {
@@ -76,7 +86,7 @@ public class ReferenceChronicleTest {
     @Test(timeout = 5000)
     public void testLocalSubscriptionMUFGChronicle() throws IOException {
 
-        AssetTree serverAssetTree = new VanillaAssetTree().forTesting();
+        AssetTree serverAssetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
         serverAssetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore", VanillaMapView::new, KeyValueStore.class);
         serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
                 new ChronicleMapKeyValueStore(context.basePath(OS.TARGET).entries(50).averageValueSize(2_000_000), asset));

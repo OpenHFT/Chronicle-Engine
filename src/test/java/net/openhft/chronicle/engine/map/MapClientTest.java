@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
@@ -40,6 +41,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -55,9 +57,20 @@ import static org.junit.Assert.*;
 public class MapClientTest extends ThreadMonitoringTest {
     public static final WireType WIRE_TYPE = WireType.TEXT;
     private static int i;
+
+
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
+
+
     // server has it's own asset tree, to the client.
     @NotNull
-    private final AssetTree assetTree = new VanillaAssetTree().forTesting();
+    private final AssetTree assetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
     @Nullable
     private Class<? extends CloseableSupplier> supplier = null;
 
@@ -103,29 +116,29 @@ public class MapClientTest extends ThreadMonitoringTest {
         });
     }
 
-/*    @Test(timeout = 50000)
-    public void testSubscriptionTest() throws IOException, InterruptedException {
-        yamlLoggger(() -> {
-            try {
-                supplyMap(Integer.class, String.class, map -> {
-                    try {
-                        supplyMapEventListener(Integer.class, String.class, mapEventListener -> {
-                            Chassis.registerSubscriber("test", MapEvent.class, e -> e.apply(mapEventListener));
+    /*    @Test(timeout = 50000)
+        public void testSubscriptionTest() throws IOException, InterruptedException {
+            yamlLoggger(() -> {
+                try {
+                    supplyMap(Integer.class, String.class, map -> {
+                        try {
+                            supplyMapEventListener(Integer.class, String.class, mapEventListener -> {
+                                Chassis.registerSubscriber("test", MapEvent.class, e -> e.apply(mapEventListener));
 
-                            map.put(i, "one");
+                                map.put(i, "one");
 
-                        });
+                            });
 
-                    } catch (IOException e) {
-                        Jvm.rethrow(e);
-                    }
-                });
+                        } catch (IOException e) {
+                            Jvm.rethrow(e);
+                        }
+                    });
 
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
-    }*/
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+        }*/
     @Test(timeout = 50000)
     public void testEntrySetIsEmpty() throws IOException, InterruptedException {
 
@@ -337,6 +350,7 @@ public class MapClientTest extends ThreadMonitoringTest {
     private interface CloseableSupplier<X> extends Closeable, Supplier<X> {
     }
 
+
     public static class RemoteMapSupplier<K, V> implements CloseableSupplier<MapView<K, V>> {
 
         @NotNull
@@ -356,10 +370,10 @@ public class MapClientTest extends ThreadMonitoringTest {
                 @NotNull final AssetTree clientAssetTree,
                 @NotNull final String name) throws IOException {
             this.clientAssetTree = clientAssetTree;
-            this.serverAssetTree = new VanillaAssetTree().forTesting(true);
+            this.serverAssetTree = new VanillaAssetTree().forTesting(true, x -> t.set(x));
             TCPRegistry.createServerSocketChannelFor(hostPortDescription);
             serverEndpoint = new ServerEndpoint(hostPortDescription, serverAssetTree, wireType);
-            ((VanillaAssetTree) clientAssetTree).forRemoteAccess(hostPortDescription, wireType);
+            ((VanillaAssetTree) clientAssetTree).forRemoteAccess(hostPortDescription, wireType, x -> t.set(x));
 
             map = clientAssetTree.acquireMap(name, kClass, vClass);
 

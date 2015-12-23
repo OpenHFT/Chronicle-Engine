@@ -41,6 +41,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.stream.IntStream;
@@ -81,10 +82,18 @@ public class SubscriptionModelPerformanceTest {
                 Jvm.pause(i * i);
     }
 
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
+
+
     @Before
     public void setUp() throws IOException {
-//        YamlLogging.clientReads = YamlLogging.clientWrites= true;
-        YamlLogging.clientReads = YamlLogging.clientWrites = false;
+        YamlLogging.setAll(false);
 
         String hostPortDescription = "SubscriptionModelPerformanceTest-" + System.nanoTime();
         WireType wireType = WireType.BINARY;
@@ -93,12 +102,12 @@ public class SubscriptionModelPerformanceTest {
         Files.deleteIfExists(Paths.get(OS.TARGET, _mapName));
 
         TCPRegistry.createServerSocketChannelFor(hostPortDescription);
-        serverAssetTree = new VanillaAssetTree(14).forTesting();
+        serverAssetTree = new VanillaAssetTree(14).forTesting(x -> t.set(x));
 
         serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
                 new ChronicleMapKeyValueStore(context.basePath(OS.TARGET).entries(50).averageValueSize(2 << 20), asset));
         serverEndpoint = new ServerEndpoint(hostPortDescription, serverAssetTree, wireType);
-        clientAssetTree = new VanillaAssetTree(15).forRemoteAccess(hostPortDescription, wireType);
+        clientAssetTree = new VanillaAssetTree(15).forRemoteAccess(hostPortDescription, wireType, x -> t.set(x));
     }
 
     @After

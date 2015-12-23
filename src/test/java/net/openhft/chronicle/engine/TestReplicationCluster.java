@@ -21,10 +21,7 @@ import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,6 +31,8 @@ import java.util.Arrays;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -57,6 +56,13 @@ public class TestReplicationCluster {
     private static ServerEndpoint serverEndpoint4;
     private static ServerEndpoint serverEndpoint5;
 
+    private static final AtomicReference<Throwable> throwableRef = new AtomicReference<>();
+    private static final Consumer<Throwable> failOnException = throwable1 -> {
+        throwable1.printStackTrace();
+        throwableRef.set(throwable1);
+    };
+
+
     @BeforeClass
     public static void before() throws IOException {
         YamlLogging.clientWrites = false;
@@ -77,21 +83,21 @@ public class TestReplicationCluster {
         //    TCPRegistry.createServerSocketChannelFor("host.port1", "host.port2");
         WireType writeType = WireType.BINARY;
         {
-            AssetTree tree = create(1, writeType, "clusterFive");
+            AssetTree tree = create(1, writeType, "clusterFive", failOnException);
             serverEndpoint1 = new ServerEndpoint("host.port1", tree, writeType);
             tree.acquireMap(NAME, String.class,
                     String.class).size();
         }
 
         {
-            AssetTree tree = create(2, writeType, "clusterFive");
+            AssetTree tree = create(2, writeType, "clusterFive", failOnException);
             serverEndpoint2 = new ServerEndpoint("host.port2", tree, writeType);
             tree.acquireMap(NAME, String.class,
                     String.class).size();
         }
 
         {
-            AssetTree tree = create(3, writeType, "clusterFive");
+            AssetTree tree = create(3, writeType, "clusterFive", failOnException);
             serverEndpoint3 = new ServerEndpoint("host.port3", tree, writeType);
             tree.acquireMap(NAME, String.class,
                     String.class).size();
@@ -99,7 +105,7 @@ public class TestReplicationCluster {
 
 
         {
-            AssetTree tree = create(4, writeType, "clusterFive");
+            AssetTree tree = create(4, writeType, "clusterFive", failOnException);
             serverEndpoint4 = new ServerEndpoint("host.port4", tree, writeType);
             tree.acquireMap(NAME, String.class,
                     String.class).size();
@@ -107,7 +113,7 @@ public class TestReplicationCluster {
 
 
         {
-            AssetTree tree = create(5, writeType, "clusterFive");
+            AssetTree tree = create(5, writeType, "clusterFive", failOnException);
             serverEndpoint5 = new ServerEndpoint("host.port5", tree, writeType);
             tree.acquireMap(NAME, String.class,
                     String.class).size();
@@ -117,8 +123,19 @@ public class TestReplicationCluster {
     }
 
 
+    @After
+    public void afterMethod() {
+        final Throwable throwable = throwableRef.getAndSet(null);
+        if (throwable != null) {
+            throwable.printStackTrace();
+            Assert.fail();
+        }
+
+    }
+
     @AfterClass
     public static void after() throws IOException {
+
 
         if (serverEndpoint != null)
             serverEndpoint.close();
@@ -132,9 +149,11 @@ public class TestReplicationCluster {
     }
 
     @NotNull
-    private static AssetTree create(final int hostId, Function<Bytes, Wire> writeType, final String clusterTwo) {
+    private static AssetTree create(final int hostId, Function<Bytes, Wire> writeType,
+                                    final String clusterTwo,
+                                    final Consumer<Throwable> onThrowable) {
         AssetTree tree = new VanillaAssetTree((byte) hostId)
-                .forTesting()
+                .forTesting(onThrowable)
                 .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);
 
         tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
@@ -197,7 +216,7 @@ public class TestReplicationCluster {
         final String s = generateValue('X');
         Executors.newSingleThreadExecutor().submit(() -> {
             VanillaAssetTree tree1 = new VanillaAssetTree("/").forRemoteAccess("host.port1",
-                    WIRE_TYPE);
+                    WIRE_TYPE, failOnException);
             final ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME, String.class,
                     String.class);
             for (; count.get() < 500; ) {
@@ -219,9 +238,10 @@ public class TestReplicationCluster {
         Thread.sleep(500);
         YamlLogging.setAll(false);
 
-
+        AtomicReference<Throwable> t = new AtomicReference<>();
         final ConcurrentMap<String, String> map;
-        AssetTree tree3 = new VanillaAssetTree("/").forRemoteAccess("host.port3", WIRE_TYPE);
+        AssetTree tree3 = new VanillaAssetTree("/").forRemoteAccess("host.port3", WIRE_TYPE, x -> t
+                .set(x));
 
 
         tree3.registerSubscriber(NAME, MapEvent.class, o ->
@@ -239,7 +259,13 @@ public class TestReplicationCluster {
             } catch (Exception ignore) {
 
             }
+            final Throwable throwable = t.get();
+            if (throwable != null) {
+                throwable.printStackTrace();
+                Assert.fail();
+            }
         }
+
 
     }
 

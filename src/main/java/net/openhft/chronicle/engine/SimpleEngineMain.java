@@ -54,7 +54,7 @@ public class SimpleEngineMain {
 
     public static void main(@NotNull String... args) throws IOException, InterruptedException, URISyntaxException {
         ChronicleConfig.init();
-        VanillaAssetTree assetTree = new VanillaAssetTree(HOST_ID).forTesting(false);
+        VanillaAssetTree assetTree = new VanillaAssetTree(HOST_ID).forTesting(false, t -> t.printStackTrace());
         if (JMX)
             assetTree.enableManagement();
 

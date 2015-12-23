@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.engine;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
@@ -39,6 +40,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * test using the listener both remotely or locally via the engine
@@ -57,16 +59,24 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
+
     @Before
     public void before() throws IOException {
-        serverAssetTree = new VanillaAssetTree().forTesting();
+        serverAssetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
 
         TCPRegistry.createServerSocketChannelFor(CONNECTION);
 
         serverEndpoint = new ServerEndpoint(CONNECTION, serverAssetTree, WIRE_TYPE);
 
         for (int i = 0; i < MAX; i++) {
-            trees[i] = new VanillaAssetTree().forRemoteAccess(CONNECTION, WIRE_TYPE);
+            trees[i] = new VanillaAssetTree().forRemoteAccess(CONNECTION, WIRE_TYPE, x -> t.set(x));
             maps[i] = trees[i].acquireMap(NAME + i, String.class, String.class);
         }
 

@@ -40,7 +40,7 @@ public class ServerMain {
 
         YamlLogging.showServerReads = true;
         YamlLogging.showServerWrites = true;
-        AssetTree serverTree = new VanillaAssetTree().forServer(false);
+        AssetTree serverTree = new VanillaAssetTree().forServer(false, Throwable::printStackTrace);
         endpoint = new ServerEndpoint("localhost:9090", serverTree, WireType.TEXT);
     }
 }

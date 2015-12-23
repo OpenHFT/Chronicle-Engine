@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -39,7 +40,16 @@ public class TestInsertUpdateChronicleMapView {
     public String connection = "RemoteSubscriptionTest.host.port";
     @NotNull
 
-    private AssetTree clientAssetTree = new VanillaAssetTree().forTesting();
+
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
+
+    private AssetTree clientAssetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
@@ -57,7 +67,7 @@ public class TestInsertUpdateChronicleMapView {
 
     @Before
     public void before() throws IOException {
-        serverAssetTree = new VanillaAssetTree().forTesting();
+        serverAssetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
 
         YamlLogging.showServerWrites = true;
         YamlLogging.showServerReads = true;
@@ -73,7 +83,7 @@ public class TestInsertUpdateChronicleMapView {
                 new ChronicleMapKeyValueStore(context.basePath(null).entries(100)
                         .putReturnsNull(false), asset));
 
-        clientAssetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType);
+        clientAssetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType, x -> t.set(x));
 
     }
 

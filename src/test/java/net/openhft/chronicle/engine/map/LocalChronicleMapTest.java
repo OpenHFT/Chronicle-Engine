@@ -17,9 +17,11 @@
 package net.openhft.chronicle.engine.map;
 
 import jdk.nashorn.internal.ir.annotations.Ignore;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.map.MapClientTest.LocalMapSupplier;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import org.jetbrains.annotations.NotNull;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -28,6 +30,7 @@ import org.junit.rules.TestName;
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
@@ -48,10 +51,19 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     @Rule
     public TestName name = new TestName();
 
+
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
+
     @NotNull
     private static ClosableMapSupplier<Integer, String> newIntString() throws IOException {
         final LocalMapSupplier supplier = new LocalMapSupplier<>(Integer
-                .class, String.class, new VanillaAssetTree().forTesting());
+                .class, String.class, new VanillaAssetTree().forTesting(x -> t.set(x)));
 
         return new ClosableMapSupplier() {
 
@@ -73,7 +85,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     private static ClosableMapSupplier<CharSequence, CharSequence> newStrStrMap() throws
             IOException {
 
-        final LocalMapSupplier supplier = new LocalMapSupplier<>(CharSequence.class, CharSequence.class, new VanillaAssetTree().forTesting());
+        final LocalMapSupplier supplier = new LocalMapSupplier<>(CharSequence.class, CharSequence.class, new VanillaAssetTree().forTesting(x -> t.set(x)));
 
         return new ClosableMapSupplier() {
 

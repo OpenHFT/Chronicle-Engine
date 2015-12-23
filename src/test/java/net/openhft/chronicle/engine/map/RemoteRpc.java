@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
@@ -27,6 +28,7 @@ import org.junit.*;
 import org.junit.rules.TestName;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static net.openhft.chronicle.engine.Utils.methodName;
 
@@ -50,6 +52,14 @@ public class RemoteRpc extends JSR166TestCase {
         methodName(name.getMethodName());
     }
 
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
+
     /**
      * clear removes all pairs
      */
@@ -57,9 +67,9 @@ public class RemoteRpc extends JSR166TestCase {
     @Test
     public void testRpc() throws IOException, InterruptedException {
 
-        YamlLogging.clientWrites = true;
-        YamlLogging.clientReads = true;
-        assetTree = (new VanillaAssetTree(1)).forRemoteAccess("192.168.1.76:8088", WIRE_TYPE);
+        YamlLogging.setAll(false);
+        assetTree = (new VanillaAssetTree(1)).forRemoteAccess("192.168.1.76:8088", WIRE_TYPE,
+                x -> t.set(x));
 
         MapView<String, String> map = assetTree.acquireMap("/test", String.class, String.class);
 
@@ -98,7 +108,7 @@ public class RemoteRpc extends JSR166TestCase {
 
         YamlLogging.clientWrites = true;
         YamlLogging.clientReads = true;
-        assetTree = (new VanillaAssetTree(1)).forRemoteAccess("192.168.1.76:8088", WIRE_TYPE);
+        assetTree = (new VanillaAssetTree(1)).forRemoteAccess("192.168.1.76:8088", WIRE_TYPE, x -> t.set(x));
 
         MapView<String, String> map = assetTree.acquireMap("/test", String.class, String.class);
         MapView<String, String> map2 = assetTree.acquireMap("/test2", String.class, String
