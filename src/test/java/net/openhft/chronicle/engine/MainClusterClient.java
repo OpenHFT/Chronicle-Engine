@@ -61,6 +61,25 @@ public class MainClusterClient {
             }
         });
 
+
+        Executors.newSingleThreadExecutor().submit(() -> {
+            VanillaAssetTree tree5 = new VanillaAssetTree("tree1").forRemoteAccess("localhost:8083",
+                    WIRE_TYPE);
+            final ConcurrentMap<String, String> map1 = tree5.acquireMap(NAME, String.class,
+                    String.class);
+            for (; ; ) {
+                for (int i = 0; i < entries; i++) {
+                    try {
+                        map1.remove("" + i);
+                        Thread.sleep(20);
+                    } catch (Throwable t) {
+                        t.printStackTrace();
+                    }
+
+                }
+            }
+        });
+
         YamlLogging.setAll(false);
 
         final ConcurrentMap<String, String> map;
