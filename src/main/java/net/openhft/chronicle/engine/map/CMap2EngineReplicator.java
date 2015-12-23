@@ -18,6 +18,7 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
+import net.openhft.chronicle.bytes.NativeBytesStore;
 import net.openhft.chronicle.bytes.PointerBytesStore;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.api.EngineReplication;
@@ -59,10 +60,10 @@ public class CMap2EngineReplicator implements EngineReplication,
     private final ThreadLocal<PointerBytesStore> keyLocal = withInitial(PointerBytesStore::new);
     private final ThreadLocal<PointerBytesStore> valueLocal = withInitial(PointerBytesStore::new);
     private EngineReplicationLangBytes engineReplicationLang;
-    private final ThreadLocal<Bytes<ByteBuffer>> keyByteStore = ThreadLocal.withInitial
-            (Bytes::elasticByteBuffer);
-    private final ThreadLocal<Bytes<ByteBuffer>> valuesByteStore = ThreadLocal.withInitial
-            (Bytes::elasticByteBuffer);
+    private final ThreadLocal<BytesStore> keyByteStore = ThreadLocal.withInitial
+            (NativeBytesStore::elasticByteBuffer);
+    private final ThreadLocal<BytesStore> valuesByteStore = ThreadLocal.withInitial
+            (NativeBytesStore::elasticByteBuffer);
 
     public CMap2EngineReplicator(RequestContext requestContext, @NotNull Asset asset) {
         this(requestContext);
@@ -81,19 +82,21 @@ public class CMap2EngineReplicator implements EngineReplication,
 
     @NotNull
     private net.openhft.lang.io.Bytes toLangBytes(@NotNull BytesStore b) {
-        long l = b.readRemaining();
-        int i = (int) b.readPosition();
+        long remaining = b.readRemaining();
+        int pos = (int) b.readPosition();
 
-        IByteBufferBytes wrap = ByteBufferBytes.wrap(ByteBuffer.allocate((int) l));
+        IByteBufferBytes wrap = ByteBufferBytes.wrap(ByteBuffer.allocate((int) remaining));
 
         wrap.clear();
 
         while (wrap.remaining() > 7) {
-            wrap.writeLong(b.readLong(i += 8));
+            wrap.writeLong(b.readLong(pos));
+            pos += 8;
         }
 
         while (wrap.remaining() > 0) {
-            wrap.writeByte(b.readByte(i++));
+            wrap.writeByte(b.readByte(pos));
+            pos++;
         }
 
         wrap.flip();
@@ -186,19 +189,18 @@ public class CMap2EngineReplicator implements EngineReplication,
                 final long position = key.position();
                 try {
 
-                    final Bytes<ByteBuffer> bytes = keyByteStore.get();
-
-                    int i = (int) key.position();
+                    BytesStore bs = keyByteStore.get();
+                    Bytes chronicleBytesKey = bs.bytesForWrite();
 
                     while (key.remaining() > 7) {
-                        bytes.writeLong(i += 8, key.readLong());
+                        chronicleBytesKey.writeLong(key.readLong());
                     }
 
                     while (key.remaining() > 0) {
-                        bytes.writeByte(i++, key.readByte());
+                        chronicleBytesKey.writeByte(key.readByte());
                     }
 
-                    return bytes.bytesForRead();
+                    return chronicleBytesKey;
                 } finally {
                     key.position(position);
                 }
@@ -214,19 +216,19 @@ public class CMap2EngineReplicator implements EngineReplication,
                 final long position = value.position();
                 try {
 
-                    final Bytes<ByteBuffer> bytes = valuesByteStore.get();
+                    BytesStore bs = valuesByteStore.get();
+                    Bytes chronicleBytesValue = bs.bytesForWrite();
 
-                    int i = (int) value.position();
                     while (value.remaining() > 7) {
-                        bytes.writeLong(i += 8, value.readLong());
+                        chronicleBytesValue.writeLong(value.readLong());
                     }
 
                     while (value.remaining() > 0) {
-                        bytes.writeByte(i++, value.readByte());
+                        chronicleBytesValue.writeByte(value.readByte());
                     }
 
 
-                    return bytes.bytesForRead();
+                    return chronicleBytesValue;
                 } finally {
                     value.position(position);
                 }
@@ -309,10 +311,10 @@ public class CMap2EngineReplicator implements EngineReplication,
             this.key = key;
             this.remoteIdentifier = remoteIdentifier;
             // must be native
-            assert key.isNative();
+//            assert key.isNative();
             this.value = value;
             // must be native
-            assert value == null || value.isNative();
+//            assert value == null || value.isNative();
             this.timestamp = timestamp;
             this.identifier = identifier;
             this.isDeleted = isDeleted;
