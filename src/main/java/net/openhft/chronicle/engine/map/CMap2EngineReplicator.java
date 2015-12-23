@@ -18,7 +18,6 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
-import net.openhft.chronicle.bytes.NativeBytesStore;
 import net.openhft.chronicle.bytes.PointerBytesStore;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.api.EngineReplication;
@@ -60,6 +59,10 @@ public class CMap2EngineReplicator implements EngineReplication,
     private final ThreadLocal<PointerBytesStore> keyLocal = withInitial(PointerBytesStore::new);
     private final ThreadLocal<PointerBytesStore> valueLocal = withInitial(PointerBytesStore::new);
     private EngineReplicationLangBytes engineReplicationLang;
+    private final ThreadLocal<Bytes<ByteBuffer>> keyByteStore = ThreadLocal.withInitial
+            (Bytes::elasticByteBuffer);
+    private final ThreadLocal<Bytes<ByteBuffer>> valuesByteStore = ThreadLocal.withInitial
+            (Bytes::elasticByteBuffer);
 
     public CMap2EngineReplicator(RequestContext requestContext, @NotNull Asset asset) {
         this(requestContext);
@@ -85,14 +88,17 @@ public class CMap2EngineReplicator implements EngineReplication,
 
         wrap.clear();
 
+        while (wrap.remaining() > 7) {
+            wrap.writeLong(b.readLong(i += 8));
+        }
+
         while (wrap.remaining() > 0) {
             wrap.writeByte(b.readByte(i++));
         }
 
         wrap.flip();
-//        System.out.println("toLangBytes "+wrap.toHexString(32));
-            return wrap;
-        }
+        return wrap;
+    }
 
 
     public void put(@NotNull final BytesStore key, @NotNull final BytesStore value,
@@ -179,23 +185,27 @@ public class CMap2EngineReplicator implements EngineReplication,
 
                 final long position = key.position();
                 try {
-                NativeBytesStore<Void> byteStore = NativeBytesStore.nativeStoreWithFixedCapacity(key
-                        .remaining());
+
+                    final Bytes<ByteBuffer> bytes = keyByteStore.get();
 
                     int i = (int) key.position();
-                    while (key.remaining() > 0) {
-                        byteStore.writeByte(i++, key.readByte());
+
+                    while (key.remaining() > 7) {
+                        bytes.writeLong(i += 8, key.readLong());
                     }
 
+                    while (key.remaining() > 0) {
+                        bytes.writeByte(i++, key.readByte());
+                    }
 
-                return byteStore.bytesForRead();
+                    return bytes.bytesForRead();
                 } finally {
                     key.position(position);
                 }
             }
 
             @Nullable
-            private Bytes<Void> toValue(final @Nullable net.openhft.lang.io.Bytes value) {
+            private Bytes toValue(final @Nullable net.openhft.lang.io.Bytes value) {
                 if (value == null)
                     return null;
                 if (value.remaining() == 0)
@@ -204,16 +214,19 @@ public class CMap2EngineReplicator implements EngineReplication,
                 final long position = value.position();
                 try {
 
-                    NativeBytesStore<Void> byteStore = NativeBytesStore.nativeStoreWithFixedCapacity(value
-                            .remaining());
+                    final Bytes<ByteBuffer> bytes = valuesByteStore.get();
 
                     int i = (int) value.position();
+                    while (value.remaining() > 7) {
+                        bytes.writeLong(i += 8, value.readLong());
+                    }
+
                     while (value.remaining() > 0) {
-                        byteStore.writeByte(i++, value.readByte());
+                        bytes.writeByte(i++, value.readByte());
                     }
 
 
-                return byteStore.bytesForRead();
+                    return bytes.bytesForRead();
                 } finally {
                     value.position(position);
                 }
@@ -296,10 +309,10 @@ public class CMap2EngineReplicator implements EngineReplication,
             this.key = key;
             this.remoteIdentifier = remoteIdentifier;
             // must be native
-            assert key.underlyingObject() == null;
+            assert key.isNative();
             this.value = value;
             // must be native
-            assert value == null || value.underlyingObject() == null;
+            assert value == null || value.isNative();
             this.timestamp = timestamp;
             this.identifier = identifier;
             this.isDeleted = isDeleted;

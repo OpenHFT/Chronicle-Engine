@@ -122,7 +122,7 @@ public class MainCluster5 {
     }
 
     @NotNull
-    private static AssetTree create(final int hostId, Function<Bytes, Wire> writeType, final String clusterTwo) {
+    static AssetTree create(final int hostId, Function<Bytes, Wire> writeType, final String clusterTwo) {
         AssetTree tree = new VanillaAssetTree((byte) hostId)
                 .forTesting()
                 .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);

@@ -39,10 +39,6 @@ public class MainClusterClient {
         WireType writeType = WireType.BINARY;
 
 
-        char[] x = new char[VALUE_SIZE];
-        Arrays.fill(x, 'X');
-        final String s = new String(x);
-
         Executors.newSingleThreadExecutor().submit(() -> {
             VanillaAssetTree tree5 = new VanillaAssetTree("tree1").forRemoteAccess("localhost:8085",
                     WIRE_TYPE);
@@ -51,8 +47,12 @@ public class MainClusterClient {
             for (; ; ) {
                 for (int i = 0; i < entries; i++) {
                     try {
+
+                        char[] x = new char[(int) (Math.random() * VALUE_SIZE)];
+                        Arrays.fill(x, 'X');
+                        final String s = new String(x);
                         map1.put("" + i, s);
-                        Thread.sleep(20);
+
                     } catch (Throwable t) {
                         t.printStackTrace();
                     }

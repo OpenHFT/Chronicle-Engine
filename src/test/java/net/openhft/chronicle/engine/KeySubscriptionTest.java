@@ -120,11 +120,8 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
     public void testSubscriptionOnKey() throws InterruptedException {
 
         //Enable Yaml logging when running in debug.
-        YamlLogging.showServerWrites = true;
-        YamlLogging.showServerReads = true;
-        YamlLogging.clientWrites = true;
-        YamlLogging.clientReads = true;
 
+        YamlLogging.setAll(false);
         String key = "key";
         String keyUri = NAME + "/" + key + "?bootstrap=false";
 
