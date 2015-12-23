@@ -116,6 +116,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
             assetTree = serverAssetTree;
 
         map = assetTree.acquireMap(NAME, String.class, String.class);
+        YamlLogging.setAll(false);
     }
 
     @After

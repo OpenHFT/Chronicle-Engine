@@ -24,6 +24,7 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.wire.WireType;
+import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 import org.junit.rules.TestName;
@@ -71,6 +72,7 @@ public class RemoteChronicleMapBinaryWire8bitTest extends JSR166TestCase {
 
     @Before
     public void before() {
+        YamlLogging.setAll(false);
         methodName(name.getMethodName());
     }
 

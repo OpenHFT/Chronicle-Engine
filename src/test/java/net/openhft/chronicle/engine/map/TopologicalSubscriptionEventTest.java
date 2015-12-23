@@ -100,6 +100,7 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
         } else
             clientAssetTree = serverAssetTree;
 
+        YamlLogging.setAll(false);
     }
 
     @After

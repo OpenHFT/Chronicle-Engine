@@ -85,6 +85,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
     @Before
     public void before() {
         methodName(name.getMethodName());
+        YamlLogging.setAll(false);
     }
 
     private static AtomicReference<Throwable> t = new AtomicReference();

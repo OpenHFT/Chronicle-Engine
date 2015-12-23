@@ -49,6 +49,7 @@ public class RemoteRpc extends JSR166TestCase {
     @Before
     public void before() {
         System.out.println("\t... test " + name.getMethodName());
+        YamlLogging.setAll(false);
         methodName(name.getMethodName());
     }
 

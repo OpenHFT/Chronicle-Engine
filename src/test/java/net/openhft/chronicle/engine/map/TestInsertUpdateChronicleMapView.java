@@ -68,9 +68,7 @@ public class TestInsertUpdateChronicleMapView {
     @Before
     public void before() throws IOException {
         serverAssetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
-
-        YamlLogging.showServerWrites = true;
-        YamlLogging.showServerReads = true;
+        YamlLogging.setAll(false);
 
         connection = "TestInsertUpdateChronicleMapView.host.port";
         TCPRegistry.createServerSocketChannelFor(connection);

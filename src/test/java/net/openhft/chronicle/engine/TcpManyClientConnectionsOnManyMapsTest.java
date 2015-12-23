@@ -27,6 +27,7 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.wire.WireType;
+import net.openhft.chronicle.wire.YamlLogging;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -69,6 +70,7 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
 
     @Before
     public void before() throws IOException {
+        YamlLogging.setAll(false);
         serverAssetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
 
         TCPRegistry.createServerSocketChannelFor(CONNECTION);

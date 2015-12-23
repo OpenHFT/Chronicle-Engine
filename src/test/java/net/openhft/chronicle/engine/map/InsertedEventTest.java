@@ -22,6 +22,7 @@ import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.Factor;
 import net.openhft.chronicle.wire.BinaryWire;
 import net.openhft.chronicle.wire.TextWire;
+import net.openhft.chronicle.wire.YamlLogging;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -37,6 +38,7 @@ public class InsertedEventTest {
 
     @Test
     public void testMarshalling() {
+        YamlLogging.setAll(false);
         Bytes bytes = Bytes.elasticByteBuffer();
         InsertedEvent<String, String> insertedEvent = InsertedEvent.of("asset", "key", "name",false);
         TextWire textWire = new TextWire(bytes);
@@ -49,6 +51,7 @@ public class InsertedEventTest {
 
     @Test
     public void testMarshalling2() {
+        YamlLogging.setAll(false);
         Bytes bytes = Bytes.elasticByteBuffer();
         InsertedEvent<String, Factor> insertedEvent = InsertedEvent.of("asset", "key", new Factor(),false);
         TextWire textWire = new TextWire(bytes);
@@ -62,6 +65,7 @@ public class InsertedEventTest {
     @Test
     @Ignore("TODO Fix")
     public void testMarshalling3a() {
+        YamlLogging.setAll(false);
         Bytes bytes = Bytes.elasticByteBuffer();
         InsertedEvent<String, BytesStore> insertedEvent = InsertedEvent.of("asset", "key", BytesStore.wrap("£Hello World".getBytes()),false);
         TextWire textWire = new TextWire(bytes);
@@ -74,6 +78,7 @@ public class InsertedEventTest {
 
     @Test
     public void testMarshalling3() {
+        YamlLogging.setAll(false);
         Bytes bytes = Bytes.elasticByteBuffer();
         InsertedEvent<String, BytesStore> insertedEvent = InsertedEvent.of("asset", "key", BytesStore.wrap("Hello World".getBytes()),false);
         TextWire textWire = new TextWire(bytes);

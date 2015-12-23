@@ -28,6 +28,7 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.ClientConnectionMonitor;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
+import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
@@ -93,6 +94,7 @@ public class TcpFailoverWithMonitoringTest {
 
     @Before
     public void before() throws IOException {
+        YamlLogging.setAll(false);
         serverAssetTree1 = new VanillaAssetTree().forTesting(x -> t.set(x));
         serverAssetTree2 = new VanillaAssetTree().forTesting(x -> t.set(x));
 
