@@ -67,7 +67,7 @@ public class TestInsertUpdateChronicleMapViewOnServer {
 
     @Before
     public void before() throws IOException {
-        serverAssetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
+        serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
 
         YamlLogging.setAll(false);
 

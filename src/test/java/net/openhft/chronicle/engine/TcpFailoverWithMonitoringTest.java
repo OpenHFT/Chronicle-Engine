@@ -95,8 +95,8 @@ public class TcpFailoverWithMonitoringTest {
     @Before
     public void before() throws IOException {
         YamlLogging.setAll(false);
-        serverAssetTree1 = new VanillaAssetTree().forTesting(x -> t.set(x));
-        serverAssetTree2 = new VanillaAssetTree().forTesting(x -> t.set(x));
+        serverAssetTree1 = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
+        serverAssetTree2 = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
 
         TCPRegistry.createServerSocketChannelFor(CONNECTION_1);
         TCPRegistry.createServerSocketChannelFor(CONNECTION_2);

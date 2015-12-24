@@ -37,19 +37,20 @@ public class MainClusterClient {
         //    TCPRegistry.createServerSocketChannelFor("host.port1", "host.port2");
         WireType writeType = WireType.BINARY;
 
+        char[] x = new char[(int) (Math.random() * VALUE_SIZE)];
+        Arrays.fill(x, 'X');
+        final String s = new String(x);
 
         Executors.newSingleThreadExecutor().submit(() -> {
             VanillaAssetTree tree5 = new VanillaAssetTree("tree1").forRemoteAccess("localhost:8085",
-                    WIRE_TYPE, x -> x.printStackTrace());
+                    WIRE_TYPE, Throwable::printStackTrace);
             final ConcurrentMap<String, String> map1 = tree5.acquireMap(NAME, String.class,
                     String.class);
             for (; ; ) {
                 for (int i = 0; i < entries; i++) {
                     try {
 
-                        char[] x = new char[(int) (Math.random() * VALUE_SIZE)];
-                        Arrays.fill(x, 'X');
-                        final String s = new String(x);
+
                         map1.put("" + i, s);
 
                     } catch (Throwable t) {
@@ -61,7 +62,7 @@ public class MainClusterClient {
         });
 
 
-        Executors.newSingleThreadExecutor().submit(() -> {
+      /*  Executors.newSingleThreadExecutor().submit(() -> {
             VanillaAssetTree tree5 = new VanillaAssetTree("tree1").forRemoteAccess("localhost:8083",
                     WIRE_TYPE, x -> x.printStackTrace());
             final ConcurrentMap<String, String> map1 = tree5.acquireMap(NAME, String.class,
@@ -70,7 +71,7 @@ public class MainClusterClient {
                 for (int i = 0; i < entries; i++) {
                     try {
                         map1.remove("" + i);
-                        Thread.sleep(20);
+                       // Thread.sleep(20);
                     } catch (Throwable t) {
                         t.printStackTrace();
                     }
@@ -78,7 +79,7 @@ public class MainClusterClient {
                 }
             }
         });
-
+*/
         YamlLogging.setAll(false);
 
         final ConcurrentMap<String, String> map;

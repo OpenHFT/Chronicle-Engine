@@ -65,7 +65,7 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
 
     @Before
     public void before() throws IOException {
-        serverAssetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
+        serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
 
         TCPRegistry.createServerSocketChannelFor(CONNECTION);
         serverEndpoint = new ServerEndpoint(CONNECTION, serverAssetTree, WIRE_TYPE);

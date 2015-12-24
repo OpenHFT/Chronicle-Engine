@@ -78,7 +78,7 @@ public class BootStrapTest {
 
     @Before
     public void before() throws IOException {
-        serverAssetTree1 = new VanillaAssetTree().forTesting(x -> t.set(x));
+        serverAssetTree1 = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
 
         TCPRegistry.createServerSocketChannelFor(CONNECTION_1);
 

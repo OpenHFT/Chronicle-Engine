@@ -54,7 +54,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     @Rule
     public TestName name = new TestName();
     @NotNull
-    private AssetTree assetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
+    private AssetTree assetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
 
     @AfterClass
     public static void tearDownClass() {

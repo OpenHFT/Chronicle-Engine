@@ -44,7 +44,7 @@ public class RedisEmulatorTest {
         YamlLogging.showServerReads=true;
         //For this test we can use a VanillaMapKeyValueStore
         //To test with a ChronicleMapKeyValueStore uncomment lines below
-        AssetTree serverAssetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
+        AssetTree serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
 //        serverAssetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
 //                VanillaMapView::new, KeyValueStore.class);
 //        serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->

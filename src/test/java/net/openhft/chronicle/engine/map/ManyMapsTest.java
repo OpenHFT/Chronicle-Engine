@@ -51,7 +51,7 @@ public class ManyMapsTest {
         int noOfMaps = 100;
         int noOfKvps = 100;
         String mapBaseName = "ManyMapsTest-";
-        AssetTree assetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
+        AssetTree assetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
 
         Map<String, Map<String, String>> _clientMaps = new HashMap<>();
         TCPRegistry.createServerSocketChannelFor(NAME);

@@ -51,7 +51,7 @@ public class ValuesViewTest extends ThreadMonitoringTest {
         if (th != null) Jvm.rethrow(th);
     }
 
-    private AssetTree assetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
+    private AssetTree assetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
@@ -72,7 +72,7 @@ public class ValuesViewTest extends ThreadMonitoringTest {
 
     @Before
     public void before() throws IOException {
-        serverAssetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
+        serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
 
         if (isRemote) {
 

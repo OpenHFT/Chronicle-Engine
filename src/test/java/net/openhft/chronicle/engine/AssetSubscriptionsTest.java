@@ -46,7 +46,7 @@ public class AssetSubscriptionsTest {
     @Test
     public void testSubscriptionsAtEachLevel() throws InvalidSubscriberException {
         // start at the top.
-        AssetTree tree = new VanillaAssetTree().forTesting(x -> t.set(x));
+        AssetTree tree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
         Subscriber<TopologicalEvent> rootTopoSubscriber = createMock("sub", Subscriber.class);
         Subscriber<MapEvent> rootMapSubscriber = createMock(Subscriber.class);
         Subscriber<String> rootNameSubscriber = createMock(Subscriber.class);
