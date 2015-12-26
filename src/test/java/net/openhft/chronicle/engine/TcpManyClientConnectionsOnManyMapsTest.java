@@ -71,7 +71,7 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
     @Before
     public void before() throws IOException {
         YamlLogging.setAll(false);
-        serverAssetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
+        serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
 
         TCPRegistry.createServerSocketChannelFor(CONNECTION);
 

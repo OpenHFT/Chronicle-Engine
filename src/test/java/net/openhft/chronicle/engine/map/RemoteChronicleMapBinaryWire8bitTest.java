@@ -60,7 +60,7 @@ public class RemoteChronicleMapBinaryWire8bitTest extends JSR166TestCase {
 
     private static int s_port = 12050;
     @NotNull
-    private final AssetTree assetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
+    private final AssetTree assetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
     @NotNull
     @Rule
     public TestName name = new TestName();

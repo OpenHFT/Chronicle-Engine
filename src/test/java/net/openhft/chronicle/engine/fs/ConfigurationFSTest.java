@@ -47,7 +47,7 @@ public class ConfigurationFSTest {
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
         ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
 
-        AssetTree at = new VanillaAssetTree().forTesting(x -> t.set(x));
+        AssetTree at = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
         at.registerSubscriber("", TopologicalEvent.class, System.out::println);
         at.registerSubscriber("/Data", TopologicalEvent.class, System.out::println);
 

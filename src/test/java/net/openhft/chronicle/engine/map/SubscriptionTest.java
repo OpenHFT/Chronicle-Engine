@@ -119,7 +119,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
 
         replay(listener);
 
-        VanillaAssetTree serverAssetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
+        VanillaAssetTree serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
         ServerEndpoint serverEndpoint = null;
         Subscriber<MapEvent> mapEventSubscriber = e -> e.apply(listener);
         VanillaAssetTree assetTree;

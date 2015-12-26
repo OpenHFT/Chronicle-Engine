@@ -69,7 +69,7 @@ public class AssetTreeJMXTest {
 
     @Test
     public void addStringValuesMapIntoTree(){
-        AssetTree tree = new VanillaAssetTree().forTesting(x -> t.set(x));
+        AssetTree tree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
         tree.enableManagement();
         ConcurrentMap<String, String> map = tree.acquireMap("group/map", String.class, String.class);
         map.put("key1", "value1");
@@ -81,7 +81,7 @@ public class AssetTreeJMXTest {
 
     @Test
     public void addDoubleValuesMapIntoTree(){
-        AssetTree tree = new VanillaAssetTree().forTesting(x -> t.set(x));
+        AssetTree tree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
         tree.enableManagement();
         ConcurrentMap<Double, Double> map = tree.acquireMap("group/map", Double.class, Double.class);
         map.put(1.1, 1.1);
@@ -93,7 +93,7 @@ public class AssetTreeJMXTest {
 
     @Test
     public void addIntegerValuesMapIntoTree(){
-        AssetTree tree = new VanillaAssetTree().forTesting(x -> t.set(x));
+        AssetTree tree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
         tree.enableManagement();
         ConcurrentMap<Integer, Integer> map = tree.acquireMap("group/map", Integer.class, Integer.class);
         map.put(1, 1);
@@ -106,7 +106,7 @@ public class AssetTreeJMXTest {
     @Ignore("todo add assertions")
     @Test
     public void addMarshallableValuesMapIntoTree(){
-        AssetTree tree = new VanillaAssetTree().forTesting(x -> t.set(x));
+        AssetTree tree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
         tree.enableManagement();
 
         Marshallable m = new MyTypes();
@@ -131,7 +131,7 @@ public class AssetTreeJMXTest {
      */
     private void addMapIntoTree(int number) throws InterruptedException {
 
-        AssetTree tree = new VanillaAssetTree().forTesting(x -> t.set(x));
+        AssetTree tree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
         tree.enableManagement();
 
         for (int i = 1; i <= number ; i++) {
@@ -149,7 +149,7 @@ public class AssetTreeJMXTest {
      */
     private void testAssetUpdate(long milliSeconds) throws InterruptedException {
 
-        AssetTree tree = new VanillaAssetTree().forTesting(x -> t.set(x));
+        AssetTree tree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
         tree.enableManagement();
 
         long timeToStop = System.currentTimeMillis() + 3600000;  //3600000 = 60*60*1000 milliseconds = 1 Hour

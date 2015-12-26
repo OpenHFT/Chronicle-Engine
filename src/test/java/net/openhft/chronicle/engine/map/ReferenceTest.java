@@ -80,7 +80,7 @@ public class ReferenceTest {
     @Before
     public void before() throws IOException {
         hostPortToken = "ReferenceTest.host.port";
-        serverAssetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
+        serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
 
         if (isRemote) {
 

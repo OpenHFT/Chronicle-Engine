@@ -64,7 +64,7 @@ public class ReferenceChronicleTest {
     @Test(timeout = 5000)
     public void testRemoteSubscriptionMUFGChronicle() throws IOException {
 
-        AssetTree serverAssetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
+        AssetTree serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
         serverAssetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore", VanillaMapView::new, KeyValueStore.class);
         serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
                 new ChronicleMapKeyValueStore(context.basePath(OS.TARGET).entries(50).averageValueSize(2_000_000), asset));
@@ -86,7 +86,7 @@ public class ReferenceChronicleTest {
     @Test(timeout = 5000)
     public void testLocalSubscriptionMUFGChronicle() throws IOException {
 
-        AssetTree serverAssetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
+        AssetTree serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
         serverAssetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore", VanillaMapView::new, KeyValueStore.class);
         serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
                 new ChronicleMapKeyValueStore(context.basePath(OS.TARGET).entries(50).averageValueSize(2_000_000), asset));

@@ -83,7 +83,7 @@ public class RemoteSubscriptionModelPerformanceTest {
         _twoMbTestString = new String(chars);
         _twoMbTestStringLength = _twoMbTestString.length();
 
-        serverAssetTree = new VanillaAssetTree(1).forTesting(x -> t.set(x));
+        serverAssetTree = new VanillaAssetTree(1).forTesting(x -> t.compareAndSet(null, x));
         //The following line doesn't add anything and breaks subscriptions
         serverAssetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore", VanillaMapView::new, KeyValueStore.class);
         serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->

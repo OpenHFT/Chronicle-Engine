@@ -70,7 +70,7 @@ public class MapClientTest extends ThreadMonitoringTest {
 
     // server has it's own asset tree, to the client.
     @NotNull
-    private final AssetTree assetTree = new VanillaAssetTree().forTesting(x -> t.set(x));
+    private final AssetTree assetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
     @Nullable
     private Class<? extends CloseableSupplier> supplier = null;
 

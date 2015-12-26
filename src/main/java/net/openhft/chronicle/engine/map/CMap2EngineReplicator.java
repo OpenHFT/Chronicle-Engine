@@ -140,13 +140,21 @@ public class CMap2EngineReplicator implements EngineReplication,
 
     }
 
+    private final ModificationIterator[] modificationIterators = new ModificationIterator[128];
+
     @Nullable
     @Override
     public ModificationIterator acquireModificationIterator(final byte remoteIdentifier) {
+
+        final ModificationIterator modificationIterator = modificationIterators[remoteIdentifier];
+        if (modificationIterator != null)
+            return modificationIterator;
+
         final EngineModificationIterator instance = engineReplicationLang
                 .acquireEngineModificationIterator(remoteIdentifier);
 
-        return new ModificationIterator() {
+
+        return modificationIterators[remoteIdentifier] = new ModificationIterator() {
             @Override
             public void forEach(@NotNull Consumer<ReplicationEntry> consumer) {
                 while (hasNext()) {
