@@ -256,7 +256,7 @@ class ReplicationHub extends AbstractStatelessClient {
                 // coming in from end users that touch these entries
                 // the code used to be this
                 // hub.lock(() -> mi.forEach(e -> ReplicationHub.this.sendEventAsyncWithoutLock
-                //         (replicationEvent, (Consumer<ValueOut>) v -> v.typedMarshallable(e)
+                //         (replicationEvent, (WriteValue) v -> v.typedMarshallable(e)
                 // )));
 
                 // also we have to write the data into a buffer, to free the map lock

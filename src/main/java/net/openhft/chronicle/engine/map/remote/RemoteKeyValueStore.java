@@ -37,15 +37,14 @@ import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.ValueIn;
-import net.openhft.chronicle.wire.ValueOut;
 import net.openhft.chronicle.wire.Wires;
 import net.openhft.chronicle.wire.WriteMarshallable;
+import net.openhft.chronicle.wire.WriteValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.server.internal.MapWireHandler.EventId;
@@ -55,7 +54,7 @@ import static net.openhft.chronicle.network.connection.CoreFields.stringEvent;
 public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
         implements Cloneable, ObjectKeyValueStore<K, V> {
 
-    private static final Consumer<ValueOut> VOID_PARAMETERS = out -> out.marshallable(WriteMarshallable.EMPTY);
+    private static final WriteValue VOID_PARAMETERS = WriteMarshallable.EMPTY;
 
     private final Class<K> kClass;
     private final Class<V> vClass;
@@ -391,7 +390,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
 
     @SuppressWarnings("SameParameterValue")
     private boolean proxyReturnBoolean(@NotNull final EventId eventId,
-                                       @Nullable final Consumer<ValueOut> consumer) {
+                                       @Nullable final WriteValue consumer) {
         final long startTime = Time.currentTimeMillis();
         return attempt(() -> readBoolean(sendEvent(startTime, eventId, consumer), startTime));
     }
