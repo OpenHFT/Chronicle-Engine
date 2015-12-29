@@ -271,6 +271,7 @@ public class Replication2WayTest {
     }
 
 
+    @Ignore
     @Test
     public void testBootstrapAllFromMap1WithSubscription2() throws InterruptedException {
 
