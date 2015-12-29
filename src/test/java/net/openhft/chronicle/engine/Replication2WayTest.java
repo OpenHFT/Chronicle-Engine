@@ -284,7 +284,7 @@ public class Replication2WayTest {
         tree1.registerSubscriber(name, MapEvent.class, f -> {
             map1Updates.incrementAndGet();
         });
-
+        map1.clear();
         map1.put("hello1", "world1");
 
         map1.put("hello2", "world2");
@@ -293,7 +293,9 @@ public class Replication2WayTest {
 
         final ConcurrentMap<String, String> map2 = tree2.acquireMap(name, String.class, String
                 .class);
-        Thread.sleep(50);
+
+        Thread.sleep(1000);
+
         tree2.registerSubscriber(name, MapEvent.class, f -> {
             map2Updates.incrementAndGet();
         });
