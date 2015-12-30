@@ -45,7 +45,7 @@
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>chronicle-bom</artifactId>
-                <version>1.10.33</version>
+                <version>1.10.34-SNAPSHOT</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -178,13 +178,6 @@
 
         </plugins>
     </build>
-
-    <distributionManagement>
-        <repository>
-            <id>releases</id>
-            <url>http://nexus.chronicle.software/content/repositories/releases</url>
-        </repository>
-    </distributionManagement>
 
     <scm>
         <url>scm:git:git@github.com:OpenHFT/Chronicle-Engine.git</url>
