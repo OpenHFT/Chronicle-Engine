@@ -79,13 +79,13 @@ clusterPeter: {
   host1: {
      hostId: 1,
      tcpBufferSize: 65536,
-     connectUri: dev:8081,
+     connectUri: hex:8081,
      timeoutMs: 1000,
   },
   host2: {
      hostId: 2,
      tcpBufferSize: 65536,
-     connectUri: hex:8082,
+     connectUri: dev:8082,
      timeoutMs: 1000,
   },
 }
