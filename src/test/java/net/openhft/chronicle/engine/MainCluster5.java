@@ -64,34 +64,34 @@ public class MainCluster5 {
             case "one":
 
                 tree = create(1, writeType, CLUSTER);
-                serverEndpoint = new ServerEndpoint("localhost:8081", tree, writeType);
+                serverEndpoint = new ServerEndpoint(OS.getHostName() + ":8081", tree, writeType);
                 tree.acquireMap(NAME, String.class, String.class).size();
                 break;
 
             case "two":
                 tree = create(2, writeType, CLUSTER);
-                serverEndpoint = new ServerEndpoint("localhost:8082", tree, writeType);
+                serverEndpoint = new ServerEndpoint(OS.getHostName() + ":8082", tree, writeType);
                 tree.acquireMap(NAME, String.class, String.class).size();
                 break;
 
 
             case "three":
                 tree = create(3, writeType, CLUSTER);
-                serverEndpoint = new ServerEndpoint("localhost:8083", tree, writeType);
+                serverEndpoint = new ServerEndpoint(OS.getHostName() + ":8083", tree, writeType);
                 tree.acquireMap(NAME, String.class, String.class).size();
                 break;
 
 
             case "four":
                 tree = create(4, writeType, CLUSTER);
-                serverEndpoint = new ServerEndpoint("localhost:8084", tree, writeType);
+                serverEndpoint = new ServerEndpoint(OS.getHostName() + ":8084", tree, writeType);
                 tree.acquireMap(NAME, String.class, String.class).size();
                 break;
 
 
             case "five":
                 tree = create(5, writeType, CLUSTER);
-                serverEndpoint = new ServerEndpoint("localhost:8085", tree, writeType);
+                serverEndpoint = new ServerEndpoint(OS.getHostName() + ":8085", tree, writeType);
                 tree.acquireMap(NAME, String.class, String.class).size();
                 break;
 
