@@ -36,11 +36,14 @@ import java.util.function.Function;
 
 public class MainCluster5 {
     public static final WireType WIRE_TYPE = WireType.BINARY;
-    public static final int entries = 150;
+    public static final int entries = 50;
     public static final String basePath = OS.TARGET + '/' + System.getProperty("server", "one");
-    public static final String NAME = "/ChMaps/test?entries=" + entries +
-            "&averageValueSize=" + MainClusterClient.VALUE_SIZE;
     public static final String CLUSTER = System.getProperty("cluster", "clusterFive");
+    static final int VALUE_SIZE = 2 << 20;
+    public static final String NAME1 = "/ChMaps/test1?entries=" + entries +
+            "&averageValueSize=" + VALUE_SIZE;
+    public static final String NAME2 = "/ChMaps/test2?entries=" + entries +
+            "&averageValueSize=" + VALUE_SIZE;
     //+    //"&basePath=/" + basePath;
     public static ServerEndpoint serverEndpoint;
 
@@ -66,41 +69,38 @@ public class MainCluster5 {
 
                 tree = create(1, writeType, CLUSTER);
                 serverEndpoint = new ServerEndpoint(OS.getHostName() + ":8081", tree, writeType);
-                tree.acquireMap(NAME, String.class, String.class).size();
                 break;
 
             case "two":
                 tree = create(2, writeType, CLUSTER);
                 serverEndpoint = new ServerEndpoint(OS.getHostName() + ":8082", tree, writeType);
-                tree.acquireMap(NAME, String.class, String.class).size();
                 break;
 
 
             case "three":
                 tree = create(3, writeType, CLUSTER);
                 serverEndpoint = new ServerEndpoint(OS.getHostName() + ":8083", tree, writeType);
-                tree.acquireMap(NAME, String.class, String.class).size();
                 break;
 
 
             case "four":
                 tree = create(4, writeType, CLUSTER);
                 serverEndpoint = new ServerEndpoint(OS.getHostName() + ":8084", tree, writeType);
-                tree.acquireMap(NAME, String.class, String.class).size();
                 break;
 
 
             case "five":
                 tree = create(5, writeType, CLUSTER);
                 serverEndpoint = new ServerEndpoint(OS.getHostName() + ":8085", tree, writeType);
-                tree.acquireMap(NAME, String.class, String.class).size();
                 break;
 
             case "client":
                 tree = new VanillaAssetTree("/").forRemoteAccess
                         ("localhost:9093", WIRE_TYPE, t -> t.printStackTrace());
-                tree.acquireMap(NAME, String.class, String.class).size();
         }
+        // configure them
+        tree.acquireMap(NAME1, String.class, String.class).size();
+        tree.acquireMap(NAME2, String.class, String.class).size();
     }
 
     @AfterClass
@@ -174,35 +174,29 @@ public class MainCluster5 {
         //  YamlLogging.setAll(true);
 
 
-        final ConcurrentMap<String, String> map;
         final String type = System.getProperty("server", "one");
 
-        map = tree.acquireMap(NAME, String.class, String.class);
+        final ConcurrentMap<String, String> map1 = tree.acquireMap(NAME1, String.class, String.class);
+        final ConcurrentMap<String, String> map2 = tree.acquireMap(NAME2, String.class, String.class);
         if ("one".equals(type)) {
             for (int i = 1; i < entries; i += 10) {
-                map.put(getKey(i), generateValue('1'));
+                map1.put(getKey(i), generateValue('1'));
             }
         }
         if ("two".equals(type)) {
-            for (int i = 20; i < entries; i++) {
-                map.put(getKey(i), generateValue('2'));
+            for (int i = 2; i < entries; i += 10) {
+                map2.put(getKey(i), generateValue('2'));
             }
-        }
-
-
-        if ("five".equals(type)) {
-            for (int i = 0; i < entries; i++) {
-                //         map.put(getKey(i), generateValue('5'));
-            }
-
-            //   System.in.read();
         }
 
 
         for (; ; ) {
             System.out.println("\n[ Map Contents ]\n");
-            map.forEach((k, v) -> System.out.println("k=" + k + ", v=" + (v == null ? "null" : v
-                    .substring(1, v.length() < 50 ? v.length() : 50))));
+            map1.forEach((k, v) -> System.out.print("1: k=" + k + ", v=" + (v == null ? "null" : v
+                    .substring(1, v.length() < 10 ? v.length() : 10)) + "\t"));
+            System.out.println(".");
+            map2.forEach((k, v) -> System.out.print("1: k=" + k + ", v=" + (v == null ? "null" : v
+                    .substring(1, v.length() < 10 ? v.length() : 10)) + "\t"));
             System.out.println(".");
             Thread.sleep(5000);
         }
