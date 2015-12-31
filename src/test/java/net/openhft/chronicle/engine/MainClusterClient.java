@@ -8,6 +8,8 @@ import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.ConcurrentMap;
@@ -17,9 +19,10 @@ import java.util.concurrent.ConcurrentMap;
  */
 
 public class MainClusterClient {
-    public static final WireType WIRE_TYPE = WireType.COMPRESSED_BINARY;
+    public static final WireType WIRE_TYPE = MainCluster5.WIRE_TYPE;
     public static final int entries = MainCluster5.entries;
-    public static final String NAME = "/ChMaps/test1";
+    public static final String NAME1 = "/ChMaps/test1";
+    public static final String NAME2 = "/ChMaps/test2";
 
     public static final int VALUE_SIZE = MainCluster5.VALUE_SIZE;
     public static final String DESCRIPTION = System.getProperty("connect", "localhost:8085");
@@ -33,31 +36,39 @@ public class MainClusterClient {
         ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
 
         //    TCPRegistry.createServerSocketChannelFor("host.port1", "host.port2");
-        WireType writeType = WireType.BINARY;
 
-        char[] x = new char[VALUE_SIZE - new Random().nextInt(VALUE_SIZE / 10)];
-        Arrays.fill(x, 'X');
-        final String s = new String(x);
+        char[] xa = new char[VALUE_SIZE - new Random().nextInt(VALUE_SIZE / 10)];
+        Arrays.fill(xa, 'X');
+        final String x = new String(xa);
+
+        char[] ya = new char[VALUE_SIZE - new Random().nextInt(VALUE_SIZE / 10)];
+        Arrays.fill(ya, 'Y');
+        final String y = new String(ya);
 
 //        Executors.newSingleThreadExecutor().submit(() -> {
         VanillaAssetTree tree5 = new VanillaAssetTree("tree1")
                 .forRemoteAccess(DESCRIPTION, WIRE_TYPE, Throwable::printStackTrace);
-            final ConcurrentMap<String, String> map1 = tree5.acquireMap(NAME, String.class,
-                    String.class);
-            for (; ; ) {
-                long start = System.currentTimeMillis();
-                for (int i = 0; i < entries; i++) {
-                    try {
-                        map1.put("" + i, s);
+        final ConcurrentMap<String, String> map1 = tree5.acquireMap(NAME1,
+                String.class, String.class);
+        final ConcurrentMap<String, String> map2 = tree5.acquireMap(NAME2,
+                String.class, String.class);
+        for (int count = 0; ; count++) {
+            String v = DateTimeFormatter.ISO_LOCAL_TIME.format(LocalDateTime.now()) + " - " + (count % 2 == 0 ? x : y);
+            long start = System.currentTimeMillis();
+            for (int i = 0; i < entries; i++) {
+                try {
+                    map1.put("" + i, v);
+                    map2.put("" + i, v);
 
-                    } catch (Throwable t) {
-                        t.printStackTrace();
-                    }
+                } catch (Throwable t) {
+                    t.printStackTrace();
                 }
-                map1.size();
-                long time = System.currentTimeMillis() - start;
-                System.out.println("Send " + entries + " puts in " + time + " ms");
             }
+            map1.size();
+            map2.size();
+            long time = System.currentTimeMillis() - start;
+            System.out.println("Send " + entries * 2 + " puts in " + time + " ms");
+        }
 //        });
 
 

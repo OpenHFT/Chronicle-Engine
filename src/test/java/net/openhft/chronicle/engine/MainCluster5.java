@@ -35,11 +35,11 @@ import java.util.function.Function;
  */
 
 public class MainCluster5 {
-    public static final WireType WIRE_TYPE = WireType.BINARY;
+    public static final WireType WIRE_TYPE = WireType.COMPRESSED_BINARY;
     public static final int entries = 50;
     public static final String basePath = OS.TARGET + '/' + System.getProperty("server", "one");
     public static final String CLUSTER = System.getProperty("cluster", "clusterFive");
-    static final int VALUE_SIZE = 2 << 20;
+    static final int VALUE_SIZE = 1 << 20;
     public static final String NAME1 = "/ChMaps/test1?entries=" + entries +
             "&averageValueSize=" + VALUE_SIZE;
     public static final String NAME2 = "/ChMaps/test2?entries=" + entries +
@@ -193,10 +193,10 @@ public class MainCluster5 {
         for (; ; ) {
             System.out.println("\n[ Map Contents ]\n");
             map1.forEach((k, v) -> System.out.print("1: k=" + k + ", v=" + (v == null ? "null" : v
-                    .substring(1, v.length() < 10 ? v.length() : 10)) + "\t"));
+                    .substring(0, v.length() < 20 ? v.length() : 20)) + "\t"));
             System.out.println(".");
             map2.forEach((k, v) -> System.out.print("1: k=" + k + ", v=" + (v == null ? "null" : v
-                    .substring(1, v.length() < 10 ? v.length() : 10)) + "\t"));
+                    .substring(0, v.length() < 20 ? v.length() : 20)) + "\t"));
             System.out.println(".");
             Thread.sleep(5000);
         }
