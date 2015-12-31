@@ -99,7 +99,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
         replicationSessionDetails = asset.root().findView(SessionDetails.class);
 
         ChronicleMapBuilder<K, V> builder = ChronicleMapBuilder.of(context.keyType(), context.valueType());
-        builder.actualSegments(1);
+        //    builder.actualSegments(1);
         HostIdentifier hostIdentifier = null;
         EngineReplication engineReplicator1 = null;
         try {
