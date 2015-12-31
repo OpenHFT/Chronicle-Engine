@@ -431,7 +431,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
 
     @Override
     public void accept(final ReplicationEntry replicationEntry) {
-        throw new UnsupportedOperationException("todo");
+        throw new UnsupportedOperationException("");
     }
 
     class Entry implements Map.Entry<K, V> {

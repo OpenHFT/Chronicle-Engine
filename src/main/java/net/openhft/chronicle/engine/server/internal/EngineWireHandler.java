@@ -52,7 +52,6 @@ import java.util.Map;
 import java.util.concurrent.RejectedExecutionException;
 
 import static net.openhft.chronicle.core.Jvm.rethrow;
-import static net.openhft.chronicle.core.util.StringUtils.endsWith;
 import static net.openhft.chronicle.network.connection.CoreFields.cid;
 import static net.openhft.chronicle.network.connection.CoreFields.csp;
 
@@ -370,13 +369,9 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
                                 publisher, tid, outWire,
                                 hostIdentifier,
                                 (Replication) view, eventLoop);
-                        return;
                     }
                 }
 
-                if (endsWith(cspText, "?view=queue")) {
-                    // TODO add in chronicle queue
-                }
 
             } catch (Exception e) {
                 LOG.error("", e);

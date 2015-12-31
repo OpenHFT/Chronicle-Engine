@@ -165,10 +165,17 @@ class ReplicationHub extends AbstractStatelessClient {
                                       return;
 
                                   }
-                                  if (replicationEvent.contentEquals(eventName))
-                                      replication.applyReplication(valueIn.typedMarshallable());
+                                  if (replicationEvent.contentEquals(eventName)) {
+                                      final EngineReplication.ReplicationEntry replicatedEntry = valueIn.typedMarshallable();
 
-                                      // receives replication events
+                                      System.out.println("*****\t\t\t\t ->  RECEIVED : " +
+                                              "CLIENT : replicatedEntry latency=" + (System
+                                              .currentTimeMillis() - replicatedEntry.timestamp()
+                                      ) + "ms");
+                                      replication.applyReplication(replicatedEntry);
+                                  }
+
+                                  // receives replication events
                                   else if (CoreFields.lastUpdateTime.contentEquals(eventName)) {
 
                                       if (Jvm.isDebug())
@@ -268,6 +275,12 @@ class ReplicationHub extends AbstractStatelessClient {
                         hasSentLastUpdateTime = false;
                         lastUpdateTime = updateTime;
                     }
+
+                    System.out.println("*****\t\t\t\tSENT : CLIENT :replicatedEntry latency=" +
+                            (System
+                                    .currentTimeMillis() - e.timestamp()
+                            ) + "ms");
+
                     wire.writeNotReadyDocument(false, wireOut ->
                             wireOut.writeEventName(replicationEvent).typedMarshallable(e));
                 });

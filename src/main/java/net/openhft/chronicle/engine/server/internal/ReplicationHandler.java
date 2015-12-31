@@ -60,6 +60,10 @@ public class ReplicationHandler<E> extends AbstractHandler {
                     LOG.debug("server : received replicationEvent");
                 ReplicationEntry replicatedEntry = valueIn.typedMarshallable();
                 assert replicatedEntry != null;
+
+                System.out.println("*****\t\t\t\t ->  RECEIVED : SERVER : replication latency=" + (System
+                        .currentTimeMillis() - replicatedEntry.timestamp()) + "ms  ");
+
                 replication.applyReplication(replicatedEntry);
                 return;
             }
@@ -164,6 +168,11 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
                                     publish1.writeNotReadyDocument(true,
                                             wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
+
+
+                                    System.out.println("*****\t\t\t\tSENT : SERVER : replication latency=" +
+                                            (System
+                                                    .currentTimeMillis() - e.timestamp()) + "ms");
 
                                     publish1.writeNotReadyDocument(false,
                                             wire -> wire.writeEventName(replicationEvent).typedMarshallable(e));
