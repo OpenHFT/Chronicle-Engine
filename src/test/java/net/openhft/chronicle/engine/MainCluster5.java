@@ -184,7 +184,7 @@ public class MainCluster5 {
             }
         }
         if ("two".equals(type)) {
-            for (int i = 2; i < entries; i += 10) {
+            for (int i = 20; i < entries; i++) {
                 map.put(getKey(i), generateValue('2'));
             }
         }
