@@ -48,6 +48,7 @@ public class MainCluster5 {
 
 
     public static void before() throws IOException {
+        System.out.println("Using cluster " + CLUSTER);
         YamlLogging.setAll(false);
         //YamlLogging.showServerWrites = true;
 
@@ -178,11 +179,14 @@ public class MainCluster5 {
 
         map = tree.acquireMap(NAME, String.class, String.class);
         if ("one".equals(type)) {
-            for (int i = 0; i < entries / 10; i++) {
+            for (int i = 1; i < entries; i += 10) {
                 map.put(getKey(i), generateValue('1'));
             }
-
-            //   System.in.read();
+        }
+        if ("two".equals(type)) {
+            for (int i = 2; i < entries; i += 10) {
+                map.put(getKey(i), generateValue('2'));
+            }
         }
 
 
