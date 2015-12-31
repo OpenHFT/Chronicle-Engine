@@ -196,7 +196,7 @@ public class MainCluster5 {
 
 
         for (; ; ) {
-            System.out.println("\n[ Map Contents " + LocalDateTime.now() + " )]\n");
+            System.out.println("\n[ Map Contents " + LocalDateTime.now() + " )]");
             map1.forEach((k, v) -> System.out.print("1: k=" + k + ", v=" + (v == null ? "null" : v
                     .substring(0, v.length() < 20 ? v.length() : 20)) + "\t"));
             System.out.println(".");
