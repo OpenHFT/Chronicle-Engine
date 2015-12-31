@@ -21,8 +21,8 @@ import java.util.concurrent.ConcurrentMap;
 public class MainClusterClient {
     public static final WireType WIRE_TYPE = MainCluster5.WIRE_TYPE;
     public static final int entries = MainCluster5.entries;
-    public static final String NAME1 = "/ChMaps/test1";
-    public static final String NAME2 = "/ChMaps/test2";
+    public static final String NAME1 = "/ChMaps/test1?putReturnsNull=true";
+    public static final String NAME2 = "/ChMaps/test2?putReturnsNull=true";
 
     public static final int VALUE_SIZE = MainCluster5.VALUE_SIZE;
     public static final String DESCRIPTION = System.getProperty("connect", "localhost:8085");
