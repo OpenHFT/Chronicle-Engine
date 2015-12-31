@@ -99,10 +99,7 @@ public class MainCluster5 {
                 tree = new VanillaAssetTree("/").forRemoteAccess
                         ("localhost:9093", WIRE_TYPE, t -> t.printStackTrace());
                 tree.acquireMap(NAME, String.class, String.class).size();
-
         }
-
-
     }
 
     @AfterClass
@@ -181,8 +178,8 @@ public class MainCluster5 {
 
         map = tree.acquireMap(NAME, String.class, String.class);
         if ("one".equals(type)) {
-            for (int i = 0; i < entries; i++) {
-//                map.put(getKey(i), generateValue('1'));
+            for (int i = 0; i < entries / 10; i++) {
+                map.put(getKey(i), generateValue('1'));
             }
 
             //   System.in.read();
