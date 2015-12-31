@@ -155,11 +155,7 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
 
 
         // allow time for outbound onEndOfConnection message to be sent
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException ignore) {
-
-        }
+        Jvm.pause(100);
     }
 
     @NotNull
