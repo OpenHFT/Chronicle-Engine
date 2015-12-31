@@ -40,6 +40,7 @@ public class MainCluster5 {
     public static final String basePath = OS.TARGET + '/' + System.getProperty("server", "one");
     public static final String NAME = "/ChMaps/test?entries=" + entries +
             "&averageValueSize=" + MainClusterClient.VALUE_SIZE;
+    public static final String CLUSTER = System.getProperty("cluster", "clusterFive");
     //+    //"&basePath=/" + basePath;
     public static ServerEndpoint serverEndpoint;
 
@@ -62,34 +63,34 @@ public class MainCluster5 {
         switch (System.getProperty("server", "one")) {
             case "one":
 
-                tree = create(1, writeType, "clusterFive");
+                tree = create(1, writeType, CLUSTER);
                 serverEndpoint = new ServerEndpoint("localhost:8081", tree, writeType);
                 tree.acquireMap(NAME, String.class, String.class).size();
                 break;
 
             case "two":
-                tree = create(2, writeType, "clusterFive");
+                tree = create(2, writeType, CLUSTER);
                 serverEndpoint = new ServerEndpoint("localhost:8082", tree, writeType);
                 tree.acquireMap(NAME, String.class, String.class).size();
                 break;
 
 
             case "three":
-                tree = create(3, writeType, "clusterFive");
+                tree = create(3, writeType, CLUSTER);
                 serverEndpoint = new ServerEndpoint("localhost:8083", tree, writeType);
                 tree.acquireMap(NAME, String.class, String.class).size();
                 break;
 
 
             case "four":
-                tree = create(4, writeType, "clusterFive");
+                tree = create(4, writeType, CLUSTER);
                 serverEndpoint = new ServerEndpoint("localhost:8084", tree, writeType);
                 tree.acquireMap(NAME, String.class, String.class).size();
                 break;
 
 
             case "five":
-                tree = create(5, writeType, "clusterFive");
+                tree = create(5, writeType, CLUSTER);
                 serverEndpoint = new ServerEndpoint("localhost:8085", tree, writeType);
                 tree.acquireMap(NAME, String.class, String.class).size();
                 break;
@@ -164,6 +165,12 @@ public class MainCluster5 {
         return new String(chars);
     }
 
+    public static void main(String[] args) throws IOException, InterruptedException {
+        before();
+        new MainCluster5().test();
+        after();
+    }
+
     public void test() throws InterruptedException, IOException {
 
         //  YamlLogging.setAll(true);
@@ -198,13 +205,6 @@ public class MainCluster5 {
             Thread.sleep(5000);
         }
 
-    }
-
-
-    public static void main(String[] args) throws IOException, InterruptedException {
-        before();
-        new MainCluster5().test();
-        after();
     }
 }
 
