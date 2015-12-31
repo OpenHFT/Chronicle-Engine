@@ -199,9 +199,10 @@ public class MainCluster5 {
 
 
         for (; ; ) {
+            System.out.println("\n[ Map Contents ]\n");
             map.forEach((k, v) -> System.out.println("k=" + k + ", v=" + (v == null ? "null" : v
                     .substring(1, v.length() < 50 ? v.length() : 50))));
-            System.out.println("\n\n");
+            System.out.println(".");
             Thread.sleep(5000);
         }
 
