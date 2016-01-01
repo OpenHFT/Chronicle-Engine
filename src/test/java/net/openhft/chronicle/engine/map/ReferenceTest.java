@@ -87,7 +87,6 @@ public class ReferenceTest {
         } else {
             assetTree = serverAssetTree;
         }
-
     }
 
     @After
