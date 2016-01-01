@@ -16,14 +16,14 @@ public class RemoteTopologySubscription extends AbstractRemoteSubscription<Topol
         super(asset.findView(TcpChannelHub.class), (long) 0, toUri(requestContext));
     }
 
-    @Override
-    public void notifyEvent(TopologicalEvent event) {
-        throw new UnsupportedOperationException("Remote client should not attempt to notify of a change");
-    }
-
     @NotNull
     private static String toUri(@NotNull final RequestContext context) {
         return "/" + context.fullName() + "?view=topologySubscription";
+    }
+
+    @Override
+    public void notifyEvent(TopologicalEvent event) {
+        throw new UnsupportedOperationException("Remote client should not attempt to notify of a change");
     }
 
 }

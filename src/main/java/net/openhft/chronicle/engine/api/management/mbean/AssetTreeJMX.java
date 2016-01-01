@@ -45,11 +45,6 @@ public class AssetTreeJMX implements AssetTreeJMXMBean {
     }
 
     @Override
-    public void setSize(long size) {
-        this.size = size;
-    }
-
-    @Override
     public String getEntries() {
         return entries;
     }
@@ -57,6 +52,11 @@ public class AssetTreeJMX implements AssetTreeJMXMBean {
     @Override
     public long getSize() {
         return size;
+    }
+
+    @Override
+    public void setSize(long size) {
+        this.size = size;
     }
 
     @Override

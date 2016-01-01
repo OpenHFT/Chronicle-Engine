@@ -68,7 +68,7 @@ public interface Visitable<E> {
      *
      * @param updateFunction update to apply to the value.
      * @param returnFunction derive an object to return
-     * @param <R> data type to return.
+     * @param <R>            data type to return.
      * @return the result of the code called.
      */
     default <R> R syncUpdate(@NotNull SerializableFunction<E, E> updateFunction, @NotNull SerializableFunction<E, R> returnFunction) {
@@ -82,8 +82,8 @@ public interface Visitable<E> {
      *
      * @param function to apply
      * @param argument for the functions use.
-     * @param <T> type of the argument
-     * @param <R> type of the return value.
+     * @param <T>      type of the argument
+     * @param <R>      type of the return value.
      * @return data derived.
      */
     default <T, R> R applyTo(@NotNull SerializableBiFunction<E, T, R> function, T argument) {
@@ -95,8 +95,8 @@ public interface Visitable<E> {
      * combination of data. This function is assumed to replace the value and trigger and events or replicated changes.
      *
      * @param updateFunction to update the state of the visitable.
-     * @param argument for the functions use.
-     * @param <T> type of the argument
+     * @param argument       for the functions use.
+     * @param <T>            type of the argument
      */
     default <T> void asyncUpdate(@NotNull SerializableBiFunction<E, T, E> updateFunction, T argument) {
         set(updateFunction.apply(get(), argument));

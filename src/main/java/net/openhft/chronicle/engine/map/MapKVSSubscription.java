@@ -287,8 +287,8 @@ public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
         final Subscriber s = delegate != null ? delegate : subscriber;
         boolean subscription = subscribers.remove(s);
         boolean keySubscription = keySubscribers.remove(s);
-        if(subscription)removeFromStats("subscription");
-        if(keySubscription)removeFromStats("keySubscription");
+        if (subscription) removeFromStats("subscription");
+        if (keySubscription) removeFromStats("keySubscription");
         s.onEndOfSubscription();
     }
 
@@ -301,8 +301,8 @@ public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
 
     //Needs some refactoring - need a definitive way of knowing when this map should become available
     //3 combinations, not lookedUP, exists or does not exist
-    private Map getSubscriptionMap(){
-        if(subscriptionMonitoringMap != null)return subscriptionMonitoringMap;
+    private Map getSubscriptionMap() {
+        if (subscriptionMonitoringMap != null) return subscriptionMonitoringMap;
         Asset subscriptionAsset = asset.root().getAsset("proc/subscriptions");
         if (subscriptionAsset != null && subscriptionAsset.getView(MapView.class) != null) {
             subscriptionMonitoringMap = subscriptionAsset.getView(MapView.class);
@@ -310,15 +310,15 @@ public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
         return subscriptionMonitoringMap;
     }
 
-    private void addToStats(String subType){
-        if(sessionProvider == null)return;
+    private void addToStats(String subType) {
+        if (sessionProvider == null) return;
 
         SessionDetails sessionDetails = sessionProvider.get();
-        if(sessionDetails != null) {
+        if (sessionDetails != null) {
             String userId = sessionDetails.userId();
 
             Map<String, SubscriptionStat> subStats = getSubscriptionMap();
-            if(subStats != null) {
+            if (subStats != null) {
                 SubscriptionStat stat = subStats.get(userId + "~" + subType);
                 if (stat == null) {
                     stat = new SubscriptionStat();
@@ -332,15 +332,15 @@ public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
         }
     }
 
-    private void removeFromStats(String subType){
-        if(sessionProvider == null)return;
+    private void removeFromStats(String subType) {
+        if (sessionProvider == null) return;
 
         SessionDetails sessionDetails = sessionProvider.get();
-        if(sessionDetails != null) {
+        if (sessionDetails != null) {
             String userId = sessionDetails.userId();
 
             Map<String, SubscriptionStat> subStats = getSubscriptionMap();
-            if(subStats != null) {
+            if (subStats != null) {
                 SubscriptionStat stat = subStats.get(userId + "~" + subType);
                 if (stat == null) {
                     throw new AssertionError("There should be an active subscription");

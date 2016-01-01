@@ -51,13 +51,13 @@ public class MonitorCfg implements Installable, Marshallable {
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         wire.read(() -> "subscriptionMonitoringEnabled").bool(this, (o, b) -> o.subscriptionMonitoringEnabled = b)
-            .read(() -> "userMonitoringEnabled").bool(this, (o, b) -> o.userMonitoringEnabled = b);
+                .read(() -> "userMonitoringEnabled").bool(this, (o, b) -> o.userMonitoringEnabled = b);
     }
 
     @Override
     public void writeMarshallable(WireOut wire) {
         wire.write(() -> "subscriptionMonitoringEnabled").bool(subscriptionMonitoringEnabled)
-            .write(() -> "userMonitoringEnabled").bool(userMonitoringEnabled);
+                .write(() -> "userMonitoringEnabled").bool(userMonitoringEnabled);
     }
 
     @Override

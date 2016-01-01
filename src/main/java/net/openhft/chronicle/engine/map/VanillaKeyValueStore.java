@@ -48,7 +48,7 @@ public class VanillaKeyValueStore<K, V> implements AuthenticatedKeyValueStore<K,
     }
 
     public VanillaKeyValueStore(Asset asset) {
-        this(null,asset);
+        this(null, asset);
         //this.asset = asset;
 
     }
@@ -97,7 +97,7 @@ public class VanillaKeyValueStore<K, V> implements AuthenticatedKeyValueStore<K,
 
     @Override
     public void entriesFor(int segment, @NotNull SubscriptionConsumer<MapEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
-        SubscriptionConsumer.notifyEachEvent(map.entrySet(), e -> kvConsumer.accept(InsertedEvent.of(asset.fullName(), e.getKey(), e.getValue(),false)));
+        SubscriptionConsumer.notifyEachEvent(map.entrySet(), e -> kvConsumer.accept(InsertedEvent.of(asset.fullName(), e.getKey(), e.getValue(), false)));
     }
 
     @NotNull

@@ -24,10 +24,9 @@ import java.nio.ByteBuffer;
  * Created by peter on 25/05/15.
  */
 public class Buffers {
+    static final ThreadLocal<Buffers> BUFFERS = ThreadLocal.withInitial(Buffers::new);
     final Bytes<ByteBuffer> keyBuffer = Bytes.elasticByteBuffer();
     final Bytes<ByteBuffer> valueBuffer = Bytes.elasticByteBuffer();
-
-    static final ThreadLocal<Buffers> BUFFERS = ThreadLocal.withInitial(Buffers::new);
 
     private Buffers() {
     }

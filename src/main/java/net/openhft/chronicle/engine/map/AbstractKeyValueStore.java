@@ -34,9 +34,9 @@ import java.util.Map;
  */
 public class AbstractKeyValueStore<K, V> implements KeyValueStore<K, V> {
     @NotNull
-    final Asset asset;
-    @NotNull
     public final KeyValueStore<K, V> kvStore;
+    @NotNull
+    final Asset asset;
     private final Class<K> keyType;
     private final Class<V> valueType;
 

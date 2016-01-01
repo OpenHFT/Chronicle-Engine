@@ -45,11 +45,11 @@ public interface MapEvent<K, V> extends Map.Entry<K, V>, ChangeEvent {
     @NotNull
     <K2, V2> MapEvent<K2, V2> translate(BiFunction<K, K2, K2> keyFunction, BiFunction<V, V2, V2> valueFunction);
 
-    enum MapEventFields implements WireKey {
-        assetName, key, oldValue, value, hasValueChanged, isReplicationEvent
-    }
-
     default V setValue(V value) {
         throw new UnsupportedOperationException();
+    }
+
+    enum MapEventFields implements WireKey {
+        assetName, key, oldValue, value, hasValueChanged, isReplicationEvent
     }
 }

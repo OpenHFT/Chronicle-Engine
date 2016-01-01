@@ -48,7 +48,7 @@ public class RemovedEvent<K, V> implements MapEvent<K, V> {
     }
 
     @NotNull
-    public static <K, V> RemovedEvent<K, V> of(String assetName, K key, V value,boolean isReplicationEvent) {
+    public static <K, V> RemovedEvent<K, V> of(String assetName, K key, V value, boolean isReplicationEvent) {
         return new RemovedEvent<>(assetName, key, value, isReplicationEvent);
     }
 

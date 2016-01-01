@@ -44,6 +44,7 @@ public class FilePerKeyBasedKeyMarshallableValueStore<K, V extends Marshallable>
     private final Function<K, String> keyToString;
     private final Function<String, K> stringToKey;
     private final Supplier<V> createValue;
+
     public FilePerKeyBasedKeyMarshallableValueStore(
             FilePerKeyValueStore kvStore, Function<K, String> keyToString,
             Function<String, K> stringToKey, Supplier<V> createValue) {
@@ -127,7 +128,7 @@ public class FilePerKeyBasedKeyMarshallableValueStore<K, V extends Marshallable>
             throws InvalidSubscriberException {
         String assetName = asset().fullName();
         kvStore.entriesFor(segment, event -> kvConsumer.accept(InsertedEvent.of(assetName,
-                stringToKey.apply(event.getKey()), bytesToValue(event.getValue()),false)));
+                stringToKey.apply(event.getKey()), bytesToValue(event.getValue()), false)));
     }
 
     @Override

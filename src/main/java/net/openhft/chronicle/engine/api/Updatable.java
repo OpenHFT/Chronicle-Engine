@@ -62,7 +62,7 @@ public interface Updatable<E> {
      * Apply a function to an Updatable which is assumed to not change the visited in any significant way.  This might not trigger an event.
      *
      * @param function to apply to derive data from this Updatable.
-     * @param <R> return type.
+     * @param <R>      return type.
      * @return derived data.
      */
     default <A, R> R applyTo(@NotNull SerializableBiFunction<E, A, R> function, A arg) {

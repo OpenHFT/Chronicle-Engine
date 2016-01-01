@@ -5,10 +5,11 @@ package net.openhft.chronicle.engine.api.management.mbean;
  */
 public interface AssetTreeJMXMBean {
 
-    void setSize(long size);
-
     String getEntries();
+
     long getSize();
+
+    void setSize(long size);
 
     String getKeyType();
 

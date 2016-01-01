@@ -24,8 +24,8 @@ import org.jetbrains.annotations.Nullable;
  */
 class FileRecord<T> {
     final long timestamp;
-    boolean valid = true;
     private final T contents;
+    boolean valid = true;
 
     FileRecord(long timestamp, T contents) {
         this.timestamp = timestamp;

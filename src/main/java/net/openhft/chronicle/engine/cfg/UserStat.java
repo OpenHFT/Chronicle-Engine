@@ -43,15 +43,15 @@ public class UserStat implements Marshallable {
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IORuntimeException {
         wire.read(() -> "loggedIn").time(this, (o, b) -> o.loggedIn = b)
-            .read(() -> "recentInteraction").time(this, (o, b) -> o.recentInteraction = b)
-            .read(() -> "totalInteractions").int16(this, (o, b) -> o.totalInteractions = b);
+                .read(() -> "recentInteraction").time(this, (o, b) -> o.recentInteraction = b)
+                .read(() -> "totalInteractions").int16(this, (o, b) -> o.totalInteractions = b);
     }
 
     @Override
     public void writeMarshallable(WireOut wire) {
         wire.write(() -> "loggedIn").time(loggedIn)
-            .write(() -> "recentInteraction").time(recentInteraction)
-            .write(() -> "totalInteractions").int16(totalInteractions);
+                .write(() -> "recentInteraction").time(recentInteraction)
+                .write(() -> "totalInteractions").int16(totalInteractions);
     }
 
     @Override

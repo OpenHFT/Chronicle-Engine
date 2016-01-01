@@ -22,8 +22,6 @@ package net.openhft.chronicle.engine.api;
 public class PermissionDeniedException extends RuntimeException {
     private Failure failure;
 
-    public enum Failure {INCORRECT_TOKEN, INCORRECT_USER}
-
     public PermissionDeniedException() {
         super();
     }
@@ -48,4 +46,6 @@ public class PermissionDeniedException extends RuntimeException {
     public void setFailure(Failure failure) {
         this.failure = failure;
     }
+
+    public enum Failure {INCORRECT_TOKEN, INCORRECT_USER}
 }

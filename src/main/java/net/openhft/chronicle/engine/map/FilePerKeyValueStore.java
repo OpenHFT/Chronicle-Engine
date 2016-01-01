@@ -477,7 +477,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
                         } else {
                             subscriptions.notifyEvent(UpdatedEvent.of(asset.fullName(), p.toFile
                                     ().getName(), prevContents, mapVal, false, prevContents ==
-                                    null ? true :  !prevContents.equals(mapVal)));
+                                    null ? true : !prevContents.equals(mapVal)));
                         }
                     } finally {
                         if (prevContents != null)

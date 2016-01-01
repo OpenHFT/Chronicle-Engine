@@ -239,10 +239,10 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         chronicleQueue.close();
     }
 
-  //  @Override
- //   public WireType wireType() {
-  //      throw new UnsupportedOperationException("todo");
-  //  }
+    //  @Override
+    //   public WireType wireType() {
+    //      throw new UnsupportedOperationException("todo");
+    //  }
 
     @Override
     public void replay(long index, @NotNull BiConsumer<T, M> consumer, @Nullable Consumer<Exception> isAbsent) {

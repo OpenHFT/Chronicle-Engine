@@ -47,9 +47,9 @@ public interface KeyedVisitable<K, E> {
     /**
      * Apply a function to the visitable and return the result.  This function is assumed to not change the value in any significant way.
      *
-     * @param key to visit within this collection.
+     * @param key      to visit within this collection.
      * @param function to apply e.g. call a getter
-     * @param <R> data type to return.
+     * @param <R>      data type to return.
      * @return the result of the code called.
      */
     default <R> R applyToKey(K key, @NotNull SerializableFunction<E, R> function) {
@@ -60,7 +60,7 @@ public interface KeyedVisitable<K, E> {
      * Apply a function to visitable potentially asynchronously.  This function is assumed to replace
      * the value and trigger and events or replicated changes.
      *
-     * @param key to visit within this collection.
+     * @param key            to visit within this collection.
      * @param updateFunction to update the state of the visibility.
      */
     default void asyncUpdateKey(K key, @NotNull SerializableFunction<E, E> updateFunction) {
@@ -70,10 +70,10 @@ public interface KeyedVisitable<K, E> {
     /**
      * Apply a function to update the state of a visible, and apply a function to return a result object synchronously.
      *
-     * @param key to update within this collection.
+     * @param key            to update within this collection.
      * @param updateFunction update to apply to the value.
      * @param returnFunction derive an object to return
-     * @param <R> data type to return.
+     * @param <R>            data type to return.
      * @return the result of the code called.
      */
     default <R> R syncUpdateKey(K key, @NotNull SerializableFunction<E, E> updateFunction, @NotNull SerializableFunction<E, R> returnFunction) {
@@ -85,11 +85,11 @@ public interface KeyedVisitable<K, E> {
     /**
      * Apply a function which takes an argument.  This argument may contain a combination of data. This function is assumed to not change the value in any significant way.
      *
-     * @param key to visit within this collection.
+     * @param key      to visit within this collection.
      * @param function to apply
      * @param argument for the functions use.
-     * @param <T> type of the argument
-     * @param <R> type of the return value.
+     * @param <T>      type of the argument
+     * @param <R>      type of the return value.
      * @return data derived.
      */
     default <T, R> R applyToKey(K key, @NotNull SerializableBiFunction<E, T, R> function, T argument) {
@@ -99,10 +99,10 @@ public interface KeyedVisitable<K, E> {
     /**
      * Apply a function to visitable potentially asynchronously.  This argument may contain a combination of data. This function is assumed to replace the value and trigger and events or replciated changes.
      *
-     * @param key to update within this collection
+     * @param key            to update within this collection
      * @param updateFunction to update the state of the visitable.
-     * @param argument for the functions use.
-     * @param <T> type of the argument
+     * @param argument       for the functions use.
+     * @param <T>            type of the argument
      */
     default <T> void asyncUpdateKey(K key, @NotNull SerializableBiFunction<E, T, E> updateFunction, T argument) {
         set(key, updateFunction.apply(get(key), argument));

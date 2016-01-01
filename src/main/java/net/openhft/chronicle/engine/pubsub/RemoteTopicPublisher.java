@@ -27,7 +27,7 @@ import static net.openhft.chronicle.engine.server.internal.TopicPublisherHandler
  * Created by Rob Austin
  */
 public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId> implements
-        TopicPublisher<T, M> , Assetted<MapView<T, M>> {
+        TopicPublisher<T, M>, Assetted<MapView<T, M>> {
 
     private final MapView<T, M> underlying;
     private final Class<T> topicClass;

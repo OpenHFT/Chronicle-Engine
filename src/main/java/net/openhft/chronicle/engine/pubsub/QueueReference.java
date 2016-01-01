@@ -36,8 +36,8 @@ public class QueueReference<T, M> implements Reference<M> {
         this.name = name;
     }
 
-    public QueueReference(RequestContext requestContext, Asset asset, QueueView<T, M>  queueView) {
-        this(requestContext.type(), queueView, (T)requestContext.name());
+    public QueueReference(RequestContext requestContext, Asset asset, QueueView<T, M> queueView) {
+        this(requestContext.type(), queueView, (T) requestContext.name());
     }
 
     @Override

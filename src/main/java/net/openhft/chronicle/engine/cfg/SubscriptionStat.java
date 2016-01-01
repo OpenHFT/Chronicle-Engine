@@ -52,17 +52,17 @@ public class SubscriptionStat implements Marshallable {
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IORuntimeException {
         wire.read(() -> "firstSubscribed").time(this, (o, b) -> o.firstSubscribed = b)
-            .read(() -> "recentlySubscribed").time(this, (o, b) -> o.recentlySubscribed = b)
-            .read(() -> "activeSubscriptions").int16(this, (o, b) -> o.activeSubscriptions = b)
-            .read(() -> "totalSubscriptions").int16(this, (o, b) -> o.totalSubscriptions = b);
+                .read(() -> "recentlySubscribed").time(this, (o, b) -> o.recentlySubscribed = b)
+                .read(() -> "activeSubscriptions").int16(this, (o, b) -> o.activeSubscriptions = b)
+                .read(() -> "totalSubscriptions").int16(this, (o, b) -> o.totalSubscriptions = b);
     }
 
     @Override
     public void writeMarshallable(WireOut wire) {
         wire.write(() -> "firstSubscribed").time(firstSubscribed)
-            .write(() -> "recentlySubscribed").time(recentlySubscribed)
-            .write(() -> "activeSubscriptions").int16(activeSubscriptions)
-            .write(() -> "totalSubscriptions").int16(totalSubscriptions);
+                .write(() -> "recentlySubscribed").time(recentlySubscribed)
+                .write(() -> "activeSubscriptions").int16(activeSubscriptions)
+                .write(() -> "totalSubscriptions").int16(totalSubscriptions);
     }
 
     @Override

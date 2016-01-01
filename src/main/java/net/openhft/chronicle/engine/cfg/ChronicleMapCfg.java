@@ -40,8 +40,8 @@ public class ChronicleMapCfg implements Installable {
     private boolean putReturnsNull, removeReturnsNull;
     private String compression;
     private String diskPath;
-    private long entries=-1;
-    private double averageSize=-1;
+    private long entries = -1;
+    private double averageSize = -1;
 
     @Override
     public Void install(String path, AssetTree assetTree) throws IOException {
@@ -52,8 +52,8 @@ public class ChronicleMapCfg implements Installable {
                 .putReturnsNull(putReturnsNull)
                 .removeReturnsNull(removeReturnsNull);
 
-        if(entries != -1)rc.entries(entries);
-        if(averageSize != -1)rc.averageValueSize(averageSize);
+        if (entries != -1) rc.entries(entries);
+        if (averageSize != -1) rc.averageValueSize(averageSize);
 
         ChronicleMapKeyValueStore chronicleMapKeyValueStore = new ChronicleMapKeyValueStore(rc, asset);
         asset.addView(ObjectKeyValueStore.class, chronicleMapKeyValueStore);

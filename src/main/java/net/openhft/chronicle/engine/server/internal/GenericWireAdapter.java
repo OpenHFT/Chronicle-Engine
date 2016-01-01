@@ -35,6 +35,9 @@ class GenericWireAdapter<K, V> implements WireAdapter<K, V> {
     private final Function<ValueIn, V> wireToValue;
     @NotNull
     private final Function<ValueIn, Entry<K, V>> wireToEntry;
+    private final BiConsumer<ValueOut, Entry<K, V>> entryToWire
+            = (v, e) -> v.marshallable(w -> w.write(() -> "key").object(e.getKey())
+            .write(() -> "value").object(e.getValue()));
 
     GenericWireAdapter(@NotNull final Class<K> kClass, @NotNull final Class<V> vClass) {
 
@@ -67,10 +70,6 @@ class GenericWireAdapter<K, V> implements WireAdapter<K, V> {
             };
         });
     }
-
-    private final BiConsumer<ValueOut, Entry<K, V>> entryToWire
-            = (v, e) -> v.marshallable(w -> w.write(() -> "key").object(e.getKey())
-            .write(() -> "value").object(e.getValue()));
 
     @NotNull
     public BiConsumer<ValueOut, K> keyToWire() {

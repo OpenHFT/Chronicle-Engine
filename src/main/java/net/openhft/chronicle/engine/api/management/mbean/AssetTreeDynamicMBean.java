@@ -78,8 +78,8 @@ public class AssetTreeDynamicMBean implements DynamicMBean {
     @Nullable
     public Object invoke(@NotNull String name, @Nullable Object[] args, @Nullable String[] sig) throws MBeanException, ReflectionException {
         if ((name.equals("reload")) && ((args == null) || (args.length == 0)) && ((sig == null) || (sig.length == 0))) {
-                load();
-                return null;
+            load();
+            return null;
         }
         throw new ReflectionException(new NoSuchMethodException(name));
     }

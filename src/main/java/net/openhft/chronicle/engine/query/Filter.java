@@ -39,6 +39,7 @@ public class Filter<E> implements Marshallable, Iterable<Operation> {
     public boolean isEmpty() {
         return pipeline == null || pipeline.isEmpty();
     }
+
     @Override
     public void readMarshallable(@NotNull WireIn wireIn) throws IllegalStateException {
         clearPipeline();

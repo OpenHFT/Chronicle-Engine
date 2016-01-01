@@ -17,18 +17,18 @@ public class Operation implements Marshallable {
     public Operation() {
     }
 
+    public Operation(@NotNull final OperationType type,
+                     @NotNull final Object wrapped) {
+        this.type = type;
+        this.wrapped = wrapped;
+    }
+
     public OperationType op() {
         return type;
     }
 
     public <T> T wrapped() {
         return (T) wrapped;
-    }
-
-    public Operation(@NotNull final OperationType type,
-                     @NotNull final Object wrapped) {
-        this.type = type;
-        this.wrapped = wrapped;
     }
 
     @Override
@@ -41,10 +41,6 @@ public class Operation implements Marshallable {
     public void writeMarshallable(WireOut wireOut) {
         wireOut.write(() -> "type").text(type.toString());
         wireOut.write(() -> "wrapped").object(wrapped);
-    }
-
-    public enum OperationType {
-        MAP, FILTER, PROJECT, FLAT_MAP
     }
 
     @Override
@@ -72,5 +68,9 @@ public class Operation implements Marshallable {
         int result = type != null ? type.hashCode() : 0;
         result = 31 * result + (wrapped != null ? wrapped.hashCode() : 0);
         return result;
+    }
+
+    public enum OperationType {
+        MAP, FILTER, PROJECT, FLAT_MAP
     }
 }

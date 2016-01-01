@@ -11,9 +11,15 @@ import java.lang.management.ManagementFactory;
  */
 public class ChronicleConfig implements ChronicleConfigMBean {
 
-    @Override
-    public void setYamlServerReadLogging(boolean logging) {
-        YamlLogging.showServerReads = logging;
+    public static void init() {
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+        ChronicleConfig mBean = new ChronicleConfig();
+        try {
+            ObjectName name = new ObjectName("net.openhft.chronicle.engine:type=ChronicleConfig");
+            mbs.registerMBean(mBean, name);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -22,8 +28,8 @@ public class ChronicleConfig implements ChronicleConfigMBean {
     }
 
     @Override
-    public void setYamlClientReadLogging(boolean logging) {
-        YamlLogging.clientReads = logging;
+    public void setYamlServerReadLogging(boolean logging) {
+        YamlLogging.showServerReads = logging;
     }
 
     @Override
@@ -32,8 +38,8 @@ public class ChronicleConfig implements ChronicleConfigMBean {
     }
 
     @Override
-    public void setYamlServerWriteLogging(boolean logging) {
-        YamlLogging.showServerWrites = logging;
+    public void setYamlClientReadLogging(boolean logging) {
+        YamlLogging.clientReads = logging;
     }
 
     @Override
@@ -42,8 +48,8 @@ public class ChronicleConfig implements ChronicleConfigMBean {
     }
 
     @Override
-    public void setYamlClientWriteLogging(boolean logging) {
-        YamlLogging.clientWrites = logging;
+    public void setYamlServerWriteLogging(boolean logging) {
+        YamlLogging.showServerWrites = logging;
     }
 
     @Override
@@ -52,8 +58,8 @@ public class ChronicleConfig implements ChronicleConfigMBean {
     }
 
     @Override
-    public void setShowHeartBeats(boolean log) {
-        YamlLogging.showHeartBeats = log;
+    public void setYamlClientWriteLogging(boolean logging) {
+        YamlLogging.clientWrites = logging;
     }
 
     @Override
@@ -61,14 +67,8 @@ public class ChronicleConfig implements ChronicleConfigMBean {
         return YamlLogging.showHeartBeats;
     }
 
-    public static void init(){
-        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-        ChronicleConfig mBean = new ChronicleConfig();
-        try {
-            ObjectName name = new ObjectName("net.openhft.chronicle.engine:type=ChronicleConfig");
-            mbs.registerMBean(mBean, name);
-        }catch(Exception e){
-            throw new RuntimeException(e);
-        }
+    @Override
+    public void setShowHeartBeats(boolean log) {
+        YamlLogging.showHeartBeats = log;
     }
 }
