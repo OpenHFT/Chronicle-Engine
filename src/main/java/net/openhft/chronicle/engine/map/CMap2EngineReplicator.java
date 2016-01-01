@@ -38,10 +38,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.function.Consumer;
 
 import static java.lang.ThreadLocal.withInitial;
+import static net.openhft.lang.io.NativeBytes.wrap;
 
 /**
  * Created by Rob Austin
@@ -82,25 +82,14 @@ public class CMap2EngineReplicator implements EngineReplication,
 
     @NotNull
     private net.openhft.lang.io.Bytes toLangBytes(@NotNull BytesStore b) {
-        long remaining = b.readRemaining();
-        int pos = (int) b.readPosition();
-
-        IByteBufferBytes wrap = ByteBufferBytes.wrap(ByteBuffer.allocateDirect((int) remaining).order(ByteOrder.nativeOrder()));
-
-        wrap.clear();
-
-        while (wrap.remaining() > 7) {
-            wrap.writeLong(b.readLong(pos));
-            pos += 8;
-        }
-
-        while (wrap.remaining() > 0) {
-            wrap.writeByte(b.readByte(pos));
-            pos++;
-        }
-
-        wrap.flip();
+        if (b.underlyingObject() == null)
+            return wrap(b.address(b.start()), b.readRemaining());
+        else {
+            ByteBuffer buffer = (ByteBuffer) b.underlyingObject();
+            IByteBufferBytes wrap = ByteBufferBytes.wrap(buffer);
+            wrap.limit((int) b.readLimit());
         return wrap;
+    }
     }
 
     public void put(@NotNull final BytesStore key, @NotNull final BytesStore value,
