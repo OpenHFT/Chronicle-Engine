@@ -41,7 +41,7 @@ public class MainCluster5 {
     public static final int entries = 50;
     public static final String basePath = OS.TARGET + '/' + System.getProperty("server", "one");
     public static final String CLUSTER = System.getProperty("cluster", "clusterFive");
-    static final int VALUE_SIZE = 1 << 20;
+    static final int VALUE_SIZE = 1 << 16;
     public static final String NAME1 = "/ChMaps/test1" +
             "?entries=" + entries +
             "&putReturnsNull=true" +
@@ -56,7 +56,7 @@ public class MainCluster5 {
     private static AssetTree tree;
 
     public static void before() throws IOException {
-        System.out.println("Using cluster " + CLUSTER);
+        System.out.println("Using cluster " + CLUSTER + " basePath: " + basePath);
         YamlLogging.setAll(false);
         //YamlLogging.showServerWrites = true;
 
