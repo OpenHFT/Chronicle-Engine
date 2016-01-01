@@ -52,10 +52,6 @@ public interface MapView<K, V> extends ConcurrentMap<K, V>,
     @Override
     EntrySetView<K, Object, V> entrySet();
 
-    default boolean keyedView() {
-        return true;
-    }
-
     /**
      * Obtain a value using a mutable buffer provided.
      *

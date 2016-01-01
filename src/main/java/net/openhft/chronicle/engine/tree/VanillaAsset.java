@@ -208,7 +208,7 @@ public class VanillaAsset implements Asset, Closeable {
 
             TcpChannelHub view = Threads.withThreadGroup(findView(ThreadGroup.class),
                     () -> new TcpChannelHub(sessionProvider, eventLoop, wire, name,
-                            socketAddressSupplier, true, clientConnectionMonitor, HandlerPriority.MONITOR));
+                            socketAddressSupplier, true, clientConnectionMonitor, HandlerPriority.TIMER));
             addView(TcpChannelHub.class, view);
         }
     }

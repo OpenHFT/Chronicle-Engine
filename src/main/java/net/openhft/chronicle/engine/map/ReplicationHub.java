@@ -171,7 +171,7 @@ class ReplicationHub extends AbstractStatelessClient {
                                       final EngineReplication.ReplicationEntry replicatedEntry = valueIn.typedMarshallable();
 
                                       long delay = System.currentTimeMillis() - replicatedEntry.timestamp();
-                                      if (delay > 250) {
+                                      if (delay > 100) {
                                           System.out.print("Rcv Clt latency=" + delay + "ms\t");
                                           if (count++ % 10 == 0) {
                                               System.out.println();

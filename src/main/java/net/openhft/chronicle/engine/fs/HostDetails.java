@@ -84,7 +84,7 @@ public class HostDetails implements Marshallable, Closeable {
             final SocketAddressSupplier socketAddressSupplier = new SocketAddressSupplier(connectURIs, "hostId=" + hostId + ",connectUri=" + connectUri);
             final ClientConnectionMonitor clientConnectionMonitor = asset.findView(ClientConnectionMonitor.class);
             return new TcpChannelHub(new SimpleSessionProvider(sessionDetails), eventLoop, wire, "hostId=" + hostId + ",connectUri=" + connectUri,
-                    socketAddressSupplier, true, clientConnectionMonitor, HandlerPriority.REPLICATION);
+                    socketAddressSupplier, true, clientConnectionMonitor, HandlerPriority.TIMER);
         });
     }
 

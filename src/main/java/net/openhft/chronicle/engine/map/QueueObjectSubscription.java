@@ -110,11 +110,6 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
     }
 
     @Override
-    public boolean keyedView() {
-        return true;
-    }
-
-    @Override
     public void setKvStore(KeyValueStore<T, M> kvStore) {
         this.kvStore = kvStore;
     }
