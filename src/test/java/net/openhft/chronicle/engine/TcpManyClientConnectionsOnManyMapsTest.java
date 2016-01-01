@@ -167,7 +167,6 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
                 e.printStackTrace();
             }
         }
-
     }
 
     /**

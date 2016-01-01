@@ -598,7 +598,6 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
                             this.replicationData = null;
                         }
                     }
-
                 }
             }
         }

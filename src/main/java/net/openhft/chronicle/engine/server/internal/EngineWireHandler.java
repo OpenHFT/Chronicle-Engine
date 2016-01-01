@@ -213,7 +213,6 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
                     } else {
                         throw new UnsupportedOperationException("unsupported view type");
                     }
-
                 }
             } catch (Throwable e) {
                 LOG.error("", e);
