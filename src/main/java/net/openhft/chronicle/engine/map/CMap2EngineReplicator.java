@@ -30,7 +30,6 @@ import net.openhft.chronicle.map.EngineReplicationLangBytes;
 import net.openhft.chronicle.map.EngineReplicationLangBytes.EngineModificationIterator;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wires;
-import net.openhft.lang.io.ByteBufferBytes;
 import net.openhft.lang.io.IByteBufferBytes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +41,7 @@ import java.nio.ByteOrder;
 import java.util.function.Consumer;
 
 import static java.lang.ThreadLocal.withInitial;
+import static net.openhft.lang.io.ByteBufferBytes.wrap;
 
 /**
  * Created by Rob Austin
@@ -77,15 +77,47 @@ public class CMap2EngineReplicator implements EngineReplication,
     }
 
 
+    private static class KV {
+
+        private IByteBufferBytes key;
+        private IByteBufferBytes value;
+
+        private IByteBufferBytes key(long size) {
+            try {
+                if (size < key.capacity())
+                    return key;
+                return wrap(ByteBuffer.allocateDirect((int) size).order(ByteOrder.nativeOrder()));
+            } finally {
+                key.position(0);
+                key.limit(size);
+            }
+        }
+
+        private IByteBufferBytes value(long size) {
+            try {
+                if (size < value.capacity())
+                    return value;
+                return wrap(ByteBuffer.allocateDirect((int) size).order(ByteOrder.nativeOrder()));
+            } finally {
+                value.position(0);
+                value.limit(size);
+            }
+        }
+
+
+        private KV() {
+            this.key = wrap(ByteBuffer.allocateDirect(1024).order(ByteOrder.nativeOrder()));
+            this.value = wrap(ByteBuffer.allocateDirect(1024).order(ByteOrder.nativeOrder()));
+        }
+    }
+
+
+    ThreadLocal<KV> daByte = ThreadLocal.withInitial(KV::new);
 
     @NotNull
-    private net.openhft.lang.io.Bytes toLangBytes(@NotNull BytesStore b) {
-        long remaining = b.readRemaining();
+    private net.openhft.lang.io.Bytes toLangBytes(@NotNull BytesStore b, @NotNull net.openhft.lang.io.Bytes wrap) {
+
         int pos = (int) b.readPosition();
-
-        IByteBufferBytes wrap = ByteBufferBytes.wrap(ByteBuffer.allocateDirect((int) remaining).order(ByteOrder.nativeOrder()));
-
-        wrap.clear();
 
         while (wrap.remaining() > 7) {
             wrap.writeLong(b.readLong(pos));
@@ -105,11 +137,20 @@ public class CMap2EngineReplicator implements EngineReplication,
     public void put(@NotNull final BytesStore key, @NotNull final BytesStore value,
                     final byte remoteIdentifier,
                     final long timestamp) {
-        engineReplicationLang.put(toLangBytes(key), toLangBytes(value), remoteIdentifier, timestamp);
+
+        final KV kv = daByte.get();
+
+        net.openhft.lang.io.Bytes keyBytes = toLangBytes(key, kv.key(key.readRemaining()));
+        net.openhft.lang.io.Bytes valueBytes = toLangBytes(value, kv.value(value.readRemaining()));
+
+        engineReplicationLang.put(toLangBytes(key, keyBytes), toLangBytes(value, valueBytes), remoteIdentifier, timestamp);
     }
 
     private void remove(@NotNull final BytesStore key, final byte remoteIdentifier, final long timestamp) {
-        engineReplicationLang.remove(toLangBytes(key), remoteIdentifier, timestamp);
+
+        KV kv = daByte.get();
+        net.openhft.lang.io.Bytes keyBytes = toLangBytes(key, kv.key(key.readRemaining()));
+        engineReplicationLang.remove(keyBytes, remoteIdentifier, timestamp);
     }
 
     @Override
