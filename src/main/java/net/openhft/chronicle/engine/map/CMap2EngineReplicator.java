@@ -38,16 +38,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.function.Consumer;
 
 import static java.lang.ThreadLocal.withInitial;
-import static net.openhft.lang.io.NativeBytes.wrap;
 
 /**
  * Created by Rob Austin
  */
 public class CMap2EngineReplicator implements EngineReplication,
         EngineReplicationLangBytesConsumer {
+
 
     private static final Logger LOG = LoggerFactory.getLogger(CMap2EngineReplicator.class);
 
@@ -59,11 +60,6 @@ public class CMap2EngineReplicator implements EngineReplication,
     private final RequestContext context;
     private final ThreadLocal<PointerBytesStore> keyLocal = withInitial(PointerBytesStore::new);
     private final ThreadLocal<PointerBytesStore> valueLocal = withInitial(PointerBytesStore::new);
-    private final ThreadLocal<BytesStore> keyByteStore = ThreadLocal.withInitial
-            (NativeBytesStore::elasticByteBuffer);
-    private final ThreadLocal<BytesStore> valuesByteStore = ThreadLocal.withInitial
-            (NativeBytesStore::elasticByteBuffer);
-    private final ModificationIterator[] modificationIterators = new ModificationIterator[128];
     private EngineReplicationLangBytes engineReplicationLang;
 
     public CMap2EngineReplicator(RequestContext requestContext, @NotNull Asset asset) {
@@ -80,17 +76,31 @@ public class CMap2EngineReplicator implements EngineReplication,
         this.engineReplicationLang = engineReplicationLangBytes;
     }
 
+
+
     @NotNull
     private net.openhft.lang.io.Bytes toLangBytes(@NotNull BytesStore b) {
-        if (b.underlyingObject() == null)
-            return wrap(b.address(b.start()), b.readRemaining());
-        else {
-            ByteBuffer buffer = (ByteBuffer) b.underlyingObject();
-            IByteBufferBytes wrap = ByteBufferBytes.wrap(buffer);
-            wrap.limit((int) b.readLimit());
+        long remaining = b.readRemaining();
+        int pos = (int) b.readPosition();
+
+        IByteBufferBytes wrap = ByteBufferBytes.wrap(ByteBuffer.allocateDirect((int) remaining).order(ByteOrder.nativeOrder()));
+
+        wrap.clear();
+
+        while (wrap.remaining() > 7) {
+            wrap.writeLong(b.readLong(pos));
+            pos += 8;
+        }
+
+        while (wrap.remaining() > 0) {
+            wrap.writeByte(b.readByte(pos));
+            pos++;
+        }
+
+        wrap.flip();
         return wrap;
     }
-    }
+
 
     public void put(@NotNull final BytesStore key, @NotNull final BytesStore value,
                     final byte remoteIdentifier,
@@ -131,15 +141,89 @@ public class CMap2EngineReplicator implements EngineReplication,
     @Nullable
     @Override
     public ModificationIterator acquireModificationIterator(final byte remoteIdentifier) {
-
-        final ModificationIterator modificationIterator = modificationIterators[remoteIdentifier];
-        if (modificationIterator != null)
-            return modificationIterator;
-
         final EngineModificationIterator instance = engineReplicationLang
                 .acquireEngineModificationIterator(remoteIdentifier);
 
-        return modificationIterators[remoteIdentifier] = new CMap2ModificationIterator(instance, remoteIdentifier);
+        return new ModificationIterator() {
+            @Override
+            public void forEach(@NotNull Consumer<ReplicationEntry> consumer) {
+                while (hasNext()) {
+                    nextEntry(entry -> {
+                        consumer.accept(entry);
+                        return true;
+                    });
+                }
+            }
+
+            public boolean hasNext() {
+                return instance.hasNext();
+            }
+
+            public boolean nextEntry(@NotNull Consumer<ReplicationEntry> consumer) {
+                return nextEntry(entry -> {
+                    consumer.accept(entry);
+                    return true;
+                });
+            }
+
+
+            boolean nextEntry(@NotNull final EntryCallback callback) {
+                return instance.nextEntry((key, value, timestamp,
+                                           identifier, isDeleted,
+                                           bootStrapTimeStamp) ->
+
+                        callback.onEntry(new VanillaReplicatedEntry(
+                                toKey(key),
+                                toValue(value),
+                                timestamp,
+                                identifier,
+                                isDeleted,
+                                bootStrapTimeStamp,
+                                remoteIdentifier)));
+            }
+
+            private Bytes toKey(final @NotNull net.openhft.lang.io.Bytes key) {
+
+
+                NativeBytesStore<Void> byteStore = NativeBytesStore.nativeStoreWithFixedCapacity(key
+                        .remaining());
+
+                int i = (int) key.position();
+                while (key.remaining() > 0) {
+                    byteStore.writeByte(i++, (byte) key.readByte());
+                }
+
+
+                return byteStore.bytesForRead();
+            }
+
+            @Nullable
+            private Bytes<Void> toValue(final @Nullable net.openhft.lang.io.Bytes value) {
+                if (value == null)
+                    return null;
+
+                NativeBytesStore<Void> byteStore = NativeBytesStore.nativeStoreWithFixedCapacity(value
+                        .remaining());
+
+                int i = (int) value.position();
+                while (value.remaining() > 0) {
+                    byteStore.writeByte(i++, (byte) value.readByte());
+                }
+
+
+                return byteStore.bytesForRead();
+            }
+
+            @Override
+            public void dirtyEntries(final long fromTimeStamp) {
+                instance.dirtyEntries(fromTimeStamp);
+            }
+
+            @Override
+            public void setModificationNotifier(@NotNull final ModificationNotifier modificationNotifier) {
+                instance.setModificationNotifier(modificationNotifier::onChange);
+            }
+        };
     }
 
     /**
@@ -207,10 +291,10 @@ public class CMap2EngineReplicator implements EngineReplication,
             this.key = key;
             this.remoteIdentifier = remoteIdentifier;
             // must be native
-//            assert key.isNative();
+            assert key.underlyingObject() == null;
             this.value = value;
             // must be native
-//            assert value == null || value.isNative();
+            assert value == null || value.underlyingObject() == null;
             this.timestamp = timestamp;
             this.identifier = identifier;
             this.isDeleted = isDeleted;
@@ -290,112 +374,6 @@ public class CMap2EngineReplicator implements EngineReplication,
             new TextWire(bytes).writeDocument(false, d -> d.write().typedMarshallable(this));
             return "\n" + Wires.fromSizePrefixedBlobs(bytes);
 
-        }
-    }
-
-    class CMap2ModificationIterator implements ModificationIterator {
-        private final EngineModificationIterator instance;
-        private final byte remoteIdentifier;
-
-        public CMap2ModificationIterator(EngineModificationIterator instance, byte remoteIdentifier) {
-            this.instance = instance;
-            this.remoteIdentifier = remoteIdentifier;
-        }
-
-        @Override
-        public void forEach(@NotNull Consumer<ReplicationEntry> consumer) {
-            EngineReplicationLangBytes.EngineEntryCallback engineEntryCallback = (key, value, timestamp,
-                                                                                  identifier, isDeleted,
-                                                                                  bootStrapTimeStamp) -> {
-                consumer.accept(new VanillaReplicatedEntry(
-                        toKey(key),
-                        toValue(value),
-                        timestamp,
-                        identifier,
-                        isDeleted,
-                        bootStrapTimeStamp,
-                        remoteIdentifier));
-                return true;
-            };
-            while (hasNext()) {
-                instance.nextEntry(engineEntryCallback);
-            }
-        }
-
-        public boolean hasNext() {
-            return instance.hasNext();
-        }
-
-        public boolean nextEntry(@NotNull Consumer<ReplicationEntry> consumer) {
-            return instance.nextEntry((key, value, timestamp, identifier, isDeleted, bootStrapTimeStamp) -> {
-                    consumer.accept(new VanillaReplicatedEntry(
-                            toKey(key),
-                            toValue(value),
-                            timestamp,
-                            identifier,
-                            isDeleted,
-                            bootStrapTimeStamp,
-                            remoteIdentifier));
-                    return true;
-            });
-        }
-
-        private Bytes toKey(final @NotNull net.openhft.lang.io.Bytes key) {
-            final long position = key.position();
-            try {
-
-                BytesStore bs = keyByteStore.get();
-                Bytes chronicleBytesKey = bs.bytesForWrite();
-
-                while (key.remaining() > 7) {
-                    chronicleBytesKey.writeLong(key.readLong());
-                }
-
-                while (key.remaining() > 0) {
-                    chronicleBytesKey.writeByte(key.readByte());
-                }
-
-                return chronicleBytesKey;
-            } finally {
-                key.position(position);
-            }
-        }
-
-        @Nullable
-        private Bytes toValue(final @Nullable net.openhft.lang.io.Bytes value) {
-            if (value == null)
-                return null;
-            if (value.remaining() == 0)
-                return null;
-
-            final long position = value.position();
-            try {
-
-                BytesStore bs = valuesByteStore.get();
-                Bytes chronicleBytesValue = bs.bytesForWrite();
-
-                while (value.remaining() > 7) {
-                    chronicleBytesValue.writeLong(value.readLong());
-                }
-
-                while (value.remaining() > 0) {
-                    chronicleBytesValue.writeByte(value.readByte());
-                }
-
-                return chronicleBytesValue;
-            } finally {
-                value.position(position);
-            }
-        }
-
-        @Override
-        public void dirtyEntries(final long fromTimeStamp) {
-            instance.dirtyEntries(fromTimeStamp);
-        }
-
-        @Override
-        public void setModificationNotifier(@NotNull final ModificationNotifier modificationNotifier) {
-            instance.setModificationNotifier(modificationNotifier::onChange);
         }
     }
 }
