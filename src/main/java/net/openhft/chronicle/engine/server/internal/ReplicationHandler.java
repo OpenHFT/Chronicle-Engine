@@ -177,20 +177,19 @@ public class ReplicationHandler<E> extends AbstractHandler {
                                         if (count++ % 10 == 1)
                                             System.out.println();
                                     }
-
+                                    if (publish1.bytes().writePosition() > 100000)
+                                        System.out.println(publish1.bytes().toDebugString(128));
                                     publish1.writeNotReadyDocument(false,
                                             wire -> wire.writeEventName(replicationEvent).typedMarshallable(e));
 
                                 }));
                             }
-                            return false;
+                            return true;
                         }
                     });
-
                 });
             }
         }
-
     };
 
     void process(@NotNull final WireIn inWire,

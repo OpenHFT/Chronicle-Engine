@@ -307,7 +307,6 @@ public class CMap2EngineReplicator implements EngineReplication,
     class CMap2ModificationIterator implements ModificationIterator {
         private final EngineModificationIterator instance;
         private final byte remoteIdentifier;
-        private EngineReplicationLangBytes.EngineEntryCallback callback;
 
         public CMap2ModificationIterator(EngineModificationIterator instance, byte remoteIdentifier) {
             this.instance = instance;
@@ -339,8 +338,7 @@ public class CMap2EngineReplicator implements EngineReplication,
         }
 
         public boolean nextEntry(@NotNull Consumer<ReplicationEntry> consumer) {
-            if (callback == null)
-                callback = (key, value, timestamp, identifier, isDeleted, bootStrapTimeStamp) -> {
+            return instance.nextEntry((key, value, timestamp, identifier, isDeleted, bootStrapTimeStamp) -> {
                     consumer.accept(new VanillaReplicatedEntry(
                             toKey(key),
                             toValue(value),
@@ -350,12 +348,10 @@ public class CMap2EngineReplicator implements EngineReplication,
                             bootStrapTimeStamp,
                             remoteIdentifier));
                     return true;
-                };
-            return instance.nextEntry(callback);
+            });
         }
 
         private Bytes toKey(final @NotNull net.openhft.lang.io.Bytes key) {
-
             final long position = key.position();
             try {
 
