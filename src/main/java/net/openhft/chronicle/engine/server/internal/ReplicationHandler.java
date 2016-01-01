@@ -106,12 +106,15 @@ public class ReplicationHandler<E> extends AbstractHandler {
                         boolean hasSentLastUpdateTime;
                         long lastUpdateTime = 0;
                         boolean hasLogged = false;
+                        int count = 0;
 
                         @Override
                         public boolean action() throws InvalidEventHandlerException {
                             if (connectionClosed)
                                 throw new InvalidEventHandlerException();
 
+                            final WireOutPublisher publisher = ReplicationHandler.this.publisher;
+                            //noinspection SynchronizationOnLocalVariableOrMethodParameter
                             synchronized (publisher) {
                                 // given the sending an event to the publish hold the chronicle map lock
                                 // we will send only one at a time
@@ -167,9 +170,13 @@ public class ReplicationHandler<E> extends AbstractHandler {
                                     publish1.writeNotReadyDocument(true,
                                             wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
 
-                                    System.out.println("*****\t\t\t\tSENT : SERVER : replication latency=" +
-                                            (System
-                                                    .currentTimeMillis() - e.timestamp()) + "ms");
+
+                                    long delay = System.currentTimeMillis() - e.timestamp();
+                                    if (delay > 60) {
+                                        System.out.print("Snt Srv latency=" + delay + "ms\t");
+                                        if (count++ % 10 == 1)
+                                            System.out.println();
+                                    }
 
                                     publish1.writeNotReadyDocument(false,
                                             wire -> wire.writeEventName(replicationEvent).typedMarshallable(e));
