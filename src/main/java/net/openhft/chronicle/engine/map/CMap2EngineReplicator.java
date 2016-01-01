@@ -84,9 +84,9 @@ public class CMap2EngineReplicator implements EngineReplication,
 
         private IByteBufferBytes key(long size) {
             try {
-                if (size < key.capacity())
-                    return key;
-                return wrap(ByteBuffer.allocateDirect((int) size).order(ByteOrder.nativeOrder()));
+                if (size > key.capacity())
+                    key = wrap(ByteBuffer.allocateDirect((int) size).order(ByteOrder.nativeOrder()));
+                return key;
             } finally {
                 key.position(0);
                 key.limit(size);
@@ -95,9 +95,9 @@ public class CMap2EngineReplicator implements EngineReplication,
 
         private IByteBufferBytes value(long size) {
             try {
-                if (size < value.capacity())
-                    return value;
-                return wrap(ByteBuffer.allocateDirect((int) size).order(ByteOrder.nativeOrder()));
+                if (size > value.capacity())
+                    value = wrap(ByteBuffer.allocateDirect((int) size).order(ByteOrder.nativeOrder()));
+                return value;
             } finally {
                 value.position(0);
                 value.limit(size);
@@ -143,7 +143,7 @@ public class CMap2EngineReplicator implements EngineReplication,
         net.openhft.lang.io.Bytes keyBytes = toLangBytes(key, kv.key(key.readRemaining()));
         net.openhft.lang.io.Bytes valueBytes = toLangBytes(value, kv.value(value.readRemaining()));
 
-        engineReplicationLang.put(toLangBytes(key, keyBytes), toLangBytes(value, valueBytes), remoteIdentifier, timestamp);
+        engineReplicationLang.put(keyBytes, valueBytes, remoteIdentifier, timestamp);
     }
 
     private void remove(@NotNull final BytesStore key, final byte remoteIdentifier, final long timestamp) {
