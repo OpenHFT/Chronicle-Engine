@@ -38,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.function.Consumer;
 
 import static java.lang.ThreadLocal.withInitial;
@@ -59,11 +60,12 @@ public class CMap2EngineReplicator implements EngineReplication,
     private final RequestContext context;
     private final ThreadLocal<PointerBytesStore> keyLocal = withInitial(PointerBytesStore::new);
     private final ThreadLocal<PointerBytesStore> valueLocal = withInitial(PointerBytesStore::new);
-    private EngineReplicationLangBytes engineReplicationLang;
     private final ThreadLocal<BytesStore> keyByteStore = ThreadLocal.withInitial
             (NativeBytesStore::elasticByteBuffer);
     private final ThreadLocal<BytesStore> valuesByteStore = ThreadLocal.withInitial
             (NativeBytesStore::elasticByteBuffer);
+    private final ModificationIterator[] modificationIterators = new ModificationIterator[128];
+    private EngineReplicationLangBytes engineReplicationLang;
 
     public CMap2EngineReplicator(RequestContext requestContext, @NotNull Asset asset) {
         this(requestContext);
@@ -79,13 +81,12 @@ public class CMap2EngineReplicator implements EngineReplication,
         this.engineReplicationLang = engineReplicationLangBytes;
     }
 
-
     @NotNull
     private net.openhft.lang.io.Bytes toLangBytes(@NotNull BytesStore b) {
         long remaining = b.readRemaining();
         int pos = (int) b.readPosition();
 
-        IByteBufferBytes wrap = ByteBufferBytes.wrap(ByteBuffer.allocate((int) remaining));
+        IByteBufferBytes wrap = ByteBufferBytes.wrap(ByteBuffer.allocateDirect((int) remaining).order(ByteOrder.nativeOrder()));
 
         wrap.clear();
 
@@ -102,7 +103,6 @@ public class CMap2EngineReplicator implements EngineReplication,
         wrap.flip();
         return wrap;
     }
-
 
     public void put(@NotNull final BytesStore key, @NotNull final BytesStore value,
                     final byte remoteIdentifier,
@@ -140,8 +140,6 @@ public class CMap2EngineReplicator implements EngineReplication,
 
     }
 
-    private final ModificationIterator[] modificationIterators = new ModificationIterator[128];
-
     @Nullable
     @Override
     public ModificationIterator acquireModificationIterator(final byte remoteIdentifier) {
@@ -154,104 +152,7 @@ public class CMap2EngineReplicator implements EngineReplication,
                 .acquireEngineModificationIterator(remoteIdentifier);
 
 
-        return modificationIterators[remoteIdentifier] = new ModificationIterator() {
-            @Override
-            public void forEach(@NotNull Consumer<ReplicationEntry> consumer) {
-                while (hasNext()) {
-                    nextEntry(entry -> {
-                        consumer.accept(entry);
-                        return true;
-                    });
-                }
-            }
-
-            public boolean hasNext() {
-                return instance.hasNext();
-            }
-
-            public boolean nextEntry(@NotNull Consumer<ReplicationEntry> consumer) {
-                return nextEntry(entry -> {
-                    consumer.accept(entry);
-                    return true;
-                });
-            }
-
-
-            boolean nextEntry(@NotNull final EntryCallback callback) {
-                return instance.nextEntry((key, value, timestamp,
-                                           identifier, isDeleted,
-                                           bootStrapTimeStamp) ->
-
-                        callback.onEntry(new VanillaReplicatedEntry(
-                                toKey(key),
-                                toValue(value),
-                                timestamp,
-                                identifier,
-                                isDeleted,
-                                bootStrapTimeStamp,
-                                remoteIdentifier)));
-            }
-
-            private Bytes toKey(final @NotNull net.openhft.lang.io.Bytes key) {
-
-                final long position = key.position();
-                try {
-
-                    BytesStore bs = keyByteStore.get();
-                    Bytes chronicleBytesKey = bs.bytesForWrite();
-
-                    while (key.remaining() > 7) {
-                        chronicleBytesKey.writeLong(key.readLong());
-                    }
-
-                    while (key.remaining() > 0) {
-                        chronicleBytesKey.writeByte(key.readByte());
-                    }
-
-                    return chronicleBytesKey;
-                } finally {
-                    key.position(position);
-                }
-            }
-
-            @Nullable
-            private Bytes toValue(final @Nullable net.openhft.lang.io.Bytes value) {
-                if (value == null)
-                    return null;
-                if (value.remaining() == 0)
-                    return null;
-
-                final long position = value.position();
-                try {
-
-                    BytesStore bs = valuesByteStore.get();
-                    Bytes chronicleBytesValue = bs.bytesForWrite();
-
-                    while (value.remaining() > 7) {
-                        chronicleBytesValue.writeLong(value.readLong());
-                    }
-
-                    while (value.remaining() > 0) {
-                        chronicleBytesValue.writeByte(value.readByte());
-                    }
-
-
-                    return chronicleBytesValue;
-                } finally {
-                    value.position(position);
-                }
-            }
-
-            @Override
-            public void dirtyEntries(final long fromTimeStamp) {
-                instance.dirtyEntries(fromTimeStamp);
-            }
-
-            @Override
-            public void setModificationNotifier(@NotNull final ModificationNotifier modificationNotifier) {
-                instance.setModificationNotifier(modificationNotifier::onChange);
-            }
-        };
+        return modificationIterators[remoteIdentifier] = new CMap2ModificationIterator(instance, remoteIdentifier);
     }
 
     /**
@@ -402,6 +303,117 @@ public class CMap2EngineReplicator implements EngineReplication,
             new TextWire(bytes).writeDocument(false, d -> d.write().typedMarshallable(this));
             return "\n" + Wires.fromSizePrefixedBlobs(bytes);
 
+        }
+    }
+
+    class CMap2ModificationIterator implements ModificationIterator {
+        private final EngineModificationIterator instance;
+        private final byte remoteIdentifier;
+        private EngineReplicationLangBytes.EngineEntryCallback callback;
+
+        public CMap2ModificationIterator(EngineModificationIterator instance, byte remoteIdentifier) {
+            this.instance = instance;
+            this.remoteIdentifier = remoteIdentifier;
+        }
+
+        @Override
+        public void forEach(@NotNull Consumer<ReplicationEntry> consumer) {
+            EngineReplicationLangBytes.EngineEntryCallback engineEntryCallback = (key, value, timestamp,
+                                                                                  identifier, isDeleted,
+                                                                                  bootStrapTimeStamp) -> {
+                consumer.accept(new VanillaReplicatedEntry(
+                        toKey(key),
+                        toValue(value),
+                        timestamp,
+                        identifier,
+                        isDeleted,
+                        bootStrapTimeStamp,
+                        remoteIdentifier));
+                return true;
+            };
+            while (hasNext()) {
+                instance.nextEntry(engineEntryCallback);
+            }
+        }
+
+        public boolean hasNext() {
+            return instance.hasNext();
+        }
+
+        public boolean nextEntry(@NotNull Consumer<ReplicationEntry> consumer) {
+            if (callback == null)
+                callback = (key, value, timestamp, identifier, isDeleted, bootStrapTimeStamp) -> {
+                    consumer.accept(new VanillaReplicatedEntry(
+                            toKey(key),
+                            toValue(value),
+                            timestamp,
+                            identifier,
+                            isDeleted,
+                            bootStrapTimeStamp,
+                            remoteIdentifier));
+                    return true;
+                };
+            return instance.nextEntry(callback);
+        }
+
+        private Bytes toKey(final @NotNull net.openhft.lang.io.Bytes key) {
+
+            final long position = key.position();
+            try {
+
+                BytesStore bs = keyByteStore.get();
+                Bytes chronicleBytesKey = bs.bytesForWrite();
+
+                while (key.remaining() > 7) {
+                    chronicleBytesKey.writeLong(key.readLong());
+                }
+
+                while (key.remaining() > 0) {
+                    chronicleBytesKey.writeByte(key.readByte());
+                }
+
+                return chronicleBytesKey;
+            } finally {
+                key.position(position);
+            }
+        }
+
+        @Nullable
+        private Bytes toValue(final @Nullable net.openhft.lang.io.Bytes value) {
+            if (value == null)
+                return null;
+            if (value.remaining() == 0)
+                return null;
+
+            final long position = value.position();
+            try {
+
+                BytesStore bs = valuesByteStore.get();
+                Bytes chronicleBytesValue = bs.bytesForWrite();
+
+                while (value.remaining() > 7) {
+                    chronicleBytesValue.writeLong(value.readLong());
+                }
+
+                while (value.remaining() > 0) {
+                    chronicleBytesValue.writeByte(value.readByte());
+                }
+
+
+                return chronicleBytesValue;
+            } finally {
+                value.position(position);
+            }
+        }
+
+        @Override
+        public void dirtyEntries(final long fromTimeStamp) {
+            instance.dirtyEntries(fromTimeStamp);
+        }
+
+        @Override
+        public void setModificationNotifier(@NotNull final ModificationNotifier modificationNotifier) {
+            instance.setModificationNotifier(modificationNotifier::onChange);
         }
     }
 }

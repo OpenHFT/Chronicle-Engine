@@ -76,9 +76,9 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
     @Nullable
     private final EventLoop eventLoop;
     private final AtomicBoolean isClosed = new AtomicBoolean();
+    private final SessionProvider sessionProvider;
     private Class keyType;
     private Class valueType;
-    private final SessionProvider sessionProvider;
     private SessionDetails replicationSessionDetails;
 
     public ChronicleMapKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset) {
@@ -197,7 +197,6 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
 
                 replicationHub.bootstrap(engineReplicator1, localIdentifier, (byte) remoteIdentifier);
             }
-
         }
     }
 
@@ -234,7 +233,6 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
             return chronicleMap.remove(key);
         else
             return null;
-
     }
 
     @Override
@@ -335,6 +333,11 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
 
     private class PublishingOperations extends MapEventListener<K, V> {
         @Override
+        public boolean isActive() {
+            return subscriptions.hasSubscribers();
+        }
+
+        @Override
         public void onRemove(@NotNull K key, V value, boolean replicationEvent, byte identifier, byte replacedIdentifier, long timestamp, long replacedTimeStamp) {
             if (replicationEvent &&
                     replicationSessionDetails != null &&
@@ -349,30 +352,22 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
             }
 
             onRemove0(key, value, replicationEvent);
-
-
         }
 
 
         public void onRemove0(@NotNull K key, V value, boolean replicationEven) {
-            if (subscriptions.hasSubscribers())
-                subscriptions.notifyEvent(RemovedEvent.of(assetFullName, key, value, replicationEven));
+            subscriptions.notifyEvent(RemovedEvent.of(assetFullName, key, value, replicationEven));
         }
-
 
         private void onPut0(@NotNull K key, V newValue, @Nullable V replacedValue,
                             boolean replicationEvent, boolean added, boolean hasValueChanged) {
-
-
-            if (subscriptions.hasSubscribers())
-                if (added) {
-                    subscriptions.notifyEvent(InsertedEvent.of(assetFullName, key, newValue, replicationEvent));
-                } else {
-                    subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, replacedValue,
-                            newValue, replicationEvent, hasValueChanged));
-                }
+            if (added) {
+                subscriptions.notifyEvent(InsertedEvent.of(assetFullName, key, newValue, replicationEvent));
+            } else {
+                subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, replacedValue,
+                        newValue, replicationEvent, hasValueChanged));
+            }
         }
-
 
         @Override
         public void onPut(K key,
@@ -407,29 +402,25 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
     }
 
     private class NullOldValuePublishingOperations extends BytesMapEventListener {
-
-
         @Override
         public void onPut(Bytes entry, long metaDataPos, long keyPos, long valuePos, boolean added, boolean replicationEvent, boolean hasValueChanged, byte identifier, byte replacedIdentifier, long timeStamp, long replacedTimeStamp, SharedSegment segment) {
             if (identifier == replacedIdentifier && timeStamp == replacedTimeStamp &&
                     !hasValueChanged)
                 return;
 
-            if (subscriptions.hasSubscribers()) {
-                K key = chronicleMap.readKey(entry, keyPos);
-                V value = chronicleMap.readValue(entry, valuePos);
+            K key = chronicleMap.readKey(entry, keyPos);
+            V value = chronicleMap.readValue(entry, valuePos);
 
-                segment.writeUnlock();
-                try {
-                    if (added) {
-                        subscriptions.notifyEvent(InsertedEvent.of(assetFullName, key, value, replicationEvent));
-                    } else {
-                        subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, null, value,
-                                replicationEvent, hasValueChanged));
-                    }
-                } finally {
-                    segment.writeLock();
+            segment.writeUnlock();
+            try {
+                if (added) {
+                    subscriptions.notifyEvent(InsertedEvent.of(assetFullName, key, value, replicationEvent));
+                } else {
+                    subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, null, value,
+                            replicationEvent, hasValueChanged));
                 }
+            } finally {
+                segment.writeLock();
             }
         }
 
@@ -438,21 +429,15 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
             if (identifier == replacedIdentifier && timeStamp == replacedTimeStamp)
                 return;
 
-            if (subscriptions.hasSubscribers()) {
-                K key = chronicleMap.readKey(entry, keyPos);
-                V value = chronicleMap.readValue(entry, valuePos);
+            K key = chronicleMap.readKey(entry, keyPos);
+            V value = chronicleMap.readValue(entry, valuePos);
 
-                segment.writeUnlock();
-                try {
-                    subscriptions.notifyEvent(RemovedEvent.of(assetFullName, key, value, replicationEvent));
-                } finally {
-                    segment.writeLock();
-                }
+            segment.writeUnlock();
+            try {
+                subscriptions.notifyEvent(RemovedEvent.of(assetFullName, key, value, replicationEvent));
+            } finally {
+                segment.writeLock();
             }
         }
-
-
     }
-
 }
-

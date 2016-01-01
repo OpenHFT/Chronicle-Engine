@@ -35,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.server.internal.ReplicationHandler.EventId.*;
@@ -170,11 +171,12 @@ class ReplicationHub extends AbstractStatelessClient {
                                   if (replicationEvent.contentEquals(eventName)) {
                                       final EngineReplication.ReplicationEntry replicatedEntry = valueIn.typedMarshallable();
 
-                                      System.out.print("Rcv Clt latency=" + (System
-                                              .currentTimeMillis() - replicatedEntry.timestamp()
-                                      ) + "ms\t");
-                                      if (count++ % 10 == 0) {
-                                          System.out.println();
+                                      long delay = System.currentTimeMillis() - replicatedEntry.timestamp();
+                                      if (delay > 250) {
+                                          System.out.print("Rcv Clt latency=" + delay + "ms\t");
+                                          if (count++ % 10 == 0) {
+                                              System.out.println();
+                                          }
                                       }
 
                                       replication.applyReplication(replicatedEntry);
@@ -213,99 +215,114 @@ class ReplicationHub extends AbstractStatelessClient {
         final TcpChannelHub hub = this.hub;
         mi.setModificationNotifier(eventLoop::unpause);
 
-        eventLoop.addHandler(true, new EventHandler() {
-
-            final Bytes bytes = Bytes.elasticByteBuffer();
-            final Wire wire = wireType.apply(bytes);
-            boolean hasSentLastUpdateTime = false;
-            long lastUpdateTime = 0;
-            boolean hasLogged;
-
-            @Override
-            public boolean action() throws InvalidEventHandlerException {
-
-                if (hub.isOutBytesLocked())
-                    return false;
-
-                if (!hub.isOutBytesEmpty())
-                    return false;
-
-                if (ReplicationHub.this.isClosed.get())
-                    throw new InvalidEventHandlerException();
-
-                bytes.clear();
-
-                if (!mi.hasNext()) {
-
-                    // because events arrive in a bitset ( aka random ) order ( not necessary in
-                    // time order ) we can only be assured that the latest time of
-                    // the last event is really the latest time, once all the events
-                    // have been received, we know when we have received all events
-                    // when there are no more events to process.
-                    if (!hasSentLastUpdateTime && lastUpdateTime > 0) {
-                        wire.writeNotReadyDocument(false,
-                                wire -> {
-                                    wire.writeEventName(CoreFields.lastUpdateTime).int64(lastUpdateTime);
-                                    wire.write(() -> "id").int8(remoteIdentifier);
-                                }
-                        );
-
-                        hasSentLastUpdateTime = true;
-
-                        if (!hasLogged)
-                            hasLogged = true;
-
-                        if (bytes.readRemaining() > 0) {
-                            ReplicationHub.this.sendBytes(bytes, false);
-                            return true;
-                        }
-                        return false;
-                    }
-                }
-
-                // publishes single events to free up the event loop, we used to publish all the
-                // changes but this can lead to this iterator never completing if updates are
-                // coming in from end users that touch these entries
-                // the code used to be this
-                // hub.lock(() -> mi.forEach(e -> ReplicationHub.this.sendEventAsyncWithoutLock
-                //         (replicationEvent, (WriteValue) v -> v.typedMarshallable(e)
-                // )));
-
-                // also we have to write the data into a buffer, to free the map lock
-                // asap, the old code use to pass the entry to the hub, this was leaving the
-                // segment locked and cause deadlocks with the read thread
-                mi.nextEntry(e -> {
-                    long updateTime = Math.max(lastUpdateTime, e.timestamp());
-                    if (updateTime > lastUpdateTime) {
-                        hasSentLastUpdateTime = false;
-                        lastUpdateTime = updateTime;
-                    }
-
-                    System.out.println("*****\t\t\t\tSENT : CLIENT :replicatedEntry latency=" +
-                            (System
-                                    .currentTimeMillis() - e.timestamp()
-                            ) + "ms");
-
-                    wire.writeNotReadyDocument(false, wireOut ->
-                            wireOut.writeEventName(replicationEvent).typedMarshallable(e));
-                });
-
-                if (bytes.readRemaining() > 0) {
-                    ReplicationHub.this.sendBytes(bytes, false);
-                    return true;
-                }
-
-                return false;
-            }
-
-            public HandlerPriority priority() {
-                return HandlerPriority.REPLICATION;
-            }
-
-        });
+        eventLoop.addHandler(true, new RepEventHandler(hub, mi, remoteIdentifier));
 
         mi.dirtyEntries(remote.lastUpdatedTime());
     }
 
+    private class RepEventHandler implements EventHandler, Consumer<EngineReplication.ReplicationEntry> {
 
+        final Bytes bytes;
+        final Wire wire;
+        private final TcpChannelHub hub;
+        private final ModificationIterator mi;
+        private final byte remoteIdentifier;
+        boolean hasSentLastUpdateTime;
+        long lastUpdateTime;
+        boolean hasLogged;
+
+        public RepEventHandler(TcpChannelHub hub, ModificationIterator mi, byte remoteIdentifier) {
+            this.hub = hub;
+            this.mi = mi;
+            this.remoteIdentifier = remoteIdentifier;
+            bytes = Bytes.elasticByteBuffer();
+            wire = wireType.apply(bytes);
+            hasSentLastUpdateTime = false;
+            lastUpdateTime = 0;
+        }
+
+        @Override
+        public boolean action() throws InvalidEventHandlerException {
+
+            if (hub.isOutBytesLocked())
+                return false;
+
+            if (!hub.isOutBytesEmpty())
+                return false;
+
+            if (ReplicationHub.this.isClosed.get())
+                throw new InvalidEventHandlerException();
+
+            bytes.clear();
+
+            if (!mi.hasNext()) {
+
+                // because events arrive in a bitset ( aka random ) order ( not necessary in
+                // time order ) we can only be assured that the latest time of
+                // the last event is really the latest time, once all the events
+                // have been received, we know when we have received all events
+                // when there are no more events to process.
+                if (!hasSentLastUpdateTime && lastUpdateTime > 0) {
+                    wire.writeNotReadyDocument(false,
+                            wire -> {
+                                wire.writeEventName(CoreFields.lastUpdateTime).int64(lastUpdateTime);
+                                wire.write(() -> "id").int8(remoteIdentifier);
+                            }
+                    );
+
+                    hasSentLastUpdateTime = true;
+
+                    if (!hasLogged)
+                        hasLogged = true;
+
+                    if (bytes.readRemaining() > 0) {
+                        ReplicationHub.this.sendBytes(bytes, false);
+                        return true;
+                    }
+                    return false;
+                }
+            }
+
+            // publishes single events to free up the event loop, we used to publish all the
+            // changes but this can lead to this iterator never completing if updates are
+            // coming in from end users that touch these entries
+            // the code used to be this
+            // hub.lock(() -> mi.forEach(e -> ReplicationHub.this.sendEventAsyncWithoutLock
+            //         (replicationEvent, (WriteValue) v -> v.typedMarshallable(e)
+            // )));
+
+            // also we have to write the data into a buffer, to free the map lock
+            // asap, the old code use to pass the entry to the hub, this was leaving the
+            // segment locked and cause deadlocks with the read thread
+            mi.nextEntry(this);
+
+            if (bytes.readRemaining() > 0) {
+                ReplicationHub.this.sendBytes(bytes, false);
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        public void accept(EngineReplication.ReplicationEntry e) {
+            long updateTime = Math.max(lastUpdateTime, e.timestamp());
+            if (updateTime > lastUpdateTime) {
+                hasSentLastUpdateTime = false;
+                lastUpdateTime = updateTime;
+            }
+
+            if (Jvm.isDebug()) {
+                long delay = System.currentTimeMillis() - e.timestamp();
+                System.out.println("*****\t\t\t\tSENT : CLIENT :replicatedEntry latency=" +
+                        delay + "ms");
+            }
+
+            wire.writeNotReadyDocument(false, wireOut ->
+                    wireOut.writeEventName(replicationEvent).typedMarshallable(e));
+        }
+
+        public HandlerPriority priority() {
+            return HandlerPriority.REPLICATION;
+        }
+    }
 }

@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.api.EngineReplication;
@@ -194,7 +195,6 @@ public class MainCluster5 {
             }
         }
 
-
         for (; ; ) {
             System.out.println("\n[ Map Contents " + LocalDateTime.now() + " )]");
             map1.forEach((k, v) -> System.out.print("1: k=" + k + ", v=" + (v == null ? "null" : v
@@ -203,11 +203,8 @@ public class MainCluster5 {
             map2.forEach((k, v) -> System.out.print("1: k=" + k + ", v=" + (v == null ? "null" : v
                     .substring(0, v.length() < 20 ? v.length() : 20)) + "\t"));
             System.out.println(".");
-            Thread.sleep(5000);
+            Jvm.pause(10_000);
         }
-
     }
-
-
 }
 

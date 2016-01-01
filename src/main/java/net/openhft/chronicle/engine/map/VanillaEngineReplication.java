@@ -125,8 +125,8 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
     }
 
     @NotNull
-    private static ATSDirectBitSet createModIterBitSet() {
-        return new ATSDirectBitSet(new DirectStore(null, DIRTY_WORD_COUNT * 8, true).bytes());
+    private static DirectBitSet createModIterBitSet() {
+        return ATSDirectBitSet.wrap(new DirectStore(null, DIRTY_WORD_COUNT * 8, true).bytes());
     }
 
     private static void initZeroStateForAllPossibleRemoteIdentifiers(
