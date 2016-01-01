@@ -37,6 +37,13 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
     private final ThreadLocal<ThreadLocalData> threadLocal;
 
+    public ChronicleQueueView(RequestContext requestContext, Asset asset) {
+        chronicleQueue = newInstance(requestContext.name(), requestContext.basePath());
+        messageTypeClass = requestContext.type();
+        elementTypeClass = requestContext.elementType();
+        threadLocal = ThreadLocal.withInitial(() -> new ThreadLocalData(chronicleQueue));
+    }
+
     @Override
     public void publish(@NotNull T topic, @NotNull M message) {
         throw new UnsupportedOperationException("todo");
@@ -61,32 +68,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     public void registerSubscriber(@NotNull T topic, @NotNull Subscriber<M> subscriber) {
         throw new UnsupportedOperationException("todo");
     }
-
-    public class ThreadLocalData {
-
-        public final ExcerptAppender appender;
-        public final ExcerptTailer tailer;
-        public M element;
-        public final ExcerptTailer replayTailer;
-
-        public ThreadLocalData(ChronicleQueue chronicleQueue) {
-            try {
-                appender = chronicleQueue.createAppender();
-                tailer = chronicleQueue.createTailer();
-                replayTailer = chronicleQueue.createTailer();
-            } catch (IOException e) {
-                throw Jvm.rethrow(e);
-            }
-        }
-    }
-
-    public ChronicleQueueView(RequestContext requestContext, Asset asset) {
-        chronicleQueue = newInstance(requestContext.name(), requestContext.basePath());
-        messageTypeClass = requestContext.type();
-        elementTypeClass = requestContext.elementType();
-        threadLocal = ThreadLocal.withInitial(() -> new ThreadLocalData(chronicleQueue));
-    }
-
 
     private ChronicleQueue newInstance(String name, String basePath) {
         ChronicleQueue chronicleQueue;
@@ -129,7 +110,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         return threadLocal.get().replayTailer;
     }
 
-
     @Override
     public ExcerptAppender threadLocalAppender() {
         return threadLocal.get().appender;
@@ -144,7 +124,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     public M threadLocalElement() {
         return (M) threadLocal.get().element;
     }
-
 
     /**
      * @param index gets the except at the given index  or {@code null} if the index is not valid
@@ -164,7 +143,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
             throw Jvm.rethrow(e);
         }
     }
-
 
     /**
      * @param name
@@ -215,7 +193,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         }
     }
 
-
     @Override
     public long set(@NotNull M event) {
         try {
@@ -257,15 +234,15 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         return chronicleQueue.lastWrittenIndex();
     }
 
-  //  @Override
- //   public WireType wireType() {
-  //      throw new UnsupportedOperationException("todo");
-  //  }
-
     @Override
     public void close() throws IOException {
         chronicleQueue.close();
     }
+
+  //  @Override
+ //   public WireType wireType() {
+  //      throw new UnsupportedOperationException("todo");
+  //  }
 
     @Override
     public void replay(long index, @NotNull BiConsumer<T, M> consumer, @Nullable Consumer<Exception> isAbsent) {
@@ -276,7 +253,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         } catch (Exception e) {
             isAbsent.accept(e);
         }
-
     }
 
     @Override
@@ -289,5 +265,22 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         return elementTypeClass;
     }
 
+    public class ThreadLocalData {
+
+        public final ExcerptAppender appender;
+        public final ExcerptTailer tailer;
+        public final ExcerptTailer replayTailer;
+        public M element;
+
+        public ThreadLocalData(ChronicleQueue chronicleQueue) {
+            try {
+                appender = chronicleQueue.createAppender();
+                tailer = chronicleQueue.createTailer();
+                replayTailer = chronicleQueue.createTailer();
+            } catch (IOException e) {
+                throw Jvm.rethrow(e);
+            }
+        }
+    }
 
 }

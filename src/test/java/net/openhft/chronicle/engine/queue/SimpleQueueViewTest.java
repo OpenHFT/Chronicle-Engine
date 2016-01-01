@@ -91,7 +91,6 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         assertEquals("Message-1", values.poll(2, SECONDS).toString());
     }
 
-
     @Test
     @Ignore
     public void testStringPublishToAKeyTopic() throws InterruptedException {
@@ -104,7 +103,6 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         publisher.publish("Message-1");
         assertEquals("Message-1", values.poll(2, SECONDS).toString());
     }
-
 
     @Test
     @Ignore
@@ -119,7 +117,6 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         assertEquals(null, values.poll(1, SECONDS));
     }
 
-
     @Test
     @Ignore
     public void testStringTopicPublisherString() throws InterruptedException {
@@ -132,7 +129,6 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         publisher.publish(messageType, "Message-1");
         assertEquals("topic Message-1", values.poll(2, SECONDS).toString());
     }
-
 
     @Test
     @Ignore
@@ -150,7 +146,6 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         publisher.publish(messageType, "Message-1");
         assertEquals("Message-1", values.poll(2, SECONDS).toString());
     }
-
 
     @Test
     @Ignore
@@ -207,7 +202,6 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
             return s;
         }
     }
-
 
 }
 

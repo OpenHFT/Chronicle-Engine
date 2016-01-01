@@ -99,7 +99,6 @@ public class MapReference<E> implements Reference<E> {
         return eClass;
     }
 
-
     @Override
     public String toString() {
         return "MapReference{" +

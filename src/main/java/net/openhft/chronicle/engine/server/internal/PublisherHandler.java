@@ -78,7 +78,6 @@ public class PublisherHandler<E> extends AbstractHandler {
                             });
 
                         }
-
                     }
 
             );

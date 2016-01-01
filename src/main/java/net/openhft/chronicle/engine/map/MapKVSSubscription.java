@@ -24,8 +24,8 @@ import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.cfg.SubscriptionStat;
-import net.openhft.chronicle.engine.pubsub.SimpleSubscription;
 import net.openhft.chronicle.engine.pubsub.MapSimpleSubscription;
+import net.openhft.chronicle.engine.pubsub.SimpleSubscription;
 import net.openhft.chronicle.engine.query.Filter;
 import net.openhft.chronicle.network.api.session.SessionDetails;
 import net.openhft.chronicle.network.api.session.SessionProvider;
@@ -268,7 +268,6 @@ public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
                 topicSubscribers.remove(subscriber);
             }
         }
-
     }
 
     @Override
@@ -350,7 +349,6 @@ public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
                 stat.setRecentlySubscribed(LocalTime.now());
                 subStats.put(userId + "~" + subType, stat);
             }
-
         }
     }
 }

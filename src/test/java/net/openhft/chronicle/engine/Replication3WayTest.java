@@ -47,6 +47,7 @@ public class Replication3WayTest {
     private static AssetTree tree3;
     private static AssetTree tree1;
     private static AssetTree tree2;
+    private static AtomicReference<Throwable> t = new AtomicReference();
 
     @BeforeClass
     public static void before() throws IOException {
@@ -92,15 +93,6 @@ public class Replication3WayTest {
         // TODO TCPRegistery.assertAllServersStopped();
     }
 
-
-    private static AtomicReference<Throwable> t = new AtomicReference();
-
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) Jvm.rethrow(th);
-    }
-
     @NotNull
     private static AssetTree create(final int hostId, Function<Bytes, Wire> writeType, final String clusterTwo) {
         AssetTree tree = new VanillaAssetTree((byte) hostId)
@@ -121,7 +113,6 @@ public class Replication3WayTest {
         return tree;
     }
 
-
     @NotNull
     public static String resourcesDir() {
         String path = ChronicleMapKeyValueStoreTest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
@@ -130,6 +121,11 @@ public class Replication3WayTest {
         return new File(path).getParentFile().getParentFile() + "/src/test/resources";
     }
 
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
 
     @Test
     public void testThreeWay() throws InterruptedException {
@@ -146,13 +142,11 @@ public class Replication3WayTest {
 
         map2.put("hello2", "world2");
 
-
         final ConcurrentMap<String, String> map3 = tree2.acquireMap(NAME, String.class, String
                 .class);
         assertNotNull(map2);
 
         map2.put("hello3", "world3");
-
 
         for (int i = 1; i <= 50; i++) {
             if (map1.size() == 3 &&
@@ -168,7 +162,6 @@ public class Replication3WayTest {
             Assert.assertEquals("world3", m.get("hello3"));
             Assert.assertEquals(3, m.size());
         }
-
     }
 }
 

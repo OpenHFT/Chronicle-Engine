@@ -46,7 +46,6 @@ public class MapSimpleSubscription<E> implements SimpleSubscription<E> {
         this.valueReader = valueReader;
     }
 
-
     @Override
     public void registerSubscriber(@NotNull RequestContext rc,
                                    @NotNull Subscriber<E> subscriber,

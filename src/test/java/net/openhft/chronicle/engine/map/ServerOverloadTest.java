@@ -34,16 +34,9 @@ import static net.openhft.chronicle.engine.Utils.methodName;
  */
 @RunWith(value = Parameterized.class)
 public class ServerOverloadTest extends ThreadMonitoringTest {
-    private static AtomicReference<Throwable> t = new AtomicReference();
-
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) Jvm.rethrow(th);
-    }
-
     public static final int SIZE = 100;
     private static final String NAME = "test";
+    private static AtomicReference<Throwable> t = new AtomicReference();
     private static MapView<String, String> map;
     private final Boolean isRemote;
     private final WireType wireType;
@@ -54,7 +47,6 @@ public class ServerOverloadTest extends ThreadMonitoringTest {
     private AssetTree assetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
-
     public ServerOverloadTest(boolean isRemote, WireType wireType) {
         this.isRemote = isRemote;
         this.wireType = wireType;
@@ -69,6 +61,12 @@ public class ServerOverloadTest extends ThreadMonitoringTest {
         );
     }
 
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
+
     @Before
     public void before() throws IOException {
         serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
@@ -80,8 +78,9 @@ public class ServerOverloadTest extends ThreadMonitoringTest {
             TCPRegistry.createServerSocketChannelFor(connection);
             serverEndpoint = new ServerEndpoint(connection, serverAssetTree, wireType);
             assetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType, x -> t.set(x));
-        } else
+        } else {
             assetTree = serverAssetTree;
+        }
 
         map = assetTree.acquireMap(NAME, String.class, String.class);
     }

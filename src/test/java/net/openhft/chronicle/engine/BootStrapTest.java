@@ -54,6 +54,7 @@ public class BootStrapTest {
     private static final String NAME = "test";
     private static final String CONNECTION_1 = "BootStrapTests.host.port";
     private static ConcurrentMap<String, String> map1, map2;
+    private static AtomicReference<Throwable> t = new AtomicReference();
     private AssetTree client1;
     private AssetTree client2;
     private VanillaAssetTree serverAssetTree1;
@@ -67,14 +68,11 @@ public class BootStrapTest {
         return Arrays.asList(new Object[5][0]);
     }
 
-    private static AtomicReference<Throwable> t = new AtomicReference();
-
     @After
     public void afterMethod() {
         final Throwable th = t.getAndSet(null);
         if (th != null) Jvm.rethrow(th);
     }
-
 
     @Before
     public void before() throws IOException {
@@ -149,7 +147,6 @@ public class BootStrapTest {
         } catch (Exception e) {
             throw Jvm.rethrow(e);
         }
-
     }
 
     /**
@@ -194,9 +191,7 @@ public class BootStrapTest {
         } catch (Exception e) {
             throw Jvm.rethrow(e);
         }
-
     }
-
 
 }
 

@@ -137,8 +137,9 @@ public interface KeyValueStore<K, V> extends Assetted<KeyValueStore<K, V>>, Clos
         if (containsKey(key) && BytesUtil.equals(get(key), oldValue)) {
             put(key, newValue);
             return true;
-        } else
+        } else {
             return false;
+        }
     }
 
     default boolean removeIfEqual(K key, V value) {
@@ -147,8 +148,9 @@ public interface KeyValueStore<K, V> extends Assetted<KeyValueStore<K, V>>, Clos
         if (containsKey(key) && BytesUtil.equals(get(key), value)) {
             remove(key);
             return true;
-        } else
+        } else {
             return false;
+        }
     }
 
     default boolean isKeyType(Object key) {
@@ -160,7 +162,6 @@ public interface KeyValueStore<K, V> extends Assetted<KeyValueStore<K, V>>, Clos
         V value2 = get(key);
         return value2 == null ? getAndPut(key, value) : value2;
     }
-
 
     @NotNull
     default Iterator<V> valuesIterator() {
@@ -176,7 +177,6 @@ public interface KeyValueStore<K, V> extends Assetted<KeyValueStore<K, V>>, Clos
     }
 
     boolean containsValue(V value);
-
 
     interface Entry<K, V> {
         @org.jetbrains.annotations.Nullable

@@ -49,7 +49,6 @@ import static java.lang.ThreadLocal.withInitial;
 public class CMap2EngineReplicator implements EngineReplication,
         EngineReplicationLangBytesConsumer {
 
-
     private static final Logger LOG = LoggerFactory.getLogger(CMap2EngineReplicator.class);
 
     static {
@@ -150,7 +149,6 @@ public class CMap2EngineReplicator implements EngineReplication,
 
         final EngineModificationIterator instance = engineReplicationLang
                 .acquireEngineModificationIterator(remoteIdentifier);
-
 
         return modificationIterators[remoteIdentifier] = new CMap2ModificationIterator(instance, remoteIdentifier);
     }
@@ -398,7 +396,6 @@ public class CMap2EngineReplicator implements EngineReplication,
                 while (value.remaining() > 0) {
                     chronicleBytesValue.writeByte(value.readByte());
                 }
-
 
                 return chronicleBytesValue;
             } finally {

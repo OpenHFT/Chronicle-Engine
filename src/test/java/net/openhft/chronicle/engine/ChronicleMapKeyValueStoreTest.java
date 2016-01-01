@@ -60,6 +60,7 @@ public class ChronicleMapKeyValueStoreTest {
     private static AssetTree tree1;
     private static AssetTree tree2;
     private static AssetTree tree3;
+    private static AtomicReference<Throwable> t = new AtomicReference();
 
     @BeforeClass
     public static void before() throws IOException {
@@ -70,14 +71,6 @@ public class ChronicleMapKeyValueStoreTest {
         tree1 = create(1, WireType.TEXT);
         tree2 = create(2, WireType.TEXT);
         tree3 = create(3, WireType.TEXT);
-    }
-
-    private static AtomicReference<Throwable> t = new AtomicReference();
-
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) Jvm.rethrow(th);
     }
 
     @AfterClass
@@ -92,7 +85,6 @@ public class ChronicleMapKeyValueStoreTest {
         String basePath = cxt.basePath();
         return basePath == null ? cxt.name() : basePath + "/" + cxt.name();
     }
-
 
     @NotNull
     private static AssetTree create(final int hostId, Function<Bytes, Wire> writeType) {
@@ -174,6 +166,12 @@ public class ChronicleMapKeyValueStoreTest {
             return ".";
         String resources = new File(path).getParentFile().getParentFile() + "/src/test/resources";
         return resources;
+    }
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
     }
 
 }

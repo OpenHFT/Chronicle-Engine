@@ -24,14 +24,11 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.tree.QueueView;
 import org.jetbrains.annotations.Nullable;
 
-
 public class QueueReference<T, M> implements Reference<M> {
 
     private final Class<M> eClass;
     private final QueueView<T, M> chronicleQueue;
     private final T name;
-
-
 
     public QueueReference(Class type, QueueView<T, M> chronicleQueue, T name) {
         this.eClass = type;

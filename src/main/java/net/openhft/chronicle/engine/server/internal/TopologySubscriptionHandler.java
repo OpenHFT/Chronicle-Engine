@@ -45,7 +45,6 @@ public class TopologySubscriptionHandler extends SubscriptionHandler<TopologySub
         });
     };
 
-
     void process(@NotNull final WireIn inWire,
                  @NotNull final RequestContext requestContext,
                  @NotNull final WireOutPublisher publisher,

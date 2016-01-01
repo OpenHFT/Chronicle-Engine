@@ -58,6 +58,7 @@ public class Replication10WayTest {
     public static final String CLUSTER_NAME = "max-cluster";
     public static final WireType WIRE_TYPE = WireType.TEXT;
     public static final String NAME = "/ChMaps/test";
+    private static AtomicReference<Throwable> t = new AtomicReference();
     public ServerEndpoint[] serverEndpoints = new ServerEndpoint[MAX];
     private AssetTree trees[] = new AssetTree[MAX];
 
@@ -68,18 +69,6 @@ public class Replication10WayTest {
     public static List<Object[]> data() {
         return Arrays.asList(new Object[3][0]);
     }
-
-
-    private static AtomicReference<Throwable> t = new AtomicReference();
-
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null)
-            Jvm.rethrow(th);
-
-    }
-
 
     @NotNull
     private static AssetTree create(final int hostId, Function<Bytes, Wire> writeType) {
@@ -128,6 +117,14 @@ public class Replication10WayTest {
         if (path == null)
             return ".";
         return new File(path).getParentFile().getParentFile() + "/src/test/resources";
+    }
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null)
+            Jvm.rethrow(th);
+
     }
 
     @Before
@@ -226,7 +223,6 @@ public class Replication10WayTest {
                     Jvm.pause(1000);
                     continue OUTER;
                 }
-
             }
 
             break;
@@ -236,7 +232,6 @@ public class Replication10WayTest {
         for (int i = 1; i < MAX; i++) {
             Assert.assertEquals("world" + i, maps[i].get("hello" + i));
         }
-
     }
 
 }

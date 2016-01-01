@@ -28,18 +28,13 @@ import static net.openhft.chronicle.engine.Utils.yamlLoggger;
  */
 public class MapBootstrapTest extends ThreadMonitoringTest {
 
-
     public static final WireType WIRE_TYPE = WireType.TEXT;
     private static final String NAME = "MapBootstrapTest";
     private static final String CONNECTION_1 = "MapBootstrapTest.host.port";
-
+    private static AtomicReference<Throwable> t = new AtomicReference();
     private AssetTree client;
-
     private VanillaAssetTree serverAssetTree1;
     private ServerEndpoint serverEndpoint1;
-
-
-    private static AtomicReference<Throwable> t = new AtomicReference();
 
     @After
     public void afterMethod() {
@@ -72,7 +67,6 @@ public class MapBootstrapTest extends ThreadMonitoringTest {
         TCPRegistry.reset();
     }
 
-
     /**
      * simple test for bootstrap == FALSE
      */
@@ -82,7 +76,6 @@ public class MapBootstrapTest extends ThreadMonitoringTest {
         map1.put("pre-boostrap", "value");
         client.acquireMap(NAME + "?bootstrap=false", String.class, String.class);
     }
-
 
     /**
      * simple test for bootstrap == FALSE

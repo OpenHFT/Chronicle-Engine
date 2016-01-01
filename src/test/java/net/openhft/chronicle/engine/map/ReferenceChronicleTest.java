@@ -37,6 +37,7 @@ import static org.junit.Assert.assertNotNull;
  */
 public class ReferenceChronicleTest {
 
+    private static AtomicReference<Throwable> t = new AtomicReference();
     private String hostPortToken;
 
     @Before
@@ -51,14 +52,11 @@ public class ReferenceChronicleTest {
         TCPRegistry.reset();
     }
 
-    private static AtomicReference<Throwable> t = new AtomicReference();
-
     @After
     public void afterMethod() {
         final Throwable th = t.getAndSet(null);
         if (th != null) Jvm.rethrow(th);
     }
-
 
     @Ignore("test keeps failing on TC")
     @Test(timeout = 5000)
@@ -80,7 +78,6 @@ public class ReferenceChronicleTest {
             serverEndpoint.close();
             serverAssetTree.close();
         }
-
     }
 
     @Test(timeout = 5000)

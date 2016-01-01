@@ -45,23 +45,18 @@ public class TestReplicationCluster {
     public static final int SIZE = 1024;
     public static final String NAME = "/ChMaps/test?entries=" + entries + "&averageValueSize=" +
             (2 << 20);
-
-    public static ServerEndpoint serverEndpoint;
-
-    private static AssetTree tree;
-
-    private static ServerEndpoint serverEndpoint1;
-    private static ServerEndpoint serverEndpoint2;
-    private static ServerEndpoint serverEndpoint3;
-    private static ServerEndpoint serverEndpoint4;
-    private static ServerEndpoint serverEndpoint5;
-
     private static final AtomicReference<Throwable> throwableRef = new AtomicReference<>();
     private static final Consumer<Throwable> failOnException = throwable1 -> {
         throwable1.printStackTrace();
         throwableRef.set(throwable1);
     };
-
+    public static ServerEndpoint serverEndpoint;
+    private static AssetTree tree;
+    private static ServerEndpoint serverEndpoint1;
+    private static ServerEndpoint serverEndpoint2;
+    private static ServerEndpoint serverEndpoint3;
+    private static ServerEndpoint serverEndpoint4;
+    private static ServerEndpoint serverEndpoint5;
 
     @BeforeClass
     public static void before() throws IOException {
@@ -103,7 +98,6 @@ public class TestReplicationCluster {
                     String.class).size();
         }
 
-
         {
             AssetTree tree = create(4, writeType, "clusterFive", failOnException);
             serverEndpoint4 = new ServerEndpoint("host.port4", tree, writeType);
@@ -111,31 +105,16 @@ public class TestReplicationCluster {
                     String.class).size();
         }
 
-
         {
             AssetTree tree = create(5, writeType, "clusterFive", failOnException);
             serverEndpoint5 = new ServerEndpoint("host.port5", tree, writeType);
             tree.acquireMap(NAME, String.class,
                     String.class).size();
         }
-
-
-    }
-
-
-    @After
-    public void afterMethod() {
-        final Throwable throwable = throwableRef.getAndSet(null);
-        if (throwable != null) {
-            throwable.printStackTrace();
-            Assert.fail();
-        }
-
     }
 
     @AfterClass
     public static void after() throws IOException {
-
 
         if (serverEndpoint != null)
             serverEndpoint.close();
@@ -200,6 +179,14 @@ public class TestReplicationCluster {
         return new String(chars);
     }
 
+    @After
+    public void afterMethod() {
+        final Throwable throwable = throwableRef.getAndSet(null);
+        if (throwable != null) {
+            throwable.printStackTrace();
+            Assert.fail();
+        }
+    }
 
     @Ignore
     @Test
@@ -229,9 +216,7 @@ public class TestReplicationCluster {
                         e.printStackTrace();
                     }
                 }
-
             }
-
 
         });
 
@@ -243,7 +228,6 @@ public class TestReplicationCluster {
         AssetTree tree3 = new VanillaAssetTree("/").forRemoteAccess("host.port3", WIRE_TYPE, x -> t
                 .set(x));
 
-
         tree3.registerSubscriber(NAME, MapEvent.class, o ->
 
         {
@@ -251,7 +235,6 @@ public class TestReplicationCluster {
                     .length() > 150 ? o.toString().substring(0, 150) : "XXXX"));
             count.decrementAndGet();
         });
-
 
         for (; count.get() > 0; ) {
             try {
@@ -265,10 +248,7 @@ public class TestReplicationCluster {
                 Assert.fail();
             }
         }
-
-
     }
-
 
 }
 

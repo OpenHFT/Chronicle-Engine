@@ -87,7 +87,6 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                     valueIn.marshallable(wire -> {
                         final Params[] params = put.params();
 
-
                         final K key = wireToK.apply(wire.read(params[0]));
                         final V value = wireToV.apply(wire.read(params[1]));
                         nullCheck(key);
@@ -189,8 +188,9 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                             StringBuilder sb = SBP.acquireStringBuilder();
                             vToWire.accept(outWire.writeEventName(reply), (V) ((ChronicleMap) map).getUsing(key, sb));
 
-                        } else
+                        } else {
                             vToWire.accept(outWire.writeEventName(reply), map.get(key));
+                        }
 
                         return;
                     }

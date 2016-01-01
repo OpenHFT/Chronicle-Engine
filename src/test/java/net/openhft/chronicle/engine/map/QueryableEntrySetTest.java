@@ -44,25 +44,17 @@ public class QueryableEntrySetTest extends ThreadMonitoringTest {
 
     private static final String NAME = "test";
     private static MapView<String, String> map;
-    private final Boolean isRemote;
-    private final WireType wireType;
-    public String connection = "QueryableTest.host.port";
     @NotNull
 
     private static AtomicReference<Throwable> t = new AtomicReference();
-
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) Jvm.rethrow(th);
-    }
-
+    private final Boolean isRemote;
+    private final WireType wireType;
+    public String connection = "QueryableTest.host.port";
     @Rule
     public TestName name = new TestName();
     private AssetTree assetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
-
     public QueryableEntrySetTest(boolean isRemote, WireType wireType) {
         this.isRemote = isRemote;
         this.wireType = wireType;
@@ -75,6 +67,12 @@ public class QueryableEntrySetTest extends ThreadMonitoringTest {
                 , new Object[]{true, WireType.TEXT}
                 , new Object[]{true, WireType.BINARY}
         );
+    }
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
     }
 
     @Before
@@ -92,8 +90,9 @@ public class QueryableEntrySetTest extends ThreadMonitoringTest {
             TCPRegistry.createServerSocketChannelFor(connection);
             serverEndpoint = new ServerEndpoint(connection, serverAssetTree, wireType);
             assetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType, x -> t.set(x));
-        } else
+        } else {
             assetTree = serverAssetTree;
+        }
 
         map = assetTree.acquireMap(NAME, String.class, String.class);
     }

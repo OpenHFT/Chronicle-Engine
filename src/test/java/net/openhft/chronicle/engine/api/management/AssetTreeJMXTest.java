@@ -22,6 +22,8 @@ import static org.junit.Assert.assertTrue;
 @Ignore("Long running test")
 public class AssetTreeJMXTest {
 
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
     @Test
     public void testAssetUpdateEvery10Sec() throws InterruptedException {
         testAssetUpdate(10000);
@@ -58,8 +60,6 @@ public class AssetTreeJMXTest {
     public void add1MillionMapIntoTree() throws InterruptedException {
         addMapIntoTree(1000000);
     }
-
-    private static AtomicReference<Throwable> t = new AtomicReference();
 
     @After
     public void afterMethod() {
@@ -161,6 +161,5 @@ public class AssetTreeJMXTest {
             tree.root().getAsset("group").removeChild("map"+count);
             count++;
         }
-
     }
 }

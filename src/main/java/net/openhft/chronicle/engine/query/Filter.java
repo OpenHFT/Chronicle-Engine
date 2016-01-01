@@ -173,7 +173,6 @@ public class Filter<E> implements Marshallable, Iterable<Operation> {
                     case PROJECT:
                         throw new UnsupportedOperationException("todo");
                 }
-
             }
 
             subscriber.onMessage(message);

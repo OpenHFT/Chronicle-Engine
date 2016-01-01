@@ -35,6 +35,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public class TestInsertUpdateChronicleMapViewOnServer {
 
     private static final String NAME = "test";
+    private static AtomicReference<Throwable> t = new AtomicReference();
     private final WireType wireType;
     public String connection = "RemoteSubscriptionTest.host.port";
     @NotNull
@@ -56,14 +57,11 @@ public class TestInsertUpdateChronicleMapViewOnServer {
         return list;
     }
 
-    private static AtomicReference<Throwable> t = new AtomicReference();
-
     @After
     public void afterMethod() {
         final Throwable th = t.getAndSet(null);
         if (th != null) Jvm.rethrow(th);
     }
-
 
     @Before
     public void before() throws IOException {

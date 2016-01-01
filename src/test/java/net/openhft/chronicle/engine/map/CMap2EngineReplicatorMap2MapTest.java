@@ -98,7 +98,6 @@ public class CMap2EngineReplicatorMap2MapTest {
             Assert.assertEquals("world3", m.get("hello3"));
             Assert.assertEquals(3, m.size());
         }
-
     }
 
     /**
@@ -153,7 +152,6 @@ public class CMap2EngineReplicatorMap2MapTest {
             Assert.assertEquals("world3", m.get("hello3"));
             Assert.assertEquals(3, m.size());
         }
-
     }
 
 }

@@ -83,8 +83,6 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
         this.topicType = topicType;
     }
 
-
-
     @Override
     public void close() {
         notifyEndOfSubscription(topicSubscribers);
@@ -126,7 +124,6 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
         throw new UnsupportedOperationException("todo");
     }
 
-
     @Override
     public int entrySubscriberCount() {
         return 0;
@@ -143,7 +140,6 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
                 || !downstream.isEmpty()
                 || asset.hasChildren();
     }
-
 
     @Override
     public boolean needsPrevious() {
@@ -170,10 +166,7 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
         } catch (Exception e) {
             throw Jvm.rethrow(e);
         }
-
     }
-
-
 
     @Override
     public void registerTopicSubscriber(@NotNull RequestContext rc, @NotNull final TopicSubscriber<T, M> subscriber) {
@@ -214,7 +207,6 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
         else
             throw new UnsupportedOperationException("unable to convert " + eventName + " to type " + topicType);
     }
-
 
     @Override
     public void registerDownstream(@NotNull EventConsumer<T, M> subscription) {
@@ -303,7 +295,6 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
                 stat.setRecentlySubscribed(LocalTime.now());
                 subStats.put(userId + "~" + subType, stat);
             }
-
         }
     }
 }

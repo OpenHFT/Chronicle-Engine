@@ -23,42 +23,11 @@ import static net.openhft.chronicle.engine.server.internal.SystemHandler.EventId
 public class SystemHandler extends AbstractHandler implements ClientClosedProvider {
     private final StringBuilder eventName = new StringBuilder();
     private SessionDetailsProvider sessionDetails;
+    private final WireParser wireParser = wireParser();
     @Nullable
     private Map<String, UserStat> monitoringMap;
     private volatile boolean hasClientClosed;
     private boolean wasHeartBeat;
-    private final WireParser wireParser = wireParser();
-
-    public boolean wasHeartBeat() {
-        return wasHeartBeat;
-    }
-
-    void process(@NotNull final WireIn inWire,
-                 @NotNull final WireOut outWire, final long tid,
-                 @NotNull final SessionDetailsProvider sessionDetails,
-                 @Nullable Map<String, UserStat> monitoringMap) {
-        wasHeartBeat = false;
-        this.sessionDetails = sessionDetails;
-        this.monitoringMap = monitoringMap;
-        setOutWire(outWire);
-        dataConsumer.accept(inWire, tid);
-    }
-
-
-    private WireParser wireParser() {
-        final WireParser parser = new VanillaWireParser();
-        parser.register(() -> EventId.domain.toString(), v -> v.text(this, (o, x) -> o.sessionDetails.setDomain(x)));
-        parser.register(() -> EventId.sessionMode.toString(), v -> v.text(this, (o, x) -> o
-                .sessionDetails.setSessionMode(SessionMode.valueOf(x))));
-        parser.register(() -> EventId.securityToken.toString(), v -> v.text(this, (o, x) -> o
-                .sessionDetails.setSecurityToken(x)));
-        parser.register(() -> EventId.clientId.toString(), v -> v.text(this, (o, x) -> o
-                .sessionDetails.setClientId(UUID.fromString(x))));
-        parser.register(() -> "", v -> {
-        });
-        return parser;
-    }
-
     @NotNull
     private final BiConsumer<WireIn, Long> dataConsumer = (inWire, tid) -> {
         eventName.setLength(0);
@@ -77,7 +46,6 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
 
             return;
         }
-
 
         if (!heartbeat.contentEquals(eventName) && !onClientClosing.contentEquals(eventName)) {
             return;
@@ -99,6 +67,35 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
             }
         });
     };
+
+    public boolean wasHeartBeat() {
+        return wasHeartBeat;
+    }
+
+    void process(@NotNull final WireIn inWire,
+                 @NotNull final WireOut outWire, final long tid,
+                 @NotNull final SessionDetailsProvider sessionDetails,
+                 @Nullable Map<String, UserStat> monitoringMap) {
+        wasHeartBeat = false;
+        this.sessionDetails = sessionDetails;
+        this.monitoringMap = monitoringMap;
+        setOutWire(outWire);
+        dataConsumer.accept(inWire, tid);
+    }
+
+    private WireParser wireParser() {
+        final WireParser parser = new VanillaWireParser();
+        parser.register(() -> EventId.domain.toString(), v -> v.text(this, (o, x) -> o.sessionDetails.setDomain(x)));
+        parser.register(() -> EventId.sessionMode.toString(), v -> v.text(this, (o, x) -> o
+                .sessionDetails.setSessionMode(SessionMode.valueOf(x))));
+        parser.register(() -> EventId.securityToken.toString(), v -> v.text(this, (o, x) -> o
+                .sessionDetails.setSecurityToken(x)));
+        parser.register(() -> EventId.clientId.toString(), v -> v.text(this, (o, x) -> o
+                .sessionDetails.setClientId(UUID.fromString(x))));
+        parser.register(() -> "", v -> {
+        });
+        return parser;
+    }
 
     /**
      * @return {@code true} if the client has intentionally closed

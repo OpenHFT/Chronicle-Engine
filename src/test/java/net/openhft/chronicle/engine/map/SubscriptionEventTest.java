@@ -66,13 +66,6 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     private static final String NAME = "test";
 
     private static AtomicReference<Throwable> t = new AtomicReference();
-
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) Jvm.rethrow(th);
-    }
-
     private static MapView<String, String> map;
     private final Boolean isRemote;
     private final WireType wireType;
@@ -82,7 +75,6 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     private AssetTree assetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
-
     public SubscriptionEventTest(boolean isRemote, WireType wireType) {
         this.isRemote = isRemote;
         this.wireType = wireType;
@@ -100,6 +92,12 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
         );
     }
 
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
+
     @Before
     public void before() throws IOException {
         serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
@@ -112,8 +110,9 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
             serverEndpoint = new ServerEndpoint(hostPort, serverAssetTree, wireType);
 
             assetTree = new VanillaAssetTree().forRemoteAccess(hostPort, wireType, x -> t.set(x));
-        } else
+        } else {
             assetTree = serverAssetTree;
+        }
 
         map = assetTree.acquireMap(NAME, String.class, String.class);
         YamlLogging.setAll(false);

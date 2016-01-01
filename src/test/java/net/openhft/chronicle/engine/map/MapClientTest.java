@@ -58,22 +58,12 @@ public class MapClientTest extends ThreadMonitoringTest {
     public static final WireType WIRE_TYPE = WireType.TEXT;
     private static int i;
 
-
     private static AtomicReference<Throwable> t = new AtomicReference();
-
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) Jvm.rethrow(th);
-    }
-
-
     // server has it's own asset tree, to the client.
     @NotNull
     private final AssetTree assetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
     @Nullable
     private Class<? extends CloseableSupplier> supplier = null;
-
     public MapClientTest(Class<? extends CloseableSupplier> supplier) {
         this.supplier = supplier;
     }
@@ -84,6 +74,12 @@ public class MapClientTest extends ThreadMonitoringTest {
                 {LocalMapSupplier.class},
                 // {RemoteMapSupplier.class}
         });
+    }
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
     }
 
     @Before
@@ -349,7 +345,6 @@ public class MapClientTest extends ThreadMonitoringTest {
 
     private interface CloseableSupplier<X> extends Closeable, Supplier<X> {
     }
-
 
     public static class RemoteMapSupplier<K, V> implements CloseableSupplier<MapView<K, V>> {
 

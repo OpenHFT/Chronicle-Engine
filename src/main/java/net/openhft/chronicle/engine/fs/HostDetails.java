@@ -64,7 +64,6 @@ public class HostDetails implements Marshallable, Closeable {
                 .write(() -> "timeoutMs").int32(timeoutMs);
     }
 
-
     /**
      * @param asset     a point in the asset tree, used to fine the ClientConnectionMonitor
      * @param eventLoop used to process events

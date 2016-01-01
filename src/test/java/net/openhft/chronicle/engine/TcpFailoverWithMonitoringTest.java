@@ -56,7 +56,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * @author Rob Austin.
  */
 
-
 @RunWith(Parameterized.class)
 public class TcpFailoverWithMonitoringTest {
 
@@ -65,26 +64,23 @@ public class TcpFailoverWithMonitoringTest {
     private static final String CONNECTION_1 = "Test1.host.port";
     private final static String CONNECTION_2 = "Test2.host.port";
     private static ConcurrentMap<String, String> map;
-
+    private static AtomicReference<Throwable> t = new AtomicReference();
+    private final BlockingQueue<String> activity = new ArrayBlockingQueue(2);
+    ServerSocketChannel connection1;
+    ServerSocketChannel connection2;
     private AssetTree failOverClient;
     private VanillaAssetTree serverAssetTree1;
     private VanillaAssetTree serverAssetTree2;
     private ServerEndpoint serverEndpoint1;
     private ServerEndpoint serverEndpoint2;
-    private final BlockingQueue<String> activity = new ArrayBlockingQueue(2);
 
     public TcpFailoverWithMonitoringTest() {
     }
-
-    ServerSocketChannel connection1;
-    ServerSocketChannel connection2;
 
     @Parameterized.Parameters
     public static List<Object[]> data() {
         return Arrays.asList(new Object[10][0]);
     }
-
-    private static AtomicReference<Throwable> t = new AtomicReference();
 
     @After
     public void afterMethod() {
@@ -167,7 +163,6 @@ public class TcpFailoverWithMonitoringTest {
     @Test
     public void test() throws Exception {
 
-
         final MapView<String, String> failoverClient = failOverClient.acquireMap(NAME,
                 String.class,
                 String.class);
@@ -190,7 +185,6 @@ public class TcpFailoverWithMonitoringTest {
 
         Assert.assertEquals("disconnected " + toString(connection1), activity.poll(4, SECONDS));
 
-
         Assert.assertEquals("connected " + toString(connection2), activity.poll(4, SECONDS));
 
         // shutting server1 down should cause the failover client to connect to server 2
@@ -201,7 +195,6 @@ public class TcpFailoverWithMonitoringTest {
     private SocketAddress toString(final ServerSocketChannel connection2) {
         return connection2.socket().getLocalSocketAddress();
     }
-
 
 }
 

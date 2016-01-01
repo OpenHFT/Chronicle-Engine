@@ -60,6 +60,7 @@ public class SubscriptionModelPerformanceTest {
     private static VanillaAssetTree serverAssetTree;
     private static VanillaAssetTree clientAssetTree;
     private static ServerEndpoint serverEndpoint;
+    private static AtomicReference<Throwable> t = new AtomicReference();
     private String _mapName;
 
     @BeforeClass
@@ -82,14 +83,11 @@ public class SubscriptionModelPerformanceTest {
                 Jvm.pause(i * i);
     }
 
-    private static AtomicReference<Throwable> t = new AtomicReference();
-
     @After
     public void afterMethod() {
         final Throwable th = t.getAndSet(null);
         if (th != null) Jvm.rethrow(th);
     }
-
 
     @Before
     public void setUp() throws IOException {

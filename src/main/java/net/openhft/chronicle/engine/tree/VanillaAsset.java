@@ -148,7 +148,6 @@ public class VanillaAsset implements Asset, Closeable {
     public void forServer(boolean daemon, final Consumer<Throwable> onThrowable) {
         standardStack(daemon, onThrowable);
 
-
         addWrappingRule(EntrySetView.class, LAST + " entrySet", VanillaEntrySetView::new, MapView.class);
 
         addWrappingRule(TopicPublisher.class, LAST + " topic publisher", MapTopicPublisher::new, MapView.class);
@@ -212,7 +211,6 @@ public class VanillaAsset implements Asset, Closeable {
                             socketAddressSupplier, true, clientConnectionMonitor, HandlerPriority.MONITOR));
             addView(TcpChannelHub.class, view);
         }
-
     }
 
     public void enableTranslatingValuesToBytesStore() {

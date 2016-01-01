@@ -149,7 +149,6 @@ class ReplicationHub extends AbstractStatelessClient {
 
                                   System.out.println("client : onConsumer - publishing updates");
 
-
                               inWire.readDocument(null, d -> {
 
                                   StringBuilder eventName = Wires.acquireStringBuilder();
@@ -200,7 +199,6 @@ class ReplicationHub extends AbstractStatelessClient {
                       }
         );
     }
-
 
     /**
      * publishes changes - this method pushes the replication events

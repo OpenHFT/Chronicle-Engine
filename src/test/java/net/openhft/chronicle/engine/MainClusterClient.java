@@ -27,7 +27,6 @@ public class MainClusterClient {
     public static final int VALUE_SIZE = MainCluster5.VALUE_SIZE;
     public static final String DESCRIPTION = System.getProperty("connect", "localhost:8085");
 
-
     public static void main(String[] args) throws IOException, InterruptedException {
         YamlLogging.setAll(false);
         //YamlLogging.showServerWrites = true;
@@ -71,7 +70,6 @@ public class MainClusterClient {
         }
 //        });
 
-
       /*  Executors.newSingleThreadExecutor().submit(() -> {
             VanillaAssetTree tree5 = new VanillaAssetTree("tree1").forRemoteAccess("localhost:8083",
                     WIRE_TYPE, x -> x.printStackTrace());
@@ -85,7 +83,6 @@ public class MainClusterClient {
                     } catch (Throwable t) {
                         t.printStackTrace();
                     }
-
                 }
             }
         });

@@ -23,6 +23,5 @@ public class DemoMapPublisher {
 //        topicPublisher.publish("test5", "topic");
 //        topicPublisher.publish("test5", "topic3");
 
-
     }
 }

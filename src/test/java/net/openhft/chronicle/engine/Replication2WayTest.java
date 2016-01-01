@@ -49,6 +49,10 @@ public class Replication2WayTest {
 
     private static AssetTree tree1;
     private static AssetTree tree2;
+    private static AtomicReference<Throwable> t = new AtomicReference();
+    @Rule
+    public TestName testName = new TestName();
+    public String name;
 
     @BeforeClass
     public static void before() throws IOException {
@@ -87,25 +91,6 @@ public class Replication2WayTest {
         // TODO TCPRegistery.assertAllServersStopped();
     }
 
-    @Rule
-    public TestName testName = new TestName();
-    public String name;
-
-    @Before
-    public void beforeTest() throws IOException {
-        name = testName.getMethodName();
-        Files.deleteIfExists(Paths.get(OS.TARGET, name.toString()));
-    }
-
-    private static AtomicReference<Throwable> t = new AtomicReference();
-
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) Jvm.rethrow(th);
-    }
-
-
     @NotNull
     private static AssetTree create(final int hostId, Function<Bytes, Wire> writeType, final String clusterTwo) {
         AssetTree tree = new VanillaAssetTree((byte) hostId)
@@ -134,6 +119,18 @@ public class Replication2WayTest {
         return new File(path).getParentFile().getParentFile() + "/src/test/resources";
     }
 
+    @Before
+    public void beforeTest() throws IOException {
+        name = testName.getMethodName();
+        Files.deleteIfExists(Paths.get(OS.TARGET, name.toString()));
+    }
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
+
     @Test
     public void testBootstrap() throws InterruptedException {
 
@@ -160,13 +157,10 @@ public class Replication2WayTest {
             Assert.assertEquals("world2", m.get("hello2"));
             Assert.assertEquals(2, m.size());
         }
-
     }
-
 
     @Test
     public void testBootstrapAllFromMap1() throws InterruptedException {
-
 
         final ConcurrentMap<String, String> map1 = tree1.acquireMap(name, String.class, String
                 .class);
@@ -179,7 +173,6 @@ public class Replication2WayTest {
                 .class);
         assertNotNull(map2);
 
-
         for (int i = 1; i <= 50; i++) {
             if (map1.size() == 2 && map2.size() == 2)
                 break;
@@ -191,17 +184,14 @@ public class Replication2WayTest {
             Assert.assertEquals("world2", m.get("hello2"));
             Assert.assertEquals(2, m.size());
         }
-
     }
 
     @Test
     public void testBootstrapAllFromMap2() throws InterruptedException {
 
-
         final ConcurrentMap<String, String> map1 = tree1.acquireMap(name, String.class, String
                 .class);
         assertNotNull(map1);
-
 
         final ConcurrentMap<String, String> map2 = tree2.acquireMap(name, String.class, String
                 .class);
@@ -209,9 +199,7 @@ public class Replication2WayTest {
         map2.put("hello1", "world1");
         map2.put("hello2", "world2");
 
-
         assertNotNull(map2);
-
 
         for (int i = 1; i <= 50; i++) {
             if (map1.size() == 2 && map2.size() == 2)
@@ -244,7 +232,6 @@ public class Replication2WayTest {
         map1.put("hello2", "world2");
         Thread.sleep(1);
 
-
         final ConcurrentMap<String, String> map2 = tree2.acquireMap(name, String.class, String
                 .class);
         tree1.registerSubscriber(name, MapEvent.class, f -> {
@@ -252,7 +239,6 @@ public class Replication2WayTest {
         });
 
         assertNotNull(map2);
-
 
         for (int i = 1; i <= 50; i++) {
             if (map1.size() == 2 && map2.size() == 2)
@@ -269,7 +255,6 @@ public class Replication2WayTest {
         Assert.assertEquals(2, map1Updates.get());
         Assert.assertEquals(2, map2Updates.get());
     }
-
 
     @Ignore
     @Test
@@ -291,7 +276,6 @@ public class Replication2WayTest {
         map1.put("hello2", "world2");
         Thread.sleep(2);
 
-
         final ConcurrentMap<String, String> map2 = tree2.acquireMap(name, String.class, String
                 .class);
 
@@ -301,12 +285,10 @@ public class Replication2WayTest {
             map2Updates.incrementAndGet();
         });
 
-
         map2.put("hello1", "world1");
         map2.put("hello2", "world2");
 
         assertNotNull(map2);
-
 
         for (int i = 1; i <= 50; i++) {
             if (map1.size() == 2 && map2.size() == 2)
@@ -323,7 +305,6 @@ public class Replication2WayTest {
         Assert.assertEquals(2, map1Updates.get());
         Assert.assertEquals(2, map2Updates.get());
     }
-
 
 }
 

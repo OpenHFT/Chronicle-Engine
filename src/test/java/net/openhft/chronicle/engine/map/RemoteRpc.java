@@ -36,6 +36,7 @@ public class RemoteRpc extends JSR166TestCase {
 
     public static final net.openhft.chronicle.wire.WireType WIRE_TYPE = net.openhft.chronicle.wire.WireType.TEXT;
     private static int s_port = 11050;
+    private static AtomicReference<Throwable> t = new AtomicReference();
     @NotNull
     @Rule
     public TestName name = new TestName();
@@ -52,8 +53,6 @@ public class RemoteRpc extends JSR166TestCase {
         YamlLogging.setAll(false);
         methodName(name.getMethodName());
     }
-
-    private static AtomicReference<Throwable> t = new AtomicReference();
 
     @After
     public void afterMethod() {
@@ -97,7 +96,6 @@ public class RemoteRpc extends JSR166TestCase {
 
             Thread.sleep(1000);
         }
-
     }
 
     /**
@@ -133,7 +131,6 @@ public class RemoteRpc extends JSR166TestCase {
 
             Thread.sleep(1000);
         }
-
     }
 
     @After

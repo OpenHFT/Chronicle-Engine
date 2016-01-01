@@ -497,7 +497,6 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
         @Nullable
         ReplicationData usingData = null;
 
-
         int keyReplicationDataIndex = -1;
         KeyValueStore<BytesStore, ReplicationData> keyReplicationData;
         Iterator<BytesStore> keySetIterator;
@@ -563,7 +562,6 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
             }
         }
 
-
         @Override
         public boolean nextEntry(Consumer<ReplicationEntry> consumer) {
 
@@ -573,7 +571,6 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
 
             for (; ; ) {
                 keySetIterator = i.keySetIterator(keyReplicationData);
-
 
                 if (count == 0) {
                     modificationIteratorsRequiringSettingBootstrapTimestamp.set(identifier);
@@ -600,14 +597,11 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
                             this.key = null;
                             this.replicationData = null;
                         }
-
-
                     }
 
                 }
             }
         }
-
 
         @Override
         public boolean hasNext() {

@@ -38,6 +38,7 @@ import static org.junit.Assert.assertNotNull;
  */
 @RunWith(value = Parameterized.class)
 public class ReferenceTest {
+    private static AtomicReference<Throwable> t = new AtomicReference();
     @NotNull
     @Rule
     public TestName name = new TestName();
@@ -64,18 +65,11 @@ public class ReferenceTest {
         );
     }
 
-    private static AtomicReference<Throwable> t = new AtomicReference();
-
     @After
     public void afterMethod() {
         final Throwable th = t.getAndSet(null);
         if (th != null) Jvm.rethrow(th);
     }
-
-
-
-
-
 
     @Before
     public void before() throws IOException {
@@ -90,8 +84,9 @@ public class ReferenceTest {
 
             assetTree = new VanillaAssetTree().forRemoteAccess(hostPortToken, wireType, x -> t.set
                     (x));
-        } else
+        } else {
             assetTree = serverAssetTree;
+        }
 
     }
 
@@ -217,9 +212,7 @@ public class ReferenceTest {
 
         }
 
-
         assertEquals(1, subscription.subscriberCount());
-
 
         assetTree.unregisterSubscriber("group" + "/" + "subject", keyEventSubscriber);
 
@@ -227,7 +220,6 @@ public class ReferenceTest {
 
         }
         assertEquals(0, subscription.subscriberCount());
-
 
     }
 

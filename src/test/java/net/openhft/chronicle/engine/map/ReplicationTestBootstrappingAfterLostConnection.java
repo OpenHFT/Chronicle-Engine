@@ -53,6 +53,7 @@ public class ReplicationTestBootstrappingAfterLostConnection {
     private static AssetTree tree3;
     private static AssetTree tree1;
     private static AssetTree tree2;
+    private static AtomicReference<Throwable> t = new AtomicReference();
 
     @BeforeClass
     public static void before() throws IOException {
@@ -87,33 +88,6 @@ public class ReplicationTestBootstrappingAfterLostConnection {
         TCPRegistry.reset();
     }
 
-    @Test
-    public void testCreateAndThenFindView() {
-
-        final String userId = "myUser";
-        final String securityToken = "myToken";
-        final String domain = "myDomain";
-
-        tree1.root().addView(SessionDetails.class, VanillaSessionDetails.of(userId,
-                securityToken, domain));
-
-        final SessionDetails view = tree1.root().findView(SessionDetails.class);
-        Assert.assertNotNull(view);
-        Assert.assertEquals(userId, view.userId());
-        Assert.assertEquals(securityToken, view.securityToken());
-        Assert.assertEquals(domain, view.domain());
-
-    }
-
-
-    private static AtomicReference<Throwable> t = new AtomicReference();
-
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) Jvm.rethrow(th);
-    }
-
     @NotNull
     private static AssetTree create(final int hostId, Function<Bytes, Wire> writeType, final String clusterName) {
         AssetTree tree = new VanillaAssetTree((byte) hostId)
@@ -140,6 +114,30 @@ public class ReplicationTestBootstrappingAfterLostConnection {
         if (path == null)
             return ".";
         return new File(path).getParentFile().getParentFile() + "/src/test/resources";
+    }
+
+    @Test
+    public void testCreateAndThenFindView() {
+
+        final String userId = "myUser";
+        final String securityToken = "myToken";
+        final String domain = "myDomain";
+
+        tree1.root().addView(SessionDetails.class, VanillaSessionDetails.of(userId,
+                securityToken, domain));
+
+        final SessionDetails view = tree1.root().findView(SessionDetails.class);
+        Assert.assertNotNull(view);
+        Assert.assertEquals(userId, view.userId());
+        Assert.assertEquals(securityToken, view.securityToken());
+        Assert.assertEquals(domain, view.domain());
+
+    }
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
     }
 
     @Test
@@ -195,7 +193,6 @@ public class ReplicationTestBootstrappingAfterLostConnection {
 
     }
 
-
     @Test
     public void testBootstrapWhenTheServerIsKilled() throws InterruptedException, IOException {
 
@@ -205,7 +202,6 @@ public class ReplicationTestBootstrappingAfterLostConnection {
                         .class);
         assertNotNull(map1);
         map1.put("hello1", "world1");
-
 
         final ConcurrentMap<String, String> map2 = tree2.acquireMap(NAME, String.class, String
                 .class);
@@ -231,11 +227,9 @@ public class ReplicationTestBootstrappingAfterLostConnection {
         map2.put("hello4", "world4");
         map1.put("hello5", "world5");
 
-
         checkEqual(map1, map2, 6);
 
     }
-
 
     @Test
     public void testBootstrapWhenTheClientIsKilled() throws InterruptedException, IOException {
@@ -246,7 +240,6 @@ public class ReplicationTestBootstrappingAfterLostConnection {
                         .class);
         assertNotNull(map1);
         map1.put("hello1", "world1");
-
 
         ConcurrentMap<String, String> map2 = tree2.acquireMap(NAME, String.class, String
                 .class);
@@ -273,7 +266,6 @@ public class ReplicationTestBootstrappingAfterLostConnection {
 
         checkEqual(map1, map2, 6);
     }
-
 
     @Test
     public void testCheckDataIsLoadedFromPersistedFile() throws InterruptedException,
@@ -306,7 +298,6 @@ public class ReplicationTestBootstrappingAfterLostConnection {
 
     }
 
-
     @Test
     public void testBootstrapWhenTheServerIsKilledUsingPersistedFile() throws InterruptedException,
             IOException {
@@ -318,7 +309,6 @@ public class ReplicationTestBootstrappingAfterLostConnection {
         assertNotNull(map1);
 
         map1.put("hello1", "world1");
-
 
         final ConcurrentMap<String, String> map2 = tree2.acquireMap(NAME, String.class, String
                 .class);
@@ -343,7 +333,6 @@ public class ReplicationTestBootstrappingAfterLostConnection {
         // and map2 will attempt a reconnect to map1
         map2.put("hello4", "world4");
         map1.put("hello5", "world5");
-
 
         checkEqual(map1, map2, 6);
 

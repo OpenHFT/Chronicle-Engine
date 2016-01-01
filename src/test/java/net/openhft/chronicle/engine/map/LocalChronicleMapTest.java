@@ -47,18 +47,10 @@ import static org.junit.Assert.*;
 @Ignore
 public class LocalChronicleMapTest extends JSR166TestCase {
     private static int s_port = 11050;
+    private static AtomicReference<Throwable> t = new AtomicReference();
     @NotNull
     @Rule
     public TestName name = new TestName();
-
-
-    private static AtomicReference<Throwable> t = new AtomicReference();
-
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) Jvm.rethrow(th);
-    }
 
     @NotNull
     private static ClosableMapSupplier<Integer, String> newIntString() throws IOException {
@@ -100,6 +92,12 @@ public class LocalChronicleMapTest extends JSR166TestCase {
                 supplier.close();
             }
         };
+    }
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
     }
 
     @Before

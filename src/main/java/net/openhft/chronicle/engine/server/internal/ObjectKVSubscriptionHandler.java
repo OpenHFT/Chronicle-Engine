@@ -50,7 +50,6 @@ public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subsc
                                     }));
                         });
                     }
-
                 }
 
                 public void onEndOfSubscription() {
@@ -67,7 +66,6 @@ public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subsc
                     }
                 }
             };
-
 
             valueIn.marshallable(m -> {
                 final Class kClass = m.read(() -> "keyType").typeLiteral();

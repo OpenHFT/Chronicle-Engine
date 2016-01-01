@@ -56,7 +56,6 @@ public class QueueSimpleSubscription<E> implements SimpleSubscription<E> {
         this.name = name;
     }
 
-
     @Override
     public void registerSubscriber(@NotNull RequestContext rc,
                                    @NotNull Subscriber<E> subscriber,

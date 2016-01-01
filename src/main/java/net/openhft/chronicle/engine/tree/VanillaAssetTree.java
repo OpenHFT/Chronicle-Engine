@@ -149,7 +149,6 @@ public class VanillaAssetTree implements AssetTree {
         return sessionDetails;
     }
 
-
     @NotNull
     @Override
     public Asset acquireAsset(@NotNull String fullName) {

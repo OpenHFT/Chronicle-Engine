@@ -75,7 +75,6 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
     @NotNull
     private final ObjectKVSubscriptionHandler subscriptionHandler;
 
-
     @NotNull
     private final TopologySubscriptionHandler topologySubscriptionHandler;
     @NotNull
@@ -152,7 +151,6 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
             abstractHandler.onEndOfConnection(heartbeatTimeOut);
         }
 
-
         // allow time for outbound onEndOfConnection message to be sent
         Jvm.pause(100);
     }
@@ -212,8 +210,9 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
                                 : requestContext.valueType();
 
                         wireAdapter = new GenericWireAdapter(type, type2);
-                    } else
+                    } else {
                         throw new UnsupportedOperationException("unsupported view type");
+                    }
 
                 }
             } catch (Throwable e) {
@@ -244,8 +243,9 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
         if (CoreFields.tid.contentEquals(eventName)) {
             tid = valueIn.int64();
             eventName.setLength(0);
-        } else
+        } else {
             tid = -1;
+        }
     }
 
     @Override
@@ -372,7 +372,6 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
                     }
                 }
 
-
             } catch (Exception e) {
                 LOG.error("", e);
             } finally {
@@ -422,7 +421,6 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
         }
     }
 
-
     /**
      * peeks the csp or if it has a cid converts the cid into a Csp and returns that
      */
@@ -445,7 +443,6 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
     public boolean hasClientClosed() {
         return systemHandler.hasClientClosed();
     }
-
 
     public void close() {
         onEndOfConnection(false);

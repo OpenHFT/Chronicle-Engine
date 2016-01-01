@@ -55,7 +55,6 @@ public class MainCluster5 {
 
     private static AssetTree tree;
 
-
     public static void before() throws IOException {
         System.out.println("Using cluster " + CLUSTER);
         YamlLogging.setAll(false);
@@ -69,7 +68,6 @@ public class MainCluster5 {
         //    TCPRegistry.createServerSocketChannelFor("host.port1", "host.port2");
         WireType writeType = WireType.BINARY;
 
-
         switch (System.getProperty("server", "one")) {
             case "one":
 
@@ -82,18 +80,15 @@ public class MainCluster5 {
                 serverEndpoint = new ServerEndpoint(":8082", tree, writeType);
                 break;
 
-
             case "three":
                 tree = create(3, writeType, CLUSTER);
                 serverEndpoint = new ServerEndpoint(":8083", tree, writeType);
                 break;
 
-
             case "four":
                 tree = create(4, writeType, CLUSTER);
                 serverEndpoint = new ServerEndpoint(":8084", tree, writeType);
                 break;
-
 
             case "five":
                 tree = create(5, writeType, CLUSTER);
@@ -111,7 +106,6 @@ public class MainCluster5 {
 
     @AfterClass
     public static void after() throws IOException {
-
 
         if (serverEndpoint != null)
             serverEndpoint.close();
@@ -152,7 +146,6 @@ public class MainCluster5 {
         return new File(path).getParentFile().getParentFile() + "/src/test/resources";
     }
 
-
     @NotNull
     public static String getKey(int i) {
         return "" + i;
@@ -178,7 +171,6 @@ public class MainCluster5 {
     public void test() throws InterruptedException, IOException {
 
         //  YamlLogging.setAll(true);
-
 
         final String type = System.getProperty("server", "one");
 

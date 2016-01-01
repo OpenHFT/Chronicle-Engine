@@ -49,6 +49,7 @@ public class Main2Way {
     private static AssetTree tree3;
     private static AssetTree tree1;
     private static AssetTree tree2;
+    private static AtomicReference<Throwable> t = new AtomicReference();
 
     @BeforeClass
     public static void before() throws IOException {
@@ -76,7 +77,6 @@ public class Main2Way {
     @AfterClass
     public static void after() throws IOException {
 
-
         if (serverEndpoint1 != null)
             serverEndpoint1.close();
         if (serverEndpoint2 != null)
@@ -91,16 +91,6 @@ public class Main2Way {
         TCPRegistry.reset();
         // TODO TCPRegistery.assertAllServersStopped();
     }
-
-
-    private static AtomicReference<Throwable> t = new AtomicReference();
-
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) Jvm.rethrow(th);
-    }
-
 
     @NotNull
     private static AssetTree create(final int hostId, Function<Bytes, Wire> writeType, final String clusterTwo) {
@@ -152,6 +142,12 @@ public class Main2Way {
         return new String(chars);
     }
 
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
+
     public void test() throws InterruptedException, IOException {
 
         YamlLogging.setAll(false);
@@ -165,7 +161,6 @@ public class Main2Way {
         } else {
             map = tree2.acquireMap(NAME, String.class, String.class);
         }
-
 
         for (int i = 0; i < entries; i++) {
             map.put(getKey(i), data);

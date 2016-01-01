@@ -17,13 +17,16 @@
 package net.openhft.chronicle.engine.api.management;
 
 import net.openhft.chronicle.engine.api.management.mbean.AssetTreeDynamicMBean;
-import net.openhft.chronicle.engine.api.map.*;
+import net.openhft.chronicle.engine.api.map.MapEvent;
+import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
-import net.openhft.chronicle.engine.map.*;
+import net.openhft.chronicle.engine.map.ObjectKeyValueStore;
+import net.openhft.chronicle.engine.map.ObjectSubscription;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
-import net.openhft.chronicle.network.api.session.*;
+import net.openhft.chronicle.network.api.session.SessionDetails;
+import net.openhft.chronicle.network.api.session.SessionProvider;
 import net.openhft.chronicle.threads.Threads;
 import net.openhft.lang.thread.NamedThreadFactory;
 import org.jetbrains.annotations.NotNull;
@@ -171,7 +174,6 @@ public enum ManagementTools
             ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor(
                     new NamedThreadFactory("tree-watcher", true));
 
-
             SessionProvider view = tree.root().findView(SessionProvider.class);
             final SessionDetails sessionDetails = view.get();
 
@@ -226,7 +228,6 @@ public enum ManagementTools
                     return;
                 }
 
-
                 final ObjectKeyValueStore view0 = view;
                 ObjectSubscription objectSubscription = asset.getView(ObjectSubscription.class);
                 //ObjectName atName = new ObjectName(createObjectNameUri(e.assetName(),e.name(),treeName));
@@ -265,7 +266,6 @@ public enum ManagementTools
 
                 //AssetTreeJMX atBean = new AssetTreeJMX(view,objectKVSSubscription,e.assetName() + "-" + e.name(),getMapAsString(view));
                 //registerTreeWithMBean(atBean, atName);
-
 
             }
             else

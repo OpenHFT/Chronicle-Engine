@@ -1,6 +1,5 @@
 package net.openhft.chronicle.engine;
 
-
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
@@ -23,13 +22,11 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public class RestartClosedPublisherTest {
     public static final WireType WIRE_TYPE = WireType.TEXT;
     private static final String CONNECTION_1 = "Test1.host.port";
+    private static AtomicReference<Throwable> t = new AtomicReference();
     private ServerEndpoint _serverEndpoint1;
     private VanillaAssetTree _server;
     private VanillaAssetTree _remote;
     private String _testMapUri = "/test/map";
-
-
-    private static AtomicReference<Throwable> t = new AtomicReference();
 
     @After
     public void afterMethod() {
@@ -47,7 +44,6 @@ public class RestartClosedPublisherTest {
 
     }
 
-
     @After
     public void after() throws Exception {
         _serverEndpoint1.close();
@@ -56,7 +52,6 @@ public class RestartClosedPublisherTest {
         TCPRegistry.reset();
 
     }
-
 
     /**
      * Test that a client can connect to a server side map, register a subscriber and perform put.
@@ -76,10 +71,8 @@ public class RestartClosedPublisherTest {
         }
     }
 
-
     private void connectClientAndPerformPutGetTest(String testKey, String value, BlockingQueue<String> eventQueue) throws InterruptedException {
         VanillaAssetTree remote = new VanillaAssetTree().forRemoteAccess(CONNECTION_1, WIRE_TYPE, x -> t.set(x));
-
 
         String keySubUri = _testMapUri + "/" + testKey + "?bootstrap=false";
         Map<String, String> map = remote.acquireMap(_testMapUri, String.class, String.class);

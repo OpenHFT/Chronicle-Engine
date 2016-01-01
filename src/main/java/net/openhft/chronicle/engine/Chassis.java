@@ -109,11 +109,9 @@ public enum Chassis {
         return assetTree.acquirePublisher(uri, eClass);
     }
 
-
     public static <T, M> QueueView<T, M> acquireQueue(String uri, Class<T> typeClass, Class<M> messageClass) {
         return assetTree.acquireQueue(uri, typeClass, messageClass);
     }
-
 
     /**
      * Get or create a TopicPublisher. A Topic Publisher can specify the topic to publish to.

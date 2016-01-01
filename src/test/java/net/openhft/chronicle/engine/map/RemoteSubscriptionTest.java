@@ -45,25 +45,15 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
 
     private static final String NAME = "test";
     private static MapView<String, String> map;
+    private static AtomicReference<Throwable> t = new AtomicReference();
     private final WireType wireType;
     public String connection = "RemoteSubscriptionTest.host.port";
-
-
-    private static AtomicReference<Throwable> t = new AtomicReference();
-
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) Jvm.rethrow(th);
-    }
-
     @NotNull
     @Rule
     public TestName name = new TestName();
     private AssetTree clientAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
-
     public RemoteSubscriptionTest(WireType wireType) {
         this.wireType = wireType;
     }
@@ -74,6 +64,12 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
         list.add(new Object[]{WireType.BINARY});
         list.add(new Object[]{WireType.TEXT});
         return list;
+    }
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
     }
 
     @Before

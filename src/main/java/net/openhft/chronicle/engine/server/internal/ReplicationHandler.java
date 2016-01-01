@@ -42,7 +42,6 @@ public class ReplicationHandler<E> extends AbstractHandler {
             eventName.setLength(0);
             final ValueIn valueIn = inWire.readEventName(eventName);
 
-
             // receives replication events
             if (CoreFields.lastUpdateTime.contentEquals(eventName)) {
                 if (Jvm.isDebug())
@@ -52,7 +51,6 @@ public class ReplicationHandler<E> extends AbstractHandler {
                 replication.setLastModificationTime(id, time);
                 return;
             }
-
 
             // receives replication events
             if (replicationEvent.contentEquals(eventName)) {
@@ -169,7 +167,6 @@ public class ReplicationHandler<E> extends AbstractHandler {
                                     publish1.writeNotReadyDocument(true,
                                             wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
 
-
                                     System.out.println("*****\t\t\t\tSENT : SERVER : replication latency=" +
                                             (System
                                                     .currentTimeMillis() - e.timestamp()) + "ms");
@@ -182,7 +179,6 @@ public class ReplicationHandler<E> extends AbstractHandler {
                             return false;
                         }
                     });
-
 
                 });
             }

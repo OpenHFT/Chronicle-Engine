@@ -36,23 +36,14 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public class TestInsertUpdateChronicleMapView {
 
     private static final String NAME = "test";
-    private final WireType wireType;
-    public String connection = "RemoteSubscriptionTest.host.port";
     @NotNull
 
-
     private static AtomicReference<Throwable> t = new AtomicReference();
-
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) Jvm.rethrow(th);
-    }
-
+    private final WireType wireType;
+    public String connection = "RemoteSubscriptionTest.host.port";
     private AssetTree clientAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
-
     public TestInsertUpdateChronicleMapView(WireType wireType) {
         this.wireType = wireType;
     }
@@ -63,6 +54,12 @@ public class TestInsertUpdateChronicleMapView {
         list.add(new Object[]{WireType.BINARY});
         //  list.add(new Object[]{WireType.TEXT});
         return list;
+    }
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
     }
 
     @Before

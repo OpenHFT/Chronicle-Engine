@@ -36,7 +36,6 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
     WireOutPublisher publisher;
     AssetTree assetTree;
 
-
     /**
      * after writing the tid to the wire
      *
@@ -155,7 +154,6 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
             assert !subscriptionEnded : "we received this message after the " +
                     "subscription has ended " + e;
 
-
             final WriteMarshallable event = p -> {
                 p.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(tid));
                 p.writeNotReadyDocument(false, wire -> wire.write(reply).object(e));
@@ -165,7 +163,6 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
             synchronized (publisher) {
                 publisher.put(key, event);
             }
-
         }
 
         @Override

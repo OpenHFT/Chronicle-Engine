@@ -51,11 +51,10 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
     public static final WireType WIRE_TYPE = WireType.TEXT;
     private static final String NAME = "test";
     private static final String CONNECTION = "host.port.KeySubscriptionTest";
+    private static AtomicReference<Throwable> t = new AtomicReference();
     private AssetTree clientTree;
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
-
-    private static AtomicReference<Throwable> t = new AtomicReference();
 
     @After
     public void afterMethod() {
@@ -101,7 +100,6 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
 
         map.registerKeySubscriber(System.out::println);
     }
-
 
     /**
      * test registerKeySubscriber before doing an operation ont the map

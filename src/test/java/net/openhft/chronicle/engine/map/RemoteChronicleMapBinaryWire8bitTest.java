@@ -49,15 +49,7 @@ import static org.junit.Assert.*;
 
 public class RemoteChronicleMapBinaryWire8bitTest extends JSR166TestCase {
 
-
     private static AtomicReference<Throwable> t = new AtomicReference();
-
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) Jvm.rethrow(th);
-    }
-
     private static int s_port = 12050;
     @NotNull
     private final AssetTree assetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
@@ -68,6 +60,12 @@ public class RemoteChronicleMapBinaryWire8bitTest extends JSR166TestCase {
     @AfterClass
     public static void tearDownClass() {
         TCPRegistry.assertAllServersStopped();
+    }
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
     }
 
     @Before

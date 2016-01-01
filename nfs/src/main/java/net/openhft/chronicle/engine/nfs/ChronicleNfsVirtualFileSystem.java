@@ -101,8 +101,9 @@ public class ChronicleNfsVirtualFileSystem implements VirtualFileSystem {
             //noinspection unchecked
             view.put(path, "");
             return ChronicleNfsEntryInode.aquireINode(view, path);
-        } else
+        } else {
             throw new UnsupportedOperationException("todo type=" + type);
+        }
     }
 
     @NotNull
@@ -170,7 +171,6 @@ public class ChronicleNfsVirtualFileSystem implements VirtualFileSystem {
         } catch (InvalidSubscriberException e) {
             throw Jvm.rethrow(e);
         }
-
     }
 
     @Override
@@ -233,9 +233,9 @@ public class ChronicleNfsVirtualFileSystem implements VirtualFileSystem {
             }
 
             return (int) len;
-        } else
+        } else {
             throw new UnsupportedOperationException();
-
+        }
     }
 
     private boolean canAccess(Inode inode, int mode) {
@@ -255,8 +255,9 @@ public class ChronicleNfsVirtualFileSystem implements VirtualFileSystem {
             final MapView view = asset.getView(MapView.class);
             if (view != null)
                 view.remove(path);
-        } else
+        } else {
             asset.removeChild(path);
+        }
     }
 
     @NotNull
@@ -284,7 +285,6 @@ public class ChronicleNfsVirtualFileSystem implements VirtualFileSystem {
         } else {
             throw new UnsupportedOperationException();
         }
-
     }
 
     @Override

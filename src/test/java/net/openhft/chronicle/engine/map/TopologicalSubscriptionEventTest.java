@@ -57,13 +57,6 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
     private static final String NAME = "test";
 
     private static AtomicReference<Throwable> t = new AtomicReference();
-
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) Jvm.rethrow(th);
-    }
-
     private final boolean isRemote;
     private final WireType wireType;
     @NotNull
@@ -72,7 +65,6 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
     private AssetTree clientAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
-
     public TopologicalSubscriptionEventTest(boolean isRemote, WireType wireType) {
         this.isRemote = isRemote;
         this.wireType = wireType;
@@ -87,6 +79,12 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
         );
     }
 
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
+
     @Before
     public void before() throws IOException {
         serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
@@ -97,8 +95,9 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
             serverEndpoint = new ServerEndpoint("TopologicalSubscriptionEventTest.host.port", serverAssetTree, wireType);
 
             clientAssetTree = new VanillaAssetTree().forRemoteAccess("TopologicalSubscriptionEventTest.host.port", wireType, x -> t.set(x));
-        } else
+        } else {
             clientAssetTree = serverAssetTree;
+        }
 
         YamlLogging.setAll(false);
     }

@@ -27,6 +27,7 @@ public class ManyMapsTest {
 
     public static final String NAME =
             "ManyMapsTest.testConnectToMultipleMapsUsingTheSamePort.host.port";
+    private static AtomicReference<Throwable> t = new AtomicReference();
 
     public static String getKey(String mapName, int counter) {
         return String.format("%s-%s", mapName, counter);
@@ -36,14 +37,11 @@ public class ManyMapsTest {
         return String.format("Val-%s-%s", mapName, counter);
     }
 
-    private static AtomicReference<Throwable> t = new AtomicReference();
-
     @After
     public void afterMethod() {
         final Throwable th = t.getAndSet(null);
         if (th != null) Jvm.rethrow(th);
     }
-
 
     @Test
     @Ignore("Long running test")

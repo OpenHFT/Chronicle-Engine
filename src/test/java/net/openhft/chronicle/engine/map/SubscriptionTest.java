@@ -55,6 +55,7 @@ import static org.junit.Assert.assertEquals;
 @RunWith(value = Parameterized.class)
 public class SubscriptionTest extends ThreadMonitoringTest {
     private static final String NAME = "/test";
+    private static AtomicReference<Throwable> t = new AtomicReference();
     private final boolean isRemote;
     private final WireType wireType;
     @NotNull
@@ -88,14 +89,11 @@ public class SubscriptionTest extends ThreadMonitoringTest {
         YamlLogging.setAll(false);
     }
 
-    private static AtomicReference<Throwable> t = new AtomicReference();
-
     @After
     public void afterMethod() {
         final Throwable th = t.getAndSet(null);
         if (th != null) Jvm.rethrow(th);
     }
-
 
     @Test
     public void testSubscriptionTest() throws IOException, InterruptedException {

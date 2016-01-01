@@ -31,13 +31,6 @@ public class RedisEmulatorTest {
 
     private static AtomicReference<Throwable> t = new AtomicReference();
 
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) Jvm.rethrow(th);
-    }
-
-
     @BeforeClass
     public static void setup() throws IOException{
         System.out.println("Hello");
@@ -66,6 +59,13 @@ public class RedisEmulatorTest {
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
     }
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
+    }
+
     @Before
     public void before(){
         assertEquals("OK", flushdb(myStringHash));

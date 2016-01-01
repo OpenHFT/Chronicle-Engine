@@ -50,14 +50,6 @@ import static org.junit.Assert.*;
 public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
 
     private static AtomicReference<Throwable> t = new AtomicReference();
-
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) Jvm.rethrow(th);
-    }
-
-
     @NotNull
     private final AssetTree assetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
     @NotNull
@@ -69,6 +61,12 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
         YamlLogging.setAll(false);
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
+    }
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) Jvm.rethrow(th);
     }
 
     @Before

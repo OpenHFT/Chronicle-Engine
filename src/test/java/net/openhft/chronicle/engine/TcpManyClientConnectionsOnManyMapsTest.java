@@ -56,11 +56,10 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
     private static final String NAME = "test";
     private static final String CONNECTION = "host.port.TcpManyConnectionsTest";
     private static MapView[] maps = new MapView[MAX];
+    private static AtomicReference<Throwable> t = new AtomicReference();
     private AssetTree[] trees = new AssetTree[MAX];
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
-
-    private static AtomicReference<Throwable> t = new AtomicReference();
 
     @After
     public void afterMethod() {
@@ -81,7 +80,6 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
             trees[i] = new VanillaAssetTree().forRemoteAccess(CONNECTION, WIRE_TYPE, x -> t.set(x));
             maps[i] = trees[i].acquireMap(NAME + i, String.class, String.class);
         }
-
     }
 
     @After
@@ -168,7 +166,6 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
             } catch (ExecutionException e) {
                 e.printStackTrace();
             }
-
         }
 
     }
@@ -207,7 +204,6 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
                 }
             });
         }
-
     }
 
 }
