@@ -83,14 +83,28 @@ public class CMap2EngineReplicatorMap2MapTest {
         map2.put("hello2", "world2");
         map3.put("hello3", "world3");
 
-        iterator1for2.forEach(replicator2::applyReplication);
-        iterator1for3.forEach(replicator3::applyReplication);
 
-        iterator2for1.forEach(replicator1::applyReplication);
-        iterator2for3.forEach(replicator3::applyReplication);
+        while (iterator1for2.hasNext()) {
+            iterator1for2.nextEntry(replicator2::applyReplication);
+        }
+        while (iterator1for3.hasNext()) {
+            iterator1for3.nextEntry(replicator3::applyReplication);
+        }
 
-        iterator3for1.forEach(replicator1::applyReplication);
-        iterator3for2.forEach(replicator2::applyReplication);
+
+        while (iterator2for1.hasNext()) {
+            iterator2for1.nextEntry(replicator1::applyReplication);
+        }
+        while (iterator2for3.hasNext()) {
+            iterator2for3.nextEntry(replicator3::applyReplication);
+        }
+
+        while (iterator3for1.hasNext()) {
+            iterator3for1.nextEntry(replicator1::applyReplication);
+        }
+        while (iterator3for2.hasNext()) {
+            iterator3for2.nextEntry(replicator2::applyReplication);
+        }
 
         for (Map m : new Map[]{map1, map2, map3}) {
             Assert.assertEquals("world1", m.get("hello1"));
@@ -129,22 +143,36 @@ public class CMap2EngineReplicatorMap2MapTest {
                 (replicator2.identifier());
 
         iterator1for2.dirtyEntries(0);
-        iterator1for2.forEach(replicator2::applyReplication);
 
+
+        while (iterator1for2.hasNext()) {
+            iterator1for2.nextEntry(replicator2::applyReplication);
+        }
         iterator1for3.dirtyEntries(0);
-        iterator1for3.forEach(replicator3::applyReplication);
 
+        while (iterator1for3.hasNext()) {
+            iterator1for3.nextEntry(replicator3::applyReplication);
+        }
         iterator2for1.dirtyEntries(0);
-        iterator2for1.forEach(replicator1::applyReplication);
 
+        while (iterator2for1.hasNext()) {
+            iterator2for1.nextEntry(replicator1::applyReplication);
+        }
         iterator2for3.dirtyEntries(0);
-        iterator2for3.forEach(replicator3::applyReplication);
 
+        while (iterator2for3.hasNext()) {
+            iterator2for3.nextEntry(replicator3::applyReplication);
+        }
         iterator3for1.dirtyEntries(0);
-        iterator3for1.forEach(replicator1::applyReplication);
 
+        while (iterator3for1.hasNext()) {
+            iterator3for1.nextEntry(replicator1::applyReplication);
+        }
         iterator3for2.dirtyEntries(0);
-        iterator3for2.forEach(replicator2::applyReplication);
+
+        while (iterator3for2.hasNext()) {
+            iterator3for2.nextEntry(replicator2::applyReplication);
+        }
 
         for (Map m : new Map[]{map1, map2, map3}) {
             Assert.assertEquals("world1", m.get("hello1"));

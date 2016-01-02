@@ -309,9 +309,9 @@ class ReplicationHub extends AbstractStatelessClient {
                 lastUpdateTime = updateTime;
             }
 
-            if (Jvm.isDebug()) {
+            if (Jvm.isDebug() && LOG.isDebugEnabled()) {
                 long delay = System.currentTimeMillis() - e.timestamp();
-                System.out.println("*****\t\t\t\tSENT : CLIENT :replicatedEntry latency=" +
+                LOG.debug("*****\t\t\t\tSENT : CLIENT :replicatedEntry latency=" +
                         delay + "ms");
             }
 

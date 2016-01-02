@@ -54,13 +54,14 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
             // receives replication events
             if (replicationEvent.contentEquals(eventName)) {
-                if (Jvm.isDebug() & LOG.isDebugEnabled())
+                if (Jvm.isDebug() && LOG.isDebugEnabled())
                     LOG.debug("server : received replicationEvent");
                 ReplicationEntry replicatedEntry = valueIn.typedMarshallable();
                 assert replicatedEntry != null;
 
-                System.out.println("*****\t\t\t\t ->  RECEIVED : SERVER : replication latency=" + (System
-                        .currentTimeMillis() - replicatedEntry.timestamp()) + "ms  ");
+                if (Jvm.isDebug() && LOG.isDebugEnabled())
+                    LOG.debug("*****\t\t\t\t ->  RECEIVED : SERVER : replication latency=" + (System
+                            .currentTimeMillis() - replicatedEntry.timestamp()) + "ms  ");
 
                 replication.applyReplication(replicatedEntry);
                 return;

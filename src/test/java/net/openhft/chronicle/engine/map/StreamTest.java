@@ -9,6 +9,7 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
+import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 import org.junit.rules.TestName;
@@ -46,6 +47,7 @@ public class StreamTest extends ThreadMonitoringTest {
     private AssetTree assetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
+
     public StreamTest(boolean isRemote, WireType wireType) {
         this.isRemote = isRemote;
         this.wireType = wireType;
@@ -80,6 +82,8 @@ public class StreamTest extends ThreadMonitoringTest {
         } else {
             assetTree = serverAssetTree;
         }
+
+        YamlLogging.setAll(false);
 
         map = assetTree.acquireMap(NAME, String.class, String.class);
     }

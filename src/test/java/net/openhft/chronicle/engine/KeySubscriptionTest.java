@@ -70,6 +70,7 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
         serverEndpoint = new ServerEndpoint(CONNECTION, serverAssetTree, WIRE_TYPE);
         clientTree = new VanillaAssetTree().forRemoteAccess(CONNECTION, WIRE_TYPE, x -> t.set(x));
 
+        YamlLogging.setAll(false);
     }
 
     @After

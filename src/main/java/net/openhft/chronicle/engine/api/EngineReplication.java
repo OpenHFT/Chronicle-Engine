@@ -48,11 +48,6 @@ public interface EngineReplication extends Replication {
      */
     byte identifier();
 
-    default void forEach(byte remoteIdentifier, @NotNull Consumer<ReplicationEntry> consumer) {
-        final ModificationIterator modificationIterator = acquireModificationIterator(remoteIdentifier);
-        if (modificationIterator != null)
-            modificationIterator.forEach(consumer);
-    }
 
     /**
      * Gets (if it does not exist, creates) an instance of ModificationIterator associated with a
@@ -100,7 +95,7 @@ public interface EngineReplication extends Replication {
      */
     interface ModificationIterator {
 
-        void forEach(@NotNull Consumer<ReplicationEntry> consumer);
+        //  void forEach(@NotNull Consumer<ReplicationEntry> consumer);
 
         boolean hasNext();
 

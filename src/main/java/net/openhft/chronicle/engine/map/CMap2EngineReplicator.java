@@ -49,7 +49,6 @@ import static net.openhft.lang.io.ByteBufferBytes.wrap;
 public class CMap2EngineReplicator implements EngineReplication,
         EngineReplicationLangBytesConsumer {
 
-
     private static final Logger LOG = LoggerFactory.getLogger(CMap2EngineReplicator.class);
 
     static {
@@ -77,7 +76,7 @@ public class CMap2EngineReplicator implements EngineReplication,
     }
 
 
-    private static class KV {
+    private static class KvLangBytes {
 
         private IByteBufferBytes key;
         private IByteBufferBytes value;
@@ -105,14 +104,50 @@ public class CMap2EngineReplicator implements EngineReplication,
         }
 
 
-        private KV() {
+        private KvLangBytes() {
             this.key = wrap(ByteBuffer.allocateDirect(1024).order(ByteOrder.nativeOrder()));
             this.value = wrap(ByteBuffer.allocateDirect(1024).order(ByteOrder.nativeOrder()));
         }
     }
 
 
-    ThreadLocal<KV> daByte = ThreadLocal.withInitial(KV::new);
+    private static class KvBytes {
+
+        private Bytes<Void> key;
+        private Bytes<Void> value;
+
+        private Bytes<Void> key(long size) {
+            try {
+                if (size > key.capacity())
+                    key = NativeBytesStore.nativeStoreWithFixedCapacity(size).bytesForRead();
+                return key;
+            } finally {
+                key.readPosition(0);
+                key.readLimit(size);
+            }
+        }
+
+        private Bytes<Void> value(long size) {
+            try {
+                if (size > value.capacity())
+                    value = NativeBytesStore.nativeStoreWithFixedCapacity(size).bytesForRead();
+                return value;
+            } finally {
+                value.readPosition(0);
+                value.readLimit(size);
+            }
+
+        }
+
+
+        private KvBytes() {
+            this.key = NativeBytesStore.nativeStoreWithFixedCapacity(1024).bytesForRead();
+            this.value = NativeBytesStore.nativeStoreWithFixedCapacity(1024).bytesForRead();
+        }
+    }
+
+
+    private final ThreadLocal<KvLangBytes> kvByte = ThreadLocal.withInitial(KvLangBytes::new);
 
     @NotNull
     private net.openhft.lang.io.Bytes toLangBytes(@NotNull BytesStore b, @NotNull net.openhft.lang.io.Bytes wrap) {
@@ -138,7 +173,7 @@ public class CMap2EngineReplicator implements EngineReplication,
                     final byte remoteIdentifier,
                     final long timestamp) {
 
-        final KV kv = daByte.get();
+        final KvLangBytes kv = kvByte.get();
 
         net.openhft.lang.io.Bytes keyBytes = toLangBytes(key, kv.key(key.readRemaining()));
         net.openhft.lang.io.Bytes valueBytes = toLangBytes(value, kv.value(value.readRemaining()));
@@ -148,7 +183,7 @@ public class CMap2EngineReplicator implements EngineReplication,
 
     private void remove(@NotNull final BytesStore key, final byte remoteIdentifier, final long timestamp) {
 
-        KV kv = daByte.get();
+        KvLangBytes kv = kvByte.get();
         net.openhft.lang.io.Bytes keyBytes = toLangBytes(key, kv.key(key.readRemaining()));
         engineReplicationLang.remove(keyBytes, remoteIdentifier, timestamp);
     }
@@ -179,22 +214,16 @@ public class CMap2EngineReplicator implements EngineReplication,
 
     }
 
+
     @Nullable
     @Override
     public ModificationIterator acquireModificationIterator(final byte remoteIdentifier) {
         final EngineModificationIterator instance = engineReplicationLang
                 .acquireEngineModificationIterator(remoteIdentifier);
 
+        final ThreadLocal<KvBytes> kvBytesThreadLocal = ThreadLocal.withInitial(KvBytes::new);
+
         return new ModificationIterator() {
-            @Override
-            public void forEach(@NotNull Consumer<ReplicationEntry> consumer) {
-                while (hasNext()) {
-                    nextEntry(entry -> {
-                        consumer.accept(entry);
-                        return true;
-                    });
-                }
-            }
 
             public boolean hasNext() {
                 return instance.hasNext();
@@ -207,51 +236,41 @@ public class CMap2EngineReplicator implements EngineReplication,
                 });
             }
 
-
             boolean nextEntry(@NotNull final EntryCallback callback) {
                 return instance.nextEntry((key, value, timestamp,
                                            identifier, isDeleted,
                                            bootStrapTimeStamp) ->
+                {
+                    final KvBytes threadLocal = kvBytesThreadLocal.get();
+                    return callback.onEntry(new VanillaReplicatedEntry(
+                            toKey(key, threadLocal.key(key.remaining())),
+                            toValue(value, threadLocal.value(value.remaining())),
+                            timestamp,
+                            identifier,
+                            isDeleted,
+                            bootStrapTimeStamp,
+                            remoteIdentifier));
+                });
 
-                        callback.onEntry(new VanillaReplicatedEntry(
-                                toKey(key),
-                                toValue(value),
-                                timestamp,
-                                identifier,
-                                isDeleted,
-                                bootStrapTimeStamp,
-                                remoteIdentifier)));
             }
 
-            private Bytes toKey(final @NotNull net.openhft.lang.io.Bytes key) {
-
-
-                NativeBytesStore<Void> byteStore = NativeBytesStore.nativeStoreWithFixedCapacity(key
-                        .remaining());
-
-                int i = (int) key.position();
-                while (key.remaining() > 0) {
-                    byteStore.writeByte(i++, (byte) key.readByte());
-                }
-
-
+            private Bytes toKey(final @NotNull net.openhft.lang.io.Bytes key, final Bytes<Void>
+                    byteStore) {
+                PointerBytesStore result = keyLocal.get();
+                result.set(key.address(), key.capacity());
+                result.copyTo(byteStore);
                 return byteStore.bytesForRead();
             }
 
             @Nullable
-            private Bytes<Void> toValue(final @Nullable net.openhft.lang.io.Bytes value) {
+            private Bytes<Void> toValue(final @Nullable net.openhft.lang.io.Bytes value,
+                                        final Bytes<Void> byteStore) {
                 if (value == null)
                     return null;
 
-                NativeBytesStore<Void> byteStore = NativeBytesStore.nativeStoreWithFixedCapacity(value
-                        .remaining());
-
-                int i = (int) value.position();
-                while (value.remaining() > 0) {
-                    byteStore.writeByte(i++, (byte) value.readByte());
-                }
-
-
+                PointerBytesStore result = valueLocal.get();
+                result.set(value.address(), value.capacity());
+                result.copyTo(byteStore);
                 return byteStore.bytesForRead();
             }
 
@@ -261,7 +280,8 @@ public class CMap2EngineReplicator implements EngineReplication,
             }
 
             @Override
-            public void setModificationNotifier(@NotNull final ModificationNotifier modificationNotifier) {
+            public void setModificationNotifier(
+                    @NotNull final ModificationNotifier modificationNotifier) {
                 instance.setModificationNotifier(modificationNotifier::onChange);
             }
         };
