@@ -109,6 +109,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
                         long lastUpdateTime = 0;
                         boolean hasLogged = false;
                         int count = 0;
+                        long startBufferFullTimeStamp = 0;
 
                         @Override
                         public boolean action() throws InvalidEventHandlerException {
@@ -121,10 +122,21 @@ public class ReplicationHandler<E> extends AbstractHandler {
                                 // given the sending an event to the publish hold the chronicle map lock
                                 // we will send only one at a time
 
-                                if (!publisher.isEmpty())
-                                    return false;
+
+                                if (!publisher.isEmpty()) {
+                                    if (mi.hasNext() && startBufferFullTimeStamp == 0) {
+                                        startBufferFullTimeStamp = System.currentTimeMillis();
+                                        return false;
+                                    }
+                                }
+
 
                                 if (!mi.hasNext()) {
+
+                                    if (startBufferFullTimeStamp != 0) {
+                                        LOG.info("blocked - outbound buffer full=" + startBufferFullTimeStamp + "ms");
+                                        startBufferFullTimeStamp = 0;
+                                    }
 
                                     // because events arrive in a bitset ( aka random ) order ( not necessary in
                                     // time order ) we can only be assured that the latest time of
