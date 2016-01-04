@@ -75,7 +75,8 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
             if (bootstrap.contentEquals(eventName)) {
                 writeData(true, inWire.bytes(), out -> {
-                    System.out.println("server : received bootstrap request");
+                   if (LOG.isDebugEnabled())
+                       LOG.debug("server : received bootstrap request");
 
                     // receive bootstrap
                     final Bootstrap inBootstrap = valueIn.typedMarshallable();
