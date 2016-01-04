@@ -75,8 +75,8 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
             if (bootstrap.contentEquals(eventName)) {
                 writeData(true, inWire.bytes(), out -> {
-                   if (LOG.isDebugEnabled())
-                       LOG.debug("server : received bootstrap request");
+                    if (LOG.isDebugEnabled())
+                        LOG.debug("server : received bootstrap request");
 
                     // receive bootstrap
                     final Bootstrap inBootstrap = valueIn.typedMarshallable();
@@ -172,12 +172,13 @@ public class ReplicationHandler<E> extends AbstractHandler {
                                     publish1.writeNotReadyDocument(true,
                                             wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
 
-
-                                    long delay = System.currentTimeMillis() - e.timestamp();
-                                    if (delay > 60) {
-                                        System.out.print("Snt Srv latency=" + delay + "ms\t");
-                                        if (count++ % 10 == 1)
-                                            System.out.println();
+                                    if (LOG.isDebugEnabled()) {
+                                        long delay = System.currentTimeMillis() - e.timestamp();
+                                        if (delay > 60) {
+                                            LOG.debug("Snt Srv latency=" + delay + "ms\t");
+                                            if (count++ % 10 == 1)
+                                                LOG.debug("");
+                                        }
                                     }
                                     if (publish1.bytes().writePosition() > 100000)
                                         System.out.println(publish1.bytes().toDebugString(128));

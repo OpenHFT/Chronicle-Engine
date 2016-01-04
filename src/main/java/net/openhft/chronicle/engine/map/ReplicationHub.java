@@ -136,7 +136,7 @@ class ReplicationHub extends AbstractStatelessClient {
         hub.subscribe(new AbstractAsyncTemporarySubscription(hub, csp, localIdentifier, "replication " +
                               "onConnected") {
 
-            int count = 0;
+                          int count = 0;
 
                           @Override
                           public void onSubscribe(@NotNull WireOut wireOut) {
@@ -170,11 +170,13 @@ class ReplicationHub extends AbstractStatelessClient {
                                   if (replicationEvent.contentEquals(eventName)) {
                                       final EngineReplication.ReplicationEntry replicatedEntry = valueIn.typedMarshallable();
 
-                                      long delay = System.currentTimeMillis() - replicatedEntry.timestamp();
-                                      if (delay > 100) {
-                                          System.out.print("Rcv Clt latency=" + delay + "ms\t");
-                                          if (count++ % 10 == 0) {
-                                              System.out.println();
+                                      if (LOG.isDebugEnabled()) {
+                                          long delay = System.currentTimeMillis() - replicatedEntry.timestamp();
+                                          if (delay > 100) {
+                                              LOG.debug("Rcv Clt latency=" + delay + "ms\t");
+                                              if (count++ % 10 == 0) {
+                                                  System.out.println();
+                                              }
                                           }
                                       }
 
