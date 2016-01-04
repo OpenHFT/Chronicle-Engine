@@ -143,7 +143,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
                                         hasSentLastUpdateTime = true;
 
                                         if (!hasLogged) {
-                                            System.out.println("received ALL replication the EVENTS for " +
+                                            LOG.info("received ALL replication the EVENTS for " +
                                                     "id=" + id);
                                             hasLogged = true;
                                         }
