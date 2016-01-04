@@ -54,7 +54,6 @@ class GenericWireAdapter<K, V> implements WireAdapter<K, V> {
                     x.read(() -> "key").object(usingKey.get(), CharSequence.class) :
                     x.read(() -> "key").object(kClass));
 
-
             final V value = (V) ((vClass == CharSequence.class) ?
                     x.read(() -> "value").object(usingValue.get(), CharSequence.class) :
                     x.read(() -> "value").object(vClass));
