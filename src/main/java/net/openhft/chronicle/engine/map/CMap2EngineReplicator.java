@@ -214,14 +214,13 @@ public class CMap2EngineReplicator implements EngineReplication,
 
     }
 
+    final ThreadLocal<KvBytes> kvBytesThreadLocal = ThreadLocal.withInitial(KvBytes::new);
 
     @Nullable
     @Override
     public ModificationIterator acquireModificationIterator(final byte remoteIdentifier) {
         final EngineModificationIterator instance = engineReplicationLang
                 .acquireEngineModificationIterator(remoteIdentifier);
-
-        final ThreadLocal<KvBytes> kvBytesThreadLocal = ThreadLocal.withInitial(KvBytes::new);
 
         return new ModificationIterator() {
 
