@@ -39,6 +39,9 @@ class GenericWireAdapter<K, V> implements WireAdapter<K, V> {
             = (v, e) -> v.marshallable(w -> w.write(() -> "key").object(e.getKey())
             .write(() -> "value").object(e.getValue()));
 
+    private final ThreadLocal<CharSequence> usingKey = ThreadLocal.withInitial(StringBuilder::new);
+    private final ThreadLocal<CharSequence> usingValue = ThreadLocal.withInitial(StringBuilder::new);
+
     GenericWireAdapter(@NotNull final Class<K> kClass, @NotNull final Class<V> vClass) {
 
         wireToKey = (valueIn) -> valueIn.object(kClass);
@@ -46,8 +49,14 @@ class GenericWireAdapter<K, V> implements WireAdapter<K, V> {
 
         wireToEntry = valueIn -> valueIn.applyToMarshallable(x -> {
 
-            final K key = x.read(() -> "key").object(kClass);
-            final V value = x.read(() -> "value").object(vClass);
+            final K key = (K) ((kClass == CharSequence.class) ?
+                    x.read(() -> "key").object(usingKey.get(), CharSequence.class) :
+                    x.read(() -> "key").object(kClass));
+
+
+            final V value = (V) ((kClass == CharSequence.class) ?
+                    x.read(() -> "value").object(usingValue.get(), CharSequence.class) :
+                    x.read(() -> "value").object(kClass));
 
             return new Entry<K, V>() {
                 @Nullable
