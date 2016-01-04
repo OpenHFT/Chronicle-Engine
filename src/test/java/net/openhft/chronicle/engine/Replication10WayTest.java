@@ -58,7 +58,7 @@ public class Replication10WayTest {
     public static final String CLUSTER_NAME = "max-cluster";
     public static final WireType WIRE_TYPE = WireType.TEXT;
     public static final String NAME = "/ChMaps/test";
-    private static AtomicReference<Throwable> t = new AtomicReference();
+    private static AtomicReference<Throwable> t = new AtomicReference<>();
     public ServerEndpoint[] serverEndpoints = new ServerEndpoint[MAX];
     private AssetTree trees[] = new AssetTree[MAX];
 
