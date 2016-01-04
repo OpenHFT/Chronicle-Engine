@@ -172,16 +172,16 @@ public class ReplicationHandler<E> extends AbstractHandler {
                                     publish1.writeNotReadyDocument(true,
                                             wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
 
-                                    if (LOG.isDebugEnabled()) {
+                                    if (LOG.isInfoEnabled()) {
                                         long delay = System.currentTimeMillis() - e.timestamp();
                                         if (delay > 60) {
-                                            LOG.debug("Snt Srv latency=" + delay + "ms\t");
+                                            LOG.info("Snt Srv latency=" + delay + "ms\t");
                                             if (count++ % 10 == 1)
-                                                LOG.debug("");
+                                                LOG.info("");
                                         }
                                     }
-                                    if (publish1.bytes().writePosition() > 100000)
-                                        System.out.println(publish1.bytes().toDebugString(128));
+                                    if (publish1.bytes().writePosition() > 100000 && LOG.isDebugEnabled())
+                                        LOG.debug(publish1.bytes().toDebugString(128));
                                     publish1.writeNotReadyDocument(false,
                                             wire -> wire.writeEventName(replicationEvent).typedMarshallable(e));
 

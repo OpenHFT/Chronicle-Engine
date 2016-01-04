@@ -170,12 +170,12 @@ class ReplicationHub extends AbstractStatelessClient {
                                   if (replicationEvent.contentEquals(eventName)) {
                                       final EngineReplication.ReplicationEntry replicatedEntry = valueIn.typedMarshallable();
 
-                                      if (LOG.isDebugEnabled()) {
+                                      if (LOG.isInfoEnabled()) {
                                           long delay = System.currentTimeMillis() - replicatedEntry.timestamp();
                                           if (delay > 100) {
-                                              LOG.debug("Rcv Clt latency=" + delay + "ms\t");
+                                              LOG.info("Rcv Clt latency=" + delay + "ms\t");
                                               if (count++ % 10 == 0) {
-                                                  System.out.println();
+                                                  LOG.info("");
                                               }
                                           }
                                       }
