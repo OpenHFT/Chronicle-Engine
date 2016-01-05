@@ -21,7 +21,6 @@ import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -41,7 +40,7 @@ import java.util.function.Function;
 public class RoundTripTest {
     public static final WireType WIRE_TYPE = WireType.BINARY;
     public static final int ENTRIES = 50;
-    public static final int TIMES = 100;
+    public static final int TIMES = 10000;
     public static final String basePath = OS.TARGET + '/' + System.getProperty("server", "one");
     public static final String CLUSTER = System.getProperty("cluster", "clusterFive");
     static final int VALUE_SIZE = 2 << 20;
@@ -55,9 +54,10 @@ public class RoundTripTest {
 
     private static String CONNECTION_1 = "CONNECTION_1";
     private static String CONNECTION_2 = "CONNECTION_2";
+    private static String CONNECTION_3 = "CONNECTION_3";
 
     @Test
-    @Ignore("long running test")
+
     public void test() throws IOException, InterruptedException {
         System.out.println("Using cluster " + CLUSTER + " basePath: " + basePath);
         YamlLogging.setAll(false);
@@ -67,16 +67,20 @@ public class RoundTripTest {
 
         TCPRegistry.createServerSocketChannelFor(CONNECTION_1);
         TCPRegistry.createServerSocketChannelFor(CONNECTION_2);
+        TCPRegistry.createServerSocketChannelFor(CONNECTION_3);
 
         final List<HostDetails> hostDetails = new ArrayList<>();
         hostDetails.add(new HostDetails(1, 128 << 20, CONNECTION_1, 5_000));
         hostDetails.add(new HostDetails(2, 128 << 20, CONNECTION_2, 5_000));
+        hostDetails.add(new HostDetails(3, 128 << 20, CONNECTION_3, 5_000));
 
         AssetTree serverAssetTree1 = create(1, WIRE_TYPE.BINARY, hostDetails);
         AssetTree serverAssetTree2 = create(2, WIRE_TYPE.BINARY, hostDetails);
+        AssetTree serverAssetTree3 = create(3, WIRE_TYPE.BINARY, hostDetails);
 
         ServerEndpoint serverEndpoint1 = new ServerEndpoint(CONNECTION_1, serverAssetTree1, WIRE_TYPE);
         ServerEndpoint serverEndpoint2 = new ServerEndpoint(CONNECTION_2, serverAssetTree2, WIRE_TYPE);
+        ServerEndpoint serverEndpoint3 = new ServerEndpoint(CONNECTION_3, serverAssetTree3, WIRE_TYPE);
 
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
         ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
@@ -88,12 +92,15 @@ public class RoundTripTest {
             // configure them
             serverAssetTree1.acquireMap(NAME, String.class, String.class).size();
             serverAssetTree2.acquireMap(NAME, String.class, String.class).size();
+            serverAssetTree3.acquireMap(NAME, String.class, String.class).size();
 
             final ConcurrentMap<CharSequence, CharSequence> map1 = serverAssetTree1.acquireMap(NAME, CharSequence.class, CharSequence.class);
             final ConcurrentMap<CharSequence, CharSequence> map2 = serverAssetTree2.acquireMap(NAME, CharSequence.class, CharSequence.class);
+            final ConcurrentMap<CharSequence, CharSequence> map3 = serverAssetTree3.acquireMap(NAME, CharSequence.class, CharSequence.class);
 
             map1.size();
             map2.size();
+            map3.size();
 
             YamlLogging.setAll(false);
 
@@ -105,15 +112,15 @@ public class RoundTripTest {
             VanillaAssetTree treeC1 = new VanillaAssetTree("tree1")
                     .forRemoteAccess(CONNECTION_1, WIRE_TYPE, Throwable::printStackTrace);
 
+            VanillaAssetTree treeC3 = new VanillaAssetTree("tree1")
+                    .forRemoteAccess(CONNECTION_3, WIRE_TYPE, Throwable::printStackTrace);
             AtomicReference<CountDownLatch> latchRef = new AtomicReference<>();
 
-            treeC1.registerSubscriber(NAME, MapEvent.class, z -> {
+            treeC3.registerSubscriber(NAME, MapEvent.class, z -> {
                 latchRef.get().countDown();
             });
 
-            VanillaAssetTree treeC2 = new VanillaAssetTree("tree1")
-                    .forRemoteAccess(CONNECTION_2, WIRE_TYPE, Throwable::printStackTrace);
-            final ConcurrentMap<CharSequence, CharSequence> mapC2 = treeC2.acquireMap(NAME, CharSequence.class, CharSequence
+            final ConcurrentMap<CharSequence, CharSequence> mapC1 = treeC1.acquireMap(NAME, CharSequence.class, CharSequence
                     .class);
 
             long start = System.currentTimeMillis();
@@ -125,16 +132,16 @@ public class RoundTripTest {
                 long timeTakenI = System.currentTimeMillis();
                 latchRef.set(new CountDownLatch(ENTRIES));
                 for (int i = 0; i < ENTRIES; i++) {
-                    mapC2.put("" + i, generateValue('X', VALUE_SIZE));
+                    mapC1.put("" + i, generateValue('X', VALUE_SIZE));
                 }
                 latchRef.get().await();
 
-                final long timeTakenItteration = System.currentTimeMillis() -
+                final long timeTakenIteration = System.currentTimeMillis() -
                         timeTakenI;
 
-                max = Math.max(max, timeTakenItteration);
-                min = Math.min(min, timeTakenItteration);
-                System.out.println(" - round trip latency=" + timeTakenItteration + "ms");
+                max = Math.max(max, timeTakenIteration);
+                min = Math.min(min, timeTakenIteration);
+                System.out.println(" - round trip latency=" + timeTakenIteration + "ms");
             }
 
 
@@ -150,6 +157,7 @@ public class RoundTripTest {
         } finally {
             serverEndpoint1.close();
             serverEndpoint2.close();
+            serverEndpoint3.close();
         }
 
     }
