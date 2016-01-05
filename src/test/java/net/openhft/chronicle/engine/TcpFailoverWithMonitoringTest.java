@@ -94,7 +94,7 @@ public class TcpFailoverWithMonitoringTest {
         serverAssetTree1 = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
         serverAssetTree2 = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
 
-        TCPRegistry.createServerSocketChannelFor(CONNECTION_1);
+          TCPRegistry.createServerSocketChannelFor(CONNECTION_1);
         TCPRegistry.createServerSocketChannelFor(CONNECTION_2);
 
         connection1 = TCPRegistry.acquireServerSocketChannel(CONNECTION_1);

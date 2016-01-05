@@ -32,7 +32,18 @@ import java.util.concurrent.ConcurrentSkipListMap;
  * Created by peter.lawrey on 17/06/2015.
  */
 public class Clusters implements Marshallable, Closeable {
-    private final Map<String, Cluster> clusterMap = new ConcurrentSkipListMap<>();
+    private final Map<String, Cluster> clusterMap;
+
+
+    public Clusters() {
+        this.clusterMap = new ConcurrentSkipListMap<>();
+    }
+
+
+    public Clusters(Map<String, Cluster> clusterMap) {
+        this.clusterMap = clusterMap;
+    }
+
 
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
