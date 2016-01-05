@@ -40,10 +40,10 @@ import java.util.function.Function;
 public class RoundTripTest {
     public static final WireType WIRE_TYPE = WireType.BINARY;
     public static final int ENTRIES = 50;
-    public static final int TIMES = 100;
+    public static final int TIMES = 1_000;
     public static final String basePath = OS.TARGET + '/' + System.getProperty("server", "one");
     public static final String CLUSTER = System.getProperty("cluster", "clusterFive");
-    static final int VALUE_SIZE = 1 << 20;
+    static final int VALUE_SIZE = 2 << 20;
     public static final String SIMPLE_NAME = "/ChMaps/test1";
     public static final String NAME = SIMPLE_NAME +
             "?entries=" + ENTRIES * 2 +
