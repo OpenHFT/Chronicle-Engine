@@ -112,15 +112,15 @@ public class RoundTripTest {
             VanillaAssetTree treeC1 = new VanillaAssetTree("tree1")
                     .forRemoteAccess(CONNECTION_1, WIRE_TYPE, Throwable::printStackTrace);
 
+            VanillaAssetTree treeC3 = new VanillaAssetTree("tree1")
+                    .forRemoteAccess(CONNECTION_3, WIRE_TYPE, Throwable::printStackTrace);
             AtomicReference<CountDownLatch> latchRef = new AtomicReference<>();
 
-            treeC1.registerSubscriber(NAME, MapEvent.class, z -> {
+            treeC3.registerSubscriber(NAME, MapEvent.class, z -> {
                 latchRef.get().countDown();
             });
 
-            VanillaAssetTree treeC3 = new VanillaAssetTree("tree1")
-                    .forRemoteAccess(CONNECTION_3, WIRE_TYPE, Throwable::printStackTrace);
-            final ConcurrentMap<CharSequence, CharSequence> mapC2 = treeC3.acquireMap(NAME, CharSequence.class, CharSequence
+            final ConcurrentMap<CharSequence, CharSequence> mapC1 = treeC1.acquireMap(NAME, CharSequence.class, CharSequence
                     .class);
 
             long start = System.currentTimeMillis();
@@ -132,16 +132,16 @@ public class RoundTripTest {
                 long timeTakenI = System.currentTimeMillis();
                 latchRef.set(new CountDownLatch(ENTRIES));
                 for (int i = 0; i < ENTRIES; i++) {
-                    mapC2.put("" + i, generateValue('X', VALUE_SIZE));
+                    mapC1.put("" + i, generateValue('X', VALUE_SIZE));
                 }
                 latchRef.get().await();
 
-                final long timeTakenItteration = System.currentTimeMillis() -
+                final long timeTakenIteration = System.currentTimeMillis() -
                         timeTakenI;
 
-                max = Math.max(max, timeTakenItteration);
-                min = Math.min(min, timeTakenItteration);
-                System.out.println(" - round trip latency=" + timeTakenItteration + "ms");
+                max = Math.max(max, timeTakenIteration);
+                min = Math.min(min, timeTakenIteration);
+                System.out.println(" - round trip latency=" + timeTakenIteration + "ms");
             }
 
 
