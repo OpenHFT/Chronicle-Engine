@@ -20,6 +20,7 @@ import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -37,15 +38,16 @@ import java.util.function.Function;
 
 public class RoundTripTest {
     public static final WireType WIRE_TYPE = WireType.BINARY;
-    public static final int entries = 50;
+    public static final int ENTRIES = 50;
     public static final String basePath = OS.TARGET + '/' + System.getProperty("server", "one");
     public static final String CLUSTER = System.getProperty("cluster", "clusterFive");
     static final int VALUE_SIZE = 1 << 20;
     public static final String SIMPLE_NAME = "/ChMaps/test1";
     public static final String NAME = SIMPLE_NAME +
-            "?entries=" + entries +
+            "?entries=" + ENTRIES * 2 +
             "&putReturnsNull=true" +
             "&averageValueSize=" + VALUE_SIZE;
+    public static final int COUNT = 50;
 
     public static ServerEndpoint serverEndpoint;
 
@@ -95,15 +97,14 @@ public class RoundTripTest {
             ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
             ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
 
-            CountDownLatch l = new CountDownLatch(1);
+            CountDownLatch l = new CountDownLatch(COUNT);
 
             VanillaAssetTree treeC1 = new VanillaAssetTree("tree1")
                     .forRemoteAccess(CONNECTION_1, WIRE_TYPE, Throwable::printStackTrace);
 
-            long start = System.currentTimeMillis();
 
             treeC1.registerSubscriber(NAME, MapEvent.class, z -> {
-                System.out.println(z);
+                //  System.out.println(z);
                 l.countDown();
             });
 
@@ -111,10 +112,18 @@ public class RoundTripTest {
                     .forRemoteAccess(CONNECTION_2, WIRE_TYPE, Throwable::printStackTrace);
             final ConcurrentMap<String, String> mapC2 = treeC2.acquireMap(NAME, String.class, String.class);
 
-            mapC2.put("hello", "world");
+            long start = System.currentTimeMillis();
+
+            for (int i = 0; i < COUNT; i++) {
+                mapC2.put("" + i, generateValue('X', VALUE_SIZE));
+            }
+
             l.await();
 
-            System.out.println("round trip latency=" + (System.currentTimeMillis() - start) + "ms");
+            long timeTaken = System.currentTimeMillis() - start;
+            System.out.println("round trip latency=" + timeTaken + "ms");
+
+            Assert.assertTrue(timeTaken <= 1000);
 
         } finally {
             serverEndpoint1.close();
@@ -160,5 +169,13 @@ public class RoundTripTest {
     public static String getKey(int i) {
         return "" + i;
     }
+
+
+    public static String generateValue(char c, int size) {
+        char[] chars = new char[size];
+        Arrays.fill(chars, c);
+        return new String(chars);
+    }
+
 }
 
