@@ -21,6 +21,7 @@ import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -56,6 +57,7 @@ public class RoundTripTest {
     private static String CONNECTION_2 = "CONNECTION_2";
 
     @Test
+    @Ignore("long running test")
     public void test() throws IOException, InterruptedException {
         System.out.println("Using cluster " + CLUSTER + " basePath: " + basePath);
         YamlLogging.setAll(false);
