@@ -64,6 +64,16 @@ public class HostDetails implements Marshallable, Closeable {
                 .write(() -> "timeoutMs").int32(timeoutMs);
     }
 
+    public HostDetails() {
+    }
+
+    public HostDetails(int hostId, int tcpBufferSize, String connectUri, int timeoutMs) {
+        this.hostId = hostId;
+        this.tcpBufferSize = tcpBufferSize;
+        this.connectUri = connectUri;
+        this.timeoutMs = timeoutMs;
+    }
+
     /**
      * @param asset     a point in the asset tree, used to fine the ClientConnectionMonitor
      * @param eventLoop used to process events

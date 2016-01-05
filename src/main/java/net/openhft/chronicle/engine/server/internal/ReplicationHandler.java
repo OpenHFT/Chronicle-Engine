@@ -123,7 +123,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
                                 // we will send only one at a time
 
 
-                                if (!publisher.isEmpty()) {
+                                if (!publisher.canTakeMoreData()) {
                                     if (mi.hasNext() && startBufferFullTimeStamp == 0) {
                                         startBufferFullTimeStamp = System.currentTimeMillis();
                                         return false;
@@ -134,7 +134,9 @@ public class ReplicationHandler<E> extends AbstractHandler {
                                 if (!mi.hasNext()) {
 
                                     if (startBufferFullTimeStamp != 0) {
-                                        LOG.info("blocked - outbound buffer full=" + startBufferFullTimeStamp + "ms");
+                                        long timetaken = System.currentTimeMillis() - startBufferFullTimeStamp;
+                                        if (timetaken > 100)
+                                            LOG.info("blocked - outbound buffer full=" + timetaken + "ms");
                                         startBufferFullTimeStamp = 0;
                                     }
 
