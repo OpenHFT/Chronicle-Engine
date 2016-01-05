@@ -123,7 +123,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
                                 // we will send only one at a time
 
 
-                                if (!publisher.isEmpty()) {
+                                if (!publisher.canTakeMoreData()) {
                                     if (mi.hasNext() && startBufferFullTimeStamp == 0) {
                                         startBufferFullTimeStamp = System.currentTimeMillis();
                                         return false;
