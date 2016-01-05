@@ -30,6 +30,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 /**
@@ -39,6 +40,7 @@ import java.util.function.Function;
 public class RoundTripTest {
     public static final WireType WIRE_TYPE = WireType.BINARY;
     public static final int ENTRIES = 50;
+    public static final int TIMES = 100;
     public static final String basePath = OS.TARGET + '/' + System.getProperty("server", "one");
     public static final String CLUSTER = System.getProperty("cluster", "clusterFive");
     static final int VALUE_SIZE = 1 << 20;
@@ -47,7 +49,6 @@ public class RoundTripTest {
             "?entries=" + ENTRIES * 2 +
             "&putReturnsNull=true" +
             "&averageValueSize=" + VALUE_SIZE;
-    public static final int COUNT = 50;
 
     public static ServerEndpoint serverEndpoint;
 
@@ -86,8 +87,8 @@ public class RoundTripTest {
             serverAssetTree1.acquireMap(NAME, String.class, String.class).size();
             serverAssetTree2.acquireMap(NAME, String.class, String.class).size();
 
-            final ConcurrentMap<String, String> map1 = serverAssetTree1.acquireMap(NAME, String.class, String.class);
-            final ConcurrentMap<String, String> map2 = serverAssetTree2.acquireMap(NAME, String.class, String.class);
+            final ConcurrentMap<CharSequence, CharSequence> map1 = serverAssetTree1.acquireMap(NAME, CharSequence.class, CharSequence.class);
+            final ConcurrentMap<CharSequence, CharSequence> map2 = serverAssetTree2.acquireMap(NAME, CharSequence.class, CharSequence.class);
 
             map1.size();
             map2.size();
@@ -97,33 +98,52 @@ public class RoundTripTest {
             ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
             ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
 
-            CountDownLatch l = new CountDownLatch(COUNT);
+            CountDownLatch l = new CountDownLatch(ENTRIES * TIMES);
 
             VanillaAssetTree treeC1 = new VanillaAssetTree("tree1")
                     .forRemoteAccess(CONNECTION_1, WIRE_TYPE, Throwable::printStackTrace);
 
+            AtomicReference<CountDownLatch> latchRef = new AtomicReference<>();
 
             treeC1.registerSubscriber(NAME, MapEvent.class, z -> {
-                //  System.out.println(z);
-                l.countDown();
+                latchRef.get().countDown();
             });
 
             VanillaAssetTree treeC2 = new VanillaAssetTree("tree1")
                     .forRemoteAccess(CONNECTION_2, WIRE_TYPE, Throwable::printStackTrace);
-            final ConcurrentMap<String, String> mapC2 = treeC2.acquireMap(NAME, String.class, String.class);
+            final ConcurrentMap<CharSequence, CharSequence> mapC2 = treeC2.acquireMap(NAME, CharSequence.class, CharSequence
+                    .class);
 
             long start = System.currentTimeMillis();
 
-            for (int i = 0; i < COUNT; i++) {
-                mapC2.put("" + i, generateValue('X', VALUE_SIZE));
+            long min = Long.MAX_VALUE;
+            long max = Long.MIN_VALUE;
+
+            for (int j = 0; j < TIMES; j++) {
+                long timeTakenI = System.currentTimeMillis();
+                latchRef.set(new CountDownLatch(ENTRIES));
+                for (int i = 0; i < ENTRIES; i++) {
+                    mapC2.put("" + i, generateValue('X', VALUE_SIZE));
+                }
+                latchRef.get().await();
+
+                final long timeTakenItteration = System.currentTimeMillis() -
+                        timeTakenI;
+
+                max = Math.max(max, timeTakenItteration);
+                min = Math.min(min, timeTakenItteration);
+                System.out.println(" - round trip latency=" + timeTakenItteration + "ms");
             }
 
-            l.await();
 
             long timeTaken = System.currentTimeMillis() - start;
-            System.out.println("round trip latency=" + timeTaken + "ms");
+            final double target = 1000 * TIMES;
+            System.out.println("TOTAL round trip latency=" + timeTaken + "ms (target = " +
+                    (int) target + "ms) " +
+                    "for " + TIMES + "  times. Arg=" + (timeTaken / TIMES) + ", max=" + max + ", " +
+                    "min=" + min);
 
-            Assert.assertTrue(timeTaken <= 1000);
+            Assert.assertTrue(timeTaken <= target);
 
         } finally {
             serverEndpoint1.close();
@@ -137,7 +157,7 @@ public class RoundTripTest {
     static AssetTree create(final int hostId, Function<Bytes, Wire> writeType, final List<HostDetails> hostDetails) {
 
         AssetTree tree = new VanillaAssetTree((byte) hostId)
-                .forTesting(t -> t.printStackTrace());
+                .forTesting(Throwable::printStackTrace);
 
         Map<String, HostDetails> hostDetailsMap = new ConcurrentSkipListMap<>();
 
