@@ -130,7 +130,6 @@ public class ReplicationHandler<E> extends AbstractHandler {
                                     }
                                 }
 
-
                                 if (!mi.hasNext()) {
 
                                     if (startBufferFullTimeStamp != 0) {

@@ -39,7 +39,7 @@ import java.util.function.Function;
 
 public class RoundTripTest {
     public static final WireType WIRE_TYPE = WireType.BINARY;
-    public static final int ENTRIES = 1;
+    public static final int ENTRIES = 2;
     public static final int TIMES = 10000;
     public static final String basePath = OS.TARGET + '/' + System.getProperty("server", "one");
     public static final String CLUSTER = System.getProperty("cluster", "clusterFive");
