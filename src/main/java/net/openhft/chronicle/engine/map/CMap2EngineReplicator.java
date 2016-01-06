@@ -29,18 +29,16 @@ import net.openhft.chronicle.map.EngineReplicationLangBytes;
 import net.openhft.chronicle.map.EngineReplicationLangBytes.EngineModificationIterator;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wires;
-import net.openhft.lang.io.IByteBufferBytes;
+import net.openhft.lang.io.NativeBytes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.function.Consumer;
 
 import static java.lang.ThreadLocal.withInitial;
-import static net.openhft.lang.io.ByteBufferBytes.wrap;
 
 /**
  * Created by Rob Austin
@@ -78,22 +76,9 @@ public class CMap2EngineReplicator implements EngineReplication,
     }
 
     @NotNull
-    private net.openhft.lang.io.Bytes toLangBytes(@NotNull BytesStore b, @NotNull net.openhft.lang.io.Bytes wrap) {
-
-        int pos = (int) b.readPosition();
-
-        while (wrap.remaining() > 7) {
-            wrap.writeLong(b.readLong(pos));
-            pos += 8;
-        }
-
-        while (wrap.remaining() > 0) {
-            wrap.writeByte(b.readByte(pos));
-            pos++;
-        }
-
-        wrap.flip();
-        return wrap;
+    private net.openhft.lang.io.Bytes toLangBytes(@NotNull BytesStore b, @NotNull net.openhft.lang.io.NativeBytes lb) {
+        lb.setStartAndCapacityAddress(b.address(b.start()), b.address(b.readLimit()));
+        return lb;
     }
 
     public void put(@NotNull final BytesStore key, @NotNull final BytesStore value,
@@ -241,36 +226,22 @@ public class CMap2EngineReplicator implements EngineReplication,
                 '}';
     }
 
-    private static class KvLangBytes {
+    static class KvLangBytes {
 
-        private IByteBufferBytes key;
-        private IByteBufferBytes value;
+        private final NativeBytes key;
+        private final NativeBytes value;
 
-        private KvLangBytes() {
-            this.key = wrap(ByteBuffer.allocateDirect(1024).order(ByteOrder.nativeOrder()));
-            this.value = wrap(ByteBuffer.allocateDirect(1024).order(ByteOrder.nativeOrder()));
+        KvLangBytes() {
+            this.key = NativeBytes.empty();
+            this.value = NativeBytes.empty();
         }
 
-        private IByteBufferBytes key(long size) {
-            try {
-                if (size > key.capacity())
-                    key = wrap(ByteBuffer.allocateDirect((int) size).order(ByteOrder.nativeOrder()));
+        NativeBytes key(long size) {
                 return key;
-            } finally {
-                key.position(0);
-                key.limit(size);
-            }
         }
 
-        private IByteBufferBytes value(long size) {
-            try {
-                if (size > value.capacity())
-                    value = wrap(ByteBuffer.allocateDirect((int) size).order(ByteOrder.nativeOrder()));
+        NativeBytes value(long size) {
                 return value;
-            } finally {
-                value.position(0);
-                value.limit(size);
-            }
         }
     }
 
