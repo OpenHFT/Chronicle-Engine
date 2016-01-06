@@ -18,7 +18,6 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
-import net.openhft.chronicle.bytes.NativeBytesStore;
 import net.openhft.chronicle.bytes.PointerBytesStore;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.api.EngineReplication;
@@ -56,15 +55,18 @@ public class CMap2EngineReplicator implements EngineReplication,
         ClassAliasPool.CLASS_ALIASES.addAlias(Bootstrap.class);
     }
 
+    final ThreadLocal<KvBytes> kvBytesThreadLocal = ThreadLocal.withInitial(KvBytes::new);
     private final RequestContext context;
     private final ThreadLocal<PointerBytesStore> keyLocal = withInitial(PointerBytesStore::new);
     private final ThreadLocal<PointerBytesStore> valueLocal = withInitial(PointerBytesStore::new);
+    private final ThreadLocal<KvLangBytes> kvByte = ThreadLocal.withInitial(KvLangBytes::new);
     private EngineReplicationLangBytes engineReplicationLang;
 
     public CMap2EngineReplicator(RequestContext requestContext, @NotNull Asset asset) {
         this(requestContext);
         asset.addView(EngineReplicationLangBytesConsumer.class, this);
     }
+
 
     public CMap2EngineReplicator(final RequestContext context) {
         this.context = context;
@@ -74,80 +76,6 @@ public class CMap2EngineReplicator implements EngineReplication,
     public void set(@NotNull final EngineReplicationLangBytes engineReplicationLangBytes) {
         this.engineReplicationLang = engineReplicationLangBytes;
     }
-
-
-    private static class KvLangBytes {
-
-        private IByteBufferBytes key;
-        private IByteBufferBytes value;
-
-        private IByteBufferBytes key(long size) {
-            try {
-                if (size > key.capacity())
-                    key = wrap(ByteBuffer.allocateDirect((int) size).order(ByteOrder.nativeOrder()));
-                return key;
-            } finally {
-                key.position(0);
-                key.limit(size);
-            }
-        }
-
-        private IByteBufferBytes value(long size) {
-            try {
-                if (size > value.capacity())
-                    value = wrap(ByteBuffer.allocateDirect((int) size).order(ByteOrder.nativeOrder()));
-                return value;
-            } finally {
-                value.position(0);
-                value.limit(size);
-            }
-        }
-
-
-        private KvLangBytes() {
-            this.key = wrap(ByteBuffer.allocateDirect(1024).order(ByteOrder.nativeOrder()));
-            this.value = wrap(ByteBuffer.allocateDirect(1024).order(ByteOrder.nativeOrder()));
-        }
-    }
-
-
-    private static class KvBytes {
-
-        private Bytes<Void> key;
-        private Bytes<Void> value;
-
-        private Bytes<Void> key(long size) {
-            try {
-                if (size > key.capacity())
-                    key = NativeBytesStore.nativeStoreWithFixedCapacity(size).bytesForRead();
-                return key;
-            } finally {
-                key.readPosition(0);
-                key.readLimit(size);
-            }
-        }
-
-        private Bytes<Void> value(long size) {
-            try {
-                if (size > value.capacity())
-                    value = NativeBytesStore.nativeStoreWithFixedCapacity(size).bytesForRead();
-                return value;
-            } finally {
-                value.readPosition(0);
-                value.readLimit(size);
-            }
-
-        }
-
-
-        private KvBytes() {
-            this.key = NativeBytesStore.nativeStoreWithFixedCapacity(1024).bytesForRead();
-            this.value = NativeBytesStore.nativeStoreWithFixedCapacity(1024).bytesForRead();
-        }
-    }
-
-
-    private final ThreadLocal<KvLangBytes> kvByte = ThreadLocal.withInitial(KvLangBytes::new);
 
     @NotNull
     private net.openhft.lang.io.Bytes toLangBytes(@NotNull BytesStore b, @NotNull net.openhft.lang.io.Bytes wrap) {
@@ -167,7 +95,6 @@ public class CMap2EngineReplicator implements EngineReplication,
         wrap.flip();
         return wrap;
     }
-
 
     public void put(@NotNull final BytesStore key, @NotNull final BytesStore value,
                     final byte remoteIdentifier,
@@ -214,8 +141,6 @@ public class CMap2EngineReplicator implements EngineReplication,
 
     }
 
-    final ThreadLocal<KvBytes> kvBytesThreadLocal = ThreadLocal.withInitial(KvBytes::new);
-
     @Nullable
     @Override
     public ModificationIterator acquireModificationIterator(final byte remoteIdentifier) {
@@ -241,36 +166,33 @@ public class CMap2EngineReplicator implements EngineReplication,
                                            bootStrapTimeStamp) ->
                 {
                     final KvBytes threadLocal = kvBytesThreadLocal.get();
-                    return callback.onEntry(new VanillaReplicatedEntry(
+                    VanillaReplicatedEntry entry = new VanillaReplicatedEntry(
                             toKey(key, threadLocal.key(key.remaining())),
                             toValue(value, threadLocal.value(value.remaining())),
                             timestamp,
                             identifier,
                             isDeleted,
                             bootStrapTimeStamp,
-                            remoteIdentifier));
+                            remoteIdentifier);
+                    return callback.onEntry(entry);
                 });
 
             }
 
-            private Bytes toKey(final @NotNull net.openhft.lang.io.Bytes key, final Bytes<Void>
-                    byteStore) {
-                PointerBytesStore result = keyLocal.get();
-                result.set(key.address(), key.capacity());
-                result.copyTo(byteStore);
-                return byteStore.bytesForRead();
+            private PointerBytesStore toKey(final @NotNull net.openhft.lang.io.Bytes key,
+                                            final PointerBytesStore pbs) {
+                pbs.set(key.address(), key.capacity());
+                return pbs;
             }
 
             @Nullable
-            private Bytes<Void> toValue(final @Nullable net.openhft.lang.io.Bytes value,
-                                        final Bytes<Void> byteStore) {
+            private BytesStore toValue(final @Nullable net.openhft.lang.io.Bytes value,
+                                       final PointerBytesStore pbs) {
                 if (value == null)
                     return null;
 
-                PointerBytesStore result = valueLocal.get();
-                result.set(value.address(), value.capacity());
-                result.copyTo(byteStore);
-                return byteStore.bytesForRead();
+                pbs.set(value.address(), value.capacity());
+                return pbs;
             }
 
             @Override
@@ -317,6 +239,52 @@ public class CMap2EngineReplicator implements EngineReplication,
                 ", keyLocal=" + keyLocal +
                 ", valueLocal=" + valueLocal +
                 '}';
+    }
+
+    private static class KvLangBytes {
+
+        private IByteBufferBytes key;
+        private IByteBufferBytes value;
+
+        private KvLangBytes() {
+            this.key = wrap(ByteBuffer.allocateDirect(1024).order(ByteOrder.nativeOrder()));
+            this.value = wrap(ByteBuffer.allocateDirect(1024).order(ByteOrder.nativeOrder()));
+        }
+
+        private IByteBufferBytes key(long size) {
+            try {
+                if (size > key.capacity())
+                    key = wrap(ByteBuffer.allocateDirect((int) size).order(ByteOrder.nativeOrder()));
+                return key;
+            } finally {
+                key.position(0);
+                key.limit(size);
+            }
+        }
+
+        private IByteBufferBytes value(long size) {
+            try {
+                if (size > value.capacity())
+                    value = wrap(ByteBuffer.allocateDirect((int) size).order(ByteOrder.nativeOrder()));
+                return value;
+            } finally {
+                value.position(0);
+                value.limit(size);
+            }
+        }
+    }
+
+    private static class KvBytes {
+        private final PointerBytesStore key = BytesStore.nativePointer();
+        private final PointerBytesStore value = BytesStore.nativePointer();
+
+        private PointerBytesStore key(long size) {
+            return key;
+        }
+
+        private PointerBytesStore value(long size) {
+            return value;
+        }
     }
 
     public static class VanillaReplicatedEntry implements ReplicationEntry {

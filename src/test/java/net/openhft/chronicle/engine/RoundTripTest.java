@@ -39,12 +39,12 @@ import java.util.function.Function;
 
 public class RoundTripTest {
     public static final WireType WIRE_TYPE = WireType.BINARY;
-    public static final int ENTRIES = 50;
+    public static final int ENTRIES = 1;
     public static final int TIMES = 10000;
     public static final String basePath = OS.TARGET + '/' + System.getProperty("server", "one");
     public static final String CLUSTER = System.getProperty("cluster", "clusterFive");
     public static final String SIMPLE_NAME = "/ChMaps/test1";
-    static final int VALUE_SIZE = 2 << 20;
+    static final int VALUE_SIZE = 4 << 20;
     public static final String NAME = SIMPLE_NAME +
             "?entries=" + ENTRIES * 2 +
             "&putReturnsNull=true" +
@@ -110,9 +110,9 @@ public class RoundTripTest {
         TCPRegistry.createServerSocketChannelFor(CONNECTION_3);
 
         final List<HostDetails> hostDetails = new ArrayList<>();
-        hostDetails.add(new HostDetails(1, 128 << 20, CONNECTION_1, 5_000));
-        hostDetails.add(new HostDetails(2, 128 << 20, CONNECTION_2, 5_000));
-        hostDetails.add(new HostDetails(3, 128 << 20, CONNECTION_3, 5_000));
+        hostDetails.add(new HostDetails(1, 8 << 20, CONNECTION_1, 5_000));
+        hostDetails.add(new HostDetails(2, 8 << 20, CONNECTION_2, 5_000));
+        hostDetails.add(new HostDetails(3, 8 << 20, CONNECTION_3, 5_000));
 
         AssetTree serverAssetTree1 = create(1, WIRE_TYPE.BINARY, hostDetails);
         AssetTree serverAssetTree2 = create(2, WIRE_TYPE.BINARY, hostDetails);
