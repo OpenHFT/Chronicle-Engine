@@ -5,7 +5,6 @@ import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
-import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
@@ -155,7 +154,7 @@ public class RoundTripTest {
                     .forRemoteAccess(CONNECTION_3, WIRE_TYPE, Throwable::printStackTrace);
             AtomicReference<CountDownLatch> latchRef = new AtomicReference<>();
 
-            treeC3.registerSubscriber(NAME, MapEvent.class, z -> {
+            treeC3.registerSubscriber(NAME, String.class, z -> {
                 latchRef.get().countDown();
             });
 

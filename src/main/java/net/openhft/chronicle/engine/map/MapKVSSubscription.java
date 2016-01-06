@@ -139,6 +139,12 @@ public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
                 || asset.hasChildren();
     }
 
+    @Override
+    public boolean hasValueSubscribers() {
+        return !topicSubscribers.isEmpty() || !subscribers.isEmpty()
+                || !downstream.isEmpty() || asset.hasChildren();
+    }
+
     private void notifyEvent0(@NotNull MapEvent<K, V> changeEvent) {
         notifyEvent1(changeEvent);
         notifyEventToChild(changeEvent);

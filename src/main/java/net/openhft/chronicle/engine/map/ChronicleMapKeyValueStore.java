@@ -338,6 +338,11 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
         }
 
         @Override
+        public boolean usesValue() {
+            return subscriptions.hasValueSubscribers();
+        }
+
+        @Override
         public void onRemove(@NotNull K key, V value, boolean replicationEvent, byte identifier, byte replacedIdentifier, long timestamp, long replacedTimeStamp) {
             if (replicationEvent &&
                     replicationSessionDetails != null &&

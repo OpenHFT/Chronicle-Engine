@@ -37,10 +37,10 @@ public class InsertedEvent<K, V> implements MapEvent<K, V> {
     private String assetName;
     @NotNull
     private K key;
-    @NotNull
+    @Nullable
     private V value;
 
-    private InsertedEvent(String assetName, @NotNull K key, @NotNull V value, boolean isReplicationEvent) {
+    private InsertedEvent(String assetName, @NotNull K key, @Nullable V value, boolean isReplicationEvent) {
         this.assetName = assetName;
         this.key = key;
         this.value = value;
