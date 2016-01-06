@@ -44,8 +44,8 @@ public class RoundTripTest {
     public static final int TIMES = 10000;
     public static final String basePath = OS.TARGET + '/' + System.getProperty("server", "one");
     public static final String CLUSTER = System.getProperty("cluster", "clusterFive");
-    static final int VALUE_SIZE = 2 << 20;
     public static final String SIMPLE_NAME = "/ChMaps/test1";
+    static final int VALUE_SIZE = 2 << 20;
     public static final String NAME = SIMPLE_NAME +
             "?entries=" + ENTRIES * 2 +
             "&putReturnsNull=true" +
@@ -57,8 +57,51 @@ public class RoundTripTest {
     private static String CONNECTION_2 = "CONNECTION_2";
     private static String CONNECTION_3 = "CONNECTION_3";
 
+    @NotNull
+    static AssetTree create(final int hostId, Function<Bytes, Wire> writeType, final List<HostDetails> hostDetails) {
+
+        AssetTree tree = new VanillaAssetTree((byte) hostId)
+                .forTesting(Throwable::printStackTrace);
+
+        Map<String, HostDetails> hostDetailsMap = new ConcurrentSkipListMap<>();
+
+        for (HostDetails hd : hostDetails) {
+            hostDetailsMap.put(hd.toString(), hd);
+        }
+
+        Clusters testCluster = new Clusters(Collections.<String, Cluster>singletonMap("test",
+                new Cluster("test", hostDetailsMap)));
+
+
+        tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
+                VanillaMapView::new,
+                KeyValueStore.class);
+        tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
+                CMap2EngineReplicator::new);
+        tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
+                new ChronicleMapKeyValueStore(context.wireType(writeType).cluster("test"),
+                        asset));
+
+        Asset asset1 = tree.acquireAsset(SIMPLE_NAME);
+        asset1.addView(Clusters.class, testCluster);
+        VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
+
+        return tree;
+    }
+
+    @NotNull
+    public static String getKey(int i) {
+        return "" + i;
+    }
+
+    public static String generateValue(char c, int size) {
+        char[] chars = new char[size];
+        Arrays.fill(chars, c);
+        return new String(chars);
+    }
+
     @Test
-    @Ignore
+    @Ignore("Long running")
     public void test() throws IOException, InterruptedException {
         System.out.println("Using cluster " + CLUSTER + " basePath: " + basePath);
         YamlLogging.setAll(false);
@@ -156,51 +199,6 @@ public class RoundTripTest {
             serverEndpoint3.close();
         }
 
-    }
-
-
-    @NotNull
-    static AssetTree create(final int hostId, Function<Bytes, Wire> writeType, final List<HostDetails> hostDetails) {
-
-        AssetTree tree = new VanillaAssetTree((byte) hostId)
-                .forTesting(Throwable::printStackTrace);
-
-        Map<String, HostDetails> hostDetailsMap = new ConcurrentSkipListMap<>();
-
-        for (HostDetails hd : hostDetails) {
-            hostDetailsMap.put(hd.toString(), hd);
-        }
-
-        Clusters testCluster = new Clusters(Collections.<String, Cluster>singletonMap("test",
-                new Cluster("test", hostDetailsMap)));
-
-
-        tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
-                VanillaMapView::new,
-                KeyValueStore.class);
-        tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
-                CMap2EngineReplicator::new);
-        tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
-                new ChronicleMapKeyValueStore(context.wireType(writeType).cluster("test"),
-                        asset));
-
-        Asset asset1 = tree.acquireAsset(SIMPLE_NAME);
-        asset1.addView(Clusters.class, testCluster);
-        VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
-
-        return tree;
-    }
-
-    @NotNull
-    public static String getKey(int i) {
-        return "" + i;
-    }
-
-
-    public static String generateValue(char c, int size) {
-        char[] chars = new char[size];
-        Arrays.fill(chars, c);
-        return new String(chars);
     }
 
 }
