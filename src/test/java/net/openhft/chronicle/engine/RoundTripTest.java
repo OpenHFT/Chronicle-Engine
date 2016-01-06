@@ -21,6 +21,7 @@ import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -57,12 +58,9 @@ public class RoundTripTest {
     private static String CONNECTION_3 = "CONNECTION_3";
 
     @Test
-
+    @Ignore
     public void test() throws IOException, InterruptedException {
         System.out.println("Using cluster " + CLUSTER + " basePath: " + basePath);
-        YamlLogging.setAll(false);
-
-
         YamlLogging.setAll(false);
 
         TCPRegistry.createServerSocketChannelFor(CONNECTION_1);
@@ -101,8 +99,6 @@ public class RoundTripTest {
             map1.size();
             map2.size();
             map3.size();
-
-            YamlLogging.setAll(false);
 
             ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
             ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
