@@ -8,6 +8,7 @@ import net.openhft.chronicle.engine.map.replication.Bootstrap;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
+import net.openhft.chronicle.threads.HandlerPriority;
 import net.openhft.chronicle.threads.api.EventHandler;
 import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.threads.api.InvalidEventHandlerException;
@@ -103,106 +104,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
                     // sends replication events back to the remote client
                     mi.setModificationNotifier(eventLoop::unpause);
 
-                    eventLoop.addHandler(true, new EventHandler() {
-
-                        boolean hasSentLastUpdateTime;
-                        long lastUpdateTime = 0;
-                        boolean hasLogged = false;
-                        int count = 0;
-                        long startBufferFullTimeStamp = 0;
-
-                        @Override
-                        public boolean action() throws InvalidEventHandlerException {
-                            if (connectionClosed)
-                                throw new InvalidEventHandlerException();
-
-                            final WireOutPublisher publisher = ReplicationHandler.this.publisher;
-                            //noinspection SynchronizationOnLocalVariableOrMethodParameter
-                            synchronized (publisher) {
-                                // given the sending an event to the publish hold the chronicle map lock
-                                // we will send only one at a time
-
-
-                                if (!publisher.canTakeMoreData()) {
-                                    if (mi.hasNext() && startBufferFullTimeStamp == 0) {
-                                        startBufferFullTimeStamp = System.currentTimeMillis();
-                                        return false;
-                                    }
-                                }
-
-                                if (!mi.hasNext()) {
-
-                                    if (startBufferFullTimeStamp != 0) {
-                                        long timetaken = System.currentTimeMillis() - startBufferFullTimeStamp;
-                                        if (timetaken > 100)
-                                            LOG.info("blocked - outbound buffer full=" + timetaken + "ms");
-                                        startBufferFullTimeStamp = 0;
-                                    }
-
-                                    // because events arrive in a bitset ( aka random ) order ( not necessary in
-                                    // time order ) we can only be assured that the latest time of
-                                    // the last event is really the latest time, once all the events
-                                    // have been received, we know when we have received all events
-                                    // when there are no more events to process.
-                                    if (!hasSentLastUpdateTime && lastUpdateTime > 0) {
-                                        publisher.put(null, publish -> publish
-                                                .writeNotReadyDocument(false,
-                                                        wire -> {
-                                                            wire.writeEventName(CoreFields.lastUpdateTime).int64(lastUpdateTime);
-                                                            wire.write(() -> "id").int8(id);
-                                                        }
-                                                ));
-
-                                        hasSentLastUpdateTime = true;
-
-                                        if (!hasLogged) {
-                                            LOG.info("received ALL replication the EVENTS for " +
-                                                    "id=" + id);
-                                            hasLogged = true;
-                                        }
-
-                                        return false;
-                                    }
-                                }
-
-                                mi.nextEntry(e -> publisher.put(null, publish1 -> {
-
-                                    if (e.remoteIdentifier() == hostId.hostId())
-                                        return;
-
-                                    long newlastUpdateTime = Math.max(lastUpdateTime, e.timestamp());
-
-                                    if (newlastUpdateTime > lastUpdateTime) {
-                                        hasSentLastUpdateTime = false;
-                                        lastUpdateTime = newlastUpdateTime;
-                                    }
-
-                                    if (LOG.isDebugEnabled())
-                                        LOG.debug("publish from server response from iterator " +
-                                                "localIdentifier=" + hostId + " ,remoteIdentifier=" +
-                                                id + " event=" + e);
-
-                                    publish1.writeNotReadyDocument(true,
-                                            wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
-
-                                    if (LOG.isInfoEnabled()) {
-                                        long delay = System.currentTimeMillis() - e.timestamp();
-                                        if (delay > 60) {
-                                            LOG.info("Snt Srv latency=" + delay + "ms\t");
-                                            if (count++ % 10 == 1)
-                                                LOG.info("");
-                                        }
-                                    }
-                                    if (publish1.bytes().writePosition() > 100000 && LOG.isDebugEnabled())
-                                        LOG.debug(publish1.bytes().toDebugString(128));
-                                    publish1.writeNotReadyDocument(false,
-                                            wire -> wire.writeEventName(replicationEvent).typedMarshallable(e));
-
-                                }));
-                            }
-                            return true;
-                        }
-                    });
+                    eventLoop.addHandler(true, new ReplicationEventHandler(mi, id, inputTid));
                 });
             }
         }
@@ -251,4 +153,124 @@ public class ReplicationHandler<E> extends AbstractHandler {
         }
     }
 
+    private class ReplicationEventHandler implements EventHandler {
+
+        private final ModificationIterator mi;
+        private final byte id;
+        private final Long inputTid;
+        boolean hasSentLastUpdateTime;
+        long lastUpdateTime;
+        boolean hasLogged;
+        int count;
+        long startBufferFullTimeStamp;
+
+        public ReplicationEventHandler(ModificationIterator mi, byte id, Long inputTid) {
+            this.mi = mi;
+            this.id = id;
+            this.inputTid = inputTid;
+            lastUpdateTime = 0;
+            hasLogged = false;
+            count = 0;
+            startBufferFullTimeStamp = 0;
+        }
+
+        @NotNull
+        @Override
+        public HandlerPriority priority() {
+            return HandlerPriority.REPLICATION;
+        }
+
+        @Override
+        public boolean action() throws InvalidEventHandlerException {
+            if (connectionClosed)
+                throw new InvalidEventHandlerException();
+
+            final WireOutPublisher publisher = ReplicationHandler.this.publisher;
+            //noinspection SynchronizationOnLocalVariableOrMethodParameter
+            synchronized (publisher) {
+                // given the sending an event to the publish hold the chronicle map lock
+                // we will send only one at a time
+
+
+                if (!publisher.canTakeMoreData()) {
+                    if (startBufferFullTimeStamp == 0) {
+                        startBufferFullTimeStamp = System.currentTimeMillis();
+                    }
+                    return false;
+                }
+
+                if (!mi.hasNext()) {
+
+                    if (startBufferFullTimeStamp != 0) {
+                        long timetaken = System.currentTimeMillis() - startBufferFullTimeStamp;
+                        if (timetaken > 100)
+                            LOG.info("blocked - outbound buffer full=" + timetaken + "ms");
+                        startBufferFullTimeStamp = 0;
+                    }
+
+                    // because events arrive in a bitset ( aka random ) order ( not necessary in
+                    // time order ) we can only be assured that the latest time of
+                    // the last event is really the latest time, once all the events
+                    // have been received, we know when we have received all events
+                    // when there are no more events to process.
+                    if (!hasSentLastUpdateTime && lastUpdateTime > 0) {
+                        publisher.put(null, publish -> publish
+                                .writeNotReadyDocument(false,
+                                        wire -> {
+                                            wire.writeEventName(CoreFields.lastUpdateTime).int64(lastUpdateTime);
+                                            wire.write(() -> "id").int8(id);
+                                        }
+                                ));
+
+                        hasSentLastUpdateTime = true;
+
+                        if (!hasLogged) {
+                            LOG.info("received ALL replication the EVENTS for " +
+                                    "id=" + id);
+                            hasLogged = true;
+                        }
+
+                    }
+                    return false;
+                }
+
+                mi.nextEntry(e -> publisher.put(null, publish1 -> {
+
+                    if (e.remoteIdentifier() == hostId.hostId())
+                        return;
+
+                    long newlastUpdateTime = Math.max(lastUpdateTime, e.timestamp());
+
+                    if (newlastUpdateTime > lastUpdateTime) {
+                        hasSentLastUpdateTime = false;
+                        lastUpdateTime = newlastUpdateTime;
+                    }
+
+                    if (LOG.isDebugEnabled())
+                        LOG.debug("publish from server response from iterator " +
+                                "localIdentifier=" + hostId + " ,remoteIdentifier=" +
+                                id + " event=" + e);
+
+                    publish1.writeNotReadyDocument(true,
+                            wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
+
+                    if (LOG.isInfoEnabled()) {
+                        long delay = System.currentTimeMillis() - e.timestamp();
+                        if (delay > 60) {
+                            LOG.info("Snt Srv latency=" + delay + "ms\t");
+                            if (count++ % 10 == 1)
+                                LOG.info("");
+                        }
+                    }
+                    System.out.print("re");
+                    if (publish1.bytes().writePosition() > 100000 && LOG.isDebugEnabled())
+                        LOG.debug(publish1.bytes().toDebugString(128));
+                    publish1.writeNotReadyDocument(false,
+                            wire -> wire.writeEventName(replicationEvent).typedMarshallable(e));
+
+                }));
+            }
+            return true;
+        }
+    }
 }

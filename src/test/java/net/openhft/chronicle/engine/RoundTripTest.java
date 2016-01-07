@@ -54,8 +54,8 @@ public class RoundTripTest {
             "&averageValueSize=" + VALUE_SIZE;
 
     public static ServerEndpoint serverEndpoint;
+    static int counter = 0;
     private static AtomicReference<Throwable> t = new AtomicReference<>();
-
     private static String CONNECTION_1 = "CONNECTION_1";
     private static String CONNECTION_2 = "CONNECTION_2";
     private static String CONNECTION_3 = "CONNECTION_3";
@@ -92,6 +92,17 @@ public class RoundTripTest {
         return tree;
     }
 
+    @NotNull
+    public static String getKey(int i) {
+        return "" + i;
+    }
+
+    public static String generateValue(char c, int size) {
+        char[] chars = new char[size - 7];
+        Arrays.fill(chars, c);
+        return counter++ + " " + new String(chars);
+    }
+
     @After
     public void afterMethod() {
         checkForThrowablesInOtherThreads();
@@ -101,17 +112,6 @@ public class RoundTripTest {
         final Throwable th = t.getAndSet(null);
         if (th != null)
             throw Jvm.rethrow(th);
-    }
-
-    @NotNull
-    public static String getKey(int i) {
-        return "" + i;
-    }
-
-    public static String generateValue(char c, int size) {
-        char[] chars = new char[size];
-        Arrays.fill(chars, c);
-        return new String(chars);
     }
 
     @Test
@@ -181,11 +181,20 @@ public class RoundTripTest {
             long min = Long.MAX_VALUE;
             long max = Long.MIN_VALUE;
 
+            String[] keys = new String[ENTRIES];
+            String[] values0 = new String[ENTRIES];
+            String[] values1 = new String[ENTRIES];
+            for (int i = 0; i < ENTRIES; i++) {
+                keys[i] = getKey(i);
+                values0[i] = generateValue('X', VALUE_SIZE);
+                values1[i] = generateValue('-', VALUE_SIZE);
+            }
             for (int j = 0; j < TIMES; j++) {
                 long timeTakenI = System.currentTimeMillis();
                 latchRef.set(new CountDownLatch(ENTRIES));
+                String[] values = j % 2 == 0 ? values0 : values1;
                 for (int i = 0; i < ENTRIES; i++) {
-                    mapC1.put("" + i, generateValue('X', VALUE_SIZE));
+                    mapC1.put(keys[i], values[i]);
                 }
 
                 while (!latchRef.get().await(1, TimeUnit.MILLISECONDS)) {
@@ -198,6 +207,7 @@ public class RoundTripTest {
                 max = Math.max(max, timeTakenIteration);
                 min = Math.min(min, timeTakenIteration);
                 System.out.println(" - round trip latency=" + timeTakenIteration + "ms");
+//                Jvm.pause(10);
             }
 
 
