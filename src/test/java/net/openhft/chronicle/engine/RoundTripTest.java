@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.api.EngineReplication;
@@ -19,6 +20,7 @@ import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -51,6 +53,7 @@ public class RoundTripTest {
             "&averageValueSize=" + VALUE_SIZE;
 
     public static ServerEndpoint serverEndpoint;
+    private static AtomicReference<Throwable> t = new AtomicReference<>();
 
     private static String CONNECTION_1 = "CONNECTION_1";
     private static String CONNECTION_2 = "CONNECTION_2";
@@ -60,7 +63,7 @@ public class RoundTripTest {
     static AssetTree create(final int hostId, Function<Bytes, Wire> writeType, final List<HostDetails> hostDetails) {
 
         AssetTree tree = new VanillaAssetTree((byte) hostId)
-                .forTesting(Throwable::printStackTrace);
+                .forTesting(x -> t.compareAndSet(null, x));
 
         Map<String, HostDetails> hostDetailsMap = new ConcurrentSkipListMap<>();
 
@@ -86,6 +89,14 @@ public class RoundTripTest {
         VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
 
         return tree;
+    }
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null)
+            throw Jvm.rethrow(th);
+
     }
 
     @NotNull
