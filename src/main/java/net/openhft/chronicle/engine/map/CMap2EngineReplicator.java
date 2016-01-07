@@ -76,8 +76,14 @@ public class CMap2EngineReplicator implements EngineReplication,
     }
 
     @NotNull
-    private net.openhft.lang.io.Bytes toLangBytes(@NotNull BytesStore b, @NotNull net.openhft.lang.io.NativeBytes lb) {
-        lb.setStartAndCapacityAddress(b.address(b.start()), b.address(b.readLimit()));
+    private net.openhft.lang.io.Bytes toLangBytes(@NotNull BytesStore b, @NotNull Bytes tmpBytes, @NotNull net.openhft.lang.io.NativeBytes lb) {
+        if (b.isNative()) {
+            lb.setStartAndCapacityAddress(b.address(b.start()), b.address(b.readLimit()));
+        } else {
+            tmpBytes.clear();
+            tmpBytes.write(b);
+            lb.setStartAndCapacityAddress(tmpBytes.address(b.start()), tmpBytes.address(b.readLimit()));
+        }
         return lb;
     }
 
@@ -87,8 +93,8 @@ public class CMap2EngineReplicator implements EngineReplication,
 
         final KvLangBytes kv = kvByte.get();
 
-        net.openhft.lang.io.Bytes keyBytes = toLangBytes(key, kv.key(key.readRemaining()));
-        net.openhft.lang.io.Bytes valueBytes = toLangBytes(value, kv.value(value.readRemaining()));
+        net.openhft.lang.io.Bytes keyBytes = toLangBytes(key, kv.tmpKeyBytes, kv.key);
+        net.openhft.lang.io.Bytes valueBytes = toLangBytes(value, kv.tmpValueBytes, kv.value);
 
         engineReplicationLang.put(keyBytes, valueBytes, remoteIdentifier, timestamp);
     }
@@ -96,7 +102,7 @@ public class CMap2EngineReplicator implements EngineReplication,
     private void remove(@NotNull final BytesStore key, final byte remoteIdentifier, final long timestamp) {
 
         KvLangBytes kv = kvByte.get();
-        net.openhft.lang.io.Bytes keyBytes = toLangBytes(key, kv.key(key.readRemaining()));
+        net.openhft.lang.io.Bytes keyBytes = toLangBytes(key, kv.tmpKeyBytes, kv.key);
         engineReplicationLang.remove(keyBytes, remoteIdentifier, timestamp);
     }
 
@@ -228,21 +234,10 @@ public class CMap2EngineReplicator implements EngineReplication,
 
     static class KvLangBytes {
 
-        private final NativeBytes key;
-        private final NativeBytes value;
-
-        KvLangBytes() {
-            this.key = NativeBytes.empty();
-            this.value = NativeBytes.empty();
-        }
-
-        NativeBytes key(long size) {
-                return key;
-        }
-
-        NativeBytes value(long size) {
-                return value;
-        }
+        final NativeBytes key = NativeBytes.empty();
+        final NativeBytes value = NativeBytes.empty();
+        final Bytes tmpKeyBytes = Bytes.allocateElasticDirect();
+        final Bytes tmpValueBytes = Bytes.allocateElasticDirect();
     }
 
     private static class KvBytes {
