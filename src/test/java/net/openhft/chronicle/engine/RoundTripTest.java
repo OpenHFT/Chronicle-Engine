@@ -32,6 +32,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
@@ -93,10 +94,13 @@ public class RoundTripTest {
 
     @After
     public void afterMethod() {
+        checkForThrowablesInOtherThreads();
+    }
+
+    private void checkForThrowablesInOtherThreads() {
         final Throwable th = t.getAndSet(null);
         if (th != null)
             throw Jvm.rethrow(th);
-
     }
 
     @NotNull
@@ -183,7 +187,10 @@ public class RoundTripTest {
                 for (int i = 0; i < ENTRIES; i++) {
                     mapC1.put("" + i, generateValue('X', VALUE_SIZE));
                 }
-                latchRef.get().await();
+
+                while (!latchRef.get().await(1, TimeUnit.MILLISECONDS)) {
+                    checkForThrowablesInOtherThreads();
+                }
 
                 final long timeTakenIteration = System.currentTimeMillis() -
                         timeTakenI;
