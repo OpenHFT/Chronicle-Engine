@@ -47,12 +47,9 @@ public class RoundTripTest {
     public static final String basePath = OS.TARGET + '/' + System.getProperty("server", "one");
     public static final String CLUSTER = System.getProperty("cluster", "clusterFive");
     public static final String SIMPLE_NAME = "/ChMaps/test1";
-    static final int VALUE_SIZE = 2 << 20;
     public static final String NAME = SIMPLE_NAME +
-            "?entries=" + ENTRIES * 2 +
-            "&putReturnsNull=true" +
-            "&averageValueSize=" + VALUE_SIZE;
-
+            "?putReturnsNull=true";
+    static final int VALUE_SIZE = 2 << 20;
     public static ServerEndpoint serverEndpoint;
     static int counter = 0;
     private static AtomicReference<Throwable> t = new AtomicReference<>();
@@ -82,7 +79,10 @@ public class RoundTripTest {
         tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
                 CMap2EngineReplicator::new);
         tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
-                new ChronicleMapKeyValueStore(context.wireType(writeType).cluster("test"),
+                new ChronicleMapKeyValueStore(context.wireType(writeType)
+                        .cluster("test")
+                        .entries(ENTRIES)
+                        .averageValueSize(VALUE_SIZE),
                         asset));
 
         Asset asset1 = tree.acquireAsset(SIMPLE_NAME);

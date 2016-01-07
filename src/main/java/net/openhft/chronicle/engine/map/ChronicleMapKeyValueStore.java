@@ -99,7 +99,7 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
         replicationSessionDetails = asset.root().findView(SessionDetails.class);
 
         ChronicleMapBuilder<K, V> builder = ChronicleMapBuilder.of(context.keyType(), context.valueType());
-//        builder.actualSegments(32);
+        builder.actualSegments(128);
         HostIdentifier hostIdentifier = null;
         EngineReplication engineReplicator1 = null;
         try {
@@ -138,9 +138,9 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
         if (maxEntries > 0)
             builder.entries(maxEntries + 1); // we have to add a head room of 1
 
-        if (basePath == null)
+        if (basePath == null) {
             chronicleMap = builder.create();
-        else {
+        } else {
             String pathname = basePath + "/" + context.name();
             //noinspection ResultOfMethodCallIgnored
             new File(basePath).mkdirs();
