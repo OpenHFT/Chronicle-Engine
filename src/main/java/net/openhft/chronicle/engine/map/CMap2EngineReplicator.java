@@ -82,7 +82,8 @@ public class CMap2EngineReplicator implements EngineReplication,
         } else {
             tmpBytes.clear();
             tmpBytes.write(b);
-            lb.setStartAndCapacityAddress(tmpBytes.address(b.start()), tmpBytes.address(b.readLimit()));
+            lb.setStartAndCapacityAddress(tmpBytes.address(tmpBytes.start()),
+                    tmpBytes.address(tmpBytes.readLimit()));
         }
         return lb;
     }
