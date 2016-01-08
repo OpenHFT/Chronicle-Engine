@@ -28,6 +28,7 @@ import net.openhft.chronicle.hash.replication.EngineReplicationLangBytesConsumer
 import net.openhft.chronicle.map.EngineReplicationLangBytes;
 import net.openhft.chronicle.map.EngineReplicationLangBytes.EngineModificationIterator;
 import net.openhft.chronicle.wire.TextWire;
+import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.Wires;
 import net.openhft.lang.io.NativeBytes;
 import org.jetbrains.annotations.NotNull;
@@ -78,7 +79,10 @@ public class CMap2EngineReplicator implements EngineReplication,
     @NotNull
     private net.openhft.lang.io.Bytes toLangBytes(@NotNull BytesStore b, @NotNull Bytes tmpBytes, @NotNull net.openhft.lang.io.NativeBytes lb) {
         if (b.isNative()) {
+//            check(b);
             lb.setStartAndCapacityAddress(b.address(b.start()), b.address(b.readLimit()));
+//            check(lb);
+
         } else {
             tmpBytes.clear();
             tmpBytes.write(b);
@@ -88,16 +92,75 @@ public class CMap2EngineReplicator implements EngineReplication,
         return lb;
     }
 
+    private void check(@NotNull BytesStore b) {
+        for (long i = b.start(); i < b.readLimit(); i++) {
+            int ch = b.readByte(i);
+            if (ch < ' ')
+                throw new AssertionError("Char " + (int) ch);
+        }
+    }
+
+    private void check(@NotNull net.openhft.lang.io.Bytes b) {
+        if (b.position() != 0)
+            throw new AssertionError();
+        if (b.remaining() != b.limit())
+            throw new AssertionError();
+        for (long i = 0; i < 16 && i < b.limit(); i++) {
+            int ch = b.readByte(i);
+            if (ch < ' ')
+                throw new AssertionError("Char " + (int) ch);
+        }
+        if (b.limit() > 32)
+            for (long i = b.limit() - 16; i < b.limit(); i++) {
+                int ch = b.readByte(i);
+                if (ch < ' ')
+                    throw new AssertionError("Char " + (int) ch);
+            }
+    }
+
     public void put(@NotNull final BytesStore key, @NotNull final BytesStore value,
                     final byte remoteIdentifier,
                     final long timestamp) {
 
+//        assert key.refCount() == 1;
+//        assert value.refCount()== 1;
         final KvLangBytes kv = kvByte.get();
 
         net.openhft.lang.io.Bytes keyBytes = toLangBytes(key, kv.tmpKeyBytes, kv.key);
         net.openhft.lang.io.Bytes valueBytes = toLangBytes(value, kv.tmpValueBytes, kv.value);
 
         engineReplicationLang.put(keyBytes, valueBytes, remoteIdentifier, timestamp);
+        keyBytes.position(0);
+        valueBytes.position(0);
+
+//        assert key.refCount() == 1;
+//        assert value.refCount() == 1;
+//        assert keyBytes == kv.key;
+//        assert valueBytes == kv.value;
+
+        long addr = keyBytes.address();
+//        long limit = keyBytes.limit();
+        long firstBytes = NativeBytes.UNSAFE.getLong(addr);
+        check(keyBytes);
+        Thread.yield();
+        check(valueBytes);
+
+//        assert keyBytes == kv.key;
+//        assert valueBytes == kv.value;
+
+        long addr2 = keyBytes.address();
+//        long limit2 = keyBytes.limit();
+        long firstBytes2 = NativeBytes.UNSAFE.getLong(addr);
+        assert addr == addr2 : "address";
+//        assert limit == limit2 : "limit";
+        assert firstBytes == firstBytes2 : "firstBytes";
+        check(kv.key);
+//        check(kv.value);
+//        assert keyBytes == kv.key;
+//        assert valueBytes == kv.value;
+//        assert key.refCount() == 1;
+//        assert value.refCount() == 1;
+
     }
 
     private void remove(@NotNull final BytesStore key, final byte remoteIdentifier, final long timestamp) {
@@ -296,6 +359,23 @@ public class CMap2EngineReplicator implements EngineReplication,
             this.bootStrapTimeStamp = bootStrapTimeStamp;
         }
 
+        // for deserialization only.
+        public VanillaReplicatedEntry() {
+            remoteIdentifier = 0;
+            key = BytesStore.nativePointer();
+            value = BytesStore.nativePointer();
+        }
+
+        @Override
+        public void readMarshallable(@NotNull WireIn wire) {
+            wire.read(() -> "key").bytesSet((PointerBytesStore) key);
+            wire.read(() -> "value").bytesSet((PointerBytesStore) value);
+            timestamp(wire.read(() -> "timestamp").int64());
+            identifier(wire.read(() -> "identifier").int8());
+            isDeleted(wire.read(() -> "isDeleted").bool());
+            bootStrapTimeStamp(wire.read(() -> "bootStrapTimeStamp").int64());
+        }
+
         @Override
         public BytesStore key() {
             return key;
@@ -304,7 +384,7 @@ public class CMap2EngineReplicator implements EngineReplication,
         @Nullable
         @Override
         public BytesStore value() {
-            return value;
+            return value != null && value.isPresent() ? value : null;
         }
 
         @Override

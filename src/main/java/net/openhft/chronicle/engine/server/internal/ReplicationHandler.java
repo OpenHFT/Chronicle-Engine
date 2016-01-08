@@ -2,8 +2,8 @@ package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
-import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.pubsub.Replication;
+import net.openhft.chronicle.engine.map.CMap2EngineReplicator.VanillaReplicatedEntry;
 import net.openhft.chronicle.engine.map.replication.Bootstrap;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.network.connection.CoreFields;
@@ -37,6 +37,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
     @NotNull
     private final BiConsumer<WireIn, Long> dataConsumer = new BiConsumer<WireIn, Long>() {
 
+        final ThreadLocal<VanillaReplicatedEntry> vre = ThreadLocal.withInitial(VanillaReplicatedEntry::new);
         @Override
         public void accept(@NotNull final WireIn inWire, Long inputTid) {
 
@@ -57,8 +58,8 @@ public class ReplicationHandler<E> extends AbstractHandler {
             if (replicationEvent.contentEquals(eventName)) {
                 if (Jvm.isDebug() && LOG.isDebugEnabled())
                     LOG.debug("server : received replicationEvent");
-                ReplicationEntry replicatedEntry = valueIn.typedMarshallable();
-                assert replicatedEntry != null;
+                VanillaReplicatedEntry replicatedEntry = vre.get();
+                valueIn.marshallable(replicatedEntry);
 
                 if (Jvm.isDebug() && LOG.isDebugEnabled())
                     LOG.debug("*****\t\t\t\t ->  RECEIVED : SERVER : replication latency=" + (System
