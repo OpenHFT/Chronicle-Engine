@@ -21,6 +21,7 @@ import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.map.CMap2EngineReplicator.VanillaReplicatedEntry;
 import net.openhft.chronicle.engine.map.replication.Bootstrap;
 import net.openhft.chronicle.engine.server.internal.MapWireHandler;
 import net.openhft.chronicle.engine.server.internal.ReplicationHandler.EventId;
@@ -45,6 +46,7 @@ import static net.openhft.chronicle.engine.server.internal.ReplicationHandler.Ev
  */
 class ReplicationHub extends AbstractStatelessClient {
     private static final Logger LOG = LoggerFactory.getLogger(ChronicleMapKeyValueStore.class);
+    final ThreadLocal<VanillaReplicatedEntry> vre = ThreadLocal.withInitial(VanillaReplicatedEntry::new);
     private final EventLoop eventLoop;
     private final AtomicBoolean isClosed;
     private final Function<Bytes, Wire> wireType;
@@ -146,7 +148,6 @@ class ReplicationHub extends AbstractStatelessClient {
                           @Override
                           public void onConsumer(@NotNull WireIn inWire) {
                               if (Jvm.isDebug())
-
                                   System.out.println("client : onConsumer - publishing updates");
 
                               inWire.readDocument(null, d -> {
@@ -168,7 +169,8 @@ class ReplicationHub extends AbstractStatelessClient {
 
                                   }
                                   if (replicationEvent.contentEquals(eventName)) {
-                                      final EngineReplication.ReplicationEntry replicatedEntry = valueIn.typedMarshallable();
+                                      final VanillaReplicatedEntry replicatedEntry = vre.get();
+                                      valueIn.marshallable(replicatedEntry);
 
                                       if (LOG.isInfoEnabled()) {
                                           long delay = System.currentTimeMillis() - replicatedEntry.timestamp();

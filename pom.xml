@@ -28,7 +28,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>chronicle-engine</artifactId>
-    <version>1.10.24-SNAPSHOT</version>
+    <version>1.10.27-SNAPSHOT</version>
     <name>OpenHFT/Chronicle-Engine</name>
     <description>Chronicle Engine Framework</description>
 
@@ -45,7 +45,7 @@
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>chronicle-bom</artifactId>
-                <version>1.10.40</version>
+                <version>1.10.47</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
