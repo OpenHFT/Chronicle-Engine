@@ -263,7 +263,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
                                 LOG.info("");
                         }
                     }
-                    System.out.print("re");
+
                     if (publish1.bytes().writePosition() > 100000 && LOG.isDebugEnabled())
                         LOG.debug(publish1.bytes().toDebugString(128));
                     publish1.writeNotReadyDocument(false,
