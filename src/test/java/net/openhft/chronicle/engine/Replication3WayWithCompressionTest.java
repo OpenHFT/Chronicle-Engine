@@ -52,7 +52,7 @@ public class Replication3WayWithCompressionTest {
     @BeforeClass
     public static void before() throws IOException {
 
-        System.setProperty("EngineReplication.Compression", "true");
+        System.setProperty("EngineReplication.Compression", "gzip");
 
         YamlLogging.setAll(false);
 

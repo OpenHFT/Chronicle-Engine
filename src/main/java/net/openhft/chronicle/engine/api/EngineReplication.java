@@ -32,8 +32,9 @@ import java.util.function.Consumer;
 public interface EngineReplication extends Replication {
 
 
-    boolean ENGINE_REPLICATION_COMPRESSION = Boolean.getBoolean("EngineReplication" +
+    String ENGINE_REPLICATION_COMPRESSION = System.getProperty("EngineReplication" +
             ".Compression");
+
 
     /**
      * Provides the unique Identifier associated with this instance. <p> An identifier is used to
@@ -194,8 +195,8 @@ public interface EngineReplication extends Replication {
         default void writeMarshallable(@NotNull final WireOut wire) {
             wire.write(() -> "key").bytes(key());
 
-            if (ENGINE_REPLICATION_COMPRESSION && value() != null)
-                wire.write(() -> "value").compress("lzw", value().bytesForRead());
+            if (ENGINE_REPLICATION_COMPRESSION != null && value() != null)
+                wire.write(() -> "value").compress(ENGINE_REPLICATION_COMPRESSION, value().bytesForRead());
             else
                 wire.write(() -> "value").bytes(value());
 
