@@ -14,6 +14,7 @@ import net.openhft.chronicle.queue.ExcerptTailer;
 import net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.WireKey;
+import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,7 +98,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
     @NotNull
     @Override
-    public Excerpt createExcerpt() throws IOException {
+    public Excerpt createExcerpt() {
         return chronicleQueue.createExcerpt();
     }
 
@@ -134,7 +135,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     public M get(int index) {
         try {
             final ExcerptTailer tailer = threadLocalTailer();
-            if (!tailer.index(index))
+            if (!tailer.moveToIndex(index))
                 return null;
             return tailer.readDocument(
                     wire -> threadLocalElement(wire.read().object(elementTypeClass))) ?
@@ -168,7 +169,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     }
 
     /**
-     * @param consumer a consumer that provides that name of the event and value contained within the except
+     * @param consumer a consumer that provides that name of the event and value contained within
+     *                 the except
      */
     public void get(BiConsumer<CharSequence, M> consumer) {
         try {
@@ -210,7 +212,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
     @NotNull
     @Override
-    public ExcerptAppender createAppender() throws IOException {
+    public ExcerptAppender createAppender() {
         return chronicleQueue.createAppender();
     }
 
@@ -225,30 +227,33 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     }
 
     @Override
-    public long firstAvailableIndex() {
-        return chronicleQueue.firstAvailableIndex();
+    public long firstIndex() {
+        return chronicleQueue.firstIndex();
     }
 
     @Override
-    public long lastWrittenIndex() {
-        return chronicleQueue.lastWrittenIndex();
+    public long lastIndex() {
+        return chronicleQueue.lastIndex();
     }
+
+    @NotNull
+    @Override
+    public WireType wireType() {
+        throw new UnsupportedOperationException("todo");
+    }
+
 
     @Override
     public void close() throws IOException {
         chronicleQueue.close();
     }
 
-    //  @Override
-    //   public WireType wireType() {
-    //      throw new UnsupportedOperationException("todo");
-    //  }
 
     @Override
     public void replay(long index, @NotNull BiConsumer<T, M> consumer, @Nullable Consumer<Exception> isAbsent) {
         ExcerptTailer excerptTailer = threadLocalReplayTailer();
         try {
-            excerptTailer.index(index);
+            excerptTailer.moveToIndex(index);
             excerptTailer.readDocument(w -> w.read());
         } catch (Exception e) {
             isAbsent.accept(e);

@@ -59,11 +59,7 @@ public interface QueueView<T, M> extends ChronicleQueue, TopicPublisher<T, M>, K
     @Override
     void clear();
 
-    @Override
-    long firstAvailableIndex();
 
-    @Override
-    long lastWrittenIndex();
 
     @Override
     void close() throws IOException;
