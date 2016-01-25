@@ -36,6 +36,28 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     private final Class<T> messageTypeClass;
     private final Class<M> elementTypeClass;
 
+    private static final String DEFAULT_BASE_PATH;
+
+    static {
+        String dir = "/tmp";
+        try {
+            final Path tempDirectory = Files.createTempDirectory("engine-queue");
+            dir = tempDirectory.toAbsolutePath().toString();
+        } catch (Exception ignore) {
+        }
+
+        DEFAULT_BASE_PATH = dir;
+    }
+
+    @NotNull
+    public static String resourcesDir() {
+        String path = ChronicleQueueView.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        if (path == null)
+            return ".";
+        return new File(path).getParentFile().getParentFile() + "/src/test/resources";
+    }
+
+
     private final ThreadLocal<ThreadLocalData> threadLocal;
 
     public ChronicleQueueView(RequestContext requestContext, Asset asset) {
@@ -51,7 +73,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     }
 
     @Override
-    public void registerTopicSubscriber(@NotNull TopicSubscriber<T, M> topicSubscriber) throws AssetNotFoundException {
+    public void registerTopicSubscriber
+            (@NotNull TopicSubscriber<T, M> topicSubscriber) throws AssetNotFoundException {
         throw new UnsupportedOperationException("todo");
     }
 
@@ -70,20 +93,16 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         throw new UnsupportedOperationException("todo");
     }
 
-    private ChronicleQueue newInstance(String name, String basePath) {
+    private ChronicleQueue newInstance(String name, @Nullable String basePath) {
         ChronicleQueue chronicleQueue;
+
+        if (basePath == null)
+            basePath = DEFAULT_BASE_PATH;
+
         File baseFilePath;
         try {
-
-            if (basePath != null) {
-                baseFilePath = new File(basePath + name);
-                //noinspection ResultOfMethodCallIgnored
-                baseFilePath.mkdirs();
-            } else {
-                final Path tempDirectory = Files.createTempDirectory("engine-queue");
-                baseFilePath = tempDirectory.toFile();
-            }
-
+            baseFilePath = new File(basePath + name);
+            baseFilePath.mkdirs();
             chronicleQueue = new SingleChronicleQueueBuilder(baseFilePath).build();
         } catch (Exception e) {
             throw Jvm.rethrow(e);
@@ -187,21 +206,17 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
     @Override
     public long set(@NotNull T name, @NotNull M message) {
-        try {
-            final WireKey wireKey = name instanceof WireKey ? (WireKey) name : () -> name.toString();
-            return threadLocalAppender().writeDocument(w -> w.writeEventName(wireKey).object(message));
-        } catch (IOException e) {
-            throw Jvm.rethrow(e);
-        }
+
+        final WireKey wireKey = name instanceof WireKey ? (WireKey) name : name::toString;
+        return threadLocalAppender().writeDocument(w -> w.writeEventName(wireKey).object(message));
+
     }
 
     @Override
     public long set(@NotNull M event) {
-        try {
-            return threadLocalAppender().writeDocument(w -> w.writeEventName(() -> "").object(event));
-        } catch (IOException e) {
-            throw Jvm.rethrow(e);
-        }
+
+        return threadLocalAppender().writeDocument(w -> w.writeEventName(() -> "").object(event));
+
     }
 
     @NotNull
