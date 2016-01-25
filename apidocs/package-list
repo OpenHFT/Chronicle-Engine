@@ -17,6 +17,7 @@ net.openhft.chronicle.engine.map.remote
 net.openhft.chronicle.engine.map.replication
 net.openhft.chronicle.engine.pubsub
 net.openhft.chronicle.engine.query
+net.openhft.chronicle.engine.queue
 net.openhft.chronicle.engine.server
 net.openhft.chronicle.engine.server.internal
 net.openhft.chronicle.engine.session
