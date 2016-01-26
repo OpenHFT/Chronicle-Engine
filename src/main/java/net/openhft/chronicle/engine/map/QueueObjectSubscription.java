@@ -46,6 +46,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
 
 /**
  * Created by peter on 22/05/15.
@@ -180,11 +181,11 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
 
             chronicleQueue.get((eventName, m) -> {
 
-                try {
+                    try {
                     subscriber.onMessage(toT(eventName), m);
-                } catch (InvalidSubscriberException e) {
-                    terminate.set(true);
-                }
+                    } catch (InvalidSubscriberException e) {
+                        terminate.set(true);
+                    }
             });
 
             return true;

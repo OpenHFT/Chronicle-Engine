@@ -99,7 +99,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
         File baseFilePath;
         try {
-            baseFilePath = new File(basePath + name);
+            baseFilePath = new File(basePath , name);
             baseFilePath.mkdirs();
             chronicleQueue = new SingleChronicleQueueBuilder(baseFilePath).build();
         } catch (Exception e) {
@@ -108,6 +108,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         return chronicleQueue;
     }
 
+    @NotNull
     @Override
     public String name() {
         return chronicleQueue.name();
