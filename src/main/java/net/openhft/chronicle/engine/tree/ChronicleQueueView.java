@@ -203,7 +203,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     }
 
     @Override
-    public long set(@NotNull T name, @NotNull M message) throws IOException {
+    public long set(@NotNull T name, @NotNull M message) {
 
         final WireKey wireKey = name instanceof WireKey ? (WireKey) name : name::toString;
         return threadLocalAppender().writeDocument(w -> w.writeEventName(wireKey).object(message));
@@ -211,7 +211,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     }
 
     @Override
-    public long set(@NotNull M event) throws IOException {
+    public long set(@NotNull M event) {
 
         return threadLocalAppender().writeDocument(w -> w.writeEventName(() -> "").object(event));
 
