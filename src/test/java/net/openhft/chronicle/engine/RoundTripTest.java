@@ -69,7 +69,7 @@ public class RoundTripTest {
             hostDetailsMap.put(hd.toString(), hd);
         }
 
-        Clusters testCluster = new Clusters(Collections.<String, Cluster>singletonMap("test",
+        Clusters testCluster = new Clusters(Collections.singletonMap("test",
                 new Cluster("test", hostDetailsMap)));
 
 

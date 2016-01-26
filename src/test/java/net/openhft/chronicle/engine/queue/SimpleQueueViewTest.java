@@ -13,7 +13,10 @@ import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -67,7 +70,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     }
 
     @Test
-    @Ignore
+
     public void testMarshablePublishToATopic() throws InterruptedException {
         String uri = "/queue/" + name;
         Publisher<MyMarshallable> publisher = acquirePublisher(uri, MyMarshallable.class);
@@ -79,7 +82,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     }
 
     @Test
-    @Ignore
+
     public void testStringPublishToATopic() throws InterruptedException {
         String uri = "/queue/" + name;
         acquireQueue(uri, String.class, String.class);
@@ -92,7 +95,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     }
 
     @Test
-    @Ignore
+
     public void testStringPublishToAKeyTopic() throws InterruptedException {
         String uri = "/queue/" + name + "/key";
         acquireQueue("/queue/" + name, String.class, String.class);
@@ -105,7 +108,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     }
 
     @Test
-    @Ignore
+
     public void testStringPublishToAKeyTopicNotForMe() throws InterruptedException {
         String uri = "/queue/" + name + "/key";
         acquireQueue("/queue/" + name, String.class, String.class);
@@ -118,7 +121,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     }
 
     @Test
-    @Ignore
+
     public void testStringTopicPublisherString() throws InterruptedException {
         String uri = "/queue/" + name;
         String messageType = "topic";
@@ -131,7 +134,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     }
 
     @Test
-    @Ignore
+
     public void testStringTopicPublisherWithSubscribe() throws InterruptedException {
         String uri = "/queue/" + name;
         String messageType = "topic";
@@ -148,7 +151,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     }
 
     @Test
-    @Ignore
+
     public void testStringPublishWithTopicSubscribe() throws InterruptedException {
         String uri = "/queue/" + name;
         String messageType = "topic";
@@ -162,12 +165,13 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         assertEquals("topic Message-1", values.poll(2, SECONDS).toString());
     }
 
-    @Ignore
+
     @Test
-    public void testStringPublishWithIndex() throws InterruptedException {
+    public void testStringPublishWithIndex() throws InterruptedException, IOException {
         String uri = "/queue/" + name;
-        String messageType = "topic";
-        Publisher<String> publisher = acquirePublisher(uri + "/" + messageType, String.class);
+
+        final Publisher<String> publisher = acquirePublisher(uri,
+                String.class);
         BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
 
         long index = publisher.publish("Message-1");
@@ -176,7 +180,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
         QueueView<String, String> queue = acquireQueue(uri, String.class, String.class);
         queue.replay(index, (topic, message) -> values.add(topic + " " + message), null);
-        assertEquals("Message-1", values.poll(2, SECONDS).toString());
+        assertEquals(name + " " + "Message-1", values.poll(2, SECONDS).toString());
     }
 
     class MyMarshallable implements Marshallable {

@@ -14,6 +14,7 @@ import net.openhft.chronicle.queue.ExcerptTailer;
 import net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.WireKey;
+import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +36,28 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     private final Class<T> messageTypeClass;
     private final Class<M> elementTypeClass;
 
+    private static final String DEFAULT_BASE_PATH;
+
+    static {
+        String dir = "/tmp";
+        try {
+            final Path tempDirectory = Files.createTempDirectory("engine-queue");
+            dir = tempDirectory.toAbsolutePath().toString();
+        } catch (Exception ignore) {
+        }
+
+        DEFAULT_BASE_PATH = dir;
+    }
+
+    @NotNull
+    public static String resourcesDir() {
+        String path = ChronicleQueueView.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        if (path == null)
+            return ".";
+        return new File(path).getParentFile().getParentFile() + "/src/test/resources";
+    }
+
+
     private final ThreadLocal<ThreadLocalData> threadLocal;
 
     public ChronicleQueueView(RequestContext requestContext, Asset asset) {
@@ -50,7 +73,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     }
 
     @Override
-    public void registerTopicSubscriber(@NotNull TopicSubscriber<T, M> topicSubscriber) throws AssetNotFoundException {
+    public void registerTopicSubscriber
+            (@NotNull TopicSubscriber<T, M> topicSubscriber) throws AssetNotFoundException {
         throw new UnsupportedOperationException("todo");
     }
 
@@ -69,20 +93,16 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         throw new UnsupportedOperationException("todo");
     }
 
-    private ChronicleQueue newInstance(String name, String basePath) {
+    private ChronicleQueue newInstance(String name, @Nullable String basePath) {
         ChronicleQueue chronicleQueue;
+
+        if (basePath == null)
+            basePath = DEFAULT_BASE_PATH;
+
         File baseFilePath;
         try {
-
-            if (basePath != null) {
-                baseFilePath = new File(basePath + name);
-                //noinspection ResultOfMethodCallIgnored
-                baseFilePath.mkdirs();
-            } else {
-                final Path tempDirectory = Files.createTempDirectory("engine-queue");
-                baseFilePath = tempDirectory.toFile();
-            }
-
+            baseFilePath = new File(basePath + name);
+            baseFilePath.mkdirs();
             chronicleQueue = new SingleChronicleQueueBuilder(baseFilePath).build();
         } catch (Exception e) {
             throw Jvm.rethrow(e);
@@ -97,7 +117,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
     @NotNull
     @Override
-    public Excerpt createExcerpt() throws IOException {
+    public Excerpt createExcerpt() {
         return chronicleQueue.createExcerpt();
     }
 
@@ -134,7 +154,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     public M get(int index) {
         try {
             final ExcerptTailer tailer = threadLocalTailer();
-            if (!tailer.index(index))
+            if (!tailer.moveToIndex(index))
                 return null;
             return tailer.readDocument(
                     wire -> threadLocalElement(wire.read().object(elementTypeClass))) ?
@@ -168,7 +188,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     }
 
     /**
-     * @param consumer a consumer that provides that name of the event and value contained within the except
+     * @param consumer a consumer that provides that name of the event and value contained within
+     *                 the except
      */
     public void get(BiConsumer<CharSequence, M> consumer) {
         try {
@@ -185,21 +206,17 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
     @Override
     public long set(@NotNull T name, @NotNull M message) {
-        try {
-            final WireKey wireKey = name instanceof WireKey ? (WireKey) name : () -> name.toString();
-            return threadLocalAppender().writeDocument(w -> w.writeEventName(wireKey).object(message));
-        } catch (IOException e) {
-            throw Jvm.rethrow(e);
-        }
+
+        final WireKey wireKey = name instanceof WireKey ? (WireKey) name : name::toString;
+        return threadLocalAppender().writeDocument(w -> w.writeEventName(wireKey).object(message));
+
     }
 
     @Override
     public long set(@NotNull M event) {
-        try {
-            return threadLocalAppender().writeDocument(w -> w.writeEventName(() -> "").object(event));
-        } catch (IOException e) {
-            throw Jvm.rethrow(e);
-        }
+
+        return threadLocalAppender().writeDocument(w -> w.writeEventName(() -> "").object(event));
+
     }
 
     @NotNull
@@ -210,7 +227,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
     @NotNull
     @Override
-    public ExcerptAppender createAppender() throws IOException {
+    public ExcerptAppender createAppender() {
         return chronicleQueue.createAppender();
     }
 
@@ -225,30 +242,33 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     }
 
     @Override
-    public long firstAvailableIndex() {
-        return chronicleQueue.firstAvailableIndex();
+    public long firstIndex() {
+        return chronicleQueue.firstIndex();
     }
 
     @Override
-    public long lastWrittenIndex() {
-        return chronicleQueue.lastWrittenIndex();
+    public long lastIndex() {
+        return chronicleQueue.lastIndex();
     }
+
+    @NotNull
+    @Override
+    public WireType wireType() {
+        throw new UnsupportedOperationException("todo");
+    }
+
 
     @Override
     public void close() throws IOException {
         chronicleQueue.close();
     }
 
-    //  @Override
-    //   public WireType wireType() {
-    //      throw new UnsupportedOperationException("todo");
-    //  }
 
     @Override
     public void replay(long index, @NotNull BiConsumer<T, M> consumer, @Nullable Consumer<Exception> isAbsent) {
         ExcerptTailer excerptTailer = threadLocalReplayTailer();
         try {
-            excerptTailer.index(index);
+            excerptTailer.moveToIndex(index);
             excerptTailer.readDocument(w -> w.read());
         } catch (Exception e) {
             isAbsent.accept(e);
