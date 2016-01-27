@@ -138,23 +138,23 @@ public class CMap2EngineReplicator implements EngineReplication,
 //        assert keyBytes == kv.key;
 //        assert valueBytes == kv.value;
 
-        long addr = keyBytes.address();
+     //   long addr = keyBytes.address();
 //        long limit = keyBytes.limit();
-        long firstBytes = NativeBytes.UNSAFE.getLong(addr);
-        check(keyBytes);
-        Thread.yield();
-        check(valueBytes);
+    //    long firstBytes = NativeBytes.UNSAFE.getLong(addr);
+   //     check(keyBytes);
+   //     Thread.yield();
+  //      check(valueBytes);
 
 //        assert keyBytes == kv.key;
 //        assert valueBytes == kv.value;
 
-        long addr2 = keyBytes.address();
+   //     long addr2 = keyBytes.address();
 //        long limit2 = keyBytes.limit();
-        long firstBytes2 = NativeBytes.UNSAFE.getLong(addr);
-        assert addr == addr2 : "address";
+  //      long firstBytes2 = NativeBytes.UNSAFE.getLong(addr);
+ //       assert addr == addr2 : "address";
 //        assert limit == limit2 : "limit";
-        assert firstBytes == firstBytes2 : "firstBytes";
-        check(kv.key);
+ //       assert firstBytes == firstBytes2 : "firstBytes";
+ //       check(kv.key);
 //        check(kv.value);
 //        assert keyBytes == kv.key;
 //        assert valueBytes == kv.value;
