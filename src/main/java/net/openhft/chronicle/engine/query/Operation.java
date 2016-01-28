@@ -38,7 +38,7 @@ public class Operation implements Marshallable {
     }
 
     @Override
-    public void writeMarshallable(WireOut wireOut) {
+    public void writeMarshallable(@org.jetbrains.annotations.NotNull WireOut wireOut) {
         wireOut.write(() -> "type").text(type.toString());
         wireOut.write(() -> "wrapped").object(wrapped);
     }

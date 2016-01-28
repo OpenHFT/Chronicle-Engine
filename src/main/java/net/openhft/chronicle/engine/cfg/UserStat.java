@@ -48,7 +48,7 @@ public class UserStat implements Marshallable {
     }
 
     @Override
-    public void writeMarshallable(WireOut wire) {
+    public void writeMarshallable(@NotNull WireOut wire) {
         wire.write(() -> "loggedIn").time(loggedIn)
                 .write(() -> "recentInteraction").time(recentInteraction)
                 .write(() -> "totalInteractions").int16(totalInteractions);
