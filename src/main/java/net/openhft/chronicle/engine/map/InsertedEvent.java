@@ -126,7 +126,8 @@ public class InsertedEvent<K, V> implements MapEvent<K, V> {
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         wire.read(MapEventFields.assetName).text(this, (o, s) -> assetName = s);
-        wire.read(MapEventFields.key).object((Class<K>) Object.class, this, (o, x) -> o.key = x);
+        wire.read(MapEventFields.key)
+                .object((Class<K>) Object.class, this, (o, x) -> o.key = x);
         wire.read(MapEventFields.value).object((Class<V>) Object.class, this, (o, x) -> o.value = x);
         wire.read(MapEventFields.isReplicationEvent).bool(this, (o, x) -> o.isReplicationEvent = x);
     }

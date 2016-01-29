@@ -95,6 +95,7 @@ abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient imp
                         subscriber.onEndOfSubscription();
                         subscribersToTid.remove(this);
                         hub.unsubscribe(tid());
+
                     } else if (CoreFields.reply.contentEquals(eventName)) {
                         final Class aClass = rc.elementType();
 
@@ -110,7 +111,7 @@ abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient imp
         });
     }
 
-    private void onEvent(@Nullable Object message, @NotNull Subscriber subscriber) {
+    void onEvent(@Nullable Object message, @NotNull Subscriber subscriber) {
         try {
             if (message == null) {
                 // todo remove subscriber.
