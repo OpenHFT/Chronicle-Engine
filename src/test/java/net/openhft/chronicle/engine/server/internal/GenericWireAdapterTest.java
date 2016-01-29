@@ -3,6 +3,7 @@ package net.openhft.chronicle.engine.server.internal;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
+import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
@@ -23,7 +24,7 @@ public class GenericWireAdapterTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {WireType.TEXT},
+            {WireType.TEXT},
                 {WireType.BINARY}
         });
     }
@@ -45,11 +46,24 @@ public class GenericWireAdapterTest {
 
         final Bytes b = Bytes.elasticByteBuffer();
         final Wire wire = wireType.apply(b);
-        genericWireAdapter.valueToWire().accept(wire.getValueOut(), EXPECTED);
-        final Double actual = genericWireAdapter.wireToValue().apply(wire.getValueIn());
 
-        System.out.println(actual);
-        Assert.assertEquals(EXPECTED, actual);
+        wire.writeDocument(false, w -> {
+            genericWireAdapter.valueToWire().accept(wire.getValueOut(), EXPECTED);
+
+        });
+
+        System.out.println("----------------------------------");
+        System.out.println(Wires.fromSizePrefixedBlobs(wire.bytes()));
+
+        wire.readDocument(null, w -> {
+
+            final Double actual = genericWireAdapter.wireToValue().apply(wire.getValueIn());
+
+          //  System.out.println(actual);
+            Assert.assertEquals(EXPECTED, actual);
+        });
+
+
     }
 
 
