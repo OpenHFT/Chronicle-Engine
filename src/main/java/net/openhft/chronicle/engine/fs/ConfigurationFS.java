@@ -97,7 +97,7 @@ public class ConfigurationFS implements MountPoint {
     }
 
     @Override
-    public void writeMarshallable(WireOut wire) {
+    public void writeMarshallable(@NotNull WireOut wire) {
         throw new UnsupportedOperationException("todo");
     }
 

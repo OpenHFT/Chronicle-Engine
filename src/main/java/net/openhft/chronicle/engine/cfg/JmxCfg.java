@@ -46,7 +46,7 @@ public class JmxCfg implements Installable, Marshallable {
     }
 
     @Override
-    public void writeMarshallable(WireOut wire) {
+    public void writeMarshallable(@NotNull WireOut wire) {
         wire.write(() -> "enabled").bool(enabled);
     }
 

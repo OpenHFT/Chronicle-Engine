@@ -54,7 +54,7 @@ public class ServerCfg implements Installable, Marshallable {
     }
 
     @Override
-    public void writeMarshallable(WireOut wire) {
+    public void writeMarshallable(@NotNull WireOut wire) {
         wire.write(() -> "wireType").asEnum(wireType);
         wire.write(() -> "port").int32(port);
         wire.write(() -> "logTCPMessages").asEnum(logTCPMessages);

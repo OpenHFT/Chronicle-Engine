@@ -31,11 +31,6 @@ import java.util.function.Consumer;
  */
 public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
-    private final ChronicleQueue chronicleQueue;
-
-    private final Class<T> messageTypeClass;
-    private final Class<M> elementTypeClass;
-
     private static final String DEFAULT_BASE_PATH;
 
     static {
@@ -49,22 +44,25 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         DEFAULT_BASE_PATH = dir;
     }
 
-    @NotNull
-    public static String resourcesDir() {
-        String path = ChronicleQueueView.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-        if (path == null)
-            return ".";
-        return new File(path).getParentFile().getParentFile() + "/src/test/resources";
-    }
-
-
+    private final ChronicleQueue chronicleQueue;
+    private final Class<T> messageTypeClass;
+    private final Class<M> elementTypeClass;
     private final ThreadLocal<ThreadLocalData> threadLocal;
+
 
     public ChronicleQueueView(RequestContext requestContext, Asset asset) {
         chronicleQueue = newInstance(requestContext.name(), requestContext.basePath());
         messageTypeClass = requestContext.type();
         elementTypeClass = requestContext.elementType();
         threadLocal = ThreadLocal.withInitial(() -> new ThreadLocalData(chronicleQueue));
+    }
+
+    @NotNull
+    public static String resourcesDir() {
+        String path = ChronicleQueueView.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        if (path == null)
+            return ".";
+        return new File(path).getParentFile().getParentFile() + "/src/test/resources";
     }
 
     @Override
@@ -101,7 +99,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
         File baseFilePath;
         try {
-            baseFilePath = new File(basePath + name);
+            baseFilePath = new File(basePath , name);
             baseFilePath.mkdirs();
             chronicleQueue = new SingleChronicleQueueBuilder(baseFilePath).build();
         } catch (Exception e) {
@@ -110,6 +108,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         return chronicleQueue;
     }
 
+    @NotNull
     @Override
     public String name() {
         return chronicleQueue.name();

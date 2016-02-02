@@ -47,7 +47,7 @@ public class Price implements Marshallable {
     }
 
     @Override
-    public void writeMarshallable(WireOut wire) {
+    public void writeMarshallable(@NotNull WireOut wire) {
         wire.write(() -> "instrument").text(instrument);
         wire.write(() -> "bidPrice").float64(bidPrice);
         wire.write(() -> "bidQuantity").float64(bidQuantity);

@@ -51,7 +51,7 @@ public interface QueueView<T, M> extends ChronicleQueue, TopicPublisher<T, M>, K
      * @param except the except to add
      * @return the index of the new except added to the chronicle queue
      */
-    long set(@NotNull M except);
+    long set(@NotNull M except) throws IOException;
 
     @Override
     long size();

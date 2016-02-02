@@ -184,6 +184,10 @@ public class VanillaAsset implements Asset, Closeable {
         addWrappingRule(KeySetView.class, LAST + " remote key maps", RemoteKeySetView::new,
                 MapView.class);
 
+       final Asset queue = acquireAsset("queue");
+        queue.addLeafRule(ObjectSubscription.class, LAST + " Remote", RemoteKVSSubscription::new);
+
+
         addLeafRule(ObjectSubscription.class, LAST + " Remote", RemoteKVSSubscription::new);
 
         //TODO This is incorrect should be RemoteKVSSubscription

@@ -40,7 +40,7 @@ public class RequestContextTest {
         RequestContext rc = requestContext(uri);
         assertEquals("/chronicleMapString?" +
                 "view=Map&" +
-                "keyType=int32&" +
+                "keyType=int&" +
                 "putReturnsNull=true&" +
                 "removeReturnsNull=true&" +
                 "bootstrap=true&" +

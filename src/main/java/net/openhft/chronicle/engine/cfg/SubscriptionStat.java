@@ -58,7 +58,7 @@ public class SubscriptionStat implements Marshallable {
     }
 
     @Override
-    public void writeMarshallable(WireOut wire) {
+    public void writeMarshallable(@NotNull WireOut wire) {
         wire.write(() -> "firstSubscribed").time(firstSubscribed)
                 .write(() -> "recentlySubscribed").time(recentlySubscribed)
                 .write(() -> "activeSubscriptions").int16(activeSubscriptions)

@@ -55,7 +55,7 @@ public class MonitorCfg implements Installable, Marshallable {
     }
 
     @Override
-    public void writeMarshallable(WireOut wire) {
+    public void writeMarshallable(@NotNull WireOut wire) {
         wire.write(() -> "subscriptionMonitoringEnabled").bool(subscriptionMonitoringEnabled)
                 .write(() -> "userMonitoringEnabled").bool(userMonitoringEnabled);
     }

@@ -42,7 +42,7 @@ public class ClustersCfg implements Installable, Marshallable {
     }
 
     @Override
-    public void writeMarshallable(WireOut wire) {
+    public void writeMarshallable(@NotNull WireOut wire) {
         clusters.writeMarshallable(wire);
     }
 
