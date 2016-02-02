@@ -170,7 +170,8 @@ public class RequestContext implements Cloneable {
 
     @NotNull
     public WireParser getWireParser() {
-        WireParser parser = new VanillaWireParser();
+        WireParser parser = new VanillaWireParser((s, v) -> {
+        });
         parser.register(() -> "cluster", v -> v.text(this, (o, x) -> o.cluster = x));
         parser.register(() -> "view", v -> v.text(this, RequestContext::view));
         parser.register(() -> "bootstrap", v -> v.bool(this, (o, x) -> o.bootstrap = x));
@@ -191,7 +192,6 @@ public class RequestContext implements Cloneable {
         parser.register(() -> "entries", v -> v.int64(this, (o, x) -> o.entries = x));
         parser.register(() -> "averageValueSize", v -> v.int64(this, (o, x) -> o.averageValueSize = x));
 
-        parser.register(WireParser.DEFAULT, ValueIn.DISCARD);
         return parser;
     }
 

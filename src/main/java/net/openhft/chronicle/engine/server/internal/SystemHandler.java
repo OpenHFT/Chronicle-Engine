@@ -84,7 +84,8 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
     }
 
     private WireParser wireParser() {
-        final WireParser parser = new VanillaWireParser();
+        final WireParser parser = new VanillaWireParser((o, v) -> {
+        });
         parser.register(() -> EventId.domain.toString(), v -> v.text(this, (o, x) -> o.sessionDetails.setDomain(x)));
         parser.register(() -> EventId.sessionMode.toString(), v -> v.text(this, (o, x) -> o
                 .sessionDetails.setSessionMode(SessionMode.valueOf(x))));
@@ -92,8 +93,6 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
                 .sessionDetails.setSecurityToken(x)));
         parser.register(() -> EventId.clientId.toString(), v -> v.text(this, (o, x) -> o
                 .sessionDetails.setClientId(UUID.fromString(x))));
-        parser.register(() -> "", v -> {
-        });
         return parser;
     }
 
