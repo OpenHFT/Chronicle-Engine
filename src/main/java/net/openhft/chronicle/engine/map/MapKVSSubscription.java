@@ -46,7 +46,6 @@ import static net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer.notif
 /**
  * Created by peter on 22/05/15.
  */
-// todo review thread safety
 public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
         RawKVSSubscription<K, V> {
 

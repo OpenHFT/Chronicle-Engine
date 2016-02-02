@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -46,7 +45,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiConsumer;
 
 /**
  * Created by peter on 22/05/15.
@@ -67,7 +65,6 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
 
     private Map<String, SubscriptionStat> subscriptionMonitoringMap = null;
     private EventLoop eventLoop;
-    private KeyValueStore<T, M> kvStore;
 
     public QueueObjectSubscription(@NotNull RequestContext requestContext, @NotNull Asset asset) {
         this(requestContext.topicType(), requestContext.viewType(), asset);
@@ -112,12 +109,12 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
 
     @Override
     public void setKvStore(KeyValueStore<T, M> kvStore) {
-        this.kvStore = kvStore;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void notifyEvent(MapEvent<T, M> changeEvent) {
-        throw new UnsupportedOperationException("todo");
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -148,20 +145,15 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
                                    @NotNull Subscriber subscriber,
                                    @NotNull Filter filter) {
 
-        try {
-            final QueueView<T, M> chronicleQueue = asset.acquireView
-                    (QueueView.class);
+        final QueueView<T, M> chronicleQueue = asset.acquireView(QueueView.class);
 
-            eventLoop.addHandler(() -> {
-                final M e = chronicleQueue.get(rc.name());
-                if (e != null)
-                    subscriber.accept(e);
-                return true;
-            });
-
-        } catch (Exception e) {
-            throw Jvm.rethrow(e);
-        }
+        eventLoop.addHandler(() -> {
+            final M e = chronicleQueue.get(rc.name());
+            if (e == null)
+                return false;
+            subscriber.accept(e);
+            return true;
+        });
     }
 
     @Override
@@ -181,11 +173,11 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
 
             chronicleQueue.get((eventName, m) -> {
 
-                    try {
+                try {
                     subscriber.onMessage(toT(eventName), m);
-                    } catch (InvalidSubscriberException e) {
-                        terminate.set(true);
-                    }
+                } catch (InvalidSubscriberException e) {
+                    terminate.set(true);
+                }
             });
 
             return true;

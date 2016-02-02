@@ -250,11 +250,11 @@ public class RequestContext implements Cloneable {
         return type;
     }
 
-    public Class messageType() {
+    public <T> Class<T> messageType() {
 
         if (type2 == null)
-            return String.class;
-        return type2;
+            return (Class<T>) String.class;
+        return (Class<T>)type2;
     }
 
     @NotNull

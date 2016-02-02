@@ -48,6 +48,7 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
         this.messageClass = messageClass;
     }
 
+
     private static String toUri(String fullName, Class messageClass) {
         StringBuilder uri = new StringBuilder();
         if (!fullName.startsWith("/"))
@@ -157,6 +158,12 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
         };
 
         hub.subscribe(asyncSubscription);
+    }
+
+
+    @Override
+    public Class getType() {
+        return messageClass;
     }
 
     void onEvent(@Nullable E message, @NotNull Subscriber<E> subscriber) {

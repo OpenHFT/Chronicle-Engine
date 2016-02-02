@@ -58,29 +58,22 @@ public class PublisherHandler<E> extends AbstractHandler {
                 return;
             }
 
-            outWire.writeDocument(true, wire -> outWire.writeEventName(tid).int64(inputTid));
 
-            writeData(inWire.bytes(), out
+            if (publish.contentEquals(eventName)) {
 
-                            ->
+                valueIn.marshallable(w -> {
+                    final Params[] params = publish.params();
 
-                    {
+                    final Params param = params[0];
+                    final ValueIn read = w.read(param);
+                    final E message = wireToE.apply(read);
 
-                        if (publish.contentEquals(eventName)) {
+                    nullCheck(message);
+                    view.publish((E) message);
+                });
 
-                            valueIn.marshallable(wire -> {
-                                final Params[] params = publish.params();
+            }
 
-                                final E message = wireToE.apply(wire.read(params[1]));
-
-                                nullCheck(message);
-                                view.publish(message);
-                            });
-
-                        }
-                    }
-
-            );
         }
     };
 
@@ -105,7 +98,7 @@ public class PublisherHandler<E> extends AbstractHandler {
     }
 
     public enum EventId implements ParameterizeWireKey {
-        publish,
+        publish(message),
         onEndOfSubscription,
         registerSubscriber(message);
 

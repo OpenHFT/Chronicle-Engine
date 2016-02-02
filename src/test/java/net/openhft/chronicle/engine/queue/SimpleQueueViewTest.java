@@ -3,19 +3,14 @@ package net.openhft.chronicle.engine.queue;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
-import net.openhft.chronicle.engine.api.pubsub.Publisher;
-import net.openhft.chronicle.engine.api.pubsub.Subscriber;
-import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
-import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
+import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
+import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
-import net.openhft.chronicle.wire.Marshallable;
-import net.openhft.chronicle.wire.WireIn;
-import net.openhft.chronicle.wire.WireOut;
-import net.openhft.chronicle.wire.WireType;
+import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -33,7 +28,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static net.openhft.chronicle.engine.Chassis.*;
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static org.junit.Assert.assertEquals;
 
@@ -54,7 +48,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
     public SimpleQueueViewTest(Boolean isRemote) {
         this.isRemote = isRemote;
-        wireType = WireType.TEXT;
+        wireType = WireType.BINARY;
     }
 
     @Parameterized.Parameters
@@ -62,7 +56,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
         return Arrays.asList(new Boolean[][]{
                 {false}
-                , {true}
+                //, {true}
         });
     }
 
@@ -79,65 +73,84 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
 
     @Before
-    public void before() {
+    public void before() throws IOException {
         methodName(name.getMethodName());
 
-        if (!isRemote)
+        if (isRemote) {
+            final VanillaAssetTree server = new VanillaAssetTree();
+            final AssetTree serverAssetTree = server.forTesting(x -> t.set(x));
+            YamlLogging.setAll(false);
+            String hostPortDescription = "SimpleQueueViewTest-" + System.nanoTime();
+            TCPRegistry.createServerSocketChannelFor(hostPortDescription);
+            new ServerEndpoint(hostPortDescription, serverAssetTree, WireType.BINARY);
+
+            final VanillaAssetTree client = new VanillaAssetTree();
+            assetTree = client.forRemoteAccess(hostPortDescription,
+                    WireType.BINARY, x -> t.set(x));
+
+
+        } else {
             assetTree = (new VanillaAssetTree(1)).forTesting(
                     x -> t.set(x));
-        else {
-          /*  assetTree = (new VanillaAssetTree(1)).forRemoteAccess("192.168.1.76:8088",
-                    wireType,
-                    x -> t.set(x));*/
         }
-
+        YamlLogging.setAll(true);
     }
+
 
     @Test
-    public void testMarshablePublishToATopic() throws InterruptedException {
+    public void testStringTopicPublisherWithSubscribe() throws InterruptedException {
         String uri = "/queue/" + name;
-        Publisher<MyMarshallable> publisher = assetTree.acquirePublisher(uri, MyMarshallable.class);
-        BlockingQueue<MyMarshallable> values = new ArrayBlockingQueue<>(1);
-        Subscriber<MyMarshallable> subscriber = values::add;
-        assetTree.registerSubscriber(uri, MyMarshallable.class, subscriber);
-        publisher.publish(new MyMarshallable("Message-1"));
-        assertEquals("Message-1", values.poll(2, SECONDS).toString());
+        String messageType = "topic";
+        TopicPublisher<String, String> publisher = assetTree.acquireTopicPublisher(uri, String.class, String.class);
+        BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
+        Subscriber<String> subscriber = e -> {
+            if (e != null)
+                values.add(e);
+        };
+
+        assetTree.registerSubscriber(uri + "/" + messageType, String.class, subscriber);
+        Thread.sleep(500);
+        publisher.publish(messageType, "Message-1");
+        assertEquals("Message-1", values.poll(2, SECONDS));
     }
+
 
     @Test
     public void testStringPublishToATopic() throws InterruptedException {
-        String uri = "/queue/" + name;
-        acquireQueue(uri, String.class, String.class);
+        String uri = "/queue/testStringPublishToATopic";
+        assetTree.acquireQueue(uri, String.class, String.class);
         Publisher<String> publisher = assetTree.acquirePublisher(uri, String.class);
         BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
         Subscriber<String> subscriber = values::add;
         assetTree.registerSubscriber(uri, String.class, subscriber);
+        Thread.sleep(500);
         publisher.publish("Message-1");
-        assertEquals("Message-1", values.poll(2, SECONDS).toString());
+        assertEquals("Message-1", values.poll(2, SECONDS));
     }
 
-    @Test
 
+    @Test
     public void testStringPublishToAKeyTopic() throws InterruptedException {
         String uri = "/queue/" + name + "/key";
-        acquireQueue("/queue/" + name, String.class, String.class);
+        assetTree.acquireQueue("/queue/" + name, String.class, String.class);
         Publisher<String> publisher = assetTree.acquirePublisher(uri, String.class);
         BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
         Subscriber<String> subscriber = values::add;
         assetTree.registerSubscriber(uri, String.class, subscriber);
+        Thread.sleep(500);
         publisher.publish("Message-1");
-        assertEquals("Message-1", values.poll(2, SECONDS).toString());
+        assertEquals("Message-1", values.poll(2, SECONDS));
     }
 
     @Test
-
     public void testStringPublishToAKeyTopicNotForMe() throws InterruptedException {
         String uri = "/queue/" + name + "/key";
-        acquireQueue("/queue/" + name, String.class, String.class);
+        assetTree.acquireQueue("/queue/" + name, String.class, String.class);
         Publisher<String> publisher = assetTree.acquirePublisher(uri, String.class);
         BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
         Subscriber<String> subscriber = values::add;
         assetTree.registerSubscriber(uri + "KeyNotForMe", String.class, subscriber);
+        Thread.sleep(500);
         publisher.publish("Message-1");
         assertEquals(null, values.poll(1, SECONDS));
     }
@@ -151,41 +164,26 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
         TopicSubscriber<String, String> subscriber = (topic, message) -> values.add(topic + " " + message);
         assetTree.registerTopicSubscriber(uri, String.class, String.class, subscriber);
+        Thread.sleep(500);
         publisher.publish(messageType, "Message-1");
-        assertEquals("topic Message-1", values.poll(2, SECONDS).toString());
+        assertEquals("topic Message-1", values.poll(2, SECONDS));
     }
 
-    @Test
-
-    public void testStringTopicPublisherWithSubscribe() throws InterruptedException {
-        String uri = "/queue/" + name;
-        String messageType = "topic";
-        TopicPublisher<String, String> publisher = assetTree.acquireTopicPublisher(uri, String.class, String.class);
-        BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
-        Subscriber<String> subscriber = e -> {
-            if (e != null)
-                values.add(e);
-        };
-
-        assetTree.registerSubscriber(uri + "/" + messageType, String.class, subscriber);
-        publisher.publish(messageType, "Message-1");
-        assertEquals("Message-1", values.poll(2, SECONDS).toString());
-    }
 
     @Test
-
     public void testSrtringPublishWithTopicSubscribe() throws InterruptedException {
         String uri = "/queue/" + name;
         String messageType = "topic";
         assetTree.acquireQueue(uri, String.class, String.class);
-        Publisher<String> publisher =  assetTree.acquirePublisher(uri + "/" + messageType, String
+        Publisher<String> publisher = assetTree.acquirePublisher(uri + "/" + messageType, String
                 .class);
         BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
 
         TopicSubscriber<String, String> subscriber = (topic, message) -> values.add(topic + " " + message);
         assetTree.registerTopicSubscriber(uri, String.class, String.class, subscriber);
+
         publisher.publish("Message-1");
-        assertEquals("topic Message-1", values.poll(2, SECONDS).toString());
+        assertEquals("topic Message-1", values.poll(2, SECONDS));
     }
 
 
@@ -203,7 +201,24 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
         QueueView<String, String> queue = assetTree.acquireQueue(uri, String.class, String.class);
         queue.replay(index, (topic, message) -> values.add(topic + " " + message), null);
-        assertEquals(name + " " + "Message-1", values.poll(2, SECONDS).toString());
+        assertEquals(name + " " + "Message-1", values.poll(2, SECONDS));
+    }
+
+
+    @Test
+    public void testMarshablePublishToATopic() throws InterruptedException {
+        String uri = "/queue/" + name;
+        Publisher<MyMarshallable> publisher = assetTree.acquirePublisher(uri, MyMarshallable.class);
+        BlockingQueue<MyMarshallable> values = new ArrayBlockingQueue<>(1);
+        assetTree.registerSubscriber(uri, MyMarshallable.class, new Subscriber<MyMarshallable>() {
+            @Override
+            public void onMessage(MyMarshallable e) throws InvalidSubscriberException {
+                values.add(e);
+            }
+        });
+        Thread.sleep(500);
+        publisher.publish(new MyMarshallable("Message-1"));
+        assertEquals("Message-1", values.poll(5, SECONDS).toString());
     }
 
     class MyMarshallable implements Marshallable {

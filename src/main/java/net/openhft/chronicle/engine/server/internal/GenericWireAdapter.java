@@ -43,8 +43,14 @@ class GenericWireAdapter<K, V> implements WireAdapter<K, V> {
     // if its a string builder re-uses it
     private final ThreadLocal<CharSequence> usingKey = ThreadLocal.withInitial(StringBuilder::new);
     private final ThreadLocal<CharSequence> usingValue = ThreadLocal.withInitial(StringBuilder::new);
+    @NotNull
+    private final Class<K> kClass;
+    @NotNull
+    private final Class<V> vClass;
 
     GenericWireAdapter(@NotNull final Class<K> kClass, @NotNull final Class<V> vClass) {
+        this.kClass = kClass;
+        this.vClass = vClass;
 
         wireToKey = (valueIn) -> valueIn.object(kClass);
         wireToValue = in -> in.object(vClass);
@@ -108,5 +114,13 @@ class GenericWireAdapter<K, V> implements WireAdapter<K, V> {
     @NotNull
     public Function<ValueIn, Entry<K, V>> wireToEntry() {
         return wireToEntry;
+    }
+
+    @Override
+    public String toString() {
+        return "GenericWireAdapter{" +
+                "kClass=" + kClass +
+                ", vClass=" + vClass +
+                '}';
     }
 }

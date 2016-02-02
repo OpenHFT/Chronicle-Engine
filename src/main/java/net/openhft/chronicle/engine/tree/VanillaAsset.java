@@ -103,24 +103,12 @@ public class VanillaAsset implements Asset, Closeable {
 
     public void standardStack(boolean daemon, final Consumer<Throwable> onThrowable) {
 
-        final Asset queue = acquireAsset("queue");
-        queue.addWrappingRule(Publisher.class, LAST + "reference to a ChronicleQueue",
-                QueueReference::new, QueueView.class);
 
-        queue.addWrappingRule(TopicPublisher.class, LAST + "reference to a ChronicleQueue",
-                QueueTopicPublisher::new, QueueView.class);
-
-        queue.addLeafRule(ObjectSubscription.class, LAST + " vanilla queue subscription",
-                QueueObjectSubscription::new);
-
-       /* queue.addLeafRule(SimpleSubscription.class, LAST + " vanilla queue subscription",
-                QueueSimpleSubscription::new);
-*/
         addLeafRule(QueueView.class, LAST + "chronicle queue", ChronicleQueueView::new);
 
         addWrappingRule(Reference.class, LAST + "reference", MapReference::new, MapView.class);
         addWrappingRule(Replication.class, LAST + "replication", VanillaReplication::new, MapView.class);
-        addWrappingRule(Publisher.class, LAST + "publisher", MapReference::new, MapView.class);
+
         addWrappingRule(ValuesCollection.class, LAST + " values", VanillaValuesCollection::new, MapView.class);
 
         addWrappingRule(MapView.class, LAST + " string key maps", VanillaMapView::new, ObjectKeyValueStore.class);
@@ -148,9 +136,21 @@ public class VanillaAsset implements Asset, Closeable {
     public void forServer(boolean daemon, final Consumer<Throwable> onThrowable) {
         standardStack(daemon, onThrowable);
 
+        final Asset queue = acquireAsset("queue");
+        queue.addWrappingRule(Publisher.class, LAST + "reference to a ChronicleQueue",
+                QueueReference::new, QueueView.class);
+
+        queue.addWrappingRule(TopicPublisher.class, LAST + "reference to a ChronicleQueue",
+                QueueTopicPublisher::new, QueueView.class);
+
+        queue.addLeafRule(ObjectSubscription.class, LAST + " vanilla queue subscription",
+                QueueObjectSubscription::new);
+
+        addWrappingRule(Publisher.class, LAST + "publisher", MapReference::new, MapView.class);
         addWrappingRule(EntrySetView.class, LAST + " entrySet", VanillaEntrySetView::new, MapView.class);
 
         addWrappingRule(TopicPublisher.class, LAST + " topic publisher", MapTopicPublisher::new, MapView.class);
+
         addWrappingRule(ObjectKeyValueStore.class, LAST + " authenticated",
                 VanillaSubscriptionKeyValueStore::new, AuthenticatedKeyValueStore.class);
         addWrappingRule(KeySetView.class, LAST + " keySet", VanillaKeySetView::new, MapView.class);
@@ -177,27 +177,33 @@ public class VanillaAsset implements Asset, Closeable {
 
         standardStack(true, onThrowable);
 
+
         addWrappingRule(EntrySetView.class, LAST + " entrySet", RemoteEntrySetView::new, MapView.class);
 
         addWrappingRule(MapView.class, LAST + " remote key maps", RemoteMapView::new, ObjectKeyValueStore.class);
 
-        addWrappingRule(KeySetView.class, LAST + " remote key maps", RemoteKeySetView::new,
-                MapView.class);
-
-       final Asset queue = acquireAsset("queue");
-        queue.addLeafRule(ObjectSubscription.class, LAST + " Remote", RemoteKVSSubscription::new);
+        addWrappingRule(KeySetView.class, LAST + " remote key maps", RemoteKeySetView::new, MapView.class);
 
 
         addLeafRule(ObjectSubscription.class, LAST + " Remote", RemoteKVSSubscription::new);
 
+/*
         //TODO This is incorrect should be RemoteKVSSubscription
-        addLeafRule(RawKVSSubscription.class, LAST + " vanilla",
+        addLeafRule(RemoteKVSSubscription.class, LAST + " vanilla",
                 MapKVSSubscription::new);
+*/
 
-        addLeafRule(ObjectKeyValueStore.class, LAST + " Remote AKVS",
-                RemoteKeyValueStore::new);
-        addWrappingRule(TopicPublisher.class, LAST + " topic publisher", RemoteTopicPublisher::new,
-                MapView.class);
+        addLeafRule(ObjectKeyValueStore.class, LAST + " Remote AKVS", RemoteKeyValueStore::new);
+        addLeafRule(TopicPublisher.class, LAST + " topic publisher", RemoteTopicPublisher::new);
+
+        addLeafRule(Publisher.class, LAST + " topic publisher", RemotePublisher::new);
+
+        // addWrappingRule(Publisher.class, LAST + "publisher", MapReference::new, MapView.class);
+
+        //  addWrappingRule(Publisher.class, LAST + " topic publisher", RemotePublisher::new,
+        //  MapView.class);
+
+
         addLeafRule(TopologySubscription.class, LAST + " vanilla",
                 RemoteTopologySubscription::new);
 

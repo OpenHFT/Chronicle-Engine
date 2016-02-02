@@ -99,7 +99,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
         File baseFilePath;
         try {
-            baseFilePath = new File(basePath , name);
+            baseFilePath = new File(basePath, name);
             baseFilePath.mkdirs();
             chronicleQueue = new SingleChronicleQueueBuilder(baseFilePath).build();
         } catch (Exception e) {
@@ -169,21 +169,21 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
      */
     @Override
     public M get(String name) {
-        try {
-            final ExcerptTailer tailer = threadLocalTailer();
-            return tailer.readDocument(
-                    wire -> {
 
-                        final StringBuilder eventName = Wires.acquireStringBuilder();
-                        final ValueIn valueIn = wire.readEventName(eventName);
+        final ExcerptTailer tailer = threadLocalTailer();
 
-                        if (name == null || name.isEmpty() || name.contentEquals(eventName))
-                            threadLocalElement(valueIn.object(elementTypeClass));
+        // todo change this to use tailer reading document
+        return tailer.readDocument(
+                wire -> {
 
-                    }) ? threadLocalElement() : null;
-        } catch (Exception e) {
-            throw Jvm.rethrow(e);
-        }
+                    final StringBuilder eventName = Wires.acquireStringBuilder();
+                    final ValueIn valueIn = wire.readEventName(eventName);
+
+                    if (name == null || name.isEmpty() || name.contentEquals(eventName))
+                        threadLocalElement(valueIn.object(elementTypeClass));
+
+                }) ? threadLocalElement() : null;
+
     }
 
     /**

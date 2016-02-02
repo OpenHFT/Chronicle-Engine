@@ -188,7 +188,12 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
                         return;
                     }
 
-                    view = this.assetTree.acquireView(requestContext);
+                    // todo I'm sure this can be improved
+                    if (viewType == Publisher.class)
+                        view = this.assetTree.acquirePublisher(requestContext.fullName(),
+                                requestContext.messageType());
+                    else
+                        view = this.assetTree.acquireView(requestContext);
 
                     if (viewType == MapView.class ||
                             viewType == EntrySetView.class ||
