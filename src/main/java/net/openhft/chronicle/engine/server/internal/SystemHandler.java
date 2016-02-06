@@ -23,7 +23,7 @@ import static net.openhft.chronicle.engine.server.internal.SystemHandler.EventId
 public class SystemHandler extends AbstractHandler implements ClientClosedProvider {
     private final StringBuilder eventName = new StringBuilder();
     private SessionDetailsProvider sessionDetails;
-    private final WireParser wireParser = wireParser();
+    private final WireParser<Void> wireParser = wireParser();
     @Nullable
     private Map<String, UserStat> monitoringMap;
     private volatile boolean hasClientClosed;
@@ -83,15 +83,15 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
         dataConsumer.accept(inWire, tid);
     }
 
-    private WireParser wireParser() {
-        final WireParser parser = new VanillaWireParser((s, v, $) -> {
+    private WireParser<Void> wireParser() {
+        final WireParser<Void> parser = new VanillaWireParser<>((s, v, $) -> {
         });
-        parser.register(() -> EventId.domain.toString(), (s, v, $) -> v.text(this, (o, x) -> o.sessionDetails.setDomain(x)));
-        parser.register(() -> EventId.sessionMode.toString(), (s, v, $) -> v.text(this, (o, x) -> o
+        parser.register(EventId.domain::toString, (s, v, $) -> v.text(this, (o, x) -> o.sessionDetails.setDomain(x)));
+        parser.register(EventId.sessionMode::toString, (s, v, $) -> v.text(this, (o, x) -> o
                 .sessionDetails.setSessionMode(SessionMode.valueOf(x))));
-        parser.register(() -> EventId.securityToken.toString(), (s, v, $) -> v.text(this, (o, x) -> o
+        parser.register(EventId.securityToken::toString, (s, v, $) -> v.text(this, (o, x) -> o
                 .sessionDetails.setSecurityToken(x)));
-        parser.register(() -> EventId.clientId.toString(), (s, v, $) -> v.text(this, (o, x) -> o
+        parser.register(EventId.clientId::toString, (s, v, $) -> v.text(this, (o, x) -> o
                 .sessionDetails.setClientId(UUID.fromString(x))));
         return parser;
     }

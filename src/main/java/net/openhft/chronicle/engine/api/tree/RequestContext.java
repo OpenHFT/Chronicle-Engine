@@ -160,7 +160,7 @@ public class RequestContext implements Cloneable {
     public RequestContext queryString(@NotNull String queryString) {
         if (queryString.isEmpty())
             return this;
-        WireParser parser = getWireParser();
+        WireParser<Void> parser = getWireParser();
         Bytes bytes = Bytes.from(queryString);
         QueryWire wire = new QueryWire(bytes);
         while (bytes.readRemaining() > 0)
@@ -169,8 +169,8 @@ public class RequestContext implements Cloneable {
     }
 
     @NotNull
-    public WireParser getWireParser() {
-        WireParser parser = new VanillaWireParser((s, v, $) -> {
+    public WireParser<Void> getWireParser() {
+        WireParser<Void> parser = new VanillaWireParser<>((s, v, $) -> {
         });
         parser.register(() -> "cluster", (s, v, $) -> v.text(this, (o, x) -> o.cluster = x));
         parser.register(() -> "view", (s, v, $) -> v.text(this, RequestContext::view));
