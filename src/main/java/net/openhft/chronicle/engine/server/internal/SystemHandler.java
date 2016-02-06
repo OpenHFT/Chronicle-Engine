@@ -22,8 +22,8 @@ import static net.openhft.chronicle.engine.server.internal.SystemHandler.EventId
  */
 public class SystemHandler extends AbstractHandler implements ClientClosedProvider {
     private final StringBuilder eventName = new StringBuilder();
-    private final WireParser wireParser = wireParser();
     private SessionDetailsProvider sessionDetails;
+    private final WireParser wireParser = wireParser();
     @Nullable
     private Map<String, UserStat> monitoringMap;
     private volatile boolean hasClientClosed;
@@ -42,7 +42,7 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
             }
 
             while (inWire.bytes().readRemaining() > 0)
-                wireParser.parseOne(inWire);
+                wireParser.parseOne(inWire, null);
 
             return;
         }
@@ -84,14 +84,14 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
     }
 
     private WireParser wireParser() {
-        final WireParser parser = new VanillaWireParser((o, v) -> {
+        final WireParser parser = new VanillaWireParser((s, v, $) -> {
         });
-        parser.register(() -> EventId.domain.toString(), v -> v.text(this, (o, x) -> o.sessionDetails.setDomain(x)));
-        parser.register(() -> EventId.sessionMode.toString(), v -> v.text(this, (o, x) -> o
+        parser.register(() -> EventId.domain.toString(), (s, v, $) -> v.text(this, (o, x) -> o.sessionDetails.setDomain(x)));
+        parser.register(() -> EventId.sessionMode.toString(), (s, v, $) -> v.text(this, (o, x) -> o
                 .sessionDetails.setSessionMode(SessionMode.valueOf(x))));
-        parser.register(() -> EventId.securityToken.toString(), v -> v.text(this, (o, x) -> o
+        parser.register(() -> EventId.securityToken.toString(), (s, v, $) -> v.text(this, (o, x) -> o
                 .sessionDetails.setSecurityToken(x)));
-        parser.register(() -> EventId.clientId.toString(), v -> v.text(this, (o, x) -> o
+        parser.register(() -> EventId.clientId.toString(), (s, v, $) -> v.text(this, (o, x) -> o
                 .sessionDetails.setClientId(UUID.fromString(x))));
         return parser;
     }

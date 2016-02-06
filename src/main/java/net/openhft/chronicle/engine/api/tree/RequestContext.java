@@ -164,33 +164,33 @@ public class RequestContext implements Cloneable {
         Bytes bytes = Bytes.from(queryString);
         QueryWire wire = new QueryWire(bytes);
         while (bytes.readRemaining() > 0)
-            parser.parseOne(wire);
+            parser.parseOne(wire, null);
         return this;
     }
 
     @NotNull
     public WireParser getWireParser() {
-        WireParser parser = new VanillaWireParser((s, v) -> {
+        WireParser parser = new VanillaWireParser((s, v, $) -> {
         });
-        parser.register(() -> "cluster", v -> v.text(this, (o, x) -> o.cluster = x));
-        parser.register(() -> "view", v -> v.text(this, RequestContext::view));
-        parser.register(() -> "bootstrap", v -> v.bool(this, (o, x) -> o.bootstrap = x));
-        parser.register(() -> "putReturnsNull", v -> v.bool(this, (o, x) -> o.putReturnsNull = x));
-        parser.register(() -> "removeReturnsNull", v -> v.bool(this, (o, x) -> o.removeReturnsNull = x));
+        parser.register(() -> "cluster", (s, v, $) -> v.text(this, (o, x) -> o.cluster = x));
+        parser.register(() -> "view", (s, v, $) -> v.text(this, RequestContext::view));
+        parser.register(() -> "bootstrap", (s, v, $) -> v.bool(this, (o, x) -> o.bootstrap = x));
+        parser.register(() -> "putReturnsNull", (s, v, $) -> v.bool(this, (o, x) -> o.putReturnsNull = x));
+        parser.register(() -> "removeReturnsNull", (s, v, $) -> v.bool(this, (o, x) -> o.removeReturnsNull = x));
         parser.register(() -> "nullOldValueOnUpdateEvent",
-                v -> v.bool(this, (o, x) -> o.nullOldValueOnUpdateEvent = x));
-        parser.register(() -> "basePath", v -> v.text(this, (o, x) -> o.basePath = x));
-        parser.register(() -> "viewType", v -> v.typeLiteral(this, (o, x) -> o.viewType = x));
-        parser.register(() -> "topicType", v -> v.typeLiteral(this, (o, x) -> o.type = x));
-        parser.register(() -> "keyType", v -> v.typeLiteral(this, (o, x) -> o.type = x));
-        parser.register(() -> "valueType", v -> v.typeLiteral(this, (o, x) -> o.type2 = x));
-        parser.register(() -> "messageType", v -> v.typeLiteral(this, (o, x) -> o.type2 = x));
-        parser.register(() -> "elementType", v -> v.typeLiteral(this, (o, x) -> o.type = x));
-        parser.register(() -> "endSubscriptionAfterBootstrap", v -> v.bool(this, (o, x) -> o.endSubscriptionAfterBootstrap = x));
-        parser.register(() -> "throttlePeriodMs", v -> v.int32(this, (o, x) -> o.throttlePeriodMs = x));
+                (s, v, $) -> v.bool(this, (o, x) -> o.nullOldValueOnUpdateEvent = x));
+        parser.register(() -> "basePath", (s, v, $) -> v.text(this, (o, x) -> o.basePath = x));
+        parser.register(() -> "viewType", (s, v, $) -> v.typeLiteral(this, (o, x) -> o.viewType = x));
+        parser.register(() -> "topicType", (s, v, $) -> v.typeLiteral(this, (o, x) -> o.type = x));
+        parser.register(() -> "keyType", (s, v, $) -> v.typeLiteral(this, (o, x) -> o.type = x));
+        parser.register(() -> "valueType", (s, v, $) -> v.typeLiteral(this, (o, x) -> o.type2 = x));
+        parser.register(() -> "messageType", (s, v, $) -> v.typeLiteral(this, (o, x) -> o.type2 = x));
+        parser.register(() -> "elementType", (s, v, $) -> v.typeLiteral(this, (o, x) -> o.type = x));
+        parser.register(() -> "endSubscriptionAfterBootstrap", (s, v, $) -> v.bool(this, (o, x) -> o.endSubscriptionAfterBootstrap = x));
+        parser.register(() -> "throttlePeriodMs", (s, v, $) -> v.int32(this, (o, x) -> o.throttlePeriodMs = x));
 
-        parser.register(() -> "entries", v -> v.int64(this, (o, x) -> o.entries = x));
-        parser.register(() -> "averageValueSize", v -> v.int64(this, (o, x) -> o.averageValueSize = x));
+        parser.register(() -> "entries", (s, v, $) -> v.int64(this, (o, x) -> o.entries = x));
+        parser.register(() -> "averageValueSize", (s, v, $) -> v.int64(this, (o, x) -> o.averageValueSize = x));
 
         return parser;
     }
