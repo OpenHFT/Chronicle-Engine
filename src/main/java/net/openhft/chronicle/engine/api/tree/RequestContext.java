@@ -164,7 +164,7 @@ public class RequestContext implements Cloneable {
         Bytes bytes = Bytes.from(queryString);
         QueryWire wire = new QueryWire(bytes);
         while (bytes.readRemaining() > 0)
-            parser.parse(wire);
+            parser.parseOne(wire);
         return this;
     }
 

@@ -22,8 +22,8 @@ import static net.openhft.chronicle.engine.server.internal.SystemHandler.EventId
  */
 public class SystemHandler extends AbstractHandler implements ClientClosedProvider {
     private final StringBuilder eventName = new StringBuilder();
-    private SessionDetailsProvider sessionDetails;
     private final WireParser wireParser = wireParser();
+    private SessionDetailsProvider sessionDetails;
     @Nullable
     private Map<String, UserStat> monitoringMap;
     private volatile boolean hasClientClosed;
@@ -42,7 +42,7 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
             }
 
             while (inWire.bytes().readRemaining() > 0)
-                wireParser.parse(inWire);
+                wireParser.parseOne(inWire);
 
             return;
         }
