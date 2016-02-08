@@ -53,8 +53,7 @@ public class PublisherHandler<E> extends AbstractHandler {
                 boolean bootstrap = true;
 
                 valueIn.marshallable(m -> view.registerSubscriber(bootstrap,
-                        requestContext.throttlePeriodMs(),
-                        listener));
+                        requestContext.throttlePeriodMs(), listener));
                 return;
             }
 

@@ -104,7 +104,7 @@ public interface AssetTree extends Closeable {
      */
     @NotNull
     default <E> Publisher<E> acquirePublisher(@NotNull String uri, Class<E> eClass) throws AssetNotFoundException {
-        return acquireView(requestContext(uri).view("pub").type(eClass));
+        return acquireView(requestContext(uri).view("pub").elementType(eClass));
     }
 
     /**
@@ -146,7 +146,7 @@ public interface AssetTree extends Closeable {
      * @throws AssetNotFoundException the view could not be constructed.
      */
     default <E> void registerSubscriber(@NotNull String uri, Class<E> eClass, Subscriber<E> subscriber) throws AssetNotFoundException {
-        RequestContext rc = requestContext(uri).type(eClass);
+        RequestContext rc = requestContext(uri).type2(eClass);
 
         acquireSubscription(rc)
                 .registerSubscriber(rc, subscriber, Filter.empty());

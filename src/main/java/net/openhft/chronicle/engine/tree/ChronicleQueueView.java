@@ -46,13 +46,14 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
     private final ChronicleQueue chronicleQueue;
     private final Class<T> messageTypeClass;
+    @NotNull
     private final Class<M> elementTypeClass;
     private final ThreadLocal<ThreadLocalData> threadLocal;
 
 
     public ChronicleQueueView(RequestContext requestContext, Asset asset) {
         chronicleQueue = newInstance(requestContext.name(), requestContext.basePath());
-        messageTypeClass = requestContext.type();
+        messageTypeClass = requestContext.messageType();
         elementTypeClass = requestContext.elementType();
         threadLocal = ThreadLocal.withInitial(() -> new ThreadLocalData(chronicleQueue));
     }
@@ -170,6 +171,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     @Override
     public M get(String name) {
 
+
         final ExcerptTailer tailer = threadLocalTailer();
 
         // todo change this to use tailer reading document
@@ -179,8 +181,13 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
                     final StringBuilder eventName = Wires.acquireStringBuilder();
                     final ValueIn valueIn = wire.readEventName(eventName);
 
-                    if (name == null || name.isEmpty() || name.contentEquals(eventName))
-                        threadLocalElement(valueIn.object(elementTypeClass));
+                    System.out.println("************* read event=" + eventName);
+
+                    final M object = valueIn.object(elementTypeClass);
+
+                    if (name == null || name.isEmpty() || name.contentEquals(eventName)) {
+                        threadLocalElement(object);
+                    }
 
                 }) ? threadLocalElement() : null;
 
@@ -190,22 +197,27 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
      * @param consumer a consumer that provides that name of the event and value contained within
      *                 the except
      */
-    public void get(BiConsumer<CharSequence, M> consumer) {
+    public void get(@NotNull BiConsumer<CharSequence, M> consumer) {
         try {
             final ExcerptTailer tailer = threadLocalTailer();
+
             tailer.readDocument(w -> {
                 final StringBuilder eventName = Wires.acquireStringBuilder();
                 final ValueIn valueIn = w.readEventName(eventName);
+
+
                 consumer.accept(eventName, valueIn.object(elementTypeClass));
+
             });
         } catch (Exception e) {
+            e.printStackTrace();
             throw Jvm.rethrow(e);
         }
     }
 
     @Override
     public long set(@NotNull T name, @NotNull M message) {
-
+        System.out.println("set - Thread-id=" + Thread.currentThread().hashCode());
         final WireKey wireKey = name instanceof WireKey ? (WireKey) name : name::toString;
         return threadLocalAppender().writeDocument(w -> w.writeEventName(wireKey).object(message));
 

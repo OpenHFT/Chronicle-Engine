@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
 import static net.openhft.chronicle.engine.server.internal.ObjectKVSubscriptionHandler.EventId.*;
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
 
@@ -59,12 +60,23 @@ public class RemoteKVSSubscription<K, V> extends AbstractRemoteSubscription<MapE
 
     @NotNull
     private static String toUri(@NotNull final RequestContext context) {
+       StringBuilder sb = Wires.acquireStringBuilder();
+
         String addSlash = "";
         if (context.fullName().indexOf('/') != 0) {
             addSlash = "/";
         }
 
-        return addSlash + context.fullName() + "?view=subscription";
+        sb.append(addSlash).append(context.fullName()).append("?view=subscription");
+
+        if (context.messageType() != String.class)
+            sb.append("&messageType=").append(CLASS_ALIASES.nameFor(context.messageType()));
+
+        if (context.elementType() != String.class)
+            sb.append("&elementType=").append(CLASS_ALIASES.nameFor(context.elementType()));
+
+        return sb.toString();
+
     }
 
     @Override

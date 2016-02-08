@@ -184,8 +184,8 @@ public class RequestContext implements Cloneable {
         parser.register(() -> "topicType", (s, v, $) -> v.typeLiteral(this, (o, x) -> o.type = x));
         parser.register(() -> "keyType", (s, v, $) -> v.typeLiteral(this, (o, x) -> o.type = x));
         parser.register(() -> "valueType", (s, v, $) -> v.typeLiteral(this, (o, x) -> o.type2 = x));
-        parser.register(() -> "messageType", (s, v, $) -> v.typeLiteral(this, (o, x) -> o.type2 = x));
-        parser.register(() -> "elementType", (s, v, $) -> v.typeLiteral(this, (o, x) -> o.type = x));
+        parser.register(() -> "messageType", (s, v, $) -> v.typeLiteral(this, (o, x) -> o.type = x));
+        parser.register(() -> "elementType", (s, v, $) -> v.typeLiteral(this, (o, x) -> o.type2 = x));
         parser.register(() -> "endSubscriptionAfterBootstrap", (s, v, $) -> v.bool(this, (o, x) -> o.endSubscriptionAfterBootstrap = x));
         parser.register(() -> "throttlePeriodMs", (s, v, $) -> v.int32(this, (o, x) -> o.throttlePeriodMs = x));
 
@@ -220,15 +220,18 @@ public class RequestContext implements Cloneable {
         return this;
     }
 
+    @NotNull
     public Class type() {
-
         if (type == null)
             return String.class;
         return type;
     }
 
+    @NotNull
     public Class elementType() {
-        return type2 == null ? type : type2;
+        if (type2 != null)
+            return type2;
+        return String.class;
     }
 
     public Class keyType() {
@@ -250,12 +253,17 @@ public class RequestContext implements Cloneable {
         return type;
     }
 
-    public <T> Class<T> messageType() {
-
-        if (type2 == null)
-            return (Class<T>) String.class;
-        return (Class<T>)type2;
+    public Class messageType() {
+        if (type == null)
+            return String.class;
+        return type;
     }
+
+    public RequestContext messageType(Class clazz) {
+        this.type = clazz;
+        return this;
+    }
+
 
     @NotNull
     public RequestContext valueType(Class type2) {
@@ -508,6 +516,12 @@ public class RequestContext implements Cloneable {
         this.throttlePeriodMs = throttlePeriodMs;
         return this;
     }
+
+    public <E> RequestContext elementType(Class<E> eClass) {
+        this.type2 = eClass;
+        return this;
+    }
+
 
     public enum Operation {
         END_SUBSCRIPTION_AFTER_BOOTSTRAP, BOOTSTRAP;

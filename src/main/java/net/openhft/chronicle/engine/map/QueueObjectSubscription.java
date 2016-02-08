@@ -109,12 +109,12 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
 
     @Override
     public void setKvStore(KeyValueStore<T, M> kvStore) {
-        throw new UnsupportedOperationException();
+        //   throw new UnsupportedOperationException();
     }
 
     @Override
     public void notifyEvent(MapEvent<T, M> changeEvent) {
-        throw new UnsupportedOperationException();
+        // throw new UnsupportedOperationException();
     }
 
     @Override
@@ -141,17 +141,24 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
     }
 
     @Override
-    public void registerSubscriber(@NotNull RequestContext rc,
-                                   @NotNull Subscriber subscriber,
-                                   @NotNull Filter filter) {
+    public void registerSubscriber(@NotNull final RequestContext rc,
+                                   @NotNull final Subscriber subscriber,
+                                   @NotNull final Filter filter) {
 
-        final QueueView<T, M> chronicleQueue = asset.acquireView(QueueView.class);
-
+        final Subscriber mysubscriber = subscriber;
+        final int that = this.hashCode();
+        final QueueView<T, M> chronicleQueue = asset.acquireView(QueueView.class, rc);
         eventLoop.addHandler(() -> {
             final M e = chronicleQueue.get(rc.name());
             if (e == null)
                 return false;
-            subscriber.accept(e);
+            System.out.println("subscriber.accept e=" + e + ", ***(2) subscriber=" + mysubscriber
+                    .getClass() + ",this=" + that);
+            try {
+                mysubscriber.accept(e);
+            } catch (Exception e1) {
+                e1.printStackTrace();
+            }
             return true;
         });
     }

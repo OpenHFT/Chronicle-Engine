@@ -92,7 +92,7 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
 
             Subscriber<Object> listener = new LocalSubscriber(tid, pub);
             tidToListener.put(tid, listener);
-            RequestContext rc = requestContext.clone().type(subscriptionType);
+            RequestContext rc = requestContext.clone().type2(subscriptionType);
             final SubscriptionCollection subscription = assetTree.acquireSubscription(rc);
             subscription.registerSubscriber(rc, listener, filter);
             return true;

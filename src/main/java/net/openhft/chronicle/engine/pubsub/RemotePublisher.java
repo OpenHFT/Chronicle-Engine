@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
 import static net.openhft.chronicle.engine.server.internal.PublisherHandler.EventId.registerSubscriber;
 import static net.openhft.chronicle.engine.server.internal.ReferenceHandler.EventId.unregisterSubscriber;
 import static net.openhft.chronicle.engine.server.internal.TopicPublisherHandler.EventId.onEndOfSubscription;
@@ -49,11 +50,14 @@ public class RemotePublisher<T, M> extends AbstractStatelessClient<EventId> impl
     }
 
     private static String toUri(@NotNull final RequestContext context) {
-        final StringBuilder uri = new StringBuilder("/" + context.fullName()
+        final StringBuilder uri = new StringBuilder(context.fullName()
                 + "?view=publisher");
 
-        if (context.type() != String.class)
-            uri.append("&messageType=").append(context.type().getName());
+        if (context.messageType() != String.class)
+            uri.append("&messageType=").append(CLASS_ALIASES.nameFor(context.messageType()));
+
+        if (context.elementType() != String.class)
+            uri.append("&elementType=").append(CLASS_ALIASES.nameFor(context.elementType()));
 
         return uri.toString();
     }
