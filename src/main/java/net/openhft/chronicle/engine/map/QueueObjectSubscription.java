@@ -145,20 +145,14 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
                                    @NotNull final Subscriber subscriber,
                                    @NotNull final Filter filter) {
 
-        final Subscriber mysubscriber = subscriber;
+
         final int that = this.hashCode();
         final QueueView<T, M> chronicleQueue = asset.acquireView(QueueView.class, rc);
         eventLoop.addHandler(() -> {
             final M e = chronicleQueue.get(rc.name());
             if (e == null)
                 return false;
-            System.out.println("subscriber.accept e=" + e + ", ***(2) subscriber=" + mysubscriber
-                    .getClass() + ",this=" + that);
-            try {
-                mysubscriber.accept(e);
-            } catch (Exception e1) {
-                e1.printStackTrace();
-            }
+            subscriber.accept(e);
             return true;
         });
     }

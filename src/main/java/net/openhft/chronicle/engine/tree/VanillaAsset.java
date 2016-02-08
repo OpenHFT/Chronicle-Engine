@@ -103,6 +103,9 @@ public class VanillaAsset implements Asset, Closeable {
 
     public void standardStack(boolean daemon, final Consumer<Throwable> onThrowable) {
 
+        final Asset queue = acquireAsset("queue");
+        queue.addWrappingRule(Reference.class, LAST + "reference", QueueReference::new, QueueView
+                .class);
 
         addWrappingRule(Reference.class, LAST + "reference", MapReference::new, MapView.class);
         addWrappingRule(Replication.class, LAST + "replication", VanillaReplication::new, MapView.class);

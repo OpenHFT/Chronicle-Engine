@@ -164,7 +164,8 @@ public interface AssetTree extends Closeable {
      */
     default <T, E> void registerTopicSubscriber(@NotNull String uri, Class<T> topicClass, Class<E> messageClass, TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
         RequestContext rc = requestContext(uri).keyType(topicClass).valueType(messageClass);
-        ((KVSSubscription) acquireSubscription(rc)).registerTopicSubscriber(rc, subscriber);
+        final KVSSubscription kvsSubscription = (KVSSubscription) acquireSubscription(rc);
+        kvsSubscription.registerTopicSubscriber(rc, subscriber);
     }
 
     /**

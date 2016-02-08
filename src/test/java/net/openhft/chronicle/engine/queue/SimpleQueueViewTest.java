@@ -176,7 +176,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         String uri = "/queue/" + methodName;
         String messageType = "topic";
         TopicPublisher<String, String> publisher = assetTree.acquireTopicPublisher(uri, String.class, String.class);
-        BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
+        BlockingQueue<String> values = new ArrayBlockingQueue<>(10);
         TopicSubscriber<String, String> subscriber = (topic, message) -> values.add(topic + " " + message);
         assetTree.registerTopicSubscriber(uri, String.class, String.class, subscriber);
         Thread.sleep(500);
@@ -195,7 +195,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
             assetTree.acquireQueue(uri, String.class, String.class);
         Publisher<String> publisher = assetTree.acquirePublisher(uri + "/" + messageType, String
                 .class);
-        BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
+        BlockingQueue<String> values = new ArrayBlockingQueue<>(10);
 
         TopicSubscriber<String, String> subscriber = (topic, message) -> {
             values.add(topic + " " + message);
@@ -218,7 +218,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
         final Publisher<String> publisher = assetTree.acquirePublisher(uri,
                 String.class);
-        BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
+        BlockingQueue<String> values = new ArrayBlockingQueue<>(10);
 
         long index = publisher.publish("Message-1");
         TopicSubscriber<String, String> subscriber = (topic, message) -> values.add(topic + " " + message);
@@ -234,7 +234,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     public void testMarshablePublishToATopic() throws InterruptedException {
         String uri = "/queue/testMarshablePublishToATopic";
         Publisher<MyMarshallable> publisher = assetTree.acquirePublisher(uri, MyMarshallable.class);
-        BlockingQueue<MyMarshallable> values = new ArrayBlockingQueue<>(1);
+        BlockingQueue<MyMarshallable> values = new ArrayBlockingQueue<>(10);
         assetTree.registerSubscriber(uri, MyMarshallable.class, values::add);
         Thread.sleep(1000);
         publisher.publish(new MyMarshallable("Message-1"));

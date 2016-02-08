@@ -180,9 +180,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
                     final StringBuilder eventName = Wires.acquireStringBuilder();
                     final ValueIn valueIn = wire.readEventName(eventName);
-
-                    System.out.println("************* read event=" + eventName);
-
                     final M object = valueIn.object(elementTypeClass);
 
                     if (name == null || name.isEmpty() || name.contentEquals(eventName)) {
@@ -219,7 +216,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     public long set(@NotNull T name, @NotNull M message) {
         System.out.println("set - Thread-id=" + Thread.currentThread().hashCode());
         final WireKey wireKey = name instanceof WireKey ? (WireKey) name : name::toString;
-        return threadLocalAppender().writeDocument(w -> w.writeEventName(wireKey).object(message));
+        final ExcerptAppender excerptAppender = threadLocalAppender();
+        return excerptAppender.writeDocument(w -> w.writeEventName(wireKey).object(message));
 
     }
 
