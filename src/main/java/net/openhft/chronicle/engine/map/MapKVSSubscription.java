@@ -192,7 +192,7 @@ public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
     public void registerSubscriber(@NotNull RequestContext rc,
                                    @NotNull Subscriber subscriber,
                                    @NotNull Filter filter) {
-        Class eClass = rc.type();
+        Class eClass = rc.elementType();
         if (eClass == Entry.class || eClass == MapEvent.class)
             registerSubscriber0(rc, subscriber, filter);
         else
