@@ -39,7 +39,6 @@ public class LocalQueueRefTest extends ThreadMonitoringTest {
 
     private static AtomicReference<Throwable> t = new AtomicReference();
 
-
     @Before
     public void before() throws IOException {
         methodName(name.getMethodName());
@@ -48,7 +47,6 @@ public class LocalQueueRefTest extends ThreadMonitoringTest {
                 x -> t.set(x));
         YamlLogging.setAll(true);
     }
-
 
     @After
     public void after() {

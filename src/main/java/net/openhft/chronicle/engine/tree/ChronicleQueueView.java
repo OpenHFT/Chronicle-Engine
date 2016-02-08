@@ -214,7 +214,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
     @Override
     public long set(@NotNull T name, @NotNull M message) {
-        System.out.println("set - Thread-id=" + Thread.currentThread().hashCode());
         final WireKey wireKey = name instanceof WireKey ? (WireKey) name : name::toString;
         final ExcerptAppender excerptAppender = threadLocalAppender();
         return excerptAppender.writeDocument(w -> w.writeEventName(wireKey).object(message));
