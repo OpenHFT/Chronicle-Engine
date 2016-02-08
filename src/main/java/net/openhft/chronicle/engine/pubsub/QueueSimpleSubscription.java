@@ -17,7 +17,6 @@
 package net.openhft.chronicle.engine.pubsub;
 
 import net.openhft.chronicle.bytes.BytesStore;
-import net.openhft.chronicle.engine.api.pubsub.Reference;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.tree.Asset;
@@ -39,21 +38,13 @@ public class QueueSimpleSubscription<E> implements SimpleSubscription<E> {
 
     private static final Logger LOG = LoggerFactory.getLogger(QueueSimpleSubscription.class);
     private final Set<Subscriber<E>> subscribers = new CopyOnWriteArraySet<>();
-    private final Reference<E> currentValue;
     private final Function<Object, E> valueReader;
-    private final Asset parent;
     private final ObjectSubscription objectSubscription;
-    private final String name;
 
-    public QueueSimpleSubscription(Reference<E> reference,
-                                   Function<Object, E> valueReader,
-                                   Asset parent,
-                                   String name) {
-        this.currentValue = reference;
+    public QueueSimpleSubscription(Function<Object, E> valueReader,
+                                   Asset parent) {
         this.valueReader = valueReader;
-        this.parent = parent;
         this.objectSubscription = parent.acquireView(ObjectSubscription.class);
-        this.name = name;
     }
 
     @Override

@@ -62,7 +62,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     public static Collection<Object[]> data() throws IOException {
 
         return Arrays.asList(new Boolean[][]{
-                {false}, {false}
+                {false}, {true}
         });
     }
 
@@ -113,6 +113,8 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     public void testStringTopicPublisherWithSubscribe() throws InterruptedException {
         String uri = "/queue/" + methodName;
         String messageType = "topic";
+
+
         TopicPublisher<String, String> publisher = assetTree.acquireTopicPublisher(uri, String.class, String.class);
         BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
         Subscriber<String> subscriber = e -> {
@@ -130,7 +132,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     @Test
     public void testStringPublishToATopic() throws InterruptedException {
         String uri = "/queue/testStringPublishToATopic";
-        assetTree.acquireQueue(uri, String.class, String.class);
+//        assetTree.acquireQueue(uri, String.class, String.class);
         Publisher<String> publisher = assetTree.acquirePublisher(uri, String.class);
         BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
         Subscriber<String> subscriber = values::add;
@@ -145,7 +147,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     public void testStringPublishToAKeyTopic() throws InterruptedException {
         YamlLogging.setAll(true);
         String uri = "/queue/" + methodName + "/key";
-        assetTree.acquireQueue("/queue/" + methodName, String.class, String.class);
+//        assetTree.acquireQueue("/queue/" + methodName, String.class, String.class);
         Publisher<String> publisher = assetTree.acquirePublisher(uri, String.class);
         BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
         Subscriber<String> subscriber = values::add;
@@ -158,7 +160,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     @Test
     public void testStringPublishToAKeyTopicNotForMe() throws InterruptedException {
         String uri = "/queue/" + methodName + "/key";
-        assetTree.acquireQueue("/queue/" + methodName, String.class, String.class);
+//        assetTree.acquireQueue("/queue/" + methodName, String.class, String.class);
         Publisher<String> publisher = assetTree.acquirePublisher(uri, String.class);
         BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
         Subscriber<String> subscriber = values::add;
@@ -187,7 +189,10 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     public void testSrtringPublishWithTopicSubscribe() throws InterruptedException {
         String uri = "/queue/" + methodName;
         String messageType = "topic";
-        assetTree.acquireQueue(uri, String.class, String.class);
+
+        // todo - fix
+        if (!isRemote)
+            assetTree.acquireQueue(uri, String.class, String.class);
         Publisher<String> publisher = assetTree.acquirePublisher(uri + "/" + messageType, String
                 .class);
         BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
@@ -205,7 +210,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     @Test
     public void testStringPublishWithIndex() throws InterruptedException, IOException {
 
-        // todo replay is not currently supported remotely
+        // todo - replay is not currently supported remotely
         if (isRemote)
             return;
 

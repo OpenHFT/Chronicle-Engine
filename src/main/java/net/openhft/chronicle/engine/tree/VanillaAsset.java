@@ -104,8 +104,6 @@ public class VanillaAsset implements Asset, Closeable {
     public void standardStack(boolean daemon, final Consumer<Throwable> onThrowable) {
 
 
-        addLeafRule(QueueView.class, LAST + "chronicle queue", ChronicleQueueView::new);
-
         addWrappingRule(Reference.class, LAST + "reference", MapReference::new, MapView.class);
         addWrappingRule(Replication.class, LAST + "replication", VanillaReplication::new, MapView.class);
 
@@ -145,6 +143,8 @@ public class VanillaAsset implements Asset, Closeable {
 
         queue.addLeafRule(ObjectSubscription.class, LAST + " vanilla queue subscription",
                 QueueObjectSubscription::new);
+
+        queue.addLeafRule(QueueView.class, LAST + "chronicle queue", ChronicleQueueView::new);
 
         addWrappingRule(Publisher.class, LAST + "publisher", MapReference::new, MapView.class);
         addWrappingRule(EntrySetView.class, LAST + " entrySet", VanillaEntrySetView::new, MapView.class);
@@ -193,12 +193,18 @@ public class VanillaAsset implements Asset, Closeable {
                 MapKVSSubscription::new);
 */
 
+        //addLeafRule(QueueView.class, LAST + " Remote AKVS", RemoteQueueView::new);
+
+
         addLeafRule(ObjectKeyValueStore.class, LAST + " Remote AKVS", RemoteKeyValueStore::new);
         addLeafRule(TopicPublisher.class, LAST + " topic publisher", RemoteTopicPublisher::new);
-
+        //       addLeafRule(Subscriber.class, LAST + " topic publisher", RemoteSubscription::new);
         addLeafRule(Publisher.class, LAST + " topic publisher", RemotePublisher::new);
 
-        // addWrappingRule(Publisher.class, LAST + "publisher", MapReference::new, MapView.class);
+        addWrappingRule(SimpleSubscription.class, LAST + "subscriber", RemoteSimpleSubscription::new, Reference.class);
+
+        addLeafRule(Reference.class, LAST + "reference", RemoteReference::new);
+
 
         //  addWrappingRule(Publisher.class, LAST + " topic publisher", RemotePublisher::new,
         //  MapView.class);
@@ -444,15 +450,8 @@ public class VanillaAsset implements Asset, Closeable {
                         return saFactory.createSubAsset(this, name, map.valueType());
                     }
 
-                    QueueView queue = getView(QueueView.class);
-
-                    if (queue == null) {
-                        throw new IllegalStateException("You can only have a SubAsset of a Map or Queue");
-                    }
-
                     SubAssetFactory saFactory = findOrCreateView(SubAssetFactory.class);
-                    return saFactory.createSubAsset(this, name, queue.messageType());
-
+                    return saFactory.createSubAsset(this, name, String.class);
                 }
 
         );
