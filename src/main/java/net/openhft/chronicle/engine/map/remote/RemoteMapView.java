@@ -70,7 +70,7 @@ public class RemoteMapView<K, MV, V> extends VanillaMapView<K, V> {
                                       @org.jetbrains.annotations.NotNull @NotNull Set<RequestContext.Operation> contextOperations) {
 
         final KVSSubscription<K, V> subscription = (KVSSubscription<K, V>) asset.subscription(true);
-        final RequestContext rc = RequestContext.requestContext().type(keyClass);
+        final RequestContext rc = RequestContext.requestContext().type(keyClass).type2(valueType);
         contextOperations.forEach(e -> e.apply(rc));
 
         subscription.registerKeySubscriber(rc, subscriber, filter);

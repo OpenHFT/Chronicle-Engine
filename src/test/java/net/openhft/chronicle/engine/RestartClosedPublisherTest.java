@@ -78,7 +78,7 @@ public class RestartClosedPublisherTest {
         Map<String, String> map = remote.acquireMap(_testMapUri, String.class, String.class);
 
         map.size();
-        System.out.println("registerSubscriber");
+
         remote.registerSubscriber(keySubUri + "?bootstrap=false", String.class, (e) -> eventQueue.add(e));
 
         // wait for the subscription to be read by the server

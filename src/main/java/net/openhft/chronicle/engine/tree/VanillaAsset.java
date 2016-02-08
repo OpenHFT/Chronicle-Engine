@@ -447,7 +447,8 @@ public class VanillaAsset implements Asset, Closeable {
 
                     if (map != null) {
                         if (map.keyType() != String.class)
-                            throw new IllegalStateException("You can only have a SubAsset of a Map with a String key.");
+                            throw new IllegalStateException("You can only have a SubAsset of a " +
+                                    "Map with a String key. KeyType=" + map.keyType());
 
                         SubAssetFactory saFactory = findOrCreateView(SubAssetFactory.class);
                         return saFactory.createSubAsset(this, name, map.valueType());

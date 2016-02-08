@@ -83,13 +83,8 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
     private final PublisherHandler publisherHandler;
     @NotNull
     private final ReferenceHandler referenceHandler;
-
-    //  @NotNull
-    //  private final TopologyHandler topologyHandler;
-
     @NotNull
     private final ReplicationHandler replicationHandler;
-
     @NotNull
     private final AssetTree assetTree;
     @NotNull

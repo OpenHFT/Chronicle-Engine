@@ -44,11 +44,12 @@ import static net.openhft.chronicle.engine.api.tree.RequestContext.Operation.END
  */
 public class VanillaMapView<K, V> implements MapView<K, V> {
     protected final Class keyClass;
+    protected final Class valueType;
     protected final Asset asset;
     protected final RequestContext context;
     private final boolean putReturnsNull;
     private final boolean removeReturnsNull;
-    private final Class valueType;
+
     private final KeyValueStore<K, V> kvStore;
     private AbstractCollection<V> values;
 
@@ -83,7 +84,7 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
     @NotNull
     @Override
     public KeySetView<K> keySet() {
-        return asset.acquireView(KeySetView.class);
+        return asset.acquireView(KeySetView.class, context);
     }
 
     @NotNull

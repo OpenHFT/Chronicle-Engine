@@ -11,13 +11,13 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
+import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -42,7 +42,7 @@ public class QueryableKeySetTest extends ThreadMonitoringTest {
 
     private static final String NAME = "test";
     private static AtomicReference<Throwable> t = new AtomicReference();
-    private static MapView<String, String> map;
+
     private final Boolean isRemote;
     private final WireType wireType;
     public String connection = "QueryableTest.host.port";
@@ -77,12 +77,7 @@ public class QueryableKeySetTest extends ThreadMonitoringTest {
         serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
 
         if (isRemote) {
-
             methodName(name.getMethodName());
-
-//            YamlLogging.showServerWrites = true;
-//            YamlLogging.showServerReads = true;
-
             connection = "QueryableKeySetTest.host.port";
             TCPRegistry.createServerSocketChannelFor(connection);
             serverEndpoint = new ServerEndpoint(connection, serverAssetTree, wireType);
@@ -91,7 +86,7 @@ public class QueryableKeySetTest extends ThreadMonitoringTest {
             assetTree = serverAssetTree;
         }
 
-        map = assetTree.acquireMap(NAME, String.class, String.class);
+        YamlLogging.setAll(true);
     }
 
     @After
@@ -101,8 +96,7 @@ public class QueryableKeySetTest extends ThreadMonitoringTest {
         if (serverEndpoint != null)
             serverEndpoint.close();
         serverAssetTree.close();
-        if (map instanceof Closeable)
-            ((Closeable) map).close();
+
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
     }
@@ -159,7 +153,7 @@ public class QueryableKeySetTest extends ThreadMonitoringTest {
         Assert.assertEquals((Double) 1.5, x);
     }
 
-    @Test(timeout = 10000)
+    @Test(timeout = 100000000)
     public void testForEach() throws Exception {
 
         final MapView<Integer, Integer> map = assetTree.acquireMap("name", Integer.class, Integer

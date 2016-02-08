@@ -60,7 +60,7 @@ public class RemoteKVSSubscription<K, V> extends AbstractRemoteSubscription<MapE
 
     @NotNull
     private static String toUri(@NotNull final RequestContext context) {
-       StringBuilder sb = Wires.acquireStringBuilder();
+        StringBuilder sb = Wires.acquireStringBuilder();
 
         String addSlash = "";
         if (context.fullName().indexOf('/') != 0) {
@@ -182,7 +182,7 @@ public class RemoteKVSSubscription<K, V> extends AbstractRemoteSubscription<MapE
 
     @Override
     public void registerDownstream(@NotNull EventConsumer<K, V> subscription) {
-        registerSubscriber(rc.clone().type(MapEvent.class).type2(null),
+        registerSubscriber(rc.clone().messageType(rc.messageType()).elementType(MapEvent.class),
                 subscription::notifyEvent, Filter.empty());
     }
 

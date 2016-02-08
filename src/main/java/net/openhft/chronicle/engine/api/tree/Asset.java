@@ -217,7 +217,7 @@ public interface Asset extends Closeable {
      */
     @NotNull
     default <V> V acquireView(Class<V> viewType) {
-        return acquireView(viewType, RequestContext.requestContext(fullName()).viewType(viewType));
+        return acquireView(viewType, RequestContext.requestContext(fullName()));
     }
 
     /**
