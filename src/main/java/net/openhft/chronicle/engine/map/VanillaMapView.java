@@ -330,7 +330,7 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
                                    @NotNull Set<Operation> operations) {
 
         final RequestContext rc = context.clone();
-        rc.bootstrap(true).type(MapEvent.class).type2(null);
+        rc.bootstrap(true).elementType(MapEvent.class);
         operations.forEach(e -> e.apply(rc));
 
         KVSSubscription<K, V> subscription = (KVSSubscription<K, V>) asset.subscription(true);
