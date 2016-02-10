@@ -56,12 +56,10 @@ public interface QueueView<T, M> extends ChronicleQueue, TopicPublisher<T, M>, K
      */
     long set(@NotNull M except) throws IOException;
 
-    @Override
     long size();
 
     @Override
     void clear();
-
 
     @Override
     void close() throws IOException;
