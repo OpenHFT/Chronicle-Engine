@@ -20,11 +20,6 @@ public interface QueueView<T, M> extends ChronicleQueue, TopicPublisher<T, M>, K
 
     ExcerptAppender threadLocalAppender();
 
-    void threadLocalElement(M e);
-
-    @Nullable
-    M threadLocalElement();
-
     @Nullable
     M get(int index);
 
@@ -55,9 +50,6 @@ public interface QueueView<T, M> extends ChronicleQueue, TopicPublisher<T, M>, K
      * @return the index of the new except added to the chronicle queue
      */
     long set(@NotNull M except) throws IOException;
-
-    @Override
-    long size();
 
     @Override
     void clear();

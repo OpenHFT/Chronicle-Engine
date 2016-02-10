@@ -106,11 +106,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         return chronicleQueue;
     }
 
-    @NotNull
-    @Override
-    public String name() {
-        return chronicleQueue.name();
-    }
 
     @NotNull
     @Override
@@ -130,16 +125,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     @Override
     public ExcerptAppender threadLocalAppender() {
         return threadLocal.get().appender;
-    }
-
-    @Override
-    public void threadLocalElement(M e) {
-        threadLocal.get().element = e;
-    }
-
-    @Override
-    public M threadLocalElement() {
-        return (M) threadLocal.get().element;
     }
 
     /**
@@ -235,14 +220,16 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         return chronicleQueue.createAppender();
     }
 
-    @Override
-    public long size() {
-        return chronicleQueue.size();
-    }
 
     @Override
     public void clear() {
         chronicleQueue.clear();
+    }
+
+    @NotNull
+    @Override
+    public File path() {
+        throw new UnsupportedOperationException("todo");
     }
 
     @Override
@@ -294,7 +281,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         public final ExcerptAppender appender;
         public final ExcerptTailer tailer;
         public final ExcerptTailer replayTailer;
-        public M element;
 
         public ThreadLocalData(ChronicleQueue chronicleQueue) {
             try {
