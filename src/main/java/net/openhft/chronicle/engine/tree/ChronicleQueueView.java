@@ -94,7 +94,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
         if (basePath == null)
             basePath = DEFAULT_BASE_PATH;
-
         File baseFilePath;
         try {
             baseFilePath = new File(basePath, name);
