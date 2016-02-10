@@ -12,10 +12,7 @@ import net.openhft.chronicle.queue.Excerpt;
 import net.openhft.chronicle.queue.ExcerptAppender;
 import net.openhft.chronicle.queue.ExcerptTailer;
 import net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder;
-import net.openhft.chronicle.wire.ValueIn;
-import net.openhft.chronicle.wire.WireKey;
-import net.openhft.chronicle.wire.WireType;
-import net.openhft.chronicle.wire.Wires;
+import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -149,45 +146,44 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
      * @param index gets the except at the given index  or {@code null} if the index is not valid
      * @return the except
      */
-    @NotNull
+    @Nullable
     @Override
     public M get(int index) {
-        try {
-            final ExcerptTailer tailer = threadLocalTailer();
-            if (!tailer.moveToIndex(index))
-                return null;
-            return tailer.readDocument(
-                    wire -> threadLocalElement(wire.read().object(elementTypeClass))) ?
-                    threadLocalElement() : null;
-        } catch (Exception e) {
-            throw Jvm.rethrow(e);
+
+        final ExcerptTailer tailer = threadLocalTailer();
+        if (!tailer.moveToIndex(index))
+            return null;
+
+        try (final DocumentContext dc = tailer.readingDocument()) {
+            return dc.wire().read().object(elementTypeClass);
         }
+
     }
 
     /**
-     * @param name
-     * @return the last except or {@code null} if there are no more excepts available
+     * get a  excerpt based on the {@code name} which is used as a filter
+     *
+     * @param name the name of the event in the chronicle queue, this is used as a filter so only
+     *             the excerpt with this name will be returned, if the excerpt does not have the
+     *             event name equal to {@code name} the excerpt will be skipped. if the {@code name}
+     *             is {@code null}  or {@code empty} all  excerpt will be returned
+     * @return the excerpt or {@code null} if there are no more excepts available
      */
     @Override
     public M get(String name) {
 
-
         final ExcerptTailer tailer = threadLocalTailer();
 
-        // todo change this to use tailer reading document
-        return tailer.readDocument(
-                wire -> {
+        try (final DocumentContext dc = tailer.readingDocument()) {
+            final StringBuilder eventName = Wires.acquireStringBuilder();
+            final ValueIn valueIn = dc.wire().readEventName(eventName);
 
-                    final StringBuilder eventName = Wires.acquireStringBuilder();
-                    final ValueIn valueIn = wire.readEventName(eventName);
-                    final M object = valueIn.object(elementTypeClass);
+            if (name == null || name.isEmpty() || name.contentEquals(eventName)) {
+                return valueIn.object(elementTypeClass);
+            }
+        }
 
-                    if (name == null || name.isEmpty() || name.contentEquals(eventName)) {
-                        threadLocalElement(object);
-                    }
-
-                }) ? threadLocalElement() : null;
-
+        return null;
     }
 
     /**
