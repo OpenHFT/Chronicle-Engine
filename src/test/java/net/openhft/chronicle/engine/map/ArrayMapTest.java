@@ -89,11 +89,12 @@ public class ArrayMapTest extends ThreadMonitoringTest {
 
     @After
     public void after() throws IOException {
-        assetTree.close();
 
         serverAssetTree.close();
         if (serverEndpoint != null)
             serverEndpoint.close();
+
+        assetTree.close();
 
         if (map instanceof Closeable)
             ((Closeable) map).close();
@@ -114,6 +115,7 @@ public class ArrayMapTest extends ThreadMonitoringTest {
     }
 
 
+    @
     @Test
     public void testByteArrayValueWithRealBytes() throws Exception {
 
