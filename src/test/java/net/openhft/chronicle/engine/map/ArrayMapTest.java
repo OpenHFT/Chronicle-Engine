@@ -36,7 +36,7 @@ import static net.openhft.chronicle.engine.Utils.methodName;
 @RunWith(value = Parameterized.class)
 public class ArrayMapTest extends ThreadMonitoringTest {
     private static final String NAME = "test";
-    private static MapView<String, String> map;
+    private static MapView<String, byte[]> map;
     private static AtomicReference<Throwable> t = new AtomicReference();
     private final Boolean isRemote;
     private final WireType wireType;
@@ -83,18 +83,18 @@ public class ArrayMapTest extends ThreadMonitoringTest {
             assetTree = serverAssetTree;
         }
 
-        map = assetTree.acquireMap(NAME, String.class, String.class);
-
+        map = assetTree.acquireMap(NAME, String.class, byte[].class);
         YamlLogging.setAll(true);
     }
 
     @After
     public void after() throws IOException {
         assetTree.close();
-        Jvm.pause(1000);
+
+        serverAssetTree.close();
         if (serverEndpoint != null)
             serverEndpoint.close();
-        serverAssetTree.close();
+
         if (map instanceof Closeable)
             ((Closeable) map).close();
         TcpChannelHub.closeAllHubs();
@@ -113,6 +113,19 @@ public class ArrayMapTest extends ThreadMonitoringTest {
 
     }
 
+
+    @Test
+    public void testByteArrayValueWithRealBytes() throws Exception {
+
+        final MapView<String, byte[]> map = assetTree.acquireMap("name", String.class, byte[]
+                .class);
+
+        final byte[] expected = {1, 2, 3, 4, 5, 6, 7};
+        map.put("1", expected);
+
+        final byte[] actual = map.get("1");
+        Assert.assertArrayEquals(expected, actual);
+    }
 
 }
 
