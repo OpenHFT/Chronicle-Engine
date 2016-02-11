@@ -18,6 +18,8 @@ package net.openhft.chronicle.engine.fs;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.io.Closeable;
+import net.openhft.chronicle.core.threads.EventLoop;
+import net.openhft.chronicle.core.threads.HandlerPriority;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.api.session.SessionDetails;
@@ -25,8 +27,6 @@ import net.openhft.chronicle.network.api.session.SessionProvider;
 import net.openhft.chronicle.network.connection.ClientConnectionMonitor;
 import net.openhft.chronicle.network.connection.SocketAddressSupplier;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
-import net.openhft.chronicle.threads.HandlerPriority;
-import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireIn;
@@ -48,6 +48,16 @@ public class HostDetails implements Marshallable, Closeable {
     public String connectUri;
     public int timeoutMs;
 
+    public HostDetails() {
+    }
+
+    public HostDetails(int hostId, int tcpBufferSize, String connectUri, int timeoutMs) {
+        this.hostId = hostId;
+        this.tcpBufferSize = tcpBufferSize;
+        this.connectUri = connectUri;
+        this.timeoutMs = timeoutMs;
+    }
+
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         wire.read(() -> "hostId").int32(this, (o, i) -> o.hostId = i)
@@ -62,16 +72,6 @@ public class HostDetails implements Marshallable, Closeable {
                 .write(() -> "tcpBufferSize").int32(tcpBufferSize)
                 .write(() -> "connectUri").text(connectUri)
                 .write(() -> "timeoutMs").int32(timeoutMs);
-    }
-
-    public HostDetails() {
-    }
-
-    public HostDetails(int hostId, int tcpBufferSize, String connectUri, int timeoutMs) {
-        this.hostId = hostId;
-        this.tcpBufferSize = tcpBufferSize;
-        this.connectUri = connectUri;
-        this.timeoutMs = timeoutMs;
     }
 
     /**

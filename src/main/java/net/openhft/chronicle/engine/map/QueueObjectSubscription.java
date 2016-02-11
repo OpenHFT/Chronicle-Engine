@@ -16,6 +16,8 @@
 
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.core.threads.EventLoop;
+import net.openhft.chronicle.core.threads.InvalidEventHandlerException;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -31,8 +33,6 @@ import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.network.api.session.SessionDetails;
 import net.openhft.chronicle.network.api.session.SessionProvider;
 import net.openhft.chronicle.queue.Excerpt;
-import net.openhft.chronicle.threads.api.EventLoop;
-import net.openhft.chronicle.threads.api.InvalidEventHandlerException;
 import net.openhft.chronicle.wire.WireKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

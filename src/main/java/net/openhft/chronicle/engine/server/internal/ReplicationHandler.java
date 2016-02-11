@@ -1,6 +1,10 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.threads.EventHandler;
+import net.openhft.chronicle.core.threads.EventLoop;
+import net.openhft.chronicle.core.threads.HandlerPriority;
+import net.openhft.chronicle.core.threads.InvalidEventHandlerException;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.engine.api.pubsub.Replication;
 import net.openhft.chronicle.engine.map.CMap2EngineReplicator.VanillaReplicatedEntry;
@@ -8,10 +12,6 @@ import net.openhft.chronicle.engine.map.replication.Bootstrap;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
-import net.openhft.chronicle.threads.HandlerPriority;
-import net.openhft.chronicle.threads.api.EventHandler;
-import net.openhft.chronicle.threads.api.EventLoop;
-import net.openhft.chronicle.threads.api.InvalidEventHandlerException;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;

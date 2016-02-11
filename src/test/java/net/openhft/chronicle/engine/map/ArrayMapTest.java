@@ -115,7 +115,6 @@ public class ArrayMapTest extends ThreadMonitoringTest {
     }
 
 
-    @
     @Test
     public void testByteArrayValueWithRealBytes() throws Exception {
 

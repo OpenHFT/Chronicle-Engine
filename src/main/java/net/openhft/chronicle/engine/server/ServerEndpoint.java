@@ -16,13 +16,13 @@
 package net.openhft.chronicle.engine.server;
 
 import net.openhft.chronicle.core.io.Closeable;
+import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
 import net.openhft.chronicle.network.AcceptorEventHandler;
 import net.openhft.chronicle.network.VanillaSessionDetails;
 import net.openhft.chronicle.threads.Threads;
-import net.openhft.chronicle.threads.api.EventLoop;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
