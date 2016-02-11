@@ -59,14 +59,14 @@ public class ServerEndpoint implements Closeable {
 
     public ServerEndpoint(@NotNull String hostPortDescription,
                           @NotNull AssetTree assetTree,
-                          @NotNull WireType wire,
+                          @NotNull WireType wireType,
                           int heartbeatIntervalTicks,
                           int heartbeatIntervalTimeout) {
         this.heartbeatIntervalTicks = heartbeatIntervalTicks;
         this.heartbeatIntervalTimeout = heartbeatIntervalTimeout;
         eg = assetTree.root().acquireView(EventLoop.class);
         Threads.withThreadGroup(assetTree.root().getView(ThreadGroup.class), () -> {
-            start(hostPortDescription, assetTree, wire);
+            start(hostPortDescription, assetTree, wireType);
             return null;
         });
     }
