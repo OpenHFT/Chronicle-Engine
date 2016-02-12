@@ -102,6 +102,7 @@ public class ArrayMapTest extends ThreadMonitoringTest {
         TCPRegistry.reset();
     }
 
+
     @Test
     public void testByteArrayValue() throws Exception {
 
@@ -115,7 +116,6 @@ public class ArrayMapTest extends ThreadMonitoringTest {
     }
 
 
-    @
     @Test
     public void testByteArrayValueWithRealBytes() throws Exception {
 

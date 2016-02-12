@@ -38,8 +38,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static net.openhft.chronicle.engine.Utils.yamlLoggger;
-
 /**
  * test using the listener both remotely or locally via the engine
  *
@@ -135,31 +133,30 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
 
         BlockingQueue<String> q = new ArrayBlockingQueue<>(2);
 
-        yamlLoggger(() -> {
 
-            final MapView<String, String> server = clientTree.acquireMap(NAME, String.class,
-                    String.class);
+        final MapView<String, String> server = clientTree.acquireMap(NAME, String.class,
+                String.class);
 
-            // we have to call an action on the server map because it lazily created
-            server.size();
+        // we have to call an action on the server map because it lazily created
+        server.size();
 
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                Jvm.rethrow(e);
-            }
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            Jvm.rethrow(e);
+        }
 
-            clientTree.registerSubscriber(keyUri, String.class, q::add);
+        clientTree.registerSubscriber(keyUri, String.class, q::add);
 
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                Jvm.rethrow(e);
-            }
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            Jvm.rethrow(e);
+        }
 
-            server.put(key, "val1");
-            server.put(key, "val2");
-        });
+        server.put(key, "val1");
+        server.put(key, "val2");
+
 
         Assert.assertEquals("val1", q.poll(10, TimeUnit.SECONDS));
         Assert.assertEquals("val2", q.poll(10, TimeUnit.SECONDS));
