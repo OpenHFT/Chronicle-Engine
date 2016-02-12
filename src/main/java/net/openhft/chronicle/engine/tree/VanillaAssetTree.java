@@ -145,7 +145,7 @@ public class VanillaAssetTree implements AssetTree {
     @NotNull
     private VanillaSessionDetails clientSession() {
         final VanillaSessionDetails sessionDetails = new VanillaSessionDetails();
-        sessionDetails.setUserId(System.getProperty("user.name"));
+        sessionDetails.userId(System.getProperty("user.name"));
         return sessionDetails;
     }
 

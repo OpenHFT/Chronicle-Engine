@@ -34,7 +34,7 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
         final ValueIn valueIn = inWire.readEventName(eventName);
 
         if (EventId.userId.contentEquals(eventName)) {
-            this.sessionDetails.setUserId(valueIn.text());
+            this.sessionDetails.userId(valueIn.text());
             if (this.monitoringMap != null) {
                 UserStat userStat = new UserStat();
                 userStat.setLoggedIn(LocalTime.now());
@@ -86,13 +86,15 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
     private WireParser<Void> wireParser() {
         final WireParser<Void> parser = new VanillaWireParser<>((s, v, $) -> {
         });
-        parser.register(EventId.domain::toString, (s, v, $) -> v.text(this, (o, x) -> o.sessionDetails.setDomain(x)));
+        parser.register(EventId.domain::toString, (s, v, $) -> v.text(this, (o, x) -> o.sessionDetails.domain(x)));
         parser.register(EventId.sessionMode::toString, (s, v, $) -> v.text(this, (o, x) -> o
-                .sessionDetails.setSessionMode(SessionMode.valueOf(x))));
+                .sessionDetails.sessionMode(SessionMode.valueOf(x))));
         parser.register(EventId.securityToken::toString, (s, v, $) -> v.text(this, (o, x) -> o
-                .sessionDetails.setSecurityToken(x)));
+                .sessionDetails.securityToken(x)));
         parser.register(EventId.clientId::toString, (s, v, $) -> v.text(this, (o, x) -> o
-                .sessionDetails.setClientId(UUID.fromString(x))));
+                .sessionDetails.clientId(UUID.fromString(x))));
+        parser.register(EventId.wiretype::toString, (s, v, $) -> v.text(this, (o, x) -> o
+                .sessionDetails.wireType(WireType.valueOf(x))));
         return parser;
     }
 
@@ -113,7 +115,7 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
         sessionMode,
         domain,
         securityToken,
-        clientId
+        wiretype, clientId
     }
 }
 
