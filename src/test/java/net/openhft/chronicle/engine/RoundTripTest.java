@@ -1,6 +1,5 @@
 package net.openhft.chronicle.engine;
 
-import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
@@ -16,7 +15,6 @@ import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
-import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +32,6 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 
 /**
  * Created by Rob Austin
@@ -58,7 +55,7 @@ public class RoundTripTest {
     private static String CONNECTION_3 = "CONNECTION_3";
 
     @NotNull
-    static AssetTree create(final int hostId, Function<Bytes, Wire> writeType, final List<HostDetails> hostDetails) {
+    static AssetTree create(final int hostId, WireType writeType, final List<HostDetails> hostDetails) {
 
         AssetTree tree = new VanillaAssetTree((byte) hostId)
                 .forTesting(x -> t.compareAndSet(null, x));

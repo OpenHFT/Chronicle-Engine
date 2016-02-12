@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.engine.fs;
 
-import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.core.threads.HandlerPriority;
@@ -28,16 +27,15 @@ import net.openhft.chronicle.network.connection.ClientConnectionMonitor;
 import net.openhft.chronicle.network.connection.SocketAddressSupplier;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.Marshallable;
-import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
+import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 
 import static net.openhft.chronicle.network.VanillaSessionDetails.of;
 
@@ -82,7 +80,7 @@ public class HostDetails implements Marshallable, Closeable {
      */
     public TcpChannelHub acquireTcpChannelHub(@NotNull final Asset asset,
                                               @NotNull final EventLoop eventLoop,
-                                              @NotNull final Function<Bytes, Wire> wire) {
+                                              @NotNull final WireType wire) {
 
         @Nullable
         final SessionDetails sessionDetails = asset.root().findView(SessionDetails.class);

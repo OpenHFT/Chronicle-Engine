@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.engine.tree;
 
-import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.annotation.ForceInline;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.threads.EventLoop;
@@ -49,7 +48,7 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.EventGroup;
 import net.openhft.chronicle.threads.Threads;
 import net.openhft.chronicle.wire.Marshallable;
-import net.openhft.chronicle.wire.Wire;
+import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -62,7 +61,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * Created by peter on 22/05/15.
@@ -172,7 +170,7 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     public void forRemoteAccess(@NotNull String[] hostPortDescriptions,
-                                @NotNull Function<Bytes, Wire> wire,
+                                @NotNull WireType wire,
                                 @NotNull VanillaSessionDetails sessionDetails,
                                 @Nullable ClientConnectionMonitor clientConnectionMonitor,
                                 final Consumer<Throwable> onThrowable) throws

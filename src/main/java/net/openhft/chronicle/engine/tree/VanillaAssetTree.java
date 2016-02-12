@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.engine.tree;
 
-import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.threads.EventLoop;
@@ -31,14 +30,12 @@ import net.openhft.chronicle.engine.map.remote.*;
 import net.openhft.chronicle.network.VanillaSessionDetails;
 import net.openhft.chronicle.network.connection.ClientConnectionMonitor;
 import net.openhft.chronicle.threads.Threads;
-import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
 
@@ -106,12 +103,12 @@ public class VanillaAssetTree implements AssetTree {
     }
 
     @NotNull
-    public VanillaAssetTree forRemoteAccess(String hostPortDescription, @NotNull Function<Bytes, Wire> wire, final Consumer<Throwable> onThrowable) {
+    public VanillaAssetTree forRemoteAccess(String hostPortDescription, @NotNull WireType wire, final Consumer<Throwable> onThrowable) {
         return forRemoteAccess(new String[]{hostPortDescription}, wire, onThrowable);
     }
 
     @NotNull
-    public VanillaAssetTree forRemoteAccess(@NotNull String[] hostPortDescription, @NotNull Function<Bytes, Wire> wire, final Consumer<Throwable> onThrowable) {
+    public VanillaAssetTree forRemoteAccess(@NotNull String[] hostPortDescription, @NotNull WireType wire, final Consumer<Throwable> onThrowable) {
         root.forRemoteAccess(hostPortDescription, wire, clientSession(), null, onThrowable);
         return this;
     }
@@ -127,7 +124,7 @@ public class VanillaAssetTree implements AssetTree {
      */
     @NotNull
     public VanillaAssetTree forRemoteAccess(@NotNull String[] hostPortDescription,
-                                            @NotNull Function<Bytes, Wire> wire,
+                                            @NotNull WireType wire,
                                             @Nullable ClientConnectionMonitor clientConnectionMonitor, final Consumer<Throwable> onThrowable) {
 
         if (clientConnectionMonitor != null)

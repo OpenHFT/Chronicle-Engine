@@ -21,7 +21,6 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.wire.TextWire;
-import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +43,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 
 import static org.junit.Assert.assertNotNull;
 
@@ -71,7 +69,7 @@ public class Replication10WayTest {
     }
 
     @NotNull
-    private static AssetTree create(final int hostId, Function<Bytes, Wire> writeType) {
+    private static AssetTree create(final int hostId, WireType writeType) {
         AssetTree tree = new VanillaAssetTree((byte) hostId)
                 .forTesting(x -> t.compareAndSet(null, x))
                 .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);

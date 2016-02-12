@@ -1,6 +1,5 @@
 package net.openhft.chronicle.engine;
 
-import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
@@ -17,7 +16,6 @@ import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
-import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +28,6 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.Function;
 
 /**
  * Created by Rob Austin
@@ -119,7 +116,7 @@ public class MainCluster5 {
     }
 
     @NotNull
-    static AssetTree create(final int hostId, Function<Bytes, Wire> writeType, final String clusterTwo) {
+    static AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
         AssetTree tree = new VanillaAssetTree((byte) hostId)
                 .forTesting(t -> t.printStackTrace())
                 .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);

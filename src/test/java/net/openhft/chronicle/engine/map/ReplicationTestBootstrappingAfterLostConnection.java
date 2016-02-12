@@ -1,6 +1,5 @@
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
@@ -20,7 +19,6 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.VanillaSessionDetails;
 import net.openhft.chronicle.network.api.session.SessionDetails;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
-import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +34,6 @@ import java.util.Iterator;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 
 import static org.junit.Assert.assertNotNull;
 
@@ -89,7 +86,8 @@ public class ReplicationTestBootstrappingAfterLostConnection {
     }
 
     @NotNull
-    private static AssetTree create(final int hostId, Function<Bytes, Wire> writeType, final String clusterName) {
+    private static AssetTree create(final int hostId, WireType writeType, final String
+            clusterName) {
         AssetTree tree = new VanillaAssetTree((byte) hostId)
                 .forTesting(x -> t.compareAndSet(null, x))
                 .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);

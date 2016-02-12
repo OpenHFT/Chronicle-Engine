@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.engine;
 
-import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
@@ -39,7 +38,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 
 import static net.openhft.chronicle.core.Jvm.pause;
 import static net.openhft.chronicle.engine.Chassis.*;
@@ -55,7 +53,7 @@ public class MarshallableFilePerKeyValueStoreTest {
     @Before
     public void createMap() throws IOException {
         resetChassis();
-        Function<Bytes, Wire> writeType = WireType.TEXT;
+        WireType writeType = WireType.TEXT;
         ((VanillaAsset) assetTree().root()).enableTranslatingValuesToBytesStore();
 
         LeafViewFactory<AuthenticatedKeyValueStore> factory = (context, asset) -> new FilePerKeyValueStore(context.basePath(OS.TARGET).wireType(writeType), asset);

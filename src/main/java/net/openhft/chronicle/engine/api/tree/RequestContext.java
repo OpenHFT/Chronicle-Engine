@@ -32,12 +32,14 @@ import net.openhft.chronicle.engine.query.Operation.OperationType;
 import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.TopologySubscription;
-import net.openhft.chronicle.wire.*;
+import net.openhft.chronicle.wire.QueryWire;
+import net.openhft.chronicle.wire.VanillaWireParser;
+import net.openhft.chronicle.wire.WireParser;
+import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Proxy;
-import java.util.function.Function;
 
 import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
 
@@ -72,7 +74,7 @@ public class RequestContext implements Cloneable {
     private String name;
     private Class viewType, type, type2;
     private String basePath;
-    private Function<Bytes, Wire> wireType = WireType.TEXT;
+    private WireType wireType = WireType.TEXT;
     @Nullable
     private Boolean putReturnsNull = null,
             removeReturnsNull = null,
@@ -302,13 +304,13 @@ public class RequestContext implements Cloneable {
     }
 
     @NotNull
-    public RequestContext wireType(Function<Bytes, Wire> writeType) {
+    public RequestContext wireType(WireType writeType) {
         checkSealed();
         this.wireType = writeType;
         return this;
     }
 
-    public Function<Bytes, Wire> wireType() {
+    public WireType wireType() {
         return wireType;
     }
 
