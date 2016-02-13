@@ -93,8 +93,9 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
                 .sessionDetails.securityToken(x)));
         parser.register(EventId.clientId::toString, (s, v, $) -> v.text(this, (o, x) -> o
                 .sessionDetails.clientId(UUID.fromString(x))));
-        parser.register(EventId.wiretype::toString, (s, v, $) -> v.text(this, (o, x) -> o
+        parser.register(EventId.wireType::toString, (s, v, $) -> v.text(this, (o, x) -> o
                 .sessionDetails.wireType(WireType.valueOf(x))));
+
         return parser;
     }
 
@@ -115,7 +116,8 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
         sessionMode,
         domain,
         securityToken,
-        wiretype, clientId
+        wireType,
+        clientId
     }
 }
 
