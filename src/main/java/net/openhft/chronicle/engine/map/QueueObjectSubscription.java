@@ -18,6 +18,7 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.core.threads.InvalidEventHandlerException;
+import net.openhft.chronicle.core.util.ObjectUtils;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -149,7 +150,12 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
         final int that = this.hashCode();
         final QueueView<T, M> chronicleQueue = asset.acquireView(QueueView.class, rc);
         eventLoop.addHandler(() -> {
-            final M e = chronicleQueue.get(rc.name());
+
+            final T topic = ObjectUtils.convertTo(topicType, rc.name());
+            QueueView.Excerpt<T, M> excerpt = chronicleQueue.get(topic);
+            if (excerpt == null)
+                return false;
+            final M e = excerpt.message();
             if (e == null)
                 return false;
             subscriber.accept(e);
@@ -172,14 +178,14 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
             if (terminate.get())
                 throw new InvalidEventHandlerException();
 
-            chronicleQueue.get((eventName, m) -> {
-
-                try {
-                    subscriber.onMessage(toT(eventName), m);
-                } catch (InvalidSubscriberException e) {
-                    terminate.set(true);
-                }
-            });
+            final QueueView.Excerpt<T, M> next = chronicleQueue.next();
+            if (next == null)
+                return false;
+            try {
+                subscriber.onMessage(next.topic(), next.message());
+            } catch (InvalidSubscriberException e) {
+                terminate.set(true);
+            }
 
             return true;
         });

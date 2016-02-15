@@ -27,22 +27,31 @@ import static net.openhft.chronicle.engine.server.internal.TopicPublisherHandler
 public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId> implements
         TopicPublisher<T, M> {
 
-    private final Class<T> topicClass;
-    private final Class<M> messageClass;
+    final Class<T> topicClass;
+    final Class<M> messageClass;
     private final Asset asset;
 
     public RemoteTopicPublisher(@NotNull RequestContext context, @NotNull Asset asset)
             throws AssetNotFoundException {
-        super(asset.findView(TcpChannelHub.class), (long) 0, toUri(context));
+        super(asset.findView(TcpChannelHub.class), (long) 0, toUri(context, "topicPublisher"));
         this.asset = asset;
         topicClass = context.topicType();
         messageClass = context.messageType();
 
     }
 
-    private static String toUri(@NotNull final RequestContext context) {
+    protected RemoteTopicPublisher(@NotNull RequestContext context, @NotNull Asset asset, String view)
+            throws AssetNotFoundException {
+        super(asset.findView(TcpChannelHub.class), (long) 0, toUri(context, view));
+        this.asset = asset;
+        topicClass = context.topicType();
+        messageClass = context.messageType();
+
+    }
+
+    private static String toUri(@NotNull final RequestContext context, String view) {
         final StringBuilder uri = new StringBuilder("/" + context.fullName()
-                + "?view=" + "topicPublisher");
+                + "?view=" + view);
 
         if (context.keyType() != String.class)
             uri.append("&topicType=").append(context.topicType().getName());
@@ -61,7 +70,6 @@ public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId>
             m.write(Params.topic).object(topic);
             m.write(Params.message).object(message);
         }), true);
-
     }
 
     private void checkTopic(@Nullable Object topic) {

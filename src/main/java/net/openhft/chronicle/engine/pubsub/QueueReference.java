@@ -42,13 +42,16 @@ public class QueueReference<T, M> implements Reference<M> {
 
     @Override
     public long set(M event) {
-        return chronicleQueue.set(name, event);
+        return chronicleQueue.publishAndIndex(name, event);
     }
 
     @Nullable
     @Override
     public M get() {
-        return chronicleQueue.get("");
+        final QueueView.Excerpt<T, M> next = chronicleQueue.next();
+        if (next == null)
+            return null;
+        return next.message();
     }
 
     @Override

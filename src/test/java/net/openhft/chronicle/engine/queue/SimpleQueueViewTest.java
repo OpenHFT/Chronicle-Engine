@@ -3,13 +3,11 @@ package net.openhft.chronicle.engine.queue;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
-import net.openhft.chronicle.engine.api.pubsub.Publisher;
-import net.openhft.chronicle.engine.api.pubsub.Subscriber;
-import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
-import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
+import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.QueueView;
+import net.openhft.chronicle.engine.tree.QueueView.Excerpt;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
@@ -107,13 +105,19 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
 
     @After
-    public void after() {
+    public void after() throws Throwable {
+        final Throwable tr = t.getAndSet(null);
+
+        if (tr != null)
+            throw tr;
         assetTree.close();
         if (serverEndpoint != null)
             serverEndpoint.close();
         methodName = "";
 
+
     }
+
 
     @Test
     public void testStringTopicPublisherWithSubscribe() throws InterruptedException {
@@ -126,16 +130,17 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
 
         TopicPublisher<String, String> publisher = assetTree.acquireTopicPublisher(uri, String.class, String.class);
-        BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
+        BlockingQueue<String> values0 = new ArrayBlockingQueue<>(10);
         Subscriber<String> subscriber = e -> {
-            if (e != null)
-                values.add(e);
+            if (e != null) {
+                values0.add(e);
+            }
         };
 
         assetTree.registerSubscriber(uri + "/" + messageType, String.class, subscriber);
         Thread.sleep(500);
         publisher.publish(messageType, "Message-1");
-        assertEquals("Message-1", values.poll(2, SECONDS));
+        assertEquals("Message-1", values0.poll(3, SECONDS));
     }
 
 
@@ -228,12 +233,14 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         BlockingQueue<String> values = new ArrayBlockingQueue<>(10);
 
         long index = publisher.publish("Message-1");
-        TopicSubscriber<String, String> subscriber = (topic, message) -> values.add(topic + " " + message);
-        assetTree.registerTopicSubscriber(uri, String.class, String.class, subscriber);
+        //    TopicSubscriber<String, String> subscriber = (topic, message) -> values.add(topic + " "
+        //          + message);
+        //   assetTree.registerTopicSubscriber(uri, String.class, String.class, subscriber);
 
         QueueView<String, String> queue = assetTree.acquireQueue(uri, String.class, String.class);
-        queue.replay(index, (topic, message) -> values.add(topic + " " + message), null);
-        assertEquals(methodName + " " + "Message-1", values.poll(2, SECONDS));
+        final Excerpt<String, String> excerpt = queue.get(index);
+        assertEquals(methodName, excerpt.topic());
+        assertEquals("Message-1", excerpt.message());
     }
 
 
@@ -241,12 +248,17 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     public void testMarshablePublishToATopic() throws InterruptedException {
         String uri = "/queue/testMarshablePublishToATopic";
         Publisher<MyMarshallable> publisher = assetTree.acquirePublisher(uri, MyMarshallable.class);
-        BlockingQueue<MyMarshallable> values = new ArrayBlockingQueue<>(10);
-        assetTree.registerSubscriber(uri, MyMarshallable.class, values::add);
-        Thread.sleep(1000);
+        BlockingQueue<MyMarshallable> values2 = new ArrayBlockingQueue<>(10);
+        assetTree.registerSubscriber(uri, MyMarshallable.class, new Subscriber<MyMarshallable>() {
+            @Override
+            public void onMessage(MyMarshallable e) throws InvalidSubscriberException {
+
+                values2.add(e);
+            }
+        });
         publisher.publish(new MyMarshallable("Message-1"));
-        Thread.sleep(1000);
-        assertEquals("Message-1", values.poll(5, SECONDS).toString());
+
+        assertEquals("Message-1", values2.poll(5, SECONDS).toString());
     }
 
 

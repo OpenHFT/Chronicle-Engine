@@ -1,74 +1,51 @@
 package net.openhft.chronicle.engine.tree;
 
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
-import net.openhft.chronicle.engine.api.tree.KeyedView;
-import net.openhft.chronicle.queue.ChronicleQueue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.IOException;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 /**
  * @author Rob Austin.
  */
-public interface QueueView<T, M> extends ChronicleQueue, TopicPublisher<T, M>, KeyedView {
-    // ExcerptTailer threadLocalTailer();
+public interface QueueView<T, M> extends TopicPublisher<T, M> {
 
-    //   ExcerptAppender threadLocalAppender();
 
-    @Nullable
-    M get(int index);
+    interface Excerpt<T, M> {
+        T topic();
+
+        M message();
+
+        long index();
+    }
 
     /**
-     * @param eventName {@code null} if you wish to receive all events, otherwise the name of the
-     *                  event that you wish to receive
-     * @return the element that is stored under then {@code eventName} or {@code null} if none can
-     * be found
+     * @return the next message from the current tailer
      */
     @Nullable
-    M get(@Nullable String eventName);
+    Excerpt<T, M> next();
 
     /**
-     * @param consumer a consumer that provides that name of the event and value contained within
-     *                 the except
-     */
-    void get(BiConsumer<CharSequence, M> consumer);
-
-    /**
-     * @param name    the type of the  except
-     * @param message the except to add
-     * @return the index of the new except added to the chronicle queue
-     */
-    long set(@NotNull T name, @NotNull M message);
-
-    /**
-     * @param except the except to add
-     * @return the index of the new except added to the chronicle queue
-     */
-    long set(@NotNull M except) throws IOException;
-
-    @Override
-    void clear();
-
-
-    @Override
-    void close() throws IOException;
-
-    /**
-     * returns a except at and index
+     * returns a {@link Excerpt} at a given index
      *
-     * @param index    the location of the except
-     * @param consumer then consumer for the except
-     * @param isAbsent can be {@code null} if you don't wish to provide a isAbsent, otherwise this
-     *                 consumer will get called no except can be found at this {@code index}, this
-     *                 could occur if the {@code index} is in the future or the index is in the
-     *                 passed and is not available, as the chronicle file may have been deleted.
+     * @param index the location of the except
      */
-    void replay(long index, @NotNull BiConsumer<T, M> consumer, @Nullable Consumer<Exception> isAbsent);
+    @Nullable
+    Excerpt<T, M> get(long index);
 
-    Class<T> messageType();
+    /**
+     * the next message from the current tailer which has this {@code topic}
+     *
+     * @param topic next excerpt that has this topic
+     * @return the except
+     */
+    Excerpt<T, M> get(T topic);
 
-    Class<M> elementTypeClass();
+    /**
+     * Publish to a provided topic.
+     *
+     * @param topic   to publish to
+     * @param message to publish.
+     * @return the index in the chroncile queue the ex
+     */
+    long publishAndIndex(@NotNull T topic, @NotNull M message);
 }

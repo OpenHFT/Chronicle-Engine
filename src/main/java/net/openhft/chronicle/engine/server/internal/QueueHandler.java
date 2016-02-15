@@ -18,9 +18,9 @@ import static net.openhft.chronicle.network.connection.CoreFields.reply;
 import static net.openhft.chronicle.network.connection.CoreFields.tid;
 
 /**
- * Created by Rob Austin
+ * @author Rob Austin.
  */
-public class TopicPublisherHandler<T, M> extends AbstractHandler {
+public class QueueHandler<T, M> extends TopicPublisherHandler<T, M> {
 
     private final StringBuilder eventName = new StringBuilder();
 
@@ -112,7 +112,7 @@ public class TopicPublisherHandler<T, M> extends AbstractHandler {
 
     public enum Params implements WireKey {
         topic,
-        message, index,
+        message,
     }
 
     public enum EventId implements ParameterizeWireKey {
