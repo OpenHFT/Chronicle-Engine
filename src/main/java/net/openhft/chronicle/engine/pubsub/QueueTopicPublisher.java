@@ -51,7 +51,6 @@ public class QueueTopicPublisher<T, M> implements TopicPublisher<T, M>, Assetted
     @Override
     public void publish(@NotNull T topic, @NotNull M message) {
         underlying.publish(topic, message);
-        ;
     }
 
     @Override
