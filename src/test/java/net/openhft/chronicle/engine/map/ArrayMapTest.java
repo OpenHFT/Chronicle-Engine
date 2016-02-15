@@ -129,5 +129,19 @@ public class ArrayMapTest extends ThreadMonitoringTest {
         Assert.assertArrayEquals(expected, actual);
     }
 
+    @Test
+    public void testByteArrayValueWithRealBytesNegitive() throws Exception {
+
+        final MapView<String, byte[]> map = assetTree.acquireMap("name", String.class, byte[]
+                .class);
+
+        final byte[] expected = {-1, -2, -3, -4, -5, -6, -7};
+        map.put("1", expected);
+
+        final byte[] actual = map.get("1");
+        Assert.assertArrayEquals(expected, actual);
+    }
+
+
 }
 
