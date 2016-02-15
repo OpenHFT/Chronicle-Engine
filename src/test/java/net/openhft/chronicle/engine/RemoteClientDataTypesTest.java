@@ -6,7 +6,10 @@ import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -25,17 +28,16 @@ import java.util.concurrent.TimeUnit;
 @RunWith(Parameterized.class)
 public class RemoteClientDataTypesTest {
 
-    private Class _keyClass;
-    private Class _valueClass;
-    private Object _key;
-    private Object _value;
-    private String _mapUri;
-
     private static AssetTree _serverAssetTree;
     private static AssetTree _clientAssetTree;
     private static ServerEndpoint _serverEndpoint;
     private static String _serverAddress = "host.port1";
     private final WireType _wireType;
+    private Class _keyClass;
+    private Class _valueClass;
+    private Object _key;
+    private Object _value;
+    private String _mapUri;
 
 
     public RemoteClientDataTypesTest(WireType wireType, Class keyClass, Class valueClass, Object key, Object value, String mapUri) {
@@ -89,7 +91,6 @@ public class RemoteClientDataTypesTest {
         TCPRegistry.reset();
     }
 
-    @Ignore("Peter to fix - JIRA - https://higherfrequencytrading.atlassian.net/browse/CE-194")
     @Test
     public void testDataTypesMapAndEvents() throws InterruptedException {
         BlockingQueue valueSubscriptionQueue = new ArrayBlockingQueue<>(1);

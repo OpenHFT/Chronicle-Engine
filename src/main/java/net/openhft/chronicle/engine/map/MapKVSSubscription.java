@@ -169,16 +169,18 @@ public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
 
     private void notifyEventToChild(@NotNull MapEvent<K, V> changeEvent) {
         K key = changeEvent.getKey();
-        if (asset.hasChildren() && key instanceof CharSequence) {
-            String keyStr = key.toString();
-            Asset child = asset.getChild(keyStr);
-            if (child != null) {
-                SubscriptionCollection subscription = child.subscription(false);
-                if (subscription instanceof MapSimpleSubscription) {
+        if (asset == null || !asset.hasChildren()) {
+            return;
+        }
+        String keyStr = key.toString();
+        Asset child = asset.getChild(keyStr);
+        if (child == null) {
+            return;
+        }
+        SubscriptionCollection subscription = child.subscription(false);
+        if (subscription instanceof MapSimpleSubscription) {
 //                    System.out.println(changeEvent.toString().substring(0, 100));
-                    ((SimpleSubscription) subscription).notifyMessage(changeEvent.getValue());
-                }
-            }
+            ((SimpleSubscription) subscription).notifyMessage(changeEvent.getValue());
         }
     }
 
