@@ -3,8 +3,6 @@ package net.openhft.chronicle.engine.tree;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.tree.KeyedView;
 import net.openhft.chronicle.queue.ChronicleQueue;
-import net.openhft.chronicle.queue.ExcerptAppender;
-import net.openhft.chronicle.queue.ExcerptTailer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,9 +14,9 @@ import java.util.function.Consumer;
  * @author Rob Austin.
  */
 public interface QueueView<T, M> extends ChronicleQueue, TopicPublisher<T, M>, KeyedView {
-    ExcerptTailer threadLocalTailer();
+    // ExcerptTailer threadLocalTailer();
 
-    ExcerptAppender threadLocalAppender();
+    //   ExcerptAppender threadLocalAppender();
 
     @Nullable
     M get(int index);

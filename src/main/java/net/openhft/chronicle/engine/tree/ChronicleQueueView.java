@@ -112,8 +112,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         return chronicleQueue.createExcerpt();
     }
 
-    @Override
-    public ExcerptTailer threadLocalTailer() {
+    //  @Override
+    ExcerptTailer threadLocalTailer() {
         return threadLocal.get().tailer;
     }
 
@@ -121,7 +121,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         return threadLocal.get().replayTailer;
     }
 
-    @Override
+    //  @Override
     public ExcerptAppender threadLocalAppender() {
         return threadLocal.get().appender;
     }
