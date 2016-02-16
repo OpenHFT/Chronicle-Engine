@@ -100,13 +100,13 @@ public class RemotePublisher<T, M> extends AbstractStatelessClient<EventId> impl
     }
 
     @Override
-    public long publish(M event) {
+    public void publish(M event) {
         checkMessage(event);
         sendEventAsync(publish, valueOut -> valueOut.marshallable(m -> {
             m.write(Params.message).object(event);
         }), true);
 
-        return -1;
+
     }
 
     @Override

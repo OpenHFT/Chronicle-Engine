@@ -33,6 +33,7 @@ import net.openhft.chronicle.engine.cfg.UserStat;
 import net.openhft.chronicle.engine.collection.CollectionWireHandler;
 import net.openhft.chronicle.engine.map.ObjectSubscription;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
+import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.engine.tree.TopologySubscription;
 import net.openhft.chronicle.network.ClientClosedProvider;
 import net.openhft.chronicle.network.WireTcpHandler;
@@ -200,6 +201,7 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
                             viewType == Reference.class ||
                             viewType == TopologySubscription.class ||
                             viewType == Replication.class ||
+                            viewType == QueueView.class ||
                             viewType == Heartbeat.class) {
 
                         // default to string type if not provided
@@ -350,7 +352,7 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
                         return;
                     }
 
-                    if (viewType == TopicPublisher.class) {
+                    if (viewType == TopicPublisher.class || viewType == QueueView.class) {
                         topicPublisherHandler.process(in, publisher, tid, outWire,
                                 (TopicPublisher) view, wireAdapter);
                         return;

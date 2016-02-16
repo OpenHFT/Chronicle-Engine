@@ -28,7 +28,7 @@ public interface Publisher<E> {
      * @param event to publish
      * @return the index when using a chronicle queue, for other types zero is returned
      */
-    long publish(E event);
+    void publish(E event);
 
     /**
      * Add a subscription to this specific topic

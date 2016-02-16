@@ -179,6 +179,10 @@ public class VanillaAsset implements Asset, Closeable {
         standardStack(true, onThrowable);
 
 
+        final Asset queue = acquireAsset("queue");
+        queue.addLeafRule(QueueView.class, LAST + "reference to a ChronicleQueue", RemoteQueueView::new);
+
+
         addWrappingRule(EntrySetView.class, LAST + " entrySet", RemoteEntrySetView::new, MapView.class);
 
         addWrappingRule(MapView.class, LAST + " remote key maps", RemoteMapView::new, ObjectKeyValueStore.class);
@@ -187,14 +191,6 @@ public class VanillaAsset implements Asset, Closeable {
 
 
         addLeafRule(ObjectSubscription.class, LAST + " Remote", RemoteKVSSubscription::new);
-
-/*
-        //TODO This is incorrect should be RemoteKVSSubscription
-        addLeafRule(RemoteKVSSubscription.class, LAST + " vanilla",
-                MapKVSSubscription::new);
-*/
-
-        //addLeafRule(QueueView.class, LAST + " Remote AKVS", RemoteQueueView::new);
 
 
         addLeafRule(ObjectKeyValueStore.class, LAST + " Remote AKVS", RemoteKeyValueStore::new);
@@ -205,10 +201,6 @@ public class VanillaAsset implements Asset, Closeable {
         addWrappingRule(SimpleSubscription.class, LAST + "subscriber", RemoteSimpleSubscription::new, Reference.class);
 
         addLeafRule(Reference.class, LAST + "reference", RemoteReference::new);
-
-
-        //  addWrappingRule(Publisher.class, LAST + " topic publisher", RemotePublisher::new,
-        //  MapView.class);
 
 
         addLeafRule(TopologySubscription.class, LAST + " vanilla",

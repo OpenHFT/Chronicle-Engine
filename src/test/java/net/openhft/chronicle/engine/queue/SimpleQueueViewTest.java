@@ -11,6 +11,7 @@ import net.openhft.chronicle.engine.tree.QueueView.Excerpt;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
+import net.openhft.chronicle.queue.impl.RollingChronicleQueue;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
@@ -100,6 +101,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
                     x -> t.set(x));
             serverEndpoint = null;
         }
+
         YamlLogging.setAll(true);
     }
 
@@ -110,24 +112,22 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
         if (tr != null)
             throw tr;
-        assetTree.close();
+
         if (serverEndpoint != null)
             serverEndpoint.close();
+
+        assetTree.close();
         methodName = "";
-
-
     }
 
 
     @Test
     public void testStringTopicPublisherWithSubscribe() throws InterruptedException {
+
         if (isRemote)
-            return; // todo peter to fix this test when running remote
-
-
+            return;
         String uri = "/queue/" + methodName;
         String messageType = "topic";
-
 
         TopicPublisher<String, String> publisher = assetTree.acquireTopicPublisher(uri, String.class, String.class);
         BlockingQueue<String> values0 = new ArrayBlockingQueue<>(10);
@@ -141,6 +141,44 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         Thread.sleep(500);
         publisher.publish(messageType, "Message-1");
         assertEquals("Message-1", values0.poll(3, SECONDS));
+    }
+
+
+    @Test
+    public void testPublishAndNext() throws InterruptedException {
+
+        String uri = "/queue/" + methodName;
+        String messageType = "topic";
+
+        TopicPublisher<String, String> publisher = assetTree.acquireTopicPublisher(uri, String.class, String.class);
+
+        final QueueView<String, String> queueView = assetTree.acquireQueue(uri, String.class,
+                String.class);
+        Thread.sleep(500);
+        publisher.publish(messageType, "Message-1");
+        final Excerpt<String, String> next = queueView.next();
+        assertEquals("Message-1", next.message());
+    }
+
+
+    @Test
+    public void testPublishAtIndexCheckIndex() throws InterruptedException {
+
+        String uri = "/queue/" + methodName;
+        String messageType = "topic";
+
+
+        final QueueView<String, String> queueView = assetTree.acquireQueue(uri, String.class,
+                String.class);
+        Thread.sleep(500);
+        final long index = queueView.publishAndIndex(messageType, "Message-1");
+        System.out.println(RollingChronicleQueue.toSequenceNumber(index));
+
+        final Excerpt<String, String> actual = queueView.next();
+
+        System.out.println(RollingChronicleQueue.toSequenceNumber(index));
+
+        assertEquals(index, actual.index());
     }
 
 
@@ -223,19 +261,13 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     public void testStringPublishWithIndex() throws InterruptedException, IOException {
 
         // todo - replay is not currently supported remotely
-        if (isRemote)
-            return;
 
         String uri = "/queue/" + methodName;
 
-        final Publisher<String> publisher = assetTree.acquirePublisher(uri,
-                String.class);
-        BlockingQueue<String> values = new ArrayBlockingQueue<>(10);
+        final QueueView<String, String> publisher = assetTree.acquireQueue(uri, String.class, String
+                .class);
 
-        long index = publisher.publish("Message-1");
-        //    TopicSubscriber<String, String> subscriber = (topic, message) -> values.add(topic + " "
-        //          + message);
-        //   assetTree.registerTopicSubscriber(uri, String.class, String.class, subscriber);
+        final long index = publisher.publishAndIndex(methodName, "Message-1");
 
         QueueView<String, String> queue = assetTree.acquireQueue(uri, String.class, String.class);
         final Excerpt<String, String> excerpt = queue.get(index);

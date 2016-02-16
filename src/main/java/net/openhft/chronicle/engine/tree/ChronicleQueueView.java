@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine.tree;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.core.util.ObjectUtils;
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
@@ -100,14 +101,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     }
 
 
-    @NotNull
-        //  @Override
-        //  public Excerpt createExcerpt() {
-        //     return chronicleQueue.createExcerpt();
-        //  }
-
-        //  @Override
-    ExcerptTailer threadLocalTailer() {
+    private ExcerptTailer threadLocalTailer() {
         return threadLocal.get().tailer;
     }
 
@@ -161,20 +155,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         }
     }
 
-/*    @Override
-    public void get(T topic, BiConsumer<T, M> consumer) {
-        final ThreadLocalData threadLocalData = threadLocal.get();
-        ExcerptTailer excerptTailer = threadLocalData.replayTailer;
-        final LocalExcept excerpt = threadLocalData.excerpt;
-
-        excerptTailer.readBytes()
-
-        try (DocumentContext dc = excerptTailer.readingDocument()) {
-            final StringBuilder topic = Wires.acquireStringBuilder();
-            final M message = dc.wire().readEventName(topic).object(elementTypeClass);
-            return excerpt.message(message).topic(ObjectUtils.convertTo(messageTypeClass, topic));
-        }
-    }*/
 
     @Override
     public Excerpt<T, M> get(T topic) {
@@ -208,31 +188,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         publishAndIndex(topic, message);
     }
 
-    /**
-     * get a  excerpt based on the {@code name} which is used as a filter
-     *
-     * @param name the name of the event in the chronicle queue, this is used as a filter so only
-     *             the excerpt with this name will be returned, if the excerpt does not have the
-     *             event name equal to {@code name} the excerpt will be skipped. if the {@code name}
-     *             is {@code null}  or {@code empty} all  excerpt will be returned
-     * @return the excerpt or {@code null} if there are no more excepts available
-     */
-
-/*    public M get(String name) {
-
-        final ExcerptTailer tailer = threadLocalTailer();
-
-        try (final DocumentContext dc = tailer.readingDocument()) {
-            final StringBuilder eventName = Wires.acquireStringBuilder();
-            final ValueIn valueIn = dc.wire().readEventName(eventName);
-
-            if (name == null || name.isEmpty() || name.contentEquals(eventName)) {
-                return valueIn.object(elementTypeClass);
-            }
-        }
-
-        return null;
-    }*/
 
     /**
      * @param consumer a consumer that provides that name of the event and value contained within
@@ -245,8 +200,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
             tailer.readDocument(w -> {
                 final StringBuilder eventName = Wires.acquireStringBuilder();
                 final ValueIn valueIn = w.readEventName(eventName);
-
-
                 consumer.accept(eventName, valueIn.object(elementTypeClass));
 
             });
@@ -260,28 +213,18 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     public long publishAndIndex(@NotNull T topic, @NotNull M message) {
         final WireKey wireKey = topic instanceof WireKey ? (WireKey) topic : topic::toString;
         final ExcerptAppender excerptAppender = threadLocalAppender();
-        return excerptAppender.writeDocument(w -> w.writeEventName(wireKey).object(message));
+
+        try (final DocumentContext dc = excerptAppender.writingDocument()) {
+            dc.wire().writeEventName(wireKey).object(message);
+            return excerptAppender.index();
+        }
 
     }
 
 
     public long set(@NotNull M event) {
-
         return threadLocalAppender().writeDocument(w -> w.writeEventName(() -> "").object(event));
-
     }
-
-    @NotNull
-    public ExcerptTailer createTailer() throws IOException {
-        return chronicleQueue.createTailer();
-    }
-
-    @NotNull
-
-    public ExcerptAppender createAppender() {
-        return chronicleQueue.createAppender();
-    }
-
 
     public void clear() {
         chronicleQueue.clear();
@@ -313,7 +256,20 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         chronicleQueue.close();
     }
 
-    private class LocalExcept<T, M> implements Excerpt<T, M> {
+    public <M> void registerSubscriber(Subscriber<M> subscriber) {
+
+    }
+
+    public void unregisterSubscriber(Subscriber subscriber) {
+
+    }
+
+    public int subscriberCount() {
+        throw new UnsupportedOperationException("todo");
+    }
+
+
+    public static class LocalExcept<T, M> implements Excerpt<T, M>, Marshallable {
 
         private T topic;
         private M message;
@@ -339,7 +295,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
             return this;
         }
 
-
         LocalExcept message(M message) {
             this.message = message;
             return this;
@@ -352,30 +307,36 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
         @Override
         public String toString() {
-            return "Except{" +
-                    "topic=" + topic +
-                    ", message=" + message +
-                    '}';
+            return "Except{" + "topic=" + topic + ", message=" + message + '}';
         }
 
+        @Override
+        public void writeMarshallable(@NotNull WireOut wireOut) {
+            wireOut.write(() -> "topic").object(topic);
+            wireOut.write(() -> "message").object(message);
+            wireOut.write(() -> "index").int64(index);
+        }
+
+        @Override
+        public void readMarshallable(@NotNull WireIn wireIn) throws IORuntimeException {
+            topic((T) wireIn.read(() -> "topic").object(Object.class));
+            message((M) wireIn.read(() -> "message").object(Object.class));
+            index(wireIn.read(() -> "index").int64());
+        }
     }
 
-    public class ThreadLocalData {
+    class ThreadLocalData {
 
-        public final ExcerptAppender appender;
-        public final ExcerptTailer tailer;
-        public final ExcerptTailer replayTailer;
-        private final LocalExcept excerpt;
+        final ExcerptAppender appender;
+        final ExcerptTailer tailer;
+        final ExcerptTailer replayTailer;
+        final LocalExcept excerpt;
 
         public ThreadLocalData(ChronicleQueue chronicleQueue) {
-            try {
-                appender = chronicleQueue.createAppender();
-                tailer = chronicleQueue.createTailer();
-                replayTailer = chronicleQueue.createTailer();
-                excerpt = new LocalExcept();
-            } catch (IOException e) {
-                throw Jvm.rethrow(e);
-            }
+            appender = chronicleQueue.createAppender();
+            tailer = chronicleQueue.createTailer();
+            replayTailer = chronicleQueue.createTailer();
+            excerpt = new LocalExcept();
         }
     }
 

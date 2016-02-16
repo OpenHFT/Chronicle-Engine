@@ -73,8 +73,8 @@ public interface Reference<E> extends Publisher<E>, Supplier<E>, Visitable<E> {
      *
      * @param e value to publish/set
      */
-    default long publish(E e) {
-        return set(e);
+    default void publish(E e) {
+        set(e);
     }
 
     default Class getType() {

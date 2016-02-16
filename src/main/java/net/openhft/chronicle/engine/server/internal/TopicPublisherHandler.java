@@ -2,6 +2,7 @@ package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
+import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
@@ -10,10 +11,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-import static net.openhft.chronicle.engine.server.internal.TopicPublisherHandler.EventId.publish;
-import static net.openhft.chronicle.engine.server.internal.TopicPublisherHandler.EventId.registerTopicSubscriber;
-import static net.openhft.chronicle.engine.server.internal.TopicPublisherHandler.Params.message;
-import static net.openhft.chronicle.engine.server.internal.TopicPublisherHandler.Params.topic;
+import static net.openhft.chronicle.engine.server.internal.TopicPublisherHandler.EventId.*;
+import static net.openhft.chronicle.engine.server.internal.TopicPublisherHandler.Params.*;
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
 import static net.openhft.chronicle.network.connection.CoreFields.tid;
 
@@ -66,7 +65,7 @@ public class TopicPublisherHandler<T, M> extends AbstractHandler {
                                 publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
                                         (inputTid));
                                 publish.writeNotReadyDocument(false, wire -> wire.writeEventName
-                                        (EventId.onEndOfSubscription).text(""));
+                                        (onEndOfSubscription).text(""));
 
                             });
                         }
@@ -88,8 +87,45 @@ public class TopicPublisherHandler<T, M> extends AbstractHandler {
                     nullCheck(message);
                     view.publish(topic, message);
                 });
-
+                return;
             }
+
+            outWire.writeDocument(true, wire -> outWire.writeEventName(tid).int64(inputTid));
+            writeData(inWire.bytes(), out -> {
+                if (next.contentEquals(eventName)) {
+                    out.writeEventName(reply).object(((QueueView) view).next());
+                    return;
+                }
+
+                if (getNextAtIndex.contentEquals(eventName)) {
+                    out.writeEventName(reply).object(((QueueView) view).get(valueIn.int64()));
+                    return;
+                }
+
+                if (getNextAtTopic.contentEquals(eventName)) {
+                    out.writeEventName(reply).object(((QueueView) view).get(valueIn.object()));
+                    return;
+                }
+
+
+                if (publishAndIndex.contentEquals(eventName)) {
+
+                    long index = valueIn.applyToMarshallable(wire -> {
+                        final Params[] params = publish.params();
+                        final T topic = wireToT.apply(wire.read(params[0]));
+                        final M message = wireToM.apply(wire.read(params[1]));
+                        nullCheck(topic);
+                        nullCheck(message);
+                        return ((QueueView) view).publishAndIndex(topic, message);
+
+                    });
+                    out.writeEventName(reply).int64(index);
+                    return;
+                }
+
+
+            });
+
         }
     };
 
@@ -112,14 +148,19 @@ public class TopicPublisherHandler<T, M> extends AbstractHandler {
 
     public enum Params implements WireKey {
         topic,
-        message, index,
+        message,
+        index
     }
 
     public enum EventId implements ParameterizeWireKey {
         publish(topic, message),
         onEndOfSubscription,
         registerTopicSubscriber(topic, message),
-        replay;
+        replay,
+        getNextAtIndex(index),      // used only by the queue view
+        getNextAtTopic(topic),      // used only by the queue view
+        next,                // used only by the queue view
+        publishAndIndex(topic, message);     // used only by the queue view
 
         private final WireKey[] params;
 

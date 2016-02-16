@@ -16,6 +16,10 @@
 
 package net.openhft.chronicle.engine.pubsub;
 
+import net.openhft.chronicle.core.threads.EventLoop;
+import net.openhft.chronicle.core.threads.InvalidEventHandlerException;
+import net.openhft.chronicle.core.util.ObjectUtils;
+import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Reference;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
@@ -24,20 +28,29 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.tree.QueueView;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class QueueReference<T, M> implements Reference<M> {
 
     private final Class<M> eClass;
     private final QueueView<T, M> chronicleQueue;
     private final T name;
+    private final Asset asset;
+    private EventLoop eventLoop;
 
-    public QueueReference(Class type, QueueView<T, M> chronicleQueue, T name) {
+    public QueueReference(Class type, Asset asset, QueueView<T, M> chronicleQueue, T name) {
         this.eClass = type;
         this.chronicleQueue = chronicleQueue;
         this.name = name;
+        eventLoop = asset.root().acquireView(EventLoop.class);
+        this.asset = asset;
     }
 
     public QueueReference(RequestContext requestContext, Asset asset, QueueView<T, M> queueView) {
-        this(requestContext.type(), queueView, (T) requestContext.name());
+        this(requestContext.type(), asset, queueView,
+                (T) ObjectUtils.convertTo(requestContext.type(), requestContext.name()));
     }
 
     @Override
@@ -59,22 +72,50 @@ public class QueueReference<T, M> implements Reference<M> {
         throw new UnsupportedOperationException();
     }
 
+    private final Map<Subscriber<M>, AtomicBoolean> subscribers = new HashMap<>();
+
     @Override
     public void registerSubscriber(boolean bootstrap,
                                    int throttlePeriodMs,
                                    Subscriber<M> subscriber) throws AssetNotFoundException {
-        throw new UnsupportedOperationException();
+
+        AtomicBoolean terminate = new AtomicBoolean();
+        subscribers.put(subscriber, terminate);
+
+        final QueueView<T, M> chronicleQueue = asset.acquireView(QueueView.class);
+
+        eventLoop.addHandler(() -> {
+
+            // this will be set to true if onMessage throws InvalidSubscriberException
+            if (terminate.get())
+                throw new InvalidEventHandlerException();
+
+            final QueueView.Excerpt<T, M> next = chronicleQueue.next();
+            if (next == null)
+                return false;
+            try {
+                subscriber.onMessage(next.message());
+            } catch (InvalidSubscriberException e) {
+                terminate.set(true);
+            }
+
+            return true;
+        });
+
     }
+
 
     @Override
     public void unregisterSubscriber(Subscriber subscriber) {
-        throw new UnsupportedOperationException();
+        final AtomicBoolean terminator = subscribers.remove(subscriber);
+        if (terminator != null)
+            terminator.set(true);
     }
+
 
     @Override
     public int subscriberCount() {
-        throw new UnsupportedOperationException();
-
+        return subscribers.size();
     }
 
     @Override
