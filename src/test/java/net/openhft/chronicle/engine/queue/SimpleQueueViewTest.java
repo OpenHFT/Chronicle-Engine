@@ -41,7 +41,6 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         ClassAliasPool.CLASS_ALIASES.addAlias(MyMarshallable.class, "MyMarshallable");
     }
 
-
     private static final String NAME = "/test";
 
     private final boolean isRemote;
@@ -124,8 +123,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     @Test
     public void testStringTopicPublisherWithSubscribe() throws InterruptedException {
 
-        if (isRemote)
-            return;
+
         String uri = "/queue/" + methodName;
         String messageType = "topic";
 
