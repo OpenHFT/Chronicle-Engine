@@ -11,7 +11,6 @@ import net.openhft.chronicle.engine.tree.QueueView.Excerpt;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
-import net.openhft.chronicle.queue.impl.RollingChronicleQueue;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
@@ -123,7 +122,6 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     @Test
     public void testStringTopicPublisherWithSubscribe() throws InterruptedException {
 
-
         String uri = "/queue/" + methodName;
         String messageType = "topic";
 
@@ -135,7 +133,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
             }
         };
 
-        assetTree.registerSubscriber(uri + "/" + messageType, String.class, subscriber);
+        assetTree.registerSubscriber(uri, String.class, subscriber);
         Thread.sleep(500);
         publisher.publish(messageType, "Message-1");
         assertEquals("Message-1", values0.poll(3, SECONDS));
@@ -165,17 +163,11 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         String uri = "/queue/" + methodName;
         String messageType = "topic";
 
-
         final QueueView<String, String> queueView = assetTree.acquireQueue(uri, String.class,
                 String.class);
         Thread.sleep(500);
         final long index = queueView.publishAndIndex(messageType, "Message-1");
-        System.out.println(RollingChronicleQueue.toSequenceNumber(index));
-
         final Excerpt<String, String> actual = queueView.next();
-
-        System.out.println(RollingChronicleQueue.toSequenceNumber(index));
-
         assertEquals(index, actual.index());
     }
 
