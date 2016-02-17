@@ -10,7 +10,6 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -44,7 +43,6 @@ public class ManyMapsTest {
     }
 
     @Test
-    @Ignore("Long running test")
     public void testConnectToMultipleMapsUsingTheSamePort() throws IOException {
         int noOfMaps = 100;
         int noOfKvps = 100;
