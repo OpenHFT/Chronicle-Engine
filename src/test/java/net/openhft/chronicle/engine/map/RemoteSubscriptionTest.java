@@ -86,7 +86,7 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
 
         connection = "StreamTest." + name.getMethodName() + ".host.port";
         TCPRegistry.createServerSocketChannelFor(connection);
-        serverEndpoint = new ServerEndpoint(connection, serverAssetTree, wireType);
+        serverEndpoint = new ServerEndpoint(connection, serverAssetTree);
         clientAssetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType, x -> t.set(x));
 
         map = clientAssetTree.acquireMap(NAME, String.class, String.class);

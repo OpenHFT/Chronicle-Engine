@@ -69,7 +69,7 @@ public class TestInsertUpdateChronicleMapView {
 
         connection = "TestInsertUpdateChronicleMapView.host.port";
         TCPRegistry.createServerSocketChannelFor(connection);
-        serverEndpoint = new ServerEndpoint(connection, serverAssetTree, wireType);
+        serverEndpoint = new ServerEndpoint(connection, serverAssetTree);
 
         serverAssetTree.root().addWrappingRule(MapView.class, "map directly to " + "KeyValueStore",
                 VanillaMapView::new, KeyValueStore.class);

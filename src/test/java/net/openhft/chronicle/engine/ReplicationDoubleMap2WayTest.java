@@ -63,8 +63,8 @@ public class ReplicationDoubleMap2WayTest {
         tree1 = create(1, writeType, "clusterTwo");
         tree2 = create(2, writeType, "clusterTwo");
 
-        serverEndpoint1 = new ServerEndpoint("host.port1", tree1, writeType);
-        serverEndpoint2 = new ServerEndpoint("host.port2", tree2, writeType);
+        serverEndpoint1 = new ServerEndpoint("host.port1", tree1);
+        serverEndpoint2 = new ServerEndpoint("host.port2", tree2);
     }
 
     @AfterClass

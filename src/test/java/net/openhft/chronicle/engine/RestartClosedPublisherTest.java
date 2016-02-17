@@ -40,7 +40,7 @@ public class RestartClosedPublisherTest {
         YamlLogging.setAll(true);
         _server = new VanillaAssetTree().forServer(x -> t.set(x));
 
-        _serverEndpoint1 = new ServerEndpoint(CONNECTION_1, _server, WIRE_TYPE);
+        _serverEndpoint1 = new ServerEndpoint(CONNECTION_1, _server);
 
     }
 

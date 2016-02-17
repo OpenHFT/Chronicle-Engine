@@ -77,7 +77,7 @@ public class ArrayMapTest extends ThreadMonitoringTest {
             methodName(name.getMethodName());
             connection = "ArrayMapTest." + name.getMethodName() + ".host.port";
             TCPRegistry.createServerSocketChannelFor(connection);
-            serverEndpoint = new ServerEndpoint(connection, serverAssetTree, wireType);
+            serverEndpoint = new ServerEndpoint(connection, serverAssetTree);
             assetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType, x -> t.set(x));
         } else {
             assetTree = serverAssetTree;

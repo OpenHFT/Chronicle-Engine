@@ -76,35 +76,35 @@ public class TestReplicationCluster {
         WireType writeType = WireType.BINARY;
         {
             AssetTree tree = create(1, writeType, "clusterFive", failOnException);
-            serverEndpoint1 = new ServerEndpoint("host.port1", tree, writeType);
+            serverEndpoint1 = new ServerEndpoint("host.port1", tree);
             tree.acquireMap(NAME, String.class,
                     String.class).size();
         }
 
         {
             AssetTree tree = create(2, writeType, "clusterFive", failOnException);
-            serverEndpoint2 = new ServerEndpoint("host.port2", tree, writeType);
+            serverEndpoint2 = new ServerEndpoint("host.port2", tree);
             tree.acquireMap(NAME, String.class,
                     String.class).size();
         }
 
         {
             AssetTree tree = create(3, writeType, "clusterFive", failOnException);
-            serverEndpoint3 = new ServerEndpoint("host.port3", tree, writeType);
+            serverEndpoint3 = new ServerEndpoint("host.port3", tree);
             tree.acquireMap(NAME, String.class,
                     String.class).size();
         }
 
         {
             AssetTree tree = create(4, writeType, "clusterFive", failOnException);
-            serverEndpoint4 = new ServerEndpoint("host.port4", tree, writeType);
+            serverEndpoint4 = new ServerEndpoint("host.port4", tree);
             tree.acquireMap(NAME, String.class,
                     String.class).size();
         }
 
         {
             AssetTree tree = create(5, writeType, "clusterFive", failOnException);
-            serverEndpoint5 = new ServerEndpoint("host.port5", tree, writeType);
+            serverEndpoint5 = new ServerEndpoint("host.port5", tree);
             tree.acquireMap(NAME, String.class,
                     String.class).size();
         }

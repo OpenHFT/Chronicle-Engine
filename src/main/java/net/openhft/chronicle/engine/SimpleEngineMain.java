@@ -67,7 +67,7 @@ public class SimpleEngineMain {
                     new ChronicleMapKeyValueStore(context.basePath(OS.TARGET), asset));
         }
 
-        serverEndpoint = new ServerEndpoint("*:" + PORT, assetTree, WIRE_TYPE);
+        serverEndpoint = new ServerEndpoint("*:" + PORT, assetTree);
 
         if (MSG_DUMP) {
             LOGGER.info("Enabling message logging");

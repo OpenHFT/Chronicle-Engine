@@ -67,9 +67,9 @@ public class Replication3WayWithCompressionTest {
         tree2 = create(2, writeType, "clusterTwo");
         tree3 = create(3, writeType, "clusterThree");
 
-        serverEndpoint1 = new ServerEndpoint("host.port1", tree1, writeType);
-        serverEndpoint2 = new ServerEndpoint("host.port2", tree2, writeType);
-        serverEndpoint3 = new ServerEndpoint("host.port3", tree3, writeType);
+        serverEndpoint1 = new ServerEndpoint("host.port1", tree1);
+        serverEndpoint2 = new ServerEndpoint("host.port2", tree2);
+        serverEndpoint3 = new ServerEndpoint("host.port3", tree3);
     }
 
     @AfterClass

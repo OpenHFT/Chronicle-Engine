@@ -52,7 +52,7 @@ public class ManyMapsTest {
         Map<String, Map<String, String>> _clientMaps = new HashMap<>();
         TCPRegistry.createServerSocketChannelFor(NAME);
         //TODO CHENT-68 Only works with BINARY NOT TEXT.
-        ServerEndpoint serverEndpoint = new ServerEndpoint(NAME, assetTree, WireType.BINARY);
+        ServerEndpoint serverEndpoint = new ServerEndpoint(NAME, assetTree);
 
         AssetTree clientAssetTree = new VanillaAssetTree().forRemoteAccess(NAME, WireType.BINARY, x -> t.set(x));
         System.out.println("Creating maps.");

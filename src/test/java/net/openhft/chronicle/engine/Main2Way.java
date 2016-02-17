@@ -64,10 +64,10 @@ public class Main2Way {
 
         if ("one".equals(System.getProperty("server", "one"))) {
             tree1 = create(1, writeType, "clusterThree");
-            serverEndpoint1 = new ServerEndpoint("localhost:8081", tree1, writeType);
+            serverEndpoint1 = new ServerEndpoint("localhost:8081", tree1);
         } else {
             tree2 = create(2, writeType, "clusterThree");
-            serverEndpoint2 = new ServerEndpoint("localhost:8082", tree2, writeType);
+            serverEndpoint2 = new ServerEndpoint("localhost:8082", tree2);
         }
     }
 

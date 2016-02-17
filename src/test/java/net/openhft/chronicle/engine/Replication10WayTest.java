@@ -142,7 +142,7 @@ public class Replication10WayTest {
             trees[i] = create(i, writeType);
             assert trees[i] != null;
 
-            serverEndpoints[i] = new ServerEndpoint(hostPort, trees[i], writeType);
+            serverEndpoints[i] = new ServerEndpoint(hostPort, trees[i]);
 
         }
     }

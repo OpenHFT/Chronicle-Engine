@@ -23,7 +23,6 @@ import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
 import net.openhft.chronicle.network.AcceptorEventHandler;
 import net.openhft.chronicle.network.VanillaSessionDetails;
 import net.openhft.chronicle.threads.Threads;
-import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -53,28 +52,26 @@ public class ServerEndpoint implements Closeable {
     @Nullable
     private AcceptorEventHandler eah;
 
-    public ServerEndpoint(String hostPortDescription, @NotNull AssetTree assetTree, @NotNull WireType wire) {
-        this(hostPortDescription, assetTree, wire, HEARTBEAT_INTERVAL_TICKS, HEARTBEAT_TIME_OUT_TICKS);
+    public ServerEndpoint(String hostPortDescription, @NotNull AssetTree assetTree) {
+        this(hostPortDescription, assetTree, HEARTBEAT_INTERVAL_TICKS, HEARTBEAT_TIME_OUT_TICKS);
     }
 
     public ServerEndpoint(@NotNull String hostPortDescription,
                           @NotNull AssetTree assetTree,
-                          @NotNull WireType wireType,
                           int heartbeatIntervalTicks,
                           int heartbeatIntervalTimeout) {
         this.heartbeatIntervalTicks = heartbeatIntervalTicks;
         this.heartbeatIntervalTimeout = heartbeatIntervalTimeout;
         eg = assetTree.root().acquireView(EventLoop.class);
         Threads.withThreadGroup(assetTree.root().getView(ThreadGroup.class), () -> {
-            start(hostPortDescription, assetTree, wireType);
+            start(hostPortDescription, assetTree);
             return null;
         });
     }
 
     @Nullable
     private AcceptorEventHandler start(@NotNull String hostPortDescription,
-                                       @NotNull final AssetTree asset,
-                                       @NotNull WireType wireType) throws IOException {
+                                       @NotNull final AssetTree asset) throws IOException {
         assert eg != null;
 
         eg.start();
@@ -85,7 +82,7 @@ public class ServerEndpoint implements Closeable {
         assert eventLoop != null;
 
         final AcceptorEventHandler eah = new AcceptorEventHandler(hostPortDescription,
-                () -> new EngineWireHandler(wireType, asset),
+                () -> new EngineWireHandler(asset),
                 VanillaSessionDetails::new,
                 heartbeatIntervalTicks,
                 heartbeatIntervalTimeout);

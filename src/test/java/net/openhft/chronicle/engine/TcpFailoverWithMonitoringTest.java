@@ -100,8 +100,8 @@ public class TcpFailoverWithMonitoringTest {
         connection1 = TCPRegistry.acquireServerSocketChannel(CONNECTION_1);
         connection2 = TCPRegistry.acquireServerSocketChannel(CONNECTION_2);
 
-        serverEndpoint1 = new ServerEndpoint(CONNECTION_1, serverAssetTree1, WIRE_TYPE);
-        serverEndpoint2 = new ServerEndpoint(CONNECTION_2, serverAssetTree2, WIRE_TYPE);
+        serverEndpoint1 = new ServerEndpoint(CONNECTION_1, serverAssetTree1);
+        serverEndpoint2 = new ServerEndpoint(CONNECTION_2, serverAssetTree2);
 
         final String[] connection = {CONNECTION_1, CONNECTION_2};
 

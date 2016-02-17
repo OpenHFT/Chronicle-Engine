@@ -196,7 +196,7 @@ public class GuavaEngineTest {
         public RemoteTestGenerator(@NotNull AssetTree assetTree) throws IOException {
             this.assetTree = assetTree;
             TCPRegistry.createServerSocketChannelFor("guava.test.host.port");
-            final ServerEndpoint serverEndpoint = new ServerEndpoint("guava.test.host.port", assetTree, WIRE_TYPE);
+            final ServerEndpoint serverEndpoint = new ServerEndpoint("guava.test.host.port", assetTree);
 
             final String hostname = "localhost";
             this.remoteAssetTree = ((VanillaAssetTree) assetTree).forRemoteAccess("guava.test" +

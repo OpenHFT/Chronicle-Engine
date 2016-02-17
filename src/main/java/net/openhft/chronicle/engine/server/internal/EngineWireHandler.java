@@ -111,9 +111,8 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
     private Class viewType;
     private long tid;
 
-    public EngineWireHandler(@NotNull final WireType byteToWire,
-                             @NotNull final AssetTree assetTree) {
-        super(byteToWire);
+    public EngineWireHandler(@NotNull final AssetTree assetTree) {
+        super();
 
         this.sessionProvider = assetTree.root().getView(SessionProvider.class);
         this.eventLoop = assetTree.root().findOrCreateView(EventLoop.class);

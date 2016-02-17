@@ -48,7 +48,7 @@ public class MapBootstrapTest extends ThreadMonitoringTest {
 
         TCPRegistry.createServerSocketChannelFor(CONNECTION_1);
 
-        serverEndpoint1 = new ServerEndpoint(CONNECTION_1, serverAssetTree1, WIRE_TYPE);
+        serverEndpoint1 = new ServerEndpoint(CONNECTION_1, serverAssetTree1);
 
         client = new VanillaAssetTree("client1").forRemoteAccess
                 (CONNECTION_1, WIRE_TYPE, x -> t.set(x));

@@ -87,7 +87,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
             String hostPortDescription = "SimpleQueueViewTest-methodName" + methodName;
             TCPRegistry.createServerSocketChannelFor(hostPortDescription);
-            serverEndpoint = new ServerEndpoint(hostPortDescription, serverAssetTree, WireType.BINARY);
+            serverEndpoint = new ServerEndpoint(hostPortDescription, serverAssetTree);
 
             final VanillaAssetTree client = new VanillaAssetTree();
             assetTree = client.forRemoteAccess(hostPortDescription,

@@ -69,27 +69,27 @@ public class MainCluster5 {
             case "one":
 
                 tree = create(1, writeType, CLUSTER);
-                serverEndpoint = new ServerEndpoint(":8081", tree, writeType);
+                serverEndpoint = new ServerEndpoint(":8081", tree);
                 break;
 
             case "two":
                 tree = create(2, writeType, CLUSTER);
-                serverEndpoint = new ServerEndpoint(":8082", tree, writeType);
+                serverEndpoint = new ServerEndpoint(":8082", tree);
                 break;
 
             case "three":
                 tree = create(3, writeType, CLUSTER);
-                serverEndpoint = new ServerEndpoint(":8083", tree, writeType);
+                serverEndpoint = new ServerEndpoint(":8083", tree);
                 break;
 
             case "four":
                 tree = create(4, writeType, CLUSTER);
-                serverEndpoint = new ServerEndpoint(":8084", tree, writeType);
+                serverEndpoint = new ServerEndpoint(":8084", tree);
                 break;
 
             case "five":
                 tree = create(5, writeType, CLUSTER);
-                serverEndpoint = new ServerEndpoint(":8085", tree, writeType);
+                serverEndpoint = new ServerEndpoint(":8085", tree);
                 break;
 
             case "client":
