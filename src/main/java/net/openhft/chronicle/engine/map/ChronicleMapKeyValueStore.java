@@ -150,7 +150,7 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
         if (maxEntries > 0)
             builder.entries(maxEntries + 1); // we have to add a head room of 1
 
-        builder.name(context.name() + "_" + Thread.currentThread().getName());
+//        builder.name(context.name() + "_" + Thread.currentThread().getName());
 
         if (basePath == null) {
             chronicleMap = builder.create();
