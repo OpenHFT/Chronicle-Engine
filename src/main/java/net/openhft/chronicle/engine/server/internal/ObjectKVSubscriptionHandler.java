@@ -3,7 +3,7 @@ package net.openhft.chronicle.engine.server.internal;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionCollection;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
-import net.openhft.chronicle.engine.api.tree.AssetTree;
+import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.map.ObjectSubscription;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
@@ -77,10 +77,11 @@ public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subsc
                 tidToListener.put(inputTid, listener);
 
                 if ("bootstrap".contentEquals(eventName))
-                    assetTree.registerTopicSubscriber(requestContext.fullName()
+                    asset.registerTopicSubscriber(requestContext.fullName()
                             + "?bootstrap=" + bootstrap.bool(), kClass, vClass, listener);
                 else
-                    assetTree.registerTopicSubscriber(requestContext.fullName(), kClass, vClass, listener);
+                    asset.registerTopicSubscriber(requestContext.fullName(), kClass,
+                            vClass, listener);
             });
             return;
         }
@@ -91,7 +92,7 @@ public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subsc
                 LOG.warn("No subscriber to present to unsubscribe (" + inputTid + ")");
                 return;
             }
-            assetTree.unregisterTopicSubscriber(requestContext.fullName(), listener);
+            asset.unregisterTopicSubscriber(requestContext, listener);
 
             return;
         }
@@ -116,11 +117,13 @@ public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subsc
     @Override
     protected void unregisterAll() {
 
+
         tidToListener.forEach((k, listener) -> {
             if (listener instanceof TopicSubscriber)
-                assetTree.unregisterTopicSubscriber(requestContext.fullName(), (TopicSubscriber) listener);
+                asset.unregisterTopicSubscriber(requestContext,
+                        (TopicSubscriber) listener);
             else
-                assetTree.unregisterSubscriber(requestContext.fullName(), (Subscriber) listener);
+                asset.unregisterSubscriber(requestContext, (Subscriber) listener);
         });
         tidToListener.clear();
     }
@@ -128,7 +131,7 @@ public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subsc
     void process(@NotNull final WireIn inWire,
                  @NotNull final RequestContext requestContext,
                  @NotNull final WireOutPublisher publisher,
-                 @NotNull final AssetTree assetTree, final long tid,
+                 @NotNull final Asset rootAsset, final long tid,
                  @NotNull final Wire outWire,
                  @NotNull final SubscriptionCollection subscription) {
         setOutWire(outWire);
@@ -136,7 +139,7 @@ public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subsc
         this.subscription = subscription;
         this.requestContext = requestContext;
         this.publisher = publisher(publisher);
-        this.assetTree = assetTree;
+        this.asset = rootAsset;
         dataConsumer.accept(inWire, tid);
 
     }

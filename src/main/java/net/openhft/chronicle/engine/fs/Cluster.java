@@ -17,14 +17,17 @@
 package net.openhft.chronicle.engine.fs;
 
 import net.openhft.chronicle.core.io.Closeable;
+import net.openhft.chronicle.network.api.TcpHandler;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
+import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 /**
@@ -34,6 +37,7 @@ public class Cluster implements Marshallable, Closeable {
     @NotNull
     private final Map<String, HostDetails> map;
     private final String clusterName;
+    private final Map<InetSocketAddress, TcpHandler> tcpHandlers = new ConcurrentHashMap<>();
 
     public Cluster(String clusterName) {
         this.clusterName = clusterName;
@@ -78,4 +82,11 @@ public class Cluster implements Marshallable, Closeable {
     public void close() {
         hostDetails().forEach(Closeable::closeQuietly);
     }
+
+    @Override
+    public void notifyClosing() {
+        hostDetails().forEach(HostDetails::notifyClosing);
+    }
+
+
 }

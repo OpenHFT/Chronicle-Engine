@@ -1,10 +1,12 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.engine.cfg.UserStat;
+import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.network.ClientClosedProvider;
 import net.openhft.chronicle.network.SessionMode;
 import net.openhft.chronicle.network.api.session.SessionDetailsProvider;
 import net.openhft.chronicle.network.connection.CoreFields;
+import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,6 +15,8 @@ import java.time.LocalTime;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static net.openhft.chronicle.engine.server.internal.SystemHandler.EventId.heartbeat;
 import static net.openhft.chronicle.engine.server.internal.SystemHandler.EventId.onClientClosing;
@@ -75,12 +79,28 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
     void process(@NotNull final WireIn inWire,
                  @NotNull final WireOut outWire, final long tid,
                  @NotNull final SessionDetailsProvider sessionDetails,
-                 @Nullable Map<String, UserStat> monitoringMap) {
-        wasHeartBeat = false;
+                 @Nullable Map<String, UserStat> monitoringMap,
+                 boolean isServerSocket,
+                 @Nullable Supplier<WireOutPublisher> publisher,
+                 @Nullable final HostIdentifier hostId,
+                 Consumer<WireType> onWireType, WireType wireType0) {
+
+        this.wasHeartBeat = false;
         this.sessionDetails = sessionDetails;
         this.monitoringMap = monitoringMap;
         setOutWire(outWire);
         dataConsumer.accept(inWire, tid);
+
+        if (wireType0 == null && sessionDetails.wireType() != null)
+            onWireType.accept(sessionDetails.wireType());
+/*
+        if (isServerSocket && sessionDetails.hostId() != 0) {
+            final VanillaSessionDetails sd = new VanillaSessionDetails();
+
+            sd.hostId(hostId.hostId());
+            sd.wireType(sessionDetails.wireType());
+            publisher.get().put(null, w -> w.writeDocument(false, sd));
+        }*/
     }
 
     private WireParser<Void> wireParser() {
@@ -95,7 +115,8 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
                 .sessionDetails.clientId(UUID.fromString(x))));
         parser.register(EventId.wireType::toString, (s, v, $) -> v.text(this, (o, x) -> o
                 .sessionDetails.wireType(WireType.valueOf(x))));
-
+        parser.register(EventId.hostId::toString, (s, v, $) -> v.int8(this, (o, x) -> o
+                .sessionDetails.hostId(x)));
         return parser;
     }
 
@@ -117,7 +138,8 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
         domain,
         securityToken,
         wireType,
-        clientId
+        clientId,
+        hostId
     }
 }
 

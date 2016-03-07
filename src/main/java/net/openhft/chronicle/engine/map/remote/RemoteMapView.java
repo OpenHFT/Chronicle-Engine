@@ -45,8 +45,9 @@ import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
 public class RemoteMapView<K, MV, V> extends VanillaMapView<K, V> {
     private final RequestContext context;
 
-    public RemoteMapView(@NotNull RequestContext context, Asset asset, KeyValueStore<K, V>
-            kvStore) {
+    public RemoteMapView(@NotNull RequestContext context,
+                         @NotNull Asset asset,
+                         @NotNull KeyValueStore<K, V> kvStore) {
         super(context, asset, kvStore);
         this.context = context;
     }

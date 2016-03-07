@@ -97,7 +97,7 @@ public class VanillaAssetTree implements AssetTree {
     }
 
     @NotNull
-    public VanillaAssetTree forServer(boolean daemon, final Consumer<Throwable> onThrowable) {
+    public VanillaAssetTree forServer(boolean daemon, @NotNull final Consumer<Throwable> onThrowable) {
         root.forServer(daemon, onThrowable);
         return this;
     }
@@ -108,7 +108,9 @@ public class VanillaAssetTree implements AssetTree {
     }
 
     @NotNull
-    public VanillaAssetTree forRemoteAccess(@NotNull String[] hostPortDescription, @NotNull WireType wire, final Consumer<Throwable> onThrowable) {
+    public VanillaAssetTree forRemoteAccess(@NotNull String[] hostPortDescription,
+                                            @NotNull WireType wire,
+                                            @NotNull final Consumer<Throwable> onThrowable) {
         root.forRemoteAccess(hostPortDescription, wire, clientSession(), null, onThrowable);
         return this;
     }

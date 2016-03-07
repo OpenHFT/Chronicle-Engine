@@ -114,7 +114,7 @@ public class BootStrapTest {
      * @throws IOException
      * @throws InterruptedException
      */
-    @Test
+    @Test(timeout = 2_000)
     public void nonBootstrappingTest() throws IOException, InterruptedException {
 
         try {
@@ -156,7 +156,7 @@ public class BootStrapTest {
      * @throws IOException
      * @throws InterruptedException
      */
-    @Test
+    @Test(timeout = 2_000)
     public void bootstrappingTest() throws IOException, InterruptedException {
 
         try {

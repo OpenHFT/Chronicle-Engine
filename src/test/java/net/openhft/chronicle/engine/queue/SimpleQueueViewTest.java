@@ -85,7 +85,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
             final VanillaAssetTree server = new VanillaAssetTree();
             final AssetTree serverAssetTree = server.forTesting(x -> t.set(x));
 
-            String hostPortDescription = "SimpleQueueViewTest-methodName" + methodName;
+            String hostPortDescription = "SimpleQueueViewTest-methodName" + methodName + wireType;
             TCPRegistry.createServerSocketChannelFor(hostPortDescription);
             serverEndpoint = new ServerEndpoint(hostPortDescription, serverAssetTree);
 
@@ -95,8 +95,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
 
         } else {
-            assetTree = (new VanillaAssetTree(1)).forTesting(
-                    x -> t.set(x));
+            assetTree = (new VanillaAssetTree(1)).forTesting(x -> t.set(x));
             serverEndpoint = null;
         }
 
@@ -116,6 +115,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
         assetTree.close();
         methodName = "";
+        TCPRegistry.reset();
     }
 
 

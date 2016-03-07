@@ -28,6 +28,7 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
+import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.After;
@@ -64,6 +65,7 @@ public class MapClientTest extends ThreadMonitoringTest {
     private final AssetTree assetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
     @Nullable
     private Class<? extends CloseableSupplier> supplier = null;
+
     public MapClientTest(Class<? extends CloseableSupplier> supplier) {
         this.supplier = supplier;
     }
@@ -71,8 +73,8 @@ public class MapClientTest extends ThreadMonitoringTest {
     @Parameters
     public static Collection<Object[]> data() throws IOException {
         return Arrays.asList(new Class[][]{
-                {LocalMapSupplier.class},
-                // {RemoteMapSupplier.class}
+                //   {LocalMapSupplier.class},
+                {RemoteMapSupplier.class}
         });
     }
 
@@ -86,6 +88,7 @@ public class MapClientTest extends ThreadMonitoringTest {
     public void clearState() {
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
+        YamlLogging.setAll(true);
     }
 
     @After

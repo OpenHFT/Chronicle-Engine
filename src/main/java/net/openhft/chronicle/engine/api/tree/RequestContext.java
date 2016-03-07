@@ -198,7 +198,7 @@ public class RequestContext implements Cloneable {
     }
 
     @NotNull
-    RequestContext view(@NotNull String viewName) {
+    public RequestContext view(@NotNull String viewName) {
         try {
             Class clazz = lookupType(viewName);
             viewType(clazz);
@@ -289,7 +289,8 @@ public class RequestContext implements Cloneable {
 
     @NotNull
     public String fullName() {
-        return pathName.isEmpty() ? name : (pathName + "/" + name);
+        final String s = pathName.isEmpty() ? name : (pathName + "/" + name);
+        return s.startsWith("/") ? s : "/" + s;
     }
 
     @NotNull
@@ -312,15 +313,6 @@ public class RequestContext implements Cloneable {
 
     public WireType wireType() {
         return wireType;
-    }
-
-    public String namePath() {
-        return pathName;
-    }
-
-    public RequestContext namePath(String pathName) {
-        this.pathName = pathName;
-        return this;
     }
 
     public String name() {
@@ -474,10 +466,7 @@ public class RequestContext implements Cloneable {
 
     public String toUri() {
         StringBuilder sb = new StringBuilder();
-        if (pathName != null && !pathName.isEmpty()) {
-            sb.append("/").append(pathName);
-        }
-        sb.append("/").append(name);
+        sb.append(fullName());
         String sep = "?";
         if (viewType != null) {
             sb.append(sep).append("view=").append(CLASS_ALIASES.nameFor(viewType()));

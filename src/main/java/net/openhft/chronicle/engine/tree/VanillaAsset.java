@@ -99,7 +99,7 @@ public class VanillaAsset implements Asset, Closeable {
         }
     }
 
-    public void standardStack(boolean daemon, final Consumer<Throwable> onThrowable) {
+    public void standardStack(boolean daemon, @NotNull final Consumer<Throwable> onThrowable) {
 
         final Asset queue = acquireAsset("queue");
         queue.addWrappingRule(Reference.class, LAST + "reference", QueueReference::new, QueueView
@@ -173,11 +173,9 @@ public class VanillaAsset implements Asset, Closeable {
                                 @NotNull WireType wire,
                                 @NotNull VanillaSessionDetails sessionDetails,
                                 @Nullable ClientConnectionMonitor clientConnectionMonitor,
-                                final Consumer<Throwable> onThrowable) throws
-            AssetNotFoundException {
+                                @NotNull Consumer<Throwable> onThrowable) throws AssetNotFoundException {
 
         standardStack(true, onThrowable);
-
 
         final Asset queue = acquireAsset("queue");
         queue.addLeafRule(QueueView.class, LAST + "reference to a ChronicleQueue", RemoteQueueView::new);
@@ -322,6 +320,10 @@ public class VanillaAsset implements Asset, Closeable {
     @Override
     public <V> V acquireView(@NotNull Class<V> viewType, @NotNull RequestContext rc) throws
             AssetNotFoundException {
+
+        assert fullName().equals(rc.fullName()) :
+                "fullName=" + fullName() + " ,rc.fullName()=" + rc.fullName();
+
         synchronized (viewMap) {
             V view = getView(viewType);
             if (view != null) {

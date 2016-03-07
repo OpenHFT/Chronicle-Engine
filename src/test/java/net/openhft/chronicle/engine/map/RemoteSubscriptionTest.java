@@ -47,7 +47,7 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
     private static MapView<String, String> map;
 
     private final WireType wireType;
-    public String connection = "RemoteSubscriptionTest.host.port";
+    public String connection;
     @NotNull
     @Rule
     public TestName name = new TestName();
@@ -84,7 +84,7 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
         YamlLogging.showServerWrites = true;
         YamlLogging.showServerReads = true;
 
-        connection = "StreamTest." + name.getMethodName() + ".host.port";
+        connection = "StreamTest." + name.getMethodName() + ".host.port" + wireType;
         TCPRegistry.createServerSocketChannelFor(connection);
         serverEndpoint = new ServerEndpoint(connection, serverAssetTree);
         clientAssetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType, x -> t.set(x));

@@ -61,13 +61,7 @@ public class RemoteKVSSubscription<K, V> extends AbstractRemoteSubscription<MapE
     @NotNull
     private static String toUri(@NotNull final RequestContext context) {
         StringBuilder sb = Wires.acquireStringBuilder();
-
-        String addSlash = "";
-        if (context.fullName().indexOf('/') != 0) {
-            addSlash = "/";
-        }
-
-        sb.append(addSlash).append(context.fullName()).append("?view=subscription");
+        sb.append(context.fullName()).append("?view=subscription");
 
         if (context.messageType() != String.class)
             sb.append("&messageType=").append(CLASS_ALIASES.nameFor(context.messageType()));

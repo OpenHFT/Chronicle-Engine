@@ -20,31 +20,43 @@ import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.core.threads.HandlerPriority;
 import net.openhft.chronicle.engine.api.tree.Asset;
+import net.openhft.chronicle.engine.server.ServerEndpoint;
+import net.openhft.chronicle.engine.server.internal.EngineWireNetworkContext;
+import net.openhft.chronicle.map.Function;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.api.session.SessionDetails;
 import net.openhft.chronicle.network.api.session.SessionProvider;
 import net.openhft.chronicle.network.connection.ClientConnectionMonitor;
 import net.openhft.chronicle.network.connection.SocketAddressSupplier;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
-import net.openhft.chronicle.wire.Marshallable;
-import net.openhft.chronicle.wire.WireIn;
-import net.openhft.chronicle.wire.WireOut;
-import net.openhft.chronicle.wire.WireType;
+import net.openhft.chronicle.network.connection.WireOutPublisher;
+import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 import static net.openhft.chronicle.network.VanillaSessionDetails.of;
 
 public class HostDetails implements Marshallable, Closeable {
     private final Map<InetSocketAddress, TcpChannelHub> tcpChannelHubs = new ConcurrentHashMap<>();
+
+    private static final Logger LOG = LoggerFactory.getLogger(HostDetails.class);
+
     public int hostId;
     public int tcpBufferSize;
     public String connectUri;
     public int timeoutMs;
+    HostConnection hostConnection;
+    private volatile boolean closed = false;
 
     public HostDetails() {
     }
@@ -83,8 +95,7 @@ public class HostDetails implements Marshallable, Closeable {
                                               @NotNull final WireType wire) {
 
         @Nullable
-        final SessionDetails sessionDetails = asset.root().findView(SessionDetails.class);
-
+        final SessionDetails sessionDetails = asset.findView(SessionDetails.class);
         final InetSocketAddress addr = TCPRegistry.lookup(connectUri);
 
         return tcpChannelHubs.computeIfAbsent(addr, hostPort -> {
@@ -96,6 +107,112 @@ public class HostDetails implements Marshallable, Closeable {
         });
     }
 
+
+    class HostConnection implements Closeable {
+
+        private final WireType wireType;
+
+        private final Asset asset;
+        private final Consumer<WireOut> onSendHeader;
+        private final Function<WireType, WireOutPublisher> wireOutPublisherFunction;
+
+        private final Set<WriteMarshallable> bootstraps = Collections.newSetFromMap(new IdentityHashMap());
+
+        private WireOutPublisher wireOutPublisher;
+
+        public HostConnection(@NotNull WireType wireType,
+                              Asset asset,
+                              @NotNull Consumer<WireOut> onSendHeader,
+                              @NotNull Function<WireType, WireOutPublisher>
+                                      wireOutPublisherFunction,
+                              WriteMarshallable bootstrap) {
+            this.wireType = wireType;
+            this.asset = asset;
+            this.onSendHeader = onSendHeader;
+            this.wireOutPublisherFunction = wireOutPublisherFunction;
+            bootstraps.add(bootstrap);
+        }
+
+        @Override
+        public void close() {
+            synchronized (lock()) {
+                Closeable.closeQuietly(wireOutPublisher);
+                if (closed) {
+                    wireOutPublisher = null;
+                } else {
+                    connect();
+                }
+            }
+        }
+
+        public void addBootStrap(WriteMarshallable bootstrap) {
+            synchronized (lock()) {
+                bootstraps.add(bootstrap);
+                if (wireOutPublisher != null)
+                    wireOutPublisher.put("", bootstrap);
+            }
+
+        }
+
+        public WireOutPublisher connect() {
+            synchronized (lock()) {
+                this.wireOutPublisher = wireOutPublisherFunction.apply(wireType);
+
+                final EngineWireNetworkContext nc = new EngineWireNetworkContext();
+                nc.wireType(wireType);
+                nc.rootAsset(asset.root());
+                nc.wireOutPublisher(this.wireOutPublisher);
+                nc.closeTask(this);
+
+                final ServerEndpoint serverEndpoint = asset.findView(ServerEndpoint.class);
+                if (serverEndpoint == null)
+                    throw new IllegalStateException("serverEndpoint not found");
+
+                wireOutPublisher.put("", onSendHeader::accept);
+
+                for (WriteMarshallable bootstrap : bootstraps) {
+                    wireOutPublisher.put("", bootstrap);
+                }
+
+                serverEndpoint.connect(connectUri, asset, timeoutMs, nc);
+                return wireOutPublisher;
+            }
+        }
+
+    }
+
+    Object lock() {
+        return this;
+    }
+
+
+    /**
+     * @param wireType                 the wire type the message is send using
+     * @param asset                    the current asset
+     * @param onSendHeader             called the first time the connection is establish, the call
+     *                                 site to construct the fist message
+     * @param wireOutPublisherFunction
+     * @param bootstrap
+     * @return WireOutPublisher used to publish further data to this client
+     */
+    public synchronized WireOutPublisher connect(@NotNull WireType wireType,
+                                                 Asset asset,
+                                                 final Consumer<WireOut> onSendHeader,
+                                                 final Function<WireType, WireOutPublisher> wireOutPublisherFunction,
+                                                 WriteMarshallable bootstrap) {
+        if (closed)
+            throw new IllegalStateException("Closed");
+        if (hostConnection == null) {
+            hostConnection = new HostConnection(wireType,
+                    asset, onSendHeader,
+                    wireOutPublisherFunction, bootstrap);
+            hostConnection.connect();
+        } else {
+            hostConnection.addBootStrap(bootstrap);
+        }
+        return hostConnection.wireOutPublisher;
+    }
+
     /**
      * @return the {@code TcpChannelHub} if it exists, otherwise {@code null}
      */
@@ -104,16 +221,26 @@ public class HostDetails implements Marshallable, Closeable {
     }
 
     @Override
+    public void notifyClosing() {
+        closed = true;
+    }
+
+    @Override
     public void close() {
+        closed = true;
         tcpChannelHubs.values().forEach(Closeable::closeQuietly);
     }
 
-    @NotNull
     @Override
     public String toString() {
         return "HostDetails{" +
-                "hostId=" + hostId +
-                ", connectUri='" + connectUri +
+                "tcpChannelHubs=" + tcpChannelHubs +
+                ", hostId=" + hostId +
+                ", tcpBufferSize=" + tcpBufferSize +
+                ", connectUri='" + connectUri + '\'' +
+                ", timeoutMs=" + timeoutMs +
+                ", hostConnection=" + hostConnection +
+                ", closed=" + closed +
                 '}';
     }
 

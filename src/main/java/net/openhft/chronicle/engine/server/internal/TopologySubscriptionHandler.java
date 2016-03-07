@@ -1,7 +1,7 @@
 package net.openhft.chronicle.engine.server.internal;
 
+import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
-import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.tree.TopologySubscription;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
@@ -48,7 +48,7 @@ public class TopologySubscriptionHandler extends SubscriptionHandler<TopologySub
     void process(@NotNull final WireIn inWire,
                  @NotNull final RequestContext requestContext,
                  @NotNull final WireOutPublisher publisher,
-                 @NotNull final AssetTree assetTree, final long tid,
+                 @NotNull final Asset asset, final long tid,
                  @NotNull final Wire outWire,
                  @NotNull final TopologySubscription subscription) {
         setOutWire(outWire);
@@ -56,7 +56,7 @@ public class TopologySubscriptionHandler extends SubscriptionHandler<TopologySub
         this.subscription = subscription;
         this.requestContext = requestContext;
         this.publisher = publisher;
-        this.assetTree = assetTree;
+        this.asset = asset;
         assert dataConsumer != null;
         dataConsumer.accept(inWire, tid);
     }

@@ -40,7 +40,7 @@ public class ArrayMapTest extends ThreadMonitoringTest {
     private static AtomicReference<Throwable> t = new AtomicReference();
     private final Boolean isRemote;
     private final WireType wireType;
-    public String connection = "SteamTest.host.port";
+    public String connection;
     @NotNull
     @Rule
     public TestName name = new TestName();
@@ -75,7 +75,7 @@ public class ArrayMapTest extends ThreadMonitoringTest {
         if (isRemote) {
 
             methodName(name.getMethodName());
-            connection = "ArrayMapTest." + name.getMethodName() + ".host.port";
+            connection = "ArrayMapTest." + name.getMethodName() + ".host.port" + wireType;
             TCPRegistry.createServerSocketChannelFor(connection);
             serverEndpoint = new ServerEndpoint(connection, serverAssetTree);
             assetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType, x -> t.set(x));

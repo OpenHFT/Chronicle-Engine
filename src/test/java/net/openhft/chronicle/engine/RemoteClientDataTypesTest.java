@@ -6,12 +6,15 @@ import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
+import net.openhft.chronicle.wire.YamlLogging;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -20,6 +23,7 @@ import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 
 /**
@@ -27,6 +31,9 @@ import java.util.concurrent.TimeUnit;
  */
 @RunWith(Parameterized.class)
 public class RemoteClientDataTypesTest {
+
+
+    private static final Logger LOG = LoggerFactory.getLogger(RemoteClientDataTypesTest.class);
 
     private static AssetTree _serverAssetTree;
     private static AssetTree _clientAssetTree;
@@ -64,35 +71,43 @@ public class RemoteClientDataTypesTest {
     }
 
 
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
     @Before
     public void setUp() throws IOException {
-        _serverAssetTree = new VanillaAssetTree().forServer(null);
+        _serverAssetTree = new VanillaAssetTree().forServer(x -> t.compareAndSet(null, x));
 
         TCPRegistry.createServerSocketChannelFor(_serverAddress);
         _serverEndpoint = new ServerEndpoint(_serverAddress, _serverAssetTree);
-
-        _clientAssetTree = new VanillaAssetTree().forRemoteAccess(_serverAddress, _wireType, null);
+        _clientAssetTree = new VanillaAssetTree().forRemoteAccess(_serverAddress, _wireType,
+                x -> t.compareAndSet(null, x));
     }
 
     @After
     public void tearDown() {
-        if (_clientAssetTree != null) {
+
+        final Throwable throwable = t.get();
+
+        if (throwable != null)
+            LOG.error("", throwable);
+
+        if (_clientAssetTree != null)
             _clientAssetTree.close();
-        }
 
-        if (_serverAssetTree != null) {
+        if (_serverAssetTree != null)
             _serverAssetTree.close();
-        }
 
-        if (_serverEndpoint != null) {
+        if (_serverEndpoint != null)
             _serverEndpoint.close();
-        }
 
         TCPRegistry.reset();
     }
 
     @Test
     public void testDataTypesMapAndEvents() throws InterruptedException {
+
+        YamlLogging.setAll(true);
+
         BlockingQueue valueSubscriptionQueue = new ArrayBlockingQueue<>(1);
         BlockingQueue eventSubscriptionQueue = new ArrayBlockingQueue<>(1);
         BlockingQueue topicSubscriptionQueue = new ArrayBlockingQueue<>(1);

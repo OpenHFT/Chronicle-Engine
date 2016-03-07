@@ -19,11 +19,16 @@ package net.openhft.chronicle.engine.api.tree;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.util.ThrowingAcceptor;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
+import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionCollection;
+import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
+import net.openhft.chronicle.engine.map.KVSSubscription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiPredicate;
+
+import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
 
 /**
  * An Asset is a point on an AssetTree.  An Asset can not only have any number of Children it has
@@ -329,4 +334,48 @@ public interface Asset extends Closeable {
     void forEachChild(ThrowingAcceptor<Asset, InvalidSubscriberException> childAcceptor) throws InvalidSubscriberException;
 
     void getUsageStats(AssetTreeStats ats);
+
+    default <E> void unregisterSubscriber(
+            @NotNull RequestContext requestContext,
+            @NotNull Subscriber<Object> subscriber) {
+
+        final Class<SubscriptionCollection> subscriptionType = requestContext.getSubscriptionType();
+        final SubscriptionCollection subscription = getView(subscriptionType);
+
+        if (subscription == null)
+            subscriber.onEndOfSubscription();
+        else
+            subscription.unregisterSubscriber(subscriber);
+
+
+    }
+
+
+    default <T, E> void unregisterTopicSubscriber(@NotNull RequestContext requestContext,
+                                                  @NotNull TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
+        SubscriptionCollection subscription = getView(requestContext.getSubscriptionType());
+        if (subscription instanceof KVSSubscription)
+            ((KVSSubscription) subscription).unregisterTopicSubscriber(subscriber);
+        else
+            subscriber.onEndOfSubscription();
+    }
+
+
+    default <T, E> void registerTopicSubscriber(@NotNull String uri,
+                                                @NotNull Class<T> topicClass,
+                                                @NotNull Class<E> messageClass,
+                                                @NotNull TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
+        RequestContext rc = requestContext(uri).keyType(topicClass).valueType(messageClass);
+        final SubscriptionCollection subscriptionCollection = acquireSubscription(rc);
+        final KVSSubscription kvsSubscription = (KVSSubscription) subscriptionCollection;
+        kvsSubscription.registerTopicSubscriber(rc, subscriber);
+    }
+
+
+    default SubscriptionCollection acquireSubscription(@NotNull RequestContext requestContext) {
+        Class<SubscriptionCollection> subscriptionType = requestContext.getSubscriptionType();
+        requestContext.viewType(subscriptionType);
+        return acquireView(subscriptionType, requestContext);
+    }
+
 }

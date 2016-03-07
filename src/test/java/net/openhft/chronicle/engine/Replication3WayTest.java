@@ -47,7 +47,7 @@ public class Replication3WayTest {
     private static AtomicReference<Throwable> t = new AtomicReference();
 
     @BeforeClass
-    public static void before() throws IOException {
+    public static void before() throws IOException, InterruptedException {
         YamlLogging.setAll(false);
 
         //YamlLogging.showServerWrites = true;
@@ -57,16 +57,22 @@ public class Replication3WayTest {
         //Delete any files from the last run
         Files.deleteIfExists(Paths.get(OS.TARGET, NAME));
 
-        TCPRegistry.createServerSocketChannelFor("host.port1", "host.port2", "host.port3");
+        TCPRegistry.createServerSocketChannelFor(
+                "clusterThree.host.port1",
+                "clusterThree.host.port2",
+                "clusterThree.host.port3");
 
         WireType writeType = WireType.TEXT;
-        tree1 = create(1, writeType, "clusterTwo");
-        tree2 = create(2, writeType, "clusterTwo");
+        tree1 = create(1, writeType, "clusterThree");
+        tree2 = create(2, writeType, "clusterThree");
         tree3 = create(3, writeType, "clusterThree");
 
-        serverEndpoint1 = new ServerEndpoint("host.port1", tree1);
-        serverEndpoint2 = new ServerEndpoint("host.port2", tree2);
-        serverEndpoint3 = new ServerEndpoint("host.port3", tree3);
+        serverEndpoint1 = new ServerEndpoint("clusterThree.host.port1", tree1);
+        serverEndpoint2 = new ServerEndpoint("clusterThree.host.port2", tree2);
+        serverEndpoint3 = new ServerEndpoint("clusterThree.host.port3", tree3);
+
+
+        Thread.sleep(900);
     }
 
     @AfterClass
@@ -126,6 +132,8 @@ public class Replication3WayTest {
 
     @Test
     public void testThreeWay() throws InterruptedException {
+        YamlLogging.setAll(false);
+        YamlLogging.showServerReads = true;
 
         final ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME, String.class, String
                 .class);
@@ -139,18 +147,20 @@ public class Replication3WayTest {
 
         map2.put("hello2", "world2");
 
-        final ConcurrentMap<String, String> map3 = tree2.acquireMap(NAME, String.class, String
+        final ConcurrentMap<String, String> map3 = tree3.acquireMap(NAME, String.class, String
                 .class);
         assertNotNull(map2);
 
-        map2.put("hello3", "world3");
+        map3.put("hello3", "world3");
 
-        for (int i = 1; i <= 50; i++) {
+        for (int i = 1; i <= 100; i++) {
             if (map1.size() == 3 &&
                     map2.size() == 3 &&
                     map3.size() == 3)
                 break;
-            Jvm.pause(300);
+            if (i == 99)
+                System.out.println("");
+            Jvm.pause(100);
         }
 
         for (Map m : new Map[]{map1, map2, map3}) {

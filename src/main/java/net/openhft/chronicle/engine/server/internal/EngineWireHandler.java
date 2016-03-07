@@ -26,7 +26,6 @@ import net.openhft.chronicle.engine.api.session.Heartbeat;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.api.tree.Asset;
-import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.api.tree.RequestContextInterner;
 import net.openhft.chronicle.engine.cfg.UserStat;
@@ -36,6 +35,7 @@ import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.engine.tree.TopologySubscription;
 import net.openhft.chronicle.network.ClientClosedProvider;
+import net.openhft.chronicle.network.NetworkContextManager;
 import net.openhft.chronicle.network.WireTcpHandler;
 import net.openhft.chronicle.network.api.session.SessionDetailsProvider;
 import net.openhft.chronicle.network.api.session.SessionProvider;
@@ -51,15 +51,17 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
 import static net.openhft.chronicle.core.Jvm.rethrow;
-import static net.openhft.chronicle.network.connection.CoreFields.cid;
 import static net.openhft.chronicle.network.connection.CoreFields.csp;
 
 /**
  * Created by Rob Austin
  */
-public class EngineWireHandler extends WireTcpHandler implements ClientClosedProvider {
+public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> implements
+        ClientClosedProvider, NetworkContextManager<EngineWireNetworkContext> {
 
     private static final Logger LOG = LoggerFactory.getLogger(EngineWireHandler.class);
 
@@ -87,7 +89,8 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
     @NotNull
     private final ReplicationHandler replicationHandler;
     @NotNull
-    private final AssetTree assetTree;
+    private Asset rootAsset;
+
     @NotNull
     private final ReadMarshallable metaDataConsumer;
     private final StringBuilder lastCsp = new StringBuilder();
@@ -95,37 +98,33 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
     @NotNull
     private final SystemHandler systemHandler;
     @Nullable
-    private final SessionProvider sessionProvider;
+    private SessionProvider sessionProvider;
+
     @Nullable
-    private final HostIdentifier hostIdentifier;
-    @Nullable
-    private final EventLoop eventLoop;
+    private EventLoop eventLoop;
     private final RequestContextInterner requestContextInterner = new RequestContextInterner(128);
     private final StringBuilder currentLogMessage = new StringBuilder();
     private final StringBuilder prevLogMessage = new StringBuilder();
+    private boolean isServerSocket;
+    private Asset contextAsset;
+
     private WireAdapter wireAdapter;
     private Object view;
     private boolean isSystemMessage = true;
     private RequestContext requestContext;
+
+    private SessionDetailsProvider sessionDetails;
+
     @Nullable
     private Class viewType;
     private long tid;
+    private long cid;
+    private byte localIdentifier;
+    private HostIdentifier hostIdentifier;
 
-    public EngineWireHandler(@NotNull final AssetTree assetTree) {
-        super();
-
-        this.sessionProvider = assetTree.root().getView(SessionProvider.class);
-        this.eventLoop = assetTree.root().findOrCreateView(EventLoop.class);
-        assert eventLoop != null;
-        try {
-            this.eventLoop.start();
-        } catch (RejectedExecutionException e) {
-            LOG.debug("", e);
-        }
-        this.hostIdentifier = assetTree.root().findOrCreateView(HostIdentifier.class);
-        this.assetTree = assetTree;
+    public EngineWireHandler() {
         this.mapWireHandler = new MapWireHandler<>();
-        this.metaDataConsumer = wireInConsumer();
+        this.metaDataConsumer = metaDataConsumer();
         this.keySetHandler = new CollectionWireHandler();
         this.entrySetHandler = new CollectionWireHandler();
         this.valuesHandler = new CollectionWireHandler();
@@ -136,6 +135,37 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
         this.referenceHandler = new ReferenceHandler();
         this.replicationHandler = new ReplicationHandler();
         this.systemHandler = new SystemHandler();
+    }
+
+
+    @Override
+    public void nc(EngineWireNetworkContext nc) {
+        super.nc(nc);
+        publisher(nc.wireOutPublisher());
+
+        rootAsset = nc.rootAsset().root();
+        contextAsset = nc.isAcceptor() ? rootAsset : nc.rootAsset();
+
+
+        hostIdentifier = rootAsset.findOrCreateView(HostIdentifier.class);
+
+        if (hostIdentifier != null)
+            localIdentifier = hostIdentifier.hostId();
+
+        this.sessionProvider = rootAsset.getView(SessionProvider.class);
+        this.eventLoop = rootAsset.findOrCreateView(EventLoop.class);
+        assert eventLoop != null;
+
+        try {
+            this.eventLoop.start();
+        } catch (RejectedExecutionException e) {
+            LOG.debug("", e);
+        }
+
+
+        this.isServerSocket = nc.isAcceptor();
+        this.sessionDetails = nc.sessionDetails();
+        this.rootAsset = nc.rootAsset();
     }
 
     @Override
@@ -151,9 +181,10 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
     }
 
     @NotNull
-    private ReadMarshallable wireInConsumer() {
+    private ReadMarshallable metaDataConsumer() {
         return (wire) -> {
-            long startWritePosition = outWire.bytes().writePosition();
+
+            long startWritePosition = (outWire == null) ? 0 : outWire.bytes().writePosition();
 
             // if true the next data message will be a system message
             isSystemMessage = wire.bytes().readRemaining() == 0;
@@ -162,12 +193,9 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
                 return;
             }
 
-            try {
-                readCsp(wire);
-                readTid(wire);
-            } catch (Throwable t) {
-                Jvm.rethrow(t);
-            }
+
+            readCsp(wire);
+            readTid(wire);
 
             try {
                 if (hasCspChanged(cspText)) {
@@ -176,6 +204,10 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
                         LOG.debug("received meta-data:\n" + wire.bytes().toHexString());
 
                     requestContext = requestContextInterner.intern(cspText);
+                    final String fullName = requestContext.fullName();
+                    if (!"/".equals(fullName))
+                        contextAsset = this.rootAsset.acquireAsset(fullName);
+
                     viewType = requestContext.viewType();
                     if (viewType == null) {
                         if (LOG.isDebugEnabled()) LOG.debug("received system-meta-data");
@@ -183,12 +215,7 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
                         return;
                     }
 
-                    // todo I'm sure this can be improved
-                    if (viewType == Publisher.class)
-                        view = this.assetTree.acquirePublisher(requestContext.fullName(),
-                                requestContext.messageType());
-                    else
-                        view = this.assetTree.acquireView(requestContext);
+                    view = contextAsset.acquireView(requestContext);
 
                     if (viewType == MapView.class ||
                             viewType == EntrySetView.class ||
@@ -248,10 +275,10 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
         }
     }
 
+
     @Override
     protected void process(@NotNull final WireIn in,
-                           @NotNull final WireOut out,
-                           @NotNull final SessionDetailsProvider sessionDetails) {
+                           @NotNull final WireOut out) {
 
         if (!YamlLogging.showHeartBeats) {
             //save the previous message (the meta-data for printing later)
@@ -265,8 +292,6 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
             logYamlToStandardOut(in);
         }
 
-        if (sessionProvider != null)
-            sessionProvider.set(sessionDetails);
 
         in.readDocument(this.metaDataConsumer, (WireIn wire) -> {
 
@@ -275,12 +300,18 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
                 if (LOG.isDebugEnabled())
                     LOG.debug("received data:\n" + wire.bytes().toHexString());
 
+                Consumer<WireType> wireTypeConsumer = wt -> {
+                    wireType(wt);
+                    checkWires(in.bytes(), out.bytes(), wireType());
+                };
+
                 if (isSystemMessage) {
-                    systemHandler.process(in, out, tid, sessionDetails, getMonitoringMap());
+                    systemHandler.process(in, out, tid, sessionDetails, getMonitoringMap(),
+                            isServerSocket, () -> publisher(), hostIdentifier, wireTypeConsumer,
+                            wireType());
                     if (!systemHandler.wasHeartBeat()) {
-                        if (!YamlLogging.showHeartBeats) {
+                        if (!YamlLogging.showHeartBeats)
                             logBufferToStandardOut(prevLogMessage.append(currentLogMessage));
-                        }
                     }
                     return;
                 }
@@ -332,43 +363,44 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
 
                     if (viewType == ObjectSubscription.class) {
                         subscriptionHandler.process(in,
-                                requestContext, publisher, assetTree, tid,
+                                requestContext, publisher(), contextAsset, tid,
                                 outWire, (SubscriptionCollection) view);
                         return;
                     }
 
                     if (viewType == TopologySubscription.class) {
                         topologySubscriptionHandler.process(in,
-                                requestContext, publisher, assetTree, tid,
+                                requestContext, publisher(), contextAsset, tid,
                                 outWire, (TopologySubscription) view);
                         return;
                     }
 
                     if (viewType == Reference.class) {
                         referenceHandler.process(in, requestContext,
-                                publisher, tid,
+                                publisher(), tid,
                                 (Reference) view, cspText, outWire, wireAdapter);
                         return;
                     }
 
                     if (viewType == TopicPublisher.class || viewType == QueueView.class) {
-                        topicPublisherHandler.process(in, publisher, tid, outWire,
+                        topicPublisherHandler.process(in, publisher(), tid, outWire,
                                 (TopicPublisher) view, wireAdapter);
                         return;
                     }
 
                     if (viewType == Publisher.class) {
                         publisherHandler.process(in, requestContext,
-                                publisher, tid,
+                                publisher(), tid,
                                 (Publisher) view, outWire, wireAdapter);
                         return;
                     }
 
                     if (viewType == Replication.class) {
                         replicationHandler.process(in,
-                                publisher, tid, outWire,
+                                publisher(), tid, outWire,
                                 hostIdentifier,
-                                (Replication) view, eventLoop);
+                                (Replication) view,
+                                eventLoop);
                     }
                 }
 
@@ -383,7 +415,7 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
 
     private Map<String, UserStat> getMonitoringMap() {
         Map<String, UserStat> userMonitoringMap = null;
-        Asset userAsset = assetTree.root().getAsset("proc/users");
+        Asset userAsset = rootAsset.root().getAsset("proc/users");
         if (userAsset != null && userAsset.getView(MapView.class) != null) {
             userMonitoringMap = userAsset.getView(MapView.class);
         }
@@ -409,8 +441,7 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
                 logBuffer.append("\nServer Receives:\n")
                         .append(Wires.fromSizePrefixedBlobs(in.bytes()));
             } catch (Exception e) {
-                logBuffer.append("\n\n" +
-                        Bytes.toString(in.bytes()));
+                logBuffer.append("\n\n").append(Bytes.toString(in.bytes()));
             }
         }
     }
@@ -425,17 +456,47 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
      * peeks the csp or if it has a cid converts the cid into a Csp and returns that
      */
     private void readCsp(@NotNull final WireIn wireIn) {
-        final StringBuilder keyName = Wires.acquireStringBuilder();
+        final StringBuilder event = Wires.acquireStringBuilder();
 
         cspText.setLength(0);
-        final ValueIn read = wireIn.readEventName(keyName);
-        if (csp.contentEquals(keyName)) {
+        final ValueIn read = wireIn.readEventName(event);
+        if (csp.contentEquals(event)) {
             read.textTo(cspText);
 
-        } else if (cid.contentEquals(keyName)) {
+
+            tryReadEvent(wireIn, (that, wire) -> {
+                final StringBuilder e = Wires.acquireStringBuilder();
+                final ValueIn valueIn = wireIn.readEventName(e);
+                if (!CoreFields.cid.contentEquals(e))
+                    return false;
+
+                final long cid1 = valueIn.int64();
+                that.cid = cid1;
+                mapWireHandler.setCid(cspText.toString(), cid1);
+                return true;
+            });
+
+
+        } else if (CoreFields.cid.contentEquals(event)) {
             final long cid = read.int64();
             final CharSequence s = mapWireHandler.getCspForCid(cid);
             cspText.append(s);
+            this.cid = cid;
+        }
+    }
+
+    /**
+     * if not successful, in other-words when the function returns try, will return the wire back to
+     * the read location
+     */
+    private void tryReadEvent(@NotNull final WireIn wire,
+                              @NotNull final BiFunction<EngineWireHandler, WireIn, Boolean> f) {
+        final long readPosition = wire.bytes().readPosition();
+        boolean success = false;
+        try {
+            success = f.apply(this, wire);
+        } finally {
+            if (!success) wire.bytes().readPosition(readPosition);
         }
     }
 
@@ -446,6 +507,6 @@ public class EngineWireHandler extends WireTcpHandler implements ClientClosedPro
 
     public void close() {
         onEndOfConnection(false);
-        publisher.close();
+        publisher().close();
     }
 }

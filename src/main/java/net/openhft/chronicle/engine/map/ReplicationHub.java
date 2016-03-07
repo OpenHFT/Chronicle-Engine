@@ -28,7 +28,7 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.map.CMap2EngineReplicator.VanillaReplicatedEntry;
 import net.openhft.chronicle.engine.map.replication.Bootstrap;
 import net.openhft.chronicle.engine.server.internal.MapWireHandler;
-import net.openhft.chronicle.engine.server.internal.ReplicationHandler.EventId;
+import net.openhft.chronicle.engine.server.internal.ReplicationHandler2.EventId;
 import net.openhft.chronicle.network.connection.*;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +39,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static net.openhft.chronicle.engine.server.internal.ReplicationHandler.EventId.*;
+import static net.openhft.chronicle.engine.server.internal.ReplicationHandler2.EventId.*;
 
 /**
  * Created by Rob Austin
@@ -97,7 +97,7 @@ class ReplicationHub extends AbstractStatelessClient {
             @Override
             public void onConsumer(@NotNull WireIn inWire) {
                 if (Jvm.isDebug())
-                    System.out.println("client : bootstrap");
+                    LOG.info("client : bootstrap");
 
                 inWire.readDocument(null, d -> {
                     byte remoteIdentifier = d.read(identifierReply).int8();
@@ -148,7 +148,7 @@ class ReplicationHub extends AbstractStatelessClient {
                           @Override
                           public void onConsumer(@NotNull WireIn inWire) {
                               if (Jvm.isDebug())
-                                  System.out.println("client : onConsumer - publishing updates");
+                                  LOG.info("client : onConsumer - publishing updates");
 
                               inWire.readDocument(null, d -> {
 

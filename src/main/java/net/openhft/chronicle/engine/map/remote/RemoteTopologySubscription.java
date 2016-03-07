@@ -18,7 +18,7 @@ public class RemoteTopologySubscription extends AbstractRemoteSubscription<Topol
 
     @NotNull
     private static String toUri(@NotNull final RequestContext context) {
-        return "/" + context.fullName() + "?view=topologySubscription";
+        return context.fullName() + "?view=topologySubscription";
     }
 
     @Override

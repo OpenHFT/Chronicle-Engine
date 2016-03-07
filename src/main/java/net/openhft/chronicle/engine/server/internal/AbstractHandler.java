@@ -96,7 +96,7 @@ abstract class AbstractHandler {
         logYaml();
     }
 
-    private void logYaml() {
+    void logYaml() {
         if (YamlLogging.showServerWrites)
             try {
                 LOG.info("\nServer Sends:\n" +

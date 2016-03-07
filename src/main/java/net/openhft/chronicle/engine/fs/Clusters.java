@@ -78,4 +78,9 @@ public class Clusters implements Marshallable, Closeable {
     public void close() {
         clusterMap.values().forEach(Closeable::closeQuietly);
     }
+
+    @Override
+    public void notifyClosing() {
+        clusterMap.values().forEach(Cluster::notifyClosing);
+    }
 }

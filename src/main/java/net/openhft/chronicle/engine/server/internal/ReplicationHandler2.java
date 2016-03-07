@@ -7,6 +7,7 @@ import net.openhft.chronicle.core.threads.HandlerPriority;
 import net.openhft.chronicle.core.threads.InvalidEventHandlerException;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.engine.api.pubsub.Replication;
+import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.map.CMap2EngineReplicator.VanillaReplicatedEntry;
 import net.openhft.chronicle.engine.map.replication.Bootstrap;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
@@ -19,25 +20,29 @@ import org.slf4j.LoggerFactory;
 
 import java.util.function.BiConsumer;
 
-import static net.openhft.chronicle.engine.server.internal.ReplicationHandler.EventId.*;
+import static net.openhft.chronicle.engine.server.internal.ReplicationHandler2.EventId.*;
 
 /**
  * Created by Rob Austin
  */
-public class ReplicationHandler<E> extends AbstractHandler {
-    private static final Logger LOG = LoggerFactory.getLogger(ReplicationHandler.class);
+public class ReplicationHandler2<E> extends AbstractHandler {
+    private static final Logger LOG = LoggerFactory.getLogger(ReplicationHandler2.class);
     private final StringBuilder eventName = new StringBuilder();
     private Replication replication;
     private WireOutPublisher publisher;
     private HostIdentifier hostId;
     private long tid;
-
+    private boolean isAcceptor;
     private EventLoop eventLoop;
+
+    private byte remoteIdentifier;
+    private byte localIdentifier;
 
     @NotNull
     private final BiConsumer<WireIn, Long> dataConsumer = new BiConsumer<WireIn, Long>() {
 
         final ThreadLocal<VanillaReplicatedEntry> vre = ThreadLocal.withInitial(VanillaReplicatedEntry::new);
+
         @Override
         public void accept(@NotNull final WireIn inWire, Long inputTid) {
 
@@ -70,6 +75,52 @@ public class ReplicationHandler<E> extends AbstractHandler {
             }
 
             assert outWire != null;
+
+            if (bootstrap.contentEquals(eventName)) {
+
+                final String name = Thread.currentThread().getName();
+
+                // receive bootstrap
+                final long timestamp = valueIn.int64();
+
+                try {
+                    assert localIdentifier != remoteIdentifier;
+                } catch (Error e) {
+                    e.printStackTrace();
+                }
+
+                final ModificationIterator mi = replication.acquireModificationIterator(remoteIdentifier);
+                if (mi != null)
+                    mi.dirtyEntries(timestamp);
+
+                if (isAcceptor) {
+
+                    outWire.writeDocument(true, d -> {
+                        final String fullName = requestContext.fullName();
+                        outWire.write(CoreFields.csp).text(fullName + "?view=Replication")
+                                .write(CoreFields.cid).int64(cid);
+                    });
+
+                    outWire.writeDocument(false, d -> outWire.write(bootstrap)
+                            .int64(replication.lastModificationTime(remoteIdentifier))
+                            .writeComment("localIdentifier=" + hostId.hostId() +
+                                    ",remoteIdentifier=" + remoteIdentifier));
+
+                    logYaml();
+                }
+
+                if (Jvm.isDebug())
+                    LOG.info("server : received simplebootstrap");
+                if (mi == null)
+                    return;
+
+                // sends replication events back to the remote client
+                mi.setModificationNotifier(eventLoop::unpause);
+
+                eventLoop.addHandler(true, new ReplicationEventHandler(mi, remoteIdentifier, inputTid));
+                return;
+            }
+
             outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
 
             if (identifier.contentEquals(eventName))
@@ -97,7 +148,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
                     outWire.writeEventName(bootstrap).typedMarshallable(outBootstrap);
 
                     if (Jvm.isDebug())
-                        System.out.println("server : received replicationSubscribe");
+                        LOG.info("server : received replicationSubscribe");
 
                     // receive bootstrap
                     if (mi == null)
@@ -108,8 +159,12 @@ public class ReplicationHandler<E> extends AbstractHandler {
                     eventLoop.addHandler(true, new ReplicationEventHandler(mi, id, inputTid));
                 });
             }
+
+
         }
     };
+    private RequestContext requestContext;
+    private long cid;
 
     void process(@NotNull final WireIn inWire,
                  final WireOutPublisher publisher,
@@ -117,16 +172,25 @@ public class ReplicationHandler<E> extends AbstractHandler {
                  final Wire outWire,
                  final HostIdentifier hostId,
                  final Replication replication,
-                 final EventLoop eventLoop) {
+                 final EventLoop eventLoop,
+                 final boolean isServerSocket,
+                 byte remoteIdentifier,
+                 final RequestContext requestContext,
+                 long cid,
+                 byte localIdentifier) {
 
         this.eventLoop = eventLoop;
+        this.isAcceptor = isServerSocket;
         setOutWire(outWire);
 
+        this.localIdentifier = localIdentifier;
         this.hostId = hostId;
         this.publisher = publisher;
         this.replication = replication;
         this.tid = tid;
-
+        this.remoteIdentifier = remoteIdentifier;
+        this.requestContext = requestContext;
+        this.cid = cid;
         dataConsumer.accept(inWire, tid);
 
     }
@@ -158,7 +222,6 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
         private final ModificationIterator mi;
         private final byte id;
-        private final Long inputTid;
         boolean hasSentLastUpdateTime;
         long lastUpdateTime;
         boolean hasLogged;
@@ -168,7 +231,6 @@ public class ReplicationHandler<E> extends AbstractHandler {
         public ReplicationEventHandler(ModificationIterator mi, byte id, Long inputTid) {
             this.mi = mi;
             this.id = id;
-            this.inputTid = inputTid;
             lastUpdateTime = 0;
             hasLogged = false;
             count = 0;
@@ -186,12 +248,12 @@ public class ReplicationHandler<E> extends AbstractHandler {
             if (connectionClosed)
                 throw new InvalidEventHandlerException();
 
-            final WireOutPublisher publisher = ReplicationHandler.this.publisher;
+            final WireOutPublisher publisher = ReplicationHandler2.this.publisher;
+
             //noinspection SynchronizationOnLocalVariableOrMethodParameter
             synchronized (publisher) {
                 // given the sending an event to the publish hold the chronicle map lock
                 // we will send only one at a time
-
 
                 if (!publisher.canTakeMoreData()) {
                     if (startBufferFullTimeStamp == 0) {
@@ -215,13 +277,15 @@ public class ReplicationHandler<E> extends AbstractHandler {
                     // have been received, we know when we have received all events
                     // when there are no more events to process.
                     if (!hasSentLastUpdateTime && lastUpdateTime > 0) {
-                        publisher.put(null, publish -> publish
-                                .writeNotReadyDocument(false,
-                                        wire -> {
-                                            wire.writeEventName(CoreFields.lastUpdateTime).int64(lastUpdateTime);
-                                            wire.write(() -> "id").int8(id);
-                                        }
-                                ));
+
+                        publisher.put(null, w -> {
+                            w.writeDocument(true, d -> d.write(CoreFields.cid).int64(cid));
+                            w.writeNotReadyDocument(false, d -> {
+                                        d.writeEventName(CoreFields.lastUpdateTime).int64(lastUpdateTime);
+                                        d.write(() -> "id").int8(id);
+                                    }
+                            );
+                        });
 
                         hasSentLastUpdateTime = true;
 
@@ -235,7 +299,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
                     return false;
                 }
 
-                mi.nextEntry(e -> publisher.put(null, publish1 -> {
+                mi.nextEntry(e -> publisher.put(null, w -> {
 
                     if (e.remoteIdentifier() == hostId.hostId())
                         return;
@@ -252,26 +316,20 @@ public class ReplicationHandler<E> extends AbstractHandler {
                                 "localIdentifier=" + hostId + " ,remoteIdentifier=" +
                                 id + " event=" + e);
 
-                    publish1.writeNotReadyDocument(true,
-                            wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
-
-                    if (LOG.isInfoEnabled()) {
-                        long delay = System.currentTimeMillis() - e.timestamp();
-                        if (delay > 60) {
-                            LOG.info("Snt Srv latency=" + delay + "ms\t");
-                            if (count++ % 10 == 1)
-                                LOG.info("");
-                        }
-                    }
-
-                    if (publish1.bytes().writePosition() > 100000 && LOG.isDebugEnabled())
-                        LOG.debug(publish1.bytes().toDebugString(128));
-                    publish1.writeNotReadyDocument(false,
-                            wire -> wire.writeEventName(replicationEvent).typedMarshallable(e));
+                    w.writeDocument(true, d -> d.write(CoreFields.cid).int64(cid));
+                    w.writeNotReadyDocument(false,
+                            d -> d.writeEventName(replicationEvent).typedMarshallable(e));
 
                 }));
             }
             return true;
+        }
+
+        @Override
+        public String toString() {
+            return "ReplicationEventHandler{" +
+                    "id=" + id + ",connectionClosed=" + connectionClosed +
+                    '}';
         }
     }
 }

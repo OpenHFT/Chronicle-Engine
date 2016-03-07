@@ -4,8 +4,8 @@ import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionCollection;
+import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
-import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.query.Filter;
 import net.openhft.chronicle.network.connection.CoreFields;
@@ -34,7 +34,7 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
     Wire outWire;
     T subscription;
     WireOutPublisher publisher;
-    AssetTree assetTree;
+    Asset asset;
 
     /**
      * after writing the tid to the wire
@@ -93,7 +93,7 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
             Subscriber<Object> listener = new LocalSubscriber(tid, pub);
             tidToListener.put(tid, listener);
             RequestContext rc = requestContext.clone().elementType(subscriptionType);
-            final SubscriptionCollection subscription = assetTree.acquireSubscription(rc);
+            final SubscriptionCollection subscription = asset.acquireSubscription(rc);
             subscription.registerSubscriber(rc, listener, filter);
             return true;
         }
@@ -104,7 +104,7 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
                 return true;
             }
 
-            assetTree.unregisterSubscriber(requestContext.fullName(), listener);
+            asset.unregisterSubscriber(requestContext, listener);
             return true;
         }
         return false;
@@ -113,9 +113,8 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
     @Override
     protected void unregisterAll() {
 
-        tidToListener.forEach((k, listener) -> {
-            assetTree.unregisterSubscriber(requestContext.fullName(), (Subscriber<Object>) listener);
-        });
+        tidToListener.forEach((k, listener) -> asset.unregisterSubscriber(requestContext,
+                (Subscriber<Object>) listener));
         tidToListener.clear();
     }
 
@@ -186,8 +185,7 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
         @Override
         public String toString() {
             return "LocalSubscriber{" +
-                    "tid=" + tid +
-                    '}';
+                    "tid=" + tid + '}';
         }
     }
 }

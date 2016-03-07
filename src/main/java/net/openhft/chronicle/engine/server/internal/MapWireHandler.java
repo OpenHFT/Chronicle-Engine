@@ -388,6 +388,10 @@ public class MapWireHandler<K, V> extends AbstractHandler {
         return cidToCsp.get(cid);
     }
 
+    public void setCid(String csp, long cid) {
+        cidToCsp.put(cid, csp);
+    }
+
     public enum Params implements WireKey {
         key,
         value,

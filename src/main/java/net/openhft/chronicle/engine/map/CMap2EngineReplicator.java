@@ -133,33 +133,6 @@ public class CMap2EngineReplicator implements EngineReplication,
         keyBytes.position(0);
         valueBytes.position(0);
 
-//        assert key.refCount() == 1;
-//        assert value.refCount() == 1;
-//        assert keyBytes == kv.key;
-//        assert valueBytes == kv.value;
-
-     //   long addr = keyBytes.address();
-//        long limit = keyBytes.limit();
-    //    long firstBytes = NativeBytes.UNSAFE.getLong(addr);
-   //     check(keyBytes);
-   //     Thread.yield();
-  //      check(valueBytes);
-
-//        assert keyBytes == kv.key;
-//        assert valueBytes == kv.value;
-
-   //     long addr2 = keyBytes.address();
-//        long limit2 = keyBytes.limit();
-  //      long firstBytes2 = NativeBytes.UNSAFE.getLong(addr);
- //       assert addr == addr2 : "address";
-//        assert limit == limit2 : "limit";
- //       assert firstBytes == firstBytes2 : "firstBytes";
- //       check(kv.key);
-//        check(kv.value);
-//        assert keyBytes == kv.key;
-//        assert valueBytes == kv.value;
-//        assert key.refCount() == 1;
-//        assert value.refCount() == 1;
 
     }
 

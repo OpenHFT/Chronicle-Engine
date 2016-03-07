@@ -32,13 +32,18 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.fs.Cluster;
 import net.openhft.chronicle.engine.fs.Clusters;
 import net.openhft.chronicle.engine.fs.HostDetails;
+import net.openhft.chronicle.engine.server.internal.ReplicationHandler3;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.hash.replication.EngineReplicationLangBytesConsumer;
 import net.openhft.chronicle.map.*;
 import net.openhft.chronicle.network.api.session.SessionDetails;
 import net.openhft.chronicle.network.api.session.SessionProvider;
+import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
+import net.openhft.chronicle.network.connection.VanillaWireOutPublisher;
 import net.openhft.chronicle.threads.NamedThreadFactory;
+import net.openhft.chronicle.wire.WireType;
+import net.openhft.chronicle.wire.WriteMarshallable;
 import net.openhft.lang.io.Bytes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,13 +58,17 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
+import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
 import static net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer.notifyEachEvent;
+import static net.openhft.chronicle.engine.server.internal.ReplicationHandler2.EventId.bootstrap;
 import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplication.builder;
+import static net.openhft.chronicle.network.HeaderTcpHandler.toHeader;
 
-public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<K, V>,
+public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V>,
         Closeable, Supplier<EngineReplication> {
 
     private static final ScheduledExecutorService DELAYED_CLOSER = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("ChronicleMapKeyValueStore Closer", true));
@@ -80,6 +89,10 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
     private Class keyType;
     private Class valueType;
     private SessionDetails replicationSessionDetails;
+
+    static {
+        CLASS_ALIASES.addAlias(ReplicationHandler3.class);
+    }
 
     public ChronicleMapKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset) {
         String basePath = context.basePath();
@@ -137,6 +150,8 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
         if (maxEntries > 0)
             builder.entries(maxEntries + 1); // we have to add a head room of 1
 
+        builder.name(context.name() + "_" + Thread.currentThread().getName());
+
         if (basePath == null) {
             chronicleMap = builder.create();
         } else {
@@ -173,29 +188,98 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
                 LOG.debug("hostDetails : localIdentifier=" + localIdentifier + ",cluster=" + cluster.hostDetails());
 
             for (HostDetails hostDetails : cluster.hostDetails()) {
+                try {
+                    // its the identifier with the larger values that will establish the connection
+                    byte remoteIdentifier = (byte) hostDetails.hostId;
 
-                // its the identifier with the larger values that will establish the connection
-                int remoteIdentifier = hostDetails.hostId;
+                    if (remoteIdentifier <= localIdentifier) {
 
-                if (remoteIdentifier <= localIdentifier) {
+                        if (LOG.isDebugEnabled())
+                            LOG.debug("skipping : attempting to connect to localIdentifier=" +
+                                    localIdentifier + ", remoteIdentifier=" + remoteIdentifier);
+
+                        continue;
+                    }
 
                     if (LOG.isDebugEnabled())
-                        LOG.debug("skipping : attempting to connect to localIdentifier=" +
-                                localIdentifier + ", remoteIdentifier=" + remoteIdentifier);
+                        LOG.debug("attempting to connect to localIdentifier=" + localIdentifier + ", " +
+                                "remoteIdentifier=" + remoteIdentifier);
 
-                    continue;
+                    // the wire type used for replication
+                    final WireType wireType = WireType.TEXT;
+
+
+                    if (Boolean.getBoolean("ReplicationHandler3")) {
+
+                        final ReplicationHandler3 replicationHandler = new ReplicationHandler3
+                                (localIdentifier, remoteIdentifier, wireType);
+
+
+                        final String csp = context.fullName() + "?view=" + "Replication";
+                        final WriteMarshallable out = w -> {
+
+                            final long lastUpdateTime = ((Replica) chronicleMap).lastModificationTime
+                                    (remoteIdentifier);
+
+                            w.writeDocument(true, m -> {
+                                m.writeEventName(CoreFields.csp).text(csp);
+                                m.writeEventName(CoreFields.cid).int64(uniqueCspId());
+                            });
+
+                            w.writeDocument(false, d -> d.writeEventName(bootstrap)
+                                    .int64(lastUpdateTime).writeComment
+                                            ("the-client:localIdentifier=" + localIdentifier + "," +
+                                                    "remoteIdentifier=" +
+                                                    remoteIdentifier + ",Thread=" + Thread.currentThread
+                                                    ().getName() + ",Thread=" + Thread.currentThread().getName()));
+                        };
+
+                        hostDetails.connect(
+                                wireType,
+                                asset,
+                                w -> toHeader(replicationHandler).writeMarshallable(w),
+                                VanillaWireOutPublisher::new, out);
+
+
+                        assert localIdentifier != remoteIdentifier : "remoteIdentifier=" + remoteIdentifier;
+                    } else {
+                        final TcpChannelHub tcpChannelHub = hostDetails.acquireTcpChannelHub(asset, eventLoop, context.wireType());
+                        final ReplicationHub replicationHub = new ReplicationHub(context, tcpChannelHub,
+                                eventLoop, isClosed, context.wireType());
+
+                        replicationHub.bootstrap(engineReplicator1, localIdentifier, (byte) remoteIdentifier);
+                    }
+                } catch (
+                        Exception e
+                        )
+
+                {
+                    LOG.error("hostDetails=" + hostDetails, e);
                 }
-
-                if (LOG.isDebugEnabled())
-                    LOG.debug("attempting to connect to localIdentifier=" + localIdentifier + ", " +
-                            "remoteIdentifier=" + remoteIdentifier);
-
-                final TcpChannelHub tcpChannelHub = hostDetails.acquireTcpChannelHub(asset, eventLoop, context.wireType());
-                final ReplicationHub replicationHub = new ReplicationHub(context, tcpChannelHub,
-                        eventLoop, isClosed, context.wireType());
-
-                replicationHub.bootstrap(engineReplicator1, localIdentifier, (byte) remoteIdentifier);
             }
+        }
+    }
+
+    private AtomicLong uniqueCspid = new AtomicLong();
+
+    private long uniqueCspId() {
+        long time = System.currentTimeMillis();
+
+        for (; ; ) {
+
+            final long current = this.uniqueCspid.get();
+
+            if (time == this.uniqueCspid.get()) {
+                time++;
+                continue;
+            }
+
+            final boolean success = this.uniqueCspid.compareAndSet(current, time);
+
+            if (!success)
+                continue;
+
+            return time;
         }
     }
 
@@ -236,7 +320,8 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
 
     @Override
     public V getUsing(K key, @Nullable Object value) {
-        if (value != null) throw new UnsupportedOperationException("Mutable values not supported");
+        if (value != null)
+            throw new UnsupportedOperationException("Mutable values not supported");
         return chronicleMap.getUsing(key, (V) value);
     }
 
@@ -246,13 +331,15 @@ public class ChronicleMapKeyValueStore<K, MV, V> implements ObjectKeyValueStore<
     }
 
     @Override
-    public void keysFor(int segment, @NotNull SubscriptionConsumer<K> kConsumer) throws InvalidSubscriberException {
+    public void keysFor(int segment, @NotNull SubscriptionConsumer<K> kConsumer) throws
+            InvalidSubscriberException {
         //Ignore the segments and return keysFor the whole map
         notifyEachEvent(chronicleMap.keySet(), kConsumer);
     }
 
     @Override
-    public void entriesFor(int segment, @NotNull SubscriptionConsumer<MapEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
+    public void entriesFor(int segment,
+                           @NotNull SubscriptionConsumer<MapEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
         //Ignore the segments and return entriesFor the whole map
         chronicleMap.entrySet().stream().map(e -> InsertedEvent.of(assetFullName, e.getKey(), e.getValue(), false)).forEach(e -> {
             try {
