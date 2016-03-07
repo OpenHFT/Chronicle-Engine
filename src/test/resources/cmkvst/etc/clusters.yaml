@@ -52,31 +52,31 @@ clusterFive: {
   host1: {
      hostId: 1,
      tcpBufferSize: 65536,
-     connectUri: localhost:8081,
+     connectUri: "localhost:8081",
      timeoutMs: 1000,
   },
   host2: {
      hostId: 2,
      tcpBufferSize: 65536,
-     connectUri: localhost:8082,
+     connectUri: "localhost:8082",
      timeoutMs: 1000,
   } ,
   host3: {
      hostId: 3,
      tcpBufferSize: 65536,
-     connectUri: localhost:8083,
+     connectUri: "localhost:8083",
      timeoutMs: 1000,
   },
   host4: {
     hostId: 4,
     tcpBufferSize: 65536,
-    connectUri: localhost:8084,
+    connectUri: "localhost:8084",
     timeoutMs: 1000,
   },
   host5: {
      hostId: 5,
      tcpBufferSize: 65536,
-     connectUri: localhost:8085,
+     connectUri: "localhost:8085",
      timeoutMs: 1000,
   }
 }
@@ -85,75 +85,13 @@ clusterPeter: {
   host1: {
      hostId: 1,
      tcpBufferSize: 65536,
-     connectUri: hex:8081,
+     connectUri: "hex:8081",
      timeoutMs: 1000,
   },
   host2: {
      hostId: 2,
      tcpBufferSize: 65536,
-     connectUri: dev:8082,
+     connectUri: "dev:8082",
      timeoutMs: 1000,
-  }
-}
- clusterTen: {
-    host1: {
-       hostId: 1,
-       tcpBufferSize: 65536,
-       connectUri: host.port1,
-       timeoutMs: 1000,
-    },
-    host2: {
-       hostId: 2,
-       tcpBufferSize: 65536,
-       connectUri: host.port2,
-       timeoutMs: 1000,
-    } ,
-    host3: {
-       hostId: 3,
-       tcpBufferSize: 65536,
-       connectUri: host.port3,
-       timeoutMs: 1000,
-    },
-    host4: {
-      hostId: 4,
-      tcpBufferSize: 65536,
-      connectUri: host.port4,
-      timeoutMs: 1000,
-    },
-    host5: {
-       hostId: 5,
-       tcpBufferSize: 65536,
-       connectUri: host.port5,
-       timeoutMs: 1000,
-    },
-   host6: {
-       hostId: 6,
-       tcpBufferSize: 65536,
-       connectUri: host.port6,
-       timeoutMs: 1000,
-    },
-    host7: {
-       hostId: 7,
-       tcpBufferSize: 65536,
-       connectUri: host.port7,
-       timeoutMs: 1000,
-    } ,
-    host8: {
-       hostId: 8,
-       tcpBufferSize: 65536,
-       connectUri: host.port8,
-       timeoutMs: 1000,
-    },
-    host9: {
-      hostId: 9,
-      tcpBufferSize: 65536,
-      connectUri: host.port9,
-      timeoutMs: 1000,
-    },
-    host10: {
-       hostId: 10,
-       tcpBufferSize: 65536,
-       connectUri: host.port10,
-       timeoutMs: 1000,
-    }
+  },
 }
