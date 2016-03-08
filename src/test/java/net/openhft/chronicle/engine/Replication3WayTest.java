@@ -19,12 +19,20 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
@@ -35,7 +43,34 @@ import static org.junit.Assert.assertNotNull;
  * Created by Rob Austin
  */
 
+@RunWith(value = Parameterized.class)
 public class Replication3WayTest {
+
+    private final WireType wireType;
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() throws IOException {
+        final int initialCapacity = 1;
+        final List<Object[]> list = new ArrayList<>(initialCapacity);
+
+        // for (int i = 0; i < initialCapacity; i++) {
+        //     list.add(new Object[]{WireType.BINARY});
+        //  }
+
+        //list.add(new Object[]{WireType.BINARY});
+        list.add(new Object[]{WireType.TEXT});
+        //   list.add(new Object[]{WireType.TEXT});
+        return list;
+    }
+
+    public Replication3WayTest(WireType wireType) {
+        this.wireType = wireType;
+    }
+
+    static {
+        System.setProperty("ReplicationHandler3", "true");
+    }
+
     public static final WireType WIRE_TYPE = WireType.TEXT;
     public static final String NAME = "/ChMaps/test";
     public static ServerEndpoint serverEndpoint1;
@@ -46,8 +81,8 @@ public class Replication3WayTest {
     private static AssetTree tree2;
     private static AtomicReference<Throwable> t = new AtomicReference();
 
-    @BeforeClass
-    public static void before() throws IOException, InterruptedException {
+    @Before
+    public void before() throws IOException, InterruptedException {
         YamlLogging.setAll(false);
 
         //YamlLogging.showServerWrites = true;
@@ -62,21 +97,20 @@ public class Replication3WayTest {
                 "clusterThree.host.port2",
                 "clusterThree.host.port3");
 
-        WireType writeType = WireType.TEXT;
-        tree1 = create(1, writeType, "clusterThree");
-        tree2 = create(2, writeType, "clusterThree");
-        tree3 = create(3, writeType, "clusterThree");
+
+        tree1 = create(1, wireType, "clusterThree");
+        tree2 = create(2, wireType, "clusterThree");
+        tree3 = create(3, wireType, "clusterThree");
 
         serverEndpoint1 = new ServerEndpoint("clusterThree.host.port1", tree1);
         serverEndpoint2 = new ServerEndpoint("clusterThree.host.port2", tree2);
         serverEndpoint3 = new ServerEndpoint("clusterThree.host.port3", tree3);
 
 
-        Thread.sleep(900);
     }
 
-    @AfterClass
-    public static void after() throws IOException {
+    @After
+    public void after() throws IOException, InterruptedException {
         if (serverEndpoint1 != null)
             serverEndpoint1.close();
         if (serverEndpoint2 != null)
@@ -93,7 +127,7 @@ public class Replication3WayTest {
 
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
-        // TODO TCPRegistery.assertAllServersStopped();
+
     }
 
     @NotNull
@@ -133,7 +167,7 @@ public class Replication3WayTest {
     @Test
     public void testThreeWay() throws InterruptedException {
         YamlLogging.setAll(false);
-        YamlLogging.showServerReads = true;
+        //YamlLogging.showServerReads = true;
 
         final ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME, String.class, String
                 .class);

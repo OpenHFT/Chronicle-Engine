@@ -140,7 +140,8 @@ public class ServerEndpoint implements Closeable {
                         @NotNull final Asset asset,
                         final long timeOutMs,
                         final EngineWireNetworkContext nc) {
-        remoteConnector.connect(remoteHostPort, asset.root().findOrCreateView(EventLoop.class), nc, timeOutMs);
+        remoteConnector.connect(remoteHostPort, asset.root().findOrCreateView(EventLoop.class),
+                nc, timeOutMs);
     }
 
 

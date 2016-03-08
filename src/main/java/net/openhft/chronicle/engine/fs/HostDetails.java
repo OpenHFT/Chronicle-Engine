@@ -193,7 +193,6 @@ public class HostDetails implements Marshallable, Closeable {
      *                                 site to construct the fist message
      * @param wireOutPublisherFunction
      * @param bootstrap
-     * @return WireOutPublisher used to publish further data to this client
      */
     public synchronized WireOutPublisher connect(@NotNull WireType wireType,
                                                  Asset asset,

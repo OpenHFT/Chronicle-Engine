@@ -237,9 +237,9 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
                         hostDetails.connect(
                                 wireType,
                                 asset,
-                                w -> toHeader(replicationHandler).writeMarshallable(w),
+                                w -> toHeader(replicationHandler, localIdentifier, remoteIdentifier)
+                                        .writeMarshallable(w),
                                 VanillaWireOutPublisher::new, out);
-
 
                         assert localIdentifier != remoteIdentifier : "remoteIdentifier=" + remoteIdentifier;
                     } else {
@@ -249,11 +249,7 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
 
                         replicationHub.bootstrap(engineReplicator1, localIdentifier, (byte) remoteIdentifier);
                     }
-                } catch (
-                        Exception e
-                        )
-
-                {
+                } catch (Exception e) {
                     LOG.error("hostDetails=" + hostDetails, e);
                 }
             }

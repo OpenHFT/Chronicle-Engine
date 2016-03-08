@@ -71,16 +71,14 @@ public class ReplicationHandler3 extends CspTcpHander<EngineWireNetworkContext> 
     @Override
     public void nc(EngineWireNetworkContext nc) {
         super.nc(nc);
-
         isAcceptor(nc.isAcceptor());
-        publisher(nc.wireOutPublisher());
-
         rootAsset = nc.rootAsset();
-
         final HostIdentifier hostIdentifier = rootAsset.findOrCreateView(HostIdentifier.class);
 
         if (hostIdentifier != null)
             localIdentifier = hostIdentifier.hostId();
+
+        publisher(nc.wireOutPublisher());
 
         this.eventLoop = rootAsset.findOrCreateView(EventLoop.class);
         eventLoop.start();
@@ -88,7 +86,8 @@ public class ReplicationHandler3 extends CspTcpHander<EngineWireNetworkContext> 
         if (nc.isAcceptor())
             // reflect the header back to the client
             nc.wireOutPublisher().put("",
-                    toHeader(new ReplicationHandler3(localIdentifier, remoteIdentifier, wireType())));
+                    toHeader(new ReplicationHandler3(localIdentifier, remoteIdentifier, wireType
+                            ()), localIdentifier, remoteIdentifier));
     }
 
 
@@ -136,21 +135,14 @@ public class ReplicationHandler3 extends CspTcpHander<EngineWireNetworkContext> 
                 return;
 
             if (dc.isMetaData()) {
+                readCsp(inWire);
 
-                try {
-                    readCsp(inWire);
-
-                    if (hasCspChanged(cspText)) {
-                        requestContext = requestContextInterner.intern(cspText);
-                        final String childName = requestContext.fullName();
-                        final Asset asset = rootAsset.acquireAsset(childName);
-                        replication = asset.acquireView(Replication.class, requestContext);
-                    }
-
-                } catch (Throwable t) {
-                    throw Jvm.rethrow(t);
+                if (hasCspChanged(cspText)) {
+                    requestContext = requestContextInterner.intern(cspText);
+                    final String childName = requestContext.fullName();
+                    final Asset asset = rootAsset.acquireAsset(childName);
+                    replication = asset.acquireView(Replication.class, requestContext);
                 }
-
                 return;
             }
 
@@ -164,6 +156,7 @@ public class ReplicationHandler3 extends CspTcpHander<EngineWireNetworkContext> 
 
             // receives replication events
             if (CoreFields.lastUpdateTime.contentEquals(eventName)) {
+                // Thread.sleep(100);
                 if (Jvm.isDebug())
                     LOG.info("server : received lastUpdateTime");
                 final long time = valueIn.int64();
@@ -174,6 +167,7 @@ public class ReplicationHandler3 extends CspTcpHander<EngineWireNetworkContext> 
 
             // receives replication events
             if (replicationEvent.contentEquals(eventName)) {
+
                 if (Jvm.isDebug() && LOG.isDebugEnabled())
                     LOG.debug("server : received replicationEvent");
                 CMap2EngineReplicator.VanillaReplicatedEntry replicatedEntry = vre.get();
@@ -188,36 +182,27 @@ public class ReplicationHandler3 extends CspTcpHander<EngineWireNetworkContext> 
             }
 
             if (bootstrap.contentEquals(eventName)) {
-
+                //      Thread.sleep(100);
                 // receive bootstrap
                 final long timestamp = valueIn.int64();
 
                 assert localIdentifier != remoteIdentifier;
 
-                if (replication == null)
-                    LOG.info("replication==null");
-
                 final ModificationIterator mi = replication.acquireModificationIterator(remoteIdentifier);
 
-                assert mi != null;
 
                 if (mi != null)
                     mi.dirtyEntries(timestamp);
 
                 if (isAcceptor()) {
 
-                    outWire.writeDocument(true, d -> {
-                        final String fullName = requestContext.fullName();
-                        d.write(CoreFields.csp).text(fullName + "?view=Replication")
-                                .write(CoreFields.cid).int64(cid());
-                    });
-
+                    outWire.writeDocument(true, d -> d.write(CoreFields.csp).text(cspText)
+                            .write(CoreFields.cid).int64(cid()));
                     outWire.writeDocument(false, d -> outWire.write(bootstrap)
                             .int64(replication.lastModificationTime(remoteIdentifier))
-                            .writeComment("localIdentifier=" + localIdentifier +
-                                    ",remoteIdentifier=" + remoteIdentifier));
+                            .writeComment("server: localIdentifier=" + localIdentifier + ",remoteIdentifier=" + remoteIdentifier));
 
-                    //    logYaml();
+                    logYaml();
                 }
 
                 if (mi == null)
