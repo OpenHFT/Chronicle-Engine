@@ -50,15 +50,15 @@ public class Replication3WayTest {
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() throws IOException {
-        final int initialCapacity = 1;
+        final int initialCapacity = 10;
         final List<Object[]> list = new ArrayList<>(initialCapacity);
 
-        // for (int i = 0; i < initialCapacity; i++) {
-        //     list.add(new Object[]{WireType.BINARY});
-        //  }
+        for (int i = 0; i < initialCapacity; i++) {
+            list.add(new Object[]{WireType.BINARY});
+        }
 
         //list.add(new Object[]{WireType.BINARY});
-        list.add(new Object[]{WireType.TEXT});
+        // list.add(new Object[]{WireType.TEXT});
         //   list.add(new Object[]{WireType.TEXT});
         return list;
     }
