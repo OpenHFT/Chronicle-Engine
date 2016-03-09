@@ -216,14 +216,16 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
         try (final DocumentContext dc = excerptAppender.writingDocument()) {
             dc.wire().writeEventName(wireKey).object(message);
-            return excerptAppender.index();
+            return excerptAppender.lastIndexAppended();
         }
 
     }
 
 
     public long set(@NotNull M event) {
-        return threadLocalAppender().writeDocument(w -> w.writeEventName(() -> "").object(event));
+        final ExcerptAppender excerptAppender = threadLocalAppender();
+        excerptAppender.writeDocument(w -> w.writeEventName(() -> "").object(event));
+        return excerptAppender.lastIndexAppended();
     }
 
     public void clear() {
