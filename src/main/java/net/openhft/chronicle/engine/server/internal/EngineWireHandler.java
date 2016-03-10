@@ -141,12 +141,12 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
     @Override
     public void nc(EngineWireNetworkContext nc) {
         super.nc(nc);
+        if (wireType() == null)
+            wireType(nc.wireType());
         publisher(nc.wireOutPublisher());
 
         rootAsset = nc.rootAsset().root();
         contextAsset = nc.isAcceptor() ? rootAsset : nc.rootAsset();
-
-
         hostIdentifier = rootAsset.findOrCreateView(HostIdentifier.class);
 
         if (hostIdentifier != null)

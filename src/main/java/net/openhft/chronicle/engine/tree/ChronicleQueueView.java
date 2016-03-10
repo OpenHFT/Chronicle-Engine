@@ -16,6 +16,8 @@ import net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,6 +31,7 @@ import java.util.function.BiConsumer;
 public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
     private static final String DEFAULT_BASE_PATH;
+    private static final Logger LOG = LoggerFactory.getLogger(ChronicleQueueView.class);
 
     static {
         String dir = "/tmp";
@@ -47,11 +50,98 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     private final Class<M> elementTypeClass;
     private final ThreadLocal<ThreadLocalData> threadLocal;
 
-    public ChronicleQueueView(RequestContext requestContext, Asset asset) {
-        chronicleQueue = newInstance(requestContext.name(), requestContext.basePath());
-        messageTypeClass = requestContext.messageType();
-        elementTypeClass = requestContext.elementType();
+    public ChronicleQueueView(RequestContext context, Asset asset) {
+        chronicleQueue = newInstance(context.name(), context.basePath());
+        messageTypeClass = context.messageType();
+        elementTypeClass = context.elementType();
         threadLocal = ThreadLocal.withInitial(() -> new ThreadLocalData(chronicleQueue));
+
+      /*  HostIdentifier hostIdentifier = null;
+        boolean isSource = true;
+        if (hostIdentifier != null) {
+            Clusters clusters = asset.findView(Clusters.class);
+
+            if (clusters == null) {
+                LOG.warn("no clusters found.");
+                return;
+            }
+
+            final Cluster cluster = clusters.get(context.cluster());
+
+            if (cluster == null) {
+                LOG.warn("no cluster found name=" + context.cluster());
+                return;
+            }
+
+            byte localIdentifier = hostIdentifier.hostId();
+
+            if (LOG.isDebugEnabled())
+                LOG.debug("hostDetails : localIdentifier=" + localIdentifier + ",cluster=" + cluster.hostDetails());
+
+            for (HostDetails hostDetails : cluster.hostDetails()) {
+                try {
+                    // its the identifier with the larger values that will establish the connection
+                    byte remoteIdentifier = (byte) hostDetails.hostId;
+
+                    if (remoteIdentifier <= localIdentifier) {
+
+                        if (LOG.isDebugEnabled())
+                            LOG.debug("skipping : attempting to connect to localIdentifier=" +
+                                    localIdentifier + ", remoteIdentifier=" + remoteIdentifier);
+
+                        continue;
+                    }
+
+                    if (LOG.isDebugEnabled())
+                        LOG.debug("attempting to connect to localIdentifier=" + localIdentifier + ", " +
+                                "remoteIdentifier=" + remoteIdentifier);
+
+                    // the wire type used for replication
+
+                    final WireType wireType = context.wireType();
+
+
+
+                    final QueueReplicationHandler replicationHandler = new
+                            QueueReplicationHandler(!isSource);
+
+
+
+                    final QueueReplicationHandler replicationHandler = new
+                            QueueReplicationHandler(!isSource);
+
+                    final String csp = context.fullName() + "?view=" + "Replication";
+                    final WriteMarshallable out = w -> {
+
+                        w.writeDocument(true, m -> {
+                            m.writeEventName(CoreFields.csp).text(csp);
+                            m.writeEventName(CoreFields.cid).int64(uniqueCspId());
+                            m.writeEventName(CoreFields.handler).typedMarshallable(replicationHandler);
+                        });
+
+                        w.writeDocument(false, d -> d.writeEventName(bootstrap)
+                                .int64(lastUpdateTime).writeComment
+                                        ("the-client:localIdentifier=" + localIdentifier + "," +
+                                                "remoteIdentifier=" +
+                                                remoteIdentifier + ",Thread=" + Thread.currentThread
+                                                ().getName() + ",Thread=" + Thread.currentThread().getName()));
+                    };
+
+                    hostDetails.connect(
+                            wireType,
+                            asset,
+                            w -> toHeader(replicationHandler, localIdentifier, remoteIdentifier)
+                                    .writeMarshallable(w),
+                            VanillaWireOutPublisher::new, out);
+
+                    assert localIdentifier != remoteIdentifier : "remoteIdentifier=" + remoteIdentifier;
+
+                } catch (Exception e) {
+                    LOG.error("hostDetails=" + hostDetails, e);
+                }
+            }
+        }*/
+
 
     }
 
@@ -132,7 +222,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
 
     /**
-     * @param index gets the except at the given index  or {@code null} if the index is not valid
+     * @param index gets the except at the given index or {@code null} if the index is not valid
      * @return the except
      */
     @Nullable

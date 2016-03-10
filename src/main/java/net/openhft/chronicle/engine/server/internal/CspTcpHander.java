@@ -1,8 +1,8 @@
 package net.openhft.chronicle.engine.server.internal;
 
-import net.openhft.chronicle.engine.api.tree.RequestContextInterner;
 import net.openhft.chronicle.network.NetworkContext;
 import net.openhft.chronicle.network.WireTcpHandler;
+import net.openhft.chronicle.network.api.session.SubHandler;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.WireIn;
@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.BiFunction;
 
 import static net.openhft.chronicle.network.connection.CoreFields.csp;
 
@@ -22,93 +21,66 @@ import static net.openhft.chronicle.network.connection.CoreFields.csp;
 public abstract class CspTcpHander<T extends NetworkContext> extends WireTcpHandler<T> {
 
     protected final StringBuilder cspText = new StringBuilder();
-    protected final StringBuilder cpsBuff = new StringBuilder();
-    protected final RequestContextInterner requestContextInterner = new RequestContextInterner(128);
+
     @NotNull
-    private final Map<Long, String> cidToCsp = new HashMap<>();
-    @NotNull
-    private final Map<String, Long> cspToCid = new HashMap<>();
-    private long cid;
-    private final StringBuilder lastCsp = new StringBuilder();
+    private final Map<Long, SubHandler> cidToHandle = new HashMap<>();
+    private SubHandler handler;
 
+    private long lastCid;
 
-    protected boolean hasCspChanged(@NotNull final StringBuilder cspText) {
-        boolean result = !cspText.equals(lastCsp);
-
-        // if it has changed remember what it changed to, for next time this method is called.
-        if (result) {
-            lastCsp.setLength(0);
-            lastCsp.append(cspText);
-        }
-
-        return result;
-    }
-
-    public long cid() {
-        return cid;
+    protected SubHandler handler() {
+        return handler;
     }
 
     /**
      * peeks the csp or if it has a cid converts the cid into a Csp and returns that
+     *
+     * @return {@code true} if if a csp was read rather than a cid
      */
-    protected void readCsp(@NotNull final WireIn wireIn) {
+    protected boolean readMeta(@NotNull final WireIn wireIn) {
         final StringBuilder event = Wires.acquireStringBuilder();
 
-        cspText.setLength(0);
-        final ValueIn read = wireIn.readEventName(event);
+        ValueIn valueIn = wireIn.readEventName(event);
+
         if (csp.contentEquals(event)) {
-            read.textTo(cspText);
+            final String csp = valueIn.text();
 
+            long cid;
+            event.setLength(0);
+            valueIn = wireIn.readEventName(event);
 
-            tryReadEvent(wireIn, (that, wire) -> {
-                final StringBuilder e = Wires.acquireStringBuilder();
-                final ValueIn valueIn = wireIn.readEventName(e);
-                if (!CoreFields.cid.contentEquals(e))
-                    return false;
+            if (CoreFields.cid.contentEquals(event))
+                cid = valueIn.int64();
+            else
+                throw new IllegalStateException("expecting 'cid' but eventName=" + event);
 
-                final long cid1 = valueIn.int64();
-                that.cid = cid1;
-                setCid(cspText.toString(), cid1);
-                return true;
-            });
+            event.setLength(0);
+            valueIn = wireIn.readEventName(event);
 
-
+            if (CoreFields.handler.contentEquals(event)) {
+                handler = valueIn.typedMarshallable();
+                handler.nc(nc());
+                handler.cid(cid);
+                handler.csp(csp);
+                lastCid = cid;
+                cidToHandle.put(cid, handler);
+            } else
+                throw new IllegalStateException("expecting 'cid' but eventName=" + event);
+            return true;
         } else if (CoreFields.cid.contentEquals(event)) {
-            final long cid = read.int64();
-            final CharSequence s = getCspForCid(cid);
-            cspText.append(s);
-            this.cid = cid;
+            final long cid = valueIn.int64();
+            if (cid == lastCid)
+                return false;
+            lastCid = cid;
+            handler = cidToHandle.get(cid);
+        } else {
+            throw new IllegalStateException("expecting either csp or cid");
         }
+
+        return false;
     }
-
-
-    /**
-     * if not successful, in other-words when the function returns try, will return the wire back to
-     * the read location
-     */
-    private void tryReadEvent(@NotNull final WireIn wire,
-                              @NotNull final BiFunction<CspTcpHander, WireIn, Boolean> f) {
-        final long readPosition = wire.bytes().readPosition();
-        boolean success = false;
-        try {
-            success = f.apply(this, wire);
-        } finally {
-            if (!success) wire.bytes().readPosition(readPosition);
-        }
-    }
-
-
-    public void setCid(String csp, long cid) {
-        cidToCsp.put(cid, csp);
-    }
-
-    public CharSequence getCspForCid(long cid) {
-        return cidToCsp.get(cid);
-    }
-
 
     @Override
     protected abstract void process(@NotNull WireIn in, @NotNull WireOut out);
-
 
 }

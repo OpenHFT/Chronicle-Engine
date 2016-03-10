@@ -32,7 +32,8 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.fs.Cluster;
 import net.openhft.chronicle.engine.fs.Clusters;
 import net.openhft.chronicle.engine.fs.HostDetails;
-import net.openhft.chronicle.engine.server.internal.ReplicationHandler3;
+import net.openhft.chronicle.engine.server.internal.MapReplicationHandler;
+import net.openhft.chronicle.engine.server.internal.UberHandler;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.hash.replication.EngineReplicationLangBytesConsumer;
 import net.openhft.chronicle.map.*;
@@ -64,9 +65,9 @@ import java.util.function.Supplier;
 import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
 import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
 import static net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer.notifyEachEvent;
-import static net.openhft.chronicle.engine.server.internal.ReplicationHandler2.EventId.bootstrap;
 import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplication.builder;
 import static net.openhft.chronicle.network.HeaderTcpHandler.toHeader;
+import static net.openhft.chronicle.network.connection.CoreFields.cid;
 
 public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V>,
         Closeable, Supplier<EngineReplication> {
@@ -91,7 +92,7 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
     private SessionDetails replicationSessionDetails;
 
     static {
-        CLASS_ALIASES.addAlias(ReplicationHandler3.class);
+        CLASS_ALIASES.addAlias(MapReplicationHandler.class);
     }
 
     public ChronicleMapKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset) {
@@ -167,91 +168,94 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
             }
         }
 
-        if (hostIdentifier != null) {
-            Clusters clusters = asset.findView(Clusters.class);
+        if (hostIdentifier == null)
+            return;
 
-            if (clusters == null) {
-                LOG.warn("no clusters found.");
-                return;
-            }
+        Clusters clusters = asset.findView(Clusters.class);
 
-            final Cluster cluster = clusters.get(context.cluster());
+        if (clusters == null) {
+            LOG.warn("no clusters found.");
+            return;
+        }
 
-            if (cluster == null) {
-                LOG.warn("no cluster found name=" + context.cluster());
-                return;
-            }
+        final Cluster cluster = clusters.get(context.cluster());
 
-            byte localIdentifier = hostIdentifier.hostId();
+        if (cluster == null) {
+            LOG.warn("no cluster found name=" + context.cluster());
+            return;
+        }
 
-            if (LOG.isDebugEnabled())
-                LOG.debug("hostDetails : localIdentifier=" + localIdentifier + ",cluster=" + cluster.hostDetails());
+        byte localIdentifier = hostIdentifier.hostId();
 
-            for (HostDetails hostDetails : cluster.hostDetails()) {
-                try {
-                    // its the identifier with the larger values that will establish the connection
-                    byte remoteIdentifier = (byte) hostDetails.hostId;
+        if (LOG.isDebugEnabled())
+            LOG.debug("hostDetails : localIdentifier=" + localIdentifier + ",cluster=" + cluster.hostDetails());
 
-                    if (remoteIdentifier <= localIdentifier) {
+        for (HostDetails hostDetails : cluster.hostDetails()) {
+            try {
+                // its the identifier with the larger values that will establish the connection
+                byte remoteIdentifier = (byte) hostDetails.hostId;
 
-                        if (LOG.isDebugEnabled())
-                            LOG.debug("skipping : attempting to connect to localIdentifier=" +
-                                    localIdentifier + ", remoteIdentifier=" + remoteIdentifier);
-
-                        continue;
-                    }
+                if (remoteIdentifier <= localIdentifier) {
 
                     if (LOG.isDebugEnabled())
-                        LOG.debug("attempting to connect to localIdentifier=" + localIdentifier + ", " +
-                                "remoteIdentifier=" + remoteIdentifier);
+                        LOG.debug("skipping : attempting to connect to localIdentifier=" +
+                                localIdentifier + ", remoteIdentifier=" + remoteIdentifier);
 
-                    // the wire type used for replication
-                    final WireType wireType = WireType.TEXT;
-
-
-                    if (Boolean.getBoolean("ReplicationHandler3")) {
-
-                        final ReplicationHandler3 replicationHandler = new ReplicationHandler3
-                                (localIdentifier, remoteIdentifier, wireType);
-
-
-                        final String csp = context.fullName() + "?view=" + "Replication";
-                        final WriteMarshallable out = w -> {
-
-                            final long lastUpdateTime = ((Replica) chronicleMap).lastModificationTime
-                                    (remoteIdentifier);
-
-                            w.writeDocument(true, m -> {
-                                m.writeEventName(CoreFields.csp).text(csp);
-                                m.writeEventName(CoreFields.cid).int64(uniqueCspId());
-                            });
-
-                            w.writeDocument(false, d -> d.writeEventName(bootstrap)
-                                    .int64(lastUpdateTime).writeComment
-                                            ("the-client:localIdentifier=" + localIdentifier + "," +
-                                                    "remoteIdentifier=" +
-                                                    remoteIdentifier + ",Thread=" + Thread.currentThread
-                                                    ().getName() + ",Thread=" + Thread.currentThread().getName()));
-                        };
-
-                        hostDetails.connect(
-                                wireType,
-                                asset,
-                                w -> toHeader(replicationHandler, localIdentifier, remoteIdentifier)
-                                        .writeMarshallable(w),
-                                VanillaWireOutPublisher::new, out);
-
-                        assert localIdentifier != remoteIdentifier : "remoteIdentifier=" + remoteIdentifier;
-                    } else {
-                        final TcpChannelHub tcpChannelHub = hostDetails.acquireTcpChannelHub(asset, eventLoop, context.wireType());
-                        final ReplicationHub replicationHub = new ReplicationHub(context, tcpChannelHub,
-                                eventLoop, isClosed, context.wireType());
-
-                        replicationHub.bootstrap(engineReplicator1, localIdentifier, (byte) remoteIdentifier);
-                    }
-                } catch (Exception e) {
-                    LOG.error("hostDetails=" + hostDetails, e);
+                    continue;
                 }
+
+                if (LOG.isDebugEnabled())
+                    LOG.debug("attempting to connect to localIdentifier=" + localIdentifier + ", " +
+                            "remoteIdentifier=" + remoteIdentifier);
+
+                // the wire type used for replication
+                final WireType wireType = WireType.TEXT;
+
+
+                if (Boolean.getBoolean("ReplicationHandler3")) {
+
+                    final UberHandler handler = new UberHandler(localIdentifier,
+                            remoteIdentifier, wireType);
+
+                    final String csp = context.fullName() + "?view=" + "Replication";
+                    final WriteMarshallable out = w -> {
+
+                        final long lastUpdateTime = ((Replica) chronicleMap).lastModificationTime
+                                (remoteIdentifier);
+
+                        w.writeDocument(true, d -> {
+
+                            final MapReplicationHandler h = new MapReplicationHandler
+                                    (lastUpdateTime);
+
+                            d.writeEventName(CoreFields.csp).text(csp)
+                                    .writeEventName(cid).int64(uniqueCspId())
+                                    .writeEventName(CoreFields.handler).typedMarshallable(h)
+                                    .writeComment("server: localIdentifier=" + localIdentifier +
+                                            ",remoteIdentifier=" + remoteIdentifier);
+                        });
+
+                    };
+
+                    hostDetails.connect(
+                            wireType,
+                            asset,
+                            w -> toHeader(handler, localIdentifier, remoteIdentifier)
+                                    .writeMarshallable(w),
+                            VanillaWireOutPublisher::new, out);
+
+                    assert localIdentifier != remoteIdentifier : "remoteIdentifier=" + remoteIdentifier;
+                    continue;
+                }
+
+                final TcpChannelHub tcpChannelHub = hostDetails.acquireTcpChannelHub(asset, eventLoop, context.wireType());
+                final ReplicationHub replicationHub = new ReplicationHub(context, tcpChannelHub,
+                        eventLoop, isClosed, context.wireType());
+
+                replicationHub.bootstrap(engineReplicator1, localIdentifier, remoteIdentifier);
+
+            } catch (Exception e) {
+                LOG.error("hostDetails=" + hostDetails, e);
             }
         }
     }

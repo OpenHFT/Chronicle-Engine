@@ -1,71 +1,53 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.annotation.UsedViaReflection;
-import net.openhft.chronicle.core.io.Closeable;
-import net.openhft.chronicle.core.threads.EventHandler;
 import net.openhft.chronicle.core.threads.EventLoop;
-import net.openhft.chronicle.core.threads.HandlerPriority;
-import net.openhft.chronicle.core.threads.InvalidEventHandlerException;
-import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
-import net.openhft.chronicle.engine.api.pubsub.Replication;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.map.CMap2EngineReplicator;
-import net.openhft.chronicle.engine.tree.HostIdentifier;
-import net.openhft.chronicle.network.connection.CoreFields;
-import net.openhft.chronicle.network.connection.WireOutPublisher;
+import net.openhft.chronicle.queue.ChronicleQueue;
+import net.openhft.chronicle.queue.ExcerptAppender;
+import net.openhft.chronicle.queue.ExcerptTailer;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static net.openhft.chronicle.engine.server.internal.ReplicationHandler2.EventId.bootstrap;
-import static net.openhft.chronicle.engine.server.internal.ReplicationHandler3.EventId.replicationEvent;
+import java.util.concurrent.ConcurrentHashMap;
+
 import static net.openhft.chronicle.network.HeaderTcpHandler.toHeader;
 
 /**
  * Created by Rob Austin
  */
-public class ReplicationHandler3 extends CspTcpHander<EngineWireNetworkContext> implements
+public class QueueReplicationHandler extends CspTcpHander<EngineWireNetworkContext> implements
         Demarshallable, WriteMarshallable {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ReplicationHandler3.class);
+    private static final Logger LOG = LoggerFactory.getLogger(QueueReplicationHandler.class);
 
-    private Replication replication;
-    private byte remoteIdentifier;
-    private byte localIdentifier;
     private RequestContext requestContext;
     private EventLoop eventLoop;
     private Asset rootAsset;
     private volatile boolean closed;
+    private ChronicleQueue queue;
+    private boolean isSource;
 
     @UsedViaReflection
-    private ReplicationHandler3(WireIn wire) {
-        remoteIdentifier = wire.read(() -> "hostId").int8();
+    private QueueReplicationHandler(@NotNull WireIn wire) {
         final WireType wireType = wire.read(() -> "wireType").object(WireType.class);
         wireType(wireType);
-
-        LOG.info("remoteIdentifier=" + remoteIdentifier);
     }
 
-    public ReplicationHandler3(byte localIdentifier,
-                               byte remoteIdentifier,
-                               WireType wireType) {
-
-        LOG.info("localIdentifier=" + localIdentifier + ",remoteIdentifier=" + remoteIdentifier);
-        this.remoteIdentifier = remoteIdentifier;
-        this.localIdentifier = localIdentifier;
-        wireType(wireType);
+    public QueueReplicationHandler(boolean isSource) {
+        this.isSource = isSource;
     }
 
     @Override
     public void writeMarshallable(@NotNull WireOut wire) {
-        wire.write(() -> "hostId").int8(localIdentifier);
         final WireType value = wireType();
         wire.write(() -> "wireType").object(value);
-        wire.writeComment("remoteIdentifier=" + remoteIdentifier);
+        wire.write(() -> "isSource").bool(isSource);
     }
 
     @Override
@@ -73,11 +55,6 @@ public class ReplicationHandler3 extends CspTcpHander<EngineWireNetworkContext> 
         super.nc(nc);
         isAcceptor(nc.isAcceptor());
         rootAsset = nc.rootAsset();
-        final HostIdentifier hostIdentifier = rootAsset.findOrCreateView(HostIdentifier.class);
-
-        if (hostIdentifier != null)
-            localIdentifier = hostIdentifier.hostId();
-
         publisher(nc.wireOutPublisher());
 
         this.eventLoop = rootAsset.findOrCreateView(EventLoop.class);
@@ -86,20 +63,15 @@ public class ReplicationHandler3 extends CspTcpHander<EngineWireNetworkContext> 
         if (nc.isAcceptor())
             // reflect the header back to the client
             nc.wireOutPublisher().put("",
-                    toHeader(new ReplicationHandler3(localIdentifier, remoteIdentifier, wireType
-                            ()), localIdentifier, remoteIdentifier));
+                    toHeader(new QueueReplicationHandler(isSource)));
     }
-
 
     final ThreadLocal<CMap2EngineReplicator.VanillaReplicatedEntry> vre = ThreadLocal.withInitial(CMap2EngineReplicator.VanillaReplicatedEntry::new);
 
-
     public enum EventId implements ParameterizeWireKey {
-        publish,
-        onEndOfSubscription,
-        apply,
         replicationEvent,
         bootstrap,
+        lastUpdateIndex,
         identifierReply,
         identifier;
 
@@ -123,10 +95,25 @@ public class ReplicationHandler3 extends CspTcpHander<EngineWireNetworkContext> 
         closed = true;
     }
 
+    class Q {
+        ExcerptAppender appender;
+        ExcerptTailer tailer;
+
+        public Q(ExcerptAppender appender, ExcerptTailer tailer) {
+            this.appender = appender;
+            this.tailer = tailer;
+        }
+    }
+
+
+    ConcurrentHashMap<String, Q> qs = new ConcurrentHashMap();
+    Q q;
+
+
     @Override
     protected void process(@NotNull WireIn inWire, @NotNull WireOut outWire) {
 
-        LOG.info("isAcceptor=" + nc().isAcceptor());
+    /*    LOG.info("isAcceptor=" + nc().isAcceptor());
         LOG.info("wire-in=" + Wires.fromSizePrefixedBlobs(inWire.bytes()));
 
         try (final DocumentContext dc = inWire.readingDocument()) {
@@ -138,16 +125,19 @@ public class ReplicationHandler3 extends CspTcpHander<EngineWireNetworkContext> 
                 readCsp(inWire);
 
                 if (hasCspChanged(cspText)) {
-                    requestContext = requestContextInterner.intern(cspText);
-                    final String childName = requestContext.fullName();
-                    final Asset asset = rootAsset.acquireAsset(childName);
-                    replication = asset.acquireView(Replication.class, requestContext);
+
+                    q = qs.computeIfAbsent(cspText.toString(), key -> {
+                        requestContext = requestContextInterner.intern(cspText);
+                        final Asset asset = rootAsset.acquireAsset(requestContext.fullName());
+                        queue = asset.acquireView(ChronicleQueue.class, requestContext);
+
+                        final ExcerptAppender appender = queue.createAppender();
+                        final ExcerptTailer tailer = queue.createTailer();
+                        return new Q(appender, tailer);
+                    });
                 }
                 return;
             }
-
-            if (replication == null)
-                LOG.info("replication==null");
 
             StringBuilder eventName = Wires.acquireStringBuilder();
 
@@ -155,13 +145,15 @@ public class ReplicationHandler3 extends CspTcpHander<EngineWireNetworkContext> 
             final ValueIn valueIn = inWire.readEventName(eventName);
 
             // receives replication events
-            if (CoreFields.lastUpdateTime.contentEquals(eventName)) {
+            if (EventId.lastUpdateIndex.contentEquals(eventName)) {
                 // Thread.sleep(100);
                 if (Jvm.isDebug())
                     LOG.info("server : received lastUpdateTime");
-                final long time = valueIn.int64();
-                final byte id = inWire.read(() -> "id").int8();
-                replication.setLastModificationTime(id, time);
+                final long index = valueIn.int64();
+                *//*if (isSource)
+                    q.
+*//*
+
                 return;
             }
 
@@ -202,7 +194,7 @@ public class ReplicationHandler3 extends CspTcpHander<EngineWireNetworkContext> 
                             .int64(replication.lastModificationTime(remoteIdentifier))
                             .writeComment("server: localIdentifier=" + localIdentifier + ",remoteIdentifier=" + remoteIdentifier));
 
-                    logYaml();
+                    logYaml(outWire);
                 }
 
                 if (mi == null)
@@ -223,10 +215,10 @@ public class ReplicationHandler3 extends CspTcpHander<EngineWireNetworkContext> 
 
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
-    private class ReplicationEventHandler implements EventHandler, Closeable {
+  /*  private class ReplicationEventHandler implements EventHandler, Closeable {
 
         private final ModificationIterator mi;
         private final byte id;
@@ -359,9 +351,9 @@ public class ReplicationHandler3 extends CspTcpHander<EngineWireNetworkContext> 
 
         @Override
         public void close() {
-            ReplicationHandler3.this.close();
+            QueueReplicationHandler.this.close();
         }
-    }
+    }*/
 
     @Override
     public void process(@NotNull Bytes in, @NotNull Bytes out) {

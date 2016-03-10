@@ -50,7 +50,7 @@ public class Replication3WayTest {
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() throws IOException {
-        final int initialCapacity = 10;
+        final int initialCapacity = 1;
         final List<Object[]> list = new ArrayList<>(initialCapacity);
 
         for (int i = 0; i < initialCapacity; i++) {
@@ -166,7 +166,7 @@ public class Replication3WayTest {
 
     @Test
     public void testThreeWay() throws InterruptedException {
-        YamlLogging.setAll(false);
+        YamlLogging.setAll(true);
         //YamlLogging.showServerReads = true;
 
         final ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME, String.class, String

@@ -200,8 +200,8 @@ public class ReplicationHandler2<E> extends AbstractHandler {
         onEndOfSubscription,
         apply,
         replicationEvent,
-        bootstrap,
         identifierReply,
+        bootstrap,
         identifier;
 
         private final WireKey[] params;
