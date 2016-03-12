@@ -99,19 +99,19 @@ public class ServerOverloadTest extends ThreadMonitoringTest {
     }
 
 
-    @Ignore
+
     @Test
     public void testThatSendingAlotOfDataToTheServer() throws Exception {
 
         final MapView<String, String> map = assetTree.acquireMap("name", String.class, String
                 .class);
 
-        final int megabyte = 1048576;
-        char[] large2MbChar = new char[2 * megabyte];
 
-        Arrays.fill(large2MbChar, 'X');
+        char[] largeChar = new char[TcpChannelHub.BUFFER_SIZE - 128];
 
-        final String large2MbString = new String(large2MbChar);
+        Arrays.fill(largeChar, 'X');
+
+        final String large2MbString = new String(largeChar);
 
         for (int i = 0; i < SIZE; i++) {
             System.out.print(".");

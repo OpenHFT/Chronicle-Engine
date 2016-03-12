@@ -120,9 +120,7 @@ public class ServerEndpoint implements Closeable {
             return null;
         });
 
-
         remoteConnector = new RemoteConnector(onSocket);
-
         assetTree.root().addView(ServerEndpoint.class, this);
     }
 
