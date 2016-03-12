@@ -156,17 +156,23 @@ public class HostDetails implements Marshallable, Closeable {
 
         public WireOutPublisher connect() {
             synchronized (lock()) {
-                this.wireOutPublisher = wireOutPublisherFunction.apply(wireType);
+
+                // we will send the initial header as text wire, then the rest will be sent in
+                // what ever wire is configured
+                this.wireOutPublisher = wireOutPublisherFunction.apply(WireType.TEXT);
 
                 final EngineWireNetworkContext nc = new EngineWireNetworkContext();
+                nc.wireOutPublisher(this.wireOutPublisher);
                 nc.wireType(wireType);
                 nc.rootAsset(asset.root());
-                nc.wireOutPublisher(this.wireOutPublisher);
+
                 nc.closeTask(this);
 
                 final ServerEndpoint serverEndpoint = asset.findView(ServerEndpoint.class);
                 if (serverEndpoint == null)
                     throw new IllegalStateException("serverEndpoint not found");
+
+                wireOutPublisher.wireType(wireType);
 
                 wireOutPublisher.put("", onSendHeader::accept);
 

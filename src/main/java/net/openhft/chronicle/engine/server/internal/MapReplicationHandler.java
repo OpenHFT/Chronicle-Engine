@@ -1,6 +1,5 @@
 package net.openhft.chronicle.engine.server.internal;
 
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.annotation.UsedViaReflection;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.threads.EventHandler;
@@ -11,9 +10,8 @@ import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.engine.api.pubsub.Replication;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
-import net.openhft.chronicle.engine.map.CMap2EngineReplicator;
+import net.openhft.chronicle.engine.map.CMap2EngineReplicator.VanillaReplicatedEntry;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
-import net.openhft.chronicle.network.api.session.SubHandler;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.wire.*;
@@ -29,7 +27,7 @@ import static net.openhft.chronicle.network.connection.CoreFields.lastUpdateTime
  * Created by Rob Austin
  */
 public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkContext> implements
-        Demarshallable, WriteMarshallable, SubHandler<EngineWireNetworkContext> {
+        Demarshallable, WriteMarshallable {
 
     private static final Logger LOG = LoggerFactory.getLogger(MapReplicationHandler.class);
 
@@ -39,7 +37,6 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
     private EventLoop eventLoop;
     private Asset rootAsset;
     private volatile boolean closed;
-    private byte remoteIdentifier;
 
 
     @UsedViaReflection
@@ -56,25 +53,16 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
         wire.write(() -> "timestamp").int64(timestamp);
     }
 
-    final ThreadLocal<CMap2EngineReplicator.VanillaReplicatedEntry> vre = ThreadLocal.withInitial(CMap2EngineReplicator.VanillaReplicatedEntry::new);
+    final ThreadLocal<VanillaReplicatedEntry> vre = ThreadLocal.withInitial(VanillaReplicatedEntry::new);
+
 
     @Override
     public void processData(@NotNull WireIn inWire, @NotNull WireOut outWire) {
 
-        LOG.info("isAcceptor=" + nc().isAcceptor());
-
-        if (replication == null)
-            LOG.info("replication==null");
-
         final StringBuilder eventName = Wires.acquireStringBuilder();
         final ValueIn valueIn = inWire.readEventName(eventName);
 
-
-        // receives replication events
         if (lastUpdateTime.contentEquals(eventName)) {
-            // Thread.sleep(100);
-            if (Jvm.isDebug())
-                LOG.info("server : received lastUpdateTime");
             final long time = valueIn.int64();
             final byte id = inWire.read(() -> "id").int8();
             replication.setLastModificationTime(id, time);
@@ -83,26 +71,13 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
 
         // receives replication events
         if (replicationEvent.contentEquals(eventName)) {
-
-            if (Jvm.isDebug() && LOG.isDebugEnabled())
-                LOG.debug("server : received replicationEvent");
-            CMap2EngineReplicator.VanillaReplicatedEntry replicatedEntry = vre.get();
-            valueIn.marshallable(replicatedEntry);
-
-            if (Jvm.isDebug() && LOG.isDebugEnabled())
-                LOG.debug("*****\t\t\t\t ->  RECEIVED : SERVER : replication latency=" + (System
-                        .currentTimeMillis() - replicatedEntry.timestamp()) + "ms  ");
-
-            replication.applyReplication(replicatedEntry);
+            final VanillaReplicatedEntry entry = vre.get();
+            entry.clear();
+            valueIn.marshallable(entry);
+            replication.applyReplication(entry);
         }
-
-
     }
 
-    @Override
-    public void remoteIdentifier(byte remoteIdentifier) {
-        this.remoteIdentifier = remoteIdentifier;
-    }
 
     @Override
     public void onBootstrap(@NotNull WireOut outWire) {
@@ -119,7 +94,7 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
         this.eventLoop = rootAsset.findOrCreateView(EventLoop.class);
         eventLoop.start();
 
-        final ModificationIterator mi = replication.acquireModificationIterator(remoteIdentifier);
+        final ModificationIterator mi = replication.acquireModificationIterator(remoteIdentifier());
 
         if (mi != null)
             mi.dirtyEntries(timestamp);
@@ -128,14 +103,14 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
 
             outWire.writeDocument(true, d -> {
 
-                final long timestamp = replication.lastModificationTime(remoteIdentifier);
+                final long timestamp = replication.lastModificationTime(remoteIdentifier());
                 final MapReplicationHandler handler = new MapReplicationHandler(timestamp);
 
                 d.writeEventName(CoreFields.csp).text(csp())
                         .writeEventName(CoreFields.cid).int64(cid())
                         .writeEventName(CoreFields.handler).typedMarshallable(handler)
                         .writeComment("server: localIdentifier=" + localIdentifier +
-                                ",remoteIdentifier=" + remoteIdentifier);
+                                ",remoteIdentifier=" + remoteIdentifier());
             });
 
             logYaml(outWire);
@@ -150,7 +125,7 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
         if (!eventLoop.isAlive() && !eventLoop.isClosed())
             throw new IllegalStateException("the event loop is not yet running !");
 
-        eventLoop.addHandler(true, new ReplicationEventHandler(mi, remoteIdentifier));
+        eventLoop.addHandler(true, new ReplicationEventHandler(mi, remoteIdentifier()));
     }
 
     @Override
@@ -251,11 +226,6 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
 
                     hasSentLastUpdateTime = true;
 
-                    if (!hasLogged) {
-                        LOG.info("received ALL replication the EVENTS for " +
-                                "id=" + id);
-                        hasLogged = true;
-                    }
 
                 }
                 return false;
@@ -271,12 +241,6 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
                             lastUpdateTime = newlastUpdateTime;
                         }
 
-                        if (LOG.isDebugEnabled())
-                            LOG.debug("publish from server response from iterator " +
-                                    "localIdentifier=" + localIdentifier + ", " +
-                                    "remoteIdentifier=" + id + ", " +
-                                    "event=" + e);
-
                         w.writeDocument(true, d -> d.write(CoreFields.cid).int64(cid()));
                         w.writeDocument(false,
                                 d -> {
@@ -287,7 +251,7 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
 
                     })
             );
-            // }
+
             return true;
         }
 

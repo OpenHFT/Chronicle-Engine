@@ -43,7 +43,6 @@ import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.network.connection.VanillaWireOutPublisher;
 import net.openhft.chronicle.threads.NamedThreadFactory;
-import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.WriteMarshallable;
 import net.openhft.lang.io.Bytes;
 import org.jetbrains.annotations.NotNull;
@@ -151,8 +150,6 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
         if (maxEntries > 0)
             builder.entries(maxEntries + 1); // we have to add a head room of 1
 
-//        builder.name(context.name() + "_" + Thread.currentThread().getName());
-
         if (basePath == null) {
             chronicleMap = builder.create();
         } else {
@@ -196,28 +193,23 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
                 byte remoteIdentifier = (byte) hostDetails.hostId;
 
                 if (remoteIdentifier <= localIdentifier) {
-
                     if (LOG.isDebugEnabled())
                         LOG.debug("skipping : attempting to connect to localIdentifier=" +
                                 localIdentifier + ", remoteIdentifier=" + remoteIdentifier);
-
                     continue;
                 }
 
                 if (LOG.isDebugEnabled())
-                    LOG.debug("attempting to connect to localIdentifier=" + localIdentifier + ", " +
+                    LOG.debug("attempting to connect to " +
+                            "localIdentifier=" + localIdentifier + ", " +
                             "remoteIdentifier=" + remoteIdentifier);
-
-                // the wire type used for replication
-                final WireType wireType = WireType.TEXT;
-
 
                 if (Boolean.getBoolean("ReplicationHandler3")) {
 
                     final UberHandler handler = new UberHandler(localIdentifier,
-                            remoteIdentifier, wireType);
+                            remoteIdentifier, context.wireType());
 
-                    final String csp = context.fullName() + "?view=" + "Replication";
+                    final String csp = context.fullName();
                     final WriteMarshallable out = w -> {
 
                         final long lastUpdateTime = ((Replica) chronicleMap).lastModificationTime
@@ -225,8 +217,7 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
 
                         w.writeDocument(true, d -> {
 
-                            final MapReplicationHandler h = new MapReplicationHandler
-                                    (lastUpdateTime);
+                            final MapReplicationHandler h = new MapReplicationHandler(lastUpdateTime);
 
                             d.writeEventName(CoreFields.csp).text(csp)
                                     .writeEventName(cid).int64(uniqueCspId())
@@ -237,14 +228,12 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
 
                     };
 
-                    hostDetails.connect(
-                            wireType,
+                    hostDetails.connect(context.wireType(),
                             asset,
                             w -> toHeader(handler, localIdentifier, remoteIdentifier)
                                     .writeMarshallable(w),
                             VanillaWireOutPublisher::new, out);
 
-                    assert localIdentifier != remoteIdentifier : "remoteIdentifier=" + remoteIdentifier;
                     continue;
                 }
 

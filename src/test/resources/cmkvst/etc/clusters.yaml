@@ -48,38 +48,7 @@ clusterThree: {
     }
 }
 
-clusterFive: {
-  host1: {
-     hostId: 1,
-     tcpBufferSize: 65536,
-     connectUri: "localhost:8081",
-     timeoutMs: 1000,
-  },
-  host2: {
-     hostId: 2,
-     tcpBufferSize: 65536,
-     connectUri: "localhost:8082",
-     timeoutMs: 1000,
-  } ,
-  host3: {
-     hostId: 3,
-     tcpBufferSize: 65536,
-     connectUri: "localhost:8083",
-     timeoutMs: 1000,
-  },
-  host4: {
-    hostId: 4,
-    tcpBufferSize: 65536,
-    connectUri: "localhost:8084",
-    timeoutMs: 1000,
-  },
-  host5: {
-     hostId: 5,
-     tcpBufferSize: 65536,
-     connectUri: "localhost:8085",
-     timeoutMs: 1000,
-  }
-}
+
 
 clusterPeter: {
   host1: {

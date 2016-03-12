@@ -9,6 +9,11 @@ import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.fs.HostDetails;
+import net.openhft.chronicle.engine.server.internal.QueueReplicationHandler;
+import net.openhft.chronicle.engine.server.internal.UberHandler;
+import net.openhft.chronicle.network.connection.CoreFields;
+import net.openhft.chronicle.network.connection.VanillaWireOutPublisher;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ExcerptAppender;
 import net.openhft.chronicle.queue.ExcerptTailer;
@@ -23,7 +28,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
+
+import static net.openhft.chronicle.network.HeaderTcpHandler.toHeader;
+import static net.openhft.chronicle.network.connection.CoreFields.cid;
+import static net.openhft.chronicle.wire.WireType.TEXT;
 
 /**
  * @author Rob Austin.
@@ -56,93 +66,59 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         elementTypeClass = context.elementType();
         threadLocal = ThreadLocal.withInitial(() -> new ThreadLocalData(chronicleQueue));
 
-      /*  HostIdentifier hostIdentifier = null;
-        boolean isSource = true;
-        if (hostIdentifier != null) {
-            Clusters clusters = asset.findView(Clusters.class);
+        HostDetails localHostDetails = null;
 
-            if (clusters == null) {
-                LOG.warn("no clusters found.");
-                return;
+        // source host detail
+        HostDetails source = new HostDetails();
+
+        if (localHostDetails == null)
+            return;
+
+        if (localHostDetails == source)
+            // we are the source, we would not want to copy to our self
+            return;
+
+        final UberHandler handler = new UberHandler(
+                (byte) localHostDetails.hostId,
+                (byte) source.hostId, context.wireType());
+
+        final long lastIndexReceived = threadLocalAppender().lastIndexAppended();
+        final QueueReplicationHandler h = new QueueReplicationHandler(lastIndexReceived, true);
+
+        final String csp = context.fullName();
+        final WriteMarshallable out = w -> w.writeDocument(true, d ->
+                d.writeEventName(CoreFields.csp).text(csp)
+                        .writeEventName(cid).int64(uniqueCspId())
+                        .writeEventName(CoreFields.handler).typedMarshallable(h));
+
+        localHostDetails.connect(
+                TEXT,
+                asset,
+                w -> toHeader(handler).writeMarshallable(w),
+                VanillaWireOutPublisher::new, out);
+    }
+
+    private AtomicLong uniqueCspid = new AtomicLong();
+
+    private long uniqueCspId() {
+        long time = System.currentTimeMillis();
+
+        for (; ; ) {
+
+            final long current = this.uniqueCspid.get();
+
+            if (time == this.uniqueCspid.get()) {
+                time++;
+                continue;
             }
 
-            final Cluster cluster = clusters.get(context.cluster());
+            final boolean success = this.uniqueCspid.compareAndSet(current, time);
 
-            if (cluster == null) {
-                LOG.warn("no cluster found name=" + context.cluster());
-                return;
-            }
+            if (!success)
+                continue;
 
-            byte localIdentifier = hostIdentifier.hostId();
-
-            if (LOG.isDebugEnabled())
-                LOG.debug("hostDetails : localIdentifier=" + localIdentifier + ",cluster=" + cluster.hostDetails());
-
-            for (HostDetails hostDetails : cluster.hostDetails()) {
-                try {
-                    // its the identifier with the larger values that will establish the connection
-                    byte remoteIdentifier = (byte) hostDetails.hostId;
-
-                    if (remoteIdentifier <= localIdentifier) {
-
-                        if (LOG.isDebugEnabled())
-                            LOG.debug("skipping : attempting to connect to localIdentifier=" +
-                                    localIdentifier + ", remoteIdentifier=" + remoteIdentifier);
-
-                        continue;
-                    }
-
-                    if (LOG.isDebugEnabled())
-                        LOG.debug("attempting to connect to localIdentifier=" + localIdentifier + ", " +
-                                "remoteIdentifier=" + remoteIdentifier);
-
-                    // the wire type used for replication
-
-                    final WireType wireType = context.wireType();
-
-
-
-                    final QueueReplicationHandler replicationHandler = new
-                            QueueReplicationHandler(!isSource);
-
-
-
-                    final QueueReplicationHandler replicationHandler = new
-                            QueueReplicationHandler(!isSource);
-
-                    final String csp = context.fullName() + "?view=" + "Replication";
-                    final WriteMarshallable out = w -> {
-
-                        w.writeDocument(true, m -> {
-                            m.writeEventName(CoreFields.csp).text(csp);
-                            m.writeEventName(CoreFields.cid).int64(uniqueCspId());
-                            m.writeEventName(CoreFields.handler).typedMarshallable(replicationHandler);
-                        });
-
-                        w.writeDocument(false, d -> d.writeEventName(bootstrap)
-                                .int64(lastUpdateTime).writeComment
-                                        ("the-client:localIdentifier=" + localIdentifier + "," +
-                                                "remoteIdentifier=" +
-                                                remoteIdentifier + ",Thread=" + Thread.currentThread
-                                                ().getName() + ",Thread=" + Thread.currentThread().getName()));
-                    };
-
-                    hostDetails.connect(
-                            wireType,
-                            asset,
-                            w -> toHeader(replicationHandler, localIdentifier, remoteIdentifier)
-                                    .writeMarshallable(w),
-                            VanillaWireOutPublisher::new, out);
-
-                    assert localIdentifier != remoteIdentifier : "remoteIdentifier=" + remoteIdentifier;
-
-                } catch (Exception e) {
-                    LOG.error("hostDetails=" + hostDetails, e);
-                }
-            }
-        }*/
-
-
+            return time;
+        }
     }
 
     @NotNull

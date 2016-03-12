@@ -141,7 +141,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
     @Override
     public void nc(EngineWireNetworkContext nc) {
         super.nc(nc);
-        if (wireType() == null)
+        if (wireType() == null && nc.wireType() != null)
             wireType(nc.wireType());
         publisher(nc.wireOutPublisher());
 

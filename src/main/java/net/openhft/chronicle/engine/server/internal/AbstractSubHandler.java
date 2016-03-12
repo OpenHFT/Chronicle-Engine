@@ -13,6 +13,7 @@ public abstract class AbstractSubHandler<T extends NetworkContext> implements Su
     private T nc;
     private long cid;
     private String csp;
+    private byte remoteIdentifier;
 
     @Override
     public void cid(long cid) {
@@ -45,5 +46,14 @@ public abstract class AbstractSubHandler<T extends NetworkContext> implements Su
     @Override
     public void nc(T nc) {
         this.nc = nc;
+    }
+
+    public byte remoteIdentifier() {
+        return remoteIdentifier;
+    }
+
+    @Override
+    public void remoteIdentifier(byte remoteIdentifier) {
+        this.remoteIdentifier = remoteIdentifier;
     }
 }

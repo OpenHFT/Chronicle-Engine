@@ -74,7 +74,7 @@ public abstract class CspTcpHander<T extends NetworkContext> extends WireTcpHand
             lastCid = cid;
             handler = cidToHandle.get(cid);
         } else {
-            throw new IllegalStateException("expecting either csp or cid");
+            throw new IllegalStateException("expecting either csp or cid, event="+event);
         }
 
         return false;

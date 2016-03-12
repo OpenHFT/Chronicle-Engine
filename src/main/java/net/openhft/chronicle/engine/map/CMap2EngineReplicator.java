@@ -339,6 +339,15 @@ public class CMap2EngineReplicator implements EngineReplication,
             value = BytesStore.nativePointer();
         }
 
+        public void clear() {
+            key.isPresent(false);
+            value.isPresent(false);
+            timestamp = 0;
+            identifier = 0;
+            isDeleted = false;
+            bootStrapTimeStamp = 0;
+        }
+
         @Override
         public void readMarshallable(@NotNull WireIn wire) {
             wire.read(() -> "key").bytesSet((PointerBytesStore) key);
