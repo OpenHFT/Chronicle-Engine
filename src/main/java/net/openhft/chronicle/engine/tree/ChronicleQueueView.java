@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 
@@ -207,7 +208,11 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         final ThreadLocalData threadLocalData = threadLocal.get();
         ExcerptTailer excerptTailer = threadLocalData.replayTailer;
 
-        excerptTailer.moveToIndex(index);
+        try {
+            excerptTailer.moveToIndex(index);
+        } catch (TimeoutException e) {
+            return null;
+        }
         try (DocumentContext dc = excerptTailer.readingDocument()) {
             if (!dc.isPresent())
                 return null;

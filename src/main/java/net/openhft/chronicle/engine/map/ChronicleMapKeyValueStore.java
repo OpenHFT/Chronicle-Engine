@@ -443,8 +443,9 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
             if (added) {
                 subscriptions.notifyEvent(InsertedEvent.of(assetFullName, key, newValue, replicationEvent));
             } else {
-                subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, replacedValue,
-                        newValue, replicationEvent, hasValueChanged));
+                if (hasValueChanged)
+                    subscriptions.notifyEvent(UpdatedEvent.of(assetFullName, key, replacedValue,
+                            newValue, replicationEvent, hasValueChanged));
             }
         }
 

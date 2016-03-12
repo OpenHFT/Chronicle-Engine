@@ -253,7 +253,7 @@ public class Replication2WayTest {
         Assert.assertEquals(2, map2Updates.get());
     }
 
-    //@Ignore
+
     @Test
     public void testBootstrapAllFromMap1WithSubscription2() throws InterruptedException {
 
@@ -276,7 +276,10 @@ public class Replication2WayTest {
 
         Thread.sleep(1000);
 
-        tree2.registerSubscriber(name, MapEvent.class, f -> map2Updates.incrementAndGet());
+        tree2.registerSubscriber(name, MapEvent.class, f -> {
+            System.out.println(("f=" + f));
+            map2Updates.incrementAndGet();
+        });
 
         map2.put("hello1", "world1");
         map2.put("hello2", "world2");
@@ -296,9 +299,7 @@ public class Replication2WayTest {
         }
 
         Assert.assertEquals(2, map1Updates.get());
-
-        // todo FIX - we are gettting an extra update
-        // Assert.assertEquals(2, map2Updates.get());
+        Assert.assertEquals(2, map2Updates.get());
     }
 
 }
