@@ -276,10 +276,7 @@ public class Replication2WayTest {
 
         Thread.sleep(1000);
 
-        tree2.registerSubscriber(name, MapEvent.class, f -> {
-            System.out.println(("f=" + f));
-            map2Updates.incrementAndGet();
-        });
+        tree2.registerSubscriber(name, MapEvent.class, f -> map2Updates.incrementAndGet());
 
         map2.put("hello1", "world1");
         map2.put("hello2", "world2");
