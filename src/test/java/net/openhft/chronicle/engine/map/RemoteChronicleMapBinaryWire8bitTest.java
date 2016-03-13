@@ -77,7 +77,7 @@ public class RemoteChronicleMapBinaryWire8bitTest extends JSR166TestCase {
     @NotNull
     private ClosableMapSupplier<Integer, CharSequence> newIntString(@NotNull String name) throws IOException {
         final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(
-                "RemoteChronicleMapBinaryWire8bitTest1.host.port",
+                "Test1.host.port",
                 Integer.class, CharSequence.class, WireType.BINARY, assetTree, name);
 
         return new ClosableMapSupplier() {
@@ -102,7 +102,7 @@ public class RemoteChronicleMapBinaryWire8bitTest extends JSR166TestCase {
             IOException {
 
         final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(
-                "RemoteChronicleMapBinaryWire8bitTest2.host.port",
+                "Test2.host.port",
                 CharSequence.class, CharSequence.class, WireType.BINARY, assetTree, "test");
 
         return new ClosableMapSupplier() {

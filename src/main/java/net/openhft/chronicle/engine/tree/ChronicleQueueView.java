@@ -67,6 +67,10 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         elementTypeClass = context.elementType();
         threadLocal = ThreadLocal.withInitial(() -> new ThreadLocalData(chronicleQueue));
 
+        //replication(context, asset);
+    }
+
+    public void replication(RequestContext context, Asset asset) {
         HostDetails localHostDetails = null;
 
         // source host detail
