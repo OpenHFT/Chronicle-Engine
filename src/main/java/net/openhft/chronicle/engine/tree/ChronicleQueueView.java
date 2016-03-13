@@ -60,6 +60,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     @NotNull
     private final Class<M> elementTypeClass;
     private final ThreadLocal<ThreadLocalData> threadLocal;
+    private AtomicLong uniqueCspid = new AtomicLong();
 
     public ChronicleQueueView(RequestContext context, Asset asset) {
         chronicleQueue = newInstance(context.name(), context.basePath());
@@ -103,7 +104,13 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
                 VanillaWireOutPublisher::new, out);
     }
 
-    private AtomicLong uniqueCspid = new AtomicLong();
+    @NotNull
+    public static String resourcesDir() {
+        String path = ChronicleQueueView.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        if (path == null)
+            return ".";
+        return new File(path).getParentFile().getParentFile() + "/src/test/resources";
+    }
 
     private long uniqueCspId() {
         long time = System.currentTimeMillis();
@@ -124,14 +131,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
             return time;
         }
-    }
-
-    @NotNull
-    public static String resourcesDir() {
-        String path = ChronicleQueueView.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-        if (path == null)
-            return ".";
-        return new File(path).getParentFile().getParentFile() + "/src/test/resources";
     }
 
     @Override
@@ -291,9 +290,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
         try (final DocumentContext dc = excerptAppender.writingDocument()) {
             dc.wire().writeEventName(wireKey).object(message);
-            return excerptAppender.lastIndexAppended();
         }
-
+        return excerptAppender.lastIndexAppended();
     }
 
 

@@ -36,18 +36,19 @@ import static org.junit.Assert.assertEquals;
 @RunWith(value = Parameterized.class)
 public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
+    private static final String NAME = "/test";
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
     static {
         ClassAliasPool.CLASS_ALIASES.addAlias(MyMarshallable.class, "MyMarshallable");
     }
 
-    private static final String NAME = "/test";
-
     private final boolean isRemote;
+    private final WireType wireType;
     @NotNull
     @Rule
     public TestName name = new TestName();
     String methodName = "";
-    private final WireType wireType;
     private AssetTree assetTree;
     private ServerEndpoint serverEndpoint;
 
@@ -71,10 +72,6 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         final Throwable th = t.getAndSet(null);
         if (th != null) Jvm.rethrow(th);
     }
-
-
-    private static AtomicReference<Throwable> t = new AtomicReference();
-
 
     @Before
     public void before() throws IOException {
@@ -156,7 +153,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         assertEquals("Message-1", next.message());
     }
 
-
+    // TODO FIX this test should fail the second time as the messages are retained from the first test.
     @Test
     public void testPublishAtIndexCheckIndex() throws InterruptedException {
 
@@ -170,7 +167,6 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         final Excerpt<String, String> actual = queueView.next();
         assertEquals(index, actual.index());
     }
-
 
     @Test
     public void testStringPublishToATopic() throws InterruptedException {
