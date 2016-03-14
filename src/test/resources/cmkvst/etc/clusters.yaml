@@ -3,13 +3,13 @@ cluster: {
      hostId: 1,
      tcpBufferSize: 65536,
      connectUri: host.port1,
-     timeoutMs: 1000,
+     timeoutMs: 5000,
   },
   host2: {
      hostId: 2,
      tcpBufferSize: 65536,
      connectUri: host.port2,
-     timeoutMs: 1000,
+     timeoutMs: 5000,
   }
 }
 clusterTwo: {
@@ -17,13 +17,13 @@ clusterTwo: {
      hostId: 1,
      tcpBufferSize: 65536,
      connectUri: host.port1,
-     timeoutMs: 1000,
+     timeoutMs: 5000,
   },
   host2: {
      hostId: 2,
      tcpBufferSize: 65536,
      connectUri: host.port2,
-     timeoutMs: 1000,
+     timeoutMs: 5000,
   }
 }
 
@@ -32,19 +32,19 @@ clusterThree: {
      hostId: 1,
      tcpBufferSize: 65536,
      connectUri: clusterThree.host.port1,
-     timeoutMs: 1000,
+     timeoutMs: 5000,
   },
   host2: {
      hostId: 2,
      tcpBufferSize: 65536,
      connectUri: clusterThree.host.port2,
-     timeoutMs: 1000,
+     timeoutMs: 5000,
   }
   host3: {
        hostId: 3,
        tcpBufferSize: 65536,
        connectUri: clusterThree.host.port3,
-       timeoutMs: 1000,
+       timeoutMs: 5000,
     }
 }
 
@@ -55,12 +55,12 @@ clusterPeter: {
      hostId: 1,
      tcpBufferSize: 65536,
      connectUri: "hex:8081",
-     timeoutMs: 1000,
+     timeoutMs: 5000,
   },
   host2: {
      hostId: 2,
      tcpBufferSize: 65536,
      connectUri: "dev:8082",
-     timeoutMs: 1000,
+     timeoutMs: 5000,
   },
 }

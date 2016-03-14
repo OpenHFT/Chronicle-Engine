@@ -72,12 +72,11 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
         final Throwable th = t.getAndSet(null);
-        if (th != null) Jvm.rethrow(th);
+        if (th != null) throw Jvm.rethrow(th);
     }
 
     @Before
     public void before() throws IOException {
-
 
         methodName(name.getMethodName());
         methodName = name.getMethodName().substring(0, name.getMethodName().indexOf('['));

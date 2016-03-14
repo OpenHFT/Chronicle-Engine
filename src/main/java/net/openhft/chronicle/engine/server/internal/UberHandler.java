@@ -34,8 +34,8 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext> implemen
     public UberHandler(byte localIdentifier,
                        byte remoteIdentifier,
                        WireType wireType) {
-        this.remoteIdentifier = remoteIdentifier;
         this.localIdentifier = localIdentifier;
+        this.remoteIdentifier = remoteIdentifier;
         wireType(wireType);
     }
 
@@ -93,7 +93,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext> implemen
                 return;
             }
 
-            if (dc.isData())
+            if (dc.isData() && handler() != null)
                 handler().processData(inWire, outWire);
 
         }

@@ -39,7 +39,7 @@ public class ConfigurationFSTest {
     @After
     public void afterMethod() {
         final Throwable th = t.getAndSet(null);
-        if (th != null) Jvm.rethrow(th);
+        if (th != null) throw Jvm.rethrow(th);
     }
 
     @Test

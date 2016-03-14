@@ -36,6 +36,7 @@ import net.openhft.chronicle.engine.map.remote.RemoteKeyValueStore;
 import net.openhft.chronicle.engine.map.remote.RemoteMapView;
 import net.openhft.chronicle.engine.map.remote.RemoteTopologySubscription;
 import net.openhft.chronicle.engine.pubsub.*;
+import net.openhft.chronicle.engine.query.QueueSource;
 import net.openhft.chronicle.engine.session.VanillaSessionProvider;
 import net.openhft.chronicle.engine.set.RemoteKeySetView;
 import net.openhft.chronicle.engine.set.VanillaKeySetView;
@@ -61,6 +62,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * Created by peter on 22/05/15.
@@ -129,13 +131,17 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     public void forServer(final Consumer<Throwable> onThrowable) {
-        forServer(true, onThrowable);
+        forServer(true, onThrowable, uri -> 1);
     }
 
-    public void forServer(boolean daemon, final Consumer<Throwable> onThrowable) {
+    public void forServer(boolean daemon,
+                          final Consumer<Throwable> onThrowable,
+                          final Function<String, Integer> uriToHostId) {
         standardStack(daemon, onThrowable);
 
         final Asset queue = acquireAsset("queue");
+
+
         queue.addWrappingRule(Publisher.class, LAST + "reference to a ChronicleQueue",
                 QueueReference::new, QueueView.class);
 
@@ -145,7 +151,14 @@ public class VanillaAsset implements Asset, Closeable {
         queue.addLeafRule(ObjectSubscription.class, LAST + " vanilla queue subscription",
                 QueueObjectSubscription::new);
 
-        queue.addLeafRule(QueueView.class, LAST + "chronicle queue", ChronicleQueueView::new);
+        queue.addLeafRule(ObjectSubscription.class, LAST + " vanilla queue subscription",
+                QueueObjectSubscription::new);
+
+
+        addView(QueueSource.class, new QueueSource(uriToHostId));
+
+        final LeafViewFactory<QueueView> aNew = ChronicleQueueView::new;
+        queue.addLeafRule(QueueView.class, LAST + "chronicle queue", aNew);
 
         addWrappingRule(Publisher.class, LAST + "publisher", MapReference::new, MapView.class);
         addWrappingRule(EntrySetView.class, LAST + " entrySet", VanillaEntrySetView::new, MapView.class);

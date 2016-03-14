@@ -48,4 +48,5 @@ public interface QueueView<T, M> extends TopicPublisher<T, M> {
      * @return the index in the chroncile queue the ex
      */
     long publishAndIndex(@NotNull T topic, @NotNull M message);
+
 }
