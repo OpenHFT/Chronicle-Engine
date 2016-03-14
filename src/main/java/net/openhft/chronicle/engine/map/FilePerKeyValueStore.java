@@ -319,8 +319,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
 
             fc.read(dst);
 
-            readingBytes.readPosition(0);
-            readingBytes.readLimit(dst.position());
+            readingBytes.readPositionRemaining(0, dst.position());
             dst.flip();
         }
         readingBytes.reserve();
