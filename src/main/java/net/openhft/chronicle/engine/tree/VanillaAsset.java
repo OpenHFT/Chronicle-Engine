@@ -71,7 +71,7 @@ public class VanillaAsset implements Asset, Closeable {
 
     public static final Comparator<Class> CLASS_COMPARATOR = Comparator.comparing(Class::getName);
     private static final Logger LOG = LoggerFactory.getLogger(VanillaAsset.class);
-    private static final String LAST = "{last}";
+    public static final String LAST = "{last}";
     private static final BiPredicate<RequestContext, Asset> ALWAYS = (rc, asset) -> true;
     final Map<Class, Object> viewMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
     final ConcurrentMap<String, Asset> children = new ConcurrentSkipListMap<>();
@@ -157,8 +157,7 @@ public class VanillaAsset implements Asset, Closeable {
 
         addView(QueueSource.class, new QueueSource(uriToHostId));
 
-        final LeafViewFactory<QueueView> aNew = ChronicleQueueView::new;
-        queue.addLeafRule(QueueView.class, LAST + "chronicle queue", aNew);
+        queue.addLeafRule(QueueView.class, LAST + "chronicle queue", ChronicleQueueView::new);
 
         addWrappingRule(Publisher.class, LAST + "publisher", MapReference::new, MapView.class);
         addWrappingRule(EntrySetView.class, LAST + " entrySet", VanillaEntrySetView::new, MapView.class);

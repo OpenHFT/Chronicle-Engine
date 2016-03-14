@@ -7,6 +7,8 @@ import net.openhft.chronicle.core.threads.EventHandler;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.core.threads.InvalidEventHandlerException;
 import net.openhft.chronicle.engine.api.tree.Asset;
+import net.openhft.chronicle.engine.tree.ChronicleQueueView;
+import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.queue.ChronicleQueue;
@@ -64,14 +66,21 @@ public class QueueReplicationHandler extends AbstractSubHandler<EngineWireNetwor
             if (replicationEvent == null)
                 return;
 
-            final long index = appender.lastIndexAppended();
-            if (replicationEvent.index() - 1 == index) {
+            long index;
+
+            try {
+                index = appender.lastIndexAppended();
+            } catch (Exception ignore) {
+                index = -1;
+            }
+
+            if (replicationEvent.index() > index) {
                 appender.writeBytes(replicationEvent.payload().bytesForRead());
             }
         }
     }
 
-    class ReplicationEvent implements Demarshallable, WriteMarshallable {
+    public static class ReplicationEvent implements Demarshallable, WriteMarshallable {
 
         private final long index;
         private final BytesStore payload;
@@ -101,6 +110,14 @@ public class QueueReplicationHandler extends AbstractSubHandler<EngineWireNetwor
             wire.write(() -> "index").int64(index);
             wire.write(() -> "payload").bytes(payload);
         }
+
+        @Override
+        public String toString() {
+            return "ReplicationEvent{" +
+                    "index=" + index +
+                    ", payload=" + Wires.fromSizePrefixedBlobs(payload.bytesForRead()) +
+                    '}';
+        }
     }
 
     class EventListener implements EventHandler {
@@ -129,17 +146,21 @@ public class QueueReplicationHandler extends AbstractSubHandler<EngineWireNetwor
             if (!publisher.canTakeMoreData())
                 return false;
 
-            final long index = tailer.index();
-
+            long index = tailer.index();
             if (index <= lastIndexReceived)
                 return false;
 
             tailer.readBytes(bytes);
+
+            //    if (bytes.readRemaining()>0)
+            //      System.out.println("");
             lastIndexReceived = tailer.index();
 
-            publisher.put("", new ReplicationEvent(index, bytes));
+            final ReplicationEvent event = new ReplicationEvent(index, bytes);
+            publisher.put("", d -> d.writeDocument(false,
+                    w -> w.writeEventName(() -> "replicationEvent").typedMarshallable
+                            (event)));
             bytes.clear();
-
             return false;
         }
     }
@@ -147,19 +168,22 @@ public class QueueReplicationHandler extends AbstractSubHandler<EngineWireNetwor
 
     @Override
     public void onBootstrap(@NotNull WireOut outWire) {
-        this.eventLoop = rootAsset.findOrCreateView(EventLoop.class);
-        eventLoop.start();
 
         rootAsset = nc().rootAsset();
+        final Asset asset = rootAsset.acquireAsset(csp());
+        final ChronicleQueueView chronicleQueueView = (ChronicleQueueView) asset.acquireView(QueueView
+                .class);
+        final ChronicleQueue chronicleQueue = chronicleQueueView.chronicleQueue();
+        appender = chronicleQueue.createAppender();
+
+        assert appender != null;
 
         if (!isSource)
             return;
 
-        final Asset asset = rootAsset.acquireAsset(csp());
-        final ChronicleQueue q = asset.acquireView(ChronicleQueue.class);
-        final ExcerptTailer tailer = q.createTailer();
-        appender = q.createAppender();
-        eventLoop.addHandler(new EventListener(tailer, nc().wireOutPublisher()));
+
+        eventLoop = rootAsset.findOrCreateView(EventLoop.class);
+        eventLoop.start();
 
         outWire.writeDocument(true, d -> {
 
@@ -171,6 +195,10 @@ public class QueueReplicationHandler extends AbstractSubHandler<EngineWireNetwor
                     .writeEventName(CoreFields.handler).typedMarshallable(handler);
         });
 
+        //  }
+
+        LOG.info("chronicleQueue=" + chronicleQueue.hashCode());
+        eventLoop.addHandler(new EventListener(chronicleQueue.createTailer(), nc().wireOutPublisher()));
         logYaml(outWire);
     }
 

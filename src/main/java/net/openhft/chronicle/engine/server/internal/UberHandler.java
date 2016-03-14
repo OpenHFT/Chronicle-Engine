@@ -34,8 +34,12 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext> implemen
     public UberHandler(byte localIdentifier,
                        byte remoteIdentifier,
                        WireType wireType) {
+        assert remoteIdentifier != localIdentifier :
+                "remoteIdentifier=" + remoteIdentifier + ", " +
+                        "localIdentifier=" + localIdentifier;
         this.localIdentifier = localIdentifier;
         this.remoteIdentifier = remoteIdentifier;
+
         wireType(wireType);
     }
 
@@ -59,6 +63,11 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext> implemen
 
         if (hostIdentifier != null)
             localIdentifier = hostIdentifier.hostId();
+
+
+        assert remoteIdentifier != localIdentifier :
+                "remoteIdentifier=" + remoteIdentifier + ", " +
+                        "localIdentifier=" + localIdentifier;
 
         publisher(nc.wireOutPublisher());
 

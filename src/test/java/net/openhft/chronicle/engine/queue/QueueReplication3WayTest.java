@@ -5,24 +5,25 @@ import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.ChronicleMapKeyValueStoreTest;
 import net.openhft.chronicle.engine.VanillaAssetTreeEgMain;
-import net.openhft.chronicle.engine.api.EngineReplication;
-import net.openhft.chronicle.engine.api.map.KeyValueStore;
-import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
+import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.fs.ChronicleMapGroupFS;
 import net.openhft.chronicle.engine.fs.FilePerKeyGroupFS;
-import net.openhft.chronicle.engine.map.CMap2EngineReplicator;
-import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
-import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
+import net.openhft.chronicle.engine.tree.ChronicleQueueView;
+import net.openhft.chronicle.engine.tree.QueueView;
+import net.openhft.chronicle.engine.tree.VanillaAsset;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -40,6 +41,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.engine.Utils.methodName;
+import static net.openhft.chronicle.engine.queue.SimpleQueueViewTest.deleteFile;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -116,6 +118,8 @@ public class QueueReplication3WayTest {
 
     @After
     public void after() throws IOException, InterruptedException {
+
+
         if (serverEndpoint1 != null)
             serverEndpoint1.close();
         if (serverEndpoint2 != null)
@@ -123,12 +127,22 @@ public class QueueReplication3WayTest {
         if (serverEndpoint3 != null)
             serverEndpoint3.close();
 
-        if (tree1 != null)
-            tree1.close();
-        if (tree2 != null)
-            tree2.close();
-        if (tree3 != null)
-            tree3.close();
+
+        for (AssetTree tree : new AssetTree[]{tree1, tree2, tree3}) {
+            if (tree == null)
+                continue;
+
+            try {
+                final ChronicleQueueView queueView = (ChronicleQueueView) tree.acquireAsset("/queue/" + methodName).acquireView(QueueView.class);
+                final File path = queueView.chronicleQueue().path();
+                System.out.println("path=" + path);
+                deleteFile(path);
+            } catch (Exception ignore) {
+
+            }
+            tree.close();
+        }
+
 
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
@@ -140,15 +154,10 @@ public class QueueReplication3WayTest {
         AssetTree tree = new VanillaAssetTree((byte) hostId)
                 .forTesting(x -> t.compareAndSet(null, x))
                 .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);
+        final Asset queue = tree.root().acquireAsset("queue");
+        queue.addLeafRule(QueueView.class, VanillaAsset.LAST + "chronicle queue", (context, asset) ->
+                new ChronicleQueueView(context.wireType(writeType).cluster(clusterTwo), asset));
 
-        tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
-                VanillaMapView::new,
-                KeyValueStore.class);
-        tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
-                CMap2EngineReplicator::new);
-        tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
-                new ChronicleMapKeyValueStore(context.wireType(writeType).cluster(clusterTwo),
-                        asset));
 
         VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
 
@@ -169,34 +178,40 @@ public class QueueReplication3WayTest {
         if (th != null) throw Jvm.rethrow(th);
     }
 
-    @Ignore
+
     @Test
     public void testThreeWay() throws InterruptedException {
         YamlLogging.setAll(true);
 
         String uri = "/queue/" + methodName;
-        String messageType = "topic";
 
-        Publisher<String> publisher = tree1.acquirePublisher(uri + "/" + messageType, String.class);
+
+        Publisher<String> publisher = tree1.acquirePublisher(uri, String.class);
 
         BlockingQueue<String> tree2Values = new ArrayBlockingQueue<>(10);
         BlockingQueue<String> tree3Values = new ArrayBlockingQueue<>(10);
 
         {
-            tree2.registerTopicSubscriber(uri, String.class, String.class, (topic, message) -> {
-                tree2Values.add(topic + " " + message);
+            tree2.registerSubscriber(uri, String.class, message -> {
+                tree2Values.add(message);
             });
 
-            tree3.registerTopicSubscriber(uri, String.class, String.class, (topic, message) -> {
-                tree3Values.add(topic + " " + message);
+            tree3.registerSubscriber(uri, String.class, message -> {
+                tree3Values.add(message);
             });
+
         }
 
         publisher.publish("Message-1");
 
-        assertEquals("topic Message-1", tree2Values.poll(10, SECONDS));
-        assertEquals("topic Message-1", tree3Values.poll(10, SECONDS));
+        Thread.sleep(1000);
+
+        assertEquals("Message-1", tree2Values.poll(2, SECONDS));
+        assertEquals("Message-1", tree3Values.poll(2, SECONDS));
+
 
     }
+
+
 }
 

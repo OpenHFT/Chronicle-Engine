@@ -115,7 +115,6 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     @After
     public void after() throws Throwable {
 
-
         // clear the directory by deleting in at re-creating it.
         final File file = new File(ChronicleQueueView.DEFAULT_BASE_PATH);
         deleteFile(file);

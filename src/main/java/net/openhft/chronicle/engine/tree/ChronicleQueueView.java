@@ -37,7 +37,6 @@ import java.util.function.BiConsumer;
 
 import static net.openhft.chronicle.network.HeaderTcpHandler.toHeader;
 import static net.openhft.chronicle.network.connection.CoreFields.cid;
-import static net.openhft.chronicle.wire.WireType.TEXT;
 
 /**
  * @author Rob Austin.
@@ -50,7 +49,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     static {
         String dir = "/tmp";
         try {
-            final Path tempDirectory = Files.createTempDirectory("engine-queue");
+            final Path tempDirectory = Files.createTempDirectory("engine-queue-");
             dir = tempDirectory.toAbsolutePath().toString();
         } catch (Exception ignore) {
         }
@@ -64,15 +63,22 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     private final Class<M> elementTypeClass;
     private final ThreadLocal<ThreadLocalData> threadLocal;
     private AtomicLong uniqueCspid = new AtomicLong();
-    private boolean isSource;
+
 
     public ChronicleQueueView(RequestContext context, Asset asset) {
-        chronicleQueue = newInstance(context.name(), context.basePath());
+        final HostIdentifier hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
+        chronicleQueue = newInstance(context.name(), context.basePath(), hostIdentifier.hostId());
         messageTypeClass = context.messageType();
         elementTypeClass = context.elementType();
+        LOG.info("context=" + context.name() + ", chronicleQueue=" + chronicleQueue);
         threadLocal = ThreadLocal.withInitial(() -> new ThreadLocalData(chronicleQueue));
 
-        //replication(context, asset);
+        replication(context, asset);
+    }
+
+
+    public ChronicleQueue chronicleQueue() {
+        return chronicleQueue;
     }
 
     public void replication(RequestContext context, Asset asset) {
@@ -96,11 +102,17 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         final HostDetails sourceHostDetails = hostDetails(sourceHostId, asset, context);
 
         final UberHandler handler = new UberHandler(
-                (byte) sourceHostId,
                 hostIdentifier.hostId(),
+                (byte) sourceHostId,
                 context.wireType());
 
-        final long lastIndexReceived = threadLocalAppender().lastIndexAppended();
+        long lastIndexReceived = -1;
+        try {
+            lastIndexReceived = threadLocalAppender().lastIndexAppended();
+        } catch (IllegalStateException ignore) {
+
+        }
+
         final QueueReplicationHandler h = new QueueReplicationHandler(lastIndexReceived, true);
 
         final String csp = context.fullName();
@@ -110,7 +122,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
                         .writeEventName(CoreFields.handler).typedMarshallable(h));
 
         sourceHostDetails.connect(
-                TEXT,
+                context.wireType(),
                 asset,
                 w -> toHeader(handler).writeMarshallable(w),
                 VanillaWireOutPublisher::new, out);
@@ -166,11 +178,11 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         throw new UnsupportedOperationException("todo");
     }
 
-    private ChronicleQueue newInstance(String name, @Nullable String basePath) {
+    private ChronicleQueue newInstance(String name, @Nullable String basePath, int hostID) {
         ChronicleQueue chronicleQueue;
 
         if (basePath == null)
-            basePath = DEFAULT_BASE_PATH;
+            basePath = DEFAULT_BASE_PATH + "/" + hostID;
 
         File baseFilePath;
         try {
