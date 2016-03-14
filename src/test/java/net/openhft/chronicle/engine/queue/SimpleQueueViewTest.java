@@ -6,6 +6,7 @@ import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
+import net.openhft.chronicle.engine.tree.ChronicleQueueView;
 import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.engine.tree.QueueView.Excerpt;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
@@ -19,6 +20,7 @@ import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -75,6 +77,8 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
     @Before
     public void before() throws IOException {
+
+
         methodName(name.getMethodName());
         methodName = name.getMethodName().substring(0, name.getMethodName().indexOf('['));
 
@@ -100,8 +104,24 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     }
 
 
+    public static void deleteFile(File element) {
+        if (element.isDirectory()) {
+            for (File sub : element.listFiles()) {
+                deleteFile(sub);
+            }
+        }
+        element.delete();
+    }
+
     @After
     public void after() throws Throwable {
+
+
+        // clear the directory by deleting in at re-creating it.
+        final File file = new File(ChronicleQueueView.DEFAULT_BASE_PATH);
+        deleteFile(file);
+        file.mkdirs();
+
         final Throwable tr = t.getAndSet(null);
 
         if (tr != null)

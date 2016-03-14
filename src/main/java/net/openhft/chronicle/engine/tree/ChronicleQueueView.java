@@ -41,7 +41,7 @@ import static net.openhft.chronicle.wire.WireType.TEXT;
  */
 public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
-    private static final String DEFAULT_BASE_PATH;
+    public static final String DEFAULT_BASE_PATH;
     private static final Logger LOG = LoggerFactory.getLogger(ChronicleQueueView.class);
 
     static {
@@ -159,6 +159,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
         if (basePath == null)
             basePath = DEFAULT_BASE_PATH;
+
         File baseFilePath;
         try {
             baseFilePath = new File(basePath, name);
