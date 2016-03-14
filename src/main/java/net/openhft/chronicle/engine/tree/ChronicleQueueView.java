@@ -9,7 +9,10 @@ import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.fs.Cluster;
+import net.openhft.chronicle.engine.fs.Clusters;
 import net.openhft.chronicle.engine.fs.HostDetails;
+import net.openhft.chronicle.engine.query.QueueSource;
 import net.openhft.chronicle.engine.server.internal.QueueReplicationHandler;
 import net.openhft.chronicle.engine.server.internal.UberHandler;
 import net.openhft.chronicle.network.connection.CoreFields;
@@ -61,6 +64,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     private final Class<M> elementTypeClass;
     private final ThreadLocal<ThreadLocalData> threadLocal;
     private AtomicLong uniqueCspid = new AtomicLong();
+    private boolean isSource;
 
     public ChronicleQueueView(RequestContext context, Asset asset) {
         chronicleQueue = newInstance(context.name(), context.basePath());
@@ -72,21 +76,29 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     }
 
     public void replication(RequestContext context, Asset asset) {
-        HostDetails localHostDetails = null;
+        final QueueSource queueSource;
+        final HostIdentifier hostIdentifier;
 
-        // source host detail
-        HostDetails source = new HostDetails();
+        try {
+            hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
+            queueSource = asset.findView(QueueSource.class);
+        } catch (AssetNotFoundException anfe) {
+            if (LOG.isDebugEnabled())
+                LOG.debug("replication not enabled " + anfe.getMessage());
+            return;
+        }
 
-        if (localHostDetails == null)
+        final int sourceHostId = queueSource.sourceHostId(context.fullName());
+
+        if (hostIdentifier.hostId() == sourceHostId)
             return;
 
-        if (localHostDetails == source)
-            // we are the source, we would not want to copy to our self
-            return;
+        final HostDetails sourceHostDetails = hostDetails(sourceHostId, asset, context);
 
         final UberHandler handler = new UberHandler(
-                (byte) localHostDetails.hostId,
-                (byte) source.hostId, context.wireType());
+                (byte) sourceHostId,
+                hostIdentifier.hostId(),
+                context.wireType());
 
         final long lastIndexReceived = threadLocalAppender().lastIndexAppended();
         final QueueReplicationHandler h = new QueueReplicationHandler(lastIndexReceived, true);
@@ -97,7 +109,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
                         .writeEventName(cid).int64(uniqueCspId())
                         .writeEventName(CoreFields.handler).typedMarshallable(h));
 
-        localHostDetails.connect(
+        sourceHostDetails.connect(
                 TEXT,
                 asset,
                 w -> toHeader(handler).writeMarshallable(w),
@@ -295,7 +307,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         return excerptAppender.lastIndexAppended();
     }
 
-
     public long set(@NotNull M event) {
         final ExcerptAppender excerptAppender = threadLocalAppender();
         excerptAppender.writeDocument(w -> w.writeEventName(() -> "").object(event));
@@ -307,16 +318,13 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     }
 
     @NotNull
-
     public File path() {
         throw new UnsupportedOperationException("todo");
     }
 
-
     public long firstIndex() {
         return chronicleQueue.firstIndex();
     }
-
 
     public long lastIndex() {
         return chronicleQueue.lastIndex();
@@ -414,6 +422,22 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
             replayTailer = chronicleQueue.createTailer();
             excerpt = new LocalExcept();
         }
+    }
+
+
+    private HostDetails hostDetails(int hostId, Asset asset, RequestContext context) {
+
+        Clusters clusters = asset.findView(Clusters.class);
+        final Cluster cluster = clusters.get(context.cluster());
+
+
+        for (HostDetails hostDetails : cluster.hostDetails()) {
+            if (hostDetails.hostId == hostId)
+                return hostDetails;
+        }
+
+        throw new IllegalStateException("HostId not found, hostId=" + hostId);
+
     }
 
 }

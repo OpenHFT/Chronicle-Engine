@@ -68,7 +68,7 @@ public class ReferenceTest {
     @After
     public void afterMethod() {
         final Throwable th = t.getAndSet(null);
-        if (th != null) Jvm.rethrow(th);
+        if (th != null) throw Jvm.rethrow(th);
     }
 
     @Before
@@ -100,7 +100,7 @@ public class ReferenceTest {
         //TCPRegistry.assertAllServersStopped();
 
         final Throwable th = t.getAndSet(null);
-        if (th != null) Jvm.rethrow(th);
+        if (th != null) throw Jvm.rethrow(th);
     }
 
     @Test

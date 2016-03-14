@@ -44,7 +44,7 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     @After
     public void afterMethod() {
         final Throwable th = t.getAndSet(null);
-        if (th != null) Jvm.rethrow(th);
+        if (th != null) throw Jvm.rethrow(th);
     }
 
     private static int s_port = 11050;

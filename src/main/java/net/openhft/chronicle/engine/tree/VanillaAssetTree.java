@@ -98,7 +98,7 @@ public class VanillaAssetTree implements AssetTree {
 
     @NotNull
     public VanillaAssetTree forServer(boolean daemon, @NotNull final Consumer<Throwable> onThrowable) {
-        root.forServer(daemon, onThrowable);
+        root.forServer(daemon, onThrowable, uri -> 1);
         return this;
     }
 

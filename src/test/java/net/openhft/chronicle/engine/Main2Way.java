@@ -142,7 +142,7 @@ public class Main2Way {
     @After
     public void afterMethod() {
         final Throwable th = t.getAndSet(null);
-        if (th != null) Jvm.rethrow(th);
+        if (th != null) throw Jvm.rethrow(th);
     }
 
     public void test() throws InterruptedException, IOException {
