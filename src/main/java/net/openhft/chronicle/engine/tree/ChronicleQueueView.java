@@ -63,7 +63,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     private final Class<M> elementTypeClass;
     private final ThreadLocal<ThreadLocalData> threadLocal;
     private AtomicLong uniqueCspid = new AtomicLong();
-
+    private boolean isSource;
+    private boolean isReplicating;
 
     public ChronicleQueueView(RequestContext context, Asset asset) {
         final HostIdentifier hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
@@ -86,6 +87,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     }
 
     public void replication(RequestContext context, Asset asset) {
+        isReplicating = true;
         final QueueSource queueSource;
         final HostIdentifier hostIdentifier;
 
@@ -100,8 +102,10 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
         final int sourceHostId = queueSource.sourceHostId(context.fullName());
 
-        if (hostIdentifier.hostId() == sourceHostId)
+        if (hostIdentifier.hostId() == sourceHostId) {
+            isSource = true;
             return;
+        }
 
         final HostDetails sourceHostDetails = hostDetails(sourceHostId, asset, context);
 
@@ -199,14 +203,11 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         return chronicleQueue;
     }
 
-
     private ExcerptTailer threadLocalTailer() {
         return threadLocal.get().tailer;
     }
 
-
-    //  @Override
-    public ExcerptAppender threadLocalAppender() {
+    private ExcerptAppender threadLocalAppender() {
         return threadLocal.get().appender;
     }
 
@@ -314,6 +315,11 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
 
     public long publishAndIndex(@NotNull T topic, @NotNull M message) {
+
+        if (isReplicating && !isSource)
+            throw new IllegalStateException("You can not publish to a sink used in replication, " +
+                    "you have to publish to the source");
+
         final WireKey wireKey = topic instanceof WireKey ? (WireKey) topic : topic::toString;
         final ExcerptAppender excerptAppender = threadLocalAppender();
 
@@ -324,6 +330,9 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     }
 
     public long set(@NotNull M event) {
+        if (isReplicating && !isSource)
+            throw new IllegalStateException("You can not publish to a sink used in replication, " +
+                    "you have to publish to the source");
         final ExcerptAppender excerptAppender = threadLocalAppender();
         excerptAppender.writeDocument(w -> w.writeEventName(() -> "").object(event));
         return excerptAppender.lastIndexAppended();

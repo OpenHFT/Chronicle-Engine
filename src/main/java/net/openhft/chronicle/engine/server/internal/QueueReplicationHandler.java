@@ -24,8 +24,8 @@ import static net.openhft.chronicle.network.WireTcpHandler.logYaml;
 /**
  * Created by Rob Austin
  */
-public class QueueReplicationHandler extends AbstractSubHandler<EngineWireNetworkContext> implements
-        Demarshallable, WriteMarshallable {
+public class QueueReplicationHandler extends AbstractSubHandler<EngineWireNetworkContext>
+        implements Demarshallable, WriteMarshallable {
 
     private static final Logger LOG = LoggerFactory.getLogger(QueueReplicationHandler.class);
     private final boolean isSource;
@@ -56,6 +56,9 @@ public class QueueReplicationHandler extends AbstractSubHandler<EngineWireNetwor
     @Override
     public void processData(@NotNull WireIn inWire, @NotNull WireOut outWire) {
 
+        if (closed)
+            return;
+
         final StringBuilder eventName = Wires.acquireStringBuilder();
         final ValueIn valueIn = inWire.readEventName(eventName);
 
@@ -74,8 +77,12 @@ public class QueueReplicationHandler extends AbstractSubHandler<EngineWireNetwor
                 index = -1;
             }
 
-            if (replicationEvent.index() > index) {
+            if (index == -1)
                 appender.writeBytes(replicationEvent.payload().bytesForRead());
+            else if (replicationEvent.index() - 1 == index) {
+                appender.writeBytes(replicationEvent.payload().bytesForRead());
+            } else {
+                LOG.error("replication failed due to out of order indexes");
             }
         }
     }
@@ -152,9 +159,13 @@ public class QueueReplicationHandler extends AbstractSubHandler<EngineWireNetwor
 
             tailer.readBytes(bytes);
 
+            if (bytes.readRemaining() == 0)
+                return false;
+
             //    if (bytes.readRemaining()>0)
             //      System.out.println("");
             lastIndexReceived = tailer.index();
+
 
             final ReplicationEvent event = new ReplicationEvent(index, bytes);
             publisher.put("", d -> d.writeDocument(false,
@@ -180,7 +191,6 @@ public class QueueReplicationHandler extends AbstractSubHandler<EngineWireNetwor
 
         if (!isSource)
             return;
-
 
         eventLoop = rootAsset.findOrCreateView(EventLoop.class);
         eventLoop.start();

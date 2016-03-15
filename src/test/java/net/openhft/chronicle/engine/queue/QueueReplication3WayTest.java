@@ -208,10 +208,6 @@ public class QueueReplication3WayTest {
 
         assertEquals("Message-1", tree2Values.poll(2, SECONDS));
         assertEquals("Message-1", tree3Values.poll(2, SECONDS));
-
-
     }
-
-
 }
 
