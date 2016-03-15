@@ -173,7 +173,6 @@ public class HostDetails implements Marshallable, Closeable {
                     throw new IllegalStateException("serverEndpoint not found");
 
                 wireOutPublisher.wireType(wireType);
-
                 wireOutPublisher.put("", onSendHeader::accept);
 
                 for (WriteMarshallable bootstrap : bootstraps) {

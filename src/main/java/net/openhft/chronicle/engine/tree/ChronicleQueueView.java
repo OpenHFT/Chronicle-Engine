@@ -80,6 +80,19 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     }
 
 
+    public ChronicleQueueView(ChronicleQueue queue, RequestContext context, Asset asset) {
+        final HostIdentifier hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
+        final Byte hostId = hostIdentifier == null ? null : hostIdentifier.hostId();
+        chronicleQueue = queue;
+        messageTypeClass = context.messageType();
+        elementTypeClass = context.elementType();
+        LOG.info("context=" + context.name() + ", chronicleQueue=" + chronicleQueue);
+        threadLocal = ThreadLocal.withInitial(() -> new ThreadLocalData(chronicleQueue));
+
+        if (hostId != null)
+            replication(context, asset);
+    }
+
     public ChronicleQueue chronicleQueue() {
         return chronicleQueue;
     }
@@ -98,20 +111,20 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
             return;
         }
 
-        final int remoteSourceIdentifer = queueSource.sourceHostId(context.fullName());
+        final int remoteSourceIdentifier = queueSource.sourceHostId(context.fullName());
 
-        if (hostIdentifier.hostId() == remoteSourceIdentifer) {
+        if (hostIdentifier.hostId() == remoteSourceIdentifier) {
             isSource = true;
             return;
         }
 
         isReplicating = true;
 
-        final HostDetails remoteSourceHostDetails = hostDetails(remoteSourceIdentifer, asset, context);
+        final HostDetails remoteSourceHostDetails = hostDetails(remoteSourceIdentifier, asset, context);
 
         final UberHandler handler = new UberHandler(
                 hostIdentifier.hostId(),
-                (byte) remoteSourceIdentifer,
+                (byte) remoteSourceIdentifier,
                 context.wireType());
 
         long lastIndexReceived = -1;

@@ -20,6 +20,8 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.TimeoutException;
+
 import static net.openhft.chronicle.network.WireTcpHandler.logYaml;
 
 /**
@@ -36,6 +38,7 @@ public class QueueReplicationHandler extends AbstractSubHandler<EngineWireNetwor
     private Asset rootAsset;
     private ExcerptAppender appender;
     private boolean closed;
+    private ChronicleQueueView chronicleQueueView;
 
     @UsedViaReflection
     private QueueReplicationHandler(WireIn wire) {
@@ -80,7 +83,7 @@ public class QueueReplicationHandler extends AbstractSubHandler<EngineWireNetwor
 
             if (index == -1)
                 appender.writeBytes(replicationEvent.payload().bytesForRead());
-            else if (replicationEvent.index() - 1 == index) {
+            else if (replicationEvent.index() < index) {
                 appender.writeBytes(replicationEvent.payload().bytesForRead());
             } else {
                 LOG.error("replication failed due to out of order indexes");
@@ -186,7 +189,7 @@ public class QueueReplicationHandler extends AbstractSubHandler<EngineWireNetwor
 
         rootAsset = nc().rootAsset();
         final Asset asset = rootAsset.acquireAsset(csp());
-        final ChronicleQueueView chronicleQueueView = (ChronicleQueueView) asset.acquireView(QueueView
+        chronicleQueueView = (ChronicleQueueView) asset.acquireView(QueueView
                 .class);
         final ChronicleQueue chronicleQueue = chronicleQueueView.chronicleQueue();
         appender = chronicleQueue.createAppender();
@@ -210,7 +213,15 @@ public class QueueReplicationHandler extends AbstractSubHandler<EngineWireNetwor
         });
 
 
-        eventLoop.addHandler(new EventListener(chronicleQueue.createTailer(), nc().wireOutPublisher()));
+        final ExcerptTailer tailer = chronicleQueue.createTailer();
+        if (lastIndexReceived > 0)
+            try {
+                tailer.moveToIndex(lastIndexReceived);
+            } catch (TimeoutException e) {
+                LOG.error("", e);
+            }
+
+        eventLoop.addHandler(new EventListener(tailer, nc().wireOutPublisher()));
         logYaml(outWire);
     }
 

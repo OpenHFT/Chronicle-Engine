@@ -63,9 +63,6 @@ public class QueueReplication3WayTest {
             list.add(new Object[]{WireType.BINARY});
         }
 
-        //list.add(new Object[]{WireType.BINARY});
-        // list.add(new Object[]{WireType.TEXT});
-        //   list.add(new Object[]{WireType.TEXT});
         return list;
     }
 
@@ -127,7 +124,6 @@ public class QueueReplication3WayTest {
             serverEndpoint2.close();
         if (serverEndpoint3 != null)
             serverEndpoint3.close();
-
 
         for (AssetTree tree : new AssetTree[]{tree1, tree2, tree3}) {
             if (tree == null)
