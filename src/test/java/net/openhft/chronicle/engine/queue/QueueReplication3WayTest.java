@@ -6,6 +6,7 @@ import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.ChronicleMapKeyValueStoreTest;
 import net.openhft.chronicle.engine.VanillaAssetTreeEgMain;
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
+import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.fs.ChronicleMapGroupFS;
@@ -191,16 +192,14 @@ public class QueueReplication3WayTest {
         BlockingQueue<String> tree2Values = new ArrayBlockingQueue<>(10);
         BlockingQueue<String> tree3Values = new ArrayBlockingQueue<>(10);
 
-        {
-            tree2.registerSubscriber(uri, String.class, message -> {
-                tree2Values.add(message);
-            });
+        tree2.registerSubscriber(uri, String.class, message -> {
+            tree2Values.add(message);
+        });
 
-            tree3.registerSubscriber(uri, String.class, message -> {
-                tree3Values.add(message);
-            });
+        tree3.registerSubscriber(uri, String.class, message -> {
+            tree3Values.add(message);
+        });
 
-        }
 
         publisher.publish("Message-1");
 
@@ -209,5 +208,37 @@ public class QueueReplication3WayTest {
         assertEquals("Message-1", tree2Values.poll(2, SECONDS));
         assertEquals("Message-1", tree3Values.poll(2, SECONDS));
     }
+
+    @Test
+    public void testStringTopicPublisherString() throws InterruptedException {
+        String uri = "/queue/" + methodName;
+        String messageType = "topic";
+        TopicPublisher<String, String> publisher = tree1.acquireTopicPublisher(uri, String.class, String.class);
+        BlockingQueue<String> tree2Values = new ArrayBlockingQueue<>(10);
+        BlockingQueue<String> tree3Values = new ArrayBlockingQueue<>(10);
+
+        tree2.registerTopicSubscriber(uri, String.class, String.class, (topic, message) ->
+                tree2Values.add(topic + " " + message));
+
+        tree3.registerTopicSubscriber(uri, String.class, String.class, (topic, message) ->
+                tree3Values.add(topic + " " + message));
+
+        Thread.sleep(500);
+        publisher.publish(messageType, "Message-1");
+        assertEquals("topic Message-1", tree2Values.poll(2, SECONDS));
+        assertEquals("topic Message-1", tree3Values.poll(3, SECONDS));
+    }
+
+    @Test(expected = java.lang.IllegalStateException.class)
+    public void testPublishingToSycnThrowsError() throws InterruptedException {
+        String uri = "/queue/" + methodName;
+        String messageType = "topic";
+        TopicPublisher<String, String> publisher = tree2.acquireTopicPublisher(uri, String.class,
+                String.class);
+
+        publisher.publish(messageType, "Message-1");
+
+    }
+
 }
 

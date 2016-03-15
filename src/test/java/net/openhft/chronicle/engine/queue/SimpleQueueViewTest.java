@@ -3,7 +3,10 @@ package net.openhft.chronicle.engine.queue;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
-import net.openhft.chronicle.engine.api.pubsub.*;
+import net.openhft.chronicle.engine.api.pubsub.Publisher;
+import net.openhft.chronicle.engine.api.pubsub.Subscriber;
+import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
+import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.ChronicleQueueView;
@@ -225,7 +228,6 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     }
 
     @Test
-
     public void testStringTopicPublisherString() throws InterruptedException {
         String uri = "/queue/" + methodName;
         String messageType = "topic";
@@ -260,7 +262,6 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         assertEquals("topic Message-1", values.poll(20, SECONDS));
     }
 
-
     @Test
     public void testStringPublishWithIndex() throws InterruptedException, IOException {
 
@@ -279,19 +280,12 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         assertEquals("Message-1", excerpt.message());
     }
 
-
     @Test
     public void testMarshablePublishToATopic() throws InterruptedException {
         String uri = "/queue/testMarshablePublishToATopic";
         Publisher<MyMarshallable> publisher = assetTree.acquirePublisher(uri, MyMarshallable.class);
         BlockingQueue<MyMarshallable> values2 = new ArrayBlockingQueue<>(10);
-        assetTree.registerSubscriber(uri, MyMarshallable.class, new Subscriber<MyMarshallable>() {
-            @Override
-            public void onMessage(MyMarshallable e) throws InvalidSubscriberException {
-
-                values2.add(e);
-            }
-        });
+        assetTree.registerSubscriber(uri, MyMarshallable.class, values2::add);
         publisher.publish(new MyMarshallable("Message-1"));
 
         assertEquals("Message-1", values2.poll(5, SECONDS).toString());
