@@ -67,13 +67,17 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
     public ChronicleQueueView(RequestContext context, Asset asset) {
         final HostIdentifier hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
-        chronicleQueue = newInstance(context.name(), context.basePath(), hostIdentifier.hostId());
+        final Byte hostId = hostIdentifier == null ?
+                null :
+                hostIdentifier.hostId();
+        chronicleQueue = newInstance(context.name(), context.basePath(), hostId);
         messageTypeClass = context.messageType();
         elementTypeClass = context.elementType();
         LOG.info("context=" + context.name() + ", chronicleQueue=" + chronicleQueue);
         threadLocal = ThreadLocal.withInitial(() -> new ThreadLocalData(chronicleQueue));
 
-        replication(context, asset);
+        if (hostId != null)
+            replication(context, asset);
     }
 
 
@@ -178,7 +182,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         throw new UnsupportedOperationException("todo");
     }
 
-    private ChronicleQueue newInstance(String name, @Nullable String basePath, int hostID) {
+    private ChronicleQueue newInstance(String name, @Nullable String basePath, @Nullable Byte hostID) {
         ChronicleQueue chronicleQueue;
 
         if (basePath == null)
