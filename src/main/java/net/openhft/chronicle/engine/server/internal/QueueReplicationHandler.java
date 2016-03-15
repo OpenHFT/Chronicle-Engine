@@ -162,10 +162,7 @@ public class QueueReplicationHandler extends AbstractSubHandler<EngineWireNetwor
             if (bytes.readRemaining() == 0)
                 return false;
 
-            //    if (bytes.readRemaining()>0)
-            //      System.out.println("");
             lastIndexReceived = tailer.index();
-
 
             final ReplicationEvent event = new ReplicationEvent(index, bytes);
             publisher.put("", d -> d.writeDocument(false,
@@ -205,9 +202,7 @@ public class QueueReplicationHandler extends AbstractSubHandler<EngineWireNetwor
                     .writeEventName(CoreFields.handler).typedMarshallable(handler);
         });
 
-        //  }
 
-        LOG.info("chronicleQueue=" + chronicleQueue.hashCode());
         eventLoop.addHandler(new EventListener(chronicleQueue.createTailer(), nc().wireOutPublisher()));
         logYaml(outWire);
     }

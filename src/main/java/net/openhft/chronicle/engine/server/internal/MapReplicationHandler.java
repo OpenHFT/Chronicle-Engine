@@ -99,7 +99,7 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
         if (mi != null)
             mi.dirtyEntries(timestamp);
 
-        if (nc().isAcceptor()) {
+        if (remoteIdentifier() < localIdentifier) {
 
             outWire.writeDocument(true, d -> {
 
