@@ -5,6 +5,7 @@ import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.annotation.UsedViaReflection;
 import net.openhft.chronicle.core.threads.EventHandler;
 import net.openhft.chronicle.core.threads.EventLoop;
+import net.openhft.chronicle.core.threads.HandlerPriority;
 import net.openhft.chronicle.core.threads.InvalidEventHandlerException;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.tree.ChronicleQueueView;
@@ -129,6 +130,7 @@ public class QueueReplicationHandler extends AbstractSubHandler<EngineWireNetwor
 
     class EventListener implements EventHandler {
 
+
         @NotNull
         final Bytes bytes = Bytes.elasticByteBuffer();
 
@@ -170,6 +172,11 @@ public class QueueReplicationHandler extends AbstractSubHandler<EngineWireNetwor
                             (event)));
             bytes.clear();
             return false;
+        }
+
+        @Override
+        public HandlerPriority priority() {
+            return HandlerPriority.REPLICATION;
         }
     }
 

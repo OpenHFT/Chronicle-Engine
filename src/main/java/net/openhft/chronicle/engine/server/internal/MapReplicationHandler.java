@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.lang.ThreadLocal.withInitial;
 import static net.openhft.chronicle.engine.server.internal.MapReplicationHandler.EventId.replicationEvent;
 import static net.openhft.chronicle.network.WireTcpHandler.logYaml;
 import static net.openhft.chronicle.network.connection.CoreFields.lastUpdateTime;
@@ -38,7 +39,6 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
     private Asset rootAsset;
     private volatile boolean closed;
 
-
     @UsedViaReflection
     private MapReplicationHandler(WireIn wire) {
         timestamp = wire.read(() -> "timestamp").int8();
@@ -53,8 +53,7 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
         wire.write(() -> "timestamp").int64(timestamp);
     }
 
-    final ThreadLocal<VanillaReplicatedEntry> vre = ThreadLocal.withInitial(VanillaReplicatedEntry::new);
-
+    private final ThreadLocal<VanillaReplicatedEntry> vre = withInitial(VanillaReplicatedEntry::new);
 
     @Override
     public void processData(@NotNull WireIn inWire, @NotNull WireOut outWire) {

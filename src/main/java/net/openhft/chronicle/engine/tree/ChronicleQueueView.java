@@ -68,9 +68,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
     public ChronicleQueueView(RequestContext context, Asset asset) {
         final HostIdentifier hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
-        final Byte hostId = hostIdentifier == null ?
-                null :
-                hostIdentifier.hostId();
+        final Byte hostId = hostIdentifier == null ? null : hostIdentifier.hostId();
         chronicleQueue = newInstance(context.name(), context.basePath(), hostId);
         messageTypeClass = context.messageType();
         elementTypeClass = context.elementType();
@@ -87,7 +85,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     }
 
     public void replication(RequestContext context, Asset asset) {
-        isReplicating = true;
+
         final QueueSource queueSource;
         final HostIdentifier hostIdentifier;
 
@@ -100,18 +98,20 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
             return;
         }
 
-        final int sourceHostId = queueSource.sourceHostId(context.fullName());
+        final int remoteSourceIdentifer = queueSource.sourceHostId(context.fullName());
 
-        if (hostIdentifier.hostId() == sourceHostId) {
+        if (hostIdentifier.hostId() == remoteSourceIdentifer) {
             isSource = true;
             return;
         }
 
-        final HostDetails sourceHostDetails = hostDetails(sourceHostId, asset, context);
+        isReplicating = true;
+
+        final HostDetails remoteSourceHostDetails = hostDetails(remoteSourceIdentifer, asset, context);
 
         final UberHandler handler = new UberHandler(
                 hostIdentifier.hostId(),
-                (byte) sourceHostId,
+                (byte) remoteSourceIdentifer,
                 context.wireType());
 
         long lastIndexReceived = -1;
@@ -129,7 +129,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
                         .writeEventName(cid).int64(uniqueCspId())
                         .writeEventName(CoreFields.handler).typedMarshallable(h));
 
-        sourceHostDetails.connect(
+        remoteSourceHostDetails.connect(
                 context.wireType(),
                 asset,
                 w -> toHeader(handler).writeMarshallable(w),
