@@ -126,8 +126,12 @@ public class BootStrapTest {
                 map1.put("hello", "world1");
                 Assert.assertEquals("world1", map1.get("hello"));
                 final String poll = q1.poll().toString();
-                Assert.assertEquals("InsertedEvent{assetName='/test', key=hello, value=world1, " +
-                                "isReplicationEvent=false}",
+                Assert.assertEquals("!InsertedEvent {\n" +
+                                "  assetName: /test,\n" +
+                                "  key: hello,\n" +
+                                "  value: world1,\n" +
+                                "  isReplicationEvent: false\n" +
+                                "}\n",
                         poll);
             }
 
@@ -141,7 +145,14 @@ public class BootStrapTest {
                 map2.put("hello", "world2");
                 Assert.assertEquals("world2", map2.get("hello"));
                 final String poll = q2.poll().toString();
-                Assert.assertEquals("UpdatedEvent{assetName='/test', key=hello, oldValue=world1, value=world2, isReplicationEvent=false}", poll);
+                Assert.assertEquals("!UpdatedEvent {\n" +
+                        "  assetName: /test,\n" +
+                        "  key: hello,\n" +
+                        "  oldValue: world1,\n" +
+                        "  value: world2,\n" +
+                        "  isReplicationEvent: false,\n" +
+                        "  hasValueChanged: true\n" +
+                        "}\n", poll);
             }
 
         } catch (Exception e) {
@@ -170,7 +181,12 @@ public class BootStrapTest {
 
                 Assert.assertEquals("world1", map1.get("hello"));
                 final String poll = q1.poll(10, TimeUnit.SECONDS).toString();
-                Assert.assertEquals("InsertedEvent{assetName='/test', key=hello, value=world1, isReplicationEvent=false}",
+                Assert.assertEquals("!InsertedEvent {\n" +
+                                "  assetName: /test,\n" +
+                                "  key: hello,\n" +
+                                "  value: world1,\n" +
+                                "  isReplicationEvent: false\n" +
+                                "}\n",
                         poll);
             }
 
@@ -185,7 +201,14 @@ public class BootStrapTest {
                 // shutting server1 down should cause the failover client to connect to server 2
                 Assert.assertEquals("world2", map2.get("hello"));
                 final String poll = q2.poll(10, TimeUnit.SECONDS).toString();
-                Assert.assertEquals("UpdatedEvent{assetName='/test', key=hello, oldValue=world1, value=world2, isReplicationEvent=false}", poll);
+                Assert.assertEquals("!UpdatedEvent {\n" +
+                        "  assetName: /test,\n" +
+                        "  key: hello,\n" +
+                        "  oldValue: world1,\n" +
+                        "  value: world2,\n" +
+                        "  isReplicationEvent: false,\n" +
+                        "  hasValueChanged: true\n" +
+                        "}\n", poll);
             }
 
         } catch (Exception e) {

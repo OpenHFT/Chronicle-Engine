@@ -87,9 +87,27 @@ public class ChassisRFCTest {
         map.put("Key-1", "Value-2");
         map.remove("Key-1");
 
-        assertEquals("[InsertedEvent{assetName='/group-A', key=Key-1, value=Value-1, isReplicationEvent=false}, " +
-                "UpdatedEvent{assetName='/group-A', key=Key-1, oldValue=Value-1, value=Value-2, isReplicationEvent=false}," +
-                " RemovedEvent{assetName='/group-A', key=Key-1, oldValue=Value-2, isReplicationEvent=false}]", values.toString());
+        assertEquals("[!InsertedEvent {\n" +
+                "  assetName: /group-A,\n" +
+                "  key: Key-1,\n" +
+                "  value: Value-1,\n" +
+                "  isReplicationEvent: false\n" +
+                "}\n" +
+                ", !UpdatedEvent {\n" +
+                "  assetName: /group-A,\n" +
+                "  key: Key-1,\n" +
+                "  oldValue: Value-1,\n" +
+                "  value: Value-2,\n" +
+                "  isReplicationEvent: false,\n" +
+                "  hasValueChanged: true\n" +
+                "}\n" +
+                ", !RemovedEvent {\n" +
+                "  assetName: /group-A,\n" +
+                "  key: Key-1,\n" +
+                "  oldValue: Value-2,\n" +
+                "  isReplicationEvent: false\n" +
+                "}\n" +
+                "]", values.toString());
     }
 
     @Test

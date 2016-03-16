@@ -18,7 +18,7 @@ package net.openhft.chronicle.engine.cfg;
 
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.fs.Clusters;
-import net.openhft.chronicle.wire.Marshallable;
+import net.openhft.chronicle.wire.AbstractMarshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Created by peter on 26/08/15.
  */
-public class ClustersCfg implements Installable, Marshallable {
+public class ClustersCfg extends AbstractMarshallable implements Installable {
     final Clusters clusters = new Clusters();
 
     @Override
@@ -44,12 +44,5 @@ public class ClustersCfg implements Installable, Marshallable {
     @Override
     public void writeMarshallable(@NotNull WireOut wire) {
         clusters.writeMarshallable(wire);
-    }
-
-    @Override
-    public String toString() {
-        return "ClustersCfg{" +
-                "clusters=" + clusters +
-                '}';
     }
 }

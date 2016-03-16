@@ -17,10 +17,7 @@
 package net.openhft.chronicle.engine.cfg;
 
 import net.openhft.chronicle.engine.api.tree.AssetTree;
-import net.openhft.chronicle.wire.Marshallable;
-import net.openhft.chronicle.wire.WireIn;
-import net.openhft.chronicle.wire.WireOut;
-import org.jetbrains.annotations.NotNull;
+import net.openhft.chronicle.wire.AbstractMarshallable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +27,7 @@ import java.net.URISyntaxException;
 /**
  * Created by peter on 26/08/15.
  */
-public class MonitorCfg implements Installable, Marshallable {
+public class MonitorCfg extends AbstractMarshallable implements Installable {
     private static final Logger LOGGER = LoggerFactory.getLogger(MonitorCfg.class);
     private boolean subscriptionMonitoringEnabled;
     private boolean userMonitoringEnabled;
@@ -46,25 +43,5 @@ public class MonitorCfg implements Installable, Marshallable {
             assetTree.acquireMap("/proc/users", String.class, UserStat.class);
         }
         return this;
-    }
-
-    @Override
-    public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
-        wire.read(() -> "subscriptionMonitoringEnabled").bool(this, (o, b) -> o.subscriptionMonitoringEnabled = b)
-                .read(() -> "userMonitoringEnabled").bool(this, (o, b) -> o.userMonitoringEnabled = b);
-    }
-
-    @Override
-    public void writeMarshallable(@NotNull WireOut wire) {
-        wire.write(() -> "subscriptionMonitoringEnabled").bool(subscriptionMonitoringEnabled)
-                .write(() -> "userMonitoringEnabled").bool(userMonitoringEnabled);
-    }
-
-    @Override
-    public String toString() {
-        return "MonitorCfg{" +
-                "subscriptionMonitoringEnabled=" + subscriptionMonitoringEnabled +
-                "userMonitoringEnabled=" + userMonitoringEnabled +
-                '}';
     }
 }

@@ -16,17 +16,13 @@
 
 package net.openhft.chronicle.engine.tree;
 
-import net.openhft.chronicle.wire.WireIn;
-import net.openhft.chronicle.wire.WireOut;
+import net.openhft.chronicle.wire.AbstractMarshallable;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Objects;
-import java.util.Optional;
 
 /**
  * Created by peter on 22/05/15.
  */
-public class AddedAssetEvent implements TopologicalEvent {
+public class AddedAssetEvent extends AbstractMarshallable implements TopologicalEvent {
     private String assetName;
     private String name;
 
@@ -52,41 +48,5 @@ public class AddedAssetEvent implements TopologicalEvent {
 
     public String name() {
         return name;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash("added", assetName, name);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return Optional.ofNullable(obj)
-                .filter(o -> o instanceof AddedAssetEvent)
-                .map(o -> (AddedAssetEvent) o)
-                .filter(e -> Objects.equals(assetName, e.assetName))
-                .filter(e -> Objects.equals(name, e.name))
-                .isPresent();
-    }
-
-    @NotNull
-    @Override
-    public String toString() {
-        return "AddedAssetEvent{" +
-                "assetName='" + assetName + '\'' +
-                ", name='" + name + '\'' +
-                '}';
-    }
-
-    @Override
-    public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
-        wire.read(TopologicalFields.assetName).text(this, (o, s) -> o.assetName = s);
-        wire.read(TopologicalFields.name).text(this, (o, s) -> o.name = s);
-    }
-
-    @Override
-    public void writeMarshallable(@NotNull WireOut wire) {
-        wire.write(TopologicalFields.assetName).text(assetName);
-        wire.write(TopologicalFields.name).object(name);
     }
 }

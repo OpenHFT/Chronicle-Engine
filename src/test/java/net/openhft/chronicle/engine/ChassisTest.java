@@ -251,7 +251,7 @@ todo fix this test
 
         // test the topic publish triggers events
         subscriber.onMessage(UpdatedEvent.of("/map-name", "Key-1", "Value-1", "Message-1", false,
-                false));
+                true));
         subscriber.onMessage(InsertedEvent.of("/map-name", "Topic-1", "Message-1",false));
         replay(subscriber);
 

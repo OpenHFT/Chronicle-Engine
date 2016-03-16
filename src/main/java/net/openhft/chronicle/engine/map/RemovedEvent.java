@@ -16,23 +16,21 @@
 
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
+import net.openhft.chronicle.wire.AbstractMarshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
  * Created by peter on 22/05/15.
  */
-public class RemovedEvent<K, V> implements MapEvent<K, V> {
+public class RemovedEvent<K, V> extends AbstractMarshallable implements MapEvent<K, V> {
     private String assetName;
     @Nullable
     private K key;
@@ -88,34 +86,6 @@ public class RemovedEvent<K, V> implements MapEvent<K, V> {
     @Override
     public void apply(@NotNull MapEventListener<K, V> listener) {
         listener.remove(assetName, key, oldValue);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash("removed", key, oldValue);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return Optional.ofNullable(obj)
-                .filter(o -> o instanceof RemovedEvent)
-                .map(o -> (RemovedEvent<K, V>) o)
-                .filter(e -> Objects.equals(assetName, e.assetName))
-                .filter(e -> BytesUtil.equals(key, e.key))
-                .filter(e -> BytesUtil.equals(oldValue, e.oldValue))
-                .filter(e -> BytesUtil.equals(isReplicationEvent, e.isReplicationEvent))
-                .isPresent();
-    }
-
-    @NotNull
-    @Override
-    public String toString() {
-        return "RemovedEvent{" +
-                "assetName='" + assetName + '\'' +
-                ", key=" + key +
-                ", oldValue=" + oldValue +
-                ", isReplicationEvent=" + isReplicationEvent +
-                '}';
     }
 
     @Override

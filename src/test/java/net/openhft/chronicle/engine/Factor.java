@@ -16,7 +16,7 @@
 
 package net.openhft.chronicle.engine;
 
-import net.openhft.chronicle.wire.Marshallable;
+import net.openhft.chronicle.wire.AbstractMarshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import net.openhft.lang.io.Bytes;
@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 
-public class Factor implements Marshallable, BytesMarshallable {
+public class Factor extends AbstractMarshallable implements BytesMarshallable {
 
     private byte openPDFlag;
     private byte openUCFlag;
@@ -194,62 +194,4 @@ public class Factor implements Marshallable, BytesMarshallable {
         wireOut.write(() -> "firm").text(firm);
     }
 
-    @NotNull
-    @Override
-    public String toString() {
-        return "Factor{" +
-                "openPDFlag=" + openPDFlag +
-                ", openUCFlag=" + openUCFlag +
-                ", openActiveEMFlag=" + openActiveEMFlag +
-                ", openPastDueEMFlag=" + openPastDueEMFlag +
-                ", accountCloseFlag=" + accountCloseFlag +
-                ", missingPaperFlag=" + missingPaperFlag +
-                ", rMLAgreementCodeFlag=" + rMLAgreementCodeFlag +
-                ", nMEAccountFlag=" + nMEAccountFlag +
-                ", accountClassificationTypeValue=" + accountClassificationTypeValue +
-                ", accountNumber='" + accountNumber + '\'' +
-                ", processDate=" + processDate +
-                ", firm='" + firm + '\'' +
-                '}';
-    }
-
-    @Override
-    public boolean equals(@Nullable Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Factor factor = (Factor) o;
-
-        if (openPDFlag != factor.openPDFlag) return false;
-        if (openUCFlag != factor.openUCFlag) return false;
-        if (openActiveEMFlag != factor.openActiveEMFlag) return false;
-        if (openPastDueEMFlag != factor.openPastDueEMFlag) return false;
-        if (accountCloseFlag != factor.accountCloseFlag) return false;
-        if (missingPaperFlag != factor.missingPaperFlag) return false;
-        if (rMLAgreementCodeFlag != factor.rMLAgreementCodeFlag) return false;
-        if (nMEAccountFlag != factor.nMEAccountFlag) return false;
-        if (accountClassificationTypeValue != factor.accountClassificationTypeValue) return false;
-        if (accountNumber != null ? !accountNumber.equals(factor.accountNumber) : factor.accountNumber != null)
-            return false;
-        if (processDate != null ? !processDate.equals(factor.processDate) : factor.processDate != null) return false;
-        return !(firm != null ? !firm.equals(factor.firm) : factor.firm != null);
-
-    }
-
-    @Override
-    public int hashCode() {
-        int result = (int) openPDFlag;
-        result = 31 * result + (int) openUCFlag;
-        result = 31 * result + (int) openActiveEMFlag;
-        result = 31 * result + (int) openPastDueEMFlag;
-        result = 31 * result + (int) accountCloseFlag;
-        result = 31 * result + (int) missingPaperFlag;
-        result = 31 * result + (int) rMLAgreementCodeFlag;
-        result = 31 * result + (int) nMEAccountFlag;
-        result = 31 * result + (int) accountClassificationTypeValue;
-        result = 31 * result + (accountNumber != null ? accountNumber.hashCode() : 0);
-        result = 31 * result + (processDate != null ? processDate.hashCode() : 0);
-        result = 31 * result + (firm != null ? firm.hashCode() : 0);
-        return result;
-    }
 }

@@ -18,10 +18,7 @@ package net.openhft.chronicle.engine.fs;
 
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
-import net.openhft.chronicle.wire.Marshallable;
-import net.openhft.chronicle.wire.WireIn;
-import net.openhft.chronicle.wire.WireOut;
-import net.openhft.chronicle.wire.Wires;
+import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -31,7 +28,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 /**
  * Created by peter.lawrey on 17/06/2015.
  */
-public class Clusters implements Marshallable, Closeable {
+public class Clusters extends AbstractMarshallable implements Closeable {
     private final Map<String, Cluster> clusterMap;
 
 
@@ -60,6 +57,21 @@ public class Clusters implements Marshallable, Closeable {
     public void writeMarshallable(@NotNull WireOut wire) {
         for (Entry<String, Cluster> entry : clusterMap.entrySet())
             wire.writeEventName(entry::getKey).marshallable(entry.getValue());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return Marshallable.$equals(this, o);
+    }
+
+    @Override
+    public int hashCode() {
+        return Marshallable.$hashCode(this);
+    }
+
+    @Override
+    public String toString() {
+        return Marshallable.$toString(this);
     }
 
     public void install(@NotNull AssetTree assetTree) {

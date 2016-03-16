@@ -16,23 +16,22 @@
 
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
+import net.openhft.chronicle.wire.AbstractMarshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
  * Created by peter on 22/05/15.
  */
-public class InsertedEvent<K, V> implements MapEvent<K, V> {
+public class InsertedEvent<K, V> extends AbstractMarshallable implements MapEvent<K, V> {
     private boolean isReplicationEvent;
     private String assetName;
     @NotNull
@@ -98,29 +97,6 @@ public class InsertedEvent<K, V> implements MapEvent<K, V> {
     @Override
     public V setValue(V value) {
         throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return Optional.ofNullable(obj)
-                .filter(o -> o instanceof InsertedEvent)
-                .map(o -> (InsertedEvent<K, V>) o)
-                .filter(e -> Objects.equals(assetName, e.assetName))
-                .filter(e -> BytesUtil.equals(key, e.key))
-                .filter(e -> BytesUtil.equals(value, e.value))
-                .filter(e -> BytesUtil.equals(isReplicationEvent, e.isReplicationEvent))
-                .isPresent();
-    }
-
-    @NotNull
-    @Override
-    public String toString() {
-        return "InsertedEvent{" +
-                "assetName='" + assetName + '\'' +
-                ", key=" + key +
-                ", value=" + value +
-                ", isReplicationEvent=" + isReplicationEvent +
-                '}';
     }
 
     @Override
