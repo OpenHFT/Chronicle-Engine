@@ -1,3 +1,21 @@
+/*
+ *
+ *  *     Copyright (C) ${YEAR}  higherfrequencytrading.com
+ *  *
+ *  *     This program is free software: you can redistribute it and/or modify
+ *  *     it under the terms of the GNU Lesser General Public License as published by
+ *  *     the Free Software Foundation, either version 3 of the License.
+ *  *
+ *  *     This program is distributed in the hope that it will be useful,
+ *  *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  *     GNU Lesser General Public License for more details.
+ *  *
+ *  *     You should have received a copy of the GNU Lesser General Public License
+ *  *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.bytes.Bytes;
@@ -91,6 +109,52 @@ public class QueueReplicationHandler extends AbstractSubHandler<EngineWireNetwor
         }
     }
 
+    @Override
+    public void onBootstrap(@NotNull WireOut outWire) {
+
+        rootAsset = nc().rootAsset();
+        final Asset asset = rootAsset.acquireAsset(csp());
+        chronicleQueueView = (ChronicleQueueView) asset.acquireView(QueueView
+                .class);
+        final ChronicleQueue chronicleQueue = chronicleQueueView.chronicleQueue();
+        appender = chronicleQueue.createAppender();
+
+        assert appender != null;
+
+        if (!isSource)
+            return;
+
+        eventLoop = rootAsset.findOrCreateView(EventLoop.class);
+        eventLoop.start();
+
+        outWire.writeDocument(true, d -> {
+
+            // this handler will just receive events
+            final QueueReplicationHandler handler = new QueueReplicationHandler(0, false);
+
+            d.writeEventName(CoreFields.csp).text(csp())
+                    .writeEventName(CoreFields.cid).int64(cid())
+                    .writeEventName(CoreFields.handler).typedMarshallable(handler);
+        });
+
+
+        final ExcerptTailer tailer = chronicleQueue.createTailer();
+        if (lastIndexReceived > 0)
+            try {
+                tailer.moveToIndex(lastIndexReceived);
+            } catch (TimeoutException e) {
+                LOG.error("", e);
+            }
+
+        eventLoop.addHandler(new EventListener(tailer, nc().wireOutPublisher()));
+        logYaml(outWire);
+    }
+
+    @Override
+    public void close() {
+        this.closed = true;
+    }
+
     public static class ReplicationEvent implements Demarshallable, WriteMarshallable {
 
         private final long index;
@@ -181,53 +245,6 @@ public class QueueReplicationHandler extends AbstractSubHandler<EngineWireNetwor
         public HandlerPriority priority() {
             return HandlerPriority.REPLICATION;
         }
-    }
-
-
-    @Override
-    public void onBootstrap(@NotNull WireOut outWire) {
-
-        rootAsset = nc().rootAsset();
-        final Asset asset = rootAsset.acquireAsset(csp());
-        chronicleQueueView = (ChronicleQueueView) asset.acquireView(QueueView
-                .class);
-        final ChronicleQueue chronicleQueue = chronicleQueueView.chronicleQueue();
-        appender = chronicleQueue.createAppender();
-
-        assert appender != null;
-
-        if (!isSource)
-            return;
-
-        eventLoop = rootAsset.findOrCreateView(EventLoop.class);
-        eventLoop.start();
-
-        outWire.writeDocument(true, d -> {
-
-            // this handler will just receive events
-            final QueueReplicationHandler handler = new QueueReplicationHandler(0, false);
-
-            d.writeEventName(CoreFields.csp).text(csp())
-                    .writeEventName(CoreFields.cid).int64(cid())
-                    .writeEventName(CoreFields.handler).typedMarshallable(handler);
-        });
-
-
-        final ExcerptTailer tailer = chronicleQueue.createTailer();
-        if (lastIndexReceived > 0)
-            try {
-                tailer.moveToIndex(lastIndexReceived);
-            } catch (TimeoutException e) {
-                LOG.error("", e);
-            }
-
-        eventLoop.addHandler(new EventListener(tailer, nc().wireOutPublisher()));
-        logYaml(outWire);
-    }
-
-    @Override
-    public void close() {
-        this.closed = true;
     }
 
 }

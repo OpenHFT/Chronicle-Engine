@@ -1,3 +1,21 @@
+/*
+ *
+ *  *     Copyright (C) ${YEAR}  higherfrequencytrading.com
+ *  *
+ *  *     This program is free software: you can redistribute it and/or modify
+ *  *     it under the terms of the GNU Lesser General Public License as published by
+ *  *     the Free Software Foundation, either version 3 of the License.
+ *  *
+ *  *     This program is distributed in the hope that it will be useful,
+ *  *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  *     GNU Lesser General Public License for more details.
+ *  *
+ *  *     You should have received a copy of the GNU Lesser General Public License
+ *  *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 package net.openhft.chronicle.engine.queue;
 
 import net.openhft.chronicle.core.Jvm;
@@ -55,9 +73,24 @@ import static org.junit.Assert.assertTrue;
 @RunWith(value = Parameterized.class)
 public class QueueReplicationSourceSycnRollTest {
 
+    public static final WireType WIRE_TYPE = WireType.TEXT;
+    public static final String NAME = "/ChMaps/test";
+    public static ServerEndpoint serverEndpoint1;
+    public static ServerEndpoint serverEndpoint2;
+    public static ServerEndpoint serverEndpoint3;
+    private static AssetTree tree1;
+    private static AssetTree tree2;
+    private static AtomicReference<Throwable> t = new AtomicReference();
     private final WireType wireType;
+    @Rule
+    public TestName name = new TestName();
+    String methodName;
     private ChronicleQueue q1;
     private ChronicleQueue q2;
+
+    public QueueReplicationSourceSycnRollTest(WireType wireType) {
+        this.wireType = wireType;
+    }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() throws IOException {
@@ -71,25 +104,28 @@ public class QueueReplicationSourceSycnRollTest {
         return list;
     }
 
-    public QueueReplicationSourceSycnRollTest(WireType wireType) {
-        this.wireType = wireType;
+    @NotNull
+    private static AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
+        AssetTree tree = new VanillaAssetTree((byte) hostId)
+                .forTesting(x -> t.compareAndSet(null, x))
+                .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);
+        final Asset queue = tree.root().acquireAsset("queue");
+        queue.addLeafRule(QueueView.class, VanillaAsset.LAST + "chronicle queue", (context, asset) ->
+                new ChronicleQueueView(context.wireType(writeType).cluster(clusterTwo), asset));
+
+
+        VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
+
+        return tree;
     }
 
-    String methodName;
-
-    @Rule
-    public TestName name = new TestName();
-
-
-    public static final WireType WIRE_TYPE = WireType.TEXT;
-    public static final String NAME = "/ChMaps/test";
-    public static ServerEndpoint serverEndpoint1;
-    public static ServerEndpoint serverEndpoint2;
-    public static ServerEndpoint serverEndpoint3;
-
-    private static AssetTree tree1;
-    private static AssetTree tree2;
-    private static AtomicReference<Throwable> t = new AtomicReference();
+    @NotNull
+    public static String resourcesDir() {
+        String path = ChronicleMapKeyValueStoreTest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        if (path == null)
+            return ".";
+        return new File(path).getParentFile().getParentFile() + "/src/test/resources";
+    }
 
     @Before
     public void before() throws IOException, InterruptedException {
@@ -117,7 +153,6 @@ public class QueueReplicationSourceSycnRollTest {
         serverEndpoint2 = new ServerEndpoint("clusterThree.host.port2", tree2);
 
     }
-
 
     @After
     public void after() throws IOException, InterruptedException {
@@ -150,40 +185,11 @@ public class QueueReplicationSourceSycnRollTest {
 
     }
 
-    @NotNull
-    private static AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
-        AssetTree tree = new VanillaAssetTree((byte) hostId)
-                .forTesting(x -> t.compareAndSet(null, x))
-                .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);
-        final Asset queue = tree.root().acquireAsset("queue");
-        queue.addLeafRule(QueueView.class, VanillaAsset.LAST + "chronicle queue", (context, asset) ->
-                new ChronicleQueueView(context.wireType(writeType).cluster(clusterTwo), asset));
-
-
-        VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
-
-        return tree;
-    }
-
-    @NotNull
-    public static String resourcesDir() {
-        String path = ChronicleMapKeyValueStoreTest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-        if (path == null)
-            return ".";
-        return new File(path).getParentFile().getParentFile() + "/src/test/resources";
-    }
-
     @After
     public void afterMethod() {
         final Throwable th = t.getAndSet(null);
         if (th != null) throw Jvm.rethrow(th);
     }
-
-
-    public enum TestKey implements WireKey {
-        test, test2
-    }
-
 
     @Test
     public void testAppendAndReadWithRollingB() throws IOException, InterruptedException {
@@ -409,6 +415,11 @@ public class QueueReplicationSourceSycnRollTest {
             assertTrue("i2 : " + i, condition2);
             assertEquals(cycle + i, tailer.cycle());
         }
+    }
+
+
+    public enum TestKey implements WireKey {
+        test, test2
     }
 }
 

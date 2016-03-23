@@ -1,3 +1,21 @@
+/*
+ *
+ *  *     Copyright (C) ${YEAR}  higherfrequencytrading.com
+ *  *
+ *  *     This program is free software: you can redistribute it and/or modify
+ *  *     it under the terms of the GNU Lesser General Public License as published by
+ *  *     the Free Software Foundation, either version 3 of the License.
+ *  *
+ *  *     This program is distributed in the hope that it will be useful,
+ *  *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  *     GNU Lesser General Public License for more details.
+ *  *
+ *  *     You should have received a copy of the GNU Lesser General Public License
+ *  *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 package net.openhft.chronicle.engine.tree;
 
 import net.openhft.chronicle.core.Jvm;
@@ -93,6 +111,14 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
             replication(context, asset);
     }
 
+    @NotNull
+    public static String resourcesDir() {
+        String path = ChronicleQueueView.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        if (path == null)
+            return ".";
+        return new File(path).getParentFile().getParentFile() + "/src/test/resources";
+    }
+
     public ChronicleQueue chronicleQueue() {
         return chronicleQueue;
     }
@@ -147,14 +173,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
                 asset,
                 w -> toHeader(handler).writeMarshallable(w),
                 VanillaWireOutPublisher::new, out);
-    }
-
-    @NotNull
-    public static String resourcesDir() {
-        String path = ChronicleQueueView.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-        if (path == null)
-            return ".";
-        return new File(path).getParentFile().getParentFile() + "/src/test/resources";
     }
 
     private long uniqueCspId() {
@@ -390,6 +408,20 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         throw new UnsupportedOperationException("todo");
     }
 
+    private HostDetails hostDetails(int hostId, Asset asset, RequestContext context) {
+
+        Clusters clusters = asset.findView(Clusters.class);
+        final Cluster cluster = clusters.get(context.cluster());
+
+
+        for (HostDetails hostDetails : cluster.hostDetails()) {
+            if (hostDetails.hostId == hostId)
+                return hostDetails;
+        }
+
+        throw new IllegalStateException("HostId not found, hostId=" + hostId);
+
+    }
 
     public static class LocalExcept<T, M> implements Excerpt<T, M>, Marshallable {
 
@@ -460,22 +492,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
             replayTailer = chronicleQueue.createTailer();
             excerpt = new LocalExcept();
         }
-    }
-
-
-    private HostDetails hostDetails(int hostId, Asset asset, RequestContext context) {
-
-        Clusters clusters = asset.findView(Clusters.class);
-        final Cluster cluster = clusters.get(context.cluster());
-
-
-        for (HostDetails hostDetails : cluster.hostDetails()) {
-            if (hostDetails.hostId == hostId)
-                return hostDetails;
-        }
-
-        throw new IllegalStateException("HostId not found, hostId=" + hostId);
-
     }
 
 }

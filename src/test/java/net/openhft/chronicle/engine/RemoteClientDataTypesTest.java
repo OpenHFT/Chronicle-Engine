@@ -1,3 +1,21 @@
+/*
+ *
+ *  *     Copyright (C) ${YEAR}  higherfrequencytrading.com
+ *  *
+ *  *     This program is free software: you can redistribute it and/or modify
+ *  *     it under the terms of the GNU Lesser General Public License as published by
+ *  *     the Free Software Foundation, either version 3 of the License.
+ *  *
+ *  *     This program is distributed in the hope that it will be useful,
+ *  *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  *     GNU Lesser General Public License for more details.
+ *  *
+ *  *     You should have received a copy of the GNU Lesser General Public License
+ *  *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.engine.api.map.MapEvent;
@@ -39,13 +57,13 @@ public class RemoteClientDataTypesTest {
     private static AssetTree _clientAssetTree;
     private static ServerEndpoint _serverEndpoint;
     private static String _serverAddress = "host.port1";
+    private static AtomicReference<Throwable> t = new AtomicReference();
     private final WireType _wireType;
     private Class _keyClass;
     private Class _valueClass;
     private Object _key;
     private Object _value;
     private String _mapUri;
-
 
     public RemoteClientDataTypesTest(WireType wireType, Class keyClass, Class valueClass, Object key, Object value, String mapUri) {
         _wireType = wireType;
@@ -69,9 +87,6 @@ public class RemoteClientDataTypesTest {
                 {WireType.BINARY, Double.class, String.class, 2.1, "Value2", "/tests/ddp/data/hub/remote/double/string/test-map"}
         });
     }
-
-
-    private static AtomicReference<Throwable> t = new AtomicReference();
 
     @Before
     public void setUp() throws IOException {

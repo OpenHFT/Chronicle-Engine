@@ -1,3 +1,21 @@
+/*
+ *
+ *  *     Copyright (C) ${YEAR}  higherfrequencytrading.com
+ *  *
+ *  *     This program is free software: you can redistribute it and/or modify
+ *  *     it under the terms of the GNU Lesser General Public License as published by
+ *  *     the Free Software Foundation, either version 3 of the License.
+ *  *
+ *  *     This program is distributed in the hope that it will be useful,
+ *  *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  *     GNU Lesser General Public License for more details.
+ *  *
+ *  *     You should have received a copy of the GNU Lesser General Public License
+ *  *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.core.Jvm;
@@ -46,7 +64,25 @@ import static org.junit.Assert.assertNotNull;
 @RunWith(value = Parameterized.class)
 public class Replication3WayTest {
 
+    public static final WireType WIRE_TYPE = WireType.TEXT;
+    public static final String NAME = "/ChMaps/test";
+    public static ServerEndpoint serverEndpoint1;
+    public static ServerEndpoint serverEndpoint2;
+    public static ServerEndpoint serverEndpoint3;
+    private static AssetTree tree3;
+    private static AssetTree tree1;
+    private static AssetTree tree2;
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
+    static {
+        System.setProperty("ReplicationHandler3", "true");
+    }
+
     private final WireType wireType;
+
+    public Replication3WayTest(WireType wireType) {
+        this.wireType = wireType;
+    }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() throws IOException {
@@ -64,23 +100,33 @@ public class Replication3WayTest {
         return list;
     }
 
-    public Replication3WayTest(WireType wireType) {
-        this.wireType = wireType;
+    @NotNull
+    private static AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
+        AssetTree tree = new VanillaAssetTree((byte) hostId)
+                .forTesting(x -> t.compareAndSet(null, x))
+                .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);
+
+        tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
+                VanillaMapView::new,
+                KeyValueStore.class);
+        tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
+                CMap2EngineReplicator::new);
+        tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
+                new ChronicleMapKeyValueStore(context.wireType(writeType).cluster(clusterTwo),
+                        asset));
+
+        VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
+
+        return tree;
     }
 
-    static {
-        System.setProperty("ReplicationHandler3", "true");
+    @NotNull
+    public static String resourcesDir() {
+        String path = ChronicleMapKeyValueStoreTest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        if (path == null)
+            return ".";
+        return new File(path).getParentFile().getParentFile() + "/src/test/resources";
     }
-
-    public static final WireType WIRE_TYPE = WireType.TEXT;
-    public static final String NAME = "/ChMaps/test";
-    public static ServerEndpoint serverEndpoint1;
-    public static ServerEndpoint serverEndpoint2;
-    public static ServerEndpoint serverEndpoint3;
-    private static AssetTree tree3;
-    private static AssetTree tree1;
-    private static AssetTree tree2;
-    private static AtomicReference<Throwable> t = new AtomicReference();
 
     @Before
     public void before() throws IOException, InterruptedException {
@@ -130,34 +176,6 @@ public class Replication3WayTest {
         TCPRegistry.reset();
 
         Thread.sleep(500);
-    }
-
-    @NotNull
-    private static AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
-        AssetTree tree = new VanillaAssetTree((byte) hostId)
-                .forTesting(x -> t.compareAndSet(null, x))
-                .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);
-
-        tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
-                VanillaMapView::new,
-                KeyValueStore.class);
-        tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
-                CMap2EngineReplicator::new);
-        tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
-                new ChronicleMapKeyValueStore(context.wireType(writeType).cluster(clusterTwo),
-                        asset));
-
-        VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
-
-        return tree;
-    }
-
-    @NotNull
-    public static String resourcesDir() {
-        String path = ChronicleMapKeyValueStoreTest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-        if (path == null)
-            return ".";
-        return new File(path).getParentFile().getParentFile() + "/src/test/resources";
     }
 
     @After

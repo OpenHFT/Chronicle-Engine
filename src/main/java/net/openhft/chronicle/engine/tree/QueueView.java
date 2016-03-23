@@ -1,3 +1,21 @@
+/*
+ *
+ *  *     Copyright (C) ${YEAR}  higherfrequencytrading.com
+ *  *
+ *  *     This program is free software: you can redistribute it and/or modify
+ *  *     it under the terms of the GNU Lesser General Public License as published by
+ *  *     the Free Software Foundation, either version 3 of the License.
+ *  *
+ *  *     This program is distributed in the hope that it will be useful,
+ *  *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  *     GNU Lesser General Public License for more details.
+ *  *
+ *  *     You should have received a copy of the GNU Lesser General Public License
+ *  *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 package net.openhft.chronicle.engine.tree;
 
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
@@ -9,14 +27,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface QueueView<T, M> extends TopicPublisher<T, M> {
 
-
-    interface Excerpt<T, M> {
-        T topic();
-
-        M message();
-
-        long index();
-    }
 
     /**
      * @return the next message from the current tailer
@@ -48,5 +58,13 @@ public interface QueueView<T, M> extends TopicPublisher<T, M> {
      * @return the index in the chroncile queue the ex
      */
     long publishAndIndex(@NotNull T topic, @NotNull M message);
+
+    interface Excerpt<T, M> {
+        T topic();
+
+        M message();
+
+        long index();
+    }
 
 }
