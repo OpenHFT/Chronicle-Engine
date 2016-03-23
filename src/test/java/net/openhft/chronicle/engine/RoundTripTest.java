@@ -144,9 +144,9 @@ public class RoundTripTest {
         hostDetails.add(new HostDetails(2, 8 << 20, CONNECTION_2, 5_000));
         hostDetails.add(new HostDetails(3, 8 << 20, CONNECTION_3, 5_000));
 
-        AssetTree serverAssetTree1 = create(1, WIRE_TYPE.BINARY, hostDetails);
-        AssetTree serverAssetTree2 = create(2, WIRE_TYPE.BINARY, hostDetails);
-        AssetTree serverAssetTree3 = create(3, WIRE_TYPE.BINARY, hostDetails);
+        AssetTree serverAssetTree1 = create(1, WireType.BINARY, hostDetails);
+        AssetTree serverAssetTree2 = create(2, WireType.BINARY, hostDetails);
+        AssetTree serverAssetTree3 = create(3, WireType.BINARY, hostDetails);
 
         ServerEndpoint serverEndpoint1 = new ServerEndpoint(CONNECTION_1, serverAssetTree1);
         ServerEndpoint serverEndpoint2 = new ServerEndpoint(CONNECTION_2, serverAssetTree2);

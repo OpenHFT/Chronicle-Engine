@@ -86,7 +86,7 @@ public class PublisherHandler<E> extends AbstractHandler {
                     final E message = wireToE.apply(read);
 
                     nullCheck(message);
-                    view.publish((E) message);
+                    view.publish(message);
                 });
 
             }
