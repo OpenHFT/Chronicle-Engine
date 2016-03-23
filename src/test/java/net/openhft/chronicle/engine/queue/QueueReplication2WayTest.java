@@ -1,21 +1,3 @@
-/*
- *
- *  *     Copyright (C) 2016  higherfrequencytrading.com
- *  *
- *  *     This program is free software: you can redistribute it and/or modify
- *  *     it under the terms of the GNU Lesser General Public License as published by
- *  *     the Free Software Foundation, either version 3 of the License.
- *  *
- *  *     This program is distributed in the hope that it will be useful,
- *  *     but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  *     GNU Lesser General Public License for more details.
- *  *
- *  *     You should have received a copy of the GNU Lesser General Public License
- *  *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- */
-
 package net.openhft.chronicle.engine.queue;
 
 import net.openhft.chronicle.core.Jvm;
@@ -68,25 +50,9 @@ import static org.junit.Assert.assertEquals;
  */
 
 @RunWith(value = Parameterized.class)
-public class QueueReplication3WayTest {
+public class QueueReplication2WayTest {
 
-    public static final WireType WIRE_TYPE = WireType.TEXT;
-    public static final String NAME = "/ChMaps/test";
-    public static ServerEndpoint serverEndpoint1;
-    public static ServerEndpoint serverEndpoint2;
-    public static ServerEndpoint serverEndpoint3;
-    private static AssetTree tree3;
-    private static AssetTree tree1;
-    private static AssetTree tree2;
-    private static AtomicReference<Throwable> t = new AtomicReference();
     private final WireType wireType;
-    @Rule
-    public TestName name = new TestName();
-    String methodName;
-
-    public QueueReplication3WayTest(WireType wireType) {
-        this.wireType = wireType;
-    }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() throws IOException {
@@ -98,6 +64,88 @@ public class QueueReplication3WayTest {
         }
 
         return list;
+    }
+
+    public QueueReplication2WayTest(WireType wireType) {
+        this.wireType = wireType;
+    }
+
+    String methodName;
+
+    @Rule
+    public TestName name = new TestName();
+
+
+    public static final WireType WIRE_TYPE = WireType.TEXT;
+    public static final String NAME = "/ChMaps/test";
+    public static ServerEndpoint serverEndpoint1;
+    public static ServerEndpoint serverEndpoint2;
+
+    private static AssetTree tree1;
+    private static AssetTree tree2;
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
+    @Before
+    public void before() throws IOException, InterruptedException {
+        YamlLogging.setAll(false);
+
+        methodName(name.getMethodName());
+        methodName = name.getMethodName().substring(0, name.getMethodName().indexOf('['));
+
+        //YamlLogging.showServerWrites = true;
+
+        ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
+        ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
+        //Delete any files from the last run
+        Files.deleteIfExists(Paths.get(OS.TARGET, NAME));
+
+
+        TCPRegistry.createServerSocketChannelFor(
+                "clusterThree.host.port1",
+                "clusterThree.host.port2",
+                "clusterThree.host.port3",
+                "host.port1",
+                "host.port2",
+                "host.port3");
+
+        tree1 = create(1, wireType, "clusterTwo");
+        tree2 = create(2, wireType, "clusterTwo");
+
+        serverEndpoint1 = new ServerEndpoint("host.port1", tree1);
+        serverEndpoint2 = new ServerEndpoint("host.port2", tree2);
+    }
+
+    @After
+    public void after() throws IOException, InterruptedException {
+
+
+        if (serverEndpoint1 != null)
+            serverEndpoint1.close();
+        if (serverEndpoint2 != null)
+            serverEndpoint2.close();
+
+        for (AssetTree tree : new AssetTree[]{tree1, tree2}) {
+            if (tree == null)
+                continue;
+
+            try {
+                final ChronicleQueueView queueView = (ChronicleQueueView) tree.acquireAsset("/queue/" + methodName).acquireView(QueueView.class);
+
+                System.out.println(queueView.dump());
+
+                final File path = queueView.chronicleQueue().path();
+                System.out.println("path=" + path);
+                deleteFile(path);
+            } catch (Exception ignore) {
+
+            }
+            tree.close();
+        }
+
+
+        TcpChannelHub.closeAllHubs();
+        TCPRegistry.reset();
+
     }
 
     @NotNull
@@ -123,69 +171,6 @@ public class QueueReplication3WayTest {
         return new File(path).getParentFile().getParentFile() + "/src/test/resources";
     }
 
-    @Before
-    public void before() throws IOException, InterruptedException {
-        YamlLogging.setAll(false);
-
-        methodName(name.getMethodName());
-        methodName = name.getMethodName().substring(0, name.getMethodName().indexOf('['));
-
-        //YamlLogging.showServerWrites = true;
-
-        ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
-        ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
-        //Delete any files from the last run
-        Files.deleteIfExists(Paths.get(OS.TARGET, NAME));
-
-        TCPRegistry.createServerSocketChannelFor(
-                "clusterThree.host.port1",
-                "clusterThree.host.port2",
-                "clusterThree.host.port3",
-                "host.port1",
-                "host.port2",
-                "host.port3");
-
-        tree1 = create(1, wireType, "clusterThree");
-        tree2 = create(2, wireType, "clusterThree");
-        tree3 = create(3, wireType, "clusterThree");
-
-        serverEndpoint1 = new ServerEndpoint("clusterThree.host.port1", tree1);
-        serverEndpoint2 = new ServerEndpoint("clusterThree.host.port2", tree2);
-        serverEndpoint3 = new ServerEndpoint("clusterThree.host.port3", tree3);
-    }
-
-    @After
-    public void after() throws IOException, InterruptedException {
-
-
-        if (serverEndpoint1 != null)
-            serverEndpoint1.close();
-        if (serverEndpoint2 != null)
-            serverEndpoint2.close();
-        if (serverEndpoint3 != null)
-            serverEndpoint3.close();
-
-        for (AssetTree tree : new AssetTree[]{tree1, tree2, tree3}) {
-            if (tree == null)
-                continue;
-
-            try {
-                final ChronicleQueueView queueView = (ChronicleQueueView) tree.acquireAsset("/queue/" + methodName).acquireView(QueueView.class);
-                final File path = queueView.chronicleQueue().path();
-                System.out.println("path=" + path);
-                deleteFile(path);
-            } catch (Exception ignore) {
-
-            }
-            tree.close();
-        }
-
-
-        TcpChannelHub.closeAllHubs();
-        TCPRegistry.reset();
-
-    }
-
     @After
     public void afterMethod() {
         final Throwable th = t.getAndSet(null);
@@ -194,7 +179,7 @@ public class QueueReplication3WayTest {
 
 
     @Test
-    public void testThreeWay() throws InterruptedException {
+    public void testTwoWay() throws InterruptedException {
         YamlLogging.setAll(true);
 
         String uri = "/queue/" + methodName;
@@ -209,10 +194,6 @@ public class QueueReplication3WayTest {
             tree2Values.add(message);
         });
 
-        tree3.registerSubscriber(uri, String.class, message -> {
-            tree3Values.add(message);
-        });
-
 
         publisher.publish("Message-1");
 
@@ -224,6 +205,8 @@ public class QueueReplication3WayTest {
 
     @Test
     public void testStringTopicPublisherString() throws InterruptedException {
+        YamlLogging.setAll(true);
+
         String uri = "/queue/" + methodName;
         String messageType = "topic";
         TopicPublisher<String, String> publisher = tree1.acquireTopicPublisher(uri, String.class, String.class);
@@ -233,8 +216,6 @@ public class QueueReplication3WayTest {
         tree2.registerTopicSubscriber(uri, String.class, String.class, (topic, message) ->
                 tree2Values.add(topic + " " + message));
 
-        tree3.registerTopicSubscriber(uri, String.class, String.class, (topic, message) ->
-                tree3Values.add(topic + " " + message));
 
         Thread.sleep(500);
         publisher.publish(messageType, "Message-1");
@@ -242,7 +223,7 @@ public class QueueReplication3WayTest {
         assertEquals("topic Message-1", tree3Values.poll(3, SECONDS));
     }
 
-    @Test(expected = java.lang.IllegalStateException.class)
+    @Test(expected = IllegalStateException.class)
     public void testPublishingToSycnThrowsError() throws InterruptedException {
         String uri = "/queue/" + methodName;
         String messageType = "topic";

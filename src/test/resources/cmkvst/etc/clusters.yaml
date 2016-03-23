@@ -1,18 +1,16 @@
-cluster: {
-  host1: {
-     hostId: 1,
-     tcpBufferSize: 65536,
-     connectUri: host.port1,
-     timeoutMs: 5000,
-  },
-  host2: {
-     hostId: 2,
-     tcpBufferSize: 65536,
-     connectUri: host.port2,
-     timeoutMs: 5000,
-  }
-}
 clusterTwo: {
+
+  context: !EngineClusterContext {
+    wireType: TEXT,
+    handlerFactory: !UberHandlerFactory {},
+    wireOutPublisherFactory: !VanillaWireOutPublisherFactory {},
+    networkContextFactory: !EngineWireNetworkContextFactory {},
+    connectionEventHandler:  !EngineConnectionManagerFactory {},
+    heartbeatTimeoutMs: 40_000L,
+    heartbeatIntervalTicks: 20_000L,
+    heartbeatFactory: !HeartbeatHandlerFactory {},
+    connectionStrategy: !HostIdConnectionStrategy {},
+  }
   host1: {
      hostId: 1,
      tcpBufferSize: 65536,
@@ -26,8 +24,18 @@ clusterTwo: {
      timeoutMs: 5000,
   }
 }
-
 clusterThree: {
+  context: !EngineClusterContext {
+    wireType: TEXT,
+    handlerFactory: !UberHandlerFactory {},
+    wireOutPublisherFactory: !VanillaWireOutPublisherFactory {},
+    networkContextFactory: !EngineWireNetworkContextFactory {},
+    connectionEventHandler:  !EngineConnectionManagerFactory {},
+    heartbeatTimeoutMs: 40_000L,
+    heartbeatIntervalTicks: 20_000L,
+    heartbeatFactory: !HeartbeatHandlerFactory {},
+    connectionStrategy: !HostIdConnectionStrategy {},
+  }
   host1: {
      hostId: 1,
      tcpBufferSize: 65536,
@@ -39,17 +47,14 @@ clusterThree: {
      tcpBufferSize: 65536,
      connectUri: clusterThree.host.port2,
      timeoutMs: 5000,
-  }
+  },
   host3: {
        hostId: 3,
        tcpBufferSize: 65536,
        connectUri: clusterThree.host.port3,
        timeoutMs: 5000,
-    }
+  }
 }
-
-
-
 clusterPeter: {
   host1: {
      hostId: 1,

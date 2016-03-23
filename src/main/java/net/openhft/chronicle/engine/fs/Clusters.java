@@ -17,6 +17,7 @@
 package net.openhft.chronicle.engine.fs;
 
 import net.openhft.chronicle.core.io.Closeable;
+import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
@@ -28,34 +29,32 @@ import java.util.concurrent.ConcurrentSkipListMap;
 /**
  * Created by peter.lawrey on 17/06/2015.
  */
-public class Clusters extends AbstractMarshallable implements Closeable {
-    private final Map<String, Cluster> clusterMap;
+public class Clusters extends AbstractMarshallable implements Marshallable, Closeable {
+    private final Map<String, EngineCluster> clusterMap;
 
 
     public Clusters() {
         this.clusterMap = new ConcurrentSkipListMap<>();
     }
 
-
-    public Clusters(Map<String, Cluster> clusterMap) {
+    public Clusters(Map<String, EngineCluster> clusterMap) {
         this.clusterMap = clusterMap;
     }
-
 
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         StringBuilder clusterName = Wires.acquireStringBuilder();
         while (wire.hasMore()) {
             wire.readEventName(clusterName).marshallable(host -> {
-                Cluster cluster = clusterMap.computeIfAbsent(clusterName.toString(), Cluster::new);
-                cluster.readMarshallable(host);
+                EngineCluster engineCluster = clusterMap.computeIfAbsent(clusterName.toString(), EngineCluster::new);
+                engineCluster.readMarshallable(host);
             });
         }
     }
 
     @Override
     public void writeMarshallable(@NotNull WireOut wire) {
-        for (Entry<String, Cluster> entry : clusterMap.entrySet())
+        for (Entry<String, EngineCluster> entry : clusterMap.entrySet())
             wire.writeEventName(entry::getKey).marshallable(entry.getValue());
     }
 
@@ -75,15 +74,24 @@ public class Clusters extends AbstractMarshallable implements Closeable {
     }
 
     public void install(@NotNull AssetTree assetTree) {
-        assetTree.root().addView(Clusters.class, this);
+        final Asset root = assetTree.root();
+        root.addView(Clusters.class, this);
+
+        if (clusterMap == null)
+            return;
+        clusterMap.values().forEach(v -> {
+            v.assetRoot(root);
+            v.install();
+        });
+
     }
 
-    public Cluster get(String cluster) {
+    public EngineCluster get(String cluster) {
         return clusterMap.get(cluster);
     }
 
-    public void put(String clusterName, Cluster cluster) {
-        clusterMap.put(clusterName, cluster);
+    public void put(String clusterName, EngineCluster engineCluster) {
+        clusterMap.put(clusterName, engineCluster);
     }
 
     @Override
@@ -93,6 +101,6 @@ public class Clusters extends AbstractMarshallable implements Closeable {
 
     @Override
     public void notifyClosing() {
-        clusterMap.values().forEach(Cluster::notifyClosing);
+        clusterMap.values().forEach(EngineCluster::notifyClosing);
     }
 }

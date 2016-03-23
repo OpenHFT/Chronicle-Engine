@@ -75,7 +75,12 @@ public class ReplicationDoubleMap2WayTest {
         ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
         //Delete any files from the last run
 
-        TCPRegistry.createServerSocketChannelFor("host.port1", "host.port2");
+        TCPRegistry.createServerSocketChannelFor(
+                "clusterThree.host.port1",
+                "clusterThree.host.port2",
+                "clusterThree.host.port3",
+                "host.port1",
+                "host.port2");
 
         WireType writeType = WireType.TEXT;
         tree1 = create(1, writeType, "clusterTwo");

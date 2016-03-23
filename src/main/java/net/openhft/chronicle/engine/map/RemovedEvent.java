@@ -93,8 +93,8 @@ public class RemovedEvent<K, V> extends AbstractMarshallable implements MapEvent
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         wire.read(MapEventFields.assetName).text(this, (o, s) -> assetName = s);
-        wire.read(MapEventFields.key).object(Object.class, this, (o, x) -> o.key = x);
-        wire.read(MapEventFields.oldValue).object(Object.class, this, (o, x) -> o.oldValue = x);
+        wire.read(MapEventFields.key).object(Object.class, this, (o, x) -> o.key = (K) x);
+        wire.read(MapEventFields.oldValue).object(Object.class, this, (o, x) -> o.oldValue = (V) x);
         wire.read(MapEventFields.isReplicationEvent).bool(this, (o, x) -> o.isReplicationEvent = x);
     }
 

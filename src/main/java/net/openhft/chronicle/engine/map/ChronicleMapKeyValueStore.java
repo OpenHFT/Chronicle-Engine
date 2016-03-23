@@ -29,19 +29,18 @@ import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
-import net.openhft.chronicle.engine.fs.Cluster;
 import net.openhft.chronicle.engine.fs.Clusters;
-import net.openhft.chronicle.engine.fs.HostDetails;
+import net.openhft.chronicle.engine.fs.EngineCluster;
+import net.openhft.chronicle.engine.fs.EngineHostDetails;
 import net.openhft.chronicle.engine.server.internal.MapReplicationHandler;
-import net.openhft.chronicle.engine.server.internal.UberHandler;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.hash.replication.EngineReplicationLangBytesConsumer;
 import net.openhft.chronicle.map.*;
 import net.openhft.chronicle.network.api.session.SessionDetails;
 import net.openhft.chronicle.network.api.session.SessionProvider;
+import net.openhft.chronicle.network.cluster.ConnectionManager;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
-import net.openhft.chronicle.network.connection.VanillaWireOutPublisher;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.wire.WriteMarshallable;
 import net.openhft.lang.io.Bytes;
@@ -58,15 +57,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
 import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
 import static net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer.notifyEachEvent;
 import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplication.builder;
-import static net.openhft.chronicle.network.HeaderTcpHandler.toHeader;
-import static net.openhft.chronicle.network.connection.CoreFields.cid;
 
 public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V>,
         Closeable, Supplier<EngineReplication> {
@@ -147,8 +143,7 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
             builder.removeReturnsNull(true);
         if (averageValueSize > 0)
             builder.averageValueSize(averageValueSize);
-        if (maxEntries > 0)
-            builder.entries(maxEntries + 1); // we have to add a head room of 1
+        if (maxEntries > 0) builder.entries(maxEntries + 1); // we have to add a head room of 1
 
         if (basePath == null) {
             chronicleMap = builder.create();
@@ -175,9 +170,9 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
             return;
         }
 
-        final Cluster cluster = clusters.get(context.cluster());
+        final EngineCluster engineCluster = clusters.get(context.cluster());
 
-        if (cluster == null) {
+        if (engineCluster == null) {
             LOG.warn("no cluster found name=" + context.cluster());
             return;
         }
@@ -185,12 +180,57 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
         byte localIdentifier = hostIdentifier.hostId();
 
         if (LOG.isDebugEnabled())
-            LOG.debug("hostDetails : localIdentifier=" + localIdentifier + ",cluster=" + cluster.hostDetails());
+            LOG.debug("hostDetails : localIdentifier=" + localIdentifier + ",cluster=" + engineCluster.hostDetails());
 
-        for (HostDetails hostDetails : cluster.hostDetails()) {
+        for (EngineHostDetails hostDetails : engineCluster.hostDetails()) {
             try {
                 // its the identifier with the larger values that will establish the connection
-                byte remoteIdentifier = (byte) hostDetails.hostId;
+                byte remoteIdentifier = (byte) hostDetails.hostId();
+
+                if (remoteIdentifier == localIdentifier)
+                    continue;
+
+                if (Boolean.getBoolean("ReplicationHandler3")) {
+
+                    final ConnectionManager connectionEventHandler = engineCluster
+                            .findConnectionEventHandler(remoteIdentifier);
+
+                    connectionEventHandler.addListener((nc, isConnected) -> {
+
+                        if (!isConnected)
+                            return;
+
+                        final String csp = context.fullName();
+                        final WriteMarshallable out = w -> {
+
+                            final long lastUpdateTime = ((Replica) chronicleMap).lastModificationTime
+                                    (remoteIdentifier);
+
+                            w.writeDocument(true, d -> {
+
+                                final MapReplicationHandler h = new MapReplicationHandler(lastUpdateTime);
+
+                                // todo improve this - at the moment, has to be the same cid for
+                                // all
+                                // MapReplicationHandlers
+                                int cid = MapReplicationHandler.class.hashCode();
+
+                                d.writeEventName(CoreFields.csp).text(csp)
+                                        .writeEventName(CoreFields.cid).int64(cid)
+                                        .writeEventName(CoreFields.handler).typedMarshallable(h)
+                                        .writeComment("server: localIdentifier=" + localIdentifier +
+                                                ",remoteIdentifier=" + remoteIdentifier);
+                            });
+
+                        };
+
+                        nc.wireOutPublisher().put("", out);
+
+                    });
+
+                    continue;
+                }
+
 
                 if (remoteIdentifier <= localIdentifier) {
                     if (LOG.isDebugEnabled())
@@ -204,38 +244,6 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
                             "localIdentifier=" + localIdentifier + ", " +
                             "remoteIdentifier=" + remoteIdentifier);
 
-                if (Boolean.getBoolean("ReplicationHandler3")) {
-
-                    final UberHandler handler = new UberHandler(localIdentifier,
-                            remoteIdentifier, context.wireType());
-
-                    final String csp = context.fullName();
-                    final WriteMarshallable out = w -> {
-
-                        final long lastUpdateTime = ((Replica) chronicleMap).lastModificationTime
-                                (remoteIdentifier);
-
-                        w.writeDocument(true, d -> {
-
-                            final MapReplicationHandler h = new MapReplicationHandler(lastUpdateTime);
-
-                            d.writeEventName(CoreFields.csp).text(csp)
-                                    .writeEventName(cid).int64(uniqueCspId())
-                                    .writeEventName(CoreFields.handler).typedMarshallable(h)
-                                    .writeComment("server: localIdentifier=" + localIdentifier +
-                                            ",remoteIdentifier=" + remoteIdentifier);
-                        });
-
-                    };
-
-                    hostDetails.connect(context.wireType(),
-                            asset,
-                            w -> toHeader(handler, localIdentifier, remoteIdentifier)
-                                    .writeMarshallable(w),
-                            VanillaWireOutPublisher::new, out);
-
-                    continue;
-                }
 
                 final TcpChannelHub tcpChannelHub = hostDetails.acquireTcpChannelHub(asset, eventLoop, context.wireType());
                 final ReplicationHub replicationHub = new ReplicationHub(context, tcpChannelHub,
@@ -249,28 +257,6 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
         }
     }
 
-    private AtomicLong uniqueCspid = new AtomicLong();
-
-    private long uniqueCspId() {
-        long time = System.currentTimeMillis();
-
-        for (; ; ) {
-
-            final long current = this.uniqueCspid.get();
-
-            if (time == this.uniqueCspid.get()) {
-                time++;
-                continue;
-            }
-
-            final boolean success = this.uniqueCspid.compareAndSet(current, time);
-
-            if (!success)
-                continue;
-
-            return time;
-        }
-    }
 
     @NotNull
     @Override

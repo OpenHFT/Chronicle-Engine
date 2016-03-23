@@ -19,8 +19,15 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.engine.api.tree.Asset;
+import net.openhft.chronicle.engine.cfg.EngineClusterContext;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
+import net.openhft.chronicle.network.MarshallableFunction;
+import net.openhft.chronicle.network.NetworkContext;
 import net.openhft.chronicle.network.VanillaNetworkContext;
+import net.openhft.chronicle.network.cluster.ClusterContext;
+import net.openhft.chronicle.wire.Demarshallable;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -29,13 +36,40 @@ import org.jetbrains.annotations.NotNull;
  */
 public class EngineWireNetworkContext<T extends EngineWireNetworkContext> extends VanillaNetworkContext<T> {
 
+
+    public static class Factory implements
+            MarshallableFunction<ClusterContext,
+                    NetworkContext>, Demarshallable {
+
+        private Factory(@NotNull WireIn wireIn) {
+
+        }
+
+        public Factory() {
+        }
+
+        @Override
+        public void writeMarshallable(@NotNull WireOut wire) {
+
+        }
+
+        @Override
+        public NetworkContext apply(ClusterContext context) {
+            return new EngineWireNetworkContext<>(((EngineClusterContext) context).assetRoot());
+        }
+    }
+
+
     private Asset rootAsset;
+
+    public EngineWireNetworkContext(Asset asset) {
+        this.rootAsset = asset.root();
+    }
 
     @NotNull
     public Asset rootAsset() {
         return rootAsset;
     }
-
 
     @Override
     public String toString() {
@@ -57,9 +91,5 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext> extend
                 '}';
     }
 
-    public EngineWireNetworkContext<T> rootAsset(Asset asset) {
-        this.rootAsset = asset.root();
-        return this;
-    }
 }
 

@@ -78,7 +78,13 @@ public class Replication3WayWithCompressionTest {
         //Delete any files from the last run
         Files.deleteIfExists(Paths.get(OS.TARGET, NAME));
 
-        TCPRegistry.createServerSocketChannelFor("host.port1", "host.port2", "host.port3");
+        TCPRegistry.createServerSocketChannelFor(
+                "clusterThree.host.port1",
+                "clusterThree.host.port2",
+                "clusterThree.host.port3",
+                "host.port1",
+                "host.port2",
+                "host.port3");
 
         WireType writeType = WireType.TEXT;
         tree1 = create(1, writeType, "clusterTwo");

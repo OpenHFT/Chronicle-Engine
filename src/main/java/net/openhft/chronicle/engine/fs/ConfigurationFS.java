@@ -36,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
 @Deprecated
 public class ConfigurationFS implements MountPoint {
     public static final String FSTAB = "fstab.yaml";
-    public static final String CLUSTERS = "clusters.yaml";
+    public final static String CLUSTERS = "clusters.yaml";
     private final String assetName;
     private final String etcDir;
     private final String baseDir;
@@ -76,6 +76,7 @@ public class ConfigurationFS implements MountPoint {
             case CLUSTERS:
                 processClusters(mapEvent.getValue());
                 break;
+
         }
     }
 

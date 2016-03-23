@@ -59,18 +59,22 @@ import static org.junit.Assert.assertNotNull;
 public class Replication2WayTest {
     public static final WireType WIRE_TYPE = WireType.TEXT;
 
-    public static ServerEndpoint serverEndpoint1;
-    public static ServerEndpoint serverEndpoint2;
+    static {
+        System.setProperty("ReplicationHandler3", "true");
+    }
 
-    private static AssetTree tree1;
-    private static AssetTree tree2;
-    private static AtomicReference<Throwable> t = new AtomicReference();
+    public ServerEndpoint serverEndpoint1;
+    public ServerEndpoint serverEndpoint2;
+
+    private AssetTree tree1;
+    private AssetTree tree2;
+    private AtomicReference<Throwable> t = new AtomicReference();
     @Rule
     public TestName testName = new TestName();
     public String name;
 
-    @BeforeClass
-    public static void before() throws IOException {
+
+    public void before() throws IOException {
         YamlLogging.setAll(false);
 
         //YamlLogging.showServerWrites = true;
@@ -79,7 +83,12 @@ public class Replication2WayTest {
         ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
         //Delete any files from the last run
 
-        TCPRegistry.createServerSocketChannelFor("host.port1", "host.port2");
+        TCPRegistry.createServerSocketChannelFor(
+                "clusterThree.host.port1",
+                "clusterThree.host.port2",
+                "clusterThree.host.port3",
+                "host.port1",
+                "host.port2");
 
         WireType writeType = WireType.TEXT;
         tree1 = create(1, writeType, "clusterTwo");
@@ -89,8 +98,8 @@ public class Replication2WayTest {
         serverEndpoint2 = new ServerEndpoint("host.port2", tree2);
     }
 
-    @AfterClass
-    public static void after() throws IOException {
+
+    public void after() throws IOException {
         if (serverEndpoint1 != null)
             serverEndpoint1.close();
         if (serverEndpoint2 != null)
@@ -107,7 +116,7 @@ public class Replication2WayTest {
     }
 
     @NotNull
-    private static AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
+    private AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
         AssetTree tree = new VanillaAssetTree((byte) hostId)
                 .forTesting(x -> t.compareAndSet(null, x))
                 .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);
@@ -121,7 +130,7 @@ public class Replication2WayTest {
                 new ChronicleMapKeyValueStore(context.wireType(writeType).cluster(clusterTwo),
                         asset));
 
-        VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
+//        VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
 
         return tree;
     }
@@ -136,14 +145,17 @@ public class Replication2WayTest {
 
     @Before
     public void beforeTest() throws IOException {
+        before();
         name = testName.getMethodName();
+        YamlLogging.showServerReads = true;
         Files.deleteIfExists(Paths.get(OS.TARGET, name.toString()));
     }
 
     @After
-    public void afterMethod() {
+    public void afterMethod() throws IOException {
         final Throwable th = t.getAndSet(null);
         if (th != null) throw Jvm.rethrow(th);
+        after();
     }
 
     @Test
@@ -177,27 +189,27 @@ public class Replication2WayTest {
     @Test
     public void testBootstrapAllFromMap1() throws InterruptedException {
 
+
         final ConcurrentMap<String, String> map1 = tree1.acquireMap(name, String.class, String
                 .class);
         assertNotNull(map1);
 
         map1.put("hello1", "world1");
-        map1.put("hello2", "world2");
+
 
         final ConcurrentMap<String, String> map2 = tree2.acquireMap(name, String.class, String
                 .class);
         assertNotNull(map2);
 
         for (int i = 1; i <= 50; i++) {
-            if (map1.size() == 2 && map2.size() == 2)
+            if (map1.size() == 1 && map2.size() == 1)
                 break;
             Jvm.pause(300);
         }
 
         for (Map m : new Map[]{map1, map2}) {
             Assert.assertEquals("world1", m.get("hello1"));
-            Assert.assertEquals("world2", m.get("hello2"));
-            Assert.assertEquals(2, m.size());
+            Assert.assertEquals(1, m.size());
         }
     }
 
@@ -212,20 +224,19 @@ public class Replication2WayTest {
                 .class);
 
         map2.put("hello1", "world1");
-        map2.put("hello2", "world2");
 
         assertNotNull(map2);
 
         for (int i = 1; i <= 50; i++) {
-            if (map1.size() == 2 && map2.size() == 2)
+            if (map1.size() == 1 && map2.size() == 1)
                 break;
             Jvm.pause(300);
         }
 
         for (Map m : new Map[]{map1, map2}) {
             Assert.assertEquals("world1", m.get("hello1"));
-            Assert.assertEquals("world2", m.get("hello2"));
-            Assert.assertEquals(2, m.size());
+
+            Assert.assertEquals(1, m.size());
         }
     }
 

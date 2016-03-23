@@ -18,9 +18,11 @@
 
 package net.openhft.chronicle.engine.server.internal;
 
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.network.NetworkContext;
 import net.openhft.chronicle.network.WireTcpHandler;
 import net.openhft.chronicle.network.api.session.SubHandler;
+import net.openhft.chronicle.network.cluster.HeartbeatEventHandler;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.WireIn;
@@ -36,18 +38,25 @@ import static net.openhft.chronicle.network.connection.CoreFields.csp;
 /**
  * @author Rob Austin.
  */
-public abstract class CspTcpHander<T extends NetworkContext> extends WireTcpHandler<T> {
+abstract class CspTcpHander<T extends NetworkContext> extends WireTcpHandler<T> {
 
     protected final StringBuilder cspText = new StringBuilder();
 
     @NotNull
     private final Map<Long, SubHandler> cidToHandle = new HashMap<>();
     private SubHandler handler;
-
+    private HeartbeatEventHandler heartbeatEventHandler;
     private long lastCid;
 
-    protected SubHandler handler() {
+    SubHandler handler() {
         return handler;
+    }
+
+
+    @Override
+    public void close() {
+        cidToHandle.values().forEach(Closeable::closeQuietly);
+        super.close();
     }
 
     /**
@@ -55,7 +64,7 @@ public abstract class CspTcpHander<T extends NetworkContext> extends WireTcpHand
      *
      * @return {@code true} if if a csp was read rather than a cid
      */
-    protected boolean readMeta(@NotNull final WireIn wireIn) {
+    boolean readMeta(@NotNull final WireIn wireIn) {
         final StringBuilder event = Wires.acquireStringBuilder();
 
         ValueIn valueIn = wireIn.readEventName(event);
@@ -75,9 +84,17 @@ public abstract class CspTcpHander<T extends NetworkContext> extends WireTcpHand
             event.setLength(0);
             valueIn = wireIn.readEventName(event);
 
+
             if (CoreFields.handler.contentEquals(event)) {
                 handler = valueIn.typedMarshallable();
                 handler.nc(nc());
+                handler.closeable(this);
+                if (handler() instanceof HeartbeatEventHandler) {
+                    assert heartbeatEventHandler == null : "its assumed that you will only have a " +
+                            "single heartbeatReceiver per connection";
+                    heartbeatEventHandler = (HeartbeatEventHandler) handler();
+                }
+
                 handler.cid(cid);
                 handler.csp(csp);
                 lastCid = cid;
@@ -92,10 +109,14 @@ public abstract class CspTcpHander<T extends NetworkContext> extends WireTcpHand
             lastCid = cid;
             handler = cidToHandle.get(cid);
         } else {
-            throw new IllegalStateException("expecting either csp or cid, event="+event);
+            throw new IllegalStateException("expecting either csp or cid, event=" + event);
         }
 
         return false;
+    }
+
+    public HeartbeatEventHandler heartbeatEventHandler() {
+        return heartbeatEventHandler;
     }
 
     @Override

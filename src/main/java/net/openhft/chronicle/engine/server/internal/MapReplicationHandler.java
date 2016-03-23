@@ -30,6 +30,7 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.map.CMap2EngineReplicator.VanillaReplicatedEntry;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
+import net.openhft.chronicle.network.cluster.AbstractSubHandler;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.wire.*;
@@ -39,7 +40,6 @@ import org.slf4j.LoggerFactory;
 
 import static java.lang.ThreadLocal.withInitial;
 import static net.openhft.chronicle.engine.server.internal.MapReplicationHandler.EventId.replicationEvent;
-import static net.openhft.chronicle.network.WireTcpHandler.logYaml;
 import static net.openhft.chronicle.network.connection.CoreFields.lastUpdateTime;
 
 /**
@@ -87,6 +87,8 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
         // receives replication events
         if (replicationEvent.contentEquals(eventName)) {
             final VanillaReplicatedEntry entry = vre.get();
+            if (localIdentifier == 3 && entry.identifier() == 2)
+                System.out.println("");
             entry.clear();
             valueIn.marshallable(entry);
             replication.applyReplication(entry);
@@ -95,7 +97,7 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
 
 
     @Override
-    public void onBootstrap(@NotNull WireOut outWire) {
+    public void onInitialize(@NotNull WireOut outWire) {
         rootAsset = nc().rootAsset();
         final RequestContext requestContext = RequestContext.requestContext(csp());
         final Asset asset = rootAsset.acquireAsset(requestContext.fullName());
@@ -109,27 +111,11 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
         this.eventLoop = rootAsset.findOrCreateView(EventLoop.class);
         eventLoop.start();
 
-        final ModificationIterator mi = replication.acquireModificationIterator(remoteIdentifier());
+        final ModificationIterator mi = replication.acquireModificationIterator(
+                (byte) remoteIdentifier());
 
         if (mi != null)
             mi.dirtyEntries(timestamp);
-
-        if (remoteIdentifier() < localIdentifier) {
-
-            outWire.writeDocument(true, d -> {
-
-                final long timestamp = replication.lastModificationTime(remoteIdentifier());
-                final MapReplicationHandler handler = new MapReplicationHandler(timestamp);
-
-                d.writeEventName(CoreFields.csp).text(csp())
-                        .writeEventName(CoreFields.cid).int64(cid())
-                        .writeEventName(CoreFields.handler).typedMarshallable(handler)
-                        .writeComment("server: localIdentifier=" + localIdentifier +
-                                ",remoteIdentifier=" + remoteIdentifier());
-            });
-
-            logYaml(outWire);
-        }
 
         if (mi == null)
             return;
@@ -140,7 +126,7 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
         if (!eventLoop.isAlive() && !eventLoop.isClosed())
             throw new IllegalStateException("the event loop is not yet running !");
 
-        eventLoop.addHandler(true, new ReplicationEventHandler(mi, remoteIdentifier()));
+        eventLoop.addHandler(true, new ReplicationEventHandler(mi, (byte) remoteIdentifier()));
     }
 
     @Override
@@ -248,7 +234,8 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
 
             mi.nextEntry(e -> publisher.put(null, w -> {
 
-                        assert e.remoteIdentifier() != localIdentifier;
+
+                assert e.remoteIdentifier() != localIdentifier;
                         long newlastUpdateTime = Math.max(lastUpdateTime, e.timestamp());
 
                         if (newlastUpdateTime > lastUpdateTime) {

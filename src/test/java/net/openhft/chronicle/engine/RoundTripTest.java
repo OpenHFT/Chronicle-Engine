@@ -73,19 +73,19 @@ public class RoundTripTest {
     private static String CONNECTION_3 = "CONNECTION_3";
 
     @NotNull
-    static AssetTree create(final int hostId, WireType writeType, final List<HostDetails> hostDetails) {
+    static AssetTree create(final int hostId, WireType writeType, final List<EngineHostDetails> hostDetails) {
 
         AssetTree tree = new VanillaAssetTree((byte) hostId)
                 .forTesting(x -> t.compareAndSet(null, x));
 
-        Map<String, HostDetails> hostDetailsMap = new ConcurrentSkipListMap<>();
+        Map<String, EngineHostDetails> hostDetailsMap = new ConcurrentSkipListMap<>();
 
-        for (HostDetails hd : hostDetails) {
+        for (EngineHostDetails hd : hostDetails) {
             hostDetailsMap.put(hd.toString(), hd);
         }
 
-        Clusters testCluster = new Clusters(Collections.singletonMap("test",
-                new Cluster("test", hostDetailsMap)));
+        final Clusters testCluster = new Clusters(Collections.singletonMap("test",
+                new EngineCluster("test")));
 
 
         tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
@@ -139,10 +139,10 @@ public class RoundTripTest {
         TCPRegistry.createServerSocketChannelFor(CONNECTION_2);
         TCPRegistry.createServerSocketChannelFor(CONNECTION_3);
 
-        final List<HostDetails> hostDetails = new ArrayList<>();
-        hostDetails.add(new HostDetails(1, 8 << 20, CONNECTION_1, 5_000));
-        hostDetails.add(new HostDetails(2, 8 << 20, CONNECTION_2, 5_000));
-        hostDetails.add(new HostDetails(3, 8 << 20, CONNECTION_3, 5_000));
+        final List<EngineHostDetails> hostDetails = new ArrayList<>();
+        hostDetails.add(new EngineHostDetails(1, 8 << 20, CONNECTION_1, 5_000));
+        hostDetails.add(new EngineHostDetails(2, 8 << 20, CONNECTION_2, 5_000));
+        hostDetails.add(new EngineHostDetails(3, 8 << 20, CONNECTION_3, 5_000));
 
         AssetTree serverAssetTree1 = create(1, WireType.BINARY, hostDetails);
         AssetTree serverAssetTree2 = create(2, WireType.BINARY, hostDetails);

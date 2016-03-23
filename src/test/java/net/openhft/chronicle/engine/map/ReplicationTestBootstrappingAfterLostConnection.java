@@ -29,8 +29,8 @@ import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.fs.ChronicleMapGroupFS;
 import net.openhft.chronicle.engine.fs.Clusters;
+import net.openhft.chronicle.engine.fs.EngineHostDetails;
 import net.openhft.chronicle.engine.fs.FilePerKeyGroupFS;
-import net.openhft.chronicle.engine.fs.HostDetails;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
@@ -182,14 +182,14 @@ public class ReplicationTestBootstrappingAfterLostConnection {
     }
 
     private void simulateSomeonePullingOutTheNetworkCableAndPluginItBackIn() {
-        final Collection<HostDetails> cluster = cluster();
-        final Iterator<HostDetails> iterator = cluster.iterator();
+        final Collection<EngineHostDetails> cluster = cluster();
+        final Iterator<EngineHostDetails> iterator = cluster.iterator();
         iterator.next();
         final TcpChannelHub tcpChannelHub = iterator.next().tcpChannelHub();
         tcpChannelHub.forceDisconnect();
     }
 
-    private Collection<HostDetails> cluster() {
+    private Collection<EngineHostDetails> cluster() {
         final Clusters clusters = tree1.root().getView(Clusters.class);
         return clusters.get("clusterTwo").hostDetails();
     }

@@ -27,14 +27,12 @@ import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
-import net.openhft.chronicle.engine.fs.Cluster;
 import net.openhft.chronicle.engine.fs.Clusters;
-import net.openhft.chronicle.engine.fs.HostDetails;
+import net.openhft.chronicle.engine.fs.EngineCluster;
 import net.openhft.chronicle.engine.query.QueueSource;
 import net.openhft.chronicle.engine.server.internal.QueueReplicationHandler;
-import net.openhft.chronicle.engine.server.internal.UberHandler;
+import net.openhft.chronicle.network.cluster.ConnectionManager;
 import net.openhft.chronicle.network.connection.CoreFields;
-import net.openhft.chronicle.network.connection.VanillaWireOutPublisher;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ExcerptAppender;
 import net.openhft.chronicle.queue.ExcerptTailer;
@@ -52,9 +50,6 @@ import java.nio.file.Path;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
-
-import static net.openhft.chronicle.network.HeaderTcpHandler.toHeader;
-import static net.openhft.chronicle.network.connection.CoreFields.cid;
 
 /**
  * @author Rob Austin.
@@ -85,16 +80,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     private boolean isReplicating;
 
     public ChronicleQueueView(RequestContext context, Asset asset) {
-        final HostIdentifier hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
-        final Byte hostId = hostIdentifier == null ? null : hostIdentifier.hostId();
-        chronicleQueue = newInstance(context.name(), context.basePath(), hostId);
-        messageTypeClass = context.messageType();
-        elementTypeClass = context.elementType();
-        LOG.info("context=" + context.name() + ", chronicleQueue=" + chronicleQueue);
-        threadLocal = ThreadLocal.withInitial(() -> new ThreadLocalData(chronicleQueue));
-
-        if (hostId != null)
-            replication(context, asset);
+        this(null, context, asset);
     }
 
 
@@ -109,14 +95,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
         if (hostId != null)
             replication(context, asset);
-    }
-
-    @NotNull
-    public static String resourcesDir() {
-        String path = ChronicleQueueView.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-        if (path == null)
-            return ".";
-        return new File(path).getParentFile().getParentFile() + "/src/test/resources";
     }
 
     public ChronicleQueue chronicleQueue() {
@@ -146,12 +124,13 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
         isReplicating = true;
 
-        final HostDetails remoteSourceHostDetails = hostDetails(remoteSourceIdentifier, asset, context);
 
-        final UberHandler handler = new UberHandler(
-                hostIdentifier.hostId(),
-                (byte) remoteSourceIdentifier,
-                context.wireType());
+        final Clusters clusters = asset.findView(Clusters.class);
+        final EngineCluster engineCluster = clusters.get(context.cluster());
+
+
+        final ConnectionManager connectionEventHandler = engineCluster.findConnectionEventHandler
+                (remoteSourceIdentifier);
 
         long lastIndexReceived = -1;
         try {
@@ -161,40 +140,29 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         }
 
         final QueueReplicationHandler h = new QueueReplicationHandler(lastIndexReceived, true);
-
         final String csp = context.fullName();
-        final WriteMarshallable out = w -> w.writeDocument(true, d ->
-                d.writeEventName(CoreFields.csp).text(csp)
-                        .writeEventName(cid).int64(uniqueCspId())
-                        .writeEventName(CoreFields.handler).typedMarshallable(h));
 
-        remoteSourceHostDetails.connect(
-                context.wireType(),
-                asset,
-                w -> toHeader(handler).writeMarshallable(w),
-                VanillaWireOutPublisher::new, out);
+        connectionEventHandler.addListener((nc, isConnected) -> {
+            if (!isConnected)
+                return;
+
+            long cid = QueueReplicationHandler.class.hashCode();
+            nc.wireOutPublisher().put("", w -> w.writeDocument(true, d ->
+                    d.writeEventName(CoreFields.csp).text(csp)
+                            .writeEventName(CoreFields.cid).int64(cid)
+                            .writeEventName(CoreFields.handler).typedMarshallable(h)));
+
+        });
     }
 
-    private long uniqueCspId() {
-        long time = System.currentTimeMillis();
-
-        for (; ; ) {
-
-            final long current = this.uniqueCspid.get();
-
-            if (time == this.uniqueCspid.get()) {
-                time++;
-                continue;
-            }
-
-            final boolean success = this.uniqueCspid.compareAndSet(current, time);
-
-            if (!success)
-                continue;
-
-            return time;
-        }
+    @NotNull
+    public static String resourcesDir() {
+        String path = ChronicleQueueView.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        if (path == null)
+            return ".";
+        return new File(path).getParentFile().getParentFile() + "/src/test/resources";
     }
+
 
     @Override
     public void registerTopicSubscriber
@@ -408,19 +376,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         throw new UnsupportedOperationException("todo");
     }
 
-    private HostDetails hostDetails(int hostId, Asset asset, RequestContext context) {
-
-        Clusters clusters = asset.findView(Clusters.class);
-        final Cluster cluster = clusters.get(context.cluster());
-
-
-        for (HostDetails hostDetails : cluster.hostDetails()) {
-            if (hostDetails.hostId == hostId)
-                return hostDetails;
-        }
-
-        throw new IllegalStateException("HostId not found, hostId=" + hostId);
-
+    public String dump() {
+        return chronicleQueue.dump();
     }
 
     public static class LocalExcept<T, M> implements Excerpt<T, M>, Marshallable {
@@ -493,6 +450,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
             excerpt = new LocalExcept();
         }
     }
+
 
 }
 

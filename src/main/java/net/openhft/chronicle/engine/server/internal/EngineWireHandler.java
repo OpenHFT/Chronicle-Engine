@@ -139,8 +139,8 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
 
 
     @Override
-    public void nc(EngineWireNetworkContext nc) {
-        super.nc(nc);
+    protected void bootstrap() {
+        EngineWireNetworkContext nc = nc();
         if (wireType() == null && nc.wireType() != null)
             wireType(nc.wireType());
         publisher(nc.wireOutPublisher());
@@ -161,7 +161,6 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
         } catch (RejectedExecutionException e) {
             LOG.debug("", e);
         }
-
 
         this.isServerSocket = nc.isAcceptor();
         this.sessionDetails = nc.sessionDetails();

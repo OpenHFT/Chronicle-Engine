@@ -25,13 +25,22 @@ import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.session.Heartbeat;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
+import net.openhft.chronicle.engine.cfg.EngineClusterContext;
+import net.openhft.chronicle.engine.cfg.VanillaWireOutPublisherFactory;
+import net.openhft.chronicle.engine.fs.EngineConnectionManager;
 import net.openhft.chronicle.engine.map.ObjectSubscription;
 import net.openhft.chronicle.engine.map.RawKVSSubscription;
 import net.openhft.chronicle.engine.query.Filter;
 import net.openhft.chronicle.engine.query.Operation.OperationType;
+import net.openhft.chronicle.engine.server.internal.EngineWireNetworkContext;
+import net.openhft.chronicle.engine.server.internal.UberHandler;
 import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.TopologySubscription;
+import net.openhft.chronicle.network.TcpEventHandler;
+import net.openhft.chronicle.network.cluster.ClusterContext;
+import net.openhft.chronicle.network.cluster.HeartbeatHandler;
+import net.openhft.chronicle.network.cluster.HostIdConnectionStrategy;
 import net.openhft.chronicle.wire.QueryWire;
 import net.openhft.chronicle.wire.VanillaWireParser;
 import net.openhft.chronicle.wire.WireParser;
@@ -68,6 +77,17 @@ public class RequestContext implements Cloneable {
         addAlias(Proxy.class, "set-proxy");
         addAlias(Operation.class, "QueryOperation");
         addAlias(OperationType.class, "QueryOperationType");
+        addAlias(UberHandler.Factory.class, "UberHandlerFactory");
+        addAlias(VanillaWireOutPublisherFactory.class, "VanillaWireOutPublisherFactory");
+        addAlias(HostIdConnectionStrategy.class, "HostIdConnectionStrategy");
+        addAlias(HeartbeatHandler.Factory.class, "HeartbeatHandlerFactory");
+        addAlias(ClusterContext.class, "ClusterContext");
+        addAlias(EngineWireNetworkContext.Factory.class, "EngineWireNetworkContextFactory");
+        addAlias(EngineConnectionManager.Factory.class, "EngineConnectionManagerFactory");
+        addAlias(TcpEventHandler.Factory.class, "TcpEventHandlerFactory");
+        addAlias(EngineClusterContext.class, "EngineClusterContext");
+        addAlias(UberHandler.class, "UberHandler");
+
     }
 
     private String pathName;
@@ -193,6 +213,7 @@ public class RequestContext implements Cloneable {
 
         parser.register(() -> "entries", (s, v, $) -> v.int64(this, (o, x) -> o.entries = x));
         parser.register(() -> "averageValueSize", (s, v, $) -> v.int64(this, (o, x) -> o.averageValueSize = x));
+
 
         return parser;
     }

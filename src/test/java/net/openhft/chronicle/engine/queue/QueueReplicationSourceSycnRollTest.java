@@ -38,7 +38,6 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ExcerptAppender;
-import net.openhft.chronicle.queue.ExcerptTailer;
 import net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder;
 import net.openhft.chronicle.wire.WireKey;
 import net.openhft.chronicle.wire.WireType;
@@ -64,7 +63,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.queue.SimpleQueueViewTest.deleteFile;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Created by Rob Austin
@@ -144,7 +142,10 @@ public class QueueReplicationSourceSycnRollTest {
         TCPRegistry.createServerSocketChannelFor(
                 "clusterThree.host.port1",
                 "clusterThree.host.port2",
-                "clusterThree.host.port3");
+                "clusterThree.host.port3",
+                "host.port1",
+                "host.port2",
+                "host.port3");
 
         tree1 = create(1, wireType, "clusterThree");
         tree2 = create(2, wireType, "clusterThree");
@@ -193,6 +194,7 @@ public class QueueReplicationSourceSycnRollTest {
 
     @Test
     public void testAppendAndReadWithRollingB() throws IOException, InterruptedException {
+        YamlLogging.setAll(true);
         SetTimeProvider stp = new SetTimeProvider();
         stp.currentTimeMillis(System.currentTimeMillis() - 3 * 86400_000L);
 
@@ -200,13 +202,15 @@ public class QueueReplicationSourceSycnRollTest {
                 ("chronicle" + "-").toFile())
                 .wireType(this.wireType)
                 .timeProvider(stp)
+                .indexSpacing(1).indexCount(8)
                 .build();
 
 
         final ChronicleQueue queue2 = new SingleChronicleQueueBuilder(Files.createTempDirectory
                 ("chronicle" + "-").toFile())
                 .wireType(this.wireType)
-                .timeProvider(stp)
+                //   .timeProvider(stp)
+                .indexSpacing(1).indexCount(8)
                 .build();
 
 
@@ -241,180 +245,13 @@ public class QueueReplicationSourceSycnRollTest {
             assertEquals(cycle + i, appender.cycle());
         }
 
-        Thread.sleep(5000);
-
-            /* Note this means the file has rolled
-            --- !!not-ready-meta-data! #binary
-            ...
-             */
-        assertEquals("--- !!meta-data #binary\n" +
-                "header: !SCQStore {\n" +
-                "  wireType: !WireType BINARY,\n" +
-                "  writePosition: 250,\n" +
-                "  roll: !SCQSRoll {\n" +
-                "    length: 86400000,\n" +
-                "    format: yyyyMMdd,\n" +
-                "    epoch: 0\n" +
-                "  },\n" +
-                "  indexing: !SCQSIndexing {\n" +
-                "    indexCount: !int 8192,\n" +
-                "    indexSpacing: 64,\n" +
-                "    index2Index: 0,\n" +
-                "    lastIndex: 0\n" +
-                "  }\n" +
-                "}\n" +
-                "# position: 227\n" +
-                "--- !!data #binary\n" +
-                "test: 0\n" +
-                "# position: 237\n" +
-                "--- !!data #binary\n" +
-                "test2: !int 1000\n" +
-                "# position: 250\n" +
-                "--- !!not-ready-meta-data! #binary\n" +
-                "...\n" +
-                "# 83885822 bytes remaining\n" +
-                "--- !!meta-data #binary\n" +
-                "header: !SCQStore {\n" +
-                "  wireType: !WireType BINARY,\n" +
-                "  writePosition: 250,\n" +
-                "  roll: !SCQSRoll {\n" +
-                "    length: 86400000,\n" +
-                "    format: yyyyMMdd,\n" +
-                "    epoch: 0\n" +
-                "  },\n" +
-                "  indexing: !SCQSIndexing {\n" +
-                "    indexCount: !int 8192,\n" +
-                "    indexSpacing: 64,\n" +
-                "    index2Index: 0,\n" +
-                "    lastIndex: 0\n" +
-                "  }\n" +
-                "}\n" +
-                "# position: 227\n" +
-                "--- !!data #binary\n" +
-                "test: 1\n" +
-                "# position: 237\n" +
-                "--- !!data #binary\n" +
-                "test2: !int 1001\n" +
-                "# position: 250\n" +
-                "--- !!not-ready-meta-data! #binary\n" +
-                "...\n" +
-                "# 83885822 bytes remaining\n" +
-                "--- !!meta-data #binary\n" +
-                "header: !SCQStore {\n" +
-                "  wireType: !WireType BINARY,\n" +
-                "  writePosition: 250,\n" +
-                "  roll: !SCQSRoll {\n" +
-                "    length: 86400000,\n" +
-                "    format: yyyyMMdd,\n" +
-                "    epoch: 0\n" +
-                "  },\n" +
-                "  indexing: !SCQSIndexing {\n" +
-                "    indexCount: !int 8192,\n" +
-                "    indexSpacing: 64,\n" +
-                "    index2Index: 0,\n" +
-                "    lastIndex: 0\n" +
-                "  }\n" +
-                "}\n" +
-                "# position: 227\n" +
-                "--- !!data #binary\n" +
-                "test: 2\n" +
-                "# position: 237\n" +
-                "--- !!data #binary\n" +
-                "test2: !int 1002\n" +
-                "# position: 250\n" +
-                "--- !!not-ready-meta-data! #binary\n" +
-                "...\n" +
-                "# 83885822 bytes remaining\n" +
-                "--- !!meta-data #binary\n" +
-                "header: !SCQStore {\n" +
-                "  wireType: !WireType BINARY,\n" +
-                "  writePosition: 250,\n" +
-                "  roll: !SCQSRoll {\n" +
-                "    length: 86400000,\n" +
-                "    format: yyyyMMdd,\n" +
-                "    epoch: 0\n" +
-                "  },\n" +
-                "  indexing: !SCQSIndexing {\n" +
-                "    indexCount: !int 8192,\n" +
-                "    indexSpacing: 64,\n" +
-                "    index2Index: 0,\n" +
-                "    lastIndex: 0\n" +
-                "  }\n" +
-                "}\n" +
-                "# position: 227\n" +
-                "--- !!data #binary\n" +
-                "test: 3\n" +
-                "# position: 237\n" +
-                "--- !!data #binary\n" +
-                "test2: !int 1003\n" +
-                "# position: 250\n" +
-                "--- !!not-ready-meta-data! #binary\n" +
-                "...\n" +
-                "# 83885822 bytes remaining\n" +
-                "--- !!meta-data #binary\n" +
-                "header: !SCQStore {\n" +
-                "  wireType: !WireType BINARY,\n" +
-                "  writePosition: 250,\n" +
-                "  roll: !SCQSRoll {\n" +
-                "    length: 86400000,\n" +
-                "    format: yyyyMMdd,\n" +
-                "    epoch: 0\n" +
-                "  },\n" +
-                "  indexing: !SCQSIndexing {\n" +
-                "    indexCount: !int 8192,\n" +
-                "    indexSpacing: 64,\n" +
-                "    index2Index: 0,\n" +
-                "    lastIndex: 0\n" +
-                "  }\n" +
-                "}\n" +
-                "# position: 227\n" +
-                "--- !!data #binary\n" +
-                "test: 4\n" +
-                "# position: 237\n" +
-                "--- !!data #binary\n" +
-                "test2: !int 1004\n" +
-                "# position: 250\n" +
-                "--- !!not-ready-meta-data! #binary\n" +
-                "...\n" +
-                "# 83885822 bytes remaining\n" +
-                "--- !!meta-data #binary\n" +
-                "header: !SCQStore {\n" +
-                "  wireType: !WireType BINARY,\n" +
-                "  writePosition: 250,\n" +
-                "  roll: !SCQSRoll {\n" +
-                "    length: 86400000,\n" +
-                "    format: yyyyMMdd,\n" +
-                "    epoch: 0\n" +
-                "  },\n" +
-                "  indexing: !SCQSIndexing {\n" +
-                "    indexCount: !int 8192,\n" +
-                "    indexSpacing: 64,\n" +
-                "    index2Index: 0,\n" +
-                "    lastIndex: 0\n" +
-                "  }\n" +
-                "}\n" +
-                "# position: 227\n" +
-                "--- !!data #binary\n" +
-                "test: 5\n" +
-                "# position: 237\n" +
-                "--- !!data #binary\n" +
-                "test2: !int 1005\n" +
-                "...\n" +
-                "# 83885826 bytes remaining\n", queue2.dump());
-
-        final ExcerptTailer tailer = queue2.createTailer().toStart();
-        for (int i = 0; i < 6; i++) {
-            final int n = i;
-            boolean condition = tailer.readDocument(r -> assertEquals(n,
-                    r.read(TestKey.test).int32()));
-            assertTrue("i : " + i, condition);
-            assertEquals(cycle + i, tailer.cycle());
-
-            boolean condition2 = tailer.readDocument(r -> assertEquals(n + 1000,
-                    r.read(TestKey.test2).int32()));
-            assertTrue("i2 : " + i, condition2);
-            assertEquals(cycle + i, tailer.cycle());
+        for (int i = 0; i < 10; i++) {
+            if (queue1.dump().equals(queue2.dump()))
+                break;
+            Thread.sleep(100);
         }
+
+        assertEquals(queue1.dump(), queue2.dump());
     }
 
 
