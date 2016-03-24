@@ -26,7 +26,10 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestName;
 
 import java.io.IOException;
@@ -41,9 +44,8 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author Rob Austin.
  */
-@Ignore
-public class LocalQueueRefTest extends ThreadMonitoringTest {
 
+public class LocalQueueRefTest extends ThreadMonitoringTest {
 
     private static AtomicReference<Throwable> t = new AtomicReference();
     @NotNull

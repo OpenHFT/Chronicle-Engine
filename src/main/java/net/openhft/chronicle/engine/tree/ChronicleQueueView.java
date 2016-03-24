@@ -79,15 +79,18 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     private boolean isSource;
     private boolean isReplicating;
 
-    public ChronicleQueueView(RequestContext context, Asset asset) {
+    public ChronicleQueueView(@NotNull RequestContext context, @NotNull Asset asset) {
         this(null, context, asset);
     }
 
 
-    public ChronicleQueueView(ChronicleQueue queue, RequestContext context, Asset asset) {
+    public ChronicleQueueView(@Nullable ChronicleQueue queue, @NotNull RequestContext context,
+                              @NotNull Asset asset) {
+
         final HostIdentifier hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
         final Byte hostId = hostIdentifier == null ? null : hostIdentifier.hostId();
-        chronicleQueue = queue;
+        chronicleQueue = (queue == null) ? newInstance(context.name(), context
+                .basePath(), hostId) : queue;
         messageTypeClass = context.messageType();
         elementTypeClass = context.elementType();
         LOG.info("context=" + context.name() + ", chronicleQueue=" + chronicleQueue);

@@ -56,7 +56,6 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author Rob Austin.
  */
-@Ignore
 @RunWith(value = Parameterized.class)
 public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
