@@ -43,10 +43,7 @@ import net.openhft.chronicle.wire.WireKey;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -67,7 +64,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * Created by Rob Austin
  */
-
+@Ignore
 @RunWith(value = Parameterized.class)
 public class QueueReplicationSourceSycnRollTest {
 
