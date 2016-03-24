@@ -43,7 +43,7 @@ abstract class CspTcpHander<T extends NetworkContext> extends WireTcpHandler<T> 
     protected final StringBuilder cspText = new StringBuilder();
 
     @NotNull
-    private final Map<Long, SubHandler> cidToHandle = new HashMap<>();
+    public final Map<Long, SubHandler> cidToHandle = new HashMap<>();
     private SubHandler handler;
     private HeartbeatEventHandler heartbeatEventHandler;
     private long lastCid;

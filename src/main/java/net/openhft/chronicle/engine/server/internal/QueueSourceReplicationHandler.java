@@ -30,16 +30,15 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.tree.ChronicleQueueView;
 import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.network.cluster.AbstractSubHandler;
+import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.queue.ChronicleQueue;
-import net.openhft.chronicle.queue.ExcerptAppender;
 import net.openhft.chronicle.queue.ExcerptTailer;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.StreamCorruptedException;
 import java.util.concurrent.TimeoutException;
 
 import static net.openhft.chronicle.network.WireTcpHandler.logYaml;
@@ -47,71 +46,71 @@ import static net.openhft.chronicle.network.WireTcpHandler.logYaml;
 /**
  * Created by Rob Austin
  */
-public class QueueReplicationHandler extends AbstractSubHandler<EngineWireNetworkContext>
+public class QueueSourceReplicationHandler extends AbstractSubHandler<EngineWireNetworkContext>
         implements Demarshallable, WriteMarshallable {
 
     static {
         ClassAliasPool.CLASS_ALIASES.addAlias(QueueReplicationEvent.class);
     }
 
-    private static final Logger LOG = LoggerFactory.getLogger(QueueReplicationHandler.class);
-    private final boolean isSource;
-
+    private static final Logger LOG = LoggerFactory.getLogger(QueueSourceReplicationHandler.class);
     private long lastIndexReceived;
     private EventLoop eventLoop;
     private Asset rootAsset;
-    private ExcerptAppender appender;
+
     private boolean closed;
     private ChronicleQueueView chronicleQueueView;
 
+
     @UsedViaReflection
-    private QueueReplicationHandler(WireIn wire) {
+    private QueueSourceReplicationHandler(WireIn wire) {
         lastIndexReceived = wire.read(() -> "lastIndexReceived").int64();
-        isSource = wire.read(() -> "isSource").bool();
+
     }
 
-    public QueueReplicationHandler(long lastIndexReceived, boolean isSource) {
+    public QueueSourceReplicationHandler(long lastIndexReceived) {
         this.lastIndexReceived = lastIndexReceived;
-        this.isSource = isSource;
     }
 
     @Override
     public void writeMarshallable(@NotNull WireOut wire) {
         wire.write(() -> "lastIndexReceived").int64(lastIndexReceived);
-        wire.write(() -> "isSource").bool(isSource);
     }
+
+    @Override
+    public void onInitialize(@NotNull WireOut outWire) {
+
+
+        rootAsset = nc().rootAsset();
+        final Asset asset = rootAsset.acquireAsset(csp());
+        chronicleQueueView = (ChronicleQueueView) asset.acquireView(QueueView
+                .class);
+        final ChronicleQueue chronicleQueue = chronicleQueueView.chronicleQueue();
+
+        eventLoop = rootAsset.findOrCreateView(EventLoop.class);
+        eventLoop.start();
+
+        final ExcerptTailer tailer = chronicleQueue.createTailer();
+        if (lastIndexReceived > 0)
+            try {
+                tailer.moveToIndex(lastIndexReceived);
+            } catch (TimeoutException e) {
+                LOG.error("", e);
+            }
+
+        eventLoop.addHandler(new EventListener(tailer, nc().wireOutPublisher()));
+        logYaml(outWire);
+    }
+
 
     @Override
     public void processData(@NotNull WireIn inWire, @NotNull WireOut outWire) {
 
-        if (closed)
-            return;
-
-        final StringBuilder eventName = Wires.acquireStringBuilder();
-        final ValueIn valueIn = inWire.readEventName(eventName);
-
-        // receives replication events
-        if ("replicationEvent".contentEquals(eventName)) {
-            final QueueReplicationEvent replicationEvent = valueIn.typedMarshallable();
-
-            if (replicationEvent == null)
-                return;
-
-            try {
-                appender.writeBytes(replicationEvent.index, replicationEvent.payload().bytesForRead());
-            } catch (StreamCorruptedException e) {
-                LOG.error("", e);
-            }
-
-        } else {
-            LOG.error("", new IllegalStateException("unsupported eventName=" + eventName));
-        }
-
 
     }
 
 
-    public static class QueueReplicationEvent implements Demarshallable, WriteMarshallable {
+    static class QueueReplicationEvent implements Demarshallable, WriteMarshallable {
 
         private final long index;
         private final BytesStore payload;
@@ -122,7 +121,7 @@ public class QueueReplicationHandler extends AbstractSubHandler<EngineWireNetwor
             payload = wireIn.read(() -> "payload").bytesStore();
         }
 
-        public QueueReplicationEvent(long index, @NotNull Bytes payload) {
+        QueueReplicationEvent(long index, @NotNull Bytes payload) {
             this.index = index;
             this.payload = payload;
         }
@@ -132,7 +131,7 @@ public class QueueReplicationHandler extends AbstractSubHandler<EngineWireNetwor
         }
 
         @NotNull
-        public BytesStore payload() {
+        BytesStore payload() {
             return payload;
         }
 
@@ -164,8 +163,8 @@ public class QueueReplicationHandler extends AbstractSubHandler<EngineWireNetwor
         final WireOutPublisher publisher;
 
 
-        public EventListener(@NotNull final ExcerptTailer tailer,
-                             @NotNull final WireOutPublisher publisher) {
+        EventListener(@NotNull final ExcerptTailer tailer,
+                      @NotNull final WireOutPublisher publisher) {
             this.tailer = tailer;
             this.publisher = publisher;
         }
@@ -187,9 +186,11 @@ public class QueueReplicationHandler extends AbstractSubHandler<EngineWireNetwor
             final long index = tailer.index();
 
             final QueueReplicationEvent event = new QueueReplicationEvent(index, bytes);
-            publisher.put("", d -> d.writeDocument(false,
-                    w -> w.writeEventName(() -> "replicationEvent").typedMarshallable
-                            (event)));
+            publisher.publish(
+                    d -> {
+                        d.writeDocument(true, w -> w.write(CoreFields.cid).int64(cid()));
+                        d.writeDocument(false, w -> w.writeEventName(() -> "replicationEvent").typedMarshallable(event));
+                    });
             bytes.clear();
             return false;
         }
@@ -200,36 +201,6 @@ public class QueueReplicationHandler extends AbstractSubHandler<EngineWireNetwor
         }
     }
 
-
-    @Override
-    public void onInitialize(@NotNull WireOut outWire) {
-
-        rootAsset = nc().rootAsset();
-        final Asset asset = rootAsset.acquireAsset(csp());
-        chronicleQueueView = (ChronicleQueueView) asset.acquireView(QueueView
-                .class);
-        final ChronicleQueue chronicleQueue = chronicleQueueView.chronicleQueue();
-        appender = chronicleQueue.createAppender();
-
-        assert appender != null;
-
-        if (!isSource)
-            return;
-
-        eventLoop = rootAsset.findOrCreateView(EventLoop.class);
-        eventLoop.start();
-
-        final ExcerptTailer tailer = chronicleQueue.createTailer();
-        if (lastIndexReceived > 0)
-            try {
-                tailer.moveToIndex(lastIndexReceived);
-            } catch (TimeoutException e) {
-                LOG.error("", e);
-            }
-
-        eventLoop.addHandler(new EventListener(tailer, nc().wireOutPublisher()));
-        logYaml(outWire);
-    }
 
     @Override
     public void close() {

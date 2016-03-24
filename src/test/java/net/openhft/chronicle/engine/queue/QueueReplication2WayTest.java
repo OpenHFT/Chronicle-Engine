@@ -4,7 +4,6 @@ import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.ChronicleMapKeyValueStoreTest;
-import net.openhft.chronicle.engine.VanillaAssetTreeEgMain;
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.tree.Asset;
@@ -21,7 +20,10 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -45,7 +47,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * Created by Rob Austin
  */
-@Ignore
+
 @RunWith(value = Parameterized.class)
 public class QueueReplication2WayTest {
 
@@ -128,7 +130,7 @@ public class QueueReplication2WayTest {
             try {
                 final ChronicleQueueView queueView = (ChronicleQueueView) tree.acquireAsset("/queue/" + methodName).acquireView(QueueView.class);
 
-                System.out.println(queueView.dump());
+                //    System.out.println(queueView.dump());
 
                 final File path = queueView.chronicleQueue().path();
                 System.out.println("path=" + path);
@@ -155,7 +157,7 @@ public class QueueReplication2WayTest {
                 new ChronicleQueueView(context.wireType(writeType).cluster(clusterTwo), asset));
 
 
-        VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
+//        VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
 
         return tree;
     }
@@ -179,13 +181,10 @@ public class QueueReplication2WayTest {
     public void testTwoWay() throws InterruptedException {
         YamlLogging.setAll(true);
 
-        String uri = "/queue/" + methodName;
+        final String uri = "/queue/" + methodName;
+        final Publisher<String> publisher = tree1.acquirePublisher(uri, String.class);
 
-
-        Publisher<String> publisher = tree1.acquirePublisher(uri, String.class);
-
-        BlockingQueue<String> tree2Values = new ArrayBlockingQueue<>(10);
-        BlockingQueue<String> tree3Values = new ArrayBlockingQueue<>(10);
+        final BlockingQueue<String> tree2Values = new ArrayBlockingQueue<>(10);
 
         tree2.registerSubscriber(uri, String.class, message -> {
             tree2Values.add(message);
@@ -193,11 +192,7 @@ public class QueueReplication2WayTest {
 
 
         publisher.publish("Message-1");
-
-        Thread.sleep(1000);
-
         assertEquals("Message-1", tree2Values.poll(2, SECONDS));
-        assertEquals("Message-1", tree3Values.poll(2, SECONDS));
     }
 
     @Test
@@ -208,16 +203,15 @@ public class QueueReplication2WayTest {
         String messageType = "topic";
         TopicPublisher<String, String> publisher = tree1.acquireTopicPublisher(uri, String.class, String.class);
         BlockingQueue<String> tree2Values = new ArrayBlockingQueue<>(10);
-        BlockingQueue<String> tree3Values = new ArrayBlockingQueue<>(10);
+
 
         tree2.registerTopicSubscriber(uri, String.class, String.class, (topic, message) ->
                 tree2Values.add(topic + " " + message));
 
-
         Thread.sleep(500);
         publisher.publish(messageType, "Message-1");
         assertEquals("topic Message-1", tree2Values.poll(2, SECONDS));
-        assertEquals("topic Message-1", tree3Values.poll(3, SECONDS));
+
     }
 
     @Test(expected = IllegalStateException.class)

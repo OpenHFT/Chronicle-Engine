@@ -29,9 +29,10 @@ import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.fs.Clusters;
 import net.openhft.chronicle.engine.fs.EngineCluster;
+import net.openhft.chronicle.engine.fs.EngineHostDetails;
 import net.openhft.chronicle.engine.query.QueueSource;
-import net.openhft.chronicle.engine.server.internal.QueueReplicationHandler;
-import net.openhft.chronicle.network.cluster.ConnectionManager;
+import net.openhft.chronicle.engine.server.internal.QueueSourceReplicationHandler;
+import net.openhft.chronicle.engine.server.internal.QueueSyncReplicationHandler;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ExcerptAppender;
@@ -119,43 +120,59 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         }
 
         final int remoteSourceIdentifier = queueSource.sourceHostId(context.fullName());
-
-        if (hostIdentifier.hostId() == remoteSourceIdentifier) {
-            isSource = true;
-            return;
-        }
+        isSource = hostIdentifier.hostId() == remoteSourceIdentifier;
 
         isReplicating = true;
-
 
         final Clusters clusters = asset.findView(Clusters.class);
         final EngineCluster engineCluster = clusters.get(context.cluster());
 
-
-        final ConnectionManager connectionEventHandler = engineCluster.findConnectionEventHandler
-                (remoteSourceIdentifier);
-
-        long lastIndexReceived = -1;
-        try {
-            lastIndexReceived = threadLocalAppender().lastIndexAppended();
-        } catch (IllegalStateException ignore) {
-
-        }
-
-        final QueueReplicationHandler h = new QueueReplicationHandler(lastIndexReceived, true);
         final String csp = context.fullName();
 
-        connectionEventHandler.addListener((nc, isConnected) -> {
-            if (!isConnected)
-                return;
+        if (engineCluster == null) {
+            LOG.warn("no cluster found name=" + context.cluster());
+            return;
+        }
 
-            long cid = QueueReplicationHandler.class.hashCode();
-            nc.wireOutPublisher().publish(w -> w.writeDocument(true, d ->
-                    d.writeEventName(CoreFields.csp).text(csp)
-                            .writeEventName(CoreFields.cid).int64(cid)
-                            .writeEventName(CoreFields.handler).typedMarshallable(h)));
+        byte localIdentifier = hostIdentifier.hostId();
 
-        });
+        if (LOG.isDebugEnabled())
+            LOG.debug("hostDetails : localIdentifier=" + localIdentifier + ",cluster=" + engineCluster.hostDetails());
+
+        for (EngineHostDetails hostDetails : engineCluster.hostDetails()) {
+
+            // its the identifier with the larger values that will establish the connection
+            byte remoteIdentifier = (byte) hostDetails.hostId();
+
+            if (remoteIdentifier == localIdentifier)
+                continue;
+
+            engineCluster.findConnectionManager(remoteIdentifier).addListener((nc, isConnected) -> {
+
+                if (!isConnected)
+                    return;
+
+                final boolean isSource0 = (remoteIdentifier == remoteSourceIdentifier);
+
+                WriteMarshallable h = isSource0 ? new QueueSourceReplicationHandler(lastIndexReceived()) :
+                        new QueueSyncReplicationHandler();
+
+                long cid = "QueueReplicationHandler".hashCode();
+                nc.wireOutPublisher().publish(w -> w.writeDocument(true, d ->
+                        d.writeEventName(CoreFields.csp).text(csp)
+                                .writeEventName(CoreFields.cid).int64(cid)
+                                .writeEventName(CoreFields.handler).typedMarshallable(h)));
+
+            });
+        }
+    }
+
+    private long lastIndexReceived() {
+        try {
+            return threadLocalAppender().lastIndexAppended();
+        } catch (IllegalStateException ignore) {
+            return -1;
+        }
     }
 
     @NotNull

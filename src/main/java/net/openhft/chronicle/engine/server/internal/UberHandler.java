@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -46,6 +47,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
 
     private static final Logger LOG = LoggerFactory.getLogger(UberHandler.class);
     private ConnectionManager connectionEventManagerHandler;
+    AtomicBoolean isClosed = new AtomicBoolean();
 
     public static class Factory implements BiFunction<ClusterContext, HostDetails,
             WriteMarshallable>, Demarshallable {
@@ -135,7 +137,6 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
             return;
         }
 
-
         // note : we have to publish the uber handler, even if we send a termination event
         // this is so the termination event can be processed by the receiver
         if (nc().isAcceptor())
@@ -147,11 +148,11 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
         if (!checkConnectionStrategy(engineCluster)) {
             // the strategy has told us to reject this connection, we have to first notify the
             // other host, we will do this by sending a termination event
-            publish(terminationHandler());
+            publish(terminationHandler(localIdentifier, remoteIdentifier));
             closeSoon();
             return;
         }
-
+        System.out.println("uberhandler=" + this.hashCode() + " -> notifyConnectionListeners");
         notifyConnectionListeners(engineCluster);
     }
 
@@ -162,7 +163,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
 
     private void notifyConnectionListeners(EngineCluster cluster) {
         connectionEventManagerHandler = cluster
-                .findConnectionEventHandler(remoteIdentifier);
+                .findConnectionManager(remoteIdentifier);
         if (connectionEventManagerHandler != null)
             connectionEventManagerHandler.onConnectionChanged(true, nc());
     }
@@ -195,11 +196,13 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
      * termination event to be sent.
      */
     private void closeSoon() {
+        isClosed.set(true);
         HEARTBEAT_EXECUTOR.schedule(this::close, 2, SECONDS);
     }
 
     @Override
     public void close() {
+        isClosed.set(true);
         if (connectionEventManagerHandler != null)
             connectionEventManagerHandler.onConnectionChanged(false, nc());
         super.close();
@@ -209,8 +212,18 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
     @Override
     protected void process(@NotNull WireIn inWire, @NotNull WireOut outWire) {
 
+        if (isClosed.get()) {
+            inWire.clear();
+            return;
+        }
+
+        String s = Wires.fromSizePrefixedBlobs(inWire.bytes());
+
+        if (s.contains("1042134191"))
+            System.out.println("");
+
         if (YamlLogging.showServerReads && inWire.hasMore())
-            LOG.info("subhandler read:\n" + Wires.fromSizePrefixedBlobs(inWire.bytes()));
+            LOG.info("subhandler read:\n" + s);
 
         onMessageReceived();
 
@@ -226,13 +239,34 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
                         continue;
 
                     handler().remoteIdentifier(remoteIdentifier);
+                    handler().localIdentifier(localIdentifier);
                     handler().onInitialize(outWire);
                     continue;
                 }
 
                 if (dc.isData() && handler() != null)
                     handler().processData(inWire, outWire);
+                else {
+                    if (handler() == null)
+                        throw new IllegalStateException("handler == null, check that the " +
+                                "Csp/Cid has been sent, failed to " +
+                                "fully " +
+                                "process the following " +
+                                "YAML\n" + s);
+                    else
+                        throw new IllegalStateException("failed to " +
+                                "fully " +
+                                "process the following " +
+                                "YAML\n" + s);
+                }
+            } catch (Exception e) {
+                LOG.error("", e);
             }
+        }
+
+        if (s.contains("1042134191") && cidToHandle.size() < 2) {
+            System.out.println("uberhandler=" + this.hashCode());
+            System.out.println("uberhandler=" + this.hashCode());
         }
     }
 
