@@ -77,7 +77,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
     public SimpleQueueViewTest(Boolean isRemote) {
         this.isRemote = isRemote;
-        wireType = WireType.BINARY;
+        this.wireType = WireType.BINARY;
     }
 
     @Parameterized.Parameters

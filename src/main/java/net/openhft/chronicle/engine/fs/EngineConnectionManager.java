@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.fs;
 
+import net.openhft.chronicle.core.annotation.UsedViaReflection;
 import net.openhft.chronicle.network.NetworkContext;
 import net.openhft.chronicle.network.cluster.ConnectionManager;
 import net.openhft.chronicle.wire.Demarshallable;
@@ -32,14 +33,14 @@ public class EngineConnectionManager implements ConnectionManager {
         System.out.println("");
     }
 
+
     public static class Factory implements
             Supplier<EngineConnectionManager>,
             Demarshallable,
             WriteMarshallable {
 
-
+        @UsedViaReflection
         private Factory(@NotNull WireIn wireIn) {
-
         }
 
         @Override

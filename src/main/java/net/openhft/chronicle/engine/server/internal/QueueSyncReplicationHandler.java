@@ -54,17 +54,13 @@ public class QueueSyncReplicationHandler extends AbstractSubHandler<EngineWireNe
 
     @UsedViaReflection
     private QueueSyncReplicationHandler(WireIn wire) {
-
-
     }
 
     public QueueSyncReplicationHandler() {
-
     }
 
     @Override
     public void writeMarshallable(@NotNull WireOut wire) {
-
     }
 
 
@@ -76,7 +72,6 @@ public class QueueSyncReplicationHandler extends AbstractSubHandler<EngineWireNe
                 .class);
         final ChronicleQueue chronicleQueue = chronicleQueueView.chronicleQueue();
         appender = chronicleQueue.createAppender();
-
         assert appender != null;
     }
 
@@ -104,7 +99,6 @@ public class QueueSyncReplicationHandler extends AbstractSubHandler<EngineWireNe
         } else {
             LOG.error("", new IllegalStateException("unsupported eventName=" + eventName));
         }
-
 
     }
 

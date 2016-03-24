@@ -51,6 +51,8 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
 
     public static class Factory implements BiFunction<ClusterContext, HostDetails,
             WriteMarshallable>, Demarshallable {
+
+        @UsedViaReflection
         private Factory(@NotNull WireIn wireIn) {
         }
 

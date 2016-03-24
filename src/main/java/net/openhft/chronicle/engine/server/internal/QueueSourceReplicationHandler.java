@@ -102,15 +102,11 @@ public class QueueSourceReplicationHandler extends AbstractSubHandler<EngineWire
         logYaml(outWire);
     }
 
-
     @Override
     public void processData(@NotNull WireIn inWire, @NotNull WireOut outWire) {
-
-
     }
 
-
-    static class QueueReplicationEvent implements Demarshallable, WriteMarshallable {
+    public static class QueueReplicationEvent implements Demarshallable, WriteMarshallable {
 
         private final long index;
         private final BytesStore payload;
@@ -152,7 +148,6 @@ public class QueueSourceReplicationHandler extends AbstractSubHandler<EngineWire
 
     private class EventListener implements EventHandler {
 
-
         @NotNull
         final Bytes bytes = Bytes.elasticByteBuffer();
 
@@ -161,7 +156,6 @@ public class QueueSourceReplicationHandler extends AbstractSubHandler<EngineWire
 
         @NotNull
         final WireOutPublisher publisher;
-
 
         EventListener(@NotNull final ExcerptTailer tailer,
                       @NotNull final WireOutPublisher publisher) {
@@ -177,7 +171,6 @@ public class QueueSourceReplicationHandler extends AbstractSubHandler<EngineWire
 
             if (!publisher.canTakeMoreData())
                 return false;
-
 
             final boolean success = tailer.readBytes(bytes);
             if (!success)
