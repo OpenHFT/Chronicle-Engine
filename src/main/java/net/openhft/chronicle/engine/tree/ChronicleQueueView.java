@@ -150,7 +150,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
                 return;
 
             long cid = QueueReplicationHandler.class.hashCode();
-            nc.wireOutPublisher().put("", w -> w.writeDocument(true, d ->
+            nc.wireOutPublisher().publish(w -> w.writeDocument(true, d ->
                     d.writeEventName(CoreFields.csp).text(csp)
                             .writeEventName(CoreFields.cid).int64(cid)
                             .writeEventName(CoreFields.handler).typedMarshallable(h)));

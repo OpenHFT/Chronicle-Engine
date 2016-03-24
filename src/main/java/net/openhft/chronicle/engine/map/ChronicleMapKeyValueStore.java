@@ -224,7 +224,7 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
 
                         };
 
-                        nc.wireOutPublisher().put("", out);
+                        nc.wireOutPublisher().publish(out);
 
                     });
 
