@@ -125,6 +125,11 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         isReplicating = true;
 
         final Clusters clusters = asset.findView(Clusters.class);
+
+        if (clusters == null) {
+            LOG.warn("no cluster found name=" + context.cluster());
+            return;
+        }
         final EngineCluster engineCluster = clusters.get(context.cluster());
 
         final String csp = context.fullName();
