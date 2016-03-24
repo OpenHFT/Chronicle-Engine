@@ -139,7 +139,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
 
 
     @Override
-    protected void bootstrap() {
+    protected void onInitialize() {
         EngineWireNetworkContext nc = nc();
         if (wireType() == null && nc.wireType() != null)
             wireType(nc.wireType());

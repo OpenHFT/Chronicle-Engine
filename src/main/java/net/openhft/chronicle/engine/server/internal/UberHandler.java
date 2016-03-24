@@ -49,8 +49,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
 
     public static class Factory implements BiFunction<ClusterContext, HostDetails,
             WriteMarshallable>, Demarshallable {
-        private Factory(WireIn wireIn) {
-
+        private Factory(@NotNull WireIn wireIn) {
         }
 
         public Factory() {
@@ -69,11 +68,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
 
     private final int remoteIdentifier;
     private final int localIdentifier;
-
-    @NotNull
     private EventLoop eventLoop;
-
-    @NotNull
     private Asset rootAsset;
 
     @NotNull
@@ -89,10 +84,10 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
         wireType(wireType);
     }
 
-    public UberHandler(int localIdentifier,
-                       int remoteIdentifier,
-                       @NotNull WireType wireType,
-                       @NotNull String clusterName) {
+    private UberHandler(int localIdentifier,
+                        int remoteIdentifier,
+                        @NotNull WireType wireType,
+                        @NotNull String clusterName) {
 
         this.localIdentifier = localIdentifier;
         this.remoteIdentifier = remoteIdentifier;
@@ -113,17 +108,14 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
         wire.write(() -> "clusterName").text(clusterName);
     }
 
-
     @Override
-    protected void bootstrap() {
+    protected void onInitialize() {
         EngineWireNetworkContext nc = nc();
         nc.wireType(wireType());
         isAcceptor(nc.isAcceptor());
         rootAsset = nc.rootAsset();
-        HostIdentifier hostIdentifier;
-        assert (hostIdentifier = rootAsset.findOrCreateView(HostIdentifier.class)) == null
-                || localIdentifier == hostIdentifier.hostId();
 
+        assert checkIdentifierEqualsHostId();
         assert remoteIdentifier != localIdentifier :
                 "remoteIdentifier=" + remoteIdentifier + ", " +
                         "localIdentifier=" + localIdentifier;
@@ -163,6 +155,11 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
         notifyConnectionListeners(engineCluster);
     }
 
+    private boolean checkIdentifierEqualsHostId() {
+        final HostIdentifier hostIdentifier = rootAsset.findOrCreateView(HostIdentifier.class);
+        return hostIdentifier == null || localIdentifier == hostIdentifier.hostId();
+    }
+
     private void notifyConnectionListeners(EngineCluster cluster) {
         connectionEventManagerHandler = cluster
                 .findConnectionEventHandler(remoteIdentifier);
@@ -172,8 +169,6 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
 
     private boolean checkConnectionStrategy(@NotNull EngineCluster cluster) {
         final ConnectionStrategy strategy = cluster.findConnectionStrategy(remoteIdentifier);
-
-
         return strategy == null ||
                 strategy.notifyConnected(this, localIdentifier, remoteIdentifier);
     }
@@ -186,7 +181,6 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
                 clusterName);
         return uberHandler(handler);
     }
-
 
     private static WriteMarshallable uberHandler(final WriteMarshallable m) {
         return wire -> {
