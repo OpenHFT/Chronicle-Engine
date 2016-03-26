@@ -43,10 +43,7 @@ import net.openhft.chronicle.wire.WireKey;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -192,6 +189,7 @@ public class QueueReplicationSourceSycnRollTest {
         if (th != null) throw Jvm.rethrow(th);
     }
 
+    @Ignore("JIRA- https://higherfrequencytrading.atlassian.net/browse/CE-200")
     @Test
     public void testAppendAndReadWithRollingB() throws IOException, InterruptedException {
         YamlLogging.setAll(true);
@@ -209,7 +207,6 @@ public class QueueReplicationSourceSycnRollTest {
         final ChronicleQueue queue2 = new SingleChronicleQueueBuilder(Files.createTempDirectory
                 ("chronicle" + "-").toFile())
                 .wireType(this.wireType)
-                //   .timeProvider(stp)
                 .indexSpacing(1).indexCount(8)
                 .build();
 
