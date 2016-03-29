@@ -39,7 +39,6 @@ public class VanillaReplication implements Replication {
     private final MapView mapView;
 
     public VanillaReplication(final RequestContext requestContext, final Asset asset, final MapView mapView) {
-        assert mapView.underlying() instanceof Supplier : "mapView.class=" + mapView.underlying().getClass();
         this.mapView = mapView;
     }
 
