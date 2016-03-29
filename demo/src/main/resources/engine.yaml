@@ -16,7 +16,7 @@ etc: {
     wireType: BINARY,
     port: 8088,
     logTCPMessages: DEBUG_ONLY, # only show when in debug mode on the server
-    heartbeatIntervalTicks: 1_000, # must be lees than the timeout.
+    heartbeatIntervalMs: 1_000, # must be lees than the timeout.
     heartbeatIntervalTimeout: 100_000
     }
   #

@@ -6,7 +6,7 @@ clusterRob: {
     networkContextFactory: !EngineWireNetworkContextFactory {},
     connectionEventHandler:  !EngineConnectionManagerFactory {},
     heartbeatTimeoutMs: 40_000L,
-    heartbeatIntervalTicks: 20_000L,
+    heartbeatIntervalMs: 20_000L,
     heartbeatFactory: !HeartbeatHandlerFactory {},
     connectionStrategy: !HostIdConnectionStrategy {},
   }
@@ -31,7 +31,7 @@ clusterTwo: {
     networkContextFactory: !EngineWireNetworkContextFactory {},
     connectionEventHandler:  !EngineConnectionManagerFactory {},
     heartbeatTimeoutMs: 40_000L,
-    heartbeatIntervalTicks: 20_000L,
+    heartbeatIntervalMs: 20_000L,
     heartbeatFactory: !HeartbeatHandlerFactory {},
     connectionStrategy: !HostIdConnectionStrategy {},
   }
@@ -56,7 +56,7 @@ clusterThree: {
     networkContextFactory: !EngineWireNetworkContextFactory {},
     connectionEventHandler:  !EngineConnectionManagerFactory {},
     heartbeatTimeoutMs: 40_000L,
-    heartbeatIntervalTicks: 20_000L,
+    heartbeatIntervalMs: 20_000L,
     heartbeatFactory: !HeartbeatHandlerFactory {},
     connectionStrategy: !HostIdConnectionStrategy {},
   }
