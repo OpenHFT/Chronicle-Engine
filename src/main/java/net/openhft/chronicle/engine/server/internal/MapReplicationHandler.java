@@ -52,11 +52,14 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
     private final ThreadLocal<VanillaReplicatedEntry> vre = withInitial(VanillaReplicatedEntry::new);
     private Replication replication;
     private long timestamp;
+
     private byte localIdentifier;
     private EventLoop eventLoop;
     private Asset rootAsset;
     private volatile boolean closed;
+    @NotNull
     private Class keyType;
+    @NotNull
     private Class valueType;
 
     @UsedViaReflection
@@ -66,8 +69,10 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
         valueType = wire.read(() -> "valueType").typeLiteral();
     }
 
-    public MapReplicationHandler(long timestamp) {
+    public MapReplicationHandler(long timestamp, @NotNull Class keyType, @NotNull Class valueType) {
         this.timestamp = timestamp;
+        this.keyType = keyType;
+        this.valueType = valueType;
     }
 
     @Override

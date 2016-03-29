@@ -214,7 +214,8 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
 
                             w.writeDocument(true, d -> {
 
-                                final MapReplicationHandler h = new MapReplicationHandler(lastUpdateTime);
+                                final MapReplicationHandler h = new MapReplicationHandler
+                                        (lastUpdateTime, keyType, valueType);
 
                                 // todo improve this - at the moment, has to be the same cid for
                                 // all MapReplicationHandlers
