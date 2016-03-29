@@ -155,8 +155,7 @@ public class RobsReplication2WayTest {
     private boolean isImac() throws UnknownHostException {
         InetAddress hostname = InetAddress.getLocalHost();
         String hostName = hostname.toString();
-        boolean isImac = hostName.startsWith("Robs-iMac");
-        return isImac;
+        return hostName.startsWith("Robs-iMac");
     }
 
     @Ignore
@@ -165,7 +164,7 @@ public class RobsReplication2WayTest {
 
         InetAddress hostname = InetAddress.getLocalHost();
         String hostName = hostname.toString();
-        boolean isImac = hostName.startsWith("Robs-iMac");
+        boolean isImac = isImac();
 
         final ConcurrentMap<Integer, String> map1 = tree1.acquireMap(name, Integer.class, String.class);
         assertNotNull(map1);
