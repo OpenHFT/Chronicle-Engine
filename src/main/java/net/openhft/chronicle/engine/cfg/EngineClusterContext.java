@@ -100,7 +100,6 @@ public class EngineClusterContext extends ClusterContext {
         wireOutPublisherFactory(new VanillaWireOutPublisherFactory());
         networkContextFactory(new EngineWireNetworkContext.Factory());
         heartbeatTimeoutMs(20_000L);
-        connectionTimeoutMs(1_000L);
     }
 
     private static byte localIdentifier(@NotNull Asset asset) {
