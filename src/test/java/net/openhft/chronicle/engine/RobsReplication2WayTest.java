@@ -24,6 +24,7 @@ import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
+import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.fs.ChronicleMapGroupFS;
 import net.openhft.chronicle.engine.fs.FilePerKeyGroupFS;
@@ -115,18 +116,21 @@ public class RobsReplication2WayTest {
 
     @NotNull
     private AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
-        AssetTree tree = new VanillaAssetTree((byte) hostId)
-                .forTesting(x -> t.compareAndSet(null, x))
-                .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);
+        VanillaAssetTree tree = new VanillaAssetTree((byte) hostId)
+                .forTesting(x -> t.compareAndSet(null, x));
 
-        tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
+        Asset testBootstrap = tree.root().acquireAsset("testBootstrap");
+        testBootstrap.addWrappingRule(MapView.class, "map directly to KeyValueStore",
                 VanillaMapView::new,
                 KeyValueStore.class);
-        tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",
+
+        testBootstrap.addLeafRule(EngineReplication.class, "Engine replication holder",
                 CMap2EngineReplicator::new);
-        tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
+        testBootstrap.addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
                 new ChronicleMapKeyValueStore(context.wireType(writeType).cluster(clusterTwo),
                         asset));
+
+        tree.withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);
 
         return tree;
     }

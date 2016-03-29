@@ -56,10 +56,14 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
     private EventLoop eventLoop;
     private Asset rootAsset;
     private volatile boolean closed;
+    private Class keyType;
+    private Class valueType;
 
     @UsedViaReflection
     private MapReplicationHandler(WireIn wire) {
         timestamp = wire.read(() -> "timestamp").int64();
+        keyType = wire.read(() -> "keyType").typeLiteral();
+        valueType = wire.read(() -> "valueType").typeLiteral();
     }
 
     public MapReplicationHandler(long timestamp) {
@@ -68,7 +72,9 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
 
     @Override
     public void writeMarshallable(@NotNull WireOut wire) {
-        wire.write(() -> "timestamp").int64(timestamp);
+        wire.write("timestamp").int64(timestamp);
+        wire.write("keyType").typeLiteral(keyType);
+        wire.write("valueType").typeLiteral(valueType);
     }
 
     @Override
@@ -101,7 +107,9 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
         rootAsset = nc().rootAsset();
         final RequestContext requestContext = RequestContext.requestContext(csp());
         final Asset asset = rootAsset.acquireAsset(requestContext.fullName());
-        replication = asset.acquireView(Replication.class);
+
+        replication = asset.acquireView(Replication.class, RequestContext.requestContext(asset
+                .fullName()).keyType(keyType).valueType(valueType));
 
         final HostIdentifier hostIdentifier = rootAsset.findOrCreateView(HostIdentifier.class);
 
