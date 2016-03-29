@@ -13,13 +13,13 @@ clusterRob: {
   host1: {
      hostId: 1,
      tcpBufferSize: 65536,
-     connectUri: Robs-iMac:8081,
+     connectUri: host1:8081,
      timeoutMs: 5000,
   },
   host2: {
      hostId: 2,
      tcpBufferSize: 65536,
-     connectUri: robs-mbp:8081
+     connectUri: host2:8081
      timeoutMs: 5000,
   }
 }
