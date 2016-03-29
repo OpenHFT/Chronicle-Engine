@@ -59,7 +59,7 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
 
     @UsedViaReflection
     private MapReplicationHandler(WireIn wire) {
-        timestamp = wire.read(() -> "timestamp").int8();
+        timestamp = wire.read(() -> "timestamp").int64();
     }
 
     public MapReplicationHandler(long timestamp) {

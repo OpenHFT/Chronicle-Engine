@@ -106,6 +106,7 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
 
         replicationSessionDetails = asset.root().findView(SessionDetails.class);
 
+//        System.out.println("key.class=" + context.keyType());
         ChronicleMapBuilder<K, V> builder = ChronicleMapBuilder.of(context.keyType(), context.valueType());
         HostIdentifier hostIdentifier = null;
         EngineReplication engineReplicator1 = null;
