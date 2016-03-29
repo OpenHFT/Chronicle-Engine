@@ -37,7 +37,10 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestName;
 
 import java.io.File;
@@ -91,7 +94,7 @@ public class RobsReplication2WayTest {
                 "host.port2");
 
         WireType writeType = WireType.TEXT;
-        tree1 = create((isImac() ? 1 : 2), writeType, "clusterRob");
+        tree1 = create((isHost1() ? 1 : 2), writeType, "clusterRob");
 
         serverEndpoint1 = new ServerEndpoint("*:8081", tree1);
         //   serverEndpoint2 = new ServerEndpoint("host.port2", tree2);
@@ -152,26 +155,30 @@ public class RobsReplication2WayTest {
         after();
     }
 
-    private boolean isImac() throws UnknownHostException {
-        InetAddress hostname = InetAddress.getLocalHost();
-        String hostName = hostname.toString();
-        return hostName.startsWith("Robs-iMac");
+
+    public static void main(String[] args) throws UnknownHostException {
+        System.out.println(InetAddress.getLocalHost());
     }
 
-    @Ignore
+    private boolean isHost1() throws UnknownHostException {
+        final String hostname = InetAddress.getByName("host1").toString().split("/")[1];
+        return InetAddress.getLocalHost().toString().contains(hostname);
+    }
+
+    // @Ignore
     @Test
     public void testBootstrap() throws InterruptedException, UnknownHostException {
 
         InetAddress hostname = InetAddress.getLocalHost();
         String hostName = hostname.toString();
-        boolean isImac = isImac();
+        boolean isHost1 = isHost1();
 
         final ConcurrentMap<Integer, String> map1 = tree1.acquireMap(name, Integer.class, String.class);
         assertNotNull(map1);
 
 
         for (int i = 0; i < 99; i++) {
-            int offset = isImac ? 0 : 1;
+            int offset = isHost1 ? 0 : 1;
             map1.put((i * 2) + offset, hostName);
 
             Thread.sleep(5);
