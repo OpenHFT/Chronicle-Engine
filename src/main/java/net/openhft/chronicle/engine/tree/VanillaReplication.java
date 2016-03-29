@@ -39,6 +39,7 @@ public class VanillaReplication implements Replication {
     private final MapView mapView;
 
     public VanillaReplication(final RequestContext requestContext, final Asset asset, final MapView mapView) {
+        assert mapView.underlying() instanceof Supplier : "mapView.class=" + mapView.underlying().getClass();
         this.mapView = mapView;
     }
 
@@ -50,8 +51,6 @@ public class VanillaReplication implements Replication {
     @Nullable
     @Override
     public ModificationIterator acquireModificationIterator(final byte id) {
-        if (!(mapView instanceof Supplier))
-            return null;
         EngineReplication engineReplication = ((Supplier<EngineReplication>) mapView.underlying()).get();
         return engineReplication.acquireModificationIterator(id);
     }
