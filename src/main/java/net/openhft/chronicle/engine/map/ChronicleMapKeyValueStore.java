@@ -38,6 +38,7 @@ import net.openhft.chronicle.hash.replication.EngineReplicationLangBytesConsumer
 import net.openhft.chronicle.map.*;
 import net.openhft.chronicle.network.api.session.SessionDetails;
 import net.openhft.chronicle.network.api.session.SessionProvider;
+import net.openhft.chronicle.network.cluster.ConnectionManager;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.NamedThreadFactory;
@@ -190,7 +191,15 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
 
                 if (Boolean.getBoolean("ReplicationHandler3")) {
 
-                    engineCluster.findConnectionManager(remoteIdentifier).addListener((nc, isConnected) -> {
+                    ConnectionManager connectionManager = engineCluster.findConnectionManager(remoteIdentifier);
+                    if (connectionManager == null) {
+                        LOG.debug("connectionManager==null for remoteIdentifier=" + remoteIdentifier);
+                        engineCluster.findConnectionManager(remoteIdentifier);
+                        continue;
+                    }
+
+
+                    connectionManager.addListener((nc, isConnected) -> {
 
                         if (!isConnected)
                             return;

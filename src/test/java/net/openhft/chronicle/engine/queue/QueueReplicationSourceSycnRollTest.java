@@ -24,6 +24,7 @@ import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.core.time.SetTimeProvider;
 import net.openhft.chronicle.engine.ChronicleMapKeyValueStoreTest;
 import net.openhft.chronicle.engine.VanillaAssetTreeEgMain;
+import net.openhft.chronicle.engine.api.pubsub.Publisher;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
@@ -43,7 +44,10 @@ import net.openhft.chronicle.wire.WireKey;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -55,8 +59,11 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.queue.SimpleQueueViewTest.deleteFile;
 import static org.junit.Assert.assertEquals;
@@ -144,11 +151,11 @@ public class QueueReplicationSourceSycnRollTest {
                 "host.port2",
                 "host.port3");
 
-        tree1 = create(1, wireType, "clusterThree");
-        tree2 = create(2, wireType, "clusterThree");
+        tree1 = create(1, wireType, "clusterTwo");
+        tree2 = create(2, wireType, "clusterTwo");
 
-        serverEndpoint1 = new ServerEndpoint("clusterThree.host.port1", tree1);
-        serverEndpoint2 = new ServerEndpoint("clusterThree.host.port2", tree2);
+        serverEndpoint1 = new ServerEndpoint("host.port1", tree1);
+        serverEndpoint2 = new ServerEndpoint("host.port2", tree2);
 
     }
 
@@ -189,7 +196,7 @@ public class QueueReplicationSourceSycnRollTest {
         if (th != null) throw Jvm.rethrow(th);
     }
 
-    @Ignore("JIRA- https://higherfrequencytrading.atlassian.net/browse/CE-200")
+    //  @Ignore("JIRA- https://higherfrequencytrading.atlassian.net/browse/CE-200")
     @Test
     public void testAppendAndReadWithRollingB() throws IOException, InterruptedException {
         YamlLogging.setAll(true);
@@ -198,7 +205,7 @@ public class QueueReplicationSourceSycnRollTest {
 
         final ChronicleQueue queue1 = new SingleChronicleQueueBuilder(Files.createTempDirectory
                 ("chronicle" + "-").toFile())
-                .wireType(this.wireType)
+                //  .wireType(this.wireType)
                 .timeProvider(stp)
                 .indexSpacing(1).indexCount(8)
                 .build();
@@ -206,13 +213,14 @@ public class QueueReplicationSourceSycnRollTest {
 
         final ChronicleQueue queue2 = new SingleChronicleQueueBuilder(Files.createTempDirectory
                 ("chronicle" + "-").toFile())
-                .wireType(this.wireType)
+                //     .wireType(this.wireType)
+                .timeProvider(stp)
                 .indexSpacing(1).indexCount(8)
                 .build();
 
 
         final RequestContext context = new RequestContext("/queue", methodName);
-        context.cluster("clusterThree");
+        context.cluster("clusterTwo");
 
         context.wireType(WireType.BINARY);
         context.type2(String.class);
@@ -227,6 +235,22 @@ public class QueueReplicationSourceSycnRollTest {
             asset.addView(QueueView.class, new ChronicleQueueView(queue2, context,
                     asset));
         }
+
+
+        YamlLogging.setAll(true);
+
+        final String uri = "/queue/" + methodName;
+        final Publisher<String> publisher = tree1.acquirePublisher(uri, String.class);
+
+        final BlockingQueue<String> tree2Values = new ArrayBlockingQueue<>(10);
+
+        tree2.registerSubscriber(uri, String.class, message -> {
+            tree2Values.add(message);
+        });
+
+
+        publisher.publish("Message-1");
+        assertEquals("Message-1", tree2Values.poll(2, SECONDS));
 
 
         final ExcerptAppender appender = queue1.createAppender();

@@ -1,5 +1,29 @@
+clusterRob: {
+ context: !EngineClusterContext {
+    wireType: TEXT,
+    handlerFactory: !UberHandlerFactory {},
+    wireOutPublisherFactory: !VanillaWireOutPublisherFactory {},
+    networkContextFactory: !EngineWireNetworkContextFactory {},
+    connectionEventHandler:  !EngineConnectionManagerFactory {},
+    heartbeatTimeoutMs: 40_000L,
+    heartbeatIntervalTicks: 20_000L,
+    heartbeatFactory: !HeartbeatHandlerFactory {},
+    connectionStrategy: !HostIdConnectionStrategy {},
+  }
+  host1: {
+     hostId: 1,
+     tcpBufferSize: 65536,
+     connectUri: Robs-iMac:8081,
+     timeoutMs: 5000,
+  },
+  host2: {
+     hostId: 2,
+     tcpBufferSize: 65536,
+     connectUri: robs-mbp:8081
+     timeoutMs: 5000,
+  }
+}
 clusterTwo: {
-
   context: !EngineClusterContext {
     wireType: TEXT,
     handlerFactory: !UberHandlerFactory {},
@@ -69,3 +93,4 @@ clusterPeter: {
      timeoutMs: 5000,
   },
 }
+

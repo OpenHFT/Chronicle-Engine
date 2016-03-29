@@ -61,15 +61,8 @@ public class ServerEndpoint implements Closeable {
     private AcceptorEventHandler eah;
 
 
-    public ServerEndpoint(String hostPortDescription, @NotNull AssetTree assetTree) {
-        this(hostPortDescription, assetTree, HEARTBEAT_INTERVAL_TICKS, HEARTBEAT_TIME_OUT_TICKS);
-    }
-
     public ServerEndpoint(@NotNull String hostPortDescription,
-                          @NotNull AssetTree assetTree,
-                          int heartbeatIntervalTicks,
-                          int heartbeatIntervalTimeout) {
-
+                          @NotNull AssetTree assetTree) {
 
         eg = assetTree.root().acquireView(EventLoop.class);
         Threads.withThreadGroup(assetTree.root().getView(ThreadGroup.class), () -> {

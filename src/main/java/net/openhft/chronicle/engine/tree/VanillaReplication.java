@@ -50,6 +50,8 @@ public class VanillaReplication implements Replication {
     @Nullable
     @Override
     public ModificationIterator acquireModificationIterator(final byte id) {
+        if (!(mapView instanceof Supplier))
+            return null;
         EngineReplication engineReplication = ((Supplier<EngineReplication>) mapView.underlying()).get();
         return engineReplication.acquireModificationIterator(id);
     }

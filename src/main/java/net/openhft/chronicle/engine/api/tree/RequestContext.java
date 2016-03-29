@@ -33,6 +33,7 @@ import net.openhft.chronicle.engine.map.RawKVSSubscription;
 import net.openhft.chronicle.engine.query.Filter;
 import net.openhft.chronicle.engine.query.Operation.OperationType;
 import net.openhft.chronicle.engine.server.internal.EngineWireNetworkContext;
+import net.openhft.chronicle.engine.server.internal.MapReplicationHandler;
 import net.openhft.chronicle.engine.server.internal.QueueSourceReplicationHandler.QueueReplicationEvent;
 import net.openhft.chronicle.engine.server.internal.UberHandler;
 import net.openhft.chronicle.engine.tree.QueueView;
@@ -89,6 +90,7 @@ public class RequestContext implements Cloneable {
         addAlias(EngineClusterContext.class, "EngineClusterContext");
         addAlias(UberHandler.class, "UberHandler");
         addAlias(QueueReplicationEvent.class, "QueueReplicationEvent");
+        addAlias(MapReplicationHandler.class, "MapReplicationHandler");
     }
 
     private String pathName;

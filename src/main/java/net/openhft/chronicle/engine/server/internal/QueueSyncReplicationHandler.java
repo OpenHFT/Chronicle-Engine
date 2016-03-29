@@ -75,7 +75,6 @@ public class QueueSyncReplicationHandler extends AbstractSubHandler<EngineWireNe
         assert appender != null;
     }
 
-
     @Override
     public void processData(@NotNull WireIn inWire, @NotNull WireOut outWire) {
 
@@ -90,8 +89,8 @@ public class QueueSyncReplicationHandler extends AbstractSubHandler<EngineWireNe
                 return;
 
             try {
-                appender.writeBytes(replicationEvent.index(), replicationEvent.payload()
-                        .bytesForRead());
+                appender.writeBytes(replicationEvent.index(),
+                        replicationEvent.payload().bytesForRead());
             } catch (StreamCorruptedException e) {
                 LOG.error("", e);
             }
