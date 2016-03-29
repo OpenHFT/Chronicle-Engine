@@ -34,7 +34,6 @@ import net.openhft.chronicle.engine.query.Filter;
 import net.openhft.chronicle.engine.query.Operation.OperationType;
 import net.openhft.chronicle.engine.server.internal.EngineWireNetworkContext;
 import net.openhft.chronicle.engine.server.internal.MapReplicationHandler;
-import net.openhft.chronicle.engine.server.internal.QueueSourceReplicationHandler.QueueReplicationEvent;
 import net.openhft.chronicle.engine.server.internal.UberHandler;
 import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
@@ -89,8 +88,12 @@ public class RequestContext implements Cloneable {
         addAlias(TcpEventHandler.Factory.class, "TcpEventHandlerFactory");
         addAlias(EngineClusterContext.class, "EngineClusterContext");
         addAlias(UberHandler.class, "UberHandler");
-        addAlias(QueueReplicationEvent.class, "QueueReplicationEvent");
         addAlias(MapReplicationHandler.class, "MapReplicationHandler");
+        addAlias(HeartbeatHandler.class, "HeartbeatHandler");
+
+        // the following will get added if they can be found
+        addAlias("software.chronicle.enterprise.queue.QueueSourceReplicationHandler");
+        addAlias("software.chronicle.enterprise.queue.QueueSyncReplicationHandler");
     }
 
     private String pathName;
@@ -122,6 +125,18 @@ public class RequestContext implements Cloneable {
     private static void addAlias(Class type, @NotNull String aliases) {
         CLASS_ALIASES.addAlias(type, aliases);
     }
+
+    private static void addAlias(String className) {
+
+        Class<?> aClass = null;
+        try {
+            aClass = Class.forName(className);
+        } catch (ClassNotFoundException ignore) {
+            return;
+        }
+        CLASS_ALIASES.addAlias(aClass, aClass.getSimpleName());
+    }
+
 
     @NotNull
     public static RequestContext requestContext() {

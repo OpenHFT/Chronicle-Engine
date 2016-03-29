@@ -31,8 +31,6 @@ import net.openhft.chronicle.engine.fs.Clusters;
 import net.openhft.chronicle.engine.fs.EngineCluster;
 import net.openhft.chronicle.engine.fs.EngineHostDetails;
 import net.openhft.chronicle.engine.query.QueueSource;
-import net.openhft.chronicle.engine.server.internal.QueueSourceReplicationHandler;
-import net.openhft.chronicle.engine.server.internal.QueueSyncReplicationHandler;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ExcerptAppender;
@@ -46,6 +44,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.TimeoutException;
@@ -159,8 +158,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
                 final boolean isSource0 = (remoteIdentifier == remoteSourceIdentifier);
 
-                WriteMarshallable h = isSource0 ? new QueueSourceReplicationHandler(lastIndexReceived()) :
-                        new QueueSyncReplicationHandler();
+                WriteMarshallable h = isSource0 ? newSource(lastIndexReceived()) : newSync();
 
                 long cid = "QueueReplicationHandler".hashCode();
                 nc.wireOutPublisher().publish(w -> w.writeDocument(true, d ->
@@ -169,6 +167,34 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
                                 .writeEventName(CoreFields.handler).typedMarshallable(h)));
 
             });
+        }
+    }
+
+
+    private WriteMarshallable newSource(long lastIndexReceived) {
+        try {
+            Class<?> aClass = Class.forName("software.chronicle.enterprise.queue.QueueSourceReplicationHandler");
+            Constructor<?> declaredConstructor = aClass.getDeclaredConstructor(long.class);
+            return (WriteMarshallable) declaredConstructor.newInstance(lastIndexReceived);
+        } catch (Exception e) {
+            IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
+                    " required to run this code." +
+                    "Please contact sales@chronicle.software");
+            LOG.error("", e);
+            throw licence;
+        }
+    }
+
+    private WriteMarshallable newSync() {
+        try {
+            Class<?> aClass = Class.forName("software.chronicle.enterprise.queue.QueueSyncReplicationHandler");
+            return (WriteMarshallable) aClass.newInstance();
+        } catch (Exception e) {
+            IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
+                    " required to run this code." +
+                    "Please contact sales@chronicle.software");
+            LOG.error("", e);
+            throw licence;
         }
     }
 
