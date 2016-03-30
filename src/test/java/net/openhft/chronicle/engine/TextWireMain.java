@@ -32,7 +32,7 @@ public class TextWireMain {
 
     public static void main(@NotNull String[] args) throws IOException, InterruptedException {
 
-        YamlLogging.showServerReads = true;
+        YamlLogging.showServerReads(true);
         // the default is BinaryWire
         int port = 8088;
         VanillaAssetTree assetTree = new VanillaAssetTree().forTesting(false, t -> t.printStackTrace());

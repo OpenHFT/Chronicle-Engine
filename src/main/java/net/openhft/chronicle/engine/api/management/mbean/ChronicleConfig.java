@@ -42,51 +42,51 @@ public class ChronicleConfig implements ChronicleConfigMBean {
 
     @Override
     public boolean getYamlServerReadLogging() {
-        return YamlLogging.showServerReads;
+        return YamlLogging.showServerReads();
     }
 
     @Override
     public void setYamlServerReadLogging(boolean logging) {
-        YamlLogging.showServerReads = logging;
+        YamlLogging.showServerReads(logging);
     }
 
     @Override
     public boolean getYamlClientReadLogging() {
-        return YamlLogging.clientReads;
+        return YamlLogging.showClientReads();
     }
 
     @Override
     public void setYamlClientReadLogging(boolean logging) {
-        YamlLogging.clientReads = logging;
+        YamlLogging.showClientReads(logging);
     }
 
     @Override
     public boolean getYamlServerWriteLogging() {
-        return YamlLogging.showServerWrites;
+        return YamlLogging.showServerWrites();
     }
 
     @Override
     public void setYamlServerWriteLogging(boolean logging) {
-        YamlLogging.showServerWrites = logging;
+        YamlLogging.showServerWrites(logging);
     }
 
     @Override
     public boolean getYamlClientWriteLogging() {
-        return YamlLogging.clientWrites;
+        return YamlLogging.showClientWrites();
     }
 
     @Override
     public void setYamlClientWriteLogging(boolean logging) {
-        YamlLogging.clientWrites = logging;
+        YamlLogging.showClientWrites(logging);
     }
 
     @Override
     public boolean getShowHeartBeats() {
-        return YamlLogging.showHeartBeats;
+        return YamlLogging.showHeartBeats();
     }
 
     @Override
     public void setShowHeartBeats(boolean log) {
-        YamlLogging.showHeartBeats = log;
+        YamlLogging.showHeartBeats(log);
     }
 }

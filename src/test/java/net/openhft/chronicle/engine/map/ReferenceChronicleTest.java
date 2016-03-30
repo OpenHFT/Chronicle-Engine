@@ -144,7 +144,7 @@ public class ReferenceChronicleTest {
         SubscriptionCollection subscription = child.subscription(false);
         assertEquals(1, subscription.subscriberCount());
 
-        YamlLogging.showServerWrites = true;
+        YamlLogging.showServerWrites(true);
 
         AtomicInteger count = new AtomicInteger();
         map.put(key, "" + count.incrementAndGet());

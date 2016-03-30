@@ -97,8 +97,8 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
 
         methodName(name.getMethodName());
 
-        YamlLogging.showServerWrites = true;
-        YamlLogging.showServerReads = true;
+        YamlLogging.showServerWrites(true);
+        YamlLogging.showServerReads(true);
 
         connection = "StreamTest." + name.getMethodName() + ".host.port" + wireType;
         TCPRegistry.createServerSocketChannelFor(connection);

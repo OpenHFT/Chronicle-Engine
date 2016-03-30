@@ -147,7 +147,7 @@ public class Replication2WayTest {
     public void beforeTest() throws IOException {
         before();
         name = testName.getMethodName();
-        YamlLogging.showServerReads = true;
+        YamlLogging.showServerReads(true);
         Files.deleteIfExists(Paths.get(OS.TARGET, name.toString()));
     }
 

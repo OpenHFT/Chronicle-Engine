@@ -305,7 +305,7 @@ public class ReferenceTest {
         SubscriptionCollection subscription = child.subscription(false);
         assertEquals(1, subscription.subscriberCount());
 
-        YamlLogging.showServerWrites = true;
+        YamlLogging.showServerWrites(true);
         //Perform test a number of times to allow the JVM to warm up, but verify runtime against average
 
         AtomicInteger count = new AtomicInteger();

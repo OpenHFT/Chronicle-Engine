@@ -133,7 +133,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
 
         yamlLoggger(() -> {
             System.out.print(":\n");
-            YamlLogging.writeMessage = "this is how to create a subscription";
+            YamlLogging.writeMessage("this is how to create a subscription");
             assetTree.registerSubscriber(NAME, MapEvent.class, mapEventSubscriber);
         });
 

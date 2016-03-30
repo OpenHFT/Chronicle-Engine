@@ -37,8 +37,8 @@ public class ServerMain {
 
     public static void main(String[] args) throws IOException {
 
-        YamlLogging.showServerReads = true;
-        YamlLogging.showServerWrites = true;
+        YamlLogging.showServerReads(true);
+        YamlLogging.showServerWrites(true);
         AssetTree serverTree = new VanillaAssetTree().forServer(false, Throwable::printStackTrace);
         endpoint = new ServerEndpoint("localhost:9090", serverTree);
     }

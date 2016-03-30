@@ -75,6 +75,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     private AssetTree assetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
+
     public SubscriptionEventTest(boolean isRemote, WireType wireType) {
         this.isRemote = isRemote;
         this.wireType = wireType;
@@ -137,20 +138,20 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
         final BlockingQueue<MapEvent> eventsQueue = new LinkedBlockingQueue<>();
 
-        YamlLogging.showServerWrites = true;
-        YamlLogging.showServerReads = true;
+        YamlLogging.showServerWrites(true);
+        YamlLogging.showServerReads(true);
 
         yamlLoggger(() -> {
             try {
-                YamlLogging.writeMessage = "Sets up a subscription to listen to map events. And " +
+                YamlLogging.writeMessage("Sets up a subscription to listen to map events. And " +
                         "subsequently puts and entry into the map, notice that the InsertedEvent is " +
-                        "received from the server";
+                        "received from the server");
 
                 Subscriber<MapEvent> add = eventsQueue::add;
                 assetTree.registerSubscriber(NAME, MapEvent.class, add);
 
-                YamlLogging.writeMessage = "puts an entry into the map so that an event will be " +
-                        "triggered";
+                YamlLogging.writeMessage("puts an entry into the map so that an event will be " +
+                        "triggered");
                 map.put("Hello", "World");
                 assertEquals(1, map.size());
 
@@ -186,8 +187,8 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
                 final Map serverMap = serverAssetTree.acquireMap(NAME, String.class, String.class);
 
-                YamlLogging.writeMessage = "puts an entry into the map so that an event will be " +
-                        "triggered";
+                YamlLogging.writeMessage("puts an entry into the map so that an event will be " +
+                        "triggered");
 
                 serverMap.put("sever-key", "server-value");
                 map.put("hello", "world");
@@ -238,9 +239,9 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
         yamlLoggger(() -> {
             try {
                 // todo fix the text
-                YamlLogging.writeMessage = "Sets up a subscription to listen to map events. And " +
+                YamlLogging.writeMessage("Sets up a subscription to listen to map events. And " +
                         "subsequently puts and entry into the map, notice that the InsertedEvent is " +
-                        "received from the server";
+                        "received from the server");
 
                 TopicPublisher<String, String> topicPublisher = assetTree.acquireTopicPublisher(NAME, String.class, String.class);
 
@@ -248,8 +249,8 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                 assetTree.registerTopicSubscriber(NAME, String.class, String.class,
                         subscriber);
 
-                YamlLogging.writeMessage = "puts an entry into the map so that an event will be " +
-                        "triggered";
+                YamlLogging.writeMessage("puts an entry into the map so that an event will be " +
+                        "triggered");
                 topicPublisher.publish("Hello", "World");
 
                 TopicDetails take = eventsQueue.take();
@@ -276,17 +277,17 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
         yamlLoggger(() -> {
             try {
-                YamlLogging.writeMessage = "Sets up a subscription to listen to key events. ";
+                YamlLogging.writeMessage("Sets up a subscription to listen to key events. ");
 
                 Subscriber<MapEvent> subscriber = eventsQueue::add;
 
                 assetTree.registerSubscriber(NAME, MapEvent.class, subscriber);
 
-                YamlLogging.writeMessage = "unsubscribes to changes to the map";
+                YamlLogging.writeMessage("unsubscribes to changes to the map");
                 assetTree.unregisterSubscriber(NAME, subscriber);
 
-                YamlLogging.writeMessage = "puts the entry into the map, but since we have " +
-                        "unsubscribed no event should be send form the server to the client";
+                YamlLogging.writeMessage("puts the entry into the map, but since we have " +
+                        "unsubscribed no event should be send form the server to the client");
                 map.put("Hello", "World");
 
                 Object object = eventsQueue.poll(500, MILLISECONDS);
@@ -306,15 +307,15 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
         yamlLoggger(() -> {
             try {
 
-                YamlLogging.writeMessage = "Sets up a subscription to listen to key events. And " +
+                YamlLogging.writeMessage("Sets up a subscription to listen to key events. And " +
                         "subsequently puts and entry into the map, notice that the InsertedEvent is " +
-                        "received from the server";
+                        "received from the server");
 
                 Subscriber<String> subscriber = eventsQueue::add;
                 assetTree.registerSubscriber(NAME, String.class, subscriber);
 
-                YamlLogging.writeMessage = "puts an entry into the map so that an event will be " +
-                        "triggered";
+                YamlLogging.writeMessage("puts an entry into the map so that an event will be " +
+                        "triggered");
                 map.put("Hello", "World");
 
                 Object object = eventsQueue.poll(500, MILLISECONDS);
@@ -337,9 +338,9 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
         yamlLoggger(() -> {
             try {
 
-                YamlLogging.writeMessage = "Sets up a subscription to listen to key events. And " +
+                YamlLogging.writeMessage("Sets up a subscription to listen to key events. And " +
                         "subsequently puts and entry into the map, notice that the InsertedEvent is " +
-                        "received from the server";
+                        "received from the server");
 
                 ConcurrentMap<String, String> map = assetTree.acquireMap(NAME, String.class, String.class);
 
@@ -380,9 +381,9 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
         yamlLoggger(() -> {
             try {
-                YamlLogging.writeMessage = "Sets up a subscription to listen to key events. Then " +
+                YamlLogging.writeMessage("Sets up a subscription to listen to key events. Then " +
                         "unsubscribes and puts and entry into the map, no subsequent event should" +
-                        " be received from the server";
+                        " be received from the server");
 
                 Subscriber<String> add = eventsQueue::add;
                 assetTree.registerSubscriber(NAME, String.class, add);
@@ -392,8 +393,8 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
                 eventsQueue.clear();
 
-                YamlLogging.writeMessage = "puts an entry into the map so that an event will be " +
-                        "triggered";
+                YamlLogging.writeMessage("puts an entry into the map so that an event will be " +
+                        "triggered");
                 String expected = "World";
                 map.getAndPut("Hello", expected);
 
@@ -413,16 +414,16 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
         yamlLoggger(() -> {
             try {
-                YamlLogging.writeMessage = "Sets up a subscription to listen to key events. And " +
+                YamlLogging.writeMessage("Sets up a subscription to listen to key events. And " +
                         "subsequently puts and entry into the map followed by a remove, notice " +
                         "that the " +
                         "'reply: Hello' is received twice, one for the put and one for the " +
-                        "remove.";
+                        "remove.");
 
                 assetTree.registerSubscriber(NAME, String.class, eventsQueue::add);
 
-                YamlLogging.writeMessage = "puts an entry into the map so that an event will be " +
-                        "triggered";
+                YamlLogging.writeMessage("puts an entry into the map so that an event will be " +
+                        "triggered");
                 String expected = "World";
                 map.put("Hello", expected);
                 map.remove("Hello");
@@ -446,16 +447,16 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
         yamlLoggger(() -> {
             try {
-                YamlLogging.writeMessage = "Sets up a subscription to listen to key events. And " +
+                YamlLogging.writeMessage("Sets up a subscription to listen to key events. And " +
                         "subsequently puts and entry into the map followed by a remove, notice " +
                         "that the " +
                         "'reply: Hello' is received twice, one for the put and one for the " +
-                        "remove.";
+                        "remove.");
 
                 assetTree.registerSubscriber(NAME, MapEvent.class, eventsQueue::add);
 
-                YamlLogging.writeMessage = "puts an entry into the map so that an event will be " +
-                        "triggered";
+                YamlLogging.writeMessage("puts an entry into the map so that an event will be " +
+                        "triggered");
                 String expected = "World";
                 map.put("Hello", expected);
                 Object putEvent = eventsQueue.poll(1, SECONDS);

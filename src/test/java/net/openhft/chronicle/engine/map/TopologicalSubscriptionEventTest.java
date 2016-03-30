@@ -121,7 +121,8 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
 
         yamlLoggger(() -> {
             try {
-                YamlLogging.writeMessage = "Sets up a subscription to listen to new maps being added and removed.";
+                YamlLogging.writeMessage("Sets up a subscription to listen to new maps being " +
+                        "added and removed.");
                 Subscriber<TopologicalEvent> subscription = eventsQueue::add;
                 clientAssetTree.registerSubscriber("", TopologicalEvent.class, subscription);
 

@@ -279,7 +279,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
     protected void process(@NotNull final WireIn in,
                            @NotNull final WireOut out) {
 
-        if (!YamlLogging.showHeartBeats) {
+        if (!YamlLogging.showHeartBeats()) {
             //save the previous message (the meta-data for printing later)
             //if the message turns out not to be a system message
             prevLogMessage.setLength(0);
@@ -309,13 +309,13 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                             isServerSocket, () -> publisher(), hostIdentifier, wireTypeConsumer,
                             wireType());
                     if (!systemHandler.wasHeartBeat()) {
-                        if (!YamlLogging.showHeartBeats)
+                        if (!YamlLogging.showHeartBeats())
                             logBufferToStandardOut(prevLogMessage.append(currentLogMessage));
                     }
                     return;
                 }
 
-                if (!YamlLogging.showHeartBeats) {
+                if (!YamlLogging.showHeartBeats()) {
                     logBufferToStandardOut(prevLogMessage.append(currentLogMessage));
                 }
 
@@ -422,7 +422,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
     }
 
     private void logYamlToStandardOut(@NotNull WireIn in) {
-        if (YamlLogging.showServerReads) {
+        if (YamlLogging.showServerReads()) {
             try {
                 LOG.info("\nServer Receives:\n" +
                         Wires.fromSizePrefixedBlobs(in.bytes()));
@@ -434,7 +434,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
     }
 
     private void logToBuffer(@NotNull WireIn in, StringBuilder logBuffer) {
-        if (YamlLogging.showServerReads) {
+        if (YamlLogging.showServerReads()) {
             logBuffer.setLength(0);
             try {
                 logBuffer.append("\nServer Receives:\n")

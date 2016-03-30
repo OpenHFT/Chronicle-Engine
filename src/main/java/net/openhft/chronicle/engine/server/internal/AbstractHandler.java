@@ -115,7 +115,7 @@ abstract class AbstractHandler {
     }
 
     void logYaml() {
-        if (YamlLogging.showServerWrites)
+        if (YamlLogging.showServerWrites())
             try {
                 LOG.info("\nServer Sends:\n" +
                         Wires.fromSizePrefixedBlobs(outWire.bytes()));

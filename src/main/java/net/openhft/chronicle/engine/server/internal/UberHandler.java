@@ -221,7 +221,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
 
         String s = Wires.fromSizePrefixedBlobs(inWire.bytes());
 
-        if (YamlLogging.showServerReads && inWire.hasMore())
+        if (YamlLogging.showServerReads() && inWire.hasMore())
             LOG.info("subhandler read:\n" + s);
 
         onMessageReceived();

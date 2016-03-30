@@ -145,10 +145,10 @@ public class RobsReplication2WayTest {
 
     @Before
     public void beforeTest() throws IOException {
-        YamlLogging.setAll(true);
+        YamlLogging.setAll(false);
         before();
         name = testName.getMethodName();
-        YamlLogging.showServerReads = true;
+        YamlLogging.showServerReads(true);
         Files.deleteIfExists(Paths.get(OS.TARGET, name.toString()));
     }
 

@@ -162,9 +162,9 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
             final Map map = supplier.get();
 
-            writeMessage = "when the key exists";
+            writeMessage("when the key exists");
             yamlLoggger(() -> assertTrue(map.containsValue("A")));
-            writeMessage = "when it doesnt exist";
+            writeMessage("when it doesnt exist");
             yamlLoggger(() -> assertFalse(map.containsValue("Z")));
         }
     }
@@ -176,7 +176,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     public void testContainsKey() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
             final Map map = supplier.get();
-            writeMessage = "example of containsKey(<key>) returning true";
+            writeMessage("example of containsKey(<key>) returning true");
             yamlLoggger(() -> assertTrue(map.containsKey(one)));
             assertFalse(map.containsKey(zero));
         }
@@ -189,7 +189,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     public void testContainsValue() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
             final Map map = supplier.get();
-            writeMessage = "example of containsValue(<value>) returning true";
+            writeMessage("example of containsValue(<value>) returning true");
             yamlLoggger(() -> assertTrue(map.containsValue("A")));
             assertFalse(map.containsValue("Z"));
         }
@@ -204,8 +204,8 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
             final Map map = supplier.get();
             assertEquals("A", map.get(one));
             try (ClosableMapSupplier empty = newStrStrMap()) {
-                writeMessage = "example of get(<key>) returning null, when the keys is not " +
-                        "present in the map";
+                writeMessage("example of get(<key>) returning null, when the keys is not " +
+                        "present in the map");
 
                 yamlLoggger(() -> {
                     Object object = map.get(notPresent);
@@ -229,7 +229,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
                     System.out.print("not empty " + empty);
                 }
 
-                writeMessage = "example of isEmpty() returning true, not it uses the size() method";
+                writeMessage("example of isEmpty() returning true, not it uses the size() method");
                 yamlLoggger(() -> assertTrue(empty.isEmpty()));
                 assertFalse(map.isEmpty());
             }
@@ -243,7 +243,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     public void testKeySet() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
             final Map map = supplier.get();
-            writeMessage = "example of checking the size of a keyset";
+            writeMessage("example of checking the size of a keyset");
             yamlLoggger(() -> {
                         Set s = map.keySet();
                         assertEquals(5, s.size());
@@ -300,8 +300,8 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     public void testEntrySetToArray() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
             final Map map = supplier.get();
-            writeMessage = "map.entrySet().toArray() first gets the entry set and then converts " +
-                    "it to an array";
+            writeMessage("map.entrySet().toArray() first gets the entry set and then converts " +
+                    "it to an array");
             yamlLoggger(() -> {
                 Set s = map.entrySet();
                 s.toArray();
@@ -324,7 +324,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     public void testValues() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
             final Map map = supplier.get();
-            writeMessage = "example of getting the values and then calling size()";
+            writeMessage("example of getting the values and then calling size()");
             yamlLoggger(() -> {
                 Collection s = map.values();
                 s.size();
@@ -347,7 +347,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     public void testEntrySet() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
             final Map map = supplier.get();
-            writeMessage = "example of getting and entry set itterator";
+            writeMessage("example of getting and entry set itterator");
             yamlLoggger(() -> {
                 Set entrySet = map.entrySet();
                 entrySet.iterator();
@@ -418,7 +418,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     public void testReplace() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
             final Map map = supplier.get();
-            writeMessage = "example of replace where the value is not known";
+            writeMessage("example of replace where the value is not known");
             yamlLoggger(() -> assertNull(map.replace(six, "Z")));
             assertFalse(map.containsKey(six));
         }
@@ -431,7 +431,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     public void testReplace2() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
             final Map map = supplier.get();
-            writeMessage = "example of replace where the value is known";
+            writeMessage("example of replace where the value is known");
             yamlLoggger(() -> assertNotNull(map.replace(one, "Z")));
             assertEquals("Z", map.get(one));
         }
@@ -445,7 +445,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
             final Map map = supplier.get();
             assertEquals("A", map.get(one));
-            writeMessage = "example of when then value was not replaced";
+            writeMessage("example of when then value was not replaced");
             yamlLoggger(() -> assertFalse(map.replace(one, "Z", "Z")));
             assertEquals("A", map.get(one));
         }
@@ -459,7 +459,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
             final Map map = supplier.get();
             assertEquals("A", map.get(one));
-            writeMessage = "example of replace where the value is known";
+            writeMessage("example of replace where the value is known");
             yamlLoggger(() -> assertTrue(map.replace(one, "A", "Z")));
             assertEquals("Z", map.get(one));
         }
@@ -502,9 +502,9 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
             final Map map = supplier.get();
             try (ClosableMapSupplier<Integer, String> supplier0 = newIntString("testEmpty")) {
                 final Map empty = supplier0.get();
-                writeMessage = "size on an empty map";
+                writeMessage("size on an empty map");
                 yamlLoggger(() -> assertEquals(0, empty.size()));
-                writeMessage = "size on a map with entries";
+                writeMessage("size on a map with entries");
                 yamlLoggger(() -> assertEquals(5, map.size()));
             }
         }
@@ -548,7 +548,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
 
         try (ClosableMapSupplier<Integer, String> supplier = newIntString("test")) {
             Map<Integer, String> c = supplier.get();
-            writeMessage = "get(null) returns a NullPointerException";
+            writeMessage("get(null) returns a NullPointerException");
             yamlLoggger(() -> c.get(null));
         }
     }
@@ -560,7 +560,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     public void testContainsKey_NullPointerException() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = newIntString("test")) {
             Map<Integer, String> c = supplier.get();
-            writeMessage = "c.containsKey(null) will throw a NullPointerException";
+            writeMessage("c.containsKey(null) will throw a NullPointerException");
             yamlLoggger(() -> c.containsKey(null));
         }
     }
@@ -572,7 +572,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     public void testPut1_NullPointerException() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = newIntString("test")) {
             Map<Integer, String> c = supplier.get();
-            writeMessage = "put(null) will throw a NullPointerException";
+            writeMessage("put(null) will throw a NullPointerException");
             yamlLoggger(() -> c.put(null, "whatever"));
         }
     }
@@ -584,7 +584,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     public void testPut2_NullPointerException() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = newIntString("test")) {
             Map<Integer, String> c = supplier.get();
-            writeMessage = "put(notPresent,null) will throw a NullPointerException";
+            writeMessage("put(notPresent,null) will throw a NullPointerException");
             yamlLoggger(() -> c.put(notPresent, null));
         }
     }
@@ -596,7 +596,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     public void testPutIfAbsent1_NullPointerException() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = newIntString("test")) {
             Map<Integer, String> c = supplier.get();
-            writeMessage = "put(null, \"whatever\") will throw a NullPointerException";
+            writeMessage("put(null, \"whatever\") will throw a NullPointerException");
             yamlLoggger(() -> c.putIfAbsent(null, "whatever"));
         }
     }
@@ -641,7 +641,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     public void testReplace2_NullPointerException() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = newIntString("test")) {
             Map<Integer, String> c = supplier.get();
-            writeMessage = "replace(notPresent,null) will throw a NullPointerException";
+            writeMessage("replace(notPresent,null) will throw a NullPointerException");
             yamlLoggger(() -> c.replace(notPresent, null));
         }
     }
@@ -664,7 +664,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     public void testReplaceValue3_NullPointerException() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = newIntString("test")) {
             Map<Integer, String> c = supplier.get();
-            writeMessage = "replace(notPresent, \"A\", null will throw a NullPointerException";
+            writeMessage("replace(notPresent, \"A\", null will throw a NullPointerException");
             yamlLoggger(() -> c.replace(notPresent, "A", null));
         }
     }
@@ -678,7 +678,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
             Map<CharSequence, CharSequence> c = supplier.get();
             c.put("sadsdf", "asdads");
 
-            writeMessage = "remove(null) will throw a NullPointerException";
+            writeMessage("remove(null) will throw a NullPointerException");
             yamlLoggger(() -> c.remove(null));
         }
     }
@@ -692,7 +692,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
         try (ClosableMapSupplier<CharSequence, CharSequence> supplier = newStrStrMap()) {
             Map<CharSequence, CharSequence> c = supplier.get();
             c.put("sadsdf", "asdads");
-            writeMessage = "remove(null,whatever) will throw a NullPointerException";
+            writeMessage("remove(null,whatever) will throw a NullPointerException");
             yamlLoggger(() -> c.remove(null, "whatever"));
         }
     }

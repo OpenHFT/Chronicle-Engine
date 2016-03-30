@@ -52,7 +52,7 @@ public class RedisEmulatorTest {
     @BeforeClass
     public static void setup() throws IOException{
         System.out.println("Hello");
-        YamlLogging.showServerReads=true;
+        YamlLogging.showServerReads(true);
         //For this test we can use a VanillaMapKeyValueStore
         //To test with a ChronicleMapKeyValueStore uncomment lines below
         AssetTree serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));

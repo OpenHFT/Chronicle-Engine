@@ -44,23 +44,23 @@ public class Utils {
                 : methodName;
         final String name = Utils.splitCamelCase(methodName1);
 
-        YamlLogging.showServerReads = false;
-        YamlLogging.clientReads = false;
+        YamlLogging.showServerReads(false);
+        YamlLogging.showClientReads(false);
         YamlLogging.title = name;
     }
 
     public static void yamlLoggger(@NotNull Runnable r) {
         try {
-            YamlLogging.clientWrites = true;
-            YamlLogging.clientReads = true;
-            YamlLogging.showServerWrites = true;
-            YamlLogging.showServerReads = true;
+            YamlLogging.showClientWrites(true);
+            YamlLogging.showClientReads(true);
+            YamlLogging.showServerWrites(true);
+            YamlLogging.showServerReads(true);
             r.run();
         } finally {
-            YamlLogging.clientWrites = false;
-            YamlLogging.clientReads = false;
-            YamlLogging.showServerWrites = false;
-            YamlLogging.showServerReads = false;
+            YamlLogging.showClientWrites(false);
+            YamlLogging.showClientReads(false);
+            YamlLogging.showServerWrites(false);
+            YamlLogging.showServerReads(false);
         }
     }
 

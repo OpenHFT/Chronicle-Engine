@@ -75,8 +75,8 @@ public class TestReplicationCluster {
 
     @BeforeClass
     public static void before() throws IOException {
-        YamlLogging.clientWrites = false;
-        YamlLogging.clientReads = false;
+        YamlLogging.showClientWrites(false);
+        YamlLogging.showClientReads(false);
 
         //YamlLogging.showServerWrites = true;
         TCPRegistry.createServerSocketChannelFor(
