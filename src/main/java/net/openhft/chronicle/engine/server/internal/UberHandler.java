@@ -46,7 +46,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
         implements Demarshallable, WriteMarshallable {
 
     private static final Logger LOG = LoggerFactory.getLogger(UberHandler.class);
-    private ConnectionManager connectionEventManagerHandler;
+    private ConnectionChangedNotifier connectionChangedNotifier;
     AtomicBoolean isClosed = new AtomicBoolean();
 
     public static class Factory implements BiFunction<ClusterContext, HostDetails,
@@ -155,7 +155,8 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
             return;
         }
         System.out.println("uberhandler=" + this.hashCode() + " -> notifyConnectionListeners");
-        notifyConnectionListeners(engineCluster);
+        if (!isClosed.get())
+            notifyConnectionListeners(engineCluster);
     }
 
     private boolean checkIdentifierEqualsHostId() {
@@ -164,10 +165,9 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
     }
 
     private void notifyConnectionListeners(EngineCluster cluster) {
-        connectionEventManagerHandler = cluster
-                .findConnectionManager(remoteIdentifier);
-        if (connectionEventManagerHandler != null)
-            connectionEventManagerHandler.onConnectionChanged(true, nc());
+        connectionChangedNotifier = cluster.findClusterNotifier(remoteIdentifier);
+        if (connectionChangedNotifier != null)
+            connectionChangedNotifier.onConnectionChanged(true, nc());
     }
 
     private boolean checkConnectionStrategy(@NotNull EngineCluster cluster) {
@@ -204,9 +204,9 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
 
     @Override
     public void close() {
-        isClosed.set(true);
-        if (connectionEventManagerHandler != null)
-            connectionEventManagerHandler.onConnectionChanged(false, nc());
+        if (!isClosed.getAndSet(true) && connectionChangedNotifier != null)
+            connectionChangedNotifier.onConnectionChanged(false, nc());
+
         super.close();
     }
 
