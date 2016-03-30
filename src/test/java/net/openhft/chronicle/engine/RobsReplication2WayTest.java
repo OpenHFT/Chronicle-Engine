@@ -148,7 +148,6 @@ public class RobsReplication2WayTest {
         YamlLogging.setAll(false);
         before();
         name = testName.getMethodName();
-        YamlLogging.showServerReads(true);
         Files.deleteIfExists(Paths.get(OS.TARGET, name.toString()));
     }
 
