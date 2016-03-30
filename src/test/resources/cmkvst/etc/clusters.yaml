@@ -5,7 +5,7 @@ clusterRob: {
     wireOutPublisherFactory: !VanillaWireOutPublisherFactory {},
     networkContextFactory: !EngineWireNetworkContextFactory {},
     connectionEventHandler:  !EngineConnectionManagerFactory {},
-    heartbeatTimeoutMs: 1_000L,
+    heartbeatTimeoutMs: 5_000L,
     heartbeatIntervalMs: 500L,
     heartbeatFactory: !HeartbeatHandlerFactory {},
     connectionStrategy: !HostIdConnectionStrategy {},

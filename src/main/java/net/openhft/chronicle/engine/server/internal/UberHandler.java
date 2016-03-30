@@ -263,10 +263,6 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
             }
         }
 
-        if (s.contains("1042134191") && cidToHandle.size() < 2) {
-            System.out.println("uberhandler=" + this.hashCode());
-            System.out.println("uberhandler=" + this.hashCode());
-        }
     }
 
     private void onMessageReceived() {
