@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.engine.server.internal;
 
+import net.openhft.chronicle.core.annotation.UsedViaReflection;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.cfg.EngineClusterContext;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
@@ -41,8 +42,8 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext> extend
             MarshallableFunction<ClusterContext,
                     NetworkContext>, Demarshallable {
 
+        @UsedViaReflection
         private Factory(@NotNull WireIn wireIn) {
-
         }
 
         public Factory() {

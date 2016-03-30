@@ -1,0 +1,25 @@
+clusterRob: {
+ context: !EngineClusterContext {
+    wireType: TEXT,
+    handlerFactory: !UberHandlerFactory {},
+    wireOutPublisherFactory: !VanillaWireOutPublisherFactory {},
+    networkContextFactory: !EngineWireNetworkContextFactory {},
+    connectionEventHandler:  !EngineConnectionManagerFactory {},
+    heartbeatTimeoutMs: 40_000L,
+    heartbeatIntervalMs: 20_000L,
+    heartbeatFactory: !HeartbeatHandlerFactory {},
+    connectionStrategy: !HostIdConnectionStrategy {},
+  }
+  host1: {
+     hostId: 1,
+     tcpBufferSize: 65536,
+     connectUri: host1:8081,
+     timeoutMs: 5000,
+  },
+  host2: {
+     hostId: 2,
+     tcpBufferSize: 65536,
+     connectUri: host2:8081,
+     timeoutMs: 5000,
+  }
+}

@@ -52,8 +52,7 @@ public class EngineClusterContext extends ClusterContext {
                 final Function<Object, TcpHandler> consumer = o -> {
                     if (o instanceof SessionDetailsProvider) {
                         final SessionDetailsProvider sessionDetails = (SessionDetailsProvider) o;
-                        //      nc.heartbeatIntervalTicks(heartbeatIntervalTicks());
-                        //    nc.heartBeatTimeoutTicks(heartbeatTimeoutMs());
+                        nc.heartbeatTimeoutMs(heartbeatTimeoutMs());
                         nc.sessionDetails(sessionDetails);
                         nc.wireType(sessionDetails.wireType());
                         final WireType wireType = nc.sessionDetails().wireType();
