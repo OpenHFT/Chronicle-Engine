@@ -47,6 +47,11 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
 
     private static final Logger LOG = LoggerFactory.getLogger(UberHandler.class);
     private ConnectionChangedNotifier connectionChangedNotifier;
+
+    public boolean isClosed() {
+        return isClosed.get();
+    }
+
     AtomicBoolean isClosed = new AtomicBoolean();
 
     public static class Factory implements BiFunction<ClusterContext, HostDetails,
@@ -138,6 +143,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
                     "found, cluster=" + clusterName));
             return;
         }
+
 
         // note : we have to publish the uber handler, even if we send a termination event
         // this is so the termination event can be processed by the receiver

@@ -22,10 +22,7 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
 import net.openhft.chronicle.engine.server.internal.EngineWireNetworkContext;
-import net.openhft.chronicle.network.AcceptorEventHandler;
-import net.openhft.chronicle.network.HeaderTcpHandler;
-import net.openhft.chronicle.network.TcpEventHandler;
-import net.openhft.chronicle.network.WireTypeSniffingTcpHandler;
+import net.openhft.chronicle.network.*;
 import net.openhft.chronicle.network.api.TcpHandler;
 import net.openhft.chronicle.network.api.session.SessionDetailsProvider;
 import net.openhft.chronicle.network.connection.VanillaWireOutPublisher;
@@ -86,46 +83,47 @@ public class ServerEndpoint implements Closeable {
         final EventLoop eventLoop = assetTree.root().findOrCreateView(EventLoop.class);
         assert eventLoop != null;
 
+        Function<NetworkContext, TcpEventHandler> networkContextTcpEventHandlerFunction = (networkContext) -> {
+
+            try {
+                final EngineWireNetworkContext nc = (EngineWireNetworkContext) networkContext;
+                if (nc.isAcceptor())
+                    nc.wireOutPublisher(new VanillaWireOutPublisher(WireType.TEXT));
+                final TcpEventHandler handler = new TcpEventHandler(networkContext);
+
+                final Function<Object, TcpHandler> consumer = o -> {
+                    if (o instanceof SessionDetailsProvider) {
+                        final SessionDetailsProvider sessionDetails = (SessionDetailsProvider) o;
+                        //      nc.heartbeatIntervalTicks(heartbeatIntervalTicks());
+                        //    nc.heartBeatTimeoutTicks(heartbeatTimeoutMs());
+                        nc.sessionDetails(sessionDetails);
+                        nc.wireType(sessionDetails.wireType());
+                        final WireType wireType = nc.sessionDetails().wireType();
+                        if (wireType != null)
+                            nc.wireOutPublisher().wireType(wireType);
+                        return new EngineWireHandler();
+                    } else if (o instanceof TcpHandler)
+                        return (TcpHandler) o;
+
+                    throw new UnsupportedOperationException("not supported class=" + o.getClass());
+                };
+
+                final Function<EngineWireNetworkContext, TcpHandler> f
+                        = x -> new HeaderTcpHandler<>(handler, consumer, x);
+
+                final WireTypeSniffingTcpHandler sniffer = new
+                        WireTypeSniffingTcpHandler<>(handler, nc, f);
+
+                handler.tcpHandler(sniffer);
+                return handler;
+
+            } catch (IOException e) {
+                throw Jvm.rethrow(e);
+            }
+        };
         final AcceptorEventHandler eah = new AcceptorEventHandler(
                 hostPortDescription,
-                (networkContext) -> {
-
-                    try {
-                        final EngineWireNetworkContext nc = (EngineWireNetworkContext) networkContext;
-                        if (nc.isAcceptor())
-                            nc.wireOutPublisher(new VanillaWireOutPublisher(WireType.TEXT));
-                        final TcpEventHandler handler = new TcpEventHandler(networkContext);
-
-                        final Function<Object, TcpHandler> consumer = o -> {
-                            if (o instanceof SessionDetailsProvider) {
-                                final SessionDetailsProvider sessionDetails = (SessionDetailsProvider) o;
-                                //      nc.heartbeatIntervalTicks(heartbeatIntervalTicks());
-                                //    nc.heartBeatTimeoutTicks(heartbeatTimeoutMs());
-                                nc.sessionDetails(sessionDetails);
-                                nc.wireType(sessionDetails.wireType());
-                                final WireType wireType = nc.sessionDetails().wireType();
-                                if (wireType != null)
-                                    nc.wireOutPublisher().wireType(wireType);
-                                return new EngineWireHandler();
-                            } else if (o instanceof TcpHandler)
-                                return (TcpHandler) o;
-
-                            throw new UnsupportedOperationException("not supported class=" + o.getClass());
-                        };
-
-                        final Function<EngineWireNetworkContext, TcpHandler> f
-                                = x -> new HeaderTcpHandler<>(handler, consumer, x);
-
-                        final WireTypeSniffingTcpHandler sniffer = new
-                                WireTypeSniffingTcpHandler<>(handler, nc, f);
-
-                        handler.tcpHandler(sniffer);
-                        return handler;
-
-                    } catch (IOException e) {
-                        throw Jvm.rethrow(e);
-                    }
-                },
+                networkContextTcpEventHandlerFunction,
                 () -> new EngineWireNetworkContext(assetTree.root()));
 
         eg.addHandler(eah);
