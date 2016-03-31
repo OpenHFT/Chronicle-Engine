@@ -20,7 +20,10 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -43,7 +46,7 @@ import static org.junit.Assert.assertNotNull;
  */
 
 @RunWith(value = Parameterized.class)
-@Ignore("TODO FIX 1.12.0")
+
 public class Replication3WayTest {
 
 
@@ -173,7 +176,7 @@ public class Replication3WayTest {
 
     @Test
     public void testThreeWay() throws InterruptedException {
-        YamlLogging.setAll(true);
+        //   YamlLogging.setAll(true);
         //YamlLogging.showServerReads = true;
 
         final ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME, String.class, String

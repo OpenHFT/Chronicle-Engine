@@ -53,7 +53,6 @@ import static org.junit.Assert.assertNotNull;
  * Created by Rob Austin
  */
 
-@Ignore("TODO FIX 1.12.0")
 public class Replication3WayWithCompressionTest {
     public static final WireType WIRE_TYPE = WireType.TEXT;
     public static final String NAME = "/ChMaps/test";

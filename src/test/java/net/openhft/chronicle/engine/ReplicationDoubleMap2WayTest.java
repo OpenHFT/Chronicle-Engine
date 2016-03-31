@@ -54,7 +54,6 @@ import static org.junit.Assert.assertNotNull;
  * Created by Rob Austin
  */
 
-@Ignore("TODO FIX 1.12.0")
 public class ReplicationDoubleMap2WayTest {
     public static final WireType WIRE_TYPE = WireType.TEXT;
 
