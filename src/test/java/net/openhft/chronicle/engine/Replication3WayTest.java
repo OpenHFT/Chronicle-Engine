@@ -215,8 +215,6 @@ public class Replication3WayTest {
             Assert.assertEquals("world1", m.get("hello1"));
             Assert.assertEquals("world2", m.get("hello2"));
             Assert.assertEquals("world3", m.get("hello3"));
-
-
             Assert.assertEquals(3, m.size());
         }
     }

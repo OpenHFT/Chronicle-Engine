@@ -71,7 +71,6 @@ clusterThree: {
        hostId: 3,
        tcpBufferSize: 65536,
        connectUri: clusterThree.host.port3,
-       timeoutMs: 5000,
   }
 }
 clusterPeter: {
