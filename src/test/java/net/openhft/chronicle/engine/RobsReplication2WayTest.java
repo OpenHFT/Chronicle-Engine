@@ -168,6 +168,7 @@ public class RobsReplication2WayTest {
     // @Ignore
     @Test
     public void testBootstrap() throws InterruptedException, UnknownHostException {
+        // YamlLogging.showServerWrites(true);
 
         InetAddress hostname = InetAddress.getLocalHost();
         String hostName = hostname.toString();
