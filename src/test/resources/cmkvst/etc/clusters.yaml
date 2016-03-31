@@ -14,13 +14,11 @@ clusterRob: {
      hostId: 1,
      tcpBufferSize: 65536,
      connectUri: host1:8081,
-     timeoutMs: 5000,
   },
   host2: {
      hostId: 2,
      tcpBufferSize: 65536,
      connectUri: host2:8081,
-     timeoutMs: 5000,
   }
 
 }
@@ -40,13 +38,11 @@ clusterTwo: {
      hostId: 1,
      tcpBufferSize: 65536,
      connectUri: host.port1,
-     timeoutMs: 5000,
   },
   host2: {
      hostId: 2,
      tcpBufferSize: 65536,
      connectUri: host.port2,
-     timeoutMs: 5000,
   }
 }
 clusterThree: {
@@ -65,13 +61,11 @@ clusterThree: {
      hostId: 1,
      tcpBufferSize: 65536,
      connectUri: clusterThree.host.port1,
-     timeoutMs: 5000,
   },
   host2: {
      hostId: 2,
      tcpBufferSize: 65536,
      connectUri: clusterThree.host.port2,
-     timeoutMs: 5000,
   },
   host3: {
        hostId: 3,

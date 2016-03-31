@@ -46,13 +46,11 @@ public class EngineHostDetails extends HostDetails implements Marshallable, Clos
         super();
     }
 
-    public EngineHostDetails(int hostId, int tcpBufferSize, String connectUri, int timeoutMs) {
+    public EngineHostDetails(int hostId, int tcpBufferSize, String connectUri) {
         super();
         hostId(hostId);
         this.tcpBufferSize(tcpBufferSize);
         this.connectUri(connectUri);
-        this.timeoutMs(timeoutMs);
-
     }
 
     /**

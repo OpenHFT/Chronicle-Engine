@@ -140,9 +140,9 @@ public class RoundTripTest {
         TCPRegistry.createServerSocketChannelFor(CONNECTION_3);
 
         final List<EngineHostDetails> hostDetails = new ArrayList<>();
-        hostDetails.add(new EngineHostDetails(1, 8 << 20, CONNECTION_1, 5_000));
-        hostDetails.add(new EngineHostDetails(2, 8 << 20, CONNECTION_2, 5_000));
-        hostDetails.add(new EngineHostDetails(3, 8 << 20, CONNECTION_3, 5_000));
+        hostDetails.add(new EngineHostDetails(1, 8 << 20, CONNECTION_1));
+        hostDetails.add(new EngineHostDetails(2, 8 << 20, CONNECTION_2));
+        hostDetails.add(new EngineHostDetails(3, 8 << 20, CONNECTION_3));
 
         AssetTree serverAssetTree1 = create(1, WireType.BINARY, hostDetails);
         AssetTree serverAssetTree2 = create(2, WireType.BINARY, hostDetails);
