@@ -46,7 +46,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
@@ -56,25 +55,14 @@ import java.util.function.BiConsumer;
  */
 public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
-    public static final String DEFAULT_BASE_PATH;
     private static final Logger LOG = LoggerFactory.getLogger(ChronicleQueueView.class);
-
-    static {
-        String dir = "/tmp";
-        try {
-            final Path tempDirectory = Files.createTempDirectory("engine-queue-");
-            dir = tempDirectory.toAbsolutePath().toString();
-        } catch (Exception ignore) {
-        }
-
-        DEFAULT_BASE_PATH = dir;
-    }
 
     private final ChronicleQueue chronicleQueue;
     private final Class<T> messageTypeClass;
     @NotNull
     private final Class<M> elementTypeClass;
     private final ThreadLocal<ThreadLocalData> threadLocal;
+    private final String defaultPath;
     private AtomicLong uniqueCspid = new AtomicLong();
     private boolean isSource;
     private boolean isReplicating;
@@ -87,6 +75,9 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     public ChronicleQueueView(@Nullable ChronicleQueue queue, @NotNull RequestContext context,
                               @NotNull Asset asset) {
 
+        String s = asset.fullName();
+        if (s.startsWith("/")) s = s.substring(1);
+        defaultPath = s;
         final HostIdentifier hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
         final Byte hostId = hostIdentifier == null ? null : hostIdentifier.hostId();
         chronicleQueue = (queue == null) ? newInstance(context.name(), context
@@ -98,6 +89,14 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
         if (hostId != null)
             replication(context, asset);
+    }
+
+    @NotNull
+    public static String resourcesDir() {
+        String path = ChronicleQueueView.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        if (path == null)
+            return ".";
+        return new File(path).getParentFile().getParentFile() + "/src/test/resources";
     }
 
     public ChronicleQueue chronicleQueue() {
@@ -170,7 +169,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         }
     }
 
-
     private WriteMarshallable newSource(long lastIndexReceived) {
         try {
             Class<?> aClass = Class.forName("software.chronicle.enterprise.queue.QueueSourceReplicationHandler");
@@ -206,15 +204,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         }
     }
 
-    @NotNull
-    public static String resourcesDir() {
-        String path = ChronicleQueueView.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-        if (path == null)
-            return ".";
-        return new File(path).getParentFile().getParentFile() + "/src/test/resources";
-    }
-
-
     @Override
     public void registerTopicSubscriber
             (@NotNull TopicSubscriber<T, M> topicSubscriber) throws AssetNotFoundException {
@@ -236,16 +225,18 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         throw new UnsupportedOperationException("todo");
     }
 
-    private ChronicleQueue newInstance(String name, @Nullable String basePath, @Nullable Byte hostID) {
+    private ChronicleQueue newInstance(String name, @Nullable String basePath, byte hostID) {
         ChronicleQueue chronicleQueue;
 
-        if (basePath == null)
-            basePath = DEFAULT_BASE_PATH + "/" + hostID;
-
         File baseFilePath;
-        try {
+        if (basePath == null)
+            baseFilePath = new File(defaultPath, "" + hostID);
+        else
             baseFilePath = new File(basePath, name);
-            baseFilePath.mkdirs();
+        try {
+            if (!baseFilePath.exists())
+                Files.createDirectories(baseFilePath.toPath());
+
             chronicleQueue = new SingleChronicleQueueBuilder(baseFilePath).build();
         } catch (Exception e) {
             throw Jvm.rethrow(e);

@@ -27,7 +27,6 @@ import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
-import net.openhft.chronicle.engine.tree.ChronicleQueueView;
 import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.engine.tree.QueueView.Excerpt;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
@@ -52,6 +51,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Rob Austin.
@@ -108,6 +108,9 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     @Before
     public void before() throws IOException {
 
+        // prevent any queues being created in the default location
+        assertTrue(new File("queue").createNewFile());
+
         methodName(name.getMethodName());
         methodName = name.getMethodName().substring(0, name.getMethodName().indexOf('['));
 
@@ -134,11 +137,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
     @After
     public void after() throws Throwable {
-
-        // clear the directory by deleting in at re-creating it.
-        final File file = new File(ChronicleQueueView.DEFAULT_BASE_PATH);
-        deleteFile(file);
-        file.mkdirs();
+        new File("queue").createNewFile();
 
         final Throwable tr = t.getAndSet(null);
 
