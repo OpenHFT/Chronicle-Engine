@@ -5,8 +5,8 @@ clusterRob: {
     wireOutPublisherFactory: !VanillaWireOutPublisherFactory {},
     networkContextFactory: !EngineWireNetworkContextFactory {},
     connectionEventHandler:  !EngineConnectionManagerFactory {},
-    heartbeatTimeoutMs: 1_000L,
-    heartbeatIntervalMs: 500L,
+    heartbeatTimeoutMs: 5_000L,
+    heartbeatIntervalMs: 1000L,
     heartbeatFactory: !HeartbeatHandlerFactory {},
     connectionStrategy: !HostIdConnectionStrategy {},
   }
@@ -22,6 +22,7 @@ clusterRob: {
      connectUri: host2:8081,
      timeoutMs: 5000,
   }
+
 }
 clusterTwo: {
   context: !EngineClusterContext {

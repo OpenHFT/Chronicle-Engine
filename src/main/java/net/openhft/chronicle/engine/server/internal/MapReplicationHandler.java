@@ -54,8 +54,6 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
     private long timestamp;
 
     private byte localIdentifier;
-    private EventLoop eventLoop;
-    private Asset rootAsset;
     private volatile boolean closed;
     @NotNull
     private Class keyType;
@@ -69,7 +67,7 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
         valueType = wire.read(() -> "valueType").typeLiteral();
     }
 
-    public MapReplicationHandler(long timestamp, @NotNull Class keyType, @NotNull Class valueType) {
+    private MapReplicationHandler(long timestamp, @NotNull Class keyType, @NotNull Class valueType) {
         this.timestamp = timestamp;
         this.keyType = keyType;
         this.valueType = valueType;
@@ -113,8 +111,7 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
         if (isClosed())
             return;
 
-
-        rootAsset = nc().rootAsset();
+        Asset rootAsset = nc().rootAsset();
         final RequestContext requestContext = RequestContext.requestContext(csp());
         final Asset asset = rootAsset.acquireAsset(requestContext.fullName());
 
@@ -136,7 +133,7 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
         if (hostIdentifier != null)
             localIdentifier = hostIdentifier.hostId();
 
-        this.eventLoop = rootAsset.findOrCreateView(EventLoop.class);
+        EventLoop eventLoop = rootAsset.findOrCreateView(EventLoop.class);
         eventLoop.start();
 
         final ModificationIterator mi = replication.acquireModificationIterator(
@@ -201,7 +198,7 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
         int count;
         long startBufferFullTimeStamp;
 
-        public ReplicationEventHandler(ModificationIterator mi, byte id) {
+        ReplicationEventHandler(ModificationIterator mi, byte id) {
             this.mi = mi;
             this.id = id;
             lastUpdateTime = 0;
@@ -257,41 +254,31 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
                     publisher.put(null, w -> {
                         w.writeDocument(true, d -> d.write(CoreFields.cid).int64(cid()));
                         w.writeDocument(false, d -> {
-                                    d.writeEventName(CoreFields.lastUpdateTime).int64(lastUpdateTime);
-                                    d.write(() -> "id").int8(id);
-                                }
-                        );
+                            d.writeEventName(CoreFields.lastUpdateTime).int64(lastUpdateTime);
+                            d.write(() -> "id").int8(id);
+                        });
                     });
-
                     hasSentLastUpdateTime = true;
-
-
                 }
                 return false;
             }
 
             mi.nextEntry(e -> publisher.put(null, w -> {
+                assert e.remoteIdentifier() != localIdentifier;
+                long newlastUpdateTime = Math.max(lastUpdateTime, e.timestamp());
 
+                if (newlastUpdateTime > lastUpdateTime) {
+                    hasSentLastUpdateTime = false;
+                    lastUpdateTime = newlastUpdateTime;
+                }
 
-                        assert e.remoteIdentifier() != localIdentifier;
-                        long newlastUpdateTime = Math.max(lastUpdateTime, e.timestamp());
-
-                        if (newlastUpdateTime > lastUpdateTime) {
-                            hasSentLastUpdateTime = false;
-                            lastUpdateTime = newlastUpdateTime;
-                        }
-
-                        w.writeDocument(true, d -> d.write(CoreFields.cid).int64(cid()));
-                        w.writeDocument(false,
-                                d -> {
-                                    d.writeEventName(replicationEvent).typedMarshallable(e);
-                                    d.writeComment("isAcceptor=" + nc().isAcceptor());
-                                }
-                        );
-
-                    })
-            );
-
+                w.writeDocument(true, d -> d.write(CoreFields.cid).int64(cid()));
+                w.writeDocument(false,
+                        d -> {
+                            d.writeEventName(replicationEvent).typedMarshallable(e);
+                            d.writeComment("isAcceptor=" + nc().isAcceptor());
+                        });
+            }));
             return true;
         }
 
