@@ -108,6 +108,11 @@ abstract class CspTcpHander<T extends NetworkContext> extends WireTcpHandler<T> 
                 return false;
             lastCid = cid;
             handler = cidToHandle.get(cid);
+
+            if (handler == null) {
+                throw new IllegalStateException("handler not found : for CID=" + cid + ", " +
+                        "known cids=" + cidToHandle.keySet());
+            }
         } else {
             throw new IllegalStateException("expecting either csp or cid, event=" + event);
         }

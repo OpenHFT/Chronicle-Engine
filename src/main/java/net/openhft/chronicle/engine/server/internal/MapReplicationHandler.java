@@ -109,6 +109,23 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
 
     @Override
     public void onInitialize(@NotNull WireOut outWire) {
+
+        if (isClosed())
+            return;
+
+        if (nc().isAcceptor()) {
+
+            // reflect back the map replication handler
+            final long lastUpdateTime = replication.lastModificationTime
+                    ((byte) remoteIdentifier());
+            final MapReplicationHandler h = new MapReplicationHandler
+                    (lastUpdateTime, keyType, valueType);
+
+            publish(w -> w.writeEventName(CoreFields.csp).text(csp())
+                    .writeEventName(CoreFields.cid).int64(cid())
+                    .writeEventName(CoreFields.handler).typedMarshallable(h));
+        }
+
         rootAsset = nc().rootAsset();
         final RequestContext requestContext = RequestContext.requestContext(csp());
         final Asset asset = rootAsset.acquireAsset(requestContext.fullName());

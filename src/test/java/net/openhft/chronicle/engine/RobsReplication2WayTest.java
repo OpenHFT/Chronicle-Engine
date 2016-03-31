@@ -161,14 +161,16 @@ public class RobsReplication2WayTest {
     }
 
     private boolean isHost1() throws UnknownHostException {
-        final String hostname = InetAddress.getByName("host1").toString().split("/")[1];
+        /*final String hostname = InetAddress.getByName("host1").toString().split("/")[1];
         return InetAddress.getLocalHost().toString().contains(hostname);
+        */
+        return true;
     }
 
     // @Ignore
     @Test
     public void testBootstrap() throws InterruptedException, UnknownHostException {
-        // YamlLogging.showServerWrites(true);
+        YamlLogging.showServerReads(true);
 
         InetAddress hostname = InetAddress.getLocalHost();
         String hostName = hostname.toString();
