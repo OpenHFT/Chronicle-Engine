@@ -360,7 +360,7 @@ public class VanillaAsset implements Asset, Closeable {
             keyedAsset = ((KeyedView) view).keyedView();
 
         Object o = viewMap.putIfAbsent(viewType, view);
-        if (o != null)
+        if (o != null && !o.equals(view))
             throw new IllegalStateException("Attempt to replace " + viewType + " with " + view + " was " + viewMap.get(viewType));
         return view;
     }
