@@ -114,6 +114,7 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
         TCPRegistry.reset();
     }
 
+    @Ignore("Disabled 31/3/16")
     @Test
     public void testTopologicalEvents() throws IOException, InterruptedException {
 
