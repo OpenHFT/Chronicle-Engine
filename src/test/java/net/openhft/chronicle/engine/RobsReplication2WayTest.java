@@ -63,6 +63,7 @@ import static org.junit.Assert.assertNotNull;
 
 public class RobsReplication2WayTest {
     public static final WireType WIRE_TYPE = WireType.TEXT;
+    public static final String SERVER1 = "192.168.1.66";
 
     static {
         System.setProperty("ReplicationHandler3", "true");
@@ -70,13 +71,23 @@ public class RobsReplication2WayTest {
 
     public ServerEndpoint serverEndpoint1;
     public ServerEndpoint serverEndpoint2;
-
-    private AssetTree tree1;
-    private AtomicReference<Throwable> t = new AtomicReference();
     @Rule
     public TestName testName = new TestName();
     public String name;
+    private AssetTree tree1;
+    private AtomicReference<Throwable> t = new AtomicReference();
 
+    @NotNull
+    public static String resourcesDir() {
+        String path = ChronicleMapKeyValueStoreTest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        if (path == null)
+            return ".";
+        return new File(path).getParentFile().getParentFile() + "/src/test/resources";
+    }
+
+    public static void main(String[] args) throws UnknownHostException {
+        System.out.println(InetAddress.getLocalHost());
+    }
 
     public void before() throws IOException {
 
@@ -100,7 +111,6 @@ public class RobsReplication2WayTest {
         serverEndpoint1 = new ServerEndpoint("*:8081", tree1);
         //   serverEndpoint2 = new ServerEndpoint("host.port2", tree2);
     }
-
 
     public void after() throws IOException {
         if (serverEndpoint1 != null)
@@ -135,14 +145,6 @@ public class RobsReplication2WayTest {
         return tree;
     }
 
-    @NotNull
-    public static String resourcesDir() {
-        String path = ChronicleMapKeyValueStoreTest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-        if (path == null)
-            return ".";
-        return new File(path).getParentFile().getParentFile() + "/src/test/resources";
-    }
-
     @Before
     public void beforeTest() throws IOException {
         YamlLogging.setAll(false);
@@ -156,11 +158,6 @@ public class RobsReplication2WayTest {
         final Throwable th = t.getAndSet(null);
         if (th != null) throw Jvm.rethrow(th);
         after();
-    }
-
-
-    public static void main(String[] args) throws UnknownHostException {
-        System.out.println(InetAddress.getLocalHost());
     }
 
     private boolean isHost1() throws UnknownHostException {
