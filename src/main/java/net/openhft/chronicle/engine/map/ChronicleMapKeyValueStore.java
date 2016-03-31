@@ -41,6 +41,7 @@ import net.openhft.chronicle.network.api.session.SessionProvider;
 import net.openhft.chronicle.network.cluster.ConnectionManager;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
+import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.lang.io.Bytes;
 import org.jetbrains.annotations.NotNull;
@@ -61,6 +62,7 @@ import java.util.function.Supplier;
 import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
 import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
 import static net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer.notifyEachEvent;
+import static net.openhft.chronicle.engine.server.internal.MapReplicationHandler.newMapReplicationHandler;
 import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplication.builder;
 
 public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V>,
@@ -207,27 +209,11 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
 
                         final String csp = context.fullName();
 
-                        nc.wireOutPublisher().publish(w -> {
+                        final long lastUpdateTime = ((Replica) chronicleMap).lastModificationTime(remoteIdentifier);
+                        int cid = "MapReplicationHandler".hashCode();
 
-                            final long lastUpdateTime = ((Replica) chronicleMap).lastModificationTime
-                                    (remoteIdentifier);
-
-                            w.writeDocument(true, d -> {
-
-                                final MapReplicationHandler h = new MapReplicationHandler
-                                        (lastUpdateTime, keyType, valueType);
-
-                                // todo improve this - at the moment, has to be the same cid for
-                                // all MapReplicationHandlers
-                                int cid = "MapReplicationHandler".hashCode();
-
-                                d.writeEventName(CoreFields.csp).text(csp)
-                                        .writeEventName(CoreFields.cid).int64(cid)
-                                        .writeEventName(CoreFields.handler).typedMarshallable(h);
-                            });
-
-                        });
-
+                        WireOutPublisher publisher = nc.wireOutPublisher();
+                        publisher.publish(newMapReplicationHandler(lastUpdateTime, keyType, valueType, csp, cid));
                     });
 
                     continue;

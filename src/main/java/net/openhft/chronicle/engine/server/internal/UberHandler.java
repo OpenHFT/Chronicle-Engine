@@ -160,7 +160,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
             closeSoon();
             return;
         }
-        System.out.println("uberhandler=" + this.hashCode() + " -> notifyConnectionListeners");
+
         if (!isClosed.get())
             notifyConnectionListeners(engineCluster);
     }

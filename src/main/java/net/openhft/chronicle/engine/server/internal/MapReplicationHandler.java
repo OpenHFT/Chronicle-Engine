@@ -113,18 +113,6 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
         if (isClosed())
             return;
 
-        if (nc().isAcceptor()) {
-
-            // reflect back the map replication handler
-            final long lastUpdateTime = replication.lastModificationTime
-                    ((byte) remoteIdentifier());
-            final MapReplicationHandler h = new MapReplicationHandler
-                    (lastUpdateTime, keyType, valueType);
-
-            publish(w -> w.writeEventName(CoreFields.csp).text(csp())
-                    .writeEventName(CoreFields.cid).int64(cid())
-                    .writeEventName(CoreFields.handler).typedMarshallable(h));
-        }
 
         rootAsset = nc().rootAsset();
         final RequestContext requestContext = RequestContext.requestContext(csp());
@@ -132,6 +120,16 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
 
         replication = asset.acquireView(Replication.class, RequestContext.requestContext(asset
                 .fullName()).keyType(keyType).valueType(valueType));
+
+
+        if (nc().isAcceptor()) {
+
+            // reflect back the map replication handler
+            final long lastUpdateTime = replication.lastModificationTime
+                    ((byte) remoteIdentifier());
+            WriteMarshallable writeMarshallable = newMapReplicationHandler(lastUpdateTime, keyType, valueType, csp(), cid());
+            publish(writeMarshallable);
+        }
 
         final HostIdentifier hostIdentifier = rootAsset.findOrCreateView(HostIdentifier.class);
 
@@ -157,6 +155,16 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
             throw new IllegalStateException("the event loop is not yet running !");
 
         eventLoop.addHandler(true, new ReplicationEventHandler(mi, (byte) remoteIdentifier()));
+    }
+
+    @NotNull
+    public static WriteMarshallable newMapReplicationHandler(long lastUpdateTime, Class keyType, Class valueType, String csp, long cid) {
+        final MapReplicationHandler h = new MapReplicationHandler
+                (lastUpdateTime, keyType, valueType);
+
+        return w -> w.writeDocument(true, d -> d.writeEventName(CoreFields.csp).text(csp)
+                .writeEventName(CoreFields.cid).int64(cid)
+                .writeEventName(CoreFields.handler).typedMarshallable(h));
     }
 
     @Override
@@ -265,7 +273,7 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
             mi.nextEntry(e -> publisher.put(null, w -> {
 
 
-                assert e.remoteIdentifier() != localIdentifier;
+                        assert e.remoteIdentifier() != localIdentifier;
                         long newlastUpdateTime = Math.max(lastUpdateTime, e.timestamp());
 
                         if (newlastUpdateTime > lastUpdateTime) {
