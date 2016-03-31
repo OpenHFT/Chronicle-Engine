@@ -70,8 +70,8 @@ import java.util.function.Function;
 public class VanillaAsset implements Asset, Closeable {
 
     public static final Comparator<Class> CLASS_COMPARATOR = Comparator.comparing(Class::getName);
-    private static final Logger LOG = LoggerFactory.getLogger(VanillaAsset.class);
     public static final String LAST = "{last}";
+    private static final Logger LOG = LoggerFactory.getLogger(VanillaAsset.class);
     private static final BiPredicate<RequestContext, Asset> ALWAYS = (rc, asset) -> true;
     final Map<Class, Object> viewMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
     final ConcurrentMap<String, Asset> children = new ConcurrentSkipListMap<>();
@@ -359,7 +359,9 @@ public class VanillaAsset implements Asset, Closeable {
         if (view instanceof KeyedView)
             keyedAsset = ((KeyedView) view).keyedView();
 
-        viewMap.put(viewType, view);
+        Object o = viewMap.putIfAbsent(viewType, view);
+        if (o != null)
+            throw new IllegalStateException("Attempt to replace " + viewType + " with " + view + " was " + viewMap.get(viewType));
         return view;
     }
 

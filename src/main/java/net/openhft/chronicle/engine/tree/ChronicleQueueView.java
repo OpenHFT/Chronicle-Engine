@@ -47,7 +47,6 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.nio.file.Files;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 
 /**
@@ -63,7 +62,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
     private final Class<M> elementTypeClass;
     private final ThreadLocal<ThreadLocalData> threadLocal;
     private final String defaultPath;
-    private AtomicLong uniqueCspid = new AtomicLong();
+
     private boolean isSource;
     private boolean isReplicating;
 
