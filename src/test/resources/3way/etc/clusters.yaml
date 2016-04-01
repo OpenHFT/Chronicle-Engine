@@ -1,0 +1,28 @@
+clusterThree: {
+  context: !EngineClusterContext {
+    wireType: BINARY,
+    handlerFactory: !UberHandlerFactory {},
+    wireOutPublisherFactory: !VanillaWireOutPublisherFactory {},
+    networkContextFactory: !EngineWireNetworkContextFactory {},
+    connectionEventHandler:  !EngineConnectionManagerFactory {},
+    heartbeatTimeoutMs: 5_000L,
+    heartbeatIntervalMs: 1_000L,
+    heartbeatFactory: !HeartbeatHandlerFactory {},
+    connectionStrategy: !HostIdConnectionStrategy {},
+  }
+  host1: {
+     hostId: 1,
+     tcpBufferSize: 65536,
+     connectUri: host.port1,
+  },
+  host2: {
+     hostId: 2,
+     tcpBufferSize: 65536,
+     connectUri: host.port2,
+  },
+  host3: {
+     hostId: 3,
+     tcpBufferSize: 65536,
+     connectUri: host.port3,
+  }
+}

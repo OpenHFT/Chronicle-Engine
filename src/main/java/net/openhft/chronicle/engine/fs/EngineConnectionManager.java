@@ -29,8 +29,8 @@ public class EngineConnectionManager implements ConnectionManager {
             ConcurrentHashMap<>();
 
 
-    public EngineConnectionManager() {
-        System.out.println("");
+    private EngineConnectionManager() {
+
     }
 
 

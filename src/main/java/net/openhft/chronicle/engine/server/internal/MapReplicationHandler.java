@@ -83,6 +83,9 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
     @Override
     public void processData(@NotNull WireIn inWire, @NotNull WireOut outWire) {
 
+        if (!inWire.hasMore())
+            return;
+
         final StringBuilder eventName = Wires.acquireStringBuilder();
         final ValueIn valueIn = inWire.readEventName(eventName);
 
@@ -190,6 +193,7 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
 
     private class ReplicationEventHandler implements EventHandler, Closeable {
 
+
         private final ModificationIterator mi;
         private final byte id;
         boolean hasSentLastUpdateTime;
@@ -275,7 +279,7 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
                 w.writeDocument(true, d -> d.write(CoreFields.cid).int64(cid()));
                 w.writeDocument(false,
                         d -> {
-                            d.writeEventName(replicationEvent).typedMarshallable(e);
+                            d.writeEventName(replicationEvent).marshallable(e);
                             d.writeComment("isAcceptor=" + nc().isAcceptor());
                         });
             }));

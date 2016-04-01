@@ -24,6 +24,7 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.fs.Clusters;
 import net.openhft.chronicle.engine.fs.EngineCluster;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
+import net.openhft.chronicle.network.api.session.SubHandler;
 import net.openhft.chronicle.network.cluster.*;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.wire.*;
@@ -220,10 +221,10 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
     @Override
     protected void process(@NotNull WireIn inWire, @NotNull WireOut outWire) {
 
-        if (isClosed.get()) {
-            inWire.clear();
-            return;
-        }
+        //   if (isClosed.get()) {
+        //       inWire.clear();
+        //       return;
+        //  }
 
         String s = Wires.fromSizePrefixedBlobs(inWire.bytes());
 
@@ -231,6 +232,8 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
             LOG.info("subhandler read:\n" + s);
 
         onMessageReceived();
+
+        boolean processedData = false;
 
         while (inWire.hasMore()) {
 
@@ -249,9 +252,10 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
                     continue;
                 }
 
-                if (dc.isData() && handler() != null)
+                if (dc.isData() && handler() != null) {
                     handler().processData(inWire, outWire);
-                else {
+                    processedData = true;
+                } else {
                     if (handler() == null)
                         throw new IllegalStateException("handler == null, check that the " +
                                 "Csp/Cid has been sent, failed to " +
@@ -268,6 +272,11 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
                 LOG.error("", e);
             }
         }
+
+        final SubHandler handler = handler();
+        if (!processedData && handler != null)
+            // give a chance to send data to the outWire
+            handler.processData(Wires.EMPTY, outWire);
 
     }
 

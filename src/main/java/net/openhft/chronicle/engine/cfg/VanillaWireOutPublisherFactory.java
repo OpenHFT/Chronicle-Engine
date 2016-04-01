@@ -16,7 +16,6 @@ public class VanillaWireOutPublisherFactory implements MarshallableFunction<Wire
         WireOutPublisher>, Demarshallable {
 
     private VanillaWireOutPublisherFactory(WireIn wireIn) {
-        System.out.println(wireIn);
     }
 
     public VanillaWireOutPublisherFactory() {

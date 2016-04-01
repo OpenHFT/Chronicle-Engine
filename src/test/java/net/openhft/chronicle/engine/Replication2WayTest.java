@@ -61,6 +61,7 @@ public class Replication2WayTest {
 
     static {
         System.setProperty("ReplicationHandler3", "true");
+
     }
 
     public ServerEndpoint serverEndpoint1;
@@ -90,11 +91,9 @@ public class Replication2WayTest {
         //Delete any files from the last run
 
         TCPRegistry.createServerSocketChannelFor(
-                "clusterThree.host.port1",
-                "clusterThree.host.port2",
-                "clusterThree.host.port3",
                 "host.port1",
-                "host.port2");
+                "host.port2",
+                "host.port3");
 
         WireType writeType = WireType.TEXT;
         tree1 = create(1, writeType, "clusterTwo");
@@ -117,14 +116,14 @@ public class Replication2WayTest {
 
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
-        // TODO TCPRegistery.assertAllServersStopped();
+
     }
 
     @NotNull
     private AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
         AssetTree tree = new VanillaAssetTree((byte) hostId)
                 .forTesting(x -> t.compareAndSet(null, x))
-                .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);
+                .withConfig(resourcesDir() + "/2way", OS.TARGET + "/" + hostId);
 
         tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
                 VanillaMapView::new,
