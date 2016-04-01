@@ -64,10 +64,11 @@ abstract class CspTcpHander<T extends NetworkContext> extends WireTcpHandler<T> 
      *
      * @return {@code true} if if a csp was read rather than a cid
      */
-    boolean readMeta(@NotNull final WireIn wireIn) {
+    boolean readMeta(@NotNull final WireIn wireIn, String yaml) {
         final StringBuilder event = Wires.acquireStringBuilder();
 
         ValueIn valueIn = wireIn.readEventName(event);
+
 
         if (csp.contentEquals(event)) {
             final String csp = valueIn.text();
@@ -84,8 +85,10 @@ abstract class CspTcpHander<T extends NetworkContext> extends WireTcpHandler<T> 
             event.setLength(0);
             valueIn = wireIn.readEventName(event);
 
-
             if (CoreFields.handler.contentEquals(event)) {
+                if (cidToHandle.containsKey(cid))
+                    // already has it registered
+                    return false;
                 handler = valueIn.typedMarshallable();
                 handler.nc(nc());
                 handler.closeable(this);
@@ -111,7 +114,7 @@ abstract class CspTcpHander<T extends NetworkContext> extends WireTcpHandler<T> 
 
             if (handler == null) {
                 throw new IllegalStateException("handler not found : for CID=" + cid + ", " +
-                        "known cids=" + cidToHandle.keySet());
+                        "known cids=" + cidToHandle.keySet() + ", yaml=" + yaml);
             }
         } else {
             throw new IllegalStateException("expecting either csp or cid, event=" + event);

@@ -157,7 +157,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
         if (!checkConnectionStrategy(engineCluster)) {
             // the strategy has told us to reject this connection, we have to first notify the
             // other host, we will do this by sending a termination event
-            publish(terminationHandler(localIdentifier, remoteIdentifier));
+            publish(terminationHandler(localIdentifier, remoteIdentifier, nc.newCid()));
             closeSoon();
             return;
         }
@@ -237,13 +237,14 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
 
         while (inWire.hasMore()) {
 
+            String yaml = Wires.fromSizePrefixedBlobs(inWire.bytes());
             try (final DocumentContext dc = inWire.readingDocument()) {
 
                 if (!dc.isPresent())
                     continue;
 
                 if (dc.isMetaData()) {
-                    if (!readMeta(inWire))
+                    if (!readMeta(inWire, yaml))
                         continue;
 
                     handler().remoteIdentifier(remoteIdentifier);
@@ -252,21 +253,16 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
                     continue;
                 }
 
-                if (dc.isData() && handler() != null) {
+                if (handler() == null)
+                    throw new IllegalStateException("handler == null, check that the " +
+                            "Csp/Cid has been sent, failed to " +
+                            "fully " +
+                            "process the following " +
+                            "YAML\n" + s);
+
+                if (dc.isData()) {
                     handler().processData(inWire, outWire);
                     processedData = true;
-                } else {
-                    if (handler() == null)
-                        throw new IllegalStateException("handler == null, check that the " +
-                                "Csp/Cid has been sent, failed to " +
-                                "fully " +
-                                "process the following " +
-                                "YAML\n" + s);
-                    else
-                        throw new IllegalStateException("failed to " +
-                                "fully " +
-                                "process the following " +
-                                "YAML\n" + s);
                 }
             } catch (Exception e) {
                 LOG.error("", e);

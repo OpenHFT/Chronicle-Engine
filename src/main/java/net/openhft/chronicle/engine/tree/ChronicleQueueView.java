@@ -154,11 +154,14 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
                 if (!isConnected)
                     return;
 
+                if (nc.isAcceptor())
+                    return;
+
                 final boolean isSource0 = (remoteIdentifier == remoteSourceIdentifier);
 
                 WriteMarshallable h = isSource0 ? newSource(lastIndexReceived()) : newSync();
 
-                long cid = "QueueReplicationHandler".hashCode();
+                long cid = nc.newCid();
                 nc.wireOutPublisher().publish(w -> w.writeDocument(true, d ->
                         d.writeEventName(CoreFields.csp).text(csp)
                                 .writeEventName(CoreFields.cid).int64(cid)
@@ -168,7 +171,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         }
     }
 
-    private WriteMarshallable newSource(long lastIndexReceived) {
+    public static WriteMarshallable newSource(long lastIndexReceived) {
         try {
             Class<?> aClass = Class.forName("software.chronicle.enterprise.queue.QueueSourceReplicationHandler");
             Constructor<?> declaredConstructor = aClass.getDeclaredConstructor(long.class);
@@ -182,7 +185,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         }
     }
 
-    private WriteMarshallable newSync() {
+    public static WriteMarshallable newSync() {
         try {
             Class<?> aClass = Class.forName("software.chronicle.enterprise.queue.QueueSyncReplicationHandler");
             return (WriteMarshallable) aClass.newInstance();

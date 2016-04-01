@@ -121,15 +121,11 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
         replication = asset.acquireView(Replication.class, RequestContext.requestContext(asset
                 .fullName()).keyType(keyType).valueType(valueType));
 
-
-        if (nc().isAcceptor()) {
-
-            // reflect back the map replication handler
-            final long lastUpdateTime = replication.lastModificationTime
-                    ((byte) remoteIdentifier());
-            WriteMarshallable writeMarshallable = newMapReplicationHandler(lastUpdateTime, keyType, valueType, csp(), cid());
-            publish(writeMarshallable);
-        }
+        // reflect back the map replication handler
+        final long lastUpdateTime = replication.lastModificationTime
+                ((byte) remoteIdentifier());
+        WriteMarshallable writeMarshallable = newMapReplicationHandler(lastUpdateTime, keyType, valueType, csp(), cid());
+        publish(writeMarshallable);
 
         final HostIdentifier hostIdentifier = rootAsset.findOrCreateView(HostIdentifier.class);
 

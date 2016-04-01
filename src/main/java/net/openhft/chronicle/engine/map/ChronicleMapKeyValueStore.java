@@ -39,7 +39,6 @@ import net.openhft.chronicle.map.*;
 import net.openhft.chronicle.network.api.session.SessionDetails;
 import net.openhft.chronicle.network.api.session.SessionProvider;
 import net.openhft.chronicle.network.cluster.ConnectionManager;
-import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.threads.NamedThreadFactory;
@@ -207,13 +206,15 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
                         if (!isConnected)
                             return;
 
+                        if (nc.isAcceptor())
+                            return;
+
                         final String csp = context.fullName();
 
                         final long lastUpdateTime = ((Replica) chronicleMap).lastModificationTime(remoteIdentifier);
-                        int cid = "MapReplicationHandler".hashCode();
 
                         WireOutPublisher publisher = nc.wireOutPublisher();
-                        publisher.publish(newMapReplicationHandler(lastUpdateTime, keyType, valueType, csp, cid));
+                        publisher.publish(newMapReplicationHandler(lastUpdateTime, keyType, valueType, csp, nc.newCid()));
                     });
 
                     continue;
