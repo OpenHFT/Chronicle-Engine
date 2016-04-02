@@ -233,8 +233,6 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
 
         onMessageReceived();
 
-        boolean processedData = false;
-
         while (inWire.hasMore()) {
 
             String yaml = Wires.fromSizePrefixedBlobs(inWire.bytes());
@@ -262,17 +260,18 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
 
                 if (dc.isData()) {
                     handler().processData(inWire, outWire);
-                    processedData = true;
                 }
+
             } catch (Exception e) {
                 LOG.error("", e);
             }
         }
 
-        final SubHandler handler = handler();
-        if (!processedData && handler != null)
-            // give a chance to send data to the outWire
-            handler.processData(Wires.EMPTY, outWire);
+
+        // allow hander's that just wish to write data like the chronicle-queue source, to send data
+        for (SubHandler h : cidToHandle.values()) {
+            h.processData(Wires.EMPTY, outWire);
+        }
 
     }
 
