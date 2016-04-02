@@ -144,7 +144,7 @@ public class TestUtils {
         deleteFile(Paths.get("./test" + extension).toString());
     }
 
-    public static void deleteFile(String path) throws IOException {
+    public static void deleteFile(String path) {
         try {
             Files.deleteIfExists(Paths.get(path));
         } catch (Exception e) {

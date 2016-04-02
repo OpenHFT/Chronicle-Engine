@@ -67,7 +67,7 @@ public class TestInsertUpdateChronicleMapView {
     }
 
     @Parameterized.Parameters
-    public static Collection<Object[]> data() throws IOException {
+    public static Collection<Object[]> data() {
         final List<Object[]> list = new ArrayList<>();
         list.add(new Object[]{WireType.BINARY});
         //  list.add(new Object[]{WireType.TEXT});

@@ -32,7 +32,6 @@ import org.junit.*;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -51,7 +50,7 @@ public class SubscriptionModelFilePerKeyPerformanceTest {
     private static String _mapName = "PerfTestMap";
 
     @BeforeClass
-    public static void setUpBeforeClass() throws IOException, URISyntaxException {
+    public static void setUpBeforeClass() {
         char[] chars = new char[2 << 20];
         Arrays.fill(chars, '~');
         _twoMbTestString = new String(chars);

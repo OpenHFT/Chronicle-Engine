@@ -147,7 +147,7 @@ public class AssetTreeJMXTest {
      *
      * @param number the numbers of map to add into AssetTree
      */
-    private void addMapIntoTree(int number) throws InterruptedException {
+    private void addMapIntoTree(int number) {
 
         AssetTree tree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
         tree.enableManagement();
@@ -165,7 +165,7 @@ public class AssetTreeJMXTest {
      *
      * @param milliSeconds the interval in milliSeconds to add and remove map into AssetTree
      */
-    private void testAssetUpdate(long milliSeconds) throws InterruptedException {
+    private void testAssetUpdate(long milliSeconds) {
 
         AssetTree tree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
         tree.enableManagement();

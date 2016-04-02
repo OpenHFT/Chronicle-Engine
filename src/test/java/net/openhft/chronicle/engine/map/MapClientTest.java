@@ -71,7 +71,7 @@ public class MapClientTest extends ThreadMonitoringTest {
     }
 
     @Parameters
-    public static Collection<Object[]> data() throws IOException {
+    public static Collection<Object[]> data() {
         return Arrays.asList(new Class[][]{
                 //   {LocalMapSupplier.class},
                 {RemoteMapSupplier.class}
@@ -405,7 +405,7 @@ public class MapClientTest extends ThreadMonitoringTest {
         @NotNull
         private final MapView<K, V> map;
 
-        public LocalMapSupplier(Class<K> kClass, Class<V> vClass, @NotNull AssetTree assetTree) throws IOException {
+        public LocalMapSupplier(Class<K> kClass, Class<V> vClass, @NotNull AssetTree assetTree) {
             map = assetTree.acquireMap("test" + i++ + "?putReturnsNull=false&removeReturnsNull=false", kClass, vClass);
         }
 

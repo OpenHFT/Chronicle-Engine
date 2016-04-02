@@ -22,7 +22,6 @@ import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
-import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionCollection;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
@@ -119,7 +118,7 @@ public class ReferenceChronicleTest {
         List<String> events = new ArrayList<>();
         Subscriber<String> keyEventSubscriber = new Subscriber<String>() {
             @Override
-            public void onMessage(String s) throws InvalidSubscriberException {
+            public void onMessage(String s) {
                 events.add(s);
             }
 

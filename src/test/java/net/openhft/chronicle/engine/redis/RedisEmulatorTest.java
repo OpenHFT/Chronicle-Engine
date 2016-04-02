@@ -73,7 +73,7 @@ public class RedisEmulatorTest {
     }
 
     @AfterClass
-    public static void down() throws IOException {
+    public static void down() {
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
     }

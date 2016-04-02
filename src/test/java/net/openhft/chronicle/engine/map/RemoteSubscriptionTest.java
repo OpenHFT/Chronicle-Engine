@@ -22,7 +22,6 @@ import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
-import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
@@ -78,7 +77,7 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
     }
 
     @Parameterized.Parameters
-    public static Collection<Object[]> data() throws IOException {
+    public static Collection<Object[]> data() {
         final List<Object[]> list = new ArrayList<>();
         list.add(new Object[]{WireType.BINARY});
         list.add(new Object[]{WireType.TEXT});
@@ -208,7 +207,7 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
         final Subscriber<MapEvent> eventHandler = new Subscriber<MapEvent>() {
 
             @Override
-            public void onMessage(MapEvent mapEvent) throws InvalidSubscriberException {
+            public void onMessage(MapEvent mapEvent) {
                 // do nothing
             }
 

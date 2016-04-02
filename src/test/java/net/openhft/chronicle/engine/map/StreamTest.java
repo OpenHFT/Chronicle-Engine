@@ -72,7 +72,7 @@ public class StreamTest extends ThreadMonitoringTest {
     }
 
     @Parameterized.Parameters
-    public static Collection<Object[]> data() throws IOException {
+    public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[]{false, null}
                 , new Object[]{true, WireType.TEXT}

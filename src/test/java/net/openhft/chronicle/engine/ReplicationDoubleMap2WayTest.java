@@ -91,7 +91,7 @@ public class ReplicationDoubleMap2WayTest {
     }
 
     @AfterClass
-    public static void after() throws IOException {
+    public static void after() {
         if (serverEndpoint1 != null)
             serverEndpoint1.close();
         if (serverEndpoint2 != null)

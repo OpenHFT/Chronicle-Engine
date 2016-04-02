@@ -21,7 +21,6 @@ package net.openhft.chronicle.engine.query;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.util.SerializableFunction;
 import net.openhft.chronicle.core.util.SerializablePredicate;
-import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.query.Query;
 import net.openhft.chronicle.engine.api.query.Subscription;
@@ -110,7 +109,7 @@ public class RemoteQuery<E> implements Query<E> {
         final Subscriber<E> accept = new Subscriber<E>() {
 
             @Override
-            public void onMessage(E o) throws InvalidSubscriberException {
+            public void onMessage(E o) {
                 try {
                     final boolean offer = queue.offer(o, 20, SECONDS);
 

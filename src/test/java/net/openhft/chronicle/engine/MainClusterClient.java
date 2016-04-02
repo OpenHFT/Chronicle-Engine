@@ -25,7 +25,6 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -45,7 +44,7 @@ public class MainClusterClient {
     public static final int VALUE_SIZE = MainCluster5.VALUE_SIZE;
     public static final String DESCRIPTION = System.getProperty("connect", "localhost:8085");
 
-    public static void main(String[] args) throws IOException, InterruptedException {
+    public static void main(String[] args) {
         YamlLogging.setAll(false);
         //YamlLogging.showServerWrites = true;
 

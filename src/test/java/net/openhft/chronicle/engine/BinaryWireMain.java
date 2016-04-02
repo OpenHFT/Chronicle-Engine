@@ -22,8 +22,6 @@ import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-
 /**
  * Created by andre on 01/05/2015.
  */
@@ -31,7 +29,7 @@ public class BinaryWireMain {
 
     public static final net.openhft.chronicle.wire.WireType WIRE_TYPE = WireType.BINARY;
 
-    public static void main(@NotNull String[] args) throws IOException, InterruptedException {
+    public static void main(@NotNull String[] args) {
         int port = 8088;
 
         VanillaAssetTree assetTree = new VanillaAssetTree().forTesting(false, t -> t.printStackTrace());

@@ -19,7 +19,6 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.core.util.SerializableBiFunction;
-import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Reference;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
@@ -85,7 +84,7 @@ public class ReferenceHandler<E, T> extends AbstractHandler {
                 final Reference<E> key = view;
                 final Subscriber listener = new Subscriber() {
                     @Override
-                    public void onMessage(final Object message) throws InvalidSubscriberException {
+                    public void onMessage(final Object message) {
                         synchronized (publisher) {
                             publisher.put(key, publish -> {
                                 publish.writeDocument(true, wire -> wire.writeEventName(tid).int64

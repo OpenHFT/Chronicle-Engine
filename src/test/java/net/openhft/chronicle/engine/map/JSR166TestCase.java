@@ -664,7 +664,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     @NotNull
     public Runnable awaiter(@NotNull final CountDownLatch latch) {
         return new CheckedRunnable() {
-            public void realRun() throws InterruptedException {
+            public void realRun() {
                 await(latch);
             }
         };

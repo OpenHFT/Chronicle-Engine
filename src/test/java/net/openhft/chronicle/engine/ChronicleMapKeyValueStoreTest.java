@@ -74,7 +74,7 @@ public class ChronicleMapKeyValueStoreTest {
     }
 
     @AfterClass
-    public static void after() throws IOException {
+    public static void after() {
         tree1.close();
         tree2.close();
         tree3.close();

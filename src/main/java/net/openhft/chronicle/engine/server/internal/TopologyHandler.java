@@ -18,7 +18,6 @@
 
 package net.openhft.chronicle.engine.server.internal;
 
-import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.wire.*;
@@ -59,7 +58,7 @@ public class TopologyHandler<E> extends AbstractHandler {
                 final Subscriber listener = new Subscriber() {
 
                     @Override
-                    public void onMessage(final Object message) throws InvalidSubscriberException {
+                    public void onMessage(final Object message) {
                         publisher.add(publish -> {
                             publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
                                     (inputTid));

@@ -157,7 +157,7 @@ public class RobsReplication2WayTest {
         after();
     }
 
-    private boolean isHost1() throws UnknownHostException {
+    private boolean isHost1() {
         /*final String hostname = InetAddress.getByName("host1").toString().split("/")[1];
         return InetAddress.getLocalHost().toString().contains(hostname);
         */

@@ -39,7 +39,6 @@ import net.openhft.chronicle.wire.YamlLogging;
 import org.junit.*;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -63,19 +62,11 @@ public class RemoteSubscriptionModelPerformanceTest {
     private static Map<String, String> _testMap;
     private static VanillaAssetTree serverAssetTree, clientAssetTree;
     private static ServerEndpoint serverEndpoint;
-
+    private static AtomicReference<Throwable> t = new AtomicReference();
     private final String _mapName = "PerfTestMap" + counter.incrementAndGet();
 
-    private static AtomicReference<Throwable> t = new AtomicReference();
-
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
-    }
-
     @BeforeClass
-    public static void setUpBeforeClass() throws IOException, URISyntaxException {
+    public static void setUpBeforeClass() throws IOException {
         YamlLogging.setAll(false);
 
         char[] chars = new char[2 << 20];
@@ -96,12 +87,18 @@ public class RemoteSubscriptionModelPerformanceTest {
     }
 
     @AfterClass
-    public static void tearDownAfterClass() throws IOException {
+    public static void tearDownAfterClass() {
         clientAssetTree.close();
         serverEndpoint.close();
         serverAssetTree.close();
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
+    }
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) throw Jvm.rethrow(th);
     }
 
     @Before

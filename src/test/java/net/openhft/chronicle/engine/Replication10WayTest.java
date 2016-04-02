@@ -87,7 +87,7 @@ public class Replication10WayTest {
     }
 
     @AfterClass
-    public static void after() throws IOException {
+    public static void after() {
 
         for (int i = 0; i < NUMBER_OF_SIMULATED_SERVERS; i++) {
             serverEndpoint[i].close();

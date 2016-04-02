@@ -19,7 +19,6 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.Jvm;
-import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Reference;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionCollection;
@@ -75,7 +74,7 @@ public class ReferenceTest {
     }
 
     @Parameterized.Parameters
-    public static Collection<Object[]> data() throws IOException {
+    public static Collection<Object[]> data() {
         return Arrays.asList(
                  new Object[]{false, null}
                 , new Object[]{true, WireType.TEXT}
@@ -208,7 +207,7 @@ public class ReferenceTest {
 
         Subscriber<String> keyEventSubscriber = new Subscriber<String>() {
             @Override
-            public void onMessage(String s) throws InvalidSubscriberException {
+            public void onMessage(String s) {
                 events.add(s);
             }
 
@@ -250,7 +249,7 @@ public class ReferenceTest {
 
         Subscriber<String> keyEventSubscriber = new Subscriber<String>() {
             @Override
-            public void onMessage(String s) throws InvalidSubscriberException {
+            public void onMessage(String s) {
                 events.add(s);
             }
 

@@ -81,7 +81,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     }
 
     @Parameterized.Parameters
-    public static Collection<Object[]> data() throws IOException {
+    public static Collection<Object[]> data() {
 
         return Arrays.asList(new Boolean[][]{
                 {false}, {true}

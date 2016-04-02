@@ -22,15 +22,13 @@ import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-
 /**
  * Created by andre on 01/05/2015.
  */
 public class TextWireMain {
     public static final WireType WIRE_TYPE = WireType.TEXT;
 
-    public static void main(@NotNull String[] args) throws IOException, InterruptedException {
+    public static void main(@NotNull String[] args) {
 
         YamlLogging.showServerReads(true);
         // the default is BinaryWire

@@ -35,7 +35,6 @@ import net.openhft.chronicle.wire.YamlLogging;
 import org.junit.*;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -64,7 +63,7 @@ public class SubscriptionModelPerformanceTest {
     private String _mapName;
 
     @BeforeClass
-    public static void setUpBeforeClass() throws IOException, URISyntaxException {
+    public static void setUpBeforeClass() {
         char[] chars = new char[2 << 20];
         Arrays.fill(chars, '~');
         _twoMbTestString = new String(chars);

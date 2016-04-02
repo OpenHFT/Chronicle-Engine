@@ -120,7 +120,7 @@ public class MainCluster5 {
     }
 
     @AfterClass
-    public static void after() throws IOException {
+    public static void after() {
 
         if (serverEndpoint != null)
             serverEndpoint.close();

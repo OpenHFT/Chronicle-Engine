@@ -101,13 +101,8 @@ public class GuavaEngineTest {
 
     @NotNull
     static ConcurrentMap<CharSequence, CharSequence> newStrStrLocalMap() {
-
-        try {
-            return new LocalMapSupplier(CharSequence.class, CharSequence.class, new
-                    VanillaAssetTree().forTesting(t -> t.printStackTrace())).get();
-        } catch (IOException e) {
-            throw new IORuntimeException(e);
-        }
+        return new LocalMapSupplier(CharSequence.class, CharSequence.class, new
+                VanillaAssetTree().forTesting(t -> t.printStackTrace())).get();
     }
 
     @AfterClass

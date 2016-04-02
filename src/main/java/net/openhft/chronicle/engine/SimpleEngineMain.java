@@ -31,9 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-
 /**
  * This engine main creates an empty tree configured from the command line.
  *
@@ -52,7 +49,7 @@ public class SimpleEngineMain {
 
     static ServerEndpoint serverEndpoint;
 
-    public static void main(@NotNull String... args) throws IOException, InterruptedException, URISyntaxException {
+    public static void main(@NotNull String... args) {
         ChronicleConfig.init();
         VanillaAssetTree assetTree = new VanillaAssetTree(HOST_ID).forTesting(false, t -> t.printStackTrace());
         if (JMX)

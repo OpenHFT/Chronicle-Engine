@@ -82,7 +82,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     }
 
     @Parameters
-    public static Collection<Object[]> data() throws IOException {
+    public static Collection<Object[]> data() {
         return Arrays.asList(
                 new Object[]{false, null}
                 // check connection is fine after a reconnect CE-187
