@@ -47,44 +47,14 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
         implements Demarshallable, WriteMarshallable {
 
     private static final Logger LOG = LoggerFactory.getLogger(UberHandler.class);
-    private ConnectionChangedNotifier connectionChangedNotifier;
-
-    public boolean isClosed() {
-        return isClosed.get();
-    }
-
-    AtomicBoolean isClosed = new AtomicBoolean();
-
-    public static class Factory implements BiFunction<ClusterContext, HostDetails,
-            WriteMarshallable>, Demarshallable {
-
-        @UsedViaReflection
-        private Factory(@NotNull WireIn wireIn) {
-        }
-
-        public Factory() {
-        }
-
-        @Override
-        public WriteMarshallable apply(@NotNull final ClusterContext clusterContext,
-                                       @NotNull final HostDetails hostdetails) {
-            final byte localIdentifier = clusterContext.localIdentifier();
-            final int remoteIdentifier = hostdetails.hostId();
-            final WireType wireType = clusterContext.wireType();
-            final String name = clusterContext.clusterName();
-            return uberHandler(new UberHandler(localIdentifier, remoteIdentifier, wireType, name));
-        }
-    }
-
     private final int remoteIdentifier;
     private final int localIdentifier;
+    AtomicBoolean isClosed = new AtomicBoolean();
+    private ConnectionChangedNotifier connectionChangedNotifier;
     private EventLoop eventLoop;
     private Asset rootAsset;
-
     @NotNull
     private String clusterName;
-
-
     @UsedViaReflection
     private UberHandler(WireIn wire) {
         remoteIdentifier = wire.read(() -> "remoteIdentifier").int32();
@@ -107,6 +77,18 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
                         "localIdentifier=" + localIdentifier;
         this.clusterName = clusterName;
         wireType(wireType);
+    }
+
+    private static WriteMarshallable uberHandler(final WriteMarshallable m) {
+        return wire -> {
+            try (final DocumentContext dc = wire.writingDocument(true)) {
+                wire.write(() -> HANDLER).typedMarshallable(m);
+            }
+        };
+    }
+
+    public boolean isClosed() {
+        return isClosed.get();
     }
 
     @Override
@@ -192,14 +174,6 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
         return uberHandler(handler);
     }
 
-    private static WriteMarshallable uberHandler(final WriteMarshallable m) {
-        return wire -> {
-            try (final DocumentContext dc = wire.writingDocument(true)) {
-                wire.write(() -> HANDLER).typedMarshallable(m);
-            }
-        };
-    }
-
     /**
      * wait 2 seconds before closing the socket connection, this should allow time of the
      * termination event to be sent.
@@ -217,7 +191,6 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
         super.close();
     }
 
-
     @Override
     protected void process(@NotNull WireIn inWire, @NotNull WireOut outWire) {
 
@@ -226,16 +199,17 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
         //       return;
         //  }
 
-        String s = Wires.fromSizePrefixedBlobs(inWire.bytes());
 
-        if (YamlLogging.showServerReads() && inWire.hasMore())
+        if (YamlLogging.showServerReads() && inWire.hasMore()) {
+            String s = Wires.fromSizePrefixedBlobs(inWire.bytes());
             LOG.info("subhandler read:\n" + s);
+        }
 
         onMessageReceived();
 
         while (inWire.hasMore()) {
 
-            String yaml = Wires.fromSizePrefixedBlobs(inWire.bytes());
+            String yaml = "not-set"; //Wires.fromSizePrefixedBlobs(inWire.bytes());
             try (final DocumentContext dc = inWire.readingDocument()) {
 
                 if (!dc.isPresent())
@@ -256,7 +230,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
                             "Csp/Cid has been sent, failed to " +
                             "fully " +
                             "process the following " +
-                            "YAML\n" + s);
+                            "YAML\n");
 
                 if (dc.isData()) {
                     handler().processData(inWire, outWire);
@@ -267,12 +241,10 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
             }
         }
 
-
-        // allow hander's that just wish to write data like the chronicle-queue source, to send data
+        // allow handler's that just wish to write data like the chronicle-queue source, to send data
         for (SubHandler h : cidToHandle.values()) {
             h.processData(Wires.EMPTY, outWire);
         }
-
     }
 
     private void onMessageReceived() {
@@ -280,6 +252,27 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
 
         if (heartbeatEventHandler != null)
             heartbeatEventHandler.onMessageReceived();
+    }
+
+    public static class Factory implements BiFunction<ClusterContext, HostDetails,
+            WriteMarshallable>, Demarshallable {
+
+        @UsedViaReflection
+        private Factory(@NotNull WireIn wireIn) {
+        }
+
+        public Factory() {
+        }
+
+        @Override
+        public WriteMarshallable apply(@NotNull final ClusterContext clusterContext,
+                                       @NotNull final HostDetails hostdetails) {
+            final byte localIdentifier = clusterContext.localIdentifier();
+            final int remoteIdentifier = hostdetails.hostId();
+            final WireType wireType = clusterContext.wireType();
+            final String name = clusterContext.clusterName();
+            return uberHandler(new UberHandler(localIdentifier, remoteIdentifier, wireType, name));
+        }
     }
 
 }
