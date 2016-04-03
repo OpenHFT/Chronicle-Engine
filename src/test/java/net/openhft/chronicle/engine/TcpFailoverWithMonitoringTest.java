@@ -151,6 +151,7 @@ public class TcpFailoverWithMonitoringTest {
 
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
+        TCPRegistry.assertAllServersStopped();
     }
 
     /**

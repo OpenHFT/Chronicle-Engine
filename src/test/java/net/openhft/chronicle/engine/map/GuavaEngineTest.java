@@ -18,15 +18,43 @@
 
 package net.openhft.chronicle.engine.map;
 
+import com.google.common.collect.testing.MapTestSuiteBuilder;
+import com.google.common.collect.testing.SampleElements;
+import com.google.common.collect.testing.TestMapGenerator;
+import com.google.common.collect.testing.features.CollectionFeature;
+import com.google.common.collect.testing.features.CollectionSize;
+import junit.framework.Test;
+import junit.framework.TestSuite;
+import net.openhft.chronicle.core.io.IORuntimeException;
+import net.openhft.chronicle.engine.api.tree.AssetTree;
+import net.openhft.chronicle.engine.map.MapClientTest.LocalMapSupplier;
+import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
+import net.openhft.chronicle.engine.server.ServerEndpoint;
+import net.openhft.chronicle.engine.tree.VanillaAssetTree;
+import net.openhft.chronicle.network.TCPRegistry;
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.runner.RunWith;
+import org.junit.runners.AllTests;
 
-//@SuppressWarnings("all")
-//@Ignore
-//@RunWith(AllTests.class)
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
+
+import static com.google.common.collect.testing.features.MapFeature.*;
+
+@SuppressWarnings("all")
+
+@RunWith(AllTests.class)
 public class GuavaEngineTest {
     public static final WireType WIRE_TYPE = WireType.TEXT;
 
-/*
     @NotNull
     public static Test suite() throws IOException {
 
@@ -191,5 +219,5 @@ public class GuavaEngineTest {
         Map<CharSequence, CharSequence> newMap() {
             return newStrStrLocalMap();
         }
-    }*/
+    }
 }

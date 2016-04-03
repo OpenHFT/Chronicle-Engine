@@ -89,6 +89,7 @@ public class TcpManyClientConnectionsTest extends ThreadMonitoringTest {
 
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
+        TCPRegistry.assertAllServersStopped();
     }
 
     private void shutdownTrees() {
