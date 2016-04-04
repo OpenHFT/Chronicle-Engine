@@ -147,7 +147,8 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         if (serverEndpoint != null)
             serverEndpoint.close();
 
-        assetTree.close();
+        if (assetTree != null)
+            assetTree.close();
         methodName = "";
         TCPRegistry.reset();
     }

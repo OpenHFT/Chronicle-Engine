@@ -79,16 +79,13 @@ public class Replication3WayWithCompressionTest {
         Files.deleteIfExists(Paths.get(OS.TARGET, NAME));
 
         TCPRegistry.createServerSocketChannelFor(
-                "clusterThree.host.port1",
-                "clusterThree.host.port2",
-                "clusterThree.host.port3",
                 "host.port1",
                 "host.port2",
                 "host.port3");
 
         WireType writeType = WireType.TEXT;
-        tree1 = create(1, writeType, "clusterTwo");
-        tree2 = create(2, writeType, "clusterTwo");
+        tree1 = create(1, writeType, "clusterThree");
+        tree2 = create(2, writeType, "clusterThree");
         tree3 = create(3, writeType, "clusterThree");
 
         serverEndpoint1 = new ServerEndpoint("host.port1", tree1);
@@ -114,14 +111,15 @@ public class Replication3WayWithCompressionTest {
 
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
-        // TODO TCPRegistery.assertAllServersStopped();
+
+        TCPRegistry.assertAllServersStopped();
     }
 
     @NotNull
     private static AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
         AssetTree tree = new VanillaAssetTree((byte) hostId)
                 .forTesting(x -> t.compareAndSet(null, x))
-                .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);
+                .withConfig(resourcesDir() + "/3way", OS.TARGET + "/" + hostId);
 
         tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
                 VanillaMapView::new,
