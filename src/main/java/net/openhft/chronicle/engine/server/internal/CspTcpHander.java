@@ -23,11 +23,9 @@ import net.openhft.chronicle.network.NetworkContext;
 import net.openhft.chronicle.network.WireTcpHandler;
 import net.openhft.chronicle.network.api.session.SubHandler;
 import net.openhft.chronicle.network.cluster.HeartbeatEventHandler;
+import net.openhft.chronicle.network.cluster.WireOutPayload;
 import net.openhft.chronicle.network.connection.CoreFields;
-import net.openhft.chronicle.wire.ValueIn;
-import net.openhft.chronicle.wire.WireIn;
-import net.openhft.chronicle.wire.WireOut;
-import net.openhft.chronicle.wire.Wires;
+import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -44,6 +42,7 @@ abstract class CspTcpHander<T extends NetworkContext> extends WireTcpHandler<T> 
 
     @NotNull
     public final Map<Long, SubHandler> cidToHandle = new HashMap<>();
+    public final Map<Long, WriteMarshallable> cidToWireOutConsumer = new HashMap<>();
     private SubHandler handler;
     private HeartbeatEventHandler heartbeatEventHandler;
     private long lastCid;
@@ -64,7 +63,7 @@ abstract class CspTcpHander<T extends NetworkContext> extends WireTcpHandler<T> 
      *
      * @return {@code true} if if a csp was read rather than a cid
      */
-    boolean readMeta(@NotNull final WireIn wireIn, String yaml) {
+    boolean readMeta(@NotNull final WireIn wireIn) {
         final StringBuilder event = Wires.acquireStringBuilder();
 
         ValueIn valueIn = wireIn.readEventName(event);
@@ -102,6 +101,9 @@ abstract class CspTcpHander<T extends NetworkContext> extends WireTcpHandler<T> 
                 handler.csp(csp);
                 lastCid = cid;
                 cidToHandle.put(cid, handler);
+
+                if (handler instanceof WireOutPayload)
+                    cidToWireOutConsumer.put(cid, ((WireOutPayload) handler).payload());
             } else
                 throw new IllegalStateException("expecting 'cid' but eventName=" + event);
             return true;
@@ -114,7 +116,7 @@ abstract class CspTcpHander<T extends NetworkContext> extends WireTcpHandler<T> 
 
             if (handler == null) {
                 throw new IllegalStateException("handler not found : for CID=" + cid + ", " +
-                        "known cids=" + cidToHandle.keySet() + ", yaml=" + yaml);
+                        "known cids=" + cidToHandle.keySet());
             }
         } else {
             throw new IllegalStateException("expecting either csp or cid, event=" + event);
@@ -123,7 +125,7 @@ abstract class CspTcpHander<T extends NetworkContext> extends WireTcpHandler<T> 
         return false;
     }
 
-    public HeartbeatEventHandler heartbeatEventHandler() {
+    HeartbeatEventHandler heartbeatEventHandler() {
         return heartbeatEventHandler;
     }
 

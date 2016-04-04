@@ -321,6 +321,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
                     continue;
 
                 final M message = eventName.object(elementTypeClass);
+
+                System.out.println("message=" + message + ", dc=" + dc.hashCode());
                 return threadLocalData.excerpt
                         .message(message)
                         .topic(topic1)
@@ -489,6 +491,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         public ThreadLocalData(ChronicleQueue chronicleQueue) {
             appender = chronicleQueue.createAppender();
             tailer = chronicleQueue.createTailer();
+
             replayTailer = chronicleQueue.createTailer();
             excerpt = new LocalExcept();
         }

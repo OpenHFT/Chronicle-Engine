@@ -174,7 +174,7 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
         final EngineCluster engineCluster = clusters.get(context.cluster());
 
         if (engineCluster == null) {
-            LOG.warn("no cluster found name=" + context.cluster());
+            LOG.warn("no cluster found, name=" + context.cluster());
             return;
         }
 

@@ -24,7 +24,6 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.fs.Clusters;
 import net.openhft.chronicle.engine.fs.EngineCluster;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
-import net.openhft.chronicle.network.api.session.SubHandler;
 import net.openhft.chronicle.network.cluster.*;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.wire.*;
@@ -55,6 +54,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
     private Asset rootAsset;
     @NotNull
     private String clusterName;
+
     @UsedViaReflection
     private UberHandler(WireIn wire) {
         remoteIdentifier = wire.read(() -> "remoteIdentifier").int32();
@@ -194,10 +194,10 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
     @Override
     protected void process(@NotNull WireIn inWire, @NotNull WireOut outWire) {
 
-        //   if (isClosed.get()) {
-        //       inWire.clear();
-        //       return;
-        //  }
+        if (isClosed.get()) {
+            inWire.clear();
+            return;
+        }
 
 
         if (YamlLogging.showServerReads() && inWire.hasMore()) {
@@ -209,14 +209,14 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
 
         while (inWire.hasMore()) {
 
-            String yaml = "not-set"; //Wires.fromSizePrefixedBlobs(inWire.bytes());
+
             try (final DocumentContext dc = inWire.readingDocument()) {
 
                 if (!dc.isPresent())
                     continue;
 
                 if (dc.isMetaData()) {
-                    if (!readMeta(inWire, yaml))
+                    if (!readMeta(inWire))
                         continue;
 
                     handler().remoteIdentifier(remoteIdentifier);
@@ -233,7 +233,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
                             "YAML\n");
 
                 if (dc.isData()) {
-                    handler().processData(inWire, outWire);
+                    handler().onWireIn(inWire, outWire);
                 }
 
             } catch (Exception e) {
@@ -241,9 +241,9 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
             }
         }
 
-        // allow handler's that just wish to write data like the chronicle-queue source, to send data
-        for (SubHandler h : cidToHandle.values()) {
-            h.processData(Wires.EMPTY, outWire);
+
+        for (WriteMarshallable c : cidToWireOutConsumer.values()) {
+            c.writeMarshallable(outWire);
         }
     }
 

@@ -81,10 +81,7 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
     }
 
     @Override
-    public void processData(@NotNull WireIn inWire, @NotNull WireOut outWire) {
-
-        if (!inWire.hasMore())
-            return;
+    public void onWireIn(@NotNull WireIn inWire, @NotNull WireOut outWire) {
 
         final StringBuilder eventName = Wires.acquireStringBuilder();
         final ValueIn valueIn = inWire.readEventName(eventName);
@@ -271,6 +268,7 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
                     hasSentLastUpdateTime = false;
                     lastUpdateTime = newlastUpdateTime;
                 }
+
 
                 w.writeDocument(true, d -> d.write(CoreFields.cid).int64(cid()));
                 w.writeDocument(false,

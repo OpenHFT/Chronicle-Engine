@@ -168,8 +168,8 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
 
         @Override
         public void onMessage(Object e) throws InvalidSubscriberException {
-            assert !subscriptionEnded : "we received this message after the " +
-                    "subscription has ended " + e;
+            if (subscriptionEnded)
+                return;
 
             final WriteMarshallable event = p -> {
                 p.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(tid));
