@@ -62,7 +62,7 @@ public class MapClientTest extends ThreadMonitoringTest {
     private static AtomicReference<Throwable> t = new AtomicReference();
     // server has it's own asset tree, to the client.
     @NotNull
-    private final AssetTree assetTree = new VanillaAssetTree();//.forTesting(x -> t.compareAndSet(null, x));
+    private final VanillaAssetTree assetTree = new VanillaAssetTree();
     @Nullable
     private Class<? extends CloseableSupplier> supplier = null;
 
@@ -73,7 +73,7 @@ public class MapClientTest extends ThreadMonitoringTest {
     @Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Class[][]{
-                //   {LocalMapSupplier.class},
+                {LocalMapSupplier.class},
                 {RemoteMapSupplier.class}
         });
     }
@@ -86,6 +86,10 @@ public class MapClientTest extends ThreadMonitoringTest {
 
     @Before
     public void clearState() {
+
+        if (supplier == LocalMapSupplier.class)
+            assetTree.forTesting(x -> t.compareAndSet(null, x));
+
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
         YamlLogging.setAll(true);
