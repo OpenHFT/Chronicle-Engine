@@ -194,7 +194,7 @@ public class GuavaEngineTest {
             final ServerEndpoint serverEndpoint = new ServerEndpoint("guava.test.host.port", assetTree);
 
             final String hostname = "localhost";
-            this.remoteAssetTree = ((VanillaAssetTree) assetTree).forRemoteAccess("guava.test" +
+            this.remoteAssetTree = new VanillaAssetTree().forRemoteAccess("guava.test" +
                     ".host.port", WIRE_TYPE, t -> t.printStackTrace());
         }
 
