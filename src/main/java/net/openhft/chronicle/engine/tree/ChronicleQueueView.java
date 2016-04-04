@@ -79,8 +79,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         defaultPath = s;
         final HostIdentifier hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
         final Byte hostId = hostIdentifier == null ? null : hostIdentifier.hostId();
-        chronicleQueue = (queue == null) ? newInstance(context.name(), context
-                .basePath(), hostId) : queue;
+        chronicleQueue = queue != null ? queue : newInstance(context.name(), context.basePath(), hostId);
         messageTypeClass = context.messageType();
         elementTypeClass = context.elementType();
         LOG.info("context=" + context.name() + ", chronicleQueue=" + chronicleQueue);
@@ -227,7 +226,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         throw new UnsupportedOperationException("todo");
     }
 
-    private ChronicleQueue newInstance(String name, @Nullable String basePath, byte hostID) {
+    private ChronicleQueue newInstance(String name, @Nullable String basePath, @Nullable Byte hostID) {
         ChronicleQueue chronicleQueue;
 
         File baseFilePath;

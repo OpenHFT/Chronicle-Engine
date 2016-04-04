@@ -40,9 +40,16 @@ import static org.junit.Assert.*;
 public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
 
     private static AtomicReference<Throwable> t = new AtomicReference();
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) throw Jvm.rethrow(th);
+    }
+
     private static int s_port = 11050;
     @NotNull
-    private final AssetTree assetTree = new VanillaAssetTree();//.forTesting(x -> t.compareAndSet(null, x));
+    private final AssetTree assetTree = new VanillaAssetTree();
     @NotNull
     @Rule
     public TestName name = new TestName();
@@ -50,12 +57,6 @@ public class RemoteChronicleMapTextWireTest extends JSR166TestCase {
     @AfterClass
     public static void testTearDown() {
         TCPRegistry.assertAllServersStopped();
-    }
-
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
     }
 
     @Before

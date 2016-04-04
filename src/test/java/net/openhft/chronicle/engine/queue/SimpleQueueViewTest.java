@@ -51,7 +51,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author Rob Austin.
@@ -109,7 +108,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     public void before() throws IOException {
 
         // prevent any queues being created in the default location
-        assertTrue(new File("queue").createNewFile());
+        //assertTrue(new File("queue").createNewFile());
 
         methodName(name.getMethodName());
         methodName = name.getMethodName().substring(0, name.getMethodName().indexOf('['));
