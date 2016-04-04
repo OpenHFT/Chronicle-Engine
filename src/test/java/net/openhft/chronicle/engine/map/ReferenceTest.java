@@ -55,7 +55,7 @@ import static org.junit.Assert.assertNotNull;
  */
 @RunWith(value = Parameterized.class)
 public class ReferenceTest {
-    private static AtomicReference<Throwable> t = new AtomicReference();
+    private static AtomicReference<Throwable> t = new AtomicReference<>();
     @NotNull
     @Rule
     public TestName name = new TestName();
@@ -78,7 +78,7 @@ public class ReferenceTest {
         return Arrays.asList(
                  new Object[]{false, null}
                 , new Object[]{true, WireType.TEXT}
-                , new Object[]{true, WireType.BINARY}
+//                , new Object[]{true, WireType.BINARY}
         );
     }
 

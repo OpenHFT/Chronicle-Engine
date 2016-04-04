@@ -51,7 +51,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
 
     private static AtomicReference<Throwable> t = new AtomicReference();
     @NotNull
-    private final AssetTree assetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
+    private final AssetTree assetTree = new VanillaAssetTree();//.forTesting(x -> t.compareAndSet(null, x));
     @NotNull
     @Rule
     public TestName name = new TestName();
