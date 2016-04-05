@@ -101,7 +101,7 @@ public class MaunualReplication2WayTest {
         TCPRegistry.setAlias("host.port1", "host1", 8081);
         TCPRegistry.setAlias("host.port2", "host2", 8081);
         WireType writeType = WireType.TEXT;
-        tree1 = create((isHost1() ? 1 : 2), writeType, "clusterRob");
+        tree1 = create((isHost1() ? 1 : 2), writeType, "clusterTwo");
 
         serverEndpoint1 = new ServerEndpoint("*:8081", tree1);
 
@@ -120,7 +120,7 @@ public class MaunualReplication2WayTest {
     }
 
     @NotNull
-    private AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
+    private AssetTree create(final int hostId, WireType writeType, final String clusterNam) {
         VanillaAssetTree tree = new VanillaAssetTree((byte) hostId)
                 .forTesting(x -> t.compareAndSet(null, x));
 
@@ -132,7 +132,7 @@ public class MaunualReplication2WayTest {
         testBootstrap.addLeafRule(EngineReplication.class, "Engine replication holder",
                 CMap2EngineReplicator::new);
         tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
-                new ChronicleMapKeyValueStore(context.wireType(writeType).cluster(clusterTwo),
+                new ChronicleMapKeyValueStore(context.wireType(writeType).cluster(clusterNam),
                         asset));
 
         tree.withConfig(resourcesDir() + "/2way", OS.TARGET + "/" + hostId);
@@ -165,7 +165,7 @@ public class MaunualReplication2WayTest {
     //   @Ignore("manual test")
     @Test
     public void testManualTesting() throws InterruptedException, UnknownHostException {
-        YamlLogging.setAll(true);
+        // YamlLogging.setAll(true);
         InetAddress hostname = InetAddress.getLocalHost();
         String hostName = hostname.toString();
         boolean isHost1 = isHost1();
