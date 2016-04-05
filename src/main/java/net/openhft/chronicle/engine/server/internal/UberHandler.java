@@ -54,6 +54,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
     private Asset rootAsset;
     @NotNull
     private String clusterName;
+    private int writerIndex;
 
     @UsedViaReflection
     private UberHandler(WireIn wire) {
@@ -245,7 +246,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
     }
 
 
-    private int writerIndex;
+
 
     /**
      * ready to accept wire
@@ -255,22 +256,28 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
     @Override
     protected void onWrite(@NotNull WireOut outWire) {
 
-        if (isClosed.get())
-            return;
+        for (int i = 0; i < writers.size(); i++) {
 
-        if (writers.isEmpty())
-            return;
+            if (isClosed.get())
+                return;
 
-        // round robbins - the writers, we should only write when the buffer is empty, as
-        // we can't guarantee that we will have enough space to add more data to the out wire.
+            WriteMarshallable w = next();
+            if (w != null)
+                w.writeMarshallable(outWire);
 
+            if (!outWire.bytes().isEmpty())
+                return;
+        }
+
+    }
+
+
+    // round robbins - the writers, we should only write when the buffer is empty, as
+    // we can't guarantee that we will have enough space to add more data to the out wire.
+    private WriteMarshallable next() {
         if (writerIndex >= writers.size())
             writerIndex = 0;
-
-        final WriteMarshallable w = writers.get(writerIndex++);
-        if (w != null)
-            w.writeMarshallable(outWire);
-
+        return writers.get(writerIndex++);
     }
 
 
