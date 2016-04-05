@@ -58,6 +58,7 @@ import static org.junit.Assert.assertNotNull;
  * Created by Rob Austin
  */
 @RunWith(value = Parameterized.class)
+@Ignore
 public class Replication3WayIntIntTest {
     public static final WireType WIRE_TYPE = WireType.TEXT;
     public static final int NUMBER_OF_TIMES = 10;
