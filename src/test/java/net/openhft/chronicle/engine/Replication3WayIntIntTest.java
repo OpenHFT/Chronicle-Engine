@@ -174,6 +174,7 @@ public class Replication3WayIntIntTest {
     @Test
     public void testAllDataGetsReplicated() throws Exception {
 
+        name = "testAllDataGetsReplicated";
         final ConcurrentMap<Integer, Integer> map1 = tree1.acquireMap(name, Integer.class, Integer
                 .class);
         assertNotNull(map1);
