@@ -58,7 +58,7 @@ import static org.junit.Assert.assertNotNull;
  * Created by Rob Austin
  */
 
-public class RobsReplication2WayTest {
+public class MaunualReplication2WayTest {
     public static final WireType WIRE_TYPE = WireType.TEXT;
     public static final String SERVER1 = "192.168.1.66";
 
@@ -95,18 +95,13 @@ public class RobsReplication2WayTest {
         ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
         //Delete any files from the last run
 
-        TCPRegistry.createServerSocketChannelFor(
-                "clusterThree.host.port1",
-                "clusterThree.host.port2",
-                "clusterThree.host.port3",
-                "host.port1",
-                "host.port2");
-
+        TCPRegistry.setAlias("host.port1", "host1", 8081);
+        TCPRegistry.setAlias("host.port2", "host2", 8081);
         WireType writeType = WireType.TEXT;
         tree1 = create((isHost1() ? 1 : 2), writeType, "clusterRob");
 
         serverEndpoint1 = new ServerEndpoint("*:8081", tree1);
-        //   serverEndpoint2 = new ServerEndpoint("host.port2", tree2);
+
     }
 
     public void after() throws IOException {
@@ -137,7 +132,7 @@ public class RobsReplication2WayTest {
                 new ChronicleMapKeyValueStore(context.wireType(writeType).cluster(clusterTwo),
                         asset));
 
-        tree.withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);
+        tree.withConfig(resourcesDir() + "/2way", OS.TARGET + "/" + hostId);
 
         return tree;
     }
@@ -166,7 +161,7 @@ public class RobsReplication2WayTest {
 
     @Ignore("manual test")
     @Test
-    public void testBootstrap() throws InterruptedException, UnknownHostException {
+    public void testManualTesting() throws InterruptedException, UnknownHostException {
 
         InetAddress hostname = InetAddress.getLocalHost();
         String hostName = hostname.toString();
