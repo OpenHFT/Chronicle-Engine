@@ -38,7 +38,10 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestName;
 
 import java.io.File;
@@ -121,14 +124,14 @@ public class MaunualReplication2WayTest {
         VanillaAssetTree tree = new VanillaAssetTree((byte) hostId)
                 .forTesting(x -> t.compareAndSet(null, x));
 
-        Asset testBootstrap = tree.root().acquireAsset("testBootstrap");
+        Asset testBootstrap = tree.root().acquireAsset("testManualTesting");
         testBootstrap.addWrappingRule(MapView.class, "map directly to KeyValueStore",
                 VanillaMapView::new,
                 KeyValueStore.class);
 
         testBootstrap.addLeafRule(EngineReplication.class, "Engine replication holder",
                 CMap2EngineReplicator::new);
-        testBootstrap.addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
+        tree.root().addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
                 new ChronicleMapKeyValueStore(context.wireType(writeType).cluster(clusterTwo),
                         asset));
 
@@ -159,17 +162,16 @@ public class MaunualReplication2WayTest {
         return true;
     }
 
-    @Ignore("manual test")
+    //   @Ignore("manual test")
     @Test
     public void testManualTesting() throws InterruptedException, UnknownHostException {
-
+        YamlLogging.setAll(true);
         InetAddress hostname = InetAddress.getLocalHost();
         String hostName = hostname.toString();
         boolean isHost1 = isHost1();
 
         final ConcurrentMap<Integer, String> map1 = tree1.acquireMap(name, Integer.class, String.class);
         assertNotNull(map1);
-
 
         for (int i = 0; i < 99; i++) {
             int offset = isHost1 ? 0 : 1;
