@@ -23,7 +23,6 @@ import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.ISubscriber;
-import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
@@ -170,7 +169,7 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
         topicSubscribers.add(subscriber);
         AtomicBoolean terminate = new AtomicBoolean();
 
-        final QueueView<T, M> chronicleQueue = asset.acquireView(QueueView.class);
+        final QueueView<T, M> chronicleQueue = asset.acquireView(QueueView.class, rc);
 
         eventLoop.addHandler(() -> {
 
@@ -183,7 +182,8 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
                 return false;
             try {
                 subscriber.onMessage(next.topic(), next.message());
-            } catch (InvalidSubscriberException e) {
+            } catch (Exception e) {
+                LOG.error("", e);
                 terminate.set(true);
             }
 

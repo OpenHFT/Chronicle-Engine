@@ -552,6 +552,11 @@ public class RequestContext implements Cloneable {
         return this;
     }
 
+    public RequestContext topicType(Class topicType) {
+        this.type = topicType;
+        return this;
+    }
+
 
     public enum Operation {
         END_SUBSCRIPTION_AFTER_BOOTSTRAP, BOOTSTRAP;

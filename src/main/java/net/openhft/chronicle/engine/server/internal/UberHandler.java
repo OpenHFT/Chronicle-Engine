@@ -55,7 +55,6 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
     @NotNull
     private String clusterName;
     private int writerIndex;
-
     @UsedViaReflection
     private UberHandler(WireIn wire) {
         remoteIdentifier = wire.read(() -> "remoteIdentifier").int32();
@@ -208,8 +207,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
 
         onMessageReceived();
 
-        while (inWire.hasMore()) {
-
+        while (!inWire.bytes().isEmpty()) {
 
             try (final DocumentContext dc = inWire.readingDocument()) {
 

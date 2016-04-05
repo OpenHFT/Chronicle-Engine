@@ -82,7 +82,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         chronicleQueue = queue != null ? queue : newInstance(context.name(), context.basePath(), hostId);
         messageTypeClass = context.messageType();
         elementTypeClass = context.elementType();
-        LOG.info("context=" + context.name() + ", chronicleQueue=" + chronicleQueue);
         threadLocal = ThreadLocal.withInitial(() -> new ThreadLocalData(chronicleQueue));
 
         if (hostId != null)
@@ -158,7 +157,9 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
                 final boolean isSource0 = (remoteIdentifier == remoteSourceIdentifier);
 
-                WriteMarshallable h = isSource0 ? newSource(lastIndexReceived()) : newSync();
+                WriteMarshallable h = isSource0 ?
+                        newSource(lastIndexReceived(), context.topicType(), context.elementType()) :
+                        newSync(context.topicType(), context.elementType());
 
                 long cid = nc.newCid();
                 nc.wireOutPublisher().publish(w -> w.writeDocument(true, d ->
@@ -170,24 +171,26 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
         }
     }
 
-    public static WriteMarshallable newSource(long lastIndexReceived) {
+    public static WriteMarshallable newSource(long lastIndexReceived, Class topicType, Class elementType) {
         try {
             Class<?> aClass = Class.forName("software.chronicle.enterprise.queue.QueueSourceReplicationHandler");
-            Constructor<?> declaredConstructor = aClass.getDeclaredConstructor(long.class);
-            return (WriteMarshallable) declaredConstructor.newInstance(lastIndexReceived);
+            Constructor<?> declaredConstructor = aClass.getDeclaredConstructor(long.class, Class.class,
+                    Class.class);
+            return (WriteMarshallable) declaredConstructor.newInstance(lastIndexReceived,
+                    topicType, elementType);
         } catch (Exception e) {
             IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
-                    " required to run this code." +
-                    "Please contact sales@chronicle.software");
+                    " required to run this code. Please contact sales@chronicle.software");
             LOG.error("", e);
             throw licence;
         }
     }
 
-    public static WriteMarshallable newSync() {
+    public static WriteMarshallable newSync(Class topicType, Class elementType) {
         try {
             Class<?> aClass = Class.forName("software.chronicle.enterprise.queue.QueueSyncReplicationHandler");
-            return (WriteMarshallable) aClass.newInstance();
+            Constructor<?> declaredConstructor = aClass.getConstructor(Class.class, Class.class);
+            return (WriteMarshallable) declaredConstructor.newInstance(topicType, elementType);
         } catch (Exception e) {
             IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
                     " required to run this code." +
