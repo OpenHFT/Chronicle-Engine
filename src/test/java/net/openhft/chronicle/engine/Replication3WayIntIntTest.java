@@ -69,7 +69,6 @@ public class Replication3WayIntIntTest {
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
-
         Object[][] objects = new Object[NUMBER_OF_TIMES][];
         Arrays.fill(objects, new Object[]{});
         return Arrays.asList(objects);
