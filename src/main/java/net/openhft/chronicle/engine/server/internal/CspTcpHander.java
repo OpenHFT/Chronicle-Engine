@@ -23,12 +23,14 @@ import net.openhft.chronicle.network.NetworkContext;
 import net.openhft.chronicle.network.WireTcpHandler;
 import net.openhft.chronicle.network.api.session.SubHandler;
 import net.openhft.chronicle.network.cluster.HeartbeatEventHandler;
-import net.openhft.chronicle.network.cluster.WireOutPayload;
+import net.openhft.chronicle.network.cluster.WritableSubHandler;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static net.openhft.chronicle.network.connection.CoreFields.csp;
@@ -41,8 +43,8 @@ abstract class CspTcpHander<T extends NetworkContext> extends WireTcpHandler<T> 
     protected final StringBuilder cspText = new StringBuilder();
 
     @NotNull
-    public final Map<Long, SubHandler> cidToHandle = new HashMap<>();
-    public final Map<Long, WriteMarshallable> cidToWireOutConsumer = new HashMap<>();
+    private final Map<Long, SubHandler> cidToHandle = new HashMap<>();
+    final List<WriteMarshallable> writers = new ArrayList<>();
     private SubHandler handler;
     private HeartbeatEventHandler heartbeatEventHandler;
     private long lastCid;
@@ -102,8 +104,8 @@ abstract class CspTcpHander<T extends NetworkContext> extends WireTcpHandler<T> 
                 lastCid = cid;
                 cidToHandle.put(cid, handler);
 
-                if (handler instanceof WireOutPayload)
-                    cidToWireOutConsumer.put(cid, ((WireOutPayload) handler).payload());
+                if (handler instanceof WritableSubHandler)
+                    writers.add(((WritableSubHandler) handler).writer());
             } else
                 throw new IllegalStateException("expecting 'cid' but eventName=" + event);
             return true;
@@ -130,6 +132,6 @@ abstract class CspTcpHander<T extends NetworkContext> extends WireTcpHandler<T> 
     }
 
     @Override
-    protected abstract void process(@NotNull WireIn in, @NotNull WireOut out);
+    protected abstract void onRead(@NotNull WireIn in, @NotNull WireOut out);
 
 }

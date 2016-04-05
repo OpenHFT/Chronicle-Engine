@@ -276,8 +276,8 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
 
 
     @Override
-    protected void process(@NotNull final WireIn in,
-                           @NotNull final WireOut out) {
+    protected void onRead(@NotNull final WireIn in,
+                          @NotNull final WireOut out) {
 
         if (!YamlLogging.showHeartBeats()) {
             //save the previous message (the meta-data for printing later)

@@ -81,7 +81,7 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
     }
 
     @Override
-    public void onWireIn(@NotNull WireIn inWire, @NotNull WireOut outWire) {
+    public void onRead(@NotNull WireIn inWire, @NotNull WireOut outWire) {
 
         final StringBuilder eventName = Wires.acquireStringBuilder();
         final ValueIn valueIn = inWire.readEventName(eventName);

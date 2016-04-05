@@ -192,7 +192,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
     }
 
     @Override
-    protected void process(@NotNull WireIn inWire, @NotNull WireOut outWire) {
+    protected void onRead(@NotNull WireIn inWire, @NotNull WireOut outWire) {
 
         if (isClosed.get()) {
             inWire.clear();
@@ -233,7 +233,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
                             "YAML\n");
 
                 if (dc.isData()) {
-                    handler().onWireIn(inWire, outWire);
+                    handler().onRead(inWire, outWire);
                 }
 
             } catch (Exception e) {
@@ -242,10 +242,37 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
         }
 
 
-        for (WriteMarshallable c : cidToWireOutConsumer.values()) {
-            c.writeMarshallable(outWire);
-        }
     }
+
+
+    private int writerIndex;
+
+    /**
+     * ready to accept wire
+     *
+     * @param outWire the wire that you wish to write
+     */
+    @Override
+    protected void onWrite(@NotNull WireOut outWire) {
+
+        if (isClosed.get())
+            return;
+
+        if (writers.isEmpty())
+            return;
+
+        // round robbins - the writers, we should only write when the buffer is empty, as
+        // we can't guarantee that we will have enough space to add more data to the out wire.
+
+        if (writerIndex >= writers.size())
+            writerIndex = 0;
+
+        final WriteMarshallable w = writers.get(writerIndex++);
+        if (w != null)
+            w.writeMarshallable(outWire);
+
+    }
+
 
     private void onMessageReceived() {
         final HeartbeatEventHandler heartbeatEventHandler = heartbeatEventHandler();
