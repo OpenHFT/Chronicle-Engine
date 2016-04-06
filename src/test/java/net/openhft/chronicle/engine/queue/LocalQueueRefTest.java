@@ -81,7 +81,7 @@ public class LocalQueueRefTest extends ThreadMonitoringTest {
 
         assetTree.registerSubscriber(uri, String.class, subscriber);
         ref.publish("Message-1");
-        assertEquals("Message-1", values.poll(2, SECONDS));
+        assertEquals("Message-1", values.poll(5, SECONDS));
     }
 
 

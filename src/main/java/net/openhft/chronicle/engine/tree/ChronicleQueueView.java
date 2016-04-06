@@ -318,7 +318,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
                 final StringBuilder t = Wires.acquireStringBuilder();
                 final ValueIn eventName = dc.wire().readEventName(t);
 
-                final T topic1 = ObjectUtils.convertTo(messageTypeClass, topic);
+                final T topic1 = ObjectUtils.convertTo(messageTypeClass, eventName);
 
                 if (!topic.equals(topic1))
                     continue;
