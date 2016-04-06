@@ -277,7 +277,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
 
     /**
-     * @param index gets the except at the given index or {@code null} if the index is not valid
+     * @param index gets the except at the given index
      * @return the except
      */
     @Nullable
