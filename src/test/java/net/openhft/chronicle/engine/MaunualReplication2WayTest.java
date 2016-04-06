@@ -162,7 +162,7 @@ public class MaunualReplication2WayTest {
     @Ignore("manual test")
     @Test
     public void testManualTesting() throws InterruptedException, UnknownHostException {
-        // YamlLogging.setAll(true);
+        // YamlLogging.setAll(false);
         InetAddress hostname = InetAddress.getLocalHost();
         String hostName = hostname.toString();
         boolean isHost1 = isHost1();

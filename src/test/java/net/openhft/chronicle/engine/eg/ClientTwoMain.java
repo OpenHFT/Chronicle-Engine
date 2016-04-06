@@ -61,7 +61,7 @@ public class ClientTwoMain {
     }
 
     public static void main(String[] args) {
-        YamlLogging.setAll(true);
+        YamlLogging.setAll(false);
         VanillaAssetTree assetTree = new VanillaAssetTree().forRemoteAccess("localhost:9090",
                 WireType.TEXT, x -> t.set(x));
 

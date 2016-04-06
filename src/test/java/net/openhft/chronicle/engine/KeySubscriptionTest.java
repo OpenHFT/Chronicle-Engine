@@ -117,10 +117,6 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
                 String.class, String.class);
 
         serverMap.put("hello", "world");
-
-
-        YamlLogging.showClientReads(true);
-
         Assert.assertEquals("hello", q.poll(10, TimeUnit.SECONDS));
 
     }

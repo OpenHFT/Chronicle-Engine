@@ -92,7 +92,7 @@ public class MapClientTest extends ThreadMonitoringTest {
 
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
-        YamlLogging.setAll(true);
+        YamlLogging.setAll(false);
     }
 
     @After

@@ -148,7 +148,7 @@ public class MainCluster5 {
                 new ChronicleMapKeyValueStore(context.wireType(writeType).cluster(clusterTwo),
                         asset));
 
-        VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
+        //  VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
 
         return tree;
     }
@@ -185,7 +185,7 @@ public class MainCluster5 {
 
     public void test() throws InterruptedException, IOException {
 
-        //  YamlLogging.setAll(true);
+        //  YamlLogging.setAll(false);
 
         final String type = System.getProperty("server", "one");
 

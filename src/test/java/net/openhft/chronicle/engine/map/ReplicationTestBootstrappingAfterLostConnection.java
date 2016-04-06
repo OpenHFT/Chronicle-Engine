@@ -22,7 +22,6 @@ import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.ChronicleMapKeyValueStoreTest;
-import net.openhft.chronicle.engine.VanillaAssetTreeEgMain;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -119,7 +118,7 @@ public class ReplicationTestBootstrappingAfterLostConnection {
                 new ChronicleMapKeyValueStore(context.wireType(writeType).cluster(clusterName),
                         asset));
 
-        VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
+        //  VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
 
         return tree;
     }

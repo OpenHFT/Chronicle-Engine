@@ -70,7 +70,7 @@ public class ReferenceTest {
     public ReferenceTest(boolean isRemote, WireType wireType) {
         this.wireType = wireType;
         this.isRemote = isRemote;
-        YamlLogging.setAll(true);
+        YamlLogging.setAll(false);
     }
 
     @Parameterized.Parameters

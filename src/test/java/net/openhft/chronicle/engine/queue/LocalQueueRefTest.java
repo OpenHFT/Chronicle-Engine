@@ -60,7 +60,7 @@ public class LocalQueueRefTest extends ThreadMonitoringTest {
         methodName = name.getMethodName();
         assetTree = (new VanillaAssetTree(1)).forTesting(
                 x -> t.set(x));
-        YamlLogging.setAll(true);
+        YamlLogging.setAll(false);
     }
 
     @After

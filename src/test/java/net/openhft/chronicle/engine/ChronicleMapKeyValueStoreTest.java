@@ -153,7 +153,7 @@ public class ChronicleMapKeyValueStoreTest {
                         }
                 ));
 
-        VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
+        //  VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
 
         return tree;
     }

@@ -55,7 +55,7 @@ public class RestartClosedPublisherTest {
     @Before
     public void setUp() throws Exception {
         TCPRegistry.createServerSocketChannelFor(CONNECTION_1);
-        YamlLogging.setAll(true);
+        YamlLogging.setAll(false);
         _server = new VanillaAssetTree().forServer(x -> t.set(x));
 
         _serverEndpoint1 = new ServerEndpoint(CONNECTION_1, _server);

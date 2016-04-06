@@ -102,7 +102,7 @@ public class ArrayMapTest extends ThreadMonitoringTest {
         }
 
         map = assetTree.acquireMap(NAME, String.class, byte[].class);
-        YamlLogging.setAll(true);
+        YamlLogging.setAll(false);
     }
 
     @After

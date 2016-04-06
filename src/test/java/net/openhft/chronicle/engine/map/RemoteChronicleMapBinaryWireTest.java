@@ -71,7 +71,7 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
 
     @Before
     public void before() {
-        YamlLogging.setAll(true);
+        YamlLogging.setAll(false);
         methodName(name.getMethodName());
     }
 

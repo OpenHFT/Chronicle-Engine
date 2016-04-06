@@ -147,10 +147,10 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
 
 
         final QueueView<T, M> chronicleQueue = asset.acquireView(QueueView.class, rc);
-        final T topic = ObjectUtils.convertTo(topicType, rc.name());
+
 
         eventLoop.addHandler(() -> {
-
+            final T topic = ObjectUtils.convertTo(topicType, rc.name());
             QueueView.Excerpt<T, M> excerpt = chronicleQueue.get(topic);
             if (excerpt == null)
                 return false;

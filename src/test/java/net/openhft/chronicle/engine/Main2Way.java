@@ -122,7 +122,7 @@ public class Main2Way {
                 new ChronicleMapKeyValueStore(context.wireType(writeType).cluster(clusterTwo),
                         asset));
 
-        VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
+        //  VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
 
         return tree;
     }

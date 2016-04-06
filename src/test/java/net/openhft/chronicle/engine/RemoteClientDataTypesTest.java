@@ -121,7 +121,7 @@ public class RemoteClientDataTypesTest {
     @Test
     public void testDataTypesMapAndEvents() throws InterruptedException {
 
-        YamlLogging.setAll(true);
+        YamlLogging.setAll(false);
 
         BlockingQueue valueSubscriptionQueue = new ArrayBlockingQueue<>(1);
         BlockingQueue eventSubscriptionQueue = new ArrayBlockingQueue<>(1);

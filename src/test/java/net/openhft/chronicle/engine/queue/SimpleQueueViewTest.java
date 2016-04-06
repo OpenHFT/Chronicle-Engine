@@ -135,7 +135,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
             serverEndpoint = null;
         }
 
-        YamlLogging.setAll(true);
+        YamlLogging.setAll(false);
     }
 
     @After
@@ -239,7 +239,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     public void testStringPublishToAKeyTopic() throws InterruptedException {
         Publisher<String> publisher = null;
         try {
-            YamlLogging.setAll(true);
+            YamlLogging.setAll(false);
             String uri = "/queue/" + methodName + "/key" + System.nanoTime();
             publisher = assetTree.acquirePublisher(uri, String.class);
             BlockingQueue<String> values = new ArrayBlockingQueue<>(1);

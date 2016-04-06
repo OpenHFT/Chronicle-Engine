@@ -104,7 +104,7 @@ public class QueryableKeySetTest extends ThreadMonitoringTest {
             assetTree = serverAssetTree;
         }
 
-        YamlLogging.setAll(true);
+        YamlLogging.setAll(false);
     }
 
     @After

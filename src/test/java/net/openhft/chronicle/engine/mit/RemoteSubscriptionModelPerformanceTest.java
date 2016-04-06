@@ -242,7 +242,7 @@ public class RemoteSubscriptionModelPerformanceTest {
     public void testSubscriptionMapEventListenerInsertPerformance() {
         _testMap.clear();
 
-        YamlLogging.setAll(true);
+        YamlLogging.setAll(false);
         //Create subscriber and register
         TestChronicleMapEventListener mapEventListener = new TestChronicleMapEventListener(_mapName, _twoMbTestStringLength);
 

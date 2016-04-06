@@ -102,7 +102,7 @@ public class RoundTripTest {
 
         Asset asset1 = tree.acquireAsset(SIMPLE_NAME);
         asset1.addView(Clusters.class, testCluster);
-        VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
+        //  VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
 
         return tree;
     }

@@ -100,7 +100,7 @@ public class Replication3WayIntIntTest {
     }
 
     public void before() throws IOException {
-        YamlLogging.setAll(true);
+        YamlLogging.setAll(false);
 
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
         ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
