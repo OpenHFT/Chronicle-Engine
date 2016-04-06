@@ -369,12 +369,12 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     private void deleteFiles(QueueView qv) {
         if (!(qv instanceof ChronicleQueueView))
             return;
-        File path = ((ChronicleQueueView) qv).chronicleQueue().path();
+        File path = ((ChronicleQueueView) qv).chronicleQueue().file();
         deleteFiles(path);
     }
 
     private void deleteFiles(ChronicleQueueView qv) {
-        File path = qv.chronicleQueue().path();
+        File path = qv.chronicleQueue().file();
         deleteFiles(path);
     }
 
