@@ -142,8 +142,6 @@ public class Replication3WayTest {
                 new ChronicleMapKeyValueStore(context.wireType(writeType).cluster(clusterTwo),
                         asset));
 
-//        VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
-
         return tree;
     }
 
