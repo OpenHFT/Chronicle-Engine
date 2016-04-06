@@ -316,14 +316,14 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
                 if (!dc.isPresent())
                     return null;
                 final StringBuilder t = Wires.acquireStringBuilder();
-                final ValueIn eventName = dc.wire().readEventName(t);
+                final ValueIn valueIn = dc.wire().readEventName(t);
 
-                final T topic1 = ObjectUtils.convertTo(messageTypeClass, eventName);
+                final T topic1 = ObjectUtils.convertTo(messageTypeClass, t);
 
                 if (!topic.equals(topic1))
                     continue;
 
-                final M message = eventName.object(elementTypeClass);
+                final M message = valueIn.object(elementTypeClass);
 
                 return threadLocalData.excerpt
                         .message(message)
