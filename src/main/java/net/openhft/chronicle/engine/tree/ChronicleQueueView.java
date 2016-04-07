@@ -20,7 +20,6 @@ package net.openhft.chronicle.engine.tree;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.IORuntimeException;
-import net.openhft.chronicle.core.util.ObjectUtils;
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
@@ -49,10 +48,12 @@ import java.nio.file.Files;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
 
+import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
+
 /**
  * @author Rob Austin.
  */
-public class ChronicleQueueView<T, M> implements QueueView<T, M> {
+public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactory {
 
     private static final Logger LOG = LoggerFactory.getLogger(ChronicleQueueView.class);
 
@@ -269,7 +270,30 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
             final M message = eventName.object(elementTypeClass);
             return threadLocalData.excerpt
                     .message(message)
-                    .topic(ObjectUtils.convertTo(messageTypeClass, topic))
+                    .topic(convertTo(messageTypeClass, topic))
+                    .index(excerptTailer.index());
+        }
+
+    }
+
+
+    @Override
+    public Iterator<T, M> iterator() {
+        return () -> ChronicleQueueView.this.next(chronicleQueue.createTailer());
+    }
+
+    private Excerpt<T, M> next(ExcerptTailer excerptTailer) {
+        final ThreadLocalData threadLocalData = threadLocal.get();
+
+        try (DocumentContext dc = excerptTailer.readingDocument()) {
+            if (!dc.isPresent())
+                return null;
+            final StringBuilder topic = Wires.acquireStringBuilder();
+            final ValueIn eventName = dc.wire().readEventName(topic);
+            final M message = eventName.object(elementTypeClass);
+            return threadLocalData.excerpt
+                    .message(message)
+                    .topic(convertTo(messageTypeClass, topic))
                     .index(excerptTailer.index());
         }
 
@@ -299,7 +323,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
             return threadLocalData.excerpt
                     .message(message)
-                    .topic(ObjectUtils.convertTo(messageTypeClass, topic))
+                    .topic(convertTo(messageTypeClass, topic))
                     .index(excerptTailer.index());
         }
     }
@@ -318,7 +342,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
                 final StringBuilder t = Wires.acquireStringBuilder();
                 final ValueIn valueIn = dc.wire().readEventName(t);
 
-                final T topic1 = ObjectUtils.convertTo(messageTypeClass, t);
+                final T topic1 = convertTo(messageTypeClass, t);
 
                 if (!topic.equals(topic1))
                     continue;
@@ -425,6 +449,11 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M> {
 
     public String dump() {
         return chronicleQueue.dump();
+    }
+
+    @Override
+    public <E> Asset createSubAsset(VanillaAsset vanillaAsset, String name, Class<E> valueType) {
+        return new VanillaSubAsset<>(vanillaAsset, name, valueType, null);
     }
 
     public static class LocalExcept<T, M> implements Excerpt<T, M>, Marshallable {

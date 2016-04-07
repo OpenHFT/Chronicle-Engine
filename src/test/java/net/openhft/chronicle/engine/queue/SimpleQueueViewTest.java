@@ -159,7 +159,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
 
     // todo fix for remote
-    @Ignore
+    //@Ignore
     @Test
     public void testStringTopicPublisherWithSubscribe() throws InterruptedException {
 
@@ -178,7 +178,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         };
 
         assetTree.registerSubscriber(uri + "/" + messageType, String.class, subscriber);
-        Thread.sleep(500);
+        Thread.sleep(1000);
         publisher.publish(messageType, "Message-1");
         assertEquals("Message-1", values0.poll(3, SECONDS));
         deleteFiles(publisher);

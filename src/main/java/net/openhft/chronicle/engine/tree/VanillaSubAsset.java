@@ -55,8 +55,8 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
                 subscription = new MapSimpleSubscription<>(reference, valueReader);
             } else {
                 reference = new QueueReference<>(type, parent, queueView, name);
-                subscription = new QueueSimpleSubscription<>(valueReader, parent
-                );
+                subscription = new QueueSimpleSubscription<>(valueReader, parent, name);
+
             }
         } else {
             reference = new RemoteReference<>(tcpChannelHub, type, fullName());

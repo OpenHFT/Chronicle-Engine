@@ -25,6 +25,7 @@ import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.tree.ChronicleQueueView;
 import net.openhft.chronicle.engine.tree.QueueView;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,7 +83,9 @@ public class QueueReference<T, M> implements Reference<M> {
         AtomicBoolean terminate = new AtomicBoolean();
         subscribers.put(subscriber, terminate);
 
-        final QueueView<T, M> chronicleQueue = asset.acquireView(QueueView.class);
+        final ChronicleQueueView<T, M> chronicleQueue = (ChronicleQueueView<T, M>) asset.acquireView(QueueView.class);
+
+        final QueueView.Iterator<T, M> iterator = chronicleQueue.iterator();
 
         eventLoop.addHandler(() -> {
 
@@ -90,7 +93,8 @@ public class QueueReference<T, M> implements Reference<M> {
             if (terminate.get())
                 throw new InvalidEventHandlerException();
 
-            final QueueView.Excerpt<T, M> next = chronicleQueue.next();
+            final QueueView.Excerpt<T, M> next = iterator.next();
+
             if (next == null)
                 return false;
             try {

@@ -35,6 +35,8 @@ public interface QueueView<T, M> extends TopicPublisher<T, M>, KeyedView {
     @Nullable
     Excerpt<T, M> next();
 
+    Iterator<T, M> iterator();
+
     /**
      * returns a {@link Excerpt} at a given index
      *
@@ -66,6 +68,14 @@ public interface QueueView<T, M> extends TopicPublisher<T, M>, KeyedView {
         M message();
 
         long index();
+    }
+
+    interface Iterator<T, M> {
+        /**
+         * @return the next message from the current tailer
+         */
+        @Nullable
+        Excerpt<T, M> next();
     }
 
 }

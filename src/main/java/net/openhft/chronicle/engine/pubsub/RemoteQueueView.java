@@ -44,6 +44,11 @@ public class RemoteQueueView<T, M> extends RemoteTopicPublisher<T, M> implements
     }
 
     @Override
+    public Iterator<T, M> iterator() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public Excerpt<T, M> get(long index) {
         //noinspection unchecked
         return proxyReturnWireTypedObject(getNextAtIndex, threadLocal.get(), LocalExcept.class, index);
