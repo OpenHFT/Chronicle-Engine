@@ -19,13 +19,14 @@
 package net.openhft.chronicle.engine.tree;
 
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
+import net.openhft.chronicle.engine.api.tree.KeyedView;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Rob Austin.
  */
-public interface QueueView<T, M> extends TopicPublisher<T, M> {
+public interface QueueView<T, M> extends TopicPublisher<T, M>, KeyedView {
 
 
     /**

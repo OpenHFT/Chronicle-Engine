@@ -343,6 +343,10 @@ public class RequestContext implements Cloneable {
         return basePath;
     }
 
+    public String pathName() {
+        return pathName;
+    }
+
     @NotNull
     public RequestContext wireType(WireType writeType) {
         checkSealed();
