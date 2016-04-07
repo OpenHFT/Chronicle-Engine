@@ -22,6 +22,7 @@ import net.openhft.chronicle.core.util.SerializableBiFunction;
 import net.openhft.chronicle.engine.api.pubsub.Reference;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.pubsub.QueueReference;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
@@ -81,6 +82,10 @@ public class ReferenceHandler<E, T> extends AbstractHandler {
 
             if (registerSubscriber.contentEquals(eventName)) {
 
+
+                if (view instanceof QueueReference) {
+                    System.out.println("");
+                }
                 final Reference<E> key = view;
                 final Subscriber listener = new Subscriber() {
                     @Override

@@ -257,32 +257,12 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         return threadLocal.get().appender;
     }
 
-    @Override
-    public Excerpt<T, M> next() {
-        final ThreadLocalData threadLocalData = threadLocal.get();
-        ExcerptTailer excerptTailer = threadLocalData.replayTailer;
 
-        try (DocumentContext dc = excerptTailer.readingDocument()) {
-            if (!dc.isPresent())
-                return null;
-            final StringBuilder topic = Wires.acquireStringBuilder();
-            final ValueIn eventName = dc.wire().readEventName(topic);
-            final M message = eventName.object(elementTypeClass);
-            return threadLocalData.excerpt
-                    .message(message)
-                    .topic(convertTo(messageTypeClass, topic))
-                    .index(excerptTailer.index());
-        }
-
+    public Tailer<T, M> tailer() {
+        return () -> ChronicleQueueView.this.tailer0(chronicleQueue.createTailer());
     }
 
-
-    @Override
-    public Iterator<T, M> iterator() {
-        return () -> ChronicleQueueView.this.next(chronicleQueue.createTailer());
-    }
-
-    private Excerpt<T, M> next(ExcerptTailer excerptTailer) {
+    private Excerpt<T, M> tailer0(ExcerptTailer excerptTailer) {
         final ThreadLocalData threadLocalData = threadLocal.get();
 
         try (DocumentContext dc = excerptTailer.readingDocument()) {

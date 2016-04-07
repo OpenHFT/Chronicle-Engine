@@ -159,12 +159,8 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
 
     // todo fix for remote
-    //@Ignore
     @Test
     public void testStringTopicPublisherWithSubscribe() throws InterruptedException {
-
-        //  if (isRemote)
-        //      return;
 
         String uri = "/queue/" + methodName + System.nanoTime();
         String messageType = "topic";
@@ -176,34 +172,18 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
                 values0.add(e);
             }
         };
+        publisher.publish(messageType, "Message-1");
+
+        Thread.sleep(1000);
 
         assetTree.registerSubscriber(uri + "/" + messageType, String.class, subscriber);
-        Thread.sleep(1000);
-        publisher.publish(messageType, "Message-1");
+
         assertEquals("Message-1", values0.poll(3, SECONDS));
         deleteFiles(publisher);
     }
 
 
-    @Test
-    public void testPublishAndNext() throws InterruptedException {
-        TopicPublisher<String, String> publisher = null;
-        try {
-            String uri = "/queue/" + methodName;
-            String messageType = "topic";
 
-            publisher = assetTree.acquireTopicPublisher(uri, String.class, String.class);
-
-            final QueueView<String, String> queueView = assetTree.acquireQueue(uri, String.class,
-                    String.class);
-            Thread.sleep(500);
-            publisher.publish(messageType, "Message-1");
-            final Excerpt<String, String> next = queueView.next();
-            assertEquals("Message-1", next.message());
-        } finally {
-            deleteFiles(publisher);
-        }
-    }
 
     @Test
     public void testPublishAtIndexCheckIndex() throws InterruptedException {
@@ -216,7 +196,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
             queueView = assetTree.acquireQueue(uri, String.class, String.class);
             Thread.sleep(500);
             final long index = queueView.publishAndIndex(messageType, "Message-1");
-            final Excerpt<String, String> actual = queueView.next();
+            final Excerpt<String, String> actual = queueView.get(index);
             assertEquals(index, actual.index());
         } finally {
             deleteFiles(queueView);
@@ -309,7 +289,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
                 assetTree.acquireQueue(uri, String.class, String.class);
             publisher = assetTree.acquirePublisher(uri + "/" + messageType, String
                     .class);
-            BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
+            BlockingQueue<String> values = new ArrayBlockingQueue<>(10);
 
             TopicSubscriber<String, String> subscriber = (topic, message) -> {
                 values.add(topic + " " + message);

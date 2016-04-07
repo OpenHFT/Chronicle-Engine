@@ -30,14 +30,6 @@ public interface QueueView<T, M> extends TopicPublisher<T, M>, KeyedView {
 
 
     /**
-     * @return the next message from the current tailer
-     */
-    @Nullable
-    Excerpt<T, M> next();
-
-    Iterator<T, M> iterator();
-
-    /**
      * returns a {@link Excerpt} at a given index
      *
      * @param index the location of the except
@@ -62,6 +54,7 @@ public interface QueueView<T, M> extends TopicPublisher<T, M>, KeyedView {
      */
     long publishAndIndex(@NotNull T topic, @NotNull M message);
 
+
     interface Excerpt<T, M> {
         T topic();
 
@@ -70,12 +63,12 @@ public interface QueueView<T, M> extends TopicPublisher<T, M>, KeyedView {
         long index();
     }
 
-    interface Iterator<T, M> {
+    interface Tailer<T, M> {
         /**
          * @return the next message from the current tailer
          */
         @Nullable
-        Excerpt<T, M> next();
+        Excerpt<T, M> read();
     }
 
 }

@@ -37,16 +37,6 @@ public class RemoteQueueView<T, M> extends RemoteTopicPublisher<T, M> implements
         super(requestContext, asset, "QueueView");
     }
 
-    @Override
-    public Excerpt<T, M> next() {
-        //noinspection unchecked
-        return proxyReturnWireTypedObject(next, threadLocal.get(), LocalExcept.class);
-    }
-
-    @Override
-    public Iterator<T, M> iterator() {
-        throw new UnsupportedOperationException();
-    }
 
     @Override
     public Excerpt<T, M> get(long index) {

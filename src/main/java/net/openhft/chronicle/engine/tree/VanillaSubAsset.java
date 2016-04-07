@@ -44,7 +44,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     @Nullable
     private final Reference<E> reference;
 
-    VanillaSubAsset(@NotNull VanillaAsset parent, String name, Class<E> type, Function<Object, E> valueReader) throws AssetNotFoundException {
+    public VanillaSubAsset(@NotNull VanillaAsset parent, String name, Class<E> type, Function<Object, E> valueReader) throws AssetNotFoundException {
         this.parent = parent;
         this.name = name;
         TcpChannelHub tcpChannelHub = parent.findView(TcpChannelHub.class);

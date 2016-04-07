@@ -36,17 +36,19 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class QueueReference<T, M> implements Reference<M> {
 
     private final Class<M> eClass;
-    private final QueueView<T, M> chronicleQueue;
+    private final ChronicleQueueView<T, M> chronicleQueue;
     private final T name;
     private final Asset asset;
     private EventLoop eventLoop;
+    private QueueView.Tailer<T, M> tailer;
 
     public QueueReference(Class type, Asset asset, QueueView<T, M> chronicleQueue, T name) {
         this.eClass = type;
-        this.chronicleQueue = chronicleQueue;
+        this.chronicleQueue = (ChronicleQueueView) chronicleQueue;
         this.name = name;
         eventLoop = asset.root().acquireView(EventLoop.class);
         this.asset = asset;
+        tailer = this.chronicleQueue.tailer();
     }
 
     public QueueReference(RequestContext requestContext, Asset asset, QueueView<T, M> queueView) {
@@ -62,7 +64,7 @@ public class QueueReference<T, M> implements Reference<M> {
     @Nullable
     @Override
     public M get() {
-        final QueueView.Excerpt<T, M> next = chronicleQueue.next();
+        final QueueView.Excerpt<T, M> next = tailer.read();
         if (next == null)
             return null;
         return next.message();
@@ -85,7 +87,7 @@ public class QueueReference<T, M> implements Reference<M> {
 
         final ChronicleQueueView<T, M> chronicleQueue = (ChronicleQueueView<T, M>) asset.acquireView(QueueView.class);
 
-        final QueueView.Iterator<T, M> iterator = chronicleQueue.iterator();
+        final QueueView.Tailer<T, M> iterator = chronicleQueue.tailer();
 
         eventLoop.addHandler(() -> {
 
@@ -93,7 +95,7 @@ public class QueueReference<T, M> implements Reference<M> {
             if (terminate.get())
                 throw new InvalidEventHandlerException();
 
-            final QueueView.Excerpt<T, M> next = iterator.next();
+            final QueueView.Excerpt<T, M> next = iterator.read();
 
             if (next == null)
                 return false;
@@ -126,5 +128,7 @@ public class QueueReference<T, M> implements Reference<M> {
     public Class getType() {
         return eClass;
     }
+
+
 }
 

@@ -29,6 +29,7 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.cfg.SubscriptionStat;
 import net.openhft.chronicle.engine.query.Filter;
+import net.openhft.chronicle.engine.tree.ChronicleQueueView;
 import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.network.api.session.SessionDetails;
 import net.openhft.chronicle.network.api.session.SessionProvider;
@@ -167,15 +168,17 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
         topicSubscribers.add(subscriber);
         AtomicBoolean terminate = new AtomicBoolean();
 
-        final QueueView<T, M> chronicleQueue = asset.acquireView(QueueView.class, rc);
+        final ChronicleQueueView<T, M> chronicleQueue = (ChronicleQueueView) asset.acquireView
+                (QueueView.class, rc);
 
+        QueueView.Tailer<T, M> iterator = chronicleQueue.tailer();
         eventLoop.addHandler(() -> {
 
             // this will be set to true if onMessage throws InvalidSubscriberException
             if (terminate.get())
                 throw new InvalidEventHandlerException();
 
-            final QueueView.Excerpt<T, M> next = chronicleQueue.next();
+            final QueueView.Excerpt<T, M> next = iterator.read();
             if (next == null)
                 return false;
             try {

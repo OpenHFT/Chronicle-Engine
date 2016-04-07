@@ -25,6 +25,7 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.query.Filter;
+import net.openhft.chronicle.engine.tree.ChronicleQueueView;
 import net.openhft.chronicle.engine.tree.QueueView;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -46,7 +47,7 @@ public class QueueSimpleSubscription<E> implements SimpleSubscription<E> {
 
     // private final ObjectSubscription objectSubscription;
 
-    private final QueueView<?, E> chronicleQueue;
+    private final ChronicleQueueView<?, E> chronicleQueue;
     private final EventLoop eventLoop;
     private final String topic;
 
@@ -54,10 +55,8 @@ public class QueueSimpleSubscription<E> implements SimpleSubscription<E> {
                                    Asset parent, String topic) {
         this.valueReader = valueReader;
         this.topic = topic;
-        chronicleQueue = parent.acquireView(QueueView.class);
+        chronicleQueue = (ChronicleQueueView) parent.acquireView(QueueView.class);
         eventLoop = parent.acquireView(EventLoop.class);
-
-
     }
 
     @Override
@@ -76,7 +75,7 @@ public class QueueSimpleSubscription<E> implements SimpleSubscription<E> {
         subscribers.put(subscriber, terminate);
 
 
-        final QueueView.Iterator<?, E> iterator = chronicleQueue.iterator();
+        final QueueView.Tailer<?, E> tailer = chronicleQueue.tailer();
 
         eventLoop.addHandler(() -> {
 
@@ -84,7 +83,7 @@ public class QueueSimpleSubscription<E> implements SimpleSubscription<E> {
             if (terminate.get())
                 throw new InvalidEventHandlerException();
 
-            final QueueView.Excerpt<?, E> next = iterator.next();
+            final QueueView.Excerpt<?, E> next = tailer.read();
 
             if (next == null)
                 return false;
