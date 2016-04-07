@@ -44,8 +44,6 @@ import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
  */
 public class ServerEndpoint implements Closeable {
 
-    public static final int HEARTBEAT_INTERVAL_TICKS = Integer.getInteger("heartbeat.interval.ticks", 500);
-    public static final int HEARTBEAT_TIME_OUT_TICKS = Integer.getInteger("heartbeat.timeout.ticks", 10_000);
     private static final Logger LOG = LoggerFactory.getLogger(ChronicleMapKeyValueStore.class);
 
     @Nullable
