@@ -105,7 +105,7 @@ public class Replication10WayTest {
     private static AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
         AssetTree tree = new VanillaAssetTree((byte) hostId)
                 .forTesting(x -> t.compareAndSet(null, x))
-                .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);
+                .withConfig(resourcesDir() + "/10Way", OS.TARGET + "/" + hostId);
 
         tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
                 VanillaMapView::new,
@@ -135,6 +135,7 @@ public class Replication10WayTest {
         if (th != null) throw Jvm.rethrow(th);
     }
 
+    @Ignore
     @Test
     public void testTenWay() throws InterruptedException {
 

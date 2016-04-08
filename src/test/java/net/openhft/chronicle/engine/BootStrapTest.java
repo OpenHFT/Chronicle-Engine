@@ -37,8 +37,10 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -121,11 +123,11 @@ public class BootStrapTest {
 
             {
                 map1 = client1.acquireMap(NAME, String.class, String.class);
-                Queue<MapEvent> q1 = new ConcurrentLinkedQueue();
+                BlockingQueue<MapEvent> q1 = new ArrayBlockingQueue<MapEvent>(1);
                 client1.registerSubscriber(NAME, MapEvent.class, q1::add);
                 map1.put("hello", "world1");
                 Assert.assertEquals("world1", map1.get("hello"));
-                final String poll = q1.poll().toString();
+                final String poll = q1.poll(2, TimeUnit.SECONDS).toString();
                 Assert.assertEquals("!InsertedEvent {\n" +
                                 "  assetName: /test,\n" +
                                 "  key: hello,\n" +
@@ -139,12 +141,12 @@ public class BootStrapTest {
 
             {
                 map2 = client2.acquireMap(NAME, String.class, String.class);
-                Queue<MapEvent> q2 = new ConcurrentLinkedQueue();
+                BlockingQueue<MapEvent> q2 = new ArrayBlockingQueue(1);
                 client2.registerSubscriber(NAME + "?bootstrap=false", MapEvent.class, q2::add);
 
                 map2.put("hello", "world2");
                 Assert.assertEquals("world2", map2.get("hello"));
-                final String poll = q2.poll().toString();
+                final String poll = q2.poll(2, TimeUnit.SECONDS).toString();
                 Assert.assertEquals("!UpdatedEvent {\n" +
                         "  assetName: /test,\n" +
                         "  key: hello,\n" +

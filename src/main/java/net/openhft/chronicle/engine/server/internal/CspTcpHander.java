@@ -25,7 +25,10 @@ import net.openhft.chronicle.network.api.session.SubHandler;
 import net.openhft.chronicle.network.cluster.HeartbeatEventHandler;
 import net.openhft.chronicle.network.cluster.WritableSubHandler;
 import net.openhft.chronicle.network.connection.CoreFields;
-import net.openhft.chronicle.wire.*;
+import net.openhft.chronicle.wire.ValueIn;
+import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.Wires;
+import net.openhft.chronicle.wire.WriteMarshallable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -131,7 +134,5 @@ abstract class CspTcpHander<T extends NetworkContext> extends WireTcpHandler<T> 
         return heartbeatEventHandler;
     }
 
-    @Override
-    protected abstract void onRead(@NotNull WireIn in, @NotNull WireOut out);
 
 }

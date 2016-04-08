@@ -276,9 +276,9 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
 
 
     @Override
-    protected void onRead(@NotNull final WireIn in,
+    protected void onRead(@NotNull final DocumentContext inDc,
                           @NotNull final WireOut out) {
-
+        WireIn in = inDc.wire();
         if (!YamlLogging.showHeartBeats()) {
             //save the previous message (the meta-data for printing later)
             //if the message turns out not to be a system message
@@ -292,12 +292,14 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
         }
 
 
-        in.readDocument(this.metaDataConsumer, (WireIn wire) -> {
+        if (inDc.isMetaData()) {
+            this.metaDataConsumer.readMarshallable(in);
+        } else {
 
             try {
 
                 if (LOG.isDebugEnabled())
-                    LOG.debug("received data:\n" + wire.bytes().toHexString());
+                    LOG.debug("received data:\n" + in.bytes().toHexString());
 
                 Consumer<WireType> wireTypeConsumer = wt -> {
                     wireType(wt);
@@ -306,7 +308,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
 
                 if (isSystemMessage) {
                     systemHandler.process(in, out, tid, sessionDetails, getMonitoringMap(),
-                            isServerSocket, () -> publisher(), hostIdentifier, wireTypeConsumer,
+                            isServerSocket, this::publisher, hostIdentifier, wireTypeConsumer,
                             wireType());
                     if (!systemHandler.wasHeartBeat()) {
                         if (!YamlLogging.showHeartBeats())
@@ -409,7 +411,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                 if (sessionProvider != null)
                     sessionProvider.remove();
             }
-        });
+        }
     }
 
     private Map<String, UserStat> getMonitoringMap() {

@@ -55,6 +55,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
     @NotNull
     private String clusterName;
     private int writerIndex;
+
     @UsedViaReflection
     private UberHandler(WireIn wire) {
         remoteIdentifier = wire.read(() -> "remoteIdentifier").int32();
@@ -191,59 +192,35 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
         super.close();
     }
 
+
     @Override
-    protected void onRead(@NotNull WireIn inWire, @NotNull WireOut outWire) {
-
-        if (isClosed.get()) {
-            inWire.clear();
+    protected void onRead(@NotNull DocumentContext dc, @NotNull WireOut outWire) {
+        if (isClosed.get())
             return;
-        }
-
-
-        if (YamlLogging.showServerReads() && inWire.hasMore()) {
-            String s = Wires.fromSizePrefixedBlobs(inWire.bytes());
-            LOG.info("subhandler read:\n" + s);
-        }
 
         onMessageReceived();
 
-        while (!inWire.bytes().isEmpty()) {
+        Wire inWire = dc.wire();
+        if (dc.isMetaData()) {
+            if (!readMeta(inWire))
+                return;
 
-            try (final DocumentContext dc = inWire.readingDocument()) {
-
-                if (!dc.isPresent())
-                    continue;
-
-                if (dc.isMetaData()) {
-                    if (!readMeta(inWire))
-                        continue;
-
-                    handler().remoteIdentifier(remoteIdentifier);
-                    handler().localIdentifier(localIdentifier);
-                    handler().onInitialize(outWire);
-                    continue;
-                }
-
-                if (handler() == null)
-                    throw new IllegalStateException("handler == null, check that the " +
-                            "Csp/Cid has been sent, failed to " +
-                            "fully " +
-                            "process the following " +
-                            "YAML\n");
-
-                if (dc.isData()) {
-                    handler().onRead(inWire, outWire);
-                }
-
-            } catch (Exception e) {
-                LOG.error("", e);
-            }
+            handler().remoteIdentifier(remoteIdentifier);
+            handler().localIdentifier(localIdentifier);
+            handler().onInitialize(outWire);
+            return;
         }
 
+        if (handler() == null)
+            throw new IllegalStateException("handler == null, check that the " +
+                    "Csp/Cid has been sent, failed to " +
+                    "fully " +
+                    "process the following " +
+                    "YAML\n");
 
+        if (dc.isData())
+            handler().onRead(inWire, outWire);
     }
-
-
 
 
     /**

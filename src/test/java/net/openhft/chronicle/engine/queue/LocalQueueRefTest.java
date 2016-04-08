@@ -90,7 +90,7 @@ public class LocalQueueRefTest extends ThreadMonitoringTest {
         String uri = "/queue/" + methodName;
         assetTree.acquireQueue(uri, String.class, String.class);
         final Reference<String> ref = assetTree.acquireReference(uri + "/key", String.class);
-        BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
+        BlockingQueue<String> values = new ArrayBlockingQueue<>(10);
         TopicSubscriber<String, String> subscriber = (topic, message) -> {
             if (message != null)
                 values.add(message);
