@@ -76,9 +76,6 @@ public class ReplicationDoubleMap2WayTest {
         //Delete any files from the last run
 
         TCPRegistry.createServerSocketChannelFor(
-                "clusterThree.host.port1",
-                "clusterThree.host.port2",
-                "clusterThree.host.port3",
                 "host.port1",
                 "host.port2");
 
@@ -147,8 +144,11 @@ public class ReplicationDoubleMap2WayTest {
         if (th != null) throw Jvm.rethrow(th);
     }
 
+    @Ignore
     @Test
     public void testBootstrap() throws InterruptedException {
+
+        YamlLogging.setAll(true);
 
         final ConcurrentMap<Double, Double> map1 = tree1.acquireMap(name, Double.class, Double
                 .class);

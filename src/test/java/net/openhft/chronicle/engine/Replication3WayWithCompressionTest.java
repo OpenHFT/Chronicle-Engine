@@ -149,6 +149,7 @@ public class Replication3WayWithCompressionTest {
         if (th != null) throw Jvm.rethrow(th);
     }
 
+    @Ignore
     @Test
     public void testThreeWay() throws InterruptedException {
 
