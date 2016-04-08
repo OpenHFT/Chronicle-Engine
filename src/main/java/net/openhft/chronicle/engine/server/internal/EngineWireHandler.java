@@ -89,22 +89,20 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
     @NotNull
     private final ReplicationHandler replicationHandler;
     @NotNull
-    private Asset rootAsset;
-
-    @NotNull
     private final ReadMarshallable metaDataConsumer;
     private final StringBuilder lastCsp = new StringBuilder();
     private final StringBuilder eventName = new StringBuilder();
     @NotNull
     private final SystemHandler systemHandler;
-    @Nullable
-    private SessionProvider sessionProvider;
-
-    @Nullable
-    private EventLoop eventLoop;
     private final RequestContextInterner requestContextInterner = new RequestContextInterner(128);
     private final StringBuilder currentLogMessage = new StringBuilder();
     private final StringBuilder prevLogMessage = new StringBuilder();
+    @NotNull
+    private Asset rootAsset;
+    @Nullable
+    private SessionProvider sessionProvider;
+    @Nullable
+    private EventLoop eventLoop;
     private boolean isServerSocket;
     private Asset contextAsset;
 
@@ -285,7 +283,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
             prevLogMessage.setLength(0);
             prevLogMessage.append(currentLogMessage);
             currentLogMessage.setLength(0);
-            logToBuffer(in, currentLogMessage);
+            logToBuffer(in, currentLogMessage, in.bytes().readPosition()-4);
         } else {
             //log every message
             logYamlToStandardOut(in);
@@ -435,14 +433,14 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
         }
     }
 
-    private void logToBuffer(@NotNull WireIn in, StringBuilder logBuffer) {
+    private void logToBuffer(@NotNull WireIn in, StringBuilder logBuffer, long start) {
         if (YamlLogging.showServerReads()) {
             logBuffer.setLength(0);
             try {
                 logBuffer.append("\nServer Receives:\n")
-                        .append(Wires.fromSizePrefixedBlobs(in.bytes()));
+                        .append(Wires.fromSizePrefixedBlobs(in.bytes(), start));
             } catch (Exception e) {
-                logBuffer.append("\n\n").append(Bytes.toString(in.bytes()));
+                logBuffer.append("\n\n").append(Bytes.toString(in.bytes(), start, in.bytes().readLimit() - start));
             }
         }
     }

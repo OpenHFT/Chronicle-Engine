@@ -54,7 +54,7 @@ import static net.openhft.chronicle.engine.Utils.methodName;
 public class ServerOverloadTest extends ThreadMonitoringTest {
     public static final int SIZE = 100;
     private static final String NAME = "test";
-    private static AtomicReference<Throwable> t = new AtomicReference();
+    private static AtomicReference<Throwable> t = new AtomicReference<>();
     private static MapView<String, String> map;
     private final Boolean isRemote;
     private final WireType wireType;
@@ -89,7 +89,10 @@ public class ServerOverloadTest extends ThreadMonitoringTest {
 
     @Before
     public void before() throws IOException {
-        serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
+        serverAssetTree = new VanillaAssetTree().forTesting(x -> {
+            t.compareAndSet(null, x);
+            x.printStackTrace();
+        });
 
         if (isRemote) {
 
@@ -121,26 +124,25 @@ public class ServerOverloadTest extends ThreadMonitoringTest {
     }
 
 
-    @Ignore
     @Test
     public void testThatSendingAlotOfDataToTheServer() throws Exception {
-
-        map = assetTree.acquireMap("name", String.class, String
-                .class);
+//        YamlLogging.setAll(true);
+        map = assetTree.acquireMap("name", String.class, String.class);
 
         //
-        char[] largeChar = new char[TcpChannelHub.BUFFER_SIZE - 1024];
+        char[] largeChar = new char[66000];
 
         Arrays.fill(largeChar, 'X');
 
         final String large2MbString = new String(largeChar);
 
         for (int i = 0; i < SIZE; i++) {
+//            System.out.println("i: " + i);
+            Assert.assertEquals(i, map.size());
             map.put("" + i, large2MbString);
         }
         System.out.println("gets here");
         Assert.assertEquals(SIZE, map.size());
-        System.out.println("");
     }
 
 }
