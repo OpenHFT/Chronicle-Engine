@@ -198,7 +198,8 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     /**
      * get returns the correct element at the given key, or null if not present
      */
-    @Test
+
+    @Test(timeout = 5000)
     public void testGet() throws IOException {
         try (ClosableMapSupplier<Integer, String> supplier = map5()) {
             final Map map = supplier.get();
