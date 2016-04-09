@@ -128,7 +128,6 @@ public class ArrayMapTest extends ThreadMonitoringTest {
         TCPRegistry.reset();
     }
 
-
     @Test
     public void testByteArrayValue() throws Exception {
 
@@ -140,7 +139,6 @@ public class ArrayMapTest extends ThreadMonitoringTest {
         Assert.assertArrayEquals("hello world".getBytes(), bytes);
 
     }
-
 
     @Test
     public void testByteArrayValueWithRealBytes() throws Exception {
@@ -167,7 +165,5 @@ public class ArrayMapTest extends ThreadMonitoringTest {
         final byte[] actual = map.get("1");
         Assert.assertArrayEquals(expected, actual);
     }
-
-
 }
 

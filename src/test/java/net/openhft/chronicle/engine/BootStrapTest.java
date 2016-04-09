@@ -217,6 +217,5 @@ public class BootStrapTest {
             throw Jvm.rethrow(e);
         }
     }
-
 }
 

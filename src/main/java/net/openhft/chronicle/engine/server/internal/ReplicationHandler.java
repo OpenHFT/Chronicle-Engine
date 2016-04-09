@@ -210,7 +210,6 @@ public class ReplicationHandler<E> extends AbstractHandler {
                 // given the sending an event to the publish hold the chronicle map lock
                 // we will send only one at a time
 
-
                 if (!publisher.canTakeMoreData()) {
                     if (startBufferFullTimeStamp == 0) {
                         startBufferFullTimeStamp = System.currentTimeMillis();

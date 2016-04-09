@@ -347,9 +347,7 @@ public interface Asset extends Closeable {
         else
             subscription.unregisterSubscriber(subscriber);
 
-
     }
-
 
     default <T, E> void unregisterTopicSubscriber(@NotNull RequestContext requestContext,
                                                   @NotNull TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
@@ -359,7 +357,6 @@ public interface Asset extends Closeable {
         else
             subscriber.onEndOfSubscription();
     }
-
 
     default <T, E> void registerTopicSubscriber(@NotNull String uri,
                                                 @NotNull Class<T> topicClass,
@@ -371,11 +368,9 @@ public interface Asset extends Closeable {
         kvsSubscription.registerTopicSubscriber(rc, subscriber);
     }
 
-
     default SubscriptionCollection acquireSubscription(@NotNull RequestContext requestContext) {
         Class<SubscriptionCollection> subscriptionType = requestContext.getSubscriptionType();
         requestContext.viewType(subscriptionType);
         return acquireView(subscriptionType, requestContext);
     }
-
 }

@@ -80,8 +80,6 @@ public class GenericWireAdapterTest {
             Assert.assertEquals(EXPECTED, actual);
         });
 
-
     }
-
 
 }

@@ -137,6 +137,5 @@ public class RemoteRpc extends JSR166TestCase {
     public void after() throws IOException {
         //  assetTree.close();
     }
-
 }
 

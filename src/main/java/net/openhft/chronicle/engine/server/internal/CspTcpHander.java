@@ -44,10 +44,9 @@ import static net.openhft.chronicle.network.connection.CoreFields.csp;
 abstract class CspTcpHander<T extends NetworkContext> extends WireTcpHandler<T> {
 
     protected final StringBuilder cspText = new StringBuilder();
-
+    final List<WriteMarshallable> writers = new ArrayList<>();
     @NotNull
     private final Map<Long, SubHandler> cidToHandle = new HashMap<>();
-    final List<WriteMarshallable> writers = new ArrayList<>();
     private SubHandler handler;
     private HeartbeatEventHandler heartbeatEventHandler;
     private long lastCid;
@@ -55,7 +54,6 @@ abstract class CspTcpHander<T extends NetworkContext> extends WireTcpHandler<T> 
     SubHandler handler() {
         return handler;
     }
-
 
     @Override
     public void close() {
@@ -72,7 +70,6 @@ abstract class CspTcpHander<T extends NetworkContext> extends WireTcpHandler<T> 
         final StringBuilder event = Wires.acquireStringBuilder();
 
         ValueIn valueIn = wireIn.readEventName(event);
-
 
         if (csp.contentEquals(event)) {
             final String csp = valueIn.text();
@@ -133,6 +130,4 @@ abstract class CspTcpHander<T extends NetworkContext> extends WireTcpHandler<T> 
     HeartbeatEventHandler heartbeatEventHandler() {
         return heartbeatEventHandler;
     }
-
-
 }

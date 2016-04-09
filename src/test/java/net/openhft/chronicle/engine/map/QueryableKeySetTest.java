@@ -185,6 +185,5 @@ public class QueryableKeySetTest extends ThreadMonitoringTest {
         query.filter((obj) -> obj >= 1 && obj <= 2).forEach(System.out::println);
 
     }
-
 }
 

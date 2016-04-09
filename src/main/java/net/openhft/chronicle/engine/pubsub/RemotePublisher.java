@@ -80,7 +80,6 @@ public class RemotePublisher<T, M> extends AbstractStatelessClient<EventId> impl
         return uri.toString();
     }
 
-
     private void checkTopic(@Nullable Object topic) {
         if (topic == null)
             throw new NullPointerException("topic can not be null");
@@ -90,7 +89,6 @@ public class RemotePublisher<T, M> extends AbstractStatelessClient<EventId> impl
         if (message == null)
             throw new NullPointerException("message can not be null");
     }
-
 
     private void onEvent(T topic, @Nullable M message, @NotNull TopicSubscriber<T, M> topicSubscriber) {
         try {
@@ -103,7 +101,6 @@ public class RemotePublisher<T, M> extends AbstractStatelessClient<EventId> impl
             // todo
         }
     }
-
 
     private void onEvent(@Nullable M message, @NotNull Subscriber<M> topicSubscriber) {
         try {
@@ -124,12 +121,10 @@ public class RemotePublisher<T, M> extends AbstractStatelessClient<EventId> impl
             m.write(Params.message).object(event);
         }), true);
 
-
     }
 
     @Override
     public void registerSubscriber(boolean bootstrap, int throttlePeriodMs, Subscriber<M> subscriber) throws AssetNotFoundException {
-
 
         if (hub.outBytesLock().isHeldByCurrentThread())
             throw new IllegalStateException("Cannot view map while debugging");

@@ -175,5 +175,4 @@ public class ChronicleMapKeyValueStoreTest {
         final Throwable th = t.getAndSet(null);
         if (th != null) throw Jvm.rethrow(th);
     }
-
 }

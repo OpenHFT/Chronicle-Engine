@@ -128,7 +128,6 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
             return;
         }
 
-
         // note : we have to publish the uber handler, even if we send a termination event
         // this is so the termination event can be processed by the receiver
         if (nc().isAcceptor())
@@ -192,7 +191,6 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
         super.close();
     }
 
-
     @Override
     protected void onRead(@NotNull DocumentContext dc, @NotNull WireOut outWire) {
         if (isClosed.get())
@@ -222,7 +220,6 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
             handler().onRead(inWire, outWire);
     }
 
-
     /**
      * ready to accept wire
      *
@@ -246,7 +243,6 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
 
     }
 
-
     // round robbins - the writers, we should only write when the buffer is empty, as
     // we can't guarantee that we will have enough space to add more data to the out wire.
     private WriteMarshallable next() {
@@ -254,7 +250,6 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
             writerIndex = 0;
         return writers.get(writerIndex++);
     }
-
 
     private void onMessageReceived() {
         final HeartbeatEventHandler heartbeatEventHandler = heartbeatEventHandler();
@@ -283,5 +278,4 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
             return uberHandler(new UberHandler(localIdentifier, remoteIdentifier, wireType, name));
         }
     }
-
 }

@@ -44,13 +44,11 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-
 /**
  * @author Daniel Schiermer
  */
 @RunWith(Parameterized.class)
 public class RemoteClientDataTypesTest {
-
 
     private static final Logger LOG = LoggerFactory.getLogger(RemoteClientDataTypesTest.class);
 
@@ -145,7 +143,6 @@ public class RemoteClientDataTypesTest {
         _clientAssetTree.registerSubscriber(subscriberMapUri, _keyClass, topicOnlySubscriptionQueue::add);
         _clientAssetTree.registerSubscriber(subscriberMapUri, MapEvent.class, mapEvent -> mapEvent.apply((assetName, key, oldValue, newValue) -> eventSubscriptionQueue.add(newValue)));
         _clientAssetTree.registerSubscriber(valueOnlySubscriberUri, _valueClass, valueSubscriptionQueue::add);
-
 
         //put the kvp
         testMap.put(_key, _value);

@@ -23,5 +23,4 @@ package net.openhft.chronicle.engine.queue;
  */
 public class RollTest {
 
-
 }

@@ -88,7 +88,6 @@ public class MaunualReplication2WayTest {
 
     public void before() throws IOException {
 
-
         //YamlLogging.showServerWrites = true;
 
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
@@ -186,7 +185,6 @@ public class MaunualReplication2WayTest {
 
             Thread.sleep(5000);
         }
-
 
     }
 }

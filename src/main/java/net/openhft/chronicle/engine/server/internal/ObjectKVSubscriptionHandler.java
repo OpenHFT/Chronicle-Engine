@@ -135,7 +135,6 @@ public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subsc
     @Override
     protected void unregisterAll() {
 
-
         tidToListener.forEach((k, listener) -> {
             if (listener instanceof TopicSubscriber)
                 asset.unregisterTopicSubscriber(requestContext,
@@ -179,5 +178,4 @@ public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subsc
             return (P[]) this.params;
         }
     }
-
 }

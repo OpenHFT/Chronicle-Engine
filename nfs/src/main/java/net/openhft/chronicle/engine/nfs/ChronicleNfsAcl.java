@@ -37,5 +37,4 @@ class ChronicleNfsAcl {
         ace.flag = new aceflag4(new uint32_t(flags));
         return ace;
     }
-
 }

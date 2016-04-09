@@ -154,7 +154,6 @@ public class Replication3WayTest {
     }
 
 
-
     @Test
     public void testThreeWay() throws InterruptedException {
 
@@ -189,7 +188,5 @@ public class Replication3WayTest {
             Assert.assertEquals(3, m.size());
         }
     }
-
-
 }
 

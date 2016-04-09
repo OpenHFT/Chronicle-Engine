@@ -73,6 +73,16 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
         this.valueType = valueType;
     }
 
+    @NotNull
+    public static WriteMarshallable newMapReplicationHandler(long lastUpdateTime, Class keyType, Class valueType, String csp, long cid) {
+        final MapReplicationHandler h = new MapReplicationHandler
+                (lastUpdateTime, keyType, valueType);
+
+        return w -> w.writeDocument(true, d -> d.writeEventName(CoreFields.csp).text(csp)
+                .writeEventName(CoreFields.cid).int64(cid)
+                .writeEventName(CoreFields.handler).typedMarshallable(h));
+    }
+
     @Override
     public void writeMarshallable(@NotNull WireOut wire) {
         wire.write("timestamp").int64(timestamp);
@@ -103,7 +113,6 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
             replication.applyReplication(entry);
         }
     }
-
 
     @Override
     public void onInitialize(@NotNull WireOut outWire) {
@@ -150,16 +159,6 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
         eventLoop.addHandler(true, new ReplicationEventHandler(mi, (byte) remoteIdentifier()));
     }
 
-    @NotNull
-    public static WriteMarshallable newMapReplicationHandler(long lastUpdateTime, Class keyType, Class valueType, String csp, long cid) {
-        final MapReplicationHandler h = new MapReplicationHandler
-                (lastUpdateTime, keyType, valueType);
-
-        return w -> w.writeDocument(true, d -> d.writeEventName(CoreFields.csp).text(csp)
-                .writeEventName(CoreFields.cid).int64(cid)
-                .writeEventName(CoreFields.handler).typedMarshallable(h));
-    }
-
     @Override
     public void close() {
         this.closed = true;
@@ -185,7 +184,6 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
     }
 
     private class ReplicationEventHandler implements EventHandler, Closeable {
-
 
         private final ModificationIterator mi;
         private final byte id;
@@ -269,7 +267,6 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
                     lastUpdateTime = newlastUpdateTime;
                 }
 
-
                 w.writeDocument(true, d -> d.write(CoreFields.cid).int64(cid()));
                 w.writeDocument(false,
                         d -> {
@@ -291,6 +288,5 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
             MapReplicationHandler.this.close();
         }
     }
-
 
 }

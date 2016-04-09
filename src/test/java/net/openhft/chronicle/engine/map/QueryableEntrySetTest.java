@@ -175,6 +175,5 @@ public class QueryableEntrySetTest extends ThreadMonitoringTest {
         Assert.assertEquals("1", entry.getValue());
 
     }
-
 }
 

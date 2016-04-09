@@ -130,6 +130,5 @@ public class StreamTest extends ThreadMonitoringTest {
         Assert.assertEquals(2, map.keySet().stream().count());
 
     }
-
 }
 

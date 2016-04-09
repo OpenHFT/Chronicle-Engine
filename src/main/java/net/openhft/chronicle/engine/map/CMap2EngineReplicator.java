@@ -68,7 +68,6 @@ public class CMap2EngineReplicator implements EngineReplication,
         asset.addView(EngineReplicationLangBytesConsumer.class, this);
     }
 
-
     public CMap2EngineReplicator(final RequestContext context) {
         this.context = context;
     }
@@ -134,7 +133,6 @@ public class CMap2EngineReplicator implements EngineReplication,
         engineReplicationLang.put(keyBytes, valueBytes, remoteIdentifier, timestamp);
         keyBytes.position(0);
         valueBytes.position(0);
-
 
     }
 

@@ -93,5 +93,4 @@ public class TopologySubscriptionHandler extends SubscriptionHandler<TopologySub
             return (P[]) this.params;
         }
     }
-
 }

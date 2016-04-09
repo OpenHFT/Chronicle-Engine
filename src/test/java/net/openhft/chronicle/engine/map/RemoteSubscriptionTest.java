@@ -226,6 +226,5 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
 
         Assert.assertTrue(onEndOfSubscription);
     }
-
 }
 

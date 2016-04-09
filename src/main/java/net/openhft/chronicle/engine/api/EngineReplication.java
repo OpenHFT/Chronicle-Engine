@@ -31,10 +31,8 @@ import java.util.function.Consumer;
  */
 public interface EngineReplication extends Replication {
 
-
     String ENGINE_REPLICATION_COMPRESSION = System.getProperty("EngineReplication" +
             ".Compression");
-
 
     /**
      * Provides the unique Identifier associated with this instance. <p> An identifier is used to
@@ -52,7 +50,6 @@ public interface EngineReplication extends Replication {
      * @return the unique Identifier associated with this map instance
      */
     byte identifier();
-
 
     /**
      * Gets (if it does not exist, creates) an instance of ModificationIterator associated with a

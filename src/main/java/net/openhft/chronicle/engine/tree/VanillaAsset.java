@@ -141,7 +141,6 @@ public class VanillaAsset implements Asset, Closeable {
 
         final Asset queue = acquireAsset("queue");
 
-
         queue.addWrappingRule(Publisher.class, LAST + "reference to a ChronicleQueue",
                 QueueReference::new, QueueView.class);
 
@@ -153,7 +152,6 @@ public class VanillaAsset implements Asset, Closeable {
 
         queue.addLeafRule(ObjectSubscription.class, LAST + " vanilla queue subscription",
                 QueueObjectSubscription::new);
-
 
         addView(QueueSource.class, new QueueSource(uriToHostId));
 
@@ -192,16 +190,13 @@ public class VanillaAsset implements Asset, Closeable {
         final Asset queue = acquireAsset("queue");
         queue.addLeafRule(QueueView.class, LAST + "reference to a ChronicleQueue", RemoteQueueView::new);
 
-
         addWrappingRule(EntrySetView.class, LAST + " entrySet", RemoteEntrySetView::new, MapView.class);
 
         addWrappingRule(MapView.class, LAST + " remote key maps", RemoteMapView::new, ObjectKeyValueStore.class);
 
         addWrappingRule(KeySetView.class, LAST + " remote key maps", RemoteKeySetView::new, MapView.class);
 
-
         addLeafRule(ObjectSubscription.class, LAST + " Remote", RemoteKVSSubscription::new);
-
 
         addLeafRule(ObjectKeyValueStore.class, LAST + " Remote AKVS", RemoteKeyValueStore::new);
         addLeafRule(TopicPublisher.class, LAST + " topic publisher", RemoteTopicPublisher::new);
@@ -211,7 +206,6 @@ public class VanillaAsset implements Asset, Closeable {
         addWrappingRule(SimpleSubscription.class, LAST + "subscriber", RemoteSimpleSubscription::new, Reference.class);
 
         addLeafRule(Reference.class, LAST + "reference", RemoteReference::new);
-
 
         addLeafRule(TopologySubscription.class, LAST + " vanilla",
                 RemoteTopologySubscription::new);

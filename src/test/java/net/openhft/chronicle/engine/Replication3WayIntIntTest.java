@@ -67,6 +67,20 @@ public class Replication3WayIntIntTest {
         System.setProperty("ReplicationHandler3", "true");
     }
 
+    public ServerEndpoint serverEndpoint1;
+    public ServerEndpoint serverEndpoint2;
+    @Rule
+    public TestName testName = new TestName();
+    public String name;
+    private ServerEndpoint serverEndpoint3;
+    private AssetTree tree1;
+    private AssetTree tree2;
+    private AssetTree tree3;
+    private AtomicReference<Throwable> t = new AtomicReference<>();
+
+    public Replication3WayIntIntTest() {
+
+    }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
@@ -74,22 +88,6 @@ public class Replication3WayIntIntTest {
         Arrays.fill(objects, new Object[]{});
         return Arrays.asList(objects);
     }
-
-    public Replication3WayIntIntTest() {
-
-    }
-
-    public ServerEndpoint serverEndpoint1;
-    public ServerEndpoint serverEndpoint2;
-    private ServerEndpoint serverEndpoint3;
-
-    @Rule
-    public TestName testName = new TestName();
-    public String name;
-    private AssetTree tree1;
-    private AssetTree tree2;
-    private AssetTree tree3;
-    private AtomicReference<Throwable> t = new AtomicReference<>();
 
     @NotNull
     public static String resourcesDir() {
@@ -159,7 +157,6 @@ public class Replication3WayIntIntTest {
                 new ChronicleMapKeyValueStore(context.wireType(writeType).cluster(clusterTwo),
                         asset));
 
-
         return tree;
     }
 
@@ -171,7 +168,6 @@ public class Replication3WayIntIntTest {
         Files.deleteIfExists(Paths.get(OS.TARGET, name));
     }
 
-
     @Test
     public void testAllDataGetsReplicated() throws Exception {
 
@@ -180,23 +176,19 @@ public class Replication3WayIntIntTest {
                 .class);
         assertNotNull(map1);
 
-
         final ConcurrentMap<Integer, Integer> map2 = tree2.acquireMap(name, Integer.class, Integer
                 .class);
         assertNotNull(map2);
 
-
         final ConcurrentMap<Integer, Integer> map3 = tree3.acquireMap(name, Integer.class, Integer
                 .class);
         assertNotNull(map3);
-
 
         for (int i = 0; i < 70; i++) {
             map1.put(i, i);
         }
 
         assertFullRange(70, map1);
-
 
         Thread.sleep(1);
 
@@ -206,23 +198,18 @@ public class Replication3WayIntIntTest {
 
         assertFullRange(71, map1, map2);
 
-
         assertFullRange(71, map3);
 
         assertAllContain(70, map1, map2, map3);
 
-
         put(map1, 71);
         assertAllContain(71, map1, map2, map3);
-
 
         put(map2, 72);
         assertAllContain(72, map1, map2, map3);
 
-
         put(map3, 73);
         assertAllContain(73, map1, map2, map3);
-
 
         // you have to wait for it to become fully replicated
 
@@ -237,20 +224,17 @@ public class Replication3WayIntIntTest {
             Thread.sleep(100);
         }
 
-
         if (map1.size() != map2.size())
             System.out.println("map1=" + map1 + "\nmap2=" + map2);
 
         Assert.assertEquals(map1.size(), map2.size());
         Assert.assertEquals(map2.size(), map3.size());
 
-
     }
 
     private void put(Map<Integer, Integer> map, int toPut) {
         map.put(toPut, toPut);
     }
-
 
     @SafeVarargs
     private final void assertAllContain(int key, Map<Integer, Integer>... maps) {
@@ -274,13 +258,11 @@ public class Replication3WayIntIntTest {
         assert false;
     }
 
-
     @SafeVarargs
     private final void assertFullRange(int upperBoundExclusive, Map<Integer, Integer>... maps) {
 
         Outer:
         for (int x = 0; x < 100; x++) {
-
 
             for (Map<Integer, Integer> map : maps) {
                 for (int i = 0; i < upperBoundExclusive; i++) {

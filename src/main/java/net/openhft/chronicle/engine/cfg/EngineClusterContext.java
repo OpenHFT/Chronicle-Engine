@@ -27,16 +27,19 @@ import java.util.function.Function;
  */
 public class EngineClusterContext extends ClusterContext {
 
+    Asset assetRoot;
+    private byte localIdentifier;
     private EngineClusterContext(WireIn w) {
         super(w);
     }
 
-    Asset assetRoot;
-    private byte localIdentifier;
-
-
     public EngineClusterContext() {
 
+    }
+
+    private static byte localIdentifier(@NotNull Asset asset) {
+        HostIdentifier hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
+        return hostIdentifier.hostId();
     }
 
     public Function<NetworkContext, TcpEventHandler> tcpEventHandlerFactory() {
@@ -100,11 +103,4 @@ public class EngineClusterContext extends ClusterContext {
         networkContextFactory(new EngineWireNetworkContext.Factory());
         heartbeatTimeoutMs(20_000L);
     }
-
-    private static byte localIdentifier(@NotNull Asset asset) {
-        HostIdentifier hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
-        return hostIdentifier.hostId();
-    }
-
-
 }

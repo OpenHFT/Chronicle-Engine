@@ -31,35 +31,10 @@ import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
-
 /**
  * @author Rob Austin.
  */
 public class EngineWireNetworkContext<T extends EngineWireNetworkContext> extends VanillaNetworkContext<T> {
-
-
-    public static class Factory implements
-            MarshallableFunction<ClusterContext,
-                    NetworkContext>, Demarshallable {
-
-        @UsedViaReflection
-        private Factory(@NotNull WireIn wireIn) {
-        }
-
-        public Factory() {
-        }
-
-        @Override
-        public void writeMarshallable(@NotNull WireOut wire) {
-
-        }
-
-        @Override
-        public NetworkContext apply(ClusterContext context) {
-            return new EngineWireNetworkContext<>(((EngineClusterContext) context).assetRoot());
-        }
-    }
-
 
     private Asset rootAsset;
 
@@ -92,5 +67,26 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext> extend
                 '}';
     }
 
+    public static class Factory implements
+            MarshallableFunction<ClusterContext,
+                    NetworkContext>, Demarshallable {
+
+        @UsedViaReflection
+        private Factory(@NotNull WireIn wireIn) {
+        }
+
+        public Factory() {
+        }
+
+        @Override
+        public void writeMarshallable(@NotNull WireOut wire) {
+
+        }
+
+        @Override
+        public NetworkContext apply(ClusterContext context) {
+            return new EngineWireNetworkContext<>(((EngineClusterContext) context).assetRoot());
+        }
+    }
 }
 

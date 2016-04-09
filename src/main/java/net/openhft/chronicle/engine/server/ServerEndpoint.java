@@ -55,7 +55,6 @@ public class ServerEndpoint implements Closeable {
     @Nullable
     private AcceptorEventHandler eah;
 
-
     public ServerEndpoint(@NotNull String hostPortDescription,
                           @NotNull AssetTree assetTree) {
 
@@ -67,7 +66,6 @@ public class ServerEndpoint implements Closeable {
 
         assetTree.root().addView(ServerEndpoint.class, this);
     }
-
 
     @Nullable
     private AcceptorEventHandler start(@NotNull String hostPortDescription,
@@ -128,7 +126,6 @@ public class ServerEndpoint implements Closeable {
         this.eah = eah;
         return eah;
     }
-
 
     @Override
     public void close() {

@@ -531,7 +531,6 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
             this.identifier = identifier;
         }
 
-
         @Override
         public boolean nextEntry(Consumer<ReplicationEntry> consumer) {
 

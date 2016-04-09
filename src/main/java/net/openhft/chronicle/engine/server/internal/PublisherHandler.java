@@ -75,7 +75,6 @@ public class PublisherHandler<E> extends AbstractHandler {
                 return;
             }
 
-
             if (publish.contentEquals(eventName)) {
 
                 valueIn.marshallable(w -> {
@@ -130,5 +129,4 @@ public class PublisherHandler<E> extends AbstractHandler {
             return (P[]) this.params;
         }
     }
-
 }

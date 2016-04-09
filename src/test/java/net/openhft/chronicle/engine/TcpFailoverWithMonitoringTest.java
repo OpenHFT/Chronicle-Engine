@@ -196,6 +196,5 @@ public class TcpFailoverWithMonitoringTest {
     private SocketAddress toString(final ServerSocketChannel connection2) {
         return connection2.socket().getLocalSocketAddress();
     }
-
 }
 

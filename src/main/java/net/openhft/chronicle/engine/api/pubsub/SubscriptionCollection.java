@@ -43,5 +43,4 @@ public interface SubscriptionCollection<E> extends Closeable {
     default int subscriberCount() {
         return keySubscriberCount() + entrySubscriberCount() + topicSubscriberCount();
     }
-
 }

@@ -87,7 +87,6 @@ public class RoundTripTest {
         final Clusters testCluster = new Clusters(Collections.singletonMap("test",
                 new EngineCluster("test")));
 
-
         tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
                 VanillaMapView::new,
                 KeyValueStore.class);
@@ -225,7 +224,6 @@ public class RoundTripTest {
 //                Jvm.pause(10);
             }
 
-
             long timeTaken = System.currentTimeMillis() - start;
             final double target = 1000 * TIMES;
             System.out.println("TOTAL round trip latency=" + timeTaken + "ms (target = " +
@@ -242,6 +240,5 @@ public class RoundTripTest {
         }
 
     }
-
 }
 

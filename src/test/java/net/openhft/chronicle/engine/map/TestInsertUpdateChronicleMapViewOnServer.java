@@ -162,5 +162,4 @@ public class TestInsertUpdateChronicleMapViewOnServer {
             Assert.assertTrue(event instanceof UpdatedEvent);
         }
     }
-
 }

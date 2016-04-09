@@ -187,13 +187,11 @@ public class Replication2WayTest {
     @Test
     public void testBootstrapAllFromMap1() throws InterruptedException {
 
-
         final ConcurrentMap<String, String> map1 = tree1.acquireMap(name, String.class, String
                 .class);
         assertNotNull(map1);
 
         map1.put("hello1", "world1");
-
 
         final ConcurrentMap<String, String> map2 = tree2.acquireMap(name, String.class, String
                 .class);
@@ -280,7 +278,6 @@ public class Replication2WayTest {
         Assert.assertEquals(2, map2Updates.get());
     }
 
-
     @Test
     public void testBootstrapAllFromMap1WithSubscription2() throws InterruptedException {
 
@@ -325,6 +322,5 @@ public class Replication2WayTest {
         Assert.assertEquals(2, map1Updates.get());
         Assert.assertEquals(2, map2Updates.get());
     }
-
 }
 

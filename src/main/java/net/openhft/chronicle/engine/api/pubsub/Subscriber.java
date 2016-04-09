@@ -42,5 +42,4 @@ public interface Subscriber<E> extends ISubscriber, Consumer<E> {
             throw Jvm.rethrow(ise);
         }
     }
-
 }

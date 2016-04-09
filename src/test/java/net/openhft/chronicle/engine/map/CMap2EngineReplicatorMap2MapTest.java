@@ -83,14 +83,12 @@ public class CMap2EngineReplicatorMap2MapTest {
         map2.put("hello2", "world2");
         map3.put("hello3", "world3");
 
-
         while (iterator1for2.hasNext()) {
             iterator1for2.nextEntry(replicator2::applyReplication);
         }
         while (iterator1for3.hasNext()) {
             iterator1for3.nextEntry(replicator3::applyReplication);
         }
-
 
         while (iterator2for1.hasNext()) {
             iterator2for1.nextEntry(replicator1::applyReplication);
@@ -144,7 +142,6 @@ public class CMap2EngineReplicatorMap2MapTest {
 
         iterator1for2.dirtyEntries(0);
 
-
         while (iterator1for2.hasNext()) {
             iterator1for2.nextEntry(replicator2::applyReplication);
         }
@@ -181,6 +178,5 @@ public class CMap2EngineReplicatorMap2MapTest {
             Assert.assertEquals(3, m.size());
         }
     }
-
 }
 

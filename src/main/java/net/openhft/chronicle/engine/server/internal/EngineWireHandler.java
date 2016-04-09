@@ -135,7 +135,6 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
         this.systemHandler = new SystemHandler();
     }
 
-
     @Override
     protected void onInitialize() {
         EngineWireNetworkContext nc = nc();
@@ -190,7 +189,6 @@ assert outWire.startUse();
                     if (LOG.isDebugEnabled()) LOG.debug("received system-meta-data");
                     return;
                 }
-
 
                 readCsp(wire);
                 readTid(wire);
@@ -276,7 +274,6 @@ assert outWire.startUse();
         }
     }
 
-
     @Override
     protected void onRead(@NotNull final DocumentContext inDc,
                           @NotNull final WireOut out) {
@@ -294,7 +291,6 @@ assert outWire.startUse();
                 //log every message
                 logYamlToStandardOut(in);
             }
-
 
             if (inDc.isMetaData()) {
                 this.metaDataConsumer.readMarshallable(in);
@@ -471,7 +467,6 @@ assert outWire.startUse();
         if (csp.contentEquals(event)) {
             read.textTo(cspText);
 
-
             tryReadEvent(wireIn, (that, wire) -> {
                 final StringBuilder e = Wires.acquireStringBuilder();
                 final ValueIn valueIn = wireIn.readEventName(e);
@@ -483,7 +478,6 @@ assert outWire.startUse();
                 mapWireHandler.setCid(cspText.toString(), cid1);
                 return true;
             });
-
 
         } else if (CoreFields.cid.contentEquals(event)) {
             final long cid = read.int64();

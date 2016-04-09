@@ -32,7 +32,6 @@ import java.util.concurrent.ConcurrentSkipListMap;
 public class Clusters extends AbstractMarshallable implements Marshallable, Closeable {
     private final Map<String, EngineCluster> clusterMap;
 
-
     public Clusters() {
         this.clusterMap = new ConcurrentSkipListMap<>();
     }

@@ -28,30 +28,8 @@ public class EngineConnectionManager implements ConnectionManager {
     private ConcurrentHashMap<NetworkContext, AtomicBoolean> isConnected = new
             ConcurrentHashMap<>();
 
-
     private EngineConnectionManager() {
 
-    }
-
-
-    public static class Factory implements
-            Supplier<EngineConnectionManager>,
-            Demarshallable,
-            WriteMarshallable {
-
-        @UsedViaReflection
-        private Factory(@NotNull WireIn wireIn) {
-        }
-
-        @Override
-        public void writeMarshallable(@NotNull WireOut wire) {
-
-        }
-
-        @Override
-        public EngineConnectionManager get() {
-            return new EngineConnectionManager();
-        }
     }
 
     @Override
@@ -73,4 +51,23 @@ public class EngineConnectionManager implements ConnectionManager {
             connectionListeners.forEach(l -> l.onConnectionChange(nc, isConnected));
     }
 
+    public static class Factory implements
+            Supplier<EngineConnectionManager>,
+            Demarshallable,
+            WriteMarshallable {
+
+        @UsedViaReflection
+        private Factory(@NotNull WireIn wireIn) {
+        }
+
+        @Override
+        public void writeMarshallable(@NotNull WireOut wire) {
+
+        }
+
+        @Override
+        public EngineConnectionManager get() {
+            return new EngineConnectionManager();
+        }
+    }
 }

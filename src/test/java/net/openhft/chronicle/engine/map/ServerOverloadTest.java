@@ -66,7 +66,6 @@ public class ServerOverloadTest extends ThreadMonitoringTest {
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
-
     public ServerOverloadTest(boolean isRemote, WireType wireType) {
         this.isRemote = isRemote;
         this.wireType = wireType;
@@ -105,7 +104,6 @@ public class ServerOverloadTest extends ThreadMonitoringTest {
             assetTree = serverAssetTree;
         }
 
-
     }
 
     @After
@@ -122,7 +120,6 @@ public class ServerOverloadTest extends ThreadMonitoringTest {
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
     }
-
 
     @Test
     public void testThatSendingAlotOfDataToTheServer() throws Exception {
@@ -144,6 +141,5 @@ public class ServerOverloadTest extends ThreadMonitoringTest {
         System.out.println("gets here");
         Assert.assertEquals(SIZE, map.size());
     }
-
 }
 

@@ -66,14 +66,12 @@ public class QueueSimpleSubscription<E> implements SimpleSubscription<E> {
         registerSubscriber(false, 0, subscriber);
     }
 
-
     public void registerSubscriber(boolean bootstrap,
                                    int throttlePeriodMs,
                                    Subscriber<E> subscriber) throws AssetNotFoundException {
 
         AtomicBoolean terminate = new AtomicBoolean();
         subscribers.put(subscriber, terminate);
-
 
         final QueueView.Tailer<?, E> tailer = chronicleQueue.tailer();
 
@@ -103,14 +101,12 @@ public class QueueSimpleSubscription<E> implements SimpleSubscription<E> {
 
     }
 
-
     @Override
     public void unregisterSubscriber(Subscriber subscriber) {
         final AtomicBoolean terminator = subscribers.remove(subscriber);
         if (terminator != null)
             terminator.set(true);
     }
-
 
     @Override
     public int keySubscriberCount() {

@@ -39,7 +39,6 @@ class GenericWireAdapter<K, V> implements WireAdapter<K, V> {
             = (v, e) -> v.marshallable(w -> w.write(() -> "key").object(e.getKey())
             .write(() -> "value").object(e.getValue()));
 
-
     // if its a string builder re-uses it
     private final ThreadLocal<CharSequence> usingKey = ThreadLocal.withInitial(StringBuilder::new);
     private final ThreadLocal<CharSequence> usingValue = ThreadLocal.withInitial(StringBuilder::new);

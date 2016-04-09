@@ -94,10 +94,8 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         });
     }
 
-
     @AfterClass
     public static void tearDownClass() {
-
 
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
@@ -135,7 +133,6 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
             assetTree = client.forRemoteAccess(hostPortDescription,
                     WireType.BINARY, x -> t.set(x));
 
-
         } else {
             assetTree = (new VanillaAssetTree(1)).forTesting(x -> t.set(x));
             serverEndpoint = null;
@@ -146,7 +143,6 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
     @After
     public void after() throws Throwable {
-
 
         if (serverEndpoint != null)
             serverEndpoint.close();
@@ -159,7 +155,6 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         final Throwable th = t.getAndSet(null);
         if (th != null) throw Jvm.rethrow(th);
     }
-
 
     // todo fix for remote
     @Test
@@ -189,7 +184,6 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         assertEquals("[]", values0.toString());
         deleteFiles(publisher);
     }
-
 
     @Test
     public void testPublishAtIndexCheckIndex() throws InterruptedException {
@@ -234,7 +228,6 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         }
 
     }
-
 
     @Test
     public void testStringPublishToAKeyTopic() throws InterruptedException {
@@ -300,7 +293,6 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
             deleteFiles(publisher);
         }
     }
-
 
     @Test
     @Ignore("TODO FIX Too many results")
@@ -403,6 +395,5 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
             deleteFiles((ChronicleQueueView) ((QueueTopicPublisher) p).underlying());
 
     }
-
 }
 

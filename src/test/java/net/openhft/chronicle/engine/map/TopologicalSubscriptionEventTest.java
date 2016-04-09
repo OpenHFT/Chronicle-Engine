@@ -168,6 +168,5 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
             }
         });
     }
-
 }
 

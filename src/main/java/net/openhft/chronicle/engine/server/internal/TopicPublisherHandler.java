@@ -111,7 +111,6 @@ public class TopicPublisherHandler<T, M> extends AbstractHandler {
             outWire.writeDocument(true, wire -> outWire.writeEventName(tid).int64(inputTid));
             writeData(inWire.bytes(), out -> {
 
-
                 if (getNextAtIndex.contentEquals(eventName)) {
                     out.writeEventName(reply).object(((QueueView) view).get(valueIn.int64()));
                     return;
@@ -121,7 +120,6 @@ public class TopicPublisherHandler<T, M> extends AbstractHandler {
                     out.writeEventName(reply).object(((QueueView) view).get(valueIn.object()));
                     return;
                 }
-
 
                 if (publishAndIndex.contentEquals(eventName)) {
 
@@ -137,7 +135,6 @@ public class TopicPublisherHandler<T, M> extends AbstractHandler {
                     out.writeEventName(reply).int64(index);
                     return;
                 }
-
 
             });
 

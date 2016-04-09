@@ -130,6 +130,5 @@ public class TcpManyClientConnectionsTest extends ThreadMonitoringTest {
 
         }
     }
-
 }
 

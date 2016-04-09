@@ -36,5 +36,4 @@ public class QueueSource {
     public Integer sourceHostId(@NotNull String uri) {
         return sourceB.apply(uri);
     }
-
 }

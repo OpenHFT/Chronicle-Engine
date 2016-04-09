@@ -115,5 +115,4 @@ public class ManyMapsTest {
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
     }
-
 }

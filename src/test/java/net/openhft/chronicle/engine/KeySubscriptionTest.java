@@ -132,7 +132,6 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
 
         BlockingQueue<String> q = new ArrayBlockingQueue<>(2);
 
-
         final MapView<String, String> server = clientTree.acquireMap(NAME, String.class,
                 String.class);
 
@@ -156,10 +155,8 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
         server.put(key, "val1");
         server.put(key, "val2");
 
-
         Assert.assertEquals("val1", q.poll(10, TimeUnit.SECONDS));
         Assert.assertEquals("val2", q.poll(10, TimeUnit.SECONDS));
     }
-
 }
 

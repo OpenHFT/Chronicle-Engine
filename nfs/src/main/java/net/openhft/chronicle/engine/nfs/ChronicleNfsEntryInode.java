@@ -34,5 +34,4 @@ public class ChronicleNfsEntryInode extends Inode {
     public static ChronicleNfsEntryInode getINode(@NotNull MapView mapView, @NotNull String key) {
         return POOL.get(new ChronicleNfsEntryProxy(mapView, key));
     }
-
 }

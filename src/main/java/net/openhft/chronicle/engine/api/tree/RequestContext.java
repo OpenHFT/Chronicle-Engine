@@ -137,7 +137,6 @@ public class RequestContext implements Cloneable {
         CLASS_ALIASES.addAlias(aClass, aClass.getSimpleName());
     }
 
-
     @NotNull
     public static RequestContext requestContext() {
         return new RequestContext();
@@ -232,7 +231,6 @@ public class RequestContext implements Cloneable {
         parser.register(() -> "entries", (s, v, $) -> v.int64(this, (o, x) -> o.entries = x));
         parser.register(() -> "averageValueSize", (s, v, $) -> v.int64(this, (o, x) -> o.averageValueSize = x));
 
-
         return parser;
     }
 
@@ -304,7 +302,6 @@ public class RequestContext implements Cloneable {
         this.type = clazz;
         return this;
     }
-
 
     @NotNull
     public RequestContext valueType(Class type2) {
@@ -561,7 +558,6 @@ public class RequestContext implements Cloneable {
         return this;
     }
 
-
     public enum Operation {
         END_SUBSCRIPTION_AFTER_BOOTSTRAP, BOOTSTRAP;
 
@@ -576,5 +572,4 @@ public class RequestContext implements Cloneable {
             }
         }
     }
-
 }

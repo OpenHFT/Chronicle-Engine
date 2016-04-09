@@ -179,6 +179,5 @@ public class RemoteKVSSubscription<K, V> extends AbstractRemoteSubscription<MapE
         registerSubscriber(rc.clone().messageType(rc.messageType()).elementType(MapEvent.class),
                 subscription::notifyEvent, Filter.empty());
     }
-
 }
 

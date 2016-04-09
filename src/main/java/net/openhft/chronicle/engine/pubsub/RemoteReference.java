@@ -66,7 +66,6 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
         this.messageClass = messageClass;
     }
 
-
     private static String toUri(String fullName, Class messageClass) {
         StringBuilder uri = new StringBuilder();
         uri.append(fullName).append("?view=reference");
@@ -175,7 +174,6 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
 
         hub.subscribe(asyncSubscription);
     }
-
 
     @Override
     public Class getType() {

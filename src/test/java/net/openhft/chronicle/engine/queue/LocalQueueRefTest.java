@@ -92,7 +92,6 @@ public class LocalQueueRefTest extends ThreadMonitoringTest {
         assertEquals("[]", values.toString());
     }
 
-
     @Test
     @Ignore("TODO FIX too many results")
     public void test2() throws InterruptedException {
@@ -113,6 +112,5 @@ public class LocalQueueRefTest extends ThreadMonitoringTest {
         Jvm.pause(100);
         assertEquals("[]", values.toString());
     }
-
 }
 

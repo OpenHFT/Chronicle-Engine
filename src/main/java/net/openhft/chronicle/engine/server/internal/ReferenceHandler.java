@@ -82,7 +82,6 @@ public class ReferenceHandler<E, T> extends AbstractHandler {
 
             if (registerSubscriber.contentEquals(eventName)) {
 
-
                 if (view instanceof QueueReference) {
                     System.out.println("");
                 }
@@ -244,5 +243,4 @@ public class ReferenceHandler<E, T> extends AbstractHandler {
             return (P[]) this.params;
         }
     }
-
 }

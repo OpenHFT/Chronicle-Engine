@@ -179,7 +179,6 @@ public class ReplicationHandler2<E> extends AbstractHandler {
                 });
             }
 
-
         }
     };
 

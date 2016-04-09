@@ -39,6 +39,7 @@ public class QueueReference<T, M> implements Reference<M> {
     private final ChronicleQueueView<T, M> chronicleQueue;
     private final T name;
     private final Asset asset;
+    private final Map<Subscriber<M>, AtomicBoolean> subscribers = new HashMap<>();
     private EventLoop eventLoop;
     private QueueView.Tailer<T, M> tailer;
 
@@ -75,8 +76,6 @@ public class QueueReference<T, M> implements Reference<M> {
         throw new UnsupportedOperationException();
     }
 
-    private final Map<Subscriber<M>, AtomicBoolean> subscribers = new HashMap<>();
-
     @Override
     public void registerSubscriber(boolean bootstrap,
                                    int throttlePeriodMs,
@@ -110,14 +109,12 @@ public class QueueReference<T, M> implements Reference<M> {
 
     }
 
-
     @Override
     public void unregisterSubscriber(Subscriber subscriber) {
         final AtomicBoolean terminator = subscribers.remove(subscriber);
         if (terminator != null)
             terminator.set(true);
     }
-
 
     @Override
     public int subscriberCount() {
@@ -128,7 +125,5 @@ public class QueueReference<T, M> implements Reference<M> {
     public Class getType() {
         return eClass;
     }
-
-
 }
 

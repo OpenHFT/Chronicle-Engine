@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface QueueView<T, M> extends TopicPublisher<T, M>, KeyedView {
 
-
     /**
      * returns a {@link Excerpt} at a given index
      *
@@ -54,7 +53,6 @@ public interface QueueView<T, M> extends TopicPublisher<T, M>, KeyedView {
      */
     long publishAndIndex(@NotNull T topic, @NotNull M message);
 
-
     interface Excerpt<T, M> {
         T topic();
 
@@ -70,5 +68,4 @@ public interface QueueView<T, M> extends TopicPublisher<T, M>, KeyedView {
         @Nullable
         Excerpt<T, M> read();
     }
-
 }

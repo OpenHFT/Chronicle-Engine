@@ -83,7 +83,6 @@ public class Replication10WayTest {
             serverEndpoint[i] = new ServerEndpoint("host.port" + (i + 1), tree[i]);
         }
 
-
     }
 
     @AfterClass
@@ -145,7 +144,6 @@ public class Replication10WayTest {
             assertNotNull(maps[i]);
             maps[i].put("hello" + (i + 1), "world" + (i + 1));
         }
-
 
         OUTER:
         for (int i = 0; i < 100; i++) {

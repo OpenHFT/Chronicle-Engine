@@ -37,7 +37,6 @@ public class RemoteQueueView<T, M> extends RemoteTopicPublisher<T, M> implements
         super(requestContext, asset, "QueueView");
     }
 
-
     @Override
     public Excerpt<T, M> get(long index) {
         //noinspection unchecked
@@ -54,6 +53,4 @@ public class RemoteQueueView<T, M> extends RemoteTopicPublisher<T, M> implements
     public long publishAndIndex(@NotNull T topic, @NotNull M message) {
         return proxyReturnLongWithArgs(publishAndIndex, topic, message);
     }
-
-
 }

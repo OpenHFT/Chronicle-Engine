@@ -176,6 +176,5 @@ public class SubscriptionTest extends ThreadMonitoringTest {
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
     }
-
 }
 

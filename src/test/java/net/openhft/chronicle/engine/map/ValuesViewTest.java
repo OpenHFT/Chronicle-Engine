@@ -131,6 +131,5 @@ public class ValuesViewTest extends ThreadMonitoringTest {
         Assert.assertEquals(Arrays.asList("1", "2", "2"), result);
 
     }
-
 }
 

@@ -69,6 +69,11 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
 
     private static final ScheduledExecutorService DELAYED_CLOSER = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("ChronicleMapKeyValueStore Closer", true));
     private static final Logger LOG = LoggerFactory.getLogger(ChronicleMapKeyValueStore.class);
+
+    static {
+        CLASS_ALIASES.addAlias(MapReplicationHandler.class);
+    }
+
     private final ChronicleMap<K, V> chronicleMap;
     @NotNull
     private final ObjectSubscription<K, V> subscriptions;
@@ -85,10 +90,6 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
     private Class keyType;
     private Class valueType;
     private SessionDetails replicationSessionDetails;
-
-    static {
-        CLASS_ALIASES.addAlias(MapReplicationHandler.class);
-    }
 
     public ChronicleMapKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset) {
         String basePath = context.basePath();
@@ -200,7 +201,6 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
                         continue;
                     }
 
-
                     connectionManager.addListener((nc, isConnected) -> {
 
                         if (!isConnected)
@@ -220,7 +220,6 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
                     continue;
                 }
 
-
                 if (remoteIdentifier <= localIdentifier) {
                     if (LOG.isDebugEnabled())
                         LOG.debug("skipping : attempting to connect to localIdentifier=" +
@@ -233,7 +232,6 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
                             "localIdentifier=" + localIdentifier + ", " +
                             "remoteIdentifier=" + remoteIdentifier);
 
-
                 final TcpChannelHub tcpChannelHub = hostDetails.acquireTcpChannelHub(asset, eventLoop, context.wireType());
                 final ReplicationHub replicationHub = new ReplicationHub(context, tcpChannelHub,
                         eventLoop, isClosed, context.wireType());
@@ -245,7 +243,6 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
             }
         }
     }
-
 
     @NotNull
     @Override

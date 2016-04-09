@@ -71,7 +71,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         this(null, context, asset);
     }
 
-
     public ChronicleQueueView(@Nullable ChronicleQueue queue, @NotNull RequestContext context,
                               @NotNull Asset asset) {
 
@@ -95,6 +94,35 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         if (path == null)
             return ".";
         return new File(path).getParentFile().getParentFile() + "/src/test/resources";
+    }
+
+    public static WriteMarshallable newSource(long lastIndexReceived, Class topicType, Class elementType) {
+        try {
+            Class<?> aClass = Class.forName("software.chronicle.enterprise.queue.QueueSourceReplicationHandler");
+            Constructor<?> declaredConstructor = aClass.getDeclaredConstructor(long.class, Class.class,
+                    Class.class);
+            return (WriteMarshallable) declaredConstructor.newInstance(lastIndexReceived,
+                    topicType, elementType);
+        } catch (Exception e) {
+            IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
+                    " required to run this code. Please contact sales@chronicle.software");
+            LOG.error("", e);
+            throw licence;
+        }
+    }
+
+    public static WriteMarshallable newSync(Class topicType, Class elementType) {
+        try {
+            Class<?> aClass = Class.forName("software.chronicle.enterprise.queue.QueueSyncReplicationHandler");
+            Constructor<?> declaredConstructor = aClass.getConstructor(Class.class, Class.class);
+            return (WriteMarshallable) declaredConstructor.newInstance(topicType, elementType);
+        } catch (Exception e) {
+            IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
+                    " required to run this code." +
+                    "Please contact sales@chronicle.software");
+            LOG.error("", e);
+            throw licence;
+        }
     }
 
     public ChronicleQueue chronicleQueue() {
@@ -172,35 +200,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         }
     }
 
-    public static WriteMarshallable newSource(long lastIndexReceived, Class topicType, Class elementType) {
-        try {
-            Class<?> aClass = Class.forName("software.chronicle.enterprise.queue.QueueSourceReplicationHandler");
-            Constructor<?> declaredConstructor = aClass.getDeclaredConstructor(long.class, Class.class,
-                    Class.class);
-            return (WriteMarshallable) declaredConstructor.newInstance(lastIndexReceived,
-                    topicType, elementType);
-        } catch (Exception e) {
-            IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
-                    " required to run this code. Please contact sales@chronicle.software");
-            LOG.error("", e);
-            throw licence;
-        }
-    }
-
-    public static WriteMarshallable newSync(Class topicType, Class elementType) {
-        try {
-            Class<?> aClass = Class.forName("software.chronicle.enterprise.queue.QueueSyncReplicationHandler");
-            Constructor<?> declaredConstructor = aClass.getConstructor(Class.class, Class.class);
-            return (WriteMarshallable) declaredConstructor.newInstance(topicType, elementType);
-        } catch (Exception e) {
-            IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
-                    " required to run this code." +
-                    "Please contact sales@chronicle.software");
-            LOG.error("", e);
-            throw licence;
-        }
-    }
-
     private long lastIndexReceived() {
         try {
             return threadLocalAppender().lastIndexAppended();
@@ -257,7 +256,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         return threadLocal.get().appender;
     }
 
-
     public Tailer<T, M> tailer() {
         return () -> ChronicleQueueView.this.tailer0(chronicleQueue.createTailer());
     }
@@ -278,7 +276,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         }
 
     }
-
 
     /**
      * @param index gets the except at the given index
@@ -307,7 +304,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
                     .index(excerptTailer.index());
         }
     }
-
 
     @Override
     public Excerpt<T, M> get(T topic) {
@@ -342,7 +338,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         publishAndIndex(topic, message);
     }
 
-
     /**
      * @param consumer a consumer that provides that name of the event and value contained within
      *                 the except
@@ -362,7 +357,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
             throw Jvm.rethrow(e);
         }
     }
-
 
     public long publishAndIndex(@NotNull T topic, @NotNull M message) {
 
@@ -409,7 +403,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
     public WireType wireType() {
         throw new UnsupportedOperationException("todo");
     }
-
 
     public void close() throws IOException {
         chronicleQueue.close();
@@ -507,7 +500,5 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
             excerpt = new LocalExcept();
         }
     }
-
-
 }
 

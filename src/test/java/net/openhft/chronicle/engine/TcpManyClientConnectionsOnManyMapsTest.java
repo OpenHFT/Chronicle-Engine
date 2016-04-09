@@ -204,6 +204,5 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
             });
         }
     }
-
 }
 
