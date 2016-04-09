@@ -103,11 +103,10 @@ public class InsertedEvent<K, V> extends AbstractMarshallable implements MapEven
 
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
-        wire.read(MapEventFields.assetName).text(this, (o, s) -> assetName = s);
-        wire.read(MapEventFields.key)
-                .object(Object.class, this, (o, x) -> o.key = (K) x);
-        wire.read(MapEventFields.value).object(Object.class, this, (o, x) -> o.value = (V) x);
-        wire.read(MapEventFields.isReplicationEvent).bool(this, (o, x) -> o.isReplicationEvent = x);
+        assetName = wire.read(MapEventFields.assetName).text();
+        key = wire.read(MapEventFields.key).object((Class<K>) Object.class);
+        value = wire.read(MapEventFields.value).object((Class<V>) Object.class);
+        isReplicationEvent = wire.read(MapEventFields.isReplicationEvent).bool();
     }
 
     @Override
