@@ -19,6 +19,7 @@
 package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
@@ -61,6 +62,7 @@ public class BootStrapTest {
     private AssetTree client2;
     private VanillaAssetTree serverAssetTree1;
     private ServerEndpoint serverEndpoint1;
+    private ThreadDump threadDump;
 
     public BootStrapTest() {
     }
@@ -68,6 +70,11 @@ public class BootStrapTest {
     @Parameterized.Parameters
     public static List<Object[]> data() {
         return Arrays.asList(new Object[5][0]);
+    }
+
+    @Before
+    public void threadDump() {
+        threadDump = new ThreadDump();
     }
 
     @After
@@ -107,6 +114,8 @@ public class BootStrapTest {
 
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
+
+        threadDump.assertNoNewThreads();
     }
 
     /**

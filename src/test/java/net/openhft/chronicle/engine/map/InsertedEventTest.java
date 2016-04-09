@@ -19,10 +19,13 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
+import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.Factor;
 import net.openhft.chronicle.wire.BinaryWire;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.YamlLogging;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -34,6 +37,19 @@ import static org.junit.Assert.assertEquals;
 public class InsertedEventTest {
     static {
         ClassAliasPool.CLASS_ALIASES.addAlias(InsertedEvent.class, Factor.class);
+    }
+
+
+    private ThreadDump threadDump;
+
+    @Before
+    public void threadDump() {
+        threadDump = new ThreadDump();
+    }
+
+    @After
+    public void checkThreadDump() {
+        threadDump.assertNoNewThreads();
     }
 
     @Test

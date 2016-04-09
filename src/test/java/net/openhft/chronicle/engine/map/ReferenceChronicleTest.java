@@ -20,6 +20,7 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
@@ -57,6 +58,13 @@ public class ReferenceChronicleTest {
     private static AtomicReference<Throwable> t = new AtomicReference();
     private String hostPortToken;
 
+    private ThreadDump threadDump;
+
+    @Before
+    public void threadDump() {
+        threadDump = new ThreadDump();
+    }
+
     @Before
     public void before() throws IOException {
         hostPortToken = this.getClass().getSimpleName() + ".host.port";
@@ -73,6 +81,11 @@ public class ReferenceChronicleTest {
     public void afterMethod() {
         final Throwable th = t.getAndSet(null);
         if (th != null) throw Jvm.rethrow(th);
+    }
+
+    @After
+    public void checkThreadDump() {
+        threadDump.assertNoNewThreads();
     }
 
     @Ignore("test keeps failing on TC")
@@ -105,6 +118,7 @@ public class ReferenceChronicleTest {
         serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
                 new ChronicleMapKeyValueStore(context.basePath(OS.TARGET).entries(50).averageValueSize(2_000_000), asset));
         test(serverAssetTree);
+        serverAssetTree.close();
 
     }
 

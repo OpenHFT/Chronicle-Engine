@@ -21,6 +21,7 @@ package net.openhft.chronicle.engine;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
+import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -36,10 +37,7 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -71,6 +69,9 @@ public class RoundTripTest {
     private static String CONNECTION_1 = "CONNECTION_1";
     private static String CONNECTION_2 = "CONNECTION_2";
     private static String CONNECTION_3 = "CONNECTION_3";
+
+
+    private ThreadDump threadDump;
 
     @NotNull
     static AssetTree create(final int hostId, WireType writeType, final List<EngineHostDetails> hostDetails) {
@@ -115,6 +116,16 @@ public class RoundTripTest {
         char[] chars = new char[size - 7];
         Arrays.fill(chars, c);
         return counter++ + " " + new String(chars);
+    }
+
+    @Before
+    public void threadDump() {
+        threadDump = new ThreadDump();
+    }
+
+    @After
+    public void checkThreadDump() {
+        threadDump.assertNoNewThreads();
     }
 
     @After

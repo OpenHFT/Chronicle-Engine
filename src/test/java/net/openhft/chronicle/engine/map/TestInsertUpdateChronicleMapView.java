@@ -19,6 +19,7 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -29,7 +30,6 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -53,15 +53,15 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 @RunWith(value = Parameterized.class)
 public class TestInsertUpdateChronicleMapView {
 
-    private static final String NAME = "test";
-    @NotNull
+    private static final AtomicReference<Throwable> t = new AtomicReference();
 
-    private static AtomicReference<Throwable> t = new AtomicReference();
     private final WireType wireType;
     public String connection = "RemoteSubscriptionTest.host.port";
     private AssetTree clientAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
+    private ThreadDump threadDump;
+
     public TestInsertUpdateChronicleMapView(WireType wireType) {
         this.wireType = wireType;
     }
@@ -78,6 +78,11 @@ public class TestInsertUpdateChronicleMapView {
     public void afterMethod() {
         final Throwable th = t.getAndSet(null);
         if (th != null) throw Jvm.rethrow(th);
+    }
+
+    @Before
+    public void threadDump() {
+        threadDump = new ThreadDump();
     }
 
     @Before
@@ -103,13 +108,14 @@ public class TestInsertUpdateChronicleMapView {
     @After
     public void after() throws IOException {
         clientAssetTree.close();
-        Jvm.pause(1000);
+        Jvm.pause(100);
         if (serverEndpoint != null)
             serverEndpoint.close();
         serverAssetTree.close();
 
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
+        threadDump.assertNoNewThreads();
     }
 
     @Test

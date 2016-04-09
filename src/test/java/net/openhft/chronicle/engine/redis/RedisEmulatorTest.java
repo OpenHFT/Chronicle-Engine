@@ -19,6 +19,7 @@
 package net.openhft.chronicle.engine.redis;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
@@ -48,6 +49,7 @@ public class RedisEmulatorTest {
     private static MapView myDoubleHash;
 
     private static AtomicReference<Throwable> t = new AtomicReference();
+    private ThreadDump threadDump;
 
     @BeforeClass
     public static void setup() throws IOException{
@@ -82,6 +84,16 @@ public class RedisEmulatorTest {
     public void afterMethod() {
         final Throwable th = t.getAndSet(null);
         if (th != null) throw Jvm.rethrow(th);
+    }
+
+    @Before
+    public void threadDump() {
+        threadDump = new ThreadDump();
+    }
+
+    @After
+    public void checkThreadDump() {
+        threadDump.assertNoNewThreads();
     }
 
     @Before

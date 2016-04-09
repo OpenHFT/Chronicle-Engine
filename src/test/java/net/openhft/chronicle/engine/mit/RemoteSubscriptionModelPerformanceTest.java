@@ -18,6 +18,7 @@ package net.openhft.chronicle.engine.mit;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
@@ -64,6 +65,7 @@ public class RemoteSubscriptionModelPerformanceTest {
     private static ServerEndpoint serverEndpoint;
     private static AtomicReference<Throwable> t = new AtomicReference();
     private final String _mapName = "PerfTestMap" + counter.incrementAndGet();
+    private ThreadDump threadDump;
 
     @BeforeClass
     public static void setUpBeforeClass() throws IOException {
@@ -99,6 +101,16 @@ public class RemoteSubscriptionModelPerformanceTest {
     public void afterMethod() {
         final Throwable th = t.getAndSet(null);
         if (th != null) throw Jvm.rethrow(th);
+    }
+
+    @Before
+    public void threadDump() {
+        threadDump = new ThreadDump();
+    }
+
+    @After
+    public void checkThreadDump() {
+        threadDump.assertNoNewThreads();
     }
 
     @Before
@@ -276,7 +288,7 @@ public class RemoteSubscriptionModelPerformanceTest {
 
         clientAssetTree.unregisterSubscriber(_mapName, mapEventSubscriber);
 
-        Jvm.pause(1000);
+        Jvm.pause(100);
         Assert.assertEquals(0, subscription.entrySubscriberCount());
     }
 

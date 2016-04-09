@@ -27,7 +27,6 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,7 +35,6 @@ import java.io.IOException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * test using the listener both remotely or locally via the engine
@@ -49,16 +47,10 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
     public static final WireType WIRE_TYPE = WireType.TEXT;
     private static final String NAME = "test";
     private static final String CONNECTION = "host.port.KeySubscriptionTest";
-    private static AtomicReference<Throwable> t = new AtomicReference();
+
     private AssetTree clientTree;
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
-
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
-    }
 
     @Before
     public void before() throws IOException {
@@ -67,12 +59,9 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
         TCPRegistry.createServerSocketChannelFor(CONNECTION);
         serverEndpoint = new ServerEndpoint(CONNECTION, serverAssetTree);
         clientTree = new VanillaAssetTree().forRemoteAccess(CONNECTION, WIRE_TYPE, x -> t.set(x));
-
-        YamlLogging.setAll(false);
     }
 
-    @After
-    public void after() throws IOException {
+    public void preAfter() {
 
         clientTree.close();
 

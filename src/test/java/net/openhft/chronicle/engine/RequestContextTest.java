@@ -16,7 +16,10 @@
 
 package net.openhft.chronicle.engine;
 
+import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
@@ -27,6 +30,17 @@ import static org.junit.Assert.assertEquals;
  */
 public class RequestContextTest {
 
+    private ThreadDump threadDump;
+
+    @Before
+    public void threadDump() {
+        threadDump = new ThreadDump();
+    }
+
+    @After
+    public void checkThreadDump() {
+        threadDump.assertNoNewThreads();
+    }
     @Test
     public void testParsing() {
         String uri = "/chronicleMapString?" +

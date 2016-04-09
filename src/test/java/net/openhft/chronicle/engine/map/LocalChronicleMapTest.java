@@ -17,11 +17,9 @@
 package net.openhft.chronicle.engine.map;
 
 import jdk.nashorn.internal.ir.annotations.Ignore;
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.map.MapClientTest.LocalMapSupplier;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -30,7 +28,6 @@ import org.junit.rules.TestName;
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
@@ -47,17 +44,17 @@ import static org.junit.Assert.*;
 @Ignore
 public class LocalChronicleMapTest extends JSR166TestCase {
     private static int s_port = 11050;
-    private static AtomicReference<Throwable> t = new AtomicReference();
     @NotNull
     @Rule
     public TestName name = new TestName();
 
+
     @NotNull
-    private static ClosableMapSupplier<Integer, String> newIntString() throws IOException {
+    private ClosableMapSupplier<Integer, String> newIntString() throws IOException {
         final LocalMapSupplier supplier = new LocalMapSupplier<>(Integer
                 .class, String.class, new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x)));
 
-        return new ClosableMapSupplier() {
+        return new ClosableMapSupplier<Integer, String>() {
 
             @NotNull
             @Override
@@ -74,16 +71,16 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     }
 
     @NotNull
-    private static ClosableMapSupplier<CharSequence, CharSequence> newStrStrMap() throws
+    private ClosableMapSupplier<CharSequence, CharSequence> newStrStrMap() throws
             IOException {
 
         final LocalMapSupplier supplier = new LocalMapSupplier<>(CharSequence.class, CharSequence.class, new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x)));
 
-        return new ClosableMapSupplier() {
+        return new ClosableMapSupplier<CharSequence, CharSequence>() {
 
             @NotNull
             @Override
-            public Map<Integer, String> get() {
+            public Map<CharSequence, CharSequence> get() {
                 return supplier.get();
             }
 
@@ -92,12 +89,6 @@ public class LocalChronicleMapTest extends JSR166TestCase {
                 supplier.close();
             }
         };
-    }
-
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
     }
 
     @Before

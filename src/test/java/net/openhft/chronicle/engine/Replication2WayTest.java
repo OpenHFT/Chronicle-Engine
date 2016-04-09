@@ -21,6 +21,7 @@ package net.openhft.chronicle.engine;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
+import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
@@ -61,7 +62,6 @@ public class Replication2WayTest {
 
     static {
         System.setProperty("ReplicationHandler3", "true");
-
     }
 
     public ServerEndpoint serverEndpoint1;
@@ -72,6 +72,7 @@ public class Replication2WayTest {
     private AssetTree tree1;
     private AssetTree tree2;
     private AtomicReference<Throwable> t = new AtomicReference();
+    private ThreadDump threadDump;
 
     @NotNull
     public static String resourcesDir() {
@@ -116,6 +117,10 @@ public class Replication2WayTest {
 
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
+
+        threadDump.ignore("tree-1/Heartbeat");
+        threadDump.ignore("main/" + "ChronicleMapKeyValueStore Closer");
+        threadDump.assertNoNewThreads();
     }
 
     @NotNull
@@ -143,6 +148,7 @@ public class Replication2WayTest {
 
     @Before
     public void beforeTest() throws IOException {
+        threadDump = new ThreadDump();
         before();
         name = testName.getMethodName();
 

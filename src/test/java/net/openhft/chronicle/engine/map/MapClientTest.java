@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
@@ -31,7 +30,6 @@ import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,10 +40,10 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
 import static org.junit.Assert.*;
 
@@ -59,7 +57,6 @@ public class MapClientTest extends ThreadMonitoringTest {
     public static final WireType WIRE_TYPE = WireType.TEXT;
     private static int i;
 
-    private static AtomicReference<Throwable> t = new AtomicReference();
     // server has it's own asset tree, to the client.
     @NotNull
     private final VanillaAssetTree assetTree = new VanillaAssetTree();
@@ -78,12 +75,6 @@ public class MapClientTest extends ThreadMonitoringTest {
         });
     }
 
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
-    }
-
     @Before
     public void clearState() {
 
@@ -93,11 +84,6 @@ public class MapClientTest extends ThreadMonitoringTest {
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
         YamlLogging.setAll(false);
-    }
-
-    @After
-    public void tearDown() {
-        TCPRegistry.assertAllServersStopped();
     }
 
     @Test(timeout = 50000)
@@ -386,9 +372,7 @@ public class MapClientTest extends ThreadMonitoringTest {
 
         @Override
         public void close() throws IOException {
-
-            if (map instanceof Closeable)
-                ((Closeable) map).close();
+            closeQuietly(map);
 
             clientAssetTree.close();
             serverEndpoint.close();

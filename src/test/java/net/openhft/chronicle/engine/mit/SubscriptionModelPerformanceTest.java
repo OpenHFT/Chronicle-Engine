@@ -19,6 +19,7 @@ package net.openhft.chronicle.engine.mit;
 import junit.framework.TestCase;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
@@ -61,6 +62,7 @@ public class SubscriptionModelPerformanceTest {
     private static ServerEndpoint serverEndpoint;
     private static AtomicReference<Throwable> t = new AtomicReference();
     private String _mapName;
+    private ThreadDump threadDump;
 
     @BeforeClass
     public static void setUpBeforeClass() {
@@ -86,6 +88,16 @@ public class SubscriptionModelPerformanceTest {
     public void afterMethod() {
         final Throwable th = t.getAndSet(null);
         if (th != null) throw Jvm.rethrow(th);
+    }
+
+    @Before
+    public void threadDump() {
+        threadDump = new ThreadDump();
+    }
+
+    @After
+    public void checkThreadDump() {
+        threadDump.assertNoNewThreads();
     }
 
     @Before

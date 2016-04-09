@@ -37,7 +37,6 @@ import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
 
@@ -49,16 +48,10 @@ public class MapBootstrapTest extends ThreadMonitoringTest {
     public static final WireType WIRE_TYPE = WireType.TEXT;
     private static final String NAME = "MapBootstrapTest";
     private static final String CONNECTION_1 = "MapBootstrapTest.host.port";
-    private static AtomicReference<Throwable> t = new AtomicReference();
+
     private AssetTree client;
     private VanillaAssetTree serverAssetTree1;
     private ServerEndpoint serverEndpoint1;
-
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
-    }
 
     @Before
     public void before() throws IOException {
@@ -73,7 +66,7 @@ public class MapBootstrapTest extends ThreadMonitoringTest {
     }
 
     @After
-    public void after() throws IOException {
+    public void preAfter() {
 
         if (serverEndpoint1 != null)
             serverEndpoint1.close();
@@ -83,6 +76,7 @@ public class MapBootstrapTest extends ThreadMonitoringTest {
 
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
+
     }
 
     /**

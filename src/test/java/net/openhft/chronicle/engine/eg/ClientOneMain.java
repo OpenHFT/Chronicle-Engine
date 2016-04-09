@@ -80,6 +80,6 @@ public class ClientOneMain {
         map.remove("LEADERSHIP");
         map.put("DOGS", "Poodle");
 
-        Jvm.pause(1000);
+        Jvm.pause(100);
     }
 }

@@ -173,7 +173,7 @@ public class VanillaAssetTree implements AssetTree {
     @Override
     public void close() {
         root.notifyClosing();
-        Jvm.pause(100);
+        Jvm.pause(50);
 
         // ensure that the event loop get shutdown first
         try {

@@ -27,8 +27,6 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.wire.WireType;
-import net.openhft.chronicle.wire.YamlLogging;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,11 +35,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.*;
 
 /**
  * test using the listener both remotely or locally via the engine
@@ -56,20 +50,12 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
     private static final String NAME = "test";
     private static final String CONNECTION = "host.port.TcpManyConnectionsTest";
     private static MapView[] maps = new MapView[MAX];
-    private static AtomicReference<Throwable> t = new AtomicReference();
     private AssetTree[] trees = new AssetTree[MAX];
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
-    }
-
     @Before
     public void before() throws IOException {
-        YamlLogging.setAll(false);
         serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
 
         TCPRegistry.createServerSocketChannelFor(CONNECTION);
@@ -82,8 +68,7 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
         }
     }
 
-    @After
-    public void after() throws IOException {
+    public void preAfter() {
         shutdownTrees();
         serverAssetTree.close();
         serverEndpoint.close();
@@ -93,56 +78,49 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
     }
 
     private void shutdownTrees() {
-        final ArrayList<Future> futures = new ArrayList<>();
+        ExecutorService c = Executors.newCachedThreadPool(
+                new NamedThreadFactory("Tree Closer", true));
 
-        ExecutorService c = Executors.newCachedThreadPool(new NamedThreadFactory("Tree Closer",
-                true));
-        for (int i = 1; i < MAX; i++) {
+        for (int i = 0; i < MAX; i++) {
             final int j = i;
-            futures.add(c.submit(trees[j]::close));
-
+            c.execute(trees[j]::close);
         }
 
-        futures.forEach(f -> {
-            try {
-                f.get();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
+        c.shutdown();
+        try {
+            c.awaitTermination(2, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            throw new AssertionError(e);
+        }
     }
 
     /**
      * test many clients connecting to a single server
      */
     @Test
-    public void test() throws IOException, InterruptedException {
+    public void test() throws IOException, InterruptedException, ExecutionException {
 
         final ExecutorService executorService = Executors.newCachedThreadPool();
-        {
-            List<Future> futures = new ArrayList<>();
-            for (int i = 0; i < MAX; i++) {
-                final int j = i;
 
-                futures.add(executorService.submit(() -> {
-                    assert maps[j].size() == 0;
-                    maps[j].put("hello" + j, "world" + j);
-                    Assert.assertEquals("world" + j, maps[j].get("hello" + j));
+        List<Future> futures = new ArrayList<>();
+        for (int i = 0; i < MAX; i++) {
+            final int j = i;
 
-                }));
-
-            }
-
-            futures.forEach(f -> {
-                try {
-                    f.get();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                }
-            });
+            futures.add(executorService.submit(() -> {
+                MapView map = maps[j];
+                assert map.size() == 0;
+                map.put("hello" + j, "world" + j);
+                Assert.assertEquals("world" + j, map.get("hello" + j));
+            }));
         }
+
+        futures.forEach(f -> {
+            try {
+                f.get();
+            } catch (InterruptedException | ExecutionException e) {
+                Jvm.rethrow(e);
+            }
+        });
 
         List<Future<String>> futures2 = new ArrayList<Future<String>>();
         for (int i = 0; i < MAX; i++) {
@@ -155,18 +133,12 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
 
         final Iterator<Future<String>> iterator = futures2.iterator();
         for (int i = 0; i < MAX; i++) {
-
-            try {
-                final Future<String> s = iterator.next();
-                final String actual = s.get();
-                Assert.assertEquals("world" + (i), actual);
-
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            }
+            final Future<String> s = iterator.next();
+            final String actual = s.get();
+            Assert.assertEquals("world" + (i), actual);
         }
+        executorService.shutdown();
+        executorService.awaitTermination(1, TimeUnit.SECONDS);
     }
 
     /**
@@ -176,33 +148,31 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
     public void andresTest() throws IOException, InterruptedException {
 
         final ExecutorService executorService = Executors.newCachedThreadPool();
-        {
-            List<Future> futures = new ArrayList<>();
-            for (int i = 0; i < MAX; i++) {
-                final int j = i;
 
-                futures.add(executorService.submit(() -> {
-                    assert maps[j].size() == 0;
-                    maps[j].clear();
-                    maps[j].getAndPut("x", "y");
-                    final Object x = maps[j].get("x");
-                    assert "y".equals(x) : "get(\"x\")=" + x;
-                    assert maps[j].size() == 1;
-                    maps[j].clear();
-                }));
+        List<Future> futures = new ArrayList<>();
+        for (int i = 0; i < MAX; i++) {
+            final int j = i;
 
-            }
+            futures.add(executorService.submit(() -> {
+                assert maps[j].size() == 0;
+                maps[j].clear();
+                maps[j].getAndPut("x", "y");
+                final Object x = maps[j].get("x");
+                assert "y".equals(x) : "get(\"x\")=" + x;
+                assert maps[j].size() == 1;
+                maps[j].clear();
+            }));
 
-            futures.forEach(f -> {
-                try {
-                    f.get();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                }
-            });
         }
+
+        futures.forEach(f -> {
+            try {
+                f.get();
+            } catch (InterruptedException | ExecutionException e) {
+                Jvm.rethrow(e);
+            }
+        });
+        executorService.shutdown();
     }
 }
 

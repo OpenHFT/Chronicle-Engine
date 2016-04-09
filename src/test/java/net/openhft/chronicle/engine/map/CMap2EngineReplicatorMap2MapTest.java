@@ -17,11 +17,14 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.annotation.NotNull;
+import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.api.EngineReplication.ModificationIterator;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import org.jetbrains.annotations.Nullable;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Map;
@@ -45,6 +48,7 @@ public class CMap2EngineReplicatorMap2MapTest {
     @Nullable
     private final CMap2EngineReplicator replicator3 = new CMap2EngineReplicator(null);
     private final ChronicleMap<String, String> map3 = newMap(3, replicator3, String.class, String.class);
+    private ThreadDump threadDump;
 
     private <K, V> ChronicleMap<K, V> newMap(int localIdentifier,
                                              final CMap2EngineReplicator replicator,
@@ -53,6 +57,16 @@ public class CMap2EngineReplicatorMap2MapTest {
         return ChronicleMapBuilder.of(keyClass, valueClass).
                 replication(builder().engineReplication(replicator).createWithId((byte) localIdentifier))
                 .create();
+    }
+
+    @Before
+    public void threadDump() {
+        threadDump = new ThreadDump();
+    }
+
+    @After
+    public void checkThreadDump() {
+        threadDump.assertNoNewThreads();
     }
 
     /**

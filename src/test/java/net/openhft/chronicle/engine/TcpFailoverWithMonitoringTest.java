@@ -20,6 +20,7 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.annotation.Nullable;
+import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
@@ -73,6 +74,7 @@ public class TcpFailoverWithMonitoringTest {
     private VanillaAssetTree serverAssetTree2;
     private ServerEndpoint serverEndpoint1;
     private ServerEndpoint serverEndpoint2;
+    private ThreadDump threadDump;
 
     public TcpFailoverWithMonitoringTest() {
     }
@@ -80,6 +82,11 @@ public class TcpFailoverWithMonitoringTest {
     @Parameterized.Parameters
     public static List<Object[]> data() {
         return Arrays.asList(new Object[10][0]);
+    }
+
+    @Before
+    public void threadDump() {
+        threadDump = new ThreadDump();
     }
 
     @After
@@ -152,6 +159,8 @@ public class TcpFailoverWithMonitoringTest {
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
         TCPRegistry.assertAllServersStopped();
+
+        threadDump.assertNoNewThreads();
     }
 
     /**

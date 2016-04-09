@@ -21,6 +21,7 @@ package net.openhft.chronicle.engine;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
+import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -77,6 +78,7 @@ public class Replication3WayIntIntTest {
     private AssetTree tree2;
     private AssetTree tree3;
     private AtomicReference<Throwable> t = new AtomicReference<>();
+    private ThreadDump threadDump;
 
     public Replication3WayIntIntTest() {
 
@@ -95,6 +97,16 @@ public class Replication3WayIntIntTest {
         if (path == null)
             return ".";
         return new File(path).getParentFile().getParentFile() + "/src/test/resources";
+    }
+
+    @Before
+    public void threadDump() {
+        threadDump = new ThreadDump();
+    }
+
+    @After
+    public void checkThreadDump() {
+        threadDump.assertNoNewThreads();
     }
 
     public void before() throws IOException {

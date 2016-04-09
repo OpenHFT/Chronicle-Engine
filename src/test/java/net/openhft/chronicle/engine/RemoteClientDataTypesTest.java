@@ -19,6 +19,7 @@
 package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
@@ -63,6 +64,7 @@ public class RemoteClientDataTypesTest {
     private Object _key;
     private Object _value;
     private String _mapUri;
+    private ThreadDump threadDump;
 
     public RemoteClientDataTypesTest(WireType wireType, Class keyClass, Class valueClass, Object key, Object value, String mapUri) {
         _wireType = wireType;
@@ -87,6 +89,15 @@ public class RemoteClientDataTypesTest {
         });
     }
 
+    @Before
+    public void threadDump() {
+        threadDump = new ThreadDump();
+    }
+
+    @After
+    public void checkThreadDump() {
+        threadDump.assertNoNewThreads();
+    }
     @Before
     public void setUp() throws IOException {
         _serverAssetTree = new VanillaAssetTree().forServer(x -> t.compareAndSet(null, x));

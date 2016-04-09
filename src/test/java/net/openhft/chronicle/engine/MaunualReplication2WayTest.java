@@ -21,6 +21,7 @@ package net.openhft.chronicle.engine;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
+import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -73,6 +74,7 @@ public class MaunualReplication2WayTest {
     public String name;
     private AssetTree tree1;
     private AtomicReference<Throwable> t = new AtomicReference();
+    private ThreadDump threadDump;
 
     @NotNull
     public static String resourcesDir() {
@@ -136,6 +138,16 @@ public class MaunualReplication2WayTest {
         tree.withConfig(resourcesDir() + "/2way", OS.TARGET + "/" + hostId);
 
         return tree;
+    }
+
+    @Before
+    public void threadDump() {
+        threadDump = new ThreadDump();
+    }
+
+    @After
+    public void checkThreadDump() {
+        threadDump.assertNoNewThreads();
     }
 
     @Before

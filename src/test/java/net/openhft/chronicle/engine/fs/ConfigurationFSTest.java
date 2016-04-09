@@ -19,11 +19,13 @@ package net.openhft.chronicle.engine.fs;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
+import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.VanillaAssetTreeEgMain;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Map;
@@ -35,6 +37,19 @@ import java.util.concurrent.atomic.AtomicReference;
 public class ConfigurationFSTest {
 
     private static AtomicReference<Throwable> t = new AtomicReference();
+
+    private ThreadDump threadDump;
+
+    @Before
+    public void threadDump() {
+        threadDump = new ThreadDump();
+    }
+
+    @After
+    public void checkThreadDump() {
+        threadDump.ignore("all-trees-watcher");
+        threadDump.assertNoNewThreads();
+    }
 
     @After
     public void afterMethod() {
@@ -103,6 +118,7 @@ public class ConfigurationFSTest {
                 "  }\n");
 
         VanillaAssetTreeEgMain.registerTextViewofTree("ConfigFS", at);
-        Jvm.pause(200);
+        Jvm.pause(100);
+        at.close();
     }
 }

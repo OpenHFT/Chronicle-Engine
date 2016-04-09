@@ -16,23 +16,21 @@
 
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.threads.EventLoop;
+import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
-import net.openhft.chronicle.network.TCPRegistry;
-import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
-import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestName;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
@@ -49,43 +47,28 @@ import static org.junit.Assert.*;
 
 public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
 
-    private static AtomicReference<Throwable> t = new AtomicReference();
     @NotNull
-    private final AssetTree assetTree = new VanillaAssetTree();//.forTesting(x -> t.compareAndSet(null, x));
+    private final AssetTree assetTree = new VanillaAssetTree();
     @NotNull
     @Rule
     public TestName name = new TestName();
 
-    @AfterClass
-    public static void tearDownClass() {
-        YamlLogging.setAll(false);
-        TcpChannelHub.closeAllHubs();
-        TCPRegistry.reset();
-    }
-
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
-    }
-
     @Before
     public void before() {
-        YamlLogging.setAll(false);
         methodName(name.getMethodName());
     }
 
     @NotNull
-    private ClosableMapSupplier newIntString(@NotNull String name) throws IOException {
-        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(
+    private ClosableMapSupplier<Integer, String> newIntString(@NotNull String name) throws IOException {
+        final RemoteMapSupplier<Integer, String> remoteMapSupplier = new RemoteMapSupplier<>(
                 "RemoteChronicleMapBinaryWireTest1.host.port",
                 Integer.class, String.class, WireType.BINARY, assetTree, name);
 
-        return new ClosableMapSupplier() {
+        return new ClosableMapSupplier<Integer, String>() {
 
             @NotNull
             @Override
-            public Object get() {
+            public MapView<Integer, String> get() {
                 return remoteMapSupplier.get();
             }
 
@@ -102,15 +85,15 @@ public class RemoteChronicleMapBinaryWireTest extends JSR166TestCase {
     private ClosableMapSupplier<CharSequence, CharSequence> newStrStrMap() throws
             IOException {
 
-        final RemoteMapSupplier remoteMapSupplier = new RemoteMapSupplier<>(
+        final RemoteMapSupplier<CharSequence, CharSequence> remoteMapSupplier = new RemoteMapSupplier<>(
                 "RemoteChronicleMapBinaryWireTest2.host.port",
                 CharSequence.class, CharSequence.class, WireType.BINARY, assetTree, "test");
 
-        return new ClosableMapSupplier() {
+        return new ClosableMapSupplier<CharSequence, CharSequence>() {
 
             @NotNull
             @Override
-            public Object get() {
+            public MapView<CharSequence, CharSequence> get() {
                 return remoteMapSupplier.get();
             }
 

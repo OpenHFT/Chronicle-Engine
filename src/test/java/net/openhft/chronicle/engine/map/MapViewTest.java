@@ -16,10 +16,12 @@
 
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.query.Subscription;
 import net.openhft.chronicle.engine.api.set.KeySetView;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -41,6 +43,19 @@ import static org.junit.Assert.assertTrue;
  * Created by peter.lawrey on 11/06/2015.
  */
 public class MapViewTest {
+
+    private ThreadDump threadDump;
+
+    @Before
+    public void threadDump() {
+        threadDump = new ThreadDump();
+    }
+
+    @After
+    public void checkThreadDump() {
+        threadDump.assertNoNewThreads();
+    }
+
     @Before
     public void setUp() {
         Chassis.resetChassis();

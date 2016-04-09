@@ -35,22 +35,24 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
 import static org.junit.Assert.assertEquals;
@@ -65,7 +67,6 @@ import static org.junit.Assert.assertTrue;
 public class SubscriptionEventTest extends ThreadMonitoringTest {
     private static final String NAME = "test";
 
-    private static AtomicReference<Throwable> t = new AtomicReference();
     private static MapView<String, String> map;
     private final Boolean isRemote;
     private final WireType wireType;
@@ -91,12 +92,6 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
         );
     }
 
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
-    }
-
     @Before
     public void before() throws IOException {
         serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
@@ -114,19 +109,15 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
         }
 
         map = assetTree.acquireMap(NAME, String.class, String.class);
-        YamlLogging.setAll(false);
     }
 
-    @After
-    public void after() throws IOException {
+    public void preAfter() {
         assetTree.close();
         Jvm.pause(100);
         if (serverEndpoint != null)
             serverEndpoint.close();
         serverAssetTree.close();
-        if (map instanceof Closeable)
-            ((Closeable) map).close();
-        //   TCPRegistry.assertAllServersStopped();
+        closeQuietly(map);
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
     }

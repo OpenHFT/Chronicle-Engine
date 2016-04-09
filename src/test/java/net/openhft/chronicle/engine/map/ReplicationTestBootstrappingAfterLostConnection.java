@@ -21,6 +21,7 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
+import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.ChronicleMapKeyValueStoreTest;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
@@ -69,6 +70,8 @@ public class ReplicationTestBootstrappingAfterLostConnection {
     private static AssetTree tree2;
     private static AtomicReference<Throwable> t = new AtomicReference();
 
+    private static ThreadDump threadDump;
+
     @BeforeClass
     public static void before() throws IOException {
         YamlLogging.setAll(false);
@@ -102,6 +105,7 @@ public class ReplicationTestBootstrappingAfterLostConnection {
         TCPRegistry.reset();
         final Throwable th = t.getAndSet(null);
         if (th != null) throw Jvm.rethrow(th);
+        threadDump.assertNoNewThreads();
     }
 
     @NotNull
@@ -131,6 +135,11 @@ public class ReplicationTestBootstrappingAfterLostConnection {
         if (path == null)
             return ".";
         return new File(path).getParentFile().getParentFile() + "/src/test/resources";
+    }
+
+    @BeforeClass
+    public void threadDump() {
+        threadDump = new ThreadDump();
     }
 
     @Test

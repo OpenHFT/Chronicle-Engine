@@ -17,68 +17,57 @@
 package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.core.Jvm;
-import org.jetbrains.annotations.NotNull;
+import net.openhft.chronicle.core.threads.ThreadDump;
+import net.openhft.chronicle.network.TCPRegistry;
+import net.openhft.chronicle.wire.YamlLogging;
 import org.junit.After;
 import org.junit.Before;
 
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import static net.openhft.chronicle.core.Jvm.pause;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Created by Rob Austin
  */
 public class ThreadMonitoringTest {
 
-    Set<Thread> threads;
+    protected static final AtomicReference<Throwable> t = new AtomicReference<>();
+    protected ThreadDump threadDump;
 
-    public static void checkThreadsShutdown(@NotNull Set<Thread> threads) {
-        Thread.interrupted();
-        // give them a change to stop if there were killed.
-        pause(100);
-        Map<Thread, StackTraceElement[]> threadMap = Thread.getAllStackTraces();
-        threadMap.keySet().removeAll(threads);
-        threadMap.keySet().removeAll(
-                threadMap.keySet().stream()
-                        .filter(t -> t.getName()
-                                .startsWith("ForkJoinPool.commonPool-worker"))
-                        .collect(Collectors.toList()));
-        if (threadMap.isEmpty()) {
-            return;
-        }
-        System.out.println("### threads still running after the test ###");
-        for (Entry<Thread, StackTraceElement[]> entry : threadMap.entrySet()) {
-            StringBuilder sb = new StringBuilder(entry.getKey().toString());
-            Jvm.trimStackTrace(sb, entry.getValue());
-            System.out.println(sb);
-        }
-
-        for (Thread thread : threadMap.keySet()) {
-            if (thread.isAlive()) {
-                System.out.println("Waiting for " + thread);
-                try {
-                    thread.join(1000);
-                } catch (InterruptedException e) {
-                    throw new AssertionError(e);
-                }
-                if (thread.isAlive()) {
-                    System.out.println("Forcing " + thread + " to die");
-                    thread.stop();
-                }
-            }
-        }
+    @Before
+    public void turnOffYamlLogging() {
+        YamlLogging.setAll(false);
     }
 
     @Before
-    public void sampleThreads() {
-        threads = Thread.getAllStackTraces().keySet();
+    public void threadDump() {
+        threadDump = new ThreadDump();
     }
 
     @After
-    public void checkThreadsShutdown() {
-//        checkThreadsShutdown(threads);
+    public final void after() {
+        preAfter();
+
+        final Throwable th = t.getAndSet(null);
+        if (th != null) throw Jvm.rethrow(th);
+
+        TCPRegistry.assertAllServersStopped();
+
+        threadDump.assertNoNewThreads();
+        YamlLogging.setAll(false);
     }
+
+    protected void preAfter() {
+
+    }
+
+    @After
+    public final void checkThreadDump() {
+
+    }
+
+    @After
+    public final void afterMethod() {
+
+    }
+
 }

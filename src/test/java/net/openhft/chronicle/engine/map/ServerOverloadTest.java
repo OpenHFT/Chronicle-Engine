@@ -18,7 +18,6 @@
 
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
@@ -33,12 +32,11 @@ import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.concurrent.atomic.AtomicReference;
 
+import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
 import static net.openhft.chronicle.engine.Utils.methodName;
 
 /**
@@ -53,8 +51,6 @@ import static net.openhft.chronicle.engine.Utils.methodName;
 @RunWith(value = Parameterized.class)
 public class ServerOverloadTest extends ThreadMonitoringTest {
     public static final int SIZE = 100;
-    private static final String NAME = "test";
-    private static AtomicReference<Throwable> t = new AtomicReference<>();
     private static MapView<String, String> map;
     private final Boolean isRemote;
     private final WireType wireType;
@@ -80,12 +76,6 @@ public class ServerOverloadTest extends ThreadMonitoringTest {
         );
     }
 
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
-    }
-
     @Before
     public void before() throws IOException {
         serverAssetTree = new VanillaAssetTree().forTesting(x -> {
@@ -107,11 +97,9 @@ public class ServerOverloadTest extends ThreadMonitoringTest {
     }
 
     @After
-    public void after() throws IOException {
-        if (map instanceof Closeable)
-            ((Closeable) map).close();
+    public void preAfter() {
+        closeQuietly(map);
         assetTree.close();
-        //    Jvm.pause(1000);
         if (serverEndpoint != null)
             serverEndpoint.close();
         if (serverAssetTree != assetTree)

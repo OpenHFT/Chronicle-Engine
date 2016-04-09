@@ -19,6 +19,7 @@
 package net.openhft.chronicle.engine.queue;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
@@ -52,7 +53,6 @@ import java.util.Collection;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -64,9 +64,6 @@ import static org.junit.Assert.assertEquals;
  */
 @RunWith(value = Parameterized.class)
 public class SimpleQueueViewTest extends ThreadMonitoringTest {
-
-    private static final String NAME = "/test";
-    private static AtomicReference<Throwable> t = new AtomicReference();
 
     static {
         ClassAliasPool.CLASS_ALIASES.addAlias(MyMarshallable.class, "MyMarshallable");
@@ -80,6 +77,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     String methodName = "";
     private AssetTree assetTree;
     private ServerEndpoint serverEndpoint;
+    private AssetTree serverAssetTree;
 
     public SimpleQueueViewTest(Boolean isRemote) {
         this.isRemote = isRemote;
@@ -97,10 +95,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     @AfterClass
     public static void tearDownClass() {
 
-        TcpChannelHub.closeAllHubs();
-        TCPRegistry.reset();
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
+
     }
 
     public static void deleteFiles(File element) {
@@ -119,8 +114,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         methodName = name.getMethodName().substring(0, name.getMethodName().indexOf('['));
 
         if (isRemote) {
-            final VanillaAssetTree server = new VanillaAssetTree();
-            final AssetTree serverAssetTree = server.forTesting(x -> {
+            serverAssetTree = new VanillaAssetTree().forTesting(x -> {
                 t.set(x);
                 x.printStackTrace();
             });
@@ -138,20 +132,19 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
             serverEndpoint = null;
         }
 
-        YamlLogging.setAll(false);
     }
 
     @After
-    public void after() throws Throwable {
+    public void preAfter() {
+        threadDump.ignore("ChronicleMapKeyValueStore Closer");
+        Closeable.closeQuietly(serverAssetTree);
+        Closeable.closeQuietly(serverEndpoint);
+        Closeable.closeQuietly(assetTree);
 
-        if (serverEndpoint != null)
-            serverEndpoint.close();
-
-        if (assetTree != null)
-            assetTree.close();
         methodName = "";
-        TCPRegistry.reset();
 
+        TcpChannelHub.closeAllHubs();
+        TCPRegistry.reset();
         final Throwable th = t.getAndSet(null);
         if (th != null) throw Jvm.rethrow(th);
     }

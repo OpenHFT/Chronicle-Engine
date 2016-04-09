@@ -19,6 +19,7 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -52,19 +53,17 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 @RunWith(value = Parameterized.class)
 public class TestInsertUpdateChronicleMapViewOnServer {
 
-    private static final String NAME = "test";
     private static AtomicReference<Throwable> t = new AtomicReference();
-    private final WireType wireType;
     public String connection = "RemoteSubscriptionTest.host.port";
     @NotNull
 
-    private AssetTree clientAssetTree ;
+    private AssetTree clientAssetTree;
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
+    private ThreadDump threadDump;
 
     public TestInsertUpdateChronicleMapViewOnServer(WireType wireType) {
 
-        this.wireType = wireType;
     }
 
     @Parameterized.Parameters
@@ -75,10 +74,9 @@ public class TestInsertUpdateChronicleMapViewOnServer {
         return list;
     }
 
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
+    @Before
+    public void threadDump() {
+        threadDump = new ThreadDump();
     }
 
     @Before
@@ -103,14 +101,21 @@ public class TestInsertUpdateChronicleMapViewOnServer {
     }
 
     @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) throw Jvm.rethrow(th);
+    }
+
+    @After
     public void after() throws IOException {
         clientAssetTree.close();
-        Jvm.pause(1000);
+        Jvm.pause(100);
         if (serverEndpoint != null)
             serverEndpoint.close();
         serverAssetTree.close();
 
         TCPRegistry.reset();
+        threadDump.assertNoNewThreads();
     }
 
     @Test

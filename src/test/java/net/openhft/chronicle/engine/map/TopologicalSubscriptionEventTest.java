@@ -40,7 +40,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.engine.Utils.methodName;
@@ -56,7 +55,6 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
 
     private static final String NAME = "test";
 
-    private static AtomicReference<Throwable> t = new AtomicReference();
     private final boolean isRemote;
     private final WireType wireType;
     @NotNull
@@ -79,12 +77,6 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
         );
     }
 
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
-    }
-
     @Before
     public void before() throws IOException {
         serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
@@ -99,17 +91,15 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
             clientAssetTree = serverAssetTree;
         }
 
-        YamlLogging.setAll(false);
     }
 
     @After
-    public void after() throws IOException {
+    public void preAfter() {
         clientAssetTree.close();
         if (serverEndpoint != null)
             serverEndpoint.close();
         serverAssetTree.close();
 
-        //TCPRegistry.assertAllServersStopped();
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
     }

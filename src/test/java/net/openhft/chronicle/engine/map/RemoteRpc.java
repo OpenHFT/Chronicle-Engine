@@ -16,48 +16,31 @@
 
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
-import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 import org.junit.rules.TestName;
 
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static net.openhft.chronicle.engine.Utils.methodName;
 
 public class RemoteRpc extends JSR166TestCase {
 
     public static final net.openhft.chronicle.wire.WireType WIRE_TYPE = net.openhft.chronicle.wire.WireType.TEXT;
-    private static int s_port = 11050;
-    private static AtomicReference<Throwable> t = new AtomicReference();
     @NotNull
     @Rule
     public TestName name = new TestName();
     AssetTree assetTree;
 
-    @AfterClass
-    public static void tearDownClass() {
-        TCPRegistry.assertAllServersStopped();
-    }
-
     @Before
     public void before() {
         System.out.println("\t... test " + name.getMethodName());
-        YamlLogging.setAll(false);
         methodName(name.getMethodName());
-    }
-
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
     }
 
     /**
@@ -68,8 +51,8 @@ public class RemoteRpc extends JSR166TestCase {
     public void testRpc() throws IOException, InterruptedException {
 
         YamlLogging.setAll(false);
-        assetTree = (new VanillaAssetTree(1)).forRemoteAccess("192.168.1.76:8088", WIRE_TYPE,
-                x -> t.set(x));
+        assetTree = new VanillaAssetTree(1)
+                .forRemoteAccess("192.168.1.76:8088", WIRE_TYPE, x -> t.set(x));
 
         MapView<String, String> map = assetTree.acquireMap("/test", String.class, String.class);
 
@@ -134,8 +117,8 @@ public class RemoteRpc extends JSR166TestCase {
     }
 
     @After
-    public void after() throws IOException {
-        //  assetTree.close();
+    public void preAfter() {
+        assetTree.close();
     }
 }
 

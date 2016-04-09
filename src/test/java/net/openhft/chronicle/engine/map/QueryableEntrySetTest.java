@@ -37,13 +37,11 @@ import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static net.openhft.chronicle.engine.Utils.methodName;
@@ -64,7 +62,6 @@ public class QueryableEntrySetTest extends ThreadMonitoringTest {
     private static MapView<String, String> map;
     @NotNull
 
-    private static AtomicReference<Throwable> t = new AtomicReference();
     private final Boolean isRemote;
     private final WireType wireType;
     public String connection = "QueryableTest.host.port";
@@ -85,12 +82,6 @@ public class QueryableEntrySetTest extends ThreadMonitoringTest {
                 , new Object[]{true, WireType.TEXT}
                 , new Object[]{true, WireType.BINARY}
         );
-    }
-
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
     }
 
     @Before
@@ -116,14 +107,13 @@ public class QueryableEntrySetTest extends ThreadMonitoringTest {
     }
 
     @After
-    public void after() throws IOException {
+    public void preAfter() {
         assetTree.close();
-        Jvm.pause(1000);
+        Jvm.pause(100);
         if (serverEndpoint != null)
             serverEndpoint.close();
         serverAssetTree.close();
-        if (map instanceof Closeable)
-            ((Closeable) map).close();
+        net.openhft.chronicle.core.io.Closeable.closeQuietly(map);
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
     }

@@ -27,13 +27,15 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestName;
 
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.engine.Utils.methodName;
@@ -45,7 +47,6 @@ import static org.junit.Assert.assertEquals;
 
 public class LocalQueueRefTest extends ThreadMonitoringTest {
 
-    private static AtomicReference<Throwable> t = new AtomicReference<>();
     @NotNull
     @Rule
     public TestName name = new TestName();
@@ -64,12 +65,10 @@ public class LocalQueueRefTest extends ThreadMonitoringTest {
         YamlLogging.setAll(false);
     }
 
-    @After
-    public void after() {
+    public void preAfter() {
         methodName = "";
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
     }
+
 
     @Test
     @Ignore("TODO FIX too many results")

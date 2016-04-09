@@ -18,7 +18,6 @@
 
 package net.openhft.chronicle.engine;
 
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
@@ -26,19 +25,16 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.wire.WireType;
-import net.openhft.chronicle.wire.YamlLogging;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.TimeUnit;
 
 /**
  * test using the listener both remotely or locally via the engine
@@ -53,20 +49,13 @@ public class TcpManyClientConnectionsTest extends ThreadMonitoringTest {
     private static final String NAME = "test";
     private static final String CONNECTION = "host.port.TcpManyConnectionsTest";
     private static ConcurrentMap[] maps = new ConcurrentMap[MAX];
-    private static AtomicReference<Throwable> t = new AtomicReference();
     private AssetTree[] trees = new AssetTree[MAX];
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
-    }
 
     @Before
     public void before() throws IOException {
-        YamlLogging.setAll(false);
         serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
 
         TCPRegistry.createServerSocketChannelFor(CONNECTION);
@@ -80,7 +69,7 @@ public class TcpManyClientConnectionsTest extends ThreadMonitoringTest {
     }
 
     @After
-    public void after() throws IOException {
+    public void preAfter() {
 
         shutdownTrees();
 
@@ -89,27 +78,22 @@ public class TcpManyClientConnectionsTest extends ThreadMonitoringTest {
 
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
-        TCPRegistry.assertAllServersStopped();
     }
 
     private void shutdownTrees() {
-        final ArrayList<Future> futures = new ArrayList<>();
-
-        ExecutorService c = Executors.newCachedThreadPool(new NamedThreadFactory("Tree Closer",
-                true));
-        for (int i = 1; i < MAX; i++) {
+        ExecutorService c = Executors.newCachedThreadPool(
+                new NamedThreadFactory("Tree Closer", true));
+        for (int i = 0; i < MAX; i++) {
             final int j = i;
-            futures.add(c.submit(trees[j]::close));
-
+            c.execute(trees[j]::close);
         }
 
-        futures.forEach(f -> {
-            try {
-                f.get();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
+        c.shutdown();
+        try {
+            c.awaitTermination(2, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            throw new AssertionError(e);
+        }
     }
 
     /**
@@ -122,13 +106,13 @@ public class TcpManyClientConnectionsTest extends ThreadMonitoringTest {
 
         for (int i = 0; i < MAX; i++) {
             final int j = i;
-            executorService.submit(() -> {
+            executorService.execute(() -> {
                 maps[j].put("hello" + j, "world" + j);
                 Assert.assertEquals("world" + j, maps[j].get("hello" + j));
-
             });
-
         }
+        executorService.shutdown();
+        executorService.awaitTermination(2, TimeUnit.SECONDS);
     }
 }
 

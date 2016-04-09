@@ -18,6 +18,7 @@ package net.openhft.chronicle.engine.mit;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapEventListener;
@@ -48,6 +49,7 @@ public class SubscriptionModelFilePerKeyPerformanceTest {
     private static int _twoMbTestStringLength;
     private static Map<String, String> _testMap;
     private static String _mapName = "PerfTestMap";
+    private ThreadDump threadDump;
 
     @BeforeClass
     public static void setUpBeforeClass() {
@@ -55,6 +57,16 @@ public class SubscriptionModelFilePerKeyPerformanceTest {
         Arrays.fill(chars, '~');
         _twoMbTestString = new String(chars);
         _twoMbTestStringLength = _twoMbTestString.length();
+    }
+
+    @Before
+    public void threadDump() {
+        threadDump = new ThreadDump();
+    }
+
+    @After
+    public void checkThreadDump() {
+        threadDump.assertNoNewThreads();
     }
 
     @Before

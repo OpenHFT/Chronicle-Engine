@@ -29,7 +29,9 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -40,7 +42,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
@@ -55,7 +56,6 @@ import static org.junit.Assert.assertEquals;
 @RunWith(value = Parameterized.class)
 public class SubscriptionTest extends ThreadMonitoringTest {
     private static final String NAME = "/test";
-    private static AtomicReference<Throwable> t = new AtomicReference();
     private final boolean isRemote;
     private final WireType wireType;
     @NotNull
@@ -76,9 +76,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
         );
     }
 
-    @AfterClass
-    public static void tearDownClass() {
-        //  TCPRegistry.assertAllServersStopped();
+    public void preAfter() {
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
     }
@@ -86,13 +84,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
     @Before
     public void before() {
         methodName(name.getMethodName());
-        YamlLogging.setAll(false);
-    }
 
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
     }
 
     @Test

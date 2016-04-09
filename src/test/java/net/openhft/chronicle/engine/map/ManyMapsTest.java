@@ -19,6 +19,7 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.core.util.SerializablePredicate;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
@@ -28,6 +29,7 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -45,6 +47,7 @@ public class ManyMapsTest {
     public static final String NAME =
             "ManyMapsTest.testConnectToMultipleMapsUsingTheSamePort.host.port";
     private static AtomicReference<Throwable> t = new AtomicReference();
+    private ThreadDump threadDump;
 
     public static String getKey(String mapName, int counter) {
         return String.format("%s-%s", mapName, counter);
@@ -52,6 +55,16 @@ public class ManyMapsTest {
 
     public static String getValue(String mapName, int counter) {
         return String.format("Val-%s-%s", mapName, counter);
+    }
+
+    @Before
+    public void threadDump() {
+        threadDump = new ThreadDump();
+    }
+
+    @After
+    public void checkThreadDump() {
+        threadDump.assertNoNewThreads();
     }
 
     @After
@@ -112,6 +125,8 @@ public class ManyMapsTest {
             SerializablePredicate<String> stringPredicate1 = v -> !v.contains(key);
             Assert.assertFalse(map.values().stream().anyMatch(stringPredicate1));
         }
+        clientAssetTree.close();
+        assetTree.close();
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
     }

@@ -27,19 +27,17 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
-import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.concurrent.atomic.AtomicReference;
 
+import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
 import static net.openhft.chronicle.engine.Utils.methodName;
 
 /**
@@ -54,7 +52,6 @@ import static net.openhft.chronicle.engine.Utils.methodName;
 @RunWith(value = Parameterized.class)
 public class StreamTest extends ThreadMonitoringTest {
     private static final String NAME = "test";
-    private static AtomicReference<Throwable> t = new AtomicReference();
     private static MapView<String, String> map;
     private final Boolean isRemote;
     private final WireType wireType;
@@ -80,12 +77,6 @@ public class StreamTest extends ThreadMonitoringTest {
         );
     }
 
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
-    }
-
     @Before
     public void before() throws IOException {
         serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
@@ -101,20 +92,18 @@ public class StreamTest extends ThreadMonitoringTest {
             assetTree = serverAssetTree;
         }
 
-        YamlLogging.setAll(false);
 
         map = assetTree.acquireMap(NAME, String.class, String.class);
     }
 
     @After
-    public void after() throws IOException {
+    public void preAfter() {
         assetTree.close();
-        Jvm.pause(1000);
+        Jvm.pause(100);
         if (serverEndpoint != null)
             serverEndpoint.close();
         serverAssetTree.close();
-        if (map instanceof Closeable)
-            ((Closeable) map).close();
+        closeQuietly(map);
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
     }

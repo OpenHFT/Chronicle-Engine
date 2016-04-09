@@ -47,17 +47,11 @@ mid: 0.641515
 GBPUSD: Price{instrument='GBPEUR', bidPrice=0.64149, bidQuantity=4000000.0, askPrice=0.64154, askQuantity=3000000.0}
  */
 public class ClientTwoMain {
+    private static AtomicReference<Throwable> t = new AtomicReference();
+
     static {
         ClassAliasPool.CLASS_ALIASES.addAlias(Price.class);
         ClassAliasPool.CLASS_ALIASES.addAlias(PriceUpdater.class);
-    }
-
-    private static AtomicReference<Throwable> t = new AtomicReference();
-
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
     }
 
     public static void main(String[] args) {
@@ -95,7 +89,13 @@ public class ClientTwoMain {
         System.out.println("mid: " + mid);
 
         while (true) {
-            Jvm.pause(1000);
+            Jvm.pause(100);
         }
+    }
+
+    @After
+    public void afterMethod() {
+        final Throwable th = t.getAndSet(null);
+        if (th != null) throw Jvm.rethrow(th);
     }
 }

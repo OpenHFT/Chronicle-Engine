@@ -21,6 +21,7 @@ package net.openhft.chronicle.engine;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
+import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -71,6 +72,7 @@ public class Replication3WayTest {
     private AssetTree tree2;
     private AssetTree tree3;
     private AtomicReference<Throwable> t = new AtomicReference();
+    private ThreadDump threadDump;
 
     @NotNull
     public static String resourcesDir() {
@@ -104,6 +106,11 @@ public class Replication3WayTest {
         serverEndpoint3 = new ServerEndpoint("host.port3", tree3);
     }
 
+    @Before
+    public void threadDump() {
+        threadDump = new ThreadDump();
+    }
+
     @After
     public void after() throws IOException, InterruptedException {
         if (serverEndpoint1 != null)
@@ -125,6 +132,7 @@ public class Replication3WayTest {
         final Throwable th = t.getAndSet(null);
         if (th != null) throw Jvm.rethrow(th);
 
+        threadDump.assertNoNewThreads();
     }
 
     @NotNull

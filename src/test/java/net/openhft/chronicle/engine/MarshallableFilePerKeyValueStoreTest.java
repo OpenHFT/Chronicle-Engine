@@ -17,6 +17,7 @@
 package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.tree.LeafViewFactory;
@@ -50,6 +51,17 @@ public class MarshallableFilePerKeyValueStoreTest {
     public static final String NAME = "marsfileperkvstoretests";
     private Map<String, TestMarshallable> map;
 
+    private ThreadDump threadDump;
+
+    @Before
+    public void threadDump() {
+        threadDump = new ThreadDump();
+    }
+
+    @After
+    public void checkThreadDump() {
+        threadDump.assertNoNewThreads();
+    }
     @Before
     public void createMap() throws IOException {
         resetChassis();

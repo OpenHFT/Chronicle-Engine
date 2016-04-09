@@ -19,11 +19,14 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -39,6 +42,7 @@ public class GenericWireAdapterTest {
 
     public static final Double EXPECTED = 1.23;
     private final WireType wireType;
+    private ThreadDump threadDump;
 
     /**
      * @param wireType the type of the wire
@@ -53,6 +57,16 @@ public class GenericWireAdapterTest {
                 {WireType.TEXT},
                 {WireType.BINARY}
         });
+    }
+
+    @Before
+    public void threadDump() {
+        threadDump = new ThreadDump();
+    }
+
+    @After
+    public void checkThreadDump() {
+        threadDump.assertNoNewThreads();
     }
 
     @Test

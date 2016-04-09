@@ -19,6 +19,7 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.api.pubsub.Reference;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionCollection;
@@ -66,6 +67,7 @@ public class ReferenceTest {
     private boolean isRemote;
     private ServerEndpoint serverEndpoint;
     private String hostPortToken;
+    private ThreadDump threadDump;
 
     public ReferenceTest(boolean isRemote, WireType wireType) {
         this.wireType = wireType;
@@ -78,8 +80,13 @@ public class ReferenceTest {
         return Arrays.asList(
                  new Object[]{false, null}
                 , new Object[]{true, WireType.TEXT}
-//                , new Object[]{true, WireType.BINARY}
+                , new Object[]{true, WireType.BINARY}
         );
+    }
+
+    @Before
+    public void threadDump() {
+        threadDump = new ThreadDump();
     }
 
     @After
@@ -99,25 +106,25 @@ public class ReferenceTest {
             TCPRegistry.createServerSocketChannelFor(hostPortToken);
             serverEndpoint = new ServerEndpoint(hostPortToken, serverAssetTree);
 
-            assetTree = new VanillaAssetTree().forRemoteAccess(hostPortToken, wireType, x -> t.set
-                    (x));
+            assetTree = new VanillaAssetTree()
+                    .forRemoteAccess(hostPortToken, wireType, x -> t.set(x));
         } else {
             assetTree = serverAssetTree;
         }
     }
 
     @After
-    public void after() throws IOException {
+    public void after() {
         assetTree.close();
         if (serverEndpoint != null)
             serverEndpoint.close();
         serverAssetTree.close();
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
-        //TCPRegistry.assertAllServersStopped();
 
         final Throwable th = t.getAndSet(null);
         if (th != null) throw Jvm.rethrow(th);
+        threadDump.assertNoNewThreads();
     }
 
     @Test

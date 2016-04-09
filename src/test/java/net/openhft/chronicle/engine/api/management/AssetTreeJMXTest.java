@@ -20,11 +20,13 @@ package net.openhft.chronicle.engine.api.management;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.TextWire;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -41,6 +43,17 @@ import static org.junit.Assert.assertTrue;
 public class AssetTreeJMXTest {
 
     private static AtomicReference<Throwable> t = new AtomicReference();
+    private ThreadDump threadDump;
+
+    @Before
+    public void threadDump() {
+        threadDump = new ThreadDump();
+    }
+
+    @After
+    public void checkThreadDump() {
+        threadDump.assertNoNewThreads();
+    }
 
     @Test
     public void testAssetUpdateEvery10Sec() throws InterruptedException {
@@ -94,7 +107,7 @@ public class AssetTreeJMXTest {
         map.put("key2", "value2");
         map.put("key3", "value3");
         map.put("key4", "ABCDEGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz0132456789ABCDEGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz0132456789");
-        Jvm.pause(100000);
+        Jvm.pause(100);
     }
 
     @Test

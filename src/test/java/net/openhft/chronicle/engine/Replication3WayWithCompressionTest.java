@@ -21,6 +21,7 @@ package net.openhft.chronicle.engine;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
+import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -63,6 +64,7 @@ public class Replication3WayWithCompressionTest {
     private static AssetTree tree1;
     private static AssetTree tree2;
     private static AtomicReference<Throwable> t = new AtomicReference();
+    private ThreadDump threadDump;
 
     @BeforeClass
     public static void before() throws IOException {
@@ -141,6 +143,16 @@ public class Replication3WayWithCompressionTest {
         if (path == null)
             return ".";
         return new File(path).getParentFile().getParentFile() + "/src/test/resources";
+    }
+
+    @Before
+    public void threadDump() {
+        threadDump = new ThreadDump();
+    }
+
+    @After
+    public void checkThreadDump() {
+        threadDump.assertNoNewThreads();
     }
 
     @After
