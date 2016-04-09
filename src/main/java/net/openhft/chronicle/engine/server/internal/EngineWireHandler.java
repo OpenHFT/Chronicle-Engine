@@ -180,72 +180,76 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
     @NotNull
     private ReadMarshallable metaDataConsumer() {
         return (wire) -> {
-
-            long startWritePosition = (outWire == null) ? 0 : outWire.bytes().writePosition();
-
-            // if true the next data message will be a system message
-            isSystemMessage = wire.bytes().readRemaining() == 0;
-            if (isSystemMessage) {
-                if (LOG.isDebugEnabled()) LOG.debug("received system-meta-data");
-                return;
-            }
-
-
-            readCsp(wire);
-            readTid(wire);
-
+assert outWire.startUse();
             try {
-                if (hasCspChanged(cspText)) {
+                long startWritePosition = (outWire == null) ? 0 : outWire.bytes().writePosition();
 
-                    if (LOG.isDebugEnabled())
-                        LOG.debug("received meta-data:\n" + wire.bytes().toHexString());
-
-                    requestContext = requestContextInterner.intern(cspText);
-                    final String fullName = requestContext.fullName();
-                    if (!"/".equals(fullName))
-                        contextAsset = this.rootAsset.acquireAsset(fullName);
-
-                    viewType = requestContext.viewType();
-                    if (viewType == null) {
-                        if (LOG.isDebugEnabled()) LOG.debug("received system-meta-data");
-                        isSystemMessage = true;
-                        return;
-                    }
-
-                    view = contextAsset.acquireView(requestContext);
-
-                    if (viewType == MapView.class ||
-                            viewType == EntrySetView.class ||
-                            viewType == ValuesCollection.class ||
-                            viewType == KeySetView.class ||
-                            viewType == ObjectSubscription.class ||
-                            viewType == TopicPublisher.class ||
-                            viewType == Publisher.class ||
-                            viewType == Reference.class ||
-                            viewType == TopologySubscription.class ||
-                            viewType == Replication.class ||
-                            viewType == QueueView.class ||
-                            viewType == Heartbeat.class) {
-
-                        // default to string type if not provided
-                        final Class type = requestContext.keyType() == null ? String.class
-                                : requestContext.keyType();
-
-                        final Class type2 = requestContext.valueType() == null ? String.class
-                                : requestContext.valueType();
-
-                        wireAdapter = new GenericWireAdapter(type, type2);
-                    } else {
-                        throw new UnsupportedOperationException("unsupported view type");
-                    }
+                // if true the next data message will be a system message
+                isSystemMessage = wire.bytes().readRemaining() == 0;
+                if (isSystemMessage) {
+                    if (LOG.isDebugEnabled()) LOG.debug("received system-meta-data");
+                    return;
                 }
-            } catch (Throwable e) {
-                LOG.error("", e);
-                outWire.bytes().writePosition(startWritePosition);
-                outWire.writeDocument(true, w -> w.writeEventName(CoreFields.tid).int64(tid));
-                outWire.writeDocument(false, out -> out.writeEventName(() -> "exception").throwable(e));
-                logYamlToStandardOut(outWire);
-                rethrow(e);
+
+
+                readCsp(wire);
+                readTid(wire);
+
+                try {
+                    if (hasCspChanged(cspText)) {
+
+                        if (LOG.isDebugEnabled())
+                            LOG.debug("received meta-data:\n" + wire.bytes().toHexString());
+
+                        requestContext = requestContextInterner.intern(cspText);
+                        final String fullName = requestContext.fullName();
+                        if (!"/".equals(fullName))
+                            contextAsset = this.rootAsset.acquireAsset(fullName);
+
+                        viewType = requestContext.viewType();
+                        if (viewType == null) {
+                            if (LOG.isDebugEnabled()) LOG.debug("received system-meta-data");
+                            isSystemMessage = true;
+                            return;
+                        }
+
+                        view = contextAsset.acquireView(requestContext);
+
+                        if (viewType == MapView.class ||
+                                viewType == EntrySetView.class ||
+                                viewType == ValuesCollection.class ||
+                                viewType == KeySetView.class ||
+                                viewType == ObjectSubscription.class ||
+                                viewType == TopicPublisher.class ||
+                                viewType == Publisher.class ||
+                                viewType == Reference.class ||
+                                viewType == TopologySubscription.class ||
+                                viewType == Replication.class ||
+                                viewType == QueueView.class ||
+                                viewType == Heartbeat.class) {
+
+                            // default to string type if not provided
+                            final Class type = requestContext.keyType() == null ? String.class
+                                    : requestContext.keyType();
+
+                            final Class type2 = requestContext.valueType() == null ? String.class
+                                    : requestContext.valueType();
+
+                            wireAdapter = new GenericWireAdapter(type, type2);
+                        } else {
+                            throw new UnsupportedOperationException("unsupported view type");
+                        }
+                    }
+                } catch (Throwable e) {
+                    LOG.error("", e);
+                    outWire.bytes().writePosition(startWritePosition);
+                    outWire.writeDocument(true, w -> w.writeEventName(CoreFields.tid).int64(tid));
+                    outWire.writeDocument(false, out -> out.writeEventName(() -> "exception").throwable(e));
+                    logYamlToStandardOut(outWire);
+                    rethrow(e);
+                }
+            } finally {
+                assert outWire.endUse();
             }
         };
     }
@@ -277,138 +281,143 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
     protected void onRead(@NotNull final DocumentContext inDc,
                           @NotNull final WireOut out) {
         WireIn in = inDc.wire();
-        if (!YamlLogging.showHeartBeats()) {
-            //save the previous message (the meta-data for printing later)
-            //if the message turns out not to be a system message
-            prevLogMessage.setLength(0);
-            prevLogMessage.append(currentLogMessage);
-            currentLogMessage.setLength(0);
-            logToBuffer(in, currentLogMessage, in.bytes().readPosition()-4);
-        } else {
-            //log every message
-            logYamlToStandardOut(in);
-        }
-
-
-        if (inDc.isMetaData()) {
-            this.metaDataConsumer.readMarshallable(in);
-        } else {
-
-            try {
-
-                if (LOG.isDebugEnabled())
-                    LOG.debug("received data:\n" + in.bytes().toHexString());
-
-                Consumer<WireType> wireTypeConsumer = wt -> {
-                    wireType(wt);
-                    checkWires(in.bytes(), out.bytes(), wireType());
-                };
-
-                if (isSystemMessage) {
-                    systemHandler.process(in, out, tid, sessionDetails, getMonitoringMap(),
-                            isServerSocket, this::publisher, hostIdentifier, wireTypeConsumer,
-                            wireType());
-                    if (!systemHandler.wasHeartBeat()) {
-                        if (!YamlLogging.showHeartBeats())
-                            logBufferToStandardOut(prevLogMessage.append(currentLogMessage));
-                    }
-                    return;
-                }
-
-                if (!YamlLogging.showHeartBeats()) {
-                    logBufferToStandardOut(prevLogMessage.append(currentLogMessage));
-                }
-
-                Map<String, UserStat> userMonitoringMap = getMonitoringMap();
-                if (userMonitoringMap != null) {
-                    UserStat userStat = userMonitoringMap.get(sessionDetails.userId());
-                    if (userStat == null) {
-                        throw new AssertionError("User should have been logged in");
-                    }
-                    //Use timeInMillis
-                    userStat.setRecentInteraction(LocalTime.now());
-                    userStat.setTotalInteractions(userStat.getTotalInteractions() + 1);
-                    userMonitoringMap.put(sessionDetails.userId(), userStat);
-                }
-
-                if (wireAdapter != null) {
-
-                    if (viewType == MapView.class) {
-                        mapWireHandler.process(in, out, (MapView) view, tid, wireAdapter,
-                                requestContext);
-                        return;
-                    }
-
-                    if (viewType == EntrySetView.class) {
-                        entrySetHandler.process(in, out, (EntrySetView) view,
-                                wireAdapter.entryToWire(),
-                                wireAdapter.wireToEntry(), HashSet::new, tid);
-                        return;
-                    }
-
-                    if (viewType == KeySetView.class) {
-                        keySetHandler.process(in, out, (KeySetView) view,
-                                wireAdapter.keyToWire(),
-                                wireAdapter.wireToKey(), HashSet::new, tid);
-                        return;
-                    }
-
-                    if (viewType == ValuesCollection.class) {
-                        valuesHandler.process(in, out, (ValuesCollection) view,
-                                wireAdapter.keyToWire(),
-                                wireAdapter.wireToKey(), ArrayList::new, tid);
-                        return;
-                    }
-
-                    if (viewType == ObjectSubscription.class) {
-                        subscriptionHandler.process(in,
-                                requestContext, publisher(), contextAsset, tid,
-                                outWire, (SubscriptionCollection) view);
-                        return;
-                    }
-
-                    if (viewType == TopologySubscription.class) {
-                        topologySubscriptionHandler.process(in,
-                                requestContext, publisher(), contextAsset, tid,
-                                outWire, (TopologySubscription) view);
-                        return;
-                    }
-
-                    if (viewType == Reference.class) {
-                        referenceHandler.process(in, requestContext,
-                                publisher(), tid,
-                                (Reference) view, cspText, outWire, wireAdapter);
-                        return;
-                    }
-
-                    if (viewType == TopicPublisher.class || viewType == QueueView.class) {
-                        topicPublisherHandler.process(in, publisher(), tid, outWire,
-                                (TopicPublisher) view, wireAdapter);
-                        return;
-                    }
-
-                    if (viewType == Publisher.class) {
-                        publisherHandler.process(in, requestContext,
-                                publisher(), tid,
-                                (Publisher) view, outWire, wireAdapter);
-                        return;
-                    }
-
-                    if (viewType == Replication.class) {
-                        replicationHandler.process(in,
-                                publisher(), tid, outWire,
-                                hostIdentifier,
-                                (Replication) view,
-                                eventLoop);
-                    }
-                }
-
-            } catch (Exception e) {
-                LOG.error("", e);
-            } finally {
-                if (sessionProvider != null)
-                    sessionProvider.remove();
+        assert in.startUse();
+        try {
+            if (!YamlLogging.showHeartBeats()) {
+                //save the previous message (the meta-data for printing later)
+                //if the message turns out not to be a system message
+                prevLogMessage.setLength(0);
+                prevLogMessage.append(currentLogMessage);
+                currentLogMessage.setLength(0);
+                logToBuffer(in, currentLogMessage, in.bytes().readPosition() - 4);
+            } else {
+                //log every message
+                logYamlToStandardOut(in);
             }
+
+
+            if (inDc.isMetaData()) {
+                this.metaDataConsumer.readMarshallable(in);
+            } else {
+
+                try {
+
+                    if (LOG.isDebugEnabled())
+                        LOG.debug("received data:\n" + in.bytes().toHexString());
+
+                    Consumer<WireType> wireTypeConsumer = wt -> {
+                        wireType(wt);
+                        checkWires(in.bytes(), out.bytes(), wireType());
+                    };
+
+                    if (isSystemMessage) {
+                        systemHandler.process(in, out, tid, sessionDetails, getMonitoringMap(),
+                                isServerSocket, this::publisher, hostIdentifier, wireTypeConsumer,
+                                wireType());
+                        if (!systemHandler.wasHeartBeat()) {
+                            if (!YamlLogging.showHeartBeats())
+                                logBufferToStandardOut(prevLogMessage.append(currentLogMessage));
+                        }
+                        return;
+                    }
+
+                    if (!YamlLogging.showHeartBeats()) {
+                        logBufferToStandardOut(prevLogMessage.append(currentLogMessage));
+                    }
+
+                    Map<String, UserStat> userMonitoringMap = getMonitoringMap();
+                    if (userMonitoringMap != null) {
+                        UserStat userStat = userMonitoringMap.get(sessionDetails.userId());
+                        if (userStat == null) {
+                            throw new AssertionError("User should have been logged in");
+                        }
+                        //Use timeInMillis
+                        userStat.setRecentInteraction(LocalTime.now());
+                        userStat.setTotalInteractions(userStat.getTotalInteractions() + 1);
+                        userMonitoringMap.put(sessionDetails.userId(), userStat);
+                    }
+
+                    if (wireAdapter != null) {
+
+                        if (viewType == MapView.class) {
+                            mapWireHandler.process(in, out, (MapView) view, tid, wireAdapter,
+                                    requestContext);
+                            return;
+                        }
+
+                        if (viewType == EntrySetView.class) {
+                            entrySetHandler.process(in, out, (EntrySetView) view,
+                                    wireAdapter.entryToWire(),
+                                    wireAdapter.wireToEntry(), HashSet::new, tid);
+                            return;
+                        }
+
+                        if (viewType == KeySetView.class) {
+                            keySetHandler.process(in, out, (KeySetView) view,
+                                    wireAdapter.keyToWire(),
+                                    wireAdapter.wireToKey(), HashSet::new, tid);
+                            return;
+                        }
+
+                        if (viewType == ValuesCollection.class) {
+                            valuesHandler.process(in, out, (ValuesCollection) view,
+                                    wireAdapter.keyToWire(),
+                                    wireAdapter.wireToKey(), ArrayList::new, tid);
+                            return;
+                        }
+
+                        if (viewType == ObjectSubscription.class) {
+                            subscriptionHandler.process(in,
+                                    requestContext, publisher(), contextAsset, tid,
+                                    outWire, (SubscriptionCollection) view);
+                            return;
+                        }
+
+                        if (viewType == TopologySubscription.class) {
+                            topologySubscriptionHandler.process(in,
+                                    requestContext, publisher(), contextAsset, tid,
+                                    outWire, (TopologySubscription) view);
+                            return;
+                        }
+
+                        if (viewType == Reference.class) {
+                            referenceHandler.process(in, requestContext,
+                                    publisher(), tid,
+                                    (Reference) view, cspText, outWire, wireAdapter);
+                            return;
+                        }
+
+                        if (viewType == TopicPublisher.class || viewType == QueueView.class) {
+                            topicPublisherHandler.process(in, publisher(), tid, outWire,
+                                    (TopicPublisher) view, wireAdapter);
+                            return;
+                        }
+
+                        if (viewType == Publisher.class) {
+                            publisherHandler.process(in, requestContext,
+                                    publisher(), tid,
+                                    (Publisher) view, outWire, wireAdapter);
+                            return;
+                        }
+
+                        if (viewType == Replication.class) {
+                            replicationHandler.process(in,
+                                    publisher(), tid, outWire,
+                                    hostIdentifier,
+                                    (Replication) view,
+                                    eventLoop);
+                        }
+                    }
+
+                } catch (Exception e) {
+                    LOG.error("", e);
+                } finally {
+                    if (sessionProvider != null)
+                        sessionProvider.remove();
+                }
+            }
+        } finally {
+            assert in.endUse();
         }
     }
 

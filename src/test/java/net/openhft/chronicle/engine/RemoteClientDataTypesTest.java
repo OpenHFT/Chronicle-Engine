@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.engine;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
@@ -116,6 +117,8 @@ public class RemoteClientDataTypesTest {
             _serverEndpoint.close();
 
         TCPRegistry.reset();
+        final Throwable th = t.getAndSet(null);
+        if (th != null) throw Jvm.rethrow(th);
     }
 
     @Test

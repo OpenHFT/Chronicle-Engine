@@ -87,8 +87,6 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                 new Object[]{false, null}
                 // check connection is fine after a reconnect CE-187
                 , new Object[]{true, WireType.TEXT}
-                , new Object[]{true, WireType.TEXT}
-                , new Object[]{true, WireType.BINARY}
                 , new Object[]{true, WireType.BINARY}
         );
     }

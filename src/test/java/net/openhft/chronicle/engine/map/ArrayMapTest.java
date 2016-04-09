@@ -77,6 +77,14 @@ public class ArrayMapTest extends ThreadMonitoringTest {
                 new Object[]{false, null}
                 , new Object[]{true, WireType.TEXT}
                 , new Object[]{true, WireType.BINARY}
+                , new Object[]{true, WireType.BINARY}
+                , new Object[]{true, WireType.BINARY}
+                , new Object[]{true, WireType.BINARY}
+                , new Object[]{true, WireType.BINARY}
+                , new Object[]{true, WireType.BINARY}
+                , new Object[]{true, WireType.BINARY}
+                , new Object[]{true, WireType.BINARY}
+                , new Object[]{true, WireType.BINARY}
         );
     }
 

@@ -78,6 +78,8 @@ public class ChronicleMapKeyValueStoreTest {
         tree1.close();
         tree2.close();
         tree3.close();
+        final Throwable th = t.getAndSet(null);
+        if (th != null) throw Jvm.rethrow(th);
     }
 
     @NotNull

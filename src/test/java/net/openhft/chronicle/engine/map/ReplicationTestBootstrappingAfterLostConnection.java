@@ -100,6 +100,8 @@ public class ReplicationTestBootstrappingAfterLostConnection {
 
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
+        final Throwable th = t.getAndSet(null);
+        if (th != null) throw Jvm.rethrow(th);
     }
 
     @NotNull

@@ -117,11 +117,14 @@ abstract class AbstractHandler {
     void logYaml() {
         if (YamlLogging.showServerWrites())
             try {
+                assert outWire.startUse();
                 LOG.info("\nServer Sends:\n" +
                         Wires.fromSizePrefixedBlobs(outWire.bytes()));
             } catch (Exception e) {
                 LOG.info("\nServer Sends ( corrupted ) :\n" +
                         outWire.bytes().toDebugString());
+            } finally {
+                assert outWire.endUse();
             }
     }
 

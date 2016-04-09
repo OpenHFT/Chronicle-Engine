@@ -62,6 +62,7 @@ public class GenericWireAdapterTest {
 
         final Bytes b = Bytes.elasticByteBuffer();
         final Wire wire = wireType.apply(b);
+        assert wire.startUse();
 
         wire.writeDocument(false, w -> {
             genericWireAdapter.valueToWire().accept(wire.getValueOut(), EXPECTED);

@@ -68,6 +68,7 @@ public class OperationTest extends ThreadMonitoringTest {
 
         final Bytes b = Bytes.elasticByteBuffer();
         final Wire wire = wireType.apply(b);
+        assert wire.startUse();
 
         final Operation operation = new Operation(Operation.OperationType.FILTER, (SerializablePredicate) o -> true);
         wire.writeDocument(false, w -> w.write(() -> "operation").object(operation));

@@ -68,7 +68,6 @@ public class RestartClosedPublisherTest {
         _server.close();
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
-
     }
 
     /**

@@ -105,6 +105,8 @@ public class Main2Way {
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
         // TODO TCPRegistery.assertAllServersStopped();
+        final Throwable th = t.getAndSet(null);
+        if (th != null) throw Jvm.rethrow(th);
     }
 
     @NotNull

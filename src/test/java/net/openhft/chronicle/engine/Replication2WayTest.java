@@ -116,13 +116,15 @@ public class Replication2WayTest {
 
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
-
     }
 
     @NotNull
     private AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
         AssetTree tree = new VanillaAssetTree((byte) hostId)
-                .forTesting(x -> t.compareAndSet(null, x))
+                .forTesting(x -> {
+                    t.compareAndSet(null, x);
+                    x.printStackTrace();
+                })
                 .withConfig(resourcesDir() + "/2way", OS.TARGET + "/" + hostId);
 
         tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",

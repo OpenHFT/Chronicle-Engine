@@ -54,10 +54,8 @@ public class CollectionWireHandler<U, C extends Collection<U>> {
     private final ReadMarshallable dataConsumer = new ReadMarshallable() {
         @Override
         public void readMarshallable(WireIn wire) throws IllegalStateException {
-            @SuppressWarnings("ConstantConditions") final Bytes<?> outBytes = outWire.bytes();
 
             try {
-
                 final StringBuilder eventName = Wires.acquireStringBuilder();
                 @SuppressWarnings("ConstantConditions")
                 final ValueIn valueIn = inWire.readEventName(eventName);
@@ -151,11 +149,17 @@ public class CollectionWireHandler<U, C extends Collection<U>> {
             } finally {
 
                 if (YamlLogging.showServerWrites()) {
-                    long len = outBytes.writePosition();
-                    if (len >= SIZE_OF_SIZE) {
-                        String s = Wires.fromSizePrefixedBlobs(outBytes);
+                    assert outWire.startUse();
+                    try {
+                        final Bytes<?> outBytes = outWire.bytes();
+                        long len = outBytes.writePosition();
+                        if (len >= SIZE_OF_SIZE) {
+                            String s = Wires.fromSizePrefixedBlobs(outBytes);
 
-                        LOG.info("server writes:\n\n" + s);
+                            LOG.info("server writes:\n\n" + s);
+                        }
+                    }finally {
+                        assert outWire.endUse();
                     }
                 }
             }
@@ -190,9 +194,12 @@ public class CollectionWireHandler<U, C extends Collection<U>> {
             this.inWire = in;
             this.outWire = out;
             this.tid = tid;
+            assert in.startUse();
             dataConsumer.readMarshallable(in);
         } catch (Exception e) {
             LOG.error("", e);
+        }finally {
+            assert in.endUse();
         }
     }
 
