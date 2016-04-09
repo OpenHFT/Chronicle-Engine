@@ -85,6 +85,7 @@ public class ReferenceChronicleTest {
 
     @After
     public void checkThreadDump() {
+        threadDump.ignore("FailOnTimeoutGroup/ChronicleMapKeyValueStore Closer");
         threadDump.assertNoNewThreads();
     }
 
