@@ -303,8 +303,9 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
 
     @Test
-    @Ignore("TODO FIX Too many results")
+//    @Ignore("TODO FIX Too many results")
     public void testStringPublishWithTopicSubscribe() throws InterruptedException {
+        YamlLogging.showClientReads(true);
         Publisher<String> publisher = null;
         String uri = "/queue/" + methodName + "-" + System.nanoTime();
         String messageType = "topic";
