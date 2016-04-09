@@ -133,6 +133,7 @@ public class Replication3WayTest {
         if (th != null) throw Jvm.rethrow(th);
 
         threadDump.ignore("tree-1/Heartbeat");
+        threadDump.ignore("tree-2/Heartbeat");
         threadDump.assertNoNewThreads();
     }
 
