@@ -43,6 +43,10 @@ public class ThreadMonitoringTest {
         threadDump = new ThreadDump();
     }
 
+    @Before
+    public void clearExistingConnections() {
+        TCPRegistry.reset();
+    }
     @After
     public final void after() {
         preAfter();
