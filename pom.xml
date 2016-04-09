@@ -75,6 +75,11 @@
             <artifactId>slf4j-api</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>net.openhft</groupId>
+            <artifactId>chronicle-bytes</artifactId>
+        </dependency>
+
         <!-- test dependencies -->
 
         <dependency>

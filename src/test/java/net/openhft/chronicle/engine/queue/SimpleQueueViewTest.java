@@ -166,7 +166,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         String messageType = "topic";
 
         TopicPublisher<String, String> publisher = assetTree.acquireTopicPublisher(uri, String.class, String.class);
-        BlockingQueue<String> values0 = new ArrayBlockingQueue<>(1);
+        BlockingQueue<String> values0 = new ArrayBlockingQueue<>(10);
         Subscriber<String> subscriber = e -> {
             if (e != null) {
                 values0.add(e);
