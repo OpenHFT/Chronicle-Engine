@@ -54,6 +54,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static org.junit.Assert.assertEquals;
@@ -164,7 +165,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     @Test
     @Ignore("TODO FIX Too many results")
     public void testStringTopicPublisherWithSubscribe() throws InterruptedException {
-
+        YamlLogging.setAll(true);
         String uri = "/queue/" + methodName + System.nanoTime();
         String messageType = "topic";
 
@@ -176,12 +177,14 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
             }
         };
         publisher.publish(messageType, "Message-1");
+        publisher.publish(messageType, "Message-2");
 
         Thread.sleep(1000);
 
         assetTree.registerSubscriber(uri + "/" + messageType, String.class, subscriber);
 
         assertEquals("Message-1", values0.poll(3, SECONDS));
+        assertEquals("Message-2", values0.poll(3, SECONDS));
         Jvm.pause(100);
         assertEquals("[]", values0.toString());
         deleteFiles(publisher);
@@ -201,6 +204,10 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
             final long index = queueView.publishAndIndex(messageType, "Message-1");
             final Excerpt<String, String> actual = queueView.get(index);
             assertEquals(index, actual.index());
+
+            final long index2 = queueView.publishAndIndex(messageType, "Message-2");
+            final Excerpt<String, String> actual2 = queueView.get(index2);
+            assertEquals(index2, actual2.index());
         } finally {
             deleteFiles(queueView);
         }
@@ -212,13 +219,16 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         try {
             String uri = "/queue/testStringPublishToATopic" + System.nanoTime();
             publisher = assetTree.acquirePublisher(uri, String.class);
-            BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
+            BlockingQueue<String> values = new LinkedBlockingQueue<>();
             Subscriber<String> subscriber = values::add;
             assetTree.registerSubscriber(uri, String.class, subscriber);
             Thread.sleep(500);
             publisher.publish("Message-1");
             assertEquals("Message-1", values.poll(2, SECONDS));
-
+            publisher.publish("Message-2");
+            assertEquals("Message-2", values.poll(2, SECONDS));
+            Jvm.pause(100);
+            assertEquals("[]", values.toString());
         } finally {
             deleteFiles(publisher);
         }
@@ -239,6 +249,10 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
             Thread.sleep(500);
             publisher.publish("Message-1");
             assertEquals("Message-1", values.poll(2, SECONDS));
+            publisher.publish("Message-2");
+            assertEquals("Message-2", values.poll(2, SECONDS));
+            Jvm.pause(100);
+            assertEquals("[]", values.toString());
         } finally {
             deleteFiles(publisher);
         }
@@ -254,9 +268,11 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
             BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
             Subscriber<String> subscriber = values::add;
             assetTree.registerSubscriber(uri + "KeyNotForMe", String.class, subscriber);
-            Thread.sleep(500);
+            Thread.sleep(200);
             publisher.publish("Message-1");
-            assertEquals(null, values.poll(1, SECONDS));
+            assertEquals(null, values.poll(200, MILLISECONDS));
+            publisher.publish("Message-2");
+            assertEquals(null, values.poll(200, MILLISECONDS));
         } finally {
             deleteFiles(publisher);
         }
@@ -276,6 +292,8 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
             Thread.sleep(200);
             publisher.publish(messageType, "Message-1");
             assertEquals("topic Message-1", values.poll(2, SECONDS));
+            publisher.publish(messageType, "Message-2");
+            assertEquals("topic Message-2", values.poll(2, SECONDS));
             Jvm.pause(200);
             assertEquals("[]", values.toString());
         } finally {
@@ -301,7 +319,9 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
             assetTree.registerTopicSubscriber(uri, String.class, String.class, subscriber);
 
             publisher.publish("Message-1");
-            assertEquals("topic Message-1", values.poll(20, SECONDS));
+            publisher.publish("Message-2");
+            assertEquals("topic Message-1", values.poll(2, SECONDS));
+            assertEquals("topic Message-2", values.poll(2, SECONDS));
             Jvm.pause(100);
             assertEquals("", values.toString());
         } finally {
@@ -337,11 +357,15 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         try {
             String uri = "/queue/testMarshablePublishToATopic" + System.nanoTime();
             publisher = assetTree.acquirePublisher(uri, MyMarshallable.class);
-            BlockingQueue<MyMarshallable> values2 = new ArrayBlockingQueue<>(1);
+            BlockingQueue<MyMarshallable> values2 = new LinkedBlockingQueue<>();
             assetTree.registerSubscriber(uri, MyMarshallable.class, values2::add);
             publisher.publish(new MyMarshallable("Message-1"));
+            publisher.publish(new MyMarshallable("Message-2"));
 
-            assertEquals("Message-1", values2.poll(5, SECONDS).toString());
+            assertEquals("Message-1", values2.poll(2, SECONDS).toString());
+            assertEquals("Message-2", values2.poll(2, SECONDS).toString());
+            Jvm.pause(100);
+            assertEquals("[]", values2.toString());
         } finally {
             deleteFiles(publisher);
         }
