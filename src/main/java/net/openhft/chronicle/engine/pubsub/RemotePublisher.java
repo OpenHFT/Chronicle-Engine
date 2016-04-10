@@ -77,6 +77,9 @@ public class RemotePublisher<T, M> extends AbstractStatelessClient<EventId> impl
         if (context.elementType() != String.class)
             uri.append("&elementType=").append(CLASS_ALIASES.nameFor(context.elementType()));
 
+        if (context.dontPersist())
+            uri.append("&dontPersist=").append(context.dontPersist());
+
         return uri.toString();
     }
 

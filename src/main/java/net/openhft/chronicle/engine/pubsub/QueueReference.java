@@ -94,12 +94,12 @@ public class QueueReference<T, M> implements Reference<M> {
             if (terminate.get())
                 throw new InvalidEventHandlerException();
 
-            final QueueView.Excerpt<T, M> next = iterator.read();
+            final QueueView.Excerpt<T, M> item = iterator.read();
 
-            if (next == null)
+            if (item == null || item.index() == -1)
                 return false;
             try {
-                subscriber.onMessage(next.message());
+                subscriber.onMessage(item.message());
             } catch (InvalidSubscriberException e) {
                 terminate.set(true);
             }

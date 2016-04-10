@@ -59,6 +59,8 @@ public interface QueueView<T, M> extends TopicPublisher<T, M>, KeyedView {
         M message();
 
         long index();
+
+        void clear();
     }
 
     interface Tailer<T, M> {

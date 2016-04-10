@@ -19,9 +19,11 @@
 package net.openhft.chronicle.engine.tree;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
+import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
@@ -29,6 +31,7 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.fs.Clusters;
 import net.openhft.chronicle.engine.fs.EngineCluster;
 import net.openhft.chronicle.engine.fs.EngineHostDetails;
+import net.openhft.chronicle.engine.pubsub.QueueTopicPublisher;
 import net.openhft.chronicle.engine.query.QueueSource;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.queue.ChronicleQueue;
@@ -53,7 +56,7 @@ import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
 /**
  * @author Rob Austin.
  */
-public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactory {
+public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactory, Closeable {
 
     private static final Logger LOG = LoggerFactory.getLogger(ChronicleQueueView.class);
 
@@ -259,19 +262,21 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
     }
 
     public Tailer<T, M> tailer() {
-        return () -> ChronicleQueueView.this.tailer0(chronicleQueue.createTailer());
+        final ExcerptTailer tailer = ChronicleQueueView.this.chronicleQueue.createTailer();
+        final LocalExcept localExcept = new LocalExcept();
+        return () -> ChronicleQueueView.this.next(tailer, localExcept);
     }
 
-    private Excerpt<T, M> tailer0(ExcerptTailer excerptTailer) {
-        final ThreadLocalData threadLocalData = threadLocal.get();
-
+    private Excerpt<T, M> next(ExcerptTailer excerptTailer, final LocalExcept excerpt) {
+        excerpt.clear();
         try (DocumentContext dc = excerptTailer.readingDocument()) {
             if (!dc.isPresent())
                 return null;
             final StringBuilder topic = Wires.acquireStringBuilder();
             final ValueIn eventName = dc.wire().readEventName(topic);
             final M message = eventName.object(elementTypeClass);
-            return threadLocalData.excerpt
+
+            return excerpt
                     .message(message)
                     .topic(convertTo(messageTypeClass, topic))
                     .index(excerptTailer.index());
@@ -406,10 +411,47 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         throw new UnsupportedOperationException("todo");
     }
 
-    public void close() throws IOException {
+    public void close() {
+
+        File file = chronicleQueue.file();
         chronicleQueue.close();
-        if (dontPersist)
-            Files.delete(chronicleQueue.file().toPath());
+        if (dontPersist) {
+            try {
+                deleteFiles(file);
+            } catch (Exception e) {
+                LOG.error("", e);
+            }
+        }
+
+
+    }
+
+    public static void deleteFiles(File element) throws IOException {
+        if (element.isDirectory()) {
+            for (File sub : element.listFiles()) {
+                deleteFiles(sub);
+            }
+        }
+        Files.deleteIfExists(element.toPath());
+    }
+
+    private void deleteFiles(TopicPublisher p) {
+
+        if (p instanceof QueueTopicPublisher)
+            deleteFiles((ChronicleQueueView) ((QueueTopicPublisher) p).underlying());
+
+    }
+
+
+    @Override
+    protected void finalize() throws Throwable {
+        try {
+            close();
+        } catch (Throwable ignore) {
+
+        }
+        super.finalize();
+
     }
 
     public <M> void registerSubscriber(Subscriber<M> subscriber) {
@@ -486,6 +528,12 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
             topic((T) wireIn.read(() -> "topic").object(Object.class));
             message((M) wireIn.read(() -> "message").object(Object.class));
             index(wireIn.read(() -> "index").int64());
+        }
+
+        public void clear() {
+            message = null;
+            topic = null;
+            index = -1;
         }
     }
 

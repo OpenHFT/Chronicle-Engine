@@ -161,7 +161,8 @@ public class RequestContext implements Cloneable {
         }
         String pathName = lastForwardSlash >= 0 ? fullName.substring(0, lastForwardSlash) : "";
         String name = lastForwardSlash >= 0 ? fullName.substring(lastForwardSlash + 1) : fullName;
-        return new RequestContext(pathName, name).queryString(query);
+        RequestContext requestContext = new RequestContext(pathName, name).queryString(query);
+        return requestContext;
     }
 
     static Class lookupType(@NotNull CharSequence typeName) throws ClassNotFoundException {
