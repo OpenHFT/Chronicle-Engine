@@ -111,14 +111,6 @@ public class RequestContext implements Cloneable {
     private boolean sealed = false;
     private String cluster = "cluster";
 
-    public boolean isdontPersist() {
-        return dontPersist;
-    }
-
-    public void dontPersist(boolean dontPersist) {
-        this.dontPersist = dontPersist;
-    }
-
     private int throttlePeriodMs = 0;
     private boolean dontPersist;
 
@@ -482,6 +474,7 @@ public class RequestContext implements Cloneable {
                 ", recurse=" + recurse +
                 ", endSubscriptionAfterBootstrap=" + endSubscriptionAfterBootstrap +
                 ", throttlePeriodMs=" + throttlePeriodMs +
+                ", dontPersist=" + dontPersist +
                 '}';
     }
 
@@ -544,6 +537,10 @@ public class RequestContext implements Cloneable {
             sb.append(sep).append("throttlePeriodMs=").append(throttlePeriodMs);
             sep = "&";
         }
+        if (dontPersist()) {
+            sb.append(sep).append("dontPersist").append(dontPersist);
+            sep = "&";
+        }
         return sb.toString();
     }
 
@@ -563,6 +560,15 @@ public class RequestContext implements Cloneable {
 
     public RequestContext topicType(Class topicType) {
         this.type = topicType;
+        return this;
+    }
+
+    public boolean dontPersist() {
+        return dontPersist;
+    }
+
+    public RequestContext dontPersist(boolean dontPersist) {
+        this.dontPersist = dontPersist;
         return this;
     }
 

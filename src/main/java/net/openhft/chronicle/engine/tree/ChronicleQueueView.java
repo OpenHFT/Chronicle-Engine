@@ -66,6 +66,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
 
     private boolean isSource;
     private boolean isReplicating;
+    private boolean dontPersist;
 
     public ChronicleQueueView(@NotNull RequestContext context, @NotNull Asset asset) {
         this(null, context, asset);
@@ -83,6 +84,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         messageTypeClass = context.messageType();
         elementTypeClass = context.elementType();
         threadLocal = ThreadLocal.withInitial(() -> new ThreadLocalData(chronicleQueue));
+        dontPersist = context.dontPersist();
 
         if (hostId != null)
             replication(context, asset);
@@ -406,6 +408,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
 
     public void close() throws IOException {
         chronicleQueue.close();
+        if (dontPersist)
+            Files.delete(chronicleQueue.file().toPath());
     }
 
     public <M> void registerSubscriber(Subscriber<M> subscriber) {
