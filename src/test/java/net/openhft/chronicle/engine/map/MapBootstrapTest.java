@@ -102,7 +102,7 @@ public class MapBootstrapTest extends ThreadMonitoringTest {
         final Map<String, String> map1 = client.acquireMap(NAME, String.class, String.class);
         map1.put("pre-bootstrap", "pre-bootstrap");
 
-        final BlockingQueue<String> q2 = new ArrayBlockingQueue<>(2);
+        final BlockingQueue<String> q2 = new ArrayBlockingQueue<>(1);
 
         YamlLogging.setAll(false);
 

@@ -127,7 +127,7 @@ public class TestInsertUpdateChronicleMapView {
                         String.class, String
                                 .class);
 
-        final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(128);
+        final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(1);
         clientAssetTree.registerSubscriber("name?putReturnsNull=false&bootstrap=false", MapEvent.class,
                 events::add);
         Jvm.pause(1000);
@@ -151,7 +151,7 @@ public class TestInsertUpdateChronicleMapView {
                         String.class, String
                                 .class);
 
-        final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(128);
+        final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(1);
         clientAssetTree.registerSubscriber("name?putReturnsNull=true", MapEvent.class,
                 events::add);
         Jvm.pause(1000);

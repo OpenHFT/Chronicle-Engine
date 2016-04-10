@@ -114,7 +114,7 @@ public class TestInsertUpdateChronicleMapViewOnServer extends ThreadMonitoringTe
                         String.class, String
                                 .class);
 
-        final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(128);
+        final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(1);
         clientAssetTree.registerSubscriber("name?putReturnsNull=false", MapEvent.class,
                 events::add);
 
@@ -138,7 +138,7 @@ public class TestInsertUpdateChronicleMapViewOnServer extends ThreadMonitoringTe
                         String.class, String
                                 .class);
 
-        final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(128);
+        final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(1);
         clientAssetTree.registerSubscriber("name?putReturnsNull=true", MapEvent.class,
                 events::add);
 

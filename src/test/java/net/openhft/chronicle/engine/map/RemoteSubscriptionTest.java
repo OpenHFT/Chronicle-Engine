@@ -123,7 +123,7 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
         final MapView<String, String> serverMap = serverAssetTree.acquireMap("name", String.class, String
                 .class);
 
-        final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(128);
+        final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(1);
         clientAssetTree.registerSubscriber("name", MapEvent.class, events::add);
 
         serverMap.put("hello", "world");
@@ -145,7 +145,7 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
         final MapView<String, String> clientMap = clientAssetTree.acquireMap("name", String.class, String
                 .class);
 
-        final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(128);
+        final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(1);
         serverAssetTree.registerSubscriber("name", MapEvent.class, events::add);
 
         clientMap.put("hello", "world");
@@ -167,7 +167,7 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
         final MapView<String, String> clientMap = clientAssetTree.acquireMap("name", String.class, String
                 .class);
 
-        final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(128);
+        final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(1);
         clientAssetTree.registerSubscriber("name?putReturnsNull=true", MapEvent.class,
                 events::add);
         {

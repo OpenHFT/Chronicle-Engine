@@ -217,7 +217,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         YamlLogging.setAll(true);
         String uri = "/queue/" + methodName + "/key" + DELETE_CHRONICLE_FILE;
         publisher = assetTree.acquirePublisher(uri, String.class);
-        BlockingQueue<String> values = new ArrayBlockingQueue<>(10000);
+        BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
         Subscriber<String> subscriber = values::add;
         assetTree.registerSubscriber(uri, String.class, subscriber);
         Thread.sleep(500);
@@ -251,7 +251,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     @Test
     @Ignore("TODO FIX Too many results")
     public void testStringTopicPublisherString() throws InterruptedException {
-        TopicPublisher<String, String> publisher = null;
+        TopicPublisher<String, String> publisher;
 
         String uri = "/queue/" + methodName + DELETE_CHRONICLE_FILE;
         String messageType = "topic";
