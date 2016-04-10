@@ -19,7 +19,7 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.Jvm;
-import net.openhft.chronicle.core.threads.ThreadDump;
+import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -27,10 +27,8 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
-import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -51,7 +49,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * @author Rob Austin.
  */
 @RunWith(value = Parameterized.class)
-public class TestInsertUpdateChronicleMapView {
+public class TestInsertUpdateChronicleMapView extends ThreadMonitoringTest {
 
     private static final AtomicReference<Throwable> t = new AtomicReference();
 
@@ -60,7 +58,7 @@ public class TestInsertUpdateChronicleMapView {
     private AssetTree clientAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
-    private ThreadDump threadDump;
+
 
     public TestInsertUpdateChronicleMapView(WireType wireType) {
         this.wireType = wireType;
@@ -74,16 +72,7 @@ public class TestInsertUpdateChronicleMapView {
         return list;
     }
 
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
-    }
 
-    @Before
-    public void threadDump() {
-        threadDump = new ThreadDump();
-    }
 
     @Before
     public void before() throws IOException {
@@ -102,20 +91,15 @@ public class TestInsertUpdateChronicleMapView {
                         .putReturnsNull(false), asset));
 
         clientAssetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType, x -> t.set(x));
-
     }
 
-    @After
-    public void after() throws IOException {
+
+    public void preAfter() {
         clientAssetTree.close();
         Jvm.pause(100);
         if (serverEndpoint != null)
             serverEndpoint.close();
         serverAssetTree.close();
-
-        TcpChannelHub.closeAllHubs();
-        TCPRegistry.reset();
-        threadDump.assertNoNewThreads();
     }
 
     @Test
