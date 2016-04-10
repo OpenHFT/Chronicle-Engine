@@ -90,8 +90,6 @@ public class RequestContext implements Cloneable {
         addAlias(UberHandler.class, "UberHandler");
         addAlias(MapReplicationHandler.class, "MapReplicationHandler");
         addAlias(HeartbeatHandler.class, "HeartbeatHandler");
-
-        // the following will get added if they can be found
         addAlias("software.chronicle.enterprise.queue.QueueSourceReplicationHandler");
         addAlias("software.chronicle.enterprise.queue.QueueSyncReplicationHandler");
     }
@@ -112,7 +110,17 @@ public class RequestContext implements Cloneable {
     private Boolean recurse;
     private boolean sealed = false;
     private String cluster = "cluster";
+
+    public boolean isdontPersist() {
+        return dontPersist;
+    }
+
+    public void dontPersist(boolean dontPersist) {
+        this.dontPersist = dontPersist;
+    }
+
     private int throttlePeriodMs = 0;
+    private boolean dontPersist;
 
     private RequestContext() {
     }
@@ -230,7 +238,7 @@ public class RequestContext implements Cloneable {
 
         parser.register(() -> "entries", (s, v, $) -> v.int64(this, (o, x) -> o.entries = x));
         parser.register(() -> "averageValueSize", (s, v, $) -> v.int64(this, (o, x) -> o.averageValueSize = x));
-
+        parser.register(() -> "dontPersist", (s, v, $) -> v.bool(this, (o, x) -> o.dontPersist = x));
         return parser;
     }
 

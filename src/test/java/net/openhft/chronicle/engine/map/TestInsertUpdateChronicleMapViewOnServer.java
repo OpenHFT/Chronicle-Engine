@@ -19,7 +19,7 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.Jvm;
-import net.openhft.chronicle.core.threads.ThreadDump;
+import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -30,7 +30,6 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -51,7 +50,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * @author Rob Austin.
  */
 @RunWith(value = Parameterized.class)
-public class TestInsertUpdateChronicleMapViewOnServer {
+public class TestInsertUpdateChronicleMapViewOnServer extends ThreadMonitoringTest {
 
     private static AtomicReference<Throwable> t = new AtomicReference();
     public String connection = "RemoteSubscriptionTest.host.port";
@@ -60,7 +59,7 @@ public class TestInsertUpdateChronicleMapViewOnServer {
     private AssetTree clientAssetTree;
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
-    private ThreadDump threadDump;
+
 
     public TestInsertUpdateChronicleMapViewOnServer(WireType wireType) {
 
@@ -74,10 +73,6 @@ public class TestInsertUpdateChronicleMapViewOnServer {
         return list;
     }
 
-    @Before
-    public void threadDump() {
-        threadDump = new ThreadDump();
-    }
 
     @Before
     public void before() throws IOException {
@@ -100,22 +95,15 @@ public class TestInsertUpdateChronicleMapViewOnServer {
 
     }
 
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
-    }
 
-    @After
-    public void after() throws IOException {
+    public void preAfter() {
         clientAssetTree.close();
         Jvm.pause(100);
         if (serverEndpoint != null)
             serverEndpoint.close();
         serverAssetTree.close();
 
-        TCPRegistry.reset();
-        threadDump.assertNoNewThreads();
+
     }
 
     @Test

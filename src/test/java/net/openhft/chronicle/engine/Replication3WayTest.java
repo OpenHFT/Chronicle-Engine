@@ -34,7 +34,6 @@ import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
-import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +46,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertNotNull;
 
@@ -55,7 +53,7 @@ import static org.junit.Assert.assertNotNull;
  * Created by Rob Austin
  */
 
-public class Replication3WayTest {
+public class Replication3WayTest extends ThreadMonitoringTest {
     public static final WireType WIRE_TYPE = WireType.TEXT;
 
     static {
@@ -71,8 +69,6 @@ public class Replication3WayTest {
     private AssetTree tree1;
     private AssetTree tree2;
     private AssetTree tree3;
-    private AtomicReference<Throwable> t = new AtomicReference();
-    private ThreadDump threadDump;
 
     @NotNull
     public static String resourcesDir() {
@@ -112,7 +108,7 @@ public class Replication3WayTest {
     }
 
     @After
-    public void after() throws IOException, InterruptedException {
+    public void preAfter() {
         if (serverEndpoint1 != null)
             serverEndpoint1.close();
         if (serverEndpoint2 != null)
@@ -126,15 +122,6 @@ public class Replication3WayTest {
             tree2.close();
         if (tree3 != null)
             tree3.close();
-
-        TcpChannelHub.closeAllHubs();
-        TCPRegistry.reset();
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
-
-        threadDump.ignore("tree-1/Heartbeat");
-        threadDump.ignore("tree-2/Heartbeat");
-        threadDump.assertNoNewThreads();
     }
 
     @NotNull

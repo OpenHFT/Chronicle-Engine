@@ -47,6 +47,7 @@ public class ThreadMonitoringTest {
     public void clearExistingConnections() {
         TCPRegistry.reset();
     }
+
     @After
     public final void after() {
         preAfter();
@@ -55,7 +56,10 @@ public class ThreadMonitoringTest {
         if (th != null) throw Jvm.rethrow(th);
 
         TCPRegistry.assertAllServersStopped();
-
+        threadDump.ignore("main/ChronicleMapKeyValueStore Closer");
+        threadDump.ignore("tree-1/Heartbeat");
+        threadDump.ignore("tree-2/Heartbeat");
+        threadDump.ignore("tree-3/Heartbeat");
         threadDump.assertNoNewThreads();
         YamlLogging.setAll(false);
     }

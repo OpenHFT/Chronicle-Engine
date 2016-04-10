@@ -35,11 +35,13 @@ import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
-import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestName;
 
 import java.io.File;
@@ -49,7 +51,6 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertNotNull;
 
@@ -57,7 +58,7 @@ import static org.junit.Assert.assertNotNull;
  * Created by Rob Austin
  */
 
-public class Replication2WayTest {
+public class Replication2WayTest extends ThreadMonitoringTest {
     public static final WireType WIRE_TYPE = WireType.TEXT;
 
     static {
@@ -71,8 +72,6 @@ public class Replication2WayTest {
     public String name;
     private AssetTree tree1;
     private AssetTree tree2;
-    private AtomicReference<Throwable> t = new AtomicReference();
-    private ThreadDump threadDump;
 
     @NotNull
     public static String resourcesDir() {
@@ -85,7 +84,6 @@ public class Replication2WayTest {
     public void before() throws IOException {
         YamlLogging.setAll(false);
 
-        //YamlLogging.showServerWrites = true;
 
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
         ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
@@ -93,8 +91,7 @@ public class Replication2WayTest {
 
         TCPRegistry.createServerSocketChannelFor(
                 "host.port1",
-                "host.port2",
-                "host.port3");
+                "host.port2");
 
         WireType writeType = WireType.TEXT;
         tree1 = create(1, writeType, "clusterTwo");
@@ -104,7 +101,7 @@ public class Replication2WayTest {
         serverEndpoint2 = new ServerEndpoint("host.port2", tree2);
     }
 
-    public void after() throws IOException {
+    public void preAfter() {
         if (serverEndpoint1 != null)
             serverEndpoint1.close();
         if (serverEndpoint2 != null)
@@ -114,13 +111,6 @@ public class Replication2WayTest {
             tree1.close();
         if (tree2 != null)
             tree2.close();
-
-        TcpChannelHub.closeAllHubs();
-        TCPRegistry.reset();
-
-        threadDump.ignore("tree-1/Heartbeat");
-        threadDump.ignore("main/" + "ChronicleMapKeyValueStore Closer");
-        threadDump.assertNoNewThreads();
     }
 
     @NotNull
@@ -153,13 +143,6 @@ public class Replication2WayTest {
         name = testName.getMethodName();
 
         Files.deleteIfExists(Paths.get(OS.TARGET, name.toString()));
-    }
-
-    @After
-    public void afterMethod() throws IOException {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
-        after();
     }
 
     @Test
