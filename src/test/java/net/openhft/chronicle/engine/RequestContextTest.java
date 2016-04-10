@@ -73,7 +73,8 @@ public class RequestContextTest {
                 "entries=0,\n" +
                 "recurse=null,\n" +
                 "endSubscriptionAfterBootstrap=null,\n" +
-                "throttlePeriodMs=0}", rc.toString().replaceAll(", ", ",\n"));
+                "throttlePeriodMs=0,\n" +
+                "dontPersist=false}", rc.toString().replaceAll(", ", ",\n"));
         assertEquals(Boolean.TRUE, rc.putReturnsNull());
         assertEquals(Boolean.FALSE, rc.removeReturnsNull());
         assertEquals(Boolean.TRUE, rc.bootstrap());
