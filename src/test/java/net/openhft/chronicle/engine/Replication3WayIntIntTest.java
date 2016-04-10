@@ -18,10 +18,9 @@
 
 package net.openhft.chronicle.engine;
 
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
-import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -34,11 +33,13 @@ import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
-import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -59,8 +60,7 @@ import static org.junit.Assert.assertNotNull;
  * Created by Rob Austin
  */
 @RunWith(value = Parameterized.class)
-@Ignore
-public class Replication3WayIntIntTest {
+public class Replication3WayIntIntTest extends ThreadMonitoringTest {
     public static final WireType WIRE_TYPE = WireType.TEXT;
     public static final int NUMBER_OF_TIMES = 10;
 
@@ -78,7 +78,6 @@ public class Replication3WayIntIntTest {
     private AssetTree tree2;
     private AssetTree tree3;
     private AtomicReference<Throwable> t = new AtomicReference<>();
-    private ThreadDump threadDump;
 
     public Replication3WayIntIntTest() {
 
@@ -100,15 +99,6 @@ public class Replication3WayIntIntTest {
     }
 
     @Before
-    public void threadDump() {
-        threadDump = new ThreadDump();
-    }
-
-    @After
-    public void checkThreadDump() {
-        threadDump.assertNoNewThreads();
-    }
-
     public void before() throws IOException {
         YamlLogging.setAll(false);
 
@@ -131,26 +121,14 @@ public class Replication3WayIntIntTest {
         serverEndpoint3 = new ServerEndpoint("host.port3", tree3);
     }
 
-    @After
-    public void after() throws IOException, InterruptedException {
-        if (serverEndpoint1 != null)
-            serverEndpoint1.close();
-        if (serverEndpoint2 != null)
-            serverEndpoint2.close();
-        if (serverEndpoint3 != null)
-            serverEndpoint3.close();
+    public void preAfter() {
+        Closeable.closeQuietly(serverEndpoint1);
+        Closeable.closeQuietly(serverEndpoint2);
+        Closeable.closeQuietly(serverEndpoint3);
 
-        if (tree1 != null)
-            tree1.close();
-        if (tree2 != null)
-            tree2.close();
-        if (tree3 != null)
-            tree3.close();
-
-        TcpChannelHub.closeAllHubs();
-        TCPRegistry.reset();
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
+        Closeable.closeQuietly(tree1);
+        Closeable.closeQuietly(tree2);
+        Closeable.closeQuietly(tree3);
 
     }
 
