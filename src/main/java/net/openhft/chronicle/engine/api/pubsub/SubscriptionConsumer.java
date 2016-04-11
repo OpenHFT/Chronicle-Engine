@@ -16,7 +16,7 @@
 
 package net.openhft.chronicle.engine.api.pubsub;
 
-import net.openhft.lang.Jvm;
+import net.openhft.chronicle.core.util.ThrowingConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +34,7 @@ public interface SubscriptionConsumer<T> {
         doNotify.notifyEachSubscriber(subs);
     }
 
-    static <E> void notifyEachEvent(@NotNull Set<E> subs, @NotNull SubscriptionConsumer<E> doNotify) {
+    static <E> void notifyEachEvent(@NotNull Set<E> subs, @NotNull SubscriptionConsumer<E> doNotify) throws InvalidSubscriberException {
         doNotify.notifyEachEvent(subs);
     }
 
@@ -55,14 +55,8 @@ public interface SubscriptionConsumer<T> {
         });
     }
 
-    default void notifyEachEvent(@NotNull Set<T> subs) {
-        subs.forEach(s -> {
-            try {
-                accept(s);
-            } catch (InvalidSubscriberException e) {
-                throw Jvm.rethrow(e);
-            }
-        });
+    default void notifyEachEvent(@NotNull Set<T> subs) throws InvalidSubscriberException {
+        subs.forEach(ThrowingConsumer.asConsumer(this::accept));
     }
 
     void accept(T subscriber) throws InvalidSubscriberException;

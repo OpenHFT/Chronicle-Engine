@@ -16,10 +16,10 @@
 
 package net.openhft.chronicle.engine.map;
 
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.core.threads.EventLoop;
+import net.openhft.chronicle.core.util.ThrowingConsumer;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
@@ -302,13 +302,9 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
     public void entriesFor(int segment,
                            @NotNull SubscriptionConsumer<MapEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
         //Ignore the segments and return entriesFor the whole map
-        chronicleMap.entrySet().stream().map(e -> InsertedEvent.of(assetFullName, e.getKey(), e.getValue(), false)).forEach(e -> {
-            try {
-                kvConsumer.accept(e);
-            } catch (InvalidSubscriberException t) {
-                throw Jvm.rethrow(t);
-            }
-        });
+        chronicleMap.entrySet().stream()
+                .map(e -> InsertedEvent.of(assetFullName, e.getKey(), e.getValue(), false))
+                .forEach(ThrowingConsumer.asConsumer(kvConsumer::accept));
     }
 
     @NotNull

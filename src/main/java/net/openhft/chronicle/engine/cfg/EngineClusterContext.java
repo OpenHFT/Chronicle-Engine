@@ -1,7 +1,7 @@
 package net.openhft.chronicle.engine.cfg;
 
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.threads.EventLoop;
+import net.openhft.chronicle.core.util.ThrowingFunction;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
 import net.openhft.chronicle.engine.server.internal.EngineWireNetworkContext;
@@ -29,6 +29,7 @@ public class EngineClusterContext extends ClusterContext {
 
     Asset assetRoot;
     private byte localIdentifier;
+
     private EngineClusterContext(WireIn w) {
         super(w);
     }
@@ -42,44 +43,39 @@ public class EngineClusterContext extends ClusterContext {
         return hostIdentifier.hostId();
     }
 
-    public Function<NetworkContext, TcpEventHandler> tcpEventHandlerFactory() {
+    public ThrowingFunction<NetworkContext, IOException, TcpEventHandler> tcpEventHandlerFactory() {
         return (networkContext) -> {
+            final EngineWireNetworkContext nc = (EngineWireNetworkContext) networkContext;
 
-            try {
-                final EngineWireNetworkContext nc = (EngineWireNetworkContext) networkContext;
+            if (nc.isAcceptor())
+                nc.wireOutPublisher(new VanillaWireOutPublisher(WireType.TEXT));
+            final TcpEventHandler handler = new TcpEventHandler(networkContext);
 
-                if (nc.isAcceptor())
-                    nc.wireOutPublisher(new VanillaWireOutPublisher(WireType.TEXT));
-                final TcpEventHandler handler = new TcpEventHandler(networkContext);
+            final Function<Object, TcpHandler> consumer = o -> {
+                if (o instanceof SessionDetailsProvider) {
+                    final SessionDetailsProvider sessionDetails = (SessionDetailsProvider) o;
+                    nc.heartbeatTimeoutMs(heartbeatTimeoutMs());
+                    nc.sessionDetails(sessionDetails);
+                    nc.wireType(sessionDetails.wireType());
+                    final WireType wireType = nc.sessionDetails().wireType();
+                    if (wireType != null)
+                        nc.wireOutPublisher().wireType(wireType);
+                    return new EngineWireHandler();
+                } else if (o instanceof TcpHandler)
+                    return (TcpHandler) o;
 
-                final Function<Object, TcpHandler> consumer = o -> {
-                    if (o instanceof SessionDetailsProvider) {
-                        final SessionDetailsProvider sessionDetails = (SessionDetailsProvider) o;
-                        nc.heartbeatTimeoutMs(heartbeatTimeoutMs());
-                        nc.sessionDetails(sessionDetails);
-                        nc.wireType(sessionDetails.wireType());
-                        final WireType wireType = nc.sessionDetails().wireType();
-                        if (wireType != null)
-                            nc.wireOutPublisher().wireType(wireType);
-                        return new EngineWireHandler();
-                    } else if (o instanceof TcpHandler)
-                        return (TcpHandler) o;
+                throw new UnsupportedOperationException("not supported class=" + o.getClass());
+            };
 
-                    throw new UnsupportedOperationException("not supported class=" + o.getClass());
-                };
+            final Function<EngineWireNetworkContext, TcpHandler> f
+                    = x -> new HeaderTcpHandler<>(handler, consumer, x);
 
-                final Function<EngineWireNetworkContext, TcpHandler> f
-                        = x -> new HeaderTcpHandler<>(handler, consumer, x);
+            final WireTypeSniffingTcpHandler sniffer = new
+                    WireTypeSniffingTcpHandler<>(handler, nc, f);
 
-                final WireTypeSniffingTcpHandler sniffer = new
-                        WireTypeSniffingTcpHandler<>(handler, nc, f);
+            handler.tcpHandler(sniffer);
+            return handler;
 
-                handler.tcpHandler(sniffer);
-                return handler;
-
-            } catch (IOException e) {
-                throw Jvm.rethrow(e);
-            }
         };
     }
 

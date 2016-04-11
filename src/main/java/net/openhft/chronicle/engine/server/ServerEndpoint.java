@@ -15,7 +15,6 @@
  */
 package net.openhft.chronicle.engine.server;
 
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
@@ -80,8 +79,6 @@ public class ServerEndpoint implements Closeable {
         assert eventLoop != null;
 
         Function<NetworkContext, TcpEventHandler> networkContextTcpEventHandlerFunction = (networkContext) -> {
-
-            try {
                 final EngineWireNetworkContext nc = (EngineWireNetworkContext) networkContext;
                 if (nc.isAcceptor())
                     nc.wireOutPublisher(new VanillaWireOutPublisher(WireType.TEXT));
@@ -112,10 +109,6 @@ public class ServerEndpoint implements Closeable {
 
                 handler.tcpHandler(sniffer);
                 return handler;
-
-            } catch (IOException e) {
-                throw Jvm.rethrow(e);
-            }
         };
         final AcceptorEventHandler eah = new AcceptorEventHandler(
                 hostPortDescription,

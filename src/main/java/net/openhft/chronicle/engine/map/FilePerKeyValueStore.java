@@ -22,6 +22,7 @@ import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.io.IORuntimeException;
+import net.openhft.chronicle.core.util.ThrowingConsumer;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.StringBytesStoreKeyValueStore;
@@ -139,13 +140,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     }
 
     private void keysFor0(@NotNull SubscriptionConsumer<String> stringConsumer) {
-        getFiles().forEach(p -> {
-            try {
-                stringConsumer.accept(p.getFileName().toString());
-            } catch (InvalidSubscriberException e) {
-                throw Jvm.rethrow(e);
-            }
-        });
+        getFiles().forEach(ThrowingConsumer.asConsumer(p -> stringConsumer.accept(p.getFileName().toString())));
     }
 
     @Override
@@ -153,7 +148,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         entriesFor0(kvConsumer);
     }
 
-    private void entriesFor0(@NotNull SubscriptionConsumer<MapEvent<String, BytesStore>> kvConsumer) {
+    private void entriesFor0(@NotNull SubscriptionConsumer<MapEvent<String, BytesStore>> kvConsumer) throws InvalidSubscriberException {
         getFiles().forEach(p -> {
             BytesStore fileContents = null;
             try {

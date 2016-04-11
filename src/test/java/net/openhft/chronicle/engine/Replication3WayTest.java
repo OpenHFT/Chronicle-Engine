@@ -34,6 +34,7 @@ import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
+import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
@@ -122,6 +123,14 @@ public class Replication3WayTest extends ThreadMonitoringTest {
             tree2.close();
         if (tree3 != null)
             tree3.close();
+
+        TcpChannelHub.closeAllHubs();
+        TCPRegistry.reset();
+
+        threadDump.ignore("tree-1/Heartbeat");
+        threadDump.ignore("tree-2/Heartbeat");
+        threadDump.ignore("tree-3/Heartbeat");
+        threadDump.ignore("main/ChronicleMapKeyValueStore Closer");
     }
 
     @NotNull
