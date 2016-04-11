@@ -119,6 +119,10 @@ public class Replication3WayIntIntTest extends ThreadMonitoringTest {
         serverEndpoint1 = new ServerEndpoint("host.port1", tree1);
         serverEndpoint2 = new ServerEndpoint("host.port2", tree2);
         serverEndpoint3 = new ServerEndpoint("host.port3", tree3);
+
+        name = testName.getMethodName();
+
+        Files.deleteIfExists(Paths.get(OS.TARGET, name));
     }
 
     public void preAfter() {
@@ -148,14 +152,6 @@ public class Replication3WayIntIntTest extends ThreadMonitoringTest {
                         asset));
 
         return tree;
-    }
-
-    @Before
-    public void beforeTest() throws IOException {
-        before();
-        name = testName.getMethodName();
-
-        Files.deleteIfExists(Paths.get(OS.TARGET, name));
     }
 
     @Test
