@@ -103,7 +103,7 @@ public class TestInsertUpdateChronicleMapView extends ThreadMonitoringTest {
     }
 
     @Test
-    public void testInsertFollowedByUpdate() throws Exception {
+    public void testInsertFollowedByUpdate() throws InterruptedException {
         //Note you have to set the bootstrap to false in order for this test to work.
         //Otherwise it is possible that that you can get 2 insert events.
         final MapView<String, String> serverMap = serverAssetTree.acquireMap
@@ -114,7 +114,7 @@ public class TestInsertUpdateChronicleMapView extends ThreadMonitoringTest {
         final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(1);
         clientAssetTree.registerSubscriber("name?putReturnsNull=false&bootstrap=false", MapEvent.class,
                 events::add);
-        Jvm.pause(1000);
+        Jvm.pause(500);
         {
             serverMap.put("hello", "world");
             final MapEvent event = events.poll(10, SECONDS);
@@ -128,7 +128,7 @@ public class TestInsertUpdateChronicleMapView extends ThreadMonitoringTest {
     }
 
     @Test
-    public void testInsertFollowedByUpdateWhenPutReturnsNullTrue() throws Exception {
+    public void testInsertFollowedByUpdateWhenPutReturnsNullTrue() throws InterruptedException {
 
         final MapView<String, String> serverMap = serverAssetTree.acquireMap
                 ("name?putReturnsNull=true",
@@ -138,7 +138,7 @@ public class TestInsertUpdateChronicleMapView extends ThreadMonitoringTest {
         final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(1);
         clientAssetTree.registerSubscriber("name?putReturnsNull=true", MapEvent.class,
                 events::add);
-        Jvm.pause(1000);
+        Jvm.pause(500);
         {
             serverMap.put("hello", "world");
             final MapEvent event = events.poll(10, SECONDS);

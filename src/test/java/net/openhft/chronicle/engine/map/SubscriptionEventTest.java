@@ -376,7 +376,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
                 Subscriber<String> add = eventsQueue::add;
                 assetTree.registerSubscriber(NAME, String.class, add);
-                Thread.sleep(500);
+                Jvm.pause(500);
                 // need to unsubscribe the same object which was subscribed to.
                 assetTree.unregisterSubscriber(NAME, add);
 
@@ -451,7 +451,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                 Object putEvent = eventsQueue.poll(1, SECONDS);
                 Assert.assertTrue(putEvent instanceof InsertedEvent);
 
-                Thread.sleep(1);
+                Jvm.pause(1);
                 map.remove("Hello");
 
                 Object removeEvent = eventsQueue.poll(5, SECONDS);

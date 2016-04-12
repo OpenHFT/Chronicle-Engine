@@ -119,7 +119,7 @@ public class QueryableEntrySetTest extends ThreadMonitoringTest {
     }
 
     @Test(timeout = 10000)
-    public void testQueryForEach() throws Exception {
+    public void testQueryForEach() {
 
         Map<String, String> expected = new HashMap<>();
         expected.put("1", "1");
@@ -140,7 +140,7 @@ public class QueryableEntrySetTest extends ThreadMonitoringTest {
     }
 
     @Test(timeout = 10000)
-    public void testQueryForEachWithPredicate() throws Exception {
+    public void testQueryForEachWithPredicate() throws InterruptedException {
 
         final MapView<String, String> map = assetTree.acquireMap("name", String.class, String
                 .class);

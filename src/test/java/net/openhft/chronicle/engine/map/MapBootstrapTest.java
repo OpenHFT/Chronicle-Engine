@@ -114,11 +114,7 @@ public class MapBootstrapTest extends ThreadMonitoringTest {
                         q2.add(message);
                     });
 
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                Jvm.rethrow(e);
-            }
+            Jvm.pause(500);
 
             map1.put("post-bootstrap", "post-bootstrap");
 

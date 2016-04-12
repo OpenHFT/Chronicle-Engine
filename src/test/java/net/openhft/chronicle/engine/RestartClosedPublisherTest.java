@@ -112,7 +112,7 @@ public class RestartClosedPublisherTest {
         remote.registerSubscriber(keySubUri + "?bootstrap=false", String.class, (e) -> eventQueue.add(e));
 
         // wait for the subscription to be read by the server
-        Thread.sleep(100);
+        Jvm.pause(100);
 
         map.put(testKey, value);
         Assert.assertEquals(value, eventQueue.poll(2, SECONDS));

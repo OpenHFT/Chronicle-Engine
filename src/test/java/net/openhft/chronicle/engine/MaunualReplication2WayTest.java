@@ -187,7 +187,7 @@ public class MaunualReplication2WayTest {
             int offset = isHost1 ? 0 : 1;
             map1.put((i * 2) + offset, hostName);
 
-            Thread.sleep(5);
+            Jvm.pause(5);
 
             Map<Integer, String> m = new TreeMap<>(map1);
 
@@ -195,7 +195,7 @@ public class MaunualReplication2WayTest {
 
             m.entrySet().forEach(e -> System.out.println("" + e.getKey() + " \t" + e.getValue()));
 
-            Thread.sleep(5000);
+            Jvm.pause(5000);
         }
 
     }

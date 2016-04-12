@@ -192,7 +192,7 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
      * @throws Exception
      */
     @Test
-    public void testEndOfSubscription() throws Exception {
+    public void testEndOfSubscription() throws InterruptedException {
 
         BlockingQueue<Boolean> endSub = new ArrayBlockingQueue<>(1);
 
@@ -209,9 +209,9 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
             }
         };
 
-        Thread.sleep(100);
+        Jvm.pause(100);
         clientAssetTree.registerSubscriber("name", MapEvent.class, eventHandler);
-        Thread.sleep(100);
+        Jvm.pause(100);
         clientAssetTree.unregisterSubscriber("name", eventHandler);
 
         final Boolean onEndOfSubscription = endSub.poll(20, SECONDS);

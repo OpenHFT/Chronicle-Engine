@@ -70,7 +70,7 @@ public class GenericWireAdapterTest {
     }
 
     @Test
-    public void testValueToWire() throws Exception {
+    public void testValueToWire() {
         final GenericWireAdapter<String, Double> genericWireAdapter = new GenericWireAdapter(
                 String.class, Double.class);
 

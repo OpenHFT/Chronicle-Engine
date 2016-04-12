@@ -70,7 +70,7 @@ public class FilterTest extends ThreadMonitoringTest {
     }
 
     @Test
-    public void test() throws Exception {
+    public void test() {
 
         final Bytes b = Bytes.elasticByteBuffer();
         final Wire wire = wireType.apply(b);

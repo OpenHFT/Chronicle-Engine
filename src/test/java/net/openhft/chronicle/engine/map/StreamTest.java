@@ -109,7 +109,7 @@ public class StreamTest extends ThreadMonitoringTest {
     }
 
     @Test
-    public void testSteamCount() throws Exception {
+    public void testSteamCount() {
 
         final MapView<String, String> map = assetTree.acquireMap("name", String.class, String
                 .class);

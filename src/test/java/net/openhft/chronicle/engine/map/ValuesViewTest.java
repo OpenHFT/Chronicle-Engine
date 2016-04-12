@@ -107,7 +107,7 @@ public class ValuesViewTest extends ThreadMonitoringTest {
     }
 
     @Test
-    public void testValues() throws Exception {
+    public void testValues() {
 
         final MapView<String, String> map = assetTree.acquireMap("name", String.class, String
                 .class);

@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
@@ -48,7 +49,7 @@ public class RemoteRpc extends JSR166TestCase {
      */
     @Ignore("Long running")
     @Test
-    public void testRpc() throws IOException, InterruptedException {
+    public void testRpc() throws IOException {
 
         YamlLogging.setAll(false);
         assetTree = new VanillaAssetTree(1)
@@ -57,7 +58,7 @@ public class RemoteRpc extends JSR166TestCase {
         MapView<String, String> map = assetTree.acquireMap("/test", String.class, String.class);
 
         for (int i = 0; i < 9999; i++) {
-            Thread.sleep(1000);
+            Jvm.pause(500);
             try {
                 map.put("hello", "world");
             } catch (IORuntimeException e) {
@@ -77,7 +78,7 @@ public class RemoteRpc extends JSR166TestCase {
                 System.out.println(e.getMessage());
             }
 
-            Thread.sleep(1000);
+            Jvm.pause(500);
         }
     }
 
@@ -86,7 +87,7 @@ public class RemoteRpc extends JSR166TestCase {
      */
     @Ignore("Long running")
     @Test
-    public void testSub() throws IOException, InterruptedException {
+    public void testSub() throws IOException {
 
         YamlLogging.showClientWrites(true);
         YamlLogging.showClientReads(true);
@@ -112,7 +113,7 @@ public class RemoteRpc extends JSR166TestCase {
                 e.printStackTrace();
             }
 
-            Thread.sleep(1000);
+            Jvm.pause(500);
         }
     }
 

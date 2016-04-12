@@ -96,7 +96,7 @@ public class MainClusterClient {
                 for (int i = 0; i < entries; i++) {
                     try {
                         map1.remove("" + i);
-                       // Thread.sleep(20);
+                       // Jvm.pause(20);
                     } catch (Throwable t) {
                         t.printStackTrace();
                     }

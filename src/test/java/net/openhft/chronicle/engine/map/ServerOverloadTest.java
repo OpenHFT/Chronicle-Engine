@@ -110,7 +110,7 @@ public class ServerOverloadTest extends ThreadMonitoringTest {
     }
 
     @Test
-    public void testThatSendingAlotOfDataToTheServer() throws Exception {
+    public void testThatSendingAlotOfDataToTheServer() {
 //        YamlLogging.setAll(true);
         map = assetTree.acquireMap("name", String.class, String.class);
 

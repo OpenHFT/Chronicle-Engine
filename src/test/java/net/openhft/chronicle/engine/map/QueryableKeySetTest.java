@@ -107,7 +107,7 @@ public class QueryableKeySetTest extends ThreadMonitoringTest {
     }
 
     @Test(timeout = 10000)
-    public void testQueryForEach() throws Exception {
+    public void testQueryForEach() {
 
         final MapView<String, String> map = assetTree.acquireMap("name", String.class, String
                 .class);
@@ -123,7 +123,7 @@ public class QueryableKeySetTest extends ThreadMonitoringTest {
     }
 
     @Test(timeout = 10000)
-    public void testQueryForEachWithPredicate() throws Exception {
+    public void testQueryForEachWithPredicate() {
 
         final MapView<String, String> map = assetTree.acquireMap("name", String.class, String
                 .class);
@@ -144,7 +144,7 @@ public class QueryableKeySetTest extends ThreadMonitoringTest {
     }
 
     @Test(timeout = 10000)
-    public void testQueryForCollect() throws Exception {
+    public void testQueryForCollect() {
 
         final MapView<Integer, Integer> map = assetTree.acquireMap("name", Integer.class, Integer
                 .class);
@@ -159,7 +159,7 @@ public class QueryableKeySetTest extends ThreadMonitoringTest {
     }
 
     @Test(timeout = 100000000)
-    public void testForEach() throws Exception {
+    public void testForEach() {
 
         final MapView<Integer, Integer> map = assetTree.acquireMap("name", Integer.class, Integer
                 .class);

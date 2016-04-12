@@ -118,7 +118,7 @@ public class ArrayMapTest extends ThreadMonitoringTest {
     }
 
     @Test
-    public void testByteArrayValue() throws Exception {
+    public void testByteArrayValue() {
 
         final MapView<String, byte[]> map = assetTree.acquireMap("name", String.class, byte[]
                 .class);
@@ -130,7 +130,7 @@ public class ArrayMapTest extends ThreadMonitoringTest {
     }
 
     @Test
-    public void testByteArrayValueWithRealBytes() throws Exception {
+    public void testByteArrayValueWithRealBytes() {
 
         final MapView<String, byte[]> map = assetTree.acquireMap("name", String.class, byte[]
                 .class);
@@ -143,7 +143,7 @@ public class ArrayMapTest extends ThreadMonitoringTest {
     }
 
     @Test
-    public void testByteArrayValueWithRealBytesNegitive() throws Exception {
+    public void testByteArrayValueWithRealBytesNegitive() {
 
         final MapView<String, byte[]> map = assetTree.acquireMap("name", String.class, byte[]
                 .class);

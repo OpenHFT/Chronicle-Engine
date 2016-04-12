@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.management.ManagementTools;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
@@ -76,11 +77,7 @@ public class VanillaAssetTreeEgMain {
         // removed group/map2
         tree.root().getAsset("group").removeChild("map2");
 
-        try {
-            Thread.sleep(2*60*1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        Jvm.pause(2 * 60 * 1000);
 
         for (int i = 0; i < 1000; i++) {
             map4.put("Key"+i,"Value"+i);

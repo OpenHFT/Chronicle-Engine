@@ -237,11 +237,11 @@ public class Replication2WayTest extends ThreadMonitoringTest {
         tree1.registerSubscriber(name, MapEvent.class, f -> {
             map1Updates.incrementAndGet();
         });
-        Thread.sleep(1);
+        Jvm.pause(1);
         map1.put("hello1", "world1");
-        Thread.sleep(1);
+        Jvm.pause(1);
         map1.put("hello2", "world2");
-        Thread.sleep(1);
+        Jvm.pause(1);
 
         final ConcurrentMap<String, String> map2 = tree2.acquireMap(name, String.class, String
                 .class);
@@ -282,12 +282,12 @@ public class Replication2WayTest extends ThreadMonitoringTest {
         map1.put("hello1", "world1");
 
         map1.put("hello2", "world2");
-        Thread.sleep(2);
+        Jvm.pause(2);
 
         final ConcurrentMap<String, String> map2 = tree2.acquireMap(name, String.class, String
                 .class);
 
-        Thread.sleep(1000);
+        Jvm.pause(500);
 
         tree2.registerSubscriber(name, MapEvent.class, f -> map2Updates.incrementAndGet());
 

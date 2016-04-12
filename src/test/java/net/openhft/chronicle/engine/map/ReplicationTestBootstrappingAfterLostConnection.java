@@ -307,7 +307,7 @@ public class ReplicationTestBootstrappingAfterLostConnection {
         assertNotNull(map1);
 
         map1.put("hello1", "world1");
-        Thread.sleep(100);
+        Jvm.pause(100);
         //close the map
         serverEndpoint1.close();
         tree1.close();
@@ -319,7 +319,7 @@ public class ReplicationTestBootstrappingAfterLostConnection {
                         basePath
                 , String.class, String.class);
         assertNotNull(map1a);
-        Thread.sleep(100);
+        Jvm.pause(100);
         Assert.assertEquals(1, map1a.size());
 
     }

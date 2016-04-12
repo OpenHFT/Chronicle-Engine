@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.engine;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
@@ -155,7 +156,7 @@ public class Replication3WayIntIntTest extends ThreadMonitoringTest {
     }
 
     @Test
-    public void testAllDataGetsReplicated() throws Exception {
+    public void testAllDataGetsReplicated() {
 
         name = "testAllDataGetsReplicated";
         final ConcurrentMap<Integer, Integer> map1 = tree1.acquireMap(name, Integer.class, Integer
@@ -176,7 +177,7 @@ public class Replication3WayIntIntTest extends ThreadMonitoringTest {
 
         assertFullRange(70, map1);
 
-        Thread.sleep(1);
+        Jvm.pause(1);
 
         assertFullRange(70, map2);
 
@@ -207,7 +208,7 @@ public class Replication3WayIntIntTest extends ThreadMonitoringTest {
                     map3.size() == epectedSize) {
                 break;
             }
-            Thread.sleep(100);
+            Jvm.pause(100);
         }
 
         if (map1.size() != map2.size())
@@ -228,11 +229,7 @@ public class Replication3WayIntIntTest extends ThreadMonitoringTest {
         for (int x = 0; x < 100; x++) {
             for (Map<Integer, Integer> map : maps) {
                 if (!map.containsKey(key)) {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException ignore) {
-
-                    }
+                    Jvm.pause(100);
                     continue Outer;
                 }
                 assert true;
@@ -254,11 +251,7 @@ public class Replication3WayIntIntTest extends ThreadMonitoringTest {
                 for (int i = 0; i < upperBoundExclusive; i++) {
 
                     if (!map.containsKey(i)) {
-                        try {
-                            Thread.sleep(100);
-                        } catch (InterruptedException ignore) {
-
-                        }
+                        Jvm.pause(100);
                         continue Outer;
                     }
 

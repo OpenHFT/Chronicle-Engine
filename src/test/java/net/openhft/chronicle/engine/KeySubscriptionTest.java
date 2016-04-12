@@ -100,7 +100,7 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
         clientTree.acquireMap(NAME, String.class,
                 String.class).registerKeySubscriber(q::add);
 
-        Thread.sleep(1000);
+        Jvm.pause(500);
 
         final MapView<String, String> serverMap = serverAssetTree.acquireMap(NAME,
                 String.class, String.class);
@@ -127,19 +127,11 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
         // we have to call an action on the server map because it lazily created
         server.size();
 
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            Jvm.rethrow(e);
-        }
+        Jvm.pause(500);
 
         clientTree.registerSubscriber(keyUri, String.class, q::add);
 
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            Jvm.rethrow(e);
-        }
+        Jvm.pause(500);
 
         server.put(key, "val1");
         server.put(key, "val2");

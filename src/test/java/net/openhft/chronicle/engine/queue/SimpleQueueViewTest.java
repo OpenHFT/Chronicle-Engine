@@ -159,7 +159,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         publisher.publish(messageType, "Message-1");
         publisher.publish(messageType, "Message-2");
 
-        Thread.sleep(1000);
+        Jvm.pause(500);
 
         assetTree.registerSubscriber(uri + "/" + messageType + DELETE_CHRONICLE_FILE, String.class, subscriber);
 
@@ -179,7 +179,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         String messageType = "topic";
 
         queueView = assetTree.acquireQueue(uri, String.class, String.class);
-        Thread.sleep(500);
+        Jvm.pause(500);
         final long index = queueView.publishAndIndex(messageType, "Message-1");
         final Excerpt<String, String> actual = queueView.get(index);
         assertEquals(index, actual.index());
@@ -199,7 +199,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         BlockingQueue<String> values = new LinkedBlockingQueue<>();
         Subscriber<String> subscriber = values::add;
         assetTree.registerSubscriber(uri, String.class, subscriber);
-        Thread.sleep(500);
+        Jvm.pause(500);
         publisher.publish("Message-1");
         assertEquals("Message-1", values.poll(2, SECONDS));
         publisher.publish("Message-2");
@@ -220,7 +220,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
         Subscriber<String> subscriber = values::add;
         assetTree.registerSubscriber(uri, String.class, subscriber);
-        Thread.sleep(500);
+        Jvm.pause(500);
         publisher.publish("Message-1");
         assertEquals("Message-1", values.poll(2, SECONDS));
         publisher.publish("Message-2");
@@ -240,7 +240,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
         Subscriber<String> subscriber = values::add;
         assetTree.registerSubscriber(uri + "KeyNotForMe", String.class, subscriber);
-        Thread.sleep(200);
+        Jvm.pause(200);
         publisher.publish("Message-1");
         assertEquals(null, values.poll(200, MILLISECONDS));
         publisher.publish("Message-2");
@@ -259,7 +259,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         BlockingQueue<String> values = new LinkedBlockingQueue<>();
         TopicSubscriber<String, String> subscriber = (topic, message) -> values.add(topic + " " + message);
         assetTree.registerTopicSubscriber(uri, String.class, String.class, subscriber);
-        Thread.sleep(200);
+        Jvm.pause(200);
         publisher.publish(messageType, "Message-1");
         assertEquals("topic Message-1", values.poll(2, SECONDS));
         publisher.publish(messageType, "Message-2");

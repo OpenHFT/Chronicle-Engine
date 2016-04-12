@@ -107,7 +107,7 @@ public class TestInsertUpdateChronicleMapViewOnServer extends ThreadMonitoringTe
     }
 
     @Test
-    public void testInsertFollowedByUpdate() throws Exception {
+    public void testInsertFollowedByUpdate() throws InterruptedException {
 
         final MapView<String, String> serverMap = serverAssetTree.acquireMap
                 ("name?putReturnsNull=false",
@@ -131,7 +131,7 @@ public class TestInsertUpdateChronicleMapViewOnServer extends ThreadMonitoringTe
     }
 
     @Test
-    public void testInsertFollowedByUpdateWhenPutReturnsNullTrue() throws Exception {
+    public void testInsertFollowedByUpdateWhenPutReturnsNullTrue() throws InterruptedException {
 
         final MapView<String, String> serverMap = serverAssetTree.acquireMap
                 ("name?putReturnsNull=true",
@@ -142,7 +142,7 @@ public class TestInsertUpdateChronicleMapViewOnServer extends ThreadMonitoringTe
         clientAssetTree.registerSubscriber("name?putReturnsNull=true", MapEvent.class,
                 events::add);
 
-        Thread.sleep(1000);
+        Jvm.pause(500);
 
         {
             serverMap.put("hello", "world");

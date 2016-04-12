@@ -11,7 +11,7 @@ public class NfsServer {
 
     @Test
     @Ignore("nfs service test - not required for CI")
-    public void test() throws Exception {
+    public void test()  {
 
         ChronicleNfsServer.start(new VanillaAssetTree().forTesting(true));
 

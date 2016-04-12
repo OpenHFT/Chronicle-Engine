@@ -119,7 +119,7 @@ public class AssetTreeJMXTest {
         map.put(1.01, 1.01);
         map.put(1.001, 1.001);
         map.put(1.0001, 1.0001);
-        Jvm.pause(20000);
+        Jvm.pause(200);
     }
 
     @Test
@@ -131,7 +131,7 @@ public class AssetTreeJMXTest {
         map.put(2, 2);
         map.put(3, 3);
         map.put(4, 4);
-        Jvm.pause(20000);
+        Jvm.pause(200);
     }
 
     @Ignore("todo add assertions")
@@ -169,7 +169,7 @@ public class AssetTreeJMXTest {
             ConcurrentMap<String, String> map1 = tree.acquireMap("group/map"+i, String.class, String.class);
             map1.put("key1", "value1");
         }
-        Jvm.pause(10000);
+        Jvm.pause(200);
     }
 
     /**

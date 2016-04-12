@@ -36,7 +36,7 @@ public class AllTestMain {
         RunNotifier runNotifier = new RunNotifier();
         runNotifier.addFirstListener(new RunListener() {
             @Override
-            public void testFailure(Failure failure) throws Exception {
+            public void testFailure(Failure failure) {
                 failures.add(failure);
                 System.err.println(failure);
                 failure.getException().printStackTrace();

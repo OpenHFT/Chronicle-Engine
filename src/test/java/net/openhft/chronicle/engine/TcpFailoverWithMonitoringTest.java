@@ -171,7 +171,7 @@ public class TcpFailoverWithMonitoringTest {
      * @throws InterruptedException
      */
     @Test
-    public void test() throws Exception {
+    public void test() throws InterruptedException {
 
         final MapView<String, String> failoverClient = failOverClient.acquireMap(NAME,
                 String.class,
