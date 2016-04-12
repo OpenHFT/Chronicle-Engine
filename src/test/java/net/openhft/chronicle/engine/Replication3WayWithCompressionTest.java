@@ -161,7 +161,7 @@ public class Replication3WayWithCompressionTest extends ThreadMonitoringTest {
 
         map3.put("hello3", "world3");
 
-        for (int i = 1; i <= 50; i++) {
+        for (int i = 1; i <= 100; i++) {
             if (map1.size() == 3 &&
                     map2.size() == 3 &&
                     map3.size() == 3)
