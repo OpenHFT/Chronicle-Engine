@@ -151,6 +151,8 @@ public class Replication3WayWithCompressionTest extends ThreadMonitoringTest {
     public void testThreeWay() throws InterruptedException {
         YamlLogging.setAll(true);
 
+
+        Thread.sleep(500);
         final ConcurrentMap<String, String> map1 = tree1.acquireMap(name, String.class, String
                 .class);
         assertNotNull(map1);
