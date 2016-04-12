@@ -84,7 +84,7 @@ abstract class AbstractHandler {
     /**
      * write and exceptions and rolls back if no data was written
      */
-    void writeData(boolean isNotReady, @NotNull Bytes inBytes, @NotNull WriteMarshallable c) {
+    void writeData(boolean isNotComplete, @NotNull Bytes inBytes, @NotNull WriteMarshallable c) {
 
         final WriteMarshallable marshallable = out -> {
             final long readPosition = inBytes.readPosition();
@@ -106,8 +106,8 @@ abstract class AbstractHandler {
             }
         };
 
-        if (isNotReady)
-            outWire.writeNotReadyDocument(false, marshallable);
+        if (isNotComplete)
+            outWire.writeNotCompleteDocument(false, marshallable);
         else
             outWire.writeDocument(false, marshallable);
 

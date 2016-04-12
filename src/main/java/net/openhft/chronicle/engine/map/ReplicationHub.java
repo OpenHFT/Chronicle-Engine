@@ -265,7 +265,7 @@ class ReplicationHub extends AbstractStatelessClient {
                 // have been received, we know when we have received all events
                 // when there are no more events to process.
                 if (!hasSentLastUpdateTime && lastUpdateTime > 0) {
-                    wire.writeNotReadyDocument(false,
+                    wire.writeNotCompleteDocument(false,
                             wire -> {
                                 wire.writeEventName(CoreFields.lastUpdateTime).int64(lastUpdateTime);
                                 wire.write(() -> "id").int8(remoteIdentifier);
@@ -319,7 +319,7 @@ class ReplicationHub extends AbstractStatelessClient {
                         delay + "ms");
             }
 
-            wire.writeNotReadyDocument(false, wireOut ->
+            wire.writeNotCompleteDocument(false, wireOut ->
                     wireOut.writeEventName(replicationEvent).typedMarshallable(e));
         }
 

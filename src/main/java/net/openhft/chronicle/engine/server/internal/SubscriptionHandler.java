@@ -173,7 +173,7 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
 
             final WriteMarshallable event = p -> {
                 p.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(tid));
-                p.writeNotReadyDocument(false, wire -> wire.write(reply).object(e));
+                p.writeNotCompleteDocument(false, wire -> wire.write(reply).object(e));
             };
 
             final Object key = (e instanceof MapEvent) ? ((MapEvent) e).getKey() : e;

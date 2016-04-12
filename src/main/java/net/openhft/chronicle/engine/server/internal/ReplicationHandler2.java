@@ -296,7 +296,7 @@ public class ReplicationHandler2<E> extends AbstractHandler {
 
                         publisher.put(null, w -> {
                             w.writeDocument(true, d -> d.write(CoreFields.cid).int64(cid));
-                            w.writeNotReadyDocument(false, d -> {
+                            w.writeNotCompleteDocument(false, d -> {
                                         d.writeEventName(CoreFields.lastUpdateTime).int64(lastUpdateTime);
                                         d.write(() -> "id").int8(id);
                                     }
@@ -333,7 +333,7 @@ public class ReplicationHandler2<E> extends AbstractHandler {
                                 id + " event=" + e);
 
                     w.writeDocument(true, d -> d.write(CoreFields.cid).int64(cid));
-                    w.writeNotReadyDocument(false,
+                    w.writeNotCompleteDocument(false,
                             d -> d.writeEventName(replicationEvent).typedMarshallable(e));
 
                 }));

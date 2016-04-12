@@ -233,7 +233,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
                     // when there are no more events to process.
                     if (!hasSentLastUpdateTime && lastUpdateTime > 0) {
                         publisher.put(null, publish -> publish
-                                .writeNotReadyDocument(false,
+                                .writeNotCompleteDocument(false,
                                         wire -> {
                                             wire.writeEventName(CoreFields.lastUpdateTime).int64(lastUpdateTime);
                                             wire.write(() -> "id").int8(id);
@@ -269,7 +269,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
                                 "localIdentifier=" + hostId + " ,remoteIdentifier=" +
                                 id + " event=" + e);
 
-                    publish1.writeNotReadyDocument(true,
+                    publish1.writeNotCompleteDocument(true,
                             wire -> wire.writeEventName(CoreFields.tid).int64(inputTid));
 
                     if (LOG.isInfoEnabled()) {
@@ -283,7 +283,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
 
                     if (publish1.bytes().writePosition() > 100000 && LOG.isDebugEnabled())
                         LOG.debug(publish1.bytes().toDebugString(128));
-                    publish1.writeNotReadyDocument(false,
+                    publish1.writeNotCompleteDocument(false,
                             wire -> wire.writeEventName(replicationEvent).typedMarshallable(e));
 
                 }));

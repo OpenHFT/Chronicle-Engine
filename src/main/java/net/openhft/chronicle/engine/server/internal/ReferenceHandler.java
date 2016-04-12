@@ -90,7 +90,7 @@ public class ReferenceHandler<E, T> extends AbstractHandler {
                             publisher.put(key, publish -> {
                                 publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
                                         (inputTid));
-                                publish.writeNotReadyDocument(false, wire -> wire.writeEventName(reply)
+                                publish.writeNotCompleteDocument(false, wire -> wire.writeEventName(reply)
                                         .marshallable(m -> m.write(Params.message).object(message)));
                             });
                         }

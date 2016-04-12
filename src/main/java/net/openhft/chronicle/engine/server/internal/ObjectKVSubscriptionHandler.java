@@ -61,7 +61,7 @@ public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subsc
                     synchronized (publisher) {
                         publisher.put(topic, publish -> {
                             publish.writeDocument(true, wire -> wire.writeEventName(tid).int64(inputTid));
-                            publish.writeNotReadyDocument(false, wire -> wire.writeEventName(reply)
+                            publish.writeNotCompleteDocument(false, wire -> wire.writeEventName(reply)
                                     .marshallable(m -> {
                                         m.write(() -> "topic").object(topic);
                                         m.write(() -> "message").object(message);

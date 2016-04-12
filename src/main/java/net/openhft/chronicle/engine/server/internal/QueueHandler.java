@@ -69,7 +69,7 @@ public class QueueHandler<T, M> extends TopicPublisherHandler<T, M> {
                             publisher.put(topic, publish -> {
                                 publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
                                         (inputTid));
-                                publish.writeNotReadyDocument(false, wire -> wire.writeEventName(reply)
+                                publish.writeNotCompleteDocument(false, wire -> wire.writeEventName(reply)
                                         .marshallable(m -> {
                                             m.write(() -> "topic").object(topic);
                                             m.write(() -> "message").object(message);
@@ -83,7 +83,7 @@ public class QueueHandler<T, M> extends TopicPublisherHandler<T, M> {
                             publisher.put(null, publish -> {
                                 publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
                                         (inputTid));
-                                publish.writeNotReadyDocument(false, wire -> wire.writeEventName
+                                publish.writeNotCompleteDocument(false, wire -> wire.writeEventName
                                         (EventId.onEndOfSubscription).text(""));
 
                             });
