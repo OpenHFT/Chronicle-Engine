@@ -55,7 +55,7 @@ import static org.junit.Assert.assertNotNull;
  */
 
 public class Replication3WayWithCompressionTest extends ThreadMonitoringTest {
-    public static final WireType WIRE_TYPE = WireType.TEXT;
+
     public static final String NAME = "/ChMaps/test";
     private ServerEndpoint serverEndpoint1;
     private ServerEndpoint serverEndpoint2;
