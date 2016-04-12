@@ -73,6 +73,10 @@ public class Replication3WayWithCompressionTest extends ThreadMonitoringTest {
     @Before
     public void before() throws IOException {
 
+        name = testName.getMethodName();
+
+        Files.deleteIfExists(Paths.get(OS.TARGET, name.toString()));
+
         System.setProperty("EngineReplication.Compression", "gzip");
 
         YamlLogging.setAll(false);
@@ -142,14 +146,6 @@ public class Replication3WayWithCompressionTest extends ThreadMonitoringTest {
         return new File(path).getParentFile().getParentFile() + "/src/test/resources";
     }
 
-
-    @Before
-    public void beforeTest() throws IOException {
-        before();
-        name = testName.getMethodName();
-
-        Files.deleteIfExists(Paths.get(OS.TARGET, name.toString()));
-    }
 
     @Test
     public void testThreeWay() throws InterruptedException {
