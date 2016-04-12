@@ -179,7 +179,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
     @NotNull
     private ReadMarshallable metaDataConsumer() {
         return (wire) -> {
-assert outWire.startUse();
+            assert outWire.startUse();
             try {
                 long startWritePosition = (outWire == null) ? 0 : outWire.bytes().writePosition();
 

@@ -21,7 +21,6 @@ package net.openhft.chronicle.engine;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
-import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -34,11 +33,12 @@ import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
-import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,26 +54,24 @@ import static org.junit.Assert.assertNotNull;
  * Created by Rob Austin
  */
 
-public class Replication3WayWithCompressionTest {
+public class Replication3WayWithCompressionTest extends ThreadMonitoringTest {
     public static final WireType WIRE_TYPE = WireType.TEXT;
     public static final String NAME = "/ChMaps/test";
-    public static ServerEndpoint serverEndpoint1;
-    public static ServerEndpoint serverEndpoint2;
-    public static ServerEndpoint serverEndpoint3;
+    private static ServerEndpoint serverEndpoint1;
+    private static ServerEndpoint serverEndpoint2;
+    private static ServerEndpoint serverEndpoint3;
     private static AssetTree tree3;
     private static AssetTree tree1;
     private static AssetTree tree2;
     private static AtomicReference<Throwable> t = new AtomicReference();
-    private ThreadDump threadDump;
 
-    @BeforeClass
-    public static void before() throws IOException {
+
+    @Before
+    public void before() throws IOException {
 
         System.setProperty("EngineReplication.Compression", "gzip");
 
         YamlLogging.setAll(false);
-
-        //YamlLogging.showServerWrites = true;
 
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
         ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
@@ -95,8 +93,8 @@ public class Replication3WayWithCompressionTest {
         serverEndpoint3 = new ServerEndpoint("host.port3", tree3);
     }
 
-    @AfterClass
-    public static void after() {
+
+    public void preAfter() {
         if (serverEndpoint1 != null)
             serverEndpoint1.close();
         if (serverEndpoint2 != null)
@@ -110,18 +108,13 @@ public class Replication3WayWithCompressionTest {
             tree2.close();
         if (tree3 != null)
             tree3.close();
-
-        TcpChannelHub.closeAllHubs();
-        TCPRegistry.reset();
-
-        TCPRegistry.assertAllServersStopped();
     }
 
     @NotNull
-    private static AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
+    private AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
         AssetTree tree = new VanillaAssetTree((byte) hostId)
                 .forTesting(x -> t.compareAndSet(null, x))
-                .withConfig(resourcesDir() + "/3way", OS.TARGET + "/" + hostId);
+                .withConfig(resourcesDir() + "/3wayLegacy", OS.TARGET + "/" + hostId);
 
         tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
                 VanillaMapView::new,
@@ -145,25 +138,10 @@ public class Replication3WayWithCompressionTest {
         return new File(path).getParentFile().getParentFile() + "/src/test/resources";
     }
 
-    @Before
-    public void threadDump() {
-        threadDump = new ThreadDump();
-    }
 
-    @After
-    public void checkThreadDump() {
-        threadDump.assertNoNewThreads();
-    }
-
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
-    }
-
-    @Ignore
     @Test
     public void testThreeWay() throws InterruptedException {
+        YamlLogging.setAll(true);
 
         final ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME, String.class, String
                 .class);
@@ -177,11 +155,11 @@ public class Replication3WayWithCompressionTest {
 
         map2.put("hello2", "world2");
 
-        final ConcurrentMap<String, String> map3 = tree2.acquireMap(NAME, String.class, String
+        final ConcurrentMap<String, String> map3 = tree3.acquireMap(NAME, String.class, String
                 .class);
-        assertNotNull(map2);
+        assertNotNull(map3);
 
-        map2.put("hello3", "world3");
+        map3.put("hello3", "world3");
 
         for (int i = 1; i <= 50; i++) {
             if (map1.size() == 3 &&

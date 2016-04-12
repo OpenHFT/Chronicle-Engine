@@ -47,6 +47,7 @@
                 <groupId>net.openhft</groupId>
                 <artifactId>chronicle-bom</artifactId>
                 <version>1.12.9-SNAPSHOT</version>
+
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -79,6 +80,11 @@
         <dependency>
             <groupId>net.openhft</groupId>
             <artifactId>chronicle-bytes</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>net.openhft</groupId>
+            <artifactId>chronicle-threads</artifactId>
         </dependency>
 
         <!-- test dependencies -->
