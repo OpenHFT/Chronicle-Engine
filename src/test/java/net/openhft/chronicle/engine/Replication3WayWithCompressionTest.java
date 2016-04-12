@@ -38,7 +38,9 @@ import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,7 +48,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertNotNull;
 
@@ -56,15 +57,18 @@ import static org.junit.Assert.assertNotNull;
 
 public class Replication3WayWithCompressionTest extends ThreadMonitoringTest {
 
-    public static final String NAME = "/ChMaps/test";
+    //   public static final String NAME = "/ChMaps/test";
     private ServerEndpoint serverEndpoint1;
     private ServerEndpoint serverEndpoint2;
     private ServerEndpoint serverEndpoint3;
     private AssetTree tree3;
     private AssetTree tree1;
     private AssetTree tree2;
-    private static AtomicReference<Throwable> t = new AtomicReference();
 
+    private String name;
+
+    @Rule
+    public TestName testName = new TestName();
 
     @Before
     public void before() throws IOException {
@@ -76,7 +80,7 @@ public class Replication3WayWithCompressionTest extends ThreadMonitoringTest {
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
         ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
         //Delete any files from the last run
-        Files.deleteIfExists(Paths.get(OS.TARGET, NAME));
+        // Files.deleteIfExists(Paths.get(OS.TARGET, NAME));
 
         TCPRegistry.createServerSocketChannelFor(
                 "host.port1",
@@ -139,23 +143,31 @@ public class Replication3WayWithCompressionTest extends ThreadMonitoringTest {
     }
 
 
+    @Before
+    public void beforeTest() throws IOException {
+        before();
+        name = testName.getMethodName();
+
+        Files.deleteIfExists(Paths.get(OS.TARGET, name.toString()));
+    }
+
     @Test
     public void testThreeWay() throws InterruptedException {
         YamlLogging.setAll(true);
 
-        final ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME, String.class, String
+        final ConcurrentMap<String, String> map1 = tree1.acquireMap(name, String.class, String
                 .class);
         assertNotNull(map1);
 
         map1.put("hello1", "world1");
 
-        final ConcurrentMap<String, String> map2 = tree2.acquireMap(NAME, String.class, String
+        final ConcurrentMap<String, String> map2 = tree2.acquireMap(name, String.class, String
                 .class);
         assertNotNull(map2);
 
         map2.put("hello2", "world2");
 
-        final ConcurrentMap<String, String> map3 = tree3.acquireMap(NAME, String.class, String
+        final ConcurrentMap<String, String> map3 = tree3.acquireMap(name, String.class, String
                 .class);
         assertNotNull(map3);
 
