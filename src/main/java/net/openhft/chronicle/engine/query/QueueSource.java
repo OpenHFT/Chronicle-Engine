@@ -28,12 +28,23 @@ import java.util.function.Function;
 public class QueueSource {
 
     private final Function<String, Integer> sourceB;
+    private final boolean acknowledgment;
 
-    public QueueSource(Function<String, Integer> queueSource) {
+    /**
+     * @param queueSource
+     * @param acknowledgment each replication event sends back an enableAcknowledgment, which is
+     *                       then stored in the chronicle queue.
+     */
+    public QueueSource(Function<String, Integer> queueSource, boolean acknowledgment) {
         this.sourceB = queueSource;
+        this.acknowledgment = acknowledgment;
     }
 
     public Integer sourceHostId(@NotNull String uri) {
         return sourceB.apply(uri);
+    }
+
+    public boolean acknowledgment() {
+        return acknowledgment;
     }
 }

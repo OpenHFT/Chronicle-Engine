@@ -153,7 +153,7 @@ public class VanillaAsset implements Asset, Closeable {
         queue.addLeafRule(ObjectSubscription.class, LAST + " vanilla queue subscription",
                 QueueObjectSubscription::new);
 
-        addView(QueueSource.class, new QueueSource(uriToHostId));
+        addView(QueueSource.class, new QueueSource(uriToHostId, true));
 
         queue.addLeafRule(QueueView.class, LAST + "chronicle queue", ChronicleQueueView::new);
 

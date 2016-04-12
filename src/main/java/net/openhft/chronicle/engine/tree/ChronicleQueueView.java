@@ -173,7 +173,10 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
 
         if (LOG.isDebugEnabled())
             LOG.debug("hostDetails : localIdentifier=" + localIdentifier + ",cluster=" + engineCluster.hostDetails());
-        boolean acknowledgement = true;
+
+        // if true - each replication event sends back an enableAcknowledgment
+        boolean acknowledgement = queueSource.acknowledgment();
+
         for (EngineHostDetails hostDetails : engineCluster.hostDetails()) {
 
             // its the identifier with the larger values that will establish the connection
