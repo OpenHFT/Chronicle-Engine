@@ -101,13 +101,13 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         return new File(path).getParentFile().getParentFile() + "/src/test/resources";
     }
 
-    public static WriteMarshallable newSource(long lastIndexReceived, Class topicType, Class elementType) {
+    public static WriteMarshallable newSource(long lastIndexReceived, Class topicType, Class elementType, boolean acknowledgement) {
         try {
             Class<?> aClass = Class.forName("software.chronicle.enterprise.queue.QueueSourceReplicationHandler");
             Constructor<?> declaredConstructor = aClass.getDeclaredConstructor(long.class, Class.class,
-                    Class.class);
+                    Class.class, boolean.class);
             return (WriteMarshallable) declaredConstructor.newInstance(lastIndexReceived,
-                    topicType, elementType);
+                    topicType, elementType, acknowledgement);
         } catch (Exception e) {
             IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
                     " required to run this code. Please contact sales@chronicle.software");
@@ -116,11 +116,12 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         }
     }
 
-    public static WriteMarshallable newSync(Class topicType, Class elementType) {
+    public static WriteMarshallable newSync(Class topicType, Class elementType, boolean
+            acknowledgement) {
         try {
             Class<?> aClass = Class.forName("software.chronicle.enterprise.queue.QueueSyncReplicationHandler");
-            Constructor<?> declaredConstructor = aClass.getConstructor(Class.class, Class.class);
-            return (WriteMarshallable) declaredConstructor.newInstance(topicType, elementType);
+            Constructor<?> declaredConstructor = aClass.getConstructor(Class.class, Class.class, boolean.class);
+            return (WriteMarshallable) declaredConstructor.newInstance(topicType, elementType, acknowledgement);
         } catch (Exception e) {
             IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
                     " required to run this code." +
@@ -172,7 +173,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
 
         if (LOG.isDebugEnabled())
             LOG.debug("hostDetails : localIdentifier=" + localIdentifier + ",cluster=" + engineCluster.hostDetails());
-
+        boolean acknowledgement = true;
         for (EngineHostDetails hostDetails : engineCluster.hostDetails()) {
 
             // its the identifier with the larger values that will establish the connection
@@ -192,8 +193,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
                 final boolean isSource0 = (remoteIdentifier == remoteSourceIdentifier);
 
                 WriteMarshallable h = isSource0 ?
-                        newSource(lastIndexReceived(), context.topicType(), context.elementType()) :
-                        newSync(context.topicType(), context.elementType());
+                        newSource(lastIndexReceived(), context.topicType(), context.elementType(), acknowledgement) :
+                        newSync(context.topicType(), context.elementType(), acknowledgement);
 
                 long cid = nc.newCid();
                 nc.wireOutPublisher().publish(w -> w.writeDocument(true, d ->
