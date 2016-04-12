@@ -57,12 +57,12 @@ import static org.junit.Assert.assertNotNull;
 public class Replication3WayWithCompressionTest extends ThreadMonitoringTest {
     public static final WireType WIRE_TYPE = WireType.TEXT;
     public static final String NAME = "/ChMaps/test";
-    private static ServerEndpoint serverEndpoint1;
-    private static ServerEndpoint serverEndpoint2;
-    private static ServerEndpoint serverEndpoint3;
-    private static AssetTree tree3;
-    private static AssetTree tree1;
-    private static AssetTree tree2;
+    private ServerEndpoint serverEndpoint1;
+    private ServerEndpoint serverEndpoint2;
+    private ServerEndpoint serverEndpoint3;
+    private AssetTree tree3;
+    private AssetTree tree1;
+    private AssetTree tree2;
     private static AtomicReference<Throwable> t = new AtomicReference();
 
 
