@@ -84,6 +84,10 @@ public interface Asset extends Closeable {
     default Asset getAsset(@NotNull String fullName) {
         if (fullName.isEmpty()) return this;
         int pos = fullName.indexOf("/");
+        if (pos == 0) {
+            fullName = fullName.substring(1);
+            pos = fullName.indexOf("/");
+        }
         if (pos >= 0) {
             String name1 = fullName.substring(0, pos);
             String name2 = fullName.substring(pos + 1);
