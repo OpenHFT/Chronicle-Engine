@@ -36,7 +36,10 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestName;
 
 import java.io.File;
@@ -51,9 +54,10 @@ import static org.junit.Assert.assertNotNull;
 /**
  * Created by Rob Austin
  */
-@Ignore
 public class Replication3WayWithCompressionTest extends ThreadMonitoringTest {
 
+    @Rule
+    public TestName testName = new TestName();
     //   public static final String NAME = "/ChMaps/test";
     private ServerEndpoint serverEndpoint1;
     private ServerEndpoint serverEndpoint2;
@@ -61,11 +65,15 @@ public class Replication3WayWithCompressionTest extends ThreadMonitoringTest {
     private AssetTree tree3;
     private AssetTree tree1;
     private AssetTree tree2;
-
     private String name;
 
-    @Rule
-    public TestName testName = new TestName();
+    @NotNull
+    public static String resourcesDir() {
+        String path = ChronicleMapKeyValueStoreTest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        if (path == null)
+            return ".";
+        return new File(path).getParentFile().getParentFile() + "/src/test/resources";
+    }
 
     @Before
     public void before() throws IOException {
@@ -74,6 +82,7 @@ public class Replication3WayWithCompressionTest extends ThreadMonitoringTest {
 
         Files.deleteIfExists(Paths.get(OS.TARGET, name.toString()));
 
+        System.setProperty("ReplicationHandler3", "false");
         System.setProperty("EngineReplication.Compression", "gzip");
 
         YamlLogging.setAll(false);
@@ -97,7 +106,6 @@ public class Replication3WayWithCompressionTest extends ThreadMonitoringTest {
         serverEndpoint2 = new ServerEndpoint("host.port2", tree2);
         serverEndpoint3 = new ServerEndpoint("host.port3", tree3);
     }
-
 
     public void preAfter() {
         if (serverEndpoint1 != null)
@@ -134,15 +142,6 @@ public class Replication3WayWithCompressionTest extends ThreadMonitoringTest {
 
         return tree;
     }
-
-    @NotNull
-    public static String resourcesDir() {
-        String path = ChronicleMapKeyValueStoreTest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-        if (path == null)
-            return ".";
-        return new File(path).getParentFile().getParentFile() + "/src/test/resources";
-    }
-
 
     @Test
     public void testThreeWay() throws InterruptedException {

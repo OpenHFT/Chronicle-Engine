@@ -23,6 +23,7 @@ import net.openhft.chronicle.wire.YamlLogging;
 import org.junit.After;
 import org.junit.Before;
 
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -31,6 +32,12 @@ import java.util.concurrent.atomic.AtomicReference;
 public class ThreadMonitoringTest {
 
     protected static final AtomicReference<Throwable> t = new AtomicReference<>();
+    static final Properties prop0 = new Properties();
+
+    static {
+        prop0.putAll(System.getProperties());
+    }
+
     protected ThreadDump threadDump;
 
     @Before
@@ -48,6 +55,11 @@ public class ThreadMonitoringTest {
         TCPRegistry.reset();
     }
 
+    @Before
+    public void resetProperties() {
+        System.getProperties().clear();
+        System.getProperties().putAll(prop0);
+    }
     @After
     public final void after() {
         preAfter();
@@ -62,20 +74,10 @@ public class ThreadMonitoringTest {
         threadDump.ignore("tree-3/Heartbeat");
         threadDump.assertNoNewThreads();
         YamlLogging.setAll(false);
+        resetProperties();
     }
 
     protected void preAfter() {
 
     }
-
-    @After
-    public final void checkThreadDump() {
-
-    }
-
-    @After
-    public final void afterMethod() {
-
-    }
-
 }
