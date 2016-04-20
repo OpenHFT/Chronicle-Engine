@@ -75,7 +75,7 @@ public class MapViewTest {
         assertEquals(new HashSet<>(keys).hashCode(), hc);
     }
 
-    //    @Test
+    @Test
     public void testRemoteAccess() throws IOException {
         Chassis.resetChassis();
 

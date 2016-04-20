@@ -182,7 +182,9 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
             if (next == null)
                 return false;
             try {
-                subscriber.onMessage(next.topic(), next.message());
+                M message = next.message();
+                T topic = next.topic();
+                subscriber.onMessage(topic, message);
             } catch (Exception e) {
                 LOG.error("", e);
                 terminate.set(true);
