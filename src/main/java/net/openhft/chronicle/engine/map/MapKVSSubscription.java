@@ -36,7 +36,6 @@ import org.slf4j.LoggerFactory;
 
 import java.time.LocalTime;
 import java.util.IdentityHashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -140,7 +139,7 @@ public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
     @Override
     public boolean hasValueSubscribers() {
         return !topicSubscribers.isEmpty() || !subscribers.isEmpty()
-                || !downstream.isEmpty() || asset.hasChildren() || !subscriptionDelegate.isEmpty();
+                || !downstream.isEmpty() || asset.hasChildren();
     }
 
     private void notifyEvent0(@NotNull MapEvent<K, V> changeEvent) {
@@ -164,17 +163,7 @@ public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
         if (!downstream.isEmpty()) {
             notifyEachSubscriber(downstream, d -> d.notifyEvent(changeEvent));
         }
-        if (!subscriptionDelegate.isEmpty()) {
-            Iterator<Subscriber> iterator = subscriptionDelegate.values().iterator();
-            while (iterator.hasNext()) {
-                Subscriber next = iterator.next();
-                try {
-                    next.onMessage(changeEvent);
-                } catch (InvalidSubscriberException e) {
-                    iterator.remove();
-                }
-            }
-        }
+
     }
 
     private void notifyEventToChild(@NotNull MapEvent<K, V> changeEvent) {
@@ -295,12 +284,11 @@ public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
 
     public void unregisterDownstream(EventConsumer<K, V> subscription) {
         downstream.remove(subscription);
-
     }
 
     @Override
     public void unregisterSubscriber(@NotNull Subscriber subscriber) {
-        final Subscriber delegate = subscriptionDelegate.get(subscriber);
+        final Subscriber delegate = subscriptionDelegate.remove(subscriber);
         final Subscriber s = delegate != null ? delegate : subscriber;
         boolean subscription = subscribers.remove(s);
         boolean keySubscription = keySubscribers.remove(s);
