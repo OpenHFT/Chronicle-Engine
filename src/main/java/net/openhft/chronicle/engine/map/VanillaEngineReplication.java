@@ -30,7 +30,6 @@ import net.openhft.chronicle.wire.WireOut;
 import net.openhft.lang.collection.ATSDirectBitSet;
 import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.io.DirectStore;
-import net.openhft.lang.model.Copyable;
 import net.openhft.lang.model.DataValueClasses;
 import net.openhft.lang.model.constraints.MaxSize;
 import org.jetbrains.annotations.NotNull;
@@ -385,7 +384,7 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
         int segmentForKey(Store store, BytesStore key);
     }
 
-    public interface ReplicationData extends Copyable<ReplicationData>, Marshallable {
+    public interface ReplicationData extends Marshallable {
         static void dropChange(@NotNull ReplicationData replicationData) {
             for (int i = 0; i < DIRTY_WORD_COUNT; i++) {
                 replicationData.setDirtyWordAt(i, 0);
@@ -455,8 +454,7 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
         }
     }
 
-    public interface RemoteNodeReplicationState
-            extends Copyable<RemoteNodeReplicationState>, Marshallable {
+    public interface RemoteNodeReplicationState extends Marshallable {
         long getNextBootstrapTimestamp();
 
         void setNextBootstrapTimestamp(long nextBootstrapTimestamp);
