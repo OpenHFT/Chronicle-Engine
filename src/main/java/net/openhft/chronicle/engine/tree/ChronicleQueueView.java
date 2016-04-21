@@ -75,7 +75,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         this(null, context, asset);
     }
 
-    public ChronicleQueueView(@Nullable ChronicleQueue queue, @NotNull RequestContext context,
+    public ChronicleQueueView(@Nullable ChronicleQueue queue,
+                              @NotNull RequestContext context,
                               @NotNull Asset asset) {
 
         String s = asset.fullName();

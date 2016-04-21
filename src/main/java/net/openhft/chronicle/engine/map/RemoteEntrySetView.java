@@ -30,10 +30,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-import static java.util.EnumSet.of;
-import static net.openhft.chronicle.engine.api.tree.RequestContext.Operation.BOOTSTRAP;
-import static net.openhft.chronicle.engine.api.tree.RequestContext.Operation.END_SUBSCRIPTION_AFTER_BOOTSTRAP;
-
 /**
  * @author Rob Austin.
  */
@@ -46,9 +42,7 @@ public class RemoteEntrySetView<K, MV, V> extends VanillaEntrySetView<K, MV, V> 
     @NotNull
     public Query<Map.Entry<K, V>> query() {
         return new RemoteQuery<>((subscriber, filter, contextOperations) -> {
-            mapView.registerSubscriber((Subscriber) subscriber, (Filter) filter, of
-                    (BOOTSTRAP, END_SUBSCRIPTION_AFTER_BOOTSTRAP));
-
+            mapView.registerSubscriber((Subscriber) subscriber, (Filter) filter, contextOperations);
         });
     }
 }

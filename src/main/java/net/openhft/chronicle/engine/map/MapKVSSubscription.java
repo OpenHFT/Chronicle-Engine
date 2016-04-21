@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.LocalTime;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -133,15 +134,13 @@ public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
 
     @Override
     public boolean hasSubscribers() {
-        return !topicSubscribers.isEmpty() || !subscribers.isEmpty()
-                || !keySubscribers.isEmpty() || !downstream.isEmpty()
-                || asset.hasChildren();
+        return !keySubscribers.isEmpty() || hasValueSubscribers();
     }
 
     @Override
     public boolean hasValueSubscribers() {
         return !topicSubscribers.isEmpty() || !subscribers.isEmpty()
-                || !downstream.isEmpty() || asset.hasChildren();
+                || !downstream.isEmpty() || asset.hasChildren() || !subscriptionDelegate.isEmpty();
     }
 
     private void notifyEvent0(@NotNull MapEvent<K, V> changeEvent) {
@@ -164,6 +163,17 @@ public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
         }
         if (!downstream.isEmpty()) {
             notifyEachSubscriber(downstream, d -> d.notifyEvent(changeEvent));
+        }
+        if (!subscriptionDelegate.isEmpty()) {
+            Iterator<Subscriber> iterator = subscriptionDelegate.values().iterator();
+            while (iterator.hasNext()) {
+                Subscriber next = iterator.next();
+                try {
+                    next.onMessage(changeEvent);
+                } catch (InvalidSubscriberException e) {
+                    iterator.remove();
+                }
+            }
         }
     }
 
