@@ -21,6 +21,7 @@ import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.query.Subscription;
 import net.openhft.chronicle.engine.api.set.KeySetView;
+import net.openhft.chronicle.wire.AbstractMarshallable;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -123,7 +124,7 @@ public class MapViewTest {
     }
 }
 
-class UserInfo {
+class UserInfo extends AbstractMarshallable {
     final String fullName;
     int usageCounter;
 
