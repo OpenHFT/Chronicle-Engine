@@ -57,6 +57,7 @@ public class EngineClusterContext extends ClusterContext {
                     nc.heartbeatTimeoutMs(heartbeatTimeoutMs());
                     nc.sessionDetails(sessionDetails);
                     nc.wireType(sessionDetails.wireType());
+
                     final WireType wireType = nc.sessionDetails().wireType();
                     if (wireType != null)
                         nc.wireOutPublisher().wireType(wireType);
