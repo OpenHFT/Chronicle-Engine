@@ -277,6 +277,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
     @Override
     protected void onRead(@NotNull final DocumentContext inDc,
                           @NotNull final WireOut out) {
+
         WireIn in = inDc.wire();
         assert in.startUse();
         try {
