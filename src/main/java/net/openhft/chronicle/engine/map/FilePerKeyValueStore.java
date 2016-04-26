@@ -361,7 +361,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
                 throw new IllegalStateException(e);
             }
         }
-        System.out.println(file + " size: " + file.length());
+//        System.out.println(file + " size: " + file.length());
     }
 
     private void deleteFile(@NotNull Path path) {
