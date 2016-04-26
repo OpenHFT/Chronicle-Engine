@@ -1,9 +1,5 @@
 package net.openhft.chronicle.engine.api.query;
 
-import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.wire.TextWire;
-import net.openhft.chronicle.wire.Wire;
-import net.openhft.chronicle.wire.Wires;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -33,15 +29,5 @@ public class MarshableQueryTest {
         Assert.assertEquals(true, test);
     }
 
-    @Test
-    public void testYaml() throws Exception {
-        VanillaIndexQuery marshableQuery = new VanillaIndexQuery();
-        marshableQuery.select(TestBean.class, "value.x == 2");
 
-        Bytes b = Bytes.elasticByteBuffer();
-        Wire w = new TextWire(b);
-        w.write().typedMarshallable(marshableQuery);
-        Assert.assertEquals("", Wires.fromSizePrefixedBlobs(w));
-
-    }
 }
