@@ -22,6 +22,7 @@ import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.*;
+import net.openhft.chronicle.engine.api.query.IndexQueueView;
 import net.openhft.chronicle.engine.api.session.Heartbeat;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
@@ -85,6 +86,8 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
     @NotNull
     private final PublisherHandler publisherHandler;
     @NotNull
+    private final IndexQueueViewHandler indexQueueViewHandler;
+    @NotNull
     private final ReferenceHandler referenceHandler;
     @NotNull
     private final ReplicationHandler replicationHandler;
@@ -133,6 +136,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
         this.referenceHandler = new ReferenceHandler();
         this.replicationHandler = new ReplicationHandler();
         this.systemHandler = new SystemHandler();
+        this.indexQueueViewHandler = new IndexQueueViewHandler();
     }
 
     @Override
@@ -224,7 +228,8 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                                 viewType == TopologySubscription.class ||
                                 viewType == Replication.class ||
                                 viewType == QueueView.class ||
-                                viewType == Heartbeat.class) {
+                                viewType == Heartbeat.class ||
+                                viewType == IndexQueueView.class) {
 
                             // default to string type if not provided
                             final Class type = requestContext.keyType() == null ? String.class
@@ -412,6 +417,13 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                                 hostIdentifier,
                                 (Replication) view,
                                 eventLoop);
+                        return;
+                    }
+
+                    if (viewType == IndexQueueView.class) {
+                        indexQueueViewHandler.process(in, requestContext, contextAsset,
+                                publisher(), tid,
+                                outWire);
                     }
                 }
 
@@ -517,5 +529,6 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
     public void close() {
         onEndOfConnection(false);
         publisher().close();
+        super.close();
     }
 }

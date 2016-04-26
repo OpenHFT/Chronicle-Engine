@@ -1,0 +1,175 @@
+package net.openhft.chronicle.engine.api.query;
+
+import net.openhft.chronicle.core.threads.EventLoop;
+import net.openhft.chronicle.core.threads.InvalidEventHandlerException;
+import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
+import net.openhft.chronicle.engine.api.pubsub.Subscriber;
+import net.openhft.chronicle.engine.api.tree.Asset;
+import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.tree.ChronicleQueueView;
+import net.openhft.chronicle.engine.tree.QueueView;
+import net.openhft.chronicle.queue.ChronicleQueue;
+import net.openhft.chronicle.queue.ExcerptTailer;
+import net.openhft.chronicle.wire.DocumentContext;
+import net.openhft.chronicle.wire.Marshallable;
+import net.openhft.chronicle.wire.ValueIn;
+import net.openhft.chronicle.wire.Wires;
+import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
+import java.util.function.Predicate;
+
+/**
+ * @author Rob Austin.
+ */
+public class VanillaIndexQueueView<K extends Marshallable, V extends Marshallable>
+        implements IndexQueueView<K, V> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(VanillaIndexQueueView.class);
+    private final Function<V, K> valueToKey;
+    private final EventLoop eventLoop;
+    private final ChronicleQueue chronicleQueue;
+
+    private final Map<String, Map<K, IndexedEntry<K, V>>> multiMap = new ConcurrentHashMap<>();
+    private final Map<Subscriber<IndexedEntry<K, V>>, AtomicBoolean> activeSubscriptions
+            = new ConcurrentHashMap<>();
+
+    private final AtomicBoolean isClosed = new AtomicBoolean();
+
+    public VanillaIndexQueueView(@NotNull RequestContext context,
+                                 @NotNull Asset asset,
+                                 @NotNull QueueView<K, V> queueView) {
+
+        valueToKey = asset.acquireView(ValueToKey.class);
+        eventLoop = asset.acquireView(EventLoop.class);
+
+        final ChronicleQueueView chronicleQueueView = (ChronicleQueueView) queueView;
+        chronicleQueue = chronicleQueueView.chronicleQueue();
+
+        final ExcerptTailer tailer = chronicleQueue.createTailer();
+
+        eventLoop.addHandler(() -> {
+
+            if (isClosed.get())
+                throw new InvalidEventHandlerException();
+
+            try (DocumentContext dc = tailer.readingDocument()) {
+
+                if (!dc.isPresent())
+                    return false;
+
+
+                final StringBuilder sb = Wires.acquireStringBuilder();
+                ValueIn read = dc.wire().read(sb);
+
+                V v = read.typedMarshallable();
+                K k = valueToKey.apply(v);
+
+                final String event = sb.toString();
+                multiMap.computeIfAbsent(event, e -> new ConcurrentHashMap<>())
+                        .put(k, new IndexedEntry<>(k, v, dc.index()));
+            } catch (Exception e) {
+                LOG.error("", e);
+            }
+            return true;
+        });
+    }
+
+    /**
+     * bootstraps the initial subscription data from the map
+     *
+     * @param sub
+     * @param vanillaIndexQuery
+     */
+    private void bootstrap(@NotNull Subscriber<IndexedEntry<K, V>> sub,
+                           @NotNull IndexQuery vanillaIndexQuery) {
+
+        final String eventName = vanillaIndexQuery.eventName();
+        final long from = vanillaIndexQuery.from();
+        final Predicate filter = vanillaIndexQuery.filter();
+
+        // sends all the latest values that wont get sent via the queue
+        multiMap.computeIfAbsent(eventName, k -> new ConcurrentHashMap<>())
+                .values().stream()
+                .filter((IndexedEntry<K, V> i) -> i.index() <= from && filter.test(i.value()))
+                .forEach(sub);
+    }
+
+
+    public void registerSubscriber(@NotNull Subscriber<IndexedEntry<K, V>> sub,
+                                   @NotNull IndexQuery vanillaIndexQuery) {
+
+
+        final AtomicBoolean isClosed = new AtomicBoolean();
+        activeSubscriptions.put(sub, isClosed);
+
+        bootstrap(sub, vanillaIndexQuery);
+
+        final String eventName = vanillaIndexQuery.eventName();
+        final long from = vanillaIndexQuery.from();
+        final Predicate filter = vanillaIndexQuery.filter();
+        final ExcerptTailer tailer = chronicleQueue.createTailer();
+
+        try {
+            if (from != 0)
+                tailer.moveToIndex(from);
+        } catch (TimeoutException e) {
+            tailer.close();
+            sub.onEndOfSubscription();
+            LOG.error("timeout", e);
+            return;
+        }
+
+        eventLoop.addHandler(() -> {
+            if (isClosed.get()) {
+                tailer.close();
+                throw new InvalidEventHandlerException("shutdown");
+            }
+
+            try (DocumentContext dc = tailer.readingDocument()) {
+
+                if (!dc.isPresent())
+                    return false;
+
+                final StringBuilder sb = Wires.acquireStringBuilder();
+                V v = dc.wire().read(sb).typedMarshallable();
+
+                if (!eventName.contentEquals(sb))
+                    return true;
+
+                System.out.println("filter=" + filter.toString());
+                if (!filter.test(v))
+                    return true;
+
+                try {
+                    sub.onMessage(new IndexedEntry<>(valueToKey.apply(v), v, dc.index()));
+                } catch (InvalidSubscriberException e) {
+                    unregisterSubscriber(sub);
+                }
+            }
+
+            return true;
+        });
+
+    }
+
+
+    public void unregisterSubscriber(@NotNull Subscriber<IndexedEntry<K, V>> listener) {
+        final AtomicBoolean isClosed = activeSubscriptions.remove(listener);
+        if (isClosed != null) isClosed.set(true);
+    }
+
+    @Override
+    public void close() {
+        isClosed.set(true);
+        activeSubscriptions.values().forEach(v -> v.set(true));
+        chronicleQueue.close();
+    }
+
+}

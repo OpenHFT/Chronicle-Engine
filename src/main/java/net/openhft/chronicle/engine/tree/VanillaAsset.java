@@ -26,15 +26,14 @@ import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
 import net.openhft.chronicle.engine.api.pubsub.*;
+import net.openhft.chronicle.engine.api.query.IndexQueueView;
+import net.openhft.chronicle.engine.api.query.VanillaIndexQueueView;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.api.tree.*;
 import net.openhft.chronicle.engine.collection.VanillaValuesCollection;
 import net.openhft.chronicle.engine.map.*;
-import net.openhft.chronicle.engine.map.remote.RemoteKVSSubscription;
-import net.openhft.chronicle.engine.map.remote.RemoteKeyValueStore;
-import net.openhft.chronicle.engine.map.remote.RemoteMapView;
-import net.openhft.chronicle.engine.map.remote.RemoteTopologySubscription;
+import net.openhft.chronicle.engine.map.remote.*;
 import net.openhft.chronicle.engine.pubsub.*;
 import net.openhft.chronicle.engine.query.QueueSource;
 import net.openhft.chronicle.engine.session.VanillaSessionProvider;
@@ -177,6 +176,10 @@ public class VanillaAsset implements Asset, Closeable {
 
         addLeafRule(TopologySubscription.class, LAST + " vanilla",
                 VanillaTopologySubscription::new);
+
+        addWrappingRule(IndexQueueView.class, LAST + " index queue",
+                VanillaIndexQueueView::new, QueueView.class);
+
     }
 
     public void forRemoteAccess(@NotNull String[] hostPortDescriptions,
@@ -209,6 +212,9 @@ public class VanillaAsset implements Asset, Closeable {
 
         addLeafRule(TopologySubscription.class, LAST + " vanilla",
                 RemoteTopologySubscription::new);
+
+        addLeafRule(IndexQueueView.class, LAST + " index queue",
+                RemoteIndexQueueView::new);
 
         SessionProvider sessionProvider = new ClientSessionProvider(sessionDetails);
 
