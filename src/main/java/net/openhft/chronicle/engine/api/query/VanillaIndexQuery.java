@@ -123,8 +123,9 @@ public class VanillaIndexQuery<V> extends AbstractMarshallable implements Demars
                     "java.util.function.Predicate<" + clazz + "> {\n\tpublic " +
                     "boolean test(" + clazz + " value) " +
                     "{\n\t\treturn " +
-                    typedSelect.select + ";\n\t} public String toString(){return \"" + typedSelect
-                    .select + "\";}\n}";
+                    typedSelect.select + ";\n\t}\n\n\tpublic String toString(){\n\t\treturn \"" +
+                    typedSelect
+                            .select + "\";\n\t}\n}";
 
             //System.out.println(source);
             LoggerFactory.getLogger(DataValueGenerator.class).info(source);

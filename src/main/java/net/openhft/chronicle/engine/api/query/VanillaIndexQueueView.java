@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -41,6 +42,8 @@ public class VanillaIndexQueueView<K extends Marshallable, V extends Marshallabl
             = new ConcurrentHashMap<>();
 
     private final AtomicBoolean isClosed = new AtomicBoolean();
+
+    private final AtomicLong lastIndexRead = new AtomicLong();
 
     public VanillaIndexQueueView(@NotNull RequestContext context,
                                  @NotNull Asset asset,
@@ -72,11 +75,14 @@ public class VanillaIndexQueueView<K extends Marshallable, V extends Marshallabl
                 K k = valueToKey.apply(v);
 
                 final String event = sb.toString();
+
                 multiMap.computeIfAbsent(event, e -> new ConcurrentHashMap<>())
                         .put(k, new IndexedEntry<>(k, v, dc.index()));
+                lastIndexRead.set(dc.index());
             } catch (Exception e) {
                 LOG.error("", e);
             }
+
             return true;
         });
     }
@@ -86,12 +92,12 @@ public class VanillaIndexQueueView<K extends Marshallable, V extends Marshallabl
      *
      * @param sub
      * @param vanillaIndexQuery
+     * @param from
      */
     private void bootstrap(@NotNull Subscriber<IndexedEntry<K, V>> sub,
-                           @NotNull IndexQuery vanillaIndexQuery) {
+                           @NotNull IndexQuery vanillaIndexQuery, long from) {
 
         final String eventName = vanillaIndexQuery.eventName();
-        final long from = vanillaIndexQuery.from();
         final Predicate filter = vanillaIndexQuery.filter();
 
         // sends all the latest values that wont get sent via the queue
@@ -101,7 +107,6 @@ public class VanillaIndexQueueView<K extends Marshallable, V extends Marshallabl
                 .forEach(sub);
     }
 
-
     public void registerSubscriber(@NotNull Subscriber<IndexedEntry<K, V>> sub,
                                    @NotNull IndexQuery vanillaIndexQuery) {
 
@@ -109,10 +114,11 @@ public class VanillaIndexQueueView<K extends Marshallable, V extends Marshallabl
         final AtomicBoolean isClosed = new AtomicBoolean();
         activeSubscriptions.put(sub, isClosed);
 
-        bootstrap(sub, vanillaIndexQuery);
+        final long from = vanillaIndexQuery.from() == 0
+                ? lastIndexRead.get() : vanillaIndexQuery.from();
 
+        bootstrap(sub, vanillaIndexQuery, from);
         final String eventName = vanillaIndexQuery.eventName();
-        final long from = vanillaIndexQuery.from();
         final Predicate filter = vanillaIndexQuery.filter();
         final ExcerptTailer tailer = chronicleQueue.createTailer();
 
