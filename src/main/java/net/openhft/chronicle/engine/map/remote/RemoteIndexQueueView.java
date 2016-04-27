@@ -43,7 +43,7 @@ public class RemoteIndexQueueView<K extends Marshallable, V extends Marshallable
 
     @Override
     public void registerSubscriber(@NotNull Subscriber<IndexedEntry<K, V>> subscriber,
-                                   @NotNull IndexQuery vanillaIndexQuery) {
+                                   @NotNull IndexQuery<V> vanillaIndexQuery) {
 
         if (hub.outBytesLock().isHeldByCurrentThread())
             throw new IllegalStateException("Cannot view map while debugging");
