@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 public interface IndexQueueView<K extends Marshallable, V extends Marshallable> extends Closeable {
 
     void registerSubscriber(@NotNull Subscriber<IndexedEntry<K, V>> sub,
-                            @NotNull IndexQuery vanillaIndexQuery);
+                            @NotNull IndexQuery<V> vanillaIndexQuery);
 
     void unregisterSubscriber(@NotNull Subscriber<IndexedEntry<K, V>> listener);
 }

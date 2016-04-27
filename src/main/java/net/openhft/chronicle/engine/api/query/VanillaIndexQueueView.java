@@ -94,10 +94,10 @@ public class VanillaIndexQueueView<K extends Marshallable, V extends Marshallabl
      * @param from
      */
     private void bootstrap(@NotNull Subscriber<IndexedEntry<K, V>> sub,
-                           @NotNull IndexQuery vanillaIndexQuery, long from) {
+                           @NotNull IndexQuery<V> vanillaIndexQuery, long from) {
 
         final String eventName = vanillaIndexQuery.eventName();
-        final Predicate filter = vanillaIndexQuery.filter();
+        final Predicate<V> filter = vanillaIndexQuery.filter();
 
         if (from == lastIndexRead)
             multiMap.computeIfAbsent(eventName, k -> new ConcurrentHashMap<>())
@@ -113,8 +113,7 @@ public class VanillaIndexQueueView<K extends Marshallable, V extends Marshallabl
     }
 
     public void registerSubscriber(@NotNull Subscriber<IndexedEntry<K, V>> sub,
-                                   @NotNull IndexQuery vanillaIndexQuery) {
-
+                                   @NotNull IndexQuery<V> vanillaIndexQuery) {
 
         final AtomicBoolean isClosed = new AtomicBoolean();
         activeSubscriptions.put(sub, isClosed);
@@ -126,7 +125,7 @@ public class VanillaIndexQueueView<K extends Marshallable, V extends Marshallabl
             bootstrap(sub, vanillaIndexQuery, from);
 
         final String eventName = vanillaIndexQuery.eventName();
-        final Predicate filter = vanillaIndexQuery.filter();
+        final Predicate<V> filter = vanillaIndexQuery.filter();
         final ExcerptTailer tailer = chronicleQueue.createTailer();
 
         try {
