@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -43,7 +42,7 @@ public class VanillaIndexQueueView<K extends Marshallable, V extends Marshallabl
 
     private final AtomicBoolean isClosed = new AtomicBoolean();
 
-    private final AtomicLong lastIndexRead = new AtomicLong();
+    private long lastIndexRead = 0;
 
     public VanillaIndexQueueView(@NotNull RequestContext context,
                                  @NotNull Asset asset,
@@ -78,7 +77,7 @@ public class VanillaIndexQueueView<K extends Marshallable, V extends Marshallabl
 
                 multiMap.computeIfAbsent(event, e -> new ConcurrentHashMap<>())
                         .put(k, new IndexedEntry<>(k, v, dc.index()));
-                lastIndexRead.set(dc.index());
+                lastIndexRead = dc.index();
             } catch (Exception e) {
                 LOG.error("", e);
             }
@@ -100,11 +99,17 @@ public class VanillaIndexQueueView<K extends Marshallable, V extends Marshallabl
         final String eventName = vanillaIndexQuery.eventName();
         final Predicate filter = vanillaIndexQuery.filter();
 
-        // sends all the latest values that wont get sent via the queue
-        multiMap.computeIfAbsent(eventName, k -> new ConcurrentHashMap<>())
-                .values().stream()
-                .filter((IndexedEntry<K, V> i) -> i.index() <= from && filter.test(i.value()))
-                .forEach(sub);
+        if (from == lastIndexRead)
+            multiMap.computeIfAbsent(eventName, k -> new ConcurrentHashMap<>())
+                    .values().stream()
+                    .filter((IndexedEntry<K, V> i) -> filter.test(i.value()))
+                    .forEach(sub);
+        else
+            // sends all the latest values that wont get sent via the queue
+            multiMap.computeIfAbsent(eventName, k -> new ConcurrentHashMap<>())
+                    .values().stream()
+                    .filter((IndexedEntry<K, V> i) -> i.index() <= from && filter.test(i.value()))
+                    .forEach(sub);
     }
 
     public void registerSubscriber(@NotNull Subscriber<IndexedEntry<K, V>> sub,
@@ -115,9 +120,11 @@ public class VanillaIndexQueueView<K extends Marshallable, V extends Marshallabl
         activeSubscriptions.put(sub, isClosed);
 
         final long from = vanillaIndexQuery.from() == 0
-                ? lastIndexRead.get() : vanillaIndexQuery.from();
+                ? lastIndexRead : vanillaIndexQuery.from();
 
-        bootstrap(sub, vanillaIndexQuery, from);
+        if (from != 0)
+            bootstrap(sub, vanillaIndexQuery, from);
+
         final String eventName = vanillaIndexQuery.eventName();
         final Predicate filter = vanillaIndexQuery.filter();
         final ExcerptTailer tailer = chronicleQueue.createTailer();
@@ -164,7 +171,6 @@ public class VanillaIndexQueueView<K extends Marshallable, V extends Marshallabl
         });
 
     }
-
 
     public void unregisterSubscriber(@NotNull Subscriber<IndexedEntry<K, V>> listener) {
         final AtomicBoolean isClosed = activeSubscriptions.remove(listener);
