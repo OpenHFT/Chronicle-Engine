@@ -43,6 +43,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
             = new ConcurrentHashMap<>();
 
     private final AtomicBoolean isClosed = new AtomicBoolean();
+    private final Asset asset;
 
     private long lastIndexRead = 0;
     private final Object lock = new Object();
@@ -52,6 +53,8 @@ public class VanillaIndexQueueView<V extends Marshallable>
                                  @NotNull QueueView<?, V> queueView) {
 
         valueToKey = asset.acquireView(ValueToKey.class);
+
+        this.asset = asset;
         eventLoop = asset.acquireView(EventLoop.class);
 
         final ChronicleQueueView chronicleQueueView = (ChronicleQueueView) queueView;
@@ -101,8 +104,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
     @Nullable
     public void registerSubscriber(@NotNull ConsumingSubscriber<IndexedValue<V>> sub,
                                    @NotNull IndexQuery<V> vanillaIndexQuery) {
-        // public void registerSubscriber(@NotNull ConsumingSubscriber<IndexedValue<V>> sub, @NotNull
-        //      IndexQuery<V> vanillaIndexQuery) {
 
         final AtomicBoolean isClosed = new AtomicBoolean();
         activeSubscriptions.put(sub, isClosed);
@@ -147,6 +148,10 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
     @NotNull
     private WireOutConsumer excerptConsumer(@NotNull IndexQuery<V> vanillaIndexQuery, ExcerptTailer tailer) {
+
+        final IndexedValue<V> indexedValue = new IndexedValue<>();
+        final ObjectCache objectCache = asset.acquireView(ObjectCache.class);
+
         return out -> {
             final String eventName = vanillaIndexQuery.eventName();
             final Predicate<V> filter = vanillaIndexQuery.filter();
@@ -165,11 +170,12 @@ public class VanillaIndexQueueView<V extends Marshallable>
                 if (!eventName.contentEquals(sb))
                     return;
 
-                V v = dc.wire().read(sb).typedMarshallable();
+                // allows object re-use when using marshallable
+                final V v = (V) dc.wire().read(sb).typedMarshallable(objectCache);
                 if (!filter.test(v))
                     return;
 
-                out.getValueOut().typedMarshallable(new IndexedValue<V>(v, dc.index()));
+                out.getValueOut().typedMarshallable(indexedValue);
             }
         };
     }

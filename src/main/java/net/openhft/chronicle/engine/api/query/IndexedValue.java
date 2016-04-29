@@ -26,6 +26,11 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
         this.index = index;
     }
 
+
+    IndexedValue() {
+
+    }
+
     IndexedValue(V v, long index) {
         this.v = v;
         this.index = index;
