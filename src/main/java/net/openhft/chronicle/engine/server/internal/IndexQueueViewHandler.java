@@ -21,7 +21,7 @@ package net.openhft.chronicle.engine.server.internal;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.query.IndexQueueView;
-import net.openhft.chronicle.engine.api.query.IndexedEntry;
+import net.openhft.chronicle.engine.api.query.IndexedValue;
 import net.openhft.chronicle.engine.api.query.VanillaIndexQuery;
 import net.openhft.chronicle.engine.api.query.VanillaIndexQueueView;
 import net.openhft.chronicle.engine.api.tree.Asset;
@@ -44,7 +44,7 @@ import static net.openhft.chronicle.network.connection.CoreFields.tid;
 /**
  * Created by Rob Austin
  */
-public class IndexQueueViewHandler<E> extends AbstractHandler {
+public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(IndexQueueViewHandler.class);
 
@@ -52,7 +52,7 @@ public class IndexQueueViewHandler<E> extends AbstractHandler {
     private WireOutPublisher publisher;
 
     private final StringBuilder eventName = new StringBuilder();
-    private final Map<Long, Subscriber<IndexedEntry>> tidToListener = new ConcurrentHashMap<>();
+    private final Map<Long, Subscriber<IndexedValue<V>>> tidToListener = new ConcurrentHashMap<>();
 
 
     @NotNull
@@ -67,20 +67,20 @@ public class IndexQueueViewHandler<E> extends AbstractHandler {
                 return;
             }
 
-            final Subscriber<IndexedEntry> listener = new Subscriber<IndexedEntry>() {
+            final Subscriber<IndexedValue<V>> listener = new Subscriber<IndexedValue<V>>() {
 
                 volatile boolean subscriptionEnded;
 
                 @Override
-                public void onMessage(IndexedEntry indexedValue) throws InvalidSubscriberException {
+                public void onMessage(IndexedValue indexedEntry) throws InvalidSubscriberException {
 
                     if (publisher.isClosed())
                         throw new InvalidSubscriberException();
 
-                    publisher.put(indexedValue.key(), publish -> {
+                    publisher.put(indexedEntry.k(), publish -> {
                         publish.writeDocument(true, wire -> wire.writeEventName(tid).int64(inputTid));
                         publish.writeNotCompleteDocument(false, wire ->
-                                wire.writeEventName(reply).typedMarshallable(indexedValue));
+                                wire.writeEventName(reply).typedMarshallable(indexedEntry));
                     });
                 }
 
@@ -98,7 +98,7 @@ public class IndexQueueViewHandler<E> extends AbstractHandler {
                 }
             };
 
-            final VanillaIndexQuery<E> query = valueIn.typedMarshallable();
+            final VanillaIndexQuery<V> query = valueIn.typedMarshallable();
 
             if (query.select().isEmpty() || query.valueClass() == null) {
                 LOG.warn("received empty query");
@@ -120,7 +120,7 @@ public class IndexQueueViewHandler<E> extends AbstractHandler {
         if (unregisterSubscriber.contentEquals(eventName)) {
 
             VanillaIndexQueueView indexQueueView = contextAsset.acquireView(VanillaIndexQueueView.class);
-            Subscriber<IndexedEntry> listener = tidToListener.remove(inputTid);
+            Subscriber<IndexedValue<V>> listener = tidToListener.remove(inputTid);
             if (listener == null) {
                 LOG.warn("No subscriber to present to unsubscribe (" + inputTid + ")");
                 return;

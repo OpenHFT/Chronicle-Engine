@@ -29,15 +29,15 @@ import java.util.function.Predicate;
  * @author Rob Austin.
  */
 public class VanillaIndexQueueView<K extends Marshallable, V extends Marshallable>
-        implements IndexQueueView<K, V> {
+        implements IndexQueueView<IndexedValue<V>, V> {
 
     private static final Logger LOG = LoggerFactory.getLogger(VanillaIndexQueueView.class);
     private final Function<V, K> valueToKey;
     private final EventLoop eventLoop;
     private final ChronicleQueue chronicleQueue;
 
-    private final Map<String, Map<K, IndexedEntry<K, V>>> multiMap = new ConcurrentHashMap<>();
-    private final Map<Subscriber<IndexedEntry<K, V>>, AtomicBoolean> activeSubscriptions
+    private final Map<String, Map<K, IndexedValue<V>>> multiMap = new ConcurrentHashMap<>();
+    private final Map<Subscriber<IndexedValue<V>>, AtomicBoolean> activeSubscriptions
             = new ConcurrentHashMap<>();
 
     private final AtomicBoolean isClosed = new AtomicBoolean();
@@ -66,17 +66,16 @@ public class VanillaIndexQueueView<K extends Marshallable, V extends Marshallabl
                 if (!dc.isPresent())
                     return false;
 
-
                 final StringBuilder sb = Wires.acquireStringBuilder();
-                ValueIn read = dc.wire().read(sb);
+                final ValueIn read = dc.wire().read(sb);
 
-                V v = read.typedMarshallable();
-                K k = valueToKey.apply(v);
+                final V v = read.typedMarshallable();
+                final K k = valueToKey.apply(v);
 
                 final String event = sb.toString();
 
                 multiMap.computeIfAbsent(event, e -> new ConcurrentHashMap<>())
-                        .put(k, new IndexedEntry<>(k, v, dc.index()));
+                        .put(k, new IndexedValue<V>(k, v, dc.index()));
                 lastIndexRead = dc.index();
             } catch (Exception e) {
                 LOG.error("", e);
@@ -93,7 +92,7 @@ public class VanillaIndexQueueView<K extends Marshallable, V extends Marshallabl
      * @param vanillaIndexQuery
      * @param from
      */
-    private void bootstrap(@NotNull Subscriber<IndexedEntry<K, V>> sub,
+    private void bootstrap(@NotNull Subscriber<IndexedValue<V>> sub,
                            @NotNull IndexQuery<V> vanillaIndexQuery, long from) {
 
         final String eventName = vanillaIndexQuery.eventName();
@@ -102,17 +101,18 @@ public class VanillaIndexQueueView<K extends Marshallable, V extends Marshallabl
         if (from == lastIndexRead)
             multiMap.computeIfAbsent(eventName, k -> new ConcurrentHashMap<>())
                     .values().stream()
-                    .filter((IndexedEntry<K, V> i) -> filter.test(i.value()))
+                    .filter((IndexedValue<V>i) -> filter.test(i.v()))
                     .forEach(sub);
         else
             // sends all the latest values that wont get sent via the queue
             multiMap.computeIfAbsent(eventName, k -> new ConcurrentHashMap<>())
                     .values().stream()
-                    .filter((IndexedEntry<K, V> i) -> i.index() <= from && filter.test(i.value()))
+                    .filter((IndexedValue<V> i) -> i.index() <= from && filter.test(i.v()))
                     .forEach(sub);
     }
 
-    public void registerSubscriber(@NotNull Subscriber<IndexedEntry<K, V>> sub,
+
+    public void registerSubscriber(@NotNull Subscriber<IndexedValue<V>> sub,
                                    @NotNull IndexQuery<V> vanillaIndexQuery) {
 
         final AtomicBoolean isClosed = new AtomicBoolean();
@@ -150,7 +150,7 @@ public class VanillaIndexQueueView<K extends Marshallable, V extends Marshallabl
                     return false;
 
                 final StringBuilder sb = Wires.acquireStringBuilder();
-                V v = dc.wire().read(sb).typedMarshallable();
+                V v = dc.wire().read(() -> "BookPosition").typedMarshallable();
 
                 if (!eventName.contentEquals(sb))
                     return true;
@@ -160,7 +160,7 @@ public class VanillaIndexQueueView<K extends Marshallable, V extends Marshallabl
                     return true;
 
                 try {
-                    sub.onMessage(new IndexedEntry<>(valueToKey.apply(v), v, dc.index()));
+                    sub.onMessage(new IndexedValue<V>(valueToKey.apply(v), v, dc.index()));
                 } catch (InvalidSubscriberException e) {
                     unregisterSubscriber(sub);
                 }
@@ -171,7 +171,8 @@ public class VanillaIndexQueueView<K extends Marshallable, V extends Marshallabl
 
     }
 
-    public void unregisterSubscriber(@NotNull Subscriber<IndexedEntry<K, V>> listener) {
+
+    public void unregisterSubscriber(@NotNull Subscriber<IndexedValue<V>> listener) {
         final AtomicBoolean isClosed = activeSubscriptions.remove(listener);
         if (isClosed != null) isClosed.set(true);
     }

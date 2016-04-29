@@ -8,10 +8,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Rob Austin.
  */
-public interface IndexQueueView<K extends Marshallable, V extends Marshallable> extends Closeable {
+public interface IndexQueueView<I, V extends Marshallable> extends Closeable {
 
-    void registerSubscriber(@NotNull Subscriber<IndexedEntry<K, V>> sub,
+    void registerSubscriber(@NotNull Subscriber<I> sub,
                             @NotNull IndexQuery<V> vanillaIndexQuery);
 
-    void unregisterSubscriber(@NotNull Subscriber<IndexedEntry<K, V>> listener);
+    void unregisterSubscriber(@NotNull Subscriber<I> listener);
 }

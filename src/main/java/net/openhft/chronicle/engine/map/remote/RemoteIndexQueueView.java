@@ -4,7 +4,7 @@ import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.query.IndexQuery;
 import net.openhft.chronicle.engine.api.query.IndexQueueView;
-import net.openhft.chronicle.engine.api.query.IndexedEntry;
+import net.openhft.chronicle.engine.api.query.IndexedValue;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.server.internal.MapWireHandler;
@@ -27,7 +27,7 @@ import static net.openhft.chronicle.network.connection.CoreFields.reply;
  */
 public class RemoteIndexQueueView<K extends Marshallable, V extends Marshallable> extends
         AbstractStatelessClient<MapWireHandler.EventId>
-        implements IndexQueueView<K, V> {
+        implements IndexQueueView<IndexedValue<V>, V> {
 
     private static final Logger LOG = LoggerFactory.getLogger(RemoteIndexQueueView.class);
     private final Map<Object, Long> subscribersToTid = new ConcurrentHashMap<>();
@@ -42,8 +42,8 @@ public class RemoteIndexQueueView<K extends Marshallable, V extends Marshallable
     }
 
     @Override
-    public void registerSubscriber(@NotNull Subscriber<IndexedEntry<K, V>> subscriber,
-                                   @NotNull IndexQuery<V> vanillaIndexQuery) {
+    public void registerSubscriber(@NotNull Subscriber<IndexedValue<V>> subscriber, @NotNull IndexQuery<V> vanillaIndexQuery) {
+
 
         if (hub.outBytesLock().isHeldByCurrentThread())
             throw new IllegalStateException("Cannot view map while debugging");
@@ -72,8 +72,7 @@ public class RemoteIndexQueueView<K extends Marshallable, V extends Marshallable
 
                                   if (reply.contentEquals(sb))
                                       try {
-                                          IndexedEntry<K, V> e = valueIn.typedMarshallable();
-                                          subscriber.onMessage(e);
+                                          subscriber.onMessage(valueIn.typedMarshallable());
                                       } catch (InvalidSubscriberException e) {
                                           RemoteIndexQueueView.this.unregisterSubscriber(subscriber);
                                       }
@@ -89,11 +88,11 @@ public class RemoteIndexQueueView<K extends Marshallable, V extends Marshallable
                       }
         );
 
-
     }
 
+
     @Override
-    public void unregisterSubscriber(@NotNull Subscriber<IndexedEntry<K, V>> listener) {
+    public void unregisterSubscriber(@NotNull Subscriber<IndexedValue<V>> listener) {
         Long tid = subscribersToTid.get(listener);
 
         if (tid == null) {
@@ -116,4 +115,5 @@ public class RemoteIndexQueueView<K extends Marshallable, V extends Marshallable
         });
 
     }
+
 }
