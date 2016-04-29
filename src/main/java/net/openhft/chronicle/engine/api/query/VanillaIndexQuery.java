@@ -42,11 +42,6 @@ public class VanillaIndexQuery<V> extends AbstractMarshallable implements Demars
         return valueClass;
     }
 
-    public VanillaIndexQuery valueClass(Class<V> valueClass) {
-        this.valueClass = valueClass;
-        return this;
-    }
-
     public String select() {
         return select == null ? "" : select;
     }
@@ -62,7 +57,7 @@ public class VanillaIndexQuery<V> extends AbstractMarshallable implements Demars
     /**
      * @param valueClass the type of the value
      * @param select     java source
-     * @return
+     * @return this
      */
     public VanillaIndexQuery select(@NotNull Class valueClass, @NotNull String select) {
         this.select = select;

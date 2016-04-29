@@ -27,10 +27,12 @@ import static net.openhft.chronicle.network.connection.CoreFields.reply;
  */
 public class RemoteIndexQueueView<K extends Marshallable, V extends Marshallable> extends
         AbstractStatelessClient<MapWireHandler.EventId>
-        implements IndexQueueView<IndexedValue<V>, V> {
+        implements IndexQueueView<Subscriber<IndexedValue<V>>, V> {
 
     private static final Logger LOG = LoggerFactory.getLogger(RemoteIndexQueueView.class);
     private final Map<Object, Long> subscribersToTid = new ConcurrentHashMap<>();
+    int i;
+
 
     public RemoteIndexQueueView(@NotNull final RequestContext context,
                                 @NotNull Asset asset) {
@@ -115,5 +117,6 @@ public class RemoteIndexQueueView<K extends Marshallable, V extends Marshallable
         });
 
     }
+
 
 }

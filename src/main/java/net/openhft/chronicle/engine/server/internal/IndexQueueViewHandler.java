@@ -18,14 +18,16 @@
 
 package net.openhft.chronicle.engine.server.internal;
 
+import net.openhft.chronicle.core.io.Closeable;
+import net.openhft.chronicle.engine.api.pubsub.ConsumingSubscriber;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
-import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.query.IndexQueueView;
 import net.openhft.chronicle.engine.api.query.IndexedValue;
 import net.openhft.chronicle.engine.api.query.VanillaIndexQuery;
 import net.openhft.chronicle.engine.api.query.VanillaIndexQueueView;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.network.connection.VanillaWireOutPublisher;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +54,7 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
     private WireOutPublisher publisher;
 
     private final StringBuilder eventName = new StringBuilder();
-    private final Map<Long, Subscriber<IndexedValue<V>>> tidToListener = new ConcurrentHashMap<>();
+    private final Map<Long, ConsumingSubscriber<IndexedValue<V>>> tidToListener = new ConcurrentHashMap<>();
 
 
     @NotNull
@@ -67,9 +69,11 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
                 return;
             }
 
-            final Subscriber<IndexedValue<V>> listener = new Subscriber<IndexedValue<V>>() {
+            final ConsumingSubscriber<IndexedValue<V>> listener = new ConsumingSubscriber<IndexedValue<V>>() {
 
+                volatile VanillaWireOutPublisher.WireOutConsumer wireOutConsumer;
                 volatile boolean subscriptionEnded;
+
 
                 @Override
                 public void onMessage(IndexedValue indexedEntry) throws InvalidSubscriberException {
@@ -96,6 +100,26 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
 
                     }
                 }
+
+
+                /**
+                 * used to publish bytes on the nio socket thread
+                 *
+                 * @param wireOutConsumer reads a chronicle queue and
+                 *                        publishes writes the data
+                 *                        directly to the socket
+                 */
+                public void wireOutConsumer(VanillaWireOutPublisher.WireOutConsumer wireOutConsumer) {
+                    this.wireOutConsumer = wireOutConsumer;
+                    publisher.addBytesConsumer(wireOutConsumer);
+                }
+
+                @Override
+                public void close() {
+                    publisher.removeBytesConsumer(wireOutConsumer);
+                }
+
+
             };
 
             final VanillaIndexQuery<V> query = valueIn.typedMarshallable();
@@ -112,19 +136,26 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
                 return;
             }
 
-            IndexQueueView indexQueueView = contextAsset.acquireView(IndexQueueView.class);
+            final IndexQueueView<ConsumingSubscriber<IndexedValue<V>>, V> indexQueueView =
+                    contextAsset.acquireView(IndexQueueView.class);
             indexQueueView.registerSubscriber(listener, query);
+
             return;
         }
 
         if (unregisterSubscriber.contentEquals(eventName)) {
 
-            VanillaIndexQueueView indexQueueView = contextAsset.acquireView(VanillaIndexQueueView.class);
-            Subscriber<IndexedValue<V>> listener = tidToListener.remove(inputTid);
+            VanillaIndexQueueView<V> indexQueueView = contextAsset.acquireView(VanillaIndexQueueView.class);
+            ConsumingSubscriber<IndexedValue<V>> listener = tidToListener.remove(inputTid);
+
             if (listener == null) {
                 LOG.warn("No subscriber to present to unsubscribe (" + inputTid + ")");
                 return;
             }
+
+            if (listener instanceof Closeable)
+                listener.close();
+
             indexQueueView.unregisterSubscriber(listener);
             return;
         }
@@ -135,7 +166,7 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
 
     @Override
     protected void unregisterAll() {
-        final VanillaIndexQueueView indexQueueView = contextAsset.acquireView(VanillaIndexQueueView.class);
+        final VanillaIndexQueueView<V> indexQueueView = contextAsset.acquireView(VanillaIndexQueueView.class);
         tidToListener.forEach((k, listener) -> indexQueueView.unregisterSubscriber(listener));
         tidToListener.clear();
     }

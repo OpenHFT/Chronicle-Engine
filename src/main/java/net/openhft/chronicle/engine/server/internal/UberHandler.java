@@ -243,8 +243,12 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
 
     }
 
-    // round robbins - the writers, we should only write when the buffer is empty, as
-    // we can't guarantee that we will have enough space to add more data to the out wire.
+    /**
+     * round robbins - the writers, we should only write when the buffer is empty, as // we can't
+     * guarantee that we will have enough space to add more data to the out wire.
+     *
+     * @return the  Marshallable that you are writing to
+     */
     private WriteMarshallable next() {
         if (writerIndex >= writers.size())
             writerIndex = 0;

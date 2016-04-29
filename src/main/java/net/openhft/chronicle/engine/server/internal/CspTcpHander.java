@@ -43,7 +43,6 @@ import static net.openhft.chronicle.network.connection.CoreFields.csp;
  */
 abstract class CspTcpHander<T extends NetworkContext> extends WireTcpHandler<T> {
 
-    protected final StringBuilder cspText = new StringBuilder();
     final List<WriteMarshallable> writers = new ArrayList<>();
     @NotNull
     private final Map<Long, SubHandler> cidToHandle = new HashMap<>();

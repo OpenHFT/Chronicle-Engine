@@ -2,12 +2,13 @@ package net.openhft.chronicle.engine.api.query;
 
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.core.threads.InvalidEventHandlerException;
-import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
+import net.openhft.chronicle.engine.api.pubsub.ConsumingSubscriber;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.tree.ChronicleQueueView;
 import net.openhft.chronicle.engine.tree.QueueView;
+import net.openhft.chronicle.network.connection.VanillaWireOutPublisher.WireOutConsumer;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ExcerptTailer;
 import net.openhft.chronicle.wire.DocumentContext;
@@ -15,6 +16,7 @@ import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,25 +30,26 @@ import java.util.function.Predicate;
 /**
  * @author Rob Austin.
  */
-public class VanillaIndexQueueView<K extends Marshallable, V extends Marshallable>
-        implements IndexQueueView<IndexedValue<V>, V> {
+public class VanillaIndexQueueView<V extends Marshallable>
+        implements IndexQueueView<ConsumingSubscriber<IndexedValue<V>>, V> {
 
     private static final Logger LOG = LoggerFactory.getLogger(VanillaIndexQueueView.class);
-    private final Function<V, K> valueToKey;
+    private final Function<V, ?> valueToKey;
     private final EventLoop eventLoop;
     private final ChronicleQueue chronicleQueue;
 
-    private final Map<String, Map<K, IndexedValue<V>>> multiMap = new ConcurrentHashMap<>();
+    private final Map<String, Map<Object, IndexedValue<V>>> multiMap = new ConcurrentHashMap<>();
     private final Map<Subscriber<IndexedValue<V>>, AtomicBoolean> activeSubscriptions
             = new ConcurrentHashMap<>();
 
     private final AtomicBoolean isClosed = new AtomicBoolean();
 
     private long lastIndexRead = 0;
+    private final Object lock = new Object();
 
     public VanillaIndexQueueView(@NotNull RequestContext context,
                                  @NotNull Asset asset,
-                                 @NotNull QueueView<K, V> queueView) {
+                                 @NotNull QueueView<?, V> queueView) {
 
         valueToKey = asset.acquireView(ValueToKey.class);
         eventLoop = asset.acquireView(EventLoop.class);
@@ -55,6 +58,7 @@ public class VanillaIndexQueueView<K extends Marshallable, V extends Marshallabl
         chronicleQueue = chronicleQueueView.chronicleQueue();
 
         final ExcerptTailer tailer = chronicleQueue.createTailer();
+
 
         eventLoop.addHandler(() -> {
 
@@ -70,13 +74,14 @@ public class VanillaIndexQueueView<K extends Marshallable, V extends Marshallabl
                 final ValueIn read = dc.wire().read(sb);
 
                 final V v = read.typedMarshallable();
-                final K k = valueToKey.apply(v);
+                final Object k = valueToKey.apply(v);
 
                 final String event = sb.toString();
-
-                multiMap.computeIfAbsent(event, e -> new ConcurrentHashMap<>())
-                        .put(k, new IndexedValue<V>(k, v, dc.index()));
-                lastIndexRead = dc.index();
+                synchronized (lock) {
+                    multiMap.computeIfAbsent(event, e -> new ConcurrentHashMap<>())
+                            .put(k, new IndexedValue<V>(v, dc.index()));
+                    lastIndexRead = dc.index();
+                }
             } catch (Exception e) {
                 LOG.error("", e);
             }
@@ -85,35 +90,19 @@ public class VanillaIndexQueueView<K extends Marshallable, V extends Marshallabl
         });
     }
 
+
     /**
-     * bootstraps the initial subscription data from the map
+     * consumers wire on the NIO socket thread
      *
      * @param sub
      * @param vanillaIndexQuery
-     * @param from
+     * @return
      */
-    private void bootstrap(@NotNull Subscriber<IndexedValue<V>> sub,
-                           @NotNull IndexQuery<V> vanillaIndexQuery, long from) {
-
-        final String eventName = vanillaIndexQuery.eventName();
-        final Predicate<V> filter = vanillaIndexQuery.filter();
-
-        if (from == lastIndexRead)
-            multiMap.computeIfAbsent(eventName, k -> new ConcurrentHashMap<>())
-                    .values().stream()
-                    .filter((IndexedValue<V>i) -> filter.test(i.v()))
-                    .forEach(sub);
-        else
-            // sends all the latest values that wont get sent via the queue
-            multiMap.computeIfAbsent(eventName, k -> new ConcurrentHashMap<>())
-                    .values().stream()
-                    .filter((IndexedValue<V> i) -> i.index() <= from && filter.test(i.v()))
-                    .forEach(sub);
-    }
-
-
-    public void registerSubscriber(@NotNull Subscriber<IndexedValue<V>> sub,
+    @Nullable
+    public void registerSubscriber(@NotNull ConsumingSubscriber<IndexedValue<V>> sub,
                                    @NotNull IndexQuery<V> vanillaIndexQuery) {
+        // public void registerSubscriber(@NotNull ConsumingSubscriber<IndexedValue<V>> sub, @NotNull
+        //      IndexQuery<V> vanillaIndexQuery) {
 
         final AtomicBoolean isClosed = new AtomicBoolean();
         activeSubscriptions.put(sub, isClosed);
@@ -121,24 +110,47 @@ public class VanillaIndexQueueView<K extends Marshallable, V extends Marshallabl
         final long from = vanillaIndexQuery.from() == 0
                 ? lastIndexRead : vanillaIndexQuery.from();
 
-        if (from != 0)
-            bootstrap(sub, vanillaIndexQuery, from);
+        if (from != 0) {
 
-        final String eventName = vanillaIndexQuery.eventName();
-        final Predicate<V> filter = vanillaIndexQuery.filter();
+            final String eventName = vanillaIndexQuery.eventName();
+            final Predicate<V> filter = vanillaIndexQuery.filter();
+
+            if (from == lastIndexRead)
+                multiMap.computeIfAbsent(eventName, k -> new ConcurrentHashMap<>())
+                        .values().stream()
+                        .filter((IndexedValue<V> i) -> filter.test(i.v()))
+                        .forEach(sub);
+            else
+                // sends all the latest values that wont get sent via the queue
+                multiMap.computeIfAbsent(eventName, k -> new ConcurrentHashMap<>())
+                        .values().stream()
+                        .filter((IndexedValue<V> i) -> i.index() <= from && filter.test(i.v()))
+                        .forEach(sub);
+        }
+
+
         final ExcerptTailer tailer = chronicleQueue.createTailer();
 
         try {
             if (from != 0)
                 tailer.moveToIndex(from);
+            WireOutConsumer consumer = excerptConsumer(vanillaIndexQuery, tailer);
+            sub.wireOutConsumer(consumer);
+
         } catch (TimeoutException e) {
             tailer.close();
             sub.onEndOfSubscription();
             LOG.error("timeout", e);
-            return;
         }
 
-        eventLoop.addHandler(() -> {
+    }
+
+    @NotNull
+    private WireOutConsumer excerptConsumer(@NotNull IndexQuery<V> vanillaIndexQuery, ExcerptTailer tailer) {
+        return out -> {
+            final String eventName = vanillaIndexQuery.eventName();
+            final Predicate<V> filter = vanillaIndexQuery.filter();
+
             if (isClosed.get()) {
                 tailer.close();
                 throw new InvalidEventHandlerException("shutdown");
@@ -147,32 +159,23 @@ public class VanillaIndexQueueView<K extends Marshallable, V extends Marshallabl
             try (DocumentContext dc = tailer.readingDocument()) {
 
                 if (!dc.isPresent())
-                    return false;
+                    return;
 
                 final StringBuilder sb = Wires.acquireStringBuilder();
-                V v = dc.wire().read(() -> "BookPosition").typedMarshallable();
-
                 if (!eventName.contentEquals(sb))
-                    return true;
+                    return;
 
-                System.out.println("filter=" + filter.toString());
+                V v = dc.wire().read(sb).typedMarshallable();
                 if (!filter.test(v))
-                    return true;
+                    return;
 
-                try {
-                    sub.onMessage(new IndexedValue<V>(valueToKey.apply(v), v, dc.index()));
-                } catch (InvalidSubscriberException e) {
-                    unregisterSubscriber(sub);
-                }
+                out.getValueOut().typedMarshallable(new IndexedValue<V>(v, dc.index()));
             }
-
-            return true;
-        });
-
+        };
     }
 
 
-    public void unregisterSubscriber(@NotNull Subscriber<IndexedValue<V>> listener) {
+    public void unregisterSubscriber(@NotNull ConsumingSubscriber<IndexedValue<V>> listener) {
         final AtomicBoolean isClosed = activeSubscriptions.remove(listener);
         if (isClosed != null) isClosed.set(true);
     }
@@ -183,5 +186,6 @@ public class VanillaIndexQueueView<K extends Marshallable, V extends Marshallabl
         activeSubscriptions.values().forEach(v -> v.set(true));
         chronicleQueue.close();
     }
+
 
 }

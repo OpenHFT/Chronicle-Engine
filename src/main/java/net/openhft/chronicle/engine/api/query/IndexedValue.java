@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.api.query;
 
+import net.openhft.chronicle.core.annotation.UsedViaReflection;
 import net.openhft.chronicle.wire.Demarshallable;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
@@ -14,7 +15,8 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
     private V v;
     private transient Object k;
 
-    public IndexedValue(@NotNull WireIn wire) {
+    @UsedViaReflection
+    private IndexedValue(@NotNull WireIn wire) {
         readMarshallable(wire);
     }
 
@@ -23,6 +25,12 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
         this.k = k;
         this.index = index;
     }
+
+    IndexedValue(V v, long index) {
+        this.v = v;
+        this.index = index;
+    }
+
 
     public long index() {
         return index;
