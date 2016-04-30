@@ -7,5 +7,5 @@ import net.openhft.chronicle.network.connection.VanillaWireOutPublisher;
  * @author Rob Austin.
  */
 public interface ConsumingSubscriber<E> extends Subscriber<E>, Closeable {
-    void wireOutConsumer(VanillaWireOutPublisher.WireOutConsumer wireOutConsumer);
+    void addWireConsumer(VanillaWireOutPublisher.WireOutConsumer wireOutConsumer);
 }

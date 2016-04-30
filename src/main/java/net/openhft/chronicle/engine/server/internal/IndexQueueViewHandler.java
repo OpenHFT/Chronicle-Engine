@@ -109,9 +109,9 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
                  *                        publishes writes the data
                  *                        directly to the socket
                  */
-                public void wireOutConsumer(VanillaWireOutPublisher.WireOutConsumer wireOutConsumer) {
+                public void addWireConsumer(VanillaWireOutPublisher.WireOutConsumer wireOutConsumer) {
                     this.wireOutConsumer = wireOutConsumer;
-                    publisher.addBytesConsumer(wireOutConsumer);
+                    publisher.addWireConsumer(wireOutConsumer);
                 }
 
                 @Override
@@ -139,7 +139,6 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
             final IndexQueueView<ConsumingSubscriber<IndexedValue<V>>, V> indexQueueView =
                     contextAsset.acquireView(IndexQueueView.class);
             indexQueueView.registerSubscriber(listener, query);
-
             return;
         }
 

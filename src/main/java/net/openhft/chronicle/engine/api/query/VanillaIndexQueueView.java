@@ -20,6 +20,8 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
@@ -47,21 +49,19 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
     private long lastIndexRead = 0;
     private final Object lock = new Object();
+    private static final Iterator EMPTY_ITERATOR = Collections.EMPTY_SET.iterator();
 
     public VanillaIndexQueueView(@NotNull RequestContext context,
                                  @NotNull Asset asset,
                                  @NotNull QueueView<?, V> queueView) {
 
         valueToKey = asset.acquireView(ValueToKey.class);
-
         this.asset = asset;
         eventLoop = asset.acquireView(EventLoop.class);
 
         final ChronicleQueueView chronicleQueueView = (ChronicleQueueView) queueView;
         chronicleQueue = chronicleQueueView.chronicleQueue();
-
         final ExcerptTailer tailer = chronicleQueue.createTailer();
-
 
         eventLoop.addHandler(() -> {
 
@@ -108,20 +108,27 @@ public class VanillaIndexQueueView<V extends Marshallable>
         final AtomicBoolean isClosed = new AtomicBoolean();
         activeSubscriptions.put(sub, isClosed);
 
-        final long from = vanillaIndexQuery.from() == 0
-                ? lastIndexRead : vanillaIndexQuery.from();
+        final long from = vanillaIndexQuery.from() == 0 ? lastIndexRead : vanillaIndexQuery.from();
 
+        Iterator<IndexedValue<V>> iterator = EMPTY_ITERATOR;
+
+
+        // don't send message if the from has not caught up.
         if (from != 0) {
+
+            if (from > lastIndexRead)
+                throw new UnsupportedOperationException("todo handle where the 'from' is greater " +
+                        "than the lastIndexRead");
 
             final String eventName = vanillaIndexQuery.eventName();
             final Predicate<V> filter = vanillaIndexQuery.filter();
 
-            if (from == lastIndexRead)
+            if (from == lastIndexRead) {
                 multiMap.computeIfAbsent(eventName, k -> new ConcurrentHashMap<>())
                         .values().stream()
                         .filter((IndexedValue<V> i) -> filter.test(i.v()))
                         .forEach(sub);
-            else
+            } else
                 // sends all the latest values that wont get sent via the queue
                 multiMap.computeIfAbsent(eventName, k -> new ConcurrentHashMap<>())
                         .values().stream()
@@ -129,14 +136,13 @@ public class VanillaIndexQueueView<V extends Marshallable>
                         .forEach(sub);
         }
 
-
         final ExcerptTailer tailer = chronicleQueue.createTailer();
 
         try {
             if (from != 0)
                 tailer.moveToIndex(from);
-            WireOutConsumer consumer = excerptConsumer(vanillaIndexQuery, tailer);
-            sub.wireOutConsumer(consumer);
+            WireOutConsumer consumer = excerptConsumer(vanillaIndexQuery, tailer, iterator);
+            sub.addWireConsumer(consumer);
 
         } catch (TimeoutException e) {
             tailer.close();
@@ -147,12 +153,20 @@ public class VanillaIndexQueueView<V extends Marshallable>
     }
 
     @NotNull
-    private WireOutConsumer excerptConsumer(@NotNull IndexQuery<V> vanillaIndexQuery, ExcerptTailer tailer) {
+    private WireOutConsumer excerptConsumer(@NotNull IndexQuery<V> vanillaIndexQuery,
+                                            @NotNull ExcerptTailer tailer,
+                                            @NotNull Iterator<IndexedValue<V>> iterator) {
 
         final IndexedValue<V> indexedValue = new IndexedValue<>();
         final ObjectCache objectCache = asset.acquireView(ObjectCache.class);
 
         return out -> {
+
+            if (iterator.hasNext()) {
+                out.getValueOut().typedMarshallable(iterator.next());
+                return;
+            }
+
             final String eventName = vanillaIndexQuery.eventName();
             final Predicate<V> filter = vanillaIndexQuery.filter();
 
@@ -171,7 +185,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
                     return;
 
                 // allows object re-use when using marshallable
-                final V v = (V) dc.wire().read(sb).typedMarshallable(objectCache);
+                final V v = dc.wire().read(sb).typedMarshallable(objectCache);
                 if (!filter.test(v))
                     return;
 
@@ -179,7 +193,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
             }
         };
     }
-
 
     public void unregisterSubscriber(@NotNull ConsumingSubscriber<IndexedValue<V>> listener) {
         final AtomicBoolean isClosed = activeSubscriptions.remove(listener);
@@ -192,6 +205,5 @@ public class VanillaIndexQueueView<V extends Marshallable>
         activeSubscriptions.values().forEach(v -> v.set(true));
         chronicleQueue.close();
     }
-
 
 }
