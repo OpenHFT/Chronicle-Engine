@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 import static net.openhft.chronicle.engine.server.internal.IndexQueueViewHandler.EventId.registerSubscriber;
 import static net.openhft.chronicle.engine.server.internal.IndexQueueViewHandler.EventId.unregisterSubscriber;
@@ -74,7 +75,6 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
                 volatile VanillaWireOutPublisher.WireOutConsumer wireOutConsumer;
                 volatile boolean subscriptionEnded;
 
-
                 @Override
                 public void onMessage(IndexedValue indexedEntry) throws InvalidSubscriberException {
 
@@ -105,21 +105,31 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
                 /**
                  * used to publish bytes on the nio socket thread
                  *
-                 * @param wireOutConsumer reads a chronicle queue and
+                 * @param valueOutConsumer reads a chronicle queue and
                  *                        publishes writes the data
                  *                        directly to the socket
                  */
-                public void addWireConsumer(VanillaWireOutPublisher.WireOutConsumer wireOutConsumer) {
-                    this.wireOutConsumer = wireOutConsumer;
-                    publisher.addWireConsumer(wireOutConsumer);
+                public void addValueOutConsumer(Supplier<Marshallable> valueOutConsumer) {
+                    publisher.addWireConsumer(wireOut -> {
+
+                        final WriteMarshallable marshallable = valueOutConsumer.get();
+                        if (marshallable == null)
+                            return;
+
+                        if (publisher.isClosed())
+                            return;
+
+                        wireOut.writeDocument(true, wire -> wire.writeEventName(tid).int64(inputTid));
+                        wireOut.writeNotCompleteDocument(false, wire -> {
+                            wire.writeEventName(reply).typedMarshallable(marshallable);
+                        });
+                    });
                 }
 
                 @Override
                 public void close() {
                     publisher.removeBytesConsumer(wireOutConsumer);
                 }
-
-
             };
 
             final VanillaIndexQuery<V> query = valueIn.typedMarshallable();

@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.api.query;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.core.threads.InvalidEventHandlerException;
 import net.openhft.chronicle.engine.api.pubsub.ConsumingSubscriber;
@@ -8,7 +9,6 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.tree.ChronicleQueueView;
 import net.openhft.chronicle.engine.tree.QueueView;
-import net.openhft.chronicle.network.connection.VanillaWireOutPublisher.WireOutConsumer;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ExcerptTailer;
 import net.openhft.chronicle.wire.DocumentContext;
@@ -28,6 +28,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * @author Rob Austin.
@@ -124,16 +125,16 @@ public class VanillaIndexQueueView<V extends Marshallable>
             final Predicate<V> filter = vanillaIndexQuery.filter();
 
             if (from == lastIndexRead) {
-                multiMap.computeIfAbsent(eventName, k -> new ConcurrentHashMap<>())
+                iterator = multiMap.computeIfAbsent(eventName, k -> new ConcurrentHashMap<>())
                         .values().stream()
                         .filter((IndexedValue<V> i) -> filter.test(i.v()))
-                        .forEach(sub);
+                        .iterator();
             } else
                 // sends all the latest values that wont get sent via the queue
-                multiMap.computeIfAbsent(eventName, k -> new ConcurrentHashMap<>())
+                iterator = multiMap.computeIfAbsent(eventName, k -> new ConcurrentHashMap<>())
                         .values().stream()
                         .filter((IndexedValue<V> i) -> i.index() <= from && filter.test(i.v()))
-                        .forEach(sub);
+                        .iterator();
         }
 
         final ExcerptTailer tailer = chronicleQueue.createTailer();
@@ -141,9 +142,8 @@ public class VanillaIndexQueueView<V extends Marshallable>
         try {
             if (from != 0)
                 tailer.moveToIndex(from);
-            WireOutConsumer consumer = excerptConsumer(vanillaIndexQuery, tailer, iterator);
-            sub.addWireConsumer(consumer);
-
+            final Supplier<Marshallable> consumer = excerptConsumer(vanillaIndexQuery, tailer, iterator);
+            sub.addValueOutConsumer(consumer);
         } catch (TimeoutException e) {
             tailer.close();
             sub.onEndOfSubscription();
@@ -153,18 +153,17 @@ public class VanillaIndexQueueView<V extends Marshallable>
     }
 
     @NotNull
-    private WireOutConsumer excerptConsumer(@NotNull IndexQuery<V> vanillaIndexQuery,
-                                            @NotNull ExcerptTailer tailer,
-                                            @NotNull Iterator<IndexedValue<V>> iterator) {
+    private Supplier<Marshallable> excerptConsumer(@NotNull IndexQuery<V> vanillaIndexQuery,
+                                                   @NotNull ExcerptTailer tailer,
+                                                   @NotNull Iterator<IndexedValue<V>> iterator) {
 
         final IndexedValue<V> indexedValue = new IndexedValue<>();
         final ObjectCache objectCache = asset.acquireView(ObjectCache.class);
 
-        return out -> {
+        return () -> {
 
             if (iterator.hasNext()) {
-                out.getValueOut().typedMarshallable(iterator.next());
-                return;
+                return iterator.next();
             }
 
             final String eventName = vanillaIndexQuery.eventName();
@@ -172,24 +171,24 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
             if (isClosed.get()) {
                 tailer.close();
-                throw new InvalidEventHandlerException("shutdown");
+                throw Jvm.rethrow(new InvalidEventHandlerException("shutdown"));
             }
 
             try (DocumentContext dc = tailer.readingDocument()) {
 
                 if (!dc.isPresent())
-                    return;
+                    return null;
 
                 final StringBuilder sb = Wires.acquireStringBuilder();
                 if (!eventName.contentEquals(sb))
-                    return;
+                    return null;
 
                 // allows object re-use when using marshallable
                 final V v = dc.wire().read(sb).typedMarshallable(objectCache);
                 if (!filter.test(v))
-                    return;
+                    return null;
 
-                out.getValueOut().typedMarshallable(indexedValue);
+                return indexedValue;
             }
         };
     }
