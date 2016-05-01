@@ -16,7 +16,6 @@ import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,14 +101,13 @@ public class VanillaIndexQueueView<V extends Marshallable>
      * @param vanillaIndexQuery
      * @return
      */
-    @Nullable
     public void registerSubscriber(@NotNull ConsumingSubscriber<IndexedValue<V>> sub,
                                    @NotNull IndexQuery<V> vanillaIndexQuery) {
 
         final AtomicBoolean isClosed = new AtomicBoolean();
         activeSubscriptions.put(sub, isClosed);
 
-        final long from = vanillaIndexQuery.from() == 0 ? lastIndexRead : vanillaIndexQuery.from();
+        final long from = vanillaIndexQuery.fromIndex() == 0 ? lastIndexRead : vanillaIndexQuery.fromIndex();
 
         Iterator<IndexedValue<V>> iterator = EMPTY_ITERATOR;
 

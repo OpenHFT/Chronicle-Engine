@@ -8,7 +8,9 @@ import java.util.function.Predicate;
  * @author Rob Austin.
  */
 public interface IndexQuery<V> extends Marshallable {
-    long from();
+    long fromIndex();
+
+    IndexQuery<V> fromIndex(long from);
 
     Predicate<V> filter();
 

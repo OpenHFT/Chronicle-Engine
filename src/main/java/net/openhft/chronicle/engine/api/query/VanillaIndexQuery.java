@@ -72,15 +72,14 @@ public class VanillaIndexQuery<V> extends AbstractMarshallable implements Demars
         return this;
     }
 
-    public long from() {
+    public long fromIndex() {
         return from;
     }
 
-    public VanillaIndexQuery from(long from) {
+    public IndexQuery<V> fromIndex(long from) {
         this.from = from;
         return this;
     }
-
 
     public Predicate<V> filter() {
         return ClassCache.newInstance(valueClass, select);

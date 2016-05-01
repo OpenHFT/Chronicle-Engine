@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static net.openhft.chronicle.engine.server.internal.IndexQueueViewHandler.EventId.*;
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
@@ -46,49 +47,61 @@ public class RemoteIndexQueueView<K extends Marshallable, V extends Marshallable
     @Override
     public void registerSubscriber(@NotNull Subscriber<IndexedValue<V>> subscriber, @NotNull IndexQuery<V> vanillaIndexQuery) {
 
+        final AtomicBoolean hasAlreadySubsribed = new AtomicBoolean();
 
         if (hub.outBytesLock().isHeldByCurrentThread())
             throw new IllegalStateException("Cannot view map while debugging");
 
-        hub.subscribe(new AbstractAsyncSubscription(hub, csp, "Remove KV Subscription registerTopicSubscriber") {
+        final AbstractAsyncSubscription asyncSubscription = new AbstractAsyncSubscription(
+                hub,
+                csp,
+                "Remove KV Subscription registerTopicSubscriber") {
 
-                          @Override
-                          public void onSubscribe(@NotNull final WireOut wireOut) {
-                              subscribersToTid.put(subscriber, tid());
-                              wireOut.writeEventName(registerSubscriber)
-                                      .typedMarshallable(vanillaIndexQuery);
-                          }
+            // this allows us to resubscribe from the last index we received
+            volatile long fromIndex = 0;
 
-                          @Override
-                          public void onConsumer(@NotNull final WireIn inWire) {
+            @Override
+            public void onSubscribe(@NotNull final WireOut wireOut) {
 
-                              try (DocumentContext dc = inWire.readingDocument()) {
-                                  if (!dc.isPresent())
-                                      return;
+                // this allows us to resubscribe from the last index we received
+                if (hasAlreadySubsribed.getAndSet(true))
+                    vanillaIndexQuery.fromIndex(fromIndex);
 
-                                  System.out.println(Wires.fromSizePrefixedBlobs(dc.wire().bytes(), dc.wire().bytes().readPosition() -
-                                          4));
+                subscribersToTid.put(subscriber, tid());
+                wireOut.writeEventName(registerSubscriber)
+                        .typedMarshallable(vanillaIndexQuery);
+            }
 
-                                  StringBuilder sb = Wires.acquireStringBuilder();
-                                  ValueIn valueIn = dc.wire().readEventName(sb);
+            @Override
+            public void onConsumer(@NotNull final WireIn inWire) {
 
-                                  if (reply.contentEquals(sb))
-                                      try {
-                                          subscriber.onMessage(valueIn.typedMarshallable());
-                                      } catch (InvalidSubscriberException e) {
-                                          RemoteIndexQueueView.this.unregisterSubscriber(subscriber);
-                                      }
-                                  else if (onEndOfSubscription.contentEquals(sb)) {
-                                      subscriber.onEndOfSubscription();
-                                      hub.unsubscribe(tid());
-                                  }
-                              } catch (Exception e) {
-                                  LOG.error("", e);
-                              }
+                try (DocumentContext dc = inWire.readingDocument()) {
+                    if (!dc.isPresent())
+                        return;
 
-                          }
-                      }
-        );
+                    StringBuilder sb = Wires.acquireStringBuilder();
+                    ValueIn valueIn = dc.wire().readEventName(sb);
+
+                    if (reply.contentEquals(sb))
+                        try {
+                            final IndexedValue<V> e = valueIn.typedMarshallable();
+                            fromIndex = e.index();
+                            subscriber.onMessage(e);
+                        } catch (InvalidSubscriberException e) {
+                            RemoteIndexQueueView.this.unregisterSubscriber(subscriber);
+                        }
+                    else if (onEndOfSubscription.contentEquals(sb)) {
+                        subscriber.onEndOfSubscription();
+                        hub.unsubscribe(tid());
+                    }
+                } catch (Exception e) {
+                    LOG.error("", e);
+                }
+
+            }
+        };
+
+        hub.subscribe(asyncSubscription);
 
     }
 
