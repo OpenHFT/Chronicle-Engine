@@ -27,7 +27,7 @@ import net.openhft.chronicle.engine.api.query.VanillaIndexQuery;
 import net.openhft.chronicle.engine.api.query.VanillaIndexQueueView;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
-import net.openhft.chronicle.network.connection.VanillaWireOutPublisher;
+import net.openhft.chronicle.network.connection.WireOutConsumer;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
@@ -72,7 +72,7 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
 
             final ConsumingSubscriber<IndexedValue<V>> listener = new ConsumingSubscriber<IndexedValue<V>>() {
 
-                volatile VanillaWireOutPublisher.WireOutConsumer wireOutConsumer;
+                volatile WireOutConsumer wireOutConsumer;
                 volatile boolean subscriptionEnded;
 
                 @Override
