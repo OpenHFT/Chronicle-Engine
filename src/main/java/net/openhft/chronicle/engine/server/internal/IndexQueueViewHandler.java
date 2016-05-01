@@ -101,7 +101,6 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
                     }
                 }
 
-
                 /**
                  * used to publish bytes on the nio socket thread
                  *
