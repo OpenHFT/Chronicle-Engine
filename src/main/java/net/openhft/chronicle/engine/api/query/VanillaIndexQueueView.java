@@ -112,8 +112,8 @@ public class VanillaIndexQueueView<V extends Marshallable>
         Iterator<IndexedValue<V>> iterator = EMPTY_ITERATOR;
 
 
-        // don't send message if the from has not caught up.
-        if (from != 0) {
+        // don't set itterator if the 'fromIndex' has not caught up.
+        if (from <= lastIndexRead) {
 
             if (from > lastIndexRead)
                 throw new UnsupportedOperationException("todo handle where the 'from' is greater " +
@@ -157,6 +157,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
         final IndexedValue<V> indexedValue = new IndexedValue<>();
         final ObjectCache objectCache = asset.acquireView(ObjectCache.class);
+        final long from = vanillaIndexQuery.fromIndex();
 
         return () -> {
 
@@ -175,6 +176,10 @@ public class VanillaIndexQueueView<V extends Marshallable>
             try (DocumentContext dc = tailer.readingDocument()) {
 
                 if (!dc.isPresent())
+                    return null;
+
+                // we may have just been restated and have not yet caught up
+                if (from > dc.index())
                     return null;
 
                 final StringBuilder sb = Wires.acquireStringBuilder();
