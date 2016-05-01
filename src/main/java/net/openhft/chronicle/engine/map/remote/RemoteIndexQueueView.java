@@ -47,7 +47,7 @@ public class RemoteIndexQueueView<K extends Marshallable, V extends Marshallable
     @Override
     public void registerSubscriber(@NotNull Subscriber<IndexedValue<V>> subscriber, @NotNull IndexQuery<V> vanillaIndexQuery) {
 
-        final AtomicBoolean hasAlreadySubsribed = new AtomicBoolean();
+        final AtomicBoolean hasAlreadySubscribed = new AtomicBoolean();
 
         if (hub.outBytesLock().isHeldByCurrentThread())
             throw new IllegalStateException("Cannot view map while debugging");
@@ -55,7 +55,7 @@ public class RemoteIndexQueueView<K extends Marshallable, V extends Marshallable
         final AbstractAsyncSubscription asyncSubscription = new AbstractAsyncSubscription(
                 hub,
                 csp,
-                "Remove KV Subscription registerTopicSubscriber") {
+                "RemoteIndexQueueView registerTopicSubscriber") {
 
             // this allows us to resubscribe from the last index we received
             volatile long fromIndex = 0;
@@ -64,7 +64,7 @@ public class RemoteIndexQueueView<K extends Marshallable, V extends Marshallable
             public void onSubscribe(@NotNull final WireOut wireOut) {
 
                 // this allows us to resubscribe from the last index we received
-                if (hasAlreadySubsribed.getAndSet(true))
+                if (hasAlreadySubscribed.getAndSet(true))
                     vanillaIndexQuery.fromIndex(fromIndex);
 
                 subscribersToTid.put(subscriber, tid());
