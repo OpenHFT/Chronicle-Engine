@@ -37,7 +37,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
     private static final Logger LOG = LoggerFactory.getLogger(VanillaIndexQueueView.class);
     private final Function<V, ?> valueToKey;
-    private final EventLoop eventLoop;
     private final ChronicleQueue chronicleQueue;
 
     private final Map<String, Map<Object, IndexedValue<V>>> multiMap = new ConcurrentHashMap<>();
@@ -57,7 +56,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
         valueToKey = asset.acquireView(ValueToKey.class);
         this.asset = asset;
-        eventLoop = asset.acquireView(EventLoop.class);
+        final EventLoop eventLoop = asset.acquireView(EventLoop.class);
 
         final ChronicleQueueView chronicleQueueView = (ChronicleQueueView) queueView;
         chronicleQueue = chronicleQueueView.chronicleQueue();
