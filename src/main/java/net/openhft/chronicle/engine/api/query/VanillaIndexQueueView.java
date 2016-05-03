@@ -115,10 +115,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
         // don't set itterator if the 'fromIndex' has not caught up.
         if (from <= lastIndexRead) {
 
-            if (from > lastIndexRead)
-                throw new UnsupportedOperationException("todo handle where the 'from' is greater " +
-                        "than the lastIndexRead");
-
             final String eventName = vanillaIndexQuery.eventName();
             final Predicate<V> filter = vanillaIndexQuery.filter();
 
@@ -155,7 +151,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
                                                    @NotNull ExcerptTailer tailer,
                                                    @NotNull Iterator<IndexedValue<V>> iterator) {
 
-        final IndexedValue<V> indexedValue = new IndexedValue<>();
         final ObjectCache objectCache = asset.acquireView(ObjectCache.class);
         final long from = vanillaIndexQuery.fromIndex();
 
@@ -191,7 +186,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
                 if (!filter.test(v))
                     return null;
 
-                return indexedValue;
+                return v;
             }
         };
     }
