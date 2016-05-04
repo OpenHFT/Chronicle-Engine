@@ -19,17 +19,23 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.core.annotation.UsedViaReflection;
+import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.Asset;
+import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.cfg.EngineClusterContext;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
+import net.openhft.chronicle.network.ConnectionListener;
 import net.openhft.chronicle.network.MarshallableFunction;
 import net.openhft.chronicle.network.NetworkContext;
 import net.openhft.chronicle.network.VanillaNetworkContext;
 import net.openhft.chronicle.network.cluster.ClusterContext;
+import net.openhft.chronicle.wire.AbstractMarshallable;
 import net.openhft.chronicle.wire.Demarshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Map;
 
 /**
  * @author Rob Austin.
@@ -66,6 +72,53 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext> extend
                 "rootAsset=" + root +
                 '}';
     }
+
+
+    public static class ConnectionDetails extends AbstractMarshallable {
+        int localIdentifier;
+        int remoteIdentifier;
+
+        public ConnectionDetails(int localIdentifier, int remoteIdentifier) {
+            this.localIdentifier = localIdentifier;
+            this.remoteIdentifier = remoteIdentifier;
+        }
+    }
+
+    public enum ConnectionStatus {
+        CONNECTED, DISCONNECTED
+    }
+
+    Map<ConnectionDetails, ConnectionStatus> mapView;
+
+
+    @Override
+    public ConnectionListener acquireConnectionListener() {
+
+        return new ConnectionListener() {
+
+            @Override
+            public void onConnected(int localIdentifier, int remoteIdentifier) {
+                acquireMap().put(new ConnectionDetails(localIdentifier, remoteIdentifier), ConnectionStatus.CONNECTED);
+            }
+
+            // we have to do this because of the build order of the mapview
+            Map<ConnectionDetails, ConnectionStatus> acquireMap() {
+                if (mapView == null)
+                    mapView = rootAsset().root()
+                            .acquireView(MapView.class, RequestContext.requestContext
+                                    ("/proc/connections").type(EngineWireNetworkContext
+                                    .ConnectionDetails.class).type2(EngineWireNetworkContext.ConnectionStatus.class));
+                return mapView;
+            }
+
+            @Override
+            public void onDisconnected(int localIdentifier, int remoteIdentifier) {
+                acquireMap().put(new ConnectionDetails(localIdentifier, remoteIdentifier), ConnectionStatus.DISCONNECTED);
+            }
+        };
+
+    }
+
 
     public static class Factory implements
             MarshallableFunction<ClusterContext,
