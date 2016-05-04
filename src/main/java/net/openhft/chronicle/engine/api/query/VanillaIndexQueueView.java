@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
@@ -50,6 +51,9 @@ public class VanillaIndexQueueView<V extends Marshallable>
     private final Object lock = new Object();
     private static final Iterator EMPTY_ITERATOR = Collections.EMPTY_SET.iterator();
 
+    private long currentSecond = 0;
+    private long messagesReadPerSecond = 0;
+
     public VanillaIndexQueueView(@NotNull RequestContext context,
                                  @NotNull Asset asset,
                                  @NotNull QueueView<?, V> queueView) {
@@ -62,7 +66,19 @@ public class VanillaIndexQueueView<V extends Marshallable>
         chronicleQueue = chronicleQueueView.chronicleQueue();
         final ExcerptTailer tailer = chronicleQueue.createTailer();
 
+        objectCacheThreadLocal = ThreadLocal.withInitial(() -> asset
+                .acquireView(ObjectCache.class));
+
         eventLoop.addHandler(() -> {
+
+            long second = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+
+            if (currentSecond != second) {
+                currentSecond = second;
+                System.out.println("messages read per second=" + messagesReadPerSecond);
+                messagesReadPerSecond = 0;
+            }
+
 
             if (isClosed.get())
                 throw new InvalidEventHandlerException();
@@ -77,6 +93,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
                 final V v = read.typedMarshallable();
                 final Object k = valueToKey.apply(v);
+                messagesReadPerSecond++;
 
                 final String event = sb.toString();
                 synchronized (lock) {
@@ -111,7 +128,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
         Iterator<IndexedValue<V>> iterator = EMPTY_ITERATOR;
 
 
-        // don't set itterator if the 'fromIndex' has not caught up.
+        // don't set iterator if the 'fromIndex' has not caught up.
         if (from <= lastIndexRead) {
 
             final String eventName = vanillaIndexQuery.eventName();
@@ -145,12 +162,14 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
     }
 
+    ThreadLocal<ObjectCache> objectCacheThreadLocal;
+
     @NotNull
     private Supplier<Marshallable> excerptConsumer(@NotNull IndexQuery<V> vanillaIndexQuery,
                                                    @NotNull ExcerptTailer tailer,
                                                    @NotNull Iterator<IndexedValue<V>> iterator) {
 
-        final ObjectCache objectCache = asset.acquireView(ObjectCache.class);
+
         final long from = vanillaIndexQuery.fromIndex();
 
         return () -> {
@@ -181,7 +200,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
                     return null;
 
                 // allows object re-use when using marshallable
-                final V v = dc.wire().read(sb).typedMarshallable(objectCache);
+                final V v = dc.wire().read(sb).typedMarshallable(objectCacheThreadLocal.get());
                 if (!filter.test(v))
                     return null;
 
@@ -203,3 +222,4 @@ public class VanillaIndexQueueView<V extends Marshallable>
     }
 
 }
+

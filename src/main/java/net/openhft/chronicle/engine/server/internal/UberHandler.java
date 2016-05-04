@@ -48,9 +48,8 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
     private static final Logger LOG = LoggerFactory.getLogger(UberHandler.class);
     private final int remoteIdentifier;
     private final int localIdentifier;
-    AtomicBoolean isClosed = new AtomicBoolean();
+    private AtomicBoolean isClosed = new AtomicBoolean();
     private ConnectionChangedNotifier connectionChangedNotifier;
-    private EventLoop eventLoop;
     private Asset rootAsset;
     @NotNull
     private String clusterName;
@@ -116,7 +115,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
         final WireOutPublisher publisher = nc.wireOutPublisher();
         publisher(publisher);
 
-        this.eventLoop = rootAsset.findOrCreateView(EventLoop.class);
+        EventLoop eventLoop = rootAsset.findOrCreateView(EventLoop.class);
         eventLoop.start();
 
         final Clusters clusters = rootAsset.findView(Clusters.class);
