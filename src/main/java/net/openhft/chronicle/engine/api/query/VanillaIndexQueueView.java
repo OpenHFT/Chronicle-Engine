@@ -107,7 +107,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
         });
     }
 
-
     public VanillaIndexQueueView(@NotNull RequestContext context,
                                  @NotNull Asset asset,
                                  @NotNull QueueView<?, V> queueView) {
