@@ -34,20 +34,17 @@ public class VanillaIndexQueueView<V extends Marshallable>
         implements IndexQueueView<ConsumingSubscriber<IndexedValue<V>>, V> {
 
     private static final Logger LOG = LoggerFactory.getLogger(VanillaIndexQueueView.class);
+    private static final Iterator EMPTY_ITERATOR = Collections.EMPTY_SET.iterator();
     private final Function<V, ?> valueToKey;
     private final ChronicleQueue chronicleQueue;
-
     private final Map<String, Map<Object, IndexedValue<V>>> multiMap = new ConcurrentHashMap<>();
     private final Map<Subscriber<IndexedValue<V>>, AtomicBoolean> activeSubscriptions
             = new ConcurrentHashMap<>();
-
     private final AtomicBoolean isClosed = new AtomicBoolean();
     private final Asset asset;
-
-    private long lastIndexRead = 0;
     private final Object lock = new Object();
-    private static final Iterator EMPTY_ITERATOR = Collections.EMPTY_SET.iterator();
-
+    ThreadLocal<Function<Class, ReadMarshallable>> objectCacheThreadLocal;
+    private long lastIndexRead = 0;
     private long currentSecond = 0;
     private long messagesReadPerSecond = 0;
 
@@ -159,8 +156,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
     }
 
-    ThreadLocal<Function<Class, ReadMarshallable>> objectCacheThreadLocal;
-
     @NotNull
     private Supplier<Marshallable> excerptConsumer(@NotNull IndexQuery<V> vanillaIndexQuery,
                                                    @NotNull ExcerptTailer tailer,
@@ -197,7 +192,8 @@ public class VanillaIndexQueueView<V extends Marshallable>
                     return null;
 
                 // allows object re-use when using marshallable
-                final V v = dc.wire().read(sb).typedMarshallable(objectCacheThreadLocal.get());
+                final Function<Class, ReadMarshallable> objectCache = objectCacheThreadLocal.get();
+                final V v = dc.wire().read(sb).typedMarshallable(objectCache);
                 if (!filter.test(v))
                     return null;
 
