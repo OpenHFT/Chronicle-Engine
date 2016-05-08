@@ -102,6 +102,7 @@ public class InsertedEventTest {
                 .typedMarshallable(insertedEvent);
         System.out.println("text: " + bytes);
         InsertedEvent ie = textWire.read(() -> "reply").typedMarshallable();
+        insertedEvent.equals(ie);
         assertEquals(insertedEvent, ie);
     }
 
@@ -136,7 +137,8 @@ public class InsertedEventTest {
         binaryWire.write(() -> "reply")
                 .typedMarshallable(insertedEvent);
         System.out.println("text: " + bytes);
-        InsertedEvent ie = binaryWire.read(() -> "reply").typedMarshallable();
+        InsertedEvent ie = binaryWire.read(() -> "reply")
+                .typedMarshallable();
         assertEquals(insertedEvent, ie);
     }
 }
