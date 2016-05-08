@@ -27,7 +27,9 @@ import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
 import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.query.IndexQueueView;
+import net.openhft.chronicle.engine.api.query.ObjectCacheFactory;
 import net.openhft.chronicle.engine.api.query.VanillaIndexQueueView;
+import net.openhft.chronicle.engine.api.query.VanillaObjectCacheFactory;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.api.tree.*;
@@ -179,7 +181,7 @@ public class VanillaAsset implements Asset, Closeable {
 
         addWrappingRule(IndexQueueView.class, LAST + " index queue",
                 VanillaIndexQueueView::new, QueueView.class);
-
+        addView(ObjectCacheFactory.class, VanillaObjectCacheFactory.INSTANCE);
     }
 
     public void forRemoteAccess(@NotNull String[] hostPortDescriptions,

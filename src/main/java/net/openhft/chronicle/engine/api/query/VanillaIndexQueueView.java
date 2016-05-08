@@ -11,10 +11,7 @@ import net.openhft.chronicle.engine.tree.ChronicleQueueView;
 import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ExcerptTailer;
-import net.openhft.chronicle.wire.DocumentContext;
-import net.openhft.chronicle.wire.Marshallable;
-import net.openhft.chronicle.wire.ValueIn;
-import net.openhft.chronicle.wire.Wires;
+import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,8 +63,9 @@ public class VanillaIndexQueueView<V extends Marshallable>
         chronicleQueue = chronicleQueueView.chronicleQueue();
         final ExcerptTailer tailer = chronicleQueue.createTailer();
 
-        objectCacheThreadLocal = ThreadLocal.withInitial(() -> asset
-                .acquireView(ObjectCache.class));
+        // use a function factory so each thread has a thread local function.
+        objectCacheThreadLocal = ThreadLocal.withInitial(
+                () -> asset.acquireView(ObjectCacheFactory.class).get());
 
         eventLoop.addHandler(() -> {
 
@@ -109,6 +107,62 @@ public class VanillaIndexQueueView<V extends Marshallable>
         });
     }
 
+
+    public VanillaIndexQueueView(@NotNull RequestContext context,
+                                 @NotNull Asset asset,
+                                 @NotNull QueueView<?, V> queueView) {
+
+        valueToKey = asset.acquireView(ValueToKey.class);
+        this.asset = asset;
+        final EventLoop eventLoop = asset.acquireView(EventLoop.class);
+
+        final ChronicleQueueView chronicleQueueView = (ChronicleQueueView) queueView;
+        chronicleQueue = chronicleQueueView.chronicleQueue();
+        final ExcerptTailer tailer = chronicleQueue.createTailer();
+
+        // use a function factory so each thread has a thread local function.
+        objectCacheThreadLocal = ThreadLocal.withInitial(
+                () -> asset.acquireView(ObjectCacheFactory.class).get());
+
+        eventLoop.addHandler(() -> {
+
+            long second = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+
+            if (currentSecond != second) {
+                currentSecond = second;
+                System.out.println("messages read per second=" + messagesReadPerSecond);
+                messagesReadPerSecond = 0;
+            }
+
+
+            if (isClosed.get())
+                throw new InvalidEventHandlerException();
+
+            try (DocumentContext dc = tailer.readingDocument()) {
+
+                if (!dc.isPresent())
+                    return false;
+
+                final StringBuilder sb = Wires.acquireStringBuilder();
+                final ValueIn read = dc.wire().read(sb);
+
+                final V v = read.typedMarshallable();
+                final Object k = valueToKey.apply(v);
+                messagesReadPerSecond++;
+
+                final String event = sb.toString();
+                synchronized (lock) {
+                    multiMap.computeIfAbsent(event, e -> new ConcurrentHashMap<>())
+                            .put(k, new IndexedValue<V>(v, dc.index()));
+                    lastIndexRead = dc.index();
+                }
+            } catch (Exception e) {
+                LOG.error("", e);
+            }
+
+            return true;
+        });
+    }
 
     /**
      * consumers wire on the NIO socket thread
@@ -162,7 +216,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
     }
 
-    ThreadLocal<ObjectCache> objectCacheThreadLocal;
+    ThreadLocal<Function<Class, ReadMarshallable>> objectCacheThreadLocal;
 
     @NotNull
     private Supplier<Marshallable> excerptConsumer(@NotNull IndexQuery<V> vanillaIndexQuery,
