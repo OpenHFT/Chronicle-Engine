@@ -13,6 +13,7 @@ import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ExcerptTailer;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,9 +42,9 @@ public class VanillaIndexQueueView<V extends Marshallable>
     private final Map<Subscriber<IndexedValue<V>>, AtomicBoolean> activeSubscriptions
             = new ConcurrentHashMap<>();
     private final AtomicBoolean isClosed = new AtomicBoolean();
-    private final Asset asset;
+
     private final Object lock = new Object();
-    ThreadLocal<Function<Class, ReadMarshallable>> objectCacheThreadLocal;
+    private final ThreadLocal<Function<Class, ReadMarshallable>> objectCacheThreadLocal;
     private long lastIndexRead = 0;
     private long currentSecond = 0;
     private long messagesReadPerSecond = 0;
@@ -53,16 +54,16 @@ public class VanillaIndexQueueView<V extends Marshallable>
                                  @NotNull QueueView<?, V> queueView) {
 
         valueToKey = asset.acquireView(ValueToKey.class);
-        this.asset = asset;
-        final EventLoop eventLoop = asset.acquireView(EventLoop.class);
 
+        final EventLoop eventLoop = asset.acquireView(EventLoop.class);
         final ChronicleQueueView chronicleQueueView = (ChronicleQueueView) queueView;
+
         chronicleQueue = chronicleQueueView.chronicleQueue();
         final ExcerptTailer tailer = chronicleQueue.createTailer();
 
         // use a function factory so each thread has a thread local function.
         objectCacheThreadLocal = ThreadLocal.withInitial(
-                () -> asset.acquireView(ObjectCacheFactory.class).get());
+                () -> asset.root().acquireView(ObjectCacheFactory.class).get());
 
         eventLoop.addHandler(() -> {
 
@@ -93,7 +94,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
                 final String event = sb.toString();
                 synchronized (lock) {
                     multiMap.computeIfAbsent(event, e -> new ConcurrentHashMap<>())
-                            .put(k, new IndexedValue<V>(v, dc.index()));
+                            .put(k, new IndexedValue<>(v, dc.index()));
                     lastIndexRead = dc.index();
                 }
             } catch (Exception e) {
@@ -120,7 +121,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
         final long from = vanillaIndexQuery.fromIndex() == 0 ? lastIndexRead : vanillaIndexQuery.fromIndex();
 
         Iterator<IndexedValue<V>> iterator = EMPTY_ITERATOR;
-
 
         // don't set iterator if the 'fromIndex' has not caught up.
         if (from <= lastIndexRead) {
@@ -160,46 +160,57 @@ public class VanillaIndexQueueView<V extends Marshallable>
     private Supplier<Marshallable> excerptConsumer(@NotNull IndexQuery<V> vanillaIndexQuery,
                                                    @NotNull ExcerptTailer tailer,
                                                    @NotNull Iterator<IndexedValue<V>> iterator) {
-
-
         final long from = vanillaIndexQuery.fromIndex();
+        return () -> toValue(vanillaIndexQuery, tailer, iterator, from);
+    }
 
-        return () -> {
 
-            if (iterator.hasNext()) {
-                return iterator.next();
-            }
+    private final ThreadLocal<IndexedValue<V>> indexedValue = ThreadLocal.withInitial(IndexedValue::new);
 
-            final String eventName = vanillaIndexQuery.eventName();
-            final Predicate<V> filter = vanillaIndexQuery.filter();
+    @Nullable
+    private IndexedValue<V> toValue(@NotNull IndexQuery<V> vanillaIndexQuery,
+                                    @NotNull ExcerptTailer tailer,
+                                    @NotNull Iterator<IndexedValue<V>> iterator,
+                                    long from) {
+        if (iterator.hasNext()) {
+            return iterator.next();
+        }
 
-            if (isClosed.get()) {
-                tailer.close();
-                throw Jvm.rethrow(new InvalidEventHandlerException("shutdown"));
-            }
+        final String eventName = vanillaIndexQuery.eventName();
+        final Predicate<V> filter = vanillaIndexQuery.filter();
 
-            try (DocumentContext dc = tailer.readingDocument()) {
+        if (isClosed.get()) {
+            tailer.close();
+            throw Jvm.rethrow(new InvalidEventHandlerException("shutdown"));
+        }
 
-                if (!dc.isPresent())
-                    return null;
+        try (DocumentContext dc = tailer.readingDocument()) {
 
-                // we may have just been restated and have not yet caught up
-                if (from > dc.index())
-                    return null;
+            if (!dc.isPresent())
+                return null;
 
-                final StringBuilder sb = Wires.acquireStringBuilder();
-                if (!eventName.contentEquals(sb))
-                    return null;
 
-                // allows object re-use when using marshallable
-                final Function<Class, ReadMarshallable> objectCache = objectCacheThreadLocal.get();
-                final V v = dc.wire().read(sb).typedMarshallable(objectCache);
-                if (!filter.test(v))
-                    return null;
+            System.out.println(Wires.fromSizePrefixedBlobs(dc));
+            // we may have just been restated and have not yet caught up
+            if (from > dc.index())
+                return null;
 
-                return v;
-            }
-        };
+            final StringBuilder sb = Wires.acquireStringBuilder();
+            ValueIn valueIn = dc.wire().read(sb);
+            if (!eventName.contentEquals(sb))
+                return null;
+
+            // allows object re-use when using marshallable
+            final Function<Class, ReadMarshallable> objectCache = objectCacheThreadLocal.get();
+            final V v = dc.wire().read(sb).typedMarshallable(objectCache);
+            if (!filter.test(v))
+                return null;
+
+            final IndexedValue<V> indexedValue = this.indexedValue.get();
+            indexedValue.index(dc.index());
+            indexedValue.v(v);
+            return indexedValue;
+        }
     }
 
     public void unregisterSubscriber(@NotNull ConsumingSubscriber<IndexedValue<V>> listener) {
