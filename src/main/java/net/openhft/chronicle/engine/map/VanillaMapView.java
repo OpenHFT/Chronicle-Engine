@@ -37,7 +37,6 @@ import java.util.*;
 
 import static java.util.EnumSet.of;
 import static net.openhft.chronicle.engine.api.tree.RequestContext.Operation.BOOTSTRAP;
-import static net.openhft.chronicle.engine.api.tree.RequestContext.Operation.END_SUBSCRIPTION_AFTER_BOOTSTRAP;
 
 /**
  * Created by peter on 22/05/15.
@@ -320,8 +319,7 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
 
     @Override
     public void registerSubscriber(@NotNull Subscriber<MapEvent<K, V>> subscriber) {
-        registerSubscriber(subscriber, Filter.<MapEvent<K, V>>empty(), of
-                (BOOTSTRAP, END_SUBSCRIPTION_AFTER_BOOTSTRAP));
+        registerSubscriber(subscriber, Filter.empty(), of(BOOTSTRAP));
     }
 
     @Override

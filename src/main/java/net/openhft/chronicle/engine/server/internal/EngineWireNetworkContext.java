@@ -23,11 +23,11 @@ import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.cfg.EngineClusterContext;
-import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.network.ConnectionListener;
 import net.openhft.chronicle.network.MarshallableFunction;
 import net.openhft.chronicle.network.NetworkContext;
 import net.openhft.chronicle.network.VanillaNetworkContext;
+import net.openhft.chronicle.network.api.TcpHandler;
 import net.openhft.chronicle.network.cluster.ClusterContext;
 import net.openhft.chronicle.wire.AbstractMarshallable;
 import net.openhft.chronicle.wire.Demarshallable;
@@ -35,14 +35,18 @@ import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
+import java.nio.channels.SocketChannel;
 
 /**
  * @author Rob Austin.
  */
-public class EngineWireNetworkContext<T extends EngineWireNetworkContext> extends VanillaNetworkContext<T> {
+public class EngineWireNetworkContext<T extends EngineWireNetworkContext> extends
+        VanillaNetworkContext<T> {
 
     private Asset rootAsset;
+    private MapView<ConnectionDetails, ConnectionStatus> hostByConnectionStatus;
+    private MapView<SocketChannel, TcpHandler> socketChannelByHandlers;
+    private TcpHandler handler;
 
     public EngineWireNetworkContext(Asset asset) {
         this.rootAsset = asset.root();
@@ -50,27 +54,52 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext> extend
 
     @NotNull
     public Asset rootAsset() {
-        return rootAsset;
+        try {
+            {
+                String path = "/proc/connections/cluster";
+                RequestContext requestContext = RequestContext.requestContext(path).
+                        type(ConnectionDetails.class).
+                        type2(ConnectionStatus.class);
+                hostByConnectionStatus = rootAsset.root().acquireAsset(path)
+                        .acquireView(MapView.class, requestContext);
+            }
+            {
+                String path = "/proc/connections/handlers";
+                RequestContext requestContext = RequestContext.requestContext(path).
+                        type(SocketChannel.class).
+                        type2(TcpHandler.class);
+                socketChannelByHandlers = rootAsset.root().acquireAsset(path)
+                        .acquireView(MapView.class, requestContext);
+
+                onHandlerChanged0(handler);
+
+            }
+            return rootAsset;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+
     }
 
     @Override
-    public String toString() {
+    public void onHandlerChanged(TcpHandler handler) {
+        this.handler = handler;
+        onHandlerChanged0(handler);
+    }
 
-        byte localId = -1;
-        if (rootAsset == null) {
-            return "";
+    private void onHandlerChanged0(TcpHandler handler) {
+        SocketChannel socketChannel = socketChannel();
+        if (socketChannelByHandlers != null && socketChannel != null) {
+            socketChannelByHandlers.put(socketChannel, handler);
         }
+    }
 
-        final Asset root = rootAsset;
-        final HostIdentifier hostIdentifier = root.getView(HostIdentifier.class);
-
-        if (hostIdentifier != null)
-            localId = hostIdentifier.hostId();
-
-        return "EngineWireNetworkContext{" +
-                "localId=" + localId +
-                "rootAsset=" + root +
-                '}';
+    @Override
+    public void close() {
+        SocketChannel socketChannel = socketChannel();
+        if (socketChannelByHandlers != null && socketChannel != null)
+            socketChannelByHandlers.remove(socketChannel);
     }
 
 
@@ -78,17 +107,28 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext> extend
         int localIdentifier;
         int remoteIdentifier;
 
-        public ConnectionDetails(int localIdentifier, int remoteIdentifier) {
+        ConnectionDetails(int localIdentifier, int remoteIdentifier) {
             this.localIdentifier = localIdentifier;
             this.remoteIdentifier = remoteIdentifier;
+        }
+
+        public int localIdentifier() {
+            return localIdentifier;
+        }
+
+        public int remoteIdentifier() {
+            return remoteIdentifier;
+        }
+
+        @Override
+        public String toString() {
+            return "localId=" + localIdentifier + ", remoteId=" + remoteIdentifier;
         }
     }
 
     public enum ConnectionStatus {
         CONNECTED, DISCONNECTED
     }
-
-    Map<ConnectionDetails, ConnectionStatus> mapView;
 
 
     @Override
@@ -98,22 +138,12 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext> extend
 
             @Override
             public void onConnected(int localIdentifier, int remoteIdentifier) {
-                acquireMap().put(new ConnectionDetails(localIdentifier, remoteIdentifier), ConnectionStatus.CONNECTED);
-            }
-
-            // we have to do this because of the build order of the mapview
-            Map<ConnectionDetails, ConnectionStatus> acquireMap() {
-                if (mapView == null)
-                    mapView = rootAsset().root()
-                            .acquireView(MapView.class, RequestContext.requestContext
-                                    ("/proc/connections").type(EngineWireNetworkContext
-                                    .ConnectionDetails.class).type2(EngineWireNetworkContext.ConnectionStatus.class));
-                return mapView;
+                hostByConnectionStatus.put(new ConnectionDetails(localIdentifier, remoteIdentifier), ConnectionStatus.CONNECTED);
             }
 
             @Override
             public void onDisconnected(int localIdentifier, int remoteIdentifier) {
-                acquireMap().put(new ConnectionDetails(localIdentifier, remoteIdentifier), ConnectionStatus.DISCONNECTED);
+                hostByConnectionStatus.put(new ConnectionDetails(localIdentifier, remoteIdentifier), ConnectionStatus.DISCONNECTED);
             }
         };
 
@@ -140,6 +170,13 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext> extend
         public NetworkContext apply(ClusterContext context) {
             return new EngineWireNetworkContext<>(((EngineClusterContext) context).assetRoot());
         }
+    }
+
+
+    @Override
+    public String toString() {
+        return "hostByConnectionStatus=" + hostByConnectionStatus.entrySet().toString();
+
     }
 }
 
