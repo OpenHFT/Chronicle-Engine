@@ -15,6 +15,11 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
     private V v;
     private transient Object k;
 
+
+    IndexedValue() {
+
+    }
+
     @UsedViaReflection
     private IndexedValue(@NotNull WireIn wire) {
         readMarshallable(wire);
@@ -24,11 +29,6 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
         this.v = v;
         this.k = k;
         this.index = index;
-    }
-
-
-    IndexedValue() {
-
     }
 
     IndexedValue(V v, long index) {
