@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.engine.server.internal;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.annotation.UsedViaReflection;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.Asset;
@@ -34,6 +35,8 @@ import net.openhft.chronicle.wire.Demarshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.channels.SocketChannel;
 
@@ -42,7 +45,7 @@ import java.nio.channels.SocketChannel;
  */
 public class EngineWireNetworkContext<T extends EngineWireNetworkContext> extends
         VanillaNetworkContext<T> {
-
+    private static final Logger LOG = LoggerFactory.getLogger(EngineWireNetworkContext.class);
     private Asset rootAsset;
     private MapView<ConnectionDetails, ConnectionStatus> hostByConnectionStatus;
     private MapView<SocketChannel, TcpHandler> socketChannelByHandlers;
@@ -50,10 +53,7 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext> extend
 
     public EngineWireNetworkContext(Asset asset) {
         this.rootAsset = asset.root();
-    }
 
-    @NotNull
-    public Asset rootAsset() {
         try {
             {
                 String path = "/proc/connections/cluster";
@@ -74,12 +74,16 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext> extend
                 onHandlerChanged0(handler);
 
             }
-            return rootAsset;
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
 
+        } catch (Exception e) {
+            LOG.error("", e);
+            throw Jvm.rethrow(e);
+        }
+    }
+
+    @NotNull
+    public Asset rootAsset() {
+        return this.rootAsset;
     }
 
     @Override
