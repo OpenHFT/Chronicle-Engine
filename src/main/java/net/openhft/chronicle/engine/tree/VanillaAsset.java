@@ -114,6 +114,10 @@ public class VanillaAsset implements Asset, Closeable {
         addWrappingRule(ValuesCollection.class, LAST + " values", VanillaValuesCollection::new, MapView.class);
 
         addWrappingRule(MapView.class, LAST + " string key maps", VanillaMapView::new, ObjectKeyValueStore.class);
+
+        final Asset procConnections = acquireAsset("proc/connections");
+        procConnections.addWrappingRule(MapView.class, LAST + " string key maps", VanillaMapView::new, ObjectKeyValueStore.class);
+
         addView(SubAssetFactory.class, new VanillaSubAssetFactory());
         String fullName = fullName();
         HostIdentifier hostIdentifier = findView(HostIdentifier.class);
