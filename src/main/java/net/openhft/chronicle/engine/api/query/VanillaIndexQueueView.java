@@ -152,12 +152,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
                                                    @NotNull ExcerptTailer tailer,
                                                    @NotNull Iterator<IndexedValue<V>> iterator,
                                                    final long fromIndex) {
-        try {
-            if (fromIndex != 0)
-                tailer.moveToIndex(fromIndex);
-        } catch (TimeoutException e) {
-            Jvm.rethrow(e);
-        }
         return () -> value(vanillaIndexQuery, tailer, iterator, fromIndex);
     }
 
