@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
+import static net.openhft.chronicle.core.util.StringUtils.isEqual;
 import static net.openhft.chronicle.engine.Utils.methodName;
 import static net.openhft.chronicle.engine.Utils.yamlLoggger;
 import static net.openhft.chronicle.wire.YamlLogging.writeMessage;
@@ -190,8 +191,8 @@ public class RemoteChronicleMapBinaryWire8bitTest extends JSR166TestCase {
     @Test
     public void testGet() throws IOException {
         try (ClosableMapSupplier<Integer, CharSequence> supplier = map5()) {
-            final Map map = supplier.get();
-            assertEquals("A", map.get(one));
+            final Map<Integer, CharSequence> map = supplier.get();
+            assertTrue(isEqual("A", map.get(one)));
             try (ClosableMapSupplier empty = newStrStrMap()) {
                 writeMessage("example of get(<key>) returning null, when the keys is not " +
                         "present in the map");
@@ -269,11 +270,12 @@ public class RemoteChronicleMapBinaryWire8bitTest extends JSR166TestCase {
     @Test(timeout = 50000)
     public void testValuesToArray() throws IOException {
         try (ClosableMapSupplier<Integer, CharSequence> supplier = map5()) {
-            final Map map = supplier.get();
-            Collection v = map.values();
-            Object[] ar = v.toArray();
-            ArrayList s = new ArrayList(Arrays.asList(ar));
-            assertEquals(5, ar.length);
+            final Map<Integer, CharSequence> map = supplier.get();
+            Collection<CharSequence> v = map.values();
+            List<String> s = new ArrayList<>();
+            for (CharSequence o : v.toArray(new CharSequence[0]))
+                s.add(o.toString());
+            assertEquals(5, s.size());
             assertTrue(s.contains("A"));
             assertTrue(s.contains("B"));
             assertTrue(s.contains("C"));
@@ -335,23 +337,22 @@ public class RemoteChronicleMapBinaryWire8bitTest extends JSR166TestCase {
     @Test
     public void testEntrySet() throws IOException {
         try (ClosableMapSupplier<Integer, CharSequence> supplier = map5()) {
-            final Map map = supplier.get();
+            final Map<Integer, CharSequence> map = supplier.get();
             writeMessage("example of getting and entry set itterator");
             yamlLoggger(() -> {
                 Set entrySet = map.entrySet();
                 entrySet.iterator();
             });
 
-            Set s = map.entrySet();
+            Set<Entry<Integer, CharSequence>> s = map.entrySet();
             assertEquals(5, s.size());
-            for (Object value : s) {
-                Entry e = (Entry) value;
+            for (Entry<Integer, CharSequence> e : s) {
                 assertTrue(
-                        (e.getKey().equals(one) && e.getValue().equals("A")) ||
-                                (e.getKey().equals(two) && e.getValue().equals("B")) ||
-                                (e.getKey().equals(three) && e.getValue().equals("C")) ||
-                                (e.getKey().equals(four) && e.getValue().equals("D")) ||
-                                (e.getKey().equals(five) && e.getValue().equals("E"))
+                        (e.getKey().equals(one) && isEqual(e.getValue(), "A")) ||
+                                (e.getKey().equals(two) && isEqual(e.getValue(), "B")) ||
+                                (e.getKey().equals(three) && isEqual(e.getValue(), "C")) ||
+                                (e.getKey().equals(four) && isEqual(e.getValue(), "D")) ||
+                                (e.getKey().equals(five) && isEqual(e.getValue(), "E"))
                 );
             }
         }
@@ -397,7 +398,7 @@ public class RemoteChronicleMapBinaryWire8bitTest extends JSR166TestCase {
     public void testPutIfAbsent2() throws IOException {
         try (ClosableMapSupplier<Integer, CharSequence> supplier = map5()) {
             final Map map = supplier.get();
-            yamlLoggger(() -> assertEquals("A", map.putIfAbsent(one, BytesStore.wrap("Z"))));
+            yamlLoggger(() -> assertEquals("A", map.putIfAbsent(one, BytesStore.wrap("Z")).toString()));
         }
     }
 
@@ -424,7 +425,7 @@ public class RemoteChronicleMapBinaryWire8bitTest extends JSR166TestCase {
             final Map map = supplier.get();
             writeMessage("example of replace where the value is known");
             yamlLoggger(() -> assertNotNull(map.replace(one, BytesStore.wrap("Z"))));
-            assertEquals("Z", map.get(one));
+            assertEquals("Z", map.get(one).toString());
         }
     }
 
@@ -435,10 +436,10 @@ public class RemoteChronicleMapBinaryWire8bitTest extends JSR166TestCase {
     public void testReplaceValue() throws IOException {
         try (ClosableMapSupplier<Integer, CharSequence> supplier = map5()) {
             final Map map = supplier.get();
-            assertEquals("A", map.get(one));
+            assertEquals("A", map.get(one).toString());
             writeMessage("example of when then value was not replaced");
             yamlLoggger(() -> assertFalse(map.replace(one, BytesStore.wrap("Z"), BytesStore.wrap("Z"))));
-            assertEquals("A", map.get(one));
+            assertEquals("A", map.get(one).toString());
         }
     }
 
@@ -448,11 +449,11 @@ public class RemoteChronicleMapBinaryWire8bitTest extends JSR166TestCase {
     @Test(timeout = 50000)
     public void testReplaceValue2() throws IOException {
         try (ClosableMapSupplier<Integer, CharSequence> supplier = map5()) {
-            final Map map = supplier.get();
-            assertEquals("A", map.get(one));
+            final Map<Integer, CharSequence> map = supplier.get();
+            assertTrue(isEqual("A", map.get(one)));
             writeMessage("example of replace where the value is known");
             yamlLoggger(() -> assertTrue(map.replace(one, BytesStore.wrap("A"), BytesStore.wrap("Z"))));
-            assertEquals("Z", map.get(one));
+            assertTrue(isEqual("Z", map.get(one)));
         }
     }
 

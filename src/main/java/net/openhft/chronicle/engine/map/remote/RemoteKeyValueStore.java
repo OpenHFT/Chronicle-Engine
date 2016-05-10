@@ -148,7 +148,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     }
 
     @Nullable
-    public <R, UA, RA> R syncUpdate(SerializableBiFunction updateFunction, UA ua, SerializableBiFunction returnFunction, RA ra) {
+    public <R, UA, RA> R syncUpdate(SerializableUpdaterWithArg updateFunction, UA ua, SerializableBiFunction returnFunction, RA ra) {
         return (R) proxyReturnTypedObject(update4, null, Object.class, updateFunction, ua, returnFunction, ra);
     }
 

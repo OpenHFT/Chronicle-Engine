@@ -181,7 +181,7 @@ public class RemoteMapView<K, MV, V> extends VanillaMapView<K, V> {
                                             updateFunction, UA ua, @NotNull
                                     SerializableBiFunction<MapView<K, V>, RA, R> returnFunction, RA ra) {
         RemoteKeyValueStore<K, V> store = (RemoteKeyValueStore<K, V>) underlying();
-        return store.syncUpdate((SerializableBiFunction) updateFunction, ua, (SerializableBiFunction) returnFunction, ra);
+        return store.syncUpdate((SerializableUpdaterWithArg) updateFunction, ua, (SerializableBiFunction) returnFunction, ra);
     }
 
     // helper functions.
