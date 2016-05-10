@@ -40,6 +40,9 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.channels.SocketChannel;
 
+import static net.openhft.chronicle.engine.server.internal.EngineWireNetworkContext.ConnectionStatus.CONNECTED;
+import static net.openhft.chronicle.engine.server.internal.EngineWireNetworkContext.ConnectionStatus.DISCONNECTED;
+
 /**
  * @author Rob Austin.
  */
@@ -142,12 +145,12 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext> extend
 
             @Override
             public void onConnected(int localIdentifier, int remoteIdentifier) {
-                hostByConnectionStatus.put(new ConnectionDetails(localIdentifier, remoteIdentifier), ConnectionStatus.CONNECTED);
+                hostByConnectionStatus.put(new ConnectionDetails(localIdentifier, remoteIdentifier), CONNECTED);
             }
 
             @Override
             public void onDisconnected(int localIdentifier, int remoteIdentifier) {
-                hostByConnectionStatus.put(new ConnectionDetails(localIdentifier, remoteIdentifier), ConnectionStatus.DISCONNECTED);
+                hostByConnectionStatus.put(new ConnectionDetails(localIdentifier, remoteIdentifier), DISCONNECTED);
             }
         };
 
