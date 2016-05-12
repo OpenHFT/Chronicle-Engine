@@ -18,6 +18,8 @@ package net.openhft.chronicle.engine.api.tree;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
+import net.openhft.chronicle.core.pool.ClassAliasPool;
+import net.openhft.chronicle.core.pool.ClassLookup;
 import net.openhft.chronicle.engine.HeartbeatHandler;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.map.MapEvent;
@@ -51,15 +53,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Proxy;
 
-import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
-
 /**
  * Created by peter on 24/05/15.
  */
 public class RequestContext implements Cloneable {
+    public static final ClassLookup CLASS_ALIASES = ClassLookup.create();
+
     static {
-        addAlias(QueueView.class, "Queue");
-        addAlias(MapView.class, "Map");
+        addAliasLocal(QueueView.class, "Queue");
+        addAliasLocal(MapView.class, "Map");
         addAlias(MapEvent.class, "MapEvent");
         addAlias(TopologicalEvent.class, "TopologicalEvent");
         addAlias(EntrySetView.class, "EntrySet");
@@ -123,12 +125,15 @@ public class RequestContext implements Cloneable {
     }
 
     private static void addAlias(Class type, @NotNull String aliases) {
+        ClassAliasPool.CLASS_ALIASES.addAlias(type, aliases);
+    }
+
+    private static void addAliasLocal(Class type, @NotNull String aliases) {
         CLASS_ALIASES.addAlias(type, aliases);
     }
 
     private static void addAlias(String className) {
-
-        Class<?> aClass = null;
+        Class<?> aClass;
         try {
             aClass = Class.forName(className);
         } catch (ClassNotFoundException ignore) {
@@ -510,8 +515,10 @@ public class RequestContext implements Cloneable {
         StringBuilder sb = new StringBuilder();
         sb.append(fullName());
         String sep = "?";
+        final Class viewType = this.viewType;
         if (viewType != null) {
-            sb.append(sep).append("view=").append(CLASS_ALIASES.nameFor(viewType()));
+            String alias = CLASS_ALIASES.nameFor(viewType);
+            sb.append(sep).append("view=").append(alias);
             sep = "&";
         }
         if (keyType() != null && keyType() != String.class) {

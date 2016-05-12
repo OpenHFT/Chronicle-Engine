@@ -72,6 +72,9 @@ public class ThreadMonitoringTest {
         threadDump.ignore("tree-1/Heartbeat");
         threadDump.ignore("tree-2/Heartbeat");
         threadDump.ignore("tree-3/Heartbeat");
+        threadDump.ignore("tree-1/closer");
+        threadDump.ignore("tree-2/closer");
+        threadDump.ignore("tree-3/closer");
         threadDump.assertNoNewThreads();
         YamlLogging.setAll(false);
         resetProperties();
