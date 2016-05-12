@@ -140,7 +140,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
             final Supplier<Marshallable> consumer = excerptConsumer(vanillaIndexQuery, tailer, iterator, fromIndex);
             sub.addValueOutConsumer(consumer);
         } catch (TimeoutException e) {
-            tailer.close();
+            //tailer.close();
             sub.onEndOfSubscription();
             LOG.error("timeout", e);
         }
@@ -171,7 +171,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
         final Predicate<V> filter = vanillaIndexQuery.filter();
 
         if (isClosed.get()) {
-            tailer.close();
+            //    tailer.close();
             throw Jvm.rethrow(new InvalidEventHandlerException("shutdown"));
         }
 
