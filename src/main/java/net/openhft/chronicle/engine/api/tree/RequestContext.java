@@ -18,6 +18,7 @@ package net.openhft.chronicle.engine.api.tree;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
+import net.openhft.chronicle.engine.HeartbeatHandler;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -40,7 +41,6 @@ import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.TopologySubscription;
 import net.openhft.chronicle.network.TcpEventHandler;
 import net.openhft.chronicle.network.cluster.ClusterContext;
-import net.openhft.chronicle.network.cluster.HeartbeatHandler;
 import net.openhft.chronicle.network.cluster.HostIdConnectionStrategy;
 import net.openhft.chronicle.wire.QueryWire;
 import net.openhft.chronicle.wire.VanillaWireParser;

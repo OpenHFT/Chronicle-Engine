@@ -26,6 +26,7 @@ import net.openhft.chronicle.engine.fs.EngineCluster;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
 import net.openhft.chronicle.network.cluster.*;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
+import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -34,9 +35,9 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 
+import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.network.HeaderTcpHandler.HANDLER;
-import static net.openhft.chronicle.network.cluster.HeartbeatHandler.HEARTBEAT_EXECUTOR;
 import static net.openhft.chronicle.network.cluster.TerminatorHandler.terminationHandler;
 
 /**
@@ -179,7 +180,8 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
      */
     private void closeSoon() {
         isClosed.set(true);
-        HEARTBEAT_EXECUTOR.schedule(this::close, 2, SECONDS);
+        newSingleThreadScheduledExecutor(new NamedThreadFactory("closer", true))
+                .schedule(this::close, 2, SECONDS);
     }
 
     @Override
