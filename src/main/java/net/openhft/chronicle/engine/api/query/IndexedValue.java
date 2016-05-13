@@ -4,6 +4,7 @@ import net.openhft.chronicle.core.annotation.UsedViaReflection;
 import net.openhft.chronicle.wire.Demarshallable;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -65,7 +66,14 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
     }
 
     @Override
+    public void writeMarshallable(@NotNull WireOut wire) {
+        wire.write("index").int64_0x(index);
+        wire.write("v").typedMarshallable(v);
+    }
+
+    @Override
     public String toString() {
         return Marshallable.$toString(this);
     }
 }
+
