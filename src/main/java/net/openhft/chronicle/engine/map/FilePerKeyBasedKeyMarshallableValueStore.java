@@ -56,7 +56,7 @@ public class FilePerKeyBasedKeyMarshallableValueStore<K, V extends Marshallable>
 
     private static Wire valueWire() {
         Wire valueWire = threadLocalValueWire.get();
-        valueWire.bytes().clear();
+        valueWire.clear();
         return valueWire;
     }
 
