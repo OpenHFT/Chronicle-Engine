@@ -295,6 +295,12 @@ public interface Asset extends Closeable {
     <V, U> void addWrappingRule(Class<V> viewType, String description, BiPredicate<RequestContext, Asset> predicate, WrappingViewFactory<V, U> factory, Class<U> underlyingType);
 
     /**
+     * Dump the rules in YAML format.
+     * @return the leaf and wrapping rules in text.
+     */
+    String dumpRules();
+
+    /**
      * Add an implementation of a view to the asset.. This can be used instead of, or in addition to
      * adding rules.
      *

@@ -49,8 +49,7 @@ import net.openhft.chronicle.network.connection.SocketAddressSupplier;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.EventGroup;
 import net.openhft.chronicle.threads.Threads;
-import net.openhft.chronicle.wire.Marshallable;
-import net.openhft.chronicle.wire.WireType;
+import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -81,7 +80,7 @@ public class VanillaAsset implements Asset, Closeable {
     private final String name;
     private final Map<Class, SortedMap<String, WrappingViewRecord>> wrappingViewFactoryMap =
             new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
-    private final Map<Class, LeafViewFactory> leafViewFactoryMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
+    private final Map<Class, LeafView> leafViewMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
     private String fullName = null;
     private Boolean keyedAsset;
 
@@ -259,12 +258,12 @@ public class VanillaAsset implements Asset, Closeable {
     @Override
     public <W, U> void addWrappingRule(Class<W> viewType, String description, WrappingViewFactory<W, U> factory, Class<U> underlyingType) {
         addWrappingRule(viewType, description, ALWAYS, factory, underlyingType);
-        leafViewFactoryMap.remove(viewType);
+        leafViewMap.remove(viewType);
     }
 
     @Override
     public <L> void addLeafRule(Class<L> viewType, String description, LeafViewFactory<L> factory) {
-        leafViewFactoryMap.put(viewType, factory);
+        leafViewMap.put(viewType, new LeafView(description, factory));
     }
 
     @Nullable
@@ -286,9 +285,9 @@ public class VanillaAsset implements Asset, Closeable {
     @Nullable
     public <I> I createLeafView(Class viewType, @NotNull RequestContext rc, Asset asset) throws
             AssetNotFoundException {
-        LeafViewFactory lvFactory = leafViewFactoryMap.get(viewType);
-        if (lvFactory != null)
-            return (I) lvFactory.create(rc.clone().viewType(viewType), asset);
+        LeafView lv = leafViewMap.get(viewType);
+        if (lv != null)
+            return (I) lv.factory.create(rc.clone().viewType(viewType), asset);
         if (parent == null)
             return null;
         return ((VanillaAsset) parent).createLeafView(viewType, rc, asset);
@@ -352,11 +351,41 @@ public class VanillaAsset implements Asset, Closeable {
                 if (leafView != null)
                     return addView(viewType, leafView);
                 V wrappingView = createWrappingView(viewType, rc, this, null);
-                if (wrappingView == null)
+                if (wrappingView == null) {
+                    LOG.warn("Unable to classify " + viewType + "\n" + dumpRules());
                     throw new AssetNotFoundException("Unable to classify " + viewType.getName() + " context: " + rc);
+                }
                 return addView(viewType, wrappingView);
             });
         }
+    }
+
+    @Override
+    public String dumpRules() {
+        Wire text = new TextWire(Wires.acquireBytes());
+        dumpRules(text);
+        if (parent != null)
+            ((VanillaAsset) parent).dumpRules(text);
+        return text.toString();
+    }
+
+    private void dumpRules(Wire wire) {
+        wire.write("name").text(name)
+                .write("leaf").marshallable(w -> {
+            for (Map.Entry<Class, LeafView> entry : leafViewMap.entrySet()) {
+                w.writeEvent(Class.class, entry.getKey()).leaf(false)
+                        .text(entry.getValue().name);
+            }
+        })
+                .write("wrapping").marshallable(w -> {
+            for (Map.Entry<Class, SortedMap<String, WrappingViewRecord>> entry : wrappingViewFactoryMap.entrySet()) {
+                w.writeEvent(Class.class, entry.getKey()).marshallable(ww -> {
+                    for (Map.Entry<String, WrappingViewRecord> recordEntry : entry.getValue().entrySet()) {
+                        ww.writeEventName(recordEntry.getKey()).object(Class.class, recordEntry.getValue().underlyingType);
+                    }
+                });
+            }
+        });
     }
 
     @Override
@@ -436,7 +465,7 @@ public class VanillaAsset implements Asset, Closeable {
 
     @Override
     public <V> boolean hasFactoryFor(Class<V> viewType) {
-        return leafViewFactoryMap.containsKey(viewType) || wrappingViewFactoryMap.containsKey(viewType);
+        return leafViewMap.containsKey(viewType) || wrappingViewFactoryMap.containsKey(viewType);
     }
 
     @Nullable
@@ -507,6 +536,20 @@ public class VanillaAsset implements Asset, Closeable {
             forEachChild(ca -> ca.getUsageStats(ats));
         } catch (InvalidSubscriberException e) {
             throw new AssertionError(e);
+        }
+    }
+
+    static class LeafView extends AbstractMarshallable {
+        String name;
+        transient LeafViewFactory factory;
+
+        public LeafView(String name, LeafViewFactory factory) {
+            this.name = name;
+            this.factory = factory;
+        }
+
+        public String name() {
+            return name;
         }
     }
 

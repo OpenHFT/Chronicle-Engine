@@ -71,7 +71,7 @@ public class RequestContext implements Cloneable {
         addAlias(Publisher.class, "Publisher, Pub");
         addAlias(TopicPublisher.class, "TopicPublisher, TopicPub");
         addAlias(ObjectSubscription.class, "Subscription");
-        addAlias(TopologySubscription.class, "topologySubscription");
+        addAlias(TopologySubscription.class, "TopologySubscription");
         addAlias(Reference.class, "Reference, Ref");
         addAlias(Heartbeat.class, "Heartbeat");
         addAlias(Filter.class, "Filter");
