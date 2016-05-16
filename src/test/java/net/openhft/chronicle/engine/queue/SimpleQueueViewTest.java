@@ -83,7 +83,6 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
-
         return Arrays.asList(new Boolean[][]{
                 {true}, {true}
         });
@@ -103,7 +102,9 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     public void before() throws IOException {
 
         methodName(name.getMethodName());
-        methodName = name.getMethodName().substring(0, name.getMethodName().indexOf('['));
+        methodName = name.getMethodName()
+                .substring(0, name.getMethodName().indexOf('['))
+                + "-" + System.nanoTime();
 
         if (isRemote) {
             serverAssetTree = new VanillaAssetTree().forTesting(x -> {
@@ -124,7 +125,6 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
             serverEndpoint = null;
             serverAssetTree = null;
         }
-
     }
 
     @After
@@ -167,7 +167,6 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         assertEquals("Message-2", values0.poll(3, SECONDS));
         Jvm.pause(100);
         assertEquals("[]", values0.toString());
-
     }
 
     @Test
@@ -175,7 +174,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
         QueueView<String, String> queueView = null;
 
-        String uri = "/queue/" + methodName;
+        String uri = "/queue/" + methodName + DELETE_CHRONICLE_FILE;
         String messageType = "topic";
 
         queueView = assetTree.acquireQueue(uri, String.class, String.class);
@@ -187,14 +186,13 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         final long index2 = queueView.publishAndIndex(messageType, "Message-2");
         final Excerpt<String, String> actual2 = queueView.get(index2);
         assertEquals(index2, actual2.index());
-
     }
 
     @Test
     public void testStringPublish() throws InterruptedException {
         Publisher<String> publisher = null;
 
-        String uri = "/queue/testStringPublishToATopic" + DELETE_CHRONICLE_FILE;
+        String uri = "/queue/" + methodName + DELETE_CHRONICLE_FILE;
         publisher = assetTree.acquirePublisher(uri, String.class);
         BlockingQueue<String> values = new LinkedBlockingQueue<>();
         Subscriber<String> subscriber = values::add;
@@ -206,8 +204,6 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         assertEquals("Message-2", values.poll(2, SECONDS));
         Jvm.pause(100);
         assertEquals("[]", values.toString());
-
-
     }
 
     @Test
@@ -227,25 +223,22 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         assertEquals("Message-2", values.poll(2, SECONDS));
         Jvm.pause(100);
         assertEquals("[]", values.toString());
-
     }
 
     @Test
     public void testStringPublishToAKeyTopicNotForMe() throws InterruptedException {
-
         Publisher<String> publisher = null;
 
-        String uri = "/queue/" + methodName + "/key";
+        String uri = "/queue/" + methodName + "/key" + DELETE_CHRONICLE_FILE;
         publisher = assetTree.acquirePublisher(uri, String.class);
         BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
         Subscriber<String> subscriber = values::add;
-        assetTree.registerSubscriber(uri + "KeyNotForMe", String.class, subscriber);
+        assetTree.registerSubscriber("/queue/" + methodName + "/keyNotForMe", String.class, subscriber);
         Jvm.pause(200);
         publisher.publish("Message-1");
         assertEquals(null, values.poll(200, MILLISECONDS));
         publisher.publish("Message-2");
         assertEquals(null, values.poll(200, MILLISECONDS));
-
     }
 
     @Test
@@ -266,7 +259,6 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         assertEquals("topic Message-2", values.poll(2, SECONDS));
         Jvm.pause(200);
         assertEquals("[]", values.toString());
-
     }
 
     @Test
@@ -292,14 +284,13 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         assertEquals("topic Message-2", values.poll(2, SECONDS));
         Jvm.pause(100);
         assertEquals("", values.toString());
-
     }
 
     @Test
     public void testStringPublishWithIndex() throws InterruptedException, IOException {
         QueueView<String, String> publisher = null;
 
-        String uri = "/queue/" + methodName + System.nanoTime();
+        String uri = "/queue/" + methodName + DELETE_CHRONICLE_FILE;
 
         publisher = assetTree.acquireQueue(uri, String.class, String
                 .class);
@@ -310,14 +301,13 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         final Excerpt<String, String> excerpt = queue.get(index);
         assertEquals(methodName, excerpt.topic());
         assertEquals("Message-1", excerpt.message());
-
     }
 
     @Test
     public void testMarshablePublishToATopic() throws InterruptedException {
         Publisher<MyMarshallable> publisher = null;
 
-        String uri = "/queue/testMarshablePublishToATopic" + DELETE_CHRONICLE_FILE;
+        String uri = "/queue/" + methodName + DELETE_CHRONICLE_FILE;
         publisher = assetTree.acquirePublisher(uri, MyMarshallable.class);
         BlockingQueue<MyMarshallable> values2 = new LinkedBlockingQueue<>();
         assetTree.registerSubscriber(uri, MyMarshallable.class, values2::add);
@@ -328,8 +318,6 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         assertEquals("Message-2", values2.poll(2, SECONDS).toString());
         Jvm.pause(100);
         assertEquals("[]", values2.toString());
-
     }
-
 }
 

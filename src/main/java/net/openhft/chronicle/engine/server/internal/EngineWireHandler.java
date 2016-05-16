@@ -109,7 +109,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
     private boolean isServerSocket;
     private Asset contextAsset;
 
-    private WireAdapter wireAdapter;
+    private WireAdapter<?, ?> wireAdapter;
     private Object view;
     private boolean isSystemMessage = true;
     private RequestContext requestContext;
@@ -185,7 +185,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
         return (wire) -> {
             assert outWire.startUse();
             try {
-                long startWritePosition = (outWire == null) ? 0 : outWire.bytes().writePosition();
+                long startWritePosition = outWire.bytes().writePosition();
 
                 // if true the next data message will be a system message
                 isSystemMessage = wire.bytes().readRemaining() == 0;
@@ -232,13 +232,13 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                                 viewType == IndexQueueView.class) {
 
                             // default to string type if not provided
-                            final Class type = requestContext.keyType() == null ? String.class
+                            final Class<?> type = requestContext.keyType() == null ? String.class
                                     : requestContext.keyType();
 
-                            final Class type2 = requestContext.valueType() == null ? String.class
+                            final Class<?> type2 = requestContext.valueType() == null ? String.class
                                     : requestContext.valueType();
 
-                            wireAdapter = new GenericWireAdapter(type, type2);
+                            wireAdapter = new GenericWireAdapter<>(type, type2);
                         } else {
                             throw new UnsupportedOperationException("unsupported view type");
                         }

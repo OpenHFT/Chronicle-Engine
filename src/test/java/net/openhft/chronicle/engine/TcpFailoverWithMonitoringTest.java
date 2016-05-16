@@ -65,8 +65,8 @@ public class TcpFailoverWithMonitoringTest {
     private static final String CONNECTION_1 = "Test1.host.port";
     private final static String CONNECTION_2 = "Test2.host.port";
     private static ConcurrentMap<String, String> map;
-    private static AtomicReference<Throwable> t = new AtomicReference();
-    private final BlockingQueue<String> activity = new ArrayBlockingQueue(2);
+    private static AtomicReference<Throwable> t = new AtomicReference<>();
+    private final BlockingQueue<String> activity = new ArrayBlockingQueue<>(2);
     ServerSocketChannel connection1;
     ServerSocketChannel connection2;
     private AssetTree failOverClient;
@@ -97,18 +97,15 @@ public class TcpFailoverWithMonitoringTest {
 
     @Before
     public void before() throws IOException {
-        YamlLogging.setAll(false);
+        YamlLogging.setAll(true);
         serverAssetTree1 = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
         serverAssetTree2 = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
 
-          TCPRegistry.createServerSocketChannelFor(CONNECTION_1);
+        TCPRegistry.createServerSocketChannelFor(CONNECTION_1);
         TCPRegistry.createServerSocketChannelFor(CONNECTION_2);
 
         connection1 = TCPRegistry.acquireServerSocketChannel(CONNECTION_1);
         connection2 = TCPRegistry.acquireServerSocketChannel(CONNECTION_2);
-
-        serverEndpoint1 = new ServerEndpoint(CONNECTION_1, serverAssetTree1);
-        serverEndpoint2 = new ServerEndpoint(CONNECTION_2, serverAssetTree2);
 
         final String[] connection = {CONNECTION_1, CONNECTION_2};
 
@@ -116,6 +113,9 @@ public class TcpFailoverWithMonitoringTest {
                 WIRE_TYPE, clientConnectionMonitor(), x -> t.set(x));
 
         map = failOverClient.acquireMap(NAME, String.class, String.class);
+
+        serverEndpoint1 = new ServerEndpoint(CONNECTION_1, serverAssetTree1);
+        serverEndpoint2 = new ServerEndpoint(CONNECTION_2, serverAssetTree2);
     }
 
     @NotNull
@@ -167,8 +167,6 @@ public class TcpFailoverWithMonitoringTest {
      * the fail over client connects to  server1 ( server1 is the primary) , server1 is then shut
      * down and the client connects to the secondary
      *
-     * @throws IOException
-     * @throws InterruptedException
      */
     @Test
     public void test() throws InterruptedException {
@@ -177,13 +175,13 @@ public class TcpFailoverWithMonitoringTest {
                 String.class,
                 String.class);
 
-        final MapView<String, String> map1 = serverAssetTree1.acquireMap(NAME, String.class,
-                String.class);
+        final MapView<String, String> map1 = serverAssetTree1.acquireMap(NAME,
+                String.class, String.class);
 
         Assert.assertEquals("connected " + toString(connection1), activity.poll(10, SECONDS));
 
-        final MapView<String, String> map2 = serverAssetTree2.acquireMap(NAME, String.class,
-                String.class);
+        final MapView<String, String> map2 = serverAssetTree2.acquireMap(NAME,
+                String.class, String.class);
 
         map1.put("hello", "server1");
         map2.put("hello", "server2");
@@ -195,7 +193,7 @@ public class TcpFailoverWithMonitoringTest {
 
         Assert.assertEquals("disconnected " + toString(connection1), activity.poll(4, SECONDS));
 
-        Assert.assertEquals("connected " + toString(connection2), activity.poll(4, SECONDS));
+        Assert.assertEquals("connected " + toString(connection2), activity.poll(100, SECONDS));
 
         // shutting server1 down should cause the failover client to connect to server 2
         Assert.assertEquals("server2", failoverClient.get("hello"));

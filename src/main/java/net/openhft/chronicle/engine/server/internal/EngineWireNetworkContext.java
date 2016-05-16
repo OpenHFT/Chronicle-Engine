@@ -24,6 +24,7 @@ import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.cfg.EngineClusterContext;
+import net.openhft.chronicle.engine.tree.VanillaAsset;
 import net.openhft.chronicle.network.ConnectionListener;
 import net.openhft.chronicle.network.MarshallableFunction;
 import net.openhft.chronicle.network.NetworkContext;
@@ -56,6 +57,7 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext> extend
 
     public EngineWireNetworkContext(Asset asset) {
         this.rootAsset = asset.root();
+        ((VanillaAsset) rootAsset.acquireAsset("/proc")).configMapServer();
 
         try {
             {
@@ -109,6 +111,34 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext> extend
             socketChannelByHandlers.remove(socketChannel);
     }
 
+    @Override
+    public ConnectionListener acquireConnectionListener() {
+
+        return new ConnectionListener() {
+
+            @Override
+            public void onConnected(int localIdentifier, int remoteIdentifier) {
+                hostByConnectionStatus.put(new ConnectionDetails(localIdentifier, remoteIdentifier), CONNECTED);
+            }
+
+            @Override
+            public void onDisconnected(int localIdentifier, int remoteIdentifier) {
+                hostByConnectionStatus.put(new ConnectionDetails(localIdentifier, remoteIdentifier), DISCONNECTED);
+            }
+        };
+
+    }
+
+    @Override
+    public String toString() {
+        return "hostByConnectionStatus=" + hostByConnectionStatus.entrySet().toString();
+
+    }
+
+
+    public enum ConnectionStatus {
+        CONNECTED, DISCONNECTED
+    }
 
     public static class ConnectionDetails extends AbstractMarshallable {
         int localIdentifier;
@@ -133,30 +163,6 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext> extend
         }
     }
 
-    public enum ConnectionStatus {
-        CONNECTED, DISCONNECTED
-    }
-
-
-    @Override
-    public ConnectionListener acquireConnectionListener() {
-
-        return new ConnectionListener() {
-
-            @Override
-            public void onConnected(int localIdentifier, int remoteIdentifier) {
-                hostByConnectionStatus.put(new ConnectionDetails(localIdentifier, remoteIdentifier), CONNECTED);
-            }
-
-            @Override
-            public void onDisconnected(int localIdentifier, int remoteIdentifier) {
-                hostByConnectionStatus.put(new ConnectionDetails(localIdentifier, remoteIdentifier), DISCONNECTED);
-            }
-        };
-
-    }
-
-
     public static class Factory implements
             MarshallableFunction<ClusterContext,
                     NetworkContext>, Demarshallable {
@@ -177,13 +183,6 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext> extend
         public NetworkContext apply(ClusterContext context) {
             return new EngineWireNetworkContext<>(((EngineClusterContext) context).assetRoot());
         }
-    }
-
-
-    @Override
-    public String toString() {
-        return "hostByConnectionStatus=" + hostByConnectionStatus.entrySet().toString();
-
     }
 }
 

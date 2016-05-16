@@ -67,7 +67,7 @@ public class ThreadMonitoringTest {
         final Throwable th = t.getAndSet(null);
         if (th != null) throw Jvm.rethrow(th);
 
-        TCPRegistry.assertAllServersStopped();
+        TCPRegistry.reset();
         threadDump.ignore("main/ChronicleMapKeyValueStore Closer");
         threadDump.ignore("tree-1/Heartbeat");
         threadDump.ignore("tree-2/Heartbeat");

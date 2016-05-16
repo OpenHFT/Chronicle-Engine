@@ -17,6 +17,7 @@
 package net.openhft.chronicle.engine.cfg;
 
 import net.openhft.chronicle.engine.api.tree.AssetTree;
+import net.openhft.chronicle.engine.tree.VanillaAsset;
 import net.openhft.chronicle.wire.AbstractMarshallable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +35,7 @@ public class MonitorCfg extends AbstractMarshallable implements Installable {
 
     @Override
     public MonitorCfg install(String path, AssetTree assetTree) throws IOException, URISyntaxException {
+        ((VanillaAsset) assetTree.acquireAsset("/proc")).configMapServer();
         if (subscriptionMonitoringEnabled) {
             LOGGER.info("Enabling Subscription Monitoring for " + assetTree);
             assetTree.acquireMap("/proc/subscriptions", String.class, SubscriptionStat.class);

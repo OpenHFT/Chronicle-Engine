@@ -132,6 +132,19 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         }
     }
 
+    public static void deleteFiles(File element) throws IOException {
+        if (element.isDirectory()) {
+            for (File sub : element.listFiles()) {
+                deleteFiles(sub);
+            }
+        }
+        try {
+            Files.deleteIfExists(element.toPath());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public ChronicleQueue chronicleQueue() {
         return chronicleQueue;
     }
@@ -429,15 +442,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         }
 
 
-    }
-
-    public static void deleteFiles(File element) throws IOException {
-        if (element.isDirectory()) {
-            for (File sub : element.listFiles()) {
-                deleteFiles(sub);
-            }
-        }
-        Files.deleteIfExists(element.toPath());
     }
 
     private void deleteFiles(TopicPublisher p) {

@@ -101,23 +101,84 @@ public class VanillaAsset implements Asset, Closeable {
         }
     }
 
-    public void standardStack(boolean daemon, @NotNull final Consumer<Throwable> onThrowable) {
 
-        final Asset queue = acquireAsset("queue");
-        queue.addWrappingRule(Reference.class, LAST + "reference", QueueReference::new, QueueView
-                .class);
+    void configMapCommon() {
+        addWrappingRule(ValuesCollection.class, LAST + " values", VanillaValuesCollection::new, MapView.class);
+        addView(SubAssetFactory.class, new VanillaSubAssetFactory());
+    }
 
+    public void configMapServer() {
+        configMapCommon();
+        addWrappingRule(EntrySetView.class, LAST + " VanillaEntrySetView", VanillaEntrySetView::new, MapView.class);
+        addWrappingRule(KeySetView.class, LAST + " VanillaKeySetView", VanillaKeySetView::new, MapView.class);
         addWrappingRule(Reference.class, LAST + "reference", MapReference::new, MapView.class);
         addWrappingRule(Replication.class, LAST + "replication", VanillaReplication::new, MapView.class);
+        addWrappingRule(Publisher.class, LAST + " MapReference", MapReference::new, MapView.class);
+        addWrappingRule(TopicPublisher.class, LAST + " MapTopicPublisher", MapTopicPublisher::new, MapView.class);
 
-        addWrappingRule(ValuesCollection.class, LAST + " values", VanillaValuesCollection::new, MapView.class);
+        addWrappingRule(MapView.class, LAST + " VanillaMapView", VanillaMapView::new, ObjectKeyValueStore.class);
 
-        addWrappingRule(MapView.class, LAST + " string key maps", VanillaMapView::new, ObjectKeyValueStore.class);
+        // storage options
+        addLeafRule(ObjectSubscription.class, LAST + " vanilla", MapKVSSubscription::new);
+        addLeafRule(RawKVSSubscription.class, LAST + " vanilla", MapKVSSubscription::new);
+        addWrappingRule(ObjectKeyValueStore.class, LAST + " VanillaSubscriptionKeyValueStore",
+                VanillaSubscriptionKeyValueStore::new, AuthenticatedKeyValueStore.class);
 
-        final Asset procConnections = acquireAsset("proc/connections");
-        procConnections.addWrappingRule(MapView.class, LAST + " string key maps", VanillaMapView::new, ObjectKeyValueStore.class);
+        addLeafRule(AuthenticatedKeyValueStore.class, LAST + " VanillaKeyValueStore", VanillaKeyValueStore::new);
+        addLeafRule(SubscriptionKeyValueStore.class, LAST + " VanillaKeyValueStore", VanillaKeyValueStore::new);
+        addLeafRule(KeyValueStore.class, LAST + " VanillaKeyValueStore", VanillaKeyValueStore::new);
+    }
 
-        addView(SubAssetFactory.class, new VanillaSubAssetFactory());
+    public void configMapRemote() {
+        configMapCommon();
+        addWrappingRule(SimpleSubscription.class, LAST + "subscriber", RemoteSimpleSubscription::new, Reference.class);
+
+        addWrappingRule(EntrySetView.class, LAST + " RemoteEntrySetView", RemoteEntrySetView::new, MapView.class);
+        addWrappingRule(KeySetView.class, LAST + " RemoteKeySetView", RemoteKeySetView::new, MapView.class);
+        addLeafRule(Publisher.class, LAST + " RemotePublisher", RemotePublisher::new);
+        addLeafRule(Reference.class, LAST + "reference", RemoteReference::new);
+        addLeafRule(TopicPublisher.class, LAST + " RemoteTopicPublisher", RemoteTopicPublisher::new);
+
+        addWrappingRule(MapView.class, LAST + " RemoteMapView", RemoteMapView::new, ObjectKeyValueStore.class);
+
+        addLeafRule(ObjectKeyValueStore.class, LAST + " RemoteKeyValueStore",
+                RemoteKeyValueStore::new);
+        addLeafRule(ObjectSubscription.class, LAST + " Remote", RemoteKVSSubscription::new);
+    }
+
+    void configQueueCommon() {
+        addWrappingRule(Reference.class, LAST + "QueueReference",
+                QueueReference::new, QueueView.class);
+    }
+
+    public void configQueueServer() {
+        configQueueCommon();
+        addWrappingRule(Publisher.class, LAST + " QueueReference",
+                QueueReference::new, QueueView.class);
+
+        addWrappingRule(TopicPublisher.class, LAST + " QueueTopicPublisher",
+                QueueTopicPublisher::new, QueueView.class);
+
+        addLeafRule(ObjectSubscription.class, LAST + " QueueObjectSubscription",
+                QueueObjectSubscription::new);
+
+        addWrappingRule(IndexQueueView.class, LAST + " VanillaIndexQueueView",
+                VanillaIndexQueueView::new, QueueView.class);
+
+        addLeafRule(QueueView.class, LAST + " ChronicleQueueView", ChronicleQueueView::new);
+    }
+
+    public void configQueueRemote() {
+        configQueueCommon();
+        addLeafRule(QueueView.class, LAST + " RemoteQueueView", RemoteQueueView::new);
+
+        addLeafRule(IndexQueueView.class, LAST + " RemoteIndexQueueView",
+                RemoteIndexQueueView::new);
+    }
+
+    public void standardStack(boolean daemon, @NotNull final Consumer<Throwable> onThrowable) {
+        configMapCommon();
+
         String fullName = fullName();
         HostIdentifier hostIdentifier = findView(HostIdentifier.class);
         if (hostIdentifier != null)
@@ -143,48 +204,18 @@ public class VanillaAsset implements Asset, Closeable {
                           final Function<String, Integer> uriToHostId) {
         standardStack(daemon, onThrowable);
 
-        final Asset queue = acquireAsset("queue");
+        configMapServer();
 
-        queue.addWrappingRule(Publisher.class, LAST + "reference to a ChronicleQueue",
-                QueueReference::new, QueueView.class);
-
-        queue.addWrappingRule(TopicPublisher.class, LAST + "reference to a ChronicleQueue",
-                QueueTopicPublisher::new, QueueView.class);
-
-        queue.addLeafRule(ObjectSubscription.class, LAST + " vanilla queue subscription",
-                QueueObjectSubscription::new);
-
-        queue.addLeafRule(ObjectSubscription.class, LAST + " vanilla queue subscription",
-                QueueObjectSubscription::new);
+        VanillaAsset queue = (VanillaAsset) acquireAsset("/queue");
+        queue.configQueueServer();
 
         addView(QueueSource.class, new QueueSource(uriToHostId, true));
 
-        queue.addLeafRule(QueueView.class, LAST + "chronicle queue", ChronicleQueueView::new);
+        addView(ObjectCacheFactory.class, VanillaObjectCacheFactory.INSTANCE);
 
-        addWrappingRule(Publisher.class, LAST + "publisher", MapReference::new, MapView.class);
-        addWrappingRule(EntrySetView.class, LAST + " entrySet", VanillaEntrySetView::new, MapView.class);
-
-        addWrappingRule(TopicPublisher.class, LAST + " topic publisher", MapTopicPublisher::new, MapView.class);
-
-        addWrappingRule(ObjectKeyValueStore.class, LAST + " authenticated",
-                VanillaSubscriptionKeyValueStore::new, AuthenticatedKeyValueStore.class);
-        addWrappingRule(KeySetView.class, LAST + " keySet", VanillaKeySetView::new, MapView.class);
-
-        addLeafRule(AuthenticatedKeyValueStore.class, LAST + " vanilla", VanillaKeyValueStore::new);
-        addLeafRule(SubscriptionKeyValueStore.class, LAST + " vanilla", VanillaKeyValueStore::new);
-        addLeafRule(KeyValueStore.class, LAST + " vanilla", VanillaKeyValueStore::new);
-
-        addLeafRule(ObjectSubscription.class, LAST + " vanilla",
-                MapKVSSubscription::new);
-        addLeafRule(RawKVSSubscription.class, LAST + " vanilla",
-                MapKVSSubscription::new);
-
-        addLeafRule(TopologySubscription.class, LAST + " vanilla",
+        addLeafRule(TopologySubscription.class, LAST + " VanillaTopologySubscription",
                 VanillaTopologySubscription::new);
 
-        addWrappingRule(IndexQueueView.class, LAST + " index queue",
-                VanillaIndexQueueView::new, QueueView.class);
-        addView(ObjectCacheFactory.class, VanillaObjectCacheFactory.INSTANCE);
     }
 
     public void forRemoteAccess(@NotNull String[] hostPortDescriptions,
@@ -194,32 +225,15 @@ public class VanillaAsset implements Asset, Closeable {
                                 @NotNull Consumer<Throwable> onThrowable) throws AssetNotFoundException {
 
         standardStack(true, onThrowable);
+        configMapRemote();
 
-        final Asset queue = acquireAsset("queue");
-        queue.addLeafRule(QueueView.class, LAST + "reference to a ChronicleQueue", RemoteQueueView::new);
+        VanillaAsset queue = (VanillaAsset) acquireAsset("queue");
+        queue.configQueueRemote();
 
-        addWrappingRule(EntrySetView.class, LAST + " entrySet", RemoteEntrySetView::new, MapView.class);
-
-        addWrappingRule(MapView.class, LAST + " remote key maps", RemoteMapView::new, ObjectKeyValueStore.class);
-
-        addWrappingRule(KeySetView.class, LAST + " remote key maps", RemoteKeySetView::new, MapView.class);
-
-        addLeafRule(ObjectSubscription.class, LAST + " Remote", RemoteKVSSubscription::new);
-
-        addLeafRule(ObjectKeyValueStore.class, LAST + " Remote AKVS", RemoteKeyValueStore::new);
-        addLeafRule(TopicPublisher.class, LAST + " topic publisher", RemoteTopicPublisher::new);
         //       addLeafRule(Subscriber.class, LAST + " topic publisher", RemoteSubscription::new);
-        addLeafRule(Publisher.class, LAST + " topic publisher", RemotePublisher::new);
 
-        addWrappingRule(SimpleSubscription.class, LAST + "subscriber", RemoteSimpleSubscription::new, Reference.class);
-
-        addLeafRule(Reference.class, LAST + "reference", RemoteReference::new);
-
-        addLeafRule(TopologySubscription.class, LAST + " vanilla",
+        addLeafRule(TopologySubscription.class, LAST + " RemoteTopologySubscription",
                 RemoteTopologySubscription::new);
-
-        addLeafRule(IndexQueueView.class, LAST + " index queue",
-                RemoteIndexQueueView::new);
 
         SessionProvider sessionProvider = new ClientSessionProvider(sessionDetails);
 
@@ -363,16 +377,29 @@ public class VanillaAsset implements Asset, Closeable {
     @Override
     public String dumpRules() {
         Wire text = new TextWire(Wires.acquireBytes());
-        dumpRules(text);
         if (parent != null) {
-            text.bytes().append8bit("---\n");
             ((VanillaAsset) parent).dumpRules(text);
         }
+        dumpRules(text);
+        dumpChildRules(text);
         return text.toString();
     }
 
+    private void dumpChildRules(Wire text) {
+        for (Asset asset : children.values()) {
+            if (asset instanceof VanillaAsset) {
+                VanillaAsset vasset = (VanillaAsset) asset;
+                if (vasset.leafViewMap.size() + vasset.wrappingViewFactoryMap.size() > 0) {
+                    vasset.dumpRules(text);
+                }
+                vasset.dumpChildRules(text);
+            }
+        }
+    }
+
     private void dumpRules(Wire wire) {
-        wire.write("name").text(name)
+        wire.bytes().append8bit("---\n");
+        wire.write("name").text(fullName())
                 .write("leaf").marshallable(w -> {
             for (Map.Entry<Class, LeafView> entry : leafViewMap.entrySet()) {
                 w.writeEvent(Class.class, entry.getKey()).leaf(false)
@@ -485,20 +512,18 @@ public class VanillaAsset implements Asset, Closeable {
     protected Asset createAsset(@NotNull String name) {
         assert name.length() > 0;
         return children.computeIfAbsent(name, keyedAsset != Boolean.TRUE
-                        ? n -> new VanillaAsset(this, name)
-                        : n -> {
-                    MapView map = getView(MapView.class);
+                ? n -> new VanillaAsset(this, name)
+                : n -> {
+            MapView map = getView(MapView.class);
 
-                    if (map != null) {
-                        SubAssetFactory saFactory = findOrCreateView(SubAssetFactory.class);
-                        return saFactory.createSubAsset(this, name, map.valueType());
-                    }
+            if (map != null) {
+                SubAssetFactory saFactory = findOrCreateView(SubAssetFactory.class);
+                return saFactory.createSubAsset(this, name, map.valueType());
+            }
 
-                    SubAssetFactory saFactory = findOrCreateView(SubAssetFactory.class);
-                    return saFactory.createSubAsset(this, name, String.class);
-                }
-
-        );
+            SubAssetFactory saFactory = findOrCreateView(SubAssetFactory.class);
+            return saFactory.createSubAsset(this, name, String.class);
+        });
     }
 
     @Override

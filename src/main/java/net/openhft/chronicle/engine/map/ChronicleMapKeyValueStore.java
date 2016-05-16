@@ -251,7 +251,12 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
 
     @Override
     public boolean put(K key, V value) {
-        return chronicleMap.update(key, value) != UpdateResult.INSERT;
+        try {
+            return chronicleMap.update(key, value) != UpdateResult.INSERT;
+        } catch (Exception e) {
+            System.err.println("Failed to write " + key + ", " + value);
+            throw e;
+        }
     }
 
     @Nullable
