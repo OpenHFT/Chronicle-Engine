@@ -13,9 +13,11 @@ import java.util.function.Function;
 public enum VanillaObjectCacheFactory implements ObjectCacheFactory {
     INSTANCE;
 
+    ThreadLocal<Map<Class<ReadMarshallable>, ReadMarshallable>> t = ThreadLocal.withInitial(LinkedHashMap::new);
+
     @Override
     public Function<Class, ReadMarshallable> get() {
-        Map<Class<ReadMarshallable>, ReadMarshallable> cache = new LinkedHashMap<>();
+        Map<Class<ReadMarshallable>, ReadMarshallable> cache = t.get();
         return c -> cache.computeIfAbsent(c, ObjectUtils::newInstance);
     }
 }
