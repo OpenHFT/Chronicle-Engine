@@ -32,7 +32,6 @@ public class VanillaIndexQuery<V> extends AbstractMarshallable implements Demars
     public VanillaIndexQuery() {
     }
 
-
     @UsedViaReflection
     public VanillaIndexQuery(@NotNull WireIn wire) {
         readMarshallable(wire);
@@ -87,7 +86,7 @@ public class VanillaIndexQuery<V> extends AbstractMarshallable implements Demars
 
 
     /**
-     * ensures that the same slelect/predicate will return an existing class instance
+     * ensures that the same select/predicate will return an existing class instance
      */
     private static class ClassCache {
         private static final ConcurrentMap<TypedSelect, Predicate> cache = new

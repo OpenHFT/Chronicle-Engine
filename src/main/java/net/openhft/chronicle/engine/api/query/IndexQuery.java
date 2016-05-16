@@ -10,8 +10,6 @@ import java.util.function.Predicate;
 public interface IndexQuery<V> extends Marshallable {
     long fromIndex();
 
-    IndexQuery<V> fromIndex(long from);
-
     Predicate<V> filter();
 
     String eventName();

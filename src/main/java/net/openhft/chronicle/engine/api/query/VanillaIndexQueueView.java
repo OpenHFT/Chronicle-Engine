@@ -76,7 +76,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
                 messagesReadPerSecond = 0;
             }
 
-
             if (isClosed.get())
                 throw new InvalidEventHandlerException();
 
@@ -124,14 +123,11 @@ public class VanillaIndexQueueView<V extends Marshallable>
         final Predicate<V> filter = vanillaIndexQuery.filter();
 
         // don't set iterator if the 'fromIndex' has not caught up.
-        final Predicate<IndexedValue<V>> predicate = fromIndex > lastIndexRead ?
-                i -> i.index() <= fromIndex && filter.test(i.v()) :
-                i -> filter.test(i.v());
 
         final Iterator<IndexedValue<V>> iterator =
                 multiMap.computeIfAbsent(eventName, k -> new ConcurrentHashMap<>())
                         .values().stream()
-                        .filter(predicate)
+                        .filter(i -> i.index() < fromIndex && filter.test(i.v()))
                         .iterator();
 
         final ExcerptTailer tailer = chronicleQueue.createTailer();
@@ -185,7 +181,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
 //            System.out.println(Wires.fromSizePrefixedBlobs(dc));
 
             // we may have just been restated and have not yet caught up
-            if (from >= dc.index())
+            if (from > dc.index())
                 return null;
 
             final StringBuilder sb = Wires.acquireStringBuilder();

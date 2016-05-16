@@ -5,6 +5,7 @@ import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.query.IndexQuery;
 import net.openhft.chronicle.engine.api.query.IndexQueueView;
 import net.openhft.chronicle.engine.api.query.IndexedValue;
+import net.openhft.chronicle.engine.api.query.VanillaIndexQuery;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.server.internal.MapWireHandler;
@@ -65,7 +66,7 @@ public class RemoteIndexQueueView<K extends Marshallable, V extends Marshallable
 
                 // this allows us to resubscribe from the last index we received
                 if (hasAlreadySubscribed.getAndSet(true))
-                    vanillaIndexQuery.fromIndex(fromIndex);
+                    ((VanillaIndexQuery) vanillaIndexQuery).fromIndex(fromIndex);
 
                 subscribersToTid.put(subscriber, tid());
                 wireOut.writeEventName(registerSubscriber)
@@ -79,8 +80,8 @@ public class RemoteIndexQueueView<K extends Marshallable, V extends Marshallable
                     if (!dc.isPresent())
                         return;
 
-                    StringBuilder sb = Wires.acquireStringBuilder();
-                    ValueIn valueIn = dc.wire().readEventName(sb);
+                    final StringBuilder sb = Wires.acquireStringBuilder();
+                    final ValueIn valueIn = dc.wire().readEventName(sb);
 
                     if (reply.contentEquals(sb))
                         try {
