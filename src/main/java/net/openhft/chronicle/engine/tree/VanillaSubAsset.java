@@ -64,6 +64,11 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
         }
     }
 
+    @Override
+    public String dumpRules() {
+        return parent.dumpRules();
+    }
+
     @NotNull
     @Override
     public SubscriptionCollection subscription(boolean createIfAbsent) {

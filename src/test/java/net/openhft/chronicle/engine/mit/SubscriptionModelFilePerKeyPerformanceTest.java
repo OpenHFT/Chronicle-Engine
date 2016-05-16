@@ -38,7 +38,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
-@Ignore("Long running test")
 public class SubscriptionModelFilePerKeyPerformanceTest {
     static final AtomicInteger counter = new AtomicInteger();
 

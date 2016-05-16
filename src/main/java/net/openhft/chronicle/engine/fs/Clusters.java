@@ -57,21 +57,6 @@ public class Clusters extends AbstractMarshallable implements Marshallable, Clos
             wire.writeEventName(entry::getKey).marshallable(entry.getValue());
     }
 
-    @Override
-    public boolean equals(Object o) {
-        return Marshallable.$equals(this, o);
-    }
-
-    @Override
-    public int hashCode() {
-        return Marshallable.$hashCode(this);
-    }
-
-    @Override
-    public String toString() {
-        return Marshallable.$toString(this);
-    }
-
     public void install(@NotNull AssetTree assetTree) {
         final Asset root = assetTree.root();
         root.addView(Clusters.class, this);
