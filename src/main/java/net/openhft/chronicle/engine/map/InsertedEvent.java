@@ -26,7 +26,6 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -89,11 +88,6 @@ public class InsertedEvent<K, V> extends AbstractMarshallable implements MapEven
     @Override
     public void apply(@NotNull MapEventListener<K, V> listener) {
         listener.insert(assetName, key, value);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash("inserted", key, value);
     }
 
     @Override
