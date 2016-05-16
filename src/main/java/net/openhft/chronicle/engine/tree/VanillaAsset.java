@@ -364,8 +364,10 @@ public class VanillaAsset implements Asset, Closeable {
     public String dumpRules() {
         Wire text = new TextWire(Wires.acquireBytes());
         dumpRules(text);
-        if (parent != null)
+        if (parent != null) {
+            text.bytes().append8bit("---\n");
             ((VanillaAsset) parent).dumpRules(text);
+        }
         return text.toString();
     }
 
