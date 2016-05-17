@@ -32,7 +32,6 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
     }
 
     IndexedValue() {
-
     }
 
     @UsedViaReflection
