@@ -16,6 +16,16 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
     private V v;
     private transient Object k;
 
+    private long timeCreated = System.currentTimeMillis();
+
+    private long timePublished;
+
+    /**
+     * @return the time the the IndexedValue was first created
+     */
+    public long timeCreated() {
+        return timeCreated;
+    }
 
     IndexedValue() {
 
@@ -74,6 +84,15 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
     @Override
     public String toString() {
         return Marshallable.$toString(this);
+    }
+
+    public long timePublished() {
+        return timePublished;
+    }
+
+    public IndexedValue timePublished(long timePublished) {
+        this.timePublished = timePublished;
+        return this;
     }
 }
 

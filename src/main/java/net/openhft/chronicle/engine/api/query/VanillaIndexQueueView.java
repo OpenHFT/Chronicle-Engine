@@ -36,7 +36,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
     private static final Logger LOG = LoggerFactory.getLogger(VanillaIndexQueueView.class);
 
     private final Function<V, ?> valueToKey;
-    private final TypeToString typeToString;
+
     private final ChronicleQueue chronicleQueue;
     private final Map<String, Map<Object, IndexedValue<V>>> multiMap = new ConcurrentHashMap<>();
     private final Map<Subscriber<IndexedValue<V>>, AtomicBoolean> activeSubscriptions
@@ -54,7 +54,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
                                  @NotNull QueueView<?, V> queueView) {
 
         valueToKey = asset.acquireView(ValueToKey.class);
-        typeToString = asset.acquireView(TypeToString.class);
 
         final EventLoop eventLoop = asset.acquireView(EventLoop.class);
         final ChronicleQueueView chronicleQueueView = (ChronicleQueueView) queueView;
@@ -162,30 +161,32 @@ public class VanillaIndexQueueView<V extends Marshallable>
                                   @NotNull Iterator<IndexedValue<V>> iterator,
                                   final long from) {
 
-        if (iterator.hasNext())
-            return iterator.next();
+        if (iterator.hasNext()) {
+            IndexedValue<V> indexedValue = iterator.next();
+            indexedValue.timePublished(System.currentTimeMillis());
+            return indexedValue;
+        }
 
         final String eventName = vanillaIndexQuery.eventName();
         final Predicate<V> filter = vanillaIndexQuery.filter();
 
-        if (isClosed.get()) {
-            //    tailer.close();
+        if (isClosed.get())
             throw Jvm.rethrow(new InvalidEventHandlerException("shutdown"));
-        }
 
         try (DocumentContext dc = tailer.readingDocument()) {
 
             if (!dc.isPresent())
                 return null;
 
-//            System.out.println(Wires.fromSizePrefixedBlobs(dc));
+            if (LOG.isDebugEnabled())
+                LOG.debug("processing the following message=", Wires.fromSizePrefixedBlobs(dc));
 
             // we may have just been restated and have not yet caught up
             if (from > dc.index())
                 return null;
 
             final StringBuilder sb = Wires.acquireStringBuilder();
-            ValueIn valueIn = dc.wire().read(sb);
+            final ValueIn valueIn = dc.wire().read(sb);
             if (!eventName.contentEquals(sb))
                 return null;
 
@@ -198,6 +199,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
             final IndexedValue<V> indexedValue = this.indexedValue.get();
             indexedValue.index(dc.index());
             indexedValue.v(v);
+            indexedValue.timePublished(System.currentTimeMillis());
             return indexedValue;
         }
 
