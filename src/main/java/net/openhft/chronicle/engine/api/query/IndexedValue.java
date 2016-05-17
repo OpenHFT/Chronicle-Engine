@@ -20,7 +20,7 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
 
     /**
      * @return the maximum index that is currently available, you can compare this index with the
-     * {@code index} to see how many records currently being the current event is.
+     * {@code index} to see how many records the currently even is behind.
      */
     public long maxIndex() {
         return maxIndex;
