@@ -15,16 +15,20 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
     private long index;
     private V v;
     private transient Object k;
-
-    private long timeCreated = System.currentTimeMillis();
-
     private long timePublished;
+    private long maxIndex;
 
     /**
-     * @return the time the the IndexedValue was first created
+     * @return the maximum index that is currently available, you can compare this index with the
+     * {@code index} to see how many records currently being the current event is.
      */
-    public long timeCreated() {
-        return timeCreated;
+    public long maxIndex() {
+        return maxIndex;
+    }
+
+    public IndexedValue maxIndex(long maxIndex) {
+        this.maxIndex = maxIndex;
+        return this;
     }
 
     IndexedValue() {
@@ -47,7 +51,9 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
         this.index = index;
     }
 
-
+    /**
+     * @return the {@code index} in the chronicle queue, of this event
+     */
     public long index() {
         return index;
     }

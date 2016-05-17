@@ -107,9 +107,9 @@ public class VanillaIndexQueueView<V extends Marshallable>
     /**
      * consumers wire on the NIO socket thread
      *
-     * @param sub
-     * @param vanillaIndexQuery
-     * @return
+     * @param sub               called when ever there is a subscription event that passes the
+     *                          predicate defined by {@code vanillaIndexQuery}
+     * @param vanillaIndexQuery the predicate of the subscription
      */
     public void registerSubscriber(@NotNull ConsumingSubscriber<IndexedValue<V>> sub,
                                    @NotNull IndexQuery<V> vanillaIndexQuery) {
@@ -152,7 +152,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
         return () -> value(vanillaIndexQuery, tailer, iterator, fromIndex);
     }
 
-
     private final ThreadLocal<IndexedValue<V>> indexedValue = ThreadLocal.withInitial(IndexedValue::new);
 
     @Nullable
@@ -164,6 +163,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
         if (iterator.hasNext()) {
             IndexedValue<V> indexedValue = iterator.next();
             indexedValue.timePublished(System.currentTimeMillis());
+            indexedValue.maxIndex(lastIndexRead);
             return indexedValue;
         }
 
@@ -200,6 +200,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
             indexedValue.index(dc.index());
             indexedValue.v(v);
             indexedValue.timePublished(System.currentTimeMillis());
+            indexedValue.maxIndex(lastIndexRead);
             return indexedValue;
         }
 
