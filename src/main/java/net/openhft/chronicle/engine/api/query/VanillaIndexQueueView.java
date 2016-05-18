@@ -82,22 +82,28 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
                 if (!dc.isPresent())
                     return false;
+                long start = dc.wire().bytes().readPosition();
 
-                final StringBuilder sb = Wires.acquireStringBuilder();
-                final ValueIn read = dc.wire().read(sb);
+                try {
 
-                final V v = read.typedMarshallable();
-                final Object k = valueToKey.apply(v);
-                messagesReadPerSecond++;
+                    final StringBuilder sb = Wires.acquireStringBuilder();
+                    final ValueIn read = dc.wire().read(sb);
 
-                final String event = sb.toString();
-                synchronized (lock) {
-                    multiMap.computeIfAbsent(event, e -> new ConcurrentHashMap<>())
-                            .put(k, new IndexedValue<>(v, dc.index()));
-                    lastIndexRead = dc.index();
+                    final V v = read.typedMarshallable();
+
+
+                    final Object k = valueToKey.apply(v);
+                    messagesReadPerSecond++;
+
+                    final String event = sb.toString();
+                    synchronized (lock) {
+                        multiMap.computeIfAbsent(event, e -> new ConcurrentHashMap<>())
+                                .put(k, new IndexedValue<>(v, dc.index()));
+                        lastIndexRead = dc.index();
+                    }
+                } catch (Exception e) {
+                    LOG.error(Wires.fromSizePrefixedBlobs(dc.wire().bytes(), start - 4), e);
                 }
-            } catch (Exception e) {
-                LOG.error("", e);
             }
 
             return true;
