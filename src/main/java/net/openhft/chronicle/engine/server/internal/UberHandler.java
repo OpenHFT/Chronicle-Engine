@@ -24,6 +24,7 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.fs.Clusters;
 import net.openhft.chronicle.engine.fs.EngineCluster;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
+import net.openhft.chronicle.network.TcpEventHandler;
 import net.openhft.chronicle.network.cluster.*;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.threads.NamedThreadFactory;
@@ -197,7 +198,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
         if (isClosed.get())
             return;
 
-        onMessageReceived();
+        onMessageReceivedOrWritten();
 
         Wire inWire = dc.wire();
         if (dc.isMetaData()) {
@@ -221,6 +222,11 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
             handler().onRead(inWire, outWire);
     }
 
+    @Override
+    protected void onBytesWritten() {
+        onMessageReceivedOrWritten();
+    }
+
     /**
      * ready to accept wire
      *
@@ -238,7 +244,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
             if (w != null)
                 w.writeMarshallable(outWire);
 
-            if (!outWire.bytes().isEmpty())
+            if (outWire.bytes().writeRemaining() < TcpEventHandler.TCP_BUFFER)
                 return;
         }
 
@@ -256,7 +262,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
         return writers.get(writerIndex++);
     }
 
-    private void onMessageReceived() {
+    private void onMessageReceivedOrWritten() {
         final HeartbeatEventHandler heartbeatEventHandler = heartbeatEventHandler();
 
         if (heartbeatEventHandler != null)

@@ -46,7 +46,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
     private final Object lock = new Object();
     private final ThreadLocal<Function<Class, ReadMarshallable>> objectCacheThreadLocal;
     private volatile long lastIndexRead = 0;
-    private long currentSecond = 0;
+    private long lastSecond = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     private long messagesReadPerSecond = 0;
 
     public VanillaIndexQueueView(@NotNull RequestContext context,
@@ -67,11 +67,11 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
         eventLoop.addHandler(() -> {
 
-            long second = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+            long currentSecond = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
 
-            if (currentSecond != second) {
-                currentSecond = second;
-                System.out.println("messages read per second=" + messagesReadPerSecond);
+            if (lastSecond != currentSecond) {
+                lastSecond = currentSecond;
+                LOG.info("messages read per second=" + messagesReadPerSecond);
                 messagesReadPerSecond = 0;
             }
 
