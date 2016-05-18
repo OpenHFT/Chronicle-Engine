@@ -155,7 +155,7 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
     public void onMessageReceived() {
         lastTimeMessageReceived = System.currentTimeMillis();
 
-        long currentSecond = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+        long currentSecond = TimeUnit.MILLISECONDS.toSeconds(lastTimeMessageReceived);
         if (lastPing != currentSecond) {
             LOG.info("lastTimeMessageReceived=" + lastTimeMessageReceived);
             lastPing = currentSecond;
