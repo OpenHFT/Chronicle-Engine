@@ -91,7 +91,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
                     final V v = read.typedMarshallable();
 
-
                     final Object k = valueToKey.apply(v);
                     messagesReadPerSecond++;
 
