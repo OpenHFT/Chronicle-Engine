@@ -33,7 +33,7 @@ import net.openhft.chronicle.engine.tree.ChronicleQueueView;
 import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.network.api.session.SessionDetails;
 import net.openhft.chronicle.network.api.session.SessionProvider;
-import net.openhft.chronicle.queue.Excerpt;
+import net.openhft.chronicle.queue.ExcerptTailer;
 import net.openhft.chronicle.wire.WireKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +55,7 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
 
     private static final Logger LOG = LoggerFactory.getLogger(QueueObjectSubscription.class);
     private final Set<TopicSubscriber<T, M>> topicSubscribers = new CopyOnWriteArraySet<>();
-    private final Set<Subscriber<Excerpt>> subscribers = new CopyOnWriteArraySet<>();
+    private final Set<Subscriber<ExcerptTailer>> subscribers = new CopyOnWriteArraySet<>();
     private final Set<EventConsumer<T, M>> downstream = new CopyOnWriteArraySet<>();
     private final SessionProvider sessionProvider;
 

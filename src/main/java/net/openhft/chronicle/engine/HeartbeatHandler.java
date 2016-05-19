@@ -59,6 +59,7 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
     private volatile long lastTimeMessageReceived;
     private ConnectionListener connectionMonitor;
     private Timer timer;
+    private volatile long lastPing = 0;
 
     @UsedViaReflection
     protected HeartbeatHandler(@NotNull WireIn w) {
@@ -150,14 +151,12 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
         Closeable.closeQuietly(closable());
     }
 
-    private volatile long lastPing = 0;
-
     public void onMessageReceived() {
         lastTimeMessageReceived = System.currentTimeMillis();
 
         long currentSecond = TimeUnit.MILLISECONDS.toSeconds(lastTimeMessageReceived);
         if (lastPing != currentSecond) {
-            LOG.info("lastTimeMessageReceived=" + lastTimeMessageReceived);
+            LOG.info(Integer.toHexString(hashCode()) + " lastTimeMessageReceived=" + lastTimeMessageReceived);
             lastPing = currentSecond;
         }
     }
@@ -175,6 +174,7 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
             if (hasHeartbeats1 != prev) {
                 if (!hasHeartbeats1) {
                     connectionMonitor.onDisconnected(HeartbeatHandler.this.localIdentifier(), HeartbeatHandler.this.remoteIdentifier());
+                    System.out.println("Heartbeat closing connection" + nc().sessionDetails());
                     HeartbeatHandler.this.close();
                     throw new InvalidEventHandlerException("closed");
                 } else
@@ -203,7 +203,7 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
         boolean result = lastTimeMessageReceived + heartbeatTimeoutMs >= currentTimeMillis;
 
         if (!result)
-            LOG.error("missed heartbeat, lastTimeMessageReceived=" + lastTimeMessageReceived
+            LOG.error(Integer.toHexString(hashCode()) + " missed heartbeat, lastTimeMessageReceived=" + lastTimeMessageReceived
                     + ", currentTimeMillis=" + currentTimeMillis);
         return result;
     }
