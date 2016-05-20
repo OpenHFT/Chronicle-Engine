@@ -50,7 +50,6 @@ import java.util.function.Function;
 public class HeartbeatHandler<T extends EngineWireNetworkContext> extends AbstractSubHandler<T> implements
         Demarshallable, WriteMarshallable, HeartbeatEventHandler {
 
-
     static final Logger LOG = LoggerFactory.getLogger(SimpleEngineMain.class);
 
     private final long heartbeatIntervalMs;
@@ -170,14 +169,19 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
             if (HeartbeatHandler.this.closable().isClosed())
                 throw new InvalidEventHandlerException("closed");
 
-            boolean hasHeartbeats1 = HeartbeatHandler.this.hasReceivedHeartbeat();
-            boolean prev = HeartbeatHandler.this.hasHeartbeats.getAndSet(hasHeartbeats1);
+            boolean hasHeartbeats = hasReceivedHeartbeat();
+            boolean prev = this.hasHeartbeats.getAndSet(hasHeartbeats);
 
-            if (hasHeartbeats1 != prev) {
-                if (!hasHeartbeats1) {
+            if (hasHeartbeats != prev) {
+                if (!hasHeartbeats) {
                     connectionMonitor.onDisconnected(HeartbeatHandler.this.localIdentifier(), HeartbeatHandler.this.remoteIdentifier());
                     System.out.println("Heartbeat closing connection" + nc().sessionDetails());
                     HeartbeatHandler.this.close();
+
+                    final Runnable runnable = nc().socketReconnector();
+                    if (runnable != null)
+                        runnable.run();
+
                     throw new InvalidEventHandlerException("closed");
                 } else
                     connectionMonitor.onConnected(HeartbeatHandler.this.localIdentifier(), HeartbeatHandler.this.remoteIdentifier());
