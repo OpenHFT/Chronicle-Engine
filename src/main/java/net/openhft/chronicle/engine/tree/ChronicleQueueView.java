@@ -66,6 +66,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
     private final Class<M> elementTypeClass;
     private final ThreadLocal<ThreadLocalData> threadLocal;
     private final String defaultPath;
+    private final RequestContext context;
 
     private boolean isSource;
     private boolean isReplicating;
@@ -78,7 +79,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
     public ChronicleQueueView(@Nullable ChronicleQueue queue,
                               @NotNull RequestContext context,
                               @NotNull Asset asset) {
-
+        this.context = context;
         String s = asset.fullName();
         if (s.startsWith("/")) s = s.substring(1);
         defaultPath = s;
@@ -102,12 +103,12 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         return new File(path).getParentFile().getParentFile() + "/src/test/resources";
     }
 
-    public static WriteMarshallable newSource(long lastIndexReceived, Class topicType, Class elementType, boolean acknowledgement) {
+    public static WriteMarshallable newSource(long nextIndexRequired, Class topicType, Class elementType, boolean acknowledgement) {
         try {
             Class<?> aClass = Class.forName("software.chronicle.enterprise.queue.QueueSourceReplicationHandler");
             Constructor<?> declaredConstructor = aClass.getDeclaredConstructor(long.class, Class.class,
                     Class.class, boolean.class);
-            return (WriteMarshallable) declaredConstructor.newInstance(lastIndexReceived,
+            return (WriteMarshallable) declaredConstructor.newInstance(nextIndexRequired,
                     topicType, elementType, acknowledgement);
         } catch (Exception e) {
             IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
@@ -210,7 +211,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
                 final boolean isSource0 = (remoteIdentifier == remoteSourceIdentifier);
 
                 WriteMarshallable h = isSource0 ?
-                        newSource(lastIndexReceived(), context.topicType(), context.elementType(), acknowledgement) :
+                        newSource(nextIndexRequired(), context.topicType(), context.elementType(), acknowledgement) :
                         newSync(context.topicType(), context.elementType(), acknowledgement);
 
                 long cid = nc.newCid();
@@ -223,9 +224,11 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         }
     }
 
-    private long lastIndexReceived() {
+    private long nextIndexRequired() {
         try {
-            return threadLocalAppender().lastIndexAppended();
+            final long index = chronicleQueue().nextIndexToWrite();
+            // replay the last event just in case it was corrupted.
+            return index - 1;
         } catch (IllegalStateException ignore) {
             return -1;
         }
@@ -264,7 +267,13 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
             if (!baseFilePath.exists())
                 Files.createDirectories(baseFilePath.toPath());
 
-            chronicleQueue = new SingleChronicleQueueBuilder(baseFilePath).build();
+            SingleChronicleQueueBuilder singleChronicleQueueBuilder = new SingleChronicleQueueBuilder(baseFilePath);
+
+            if (context.wireType() != null)
+                singleChronicleQueueBuilder.wireType(context.wireType());
+
+            chronicleQueue = singleChronicleQueueBuilder.build();
+
         } catch (Exception e) {
             throw Jvm.rethrow(e);
         }
@@ -389,11 +398,10 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
             throw new IllegalStateException("You can not publish to a sink used in replication, " +
                     "you have to publish to the source");
 
-        final WireKey wireKey = topic instanceof WireKey ? (WireKey) topic : topic::toString;
         final ExcerptAppender excerptAppender = threadLocalAppender();
 
         try (final DocumentContext dc = excerptAppender.writingDocument()) {
-            dc.wire().writeEventName(wireKey).object(message);
+            dc.wire().writeEvent(messageTypeClass, topic).object(elementTypeClass, message);
         }
         return excerptAppender.lastIndexAppended();
     }
@@ -421,7 +429,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
     }
 
     public long lastIndex() {
-        return chronicleQueue.lastIndex();
+        return chronicleQueue.nextIndexToWrite();
     }
 
     @NotNull

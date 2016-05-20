@@ -34,7 +34,10 @@ import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import net.openhft.chronicle.wire.WriteMarshallable;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
@@ -47,12 +50,15 @@ import java.util.function.Function;
 public class HeartbeatHandler<T extends EngineWireNetworkContext> extends AbstractSubHandler<T> implements
         Demarshallable, WriteMarshallable, HeartbeatEventHandler {
 
+    static final Logger LOG = LoggerFactory.getLogger(SimpleEngineMain.class);
+
     private final long heartbeatIntervalMs;
     private final long heartbeatTimeoutMs;
     private final AtomicBoolean hasHeartbeats = new AtomicBoolean();
     private volatile long lastTimeMessageReceived;
     private ConnectionListener connectionMonitor;
     private Timer timer;
+    private volatile long lastPing = 0;
 
     @UsedViaReflection
     protected HeartbeatHandler(@NotNull WireIn w) {
@@ -62,6 +68,8 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
                 "heartbeatTimeoutMs=" + heartbeatTimeoutMs + ", this is too small";
         assert heartbeatIntervalMs >= 500 :
                 "heartbeatIntervalMs=" + heartbeatIntervalMs + ", this is too small";
+        onMessageReceived();
+
     }
 
     private HeartbeatHandler(long heartbeatTimeoutMs, long heartbeatIntervalMs) {
@@ -99,9 +107,7 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
             w.writeDocument(false, d -> d.write(() -> "heartbeat").text(""));
         };
 
-
         connectionMonitor = nc().acquireConnectionListener();
-
         timer = new Timer(nc().rootAsset().findOrCreateView(EventLoop.class));
         startPeriodicHeartbeatCheck();
         startPeriodicallySendingHeartbeats(heartbeatMessage);
@@ -110,6 +116,8 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
     private void startPeriodicallySendingHeartbeats(WriteMarshallable heartbeatMessage) {
 
         final VanillaEventHandler task = () -> {
+            if (isClosed())
+                throw new InvalidEventHandlerException("closed");
             // we will only publish a heartbeat if the wire out publisher is empty
             WireOutPublisher wireOutPublisher = nc().wireOutPublisher();
             if (wireOutPublisher.isEmpty())
@@ -146,6 +154,12 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
 
     public void onMessageReceived() {
         lastTimeMessageReceived = System.currentTimeMillis();
+
+        long currentSecond = TimeUnit.MILLISECONDS.toSeconds(lastTimeMessageReceived);
+        if (lastPing != currentSecond) {
+            LOG.info(Integer.toHexString(hashCode()) + " lastTimeMessageReceived=" + lastTimeMessageReceived);
+            lastPing = currentSecond;
+        }
     }
 
     private VanillaEventHandler heartbeatCheck() {
@@ -155,13 +169,21 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
             if (HeartbeatHandler.this.closable().isClosed())
                 throw new InvalidEventHandlerException("closed");
 
-            boolean hasHeartbeats1 = HeartbeatHandler.this.hasReceivedHeartbeat();
-            boolean prev = HeartbeatHandler.this.hasHeartbeats.getAndSet(hasHeartbeats1);
+            boolean hasHeartbeats = hasReceivedHeartbeat();
+            boolean prev = this.hasHeartbeats.getAndSet(hasHeartbeats);
 
-            if (hasHeartbeats1 != prev) {
-                if (!hasHeartbeats1) {
+            if (hasHeartbeats != prev) {
+                if (!hasHeartbeats) {
                     connectionMonitor.onDisconnected(HeartbeatHandler.this.localIdentifier(), HeartbeatHandler.this.remoteIdentifier());
+                    System.out.println("Heartbeat closing connection" + nc().sessionDetails());
                     HeartbeatHandler.this.close();
+
+                    final Runnable socketReconnector = nc().socketReconnector();
+
+                    // if we have been terminated then we should not attempt to reconnect
+                    if (nc().terminationEventHandler().isTerminated() && socketReconnector != null)
+                        socketReconnector.run();
+
                     throw new InvalidEventHandlerException("closed");
                 } else
                     connectionMonitor.onConnected(HeartbeatHandler.this.localIdentifier(), HeartbeatHandler.this.remoteIdentifier());
@@ -175,8 +197,7 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
      * periodically check that messages have been received, ie heartbeats
      */
     private void startPeriodicHeartbeatCheck() {
-        lastTimeMessageReceived = Long.MAX_VALUE;
-        timer.scheduleAtFixedRate(heartbeatCheck(), heartbeatTimeoutMs, heartbeatTimeoutMs);
+        timer.scheduleAtFixedRate(heartbeatCheck(), 0, heartbeatTimeoutMs);
     }
 
     /**
@@ -185,7 +206,13 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
      * @return {@code true} if we have received a heartbeat recently
      */
     private boolean hasReceivedHeartbeat() {
-        return lastTimeMessageReceived >= (System.currentTimeMillis() - heartbeatTimeoutMs);
+        long currentTimeMillis = System.currentTimeMillis();
+        boolean result = lastTimeMessageReceived + heartbeatTimeoutMs >= currentTimeMillis;
+
+        if (!result)
+            LOG.error(Integer.toHexString(hashCode()) + " missed heartbeat, lastTimeMessageReceived=" + lastTimeMessageReceived
+                    + ", currentTimeMillis=" + currentTimeMillis);
+        return result;
     }
 
     public static class Factory implements Function<ClusterContext, WriteMarshallable>,

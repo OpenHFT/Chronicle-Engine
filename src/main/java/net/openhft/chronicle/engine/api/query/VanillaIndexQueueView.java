@@ -46,7 +46,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
     private final Object lock = new Object();
     private final ThreadLocal<Function<Class, ReadMarshallable>> objectCacheThreadLocal;
     private volatile long lastIndexRead = 0;
-    private long currentSecond = 0;
+    private long lastSecond = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     private long messagesReadPerSecond = 0;
 
     public VanillaIndexQueueView(@NotNull RequestContext context,
@@ -67,11 +67,11 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
         eventLoop.addHandler(() -> {
 
-            long second = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+            long currentSecond = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
 
-            if (currentSecond != second) {
-                currentSecond = second;
-                System.out.println("messages read per second=" + messagesReadPerSecond);
+            if (lastSecond != currentSecond) {
+                lastSecond = currentSecond;
+                LOG.info("messages read per second=" + messagesReadPerSecond);
                 messagesReadPerSecond = 0;
             }
 
@@ -82,22 +82,27 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
                 if (!dc.isPresent())
                     return false;
+                long start = dc.wire().bytes().readPosition();
 
-                final StringBuilder sb = Wires.acquireStringBuilder();
-                final ValueIn read = dc.wire().read(sb);
+                try {
 
-                final V v = read.typedMarshallable();
-                final Object k = valueToKey.apply(v);
-                messagesReadPerSecond++;
+                    final StringBuilder sb = Wires.acquireStringBuilder();
+                    final ValueIn read = dc.wire().read(sb);
 
-                final String event = sb.toString();
-                synchronized (lock) {
-                    multiMap.computeIfAbsent(event, e -> new ConcurrentHashMap<>())
-                            .put(k, new IndexedValue<>(v, dc.index()));
-                    lastIndexRead = dc.index();
+                    final V v = read.typedMarshallable();
+
+                    final Object k = valueToKey.apply(v);
+                    messagesReadPerSecond++;
+
+                    final String event = sb.toString();
+                    synchronized (lock) {
+                        multiMap.computeIfAbsent(event, e -> new ConcurrentHashMap<>())
+                                .put(k, new IndexedValue<>(v, dc.index()));
+                        lastIndexRead = dc.index();
+                    }
+                } catch (Exception e) {
+                    LOG.error(Wires.fromSizePrefixedBlobs(dc.wire().bytes(), start - 4), e);
                 }
-            } catch (Exception e) {
-                LOG.error("", e);
             }
 
             return true;

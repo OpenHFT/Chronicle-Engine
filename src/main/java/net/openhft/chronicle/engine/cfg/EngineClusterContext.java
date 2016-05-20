@@ -18,6 +18,8 @@ import net.openhft.chronicle.network.connection.VanillaWireOutPublisher;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.function.Function;
@@ -26,7 +28,7 @@ import java.util.function.Function;
  * @author Rob Austin.
  */
 public class EngineClusterContext extends ClusterContext {
-
+    private static final Logger LOG = LoggerFactory.getLogger(EngineClusterContext.class);
     Asset assetRoot;
     private byte localIdentifier;
 
@@ -67,6 +69,10 @@ public class EngineClusterContext extends ClusterContext {
 
                 throw new UnsupportedOperationException("not supported class=" + o.getClass());
             };
+
+
+            // todo log these to a chronicle q rather than the log
+            nc.networkStats(ns -> LOG.info("" + ns));
 
             final Function<EngineWireNetworkContext, TcpHandler> f
                     = x -> new HeaderTcpHandler<>(handler, consumer, x);

@@ -25,10 +25,7 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.cfg.EngineClusterContext;
 import net.openhft.chronicle.engine.tree.VanillaAsset;
-import net.openhft.chronicle.network.ConnectionListener;
-import net.openhft.chronicle.network.MarshallableFunction;
-import net.openhft.chronicle.network.NetworkContext;
-import net.openhft.chronicle.network.VanillaNetworkContext;
+import net.openhft.chronicle.network.*;
 import net.openhft.chronicle.network.api.TcpHandler;
 import net.openhft.chronicle.network.cluster.ClusterContext;
 import net.openhft.chronicle.wire.AbstractMarshallable;
@@ -40,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.channels.SocketChannel;
+import java.util.function.Consumer;
 
 import static net.openhft.chronicle.engine.server.internal.EngineWireNetworkContext.ConnectionStatus.CONNECTED;
 import static net.openhft.chronicle.engine.server.internal.EngineWireNetworkContext.ConnectionStatus.DISCONNECTED;
@@ -128,6 +126,8 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext> extend
         };
 
     }
+
+
 
     @Override
     public String toString() {

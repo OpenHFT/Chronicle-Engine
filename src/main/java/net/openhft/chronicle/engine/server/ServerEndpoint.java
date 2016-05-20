@@ -99,6 +99,9 @@ public class ServerEndpoint implements Closeable {
                 throw new UnsupportedOperationException("not supported class=" + o.getClass());
             };
 
+            // todo log these to a chronicle q rather than the log
+            nc.networkStats(ns -> LOG.info("" + ns));
+
             final Function<EngineWireNetworkContext, TcpHandler> f
                     = x -> new HeaderTcpHandler<>(handler, consumer, x);
 

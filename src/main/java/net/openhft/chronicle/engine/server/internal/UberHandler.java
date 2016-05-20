@@ -24,6 +24,7 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.fs.Clusters;
 import net.openhft.chronicle.engine.fs.EngineCluster;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
+import net.openhft.chronicle.network.TcpEventHandler;
 import net.openhft.chronicle.network.cluster.*;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.threads.NamedThreadFactory;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 
@@ -49,7 +51,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
     private static final Logger LOG = LoggerFactory.getLogger(UberHandler.class);
     private final int remoteIdentifier;
     private final int localIdentifier;
-    private AtomicBoolean isClosed = new AtomicBoolean();
+    private AtomicBoolean isClosing = new AtomicBoolean();
     private ConnectionChangedNotifier connectionChangedNotifier;
     private Asset rootAsset;
     @NotNull
@@ -89,7 +91,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
     }
 
     public boolean isClosed() {
-        return isClosed.get();
+        return isClosing.get();
     }
 
     @Override
@@ -144,7 +146,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
             return;
         }
 
-        if (!isClosed.get())
+        if (!isClosing.get())
             notifyConnectionListeners(engineCluster);
     }
 
@@ -179,14 +181,17 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
      * termination event to be sent.
      */
     private void closeSoon() {
-        isClosed.set(true);
-        newSingleThreadScheduledExecutor(new NamedThreadFactory("closer", true))
-                .schedule(this::close, 2, SECONDS);
+        isClosing.set(true);
+        ScheduledExecutorService closer = newSingleThreadScheduledExecutor(new NamedThreadFactory("closer", true));
+        closer.schedule(() -> {
+            closer.shutdown();
+            close();
+        }, 2, SECONDS);
     }
 
     @Override
     public void close() {
-        if (!isClosed.getAndSet(true) && connectionChangedNotifier != null)
+        if (!isClosing.getAndSet(true) && connectionChangedNotifier != null)
             connectionChangedNotifier.onConnectionChanged(false, nc());
 
         super.close();
@@ -194,10 +199,10 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
 
     @Override
     protected void onRead(@NotNull DocumentContext dc, @NotNull WireOut outWire) {
-        if (isClosed.get())
+        if (isClosing.get())
             return;
 
-        onMessageReceived();
+        onMessageReceivedOrWritten();
 
         Wire inWire = dc.wire();
         if (dc.isMetaData()) {
@@ -221,6 +226,11 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
             handler().onRead(inWire, outWire);
     }
 
+    @Override
+    protected void onBytesWritten() {
+        onMessageReceivedOrWritten();
+    }
+
     /**
      * ready to accept wire
      *
@@ -231,14 +241,14 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
 
         for (int i = 0; i < writers.size(); i++) {
 
-            if (isClosed.get())
+            if (isClosing.get())
                 return;
 
             WriteMarshallable w = next();
             if (w != null)
                 w.writeMarshallable(outWire);
 
-            if (!outWire.bytes().isEmpty())
+            if (outWire.bytes().writeRemaining() < TcpEventHandler.TCP_BUFFER)
                 return;
         }
 
@@ -256,7 +266,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
         return writers.get(writerIndex++);
     }
 
-    private void onMessageReceived() {
+    private void onMessageReceivedOrWritten() {
         final HeartbeatEventHandler heartbeatEventHandler = heartbeatEventHandler();
 
         if (heartbeatEventHandler != null)
