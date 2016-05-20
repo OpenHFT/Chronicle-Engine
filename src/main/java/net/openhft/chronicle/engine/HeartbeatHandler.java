@@ -69,6 +69,8 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
                 "heartbeatTimeoutMs=" + heartbeatTimeoutMs + ", this is too small";
         assert heartbeatIntervalMs >= 500 :
                 "heartbeatIntervalMs=" + heartbeatIntervalMs + ", this is too small";
+        onMessageReceived();
+
     }
 
     private HeartbeatHandler(long heartbeatTimeoutMs, long heartbeatIntervalMs) {
@@ -165,7 +167,7 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
 
         return () -> {
 
-            if (isClosed())
+            if (HeartbeatHandler.this.closable().isClosed())
                 throw new InvalidEventHandlerException("closed");
 
             boolean hasHeartbeats1 = HeartbeatHandler.this.hasReceivedHeartbeat();
@@ -189,8 +191,7 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
      * periodically check that messages have been received, ie heartbeats
      */
     private void startPeriodicHeartbeatCheck() {
-        lastTimeMessageReceived = Long.MAX_VALUE;
-        timer.scheduleAtFixedRate(heartbeatCheck(), heartbeatTimeoutMs, heartbeatTimeoutMs);
+        timer.scheduleAtFixedRate(heartbeatCheck(), 0, heartbeatTimeoutMs);
     }
 
     /**
