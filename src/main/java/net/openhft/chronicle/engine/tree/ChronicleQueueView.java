@@ -66,6 +66,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
     private final Class<M> elementTypeClass;
     private final ThreadLocal<ThreadLocalData> threadLocal;
     private final String defaultPath;
+    private final RequestContext context;
 
     private boolean isSource;
     private boolean isReplicating;
@@ -78,7 +79,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
     public ChronicleQueueView(@Nullable ChronicleQueue queue,
                               @NotNull RequestContext context,
                               @NotNull Asset asset) {
-
+        this.context = context;
         String s = asset.fullName();
         if (s.startsWith("/")) s = s.substring(1);
         defaultPath = s;
@@ -266,7 +267,13 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
             if (!baseFilePath.exists())
                 Files.createDirectories(baseFilePath.toPath());
 
-            chronicleQueue = new SingleChronicleQueueBuilder(baseFilePath).build();
+            SingleChronicleQueueBuilder singleChronicleQueueBuilder = new SingleChronicleQueueBuilder(baseFilePath);
+
+            if (context.wireType() != null)
+                singleChronicleQueueBuilder.wireType(context.wireType());
+
+            chronicleQueue = singleChronicleQueueBuilder.build();
+
         } catch (Exception e) {
             throw Jvm.rethrow(e);
         }
