@@ -178,9 +178,11 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
                     System.out.println("Heartbeat closing connection" + nc().sessionDetails());
                     HeartbeatHandler.this.close();
 
-                    final Runnable runnable = nc().socketReconnector();
-                    if (runnable != null)
-                        runnable.run();
+                    final Runnable socketReconnector = nc().socketReconnector();
+
+                    // if we have been terminated then we should not attempt to reconnect
+                    if (nc().terminationEventHandler().isTerminated() && socketReconnector != null)
+                        socketReconnector.run();
 
                     throw new InvalidEventHandlerException("closed");
                 } else
