@@ -266,10 +266,10 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
             if (!baseFilePath.exists())
                 Files.createDirectories(baseFilePath.toPath());
 
-            SingleChronicleQueueBuilder singleChronicleQueueBuilder = new SingleChronicleQueueBuilder(baseFilePath);
+            SingleChronicleQueueBuilder singleChronicleQueueBuilder = SingleChronicleQueueBuilder.binary(baseFilePath);
 
-            if (context.wireType() != null)
-                singleChronicleQueueBuilder.wireType(context.wireType());
+//            if (context.wireType() != null)
+//                singleChronicleQueueBuilder.wireType(context.wireType());
 
             chronicleQueue = singleChronicleQueueBuilder.build();
 
