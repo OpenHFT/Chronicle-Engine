@@ -48,7 +48,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.nio.file.Files;
-import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
 
 import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
@@ -321,11 +320,9 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         final ThreadLocalData threadLocalData = threadLocal.get();
         ExcerptTailer excerptTailer = threadLocalData.replayTailer;
 
-        try {
-            excerptTailer.moveToIndex(index);
-        } catch (TimeoutException e) {
+        if (!excerptTailer.moveToIndex(index))
             return null;
-        }
+
         try (DocumentContext dc = excerptTailer.readingDocument()) {
             if (!dc.isPresent())
                 return null;
