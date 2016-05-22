@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.cfg;
 
+import net.openhft.chronicle.core.annotation.UsedViaReflection;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.core.util.ThrowingFunction;
 import net.openhft.chronicle.engine.api.tree.Asset;
@@ -29,6 +30,7 @@ public class EngineClusterContext extends ClusterContext {
     Asset assetRoot;
     private byte localIdentifier;
 
+    @UsedViaReflection
     private EngineClusterContext(WireIn w) {
         super(w);
     }
