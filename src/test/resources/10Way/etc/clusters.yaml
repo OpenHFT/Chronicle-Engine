@@ -5,6 +5,7 @@ clusterTen: {
     wireOutPublisherFactory: !VanillaWireOutPublisherFactory {},
     networkContextFactory: !EngineWireNetworkContextFactory {},
     connectionEventHandler:  !EngineConnectionManagerFactory {},
+    networkStatsListenerFactory: !EngineNetworkStatsListenerFactory {},
     heartbeatTimeoutMs: 5_000L,
     heartbeatIntervalMs: 1_000L,
     heartbeatFactory: !HeartbeatHandlerFactory {},
