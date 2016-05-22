@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.cfg;
 
+import net.openhft.chronicle.core.annotation.UsedViaReflection;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.core.util.ThrowingFunction;
 import net.openhft.chronicle.engine.api.tree.Asset;
@@ -7,10 +8,7 @@ import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
 import net.openhft.chronicle.engine.server.internal.EngineWireNetworkContext;
 import net.openhft.chronicle.engine.server.internal.UberHandler;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
-import net.openhft.chronicle.network.HeaderTcpHandler;
-import net.openhft.chronicle.network.NetworkContext;
-import net.openhft.chronicle.network.TcpEventHandler;
-import net.openhft.chronicle.network.WireTypeSniffingTcpHandler;
+import net.openhft.chronicle.network.*;
 import net.openhft.chronicle.network.api.TcpHandler;
 import net.openhft.chronicle.network.api.session.SessionDetailsProvider;
 import net.openhft.chronicle.network.cluster.ClusterContext;
@@ -32,6 +30,7 @@ public class EngineClusterContext extends ClusterContext {
     Asset assetRoot;
     private byte localIdentifier;
 
+    @UsedViaReflection
     private EngineClusterContext(WireIn w) {
         super(w);
     }
@@ -40,10 +39,6 @@ public class EngineClusterContext extends ClusterContext {
 
     }
 
-    private static byte localIdentifier(@NotNull Asset asset) {
-        HostIdentifier hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
-        return hostIdentifier.hostId();
-    }
 
     public ThrowingFunction<NetworkContext, IOException, TcpEventHandler> tcpEventHandlerFactory() {
         return (networkContext) -> {
@@ -72,7 +67,24 @@ public class EngineClusterContext extends ClusterContext {
 
 
             // todo log these to a chronicle q rather than the log
-            nc.networkStats(ns -> LOG.info("" + ns));
+            nc.networkStatsListener(new NetworkStatsListener() {
+
+                String host;
+                long port;
+
+                @Override
+                public void onNetworkStats(long writeBps, long readBps, long socketPollCountPerSecond, @NotNull NetworkContext networkContext) {
+                    LOG.info("writeBps=" + writeBps + ", readBps=" + readBps +
+                            ", socketPollCountPerSecond=" + socketPollCountPerSecond +
+                            ", host=" + host + ", port=" + port);
+                }
+
+                @Override
+                public void onHostPort(String hostName, int port) {
+                    host = hostName;
+                    this.port = port;
+                }
+            });
 
             final Function<EngineWireNetworkContext, TcpHandler> f
                     = x -> new HeaderTcpHandler<>(handler, consumer, x);
@@ -92,7 +104,7 @@ public class EngineClusterContext extends ClusterContext {
 
     public EngineClusterContext assetRoot(Asset assetRoot) {
         this.assetRoot = assetRoot;
-        localIdentifier = localIdentifier(assetRoot);
+        localIdentifier = HostIdentifier.localIdentifier(assetRoot);
         localIdentifier(localIdentifier);
         eventLoop(assetRoot.findOrCreateView(EventLoop.class));
         return this;
