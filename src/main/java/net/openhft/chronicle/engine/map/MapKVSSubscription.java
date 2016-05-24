@@ -294,7 +294,9 @@ public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
         boolean keySubscription = keySubscribers.remove(s);
         if (subscription) removeFromStats("subscription");
         if (keySubscription) removeFromStats("keySubscription");
-        s.onEndOfSubscription();
+        //noinspection ConstantConditions
+        if (s != null)
+            s.onEndOfSubscription();
     }
 
     @Override
