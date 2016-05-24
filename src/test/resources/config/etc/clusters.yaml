@@ -4,6 +4,7 @@ clusterTwo: {
     handlerFactory: !UberHandlerFactory {},
     wireOutPublisherFactory: !VanillaWireOutPublisherFactory {},
     networkContextFactory: !EngineWireNetworkContextFactory {},
+    networkStatsListenerFactory: !EngineNetworkStatsListenerFactory {},
     connectionEventHandler:  !EngineConnectionManagerFactory {},
     heartbeatTimeoutMs: 5_000L,
     heartbeatIntervalMs: 1_000L,

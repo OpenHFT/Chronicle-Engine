@@ -21,7 +21,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -45,6 +44,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
     private final Object lock = new Object();
     private final ThreadLocal<Function<Class, ReadMarshallable>> objectCacheThreadLocal;
+    private final ThreadLocal<IndexedValue<V>> indexedValue = ThreadLocal.withInitial(IndexedValue::new);
     private volatile long lastIndexRead = 0;
     private long lastSecond = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     private long messagesReadPerSecond = 0;
@@ -138,13 +138,14 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
         try {
             if (fromIndex != 0)
-                tailer.moveToIndex(fromIndex);
+                if (!tailer.moveToIndex(fromIndex))
+                    throw new IllegalStateException("Failed to move to index " + Long.toHexString(fromIndex));
             final Supplier<Marshallable> consumer = excerptConsumer(vanillaIndexQuery, tailer, iterator, fromIndex);
             sub.addValueOutConsumer(consumer);
-        } catch (TimeoutException e) {
+        } catch (Exception e) {
             //tailer.close();
             sub.onEndOfSubscription();
-            LOG.error("timeout", e);
+            LOG.error("Error registering subscription", e);
         }
 
     }
@@ -156,8 +157,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
                                                    final long fromIndex) {
         return () -> value(vanillaIndexQuery, tailer, iterator, fromIndex);
     }
-
-    private final ThreadLocal<IndexedValue<V>> indexedValue = ThreadLocal.withInitial(IndexedValue::new);
 
     @Nullable
     private IndexedValue<V> value(@NotNull IndexQuery<V> vanillaIndexQuery,

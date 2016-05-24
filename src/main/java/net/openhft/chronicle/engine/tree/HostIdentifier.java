@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.tree;
 
+import net.openhft.chronicle.engine.api.tree.Asset;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -38,5 +39,10 @@ public class HostIdentifier {
         return "HostIdentifier{" +
                 "hostId=" + hostId +
                 '}';
+    }
+
+    public static byte localIdentifier(@NotNull Asset asset) {
+        HostIdentifier hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
+        return hostIdentifier.hostId();
     }
 }

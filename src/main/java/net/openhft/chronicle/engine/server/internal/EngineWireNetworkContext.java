@@ -25,20 +25,22 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.cfg.EngineClusterContext;
 import net.openhft.chronicle.engine.tree.VanillaAsset;
-import net.openhft.chronicle.network.*;
+import net.openhft.chronicle.network.ConnectionListener;
+import net.openhft.chronicle.network.MarshallableFunction;
+import net.openhft.chronicle.network.NetworkContext;
+import net.openhft.chronicle.network.VanillaNetworkContext;
 import net.openhft.chronicle.network.api.TcpHandler;
 import net.openhft.chronicle.network.cluster.ClusterContext;
 import net.openhft.chronicle.wire.AbstractMarshallable;
 import net.openhft.chronicle.wire.Demarshallable;
 import net.openhft.chronicle.wire.WireIn;
-import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.channels.SocketChannel;
-import java.util.function.Consumer;
 
+import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
 import static net.openhft.chronicle.engine.server.internal.EngineWireNetworkContext.ConnectionStatus.CONNECTED;
 import static net.openhft.chronicle.engine.server.internal.EngineWireNetworkContext.ConnectionStatus.DISCONNECTED;
 
@@ -53,22 +55,25 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext> extend
     private MapView<SocketChannel, TcpHandler> socketChannelByHandlers;
     private TcpHandler handler;
 
+
     public EngineWireNetworkContext(Asset asset) {
         this.rootAsset = asset.root();
         ((VanillaAsset) rootAsset.acquireAsset("/proc")).configMapServer();
 
         try {
             {
-                String path = "/proc/connections/cluster";
-                RequestContext requestContext = RequestContext.requestContext(path).
+                String path = "/proc/connections/cluster/connectivity";
+                RequestContext requestContext = requestContext(path).
                         type(ConnectionDetails.class).
                         type2(ConnectionStatus.class);
                 hostByConnectionStatus = rootAsset.root().acquireAsset(path)
                         .acquireView(MapView.class, requestContext);
             }
+
+
             {
                 String path = "/proc/connections/handlers";
-                RequestContext requestContext = RequestContext.requestContext(path).
+                RequestContext requestContext = requestContext(path).
                         type(SocketChannel.class).
                         type2(TcpHandler.class);
                 socketChannelByHandlers = rootAsset.root().acquireAsset(path)
@@ -128,13 +133,10 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext> extend
     }
 
 
-
     @Override
     public String toString() {
         return "hostByConnectionStatus=" + hostByConnectionStatus.entrySet().toString();
-
     }
-
 
     public enum ConnectionStatus {
         CONNECTED, DISCONNECTED
@@ -172,11 +174,6 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext> extend
         }
 
         public Factory() {
-        }
-
-        @Override
-        public void writeMarshallable(@NotNull WireOut wire) {
-
         }
 
         @Override

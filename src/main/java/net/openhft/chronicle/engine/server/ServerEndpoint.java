@@ -18,7 +18,6 @@ package net.openhft.chronicle.engine.server;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
-import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
 import net.openhft.chronicle.engine.server.internal.EngineWireNetworkContext;
 import net.openhft.chronicle.network.*;
@@ -43,7 +42,7 @@ import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
  */
 public class ServerEndpoint implements Closeable {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ChronicleMapKeyValueStore.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ServerEndpoint.class);
 
     @Nullable
     private final EventLoop eg;
@@ -99,8 +98,6 @@ public class ServerEndpoint implements Closeable {
                 throw new UnsupportedOperationException("not supported class=" + o.getClass());
             };
 
-            // todo log these to a chronicle q rather than the log
-            nc.networkStats(ns -> LOG.info("" + ns));
 
             final Function<EngineWireNetworkContext, TcpHandler> f
                     = x -> new HeaderTcpHandler<>(handler, consumer, x);
@@ -114,11 +111,37 @@ public class ServerEndpoint implements Closeable {
         final AcceptorEventHandler eah = new AcceptorEventHandler(
                 hostPortDescription,
                 networkContextTcpEventHandlerFunction,
-                () -> new EngineWireNetworkContext(assetTree.root()));
+                () -> createNetworkContext(assetTree));
 
         eg.addHandler(eah);
         this.eah = eah;
         return eah;
+    }
+
+    private EngineWireNetworkContext createNetworkContext(AssetTree assetTree) {
+        final EngineWireNetworkContext nc = new EngineWireNetworkContext(assetTree.root());
+
+        // todo log these to a chronicle q rather than the log
+        nc.networkStatsListener(new NetworkStatsListener() {
+
+            private String host;
+            private long port;
+
+            @Override
+            public void onNetworkStats(long writeBps, long readBps, long socketPollCountPerSecond, @NotNull NetworkContext networkContext) {
+                LOG.info("writeBps=" + writeBps + ", readBps=" + readBps +
+                        ", socketPollCountPerSecond=" + socketPollCountPerSecond +
+                        ", host=" + host + ", port=" + port);
+            }
+
+            @Override
+            public void onHostPort(String hostName, int port) {
+                host = hostName;
+                this.port = port;
+            }
+        });
+
+        return nc;
     }
 
     @Override

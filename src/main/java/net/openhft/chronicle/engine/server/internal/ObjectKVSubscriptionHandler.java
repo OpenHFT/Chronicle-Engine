@@ -136,11 +136,15 @@ public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subsc
     protected void unregisterAll() {
 
         tidToListener.forEach((k, listener) -> {
-            if (listener instanceof TopicSubscriber)
-                asset.unregisterTopicSubscriber(requestContext,
-                        (TopicSubscriber) listener);
-            else
-                asset.unregisterSubscriber(requestContext, (Subscriber) listener);
+            try {
+                if (listener instanceof TopicSubscriber)
+                    asset.unregisterTopicSubscriber(requestContext,
+                            (TopicSubscriber) listener);
+                else
+                    asset.unregisterSubscriber(requestContext, (Subscriber) listener);
+            } catch (Exception e) {
+                LOG.error("", e);
+            }
         });
         tidToListener.clear();
     }
