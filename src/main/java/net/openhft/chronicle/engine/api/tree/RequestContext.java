@@ -352,6 +352,8 @@ public class RequestContext implements Cloneable {
         return pathName;
     }
 
+    // this will be removed shortly
+    @Deprecated()
     @NotNull
     public RequestContext wireType(WireType writeType) {
         checkSealed();
@@ -359,6 +361,8 @@ public class RequestContext implements Cloneable {
         return this;
     }
 
+    // this will be removed shortly
+    @Deprecated()
     public WireType wireType() {
         return wireType;
     }

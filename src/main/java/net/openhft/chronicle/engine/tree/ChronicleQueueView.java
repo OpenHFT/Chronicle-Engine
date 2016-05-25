@@ -51,6 +51,9 @@ import java.nio.file.Files;
 import java.util.function.BiConsumer;
 
 import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
+import static net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder.binary;
+import static net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder.defaultZeroBinary;
+import static net.openhft.chronicle.wire.WireType.DEFAULT_ZERO_BINARY;
 
 /**
  * @author Rob Austin.
@@ -266,12 +269,10 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
             if (!baseFilePath.exists())
                 Files.createDirectories(baseFilePath.toPath());
 
-            SingleChronicleQueueBuilder singleChronicleQueueBuilder = SingleChronicleQueueBuilder.binary(baseFilePath);
-
-//            if (context.wireType() != null)
-//                singleChronicleQueueBuilder.wireType(context.wireType());
-
-            chronicleQueue = singleChronicleQueueBuilder.build();
+            final SingleChronicleQueueBuilder builder = context.wireType() == DEFAULT_ZERO_BINARY
+                    ? binary(baseFilePath)
+                    : defaultZeroBinary(baseFilePath);
+            chronicleQueue = builder.build();
 
         } catch (Exception e) {
             throw Jvm.rethrow(e);
