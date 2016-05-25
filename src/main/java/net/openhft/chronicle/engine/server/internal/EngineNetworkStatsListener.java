@@ -55,12 +55,11 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
 
         final SessionDetailsProvider sessionDetailsProvider = nc.sessionDetails();
         if (sessionDetailsProvider != null) {
-            wireNetworkStats.uuid(sessionDetailsProvider.userId());
             wireNetworkStats.clientId(sessionDetailsProvider.clientId());
+            wireNetworkStats.userId(sessionDetailsProvider.userId());
         }
 
         wireNetworkStats.timestamp(System.currentTimeMillis());
-
         acquireQV().publisher(wireNetworkStats);
 
     }

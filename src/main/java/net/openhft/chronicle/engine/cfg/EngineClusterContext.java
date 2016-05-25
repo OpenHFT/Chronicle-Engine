@@ -3,7 +3,10 @@ package net.openhft.chronicle.engine.cfg;
 import net.openhft.chronicle.core.annotation.UsedViaReflection;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.core.util.ThrowingFunction;
+import net.openhft.chronicle.engine.HeartbeatHandler;
 import net.openhft.chronicle.engine.api.tree.Asset;
+import net.openhft.chronicle.engine.fs.EngineConnectionManager;
+import net.openhft.chronicle.engine.server.internal.EngineNetworkStatsListener;
 import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
 import net.openhft.chronicle.engine.server.internal.EngineWireNetworkContext;
 import net.openhft.chronicle.engine.server.internal.UberHandler;
@@ -12,6 +15,7 @@ import net.openhft.chronicle.network.*;
 import net.openhft.chronicle.network.api.TcpHandler;
 import net.openhft.chronicle.network.api.session.SessionDetailsProvider;
 import net.openhft.chronicle.network.cluster.ClusterContext;
+import net.openhft.chronicle.network.cluster.HostIdConnectionStrategy;
 import net.openhft.chronicle.network.connection.VanillaWireOutPublisher;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireType;
@@ -36,7 +40,7 @@ public class EngineClusterContext extends ClusterContext {
     }
 
     public EngineClusterContext() {
-
+        super();
     }
 
 
@@ -116,6 +120,11 @@ public class EngineClusterContext extends ClusterContext {
         handlerFactory(new UberHandler.Factory());
         wireOutPublisherFactory(new VanillaWireOutPublisherFactory());
         networkContextFactory(new EngineWireNetworkContext.Factory());
-        heartbeatTimeoutMs(20_000L);
+        networkStatsListenerFactory(new EngineNetworkStatsListener.Factory());
+        connectionEventHandler(new EngineConnectionManager.Factory());
+        heartbeatFactory(new HeartbeatHandler.Factory());
+        heartbeatTimeoutMs(5_000L);
+        heartbeatIntervalMs(1_000L);
+        connectionStrategy(new HostIdConnectionStrategy());
     }
 }
