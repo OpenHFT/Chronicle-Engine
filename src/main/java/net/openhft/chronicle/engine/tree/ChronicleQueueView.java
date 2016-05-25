@@ -270,8 +270,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
                 Files.createDirectories(baseFilePath.toPath());
 
             final SingleChronicleQueueBuilder builder = context.wireType() == DEFAULT_ZERO_BINARY
-                    ? binary(baseFilePath)
-                    : defaultZeroBinary(baseFilePath);
+                    ? defaultZeroBinary(baseFilePath)
+                    : binary(baseFilePath);
             chronicleQueue = builder.build();
 
         } catch (Exception e) {
