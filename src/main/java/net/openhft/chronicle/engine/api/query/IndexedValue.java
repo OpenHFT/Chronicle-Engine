@@ -13,10 +13,10 @@ import org.jetbrains.annotations.NotNull;
 public class IndexedValue<V extends Marshallable> implements Demarshallable, Marshallable {
 
     private long index;
-    private V v;
-    private transient Object k;
     private long timePublished;
     private long maxIndex;
+    private V v;
+    private transient Object k;
 
     /**
      * @return the maximum index that is currently available, you can compare this index with the
@@ -84,6 +84,8 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
     public void writeMarshallable(@NotNull WireOut wire) {
         wire.write("index").int64_0x(index);
         wire.write("v").typedMarshallable(v);
+        wire.write("timePublished").int64(timePublished);
+        wire.write("maxIndex").int64(maxIndex);
     }
 
     @Override

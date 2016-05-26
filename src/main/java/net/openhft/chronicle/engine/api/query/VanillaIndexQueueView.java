@@ -182,6 +182,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
             if (!dc.isPresent())
                 return null;
 
+
             if (LOG.isDebugEnabled())
                 LOG.debug("processing the following message=", Wires.fromSizePrefixedBlobs(dc));
 
@@ -201,7 +202,8 @@ public class VanillaIndexQueueView<V extends Marshallable>
                 return null;
 
             final IndexedValue<V> indexedValue = this.indexedValue.get();
-            indexedValue.index(dc.index());
+            long index = dc.index();
+            indexedValue.index(index);
             indexedValue.v(v);
             indexedValue.timePublished(System.currentTimeMillis());
             indexedValue.maxIndex(lastIndexRead);

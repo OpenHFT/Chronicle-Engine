@@ -222,6 +222,9 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
         private Factory(WireIn w) {
         }
 
+        public Factory() {
+        }
+
         @Override
         public WriteMarshallable apply(ClusterContext clusterContext) {
             long heartbeatTimeoutMs = clusterContext.heartbeatTimeoutMs();

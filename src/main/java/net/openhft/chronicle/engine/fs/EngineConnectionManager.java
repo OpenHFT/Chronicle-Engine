@@ -52,12 +52,15 @@ public class EngineConnectionManager implements ConnectionManager {
     }
 
     public static class Factory implements
-            Supplier<EngineConnectionManager>,
+            Supplier<ConnectionManager>,
             Demarshallable,
             WriteMarshallable {
 
         @UsedViaReflection
         private Factory(@NotNull WireIn wireIn) {
+        }
+
+        public Factory() {
         }
 
         @Override

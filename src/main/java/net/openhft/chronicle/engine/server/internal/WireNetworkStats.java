@@ -9,13 +9,31 @@ class WireNetworkStats implements NetworkStats {
     long timestamp;
     long localIdentifier;
     long remoteIdentifier;
-    String uuid;
+
+    private int port;
     private UUID clientId;
     private String hostName;
-    private int port;
+    private String userId;
 
     public WireNetworkStats(int localIdentifer) {
         this.localIdentifier = localIdentifer;
+    }
+
+    @Override
+    public WireNetworkStats hostName(String hostName) {
+        this.hostName = hostName;
+        return this;
+    }
+
+    @Override
+    public String userId() {
+        return userId;
+    }
+
+    @Override
+    public WireNetworkStats userId(String userId) {
+        this.userId = userId;
+        return this;
     }
 
     @Override
@@ -72,46 +90,45 @@ class WireNetworkStats implements NetworkStats {
         this.port = port;
     }
 
+    @Override
     public long localIdentifier() {
         return localIdentifier;
     }
 
+    @Override
     public WireNetworkStats localIdentifier(long localIdentifer) {
         this.localIdentifier = localIdentifer;
         return this;
     }
 
+    @Override
     public long remoteIdentifier() {
         return remoteIdentifier;
     }
 
+    @Override
     public WireNetworkStats remoteIdentifier(long remoteIdentifier) {
         this.remoteIdentifier = remoteIdentifier;
         return this;
     }
 
-    public String uuid() {
-        return uuid;
-    }
-
-    public WireNetworkStats uuid(String uuid) {
-        this.uuid = uuid;
-        return this;
-    }
-
+    @Override
     public void clientId(UUID clientId) {
         this.clientId = clientId;
     }
 
 
+    @Override
     public UUID clientId() {
         return clientId;
     }
 
+    @Override
     public String hostName() {
         return hostName;
     }
 
+    @Override
     public int port() {
         return port;
     }
