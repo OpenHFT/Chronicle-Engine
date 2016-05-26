@@ -10,7 +10,7 @@ clusterTen: {
     heartbeatIntervalMs: 1_000L,
     heartbeatFactory: !HeartbeatHandlerFactory {},
     connectionStrategy: !HostIdConnectionStrategy {},
-  }
+  },
   host1: {
      hostId: 1,
      tcpBufferSize: 65536,

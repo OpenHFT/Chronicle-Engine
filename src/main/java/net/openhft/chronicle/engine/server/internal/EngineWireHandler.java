@@ -173,7 +173,11 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
         for (final AbstractHandler abstractHandler : new AbstractHandler[]{mapWireHandler,
                 subscriptionHandler, topologySubscriptionHandler,
                 publisherHandler, replicationHandler}) {
-            abstractHandler.onEndOfConnection(heartbeatTimeOut);
+            try {
+                abstractHandler.onEndOfConnection(heartbeatTimeOut);
+            } catch (Exception e) {
+                LOG.error("Failed while for " + abstractHandler, e);
+            }
         }
 
         // allow time for outbound onEndOfConnection message to be sent

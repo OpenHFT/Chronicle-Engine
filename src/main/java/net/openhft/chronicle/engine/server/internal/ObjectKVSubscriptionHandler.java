@@ -92,6 +92,7 @@ public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subsc
                 final StringBuilder eventName = Wires.acquireStringBuilder();
 
                 final ValueIn bootstrap = m.readEventName(eventName);
+                assert listener != null;
                 tidToListener.put(inputTid, listener);
 
                 if ("bootstrap".contentEquals(eventName))
@@ -138,10 +139,11 @@ public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subsc
         tidToListener.forEach((k, listener) -> {
             try {
                 if (listener instanceof TopicSubscriber)
-                    asset.unregisterTopicSubscriber(requestContext,
-                            (TopicSubscriber) listener);
-                else
+                    asset.unregisterTopicSubscriber(requestContext, (TopicSubscriber) listener);
+                else if (listener instanceof Subscriber)
                     asset.unregisterSubscriber(requestContext, (Subscriber) listener);
+                else
+                    LOG.error("Listener was " + listener);
             } catch (Exception e) {
                 LOG.error("", e);
             }
