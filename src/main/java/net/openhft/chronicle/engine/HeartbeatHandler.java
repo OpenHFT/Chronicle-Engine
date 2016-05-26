@@ -37,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
@@ -58,7 +57,7 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
     private volatile long lastTimeMessageReceived;
     private ConnectionListener connectionMonitor;
     private Timer timer;
-    private volatile long lastPing = 0;
+
 
     @UsedViaReflection
     protected HeartbeatHandler(@NotNull WireIn w) {
@@ -154,12 +153,6 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
 
     public void onMessageReceived() {
         lastTimeMessageReceived = System.currentTimeMillis();
-
-        long currentSecond = TimeUnit.MILLISECONDS.toSeconds(lastTimeMessageReceived);
-        if (lastPing != currentSecond) {
-            LOG.info(Integer.toHexString(hashCode()) + " lastTimeMessageReceived=" + lastTimeMessageReceived);
-            lastPing = currentSecond;
-        }
     }
 
     private VanillaEventHandler heartbeatCheck() {
