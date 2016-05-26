@@ -57,6 +57,8 @@ public class ConfigurationFSTest {
         if (th != null) throw Jvm.rethrow(th);
     }
 
+
+
     @Test
     public void addMountPoints() {
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
@@ -69,6 +71,7 @@ public class ConfigurationFSTest {
         new ConfigurationFS("/etc", null, OS.TARGET + "/confstest").subscribeTo(at);
         Map<String, String> etc = at.acquireMap("/etc", String.class, String.class);
         etc.put(ConfigurationFS.CLUSTERS, "cluster1: {\n" +
+                "  context:  !EngineClusterContext  { }\n" +
                 "  host1: {\n" +
                 "     hostId: 1\n" +
                 "     tcpBufferSize: 65536,\n" +

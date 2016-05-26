@@ -43,6 +43,9 @@ public class HostIdentifier {
 
     public static byte localIdentifier(@NotNull Asset asset) {
         HostIdentifier hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
+        if (hostIdentifier == null)
+            return 0;
+
         return hostIdentifier.hostId();
     }
 }
