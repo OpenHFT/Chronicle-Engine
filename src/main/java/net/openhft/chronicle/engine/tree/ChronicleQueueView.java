@@ -22,7 +22,6 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.io.IORuntimeException;
-import net.openhft.chronicle.core.util.SerializableFunction;
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
@@ -34,7 +33,7 @@ import net.openhft.chronicle.engine.fs.Clusters;
 import net.openhft.chronicle.engine.fs.EngineCluster;
 import net.openhft.chronicle.engine.fs.EngineHostDetails;
 import net.openhft.chronicle.engine.pubsub.QueueTopicPublisher;
-import net.openhft.chronicle.engine.query.QueueSource;
+import net.openhft.chronicle.engine.query.QueueConfig;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ExcerptAppender;
@@ -71,7 +70,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
     private final ThreadLocal<ThreadLocalData> threadLocal;
     private final String defaultPath;
     private final RequestContext context;
-
     private boolean isSource;
     private boolean isReplicating;
     private boolean dontPersist;
@@ -131,12 +129,12 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
      * @return
      */
     public static WriteMarshallable newSync(Class topicType, Class elementType, boolean
-            acknowledgement, @Nullable SerializableFunction<Bytes, Bytes> bytesAdaptor) {
+            acknowledgement, @Nullable InitializabeFunction<Bytes, Bytes> bytesAdaptor) {
         try {
 
             Class<?> aClass = Class.forName("software.chronicle.enterprise.queue.QueueSyncReplicationHandler");
             Constructor<?> declaredConstructor = aClass.getConstructor(Class.class, Class.class,
-                    boolean.class, SerializableFunction.class);
+                    boolean.class, InitializabeFunction.class);
             return (WriteMarshallable) declaredConstructor.newInstance(topicType, elementType,
                     acknowledgement, bytesAdaptor);
         } catch (Exception e) {
@@ -167,19 +165,19 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
 
     public void replication(RequestContext context, Asset asset) {
 
-        final QueueSource queueSource;
+        final QueueConfig queueConfig;
         final HostIdentifier hostIdentifier;
 
         try {
             hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
-            queueSource = asset.findView(QueueSource.class);
+            queueConfig = asset.findView(QueueConfig.class);
         } catch (AssetNotFoundException anfe) {
             if (LOG.isDebugEnabled())
                 LOG.debug("replication not enabled " + anfe.getMessage());
             return;
         }
 
-        final int remoteSourceIdentifier = queueSource.sourceHostId(context.fullName());
+        final int remoteSourceIdentifier = queueConfig.sourceHostId(context.fullName());
         isSource = hostIdentifier.hostId() == remoteSourceIdentifier;
 
         isReplicating = true;
@@ -205,7 +203,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
             LOG.debug("hostDetails : localIdentifier=" + localIdentifier + ",cluster=" + engineCluster.hostDetails());
 
         // if true - each replication event sends back an enableAcknowledgment
-        boolean acknowledgement = queueSource.acknowledgment();
+        final boolean acknowledgement = queueConfig.acknowledgment();
+        final InitializabeFunction<Bytes, Bytes> bytesAdaptor = queueConfig.bytesFunction();
 
         for (EngineHostDetails hostDetails : engineCluster.hostDetails()) {
 
@@ -225,9 +224,10 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
 
                 final boolean isSource0 = (remoteIdentifier == remoteSourceIdentifier);
 
+
                 WriteMarshallable h = isSource0 ?
                         newSource(nextIndexRequired(), context.topicType(), context.elementType(), acknowledgement) :
-                        newSync(context.topicType(), context.elementType(), acknowledgement, b -> b);
+                        newSync(context.topicType(), context.elementType(), acknowledgement, bytesAdaptor);
 
                 long cid = nc.newCid();
                 nc.wireOutPublisher().publish(w -> w.writeDocument(true, d ->

@@ -18,25 +18,32 @@
 
 package net.openhft.chronicle.engine.query;
 
+import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.engine.tree.InitializabeFunction;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
+
 
 /**
  * @author Rob Austin.
  */
-public class QueueSource {
+public class QueueConfig {
 
     private final Function<String, Integer> sourceB;
     private final boolean acknowledgment;
+    private final InitializabeFunction<Bytes, Bytes> bytesFunction;
 
     /**
      * @param queueSource
      * @param acknowledgment each replication event sends back an enableAcknowledgment, which is
      *                       then stored in the chronicle queue.
      */
-    public QueueSource(Function<String, Integer> queueSource, boolean acknowledgment) {
+    public QueueConfig(Function<String, Integer> queueSource, boolean acknowledgment,
+                       @Nullable InitializabeFunction<Bytes, Bytes> bytesFunction) {
         this.sourceB = queueSource;
+        this.bytesFunction = bytesFunction;
         this.acknowledgment = acknowledgment;
     }
 
@@ -47,4 +54,9 @@ public class QueueSource {
     public boolean acknowledgment() {
         return acknowledgment;
     }
+
+    public InitializabeFunction<Bytes, Bytes> bytesFunction() {
+        return bytesFunction;
+    }
+
 }

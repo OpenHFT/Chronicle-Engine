@@ -37,7 +37,7 @@ import net.openhft.chronicle.engine.collection.VanillaValuesCollection;
 import net.openhft.chronicle.engine.map.*;
 import net.openhft.chronicle.engine.map.remote.*;
 import net.openhft.chronicle.engine.pubsub.*;
-import net.openhft.chronicle.engine.query.QueueSource;
+import net.openhft.chronicle.engine.query.QueueConfig;
 import net.openhft.chronicle.engine.session.VanillaSessionProvider;
 import net.openhft.chronicle.engine.set.RemoteKeySetView;
 import net.openhft.chronicle.engine.set.VanillaKeySetView;
@@ -209,7 +209,7 @@ public class VanillaAsset implements Asset, Closeable {
         VanillaAsset queue = (VanillaAsset) acquireAsset("/queue");
         queue.configQueueServer();
 
-        addView(QueueSource.class, new QueueSource(uriToHostId, true));
+        addView(QueueConfig.class, new QueueConfig(uriToHostId, true,null));
 
         addView(ObjectCacheFactory.class, VanillaObjectCacheFactory.INSTANCE);
 
