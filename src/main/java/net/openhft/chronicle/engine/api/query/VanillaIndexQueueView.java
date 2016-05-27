@@ -187,9 +187,10 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
         try (DocumentContext dc = tailer.readingDocument()) {
 
+
             if (!dc.isPresent())
                 return null;
-
+//            System.out.println(Wires.fromSizePrefixedBlobs(dc));
 
             if (LOG.isDebugEnabled())
                 LOG.debug("processing the following message=", Wires.fromSizePrefixedBlobs(dc));
@@ -201,8 +202,11 @@ public class VanillaIndexQueueView<V extends Marshallable>
             final StringBuilder sb = Wires.acquireStringBuilder();
             while (dc.wire().bytes().readRemaining() > 0) {
                 final ValueIn valueIn = dc.wire().read(sb);
-                if (!eventName.contentEquals(sb))
+                if (!eventName.contentEquals(sb)) {
+                    // todo we should not have to do this
+                    valueIn.typedMarshallable();
                     continue;
+                }
 
                 // allows object re-use when using marshallable
                 final Function<Class, ReadMarshallable> objectCache = objectCacheThreadLocal.get();
