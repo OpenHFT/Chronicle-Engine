@@ -27,7 +27,6 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
     private final ThreadLocal<WireNetworkStats> wireNetworkStats;
 
     public EngineNetworkStatsListener(Asset asset, int localIdentifier) {
-
         this.localIdentifier = localIdentifier;
         wireNetworkStats = ThreadLocal.withInitial(() -> new WireNetworkStats(localIdentifier));
         this.asset = asset;
@@ -87,7 +86,6 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
             return new EngineNetworkStatsListener(((EngineClusterContext) context).assetRoot(),
                     context.localIdentifier());
         }
-
 
     }
 

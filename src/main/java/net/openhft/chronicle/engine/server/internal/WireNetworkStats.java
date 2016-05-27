@@ -1,22 +1,22 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.network.NetworkStats;
+import net.openhft.chronicle.wire.AbstractMarshallable;
 
 import java.util.UUID;
 
-class WireNetworkStats implements NetworkStats {
-    long writeBps, readBps, socketPollCountPerSecond;
-    long timestamp;
-    long localIdentifier;
-    long remoteIdentifier;
-
+class WireNetworkStats extends AbstractMarshallable implements NetworkStats {
+    private long writeBps, readBps, socketPollCountPerSecond;
+    private long timestamp;
+    private long localIdentifier;
+    private long remoteIdentifier;
     private int port;
     private UUID clientId;
     private String hostName;
     private String userId;
 
-    public WireNetworkStats(int localIdentifer) {
-        this.localIdentifier = localIdentifer;
+    public WireNetworkStats(int localIdentifier) {
+        this.localIdentifier = localIdentifier;
     }
 
     @Override
