@@ -22,6 +22,7 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.io.IORuntimeException;
+import net.openhft.chronicle.core.util.SerializableFunction;
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
@@ -50,7 +51,6 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.nio.file.Files;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
 
 import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
 import static net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder.binary;
@@ -131,12 +131,12 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
      * @return
      */
     public static WriteMarshallable newSync(Class topicType, Class elementType, boolean
-            acknowledgement, @Nullable Function<Bytes, Bytes> bytesAdaptor) {
+            acknowledgement, @Nullable SerializableFunction<Bytes, Bytes> bytesAdaptor) {
         try {
 
             Class<?> aClass = Class.forName("software.chronicle.enterprise.queue.QueueSyncReplicationHandler");
             Constructor<?> declaredConstructor = aClass.getConstructor(Class.class, Class.class,
-                    boolean.class,Function.class);
+                    boolean.class, SerializableFunction.class);
             return (WriteMarshallable) declaredConstructor.newInstance(topicType, elementType,
                     acknowledgement, bytesAdaptor);
         } catch (Exception e) {
@@ -227,7 +227,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
 
                 WriteMarshallable h = isSource0 ?
                         newSource(nextIndexRequired(), context.topicType(), context.elementType(), acknowledgement) :
-                        newSync(context.topicType(), context.elementType(), acknowledgement, null);
+                        newSync(context.topicType(), context.elementType(), acknowledgement, b -> b);
 
                 long cid = nc.newCid();
                 nc.wireOutPublisher().publish(w -> w.writeDocument(true, d ->
