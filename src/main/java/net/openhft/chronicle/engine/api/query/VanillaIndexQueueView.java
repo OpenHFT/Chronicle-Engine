@@ -17,7 +17,9 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -140,8 +142,9 @@ public class VanillaIndexQueueView<V extends Marshallable>
             if (fromIndex != 0)
                 if (!tailer.moveToIndex(fromIndex))
                     throw new IllegalStateException("Failed to move to index " + Long.toHexString(fromIndex));
-            final Supplier<Marshallable> consumer = excerptConsumer(vanillaIndexQuery, tailer, iterator, fromIndex);
-            sub.addValueOutConsumer(consumer);
+            final Supplier<List<Marshallable>> supplier = excerptConsumer(vanillaIndexQuery,
+                    tailer, iterator, fromIndex);
+            sub.addSupplier(supplier);
         } catch (Exception e) {
             //tailer.close();
             sub.onEndOfSubscription();
@@ -151,24 +154,29 @@ public class VanillaIndexQueueView<V extends Marshallable>
     }
 
     @NotNull
-    private Supplier<Marshallable> excerptConsumer(@NotNull IndexQuery<V> vanillaIndexQuery,
-                                                   @NotNull ExcerptTailer tailer,
-                                                   @NotNull Iterator<IndexedValue<V>> iterator,
-                                                   final long fromIndex) {
-        return () -> value(vanillaIndexQuery, tailer, iterator, fromIndex);
+    private Supplier<List<Marshallable>> excerptConsumer(@NotNull IndexQuery<V> vanillaIndexQuery,
+                                                         @NotNull ExcerptTailer tailer,
+                                                         @NotNull Iterator<IndexedValue<V>> iterator,
+                                                         final long fromIndex) {
+        return () -> VanillaIndexQueueView.this.value(vanillaIndexQuery, tailer, iterator, fromIndex);
     }
 
+    private ThreadLocal<List<Marshallable>> indexedValueList = ThreadLocal.withInitial(ArrayList::new);
+
     @Nullable
-    private IndexedValue<V> value(@NotNull IndexQuery<V> vanillaIndexQuery,
-                                  @NotNull ExcerptTailer tailer,
-                                  @NotNull Iterator<IndexedValue<V>> iterator,
-                                  final long from) {
+    private List<Marshallable> value(@NotNull IndexQuery<V> vanillaIndexQuery,
+                                     @NotNull ExcerptTailer tailer,
+                                     @NotNull Iterator<IndexedValue<V>> iterator,
+                                     final long from) {
+        List<Marshallable> indexedValues = indexedValueList.get();
+        indexedValues.clear();
 
         if (iterator.hasNext()) {
             IndexedValue<V> indexedValue = iterator.next();
             indexedValue.timePublished(System.currentTimeMillis());
             indexedValue.maxIndex(lastIndexRead);
-            return indexedValue;
+            indexedValues.add(indexedValue);
+            return indexedValues;
         }
 
         final String eventName = vanillaIndexQuery.eventName();
@@ -191,25 +199,27 @@ public class VanillaIndexQueueView<V extends Marshallable>
                 return null;
 
             final StringBuilder sb = Wires.acquireStringBuilder();
-            final ValueIn valueIn = dc.wire().read(sb);
-            if (!eventName.contentEquals(sb))
-                return null;
+            while (dc.wire().bytes().readRemaining() > 0) {
+                final ValueIn valueIn = dc.wire().read(sb);
+                if (!eventName.contentEquals(sb))
+                    continue;
 
-            // allows object re-use when using marshallable
-            final Function<Class, ReadMarshallable> objectCache = objectCacheThreadLocal.get();
-            final V v = valueIn.typedMarshallable(objectCache);
-            if (!filter.test(v))
-                return null;
+                // allows object re-use when using marshallable
+                final Function<Class, ReadMarshallable> objectCache = objectCacheThreadLocal.get();
+                final V v = valueIn.typedMarshallable(objectCache);
+                if (!filter.test(v))
+                    continue;
 
-            final IndexedValue<V> indexedValue = this.indexedValue.get();
-            long index = dc.index();
-            indexedValue.index(index);
-            indexedValue.v(v);
-            indexedValue.timePublished(System.currentTimeMillis());
-            indexedValue.maxIndex(lastIndexRead);
-            return indexedValue;
+                final IndexedValue<V> indexedValue = this.indexedValue.get();
+                long index = dc.index();
+                indexedValue.index(index);
+                indexedValue.v(v);
+                indexedValue.timePublished(System.currentTimeMillis());
+                indexedValue.maxIndex(lastIndexRead);
+                indexedValues.add(indexedValue);
+            }
         }
-
+        return indexedValues;
     }
 
     public void unregisterSubscriber(@NotNull ConsumingSubscriber<IndexedValue<V>> listener) {

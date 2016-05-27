@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
@@ -105,24 +106,29 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
                 /**
                  * used to publish bytes on the nio socket thread
                  *
-                 * @param valueOutConsumer reads a chronicle queue and
+                 * @param supplier reads a chronicle queue and
                  *                        publishes writes the data
                  *                        directly to the socket
                  */
-                public void addValueOutConsumer(Supplier<Marshallable> valueOutConsumer) {
+                public void addSupplier(Supplier<List<Marshallable>> supplier) {
                     publisher.addWireConsumer(wireOut -> {
 
-                        final WriteMarshallable marshallable = valueOutConsumer.get();
-                        if (marshallable == null)
+                        List<Marshallable> marshallables = supplier.get();
+                        if (marshallables == null)
                             return;
+                        for (Marshallable marshallable : marshallables) {
 
-                        if (publisher.isClosed())
-                            return;
+                            if (marshallable == null)
+                                continue;
 
-                        wireOut.writeDocument(true, wire -> wire.writeEventName(tid).int64(inputTid));
-                        wireOut.writeNotCompleteDocument(false, wire -> {
-                            wire.writeEventName(reply).typedMarshallable(marshallable);
-                        });
+                            if (publisher.isClosed())
+                                return;
+
+                            wireOut.writeDocument(true, wire -> wire.writeEventName(tid).int64(inputTid));
+                            wireOut.writeNotCompleteDocument(false, wire -> {
+                                wire.writeEventName(reply).typedMarshallable(marshallable);
+                            });
+                        }
                     });
                 }
 

@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.engine.tree;
 
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.io.IORuntimeException;
@@ -49,6 +50,7 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.nio.file.Files;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
 import static net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder.binary;
@@ -120,12 +122,23 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         }
     }
 
+    /**
+     * @param topicType
+     * @param elementType
+     * @param acknowledgement {@true} if message acknowledgement to the source is required
+     * @param bytesAdaptor    used to apply processing in the bytes before they are written to the
+     *                        queue
+     * @return
+     */
     public static WriteMarshallable newSync(Class topicType, Class elementType, boolean
-            acknowledgement) {
+            acknowledgement, @Nullable Function<Bytes, Bytes> bytesAdaptor) {
         try {
+
             Class<?> aClass = Class.forName("software.chronicle.enterprise.queue.QueueSyncReplicationHandler");
-            Constructor<?> declaredConstructor = aClass.getConstructor(Class.class, Class.class, boolean.class);
-            return (WriteMarshallable) declaredConstructor.newInstance(topicType, elementType, acknowledgement);
+            Constructor<?> declaredConstructor = aClass.getConstructor(Class.class, Class.class,
+                    boolean.class,Function.class);
+            return (WriteMarshallable) declaredConstructor.newInstance(topicType, elementType,
+                    acknowledgement, bytesAdaptor);
         } catch (Exception e) {
             IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
                     " required to run this code." +
@@ -214,7 +227,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
 
                 WriteMarshallable h = isSource0 ?
                         newSource(nextIndexRequired(), context.topicType(), context.elementType(), acknowledgement) :
-                        newSync(context.topicType(), context.elementType(), acknowledgement);
+                        newSync(context.topicType(), context.elementType(), acknowledgement, null);
 
                 long cid = nc.newCid();
                 nc.wireOutPublisher().publish(w -> w.writeDocument(true, d ->
