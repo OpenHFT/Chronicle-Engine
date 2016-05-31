@@ -6,12 +6,14 @@ import net.openhft.chronicle.wire.WireOut;
 import net.openhft.chronicle.wire.WriteMarshallable;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Function;
+import java.util.function.BiConsumer;
 
 /**
  * @author Rob Austin.
  */
-public interface InitializabeFunction<T, R> extends Function<T, R>, Demarshallable, WriteMarshallable {
+public interface InitializableBiConsumer<T, R> extends BiConsumer<T, R>, Demarshallable, WriteMarshallable {
+
+
     default void onInitialize(Asset asset) {
 
     }

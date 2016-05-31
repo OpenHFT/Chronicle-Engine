@@ -121,22 +121,22 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
     }
 
     /**
-     * @param topicType
-     * @param elementType
-     * @param acknowledgement {@true} if message acknowledgement to the source is required
-     * @param bytesAdaptor    used to apply processing in the bytes before they are written to the
+     * @param topicType       the type of the topic
+     * @param elementType     the type of the element
+     * @param acknowledgement {@code true} if message acknowledgement to the source is required
+     * @param messageAdaptor  used to apply processing in the bytes before they are written to the
      *                        queue
-     * @return
+     * @return and instance of QueueSyncReplicationHandler
      */
     public static WriteMarshallable newSync(Class topicType, Class elementType, boolean
-            acknowledgement, @Nullable InitializabeFunction<Bytes, Bytes> bytesAdaptor) {
+            acknowledgement, @Nullable InitializableBiConsumer<Wire, Bytes> messageAdaptor) {
         try {
 
             Class<?> aClass = Class.forName("software.chronicle.enterprise.queue.QueueSyncReplicationHandler");
             Constructor<?> declaredConstructor = aClass.getConstructor(Class.class, Class.class,
-                    boolean.class, InitializabeFunction.class);
+                    boolean.class, InitializableBiConsumer.class);
             return (WriteMarshallable) declaredConstructor.newInstance(topicType, elementType,
-                    acknowledgement, bytesAdaptor);
+                    acknowledgement, messageAdaptor);
         } catch (Exception e) {
             IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
                     " required to run this code." +
@@ -146,9 +146,12 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         }
     }
 
-    public static void deleteFiles(File element) throws IOException {
+    private static void deleteFiles(File element) throws IOException {
         if (element.isDirectory()) {
-            for (File sub : element.listFiles()) {
+            File[] files = element.listFiles();
+            if (files == null)
+                return;
+            for (File sub : files) {
                 deleteFiles(sub);
             }
         }
@@ -204,7 +207,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
 
         // if true - each replication event sends back an enableAcknowledgment
         final boolean acknowledgement = queueConfig.acknowledgment();
-        final InitializabeFunction<Bytes, Bytes> bytesAdaptor = queueConfig.bytesFunction();
+        final InitializableBiConsumer<Wire, Bytes> messageAdaptor = queueConfig.bytesFunction();
 
         for (EngineHostDetails hostDetails : engineCluster.hostDetails()) {
 
@@ -227,7 +230,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
 
                 WriteMarshallable h = isSource0 ?
                         newSource(nextIndexRequired(), context.topicType(), context.elementType(), acknowledgement) :
-                        newSync(context.topicType(), context.elementType(), acknowledgement, bytesAdaptor);
+                        newSync(context.topicType(), context.elementType(), acknowledgement, messageAdaptor);
 
                 long cid = nc.newCid();
                 nc.wireOutPublisher().publish(w -> w.writeDocument(true, d ->
