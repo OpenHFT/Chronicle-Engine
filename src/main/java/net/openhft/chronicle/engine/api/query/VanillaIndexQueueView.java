@@ -50,6 +50,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
     private volatile long lastIndexRead = 0;
     private long lastSecond = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     private long messagesReadPerSecond = 0;
+    private final TypeToString typeToString;
 
     public VanillaIndexQueueView(@NotNull RequestContext context,
                                  @NotNull Asset asset,
@@ -62,6 +63,8 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
         chronicleQueue = chronicleQueueView.chronicleQueue();
         final ExcerptTailer tailer = chronicleQueue.createTailer();
+
+        typeToString = asset.root().acquireView(TypeToString.class);
 
         // use a function factory so each thread has a thread local function.
         objectCacheThreadLocal = ThreadLocal.withInitial(
@@ -88,19 +91,23 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
                 try {
 
-                    final StringBuilder sb = Wires.acquireStringBuilder();
-                    final ValueIn read = dc.wire().read(sb);
+                    while (dc.wire().bytes().readRemaining() > 0) {
+                        final StringBuilder sb = Wires.acquireStringBuilder();
+                        final ValueIn read = dc.wire().read(sb);
 
-                    final V v = read.typedMarshallable();
+                        final V v = (V) VanillaObjectCacheFactory.INSTANCE.get()
+                                .apply(typeToString.toType(sb));
+                        read.marshallable(v);
 
-                    final Object k = valueToKey.apply(v);
-                    messagesReadPerSecond++;
+                        final Object k = valueToKey.apply(v);
+                        messagesReadPerSecond++;
 
-                    final String event = sb.toString();
-                    synchronized (lock) {
-                        multiMap.computeIfAbsent(event, e -> new ConcurrentHashMap<>())
-                                .put(k, new IndexedValue<>(v, dc.index()));
-                        lastIndexRead = dc.index();
+                        final String event = sb.toString();
+                        synchronized (lock) {
+                            multiMap.computeIfAbsent(event, e -> new ConcurrentHashMap<>())
+                                    .put(k, new IndexedValue<>(v, dc.index()));
+                            lastIndexRead = dc.index();
+                        }
                     }
                 } catch (Exception e) {
                     LOG.error(Wires.fromSizePrefixedBlobs(dc.wire().bytes(), start - 4), e);
@@ -190,7 +197,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
             if (!dc.isPresent())
                 return null;
-//            System.out.println(Wires.fromSizePrefixedBlobs(dc));
+            System.out.println(Wires.fromSizePrefixedBlobs(dc));
 
             if (LOG.isDebugEnabled())
                 LOG.debug("processing the following message=", Wires.fromSizePrefixedBlobs(dc));
@@ -203,14 +210,21 @@ public class VanillaIndexQueueView<V extends Marshallable>
             while (dc.wire().bytes().readRemaining() > 0) {
                 final ValueIn valueIn = dc.wire().read(sb);
                 if (!eventName.contentEquals(sb)) {
-                    // todo we should not have to do this
-                    valueIn.typedMarshallable();
+
+                    // todo remove this and change it to skipValue
+                    final V v = (V) VanillaObjectCacheFactory.INSTANCE.get()
+                            .apply(typeToString.toType(sb));
+                    valueIn.marshallable(v);
                     continue;
                 }
 
                 // allows object re-use when using marshallable
                 final Function<Class, ReadMarshallable> objectCache = objectCacheThreadLocal.get();
-                final V v = valueIn.typedMarshallable(objectCache);
+
+                final V v = (V) VanillaObjectCacheFactory.INSTANCE.get()
+                        .apply(typeToString.toType(sb));
+                valueIn.marshallable(v);
+
                 if (!filter.test(v))
                     continue;
 
