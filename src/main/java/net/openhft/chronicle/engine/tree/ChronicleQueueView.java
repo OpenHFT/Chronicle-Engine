@@ -18,7 +18,6 @@
 
 package net.openhft.chronicle.engine.tree;
 
-import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.io.IORuntimeException;
@@ -105,13 +104,15 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         return new File(path).getParentFile().getParentFile() + "/src/test/resources";
     }
 
-    public static WriteMarshallable newSource(long nextIndexRequired, Class topicType, Class elementType, boolean acknowledgement) {
+    public static WriteMarshallable newSource(long nextIndexRequired, Class topicType, Class elementType, boolean acknowledgement,
+                                              @Nullable MessageAdaptor messageAdaptor,
+                                              @NotNull WireType wireType) {
         try {
             Class<?> aClass = Class.forName("software.chronicle.enterprise.queue.QueueSourceReplicationHandler");
             Constructor<?> declaredConstructor = aClass.getDeclaredConstructor(long.class, Class.class,
-                    Class.class, boolean.class);
+                    Class.class, boolean.class, MessageAdaptor.class, WireType.class);
             return (WriteMarshallable) declaredConstructor.newInstance(nextIndexRequired,
-                    topicType, elementType, acknowledgement);
+                    topicType, elementType, acknowledgement, messageAdaptor, wireType);
         } catch (Exception e) {
             IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
                     " required to run this code. Please contact sales@chronicle.software");
@@ -128,15 +129,19 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
      *                        queue
      * @return and instance of QueueSyncReplicationHandler
      */
-    public static WriteMarshallable newSync(Class topicType, Class elementType, boolean
-            acknowledgement, @Nullable InitializableBiConsumer<Wire, Bytes> messageAdaptor) {
+    public static WriteMarshallable newSync(
+            @NotNull Class topicType,
+            @NotNull Class elementType,
+            boolean acknowledgement,
+            @Nullable MessageAdaptor messageAdaptor,
+            @NotNull WireType wireType) {
         try {
 
             Class<?> aClass = Class.forName("software.chronicle.enterprise.queue.QueueSyncReplicationHandler");
             Constructor<?> declaredConstructor = aClass.getConstructor(Class.class, Class.class,
-                    boolean.class, InitializableBiConsumer.class);
+                    boolean.class, MessageAdaptor.class, WireType.class);
             return (WriteMarshallable) declaredConstructor.newInstance(topicType, elementType,
-                    acknowledgement, messageAdaptor);
+                    acknowledgement, messageAdaptor, wireType);
         } catch (Exception e) {
             IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
                     " required to run this code." +
@@ -207,7 +212,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
 
         // if true - each replication event sends back an enableAcknowledgment
         final boolean acknowledgement = queueConfig.acknowledgment();
-        final InitializableBiConsumer<Wire, Bytes> messageAdaptor = queueConfig.bytesFunction();
+        final MessageAdaptor messageAdaptor = queueConfig.bytesFunction();
 
         for (EngineHostDetails hostDetails : engineCluster.hostDetails()) {
 
@@ -227,10 +232,17 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
 
                 final boolean isSource0 = (remoteIdentifier == remoteSourceIdentifier);
 
-
                 WriteMarshallable h = isSource0 ?
-                        newSource(nextIndexRequired(), context.topicType(), context.elementType(), acknowledgement) :
-                        newSync(context.topicType(), context.elementType(), acknowledgement, messageAdaptor);
+
+                        newSource(nextIndexRequired(), context.topicType(), context.elementType(), acknowledgement,
+                                messageAdaptor,
+                                queueConfig.wireType()) :
+
+                        newSync(context.topicType(),
+                                context.elementType(),
+                                acknowledgement,
+                                messageAdaptor,
+                                queueConfig.wireType());
 
                 long cid = nc.newCid();
                 nc.wireOutPublisher().publish(w -> w.writeDocument(true, d ->

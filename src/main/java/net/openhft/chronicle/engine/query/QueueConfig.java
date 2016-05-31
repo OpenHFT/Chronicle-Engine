@@ -18,9 +18,8 @@
 
 package net.openhft.chronicle.engine.query;
 
-import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.engine.tree.InitializableBiConsumer;
-import net.openhft.chronicle.wire.Wire;
+import net.openhft.chronicle.engine.tree.MessageAdaptor;
+import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +33,7 @@ public class QueueConfig {
 
     private final Function<String, Integer> sourceB;
     private final boolean acknowledgment;
-    private final InitializableBiConsumer<Wire, Bytes> messageAdaptor;
+    private final MessageAdaptor messageAdaptor;
 
     /**
      * @param queueSource
@@ -42,7 +41,7 @@ public class QueueConfig {
      *                       then stored in the chronicle queue.
      */
     public QueueConfig(Function<String, Integer> queueSource, boolean acknowledgment,
-                       @Nullable InitializableBiConsumer<Wire, Bytes> messageAdaptor) {
+                       @Nullable MessageAdaptor messageAdaptor) {
         this.sourceB = queueSource;
         this.messageAdaptor = messageAdaptor;
         this.acknowledgment = acknowledgment;
@@ -56,8 +55,11 @@ public class QueueConfig {
         return acknowledgment;
     }
 
-    public InitializableBiConsumer<Wire, Bytes> bytesFunction() {
+    public MessageAdaptor bytesFunction() {
         return messageAdaptor;
     }
 
+    public WireType wireType() {
+        return WireType.DEFAULT_ZERO_BINARY;
+    }
 }
