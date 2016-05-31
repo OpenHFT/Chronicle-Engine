@@ -187,7 +187,6 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                         if (charSequenceValue) {
                             StringBuilder sb = SBP.acquireStringBuilder();
                             vToWire.accept(outWire.writeEventName(reply), (V) ((ChronicleMap) map).getUsing(key, sb));
-
                         } else {
                             vToWire.accept(outWire.writeEventName(reply), map.get(key));
                         }
