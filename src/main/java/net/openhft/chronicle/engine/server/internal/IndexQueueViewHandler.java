@@ -91,15 +91,14 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
 
                 public void onEndOfSubscription() {
                     subscriptionEnded = true;
-                    if (!publisher.isClosed()) {
-                        publisher.put(null, publish -> {
-                            publish.writeDocument(true, wire ->
-                                    wire.writeEventName(tid).int64(inputTid));
-                            publish.writeDocument(false, wire ->
-                                    wire.writeEventName(ObjectKVSubscriptionHandler.EventId.onEndOfSubscription).text(""));
-                        });
-
-                    }
+                    if (publisher.isClosed())
+                        return;
+                    publisher.put(null, publish -> {
+                        publish.writeDocument(true, wire ->
+                                wire.writeEventName(tid).int64(inputTid));
+                        publish.writeDocument(false, wire ->
+                                wire.writeEventName(ObjectKVSubscriptionHandler.EventId.onEndOfSubscription).text(""));
+                    });
                 }
 
 

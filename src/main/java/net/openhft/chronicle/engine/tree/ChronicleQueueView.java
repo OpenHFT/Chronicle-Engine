@@ -53,7 +53,7 @@ import java.util.function.BiConsumer;
 import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
 import static net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder.binary;
 import static net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder.defaultZeroBinary;
-import static net.openhft.chronicle.wire.WireType.DEFAULT_ZERO_BINARY;
+import static net.openhft.chronicle.wire.WireType.*;
 
 /**
  * @author Rob Austin.
@@ -73,6 +73,10 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
     private boolean isReplicating;
     private boolean dontPersist;
 
+
+    @NotNull
+    private QueueConfig queueConfig;
+
     public ChronicleQueueView(@NotNull RequestContext context, @NotNull Asset asset) {
         this(null, context, asset);
     }
@@ -86,7 +90,15 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         defaultPath = s;
         final HostIdentifier hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
         final Byte hostId = hostIdentifier == null ? null : hostIdentifier.hostId();
-        chronicleQueue = queue != null ? queue : newInstance(context.name(), context.basePath(), hostId);
+
+        try {
+            queueConfig = asset.findView(QueueConfig.class);
+        } catch (AssetNotFoundException anfe) {
+            LOG.error("queue config not found asset="+asset.fullName());
+            throw anfe;
+        }
+
+        chronicleQueue = queue != null ? queue : newInstance(context.name(), context.basePath(), hostId, queueConfig.wireType());
         messageTypeClass = context.messageType();
         elementTypeClass = context.elementType();
         threadLocal = ThreadLocal.withInitial(() -> new ThreadLocalData(chronicleQueue));
@@ -104,15 +116,17 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         return new File(path).getParentFile().getParentFile() + "/src/test/resources";
     }
 
-    public static WriteMarshallable newSource(long nextIndexRequired, Class topicType, Class elementType, boolean acknowledgement,
-                                              @Nullable MessageAdaptor messageAdaptor,
-                                              @NotNull WireType wireType) {
+    public static WriteMarshallable newSource(long nextIndexRequired,
+                                              @NotNull Class topicType,
+                                              @NotNull Class elementType,
+                                              boolean acknowledgement,
+                                              @Nullable MessageAdaptor messageAdaptor) {
         try {
             Class<?> aClass = Class.forName("software.chronicle.enterprise.queue.QueueSourceReplicationHandler");
             Constructor<?> declaredConstructor = aClass.getDeclaredConstructor(long.class, Class.class,
-                    Class.class, boolean.class, MessageAdaptor.class, WireType.class);
+                    Class.class, boolean.class, MessageAdaptor.class);
             return (WriteMarshallable) declaredConstructor.newInstance(nextIndexRequired,
-                    topicType, elementType, acknowledgement, messageAdaptor, wireType);
+                    topicType, elementType, acknowledgement, messageAdaptor);
         } catch (Exception e) {
             IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
                     " required to run this code. Please contact sales@chronicle.software");
@@ -172,13 +186,10 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
     }
 
     public void replication(RequestContext context, Asset asset) {
-
-        final QueueConfig queueConfig;
         final HostIdentifier hostIdentifier;
 
         try {
             hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
-            queueConfig = asset.findView(QueueConfig.class);
         } catch (AssetNotFoundException anfe) {
             if (LOG.isDebugEnabled())
                 LOG.debug("replication not enabled " + anfe.getMessage());
@@ -187,7 +198,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
 
         final int remoteSourceIdentifier = queueConfig.sourceHostId(context.fullName());
         isSource = hostIdentifier.hostId() == remoteSourceIdentifier;
-
         isReplicating = true;
 
         final Clusters clusters = asset.findView(Clusters.class);
@@ -196,8 +206,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
             LOG.warn("no cluster found name=" + context.cluster());
             return;
         }
-        final EngineCluster engineCluster = clusters.get(context.cluster());
 
+        final EngineCluster engineCluster = clusters.get(context.cluster());
         final String csp = context.fullName();
 
         if (engineCluster == null) {
@@ -235,14 +245,13 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
                 WriteMarshallable h = isSource0 ?
 
                         newSource(nextIndexRequired(), context.topicType(), context.elementType(), acknowledgement,
-                                messageAdaptor,
-                                queueConfig.wireType()) :
+                                messageAdaptor) :
 
                         newSync(context.topicType(),
                                 context.elementType(),
                                 acknowledgement,
                                 messageAdaptor,
-                                queueConfig.wireType());
+                                chronicleQueue.wireType());
 
                 long cid = nc.newCid();
                 nc.wireOutPublisher().publish(w -> w.writeDocument(true, d ->
@@ -285,7 +294,17 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         throw new UnsupportedOperationException("todo");
     }
 
-    private ChronicleQueue newInstance(String name, @Nullable String basePath, @Nullable Byte hostID) {
+    private ChronicleQueue newInstance(@NotNull String name,
+                                       @Nullable String basePath,
+                                       @Nullable Byte hostID,
+                                       @NotNull WireType wireType) {
+
+        if (wireType == DELTA_BINARY)
+            throw new IllegalArgumentException("Chronicle Queues can not be set to use delta wire");
+
+        if (wireType != BINARY && wireType != DEFAULT_ZERO_BINARY)
+            throw new IllegalArgumentException("Currently the chronicle queue only supports Binary and Default Zero Binary Wire");
+
         ChronicleQueue chronicleQueue;
 
         File baseFilePath;
@@ -297,7 +316,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
             if (!baseFilePath.exists())
                 Files.createDirectories(baseFilePath.toPath());
 
-            final SingleChronicleQueueBuilder builder = context.wireType() == DEFAULT_ZERO_BINARY
+            final SingleChronicleQueueBuilder builder = wireType == DEFAULT_ZERO_BINARY
                     ? defaultZeroBinary(baseFilePath)
                     : binary(baseFilePath);
             chronicleQueue = builder.build();

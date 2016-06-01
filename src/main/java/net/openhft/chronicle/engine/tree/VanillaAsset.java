@@ -209,7 +209,7 @@ public class VanillaAsset implements Asset, Closeable {
         VanillaAsset queue = (VanillaAsset) acquireAsset("/queue");
         queue.configQueueServer();
 
-        addView(QueueConfig.class, new QueueConfig(uriToHostId, true,null));
+        addView(QueueConfig.class, new QueueConfig(uriToHostId, true,null,WireType.BINARY));
 
         addView(ObjectCacheFactory.class, VanillaObjectCacheFactory.INSTANCE);
 

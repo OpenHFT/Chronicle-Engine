@@ -34,6 +34,7 @@ public class QueueConfig {
     private final Function<String, Integer> sourceB;
     private final boolean acknowledgment;
     private final MessageAdaptor messageAdaptor;
+    private final WireType wireType;
 
     /**
      * @param queueSource
@@ -41,10 +42,11 @@ public class QueueConfig {
      *                       then stored in the chronicle queue.
      */
     public QueueConfig(Function<String, Integer> queueSource, boolean acknowledgment,
-                       @Nullable MessageAdaptor messageAdaptor) {
+                       @Nullable MessageAdaptor messageAdaptor, WireType wireType) {
         this.sourceB = queueSource;
         this.messageAdaptor = messageAdaptor;
         this.acknowledgment = acknowledgment;
+        this.wireType = wireType;
     }
 
     public Integer sourceHostId(@NotNull String uri) {
@@ -59,7 +61,8 @@ public class QueueConfig {
         return messageAdaptor;
     }
 
+    @NotNull
     public WireType wireType() {
-        return WireType.DEFAULT_ZERO_BINARY;
+        return wireType;
     }
 }
