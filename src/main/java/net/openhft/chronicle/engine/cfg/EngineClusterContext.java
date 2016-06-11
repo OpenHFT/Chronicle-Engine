@@ -44,7 +44,7 @@ public class EngineClusterContext extends ClusterContext {
     }
 
 
-    public ThrowingFunction<NetworkContext, IOException, TcpEventHandler> tcpEventHandlerFactory() {
+    public ThrowingFunction<NetworkContext, TcpEventHandler, IOException> tcpEventHandlerFactory() {
         return (networkContext) -> {
             final EngineWireNetworkContext nc = (EngineWireNetworkContext) networkContext;
 
