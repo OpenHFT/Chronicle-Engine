@@ -51,14 +51,10 @@ import static net.openhft.chronicle.network.connection.CoreFields.tid;
 public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(IndexQueueViewHandler.class);
-
-    private Asset contextAsset;
-    private WireOutPublisher publisher;
-
     private final StringBuilder eventName = new StringBuilder();
     private final Map<Long, ConsumingSubscriber<IndexedValue<V>>> tidToListener = new ConcurrentHashMap<>();
-
-
+    private Asset contextAsset;
+    private WireOutPublisher publisher;
     @NotNull
     private final BiConsumer<WireIn, Long> dataConsumer = (inWire, inputTid) -> {
 
@@ -100,7 +96,6 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
                                 wire.writeEventName(ObjectKVSubscriptionHandler.EventId.onEndOfSubscription).text(""));
                     });
                 }
-
 
                 /**
                  * used to publish bytes on the nio socket thread

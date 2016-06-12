@@ -92,7 +92,6 @@ public class StreamTest extends ThreadMonitoringTest {
             assetTree = serverAssetTree;
         }
 
-
         map = assetTree.acquireMap(NAME, String.class, String.class);
     }
 

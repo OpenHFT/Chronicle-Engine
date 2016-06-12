@@ -57,8 +57,6 @@ public class ConfigurationFSTest {
         if (th != null) throw Jvm.rethrow(th);
     }
 
-
-
     @Test
     public void addMountPoints() {
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);

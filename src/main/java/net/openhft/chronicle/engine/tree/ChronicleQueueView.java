@@ -73,7 +73,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
     private boolean isReplicating;
     private boolean dontPersist;
 
-
     @NotNull
     private QueueConfig queueConfig;
 
@@ -494,7 +493,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
             }
         }
 
-
     }
 
     private void deleteFiles(TopicPublisher p) {
@@ -503,7 +501,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
             deleteFiles((ChronicleQueueView) ((QueueTopicPublisher) p).underlying());
 
     }
-
 
     @Override
     protected void finalize() throws Throwable {

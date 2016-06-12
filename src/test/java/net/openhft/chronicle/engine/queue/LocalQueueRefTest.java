@@ -69,7 +69,6 @@ public class LocalQueueRefTest extends ThreadMonitoringTest {
         methodName = "";
     }
 
-
     @Test
     @Ignore("TODO FIX too many results")
     public void test() throws InterruptedException {

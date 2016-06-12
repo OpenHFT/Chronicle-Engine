@@ -38,6 +38,7 @@ public interface Subscriber<E> extends ISubscriber, Consumer<E> {
     default void accept(E e) {
         try {
             onMessage(e);
+
         } catch (InvalidSubscriberException ise) {
             throw Jvm.rethrow(ise);
         }

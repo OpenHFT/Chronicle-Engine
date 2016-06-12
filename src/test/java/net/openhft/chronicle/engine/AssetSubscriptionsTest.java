@@ -57,7 +57,6 @@ public class AssetSubscriptionsTest {
         if (th != null) throw Jvm.rethrow(th);
     }
 
-
     @Ignore("todo fix")
     @Test
     public void testSubscriptionsAtEachLevel() throws InvalidSubscriberException {

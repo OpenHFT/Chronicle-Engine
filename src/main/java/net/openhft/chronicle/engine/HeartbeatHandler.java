@@ -58,7 +58,6 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
     private ConnectionListener connectionMonitor;
     private Timer timer;
 
-
     @UsedViaReflection
     protected HeartbeatHandler(@NotNull WireIn w) {
         heartbeatTimeoutMs = w.read(() -> "heartbeatTimeoutMs").int64();

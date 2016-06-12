@@ -50,5 +50,4 @@ public interface TopicPublisher<T, M> extends KeyedView {
     Publisher<M> publisher(@NotNull T topic);
 
     void registerSubscriber(@NotNull T topic, @NotNull Subscriber<M> subscriber);
-
 }

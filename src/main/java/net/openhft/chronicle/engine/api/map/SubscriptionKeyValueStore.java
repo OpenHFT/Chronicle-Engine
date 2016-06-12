@@ -24,5 +24,4 @@ import net.openhft.chronicle.engine.map.KVSSubscription;
  */
 public interface SubscriptionKeyValueStore<K, V> extends KeyValueStore<K, V>, KeyedView {
     KVSSubscription<K, V> subscription(boolean createIfAbsent);
-
 }

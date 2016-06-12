@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
-
 /**
  * @author Rob Austin.
  */

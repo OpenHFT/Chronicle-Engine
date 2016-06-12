@@ -117,7 +117,6 @@ class WireNetworkStats extends AbstractMarshallable implements NetworkStats {
         this.clientId = clientId;
     }
 
-
     @Override
     public UUID clientId() {
         return clientId;

@@ -23,8 +23,8 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
 
     private final Asset asset;
     private final int localIdentifier;
-    private QueueView qv;
     private final ThreadLocal<WireNetworkStats> wireNetworkStats;
+    private QueueView qv;
 
     public EngineNetworkStatsListener(Asset asset, int localIdentifier) {
         this.localIdentifier = localIdentifier;
@@ -88,5 +88,5 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
         }
 
     }
-
 }
+

@@ -17,10 +17,13 @@
 package net.openhft.chronicle.engine.tree;
 
 import net.openhft.chronicle.core.io.Closeable;
-import net.openhft.chronicle.core.util.ThrowingAcceptor;
+import net.openhft.chronicle.core.util.ThrowingConsumer;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.map.SubAsset;
-import net.openhft.chronicle.engine.api.pubsub.*;
+import net.openhft.chronicle.engine.api.pubsub.Publisher;
+import net.openhft.chronicle.engine.api.pubsub.Reference;
+import net.openhft.chronicle.engine.api.pubsub.SubscriptionCollection;
+import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.*;
 import net.openhft.chronicle.engine.map.ObjectSubscription;
 import net.openhft.chronicle.engine.pubsub.*;
@@ -186,7 +189,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     }
 
     @Override
-    public void forEachChild(ThrowingAcceptor<Asset, InvalidSubscriberException> childAcceptor) throws InvalidSubscriberException {
+    public <T extends Throwable> void forEachChild(ThrowingConsumer<Asset, T> consumer) throws T {
     }
 
     @Override

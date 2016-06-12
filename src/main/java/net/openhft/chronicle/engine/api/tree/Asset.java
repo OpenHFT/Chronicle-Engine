@@ -17,7 +17,7 @@
 package net.openhft.chronicle.engine.api.tree;
 
 import net.openhft.chronicle.core.io.Closeable;
-import net.openhft.chronicle.core.util.ThrowingAcceptor;
+import net.openhft.chronicle.core.util.ThrowingConsumer;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionCollection;
@@ -337,11 +337,11 @@ public interface Asset extends Closeable {
     /**
      * Iterate of all the children of this Asset.
      *
-     * @param childAcceptor to accept each child.
+     * @param consumer to accept each child.
      * @throws InvalidSubscriberException to throw if the accept is no longer interested in getting
      *                                    more children.
      */
-    void forEachChild(ThrowingAcceptor<Asset, InvalidSubscriberException> childAcceptor) throws InvalidSubscriberException;
+    <T extends Throwable> void forEachChild(ThrowingConsumer<Asset, T> consumer) throws T;
 
     void getUsageStats(AssetTreeStats ats);
 

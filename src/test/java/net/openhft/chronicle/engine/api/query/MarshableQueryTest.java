@@ -28,6 +28,4 @@ public class MarshableQueryTest {
         boolean test = marshableQuery.filter().test(new TestBean(2));
         Assert.assertEquals(true, test);
     }
-
-
 }

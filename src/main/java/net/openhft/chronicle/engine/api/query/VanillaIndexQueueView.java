@@ -47,10 +47,11 @@ public class VanillaIndexQueueView<V extends Marshallable>
     private final Object lock = new Object();
     private final ThreadLocal<Function<Class, ReadMarshallable>> objectCacheThreadLocal;
     private final ThreadLocal<IndexedValue<V>> indexedValue = ThreadLocal.withInitial(IndexedValue::new);
+    private final TypeToString typeToString;
     private volatile long lastIndexRead = 0;
     private long lastSecond = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     private long messagesReadPerSecond = 0;
-    private final TypeToString typeToString;
+    private ThreadLocal<List<Marshallable>> indexedValueList = ThreadLocal.withInitial(ArrayList::new);
 
     public VanillaIndexQueueView(@NotNull RequestContext context,
                                  @NotNull Asset asset,
@@ -168,8 +169,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
         return () -> VanillaIndexQueueView.this.value(vanillaIndexQuery, tailer, iterator, fromIndex);
     }
 
-    private ThreadLocal<List<Marshallable>> indexedValueList = ThreadLocal.withInitial(ArrayList::new);
-
     @Nullable
     private List<Marshallable> value(@NotNull IndexQuery<V> vanillaIndexQuery,
                                      @NotNull ExcerptTailer tailer,
@@ -193,7 +192,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
             throw Jvm.rethrow(new InvalidEventHandlerException("shutdown"));
 
         try (DocumentContext dc = tailer.readingDocument()) {
-
 
             if (!dc.isPresent())
                 return null;
@@ -251,6 +249,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
         activeSubscriptions.values().forEach(v -> v.set(true));
         chronicleQueue.close();
     }
-
 }
+
 

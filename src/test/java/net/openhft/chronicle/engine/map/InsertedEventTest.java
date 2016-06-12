@@ -39,7 +39,6 @@ public class InsertedEventTest {
         ClassAliasPool.CLASS_ALIASES.addAlias(InsertedEvent.class, Factor.class);
     }
 
-
     private ThreadDump threadDump;
 
     @Before

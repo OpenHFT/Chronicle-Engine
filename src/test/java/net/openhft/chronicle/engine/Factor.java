@@ -193,5 +193,4 @@ public class Factor extends AbstractMarshallable implements BytesMarshallable {
                 .text(accountNumber);
         wireOut.write(() -> "firm").text(firm);
     }
-
 }

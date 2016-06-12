@@ -81,7 +81,6 @@ public class ReferenceHandler<E, T> extends AbstractHandler {
 
             if (registerSubscriber.contentEquals(eventName)) {
 
-
                 final Reference<E> key = view;
                 final Subscriber listener = new Subscriber() {
                     @Override

@@ -60,7 +60,6 @@ public class TestInsertUpdateChronicleMapViewOnServer extends ThreadMonitoringTe
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
-
     public TestInsertUpdateChronicleMapViewOnServer(WireType wireType) {
 
     }
@@ -72,7 +71,6 @@ public class TestInsertUpdateChronicleMapViewOnServer extends ThreadMonitoringTe
         list.add(new Object[]{WireType.TEXT});
         return list;
     }
-
 
     @Before
     public void before() throws IOException {
@@ -95,14 +93,12 @@ public class TestInsertUpdateChronicleMapViewOnServer extends ThreadMonitoringTe
 
     }
 
-
     public void preAfter() {
         clientAssetTree.close();
         Jvm.pause(100);
         if (serverEndpoint != null)
             serverEndpoint.close();
         serverAssetTree.close();
-
 
     }
 

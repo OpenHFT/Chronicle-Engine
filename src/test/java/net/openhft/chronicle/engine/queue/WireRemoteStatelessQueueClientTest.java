@@ -84,6 +84,5 @@ public class WireRemoteStatelessQueueClientTest extends ThreadMonitoringTest {
             return queue;
         }
     }*/
-
 }
 

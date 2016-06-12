@@ -43,7 +43,6 @@ public class EngineClusterContext extends ClusterContext {
         super();
     }
 
-
     public ThrowingFunction<NetworkContext, TcpEventHandler, IOException> tcpEventHandlerFactory() {
         return (networkContext) -> {
             final EngineWireNetworkContext nc = (EngineWireNetworkContext) networkContext;
@@ -68,7 +67,6 @@ public class EngineClusterContext extends ClusterContext {
 
                 throw new UnsupportedOperationException("not supported class=" + o.getClass());
             };
-
 
             // todo log these to a chronicle q rather than the log
             nc.networkStatsListener(new NetworkStatsListener() {

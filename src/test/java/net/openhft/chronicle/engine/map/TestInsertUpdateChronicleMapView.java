@@ -59,7 +59,6 @@ public class TestInsertUpdateChronicleMapView extends ThreadMonitoringTest {
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
-
     public TestInsertUpdateChronicleMapView(WireType wireType) {
         this.wireType = wireType;
     }
@@ -71,8 +70,6 @@ public class TestInsertUpdateChronicleMapView extends ThreadMonitoringTest {
         //  list.add(new Object[]{WireType.TEXT});
         return list;
     }
-
-
 
     @Before
     public void before() throws IOException {
@@ -92,7 +89,6 @@ public class TestInsertUpdateChronicleMapView extends ThreadMonitoringTest {
 
         clientAssetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType, x -> t.set(x));
     }
-
 
     public void preAfter() {
         clientAssetTree.close();

@@ -35,7 +35,6 @@ public class RemoteIndexQueueView<K extends Marshallable, V extends Marshallable
     private final Map<Object, Long> subscribersToTid = new ConcurrentHashMap<>();
     int i;
 
-
     public RemoteIndexQueueView(@NotNull final RequestContext context,
                                 @NotNull Asset asset) {
         super(asset.findView(TcpChannelHub.class), (long) 0, toUri(context));
@@ -106,7 +105,6 @@ public class RemoteIndexQueueView<K extends Marshallable, V extends Marshallable
 
     }
 
-
     @Override
     public void unregisterSubscriber(@NotNull Subscriber<IndexedValue<V>> listener) {
         Long tid = subscribersToTid.get(listener);
@@ -131,6 +129,5 @@ public class RemoteIndexQueueView<K extends Marshallable, V extends Marshallable
         });
 
     }
-
-
 }
+

@@ -26,5 +26,4 @@ import net.openhft.chronicle.engine.api.pubsub.SubscriptionCollection;
 public interface SimpleSubscription<E> extends SubscriptionCollection<E> {
 
     void notifyMessage(Object e);
-
 }

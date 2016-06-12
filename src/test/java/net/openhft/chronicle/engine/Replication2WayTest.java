@@ -79,7 +79,6 @@ public class Replication2WayTest extends ThreadMonitoringTest {
     public void before() throws IOException {
         YamlLogging.setAll(false);
 
-
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
         ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
         //Delete any files from the last run

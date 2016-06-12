@@ -53,7 +53,6 @@ public class TcpManyClientConnectionsTest extends ThreadMonitoringTest {
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
-
     @Before
     public void before() throws IOException {
         serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));

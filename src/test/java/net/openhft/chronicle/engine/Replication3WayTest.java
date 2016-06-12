@@ -159,7 +159,6 @@ public class Replication3WayTest extends ThreadMonitoringTest {
         Files.deleteIfExists(Paths.get(OS.TARGET, name.toString()));
     }
 
-
     @Test
     public void testThreeWay() throws InterruptedException {
 

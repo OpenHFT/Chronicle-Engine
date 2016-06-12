@@ -55,7 +55,6 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext> extend
     private MapView<SocketChannel, TcpHandler> socketChannelByHandlers;
     private TcpHandler handler;
 
-
     public EngineWireNetworkContext(Asset asset) {
         this.rootAsset = asset.root();
         ((VanillaAsset) rootAsset.acquireAsset("/proc")).configMapServer();
@@ -69,7 +68,6 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext> extend
                 hostByConnectionStatus = rootAsset.root().acquireAsset(path)
                         .acquireView(MapView.class, requestContext);
             }
-
 
             {
                 String path = "/proc/connections/handlers";
@@ -131,7 +129,6 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext> extend
         };
 
     }
-
 
     @Override
     public String toString() {

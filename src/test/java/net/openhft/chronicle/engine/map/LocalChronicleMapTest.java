@@ -48,7 +48,6 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     @Rule
     public TestName name = new TestName();
 
-
     @NotNull
     private ClosableMapSupplier<Integer, String> newIntString() throws IOException {
         final LocalMapSupplier supplier = new LocalMapSupplier<>(Integer

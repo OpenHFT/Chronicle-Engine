@@ -45,5 +45,4 @@ public interface Query<T> {
     <R, A> R collect(Collector<? super T, A, R> collector);
 
     void forEach(Consumer<? super T> action);
-
 }

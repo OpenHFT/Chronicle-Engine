@@ -98,7 +98,6 @@ public class ServerEndpoint implements Closeable {
                 throw new UnsupportedOperationException("not supported class=" + o.getClass());
             };
 
-
             final Function<EngineWireNetworkContext, TcpHandler> f
                     = x -> new HeaderTcpHandler<>(handler, consumer, x);
 

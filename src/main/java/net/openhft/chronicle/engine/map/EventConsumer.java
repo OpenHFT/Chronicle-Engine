@@ -26,5 +26,4 @@ import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 @FunctionalInterface
 public interface EventConsumer<K, V> extends ISubscriber {
     void notifyEvent(MapEvent<K, V> changeEvent) throws InvalidSubscriberException;
-
 }

@@ -88,7 +88,6 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         });
     }
 
-
     public static void deleteFiles(File element) {
         if (element.isDirectory()) {
             for (File sub : element.listFiles()) {

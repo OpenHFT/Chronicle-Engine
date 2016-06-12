@@ -281,6 +281,7 @@ class ReplicationHub extends AbstractStatelessClient {
                         ReplicationHub.this.sendBytes(bytes, false);
                         return true;
                     }
+
                     return false;
                 }
             }
@@ -302,6 +303,7 @@ class ReplicationHub extends AbstractStatelessClient {
                 ReplicationHub.this.sendBytes(bytes, false);
                 return true;
             }
+
             return false;
         }
 

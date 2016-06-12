@@ -10,6 +10,4 @@ public interface TypeToString {
     String typeToSting(Class type);
 
     Class<? extends Marshallable> toType(CharSequence type);
-
-
 }

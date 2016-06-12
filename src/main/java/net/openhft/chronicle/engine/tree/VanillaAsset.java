@@ -20,7 +20,7 @@ import net.openhft.chronicle.core.annotation.ForceInline;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.core.threads.HandlerPriority;
-import net.openhft.chronicle.core.util.ThrowingAcceptor;
+import net.openhft.chronicle.core.util.ThrowingConsumer;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -100,7 +100,6 @@ public class VanillaAsset implements Asset, Closeable {
                 parentSubs.notifyEvent(AddedAssetEvent.of(parent.fullName(), name));
         }
     }
-
 
     void configMapCommon() {
         addWrappingRule(ValuesCollection.class, LAST + " values", VanillaValuesCollection::new, MapView.class);
@@ -209,7 +208,7 @@ public class VanillaAsset implements Asset, Closeable {
         VanillaAsset queue = (VanillaAsset) acquireAsset("/queue");
         queue.configQueueServer();
 
-        addView(QueueConfig.class, new QueueConfig(uriToHostId, true,null,WireType.BINARY));
+        addView(QueueConfig.class, new QueueConfig(uriToHostId, true, null, WireType.BINARY));
 
         addView(ObjectCacheFactory.class, VanillaObjectCacheFactory.INSTANCE);
 
@@ -318,9 +317,10 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Override
-    public void forEachChild(@NotNull ThrowingAcceptor<Asset, InvalidSubscriberException> childAcceptor) throws InvalidSubscriberException {
-        for (Asset child : children.values())
-            childAcceptor.accept(child);
+    public <T extends Throwable> void forEachChild(@NotNull ThrowingConsumer<Asset, T> consumer) throws T {
+        for (Asset child : children.values()) {
+            consumer.accept(child);
+        }
     }
 
     @Nullable
@@ -447,11 +447,7 @@ public class VanillaAsset implements Asset, Closeable {
                 .filter(v -> v instanceof java.io.Closeable)
                 .forEach(Closeable::closeQuietly);
 
-        try {
-            forEachChild(Closeable::close);
-        } catch (InvalidSubscriberException e) {
-            LOG.error("", e);
-        }
+        forEachChild(Closeable::close);
     }
 
     @Override
@@ -461,11 +457,7 @@ public class VanillaAsset implements Asset, Closeable {
                 .map(v -> (Closeable) v)
                 .forEach(Closeable::notifyClosing);
 
-        try {
-            forEachChild(Closeable::notifyClosing);
-        } catch (InvalidSubscriberException e) {
-            LOG.error("", e);
-        }
+        forEachChild(Closeable::notifyClosing);
     }
 
     @Override
@@ -559,11 +551,7 @@ public class VanillaAsset implements Asset, Closeable {
                 }
             }
         }
-        try {
-            forEachChild(ca -> ca.getUsageStats(ats));
-        } catch (InvalidSubscriberException e) {
-            throw new AssertionError(e);
-        }
+        forEachChild(ca -> ca.getUsageStats(ats));
     }
 
     static class LeafView extends AbstractMarshallable {

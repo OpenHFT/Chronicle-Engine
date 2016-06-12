@@ -15,5 +15,4 @@ public interface IndexQueueView<S extends Subscriber<IndexedValue<V>>, V extends
                             @NotNull IndexQuery<V> vanillaIndexQuery);
 
     void unregisterSubscriber(@NotNull S listener);
-
 }

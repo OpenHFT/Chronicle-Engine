@@ -94,5 +94,4 @@ public class FilterTest extends ThreadMonitoringTest {
         Assert.assertEquals(1, actual.pipelineSize());
         Assert.assertEquals(Operation.OperationType.FILTER, actual.getPipeline(0).op());
     }
-
 }

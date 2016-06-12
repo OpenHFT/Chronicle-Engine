@@ -46,7 +46,6 @@ import static org.junit.Assert.*;
  */
 public class ChassisTest {
 
-
     private ThreadDump threadDump;
 
     @Before

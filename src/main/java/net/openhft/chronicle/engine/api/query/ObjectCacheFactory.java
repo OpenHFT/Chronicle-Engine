@@ -10,5 +10,4 @@ import java.util.function.Supplier;
  */
 @FunctionalInterface
 public interface ObjectCacheFactory extends Supplier<Function<Class, ReadMarshallable>> {
-
 }

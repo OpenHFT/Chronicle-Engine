@@ -43,5 +43,4 @@ public interface WireAdapter<K, V> {
 
     @NotNull
     Function<ValueIn, Entry<K, V>> wireToEntry();
-
 }

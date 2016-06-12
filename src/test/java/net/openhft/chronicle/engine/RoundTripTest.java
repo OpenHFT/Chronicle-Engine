@@ -70,7 +70,6 @@ public class RoundTripTest {
     private static String CONNECTION_2 = "CONNECTION_2";
     private static String CONNECTION_3 = "CONNECTION_3";
 
-
     private ThreadDump threadDump;
 
     @NotNull

@@ -288,5 +288,4 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
             MapReplicationHandler.this.close();
         }
     }
-
 }

@@ -168,6 +168,7 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
         futures.forEach(f -> {
             try {
                 f.get();
+
             } catch (InterruptedException | ExecutionException e) {
                 Jvm.rethrow(e);
             }

@@ -129,6 +129,7 @@ public class VanillaIndexQuery<V> extends AbstractMarshallable implements Demars
                 Class<Predicate> clazzP = CompilerUtils.CACHED_COMPILER.loadFromJava(classLoader,
                         "net.openhft.chronicle.engine.api.query." + className, source);
                 return clazzP.newInstance();
+
             } catch (Exception e) {
                 throw Jvm.rethrow(e);
             }
@@ -166,5 +167,4 @@ public class VanillaIndexQuery<V> extends AbstractMarshallable implements Demars
 
     }
 }
-
 

@@ -61,7 +61,7 @@ public class VanillaTopologySubscription implements TopologySubscription {
             }
             subscribers.add(subscriber);
         } catch (InvalidSubscriberException e) {
-            // ignored
+            // subscriber is discarded.
         }
     }
 
