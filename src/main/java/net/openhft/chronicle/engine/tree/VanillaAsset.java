@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.engine.tree;
 
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.annotation.ForceInline;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.threads.EventLoop;
@@ -367,10 +366,9 @@ public class VanillaAsset implements Asset, Closeable {
                 if (leafView != null)
                     return addView(viewType, leafView);
                 V wrappingView = createWrappingView(viewType, rc, this, null);
-                if (wrappingView == null) {
-                    Jvm.warn().on(getClass(), "Unable to classify " + viewType + "\n" + dumpRules());
+                if (wrappingView == null)
                     throw new AssetNotFoundException("Unable to classify " + viewType.getName() + " context: " + rc);
-                }
+
                 return addView(viewType, wrappingView);
             });
         }

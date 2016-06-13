@@ -180,7 +180,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
             Files.deleteIfExists(element.toPath());
 
         } catch (IOException e) {
-            Jvm.warn().on(ChronicleQueueView.class, "Unable to delete " + element, e);
+            Jvm.debug().on(ChronicleQueueView.class, "Unable to delete " + element, e);
         }
     }
 
