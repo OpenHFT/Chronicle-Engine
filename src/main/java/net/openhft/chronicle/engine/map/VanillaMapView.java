@@ -383,8 +383,9 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
             if (sb.length() > 3)
                 sb.setLength(sb.length() - 2);
             return sb.append("}").toString();
-        } catch (InvalidSubscriberException e) {
-            throw new AssertionError(e);
+        } catch (Exception e) {
+            sb.append(e);
+            return sb.toString();
         }
     }
 }

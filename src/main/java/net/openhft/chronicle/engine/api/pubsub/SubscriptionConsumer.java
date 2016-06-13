@@ -42,13 +42,15 @@ public interface SubscriptionConsumer<T> {
         subs.forEach(s -> {
             try {
                 accept(s);
+
             } catch (InvalidSubscriberException ise) {
                 subs.remove(s);
                 if (s instanceof ISubscriber) {
                     try {
                         ((ISubscriber) s).onEndOfSubscription();
-                    } catch (Exception e) {
-                        LOG.error("", e);
+
+                    } catch (RuntimeException e) {
+                        LOG.warn("", e);
                     }
                 }
             }

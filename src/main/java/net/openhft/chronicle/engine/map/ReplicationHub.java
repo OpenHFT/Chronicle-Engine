@@ -162,8 +162,9 @@ class ReplicationHub extends AbstractStatelessClient {
                                       // publishes changes - pushes the replication events
                                       try {
                                           publish(mi, b, remoteIdentifier);
-                                      } catch (Exception e) {
-                                          LOG.error("", e);
+
+                                      } catch (RuntimeException e) {
+                                          LOG.warn("", e);
                                       }
                                       return;
 
@@ -209,7 +210,7 @@ class ReplicationHub extends AbstractStatelessClient {
      *
      * @param mi               the modification iterator that notifies us of changes
      * @param remote           details about the remote connection
-     * @param remoteIdentifier
+     * @param remoteIdentifier the identifier of the remote host
      */
     void publish(@NotNull final ModificationIterator mi,
                  @NotNull final Bootstrap remote, byte remoteIdentifier) {

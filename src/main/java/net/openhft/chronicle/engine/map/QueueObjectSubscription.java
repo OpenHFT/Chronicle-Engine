@@ -23,6 +23,7 @@ import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.ISubscriber;
+import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
@@ -103,8 +104,9 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
     private void notifyEndOfSubscription(@NotNull ISubscriber subscriber) {
         try {
             subscriber.onEndOfSubscription();
-        } catch (Exception e) {
-            LOG.error("", e);
+
+        } catch (RuntimeException e) {
+            LOG.warn("Failed to send end of subscription", e);
         }
     }
 
@@ -185,8 +187,13 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
                 M message = next.message();
                 T topic = next.topic();
                 subscriber.onMessage(topic, message);
-            } catch (Exception e) {
-                LOG.error("", e);
+
+            } catch (InvalidSubscriberException e) {
+                topicSubscribers.add(subscriber);
+                terminate.set(true);
+
+            } catch (RuntimeException e) {
+                LOG.warn("", e);
                 terminate.set(true);
             }
 

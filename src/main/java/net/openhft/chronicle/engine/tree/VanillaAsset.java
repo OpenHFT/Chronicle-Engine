@@ -164,7 +164,7 @@ public class VanillaAsset implements Asset, Closeable {
         addWrappingRule(IndexQueueView.class, LAST + " VanillaIndexQueueView",
                 VanillaIndexQueueView::new, QueueView.class);
 
-        addLeafRule(QueueView.class, LAST + " ChronicleQueueView", ChronicleQueueView::new);
+        addLeafRule(QueueView.class, LAST + " ChronicleQueueView", ChronicleQueueView::create);
     }
 
     public void configQueueRemote() {

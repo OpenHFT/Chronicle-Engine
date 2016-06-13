@@ -144,8 +144,10 @@ public class CollectionWireHandler<U, C extends Collection<U>> {
 
                     throw new IllegalStateException("unsupported event=" + eventName);
                 });
+
             } catch (Exception e) {
-                LOG.error("", e);
+                LOG.warn("", e);
+
             } finally {
 
                 if (YamlLogging.showServerWrites()) {
@@ -196,8 +198,10 @@ public class CollectionWireHandler<U, C extends Collection<U>> {
             this.tid = tid;
             assert in.startUse();
             dataConsumer.readMarshallable(in);
-        } catch (Exception e) {
-            LOG.error("", e);
+
+        } catch (RuntimeException e) {
+            LOG.warn("", e);
+
         }finally {
             assert in.endUse();
         }

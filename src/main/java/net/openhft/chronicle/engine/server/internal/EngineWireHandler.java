@@ -159,6 +159,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
 
         try {
             this.eventLoop.start();
+
         } catch (RejectedExecutionException e) {
             LOG.debug("", e);
         }
@@ -175,8 +176,9 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                 publisherHandler, replicationHandler}) {
             try {
                 abstractHandler.onEndOfConnection(heartbeatTimeOut);
+
             } catch (Exception e) {
-                LOG.error("Failed while for " + abstractHandler, e);
+                LOG.warn("Failed while for " + abstractHandler, e);
             }
         }
 
@@ -432,7 +434,8 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                 }
 
             } catch (Exception e) {
-                LOG.error("", e);
+                LOG.warn("", e);
+
             } finally {
                 if (sessionProvider != null)
                     sessionProvider.remove();
@@ -467,6 +470,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
             try {
                 logBuffer.append("\nServer Receives:\n")
                         .append(Wires.fromSizePrefixedBlobs(in.bytes(), start));
+
             } catch (Exception e) {
                 logBuffer.append("\n\n").append(Bytes.toString(in.bytes(), start, in.bytes().readLimit() - start));
             }

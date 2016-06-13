@@ -91,7 +91,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
                 long start = dc.wire().bytes().readPosition();
 
                 try {
-
                     while (dc.wire().bytes().readRemaining() > 0) {
                         final StringBuilder sb = Wires.acquireStringBuilder();
                         final ValueIn read = dc.wire().read(sb);
@@ -110,8 +109,9 @@ public class VanillaIndexQueueView<V extends Marshallable>
                             lastIndexRead = dc.index();
                         }
                     }
-                } catch (Exception e) {
-                    LOG.error(Wires.fromSizePrefixedBlobs(dc.wire().bytes(), start - 4), e);
+
+                } catch (RuntimeException e) {
+                    LOG.warn(Wires.fromSizePrefixedBlobs(dc.wire().bytes(), start - 4), e);
                 }
             }
 
@@ -153,10 +153,11 @@ public class VanillaIndexQueueView<V extends Marshallable>
             final Supplier<List<Marshallable>> supplier = excerptConsumer(vanillaIndexQuery,
                     tailer, iterator, fromIndex);
             sub.addSupplier(supplier);
-        } catch (Exception e) {
+
+        } catch (RuntimeException e) {
             //tailer.close();
             sub.onEndOfSubscription();
-            LOG.error("Error registering subscription", e);
+            LOG.warn("Error registering subscription", e);
         }
 
     }

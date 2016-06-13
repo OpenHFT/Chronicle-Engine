@@ -91,7 +91,8 @@ public class MapSimpleSubscription<E> implements SimpleSubscription<E> {
             E ee = e instanceof BytesStore ? valueReader.apply(e) : (E) e;
             SubscriptionConsumer.notifyEachSubscriber(subscribers, s -> s.onMessage(ee));
         } catch (ClassCastException e1) {
-            System.err.println("Is " + valueReader + " the correct ValueReader?");
+            if (LOG.isDebugEnabled())
+                LOG.debug("Is " + valueReader + " the correct ValueReader?");
             throw e1;
         }
     }
@@ -102,7 +103,7 @@ public class MapSimpleSubscription<E> implements SimpleSubscription<E> {
             try {
                 subscriber.onEndOfSubscription();
             } catch (Exception e) {
-                LOG.error("", e);
+                LOG.warn("", e);
             }
         }
     }

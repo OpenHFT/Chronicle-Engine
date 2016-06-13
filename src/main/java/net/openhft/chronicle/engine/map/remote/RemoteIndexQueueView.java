@@ -95,7 +95,7 @@ public class RemoteIndexQueueView<K extends Marshallable, V extends Marshallable
                         hub.unsubscribe(tid());
                     }
                 } catch (Exception e) {
-                    LOG.error("", e);
+                    LOG.warn("", e);
                 }
 
             }

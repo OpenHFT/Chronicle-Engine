@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.engine.pubsub;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
@@ -93,26 +94,18 @@ public class RemotePublisher<T, M> extends AbstractStatelessClient<EventId> impl
             throw new NullPointerException("message can not be null");
     }
 
-    private void onEvent(T topic, @Nullable M message, @NotNull TopicSubscriber<T, M> topicSubscriber) {
-        try {
+    private void onEvent(T topic, @Nullable M message, @NotNull TopicSubscriber<T, M> topicSubscriber) throws InvalidSubscriberException {
             if (message != null) {
                 topicSubscriber.onMessage(topic, message);
             } else {
                 // todo
             }
-        } catch (InvalidSubscriberException noLongerValid) {
-            // todo
-        }
     }
 
-    private void onEvent(@Nullable M message, @NotNull Subscriber<M> topicSubscriber) {
-        try {
-            if (message != null) {
-                topicSubscriber.onMessage(message);
-            } else {
-                // todo
-            }
-        } catch (InvalidSubscriberException noLongerValid) {
+    private void onEvent(@Nullable M message, @NotNull Subscriber<M> topicSubscriber) throws InvalidSubscriberException {
+        if (message != null) {
+            topicSubscriber.onMessage(message);
+        } else {
             // todo
         }
     }
@@ -127,7 +120,8 @@ public class RemotePublisher<T, M> extends AbstractStatelessClient<EventId> impl
     }
 
     @Override
-    public void registerSubscriber(boolean bootstrap, int throttlePeriodMs, Subscriber<M> subscriber) throws AssetNotFoundException {
+    public void registerSubscriber(boolean bootstrap, int throttlePeriodMs, Subscriber<M> subscriber)
+            throws AssetNotFoundException {
 
         if (hub.outBytesLock().isHeldByCurrentThread())
             throw new IllegalStateException("Cannot view map while debugging");
@@ -153,9 +147,12 @@ public class RemotePublisher<T, M> extends AbstractStatelessClient<EventId> impl
                         hub.unsubscribe(tid());
                     } else if (CoreFields.reply.contentEquals(eventname)) {
                         valueIn.marshallable(m -> {
-
-                            final M message = m.read(() -> "message").object(messageClass);
-                            RemotePublisher.this.onEvent(message, subscriber);
+                            try {
+                                final M message = m.read(() -> "message").object(messageClass);
+                                RemotePublisher.this.onEvent(message, subscriber);
+                            } catch (InvalidSubscriberException e) {
+                                throw Jvm.rethrow(e);
+                            }
                         });
                     }
                 });

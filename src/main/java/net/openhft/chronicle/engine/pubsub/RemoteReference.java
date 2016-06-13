@@ -185,6 +185,7 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
             return;
         try {
             subscriber.onMessage(message);
+
         } catch (InvalidSubscriberException noLongerValid) {
             unregisterSubscriber(subscriber);
         }

@@ -45,6 +45,7 @@ public class TopologySubscriptionHandler extends SubscriptionHandler<TopologySub
 
         try {
             if (before(inputTid, valueIn)) return;
+
         } catch (AssetNotFoundException e) {
             throw new AssertionError(e);
         }

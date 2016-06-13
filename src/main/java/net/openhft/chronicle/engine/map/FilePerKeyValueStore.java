@@ -158,8 +158,10 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
                     InsertedEvent e = InsertedEvent.of(asset.fullName(), p.getFileName().toString(), fileContents, false);
                     kvConsumer.accept(e);
                 }
+
             } catch (InvalidSubscriberException ise) {
                 throw Jvm.rethrow(ise);
+
             } finally {
                 if (fileContents != null)
                     fileContents.release();
@@ -221,7 +223,11 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         if (closed) throw new IllegalStateException("closed");
         BytesStore existing = get(key);
         if (existing != null) {
-            deleteFile(dirPath.resolve(key));
+            try {
+                deleteFile(dirPath.resolve(key));
+            } catch (IOException e) {
+                LOG.warn("Unable to delete " + key);
+            }
         }
         return existing;
     }
@@ -231,7 +237,11 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         if (closed) throw new IllegalStateException("closed");
         Path path = dirPath.resolve(key);
         if (path.toFile().isFile())
-            deleteFile(path);
+            try {
+                deleteFile(path);
+            } catch (IOException e) {
+                LOG.warn("Unable to delete " + key);
+            }
         // todo check this is removed in watcher
         FileRecord fr = lastFileRecordMap.get(path.toFile());
         return fr != null;
@@ -246,12 +256,17 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
                 deleteFile(path);
             } catch (Exception e) {
                 count.incrementAndGet();
-                // ignored at first.
             }
         });
         if (count.intValue() > 0) {
             pause(100);
-            getFiles().forEach(this::deleteFile);
+            getFiles().forEach(path -> {
+                try {
+                    deleteFile(path);
+                } catch (IOException e) {
+                    LOG.warn("Unable to delete " + path + " " + e);
+                }
+            });
         }
     }
 
@@ -266,6 +281,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
                     .walk(dirPath)
                     .filter(p -> !Files.isDirectory(p))
                     .filter(this::isVisible);
+
         } catch (IOException e) {
             throw Jvm.rethrow(e);
         }
@@ -343,6 +359,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         } catch (IOException e) {
             throw new AssertionError(e);
         }
+
         for (int i = 1; i < 5; i++) {
             try {
                 Files.move(tmpFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
@@ -364,12 +381,8 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
 //        System.out.println(file + " size: " + file.length());
     }
 
-    private void deleteFile(@NotNull Path path) {
-        try {
-            Files.deleteIfExists(path);
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
+    private void deleteFile(@NotNull Path path) throws IOException {
+        Files.deleteIfExists(path);
     }
 
     public void close() {
@@ -418,7 +431,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
                 }
             } catch (Throwable e) {
                 if (!closed)
-                    LOG.error("", e);
+                    LOG.warn("", e);
             }
         }
 

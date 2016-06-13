@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.engine.query;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.util.SerializableFunction;
 import net.openhft.chronicle.core.util.SerializablePredicate;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
@@ -183,8 +184,8 @@ public class Filter<E> implements Marshallable, Iterable<Operation> {
                         func.apply(message).forEach(e -> {
                             try {
                                 FilteredSubscriber.this.onMessage(e);
-                            } catch (InvalidSubscriberException e1) {
-                                e1.printStackTrace();
+                            } catch (InvalidSubscriberException ise) {
+                                throw Jvm.rethrow(ise);
                             }
                         });
                         break;

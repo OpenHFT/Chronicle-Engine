@@ -247,6 +247,7 @@ public class RequestContext implements Cloneable {
         try {
             Class clazz = lookupType(viewName);
             viewType(clazz);
+
         } catch (ClassNotFoundException iae) {
             throw new IllegalArgumentException("Unknown view name:" + viewName);
         }

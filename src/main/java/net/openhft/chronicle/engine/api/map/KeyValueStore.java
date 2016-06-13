@@ -102,7 +102,8 @@ public interface KeyValueStore<K, V> extends Assetted<KeyValueStore<K, V>>, Clos
         List<Map.Entry<K, V>> entries = new ArrayList<>();
         try {
             for (int i = 0, seg = segments(); i < seg; i++)
-                entriesFor(i, e -> entries.add(e));
+                entriesFor(i, entries::add);
+
         } catch (InvalidSubscriberException e) {
             throw new AssertionError(e);
         }
@@ -115,6 +116,7 @@ public interface KeyValueStore<K, V> extends Assetted<KeyValueStore<K, V>>, Clos
         try {
             for (int i = 0, seg = segments(); i < seg; i++)
                 keysFor(i, keys::add);
+
         } catch (InvalidSubscriberException e) {
             throw new AssertionError(e);
         }
@@ -170,6 +172,7 @@ public interface KeyValueStore<K, V> extends Assetted<KeyValueStore<K, V>>, Clos
         try {
             for (int i = 0, seg = segments(); i < seg; i++)
                 entriesFor(i, e -> entries.add(e.getValue()));
+
         } catch (InvalidSubscriberException e) {
             throw new AssertionError(e);
         }

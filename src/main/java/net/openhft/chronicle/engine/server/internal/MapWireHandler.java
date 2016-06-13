@@ -301,8 +301,9 @@ public class MapWireHandler<K, V> extends AbstractHandler {
 
                     throw new IllegalStateException("unsupported event=" + eventName);
                 });
+
             } catch (Exception e) {
-                LOG.error("", e);
+                LOG.warn("", e);
             }
         }
     };

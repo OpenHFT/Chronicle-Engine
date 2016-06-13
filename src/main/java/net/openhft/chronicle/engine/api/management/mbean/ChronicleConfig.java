@@ -36,7 +36,7 @@ public class ChronicleConfig implements ChronicleConfigMBean {
             ObjectName name = new ObjectName("net.openhft.chronicle.engine:type=ChronicleConfig");
             mbs.registerMBean(mBean, name);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 

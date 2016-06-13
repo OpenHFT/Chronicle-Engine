@@ -61,7 +61,7 @@ public class VanillaTopologySubscription implements TopologySubscription {
             }
             subscribers.add(subscriber);
         } catch (InvalidSubscriberException e) {
-            // subscriber is discarded.
+            LOG.debug("discarding " + subscriber, e);
         }
     }
 
@@ -113,7 +113,7 @@ public class VanillaTopologySubscription implements TopologySubscription {
             try {
                 subscriber.onEndOfSubscription();
             } catch (Exception e) {
-                LOG.error("", e);
+                LOG.debug("", e);
             }
         }
     }

@@ -351,6 +351,7 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
                     this.keyReplicationData) {
                 try {
                     keyReplicationData.close();
+
                 } catch (Throwable e) {
                     if (throwable == null) {
                         throwable = e;

@@ -144,8 +144,9 @@ public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subsc
                     asset.unregisterSubscriber(requestContext, (Subscriber) listener);
                 else
                     LOG.error("Listener was " + listener);
+
             } catch (Exception e) {
-                LOG.error("", e);
+                LOG.warn("listener: " + listener, e);
             }
         });
         tidToListener.clear();

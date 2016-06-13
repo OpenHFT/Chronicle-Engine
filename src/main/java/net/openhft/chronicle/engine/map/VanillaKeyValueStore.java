@@ -117,6 +117,7 @@ public class VanillaKeyValueStore<K, V> implements AuthenticatedKeyValueStore<K,
         try {
             for (int i = 0, segs = segments(); i < segs; i++)
                 keysFor(i, map::remove);
+
         } catch (InvalidSubscriberException e) {
             throw new AssertionError(e);
         }

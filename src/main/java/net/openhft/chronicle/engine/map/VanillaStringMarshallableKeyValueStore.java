@@ -18,7 +18,7 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
-import net.openhft.chronicle.core.ClassLocal;
+import net.openhft.chronicle.core.util.ObjectUtils;
 import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.engine.api.map.*;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
@@ -31,7 +31,6 @@ import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Constructor;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -46,15 +45,7 @@ import static net.openhft.chronicle.engine.map.Buffers.BUFFERS;
  * Created by peter on 25/05/15.
  */
 public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> implements StringMarshallableKeyValueStore<V> {
-    private static final ClassLocal<Constructor> CONSTRUCTORS = ClassLocal.withInitial(c -> {
-        try {
-            Constructor con = c.getDeclaredConstructor();
-            con.setAccessible(true);
-            return con;
-        } catch (NoSuchMethodException e) {
-            throw new AssertionError(e);
-        }
-    });
+
     @NotNull
     private final BiFunction<V, Bytes, Bytes> valueToBytes;
     @NotNull
@@ -104,11 +95,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     @Nullable
     static <T> T acquireInstance(@NotNull Class type, @Nullable T t) {
         if (t == null)
-            try {
-                t = (T) CONSTRUCTORS.get(type).newInstance();
-            } catch (Exception e) {
-                throw new AssertionError(e);
-            }
+            t = (T) ObjectUtils.newInstance(type);
         return t;
     }
 

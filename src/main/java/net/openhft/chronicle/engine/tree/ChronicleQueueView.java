@@ -76,13 +76,13 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
     @NotNull
     private QueueConfig queueConfig;
 
-    public ChronicleQueueView(@NotNull RequestContext context, @NotNull Asset asset) {
+    public ChronicleQueueView(@NotNull RequestContext context, @NotNull Asset asset) throws IOException {
         this(null, context, asset);
     }
 
     public ChronicleQueueView(@Nullable ChronicleQueue queue,
                               @NotNull RequestContext context,
-                              @NotNull Asset asset) {
+                              @NotNull Asset asset) throws IOException {
         this.context = context;
         String s = asset.fullName();
         if (s.startsWith("/")) s = s.substring(1);
@@ -92,8 +92,9 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
 
         try {
             queueConfig = asset.findView(QueueConfig.class);
+
         } catch (AssetNotFoundException anfe) {
-            LOG.error("queue config not found asset="+asset.fullName());
+            LOG.warn("queue config not found asset=" + asset.fullName());
             throw anfe;
         }
 
@@ -126,10 +127,11 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
                     Class.class, boolean.class, MessageAdaptor.class);
             return (WriteMarshallable) declaredConstructor.newInstance(nextIndexRequired,
                     topicType, elementType, acknowledgement, messageAdaptor);
+
         } catch (Exception e) {
             IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
                     " required to run this code. Please contact sales@chronicle.software");
-            LOG.error("", e);
+            LOG.warn("", e);
             throw licence;
         }
     }
@@ -155,11 +157,12 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
                     boolean.class, MessageAdaptor.class, WireType.class);
             return (WriteMarshallable) declaredConstructor.newInstance(topicType, elementType,
                     acknowledgement, messageAdaptor, wireType);
+
         } catch (Exception e) {
             IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
                     " required to run this code." +
                     "Please contact sales@chronicle.software");
-            LOG.error("", e);
+            LOG.warn("", e);
             throw licence;
         }
     }
@@ -175,8 +178,17 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         }
         try {
             Files.deleteIfExists(element.toPath());
+
         } catch (IOException e) {
-            e.printStackTrace();
+            LOG.warn("Unable to delete " + element, e);
+        }
+    }
+
+    public static QueueView create(RequestContext context, Asset asset) {
+        try {
+            return new ChronicleQueueView<>(context, asset);
+        } catch (IOException e) {
+            throw Jvm.rethrow(e);
         }
     }
 
@@ -296,7 +308,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
     private ChronicleQueue newInstance(@NotNull String name,
                                        @Nullable String basePath,
                                        @Nullable Byte hostID,
-                                       @NotNull WireType wireType) {
+                                       @NotNull WireType wireType) throws IOException {
 
         if (wireType == DELTA_BINARY)
             throw new IllegalArgumentException("Chronicle Queues can not be set to use delta wire");
@@ -311,18 +323,15 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
             baseFilePath = new File(defaultPath, "" + hostID);
         else
             baseFilePath = new File(basePath, name);
-        try {
-            if (!baseFilePath.exists())
-                Files.createDirectories(baseFilePath.toPath());
 
-            final SingleChronicleQueueBuilder builder = wireType == DEFAULT_ZERO_BINARY
-                    ? defaultZeroBinary(baseFilePath)
-                    : binary(baseFilePath);
-            chronicleQueue = builder.build();
+        if (!baseFilePath.exists())
+            Files.createDirectories(baseFilePath.toPath());
 
-        } catch (Exception e) {
-            throw Jvm.rethrow(e);
-        }
+        final SingleChronicleQueueBuilder builder = wireType == DEFAULT_ZERO_BINARY
+                ? defaultZeroBinary(baseFilePath)
+                : binary(baseFilePath);
+        chronicleQueue = builder.build();
+
         return chronicleQueue;
     }
 
@@ -421,19 +430,14 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
      *                 the except
      */
     public void get(@NotNull BiConsumer<CharSequence, M> consumer) {
-        try {
-            final ExcerptTailer tailer = threadLocalTailer();
+        final ExcerptTailer tailer = threadLocalTailer();
 
-            tailer.readDocument(w -> {
-                final StringBuilder eventName = Wires.acquireStringBuilder();
-                final ValueIn valueIn = w.readEventName(eventName);
-                consumer.accept(eventName, valueIn.object(elementTypeClass));
+        tailer.readDocument(w -> {
+            final StringBuilder eventName = Wires.acquireStringBuilder();
+            final ValueIn valueIn = w.readEventName(eventName);
+            consumer.accept(eventName, valueIn.object(elementTypeClass));
 
-            });
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw Jvm.rethrow(e);
-        }
+        });
     }
 
     public long publishAndIndex(@NotNull T topic, @NotNull M message) {
@@ -488,8 +492,9 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         if (dontPersist) {
             try {
                 deleteFiles(file);
+
             } catch (Exception e) {
-                LOG.error("", e);
+                LOG.warn("Unable to delete " + file, e);
             }
         }
 
@@ -504,13 +509,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
 
     @Override
     protected void finalize() throws Throwable {
-        try {
-            close();
-        } catch (Throwable ignore) {
-
-        }
         super.finalize();
-
+        Closeable.closeQuietly(this);
     }
 
     public <M> void registerSubscriber(Subscriber<M> subscriber) {

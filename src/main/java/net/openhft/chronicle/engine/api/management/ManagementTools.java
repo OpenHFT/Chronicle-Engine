@@ -110,7 +110,7 @@ public enum ManagementTools {
             startJMXRemoteService();
             count++;
         } catch (IOException ie) {
-            LOG.error("Error while enable management", ie);
+            LOG.warn("Error while enable management", ie);
         }
         registerViewofTree(assetTree);
     }
@@ -121,7 +121,7 @@ public enum ManagementTools {
 
             count++;
         } catch (IOException ie) {
-            LOG.error("Error while enable management", ie);
+            LOG.warn("Error while enable management", ie);
         }
         registerViewofTree(assetTree);
     }
@@ -133,7 +133,7 @@ public enum ManagementTools {
             Set<ObjectName> objNames = mbs.queryNames(new ObjectName("*:type=" + treeName + ",*"), null);
             objNames.forEach((atName) -> ManagementTools.unregisterTreeWithMBean(atName));
         } catch (MalformedObjectNameException e) {
-            LOG.error("Error while disable management", e);
+            LOG.warn("Error while disable management", e);
         }
         count--;
 
@@ -142,7 +142,7 @@ public enum ManagementTools {
                 stopJMXRemoteService();
             }
         } catch (IOException e) {
-            LOG.error("Error while stopping JMX remote service", e);
+            LOG.warn("Error while stopping JMX remote service", e);
         }
     }
 
@@ -237,7 +237,7 @@ public enum ManagementTools {
                 unregisterTreeWithMBean(atName);
             }
         } catch (Throwable t) {
-            LOG.error("Error while handle AssetTree update", t);
+            LOG.warn("Error while handle AssetTree update", t);
         }
     }
 
@@ -280,7 +280,7 @@ public enum ManagementTools {
                 //end Dynamic MBeans Code
             }
         } catch (Throwable t) {
-            LOG.error("Error while handle Asset update", t);
+            LOG.warn("Error while handle Asset update", t);
         }
     }
 
@@ -309,7 +309,7 @@ public enum ManagementTools {
                 mbs.registerMBean(atBean, atName);
             }
         } catch (@NotNull InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException e) {
-            LOG.error("Error register AssetTree with MBean", e);
+            LOG.warn("Error register AssetTree with MBean", e);
         }
     }
 
@@ -319,7 +319,7 @@ public enum ManagementTools {
                 mbs.unregisterMBean(atName);
             }
         } catch (@NotNull InstanceNotFoundException | MBeanRegistrationException e) {
-            LOG.error("Error unregister AssetTree with MBean", e);
+            LOG.warn("Error unregister AssetTree with MBean", e);
         }
     }
 

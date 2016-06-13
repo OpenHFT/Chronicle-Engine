@@ -102,11 +102,7 @@ public class ReplicationHandler2<E> extends AbstractHandler {
                 // receive bootstrap
                 final long timestamp = valueIn.int64();
 
-                try {
-                    assert localIdentifier != remoteIdentifier;
-                } catch (Error e) {
-                    e.printStackTrace();
-                }
+                assert checkIdentifier();
 
                 final ModificationIterator mi = replication.acquireModificationIterator(remoteIdentifier);
                 if (mi != null)
@@ -179,6 +175,12 @@ public class ReplicationHandler2<E> extends AbstractHandler {
                 });
             }
 
+        }
+
+        private boolean checkIdentifier() {
+            if (localIdentifier != remoteIdentifier)
+                LOG.error("identifier comparison: " + localIdentifier + " != " + remoteIdentifier);
+            return true;
         }
     };
 

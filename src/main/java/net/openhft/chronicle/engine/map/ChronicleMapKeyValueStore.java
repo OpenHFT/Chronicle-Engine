@@ -126,7 +126,7 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
 
         } catch (AssetNotFoundException anfe) {
             if (LOG.isDebugEnabled())
-                LOG.debug("replication not enabled " + anfe.getMessage());
+                LOG.debug("replication not enabled " + anfe);
         }
 
         this.engineReplicator = engineReplicator1;
@@ -154,6 +154,7 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
             new File(basePath).mkdirs();
             try {
                 chronicleMap = builder.createPersistedTo(new File(pathname));
+
             } catch (IOException e) {
                 IORuntimeException iore = new IORuntimeException("Could not access " + pathname);
                 iore.initCause(e);
@@ -238,7 +239,7 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
                 replicationHub.bootstrap(engineReplicator1, localIdentifier, remoteIdentifier);
 
             } catch (Exception e) {
-                LOG.error("hostDetails=" + hostDetails, e);
+                LOG.warn("hostDetails=" + hostDetails, e);
             }
         }
     }
@@ -253,8 +254,10 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
     public boolean put(K key, V value) {
         try {
             return chronicleMap.update(key, value) != UpdateResult.INSERT;
-        } catch (Exception e) {
-            System.err.println("Failed to write " + key + ", " + value);
+
+        } catch (RuntimeException e) {
+            if (LOG.isDebugEnabled())
+                LOG.debug("Failed to write " + key + ", " + value, e);
             throw e;
         }
     }

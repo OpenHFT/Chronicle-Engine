@@ -96,7 +96,7 @@ public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
         try {
             subscriber.onEndOfSubscription();
         } catch (Exception e) {
-            LOG.error("", e);
+            LOG.warn("Failed to send endOfSubscription", e);
         }
     }
 
@@ -270,6 +270,7 @@ public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
             try {
                 for (int i = 0; i < kvStore.segments(); i++)
                     kvStore.entriesFor(i, e -> subscriber.onMessage(e.getKey(), e.getValue()));
+
             } catch (InvalidSubscriberException dontAdd) {
                 topicSubscribers.remove(subscriber);
             }

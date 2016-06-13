@@ -63,6 +63,7 @@ abstract class AbstractHandler {
             final long position = outWire.bytes().writePosition();
             try {
                 c.writeMarshallable(outWire);
+
             } catch (Throwable t) {
                 inBytes.readPosition(readPosition);
                 if (LOG.isInfoEnabled())
@@ -91,6 +92,7 @@ abstract class AbstractHandler {
             final long position = outWire.bytes().writePosition();
             try {
                 c.writeMarshallable(outWire);
+
             } catch (Throwable t) {
                 inBytes.readPosition(readPosition);
                 if (LOG.isInfoEnabled())
@@ -121,7 +123,7 @@ abstract class AbstractHandler {
                 LOG.info("\nServer Sends:\n" +
                         Wires.fromSizePrefixedBlobs(outWire.bytes()));
             } catch (Exception e) {
-                LOG.info("\nServer Sends ( corrupted ) :\n" +
+                LOG.warn("\nServer Sends ( corrupted ) :\n" +
                         outWire.bytes().toDebugString());
             } finally {
                 assert outWire.endUse();

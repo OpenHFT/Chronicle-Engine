@@ -176,12 +176,8 @@ public class VanillaAssetTree implements AssetTree {
         Jvm.pause(50);
 
         // ensure that the event loop get shutdown first
-        try {
-            EventLoop view = root().findView(EventLoop.class);
-            Closeable.closeQuietly(view);
-        } catch (Exception e) {
-            //
-        }
+        EventLoop view = root().findView(EventLoop.class);
+        Closeable.closeQuietly(view);
 
         root.close();
     }

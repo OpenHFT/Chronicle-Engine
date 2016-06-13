@@ -1,6 +1,5 @@
 package net.openhft.chronicle.engine.api.query;
 
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.annotation.UsedViaReflection;
 import net.openhft.chronicle.engine.map.QueueObjectSubscription;
 import net.openhft.chronicle.wire.AbstractMarshallable;
@@ -65,8 +64,9 @@ public class VanillaIndexQuery<V> extends AbstractMarshallable implements Demars
         // used to test-compile the predicate on the client side
         try {
             ClassCache.newInstance0(new ClassCache.TypedSelect(valueClass, select), "TestCompile");
+
         } catch (Exception e) {
-            LOG.error(e.getMessage() + "/n");
+            LOG.warn(e.getMessage());
         }
         return this;
     }
@@ -131,7 +131,7 @@ public class VanillaIndexQuery<V> extends AbstractMarshallable implements Demars
                 return clazzP.newInstance();
 
             } catch (Exception e) {
-                throw Jvm.rethrow(e);
+                throw new AssertionError(e);
             }
         }
 

@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.engine.pubsub;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
@@ -128,7 +129,11 @@ public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId>
                         valueIn.marshallable(m -> {
                             final T topic = m.read(() -> "topic").object(topicClass);
                             final M message = m.read(() -> "message").object(messageClass);
-                            RemoteTopicPublisher.this.onEvent(topic, message, topicSubscriber);
+                            try {
+                                RemoteTopicPublisher.this.onEvent(topic, message, topicSubscriber);
+                            } catch (InvalidSubscriberException e) {
+                                throw Jvm.rethrow(e);
+                            }
                         });
                     }
                 });
@@ -152,15 +157,11 @@ public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId>
 
     }
 
-    private void onEvent(T topic, @Nullable M message, @NotNull TopicSubscriber<T, M> topicSubscriber) {
-        try {
+    private void onEvent(T topic, @Nullable M message, @NotNull TopicSubscriber<T, M> topicSubscriber) throws InvalidSubscriberException {
             if (message != null) {
                 topicSubscriber.onMessage(topic, message);
             } else {
                 // todo
             }
-        } catch (InvalidSubscriberException noLongerValid) {
-            // todo
-        }
     }
 }
