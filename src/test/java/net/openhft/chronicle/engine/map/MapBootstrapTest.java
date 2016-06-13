@@ -19,6 +19,7 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.onoes.ExceptionKey;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
@@ -52,17 +53,19 @@ public class MapBootstrapTest extends ThreadMonitoringTest {
     private AssetTree client;
     private VanillaAssetTree serverAssetTree1;
     private ServerEndpoint serverEndpoint1;
+    private Map<ExceptionKey, Integer> exceptions;
 
     @Before
     public void before() throws IOException {
-        serverAssetTree1 = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
+        exceptions = Jvm.recordExceptions();
+        serverAssetTree1 = new VanillaAssetTree().forTesting();
 
         TCPRegistry.createServerSocketChannelFor(CONNECTION_1);
 
         serverEndpoint1 = new ServerEndpoint(CONNECTION_1, serverAssetTree1);
 
         client = new VanillaAssetTree("client1").forRemoteAccess
-                (CONNECTION_1, WIRE_TYPE, x -> t.set(x));
+                (CONNECTION_1, WIRE_TYPE);
     }
 
     @After
@@ -76,7 +79,11 @@ public class MapBootstrapTest extends ThreadMonitoringTest {
 
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
-
+        if (!exceptions.isEmpty()) {
+            Jvm.dumpException(exceptions);
+            Jvm.resetExceptionHandlers();
+            Assert.fail();
+        }
     }
 
     /**

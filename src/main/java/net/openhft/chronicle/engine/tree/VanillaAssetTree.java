@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
 
@@ -82,36 +81,35 @@ public class VanillaAssetTree implements AssetTree {
     }
 
     @NotNull
-    public VanillaAssetTree forTesting(final Consumer<Throwable> onThrowable) {
-        return forTesting(true, onThrowable);
+    public VanillaAssetTree forTesting() {
+        return forTesting(true);
     }
 
     @NotNull
-    public VanillaAssetTree forTesting(boolean daemon, final Consumer<Throwable> onThrowable) {
-        return forServer(daemon, onThrowable);
+    public VanillaAssetTree forTesting(boolean daemon) {
+        return forServer(daemon);
     }
 
     @NotNull
-    public VanillaAssetTree forServer(final Consumer<Throwable> onThrowable) {
-        return forServer(true, onThrowable);
+    public VanillaAssetTree forServer() {
+        return forServer(true);
     }
 
     @NotNull
-    public VanillaAssetTree forServer(boolean daemon, @NotNull final Consumer<Throwable> onThrowable) {
-        root.forServer(daemon, onThrowable, uri -> 1);
+    public VanillaAssetTree forServer(boolean daemon) {
+        root.forServer(daemon, uri -> 1);
         return this;
     }
 
     @NotNull
-    public VanillaAssetTree forRemoteAccess(String hostPortDescription, @NotNull WireType wire, final Consumer<Throwable> onThrowable) {
-        return forRemoteAccess(new String[]{hostPortDescription}, wire, onThrowable);
+    public VanillaAssetTree forRemoteAccess(String hostPortDescription, @NotNull WireType wire) {
+        return forRemoteAccess(new String[]{hostPortDescription}, wire);
     }
 
     @NotNull
     public VanillaAssetTree forRemoteAccess(@NotNull String[] hostPortDescription,
-                                            @NotNull WireType wire,
-                                            @NotNull final Consumer<Throwable> onThrowable) {
-        root.forRemoteAccess(hostPortDescription, wire, clientSession(), null, onThrowable);
+                                            @NotNull WireType wire) {
+        root.forRemoteAccess(hostPortDescription, wire, clientSession(), null);
         return this;
     }
 
@@ -121,24 +119,23 @@ public class VanillaAssetTree implements AssetTree {
      * @param hostPortDescription     the primary host and other failover hosts
      * @param wire                    the type of wire
      * @param clientConnectionMonitor used to monitor client failover
-     * @param onThrowable
      * @return an instance of VanillaAssetTree
      */
     @NotNull
     public VanillaAssetTree forRemoteAccess(@NotNull String[] hostPortDescription,
                                             @NotNull WireType wire,
-                                            @Nullable ClientConnectionMonitor clientConnectionMonitor, final Consumer<Throwable> onThrowable) {
+                                            @Nullable ClientConnectionMonitor clientConnectionMonitor) {
 
         if (clientConnectionMonitor != null)
             root.viewMap.put(ClientConnectionMonitor.class, clientConnectionMonitor);
 
-        root.forRemoteAccess(hostPortDescription, wire, clientSession(), clientConnectionMonitor, onThrowable);
+        root.forRemoteAccess(hostPortDescription, wire, clientSession(), clientConnectionMonitor);
         return this;
     }
 
     @NotNull
-    public VanillaAssetTree forRemoteAccess(String hostPortDescription, final Consumer<Throwable> onThrowable) {
-        return forRemoteAccess(hostPortDescription, WireType.BINARY, onThrowable);
+    public VanillaAssetTree forRemoteAccess(String hostPortDescription) {
+        return forRemoteAccess(hostPortDescription, WireType.BINARY);
     }
 
     @NotNull

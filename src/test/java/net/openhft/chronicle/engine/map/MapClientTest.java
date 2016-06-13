@@ -79,7 +79,7 @@ public class MapClientTest extends ThreadMonitoringTest {
     public void clearState() {
 
         if (supplier == LocalMapSupplier.class)
-            assetTree.forTesting(x -> t.compareAndSet(null, x));
+            assetTree.forTesting();
 
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
@@ -358,10 +358,10 @@ public class MapClientTest extends ThreadMonitoringTest {
                 @NotNull final AssetTree clientAssetTree,
                 @NotNull final String name) throws IOException {
             this.clientAssetTree = clientAssetTree;
-            this.serverAssetTree = new VanillaAssetTree().forTesting(true, x -> t.set(x));
+            this.serverAssetTree = new VanillaAssetTree().forTesting(false);
             TCPRegistry.createServerSocketChannelFor(hostPortDescription);
             serverEndpoint = new ServerEndpoint(hostPortDescription, serverAssetTree);
-            ((VanillaAssetTree) clientAssetTree).forRemoteAccess(hostPortDescription, wireType, x -> t.set(x));
+            ((VanillaAssetTree) clientAssetTree).forRemoteAccess(hostPortDescription, wireType);
 
             map = clientAssetTree.acquireMap(name, kClass, vClass);
 

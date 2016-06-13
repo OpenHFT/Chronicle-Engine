@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.engine.server.internal;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.pubsub.ConsumingSubscriber;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
@@ -135,7 +136,7 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
             final VanillaIndexQuery<V> query = valueIn.typedMarshallable();
 
             if (query.select().isEmpty() || query.valueClass() == null) {
-                LOG.warn("received empty query");
+                Jvm.warn().on(getClass(), "received empty query");
                 return;
             }
 
@@ -158,7 +159,7 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
             ConsumingSubscriber<IndexedValue<V>> listener = tidToListener.remove(inputTid);
 
             if (listener == null) {
-                LOG.warn("No subscriber to present to unsubscribe (" + inputTid + ")");
+                Jvm.warn().on(getClass(), "No subscriber to present to unsubscribe (" + inputTid + ")");
                 return;
             }
 

@@ -22,19 +22,22 @@ import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+
 /**
  * Created by andre on 01/05/2015.
  */
 public class TextWireMain {
     public static final WireType WIRE_TYPE = WireType.TEXT;
+    private static ServerEndpoint serverEndpoint;
 
-    public static void main(@NotNull String[] args) {
+    public static void main(@NotNull String[] args) throws IOException {
 
         YamlLogging.showServerReads(true);
         // the default is BinaryWire
         int port = 8088;
-        VanillaAssetTree assetTree = new VanillaAssetTree().forTesting(false, t -> t.printStackTrace());
-        final ServerEndpoint serverEndpoint = new ServerEndpoint("*:" + port, assetTree);
+        VanillaAssetTree assetTree = new VanillaAssetTree().forTesting(false);
+        serverEndpoint = new ServerEndpoint("*:" + port, assetTree);
 
         if (args.length == 1 && args[0].compareTo("-debug") == 0) {
             System.out.println("Enabling message logging");

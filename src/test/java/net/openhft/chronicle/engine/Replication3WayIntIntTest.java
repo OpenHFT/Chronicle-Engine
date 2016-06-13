@@ -21,6 +21,7 @@ package net.openhft.chronicle.engine;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.io.Closeable;
+import net.openhft.chronicle.core.onoes.ExceptionKey;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
@@ -53,7 +54,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertNotNull;
 
@@ -78,7 +78,7 @@ public class Replication3WayIntIntTest extends ThreadMonitoringTest {
     private AssetTree tree1;
     private AssetTree tree2;
     private AssetTree tree3;
-    private AtomicReference<Throwable> t = new AtomicReference<>();
+    private Map<ExceptionKey, Integer> exceptions;
 
     public Replication3WayIntIntTest() {
 
@@ -101,6 +101,7 @@ public class Replication3WayIntIntTest extends ThreadMonitoringTest {
 
     @Before
     public void before() throws IOException {
+        exceptions = Jvm.recordExceptions();
         YamlLogging.setAll(false);
 
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
@@ -134,13 +135,17 @@ public class Replication3WayIntIntTest extends ThreadMonitoringTest {
         Closeable.closeQuietly(tree1);
         Closeable.closeQuietly(tree2);
         Closeable.closeQuietly(tree3);
-
+        if (!exceptions.isEmpty()) {
+            Jvm.dumpException(exceptions);
+            Jvm.resetExceptionHandlers();
+            Assert.fail();
+        }
     }
 
     @NotNull
     private AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
         AssetTree tree = new VanillaAssetTree((byte) hostId)
-                .forTesting(x -> t.compareAndSet(null, x))
+                .forTesting()
                 .withConfig(resourcesDir() + "/3way", OS.TARGET + "/" + hostId);
 
         tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",

@@ -40,7 +40,7 @@ public class VanillaAssetTreeEgMain {
             new NamedThreadFactory("all-trees-watcher", true));
 
     public static void main(String[] args) {
-        AssetTree tree = new VanillaAssetTree().forTesting(t -> t.printStackTrace());
+        AssetTree tree = new VanillaAssetTree().forTesting();
         tree.enableManagement(18181);
 
         // start with some elements
@@ -85,7 +85,7 @@ public class VanillaAssetTreeEgMain {
 
         System.out.println("Here..............");
 
-        AssetTree tree1 = new VanillaAssetTree().forTesting(t -> t.printStackTrace());
+        AssetTree tree1 = new VanillaAssetTree().forTesting();
         tree1.enableManagement();
         ConcurrentMap<String, String> map_tree = tree1.acquireMap("group1/1/2/3/4/5/map", String.class, String.class);
         map_tree.put("key1", "ABCDEGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz0132456789ABCDEGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz0132456789");

@@ -45,7 +45,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     @Rule
     public TestName name = new TestName();
     @NotNull
-    private AssetTree assetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
+    private AssetTree assetTree = new VanillaAssetTree().forTesting();
 
     @Before
     public void before() {
@@ -158,7 +158,7 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
             final ConcurrentMap<String, String> map = remote.get();
             maps.add(map);
             for (int i = 1; i < Runtime.getRuntime().availableProcessors(); i++) {
-                AssetTree assetTree2 = new VanillaAssetTree().forRemoteAccess("testLargeUpdates.host.port", WireType.BINARY, x -> t.set(x));
+                AssetTree assetTree2 = new VanillaAssetTree().forRemoteAccess("testLargeUpdates.host.port", WireType.BINARY);
                 Map<String, String> map2 = assetTree2.acquireMap("test", String.class, String.class);
                 maps.add(map2);
                 closeables.add(assetTree2);

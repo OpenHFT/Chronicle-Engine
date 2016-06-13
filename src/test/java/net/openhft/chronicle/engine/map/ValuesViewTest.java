@@ -59,7 +59,7 @@ public class ValuesViewTest extends ThreadMonitoringTest {
     @NotNull
     @Rule
     public TestName name = new TestName();
-    private AssetTree assetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
+    private AssetTree assetTree = new VanillaAssetTree().forTesting();
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
     public ValuesViewTest(boolean isRemote, WireType wireType) {
@@ -78,7 +78,7 @@ public class ValuesViewTest extends ThreadMonitoringTest {
 
     @Before
     public void before() throws IOException {
-        serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
+        serverAssetTree = new VanillaAssetTree().forTesting();
 
         if (isRemote) {
 
@@ -86,7 +86,7 @@ public class ValuesViewTest extends ThreadMonitoringTest {
             connection = "StreamTest." + name.getMethodName() + ".host.port";
             TCPRegistry.createServerSocketChannelFor(connection);
             serverEndpoint = new ServerEndpoint(connection, serverAssetTree);
-            assetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType, x -> t.set(x));
+            assetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType);
         } else {
             assetTree = serverAssetTree;
         }

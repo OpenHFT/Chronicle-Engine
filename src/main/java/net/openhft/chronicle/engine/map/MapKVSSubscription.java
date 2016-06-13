@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.KeyValueStore.Entry;
 import net.openhft.chronicle.engine.api.map.MapEvent;
@@ -96,7 +97,7 @@ public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
         try {
             subscriber.onEndOfSubscription();
         } catch (Exception e) {
-            LOG.warn("Failed to send endOfSubscription", e);
+            Jvm.warn().on(getClass(), "Failed to send endOfSubscription", e);
         }
     }
 

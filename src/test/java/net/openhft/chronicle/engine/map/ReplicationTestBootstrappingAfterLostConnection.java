@@ -20,6 +20,7 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.onoes.ExceptionKey;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.ChronicleMapKeyValueStoreTest;
@@ -49,9 +50,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertNotNull;
 
@@ -68,12 +69,13 @@ public class ReplicationTestBootstrappingAfterLostConnection {
     private static AssetTree tree3;
     private static AssetTree tree1;
     private static AssetTree tree2;
-    private static AtomicReference<Throwable> t = new AtomicReference();
 
     private static ThreadDump threadDump;
+    private static Map<ExceptionKey, Integer> exceptions;
 
     @BeforeClass
     public static void before() throws IOException {
+        exceptions = Jvm.recordExceptions();
         YamlLogging.setAll(false);
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
         ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
@@ -103,8 +105,6 @@ public class ReplicationTestBootstrappingAfterLostConnection {
 
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
         threadDump.assertNoNewThreads();
     }
 
@@ -112,7 +112,7 @@ public class ReplicationTestBootstrappingAfterLostConnection {
     private static AssetTree create(final int hostId, WireType writeType, final String
             clusterName) {
         AssetTree tree = new VanillaAssetTree((byte) hostId)
-                .forTesting(x -> t.compareAndSet(null, x))
+                .forTesting()
                 .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);
 
         tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
@@ -162,8 +162,6 @@ public class ReplicationTestBootstrappingAfterLostConnection {
 
     @After
     public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
     }
 
     @Test

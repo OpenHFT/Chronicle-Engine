@@ -164,7 +164,7 @@ public class RemotePublisher<T, M> extends AbstractStatelessClient<EventId> impl
     public void unregisterSubscriber(Subscriber subscriber) {
         final Long tid = subscribersToTid.get(subscriber);
         if (tid == null) {
-            LOG.warn("No subscriber to unsubscribe");
+            Jvm.warn().on(getClass(), "No subscriber to unsubscribe");
             return;
         }
 

@@ -19,6 +19,7 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.onoes.ExceptionKey;
 import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.core.util.SerializablePredicate;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
@@ -48,6 +49,7 @@ public class ManyMapsTest {
             "ManyMapsTest.testConnectToMultipleMapsUsingTheSamePort.host.port";
     private static AtomicReference<Throwable> t = new AtomicReference();
     private ThreadDump threadDump;
+    private Map<ExceptionKey, Integer> exceptions;
 
     public static String getKey(String mapName, int counter) {
         return String.format("%s-%s", mapName, counter);
@@ -67,10 +69,17 @@ public class ManyMapsTest {
         threadDump.assertNoNewThreads();
     }
 
+    @Before
+    public void recordExceptions() {
+        exceptions = Jvm.recordExceptions();
+    }
     @After
     public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
+        if (!exceptions.isEmpty()) {
+            Jvm.dumpException(exceptions);
+            Jvm.resetExceptionHandlers();
+            Assert.fail();
+        }
     }
 
     @Test
@@ -78,17 +87,14 @@ public class ManyMapsTest {
         int noOfMaps = 100;
         int noOfKvps = 100;
         String mapBaseName = "ManyMapsTest-";
-        AssetTree assetTree = new VanillaAssetTree().forTesting(x -> {
-            t.compareAndSet(null, x);
-            x.printStackTrace();
-        });
+        AssetTree assetTree = new VanillaAssetTree().forTesting();
 
         Map<String, Map<String, String>> _clientMaps = new HashMap<>();
         TCPRegistry.createServerSocketChannelFor(NAME);
         //TODO CHENT-68 Only works with BINARY NOT TEXT.
         ServerEndpoint serverEndpoint = new ServerEndpoint(NAME, assetTree);
 
-        AssetTree clientAssetTree = new VanillaAssetTree().forRemoteAccess(NAME, WireType.BINARY, x -> t.set(x));
+        AssetTree clientAssetTree = new VanillaAssetTree().forRemoteAccess(NAME, WireType.BINARY);
         System.out.println("Creating maps.");
         AtomicInteger count = new AtomicInteger();
         IntStream.rangeClosed(1, noOfMaps).forEach(i -> {

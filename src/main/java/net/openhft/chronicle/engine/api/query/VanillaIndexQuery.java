@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.api.query;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.annotation.UsedViaReflection;
 import net.openhft.chronicle.engine.map.QueueObjectSubscription;
 import net.openhft.chronicle.wire.AbstractMarshallable;
@@ -66,7 +67,7 @@ public class VanillaIndexQuery<V> extends AbstractMarshallable implements Demars
             ClassCache.newInstance0(new ClassCache.TypedSelect(valueClass, select), "TestCompile");
 
         } catch (Exception e) {
-            LOG.warn(e.getMessage());
+            Jvm.warn().on(getClass(), e.getMessage());
         }
         return this;
     }

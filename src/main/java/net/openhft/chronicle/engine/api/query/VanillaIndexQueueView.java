@@ -111,7 +111,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
                     }
 
                 } catch (RuntimeException e) {
-                    LOG.warn(Wires.fromSizePrefixedBlobs(dc.wire().bytes(), start - 4), e);
+                    Jvm.warn().on(getClass(), Wires.fromSizePrefixedBlobs(dc.wire().bytes(), start - 4), e);
                 }
             }
 
@@ -157,7 +157,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
         } catch (RuntimeException e) {
             //tailer.close();
             sub.onEndOfSubscription();
-            LOG.warn("Error registering subscription", e);
+            Jvm.warn().on(getClass(), "Error registering subscription", e);
         }
 
     }
@@ -199,7 +199,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
             System.out.println(Wires.fromSizePrefixedBlobs(dc));
 
             if (LOG.isDebugEnabled())
-                LOG.debug("processing the following message=", Wires.fromSizePrefixedBlobs(dc));
+                Jvm.debug().on(getClass(), "processing the following message=" + Wires.fromSizePrefixedBlobs(dc));
 
             // we may have just been restated and have not yet caught up
             if (from > dc.index())

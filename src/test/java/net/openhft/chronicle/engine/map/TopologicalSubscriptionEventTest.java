@@ -60,7 +60,7 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
     @NotNull
     @Rule
     public TestName name = new TestName();
-    private AssetTree clientAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
+    private AssetTree clientAssetTree = new VanillaAssetTree().forTesting();
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
     public TopologicalSubscriptionEventTest(boolean isRemote, WireType wireType) {
@@ -79,14 +79,14 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
 
     @Before
     public void before() throws IOException {
-        serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
+        serverAssetTree = new VanillaAssetTree().forTesting();
 
         if (isRemote) {
             methodName(name.getMethodName());
             TCPRegistry.createServerSocketChannelFor("TopologicalSubscriptionEventTest.host.port");
             serverEndpoint = new ServerEndpoint("TopologicalSubscriptionEventTest.host.port", serverAssetTree);
 
-            clientAssetTree = new VanillaAssetTree().forRemoteAccess("TopologicalSubscriptionEventTest.host.port", wireType, x -> t.set(x));
+            clientAssetTree = new VanillaAssetTree().forRemoteAccess("TopologicalSubscriptionEventTest.host.port", wireType);
         } else {
             clientAssetTree = serverAssetTree;
         }

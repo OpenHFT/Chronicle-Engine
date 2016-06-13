@@ -161,7 +161,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
             this.eventLoop.start();
 
         } catch (RejectedExecutionException e) {
-            LOG.debug("", e);
+            Jvm.debug().on(getClass(), e);
         }
 
         this.isServerSocket = nc.isAcceptor();
@@ -178,7 +178,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                 abstractHandler.onEndOfConnection(heartbeatTimeOut);
 
             } catch (Exception e) {
-                LOG.warn("Failed while for " + abstractHandler, e);
+                Jvm.warn().on(getClass(), "Failed while for " + abstractHandler, e);
             }
         }
 
@@ -196,7 +196,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                 // if true the next data message will be a system message
                 isSystemMessage = wire.bytes().readRemaining() == 0;
                 if (isSystemMessage) {
-                    if (LOG.isDebugEnabled()) LOG.debug("received system-meta-data");
+                    if (LOG.isDebugEnabled()) Jvm.debug().on(getClass(), "received system-meta-data");
                     return;
                 }
 
@@ -207,7 +207,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                     if (hasCspChanged(cspText)) {
 
                         if (LOG.isDebugEnabled())
-                            LOG.debug("received meta-data:\n" + wire.bytes().toHexString());
+                            Jvm.debug().on(getClass(), "received meta-data:\n" + wire.bytes().toHexString());
 
                         requestContext = requestContextInterner.intern(cspText);
                         final String fullName = requestContext.fullName();
@@ -216,7 +216,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
 
                         viewType = requestContext.viewType();
                         if (viewType == null) {
-                            if (LOG.isDebugEnabled()) LOG.debug("received system-meta-data");
+                            if (LOG.isDebugEnabled()) Jvm.debug().on(getClass(), "received system-meta-data");
                             isSystemMessage = true;
                             return;
                         }
@@ -320,7 +320,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
             try {
 
                 if (LOG.isDebugEnabled())
-                    LOG.debug("received data:\n" + in.bytes().toHexString());
+                    Jvm.debug().on(getClass(), "received data:\n" + in.bytes().toHexString());
 
                 Consumer<WireType> wireTypeConsumer = wt -> {
                     wireType(wt);
@@ -434,7 +434,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                 }
 
             } catch (Exception e) {
-                LOG.warn("", e);
+                Jvm.warn().on(getClass(), e);
 
             } finally {
                 if (sessionProvider != null)

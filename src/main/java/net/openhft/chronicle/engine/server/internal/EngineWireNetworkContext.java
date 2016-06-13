@@ -83,7 +83,7 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext> extend
 
         } catch (Exception e) {
             if (Jvm.isDebug())
-                LOG.warn("", e);
+                Jvm.warn().on(getClass(), e);
             throw e;
         }
     }

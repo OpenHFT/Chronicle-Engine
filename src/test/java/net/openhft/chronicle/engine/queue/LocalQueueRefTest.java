@@ -57,11 +57,7 @@ public class LocalQueueRefTest extends ThreadMonitoringTest {
     public void before() throws IOException {
         methodName(name.getMethodName());
         methodName = name.getMethodName();
-        assetTree = (new VanillaAssetTree(1)).forTesting(
-                x -> {
-                    t.set(x);
-                    x.printStackTrace();
-                });
+        assetTree = (new VanillaAssetTree(1)).forTesting();
         YamlLogging.setAll(false);
     }
 

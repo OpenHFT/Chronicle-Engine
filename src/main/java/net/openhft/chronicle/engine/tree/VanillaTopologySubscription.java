@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.tree;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
@@ -61,7 +62,7 @@ public class VanillaTopologySubscription implements TopologySubscription {
             }
             subscribers.add(subscriber);
         } catch (InvalidSubscriberException e) {
-            LOG.debug("discarding " + subscriber, e);
+            Jvm.debug().on(getClass(), "discarding " + subscriber, e);
         }
     }
 
@@ -113,7 +114,7 @@ public class VanillaTopologySubscription implements TopologySubscription {
             try {
                 subscriber.onEndOfSubscription();
             } catch (Exception e) {
-                LOG.debug("", e);
+                Jvm.debug().on(getClass(), e);
             }
         }
     }

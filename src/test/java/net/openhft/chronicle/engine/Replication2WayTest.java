@@ -110,10 +110,7 @@ public class Replication2WayTest extends ThreadMonitoringTest {
     @NotNull
     private AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
         AssetTree tree = new VanillaAssetTree((byte) hostId)
-                .forTesting(x -> {
-                    t.compareAndSet(null, x);
-                    x.printStackTrace();
-                })
+                .forTesting()
                 .withConfig(resourcesDir() + "/2way", OS.TARGET + "/" + hostId);
 
         tree.root().addLeafRule(EngineReplication.class, "Engine replication holder",

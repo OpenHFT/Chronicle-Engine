@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.engine.server.internal;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
@@ -118,7 +119,7 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
         if (unregisterSubscriber.contentEquals(eventName)) {
             Subscriber<Object> listener = (Subscriber) tidToListener.remove(tid);
             if (listener == null) {
-                SubscriptionHandler.LOG.warn("No subscriber to present to unregisterSubscriber (" + tid + ")");
+                Jvm.warn().on(getClass(), "No subscriber to present to unregisterSubscriber (" + tid + ")");
                 return true;
             }
 

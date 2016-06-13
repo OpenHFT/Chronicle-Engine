@@ -98,7 +98,7 @@ public class ReferenceTest {
     @Before
     public void before() throws IOException {
         hostPortToken = "ReferenceTest.host.port";
-        serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
+        serverAssetTree = new VanillaAssetTree().forTesting();
 
         if (isRemote) {
 
@@ -107,7 +107,7 @@ public class ReferenceTest {
             serverEndpoint = new ServerEndpoint(hostPortToken, serverAssetTree);
 
             assetTree = new VanillaAssetTree()
-                    .forRemoteAccess(hostPortToken, wireType, x -> t.set(x));
+                    .forRemoteAccess(hostPortToken, wireType);
         } else {
             assetTree = serverAssetTree;
         }

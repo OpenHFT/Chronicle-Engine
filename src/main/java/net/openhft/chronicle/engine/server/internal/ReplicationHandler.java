@@ -75,12 +75,12 @@ public class ReplicationHandler<E> extends AbstractHandler {
             // receives replication events
             if (replicationEvent.contentEquals(eventName)) {
                 if (Jvm.isDebug() && LOG.isDebugEnabled())
-                    LOG.debug("server : received replicationEvent");
+                    Jvm.debug().on(getClass(), "server : received replicationEvent");
                 VanillaReplicatedEntry replicatedEntry = vre.get();
                 valueIn.marshallable(replicatedEntry);
 
                 if (Jvm.isDebug() && LOG.isDebugEnabled())
-                    LOG.debug("*****\t\t\t\t ->  RECEIVED : SERVER : replication latency=" + (System
+                    Jvm.debug().on(getClass(), "*****\t\t\t\t ->  RECEIVED : SERVER : replication latency=" + (System
                             .currentTimeMillis() - replicatedEntry.timestamp()) + "ms  ");
 
                 replication.applyReplication(replicatedEntry);
@@ -96,7 +96,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
             if (bootstrap.contentEquals(eventName)) {
                 writeData(true, inWire.bytes(), out -> {
                     if (LOG.isDebugEnabled())
-                        LOG.debug("server : received bootstrap request");
+                        Jvm.debug().on(getClass(), "server : received bootstrap request");
 
                     // receive bootstrap
                     final Bootstrap inBootstrap = valueIn.typedMarshallable();
@@ -265,7 +265,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
                     }
 
                     if (LOG.isDebugEnabled())
-                        LOG.debug("publish from server response from iterator " +
+                        Jvm.debug().on(getClass(), "publish from server response from iterator " +
                                 "localIdentifier=" + hostId + " ,remoteIdentifier=" +
                                 id + " event=" + e);
 
@@ -282,7 +282,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
                     }
 
                     if (publish1.bytes().writePosition() > 100000 && LOG.isDebugEnabled())
-                        LOG.debug(publish1.bytes().toDebugString(128));
+                        Jvm.debug().on(getClass(), publish1.bytes().toDebugString(128));
                     publish1.writeNotCompleteDocument(false,
                             wire -> wire.writeEventName(replicationEvent).typedMarshallable(e));
 

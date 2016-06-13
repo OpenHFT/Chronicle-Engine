@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.api.pubsub;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.util.ThrowingConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -50,7 +51,7 @@ public interface SubscriptionConsumer<T> {
                         ((ISubscriber) s).onEndOfSubscription();
 
                     } catch (RuntimeException e) {
-                        LOG.warn("", e);
+                        Jvm.warn().on(getClass(), e);
                     }
                 }
             }

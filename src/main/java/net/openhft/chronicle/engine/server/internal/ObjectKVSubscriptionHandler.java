@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.engine.server.internal;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionCollection;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
@@ -108,7 +109,7 @@ public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subsc
         if (EventId.unregisterTopicSubscriber.contentEquals(eventName)) {
             TopicSubscriber listener = (TopicSubscriber) tidToListener.remove(inputTid);
             if (listener == null) {
-                LOG.warn("No subscriber to present to unsubscribe (" + inputTid + ")");
+                Jvm.warn().on(getClass(), "No subscriber to present to unsubscribe (" + inputTid + ")");
                 return;
             }
             asset.unregisterTopicSubscriber(requestContext, listener);
@@ -146,7 +147,7 @@ public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subsc
                     LOG.error("Listener was " + listener);
 
             } catch (Exception e) {
-                LOG.warn("listener: " + listener, e);
+                Jvm.warn().on(getClass(), "listener: " + listener, e);
             }
         });
         tidToListener.clear();

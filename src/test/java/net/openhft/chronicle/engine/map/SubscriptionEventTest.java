@@ -73,7 +73,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     @NotNull
     @Rule
     public TestName name = new TestName();
-    private AssetTree assetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
+    private AssetTree assetTree = new VanillaAssetTree().forTesting();
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
@@ -94,7 +94,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
     @Before
     public void before() throws IOException {
-        serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
+        serverAssetTree = new VanillaAssetTree().forTesting();
 
         if (isRemote) {
 
@@ -103,7 +103,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
             TCPRegistry.createServerSocketChannelFor(hostPort);
             serverEndpoint = new ServerEndpoint(hostPort, serverAssetTree);
 
-            assetTree = new VanillaAssetTree().forRemoteAccess(hostPort, wireType, x -> t.set(x));
+            assetTree = new VanillaAssetTree().forRemoteAccess(hostPort, wireType);
         } else {
             assetTree = serverAssetTree;
         }

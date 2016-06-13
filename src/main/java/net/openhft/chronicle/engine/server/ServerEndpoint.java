@@ -54,10 +54,10 @@ public class ServerEndpoint implements Closeable {
     private AcceptorEventHandler eah;
 
     public ServerEndpoint(@NotNull String hostPortDescription,
-                          @NotNull AssetTree assetTree) {
+                          @NotNull AssetTree assetTree) throws IOException {
 
         eg = assetTree.root().acquireView(EventLoop.class);
-        Threads.withThreadGroup(assetTree.root().getView(ThreadGroup.class), () -> {
+        Threads.<Void, IOException>withThreadGroup(assetTree.root().getView(ThreadGroup.class), () -> {
             start(hostPortDescription, assetTree);
             return null;
         });

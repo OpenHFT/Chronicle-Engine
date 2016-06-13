@@ -20,6 +20,7 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.onoes.ExceptionKey;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.api.EngineReplication;
@@ -47,7 +48,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertNotNull;
 
@@ -63,7 +63,7 @@ public class ReplicationDoubleMap2WayTest {
 
     private static AssetTree tree1;
     private static AssetTree tree2;
-    private static AtomicReference<Throwable> t = new AtomicReference();
+    private static Map<ExceptionKey, Integer> exceptions;
     @Rule
     public TestName testName = new TestName();
     public String name;
@@ -71,6 +71,7 @@ public class ReplicationDoubleMap2WayTest {
 
     @BeforeClass
     public static void before() throws IOException {
+        exceptions = Jvm.recordExceptions();
         YamlLogging.setAll(false);
 
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
@@ -103,13 +104,20 @@ public class ReplicationDoubleMap2WayTest {
 
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
+        if (!exceptions.isEmpty()) {
+            Jvm.dumpException(exceptions);
+            Jvm.resetExceptionHandlers();
+            Assert.fail();
+        }
+
         // TODO TCPRegistery.assertAllServersStopped();
+
     }
 
     @NotNull
     private static AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
         AssetTree tree = new VanillaAssetTree((byte) hostId)
-                .forTesting(x -> t.compareAndSet(null, x))
+                .forTesting()
                 .withConfig(resourcesDir() + "/2way", OS.TARGET + "/" + hostId);
 
         tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
@@ -138,12 +146,6 @@ public class ReplicationDoubleMap2WayTest {
     public void beforeTest() throws IOException {
         name = testName.getMethodName();
         Files.deleteIfExists(Paths.get(OS.TARGET, name.toString()));
-    }
-
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
     }
 
     @Before

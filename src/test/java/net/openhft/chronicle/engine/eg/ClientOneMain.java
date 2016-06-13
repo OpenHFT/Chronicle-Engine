@@ -52,7 +52,7 @@ public class ClientOneMain {
     public static void main(String[] args) {
         YamlLogging.setAll(false);
         VanillaAssetTree assetTree = new VanillaAssetTree().forRemoteAccess("localhost:9090",
-                WireType.TEXT, t -> t.printStackTrace());
+                WireType.TEXT);
 
         Map<String, String> map = assetTree.acquireMap("/test-map", String.class, String.class);
         map.put("FUNNY", "hihi");

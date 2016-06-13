@@ -54,11 +54,11 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
 
     @Before
     public void before() throws IOException {
-        serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
+        serverAssetTree = new VanillaAssetTree().forTesting();
 
         TCPRegistry.createServerSocketChannelFor(CONNECTION);
         serverEndpoint = new ServerEndpoint(CONNECTION, serverAssetTree);
-        clientTree = new VanillaAssetTree().forRemoteAccess(CONNECTION, WIRE_TYPE, x -> t.set(x));
+        clientTree = new VanillaAssetTree().forRemoteAccess(CONNECTION, WIRE_TYPE);
     }
 
     public void preAfter() {

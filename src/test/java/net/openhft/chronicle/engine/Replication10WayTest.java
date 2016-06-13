@@ -20,6 +20,7 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.onoes.ExceptionKey;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.api.EngineReplication;
@@ -44,8 +45,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertNotNull;
 
@@ -60,12 +61,12 @@ public class Replication10WayTest {
     public static ServerEndpoint[] serverEndpoint = new
             ServerEndpoint[NUMBER_OF_SIMULATED_SERVERS];
     private static AssetTree[] tree = new AssetTree[NUMBER_OF_SIMULATED_SERVERS];
-
-    private static AtomicReference<Throwable> t = new AtomicReference();
+    private static Map<ExceptionKey, Integer> exceptions;
     private ThreadDump threadDump;
 
     @BeforeClass
     public static void before() throws IOException {
+        exceptions = Jvm.recordExceptions();
         YamlLogging.setAll(false);
 
         //YamlLogging.showServerWrites = true;
@@ -100,12 +101,17 @@ public class Replication10WayTest {
 
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
+        if (!exceptions.isEmpty()) {
+            Jvm.dumpException(exceptions);
+            Jvm.resetExceptionHandlers();
+            Assert.fail();
+        }
     }
 
     @NotNull
     private static AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
         AssetTree tree = new VanillaAssetTree((byte) hostId)
-                .forTesting(x -> t.compareAndSet(null, x))
+                .forTesting()
                 .withConfig(resourcesDir() + "/10Way", OS.TARGET + "/" + hostId);
 
         tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
@@ -138,12 +144,6 @@ public class Replication10WayTest {
     @After
     public void checkThreadDump() {
         threadDump.assertNoNewThreads();
-    }
-
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
     }
 
     @Ignore

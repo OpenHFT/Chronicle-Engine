@@ -17,6 +17,7 @@
 package net.openhft.chronicle.engine.pubsub;
 
 import net.openhft.chronicle.bytes.BytesStore;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.core.threads.InvalidEventHandlerException;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
@@ -135,7 +136,7 @@ public class QueueSimpleSubscription<E> implements SimpleSubscription<E> {
             //SubscriptionConsumer.notifyEachSubscriber(subscribers, s -> s.onMessage(ee));
         } catch (ClassCastException e1) {
             if (LOG.isDebugEnabled())
-                LOG.debug("Is " + valueReader + " the correct ValueReader?");
+                Jvm.debug().on(getClass(), "Is " + valueReader + " the correct ValueReader?");
             throw e1;
         }
     }
@@ -146,7 +147,7 @@ public class QueueSimpleSubscription<E> implements SimpleSubscription<E> {
             try {
                 subscriber.onEndOfSubscription();
             } catch (Exception e) {
-                LOG.warn("", e);
+                Jvm.warn().on(getClass(), e);
             }
         }
     }

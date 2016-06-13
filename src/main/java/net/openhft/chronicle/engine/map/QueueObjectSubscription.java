@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.core.threads.InvalidEventHandlerException;
 import net.openhft.chronicle.core.util.ObjectUtils;
@@ -106,7 +107,7 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
             subscriber.onEndOfSubscription();
 
         } catch (RuntimeException e) {
-            LOG.warn("Failed to send end of subscription", e);
+            Jvm.warn().on(getClass(), "Failed to send end of subscription", e);
         }
     }
 
@@ -193,7 +194,7 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
                 terminate.set(true);
 
             } catch (RuntimeException e) {
-                LOG.warn("", e);
+                Jvm.warn().on(getClass(), e);
                 terminate.set(true);
             }
 

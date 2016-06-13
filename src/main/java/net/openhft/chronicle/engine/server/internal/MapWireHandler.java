@@ -20,6 +20,7 @@ package net.openhft.chronicle.engine.server.internal;
  * Created by Rob Austin
  */
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.pool.StringBuilderPool;
 import net.openhft.chronicle.core.util.SerializableBiFunction;
 import net.openhft.chronicle.core.util.SerializableUpdaterWithArg;
@@ -92,7 +93,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                         nullCheck(key);
                         nullCheck(value);
                         if (LOG.isDebugEnabled())
-                            LOG.debug("putting key=" + key);
+                            Jvm.debug().on(getClass(), "putting key=" + key);
 
                         map.put(key, value);
                     });
@@ -303,7 +304,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                 });
 
             } catch (Exception e) {
-                LOG.warn("", e);
+                Jvm.warn().on(getClass(), e);
             }
         }
     };

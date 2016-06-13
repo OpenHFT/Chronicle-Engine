@@ -25,7 +25,9 @@ import com.google.common.collect.testing.features.CollectionFeature;
 import com.google.common.collect.testing.features.CollectionSize;
 import junit.framework.Test;
 import junit.framework.TestSuite;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.IORuntimeException;
+import net.openhft.chronicle.core.onoes.ExceptionKey;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.map.MapClientTest.LocalMapSupplier;
 import net.openhft.chronicle.engine.map.MapClientTest.RemoteMapSupplier;
@@ -38,6 +40,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.junit.runners.AllTests;
 
@@ -54,12 +58,13 @@ import static com.google.common.collect.testing.features.MapFeature.*;
 @RunWith(AllTests.class)
 public class GuavaEngineTest {
     public static final WireType WIRE_TYPE = WireType.TEXT;
+    private Map<ExceptionKey, Integer> exceptions;
 
     @NotNull
     public static Test suite() throws IOException {
 
         MapTestSuiteBuilder using = MapTestSuiteBuilder.using(new RemoteTestGenerator(new
-                VanillaAssetTree().forTesting(t -> t.printStackTrace())));
+                VanillaAssetTree().forTesting()));
 
         TestSuite remoteMapTests = using.named("Chronicle RemoteEngine Guava tests")
                 .withFeatures(GENERAL_PURPOSE)
@@ -102,7 +107,7 @@ public class GuavaEngineTest {
     @NotNull
     static ConcurrentMap<CharSequence, CharSequence> newStrStrLocalMap() {
         return new LocalMapSupplier(CharSequence.class, CharSequence.class, new
-                VanillaAssetTree().forTesting(t -> t.printStackTrace())).get();
+                VanillaAssetTree().forTesting()).get();
     }
 
     @AfterClass
@@ -111,10 +116,21 @@ public class GuavaEngineTest {
         TCPRegistry.reset();
     }
 
+    @Before
+    public void setUp() {
+        exceptions = Jvm.recordExceptions();
+    }
+
     @After
     public void tearDown() {
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
+
+        if (!exceptions.isEmpty()) {
+            Jvm.dumpException(exceptions);
+            Jvm.resetExceptionHandlers();
+            Assert.fail();
+        }
     }
 
     static abstract class TestGenerator
@@ -195,7 +211,7 @@ public class GuavaEngineTest {
 
             final String hostname = "localhost";
             this.remoteAssetTree = new VanillaAssetTree().forRemoteAccess("guava.test" +
-                    ".host.port", WIRE_TYPE, t -> t.printStackTrace());
+                    ".host.port", WIRE_TYPE);
         }
 
         @NotNull

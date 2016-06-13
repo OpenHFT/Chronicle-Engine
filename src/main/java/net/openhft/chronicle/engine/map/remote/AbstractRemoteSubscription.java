@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.engine.map.remote;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
@@ -149,7 +150,7 @@ abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient imp
         final Long tid = subscribersToTid.get(subscriber);
 
         if (tid == null) {
-            AbstractRemoteSubscription.LOG.warn("There is no subscription to unsubscribe");
+            Jvm.warn().on(getClass(), "There is no subscription to unsubscribe");
             return;
         }
 

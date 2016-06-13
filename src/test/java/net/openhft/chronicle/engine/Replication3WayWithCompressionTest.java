@@ -124,7 +124,7 @@ public class Replication3WayWithCompressionTest extends ThreadMonitoringTest {
     @NotNull
     private AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
         AssetTree tree = new VanillaAssetTree((byte) hostId)
-                .forTesting(x -> t.compareAndSet(null, x))
+                .forTesting()
                 .withConfig(resourcesDir() + "/3wayLegacy", OS.TARGET + "/" + hostId);
 
         tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",

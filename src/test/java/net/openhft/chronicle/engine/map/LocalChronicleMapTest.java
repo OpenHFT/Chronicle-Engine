@@ -51,7 +51,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     @NotNull
     private ClosableMapSupplier<Integer, String> newIntString() throws IOException {
         final LocalMapSupplier supplier = new LocalMapSupplier<>(Integer
-                .class, String.class, new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x)));
+                .class, String.class, new VanillaAssetTree().forTesting());
 
         return new ClosableMapSupplier<Integer, String>() {
 
@@ -73,7 +73,7 @@ public class LocalChronicleMapTest extends JSR166TestCase {
     private ClosableMapSupplier<CharSequence, CharSequence> newStrStrMap() throws
             IOException {
 
-        final LocalMapSupplier supplier = new LocalMapSupplier<>(CharSequence.class, CharSequence.class, new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x)));
+        final LocalMapSupplier supplier = new LocalMapSupplier<>(CharSequence.class, CharSequence.class, new VanillaAssetTree().forTesting());
 
         return new ClosableMapSupplier<CharSequence, CharSequence>() {
 

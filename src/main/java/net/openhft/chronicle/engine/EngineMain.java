@@ -53,7 +53,7 @@ public class EngineMain {
         String name = args.length > 0 ? args[0] : "engine.yaml";
         TextWire yaml = TextWire.fromFile(name);
         Installable installable = (Installable) yaml.readObject();
-        AssetTree assetTree = new VanillaAssetTree(HOST_ID).forServer(false, Throwable::printStackTrace);
+        AssetTree assetTree = new VanillaAssetTree(HOST_ID).forServer(false);
         assetTree.registerSubscriber("", TopologicalEvent.class, e -> LOGGER.info("Tree change " + e));
         try {
             installable.install("/", assetTree);

@@ -86,7 +86,7 @@ class ReplicationHub extends AbstractStatelessClient {
             public void onSubscribe(@NotNull WireOut wireOut) {
 
                 if (LOG.isDebugEnabled())
-                    LOG.debug("onSubscribe - localIdentifier=" + localIdentifier + "," +
+                    Jvm.debug().on(getClass(), "onSubscribe - localIdentifier=" + localIdentifier + "," +
                             "remoteIdentifier=" + remoteIdentifier);
 
                 wireOut.writeEventName(identifier)
@@ -164,7 +164,7 @@ class ReplicationHub extends AbstractStatelessClient {
                                           publish(mi, b, remoteIdentifier);
 
                                       } catch (RuntimeException e) {
-                                          LOG.warn("", e);
+                                          Jvm.warn().on(getClass(), e);
                                       }
                                       return;
 
@@ -318,7 +318,7 @@ class ReplicationHub extends AbstractStatelessClient {
 
             if (Jvm.isDebug() && LOG.isDebugEnabled()) {
                 long delay = System.currentTimeMillis() - e.timestamp();
-                LOG.debug("*****\t\t\t\tSENT : CLIENT :replicatedEntry latency=" +
+                Jvm.debug().on(getClass(), "*****\t\t\t\tSENT : CLIENT :replicatedEntry latency=" +
                         delay + "ms");
             }
 

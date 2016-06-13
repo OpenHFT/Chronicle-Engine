@@ -42,7 +42,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -52,7 +51,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 @RunWith(value = Parameterized.class)
 public class TestInsertUpdateChronicleMapViewOnServer extends ThreadMonitoringTest {
 
-    private static AtomicReference<Throwable> t = new AtomicReference();
     public String connection = "RemoteSubscriptionTest.host.port";
     @NotNull
 
@@ -74,7 +72,7 @@ public class TestInsertUpdateChronicleMapViewOnServer extends ThreadMonitoringTe
 
     @Before
     public void before() throws IOException {
-        serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
+        serverAssetTree = new VanillaAssetTree().forTesting();
 
         YamlLogging.setAll(false);
 

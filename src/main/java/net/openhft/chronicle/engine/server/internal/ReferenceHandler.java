@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.engine.server.internal;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.util.SerializableBiFunction;
 import net.openhft.chronicle.engine.api.pubsub.Reference;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
@@ -125,7 +126,7 @@ public class ReferenceHandler<E, T> extends AbstractHandler {
                 long subscriberTid = valueIn.int64();
                 Subscriber<E> listener = (Subscriber) tidToListener.remove(subscriberTid);
                 if (listener == null) {
-                    LOG.warn("No subscriber to present to unregisterSubscriber (" + subscriberTid + ")");
+                    Jvm.warn().on(getClass(), "No subscriber to present to unregisterSubscriber (" + subscriberTid + ")");
                     return;
                 }
                 view.unregisterSubscriber(listener);

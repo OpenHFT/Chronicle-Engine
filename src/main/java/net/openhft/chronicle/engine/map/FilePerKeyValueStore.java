@@ -226,7 +226,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
             try {
                 deleteFile(dirPath.resolve(key));
             } catch (IOException e) {
-                LOG.warn("Unable to delete " + key);
+                Jvm.warn().on(getClass(), "Unable to delete " + key);
             }
         }
         return existing;
@@ -240,7 +240,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
             try {
                 deleteFile(path);
             } catch (IOException e) {
-                LOG.warn("Unable to delete " + key);
+                Jvm.warn().on(getClass(), "Unable to delete " + key);
             }
         // todo check this is removed in watcher
         FileRecord fr = lastFileRecordMap.get(path.toFile());
@@ -264,7 +264,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
                 try {
                     deleteFile(path);
                 } catch (IOException e) {
-                    LOG.warn("Unable to delete " + path + " " + e);
+                    Jvm.warn().on(getClass(), "Unable to delete " + path + " " + e);
                 }
             });
         }
@@ -367,7 +367,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
 
             } catch (FileSystemException fse) {
                 if (LOG.isDebugEnabled())
-                    LOG.debug("Unable to rename file " + fse);
+                    Jvm.debug().on(getClass(), "Unable to rename file " + fse);
                 try {
                     Thread.sleep(i * i * 2);
                 } catch (InterruptedException e) {
@@ -431,7 +431,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
                 }
             } catch (Throwable e) {
                 if (!closed)
-                    LOG.warn("", e);
+                    Jvm.warn().on(getClass(), e);
             }
         }
 

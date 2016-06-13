@@ -20,6 +20,7 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.onoes.ExceptionKey;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.engine.api.EngineReplication;
@@ -38,15 +39,15 @@ import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.lang.model.DataValueClasses;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.Map;
 import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
@@ -60,10 +61,11 @@ public class ChronicleMapKeyValueStoreTest {
     private static AssetTree tree1;
     private static AssetTree tree2;
     private static AssetTree tree3;
-    private static AtomicReference<Throwable> t = new AtomicReference();
+    private static Map<ExceptionKey, Integer> exceptions;
 
     @BeforeClass
     public static void before() throws IOException {
+        exceptions = Jvm.recordExceptions();
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
         ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
         //Delete any files from the last run
@@ -78,8 +80,12 @@ public class ChronicleMapKeyValueStoreTest {
         tree1.close();
         tree2.close();
         tree3.close();
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
+
+        if (!exceptions.isEmpty()) {
+            Jvm.dumpException(exceptions);
+            Jvm.resetExceptionHandlers();
+            Assert.fail();
+        }
     }
 
     @NotNull
@@ -91,7 +97,7 @@ public class ChronicleMapKeyValueStoreTest {
     @NotNull
     private static AssetTree create(final int hostId, Function<Bytes, Wire> writeType) {
         AssetTree tree = new VanillaAssetTree((byte) hostId)
-                .forTesting(x -> t.compareAndSet(null, x))
+                .forTesting()
                 .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);
 
         tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
@@ -168,11 +174,5 @@ public class ChronicleMapKeyValueStoreTest {
             return ".";
         String resources = new File(path).getParentFile().getParentFile() + "/src/test/resources";
         return resources;
-    }
-
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
     }
 }

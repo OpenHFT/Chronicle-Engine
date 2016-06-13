@@ -17,21 +17,21 @@
 package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.onoes.ExceptionKey;
 import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 
+import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Created by Rob Austin
  */
 public class ThreadMonitoringTest {
-
-    protected static final AtomicReference<Throwable> t = new AtomicReference<>();
     static final Properties prop0 = new Properties();
 
     static {
@@ -39,6 +39,12 @@ public class ThreadMonitoringTest {
     }
 
     protected ThreadDump threadDump;
+    private Map<ExceptionKey, Integer> exceptions;
+
+    @Before
+    public void recordExceptions() {
+        exceptions = Jvm.recordExceptions();
+    }
 
     @Before
     public void turnOffYamlLogging() {
@@ -60,12 +66,10 @@ public class ThreadMonitoringTest {
         System.getProperties().clear();
         System.getProperties().putAll(prop0);
     }
+
     @After
     public final void after() {
         preAfter();
-
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
 
         TCPRegistry.reset();
         threadDump.ignore("main/ChronicleMapKeyValueStore Closer");
@@ -78,9 +82,19 @@ public class ThreadMonitoringTest {
         threadDump.assertNoNewThreads();
         YamlLogging.setAll(false);
         resetProperties();
+
+        if (!exceptions.isEmpty()) {
+            Jvm.dumpException(exceptions);
+            Assert.fail();
+        }
+        recordExceptions();
     }
 
     protected void preAfter() {
-
+        if (!exceptions.isEmpty()) {
+            Jvm.dumpException(exceptions);
+            Jvm.resetExceptionHandlers();
+            Assert.fail();
+        }
     }
 }

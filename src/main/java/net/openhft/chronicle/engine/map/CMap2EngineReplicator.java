@@ -21,6 +21,7 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.PointerBytesStore;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.tree.Asset;
@@ -160,7 +161,7 @@ public class CMap2EngineReplicator implements EngineReplication,
     public void applyReplication(@NotNull final ReplicationEntry entry) {
 
         if (LOG.isDebugEnabled())
-            LOG.debug("applyReplication entry=" + entry);
+            Jvm.debug().on(getClass(), "applyReplication entry=" + entry);
 
         if (entry.isDeleted())
             remove(entry);

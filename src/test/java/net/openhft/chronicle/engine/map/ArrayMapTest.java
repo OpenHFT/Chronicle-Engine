@@ -18,6 +18,8 @@
 
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.onoes.ExceptionKey;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
@@ -35,6 +37,7 @@ import org.junit.runners.Parameterized;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
 
 import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
 import static net.openhft.chronicle.engine.Utils.methodName;
@@ -59,9 +62,10 @@ public class ArrayMapTest extends ThreadMonitoringTest {
     @NotNull
     @Rule
     public TestName name = new TestName();
-    private AssetTree assetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
+    private AssetTree assetTree = new VanillaAssetTree().forTesting();
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
+    private Map<ExceptionKey, Integer> exceptions;
 
     public ArrayMapTest(boolean isRemote, WireType wireType) {
         this.isRemote = isRemote;
@@ -87,7 +91,8 @@ public class ArrayMapTest extends ThreadMonitoringTest {
 
     @Before
     public void before() throws IOException {
-        serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
+        exceptions = Jvm.recordExceptions();
+        serverAssetTree = new VanillaAssetTree().forTesting();
 
         if (isRemote) {
 
@@ -95,7 +100,7 @@ public class ArrayMapTest extends ThreadMonitoringTest {
             connection = "ArrayMapTest." + name.getMethodName() + ".host.port" + wireType;
             TCPRegistry.createServerSocketChannelFor(connection);
             serverEndpoint = new ServerEndpoint(connection, serverAssetTree);
-            assetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType, x -> t.set(x));
+            assetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType);
         } else {
             assetTree = serverAssetTree;
         }

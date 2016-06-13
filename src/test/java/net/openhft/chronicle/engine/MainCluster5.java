@@ -20,6 +20,7 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.onoes.ExceptionKey;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
@@ -38,6 +39,7 @@ import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.AfterClass;
+import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,6 +47,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -69,8 +72,10 @@ public class MainCluster5 {
     public static ServerEndpoint serverEndpoint;
 
     private static AssetTree tree;
+    private static Map<ExceptionKey, Integer> exceptions;
 
     public static void before() throws IOException {
+        exceptions = Jvm.recordExceptions();
         System.out.println("Using cluster " + CLUSTER + " basePath: " + basePath);
         YamlLogging.setAll(false);
         //YamlLogging.showServerWrites = true;
@@ -112,7 +117,7 @@ public class MainCluster5 {
 
             case "client":
                 tree = new VanillaAssetTree("/").forRemoteAccess
-                        ("localhost:9093", WIRE_TYPE, t -> t.printStackTrace());
+                        ("localhost:9093", WIRE_TYPE);
         }
         // configure them
         tree.acquireMap(NAME1, String.class, String.class).size();
@@ -131,12 +136,18 @@ public class MainCluster5 {
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
         // TODO TCPRegistery.assertAllServersStopped();
+        if (!exceptions.isEmpty()) {
+            Jvm.dumpException(exceptions);
+            Jvm.resetExceptionHandlers();
+            Assert.fail();
+        }
+
     }
 
     @NotNull
     static AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
         AssetTree tree = new VanillaAssetTree((byte) hostId)
-                .forTesting(t -> t.printStackTrace())
+                .forTesting()
                 .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);
 
         tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",

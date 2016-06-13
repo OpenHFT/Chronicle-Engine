@@ -66,7 +66,7 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
     @NotNull
     @Rule
     public TestName name = new TestName();
-    private AssetTree clientAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
+    private AssetTree clientAssetTree = new VanillaAssetTree().forTesting();
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
@@ -84,7 +84,7 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
 
     @Before
     public void before() throws IOException {
-        serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
+        serverAssetTree = new VanillaAssetTree().forTesting();
 
         methodName(name.getMethodName());
 
@@ -94,7 +94,7 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
         connection = "StreamTest." + name.getMethodName() + ".host.port" + wireType;
         TCPRegistry.createServerSocketChannelFor(connection);
         serverEndpoint = new ServerEndpoint(connection, serverAssetTree);
-        clientAssetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType, x -> t.set(x));
+        clientAssetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType);
 
         map = clientAssetTree.acquireMap(NAME, String.class, String.class);
     }

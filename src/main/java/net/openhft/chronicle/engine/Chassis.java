@@ -45,7 +45,7 @@ public enum Chassis {
      * Replace the underlying
      */
     public static void resetChassis() {
-        assetTree = new VanillaAssetTree().forTesting(t -> t.printStackTrace());
+        assetTree = new VanillaAssetTree().forTesting();
     }
 
     /**

@@ -20,6 +20,7 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.onoes.ExceptionKey;
 import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -35,17 +36,13 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -55,10 +52,10 @@ import static org.junit.Assert.assertNotNull;
  */
 public class ReferenceChronicleTest {
 
-    private static AtomicReference<Throwable> t = new AtomicReference();
     private String hostPortToken;
 
     private ThreadDump threadDump;
+    private Map<ExceptionKey, Integer> exceptions;
 
     @Before
     public void threadDump() {
@@ -69,6 +66,7 @@ public class ReferenceChronicleTest {
     public void before() throws IOException {
         hostPortToken = this.getClass().getSimpleName() + ".host.port";
         TCPRegistry.createServerSocketChannelFor(hostPortToken);
+        exceptions = Jvm.recordExceptions();
     }
 
     @After
@@ -79,8 +77,11 @@ public class ReferenceChronicleTest {
 
     @After
     public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
+        if (!exceptions.isEmpty()) {
+            Jvm.dumpException(exceptions);
+            Jvm.resetExceptionHandlers();
+            Assert.fail();
+        }
     }
 
     @After
@@ -93,13 +94,13 @@ public class ReferenceChronicleTest {
     @Test(timeout = 5000)
     public void testRemoteSubscriptionMUFGChronicle() throws IOException {
 
-        AssetTree serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
+        AssetTree serverAssetTree = new VanillaAssetTree().forTesting();
         serverAssetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore", VanillaMapView::new, KeyValueStore.class);
         serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
                 new ChronicleMapKeyValueStore(context.basePath(OS.TARGET).entries(50).averageValueSize(2_000_000), asset));
 
         ServerEndpoint serverEndpoint = new ServerEndpoint(hostPortToken, serverAssetTree);
-        AssetTree clientAssetTree = new VanillaAssetTree().forRemoteAccess(hostPortToken, WireType.BINARY, x -> t.set(x));
+        AssetTree clientAssetTree = new VanillaAssetTree().forRemoteAccess(hostPortToken, WireType.BINARY);
 
         //noinspection TryFinallyCanBeTryWithResources
         try {
@@ -114,7 +115,7 @@ public class ReferenceChronicleTest {
     @Test(timeout = 5000)
     public void testLocalSubscriptionMUFGChronicle() throws IOException {
 
-        AssetTree serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
+        AssetTree serverAssetTree = new VanillaAssetTree().forTesting();
         serverAssetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore", VanillaMapView::new, KeyValueStore.class);
         serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
                 new ChronicleMapKeyValueStore(context.basePath(OS.TARGET).entries(50).averageValueSize(2_000_000), asset));

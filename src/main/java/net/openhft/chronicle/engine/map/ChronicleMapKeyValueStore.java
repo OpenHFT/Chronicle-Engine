@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.map;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.core.threads.EventLoop;
@@ -126,7 +127,7 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
 
         } catch (AssetNotFoundException anfe) {
             if (LOG.isDebugEnabled())
-                LOG.debug("replication not enabled " + anfe);
+                Jvm.debug().on(getClass(), "replication not enabled ", anfe);
         }
 
         this.engineReplicator = engineReplicator1;
@@ -168,21 +169,21 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
         Clusters clusters = asset.findView(Clusters.class);
 
         if (clusters == null) {
-            LOG.warn("no clusters found.");
+            Jvm.warn().on(getClass(), "no clusters found.");
             return;
         }
 
         final EngineCluster engineCluster = clusters.get(context.cluster());
 
         if (engineCluster == null) {
-            LOG.warn("no cluster found, name=" + context.cluster());
+            Jvm.warn().on(getClass(), "no cluster found, name=" + context.cluster());
             return;
         }
 
         byte localIdentifier = hostIdentifier.hostId();
 
         if (LOG.isDebugEnabled())
-            LOG.debug("hostDetails : localIdentifier=" + localIdentifier + ",cluster=" + engineCluster.hostDetails());
+            Jvm.debug().on(getClass(), "hostDetails : localIdentifier=" + localIdentifier + ",cluster=" + engineCluster.hostDetails());
 
         for (EngineHostDetails hostDetails : engineCluster.hostDetails()) {
             try {
@@ -196,7 +197,7 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
 
                     ConnectionManager connectionManager = engineCluster.findConnectionManager(remoteIdentifier);
                     if (connectionManager == null) {
-                        LOG.debug("connectionManager==null for remoteIdentifier=" + remoteIdentifier);
+                        Jvm.warn().on(getClass(), "connectionManager==null for remoteIdentifier=" + remoteIdentifier);
                         engineCluster.findConnectionManager(remoteIdentifier);
                         continue;
                     }
@@ -222,13 +223,13 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
 
                 if (remoteIdentifier <= localIdentifier) {
                     if (LOG.isDebugEnabled())
-                        LOG.debug("skipping : attempting to connect to localIdentifier=" +
+                        Jvm.debug().on(getClass(), "skipping : attempting to connect to localIdentifier=" +
                                 localIdentifier + ", remoteIdentifier=" + remoteIdentifier);
                     continue;
                 }
 
                 if (LOG.isDebugEnabled())
-                    LOG.debug("attempting to connect to " +
+                    Jvm.debug().on(getClass(), "attempting to connect to " +
                             "localIdentifier=" + localIdentifier + ", " +
                             "remoteIdentifier=" + remoteIdentifier);
 
@@ -239,7 +240,7 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
                 replicationHub.bootstrap(engineReplicator1, localIdentifier, remoteIdentifier);
 
             } catch (Exception e) {
-                LOG.warn("hostDetails=" + hostDetails, e);
+                Jvm.warn().on(getClass(), "hostDetails=" + hostDetails, e);
             }
         }
     }
@@ -257,7 +258,7 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
 
         } catch (RuntimeException e) {
             if (LOG.isDebugEnabled())
-                LOG.debug("Failed to write " + key + ", " + value, e);
+                Jvm.debug().on(getClass(), "Failed to write " + key + ", " + value, e);
             throw e;
         }
     }
@@ -362,7 +363,7 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
         if (!isClosed.get() && engineReplicator != null)
             engineReplicator.applyReplication(replicationEntry);
         else
-            LOG.warn("message skipped as closed replicationEntry=" + replicationEntry);
+            Jvm.warn().on(getClass(), "message skipped as closed replicationEntry=" + replicationEntry);
     }
 
     @Nullable
@@ -436,7 +437,7 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
 
             if (!added && !hasValueChanged && replacedTimestamp == timestamp
                     && identifier == replacedIdentifier) {
-                LOG.debug("ignore update as nothing has changed");
+                Jvm.debug().on(getClass(), "ignore update as nothing has changed");
                 return;
             }
 

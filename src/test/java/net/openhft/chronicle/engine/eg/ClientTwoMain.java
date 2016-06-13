@@ -57,7 +57,7 @@ public class ClientTwoMain {
     public static void main(String[] args) {
         YamlLogging.setAll(false);
         VanillaAssetTree assetTree = new VanillaAssetTree().forRemoteAccess("localhost:9090",
-                WireType.TEXT, x -> t.set(x));
+                WireType.TEXT);
 
         MapView<String, Price> map = assetTree.acquireMap("/fx", String.class, Price.class);
         map.put("GBPEUR", new Price("GBPEUR", 0.71023, 1e6, 0.71024, 2e6));

@@ -19,6 +19,7 @@
 package net.openhft.chronicle.engine.redis;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.onoes.ExceptionKey;
 import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
@@ -34,7 +35,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static net.openhft.chronicle.engine.redis.RedisEmulator.*;
@@ -48,8 +48,8 @@ public class RedisEmulatorTest {
     private static MapView myLongHash;
     private static MapView myDoubleHash;
 
-    private static AtomicReference<Throwable> t = new AtomicReference();
     private ThreadDump threadDump;
+    private Map<ExceptionKey, Integer> exceptions;
 
     @BeforeClass
     public static void setup() throws IOException{
@@ -57,7 +57,7 @@ public class RedisEmulatorTest {
         YamlLogging.showServerReads(true);
         //For this test we can use a VanillaMapKeyValueStore
         //To test with a ChronicleMapKeyValueStore uncomment lines below
-        AssetTree serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
+        AssetTree serverAssetTree = new VanillaAssetTree().forTesting();
 //        serverAssetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
 //                VanillaMapView::new, KeyValueStore.class);
 //        serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
@@ -67,7 +67,7 @@ public class RedisEmulatorTest {
         ServerEndpoint serverEndpoint = new ServerEndpoint("RemoteSubscriptionModelPerformanceTest.port",
                 serverAssetTree);
         AssetTree clientAssetTree = new VanillaAssetTree()
-                .forRemoteAccess("RemoteSubscriptionModelPerformanceTest.port", WireType.TEXT, x -> t.set(x));
+                .forRemoteAccess("RemoteSubscriptionModelPerformanceTest.port", WireType.TEXT);
 
         myStringHash = clientAssetTree.acquireMap("/myStringHash", String.class, String.class);
         myLongHash = clientAssetTree.acquireMap("/myLongHash", String.class, Long.class);
@@ -80,10 +80,17 @@ public class RedisEmulatorTest {
         TCPRegistry.reset();
     }
 
+    @Before
+    public void recordExceptions() {
+        exceptions = Jvm.recordExceptions();
+    }
     @After
     public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
+        if (!exceptions.isEmpty()) {
+            Jvm.dumpException(exceptions);
+            Jvm.resetExceptionHandlers();
+            Assert.fail();
+        }
     }
 
     @Before

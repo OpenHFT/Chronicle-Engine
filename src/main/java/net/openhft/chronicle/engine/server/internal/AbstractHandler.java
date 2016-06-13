@@ -19,6 +19,7 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.wire.WireOut;
@@ -123,7 +124,7 @@ abstract class AbstractHandler {
                 LOG.info("\nServer Sends:\n" +
                         Wires.fromSizePrefixedBlobs(outWire.bytes()));
             } catch (Exception e) {
-                LOG.warn("\nServer Sends ( corrupted ) :\n" +
+                Jvm.warn().on(getClass(), "\nServer Sends ( corrupted ) :\n" +
                         outWire.bytes().toDebugString());
             } finally {
                 assert outWire.endUse();

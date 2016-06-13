@@ -109,7 +109,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
 
         replay(listener);
 
-        VanillaAssetTree serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
+        VanillaAssetTree serverAssetTree = new VanillaAssetTree().forTesting();
         ServerEndpoint serverEndpoint = null;
         Subscriber<MapEvent> mapEventSubscriber = e -> e.apply(listener);
         VanillaAssetTree assetTree;
@@ -117,7 +117,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
             TCPRegistry.createServerSocketChannelFor("testSubscriptionTest.host.port");
             serverEndpoint = new ServerEndpoint("testSubscriptionTest.host.port", serverAssetTree);
 
-            assetTree = new VanillaAssetTree().forRemoteAccess("testSubscriptionTest.host.port", wireType, x -> t.set(x));
+            assetTree = new VanillaAssetTree().forRemoteAccess("testSubscriptionTest.host.port", wireType);
         } else {
             assetTree = serverAssetTree;
         }

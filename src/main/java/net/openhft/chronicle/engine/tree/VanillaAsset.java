@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.tree;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.annotation.ForceInline;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.threads.EventLoop;
@@ -61,7 +62,6 @@ import java.util.SortedMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.BiPredicate;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -175,7 +175,7 @@ public class VanillaAsset implements Asset, Closeable {
                 RemoteIndexQueueView::new);
     }
 
-    public void standardStack(boolean daemon, @NotNull final Consumer<Throwable> onThrowable) {
+    public void standardStack(boolean daemon) {
         configMapCommon();
 
         String fullName = fullName();
@@ -186,22 +186,25 @@ public class VanillaAsset implements Asset, Closeable {
         ThreadGroup threadGroup = new ThreadGroup(fullName);
         addView(ThreadGroup.class, threadGroup);
         addLeafRule(EventLoop.class, LAST + " event group", (rc, asset) ->
-                Threads.withThreadGroup(threadGroup, () -> {
-                    EventLoop eg = new EventGroup(daemon, onThrowable);
-                    eg.start();
-                    return eg;
+                Threads.<EventLoop, AssertionError>withThreadGroup(threadGroup, () -> {
+                    try {
+                        EventLoop eg = new EventGroup(daemon);
+                        eg.start();
+                        return eg;
+                    } catch (Exception e) {
+                        throw new AssertionError(e);
+                    }
                 }));
         addView(SessionProvider.class, new VanillaSessionProvider());
     }
 
-    public void forServer(final Consumer<Throwable> onThrowable) {
-        forServer(true, onThrowable, uri -> 1);
+    public void forServer() {
+        forServer(true, uri -> 1);
     }
 
     public void forServer(boolean daemon,
-                          final Consumer<Throwable> onThrowable,
                           final Function<String, Integer> uriToHostId) {
-        standardStack(daemon, onThrowable);
+        standardStack(daemon);
 
         configMapServer();
 
@@ -220,10 +223,9 @@ public class VanillaAsset implements Asset, Closeable {
     public void forRemoteAccess(@NotNull String[] hostPortDescriptions,
                                 @NotNull WireType wire,
                                 @NotNull VanillaSessionDetails sessionDetails,
-                                @Nullable ClientConnectionMonitor clientConnectionMonitor,
-                                @NotNull Consumer<Throwable> onThrowable) throws AssetNotFoundException {
+                                @Nullable ClientConnectionMonitor clientConnectionMonitor) throws AssetNotFoundException {
 
-        standardStack(true, onThrowable);
+        standardStack(true);
         configMapRemote();
 
         VanillaAsset queue = (VanillaAsset) acquireAsset("queue");
@@ -366,7 +368,7 @@ public class VanillaAsset implements Asset, Closeable {
                     return addView(viewType, leafView);
                 V wrappingView = createWrappingView(viewType, rc, this, null);
                 if (wrappingView == null) {
-                    LOG.warn("Unable to classify " + viewType + "\n" + dumpRules());
+                    Jvm.warn().on(getClass(), "Unable to classify " + viewType + "\n" + dumpRules());
                     throw new AssetNotFoundException("Unable to classify " + viewType.getName() + " context: " + rc);
                 }
                 return addView(viewType, wrappingView);

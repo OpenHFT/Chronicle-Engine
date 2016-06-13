@@ -18,6 +18,7 @@
 
 package net.openhft.chronicle.engine.pubsub;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.core.util.SerializableBiFunction;
 import net.openhft.chronicle.core.util.SerializableFunction;
@@ -111,7 +112,7 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
 
         final Long tid = subscribersToTid.get(subscriber);
         if (tid == null) {
-            LOG.warn("No subscriber to unsubscribe");
+            Jvm.warn().on(getClass(), "No subscriber to unsubscribe");
             return;
         }
 

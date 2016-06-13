@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.engine.map.remote;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
@@ -128,7 +129,7 @@ public class RemoteKVSSubscription<K, V> extends AbstractRemoteSubscription<MapE
         Long tid = subscribersToTid.get(subscriber);
 
         if (tid == null) {
-            LOG.warn("There is no subscription to unsubscribe, was " + subscribersToTid.size() + " other subscriptions.");
+            Jvm.warn().on(getClass(), "There is no subscription to unsubscribe, was " + subscribersToTid.size() + " other subscriptions.");
             return;
         }
 

@@ -19,6 +19,7 @@
 package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.onoes.ExceptionKey;
 import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
@@ -34,20 +35,19 @@ import org.junit.Test;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class RestartClosedPublisherTest {
     public static final WireType WIRE_TYPE = WireType.TEXT;
     private static final String CONNECTION_1 = "Test1.host.port";
-    private static AtomicReference<Throwable> t = new AtomicReference();
     private ServerEndpoint _serverEndpoint1;
     private VanillaAssetTree _server;
     private VanillaAssetTree _remote;
     private String _testMapUri = "/test/map";
 
     private ThreadDump threadDump;
+    private Map<ExceptionKey, Integer> exceptions;
 
     @Before
     public void threadDump() {
@@ -61,15 +61,19 @@ public class RestartClosedPublisherTest {
 
     @After
     public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
+        if (!exceptions.isEmpty()) {
+            Jvm.dumpException(exceptions);
+            Jvm.resetExceptionHandlers();
+            Assert.fail();
+        }
     }
 
     @Before
     public void setUp() throws Exception {
+        exceptions = Jvm.recordExceptions();
         TCPRegistry.createServerSocketChannelFor(CONNECTION_1);
         YamlLogging.setAll(false);
-        _server = new VanillaAssetTree().forServer(x -> t.set(x));
+        _server = new VanillaAssetTree().forServer();
 
         _serverEndpoint1 = new ServerEndpoint(CONNECTION_1, _server);
 
@@ -102,7 +106,7 @@ public class RestartClosedPublisherTest {
     }
 
     private void connectClientAndPerformPutGetTest(String testKey, String value, BlockingQueue<String> eventQueue) throws InterruptedException {
-        VanillaAssetTree remote = new VanillaAssetTree().forRemoteAccess(CONNECTION_1, WIRE_TYPE, x -> t.set(x));
+        VanillaAssetTree remote = new VanillaAssetTree().forRemoteAccess(CONNECTION_1, WIRE_TYPE);
 
         String keySubUri = _testMapUri + "/" + testKey + "?bootstrap=false";
         Map<String, String> map = remote.acquireMap(_testMapUri, String.class, String.class);

@@ -20,6 +20,7 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.onoes.ExceptionKey;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.api.EngineReplication;
@@ -51,7 +52,6 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertNotNull;
 
@@ -73,8 +73,9 @@ public class MaunualReplication2WayTest {
     public TestName testName = new TestName();
     public String name;
     private AssetTree tree1;
-    private AtomicReference<Throwable> t = new AtomicReference();
+
     private ThreadDump threadDump;
+    private Map<ExceptionKey, Integer> exceptions;
 
     @NotNull
     public static String resourcesDir() {
@@ -89,7 +90,7 @@ public class MaunualReplication2WayTest {
     }
 
     public void before() throws IOException {
-
+        exceptions = Jvm.recordExceptions();
         //YamlLogging.showServerWrites = true;
 
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
@@ -114,15 +115,17 @@ public class MaunualReplication2WayTest {
 
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
-        // TODO TCPRegistery.assertAllServersStopped();
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
+        if (!exceptions.isEmpty()) {
+            Jvm.dumpException(exceptions);
+            Jvm.resetExceptionHandlers();
+            Assert.fail();
+        }
     }
 
     @NotNull
     private AssetTree create(final int hostId, WireType writeType, final String clusterNam) {
         VanillaAssetTree tree = new VanillaAssetTree((byte) hostId)
-                .forTesting(x -> t.compareAndSet(null, x));
+                .forTesting();
 
         Asset testBootstrap = tree.root().acquireAsset("testManualTesting");
         testBootstrap.addWrappingRule(MapView.class, "map directly to KeyValueStore",
@@ -156,13 +159,6 @@ public class MaunualReplication2WayTest {
         before();
         name = testName.getMethodName();
         Files.deleteIfExists(Paths.get(OS.TARGET, name.toString()));
-    }
-
-    @After
-    public void afterMethod() throws IOException {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
-        after();
     }
 
     private boolean isHost1() {

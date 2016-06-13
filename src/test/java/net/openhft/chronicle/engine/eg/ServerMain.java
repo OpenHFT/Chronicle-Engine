@@ -22,6 +22,8 @@ import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.YamlLogging;
 
+import java.io.IOException;
+
 /**
  * Created by peter on 17/08/15.
  */
@@ -33,11 +35,11 @@ public class ServerMain {
         ClassAliasPool.CLASS_ALIASES.addAlias(PriceUpdater.class);
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
 
         YamlLogging.showServerReads(true);
         YamlLogging.showServerWrites(true);
-        AssetTree serverTree = new VanillaAssetTree().forServer(false, Throwable::printStackTrace);
+        AssetTree serverTree = new VanillaAssetTree().forServer(false);
         endpoint = new ServerEndpoint("localhost:9090", serverTree);
     }
 }

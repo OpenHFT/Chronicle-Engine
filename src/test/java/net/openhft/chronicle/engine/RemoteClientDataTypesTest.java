@@ -100,12 +100,11 @@ public class RemoteClientDataTypesTest {
     }
     @Before
     public void setUp() throws IOException {
-        _serverAssetTree = new VanillaAssetTree().forServer(x -> t.compareAndSet(null, x));
+        _serverAssetTree = new VanillaAssetTree().forServer();
 
         TCPRegistry.createServerSocketChannelFor(_serverAddress);
         _serverEndpoint = new ServerEndpoint(_serverAddress, _serverAssetTree);
-        _clientAssetTree = new VanillaAssetTree().forRemoteAccess(_serverAddress, _wireType,
-                x -> t.compareAndSet(null, x));
+        _clientAssetTree = new VanillaAssetTree().forRemoteAccess(_serverAddress, _wireType);
     }
 
     @After

@@ -56,14 +56,14 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
 
     @Before
     public void before() throws IOException {
-        serverAssetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
+        serverAssetTree = new VanillaAssetTree().forTesting();
 
         TCPRegistry.createServerSocketChannelFor(CONNECTION);
 
         serverEndpoint = new ServerEndpoint(CONNECTION, serverAssetTree);
 
         for (int i = 0; i < MAX; i++) {
-            trees[i] = new VanillaAssetTree().forRemoteAccess(CONNECTION, WIRE_TYPE, x -> t.set(x));
+            trees[i] = new VanillaAssetTree().forRemoteAccess(CONNECTION, WIRE_TYPE);
             maps[i] = trees[i].acquireMap(NAME + i, String.class, String.class);
         }
     }

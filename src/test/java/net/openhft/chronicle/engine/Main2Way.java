@@ -20,6 +20,7 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.onoes.ExceptionKey;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
@@ -37,8 +38,8 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 
 import java.io.File;
@@ -46,9 +47,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Created by Rob Austin
@@ -64,10 +65,11 @@ public class Main2Way {
     private static AssetTree tree3;
     private static AssetTree tree1;
     private static AssetTree tree2;
-    private static AtomicReference<Throwable> t = new AtomicReference();
+    private static Map<ExceptionKey, Integer> exceptions;
 
     @BeforeClass
     public static void before() throws IOException {
+        exceptions = Jvm.recordExceptions();
         YamlLogging.setAll(false);
 
         //YamlLogging.showServerWrites = true;
@@ -104,15 +106,19 @@ public class Main2Way {
 
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
-        // TODO TCPRegistery.assertAllServersStopped();
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
+
+        if (!exceptions.isEmpty()) {
+            Jvm.dumpException(exceptions);
+            Jvm.resetExceptionHandlers();
+            Assert.fail();
+        }
+
     }
 
     @NotNull
     private static AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
         AssetTree tree = new VanillaAssetTree((byte) hostId)
-                .forTesting(x -> t.compareAndSet(null, x))
+                .forTesting()
                 .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);
 
         tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
@@ -157,12 +163,6 @@ public class Main2Way {
         for (int i = 0; i < chars.length; i += 45)
             chars[rand.nextInt(chars.length)] = '.';
         return new String(chars);
-    }
-
-    @After
-    public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
     }
 
     public void test() throws InterruptedException, IOException {

@@ -63,7 +63,7 @@ public class MainClusterClient {
 
 //        Executors.newSingleThreadExecutor().submit(() -> {
         VanillaAssetTree tree5 = new VanillaAssetTree("tree1")
-                .forRemoteAccess(DESCRIPTION, WIRE_TYPE, Throwable::printStackTrace);
+                .forRemoteAccess(DESCRIPTION, WIRE_TYPE);
         final ConcurrentMap<String, String> map1 = tree5.acquireMap(NAME1,
                 String.class, String.class);
         final ConcurrentMap<String, String> map2 = tree5.acquireMap(NAME2,

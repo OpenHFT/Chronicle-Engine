@@ -20,6 +20,7 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.annotation.Nullable;
+import net.openhft.chronicle.core.onoes.ExceptionKey;
 import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
@@ -44,10 +45,10 @@ import java.net.SocketAddress;
 import java.nio.channels.ServerSocketChannel;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -65,7 +66,6 @@ public class TcpFailoverWithMonitoringTest {
     private static final String CONNECTION_1 = "Test1.host.port";
     private final static String CONNECTION_2 = "Test2.host.port";
     private static ConcurrentMap<String, String> map;
-    private static AtomicReference<Throwable> t = new AtomicReference<>();
     private final BlockingQueue<String> activity = new ArrayBlockingQueue<>(2);
     ServerSocketChannel connection1;
     ServerSocketChannel connection2;
@@ -75,6 +75,7 @@ public class TcpFailoverWithMonitoringTest {
     private ServerEndpoint serverEndpoint1;
     private ServerEndpoint serverEndpoint2;
     private ThreadDump threadDump;
+    private Map<ExceptionKey, Integer> exceptions;
 
     public TcpFailoverWithMonitoringTest() {
     }
@@ -91,15 +92,19 @@ public class TcpFailoverWithMonitoringTest {
 
     @After
     public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
+        if (!exceptions.isEmpty()) {
+            Jvm.dumpException(exceptions);
+            Jvm.resetExceptionHandlers();
+            Assert.fail();
+        }
     }
 
     @Before
     public void before() throws IOException {
+        exceptions = Jvm.recordExceptions();
         YamlLogging.setAll(true);
-        serverAssetTree1 = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
-        serverAssetTree2 = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
+        serverAssetTree1 = new VanillaAssetTree().forTesting();
+        serverAssetTree2 = new VanillaAssetTree().forTesting();
 
         TCPRegistry.createServerSocketChannelFor(CONNECTION_1);
         TCPRegistry.createServerSocketChannelFor(CONNECTION_2);
@@ -110,7 +115,7 @@ public class TcpFailoverWithMonitoringTest {
         final String[] connection = {CONNECTION_1, CONNECTION_2};
 
         failOverClient = new VanillaAssetTree("failoverClient").forRemoteAccess(connection,
-                WIRE_TYPE, clientConnectionMonitor(), x -> t.set(x));
+                WIRE_TYPE, clientConnectionMonitor());
 
         map = failOverClient.acquireMap(NAME, String.class, String.class);
 

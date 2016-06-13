@@ -20,6 +20,7 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.onoes.ExceptionKey;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.api.EngineReplication;
@@ -65,18 +66,18 @@ public class RoundTripTest {
     static final int VALUE_SIZE = 2 << 20;
     public static ServerEndpoint serverEndpoint;
     static int counter = 0;
-    private static AtomicReference<Throwable> t = new AtomicReference<>();
     private static String CONNECTION_1 = "CONNECTION_1";
     private static String CONNECTION_2 = "CONNECTION_2";
     private static String CONNECTION_3 = "CONNECTION_3";
 
     private ThreadDump threadDump;
+    private Map<ExceptionKey, Integer> exceptions;
 
     @NotNull
     static AssetTree create(final int hostId, WireType writeType, final List<EngineHostDetails> hostDetails) {
 
         AssetTree tree = new VanillaAssetTree((byte) hostId)
-                .forTesting(x -> t.compareAndSet(null, x));
+                .forTesting();
 
         Map<String, EngineHostDetails> hostDetailsMap = new ConcurrentSkipListMap<>();
 
@@ -127,15 +128,22 @@ public class RoundTripTest {
         threadDump.assertNoNewThreads();
     }
 
-    @After
-    public void afterMethod() {
-        checkForThrowablesInOtherThreads();
+    @Before
+    public void recordException() {
+        exceptions = Jvm.recordExceptions();
     }
 
     private void checkForThrowablesInOtherThreads() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null)
-            throw Jvm.rethrow(th);
+        if (!exceptions.isEmpty()) {
+            Jvm.dumpException(exceptions);
+            Jvm.resetExceptionHandlers();
+            Assert.fail();
+        }
+    }
+
+    @After
+    public void afterMethod() {
+        checkForThrowablesInOtherThreads();
     }
 
     @Test
@@ -187,10 +195,10 @@ public class RoundTripTest {
             CountDownLatch l = new CountDownLatch(ENTRIES * TIMES);
 
             VanillaAssetTree treeC1 = new VanillaAssetTree("tree1")
-                    .forRemoteAccess(CONNECTION_1, WIRE_TYPE, Throwable::printStackTrace);
+                    .forRemoteAccess(CONNECTION_1, WIRE_TYPE);
 
             VanillaAssetTree treeC3 = new VanillaAssetTree("tree1")
-                    .forRemoteAccess(CONNECTION_3, WIRE_TYPE, Throwable::printStackTrace);
+                    .forRemoteAccess(CONNECTION_3, WIRE_TYPE);
             AtomicReference<CountDownLatch> latchRef = new AtomicReference<>();
 
             treeC3.registerSubscriber(NAME, String.class, z -> {

@@ -58,7 +58,7 @@ public class ServerOverloadTest extends ThreadMonitoringTest {
     @NotNull
     @Rule
     public TestName name = new TestName();
-    private AssetTree assetTree = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
+    private AssetTree assetTree = new VanillaAssetTree().forTesting();
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
 
@@ -78,10 +78,7 @@ public class ServerOverloadTest extends ThreadMonitoringTest {
 
     @Before
     public void before() throws IOException {
-        serverAssetTree = new VanillaAssetTree().forTesting(x -> {
-            t.compareAndSet(null, x);
-            x.printStackTrace();
-        });
+        serverAssetTree = new VanillaAssetTree().forTesting();
 
         if (isRemote) {
 
@@ -89,7 +86,7 @@ public class ServerOverloadTest extends ThreadMonitoringTest {
             connection = "ServerOverloadTest.testThatSendingAlotOfDataToTheServer.host.port";
             TCPRegistry.createServerSocketChannelFor(connection);
             serverEndpoint = new ServerEndpoint(connection, serverAssetTree);
-            assetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType, x -> t.set(x));
+            assetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType);
         } else {
             assetTree = serverAssetTree;
         }

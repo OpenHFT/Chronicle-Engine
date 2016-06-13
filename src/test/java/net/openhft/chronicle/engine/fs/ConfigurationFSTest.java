@@ -18,6 +18,7 @@ package net.openhft.chronicle.engine.fs;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.onoes.ExceptionKey;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.VanillaAssetTreeEgMain;
@@ -25,20 +26,19 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Created by peter on 12/06/15.
  */
 public class ConfigurationFSTest {
 
-    private static AtomicReference<Throwable> t = new AtomicReference();
-
     private ThreadDump threadDump;
+    private Map<ExceptionKey, Integer> exceptions;
 
     @Before
     public void threadDump() {
@@ -51,10 +51,17 @@ public class ConfigurationFSTest {
         threadDump.assertNoNewThreads();
     }
 
+    @Before
+    public void recordException() {
+        exceptions = Jvm.recordExceptions();
+    }
     @After
     public void afterMethod() {
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
+        if (!exceptions.isEmpty()) {
+            Jvm.dumpException(exceptions);
+            Jvm.resetExceptionHandlers();
+            Assert.fail();
+        }
     }
 
     @Test
@@ -62,7 +69,7 @@ public class ConfigurationFSTest {
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
         ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
 
-        AssetTree at = new VanillaAssetTree().forTesting(x -> t.compareAndSet(null, x));
+        AssetTree at = new VanillaAssetTree().forTesting();
         at.registerSubscriber("", TopologicalEvent.class, System.out::println);
         at.registerSubscriber("/Data", TopologicalEvent.class, System.out::println);
 

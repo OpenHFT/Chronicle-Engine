@@ -53,7 +53,7 @@ public class RemoteRpc extends JSR166TestCase {
 
         YamlLogging.setAll(false);
         assetTree = new VanillaAssetTree(1)
-                .forRemoteAccess("192.168.1.76:8088", WIRE_TYPE, x -> t.set(x));
+                .forRemoteAccess("192.168.1.76:8088", WIRE_TYPE);
 
         MapView<String, String> map = assetTree.acquireMap("/test", String.class, String.class);
 
@@ -91,7 +91,7 @@ public class RemoteRpc extends JSR166TestCase {
 
         YamlLogging.showClientWrites(true);
         YamlLogging.showClientReads(true);
-        assetTree = (new VanillaAssetTree(1)).forRemoteAccess("192.168.1.76:8088", WIRE_TYPE, x -> t.set(x));
+        assetTree = (new VanillaAssetTree(1)).forRemoteAccess("192.168.1.76:8088", WIRE_TYPE);
 
         MapView<String, String> map = assetTree.acquireMap("/test", String.class, String.class);
         MapView<String, String> map2 = assetTree.acquireMap("/test2", String.class, String

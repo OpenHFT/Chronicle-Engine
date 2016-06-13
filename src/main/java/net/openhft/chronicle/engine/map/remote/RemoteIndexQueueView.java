@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.map.remote;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.query.IndexQuery;
@@ -95,7 +96,7 @@ public class RemoteIndexQueueView<K extends Marshallable, V extends Marshallable
                         hub.unsubscribe(tid());
                     }
                 } catch (Exception e) {
-                    LOG.warn("", e);
+                    Jvm.warn().on(getClass(), e);
                 }
 
             }
@@ -110,7 +111,7 @@ public class RemoteIndexQueueView<K extends Marshallable, V extends Marshallable
         Long tid = subscribersToTid.get(listener);
 
         if (tid == null) {
-            LOG.warn("There is no subscription to unsubscribe, was " + subscribersToTid.size() + " other subscriptions.");
+            Jvm.warn().on(getClass(), "There is no subscription to unsubscribe, was " + subscribersToTid.size() + " other subscriptions.");
             return;
         }
 

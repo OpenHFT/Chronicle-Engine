@@ -94,7 +94,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
             queueConfig = asset.findView(QueueConfig.class);
 
         } catch (AssetNotFoundException anfe) {
-            LOG.warn("queue config not found asset=" + asset.fullName());
+            Jvm.warn().on(getClass(), "queue config not found asset=" + asset.fullName());
             throw anfe;
         }
 
@@ -131,7 +131,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         } catch (Exception e) {
             IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
                     " required to run this code. Please contact sales@chronicle.software");
-            LOG.warn("", e);
+            Jvm.warn().on(ChronicleQueueView.class, e);
             throw licence;
         }
     }
@@ -162,7 +162,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
             IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
                     " required to run this code." +
                     "Please contact sales@chronicle.software");
-            LOG.warn("", e);
+            Jvm.warn().on(ChronicleQueueView.class, e);
             throw licence;
         }
     }
@@ -180,7 +180,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
             Files.deleteIfExists(element.toPath());
 
         } catch (IOException e) {
-            LOG.warn("Unable to delete " + element, e);
+            Jvm.warn().on(ChronicleQueueView.class, "Unable to delete " + element, e);
         }
     }
 
@@ -203,7 +203,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
             hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
         } catch (AssetNotFoundException anfe) {
             if (LOG.isDebugEnabled())
-                LOG.debug("replication not enabled " + anfe.getMessage());
+                Jvm.debug().on(getClass(), "replication not enabled " + anfe.getMessage());
             return;
         }
 
@@ -214,7 +214,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         final Clusters clusters = asset.findView(Clusters.class);
 
         if (clusters == null) {
-            LOG.warn("no cluster found name=" + context.cluster());
+            Jvm.warn().on(getClass(), "no cluster found name=" + context.cluster());
             return;
         }
 
@@ -222,14 +222,14 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         final String csp = context.fullName();
 
         if (engineCluster == null) {
-            LOG.warn("no cluster found name=" + context.cluster());
+            Jvm.warn().on(getClass(), "no cluster found name=" + context.cluster());
             return;
         }
 
         byte localIdentifier = hostIdentifier.hostId();
 
         if (LOG.isDebugEnabled())
-            LOG.debug("hostDetails : localIdentifier=" + localIdentifier + ",cluster=" + engineCluster.hostDetails());
+            Jvm.debug().on(getClass(), "hostDetails : localIdentifier=" + localIdentifier + ",cluster=" + engineCluster.hostDetails());
 
         // if true - each replication event sends back an enableAcknowledgment
         final boolean acknowledgement = queueConfig.acknowledgment();
@@ -494,7 +494,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
                 deleteFiles(file);
 
             } catch (Exception e) {
-                LOG.warn("Unable to delete " + file, e);
+                Jvm.warn().on(getClass(), "Unable to delete " + file, e);
             }
         }
 

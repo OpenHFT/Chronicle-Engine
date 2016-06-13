@@ -106,21 +106,17 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
                 + "-" + System.nanoTime();
 
         if (isRemote) {
-            serverAssetTree = new VanillaAssetTree().forTesting(x -> {
-                t.set(x);
-                x.printStackTrace();
-            });
+            serverAssetTree = new VanillaAssetTree().forTesting();
 
             String hostPortDescription = "SimpleQueueViewTest-methodName" + methodName + wireType;
             TCPRegistry.createServerSocketChannelFor(hostPortDescription);
             serverEndpoint = new ServerEndpoint(hostPortDescription, serverAssetTree);
 
             final VanillaAssetTree client = new VanillaAssetTree();
-            assetTree = client.forRemoteAccess(hostPortDescription,
-                    WireType.BINARY, x -> t.set(x));
+            assetTree = client.forRemoteAccess(hostPortDescription, WireType.BINARY);
 
         } else {
-            assetTree = (new VanillaAssetTree(1)).forTesting(x -> t.set(x));
+            assetTree = (new VanillaAssetTree(1)).forTesting();
             serverEndpoint = null;
             serverAssetTree = null;
         }
@@ -138,8 +134,6 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
-        final Throwable th = t.getAndSet(null);
-        if (th != null) throw Jvm.rethrow(th);
     }
 
     @Test
