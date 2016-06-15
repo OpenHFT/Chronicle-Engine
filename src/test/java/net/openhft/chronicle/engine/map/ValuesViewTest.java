@@ -55,7 +55,7 @@ public class ValuesViewTest extends ThreadMonitoringTest {
     private static MapView<String, String> map;
     private final Boolean isRemote;
     private final WireType wireType;
-    public String connection = "SteamTest.host.port";
+    public String connection = "ValuesViewTest.host.port";
     @NotNull
     @Rule
     public TestName name = new TestName();
@@ -83,7 +83,7 @@ public class ValuesViewTest extends ThreadMonitoringTest {
         if (isRemote) {
 
             methodName(name.getMethodName());
-            connection = "StreamTest." + name.getMethodName() + ".host.port";
+            connection = "ValuesViewTest." + name.getMethodName() + ".host.port";
             TCPRegistry.createServerSocketChannelFor(connection);
             serverEndpoint = new ServerEndpoint(connection, serverAssetTree);
             assetTree = new VanillaAssetTree().forRemoteAccess(connection, wireType);
