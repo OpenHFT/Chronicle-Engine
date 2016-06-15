@@ -47,7 +47,6 @@ public class ManyMapsTest {
 
     public static final String NAME =
             "ManyMapsTest.testConnectToMultipleMapsUsingTheSamePort.host.port";
-    private static AtomicReference<Throwable> t = new AtomicReference();
     private ThreadDump threadDump;
     private Map<ExceptionKey, Integer> exceptions;
 

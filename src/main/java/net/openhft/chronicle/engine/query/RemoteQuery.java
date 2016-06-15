@@ -170,7 +170,7 @@ public class RemoteQuery<E> implements Query<E> {
             sb.append(thread).append(" ").append(thread.getState());
             Jvm.trimStackTrace(sb, entry.getValue());
             sb.append("\n");
-            Jvm.warn().on(getClass(), "\n========= THREAD DUMP =========\n", sb);
+            Jvm.warn().on(getClass(), "\n========= THREAD DUMP =========\n" + sb.toString());
         }
     }
 
