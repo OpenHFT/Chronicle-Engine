@@ -125,7 +125,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
 
         final EngineCluster engineCluster = clusters.get(clusterName);
         if (engineCluster == null) {
-            LOG.error("cluster=" + clusterName, new RuntimeException("cluster  not " +
+            Jvm.warn().on(getClass(), "cluster=" + clusterName, new RuntimeException("cluster  not " +
                     "found, cluster=" + clusterName));
             return;
         }

@@ -109,7 +109,7 @@ public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subsc
         if (EventId.unregisterTopicSubscriber.contentEquals(eventName)) {
             TopicSubscriber listener = (TopicSubscriber) tidToListener.remove(inputTid);
             if (listener == null) {
-                Jvm.warn().on(getClass(), "No subscriber to present to unsubscribe (" + inputTid + ")");
+                Jvm.debug().on(getClass(), "No subscriber to present to unsubscribe (" + inputTid + ")");
                 return;
             }
             asset.unregisterTopicSubscriber(requestContext, listener);
@@ -144,7 +144,7 @@ public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subsc
                 else if (listener instanceof Subscriber)
                     asset.unregisterSubscriber(requestContext, (Subscriber) listener);
                 else
-                    LOG.error("Listener was " + listener);
+                    Jvm.warn().on(getClass(), "Listener was " + listener);
 
             } catch (Exception e) {
                 Jvm.warn().on(getClass(), "listener: " + listener, e);

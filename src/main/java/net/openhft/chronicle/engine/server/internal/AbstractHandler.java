@@ -123,6 +123,7 @@ abstract class AbstractHandler {
                 assert outWire.startUse();
                 LOG.info("\nServer Sends:\n" +
                         Wires.fromSizePrefixedBlobs(outWire.bytes()));
+
             } catch (Exception e) {
                 Jvm.warn().on(getClass(), "\nServer Sends ( corrupted ) :\n" +
                         outWire.bytes().toDebugString());

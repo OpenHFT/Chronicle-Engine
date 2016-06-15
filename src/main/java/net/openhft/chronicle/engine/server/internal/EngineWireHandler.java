@@ -178,7 +178,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                 abstractHandler.onEndOfConnection(heartbeatTimeOut);
 
             } catch (Exception e) {
-                Jvm.warn().on(getClass(), "Failed while for " + abstractHandler, e);
+                Jvm.debug().on(getClass(), "Failed while for " + abstractHandler, e);
             }
         }
 
@@ -250,7 +250,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                         }
                     }
                 } catch (Throwable e) {
-                    LOG.error("", e);
+                    Jvm.warn().on(getClass(), "", e);
                     outWire.bytes().writePosition(startWritePosition);
                     outWire.writeDocument(true, w -> w.writeEventName(CoreFields.tid).int64(tid));
                     outWire.writeDocument(false, out -> out.writeEventName(() -> "exception").throwable(e));

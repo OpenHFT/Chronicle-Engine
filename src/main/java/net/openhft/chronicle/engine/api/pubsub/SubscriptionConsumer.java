@@ -51,7 +51,7 @@ public interface SubscriptionConsumer<T> {
                         ((ISubscriber) s).onEndOfSubscription();
 
                     } catch (RuntimeException e) {
-                        Jvm.warn().on(getClass(), e);
+                        Jvm.debug().on(getClass(), e);
                     }
                 }
             }

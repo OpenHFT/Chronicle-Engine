@@ -136,14 +136,14 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
             final VanillaIndexQuery<V> query = valueIn.typedMarshallable();
 
             if (query.select().isEmpty() || query.valueClass() == null) {
-                Jvm.warn().on(getClass(), "received empty query");
+                Jvm.debug().on(getClass(), "received empty query");
                 return;
             }
 
             try {
                 query.filter();
             } catch (Exception e) {
-                LOG.error("unable to load the filter predicate for this query=" + query, e);
+                Jvm.warn().on(getClass(), "unable to load the filter predicate for this query=" + query, e);
                 return;
             }
 
@@ -159,7 +159,7 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
             ConsumingSubscriber<IndexedValue<V>> listener = tidToListener.remove(inputTid);
 
             if (listener == null) {
-                Jvm.warn().on(getClass(), "No subscriber to present to unsubscribe (" + inputTid + ")");
+                Jvm.debug().on(getClass(), "No subscriber to present to unsubscribe (" + inputTid + ")");
                 return;
             }
 

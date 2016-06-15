@@ -179,7 +179,7 @@ public class ReplicationHandler2<E> extends AbstractHandler {
 
         private boolean checkIdentifier() {
             if (localIdentifier != remoteIdentifier)
-                LOG.error("identifier comparison: " + localIdentifier + " != " + remoteIdentifier);
+                Jvm.warn().on(getClass(), "identifier comparison: " + localIdentifier + " != " + remoteIdentifier);
             return true;
         }
     };

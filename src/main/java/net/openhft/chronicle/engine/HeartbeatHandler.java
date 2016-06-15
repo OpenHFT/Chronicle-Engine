@@ -202,7 +202,7 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
         boolean result = lastTimeMessageReceived + heartbeatTimeoutMs >= currentTimeMillis;
 
         if (!result)
-            LOG.error(Integer.toHexString(hashCode()) + " missed heartbeat, lastTimeMessageReceived=" + lastTimeMessageReceived
+            Jvm.warn().on(getClass(), Integer.toHexString(hashCode()) + " missed heartbeat, lastTimeMessageReceived=" + lastTimeMessageReceived
                     + ", currentTimeMillis=" + currentTimeMillis);
         return result;
     }

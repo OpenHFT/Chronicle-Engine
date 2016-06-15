@@ -118,7 +118,7 @@ public class RemoteQuery<E> implements Query<E> {
                     }
 
                     if (!offer) {
-                        LOG.error("Queue Full");
+                        Jvm.warn().on(getClass(), "Queue Full");
                         dumpThreads();
                     }
                 } catch (InterruptedException e) {
@@ -170,7 +170,7 @@ public class RemoteQuery<E> implements Query<E> {
             sb.append(thread).append(" ").append(thread.getState());
             Jvm.trimStackTrace(sb, entry.getValue());
             sb.append("\n");
-            LOG.error("\n========= THREAD DUMP =========\n", sb);
+            Jvm.warn().on(getClass(), "\n========= THREAD DUMP =========\n", sb);
         }
     }
 

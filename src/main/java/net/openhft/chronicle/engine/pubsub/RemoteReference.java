@@ -112,7 +112,7 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
 
         final Long tid = subscribersToTid.get(subscriber);
         if (tid == null) {
-            Jvm.warn().on(getClass(), "No subscriber to unsubscribe");
+            Jvm.debug().on(getClass(), "No subscriber to unsubscribe");
             return;
         }
 

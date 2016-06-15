@@ -119,7 +119,7 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
         if (unregisterSubscriber.contentEquals(eventName)) {
             Subscriber<Object> listener = (Subscriber) tidToListener.remove(tid);
             if (listener == null) {
-                Jvm.warn().on(getClass(), "No subscriber to present to unregisterSubscriber (" + tid + ")");
+                Jvm.debug().on(getClass(), "No subscriber to present to unregisterSubscriber (" + tid + ")");
                 return true;
             }
 

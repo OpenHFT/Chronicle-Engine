@@ -147,7 +147,7 @@ public class QueueSimpleSubscription<E> implements SimpleSubscription<E> {
             try {
                 subscriber.onEndOfSubscription();
             } catch (Exception e) {
-                Jvm.warn().on(getClass(), e);
+                Jvm.debug().on(getClass(), e);
             }
         }
     }

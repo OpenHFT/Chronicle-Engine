@@ -342,7 +342,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
             this.tid = tid;
             dataConsumer.accept(in, tid);
         } catch (Exception e) {
-            LOG.error("", e);
+            Jvm.warn().on(getClass(), "", e);
         }
     }
 

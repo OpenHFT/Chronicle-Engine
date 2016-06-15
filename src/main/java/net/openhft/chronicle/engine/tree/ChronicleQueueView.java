@@ -94,7 +94,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
             queueConfig = asset.findView(QueueConfig.class);
 
         } catch (AssetNotFoundException anfe) {
-            Jvm.warn().on(getClass(), "queue config not found asset=" + asset.fullName());
+            Jvm.debug().on(getClass(), "queue config not found asset=" + asset.fullName());
             throw anfe;
         }
 
@@ -494,7 +494,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
                 deleteFiles(file);
 
             } catch (Exception e) {
-                Jvm.warn().on(getClass(), "Unable to delete " + file, e);
+                Jvm.debug().on(getClass(), "Unable to delete " + file, e);
             }
         }
 

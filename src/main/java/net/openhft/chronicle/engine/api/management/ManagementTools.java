@@ -116,17 +116,6 @@ public enum ManagementTools {
         registerViewofTree(assetTree);
     }
 
-    public static void enableManagement(@NotNull AssetTree assetTree, int port) {
-        try {
-            startJMXRemoteService();
-
-            count++;
-        } catch (IOException ie) {
-            Jvm.warn().on(ManagementTools.class, "Error while enable management", ie);
-        }
-        registerViewofTree(assetTree);
-    }
-
     public static void disableManagement(@NotNull AssetTree assetTree) {
 
         String treeName = assetTree.toString();
