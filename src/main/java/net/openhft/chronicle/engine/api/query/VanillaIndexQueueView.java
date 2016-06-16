@@ -11,7 +11,10 @@ import net.openhft.chronicle.engine.tree.ChronicleQueueView;
 import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ExcerptTailer;
-import net.openhft.chronicle.wire.*;
+import net.openhft.chronicle.wire.DocumentContext;
+import net.openhft.chronicle.wire.Marshallable;
+import net.openhft.chronicle.wire.ValueIn;
+import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -45,7 +48,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
     private final AtomicBoolean isClosed = new AtomicBoolean();
 
     private final Object lock = new Object();
-    private final ThreadLocal<Function<Class, ReadMarshallable>> objectCacheThreadLocal;
+    private final ThreadLocal<Function<Class, Marshallable>> objectCacheThreadLocal;
     private final ThreadLocal<IndexedValue<V>> indexedValue = ThreadLocal.withInitial(IndexedValue::new);
     private final TypeToString typeToString;
     private volatile long lastIndexRead = 0;
@@ -218,7 +221,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
                 }
 
                 // allows object re-use when using marshallable
-                final Function<Class, ReadMarshallable> objectCache = objectCacheThreadLocal.get();
+                final Function<Class, Marshallable> objectCache = objectCacheThreadLocal.get();
 
                 final V v = (V) VanillaObjectCacheFactory.INSTANCE.get()
                         .apply(typeToString.toType(sb));
