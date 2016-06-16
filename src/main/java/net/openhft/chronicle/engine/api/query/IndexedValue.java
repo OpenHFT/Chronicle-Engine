@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine.api.query;
 
 import net.openhft.chronicle.core.annotation.UsedViaReflection;
+import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.wire.Demarshallable;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
@@ -101,5 +102,15 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
         this.timePublished = timePublished;
         return this;
     }
+
+    @Override
+    public void readMarshallable(@NotNull WireIn wire) throws IORuntimeException {
+        index = wire.read(() -> "index").int64();
+        v =  wire.read(() -> "v").typedMarshallable();
+        timePublished = wire.read(() -> "timePublished").int64();
+        maxIndex = wire.read(() -> "maxIndex").int64();
+    }
+
+
 }
 
