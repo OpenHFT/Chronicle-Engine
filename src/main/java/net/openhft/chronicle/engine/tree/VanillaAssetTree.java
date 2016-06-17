@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import static net.openhft.chronicle.core.pool.ClassAliasPool.CLASS_ALIASES;
 
@@ -90,10 +91,12 @@ public class VanillaAssetTree implements AssetTree {
         return forServer(daemon);
     }
 
+
     @NotNull
     public VanillaAssetTree forServer() {
         return forServer(true);
     }
+
 
     @NotNull
     public VanillaAssetTree forServer(boolean daemon) {
@@ -112,6 +115,7 @@ public class VanillaAssetTree implements AssetTree {
         root.forRemoteAccess(hostPortDescription, wire, clientSession(), null);
         return this;
     }
+
 
     /**
      * creates an asset tree that connects to a remove server via tcp/ip
@@ -193,5 +197,9 @@ public class VanillaAssetTree implements AssetTree {
     @Override
     public String toString() {
         return "tree-" + Optional.ofNullable(root.getView(HostIdentifier.class)).map(HostIdentifier::hostId).orElseGet(() -> (byte) 0);
+    }
+
+    public VanillaAssetTree forRemoteAccess(String serverAddress, WireType wireType, Consumer<Throwable> t) {
+        return forRemoteAccess(serverAddress, wireType);
     }
 }
