@@ -25,7 +25,6 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.fs.Clusters;
 import net.openhft.chronicle.engine.fs.EngineCluster;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
-import net.openhft.chronicle.network.TcpEventHandler;
 import net.openhft.chronicle.network.cluster.*;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.threads.NamedThreadFactory;
@@ -248,9 +247,6 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
             WriteMarshallable w = next();
             if (w != null)
                 w.writeMarshallable(outWire);
-
-            if (outWire.bytes().writeRemaining() < TcpEventHandler.TCP_BUFFER)
-                return;
         }
 
     }
