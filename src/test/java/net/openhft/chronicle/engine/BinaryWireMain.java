@@ -32,8 +32,8 @@ public class BinaryWireMain {
     public static final net.openhft.chronicle.wire.WireType WIRE_TYPE = WireType.BINARY;
 
     public static void main(@NotNull String[] args) throws IOException {
-        int port = 8088;
-
+        int port = 8080;
+        // YamlLogging.setAll(true);
         VanillaAssetTree assetTree = new VanillaAssetTree().forTesting(false);
         final ServerEndpoint serverEndpoint = new ServerEndpoint("*:" + port, assetTree);
 
