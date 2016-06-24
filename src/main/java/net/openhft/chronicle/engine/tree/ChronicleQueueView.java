@@ -604,7 +604,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         final LocalExcept excerpt;
 
         public ThreadLocalData(ChronicleQueue chronicleQueue) {
-            appender = chronicleQueue.createAppender();
+            appender = chronicleQueue.acquireAppender();
             tailer = chronicleQueue.createTailer();
 
             replayTailer = chronicleQueue.createTailer();
