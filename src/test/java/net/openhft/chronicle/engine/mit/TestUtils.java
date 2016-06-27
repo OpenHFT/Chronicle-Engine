@@ -31,6 +31,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
 
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
+
 public class TestUtils {
     /**
      * Calculates the runtime in nanoseconds from the given start time in nanoseconds.
@@ -137,7 +139,7 @@ public class TestUtils {
      * @throws IOException
      */
     public static void saveTestFileToDisk(String extension, String stringToWrite) throws IOException {
-        Files.write(Paths.get("./test" + extension), stringToWrite.getBytes());
+        Files.write(Paths.get("./test" + extension), stringToWrite.getBytes(ISO_8859_1));
     }
 
     public static void deleteTestFile(String extension) throws IOException {

@@ -29,6 +29,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -82,7 +83,7 @@ public class InsertedEventTest {
     public void testMarshalling3a() {
         YamlLogging.setAll(false);
         Bytes bytes = Bytes.elasticByteBuffer();
-        InsertedEvent<String, BytesStore> insertedEvent = InsertedEvent.of("asset", "key", BytesStore.wrap("£Hello World".getBytes()),false);
+        InsertedEvent<String, BytesStore> insertedEvent = InsertedEvent.of("asset", "key", BytesStore.wrap("£Hello World".getBytes(ISO_8859_1)), false);
         TextWire textWire = new TextWire(bytes);
         textWire.write(() -> "reply")
                 .typedMarshallable(insertedEvent);
@@ -95,7 +96,7 @@ public class InsertedEventTest {
     public void testMarshalling3() {
         YamlLogging.setAll(false);
         Bytes bytes = Bytes.elasticByteBuffer();
-        InsertedEvent<String, BytesStore> insertedEvent = InsertedEvent.of("asset", "key", BytesStore.wrap("Hello World".getBytes()),false);
+        InsertedEvent<String, BytesStore> insertedEvent = InsertedEvent.of("asset", "key", BytesStore.wrap("Hello World".getBytes(ISO_8859_1)), false);
         TextWire textWire = new TextWire(bytes);
         textWire.write(() -> "reply")
                 .typedMarshallable(insertedEvent);
@@ -131,7 +132,7 @@ public class InsertedEventTest {
     @Test
     public void testMarshalling3B() {
         Bytes bytes = Bytes.elasticByteBuffer();
-        InsertedEvent<String, BytesStore> insertedEvent = InsertedEvent.of("asset", "key", BytesStore.wrap("Hello World".getBytes()),false);
+        InsertedEvent<String, BytesStore> insertedEvent = InsertedEvent.of("asset", "key", BytesStore.wrap("Hello World".getBytes(ISO_8859_1)), false);
         BinaryWire binaryWire = new BinaryWire(bytes);
         binaryWire.write(() -> "reply")
                 .typedMarshallable(insertedEvent);

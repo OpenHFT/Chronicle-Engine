@@ -34,6 +34,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 import static java.nio.ByteBuffer.allocateDirect;
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static net.openhft.chronicle.bytes.NativeBytesStore.wrap;
 import static net.openhft.chronicle.hash.replication.SingleChronicleHashReplication.builder;
 
@@ -99,8 +100,8 @@ public class CMap2EngineReplicatorTest {
         final Bytes<ByteBuffer> key = wrap(allocateDirect(1024)).bytesForWrite();
         final Bytes<ByteBuffer> value = wrap(allocateDirect(1024)).bytesForWrite();
 
-        key.write("hello".getBytes());
-        value.write("world".getBytes());
+        key.write("hello".getBytes(ISO_8859_1));
+        value.write("world".getBytes(ISO_8859_1));
 
         replicator.put(key, value, (byte) 1, System.currentTimeMillis());
 

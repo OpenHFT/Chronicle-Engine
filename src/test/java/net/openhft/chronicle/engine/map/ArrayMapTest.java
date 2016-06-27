@@ -39,6 +39,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
 import static net.openhft.chronicle.engine.Utils.methodName;
 
@@ -127,10 +128,10 @@ public class ArrayMapTest extends ThreadMonitoringTest {
 
         final MapView<String, byte[]> map = assetTree.acquireMap("name", String.class, byte[]
                 .class);
-        map.put("1", "hello world".getBytes());
+        map.put("1", "hello world".getBytes(ISO_8859_1));
 
         final byte[] bytes = map.get("1");
-        Assert.assertArrayEquals("hello world".getBytes(), bytes);
+        Assert.assertArrayEquals("hello world".getBytes(ISO_8859_1), bytes);
 
     }
 
