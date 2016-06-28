@@ -18,6 +18,8 @@
 
 package net.openhft.chronicle.engine.tree;
 
+import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.NativeBytes;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.io.IORuntimeException;
@@ -355,11 +357,15 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
             if (!dc.isPresent())
                 return null;
             final StringBuilder topic = Wires.acquireStringBuilder();
-            final ValueIn eventName = dc.wire().readEventName(topic);
-            final M message = eventName.object(elementTypeClass);
+            final ValueIn valueIn = dc.wire().readEventName(topic);
+            if (Bytes.class.isAssignableFrom(elementTypeClass)) {
+                valueIn.text(excerpt.text());
+            } else {
+                final M message = valueIn.object(elementTypeClass);
+                excerpt.message(message);
+            }
 
             return excerpt
-                    .message(message)
                     .topic(convertTo(messageTypeClass, topic))
                     .index(excerptTailer.index());
         }
@@ -535,7 +541,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
     }
 
     public static class LocalExcept<T, M> implements Excerpt<T, M>, Marshallable {
-
         private T topic;
         private M message;
         private long index;
@@ -593,6 +598,16 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
             message = null;
             topic = null;
             index = -1;
+        }
+
+        public Bytes text() {
+            if (message instanceof Bytes) {
+                Bytes<?> bytes = (Bytes<?>) message;
+                return bytes.clear();
+            }
+            final NativeBytes<Void> bytes = Bytes.allocateElasticDirect();
+            message = (M) bytes;
+            return bytes;
         }
     }
 
