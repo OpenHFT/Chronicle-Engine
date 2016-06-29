@@ -19,7 +19,6 @@
 package net.openhft.chronicle.engine.tree;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.bytes.NativeBytes;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.io.IORuntimeException;
@@ -356,17 +355,17 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         try (DocumentContext dc = excerptTailer.readingDocument()) {
             if (!dc.isPresent())
                 return null;
-            final StringBuilder topic = Wires.acquireStringBuilder();
-            final ValueIn valueIn = dc.wire().readEventName(topic);
+            final Wire wire = dc.wire();
+            final T topic = wire.readEvent(messageTypeClass);
+            final ValueIn valueIn = wire.getValueIn();
             if (Bytes.class.isAssignableFrom(elementTypeClass)) {
                 valueIn.text(excerpt.text());
             } else {
                 final M message = valueIn.object(elementTypeClass);
                 excerpt.message(message);
             }
-
             return excerpt
-                    .topic(convertTo(messageTypeClass, topic))
+                    .topic(topic)
                     .index(excerptTailer.index());
         }
 
@@ -543,6 +542,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
     public static class LocalExcept<T, M> implements Excerpt<T, M>, Marshallable {
         private T topic;
         private M message;
+        private Bytes bytes;
         private long index;
 
         @Override
@@ -601,11 +601,10 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         }
 
         public Bytes text() {
-            if (message instanceof Bytes) {
-                Bytes<?> bytes = (Bytes<?>) message;
-                return bytes.clear();
-            }
-            final NativeBytes<Void> bytes = Bytes.allocateElasticDirect();
+            if (bytes == null)
+                bytes = Bytes.allocateElasticDirect();
+            else
+                bytes.clear();
             message = (M) bytes;
             return bytes;
         }
