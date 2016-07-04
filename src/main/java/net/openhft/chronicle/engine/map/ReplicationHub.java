@@ -190,7 +190,7 @@ class ReplicationHub extends AbstractStatelessClient {
                                   else if (CoreFields.lastUpdateTime.contentEquals(eventName)) {
 
                                       if (Jvm.isDebug())
-                                          System.out.println("server : received lastUpdateTime");
+                                          Jvm.debug().on(getClass(), "server : received lastUpdateTime");
 
                                       final long time = valueIn.int64();
                                       final byte id = d.read(() -> "id").int8();

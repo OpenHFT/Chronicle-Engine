@@ -256,7 +256,9 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
 
                 WriteMarshallable h = isSource0 ?
 
-                        newSource(nextIndexRequired(), context.topicType(), context.elementType(), acknowledgement,
+                        newSource(chronicleQueue.createTailer().toEnd().index(), context.topicType(),
+                                context.elementType(),
+                                acknowledgement,
                                 messageAdaptor) :
 
                         newSync(context.topicType(),
@@ -275,15 +277,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         }
     }
 
-    private long nextIndexRequired() {
-        try {
-            final long index = chronicleQueue().nextIndexToWrite();
-            // replay the last event just in case it was corrupted.
-            return index - 1;
-        } catch (IllegalStateException ignore) {
-            return -1;
-        }
-    }
 
     @Override
     public void registerTopicSubscriber
@@ -477,13 +470,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         throw new UnsupportedOperationException("todo");
     }
 
-    public long firstIndex() {
-        return chronicleQueue.firstIndex();
-    }
-
-    public long lastIndex() {
-        return chronicleQueue.nextIndexToWrite();
-    }
 
     @NotNull
     public WireType wireType() {

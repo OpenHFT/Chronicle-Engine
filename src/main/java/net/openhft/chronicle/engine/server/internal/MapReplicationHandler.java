@@ -106,8 +106,6 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
         // receives replication events
         if (replicationEvent.contentEquals(eventName)) {
             final VanillaReplicatedEntry entry = vre.get();
-            if (localIdentifier == 3 && entry.identifier() == 2)
-                System.out.println("");
             entry.clear();
             valueIn.marshallable(entry);
             replication.applyReplication(entry);

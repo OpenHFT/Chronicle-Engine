@@ -168,7 +168,7 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
             if (hasHeartbeats != prev) {
                 if (!hasHeartbeats) {
                     connectionMonitor.onDisconnected(HeartbeatHandler.this.localIdentifier(), HeartbeatHandler.this.remoteIdentifier());
-                    System.out.println("Heartbeat closing connection" + nc().sessionDetails());
+
                     HeartbeatHandler.this.close();
 
                     final Runnable socketReconnector = nc().socketReconnector();
