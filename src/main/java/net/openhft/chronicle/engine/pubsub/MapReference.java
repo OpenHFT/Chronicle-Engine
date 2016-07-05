@@ -33,15 +33,19 @@ public class MapReference<E> implements Reference<E> {
     private final String name;
     private final Class<E> eClass;
     private final MapView<String, E> underlyingMap;
+    private final Asset asset;
 
     public MapReference(@NotNull RequestContext context, Asset asset, MapView<String, E> underlying) throws AssetNotFoundException {
-        this(context.name(), context.type(), underlying);
+        this(context.name(), context.type(), asset, underlying);
     }
 
-    public MapReference(String name, Class<E> type, MapView<String, E> mapView) {
+    public MapReference(String name, Class<E> type, Asset asset, MapView<String, E> mapView) {
+        assert asset != null;
         this.name = name;
         this.eClass = type;
+        this.asset = asset;
         this.underlyingMap = mapView;
+        assert underlyingMap != null;
     }
 
     @Override
@@ -64,8 +68,7 @@ public class MapReference<E> implements Reference<E> {
     @Override
     public void registerSubscriber(boolean bootstrap, int throttlePeriodMs, Subscriber<E> subscriber) throws AssetNotFoundException {
 
-        underlyingMap.asset().acquireAsset(name)
-                .subscription(true)
+        asset.subscription(true)
                 .registerSubscriber(requestContext()
                                 .bootstrap(bootstrap)
                                 .throttlePeriodMs(throttlePeriodMs)
@@ -75,22 +78,16 @@ public class MapReference<E> implements Reference<E> {
 
     @Override
     public void unregisterSubscriber(Subscriber subscriber) {
-        Asset child = underlyingMap.asset().getChild(name);
-        if (child != null) {
-            SubscriptionCollection subscription = child.subscription(false);
-            if (subscription != null)
-                subscription.unregisterSubscriber(subscriber);
-        }
+        SubscriptionCollection subscription = asset.subscription(false);
+        if (subscription != null)
+            subscription.unregisterSubscriber(subscriber);
     }
 
     @Override
     public int subscriberCount() {
-        Asset child = underlyingMap.asset().getChild(name);
-        if (child != null) {
-            SubscriptionCollection subscription = child.subscription(false);
-            if (subscription != null)
-                return subscription.subscriberCount();
-        }
+        SubscriptionCollection subscription = asset.subscription(false);
+        if (subscription != null)
+            return subscription.subscriberCount();
         return 0;
     }
 

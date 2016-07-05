@@ -54,7 +54,7 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
         if (tcpChannelHub == null) {
             QueueView queueView = parent.getView(QueueView.class);
             if (queueView == null) {
-                reference = new MapReference<>(name, type, parent.acquireView(MapView.class));
+                reference = new MapReference<>(name, type, this, parent.acquireView(MapView.class));
                 subscription = new MapSimpleSubscription<>(reference, valueReader);
             } else {
                 reference = new QueueReference<>(type, parent, queueView, name);
