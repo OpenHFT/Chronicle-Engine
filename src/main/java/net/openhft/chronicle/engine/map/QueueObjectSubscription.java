@@ -181,24 +181,28 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
             if (terminate.get())
                 throw new InvalidEventHandlerException();
 
-            final QueueView.Excerpt<T, M> next = iterator.read();
-            if (next == null)
-                return false;
-            try {
-                M message = next.message();
-                T topic = next.topic();
-                subscriber.onMessage(topic, message);
+            boolean busy = false;
+            long start = System.nanoTime();
+            do {
+                final QueueView.Excerpt<T, M> next = iterator.read();
+                if (next == null)
+                    return busy;
+                try {
+                    M message = next.message();
+                    T topic = next.topic();
+                    subscriber.onMessage(topic, message);
 
-            } catch (InvalidSubscriberException e) {
-                topicSubscribers.add(subscriber);
-                terminate.set(true);
+                } catch (InvalidSubscriberException e) {
+                    topicSubscribers.add(subscriber);
+                    terminate.set(true);
 
-            } catch (RuntimeException e) {
-                Jvm.warn().on(getClass(), e);
-                terminate.set(true);
-            }
-
-            return true;
+                } catch (RuntimeException e) {
+                    Jvm.warn().on(getClass(), e);
+                    terminate.set(true);
+                }
+                busy = true;
+            } while (System.nanoTime() - start < 5000);
+            return busy;
         });
 
     }

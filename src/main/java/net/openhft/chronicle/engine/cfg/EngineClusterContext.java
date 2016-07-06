@@ -49,6 +49,7 @@ public class EngineClusterContext extends ClusterContext {
 
             if (nc.isAcceptor())
                 nc.wireOutPublisher(new VanillaWireOutPublisher(WireType.TEXT));
+
             final TcpEventHandler handler = new TcpEventHandler(networkContext);
 
             final Function<Object, TcpHandler> consumer = o -> {
@@ -76,9 +77,11 @@ public class EngineClusterContext extends ClusterContext {
 
                 @Override
                 public void onNetworkStats(long writeBps, long readBps, long socketPollCountPerSecond, @NotNull NetworkContext networkContext) {
-                    LOG.info("writeBps=" + writeBps + ", readBps=" + readBps +
+                    LOG.info("writeKBps=" + writeBps / 1000 +
+                            ", readKBps=" + readBps / 1000 +
                             ", socketPollCountPerSecond=" + socketPollCountPerSecond +
-                            ", host=" + host + ", port=" + port);
+                            ", host=" + host +
+                            ", port=" + port);
                 }
 
                 @Override
@@ -124,5 +127,6 @@ public class EngineClusterContext extends ClusterContext {
         heartbeatTimeoutMs(5_000L);
         heartbeatIntervalMs(1_000L);
         connectionStrategy(new HostIdConnectionStrategy());
+        serverThreadingStrategy(ServerThreadingStrategy.SINGLE_THREADED);
     }
 }

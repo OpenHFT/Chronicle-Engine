@@ -128,9 +128,9 @@ public class ServerEndpoint implements Closeable {
 
             @Override
             public void onNetworkStats(long writeBps, long readBps, long socketPollCountPerSecond, @NotNull NetworkContext networkContext) {
-                LOG.info("writeBps=" + writeBps + ", readBps=" + readBps +
-                        ", socketPollCountPerSecond=" + socketPollCountPerSecond +
-                        ", host=" + host + ", port=" + port);
+                LOG.info("writeKBps=" + writeBps / 1000 + ", readKBps=" + readBps / 1000 +
+                        ", socketPollCountPerSecond=" + socketPollCountPerSecond / 1000 +
+                        "K, host=" + host + ", port=" + port);
             }
 
             @Override

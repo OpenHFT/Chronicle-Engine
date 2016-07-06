@@ -78,9 +78,9 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
             long currentSecond = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
 
-            if (lastSecond != currentSecond) {
+            if (currentSecond >= lastSecond + 10) {
                 lastSecond = currentSecond;
-                LOG.info("messages read per second=" + messagesReadPerSecond);
+                LOG.info("messages read per second=" + messagesReadPerSecond / 10);
                 messagesReadPerSecond = 0;
             }
 

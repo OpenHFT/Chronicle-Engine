@@ -47,8 +47,8 @@ import static net.openhft.chronicle.engine.server.internal.EngineWireNetworkCont
 /**
  * @author Rob Austin.
  */
-public class EngineWireNetworkContext<T extends EngineWireNetworkContext> extends
-        VanillaNetworkContext<T> {
+public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
+        extends VanillaNetworkContext<T> {
     private static final Logger LOG = LoggerFactory.getLogger(EngineWireNetworkContext.class);
     private Asset rootAsset;
     private MapView<ConnectionDetails, ConnectionStatus> hostByConnectionStatus;
