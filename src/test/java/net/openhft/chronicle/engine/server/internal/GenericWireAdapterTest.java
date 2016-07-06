@@ -84,7 +84,7 @@ public class GenericWireAdapterTest {
         });
 
         System.out.println("----------------------------------");
-        System.out.println(Wires.fromSizePrefixedBlobs(wire.bytes()));
+        System.out.println(Wires.fromSizePrefixedBlobs(wire));
 
         wire.readDocument(null, w -> {
 
