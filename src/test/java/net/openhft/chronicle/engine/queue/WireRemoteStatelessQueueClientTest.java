@@ -32,7 +32,7 @@ public class WireRemoteStatelessQueueClientTest extends ThreadMonitoringTest {
         try (RemoteQueueSupplier remoteQueueSupplier = new RemoteQueueSupplier()) {
             final ChronicleQueue clientQueue = remoteQueueSupplier.get();
             //Create an appender
-            ExcerptAppender appender = clientQueue.createAppender();
+            ExcerptAppender appender = clientQueue.acquireAppender();
             StringBuilder sb = new StringBuilder();
             ExcerptTailer tailer = clientQueue.createTailer();
             long lastIndex = -1;
