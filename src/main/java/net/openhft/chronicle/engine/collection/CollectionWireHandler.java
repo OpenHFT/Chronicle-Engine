@@ -157,7 +157,7 @@ public class CollectionWireHandler<U, C extends Collection<U>> {
                         final Bytes<?> outBytes = outWire.bytes();
                         long len = outBytes.writePosition();
                         if (len >= SIZE_OF_SIZE) {
-                            String s = Wires.fromSizePrefixedBlobs(outBytes);
+                            String s = Wires.fromSizePrefixedBlobs((Wire) outWire);
 
                             LOG.info("server writes:\n\n" + s);
                         }

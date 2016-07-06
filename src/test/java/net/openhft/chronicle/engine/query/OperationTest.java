@@ -24,7 +24,6 @@ import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
-import net.openhft.chronicle.wire.Wires;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -73,7 +72,6 @@ public class OperationTest extends ThreadMonitoringTest {
         final Operation operation = new Operation(Operation.OperationType.FILTER, (SerializablePredicate) o -> true);
         wire.writeDocument(false, w -> w.write(() -> "operation").object(operation));
 
-        System.out.println(Wires.fromSizePrefixedBlobs(b));
         wire.readDocument(null, w -> {
             final Object object = w.read(() -> "operation").object(Object.class);
 

@@ -456,7 +456,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
         if (YamlLogging.showServerReads()) {
             try {
                 LOG.info("\nServer Receives:\n" +
-                        Wires.fromSizePrefixedBlobs(in.bytes()));
+                        Wires.fromSizePrefixedBlobs(in));
             } catch (Exception e) {
                 LOG.info("\n\n" +
                         Bytes.toString(in.bytes()));

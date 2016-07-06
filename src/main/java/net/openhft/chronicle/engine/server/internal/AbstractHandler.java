@@ -22,10 +22,7 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
-import net.openhft.chronicle.wire.WireOut;
-import net.openhft.chronicle.wire.Wires;
-import net.openhft.chronicle.wire.WriteMarshallable;
-import net.openhft.chronicle.wire.YamlLogging;
+import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -122,7 +119,7 @@ abstract class AbstractHandler {
             try {
                 assert outWire.startUse();
                 LOG.info("\nServer Sends:\n" +
-                        Wires.fromSizePrefixedBlobs(outWire.bytes()));
+                        Wires.fromSizePrefixedBlobs((Wire) outWire));
 
             } catch (Exception e) {
                 Jvm.warn().on(getClass(), "\nServer Sends ( corrupted ) :\n" +
