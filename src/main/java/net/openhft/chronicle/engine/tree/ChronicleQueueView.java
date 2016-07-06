@@ -324,6 +324,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         final SingleChronicleQueueBuilder builder = wireType == DEFAULT_ZERO_BINARY
                 ? defaultZeroBinary(baseFilePath)
                 : binary(baseFilePath);
+        builder.blockSize(256 << 20);
         chronicleQueue = builder.build();
 
         return chronicleQueue;
