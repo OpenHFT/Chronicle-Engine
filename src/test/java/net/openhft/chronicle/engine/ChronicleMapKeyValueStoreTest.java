@@ -83,7 +83,6 @@ public class ChronicleMapKeyValueStoreTest {
 
         if (!exceptions.isEmpty()) {
             Jvm.dumpException(exceptions);
-            Jvm.resetExceptionHandlers();
             Assert.fail();
         }
     }
