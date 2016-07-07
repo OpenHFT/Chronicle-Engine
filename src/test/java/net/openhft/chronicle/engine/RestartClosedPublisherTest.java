@@ -63,7 +63,6 @@ public class RestartClosedPublisherTest {
     public void afterMethod() {
         if (!exceptions.isEmpty()) {
             Jvm.dumpException(exceptions);
-            Jvm.resetExceptionHandlers();
             Assert.fail();
         }
     }
