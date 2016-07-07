@@ -164,7 +164,6 @@ public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
         if (!downstream.isEmpty()) {
             notifyEachSubscriber(downstream, d -> d.notifyEvent(changeEvent));
         }
-
     }
 
     private void notifyEventToChild(@NotNull MapEvent<K, V> changeEvent) {

@@ -277,7 +277,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         }
     }
 
-
     @Override
     public void registerTopicSubscriber
             (@NotNull TopicSubscriber<T, M> topicSubscriber) throws AssetNotFoundException {
@@ -362,7 +361,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
                     .topic(topic)
                     .index(excerptTailer.index());
         }
-
     }
 
     /**
@@ -471,7 +469,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         throw new UnsupportedOperationException("todo");
     }
 
-
     @NotNull
     public WireType wireType() {
         throw new UnsupportedOperationException("todo");
@@ -489,7 +486,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
                 Jvm.debug().on(getClass(), "Unable to delete " + file, e);
             }
         }
-
     }
 
     private void deleteFiles(TopicPublisher p) {

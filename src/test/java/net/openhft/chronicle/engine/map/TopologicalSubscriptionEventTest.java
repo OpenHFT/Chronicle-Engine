@@ -90,7 +90,6 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
         } else {
             clientAssetTree = serverAssetTree;
         }
-
     }
 
     @After

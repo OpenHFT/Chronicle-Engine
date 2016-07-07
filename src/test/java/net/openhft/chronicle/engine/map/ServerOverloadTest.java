@@ -90,7 +90,6 @@ public class ServerOverloadTest extends ThreadMonitoringTest {
         } else {
             assetTree = serverAssetTree;
         }
-
     }
 
     @After

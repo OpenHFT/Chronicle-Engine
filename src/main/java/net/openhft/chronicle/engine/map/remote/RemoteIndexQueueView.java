@@ -98,7 +98,6 @@ public class RemoteIndexQueueView<K extends Marshallable, V extends Marshallable
                 } catch (Exception e) {
                     Jvm.warn().on(getClass(), e);
                 }
-
             }
         };
 

@@ -162,7 +162,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
             sub.onEndOfSubscription();
             Jvm.warn().on(getClass(), "Error registering subscription", e);
         }
-
     }
 
     @NotNull
@@ -254,5 +253,4 @@ public class VanillaIndexQueueView<V extends Marshallable>
         chronicleQueue.close();
     }
 }
-
 

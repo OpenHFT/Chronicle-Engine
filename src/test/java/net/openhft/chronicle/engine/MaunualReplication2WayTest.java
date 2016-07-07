@@ -193,7 +193,6 @@ public class MaunualReplication2WayTest {
 
             Jvm.pause(5000);
         }
-
     }
 }
 

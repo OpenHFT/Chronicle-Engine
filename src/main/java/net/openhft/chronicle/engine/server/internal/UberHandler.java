@@ -248,7 +248,6 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
             if (w != null)
                 w.writeMarshallable(outWire);
         }
-
     }
 
     /**

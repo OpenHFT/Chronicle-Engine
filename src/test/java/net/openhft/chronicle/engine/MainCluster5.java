@@ -141,7 +141,6 @@ public class MainCluster5 {
             Jvm.resetExceptionHandlers();
             Assert.fail();
         }
-
     }
 
     @NotNull

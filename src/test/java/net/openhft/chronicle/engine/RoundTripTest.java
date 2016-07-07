@@ -256,7 +256,6 @@ public class RoundTripTest {
             serverEndpoint2.close();
             serverEndpoint3.close();
         }
-
     }
 }
 

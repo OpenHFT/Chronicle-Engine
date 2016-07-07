@@ -112,7 +112,6 @@ public class Main2Way {
             Jvm.resetExceptionHandlers();
             Assert.fail();
         }
-
     }
 
     @NotNull

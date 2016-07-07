@@ -19,19 +19,6 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
     private V v;
     private transient Object k;
 
-    /**
-     * @return the maximum index that is currently available, you can compare this index with the
-     * {@code index} to see how many records the currently even is behind.
-     */
-    public long maxIndex() {
-        return maxIndex;
-    }
-
-    public IndexedValue maxIndex(long maxIndex) {
-        this.maxIndex = maxIndex;
-        return this;
-    }
-
     IndexedValue() {
     }
 
@@ -49,6 +36,19 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
     IndexedValue(V v, long index) {
         this.v = v;
         this.index = index;
+    }
+
+    /**
+     * @return the maximum index that is currently available, you can compare this index with the
+     * {@code index} to see how many records the currently even is behind.
+     */
+    public long maxIndex() {
+        return maxIndex;
+    }
+
+    public IndexedValue maxIndex(long maxIndex) {
+        this.maxIndex = maxIndex;
+        return this;
     }
 
     /**
@@ -110,7 +110,6 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
         timePublished = wire.read(() -> "timePublished").int64();
         maxIndex = wire.read(() -> "maxIndex").int64();
     }
-
 
 }
 

@@ -85,7 +85,6 @@ public class Replication10WayTest {
             tree[i] = create(i + 1, writeType, "clusterTen");
             serverEndpoint[i] = new ServerEndpoint("host.port" + (i + 1), tree[i]);
         }
-
     }
 
     @AfterClass

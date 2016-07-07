@@ -247,7 +247,6 @@ public class ReplicationHandler<E> extends AbstractHandler {
                                     "id=" + id);
                             hasLogged = true;
                         }
-
                     }
                     return false;
                 }

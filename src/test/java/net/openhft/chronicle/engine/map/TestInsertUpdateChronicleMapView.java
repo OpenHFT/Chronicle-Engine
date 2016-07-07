@@ -50,7 +50,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 @RunWith(value = Parameterized.class)
 public class TestInsertUpdateChronicleMapView extends ThreadMonitoringTest {
 
-
     private final WireType wireType;
     public String connection = "RemoteSubscriptionTest.host.port";
     private AssetTree clientAssetTree = new VanillaAssetTree().forTesting();

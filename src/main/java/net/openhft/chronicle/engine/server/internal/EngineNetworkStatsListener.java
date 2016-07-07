@@ -86,7 +86,6 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
             return new EngineNetworkStatsListener(((EngineClusterContext) context).assetRoot(),
                     context.localIdentifier());
         }
-
     }
 }
 

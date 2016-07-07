@@ -91,12 +91,10 @@ public class VanillaAssetTree implements AssetTree {
         return forServer(daemon);
     }
 
-
     @NotNull
     public VanillaAssetTree forServer() {
         return forServer(true);
     }
-
 
     @NotNull
     public VanillaAssetTree forServer(boolean daemon) {
@@ -115,7 +113,6 @@ public class VanillaAssetTree implements AssetTree {
         root.forRemoteAccess(hostPortDescription, wire, clientSession(), null);
         return this;
     }
-
 
     /**
      * creates an asset tree that connects to a remove server via tcp/ip

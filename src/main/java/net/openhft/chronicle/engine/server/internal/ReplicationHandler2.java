@@ -174,7 +174,6 @@ public class ReplicationHandler2<E> extends AbstractHandler {
                     eventLoop.addHandler(true, new ReplicationEventHandler(mi, id, inputTid));
                 });
             }
-
         }
 
         private boolean checkIdentifier() {
@@ -312,7 +311,6 @@ public class ReplicationHandler2<E> extends AbstractHandler {
                                     "id=" + id);
                             hasLogged = true;
                         }
-
                     }
                     return false;
                 }
