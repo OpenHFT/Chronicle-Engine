@@ -525,7 +525,8 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
         try {
             success = f.apply(this, wire);
         } finally {
-            if (!success) wire.bytes().readPosition(readPosition);
+            if (!success)
+                wire.bytes().readPosition(readPosition);
         }
     }
 
