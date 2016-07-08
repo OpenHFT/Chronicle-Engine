@@ -22,6 +22,10 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.io.IORuntimeException;
+import net.openhft.chronicle.core.threads.EventHandler;
+import net.openhft.chronicle.core.threads.EventLoop;
+import net.openhft.chronicle.core.threads.HandlerPriority;
+import net.openhft.chronicle.core.threads.InvalidEventHandlerException;
 import net.openhft.chronicle.engine.api.pubsub.Publisher;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
@@ -107,6 +111,20 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
 
         if (hostId != null)
             replication(context, asset);
+
+        EventLoop eventLoop = asset.findView(EventLoop.class);
+        eventLoop.addHandler(new EventHandler() {
+            @Override
+            public boolean action() throws InvalidEventHandlerException, InterruptedException {
+                chronicleQueue.acquireAppender().pretouch();
+                return false;
+            }
+
+            @Override
+            public HandlerPriority priority() {
+                return HandlerPriority.MONITOR;
+            }
+        });
     }
 
     @NotNull
@@ -323,7 +341,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         final SingleChronicleQueueBuilder builder = wireType == DEFAULT_ZERO_BINARY
                 ? defaultZeroBinary(baseFilePath)
                 : binary(baseFilePath);
-        builder.blockSize(256 << 20);
+        // TODO make configurable
+//        builder.blockSize(256 << 20);
         chronicleQueue = builder.build();
 
         return chronicleQueue;
