@@ -25,18 +25,13 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.cfg.EngineClusterContext;
 import net.openhft.chronicle.engine.tree.VanillaAsset;
-import net.openhft.chronicle.network.ConnectionListener;
-import net.openhft.chronicle.network.MarshallableFunction;
-import net.openhft.chronicle.network.NetworkContext;
-import net.openhft.chronicle.network.VanillaNetworkContext;
+import net.openhft.chronicle.network.*;
 import net.openhft.chronicle.network.api.TcpHandler;
 import net.openhft.chronicle.network.cluster.ClusterContext;
 import net.openhft.chronicle.wire.AbstractMarshallable;
 import net.openhft.chronicle.wire.Demarshallable;
 import net.openhft.chronicle.wire.WireIn;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.channels.SocketChannel;
 
@@ -49,7 +44,6 @@ import static net.openhft.chronicle.engine.server.internal.EngineWireNetworkCont
  */
 public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
         extends VanillaNetworkContext<T> {
-    private static final Logger LOG = LoggerFactory.getLogger(EngineWireNetworkContext.class);
     private Asset rootAsset;
     private MapView<ConnectionDetails, ConnectionStatus> hostByConnectionStatus;
     private MapView<SocketChannel, TcpHandler> socketChannelByHandlers;
@@ -57,6 +51,8 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
 
     public EngineWireNetworkContext(Asset asset) {
         this.rootAsset = asset.root();
+        // TODO make configurable
+        serverThreadingStrategy(ServerThreadingStrategy.CONCURRENT);
         ((VanillaAsset) rootAsset.acquireAsset("/proc")).configMapServer();
 
         try {

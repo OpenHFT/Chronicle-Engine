@@ -80,7 +80,7 @@ public class CMap2EngineReplicator implements EngineReplication,
 
     @NotNull
     private net.openhft.lang.io.Bytes toLangBytes(@NotNull BytesStore b, @NotNull Bytes tmpBytes, @NotNull net.openhft.lang.io.NativeBytes lb) {
-        if (b.isNative()) {
+        if (b.isDirectMemory()) {
 //            check(b);
             lb.setStartPositionAddress(b.address(b.start()), b.address(b.readLimit()));
 //            check(lb);

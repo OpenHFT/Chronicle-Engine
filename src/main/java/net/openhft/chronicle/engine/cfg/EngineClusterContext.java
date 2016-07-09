@@ -49,7 +49,8 @@ public class EngineClusterContext extends ClusterContext {
 
             if (nc.isAcceptor())
                 nc.wireOutPublisher(new VanillaWireOutPublisher(WireType.TEXT));
-
+            // TODO make configurable.
+            networkContext.serverThreadingStrategy(ServerThreadingStrategy.CONCURRENT);
             final TcpEventHandler handler = new TcpEventHandler(networkContext);
 
             final Function<Object, TcpHandler> consumer = o -> {
