@@ -54,12 +54,10 @@ public class RestartClosedPublisherTest {
         threadDump = new ThreadDump();
     }
 
-    @After
     public void checkThreadDump() {
         threadDump.assertNoNewThreads();
     }
 
-    @After
     public void afterMethod() {
         if (!exceptions.isEmpty()) {
             Jvm.dumpException(exceptions);
@@ -84,6 +82,13 @@ public class RestartClosedPublisherTest {
         _server.close();
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
+
+        threadDump.assertNoNewThreads();
+
+        if (!exceptions.isEmpty()) {
+            Jvm.dumpException(exceptions);
+            Assert.fail();
+        }
     }
 
     /**

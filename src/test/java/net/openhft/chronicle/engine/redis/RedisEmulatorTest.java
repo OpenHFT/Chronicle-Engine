@@ -84,11 +84,11 @@ public class RedisEmulatorTest {
     public void recordExceptions() {
         exceptions = Jvm.recordExceptions();
     }
+
     @After
     public void afterMethod() {
         if (!exceptions.isEmpty()) {
             Jvm.dumpException(exceptions);
-            Jvm.resetExceptionHandlers();
             Assert.fail();
         }
     }
