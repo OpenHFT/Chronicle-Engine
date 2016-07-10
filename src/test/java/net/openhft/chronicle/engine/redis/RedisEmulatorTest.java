@@ -48,16 +48,18 @@ public class RedisEmulatorTest {
     private static MapView myLongHash;
     private static MapView myDoubleHash;
 
-    private ThreadDump threadDump;
+    private static ThreadDump threadDump;
+    private static AssetTree serverAssetTree;
+    private static AssetTree clientAssetTree;
     private Map<ExceptionKey, Integer> exceptions;
 
     @BeforeClass
     public static void setup() throws IOException{
-        System.out.println("Hello");
+        threadDump = new ThreadDump();
         YamlLogging.showServerReads(true);
         //For this test we can use a VanillaMapKeyValueStore
         //To test with a ChronicleMapKeyValueStore uncomment lines below
-        AssetTree serverAssetTree = new VanillaAssetTree().forTesting();
+        serverAssetTree = new VanillaAssetTree().forTesting();
 //        serverAssetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
 //                VanillaMapView::new, KeyValueStore.class);
 //        serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
@@ -66,7 +68,7 @@ public class RedisEmulatorTest {
 
         ServerEndpoint serverEndpoint = new ServerEndpoint("RemoteSubscriptionModelPerformanceTest.port",
                 serverAssetTree);
-        AssetTree clientAssetTree = new VanillaAssetTree()
+        clientAssetTree = new VanillaAssetTree()
                 .forRemoteAccess("RemoteSubscriptionModelPerformanceTest.port", WireType.TEXT);
 
         myStringHash = clientAssetTree.acquireMap("/myStringHash", String.class, String.class);
@@ -76,8 +78,12 @@ public class RedisEmulatorTest {
 
     @AfterClass
     public static void down() {
+        serverAssetTree.close();
+        clientAssetTree.close();
+
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
+        threadDump.assertNoNewThreads();
     }
 
     @Before
@@ -93,15 +99,6 @@ public class RedisEmulatorTest {
         }
     }
 
-    @Before
-    public void threadDump() {
-        threadDump = new ThreadDump();
-    }
-
-    @After
-    public void checkThreadDump() {
-        threadDump.assertNoNewThreads();
-    }
 
     @Before
     public void before(){
