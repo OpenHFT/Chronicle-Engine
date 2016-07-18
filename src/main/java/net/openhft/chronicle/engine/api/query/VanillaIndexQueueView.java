@@ -211,11 +211,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
             while (dc.wire().bytes().readRemaining() > 0) {
                 final ValueIn valueIn = dc.wire().read(sb);
                 if (!eventName.contentEquals(sb)) {
-
-                    // todo remove this and change it to skipValue
-                    final V v = (V) VanillaObjectCacheFactory.INSTANCE.get()
-                            .apply(typeToString.toType(sb));
-                    valueIn.marshallable(v);
+                    valueIn.skipValue();
                     continue;
                 }
 
