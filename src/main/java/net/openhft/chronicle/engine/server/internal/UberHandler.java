@@ -222,7 +222,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
                     "process the following " +
                     "YAML\n");
 
-        if (dc.isData())
+        if (dc.isData() && !inWire.bytes().isEmpty())
             handler().onRead(inWire, outWire);
     }
 
