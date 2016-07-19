@@ -42,6 +42,7 @@ import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ExcerptAppender;
 import net.openhft.chronicle.queue.ExcerptTailer;
+import net.openhft.chronicle.queue.impl.RollingChronicleQueue;
 import net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
@@ -67,7 +68,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
 
     private static final Logger LOG = LoggerFactory.getLogger(ChronicleQueueView.class);
 
-    private final ChronicleQueue chronicleQueue;
+    private final RollingChronicleQueue chronicleQueue;
     private final Class<T> messageTypeClass;
     @NotNull
     private final Class<M> elementTypeClass;
@@ -85,7 +86,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         this(null, context, asset);
     }
 
-    public ChronicleQueueView(@Nullable ChronicleQueue queue,
+    public ChronicleQueueView(@Nullable RollingChronicleQueue queue,
                               @NotNull RequestContext context,
                               @NotNull Asset asset) throws IOException {
         this.context = context;
@@ -211,7 +212,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         }
     }
 
-    public ChronicleQueue chronicleQueue() {
+    public RollingChronicleQueue chronicleQueue() {
         return chronicleQueue;
     }
 
@@ -316,10 +317,10 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         throw new UnsupportedOperationException("todo");
     }
 
-    private ChronicleQueue newInstance(@NotNull String name,
-                                       @Nullable String basePath,
-                                       @Nullable Byte hostID,
-                                       @NotNull WireType wireType) throws IOException {
+    private RollingChronicleQueue newInstance(@NotNull String name,
+                                              @Nullable String basePath,
+                                              @Nullable Byte hostID,
+                                              @NotNull WireType wireType) throws IOException {
 
         if (wireType == DELTA_BINARY)
             throw new IllegalArgumentException("Chronicle Queues can not be set to use delta wire");
@@ -327,7 +328,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         if (wireType != BINARY && wireType != DEFAULT_ZERO_BINARY)
             throw new IllegalArgumentException("Currently the chronicle queue only supports Binary and Default Zero Binary Wire");
 
-        ChronicleQueue chronicleQueue;
+        RollingChronicleQueue chronicleQueue;
 
         File baseFilePath;
         if (basePath == null)
