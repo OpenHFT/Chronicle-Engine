@@ -621,6 +621,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
 
         public ThreadLocalData(ChronicleQueue chronicleQueue) {
             appender = chronicleQueue.acquireAppender();
+            appender.padToCacheAlign(true);
             tailer = chronicleQueue.createTailer();
 
             replayTailer = chronicleQueue.createTailer();

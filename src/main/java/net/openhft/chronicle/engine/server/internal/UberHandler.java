@@ -25,6 +25,7 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.fs.Clusters;
 import net.openhft.chronicle.engine.fs.EngineCluster;
 import net.openhft.chronicle.engine.tree.HostIdentifier;
+import net.openhft.chronicle.network.api.session.SubHandler;
 import net.openhft.chronicle.network.cluster.*;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.threads.NamedThreadFactory;
@@ -209,13 +210,15 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
             if (!readMeta(inWire))
                 return;
 
-            handler().remoteIdentifier(remoteIdentifier);
-            handler().localIdentifier(localIdentifier);
-            handler().onInitialize(outWire);
+            SubHandler handler = handler();
+            handler.remoteIdentifier(remoteIdentifier);
+            handler.localIdentifier(localIdentifier);
+            handler.onInitialize(outWire);
             return;
         }
 
-        if (handler() == null)
+        SubHandler handler = handler();
+        if (handler == null)
             throw new IllegalStateException("handler == null, check that the " +
                     "Csp/Cid has been sent, failed to " +
                     "fully " +
@@ -223,7 +226,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
                     "YAML\n");
 
         if (dc.isData() && !inWire.bytes().isEmpty())
-            handler().onRead(inWire, outWire);
+            handler.onRead(inWire, outWire);
     }
 
     @Override
@@ -238,6 +241,9 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
      */
     @Override
     protected void onWrite(@NotNull WireOut outWire) {
+        SubHandler handler = handler();
+        if (handler != null)
+            handler.onWrite(outWire);
 
         for (int i = 0; i < writers.size(); i++) {
 
