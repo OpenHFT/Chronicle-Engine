@@ -86,7 +86,7 @@ public class ThreadMonitoringTest {
         if (!exceptions.isEmpty()) {
             Jvm.dumpException(exceptions);
             Jvm.resetExceptionHandlers();
-            //TODO FIX
+            Assert.fail();
         }
         recordExceptions();
     }

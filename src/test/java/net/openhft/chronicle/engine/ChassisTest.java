@@ -162,8 +162,7 @@ public class ChassisTest {
         // test the topic publish triggers events
         subscriber.onMessage("Message-1");
         replay(subscriber);
-/*
-todo fix this test
+
         TopicPublisher<String, String> publisher = acquireTopicPublisher("map-name", String.class, String.class);
         publisher.publish("Key-1", "Message-1");
         publisher.publish("Key-2", "Message-2");
@@ -179,7 +178,6 @@ todo fix this test
         map.put("Key-3", "Another");
         map.remove("Key-1");
         verify(subscriber);
-*/
     }
 
     @Test
