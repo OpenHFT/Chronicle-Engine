@@ -175,8 +175,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                 subscriptionHandler, topologySubscriptionHandler,
                 publisherHandler, replicationHandler}) {
             try {
-                abstractHandler.onEndOfConnection(heartbeatTimeOut);
-
+                abstractHandler.onEndOfConnection();
             } catch (Exception e) {
                 Jvm.debug().on(getClass(), "Failed while for " + abstractHandler, e);
             }
