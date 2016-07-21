@@ -145,7 +145,7 @@ public class Replication10WayTest {
         threadDump.assertNoNewThreads();
     }
 
-    @Ignore
+    @Ignore("because it uses too much resources on a PC")
     @Test
     public void testTenWay() throws InterruptedException {
 
