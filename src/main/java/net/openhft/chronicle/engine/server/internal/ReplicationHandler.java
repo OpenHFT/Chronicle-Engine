@@ -222,7 +222,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
                     if (startBufferFullTimeStamp != 0) {
                         long timetaken = System.currentTimeMillis() - startBufferFullTimeStamp;
                         if (timetaken > 100)
-                            LOG.info("blocked - outbound buffer full=" + timetaken + "ms");
+                            LOG.info("blocked - outbound buffer full, timetaken=" + timetaken + "ms");
                         startBufferFullTimeStamp = 0;
                     }
 
