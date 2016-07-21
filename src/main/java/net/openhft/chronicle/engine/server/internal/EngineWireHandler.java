@@ -182,8 +182,6 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
             }
         }
 
-        // allow time for outbound onEndOfConnection message to be sent
-        Jvm.pause(100);
     }
 
     @NotNull
