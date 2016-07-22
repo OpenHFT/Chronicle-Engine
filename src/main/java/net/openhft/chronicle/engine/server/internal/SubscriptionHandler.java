@@ -131,7 +131,6 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
 
     @Override
     protected void unregisterAll() {
-
         tidToListener.forEach((k, listener) -> asset.unregisterSubscriber(requestContext,
                 (Subscriber<Object>) listener));
         tidToListener.clear();

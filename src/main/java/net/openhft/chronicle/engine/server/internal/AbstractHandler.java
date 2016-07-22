@@ -132,7 +132,7 @@ abstract class AbstractHandler {
     /**
      * called when the connection is closed
      */
-    public void onEndOfConnection(boolean heartbeatTimeOut) {
+    void onEndOfConnection() {
         connectionClosed = true;
         unregisterAll();
     }
