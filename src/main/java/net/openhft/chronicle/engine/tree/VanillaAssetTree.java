@@ -92,14 +92,25 @@ public class VanillaAssetTree implements AssetTree {
     }
 
     @NotNull
+    public VanillaAssetTree forTesting(boolean daemon, boolean binding) {
+        return forServer(daemon, binding);
+    }
+
+    @NotNull
     public VanillaAssetTree forServer() {
         return forServer(true);
     }
 
     @NotNull
-    public VanillaAssetTree forServer(boolean daemon) {
-        root.forServer(daemon, uri -> 1);
+    public VanillaAssetTree forServer(boolean daemon, boolean binding) {
+        final int hostId = root.getView(HostIdentifier.class).hostId();
+        root.forServer(daemon, uri -> hostId, binding);
         return this;
+    }
+
+    @NotNull
+    public VanillaAssetTree forServer(boolean daemon) {
+        return forServer(daemon, false);
     }
 
     @NotNull

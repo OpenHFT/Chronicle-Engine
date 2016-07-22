@@ -174,7 +174,7 @@ public class VanillaAsset implements Asset, Closeable {
                 RemoteIndexQueueView::new);
     }
 
-    public void standardStack(boolean daemon) {
+    public void standardStack(boolean daemon, boolean binding) {
         configMapCommon();
 
         String fullName = fullName();
@@ -187,7 +187,7 @@ public class VanillaAsset implements Asset, Closeable {
         addLeafRule(EventLoop.class, LAST + " event group", (rc, asset) ->
                 Threads.<EventLoop, AssertionError>withThreadGroup(threadGroup, () -> {
                     try {
-                        EventLoop eg = new EventGroup(daemon);
+                        EventLoop eg = new EventGroup(daemon, binding);
                         eg.start();
                         return eg;
                     } catch (Exception e) {
@@ -197,13 +197,15 @@ public class VanillaAsset implements Asset, Closeable {
         addView(SessionProvider.class, new VanillaSessionProvider());
     }
 
+    @Deprecated
     public void forServer() {
-        forServer(true, uri -> 1);
+        forServer(true, uri -> 1, false);
     }
 
     public void forServer(boolean daemon,
-                          final Function<String, Integer> uriToHostId) {
-        standardStack(daemon);
+                          final Function<String, Integer> uriToHostId,
+                          boolean binding) {
+        standardStack(daemon, binding);
 
         configMapServer();
 
@@ -224,7 +226,7 @@ public class VanillaAsset implements Asset, Closeable {
                                 @NotNull VanillaSessionDetails sessionDetails,
                                 @Nullable ClientConnectionMonitor clientConnectionMonitor) throws AssetNotFoundException {
 
-        standardStack(true);
+        standardStack(true, false);
         configMapRemote();
 
         VanillaAsset queue = (VanillaAsset) acquireAsset("queue");
