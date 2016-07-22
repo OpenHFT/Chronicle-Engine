@@ -99,7 +99,6 @@ public class RedisEmulatorTest {
         }
     }
 
-
     @Before
     public void before(){
         assertEquals("OK", flushdb(myStringHash));
