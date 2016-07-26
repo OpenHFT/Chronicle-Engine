@@ -187,7 +187,7 @@ public class VanillaAsset implements Asset, Closeable {
         addLeafRule(EventLoop.class, LAST + " event group", (rc, asset) ->
                 Threads.<EventLoop, AssertionError>withThreadGroup(threadGroup, () -> {
                     try {
-                        EventLoop eg = new EventGroup(daemon, binding);
+                        EventLoop eg = new EventGroup(daemon);
                         eg.start();
                         return eg;
                     } catch (Exception e) {
