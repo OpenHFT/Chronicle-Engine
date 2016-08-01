@@ -289,7 +289,7 @@ custom type I want to define?  
 #### Answer  
 
 This will work as long as the return result can be serialized, we support serialization  for all  
-the primitive types, plus we also support the collections types such as Maps,Set List. 
+the primitive types, plus we also support the collections types such as Maps,Sets and Lists. 
  For custom types we recommend either extending the net.openhft.chronicle.wire.AbstractMarshallable 
 or implementing Marshallable, ( this is our custom serilization approach, the code has  
 been tuned to perform very well when using this, however if you wanted to consider using  
