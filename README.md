@@ -230,7 +230,80 @@ $sudo umount /engine
 ```  
 
 
-# More details to come.
+### In chronicle-Engine - you can call an arbitrary lambda or predefined function
+
+for example
+
+   List<Key> keys = ...
+   List<Value> values = map.applyTo(m -> {
+       List<Value> values = new ArrayList<>();
+       for(Key k : keys)
+            values.add(map.get(k));
+       return values;
+   });
+
+Instead of using a lambda you can define an `enum` of predefined functions, see
+
+https://github.com/OpenHFT/Chronicle-Engine/blob/master/src/main/java/net/openhft/chronicle/engine/map/remote/MapFunction.java
+
+We also have a function for querying and/or updating either an individual
+entry, or the map as whole remote.
+
+Note: update is asynchronous by default so it acts like a pipelined
+request. Some more are defined here
+
+https://github.com/OpenHFT/Chronicle-Engine/blob/master/src/main/java/net/openhft/chronicle/engine/map/remote/MapUpdate.java
+
+You can send a number of asynchronous calls and wait for a synchronous one.
+A simple example is put which is asynchronous by default.
+
+    map.put(key1, value1); // async
+    map.put(key2, value2); // async
+    map.put(key3, value3); // async
+    map.size(); // sync
+
+As size() is synchronous it must wait for the asynchronous calls to
+complete before returning it's result.
+
+   I think using benchmarks only over loop back is valid if you have a
+business requirement to use loop back.  If your requirement is for two
+processes to talk together, it is valid to compare the fastest method
+available.
+
+### Question  
+
+what kind of lambdas are possible, to run from the client onto the server ?  
+
+#### Answer  
+
+Any lamber where the code exists both on the server and on the client. 
+What you can’t do is create a custom lamber that just exists on the server.   
+
+
+### Question   
+
+In your example I see a lambda operating on N keys of the same type and returning N 
+values of the same type.  What if I want to return a scalar or multiple scalars / keys or some other 
+custom type I want to define?  
+
+#### Answer  This will work as long as the return result can be serialized, we support serialization 
+for all  the primitive types, plus we also support the collections types such as Maps,Set List. 
+For custom types we recommend either extending the net.openhft.chronicle.wire.AbstractMarshallable  
+or implementing Marshallable, ( this is our customer serilization approach, the code has
+ been tuned to perform very will when using this, however if you wanted to consider using 
+ java.io.Serializable this should also work )  
+ 
+### Question 
+ 
+What if I want to have a lambda [atomically] operate on multiple maps stored within 
+the same  server?   
+ 
+#### Answer 
+
+You would have to implement your own locking strategy as atomicity across multiple maps is not 
+ currently implemented.  
+
+More details to come.
 
 
 
