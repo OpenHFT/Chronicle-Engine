@@ -276,8 +276,8 @@ what kind of lambdas are possible, to run from the client onto the server ? �
 
 #### Answer  
 
-Any lamber where the code exists both on the server and on the client. 
-What you can’t do is create a custom lamber that just exists on the server.   
+Any lambdas where the code exists both on the server and on the client. 
+What you can’t do is create a custom lambda that just exists on the client.   
 
 
 ### Question   
@@ -286,12 +286,14 @@ In your example I see a lambda operating on N keys of the same type and returnin
 values of the same type.  What if I want to return a scalar or multiple scalars / keys or some other 
 custom type I want to define?  
 
-#### Answer  This will work as long as the return result can be serialized, we support serialization 
-for all  the primitive types, plus we also support the collections types such as Maps,Set List. 
-For custom types we recommend either extending the net.openhft.chronicle.wire.AbstractMarshallable  
-or implementing Marshallable, ( this is our customer serilization approach, the code has
- been tuned to perform very will when using this, however if you wanted to consider using 
- java.io.Serializable this should also work )  
+#### Answer  
+
+This will work as long as the return result can be serialized, we support serialization  for all  
+the primitive types, plus we also support the collections types such as Maps,Set List. 
+ For custom types we recommend either extending the net.openhft.chronicle.wire.AbstractMarshallable 
+or implementing Marshallable, ( this is our custom serilization approach, the code has  
+been tuned to perform very well when using this, however if you wanted to consider using  
+java.io.Serializable this should also work ) 
  
 ### Question 
  
