@@ -21,7 +21,6 @@
     <properties>
         <additionalparam>-Xdoclint:none</additionalparam>
     </properties>
-
     <parent>
         <groupId>net.openhft</groupId>
         <artifactId>java-parent-pom</artifactId>
