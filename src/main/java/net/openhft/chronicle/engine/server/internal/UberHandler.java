@@ -120,35 +120,37 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
         publisher(publisher);
 
         EventLoop eventLoop = rootAsset.findOrCreateView(EventLoop.class);
-        eventLoop.start();
+        if (!eventLoop.isClosed()) {
+            eventLoop.start();
 
-        final Clusters clusters = rootAsset.findView(Clusters.class);
+            final Clusters clusters = rootAsset.findView(Clusters.class);
 
-        final EngineCluster engineCluster = clusters.get(clusterName);
-        if (engineCluster == null) {
-            Jvm.warn().on(getClass(), "cluster=" + clusterName, new RuntimeException("cluster  not " +
-                    "found, cluster=" + clusterName));
-            return;
+            final EngineCluster engineCluster = clusters.get(clusterName);
+            if (engineCluster == null) {
+                Jvm.warn().on(getClass(), "cluster=" + clusterName, new RuntimeException("cluster  not " +
+                        "found, cluster=" + clusterName));
+                return;
+            }
+
+            // note : we have to publish the uber handler, even if we send a termination event
+            // this is so the termination event can be processed by the receiver
+            if (nc().isAcceptor())
+                // reflect the uber handler
+                publish(uberHandler());
+
+            nc.terminationEventHandler(engineCluster.findTerminationEventHandler(remoteIdentifier));
+
+            if (!checkConnectionStrategy(engineCluster)) {
+                // the strategy has told us to reject this connection, we have to first notify the
+                // other host, we will do this by sending a termination event
+                publish(terminationHandler(localIdentifier, remoteIdentifier, nc.newCid()));
+                closeSoon();
+                return;
+            }
+
+            if (!isClosing.get())
+                notifyConnectionListeners(engineCluster);
         }
-
-        // note : we have to publish the uber handler, even if we send a termination event
-        // this is so the termination event can be processed by the receiver
-        if (nc().isAcceptor())
-            // reflect the uber handler
-            publish(uberHandler());
-
-        nc.terminationEventHandler(engineCluster.findTerminationEventHandler(remoteIdentifier));
-
-        if (!checkConnectionStrategy(engineCluster)) {
-            // the strategy has told us to reject this connection, we have to first notify the
-            // other host, we will do this by sending a termination event
-            publish(terminationHandler(localIdentifier, remoteIdentifier, nc.newCid()));
-            closeSoon();
-            return;
-        }
-
-        if (!isClosing.get())
-            notifyConnectionListeners(engineCluster);
     }
 
     private boolean checkIdentifierEqualsHostId() {
