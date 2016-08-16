@@ -49,7 +49,7 @@ public interface QueueView<T, M> extends TopicPublisher<T, M>, KeyedView {
      *
      * @param topic   to publish to
      * @param message to publish.
-     * @return the index in the chroncile queue the ex
+     * @return the index in the chronicle queue the ex
      */
     long publishAndIndex(@NotNull T topic, @NotNull M message);
 
