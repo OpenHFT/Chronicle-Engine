@@ -74,15 +74,16 @@ public enum ManagementTools {
         return count;
     }
 
-    private static void startJMXRemoteService() throws IOException {
+    private static void startJMXRemoteService(final int port) throws IOException {
         if (jmxServer == null) {
             mbs = ManagementFactory.getPlatformMBeanServer();
 
             // Create the RMI registry on port 9000
-            LocateRegistry.createRegistry(9000);
+            LocateRegistry.createRegistry(port);
 
             // Build a URL which tells the RMIConnectorServer to bind to the RMIRegistry running on port 9000
-            JMXServiceURL url = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://localhost:9000/jmxrmi");
+            JMXServiceURL url = new JMXServiceURL
+                    ("service:jmx:rmi:///jndi/rmi://localhost:" + port + "/jmxrmi");
             Map<String, String> env = new HashMap<>();
             env.put("com.sun.management.jmxremote", "true");
             env.put("com.sun.management.jmxremote.ssl", "false");
@@ -107,13 +108,18 @@ public enum ManagementTools {
      * @param assetTree the object of AssetTree type for enable management
      */
     public static void enableManagement(@NotNull AssetTree assetTree) {
+        enableManagement(assetTree, 9000);
+    }
+
+
+    public static void enableManagement(@NotNull AssetTree assetTree, int port) {
         try {
-            startJMXRemoteService();
+            startJMXRemoteService(port);
             count++;
         } catch (IOException ie) {
             Jvm.warn().on(ManagementTools.class, "Error while enable management", ie);
         }
-        registerViewofTree(assetTree);
+        registerViewOfTree(assetTree);
     }
 
     public static void disableManagement(@NotNull AssetTree assetTree) {
@@ -136,7 +142,7 @@ public enum ManagementTools {
         }
     }
 
-    private static void registerViewofTree(@NotNull AssetTree tree) {
+    private static void registerViewOfTree(@NotNull AssetTree tree) {
         Threads.withThreadGroup(tree.root().getView(ThreadGroup.class), () -> {
             ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor(
                     new NamedThreadFactory("tree-watcher", true));

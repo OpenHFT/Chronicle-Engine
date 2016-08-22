@@ -271,7 +271,7 @@ public interface AssetTree extends Closeable {
      */
     @NotNull
     default AssetTree enableManagement(int port) {
-        ManagementTools.enableManagement(this);
+        ManagementTools.enableManagement(this, port);
         return this;
     }
 
