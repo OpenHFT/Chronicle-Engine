@@ -21,6 +21,7 @@ package net.openhft.chronicle.engine;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
+import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
@@ -45,18 +46,18 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
 
     public static final WireType WIRE_TYPE = WireType.TEXT;
     private static final String NAME = "test";
-    private static final String CONNECTION = "localhost:8080";
+    private static final String CONNECTION = "host.port.KeySubscriptionTest";
 
     private AssetTree clientTree;
     private VanillaAssetTree serverAssetTree;
-    //   private ServerEndpoint serverEndpoint;
+    private ServerEndpoint serverEndpoint;
 
     @Before
     public void before() throws IOException {
         serverAssetTree = new VanillaAssetTree().forTesting();
 
-        //TCPRegistry.createServerSocketChannelFor(CONNECTION);
-        //     serverEndpoint = new ServerEndpoint(CONNECTION, serverAssetTree);
+        TCPRegistry.createServerSocketChannelFor(CONNECTION);
+        serverEndpoint = new ServerEndpoint(CONNECTION, serverAssetTree);
         clientTree = new VanillaAssetTree().forRemoteAccess(CONNECTION, WIRE_TYPE);
     }
 
@@ -65,7 +66,7 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
         clientTree.close();
 
         serverAssetTree.close();
-        //    serverEndpoint.close();
+        serverEndpoint.close();
 
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
@@ -86,8 +87,6 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
                 String.class);
 
         map.registerKeySubscriber(System.out::println);
-
-
     }
 
     /**
