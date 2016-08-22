@@ -344,9 +344,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
                 : binary(baseFilePath);
         // TODO make configurable
 //        builder.blockSize(256 << 20);
-        chronicleQueue = builder.build();
 
-        return chronicleQueue;
+        return builder.build();
     }
 
     private ExcerptTailer threadLocalTailer() {
