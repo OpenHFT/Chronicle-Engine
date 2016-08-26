@@ -261,9 +261,10 @@ public enum ManagementTools {
                 m.put("keyStoreValue", objectSubscription.getClass().getName());
                 m.put("path", path);
 
-                Iterator<Map.Entry> it = view.entrySetIterator();
-                for (int i = 0; i < view.longSize(); i++) {
-                    Map.Entry entry = it.next();
+
+                Iterator<Map.Entry> iterator = view.entrySetIterator();
+                while (iterator.hasNext()) {
+                    Map.Entry entry = iterator.next();
                     if (entry.getValue().toString().length() > 128) {
                         m.put("~" + entry.getKey().toString(), entry.getValue().toString().substring(0, 128) + "...");
                     } else {
