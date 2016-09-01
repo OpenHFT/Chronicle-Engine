@@ -10,28 +10,7 @@ etc: {
     enabled: true
     }
   #
-  # Configure remote access for Java and C#
-  #
-  server: !ServerCfg {
-    wireType: BINARY,
-    port: 8088,
-    logTCPMessages: DEBUG_ONLY, # only show when in debug mode on the server
-    heartbeatIntervalMs: 1_000, # must be lees than the timeout.
-    heartbeatIntervalTimeout: 100_000
-    }
-  #
-  # Allow access via NFS to this engine.
-  #
-  nfs: !NfsCfg {
-    enabled: true,
-    debug: false, # log every NFS request.
-    exports: {
-     # export everything.
-      "/": "*(rw,noacl,anonuid=1000,anongid=1000)",
-      "/data": "*(rw,noacl,anonuid=1000,anongid=1000)"
-      "/stocks": "*(rw,noacl,anonuid=1000,anongid=1000)"
-    }
-  }
+
   monitoring: !MonitorCfg {
       subscriptionMonitoringEnabled: true
       userMonitoringEnabled: true
@@ -41,7 +20,10 @@ etc: {
   #
   # Configure a cluster of one for now.
   clusters: !ClustersCfg {
+
     cluster: {
+      context: !EngineClusterContext {
+      }
       host1: {
          hostId: 1,
          tcpBufferSize: 65536,
