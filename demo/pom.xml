@@ -15,7 +15,8 @@
   ~     along with this program.  If not, see <http://www.gnu.org/licenses/>.
   -->
 
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <parent>
@@ -45,7 +46,7 @@
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>chronicle-bom</artifactId>
-                <version>1.13.23</version>
+                <version>1.13.24-SNAPSHOT</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -59,9 +60,14 @@
             <artifactId>chronicle-engine</artifactId>
         </dependency>
 
+        <!--        <dependency>
+                    <groupId>net.openhft</groupId>
+                    <artifactId>chronicle-engine-nfs</artifactId>
+                </dependency>-->
+
         <dependency>
             <groupId>net.openhft</groupId>
-            <artifactId>chronicle-engine-nfs</artifactId>
+            <artifactId>chronicle-wire</artifactId>
         </dependency>
 
         <dependency>
@@ -71,12 +77,12 @@
     </dependencies>
 
     <!--<repositories>-->
-        <!--<repository>-->
-            <!--<id>dcache-releases</id>-->
-            <!--<name>dCache.ORG maven repository</name>-->
-            <!--<url>https://download.dcache.org/nexus/content/repositories/releases</url>-->
-            <!--<layout>default</layout>-->
-        <!--</repository>-->
+    <!--<repository>-->
+    <!--<id>dcache-releases</id>-->
+    <!--<name>dCache.ORG maven repository</name>-->
+    <!--<url>https://download.dcache.org/nexus/content/repositories/releases</url>-->
+    <!--<layout>default</layout>-->
+    <!--</repository>-->
     <!--</repositories>-->
 
     <build>
