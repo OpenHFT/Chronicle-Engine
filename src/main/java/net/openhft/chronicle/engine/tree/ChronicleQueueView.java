@@ -43,7 +43,6 @@ import net.openhft.chronicle.queue.ExcerptAppender;
 import net.openhft.chronicle.queue.ExcerptTailer;
 import net.openhft.chronicle.queue.impl.RollingChronicleQueue;
 import net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder;
-import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -55,6 +54,7 @@ import java.lang.reflect.Constructor;
 import java.nio.file.Files;
 import java.util.function.BiConsumer;
 
+import static com.oracle.jrockit.jfr.ContentType.Bytes;
 import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
 import static net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder.binary;
 import static net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder.defaultZeroBinary;
@@ -620,7 +620,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
 
         public ThreadLocalData(ChronicleQueue chronicleQueue) {
             appender = chronicleQueue.acquireAppender();
-            appender.padToCacheAlign(true);
+            appender.padToCacheAlign(net.openhft.chronicle.wire.MarshallableOut.Padding.ALWAYS);
             tailer = chronicleQueue.createTailer();
 
             replayTailer = chronicleQueue.createTailer();
