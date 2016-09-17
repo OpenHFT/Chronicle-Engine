@@ -43,6 +43,7 @@ import net.openhft.chronicle.queue.ExcerptAppender;
 import net.openhft.chronicle.queue.ExcerptTailer;
 import net.openhft.chronicle.queue.impl.RollingChronicleQueue;
 import net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder;
+import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -54,7 +55,6 @@ import java.lang.reflect.Constructor;
 import java.nio.file.Files;
 import java.util.function.BiConsumer;
 
-import static com.oracle.jrockit.jfr.ContentType.Bytes;
 import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
 import static net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder.binary;
 import static net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder.defaultZeroBinary;
@@ -73,7 +73,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
     private final Class<M> elementTypeClass;
     private final ThreadLocal<ThreadLocalData> threadLocal;
     private final String defaultPath;
-    private final RequestContext context;
+
     private boolean isSource;
     private boolean isReplicating;
     private boolean dontPersist;
@@ -81,14 +81,14 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
     @NotNull
     private QueueConfig queueConfig;
 
-    public ChronicleQueueView(@NotNull RequestContext context, @NotNull Asset asset) throws IOException {
+    private ChronicleQueueView(@NotNull RequestContext context, @NotNull Asset asset) throws IOException {
         this(null, context, asset);
     }
 
-    public ChronicleQueueView(@Nullable RollingChronicleQueue queue,
-                              @NotNull RequestContext context,
-                              @NotNull Asset asset) throws IOException {
-        this.context = context;
+    private ChronicleQueueView(@Nullable RollingChronicleQueue queue,
+                               @NotNull RequestContext context,
+                               @NotNull Asset asset) throws IOException {
+
         String s = asset.fullName();
         if (s.startsWith("/")) s = s.substring(1);
         defaultPath = s;
@@ -135,11 +135,11 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         return new File(path).getParentFile().getParentFile() + "/src/test/resources";
     }
 
-    public static WriteMarshallable newSource(long nextIndexRequired,
-                                              @NotNull Class topicType,
-                                              @NotNull Class elementType,
-                                              boolean acknowledgement,
-                                              @Nullable MessageAdaptor messageAdaptor) {
+    private static WriteMarshallable newSource(long nextIndexRequired,
+                                               @NotNull Class topicType,
+                                               @NotNull Class elementType,
+                                               boolean acknowledgement,
+                                               @Nullable MessageAdaptor messageAdaptor) {
         try {
             Class<?> aClass = Class.forName("software.chronicle.enterprise.queue.QueueSourceReplicationHandler");
             Constructor<?> declaredConstructor = aClass.getDeclaredConstructor(long.class, Class.class,
@@ -163,7 +163,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
      *                        queue
      * @return and instance of QueueSyncReplicationHandler
      */
-    public static WriteMarshallable newSync(
+    private static WriteMarshallable newSync(
             @NotNull Class topicType,
             @NotNull Class elementType,
             boolean acknowledgement,
@@ -611,14 +611,14 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         }
     }
 
-    class ThreadLocalData {
+    private class ThreadLocalData {
 
         final ExcerptAppender appender;
         final ExcerptTailer tailer;
         final ExcerptTailer replayTailer;
         final LocalExcept excerpt;
 
-        public ThreadLocalData(ChronicleQueue chronicleQueue) {
+        ThreadLocalData(ChronicleQueue chronicleQueue) {
             appender = chronicleQueue.acquireAppender();
             appender.padToCacheAlign(net.openhft.chronicle.wire.MarshallableOut.Padding.ALWAYS);
             tailer = chronicleQueue.createTailer();
