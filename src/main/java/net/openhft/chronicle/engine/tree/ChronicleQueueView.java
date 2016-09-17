@@ -135,7 +135,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         return new File(path).getParentFile().getParentFile() + "/src/test/resources";
     }
 
-    private static WriteMarshallable newSource(long nextIndexRequired,
+    @SuppressWarnings("WeakerAccess")
+    public static WriteMarshallable newSource(long nextIndexRequired,
                                                @NotNull Class topicType,
                                                @NotNull Class elementType,
                                                boolean acknowledgement,
@@ -163,7 +164,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
      *                        queue
      * @return and instance of QueueSyncReplicationHandler
      */
-    private static WriteMarshallable newSync(
+    @SuppressWarnings("WeakerAccess")
+    public static WriteMarshallable newSync(
             @NotNull Class topicType,
             @NotNull Class elementType,
             boolean acknowledgement,
