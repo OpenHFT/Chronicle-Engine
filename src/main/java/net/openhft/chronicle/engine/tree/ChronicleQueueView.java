@@ -73,7 +73,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
     private final Class<M> elementTypeClass;
     private final ThreadLocal<ThreadLocalData> threadLocal;
     private final String defaultPath;
-
+    private final RequestContext context;
     private boolean isSource;
     private boolean isReplicating;
     private boolean dontPersist;
@@ -81,14 +81,14 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
     @NotNull
     private QueueConfig queueConfig;
 
-    private ChronicleQueueView(@NotNull RequestContext context, @NotNull Asset asset) throws IOException {
+    public ChronicleQueueView(@NotNull RequestContext context, @NotNull Asset asset) throws IOException {
         this(null, context, asset);
     }
 
-    private ChronicleQueueView(@Nullable RollingChronicleQueue queue,
-                               @NotNull RequestContext context,
-                               @NotNull Asset asset) throws IOException {
-
+    public ChronicleQueueView(@Nullable RollingChronicleQueue queue,
+                              @NotNull RequestContext context,
+                              @NotNull Asset asset) throws IOException {
+        this.context = context;
         String s = asset.fullName();
         if (s.startsWith("/")) s = s.substring(1);
         defaultPath = s;
@@ -613,7 +613,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         }
     }
 
-    private class ThreadLocalData {
+    class ThreadLocalData {
 
         final ExcerptAppender appender;
         final ExcerptTailer tailer;
