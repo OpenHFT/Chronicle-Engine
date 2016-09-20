@@ -270,6 +270,20 @@ business requirement to use loop back.  If your requirement is for two
 processes to talk together, it is valid to compare the fastest method
 available.
 
+### Monitoring 
+
+Chroncile engine, by default creates some system maps/queue that you can subsribe to get get an idea about whats going on in your system.
+
+-       Users connected
+-       Data flowing rates
+-       Engine status
+
+subscribing to the following URL's will give you some of this information, 
+
+/proc/connections/cluster/throughput/" + localIdentifier  // Queue <NetworkStats>
+/proc/connections/cluster/connectivity          //  Map<ConnectionDetails,ConnectionStatus)
+/proc/connections/handlers                      //  Map<SocketChannel,TcpHandler)
+
 ### Question  
 
 what kind of lambdas are possible, to run from the client onto the server ?  
@@ -307,6 +321,8 @@ You would have to implement your own locking strategy as atomicity across multip
 
 More details to come.
 
+
+ 
 
 
 
