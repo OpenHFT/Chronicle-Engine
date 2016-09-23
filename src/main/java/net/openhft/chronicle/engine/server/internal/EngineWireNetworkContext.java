@@ -31,6 +31,8 @@ import net.openhft.chronicle.wire.AbstractMarshallable;
 import net.openhft.chronicle.wire.Demarshallable;
 import net.openhft.chronicle.wire.WireIn;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.channels.SocketChannel;
 
@@ -43,6 +45,9 @@ import static net.openhft.chronicle.engine.server.internal.EngineWireNetworkCont
  */
 public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
         extends VanillaNetworkContext<T> {
+
+    static final Logger LOG = LoggerFactory.getLogger(EngineWireNetworkContext.class);
+
     private Asset rootAsset;
     private MapView<ConnectionDetails, ConnectionStatus> hostByConnectionStatus;
     private MapView<SocketChannel, TcpHandler> socketChannelByHandlers;
@@ -115,12 +120,16 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
 
             @Override
             public void onConnected(int localIdentifier, int remoteIdentifier) {
-                hostByConnectionStatus.put(new ConnectionDetails(localIdentifier, remoteIdentifier), CONNECTED);
+                ConnectionDetails key = new ConnectionDetails(localIdentifier, remoteIdentifier);
+                hostByConnectionStatus.put(key, CONNECTED);
+                LOG.info(key + ", connectionStatus=" + CONNECTED);
             }
 
             @Override
             public void onDisconnected(int localIdentifier, int remoteIdentifier) {
-                hostByConnectionStatus.put(new ConnectionDetails(localIdentifier, remoteIdentifier), DISCONNECTED);
+                ConnectionDetails key = new ConnectionDetails(localIdentifier, remoteIdentifier);
+                hostByConnectionStatus.put(key, DISCONNECTED);
+                LOG.info(key + ", connectionStatus=" + DISCONNECTED);
             }
         };
 
