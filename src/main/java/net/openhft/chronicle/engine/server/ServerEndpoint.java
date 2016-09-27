@@ -128,7 +128,7 @@ public class ServerEndpoint implements Closeable {
             private long port;
 
             @Override
-            public void onNetworkStats(long writeBps, long readBps, long socketPollCountPerSecond, @NotNull NetworkContext networkContext) {
+            public void onNetworkStats(long writeBps, long readBps, long socketPollCountPerSecond, @NotNull NetworkContext networkContext, boolean connectionStatus) {
                 LOG.info("writeKBps=" + writeBps / 1000 + ", readKBps=" + readBps / 1000 +
                         ", socketPollCountPerSecond=" + socketPollCountPerSecond / 1000 +
                         "K, host=" + host + ", port=" + port);

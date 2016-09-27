@@ -31,6 +31,7 @@ class WireNetworkStats extends AbstractMarshallable implements NetworkStats {
     private UUID clientId;
     private String hostName;
     private String userId;
+    private boolean isConnected;
 
     public WireNetworkStats(int localIdentifier) {
         this.localIdentifier = localIdentifier;
@@ -147,5 +148,15 @@ class WireNetworkStats extends AbstractMarshallable implements NetworkStats {
     @Override
     public int port() {
         return port;
+    }
+
+    @Override
+    public boolean isConnected() {
+        return isConnected;
+    }
+
+    @Override
+    public void isConnected(boolean isConnected) {
+        this.isConnected = isConnected;
     }
 }

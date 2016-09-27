@@ -62,13 +62,13 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
     }
 
     @Override
-    public void onNetworkStats(long writeBps, long readBps, long socketPollCountPerSecond, @NotNull EngineWireNetworkContext nc) {
+    public void onNetworkStats(long writeBps, long readBps, long socketPollCountPerSecond, @NotNull EngineWireNetworkContext nc, boolean isConnected) {
         final WireNetworkStats wireNetworkStats = this.wireNetworkStats.get();
         wireNetworkStats.writeBps(writeBps);
         wireNetworkStats.readBps(readBps);
         wireNetworkStats.socketPollCountPerSecond(socketPollCountPerSecond);
         wireNetworkStats.timestamp(System.currentTimeMillis());
-
+        wireNetworkStats.isConnected(isConnected);
         final SessionDetailsProvider sessionDetailsProvider = nc.sessionDetails();
         if (sessionDetailsProvider != null) {
             wireNetworkStats.clientId(sessionDetailsProvider.clientId());
