@@ -75,7 +75,6 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
             wireNetworkStats.userId(sessionDetailsProvider.userId());
         }
 
-        wireNetworkStats.timestamp(System.currentTimeMillis());
         acquireQV().publisher(wireNetworkStats);
 
     }
