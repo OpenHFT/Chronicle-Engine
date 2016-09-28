@@ -25,6 +25,7 @@ import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.network.MarshallableFunction;
 import net.openhft.chronicle.network.NetworkStats;
 import net.openhft.chronicle.network.NetworkStatsListener;
+import net.openhft.chronicle.network.WireNetworkStats;
 import net.openhft.chronicle.network.api.session.SessionDetailsProvider;
 import net.openhft.chronicle.network.cluster.ClusterContext;
 import net.openhft.chronicle.wire.Demarshallable;
