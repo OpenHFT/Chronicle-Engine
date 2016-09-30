@@ -15,10 +15,7 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.WireNetworkStats;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TestName;
 
 import java.io.File;
@@ -92,4 +89,9 @@ public class NetworkStatsReaderTest {
 
     }
 
+
+    @After
+    public void after() throws IOException {
+        SimpleQueueViewTest.deleteFiles(new File(URI));
+    }
 }
