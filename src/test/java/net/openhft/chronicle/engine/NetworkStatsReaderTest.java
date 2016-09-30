@@ -37,24 +37,25 @@ public class NetworkStatsReaderTest {
     public TestName name = new TestName();
 
     private AssetTree assetTree;
+    public static final String URI = "queue/networkStats";
 
 
     @Before
     public void before() throws IOException {
-
+        SimpleQueueViewTest.deleteFiles(new File(URI));
         assetTree = (new VanillaAssetTree(1)).forServer();
 
         String hostPortDescription = "NetworkStatsReaderTest-" + name;
         TCPRegistry.createServerSocketChannelFor(hostPortDescription);
         new ServerEndpoint(hostPortDescription, assetTree);
+
+
     }
 
     @Test
     public void test() throws Exception {
 
         YamlLogging.setAll(true);
-        String uri = "queue/networkStats";
-        SimpleQueueViewTest.deleteFiles(new File(uri));
 
         EventLoop eg = assetTree.root().findOrCreateView(EventLoop.class);
         eg.start();
@@ -64,10 +65,10 @@ public class NetworkStatsReaderTest {
         ArrayBlockingQueue<String> queue = new ArrayBlockingQueue<>(10);
         mapView.registerSubscriber((e) -> queue.add(e.getValue().toString()));
 
-        eg.addHandler(new NetworkStatsSummary((ChronicleQueueView) assetTree.acquireAsset(uri).acquireView(QueueView.class), mapView));
+        eg.addHandler(new NetworkStatsSummary((ChronicleQueueView) assetTree.acquireAsset(URI).acquireView(QueueView.class), mapView));
 
         {
-            TopicPublisher<String, NetworkStats> publisher = assetTree.acquireTopicPublisher(uri,
+            TopicPublisher<String, NetworkStats> publisher = assetTree.acquireTopicPublisher(URI,
                     String.class, NetworkStats.class);
             WireNetworkStats networkStats = new WireNetworkStats(0);
             networkStats.clientId(UUID.randomUUID());
