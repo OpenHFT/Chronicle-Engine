@@ -83,7 +83,7 @@ public class NetworkStatsReaderTest {
         for (; ; ) {
             String pollValue = queue.poll(1, TimeUnit.SECONDS);
             if (pollValue == null) {
-                Assert.assertTrue(result.contains("writeEma: 3.9830509259259259"));
+                Assert.assertTrue(result.contains("  writeEma: 3.98"));
                 break;
             }
             result = pollValue;
