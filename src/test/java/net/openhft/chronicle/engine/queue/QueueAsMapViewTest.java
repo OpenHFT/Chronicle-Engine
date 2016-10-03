@@ -41,7 +41,6 @@ public class QueueAsMapViewTest extends ThreadMonitoringTest {
         ClassAliasPool.CLASS_ALIASES.addAlias(MyMarshallable.class, "MyMarshallable");
     }
 
-    private final Comparable<Boolean> isRemote;
 
     @NotNull
     @Rule
@@ -62,7 +61,6 @@ public class QueueAsMapViewTest extends ThreadMonitoringTest {
     }
 
     public QueueAsMapViewTest(Boolean isRemote) throws Exception {
-        this.isRemote = isRemote;
 
         if (isRemote) {
             serverAssetTree = new VanillaAssetTree().forTesting();
