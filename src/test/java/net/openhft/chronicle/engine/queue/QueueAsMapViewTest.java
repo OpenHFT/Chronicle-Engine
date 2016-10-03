@@ -158,7 +158,7 @@ public class QueueAsMapViewTest extends ThreadMonitoringTest {
     public void testPopulateMapTailQueue() throws InterruptedException {
         YamlLogging.setAll(true);
 
-        final ArrayBlockingQueue<String> q = new ArrayBlockingQueue<String>(100);
+        final ArrayBlockingQueue<String> q = new ArrayBlockingQueue<>(100);
 
         assetTree.registerTopicSubscriber(
                 uri,
