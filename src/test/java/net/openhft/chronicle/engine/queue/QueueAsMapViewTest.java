@@ -51,7 +51,7 @@ public class QueueAsMapViewTest extends ThreadMonitoringTest {
     private ServerEndpoint serverEndpoint;
     private AssetTree serverAssetTree;
 
-    String uri = "/queue/" + methodName;
+    String uri = "/queue/" + System.nanoTime() + "/" + methodName;
 
 
     @Parameterized.Parameters
@@ -146,9 +146,6 @@ public class QueueAsMapViewTest extends ThreadMonitoringTest {
     @Test
     public void testSimpleMap() throws InterruptedException {
         YamlLogging.setAll(true);
-        String uri = "/queue/" + methodName;
-        deleteFiles(new File(uri));
-
 
         MapView<String, String> map = assetTree.acquireMap(uri, String.class, String.class);
         map.put("hello", "world");
@@ -160,10 +157,8 @@ public class QueueAsMapViewTest extends ThreadMonitoringTest {
     @Test
     public void testPopulateMapTailQueue() throws InterruptedException {
         YamlLogging.setAll(true);
-        String uri = "/queue/" + methodName;
-        deleteFiles(new File(uri));
 
-        ArrayBlockingQueue<String> q = new ArrayBlockingQueue<String>(10);
+        final ArrayBlockingQueue<String> q = new ArrayBlockingQueue<String>(100);
 
         assetTree.registerTopicSubscriber(
                 uri,
@@ -176,6 +171,7 @@ public class QueueAsMapViewTest extends ThreadMonitoringTest {
 
         Assert.assertEquals("hello:world", q.poll(1, TimeUnit.SECONDS));
         Assert.assertEquals("hello2:world2", q.poll(1, TimeUnit.SECONDS));
+
         Assert.assertTrue(q.isEmpty());
 
 
