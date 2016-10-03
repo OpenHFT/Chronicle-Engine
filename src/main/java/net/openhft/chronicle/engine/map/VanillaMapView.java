@@ -47,8 +47,8 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
     protected final Class valueType;
     protected final Asset asset;
     protected final RequestContext context;
-    private final boolean putReturnsNull;
-    private final boolean removeReturnsNull;
+    protected final boolean putReturnsNull;
+    protected final boolean removeReturnsNull;
 
     private final KeyValueStore<K, V> kvStore;
     private AbstractCollection<V> values;

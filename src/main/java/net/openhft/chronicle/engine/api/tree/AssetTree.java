@@ -253,7 +253,19 @@ public interface AssetTree extends Closeable {
      */
     @NotNull
     default <E> E acquireView(@NotNull RequestContext requestContext) throws AssetNotFoundException {
-        return acquireAsset(requestContext.fullName()).acquireView(requestContext);
+
+        final Asset asset = acquireAsset(requestContext.fullName());
+
+     /*   if (requestContext.viewType() == MapView.class
+                && asset.findView(MapView.class) == null) {
+
+            final QueueView queueView = asset.findView(QueueView.class);
+            if (queueView != null)
+                return (E) queueView();
+
+        }*/
+
+        return asset.acquireView(requestContext);
     }
 
     /**

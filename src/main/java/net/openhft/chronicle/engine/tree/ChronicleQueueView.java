@@ -25,17 +25,22 @@ import net.openhft.chronicle.core.threads.EventHandler;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.core.threads.HandlerPriority;
 import net.openhft.chronicle.core.threads.InvalidEventHandlerException;
-import net.openhft.chronicle.engine.api.pubsub.Publisher;
-import net.openhft.chronicle.engine.api.pubsub.Subscriber;
-import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
-import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
+import net.openhft.chronicle.engine.api.map.KeyValueStore;
+import net.openhft.chronicle.engine.api.map.MapEvent;
+import net.openhft.chronicle.engine.api.map.MapView;
+import net.openhft.chronicle.engine.api.pubsub.*;
+import net.openhft.chronicle.engine.api.set.EntrySetView;
+import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.fs.Clusters;
 import net.openhft.chronicle.engine.fs.EngineCluster;
 import net.openhft.chronicle.engine.fs.EngineHostDetails;
+import net.openhft.chronicle.engine.map.VanillaKeyValueStore;
+import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.pubsub.QueueTopicPublisher;
+import net.openhft.chronicle.engine.query.Filter;
 import net.openhft.chronicle.engine.query.QueueConfig;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.queue.ChronicleQueue;
@@ -53,6 +58,10 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.nio.file.Files;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.BiConsumer;
 
 import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
@@ -63,7 +72,7 @@ import static net.openhft.chronicle.wire.WireType.*;
 /**
  * @author Rob Austin.
  */
-public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactory, Closeable {
+public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>, SubAssetFactory, Closeable {
 
     private static final Logger LOG = LoggerFactory.getLogger(ChronicleQueueView.class);
 
@@ -74,12 +83,15 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
     private final ThreadLocal<ThreadLocalData> threadLocal;
     private final String defaultPath;
     private final RequestContext context;
+    private final Asset asset;
     private boolean isSource;
     private boolean isReplicating;
     private boolean dontPersist;
 
     @NotNull
     private QueueConfig queueConfig;
+
+    private volatile MapView<T, M> mapView;
 
     public ChronicleQueueView(@NotNull RequestContext context, @NotNull Asset asset) throws IOException {
         this(null, context, asset);
@@ -89,6 +101,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
                               @NotNull RequestContext context,
                               @NotNull Asset asset) throws IOException {
         this.context = context;
+        this.asset = asset;
         String s = asset.fullName();
         if (s.startsWith("/")) s = s.substring(1);
         defaultPath = s;
@@ -97,7 +110,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
 
         try {
             queueConfig = asset.findView(QueueConfig.class);
-
         } catch (AssetNotFoundException anfe) {
             Jvm.debug().on(getClass(), "queue config not found asset=" + asset.fullName());
             throw anfe;
@@ -112,7 +124,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         if (hostId != null)
             replication(context, asset);
 
-        EventLoop eventLoop = asset.findView(EventLoop.class);
+        EventLoop eventLoop = asset.findOrCreateView(EventLoop.class);
         eventLoop.addHandler(new EventHandler() {
             @Override
             public boolean action() throws InvalidEventHandlerException, InterruptedException {
@@ -127,6 +139,27 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         });
     }
 
+
+    public MapView<T, M> mapView() {
+        final MapView<T, M> mapView = this.mapView;
+
+        if (mapView != null) {
+            return mapView;
+        }
+
+        synchronized (this) {
+            MapView<T, M> mapView0 = this.mapView;
+            if (mapView0 != null)
+                return mapView0;
+
+
+            this.mapView = new QueueViewAsMapView<T, M>(this, context, asset);
+            return this.mapView;
+        }
+
+    }
+
+
     @NotNull
     public static String resourcesDir() {
         String path = ChronicleQueueView.class.getProtectionDomain().getCodeSource().getLocation().getPath();
@@ -137,10 +170,10 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
 
     @SuppressWarnings("WeakerAccess")
     public static WriteMarshallable newSource(long nextIndexRequired,
-                                               @NotNull Class topicType,
-                                               @NotNull Class elementType,
-                                               boolean acknowledgement,
-                                               @Nullable MessageAdaptor messageAdaptor) {
+                                              @NotNull Class topicType,
+                                              @NotNull Class elementType,
+                                              boolean acknowledgement,
+                                              @Nullable MessageAdaptor messageAdaptor) {
         try {
             Class<?> aClass = Class.forName("software.chronicle.enterprise.queue.QueueSourceReplicationHandler");
             Constructor<?> declaredConstructor = aClass.getDeclaredConstructor(long.class, Class.class,
@@ -235,7 +268,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         final Clusters clusters = asset.findView(Clusters.class);
 
         if (clusters == null) {
-            Jvm.warn().on(getClass(), "no cluster found name=" + context.cluster());
+            Jvm.debug().on(getClass(), "no cluster found name=" + context.cluster());
             return;
         }
 
@@ -297,10 +330,79 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         }
     }
 
+    @NotNull
     @Override
-    public void registerTopicSubscriber
-            (@NotNull TopicSubscriber<T, M> topicSubscriber) throws AssetNotFoundException {
+    public KeySetView<T> keySet() {
         throw new UnsupportedOperationException("todo");
+    }
+
+    @NotNull
+    @Override
+    public Collection<M> values() {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @NotNull
+    @Override
+    public EntrySetView<T, Object, M> entrySet() {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public M getUsing(T key, Object using) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public void registerTopicSubscriber(@NotNull TopicSubscriber<T, M> topicSubscriber) throws
+            AssetNotFoundException {
+        asset.registerTopicSubscriber(asset.fullName(), context.type(), context.type2(), topicSubscriber);
+    }
+
+    @Override
+    public void registerKeySubscriber(@NotNull Subscriber<T> subscriber) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public void registerKeySubscriber(@NotNull Subscriber<T> subscriber, @NotNull Filter filter, @NotNull Set<RequestContext.Operation> contextOperations) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+
+    @Override
+    public void registerSubscriber(@NotNull Subscriber<MapEvent<T, M>> subscriber, @NotNull Filter<MapEvent<T, M>> filter, @NotNull Set<RequestContext.Operation> contextOperations) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
+    public Reference<M> referenceFor(T key) {
+        return mapView().referenceFor(key);
+    }
+
+    @Override
+    public Class<T> keyType() {
+        return mapView().keyType();
+    }
+
+    @Override
+    public Class<M> valueType() {
+        return mapView().valueType();
+    }
+
+    @Override
+    public long longSize() {
+        return mapView().longSize();
+    }
+
+    @Override
+    public M getAndPut(T key, M value) {
+        return getAndPut(key, value);
+    }
+
+    @Override
+    public M getAndRemove(T key) {
+        return mapView().getAndRemove(key);
     }
 
     @Override
@@ -312,6 +414,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
     public Publisher<M> publisher(@NotNull T topic) {
         throw new UnsupportedOperationException("todo");
     }
+
 
     @Override
     public void registerSubscriber(@NotNull T topic, @NotNull Subscriber<M> subscriber) {
@@ -389,7 +492,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
      */
     @Nullable
     @Override
-    public Excerpt<T, M> get(long index) {
+    public Excerpt<T, M> getExcerpt(long index) {
         final ThreadLocalData threadLocalData = threadLocal.get();
         ExcerptTailer excerptTailer = threadLocalData.replayTailer;
 
@@ -410,7 +513,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
     }
 
     @Override
-    public Excerpt<T, M> get(T topic) {
+    public Excerpt<T, M> getExcerpt(T topic) {
 
         final ThreadLocalData threadLocalData = threadLocal.get();
         ExcerptTailer excerptTailer = threadLocalData.replayTailer;
@@ -438,6 +541,11 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
     }
 
     @Override
+    public void set(T key, M element) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
     public void publish(@NotNull T topic, @NotNull M message) {
         publishAndIndex(topic, message);
     }
@@ -446,7 +554,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
      * @param consumer a consumer that provides that name of the event and value contained within
      *                 the except
      */
-    public void get(@NotNull BiConsumer<CharSequence, M> consumer) {
+    public void getExcerpt(@NotNull BiConsumer<CharSequence, M> consumer) {
         final ExcerptTailer tailer = threadLocalTailer();
 
         tailer.readDocument(w -> {
@@ -471,6 +579,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         return excerptAppender.lastIndexAppended();
     }
 
+
     public long set(@NotNull M event) {
         if (isReplicating && !isSource)
             throw new IllegalStateException("You can not publish to a sink used in replication, " +
@@ -480,8 +589,44 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         return excerptAppender.lastIndexAppended();
     }
 
+    @Override
+    public boolean isEmpty() {
+        return mapView().isEmpty();
+    }
+
+    @Override
+    public boolean containsKey(Object key) {
+        return mapView().containsKey(key);
+    }
+
+    @Override
+    public boolean containsValue(Object value) {
+        return mapView().containsValue(value);
+    }
+
+    @Override
+    public M get(Object key) {
+        return mapView().get(key);
+    }
+
+    @Override
+    public M put(T key, M value) {
+        return mapView().put(key, value);
+    }
+
+    @Override
+    public M remove(Object key) {
+        return mapView().remove(key);
+    }
+
+    @Override
+    public void putAll(@NotNull Map<? extends T, ? extends M> m) {
+        mapView().putAll(m);
+    }
+
     public void clear() {
         chronicleQueue.clear();
+        mapView().clear();
     }
 
     @NotNull
@@ -521,9 +666,12 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         Closeable.closeQuietly(this);
     }
 
-    public <M> void registerSubscriber(Subscriber<M> subscriber) {
 
+    @Override
+    public void registerSubscriber(@NotNull Subscriber<MapEvent<T, M>> subscriber) {
+        mapView().registerSubscriber(subscriber);
     }
+
 
     public void unregisterSubscriber(Subscriber subscriber) {
 
@@ -542,7 +690,38 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
         return new VanillaSubAsset<>(vanillaAsset, name, valueType, null);
     }
 
-    public static class LocalExcept<T, M> implements Excerpt<T, M>, Marshallable {
+    @Override
+    public M putIfAbsent(@NotNull T key, M value) {
+        return mapView().putIfAbsent(key, value);
+    }
+
+    @Override
+    public boolean remove(@NotNull Object key, Object value) {
+        return mapView().remove(key, value);
+    }
+
+    @Override
+    public boolean replace(@NotNull T key, @NotNull M oldValue, @NotNull M newValue) {
+        return mapView().replace(key, oldValue, newValue);
+    }
+
+    @Override
+    public M replace(@NotNull T key, @NotNull M value) {
+        return mapView().replace(key, value);
+    }
+
+    @Override
+    public Asset asset() {
+        return mapView().asset();
+    }
+
+    @Nullable
+    @Override
+    public KeyValueStore<T, M> underlying() {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    public static class LocalExcept<T, M> implements Excerpt<T, M>, Marshallable, Map.Entry<T, M> {
         private T topic;
         private M message;
         private Bytes bytes;
@@ -611,6 +790,21 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
             message = (M) bytes;
             return bytes;
         }
+
+        @Override
+        public T getKey() {
+            return topic;
+        }
+
+        @Override
+        public M getValue() {
+            return message;
+        }
+
+        @Override
+        public M setValue(M value) {
+            throw new UnsupportedOperationException("todo");
+        }
     }
 
     class ThreadLocalData {
@@ -629,5 +823,119 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, SubAssetFactor
             excerpt = new LocalExcept();
         }
     }
+
+    /**
+     * provides mapView view support for a Queue View
+     *
+     * @param <K>
+     * @param <V>
+     */
+    private static class QueueViewAsMapView<K, V> extends VanillaMapView<K, V> {
+
+        private final QueueView<K, V> queueView;
+
+        QueueViewAsMapView(final QueueView<K, V> queueView,
+                           @NotNull RequestContext context,
+                           @NotNull Asset asset) {
+            super(context, asset, new VanillaKeyValueStore<K, V>(context, asset));
+            this.queueView = queueView;
+
+            queueView.registerTopicSubscriber((topic, message) -> {
+                if (message == null)
+                    super.remove(topic);
+                else
+                    super.put(topic, message);
+            });
+
+        }
+
+
+        @Nullable
+        @Override
+        public V put(K key, V value) {
+            if (putReturnsNull) {
+                queueView.publishAndIndex(key, value);
+                super.put(key, value);
+                return null;
+            } else {
+                V v = super.get(key);
+                queueView.publishAndIndex(key, value);
+                super.put(key, value);
+                return v;
+            }
+        }
+
+        @Override
+        public void set(K key, V value) {
+            queueView.publishAndIndex((K) key, value);
+            super.put(key, value);
+        }
+
+        @Override
+        public V remove(Object key) {
+
+            if (removeReturnsNull) {
+                queueView.publishAndIndex((K) key, null);
+                super.remove(key);
+                return null;
+            } else {
+                V v = super.get(key);
+                queueView.publishAndIndex((K) key, null);
+                super.remove(key);
+                return v;
+            }
+        }
+
+        @SuppressWarnings("WhileLoopReplaceableByForEach")
+        @Override
+        public void clear() {
+            Iterator<Entry<K, V>> iterator = entrySet().iterator();
+
+            while (iterator.hasNext()) {
+                remove(iterator.next().getKey());
+            }
+        }
+
+        @Nullable
+        @Override
+        public V putIfAbsent(@net.openhft.chronicle.core.annotation.NotNull K key, V value) {
+            checkKey(key);
+            checkValue(value);
+            V v = super.putIfAbsent(key, value);
+            if (v != null)
+                queueView.publishAndIndex((K) key, value);
+            return v;
+        }
+
+        @Override
+        public boolean remove(@net.openhft.chronicle.core.annotation.NotNull Object key, Object value) {
+            if (!super.remove(key, value))
+                return false;
+            queueView.publishAndIndex((K) key, null);
+            return true;
+        }
+
+        @Override
+        public boolean replace(@net.openhft.chronicle.core.annotation.NotNull K key,
+                               @net.openhft.chronicle.core.annotation.NotNull V oldValue,
+                               @net.openhft.chronicle.core.annotation.NotNull V newValue) {
+            if (!super.replace(key, oldValue, newValue))
+                return false;
+
+            queueView.publishAndIndex((K) key, newValue);
+            return true;
+        }
+
+        @Nullable
+        @Override
+        public V replace(@net.openhft.chronicle.core.annotation.NotNull K key,
+                         @net.openhft.chronicle.core.annotation.NotNull V value) {
+            V replaced = super.replace(key, value);
+            queueView.publishAndIndex((K) key, value);
+            return replaced;
+        }
+
+    }
+
 }
 

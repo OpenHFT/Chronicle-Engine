@@ -84,7 +84,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Boolean[][]{
-                {true}, {true}
+                {true}, {false}
         });
     }
 
@@ -173,11 +173,11 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         queueView = assetTree.acquireQueue(uri, String.class, String.class);
         Jvm.pause(500);
         final long index = queueView.publishAndIndex(messageType, "Message-1");
-        final Excerpt<String, String> actual = queueView.get(index);
+        final Excerpt<String, String> actual = queueView.getExcerpt(index);
         assertEquals(index, actual.index());
 
         final long index2 = queueView.publishAndIndex(messageType, "Message-2");
-        final Excerpt<String, String> actual2 = queueView.get(index2);
+        final Excerpt<String, String> actual2 = queueView.getExcerpt(index2);
         assertEquals(index2, actual2.index());
     }
 
@@ -291,7 +291,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         final long index = publisher.publishAndIndex(methodName, "Message-1");
 
         QueueView<String, String> queue = assetTree.acquireQueue(uri, String.class, String.class);
-        final Excerpt<String, String> excerpt = queue.get(index);
+        final Excerpt<String, String> excerpt = queue.getExcerpt(index);
         assertEquals(methodName, excerpt.topic());
         assertEquals("Message-1", excerpt.message());
     }

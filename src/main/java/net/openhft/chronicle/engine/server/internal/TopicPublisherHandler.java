@@ -111,12 +111,12 @@ public class TopicPublisherHandler<T, M> extends AbstractHandler {
             writeData(inWire.bytes(), out -> {
 
                 if (getNextAtIndex.contentEquals(eventName)) {
-                    out.writeEventName(reply).object(((QueueView) view).get(valueIn.int64()));
+                    out.writeEventName(reply).object(((QueueView) view).getExcerpt(valueIn.int64()));
                     return;
                 }
 
                 if (getNextAtTopic.contentEquals(eventName)) {
-                    out.writeEventName(reply).object(((QueueView) view).get(valueIn.object()));
+                    out.writeEventName(reply).object(((QueueView) view).getExcerpt(valueIn.object()));
                     return;
                 }
 

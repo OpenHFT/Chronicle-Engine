@@ -33,7 +33,7 @@ public interface QueueView<T, M> extends TopicPublisher<T, M>, KeyedView {
      * @param index the location of the except
      */
     @Nullable
-    Excerpt<T, M> get(long index);
+    Excerpt<T, M> getExcerpt(long index);
 
     /**
      * the next message from the current tailer which has this {@code topic}
@@ -41,7 +41,7 @@ public interface QueueView<T, M> extends TopicPublisher<T, M>, KeyedView {
      * @param topic next excerpt that has this topic
      * @return the except
      */
-    Excerpt<T, M> get(T topic);
+    Excerpt<T, M> getExcerpt(T topic);
 
     /**
      * Publish to a provided topic.
@@ -51,6 +51,7 @@ public interface QueueView<T, M> extends TopicPublisher<T, M>, KeyedView {
      * @return the index in the chronicle queue the ex
      */
     long publishAndIndex(@NotNull T topic, @NotNull M message);
+
 
     interface Excerpt<T, M> {
         T topic();

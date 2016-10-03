@@ -37,13 +37,13 @@ public class RemoteQueueView<T, M> extends RemoteTopicPublisher<T, M> implements
     }
 
     @Override
-    public Excerpt<T, M> get(long index) {
+    public Excerpt<T, M> getExcerpt(long index) {
         //noinspection unchecked
         return proxyReturnWireTypedObject(getNextAtIndex, threadLocal.get(), LocalExcept.class, index);
     }
 
     @Override
-    public Excerpt<T, M> get(T topic) {
+    public Excerpt<T, M> getExcerpt(T topic) {
         //noinspection unchecked
         return proxyReturnWireTypedObject(getNextAtTopic, threadLocal.get(), LocalExcept.class, topic);
     }

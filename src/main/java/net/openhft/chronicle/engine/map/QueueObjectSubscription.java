@@ -154,7 +154,7 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
         final T topic = ObjectUtils.convertTo(topicType, rc.name());
         eventLoop.addHandler(() -> {
 
-            QueueView.Excerpt<T, M> excerpt = chronicleQueue.get(topic);
+            QueueView.Excerpt<T, M> excerpt = chronicleQueue.getExcerpt(topic);
             if (excerpt == null)
                 return false;
             final M e = excerpt.message();
