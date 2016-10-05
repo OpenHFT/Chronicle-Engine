@@ -34,8 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.channels.SocketChannel;
-
 import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
 import static net.openhft.chronicle.engine.server.internal.EngineWireNetworkContext.ConnectionStatus.CONNECTED;
 import static net.openhft.chronicle.engine.server.internal.EngineWireNetworkContext.ConnectionStatus.DISCONNECTED;
@@ -50,7 +48,6 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
 
     private Asset rootAsset;
     private MapView<ConnectionDetails, ConnectionStatus> hostByConnectionStatus;
-    private MapView<SocketChannel, TcpHandler> socketChannelByHandlers;
     private TcpHandler handler;
 
     public EngineWireNetworkContext(Asset asset) {
@@ -69,17 +66,6 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
                         .acquireView(MapView.class, requestContext);
             }
 
-            {
-                String path = "/proc/connections/handlers";
-                RequestContext requestContext = requestContext(path).
-                        type(SocketChannel.class).
-                        type2(TcpHandler.class);
-                socketChannelByHandlers = rootAsset.root().acquireAsset(path)
-                        .acquireView(MapView.class, requestContext);
-
-                onHandlerChanged0(handler);
-
-            }
 
         } catch (Exception e) {
             if (Jvm.isDebug())
@@ -96,22 +82,8 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
     @Override
     public void onHandlerChanged(TcpHandler handler) {
         this.handler = handler;
-        onHandlerChanged0(handler);
     }
 
-    private void onHandlerChanged0(TcpHandler handler) {
-        SocketChannel socketChannel = socketChannel();
-        if (socketChannelByHandlers != null && socketChannel != null) {
-            socketChannelByHandlers.put(socketChannel, handler);
-        }
-    }
-
-    @Override
-    public void close() {
-        SocketChannel socketChannel = socketChannel();
-        if (socketChannelByHandlers != null && socketChannel != null)
-            socketChannelByHandlers.remove(socketChannel);
-    }
 
     @Override
     public ConnectionListener acquireConnectionListener() {
