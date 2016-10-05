@@ -53,6 +53,15 @@ public class SimpleEngineMain {
     static ServerEndpoint serverEndpoint;
 
     public static void main(@NotNull String... args) throws IOException {
+        VanillaAssetTree assetTree = tree();
+
+
+        MapView<String, String> mapView = assetTree.acquireMap("/my/map", String.class, String.class);
+        mapView.put("hello", "world");
+    }
+
+    @NotNull
+    public static VanillaAssetTree tree() throws IOException {
         ChronicleConfig.init();
         VanillaAssetTree assetTree = new VanillaAssetTree(HOST_ID).forTesting(false);
         if (JMX)
@@ -75,5 +84,6 @@ public class SimpleEngineMain {
         }
 
         LOGGER.info("Server port seems to be " + PORT);
+        return assetTree;
     }
 }
