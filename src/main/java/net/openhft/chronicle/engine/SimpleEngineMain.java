@@ -54,10 +54,6 @@ public class SimpleEngineMain {
 
     public static void main(@NotNull String... args) throws IOException {
         VanillaAssetTree assetTree = tree();
-
-
-        MapView<String, String> mapView = assetTree.acquireMap("/my/map", String.class, String.class);
-        mapView.put("hello", "world");
     }
 
     @NotNull
