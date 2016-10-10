@@ -149,7 +149,7 @@ public class Filter<E> implements Marshallable, Iterable<Operation> {
     }
 
     /**
-     * filters subscription on based on {@code net.openhft.chronicle.engine.query.Filter}
+     * marshableFilters subscription on based on {@code net.openhft.chronicle.engine.query.Filter}
      */
     public static class FilteredSubscriber<E> implements Subscriber<E> {
 

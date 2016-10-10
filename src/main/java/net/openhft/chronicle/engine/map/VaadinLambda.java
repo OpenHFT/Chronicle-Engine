@@ -16,11 +16,11 @@ public class VaadinLambda<K, V> {
         key, value
     }
 
-    public static class Filter extends AbstractMarshallable {
-        Type type;
-        Object value;
+    public static class MarshableFilter extends AbstractMarshallable {
+        public final Type type;
+        public final Object value;
 
-        public Filter(Type type, Object value) {
+        public MarshableFilter(Type type, Object value) {
             this.type = type;
             this.value = value;
         }
@@ -38,11 +38,11 @@ public class VaadinLambda<K, V> {
 
     public static class Query<K, V> {
         public long fromIndex;
-        public final List<MarshableOrderBy> marshableOrderBy = new ArrayList<>();
-        public final List<Filter> filters = new ArrayList<>();
+        public List<MarshableOrderBy> marshableOrderBy = new ArrayList<>();
+        public List<MarshableFilter> marshableFilters = new ArrayList<>();
 
         public boolean filter(@NotNull Map.Entry<K, V> entry) {
-            for (Filter f : filters) {
+            for (MarshableFilter f : marshableFilters) {
 
                 Object item;
 
@@ -84,9 +84,10 @@ public class VaadinLambda<K, V> {
         }
     }
 
+
     @NotNull
     public static <K, V>
-    SerializableBiFunction<MapView<K, V>, Query<K, V>, Iterator<Map.Entry<K, V>>> apply(Query<K, V> query) {
+    SerializableBiFunction<MapView<K, V>, Query<K, V>, Iterator<Map.Entry<K, V>>> iteratorFunction() {
         return (MapView<K, V> kvMapView, Query<K, V> q) -> {
 
             Iterator<Map.Entry<K, V>> result = kvMapView.entrySet().stream()
@@ -94,12 +95,22 @@ public class VaadinLambda<K, V> {
                     .sorted(q.sorted())
                     .iterator();
             long x = 0;
-            while (x++ < query.fromIndex && result.hasNext()) {
+            while (x++ < q.fromIndex && result.hasNext()) {
                 result.next();
             }
 
             return result;
         };
     }
+
+    @NotNull
+    public static <K, V>
+    SerializableBiFunction<MapView<K, V>, Query<K, V>, Long> countFunction() {
+        return (MapView<K, V> mapView, Query<K, V> q) ->
+                mapView.entrySet().stream()
+                        .filter(q::filter)
+                        .count();
+    }
+
 
 }
