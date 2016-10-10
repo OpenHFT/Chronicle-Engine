@@ -103,6 +103,10 @@ public class VaadinLambda<K, V> {
         };
     }
 
+
+
+
+
     @NotNull
     public static <K, V>
     SerializableBiFunction<MapView<K, V>, Query<K, V>, Long> countFunction() {
