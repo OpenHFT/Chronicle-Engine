@@ -71,10 +71,16 @@ public class VaadinLambda<K, V> {
 
                 int result = 0;
                 if ("key".equals(order.column))
-                    result = ((Comparable) o1.getKey().toString().toLowerCase()).compareTo(o2.getKey().toString().toLowerCase());
-                else if ("value".equals(order.column))
-                    result = ((Comparable) o1.getValue().toString().toLowerCase()).compareTo(o2.getValue().toString().toLowerCase());
+                    if (o1.getKey() instanceof Number)
+                        result = ((Comparable) o1.getKey()).compareTo(o2.getKey());
+                    else
+                        result = ((Comparable) o1.getKey().toString().toLowerCase()).compareTo(o2.getKey().toString().toLowerCase());
 
+                else if ("value".equals(order.column))
+                    if (o1.getValue() instanceof Number)
+                        result = ((Comparable) o1.getValue()).compareTo(o2.getValue());
+                    else
+                        result = ((Comparable) o1.getValue().toString().toLowerCase()).compareTo(o2.getValue().toString().toLowerCase());
                 result *= order.isAscending ? 1 : -1;
                 if (result != 0)
                     return result;
@@ -102,9 +108,6 @@ public class VaadinLambda<K, V> {
             return result;
         };
     }
-
-
-
 
 
     @NotNull
