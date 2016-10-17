@@ -36,12 +36,12 @@ public class VaadinLambda<K, V> {
         }
     }
 
-    public static class Query<K, V> {
+    public static class Query<K> {
         public long fromIndex;
         public List<MarshableOrderBy> marshableOrderBy = new ArrayList<>();
         public List<MarshableFilter> marshableFilters = new ArrayList<>();
 
-        public boolean filter(@NotNull Map.Entry<K, V> entry) {
+        public boolean filter(@NotNull Map.Entry<K, ?> entry) {
             for (MarshableFilter f : marshableFilters) {
 
                 Object item;
@@ -62,11 +62,11 @@ public class VaadinLambda<K, V> {
             return true;
         }
 
-        public Comparator<Map.Entry<K, V>> sorted() {
+        public Comparator<Map.Entry<K, ?>> sorted() {
             return this::compare;
         }
 
-        private int compare(Map.Entry<K, V> o1, Map.Entry<K, V> o2) {
+        private int compare(Map.Entry<K, ?> o1, Map.Entry<K, ?> o2) {
             for (MarshableOrderBy order : marshableOrderBy) {
 
                 int result = 0;
@@ -92,11 +92,12 @@ public class VaadinLambda<K, V> {
 
 
     @NotNull
-    public static <K, V>
-    SerializableBiFunction<MapView<K, V>, Query<K, V>, Iterator<Map.Entry<K, V>>> iteratorFunction() {
-        return (MapView<K, V> kvMapView, Query<K, V> q) -> {
+    public static <K,V>
+    SerializableBiFunction<MapView<K, V>, Query<K>, Iterator<Map.Entry<K, V>>>
+    iteratorFunction() {
+        return (MapView<K, V> kvMapView, Query<K> q) -> {
 
-            Iterator<Map.Entry<K, V>> result = kvMapView.entrySet().stream()
+            Iterator<Map.Entry<K, V>> result = (Iterator) kvMapView.entrySet().stream()
                     .filter(q::filter)
                     .sorted(q.sorted())
                     .iterator();
@@ -107,13 +108,16 @@ public class VaadinLambda<K, V> {
 
             return result;
         };
+
+
+
     }
 
 
     @NotNull
     public static <K, V>
-    SerializableBiFunction<MapView<K, V>, Query<K, V>, Long> countFunction() {
-        return (MapView<K, V> mapView, Query<K, V> q) ->
+    SerializableBiFunction<MapView<K, V>, Query<K>, Long> countFunction() {
+        return (MapView<K, V> mapView, Query<K> q) ->
                 mapView.entrySet().stream()
                         .filter(q::filter)
                         .count();

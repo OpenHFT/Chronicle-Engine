@@ -18,6 +18,8 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.BytesUtil;
+import net.openhft.chronicle.engine.api.column.Column;
+import net.openhft.chronicle.engine.api.column.ColumnView;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -38,11 +40,12 @@ import java.util.*;
 
 import static java.util.EnumSet.of;
 import static net.openhft.chronicle.engine.api.tree.RequestContext.Operation.BOOTSTRAP;
+import static net.openhft.chronicle.engine.tree.TopologicalEvent.TopologicalFields.name;
 
 /**
  * Created by peter on 22/05/15.
  */
-public class VanillaMapView<K, V> implements MapView<K, V> {
+public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
     protected final Class keyClass;
     protected final Class valueType;
     protected final Asset asset;
@@ -176,6 +179,13 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
     }
 
     @Override
+    public int size(VaadinLambda.Query<K> query) {
+        return (int) entrySet().stream()
+                .filter(query::filter)
+                .count();
+    }
+
+    @Override
     public KeyValueStore<K, V> underlying() {
         return kvStore;
     }
@@ -226,6 +236,20 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
     }
 
     @Override
+    public void onCellChanged(String columnName,
+                              K key,
+                              K oldKey,
+                              Object value,
+                              Object oldValue) {
+        if ("key".equals(name))
+            kvStore.put(key, kvStore.getAndRemove(oldKey));
+        else if ("value".equals(columnName))
+            kvStore.put(key, (V) value);
+        else
+            throw new UnsupportedOperationException("unknown column columnName=" + columnName);
+    }
+
+    @Override
     public void putAll(@net.openhft.chronicle.core.annotation.NotNull Map<? extends K, ? extends V> m) {
         for (Entry<? extends K, ? extends V> entry : m.entrySet()) {
             put(entry.getKey(), entry.getValue());
@@ -255,6 +279,33 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
         //noinspection unchecked
         return asset.acquireView(EntrySetView.class);
     }
+
+    @Override
+    public void add(K k, Object v) {
+        put(k, (V) v);
+    }
+
+    @Override
+    public void onCellChanged(@NotNull Subscriber<MapEvent<K, ?>> subscriber) {
+        registerSubscriber((Subscriber) subscriber);
+    }
+
+    @Override
+    public Iterator<? extends Entry<K, ?>> iterator(VaadinLambda.Query<K> query) {
+
+        Iterator result = entrySet().stream()
+                .filter(query::filter)
+                .sorted(query.sorted())
+                .iterator();
+
+        long x = 0;
+        while (x++ < query.fromIndex && result.hasNext()) {
+            result.next();
+        }
+
+        return result;
+    }
+
 
     @Override
     public void clear() {
@@ -389,4 +440,12 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
             return sb.toString();
         }
     }
+
+
+    @Override
+    public List<Column> columns() {
+        return Arrays.asList(new Column("key", false, false, false, true, "", String.class),
+                new Column("key", false, false, false, false, "", String.class));
+    }
+
 }
