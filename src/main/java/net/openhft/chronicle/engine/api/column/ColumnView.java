@@ -12,11 +12,13 @@ import java.util.*;
  */
 public interface ColumnView<K> {
 
-    public enum Type {
+    public ArrayList<String> columnNames();
+
+    enum Type {
         key, value
     }
 
-    public static class MarshableFilter extends AbstractMarshallable {
+    class MarshableFilter extends AbstractMarshallable {
         public final Type type;
         public final Object value;
 
@@ -127,9 +129,10 @@ public interface ColumnView<K> {
      */
     void onRefresh(@NotNull Runnable r);
 
-    Iterator<? extends Map.Entry<K, ?>> iterator(Query<K> query);
+    Iterator<Row> iterator(ColumnView.Query<K> query);
 
     boolean canDeleteRow();
 
     void addRow(K k, Object... v);
+
 }

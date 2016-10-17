@@ -18,8 +18,10 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.BytesUtil;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.column.Column;
 import net.openhft.chronicle.engine.api.column.ColumnView;
+import net.openhft.chronicle.engine.api.column.Row;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -33,14 +35,16 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.api.tree.RequestContext.Operation;
 import net.openhft.chronicle.engine.query.Filter;
+import net.openhft.chronicle.wire.AbstractMarshallable;
+import net.openhft.chronicle.wire.Marshallable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Field;
 import java.util.*;
 
 import static java.util.EnumSet.of;
 import static net.openhft.chronicle.engine.api.tree.RequestContext.Operation.BOOTSTRAP;
-import static net.openhft.chronicle.engine.tree.TopologicalEvent.TopologicalFields.name;
 
 /**
  * Created by peter on 22/05/15.
@@ -237,16 +241,22 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
 
     @Override
     public void onCellChanged(String columnName,
-                          K key,
-                          K oldKey,
-                          Object value,
-                          Object oldValue) {
-        if ("key".equals(name))
+                              K key,
+                              K oldKey,
+                              Object value,
+                              Object oldValue) {
+
+        if (!(Marshallable.class.isAssignableFrom(keyType())) && "key".equals(columnName)) {
             kvStore.put(key, kvStore.getAndRemove(oldKey));
-        else if ("value".equals(columnName))
+            return;
+        }
+        if (!(Marshallable.class.isAssignableFrom(keyType())) && "value".equals(columnName)) {
             kvStore.put(key, (V) value);
-        else
-            throw new UnsupportedOperationException("unknown column columnName=" + columnName);
+            return;
+        }
+
+        throw new UnsupportedOperationException("unknown column columnName=" + columnName);
+
     }
 
     @Override
@@ -294,17 +304,56 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
     }
 
     @Override
-    public Iterator<? extends Entry<K, ?>> iterator(ColumnView.Query<K> query) {
+    public Iterator<Row> iterator(ColumnView.Query<K> query) {
 
-        final Iterator result = entrySet().stream()
+
+        final Iterator<Map.Entry<K, V>> core = entrySet().stream()
                 .filter(query::filter)
                 .sorted(query.sorted())
                 .iterator();
+        Iterator<Row> result = new Iterator<Row>() {
+
+            @Override
+            public boolean hasNext() {
+                return core.hasNext();
+            }
+
+            @Override
+            public Row next() {
+                final Map.Entry e = core.next();
+                final Row row = new Row(columnNames());
+                if (!(Marshallable.class.isAssignableFrom(keyType())))
+                    row.add("key", e.getKey());
+                else
+                    throw new UnsupportedOperationException("todo");
+
+                if (!(Marshallable.class.isAssignableFrom(valueType())))
+                    row.add("value", e.getValue());
+                else {
+                    final AbstractMarshallable value = (AbstractMarshallable) e.getValue();
+
+                    for (final Field declaredFields : valueType().getDeclaredFields()) {
+                        if (!columnNames.contains(declaredFields.getName()))
+                            continue;
+                        try {
+                            declaredFields.setAccessible(true);
+                            row.add(declaredFields.getName(), declaredFields.get(value));
+                        } catch (Exception e1) {
+                            Jvm.warn().on(VanillaMapView.class, e1);
+                        }
+                    }
+                }
+
+                return row;
+            }
+        };
+
 
         long x = 0;
         while (x++ < query.fromIndex && result.hasNext()) {
             result.next();
         }
+
 
         return result;
     }
@@ -452,8 +501,49 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
 
     @Override
     public List<Column> columns() {
-        return Arrays.asList(new Column("key", false, false, false, true, "", String.class),
-                new Column("value", false, false, false, false, "", String.class));
+        List<Column> result = new ArrayList<>();
+
+        if (!(Marshallable.class.isAssignableFrom(keyType())))
+            result.add(new Column("key", false, false, false, true, "", String.class));
+
+        if (!(Marshallable.class.isAssignableFrom(valueType())))
+            result.add(new Column("value", false, false, false, false, "", String.class));
+        else {
+            //valueType.isAssignableFrom()
+            for (final Field declaredFields : valueType().getDeclaredFields()) {
+                result.add(new Column(declaredFields.getName(), false, false, false, false, "",
+                        declaredFields.getType()));
+            }
+        }
+
+        return result;
+
+    }
+
+    ArrayList<String> columnNames = null;
+
+    @Override
+    public ArrayList<String> columnNames() {
+
+        if (columnNames != null)
+            return columnNames;
+
+        LinkedHashSet<String> result = new LinkedHashSet<>();
+
+        if (!(Marshallable.class.isAssignableFrom(keyType())))
+            result.add("key");
+
+        if (!(Marshallable.class.isAssignableFrom(valueType())))
+            result.add("value");
+        else {
+            //valueType.isAssignableFrom()
+            for (final Field declaredFields : valueType().getDeclaredFields()) {
+                result.add(declaredFields.getName());
+            }
+        }
+
+        columnNames = new ArrayList<>(result);
+        return columnNames;
     }
 
 }
