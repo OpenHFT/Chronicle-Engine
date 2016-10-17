@@ -367,10 +367,7 @@ public class VanillaAsset implements Asset, Closeable {
             }
             return Threads.withThreadGroup(findView(ThreadGroup.class), () -> {
                 V leafView = createLeafView(viewType, rc, this);
-                if (viewType != ColumnView.class && leafView instanceof ColumnView)
-                    addView(ColumnView.class, (ColumnView) leafView);
-                if (viewType != QueueView.class && viewType == QueueView.class)
-                    addView(MapView.class, (MapView) leafView);
+
                 if (leafView != null)
                     return addView(viewType, leafView);
                 V wrappingView = createWrappingView(viewType, rc, this, null);
@@ -425,8 +422,8 @@ public class VanillaAsset implements Asset, Closeable {
         });
     }
 
-    @Override
-    public <V> V addView(Class<V> viewType, V view) {
+
+    private <V> V addView0(Class<V> viewType, V view) {
 
         if (view instanceof KeyedView)
             keyedAsset = ((KeyedView) view).keyedView();
@@ -436,6 +433,17 @@ public class VanillaAsset implements Asset, Closeable {
 //        if (o != null && !o.equals(view))
 //            throw new IllegalStateException("Attempt to replace " + viewType + " with " + view + " was " + viewMap.get(viewType));
         return view;
+    }
+
+    @Override
+    public <V> V addView(Class<V> viewType, V view) {
+
+        if (viewType != ColumnView.class && view instanceof ColumnView)
+            addView0(ColumnView.class, (ColumnView) view);
+        if (viewType != QueueView.class && view instanceof QueueView)
+            addView0(QueueView.class, (QueueView) view);
+
+        return addView0(viewType, view);
     }
 
     @Override

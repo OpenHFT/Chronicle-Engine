@@ -14,16 +14,14 @@ import java.util.Map;
 /**
  * @author Rob Austin.
  */
-public interface ColumnView<K>   {
+public interface ColumnView<K> {
 
     List<Column> columns();
-
 
     /**
      * @return the number of rows
      */
     long longSize();
-
 
     Asset asset();
 
@@ -37,9 +35,11 @@ public interface ColumnView<K>   {
 
     EntrySetView<K, Object, ?> entrySet();
 
-    void add(K k, Object v);
-
     void onCellChanged(@NotNull Subscriber<MapEvent<K, ?>> subscriber);
 
     Iterator<? extends Map.Entry<K, ?>> iterator(VaadinLambda.Query<K> query);
+
+    boolean canDeleteRow();
+
+    void addRow(K k, Object... v);
 }

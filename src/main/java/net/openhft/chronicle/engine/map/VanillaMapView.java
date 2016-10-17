@@ -281,8 +281,11 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
     }
 
     @Override
-    public void add(K k, Object v) {
-        put(k, (V) v);
+    public void addRow(K k, Object... v) {
+        if (v.length == 1)
+            put(k, (V) v[0]);
+        else
+            throw new UnsupportedOperationException("");
     }
 
     @Override
@@ -304,6 +307,11 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
         }
 
         return result;
+    }
+
+    @Override
+    public boolean canDeleteRow() {
+        return true;
     }
 
 
@@ -445,7 +453,7 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
     @Override
     public List<Column> columns() {
         return Arrays.asList(new Column("key", false, false, false, true, "", String.class),
-                new Column("key", false, false, false, false, "", String.class));
+                new Column("value", false, false, false, false, "", String.class));
     }
 
 }
