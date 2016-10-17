@@ -179,7 +179,7 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
     }
 
     @Override
-    public int size(VaadinLambda.Query<K> query) {
+    public int size(ColumnView.Query<K> query) {
         return (int) entrySet().stream()
                 .filter(query::filter)
                 .count();
@@ -237,10 +237,10 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
 
     @Override
     public void onCellChanged(String columnName,
-                              K key,
-                              K oldKey,
-                              Object value,
-                              Object oldValue) {
+                          K key,
+                          K oldKey,
+                          Object value,
+                          Object oldValue) {
         if ("key".equals(name))
             kvStore.put(key, kvStore.getAndRemove(oldKey));
         else if ("value".equals(columnName))
@@ -289,14 +289,14 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
     }
 
     @Override
-    public void onCellChanged(@NotNull Subscriber<MapEvent<K, ?>> subscriber) {
-        registerSubscriber((Subscriber) subscriber);
+    public void onRefresh(@NotNull Runnable r) {
+        registerSubscriber(o -> r.run());
     }
 
     @Override
-    public Iterator<? extends Entry<K, ?>> iterator(VaadinLambda.Query<K> query) {
+    public Iterator<? extends Entry<K, ?>> iterator(ColumnView.Query<K> query) {
 
-        Iterator result = entrySet().stream()
+        final Iterator result = entrySet().stream()
                 .filter(query::filter)
                 .sorted(query.sorted())
                 .iterator();
