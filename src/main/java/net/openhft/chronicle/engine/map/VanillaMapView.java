@@ -220,17 +220,27 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
                                     final String number = trimmed.substring(1, trimmed.length()).trim();
 
                                     final Object filterNumber = convertTo(o.getClass(), number);
-
+                                    boolean result;
                                     if (trimmed.startsWith(">"))
-                                        return ((Number) o).doubleValue() > ((Number) filterNumber).doubleValue();
+                                        result = ((Number) o).doubleValue() > ((Number)
+                                                filterNumber).doubleValue();
                                     else if (trimmed.startsWith("<"))
-                                        return ((Number) o).doubleValue() < ((Number) filterNumber).doubleValue();
+                                        result = ((Number) o).doubleValue() < ((Number)
+                                                filterNumber).doubleValue();
                                     else
                                         throw new UnsupportedOperationException();
 
+                                    if (result)
+                                        continue;
+                                    else
+                                        return false;
+
                                 } else {
                                     final Object filterNumber = convertTo(o.getClass(), trimmed);
-                                    return o.equals(filterNumber);
+                                    if (o.equals(filterNumber))
+                                        continue;
+                                    else
+                                        return false;
                                 }
 
                             }
@@ -245,14 +255,16 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
                         throw new UnsupportedOperationException();
                     }
 
-                    if (item instanceof CharSequence)
-                        return item.toString().toLowerCase().contains(f.filter.toLowerCase());
-                    else
+                    boolean result = (item instanceof CharSequence)
+                            ? item.toString().toLowerCase().contains(f.filter.toLowerCase())
+                            : item.equals(convertTo(item.getClass(), f.filter.trim()));
 
-                        return item.equals(convertTo(item.getClass(), f.filter.trim()));
+                    if (!result)
+                        return false;
 
                 }
-                return false;
+
+                return true;
 
             } catch (NumberFormatException e) {
                 return false;
