@@ -1,7 +1,5 @@
 package net.openhft.chronicle.engine.api.column;
 
-import net.openhft.chronicle.engine.api.set.EntrySetView;
-import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.wire.AbstractMarshallable;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,8 +34,7 @@ public interface ColumnView<K> {
         }
     }
 
-
-    class Query<K> extends AbstractMarshallable {
+    class Query extends AbstractMarshallable {
         public long fromIndex;
         public List<MarshableOrderBy> marshableOrderBy = new ArrayList<>();
         public List<MarshableFilter> marshableFilters = new ArrayList<>();
@@ -46,13 +43,11 @@ public interface ColumnView<K> {
     List<Column> columns();
 
     /**
-     * @return the number of rows
+     * @return the total number of rows
      */
     long longSize();
 
-    Asset asset();
-
-    int size(Query<K> query);
+    int size(Query query);
 
     boolean containsKey(K k);
 
@@ -69,17 +64,15 @@ public interface ColumnView<K> {
      */
     void onCellChanged(String columnName, K key, K oldKey, Object value, Object oldValue);
 
-    EntrySetView<K, Object, ?> entrySet();
-
     /**
-     * called whenever some data in the underlying stucture has changed and hence the visual
+     * called whenever some data in the underlying structure has changed and hence the visual
      * layer has to be refreshed
      *
      * @param r to refresh the visual layer
      */
-    void onRefresh(@NotNull Runnable r);
+    void registerChangeListener(@NotNull Runnable r);
 
-    Iterator<Row> iterator(ColumnView.Query<K> query);
+    Iterator<Row> iterator(ColumnView.Query query);
 
     boolean canDeleteRow();
 

@@ -83,6 +83,8 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
         return valueType;
     }
 
+
+
     @Nullable
     @Override
     public V getUsing(K key, Object usingValue) {
@@ -184,7 +186,7 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
     }
 
 
-    public Predicate<Map.Entry<K, V>> filter(@NotNull ColumnView.Query<K> query) {
+    public Predicate<Map.Entry<K, V>> filter(@NotNull ColumnView.Query query) {
         return entry -> {
 
             if (query.marshableFilters.isEmpty())
@@ -275,7 +277,7 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
 
 
     @Override
-    public int size(ColumnView.Query<K> query) {
+    public int size(ColumnView.Query query) {
         return (int) entrySet().stream()
                 .filter(filter(query))
                 .count();
@@ -406,15 +408,9 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
     }
 
     @Override
-    public void onRefresh(@NotNull Runnable r) {
+    public void registerChangeListener(@NotNull Runnable r) {
         registerSubscriber(o -> r.run());
     }
-
-  /*  private int compare(Map.Entry<K, ?> o1, Map.Entry<K, ?> o2) {
-
-    }*//*
-*/
-
 
     private Comparator<Map.Entry<K, V>> sort(final List<MarshableOrderBy> marshableOrderBy) {
 
@@ -501,7 +497,7 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
 
 
     @Override
-    public Iterator<Row> iterator(final ColumnView.Query<K> query) {
+    public Iterator<Row> iterator(final ColumnView.Query query) {
 
         final Iterator<Map.Entry<K, V>> core = entrySet().stream()
                 .filter(filter(query))
@@ -520,12 +516,12 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
                 final Map.Entry e = core.next();
                 final Row row = new Row(columnNames());
                 if (!(AbstractMarshallable.class.isAssignableFrom(keyType())))
-                    row.add("key", e.getKey());
+                    row.set("key", e.getKey());
                 else
                     throw new UnsupportedOperationException("todo");
 
                 if (!(AbstractMarshallable.class.isAssignableFrom(valueType())))
-                    row.add("value", e.getValue());
+                    row.set("value", e.getValue());
                 else {
                     final AbstractMarshallable value = (AbstractMarshallable) e.getValue();
 
@@ -534,7 +530,7 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
                             continue;
                         try {
                             declaredFields.setAccessible(true);
-                            row.add(declaredFields.getName(), declaredFields.get(value));
+                            row.set(declaredFields.getName(), declaredFields.get(value));
                         } catch (Exception e1) {
                             Jvm.warn().on(VanillaMapView.class, e1);
                         }
