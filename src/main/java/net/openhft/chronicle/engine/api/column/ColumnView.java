@@ -5,14 +5,17 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.wire.AbstractMarshallable;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Rob Austin.
  */
 public interface ColumnView<K> {
 
-    public ArrayList<String> columnNames();
+    ArrayList<String> columnNames();
 
     enum Type {
         key, value
@@ -28,7 +31,7 @@ public interface ColumnView<K> {
         }
     }
 
-    public static class MarshableOrderBy extends AbstractMarshallable {
+    class MarshableOrderBy extends AbstractMarshallable {
         public final String column;
         public final boolean isAscending;
 
@@ -39,7 +42,7 @@ public interface ColumnView<K> {
     }
 
 
-    class Query<K> {
+    class Query<K> extends AbstractMarshallable {
         public long fromIndex;
         public List<MarshableOrderBy> marshableOrderBy = new ArrayList<>();
         public List<MarshableFilter> marshableFilters = new ArrayList<>();
@@ -65,32 +68,7 @@ public interface ColumnView<K> {
             return true;
         }
 
-        public Comparator<Map.Entry<K, ?>> sorted() {
-            return this::compare;
-        }
 
-        private int compare(Map.Entry<K, ?> o1, Map.Entry<K, ?> o2) {
-            for (MarshableOrderBy order : marshableOrderBy) {
-
-                int result = 0;
-                if ("key".equals(order.column))
-                    if (o1.getKey() instanceof Number)
-                        result = ((Comparable) o1.getKey()).compareTo(o2.getKey());
-                    else
-                        result = ((Comparable) o1.getKey().toString().toLowerCase()).compareTo(o2.getKey().toString().toLowerCase());
-
-                else if ("value".equals(order.column))
-                    if (o1.getValue() instanceof Number)
-                        result = ((Comparable) o1.getValue()).compareTo(o2.getValue());
-                    else
-                        result = ((Comparable) o1.getValue().toString().toLowerCase()).compareTo(o2.getValue().toString().toLowerCase());
-                result *= order.isAscending ? 1 : -1;
-                if (result != 0)
-                    return result;
-
-            }
-            return 0;
-        }
     }
 
     List<Column> columns();

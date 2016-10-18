@@ -36,7 +36,6 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.api.tree.RequestContext.Operation;
 import net.openhft.chronicle.engine.query.Filter;
 import net.openhft.chronicle.wire.AbstractMarshallable;
-import net.openhft.chronicle.wire.Marshallable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -246,11 +245,11 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
                               Object value,
                               Object oldValue) {
 
-        if (!(Marshallable.class.isAssignableFrom(keyType())) && "key".equals(columnName)) {
+        if (!(AbstractMarshallable.class.isAssignableFrom(keyType())) && "key".equals(columnName)) {
             kvStore.put(key, kvStore.getAndRemove(oldKey));
             return;
         }
-        if (!(Marshallable.class.isAssignableFrom(keyType())) && "value".equals(columnName)) {
+        if (!(AbstractMarshallable.class.isAssignableFrom(keyType())) && "value".equals(columnName)) {
             kvStore.put(key, (V) value);
             return;
         }
@@ -303,14 +302,105 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
         registerSubscriber(o -> r.run());
     }
 
+  /*  private int compare(Map.Entry<K, ?> o1, Map.Entry<K, ?> o2) {
+
+    }*//*
+*/
+
+
+    private Comparator<Map.Entry<K, V>> sort(final List<MarshableOrderBy> marshableOrderBy) {
+
+        return (o1, o2) -> {
+            for (MarshableOrderBy order : marshableOrderBy) {
+
+                if (o1 == null && o2 == null)
+                    return 0;
+
+                if (o1 == null)
+                    return -1;
+
+                if (o2 == null)
+                    return 1;
+
+                final String column = order.column;
+                int result = 0;
+
+                if (column.equals("key")) {
+                    if (o1.getKey() instanceof CharSequence)
+                        result = String.CASE_INSENSITIVE_ORDER.compare((String) o1.getKey(), (String) o2.getKey());
+                    else if (AbstractMarshallable.class.isAssignableFrom(keyType()))
+                        throw new UnsupportedOperationException();
+                    else if (Comparable.class.isAssignableFrom(keyType()))
+                        result = ((Comparable) o1.getKey()).compareTo(o2.getKey());
+
+
+                    if (result != 0) {
+                        result *= order.isAscending ? 1 : -1;
+                        return result;
+                    }
+
+                    continue;
+                }
+
+
+                if (column.equals("value")
+                        && (!(AbstractMarshallable.class.isAssignableFrom(valueType())))) {
+                    if (o1.getValue() instanceof CharSequence)
+                        result = String.CASE_INSENSITIVE_ORDER.compare((String) o1.getValue(), (String)
+                                o2.getValue());
+
+                    else if (o1.getValue() instanceof Comparable)
+                        result = ((Comparable) o1.getValue()).compareTo(o2.getValue());
+
+                    if (result != 0) {
+                        result *= order.isAscending ? 1 : -1;
+                        return result;
+                    }
+
+                    continue;
+
+                }
+
+                try {
+                    final Field field = o1.getValue().getClass().getDeclaredField(column);
+                    field.setAccessible(true);
+                    final Comparable o1Value = (Comparable) field.get(o1.getValue());
+                    final Comparable o2Value = (Comparable) field.get(o2.getValue());
+
+                    if ((!(o1Value instanceof Comparable)) &&
+                            (!(o2Value instanceof Comparable)))
+                        return 0;
+
+                    if (!(o1Value instanceof Comparable))
+                        return order.isAscending ? -1 : 1;
+
+                    if (!(o2Value instanceof Comparable))
+                        return order.isAscending ? 1 : -1;
+
+                    return o1Value.compareTo(o2Value) * (order.isAscending ? 1 : -1);
+
+                } catch (Exception e) {
+                    Jvm.warn().on(VanillaMapView.class, e);
+                }
+
+            }
+
+            return 0;
+        };
+
+
+    }
+
+
     @Override
-    public Iterator<Row> iterator(ColumnView.Query<K> query) {
+    public Iterator<Row> iterator(final ColumnView.Query<K> query) {
 
 
         final Iterator<Map.Entry<K, V>> core = entrySet().stream()
                 .filter(query::filter)
-                .sorted(query.sorted())
+                .sorted(sort(query.marshableOrderBy))
                 .iterator();
+
         Iterator<Row> result = new Iterator<Row>() {
 
             @Override
@@ -322,12 +412,12 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
             public Row next() {
                 final Map.Entry e = core.next();
                 final Row row = new Row(columnNames());
-                if (!(Marshallable.class.isAssignableFrom(keyType())))
+                if (!(AbstractMarshallable.class.isAssignableFrom(keyType())))
                     row.add("key", e.getKey());
                 else
                     throw new UnsupportedOperationException("todo");
 
-                if (!(Marshallable.class.isAssignableFrom(valueType())))
+                if (!(AbstractMarshallable.class.isAssignableFrom(valueType())))
                     row.add("value", e.getValue());
                 else {
                     final AbstractMarshallable value = (AbstractMarshallable) e.getValue();
@@ -378,7 +468,8 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
     }
 
     @Override
-    public boolean remove(@net.openhft.chronicle.core.annotation.NotNull Object key, Object value) {
+    public boolean remove(@net.openhft.chronicle.core.annotation.NotNull Object key, Object
+            value) {
         checkKey(key);
         checkValue(value);
         return kvStore.isKeyType(key) && kvStore.removeIfEqual((K) key, (V) value);
@@ -503,11 +594,11 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
     public List<Column> columns() {
         List<Column> result = new ArrayList<>();
 
-        if (!(Marshallable.class.isAssignableFrom(keyType())))
-            result.add(new Column("key", false, false, false, true, "", String.class));
+        if (!(AbstractMarshallable.class.isAssignableFrom(keyType())))
+            result.add(new Column("key", false, false, false, true, "", keyType()));
 
-        if (!(Marshallable.class.isAssignableFrom(valueType())))
-            result.add(new Column("value", false, false, false, false, "", String.class));
+        if (!(AbstractMarshallable.class.isAssignableFrom(valueType())))
+            result.add(new Column("value", false, false, false, false, "", valueType()));
         else {
             //valueType.isAssignableFrom()
             for (final Field declaredFields : valueType().getDeclaredFields()) {
@@ -530,13 +621,12 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
 
         LinkedHashSet<String> result = new LinkedHashSet<>();
 
-        if (!(Marshallable.class.isAssignableFrom(keyType())))
+        if (!(AbstractMarshallable.class.isAssignableFrom(keyType())))
             result.add("key");
 
-        if (!(Marshallable.class.isAssignableFrom(valueType())))
+        if (!(AbstractMarshallable.class.isAssignableFrom(valueType())))
             result.add("value");
         else {
-            //valueType.isAssignableFrom()
             for (final Field declaredFields : valueType().getDeclaredFields()) {
                 result.add(declaredFields.getName());
             }
