@@ -190,65 +190,73 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
             if (query.marshableFilters.isEmpty())
                 return true;
 
-            for (MarshableFilter f : query.marshableFilters) {
+            try {
 
-                Object item;
+                for (MarshableFilter f : query.marshableFilters) {
 
-                if ("key".equals(f.columnName)) {
-                    item = entry.getKey();
-                } else if (!(AbstractMarshallable.class.isAssignableFrom(valueType())) &&
-                        "value".equals(f.columnName)) {
-                    item = entry.getValue();
+                    Object item;
 
-                } else if (AbstractMarshallable.class.isAssignableFrom(valueType())) {
-                    try {
-                        final Class valueClass = entry.getValue().getClass();
+                    if ("key".equals(f.columnName)) {
+                        item = entry.getKey();
+                    } else if (!(AbstractMarshallable.class.isAssignableFrom(valueType())) &&
+                            "value".equals(f.columnName)) {
+                        item = entry.getValue();
+
+                    } else if (AbstractMarshallable.class.isAssignableFrom(valueType())) {
+                        try {
+                            final Class valueClass = entry.getValue().getClass();
 
 
-                        final Field field = valueClass.getDeclaredField(f.columnName);
-                        field.setAccessible(true);
-                        final Object o = field.get(entry.getValue());
+                            final Field field = valueClass.getDeclaredField(f.columnName);
+                            field.setAccessible(true);
+                            final Object o = field.get(entry.getValue());
 
-                        if (o == null)
-                            return false;
-                        final String trimmed = f.filter.trim();
-                        if (o instanceof Number) {
-                            if (trimmed.startsWith(">") ||
-                                    trimmed.startsWith("<")) {
-                                final String number = trimmed.substring(1, trimmed.length()).trim();
+                            if (o == null)
+                                return false;
+                            final String trimmed = f.filter.trim();
+                            if (o instanceof Number) {
+                                if (trimmed.startsWith(">") ||
+                                        trimmed.startsWith("<")) {
+                                    final String number = trimmed.substring(1, trimmed.length()).trim();
 
-                                final Object filterNumber = convertTo(o.getClass(), number);
+                                    final Object filterNumber = convertTo(o.getClass(), number);
 
-                                if (trimmed.startsWith(">"))
-                                    return ((Number) o).doubleValue() > ((Number) filterNumber).doubleValue();
-                                else if (trimmed.startsWith("<"))
-                                    return ((Number) o).doubleValue() < ((Number) filterNumber).doubleValue();
-                                else
-                                    throw new UnsupportedOperationException();
+                                    if (trimmed.startsWith(">"))
+                                        return ((Number) o).doubleValue() > ((Number) filterNumber).doubleValue();
+                                    else if (trimmed.startsWith("<"))
+                                        return ((Number) o).doubleValue() < ((Number) filterNumber).doubleValue();
+                                    else
+                                        throw new UnsupportedOperationException();
 
-                            } else {
-                                final Object filterNumber = convertTo(o.getClass(), trimmed);
-                                return o.equals(filterNumber);
+                                } else {
+                                    final Object filterNumber = convertTo(o.getClass(), trimmed);
+                                    return o.equals(filterNumber);
+                                }
+
                             }
+                            item = o;
 
+                        } catch (Exception e) {
+                            return false;
                         }
-                        item = o;
 
-                    } catch (Exception e) {
-                        return false;
+
+                    } else {
+                        throw new UnsupportedOperationException();
                     }
 
+                    if (item instanceof CharSequence)
+                        return item.toString().toLowerCase().contains(f.filter.toLowerCase());
+                    else
 
-                } else {
-                    throw new UnsupportedOperationException();
+                        return item.equals(convertTo(item.getClass(), f.filter.trim()));
+
                 }
+                return false;
 
-                if (item instanceof CharSequence)
-                    return item.toString().toLowerCase().contains(f.filter.toLowerCase());
-                else
-                    return item.equals(convertTo(item.getClass(), f.filter.trim()));
+            } catch (NumberFormatException e) {
+                return false;
             }
-            return false;
         };
 
     }
