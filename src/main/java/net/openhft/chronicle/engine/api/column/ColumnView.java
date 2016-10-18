@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Rob Austin.
@@ -17,17 +16,13 @@ public interface ColumnView<K> {
 
     ArrayList<String> columnNames();
 
-    enum Type {
-        key, value
-    }
-
     class MarshableFilter extends AbstractMarshallable {
-        public final Type type;
-        public final Object value;
+        public final String columnName;
+        public final String filter;
 
-        public MarshableFilter(Type type, Object value) {
-            this.type = type;
-            this.value = value;
+        public MarshableFilter(String columnName, String filter) {
+            this.columnName = columnName;
+            this.filter = filter;
         }
     }
 
@@ -46,29 +41,6 @@ public interface ColumnView<K> {
         public long fromIndex;
         public List<MarshableOrderBy> marshableOrderBy = new ArrayList<>();
         public List<MarshableFilter> marshableFilters = new ArrayList<>();
-
-        public boolean filter(@NotNull Map.Entry<K, ?> entry) {
-            for (MarshableFilter f : marshableFilters) {
-
-                Object item;
-
-                if (f.type == Type.key) {
-                    item = entry.getKey();
-                } else if (f.type == Type.value) {
-                    item = entry.getValue();
-
-                } else {
-                    throw new UnsupportedOperationException();
-                }
-
-                if (!item.toString().toLowerCase().contains(f.value.toString().toLowerCase()))
-                    return false;
-
-            }
-            return true;
-        }
-
-
     }
 
     List<Column> columns();
