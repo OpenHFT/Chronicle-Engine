@@ -41,8 +41,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.function.Predicate;
 
 import static java.util.EnumSet.of;
+import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
 import static net.openhft.chronicle.engine.api.tree.RequestContext.Operation.BOOTSTRAP;
 
 /**
@@ -181,10 +183,81 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
         return asset;
     }
 
+
+    public Predicate<Map.Entry<K, V>> filter(@NotNull ColumnView.Query<K> query) {
+        return entry -> {
+
+            if (query.marshableFilters.isEmpty())
+                return true;
+
+            for (MarshableFilter f : query.marshableFilters) {
+
+                Object item;
+
+                if ("key".equals(f.columnName)) {
+                    item = entry.getKey();
+                } else if (!(AbstractMarshallable.class.isAssignableFrom(valueType())) &&
+                        "value".equals(f.columnName)) {
+                    item = entry.getValue();
+
+                } else if (AbstractMarshallable.class.isAssignableFrom(valueType())) {
+                    try {
+                        final Class valueClass = entry.getValue().getClass();
+
+
+                        final Field field = valueClass.getDeclaredField(f.columnName);
+                        field.setAccessible(true);
+                        final Object o = field.get(entry.getValue());
+
+                        if (o == null)
+                            return false;
+                        final String trimmed = f.filter.trim();
+                        if (o instanceof Number) {
+                            if (trimmed.startsWith(">") ||
+                                    trimmed.startsWith("<")) {
+                                final String number = trimmed.substring(1, trimmed.length()).trim();
+
+                                final Object filterNumber = convertTo(o.getClass(), number);
+
+                                if (trimmed.startsWith(">"))
+                                    return ((Number) o).doubleValue() > ((Number) filterNumber).doubleValue();
+                                else if (trimmed.startsWith("<"))
+                                    return ((Number) o).doubleValue() < ((Number) filterNumber).doubleValue();
+                                else
+                                    throw new UnsupportedOperationException();
+
+                            } else {
+                                final Object filterNumber = convertTo(o.getClass(), trimmed);
+                                return o.equals(filterNumber);
+                            }
+
+                        }
+                        item = o;
+
+                    } catch (Exception e) {
+                        return false;
+                    }
+
+
+                } else {
+                    throw new UnsupportedOperationException();
+                }
+
+                if (item instanceof CharSequence)
+                    return item.toString().toLowerCase().contains(f.filter.toLowerCase());
+                else
+                    return item.equals(convertTo(item.getClass(), f.filter.trim()));
+            }
+            return false;
+        };
+
+    }
+
+
     @Override
     public int size(ColumnView.Query<K> query) {
         return (int) entrySet().stream()
-                .filter(query::filter)
+                .filter(filter(query))
                 .count();
     }
 
@@ -249,17 +322,32 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
             kvStore.put(key, kvStore.getAndRemove(oldKey));
             return;
         }
+
         if (!(AbstractMarshallable.class.isAssignableFrom(keyType())) && "value".equals(columnName)) {
             kvStore.put(key, (V) value);
             return;
         }
 
-        throw new UnsupportedOperationException("unknown column columnName=" + columnName);
+        final V v = kvStore.get(key);
+        if (!(v instanceof AbstractMarshallable))
+            throw new UnsupportedOperationException("only types of AbstractMarshallable are " +
+                    "supported, for non key/value columns");
+
+        final Field field;
+        try {
+            field = v.getClass().getDeclaredField(columnName);
+            field.setAccessible(true);
+            field.set(v, value);
+            kvStore.put(key, v);
+        } catch (Exception e) {
+            Jvm.warn().on(VanillaMapView.class, e);
+        }
 
     }
 
     @Override
-    public void putAll(@net.openhft.chronicle.core.annotation.NotNull Map<? extends K, ? extends V> m) {
+    public void putAll(@net.openhft.chronicle.core.annotation.NotNull Map<? extends K, ? extends
+            V> m) {
         for (Entry<? extends K, ? extends V> entry : m.entrySet()) {
             put(entry.getKey(), entry.getValue());
         }
@@ -395,13 +483,12 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
     @Override
     public Iterator<Row> iterator(final ColumnView.Query<K> query) {
 
-
         final Iterator<Map.Entry<K, V>> core = entrySet().stream()
-                .filter(query::filter)
+                .filter(filter(query))
                 .sorted(sort(query.marshableOrderBy))
                 .iterator();
 
-        Iterator<Row> result = new Iterator<Row>() {
+        final Iterator<Row> result = new Iterator<Row>() {
 
             @Override
             public boolean hasNext() {
