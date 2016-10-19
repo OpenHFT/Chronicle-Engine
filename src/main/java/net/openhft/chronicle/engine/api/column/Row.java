@@ -5,20 +5,21 @@ import org.jetbrains.annotations.NotNull;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author Rob Austin.
  */
 public class Row {
 
-    private List<String> columnNames;
+    private final List<String> columnNames;
     private Map<String, Object> data = new LinkedHashMap<>();
 
     /**
-     * @param columnNames all the column names that make up this row
+     * @param columns all the column names that make up this row
      */
-    public Row(@NotNull List<String> columnNames) {
-        this.columnNames = columnNames;
+    public Row(@NotNull List<Column> columns) {
+        columnNames = columns.stream().map(c -> c.name).collect(Collectors.toList());
     }
 
     /**

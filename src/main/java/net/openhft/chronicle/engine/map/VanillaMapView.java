@@ -49,17 +49,14 @@ import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
 import static net.openhft.chronicle.core.util.ObjectUtils.newInstance;
 import static net.openhft.chronicle.engine.api.tree.RequestContext.Operation.BOOTSTRAP;
 
-/**
- * Created by peter on 22/05/15.
- */
-public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
+public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView {
     protected final Class keyClass;
     protected final Class valueType;
     protected final Asset asset;
     protected final RequestContext context;
     protected final boolean putReturnsNull;
     protected final boolean removeReturnsNull;
-
+    private ArrayList<String> columnNames = null;
     private final KeyValueStore<K, V> kvStore;
     private AbstractCollection<V> values;
 
@@ -277,8 +274,16 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
     }
 
 
+    /**
+     * @param query if {@code query} == null all the total number of rows is returned
+     * @return the number of rows the matches this query
+     */
     @Override
-    public int rowCount(ColumnView.Query query) {
+    public int rowCount(@Nullable ColumnView.Query query) {
+
+        if (query == null)
+            return (int) longSize();
+
         return (int) entrySet().stream()
                 .filter(filter(query))
                 .count();
@@ -341,22 +346,22 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
 
     @Override
     public void onRowChanged(String columnName,
-                             K key,
-                             K oldKey,
+                             Object key,
+                             Object oldKey,
                              Object value,
                              Object oldValue) {
 
         if (!(AbstractMarshallable.class.isAssignableFrom(keyType())) && "key".equals(columnName)) {
-            kvStore.put(key, kvStore.getAndRemove(oldKey));
+            kvStore.put((K) key, kvStore.getAndRemove((K) oldKey));
             return;
         }
 
         if (!(AbstractMarshallable.class.isAssignableFrom(keyType())) && "value".equals(columnName)) {
-            kvStore.put(key, (V) value);
+            kvStore.put((K) key, (V) value);
             return;
         }
 
-        final V v = kvStore.get(key);
+        final V v = kvStore.get((K) key);
         if (!(v instanceof AbstractMarshallable))
             throw new UnsupportedOperationException("only types of AbstractMarshallable are " +
                     "supported, for non key/value columns");
@@ -366,7 +371,7 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
             field = v.getClass().getDeclaredField(columnName);
             field.setAccessible(true);
             field.set(v, value);
-            kvStore.put(key, v);
+            kvStore.put((K) key, v);
         } catch (Exception e) {
             Jvm.warn().on(VanillaMapView.class, e);
         }
@@ -513,7 +518,7 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
             @Override
             public Row next() {
                 final Map.Entry e = core.next();
-                final Row row = new Row(columnNames());
+                final Row row = new Row(columns());
                 if (!(AbstractMarshallable.class.isAssignableFrom(keyType())))
                     row.set("key", e.getKey());
                 else
@@ -525,7 +530,7 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
                     final AbstractMarshallable value = (AbstractMarshallable) e.getValue();
 
                     for (final Field declaredFields : valueType().getDeclaredFields()) {
-                        if (!columnNames.contains(declaredFields.getName()))
+                        if (!columnNames().contains(declaredFields.getName()))
                             continue;
                         try {
                             declaredFields.setAccessible(true);
@@ -742,10 +747,8 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
 
     }
 
-    ArrayList<String> columnNames = null;
 
-    @Override
-    public ArrayList<String> columnNames() {
+    private ArrayList<String> columnNames() {
 
         if (columnNames != null)
             return columnNames;
@@ -766,5 +769,6 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
         columnNames = new ArrayList<>(result);
         return columnNames;
     }
+
 
 }
