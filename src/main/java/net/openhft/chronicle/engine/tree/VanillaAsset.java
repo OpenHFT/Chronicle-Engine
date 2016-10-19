@@ -118,6 +118,8 @@ public class VanillaAsset implements Asset, Closeable {
 
         addWrappingRule(MapView.class, LAST + " VanillaMapView", VanillaMapView::new, ObjectKeyValueStore.class);
 
+        addWrappingRule(ColumnView.class, LAST + " ColumnView", MapWrappingColumnView::new, MapView.class);
+
         // storage options
         addLeafRule(ObjectSubscription.class, LAST + " vanilla", MapKVSSubscription::new);
         addLeafRule(RawKVSSubscription.class, LAST + " vanilla", MapKVSSubscription::new);

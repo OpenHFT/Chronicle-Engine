@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.api.column;
 
+import net.openhft.chronicle.engine.map.ObjectSubscription;
 import net.openhft.chronicle.wire.AbstractMarshallable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,5 +69,7 @@ public interface ColumnView {
     boolean canDeleteRows();
 
     boolean containsRowWithKey(Object[] keys);
+
+    ObjectSubscription objectSubscription();
 
 }

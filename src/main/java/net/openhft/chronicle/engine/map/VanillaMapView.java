@@ -725,6 +725,11 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView {
     }
 
     @Override
+    public ObjectSubscription objectSubscription() {
+        return asset().getView(ObjectSubscription.class);
+    }
+
+    @Override
     public List<Column> columns() {
         List<Column> result = new ArrayList<>();
 
@@ -744,7 +749,6 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView {
         return result;
 
     }
-
 
     private ArrayList<String> columnNames() {
 
@@ -767,6 +771,5 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView {
         columnNames = new ArrayList<>(result);
         return columnNames;
     }
-
 
 }
