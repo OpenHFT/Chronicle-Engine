@@ -1,26 +1,22 @@
 package net.openhft.chronicle.engine.api.column;
 
+import net.openhft.chronicle.wire.AbstractMarshallable;
+
 /**
  * @author Rob Austin.
  */
-public class Column {
+public class Column extends AbstractMarshallable{
     public final String name;
-    private final boolean isHidden;
     public boolean readOnly;
-    public boolean allowReadOnlyChange;
-    public boolean nullable;
     public boolean primaryKey;
     public Object value;
-    public  Class<?> type;
+    public Class<?> type;
 
-    public Column(String propertyId, boolean readOnly, boolean allowReadOnlyChange, boolean nullable, boolean primaryKey, Object value, Class<?> type, boolean isHidden) {
-        this.name = propertyId;
+    public Column(String name, boolean readOnly, boolean primaryKey, Object value, Class<?> type) {
+        this.name = name;
         this.readOnly = readOnly;
-        this.allowReadOnlyChange = allowReadOnlyChange;
-        this.nullable = nullable;
         this.primaryKey = primaryKey;
         this.value = value;
         this.type = type;
-        this.isHidden = isHidden;
     }
 }

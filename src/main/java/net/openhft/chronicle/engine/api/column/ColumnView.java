@@ -44,21 +44,16 @@ public interface ColumnView {
 
     int rowCount(@Nullable Query query);
 
-    boolean removeRow(@NotNull Map<String, Object> cells);
-
-    void addRow(@NotNull Map<String, Object> cells);
-
-
     /**
+     * used to add remove and delete rows
      * called when ever the user modify the cells and the data changes
      *
-     * @param columnName the column name of the cell
-     * @param key        the rowID of the cell
-     * @param oldKey     the old rowID of the cell
-     * @param value      the new value of the cell
-     * @param oldValue   the old value of the cell
+     * @param row    if {@code row} is empty, the row is removed, based on the key in  {@code
+     *               oldRow}
+     * @param oldRow if {@code oldRow} is empty, the row is added , based on the key in {@code row}
+     * @return the number of rows effected
      */
-    void onRowChanged(String columnName, Object key, Object oldKey, Object value, Object oldValue);
+    int changedRow(@NotNull Map<String, Object> row, @NotNull Map<String, Object> oldRow);
 
     /**
      * called whenever some data in the underlying structure has changed and hence the visual
@@ -71,5 +66,7 @@ public interface ColumnView {
     Iterator<Row> iterator(ColumnView.Query query);
 
     boolean canDeleteRows();
+
+    boolean containsRowWithKey(Object[] keys);
 
 }

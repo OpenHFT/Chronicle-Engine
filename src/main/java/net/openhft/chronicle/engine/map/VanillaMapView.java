@@ -46,7 +46,6 @@ import java.util.function.Predicate;
 
 import static java.util.EnumSet.of;
 import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
-import static net.openhft.chronicle.core.util.ObjectUtils.newInstance;
 import static net.openhft.chronicle.engine.api.tree.RequestContext.Operation.BOOTSTRAP;
 
 public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView {
@@ -289,10 +288,6 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView {
                 .count();
     }
 
-    @Override
-    public boolean removeRow(@NotNull Map<String, Object> cells) {
-        return remove(cells.get("key")) != null;
-    }
 
     @Override
     public KeyValueStore<K, V> underlying() {
@@ -344,39 +339,6 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView {
         }
     }
 
-    @Override
-    public void onRowChanged(String columnName,
-                             Object key,
-                             Object oldKey,
-                             Object value,
-                             Object oldValue) {
-
-        if (!(AbstractMarshallable.class.isAssignableFrom(keyType())) && "key".equals(columnName)) {
-            kvStore.put((K) key, kvStore.getAndRemove((K) oldKey));
-            return;
-        }
-
-        if (!(AbstractMarshallable.class.isAssignableFrom(keyType())) && "value".equals(columnName)) {
-            kvStore.put((K) key, (V) value);
-            return;
-        }
-
-        final V v = kvStore.get((K) key);
-        if (!(v instanceof AbstractMarshallable))
-            throw new UnsupportedOperationException("only types of AbstractMarshallable are " +
-                    "supported, for non key/value columns");
-
-        final Field field;
-        try {
-            field = v.getClass().getDeclaredField(columnName);
-            field.setAccessible(true);
-            field.set(v, value);
-            kvStore.put((K) key, v);
-        } catch (Exception e) {
-            Jvm.warn().on(VanillaMapView.class, e);
-        }
-
-    }
 
     @Override
     public void putAll(@net.openhft.chronicle.core.annotation.NotNull Map<? extends K, ? extends
@@ -560,33 +522,51 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView {
         return true;
     }
 
+
     @Override
-    public void addRow(@NotNull Map<String, Object> cells) {
-        final K key = (K) cells.get("key");
-        if (key == null)
-            throw new UnsupportedOperationException("key not found");
-        assert key.getClass() == keyClass;
+    public int changedRow(@NotNull Map<String, Object> row, @NotNull Map<String, Object> oldRow) {
 
-        if (AbstractMarshallable.class.isAssignableFrom(valueType())) {
-            final V v = newInstance(valueType());
+        assert row.isEmpty() && oldRow.isEmpty() : "both rows can not be empty";
 
-            for (Field field : v.getClass().getDeclaredFields()) {
-                field.setAccessible(true);
-                final String name = field.getName();
-                final Object value = cells.get(name);
-                if (value != null)
-                    try {
-                        field.set(v, ObjectUtils.convertTo(field.getType(), value));
-                    } catch (IllegalAccessException e) {
-                        Jvm.warn().on(VanillaMapView.class, e);
-                    }
-            }
-            kvStore.put(key, v);
-            return;
+        if (row.isEmpty()) {
+            final K k = (K) oldRow.get("key");
+            if (k == null)
+                throw new IllegalStateException("key not found");
+            return remove(k) == null ? 0 : 1;
         }
 
-        assert cells.size() == 2;
-        kvStore.put(key, (V) cells.get("value"));
+        Object oldKey = oldRow.get("key");
+        Object newKey = row.get("key");
+
+        if (oldKey != null && !oldKey.equals(newKey))
+            kvStore.remove((K) oldKey);
+
+        if (!AbstractMarshallable.class.isAssignableFrom(valueType())) {
+            if (!row.containsKey("value"))
+                throw new IllegalStateException("value not found");
+            assert row.size() == 2;
+            assert oldRow.size() == 2;
+            kvStore.put((K) newKey, (V) row.get("value"));
+            return 1;
+        }
+
+        final V v = ObjectUtils.newInstance(valueType());
+
+        for (Entry<String, Object> e : row.entrySet()) {
+            if ("key".equals(e.getKey()))
+                continue;
+            final Field field;
+            try {
+                field = v.getClass().getDeclaredField(e.getKey());
+                field.setAccessible(true);
+                field.set(v, ObjectUtils.convertTo(field.getType(), e.getValue()));
+            } catch (Exception e1) {
+                Jvm.warn().on(VanillaMapView.class, e1);
+            }
+        }
+
+        kvStore.put((K) newKey, v);
+        return 1;
     }
 
 
@@ -725,21 +705,26 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView {
         }
     }
 
+    @Override
+    public boolean containsRowWithKey(Object[] keys) {
+        assert keys.length == 1;
+        return kvStore.containsKey((K) keys[0]);
+    }
 
     @Override
     public List<Column> columns() {
         List<Column> result = new ArrayList<>();
 
         if (!(AbstractMarshallable.class.isAssignableFrom(keyType())))
-            result.add(new Column("key", false, false, false, true, "", keyType(), false));
+            result.add(new Column("key", false, true, "", keyType()));
 
         if (!(AbstractMarshallable.class.isAssignableFrom(valueType())))
-            result.add(new Column("value", false, false, false, false, "", valueType(), false));
+            result.add(new Column("value", false, false, "", valueType()));
         else {
             //valueType.isAssignableFrom()
             for (final Field declaredFields : valueType().getDeclaredFields()) {
-                result.add(new Column(declaredFields.getName(), false, false, false, false, "",
-                        declaredFields.getType(), false));
+                result.add(new Column(declaredFields.getName(), false, false, "",
+                        declaredFields.getType()));
             }
         }
 
