@@ -5,6 +5,7 @@ package net.openhft.chronicle.engine.api.column;
  */
 public class Column {
     public final String name;
+    private final boolean isHidden;
     public boolean readOnly;
     public boolean allowReadOnlyChange;
     public boolean nullable;
@@ -12,7 +13,7 @@ public class Column {
     public Object value;
     public  Class<?> type;
 
-    public Column(String propertyId, boolean readOnly, boolean allowReadOnlyChange, boolean nullable, boolean primaryKey, Object value, Class<?> type) {
+    public Column(String propertyId, boolean readOnly, boolean allowReadOnlyChange, boolean nullable, boolean primaryKey, Object value, Class<?> type, boolean isHidden) {
         this.name = propertyId;
         this.readOnly = readOnly;
         this.allowReadOnlyChange = allowReadOnlyChange;
@@ -20,5 +21,6 @@ public class Column {
         this.primaryKey = primaryKey;
         this.value = value;
         this.type = type;
+        this.isHidden = isHidden;
     }
 }

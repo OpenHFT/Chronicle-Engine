@@ -6,11 +6,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Rob Austin.
  */
 public interface ColumnView<K> {
+
 
     ArrayList<String> columnNames();
 
@@ -47,11 +49,14 @@ public interface ColumnView<K> {
      */
     long longSize();
 
-    int size(Query query);
+    int rowCount(Query query);
 
     boolean containsKey(K k);
 
-    Object remove(K key);
+    boolean removeRow(@NotNull Map<String, Object> cells);
+
+    void addRow(@NotNull Map<String, Object> cells);
+
 
     /**
      * called when ever the user modify the cells and the data changes
@@ -62,7 +67,7 @@ public interface ColumnView<K> {
      * @param value      the new value of the cell
      * @param oldValue   the old value of the cell
      */
-    void onCellChanged(String columnName, K key, K oldKey, Object value, Object oldValue);
+    void onRowChanged(String columnName, K key, K oldKey, Object value, Object oldValue);
 
     /**
      * called whenever some data in the underlying structure has changed and hence the visual
@@ -74,8 +79,7 @@ public interface ColumnView<K> {
 
     Iterator<Row> iterator(ColumnView.Query query);
 
-    boolean canDeleteRow();
+    boolean canDeleteRows();
 
-    void addRow(K k, Object... v);
 
 }

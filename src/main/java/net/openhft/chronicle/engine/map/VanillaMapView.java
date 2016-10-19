@@ -19,6 +19,7 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.util.ObjectUtils;
 import net.openhft.chronicle.engine.api.column.Column;
 import net.openhft.chronicle.engine.api.column.ColumnView;
 import net.openhft.chronicle.engine.api.column.Row;
@@ -45,6 +46,7 @@ import java.util.function.Predicate;
 
 import static java.util.EnumSet.of;
 import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
+import static net.openhft.chronicle.core.util.ObjectUtils.newInstance;
 import static net.openhft.chronicle.engine.api.tree.RequestContext.Operation.BOOTSTRAP;
 
 /**
@@ -82,7 +84,6 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
     public Class<V> valueType() {
         return valueType;
     }
-
 
 
     @Nullable
@@ -277,10 +278,15 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
 
 
     @Override
-    public int size(ColumnView.Query query) {
+    public int rowCount(ColumnView.Query query) {
         return (int) entrySet().stream()
                 .filter(filter(query))
                 .count();
+    }
+
+    @Override
+    public boolean removeRow(@NotNull Map<String, Object> cells) {
+        return remove(cells.get("key")) != null;
     }
 
     @Override
@@ -334,11 +340,11 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
     }
 
     @Override
-    public void onCellChanged(String columnName,
-                              K key,
-                              K oldKey,
-                              Object value,
-                              Object oldValue) {
+    public void onRowChanged(String columnName,
+                             K key,
+                             K oldKey,
+                             Object value,
+                             Object oldValue) {
 
         if (!(AbstractMarshallable.class.isAssignableFrom(keyType())) && "key".equals(columnName)) {
             kvStore.put(key, kvStore.getAndRemove(oldKey));
@@ -399,13 +405,6 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
         return asset.acquireView(EntrySetView.class);
     }
 
-    @Override
-    public void addRow(K k, Object... v) {
-        if (v.length == 1)
-            put(k, (V) v[0]);
-        else
-            throw new UnsupportedOperationException("");
-    }
 
     @Override
     public void registerChangeListener(@NotNull Runnable r) {
@@ -552,8 +551,37 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
     }
 
     @Override
-    public boolean canDeleteRow() {
+    public boolean canDeleteRows() {
         return true;
+    }
+
+    @Override
+    public void addRow(@NotNull Map<String, Object> cells) {
+        final K key = (K) cells.get("key");
+        if (key == null)
+            throw new UnsupportedOperationException("key not found");
+        assert key.getClass() == keyClass;
+
+        if (AbstractMarshallable.class.isAssignableFrom(valueType())) {
+            final V v = newInstance(valueType());
+
+            for (Field field : v.getClass().getDeclaredFields()) {
+                field.setAccessible(true);
+                final String name = field.getName();
+                final Object value = cells.get(name);
+                if (value != null)
+                    try {
+                        field.set(v, ObjectUtils.convertTo(field.getType(), value));
+                    } catch (IllegalAccessException e) {
+                        Jvm.warn().on(VanillaMapView.class, e);
+                    }
+            }
+            kvStore.put(key, v);
+            return;
+        }
+
+        assert cells.size() == 2;
+        kvStore.put(key, (V) cells.get("value"));
     }
 
 
@@ -698,15 +726,15 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView<K> {
         List<Column> result = new ArrayList<>();
 
         if (!(AbstractMarshallable.class.isAssignableFrom(keyType())))
-            result.add(new Column("key", false, false, false, true, "", keyType()));
+            result.add(new Column("key", false, false, false, true, "", keyType(), false));
 
         if (!(AbstractMarshallable.class.isAssignableFrom(valueType())))
-            result.add(new Column("value", false, false, false, false, "", valueType()));
+            result.add(new Column("value", false, false, false, false, "", valueType(), false));
         else {
             //valueType.isAssignableFrom()
             for (final Field declaredFields : valueType().getDeclaredFields()) {
                 result.add(new Column(declaredFields.getName(), false, false, false, false, "",
-                        declaredFields.getType()));
+                        declaredFields.getType(), false));
             }
         }
 
