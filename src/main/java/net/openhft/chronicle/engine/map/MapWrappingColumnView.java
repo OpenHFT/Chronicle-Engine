@@ -365,11 +365,11 @@ public class MapWrappingColumnView<K, V> implements ColumnView {
     }
 
     private boolean toRange(@NotNull Number o, @NotNull String trimmed) {
-        if (trimmed.startsWith(">") ||
-                trimmed.startsWith("<")) {
+        if (trimmed.startsWith(">") || trimmed.startsWith("<")) {
+
             @NotNull final String number = trimmed.substring(1, trimmed.length()).trim();
 
-            final Object filterNumber;
+            final Number filterNumber;
             try {
                 filterNumber = convertTo(o.getClass(), number);
             } catch (ClassCastException e) {
@@ -378,11 +378,9 @@ public class MapWrappingColumnView<K, V> implements ColumnView {
 
             boolean result;
             if (trimmed.startsWith(">"))
-                result = o.doubleValue() > ((Number)
-                        filterNumber).doubleValue();
+                result = o.doubleValue() > filterNumber.doubleValue();
             else if (trimmed.startsWith("<"))
-                result = o.doubleValue() < ((Number)
-                        filterNumber).doubleValue();
+                result = o.doubleValue() < filterNumber.doubleValue();
             else
                 throw new UnsupportedOperationException();
             return result;
