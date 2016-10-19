@@ -45,7 +45,7 @@ public interface ColumnView {
     int rowCount(@Nullable Query query);
 
     /**
-     * used to add remove and delete rows
+     * used to add, update and delete rows
      * called when ever the user modify the cells and the data changes
      *
      * @param row    if {@code row} is empty, the row is removed, based on the key in  {@code
