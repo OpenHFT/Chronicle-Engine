@@ -212,36 +212,10 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView {
 
                             if (o == null)
                                 return false;
-                            final String trimmed = f.filter.trim();
                             if (o instanceof Number) {
-                                if (trimmed.startsWith(">") ||
-                                        trimmed.startsWith("<")) {
-                                    final String number = trimmed.substring(1, trimmed.length()).trim();
-
-                                    final Object filterNumber = convertTo(o.getClass(), number);
-                                    boolean result;
-                                    if (trimmed.startsWith(">"))
-                                        result = ((Number) o).doubleValue() > ((Number)
-                                                filterNumber).doubleValue();
-                                    else if (trimmed.startsWith("<"))
-                                        result = ((Number) o).doubleValue() < ((Number)
-                                                filterNumber).doubleValue();
-                                    else
-                                        throw new UnsupportedOperationException();
-
-                                    if (result)
-                                        continue;
-                                    else
-                                        return false;
-
-                                } else {
-                                    final Object filterNumber = convertTo(o.getClass(), trimmed);
-                                    if (o.equals(filterNumber))
-                                        continue;
-                                    else
-                                        return false;
-                                }
-
+                                if (toRange((Number) o, f.filter.trim()))
+                                    continue;
+                                return false;
                             }
                             item = o;
 
@@ -254,12 +228,22 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView {
                         throw new UnsupportedOperationException();
                     }
 
-                    boolean result = (item instanceof CharSequence)
-                            ? item.toString().toLowerCase().contains(f.filter.toLowerCase())
-                            : item.equals(convertTo(item.getClass(), f.filter.trim()));
-
-                    if (!result)
-                        return false;
+                    if (item instanceof CharSequence)
+                        if (item.toString().toLowerCase().contains(f.filter.toLowerCase()))
+                            continue;
+                        else
+                            return false;
+                    else if (item instanceof Number) {
+                        if (toRange((Number) item, f.filter.trim()))
+                            continue;
+                        else
+                            return false;
+                    } else {
+                        if (item.equals(convertTo(item.getClass(), f.filter.trim())))
+                            continue;
+                        else
+                            return false;
+                    }
 
                 }
 
@@ -270,6 +254,35 @@ public class VanillaMapView<K, V> implements MapView<K, V>, ColumnView {
             }
         };
 
+    }
+
+    private boolean toRange(Number o, String trimmed) {
+        if (trimmed.startsWith(">") ||
+                trimmed.startsWith("<")) {
+            final String number = trimmed.substring(1, trimmed.length()).trim();
+
+            final Object filterNumber;
+            try {
+                filterNumber = convertTo(o.getClass(), number);
+            } catch (ClassCastException e) {
+                return false;
+            }
+
+            boolean result;
+            if (trimmed.startsWith(">"))
+                result = o.doubleValue() > ((Number)
+                        filterNumber).doubleValue();
+            else if (trimmed.startsWith("<"))
+                result = o.doubleValue() < ((Number)
+                        filterNumber).doubleValue();
+            else
+                throw new UnsupportedOperationException();
+            return result;
+
+        } else {
+            final Object filterNumber = convertTo(o.getClass(), trimmed);
+            return o.equals(filterNumber);
+        }
     }
 
 
