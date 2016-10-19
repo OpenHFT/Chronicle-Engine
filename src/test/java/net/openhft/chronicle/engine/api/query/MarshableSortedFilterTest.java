@@ -23,7 +23,7 @@ import org.junit.Test;
 /**
  * @author Rob Austin.
  */
-public class MarshableQueryTest {
+public class MarshableSortedFilterTest {
 
     @Test
     public void testToPredicateFalse() throws Exception {

@@ -35,7 +35,7 @@ public interface ColumnView {
         }
     }
 
-    class Query extends AbstractMarshallable {
+    class SortedFilter extends AbstractMarshallable {
         public long fromIndex;
         public final List<MarshableOrderBy> marshableOrderBy = new ArrayList<>();
         public final List<MarshableFilter> marshableFilters = new ArrayList<>();
@@ -43,7 +43,7 @@ public interface ColumnView {
 
     List<Column> columns();
 
-    int rowCount(@Nullable Query query);
+    int rowCount(@Nullable List<MarshableFilter> sortedFilter);
 
     /**
      * used to add, update and delete rows
@@ -64,7 +64,7 @@ public interface ColumnView {
      */
     void registerChangeListener(@NotNull Runnable r);
 
-    Iterator<Row> iterator(ColumnView.Query query);
+    Iterator<Row> iterator(SortedFilter sortedFilter);
 
     boolean canDeleteRows();
 

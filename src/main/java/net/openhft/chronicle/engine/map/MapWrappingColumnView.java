@@ -23,7 +23,6 @@ import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
  */
 public class MapWrappingColumnView<K, V> implements ColumnView {
 
-
     private final MapView<K, V> mapView;
     private ArrayList<String> columnNames = null;
 
@@ -31,7 +30,6 @@ public class MapWrappingColumnView<K, V> implements ColumnView {
                                  Asset asset,
                                  MapView<K, V> mapView) {
         this.mapView = mapView;
-
     }
 
     @Override
@@ -124,11 +122,11 @@ public class MapWrappingColumnView<K, V> implements ColumnView {
 
 
     @Override
-    public Iterator<Row> iterator(final ColumnView.Query query) {
+    public Iterator<Row> iterator(final SortedFilter sortedFilter) {
 
         final Iterator<Map.Entry<K, V>> core = mapView.entrySet().stream()
-                .filter(filter(query))
-                .sorted(sort(query.marshableOrderBy))
+                .filter(filter(sortedFilter.marshableFilters))
+                .sorted(sort(sortedFilter.marshableOrderBy))
                 .iterator();
 
         final Iterator<Row> result = new Iterator<Row>() {
@@ -170,7 +168,7 @@ public class MapWrappingColumnView<K, V> implements ColumnView {
 
 
         long x = 0;
-        while (x++ < query.fromIndex && result.hasNext()) {
+        while (x++ < sortedFilter.fromIndex && result.hasNext()) {
             result.next();
         }
 
@@ -294,15 +292,15 @@ public class MapWrappingColumnView<K, V> implements ColumnView {
         return 1;
     }
 
-    public Predicate<Map.Entry<K, V>> filter(@NotNull ColumnView.Query query) {
+    public Predicate<Map.Entry<K, V>> filter(@NotNull List<MarshableFilter> filters) {
         return entry -> {
 
-            if (query.marshableFilters.isEmpty())
+            if (filters.isEmpty())
                 return true;
 
             try {
 
-                for (MarshableFilter f : query.marshableFilters) {
+                for (MarshableFilter f : filters) {
 
                     Object item;
 
@@ -399,17 +397,18 @@ public class MapWrappingColumnView<K, V> implements ColumnView {
 
 
     /**
-     * @param query if {@code query} == null all the total number of rows is returned
+     * @param sortedFilter if {@code sortedFilter} == null or empty all the total number of rows is
+     *                     returned
      * @return the number of rows the matches this query
      */
     @Override
-    public int rowCount(@Nullable ColumnView.Query query) {
-
-        if (query == null)
+    public int rowCount(@Nullable List<MarshableFilter> sortedFilter) {
+        if (sortedFilter == null || sortedFilter.isEmpty())
             return (int) mapView.longSize();
 
         return (int) mapView.entrySet().stream()
-                .filter(filter(query))
+                .filter(filter(sortedFilter))
                 .count();
     }
+
 }
