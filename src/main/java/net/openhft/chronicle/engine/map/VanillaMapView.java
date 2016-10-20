@@ -39,9 +39,6 @@ import java.util.*;
 import static java.util.EnumSet.of;
 import static net.openhft.chronicle.engine.api.tree.RequestContext.Operation.BOOTSTRAP;
 
-/**
- * Created by peter on 22/05/15.
- */
 public class VanillaMapView<K, V> implements MapView<K, V> {
     protected final Class keyClass;
     protected final Class valueType;

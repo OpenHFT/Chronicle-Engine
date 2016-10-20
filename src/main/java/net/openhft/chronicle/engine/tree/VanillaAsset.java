@@ -23,11 +23,15 @@ import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.core.threads.HandlerPriority;
 import net.openhft.chronicle.core.util.ThrowingConsumer;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
+import net.openhft.chronicle.engine.api.column.ColumnView;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
 import net.openhft.chronicle.engine.api.pubsub.*;
-import net.openhft.chronicle.engine.api.query.*;
+import net.openhft.chronicle.engine.api.query.IndexQueueView;
+import net.openhft.chronicle.engine.api.query.ObjectCacheFactory;
+import net.openhft.chronicle.engine.api.query.VanillaIndexQueueView;
+import net.openhft.chronicle.engine.api.query.VanillaObjectCacheFactory;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.api.tree.*;
@@ -113,6 +117,7 @@ public class VanillaAsset implements Asset, Closeable {
         addWrappingRule(TopicPublisher.class, LAST + " MapTopicPublisher", MapTopicPublisher::new, MapView.class);
 
         addWrappingRule(MapView.class, LAST + " VanillaMapView", VanillaMapView::new, ObjectKeyValueStore.class);
+        addWrappingRule(ColumnView.class, LAST + " ColumnView", MapWrappingColumnView::new, MapView.class);
 
         // storage options
         addLeafRule(ObjectSubscription.class, LAST + " vanilla", MapKVSSubscription::new);
@@ -363,8 +368,7 @@ public class VanillaAsset implements Asset, Closeable {
             }
             return Threads.withThreadGroup(findView(ThreadGroup.class), () -> {
                 V leafView = createLeafView(viewType, rc, this);
-                if (leafView instanceof MapView && viewType == QueueView.class)
-                    addView(MapView.class, (MapView) leafView);
+
                 if (leafView != null)
                     return addView(viewType, leafView);
                 V wrappingView = createWrappingView(viewType, rc, this, null);
@@ -419,8 +423,8 @@ public class VanillaAsset implements Asset, Closeable {
         });
     }
 
-    @Override
-    public <V> V addView(Class<V> viewType, V view) {
+
+    private <V> V addView0(Class<V> viewType, V view) {
 
         if (view instanceof KeyedView)
             keyedAsset = ((KeyedView) view).keyedView();
@@ -430,6 +434,17 @@ public class VanillaAsset implements Asset, Closeable {
 //        if (o != null && !o.equals(view))
 //            throw new IllegalStateException("Attempt to replace " + viewType + " with " + view + " was " + viewMap.get(viewType));
         return view;
+    }
+
+    @Override
+    public <V> V addView(Class<V> viewType, V view) {
+
+        if (viewType != ColumnView.class && view instanceof ColumnView)
+            addView0(ColumnView.class, (ColumnView) view);
+        if (viewType != QueueView.class && view instanceof QueueView)
+            addView0(QueueView.class, (QueueView) view);
+
+        return addView0(viewType, view);
     }
 
     @Override
