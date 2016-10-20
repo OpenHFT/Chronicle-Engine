@@ -77,7 +77,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
                                  @NotNull Asset asset,
                                  @NotNull QueueView<?, V> queueView) {
 
-        valueToKey = asset.acquireView(ValueToKey.class);
+        valueToKey = asset.findView(ValueToKey.class);
 
         final EventLoop eventLoop = asset.acquireView(EventLoop.class);
         final ChronicleQueueView chronicleQueueView = (ChronicleQueueView) queueView;
@@ -85,7 +85,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
         chronicleQueue = chronicleQueueView.chronicleQueue();
         final ExcerptTailer tailer = chronicleQueue.createTailer();
 
-        typeToString = asset.root().acquireView(TypeToString.class);
+        typeToString = asset.root().findView(TypeToString.class);
 
         // use a function factory so each thread has a thread local function.
         objectCacheThreadLocal = ThreadLocal.withInitial(
