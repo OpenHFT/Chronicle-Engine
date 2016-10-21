@@ -55,7 +55,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
     private static final Logger LOG = LoggerFactory.getLogger(VanillaIndexQueueView.class);
 
     private final Function<V, ?> valueToKey;
-
     private final ChronicleQueue chronicleQueue;
     private final Map<String, Map<Object, IndexedValue<V>>> multiMap = new ConcurrentHashMap<>();
     private final Map<Subscriber<IndexedValue<V>>, AtomicBoolean> activeSubscriptions
@@ -63,7 +62,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
     private final AtomicBoolean isClosed = new AtomicBoolean();
 
     private final Object lock = new Object();
-    private final ThreadLocal<Function<Class, Marshallable>> objectCacheThreadLocal;
     private final ThreadLocal<IndexedValue<V>> indexedValue = ThreadLocal.withInitial(IndexedValue::new);
     private final TypeToString typeToString;
     private volatile long lastIndexRead = 0;
@@ -83,10 +81,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
         final ExcerptTailer tailer = chronicleQueue.createTailer();
 
         typeToString = asset.root().findView(TypeToString.class);
-
-        // use a function factory so each thread has a thread local function.
-        objectCacheThreadLocal = ThreadLocal.withInitial(
-                () -> asset.root().acquireView(ObjectCacheFactory.class).get());
 
         eventLoop.addHandler(() -> {
 
@@ -172,7 +166,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
             sub.addSupplier(supplier);
 
         } catch (RuntimeException e) {
-            //tailer.close();
             sub.onEndOfSubscription();
             Jvm.warn().on(getClass(), "Error registering subscription", e);
         }
@@ -209,7 +202,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
             if (!dc.isPresent())
                 return null;
-            System.out.println(Wires.fromSizePrefixedBlobs(dc));
 
             if (LOG.isDebugEnabled())
                 Jvm.debug().on(getClass(), "processing the following message=" + Wires.fromSizePrefixedBlobs(dc));
@@ -225,9 +217,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
                     valueIn.skipValue();
                     continue;
                 }
-
-                // allows object re-use when using marshallable
-                final Function<Class, Marshallable> objectCache = objectCacheThreadLocal.get();
 
                 final V v = (V) VanillaObjectCacheFactory.INSTANCE.get()
                         .apply(typeToString.toType(sb));
