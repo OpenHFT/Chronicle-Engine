@@ -37,9 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -71,7 +69,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
     private volatile long lastIndexRead = 0;
     private long lastSecond = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     private long messagesReadPerSecond = 0;
-    private ThreadLocal<List<Marshallable>> indexedValueList = ThreadLocal.withInitial(ArrayList::new);
 
     public VanillaIndexQueueView(@NotNull RequestContext context,
                                  @NotNull Asset asset,
@@ -161,7 +158,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
         final Iterator<IndexedValue<V>> iterator =
                 multiMap.computeIfAbsent(eventName, k -> new ConcurrentHashMap<>())
                         .values().stream()
-                        .filter(i -> i.index() < fromIndex && filter.test(i.v()))
+                        .filter(i -> i.index() >= fromIndex && filter.test(i.v()))
                         .iterator();
 
         final ExcerptTailer tailer = chronicleQueue.createTailer();
@@ -170,7 +167,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
             if (fromIndex != 0)
                 if (!tailer.moveToIndex(fromIndex))
                     throw new IllegalStateException("Failed to move to index " + Long.toHexString(fromIndex));
-            final Supplier<List<Marshallable>> supplier = excerptConsumer(vanillaIndexQuery,
+            final Supplier<Marshallable> supplier = excerptConsumer(vanillaIndexQuery,
                     tailer, iterator, fromIndex);
             sub.addSupplier(supplier);
 
@@ -182,27 +179,24 @@ public class VanillaIndexQueueView<V extends Marshallable>
     }
 
     @NotNull
-    private Supplier<List<Marshallable>> excerptConsumer(@NotNull IndexQuery<V> vanillaIndexQuery,
-                                                         @NotNull ExcerptTailer tailer,
-                                                         @NotNull Iterator<IndexedValue<V>> iterator,
-                                                         final long fromIndex) {
+    private Supplier<Marshallable> excerptConsumer(@NotNull IndexQuery<V> vanillaIndexQuery,
+                                                   @NotNull ExcerptTailer tailer,
+                                                   @NotNull Iterator<IndexedValue<V>> iterator,
+                                                   final long fromIndex) {
         return () -> VanillaIndexQueueView.this.value(vanillaIndexQuery, tailer, iterator, fromIndex);
     }
 
     @Nullable
-    private List<Marshallable> value(@NotNull IndexQuery<V> vanillaIndexQuery,
-                                     @NotNull ExcerptTailer tailer,
-                                     @NotNull Iterator<IndexedValue<V>> iterator,
-                                     final long from) {
-        List<Marshallable> indexedValues = indexedValueList.get();
-        indexedValues.clear();
+    private Marshallable value(@NotNull IndexQuery<V> vanillaIndexQuery,
+                               @NotNull ExcerptTailer tailer,
+                               @NotNull Iterator<IndexedValue<V>> iterator,
+                               final long from) {
 
         if (iterator.hasNext()) {
             IndexedValue<V> indexedValue = iterator.next();
             indexedValue.timePublished(System.currentTimeMillis());
             indexedValue.maxIndex(lastIndexRead);
-            indexedValues.add(indexedValue);
-            return indexedValues;
+            return indexedValue;
         }
 
         final String eventName = vanillaIndexQuery.eventName();
@@ -247,11 +241,12 @@ public class VanillaIndexQueueView<V extends Marshallable>
                 indexedValue.index(index);
                 indexedValue.v(v);
                 indexedValue.timePublished(System.currentTimeMillis());
+                lastIndexRead = Math.max(lastIndexRead, dc.index());
                 indexedValue.maxIndex(lastIndexRead);
-                indexedValues.add(indexedValue);
+                return indexedValue;
             }
         }
-        return indexedValues;
+        return null;
     }
 
     public void unregisterSubscriber(@NotNull ConsumingSubscriber<IndexedValue<V>> listener) {

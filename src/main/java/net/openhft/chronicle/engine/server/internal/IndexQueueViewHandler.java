@@ -34,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
@@ -104,25 +103,20 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
                  *                        publishes writes the data
                  *                        directly to the socket
                  */
-                public void addSupplier(Supplier<List<Marshallable>> supplier) {
+                public void addSupplier(Supplier<Marshallable> supplier) {
                     publisher.addWireConsumer(wireOut -> {
 
-                        List<Marshallable> marshallables = supplier.get();
-                        if (marshallables == null)
+                        Marshallable marshallable = supplier.get();
+                        if (marshallable == null)
                             return;
-                        for (Marshallable marshallable : marshallables) {
 
-                            if (marshallable == null)
-                                continue;
+                        if (publisher.isClosed())
+                            return;
 
-                            if (publisher.isClosed())
-                                return;
+                        wireOut.writeDocument(true, wire -> wire.writeEventName(tid).int64(inputTid));
+                        wireOut.writeNotCompleteDocument(false,
+                                wire -> wire.writeEventName(reply).typedMarshallable(marshallable));
 
-                            wireOut.writeDocument(true, wire -> wire.writeEventName(tid).int64(inputTid));
-                            wireOut.writeNotCompleteDocument(false, wire -> {
-                                wire.writeEventName(reply).typedMarshallable(marshallable);
-                            });
-                        }
                     });
                 }
 
