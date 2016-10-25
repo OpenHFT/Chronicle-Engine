@@ -18,6 +18,7 @@
 package net.openhft.chronicle.engine.collection;
 
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
+import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
@@ -49,7 +50,7 @@ public class VanillaValuesCollection<K, V> extends AbstractCollection<V> impleme
     @NotNull
     @Override
     public Iterator<V> iterator() {
-        return mapView.underlying().valuesIterator();
+        return ((KeyValueStore<K, V>) mapView.underlying()).valuesIterator();
     }
 
     @Override

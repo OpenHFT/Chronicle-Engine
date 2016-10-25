@@ -22,6 +22,7 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.tree.ChronicleQueueView.LocalExcept;
 import net.openhft.chronicle.engine.tree.QueueView;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static net.openhft.chronicle.engine.server.internal.TopicPublisherHandler.EventId.*;
 
@@ -31,9 +32,11 @@ import static net.openhft.chronicle.engine.server.internal.TopicPublisherHandler
 public class RemoteQueueView<T, M> extends RemoteTopicPublisher<T, M> implements QueueView<T, M> {
 
     final ThreadLocal<LocalExcept<T, M>> threadLocal = ThreadLocal.withInitial(LocalExcept::new);
+    private final Asset asset;
 
     public RemoteQueueView(@NotNull RequestContext requestContext, @NotNull Asset asset) {
         super(requestContext, asset, "QueueView");
+        this.asset = asset;
     }
 
     @Override
@@ -51,5 +54,16 @@ public class RemoteQueueView<T, M> extends RemoteTopicPublisher<T, M> implements
     @Override
     public long publishAndIndex(@NotNull T topic, @NotNull M message) {
         return proxyReturnLongWithArgs(publishAndIndex, topic, message);
+    }
+
+    @Override
+    public Asset asset() {
+        return asset;
+    }
+
+    @Nullable
+    @Override
+    public Object underlying() {
+        throw new UnsupportedOperationException("todo");
     }
 }

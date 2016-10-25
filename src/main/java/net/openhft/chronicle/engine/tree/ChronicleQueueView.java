@@ -25,7 +25,6 @@ import net.openhft.chronicle.core.threads.EventHandler;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.core.threads.HandlerPriority;
 import net.openhft.chronicle.core.threads.InvalidEventHandlerException;
-import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.*;
@@ -72,7 +71,8 @@ import static net.openhft.chronicle.wire.WireType.*;
 /**
  * @author Rob Austin.
  */
-public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>, SubAssetFactory, Closeable {
+public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>, SubAssetFactory,
+        Closeable {
 
     private static final Logger LOG = LoggerFactory.getLogger(ChronicleQueueView.class);
 
@@ -360,6 +360,11 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
     }
 
     @Override
+    public void unregisterTopicSubscriber(@NotNull TopicSubscriber<T, M> topicSubscriber) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
     public void registerKeySubscriber(@NotNull Subscriber<T> subscriber) {
         throw new UnsupportedOperationException("todo");
     }
@@ -405,9 +410,11 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         return mapView().getAndRemove(key);
     }
 
-    @Override
-    public void unregisterTopicSubscriber(@NotNull TopicSubscriber<T, M> topicSubscriber) {
-        throw new UnsupportedOperationException("todo");
+    public void unregisterTopicSubscriber(T topic, @NotNull TopicSubscriber<T, M> topicSubscriber) {
+        String name = "".equals(topic.toString().trim())
+                ? asset.fullName() : asset
+                .fullName() + "/" + topic.toString();
+        asset.unregisterTopicSubscriber(name, context.type(), context.type2(), topicSubscriber);
     }
 
     @Override
@@ -418,7 +425,12 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
 
     @Override
     public void registerSubscriber(@NotNull T topic, @NotNull Subscriber<M> subscriber) {
-        throw new UnsupportedOperationException("todo");
+        String name = "".equals(topic.toString().trim())
+                ? asset.fullName() : asset
+                .fullName() + "/" + topic.toString();
+
+        asset.registerTopicSubscriber(name, context.type(), context.type2(),
+                (topic1, message) -> subscriber.onMessage((M) message));
     }
 
     private RollingChronicleQueue newInstance(@NotNull String name,
@@ -438,7 +450,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         if (basePath == null)
             baseFilePath = new File(defaultPath, "" + hostID);
         else
-            baseFilePath = new File(basePath+"/"+defaultPath, "" + hostID);
+            baseFilePath = new File(basePath + "/" + defaultPath, "" + hostID);
 
         if (!baseFilePath.exists())
             Files.createDirectories(baseFilePath.toPath());
@@ -487,7 +499,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
     }
 
     /**
-     * @param index gets the except at the given index
+     * @param index gets the except at the given index, if index==0 then the first index is
+     *              returned
      * @return the except
      */
     @Nullable
@@ -496,7 +509,9 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         final ThreadLocalData threadLocalData = threadLocal.get();
         ExcerptTailer excerptTailer = threadLocalData.replayTailer;
 
-        if (!excerptTailer.moveToIndex(index))
+        if (index == 0)
+            excerptTailer.toStart();
+        else if (!excerptTailer.moveToIndex(index))
             return null;
 
         try (DocumentContext dc = excerptTailer.readingDocument()) {
@@ -717,7 +732,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
 
     @Nullable
     @Override
-    public KeyValueStore<T, M> underlying() {
+    public Object underlying() {
         throw new UnsupportedOperationException("todo");
     }
 

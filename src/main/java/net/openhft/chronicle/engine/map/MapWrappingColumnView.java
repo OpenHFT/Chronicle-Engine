@@ -3,7 +3,7 @@ package net.openhft.chronicle.engine.map;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.util.ObjectUtils;
 import net.openhft.chronicle.engine.api.column.Column;
-import net.openhft.chronicle.engine.api.column.ColumnView;
+import net.openhft.chronicle.engine.api.column.MapColumnView;
 import net.openhft.chronicle.engine.api.column.Row;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.Asset;
@@ -21,7 +21,7 @@ import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
 /**
  * @author Rob Austin.
  */
-public class MapWrappingColumnView<K, V> implements ColumnView {
+public class MapWrappingColumnView<K, V> implements MapColumnView {
 
     private final MapView<K, V> mapView;
     @Nullable
@@ -196,15 +196,15 @@ public class MapWrappingColumnView<K, V> implements ColumnView {
         @NotNull List<Column> result = new ArrayList<>();
 
         if (!(AbstractMarshallable.class.isAssignableFrom(keyType())))
-            result.add(new Column("key", false, true, "", keyType()));
+            result.add(new Column("key", false, true, "", keyType(), true));
 
         if (!(AbstractMarshallable.class.isAssignableFrom(valueType())))
-            result.add(new Column("value", false, false, "", valueType()));
+            result.add(new Column("value", false, false, "", valueType(), true));
         else {
             //valueType.isAssignableFrom()
             for (@NotNull final Field declaredFields : valueType().getDeclaredFields()) {
                 result.add(new Column(declaredFields.getName(), false, false, "",
-                        declaredFields.getType()));
+                        declaredFields.getType(), true));
             }
         }
 

@@ -297,6 +297,7 @@ public interface Asset extends Closeable {
 
     /**
      * Dump the rules in YAML format.
+     *
      * @return the leaf and wrapping rules in text.
      */
     String dumpRules();
@@ -363,6 +364,18 @@ public interface Asset extends Closeable {
     default <T, E> void unregisterTopicSubscriber(@NotNull RequestContext requestContext,
                                                   @NotNull TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
         SubscriptionCollection subscription = getView(requestContext.getSubscriptionType());
+        if (subscription instanceof KVSSubscription)
+            ((KVSSubscription) subscription).unregisterTopicSubscriber(subscriber);
+        else
+            subscriber.onEndOfSubscription();
+    }
+
+    default <T, E> void unregisterTopicSubscriber(@NotNull String uri,
+                                                  @NotNull Class<T> topicClass,
+                                                  @NotNull Class<E> messageClass,
+                                                  @NotNull TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
+        RequestContext rc = requestContext(uri).keyType(topicClass).valueType(messageClass);
+        SubscriptionCollection subscription = getView(rc.getSubscriptionType());
         if (subscription instanceof KVSSubscription)
             ((KVSSubscription) subscription).unregisterTopicSubscriber(subscriber);
         else

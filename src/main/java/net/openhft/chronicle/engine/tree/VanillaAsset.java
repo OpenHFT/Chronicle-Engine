@@ -24,6 +24,8 @@ import net.openhft.chronicle.core.threads.HandlerPriority;
 import net.openhft.chronicle.core.util.ThrowingConsumer;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.column.ColumnView;
+import net.openhft.chronicle.engine.api.column.MapColumnView;
+import net.openhft.chronicle.engine.api.column.QueueColumnView;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
@@ -40,6 +42,7 @@ import net.openhft.chronicle.engine.map.*;
 import net.openhft.chronicle.engine.map.remote.*;
 import net.openhft.chronicle.engine.pubsub.*;
 import net.openhft.chronicle.engine.query.QueueConfig;
+import net.openhft.chronicle.engine.queue.QueueWrappingColumnView;
 import net.openhft.chronicle.engine.session.VanillaSessionProvider;
 import net.openhft.chronicle.engine.set.RemoteKeySetView;
 import net.openhft.chronicle.engine.set.VanillaKeySetView;
@@ -115,9 +118,10 @@ public class VanillaAsset implements Asset, Closeable {
         addWrappingRule(Replication.class, LAST + "replication", VanillaReplication::new, MapView.class);
         addWrappingRule(Publisher.class, LAST + " MapReference", MapReference::new, MapView.class);
         addWrappingRule(TopicPublisher.class, LAST + " MapTopicPublisher", MapTopicPublisher::new, MapView.class);
-
+        System.out.println("");
         addWrappingRule(MapView.class, LAST + " VanillaMapView", VanillaMapView::new, ObjectKeyValueStore.class);
-        addWrappingRule(ColumnView.class, LAST + " ColumnView", MapWrappingColumnView::new, MapView.class);
+        addWrappingRule(MapColumnView.class, LAST + "Map ColumnView", MapWrappingColumnView::new,
+                MapView.class);
 
         // storage options
         addLeafRule(ObjectSubscription.class, LAST + " vanilla", MapKVSSubscription::new);
@@ -167,6 +171,9 @@ public class VanillaAsset implements Asset, Closeable {
                 VanillaIndexQueueView::new, QueueView.class);
 
         addLeafRule(QueueView.class, LAST + " ChronicleQueueView", ChronicleQueueView::create);
+
+        addWrappingRule(QueueColumnView.class, LAST + "Queue ColumnView",
+                QueueWrappingColumnView::new, QueueView.class);
     }
 
     public void configQueueRemote() {
@@ -214,6 +221,7 @@ public class VanillaAsset implements Asset, Closeable {
 
         VanillaAsset queue = (VanillaAsset) acquireAsset("/queue");
         queue.configQueueServer();
+
 
         addView(QueueConfig.class, new QueueConfig(uriToHostId, true, null, WireType.BINARY));
 

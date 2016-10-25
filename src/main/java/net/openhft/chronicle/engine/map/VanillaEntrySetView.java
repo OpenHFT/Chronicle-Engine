@@ -18,6 +18,7 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.bytes.BytesUtil;
+import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.tree.Asset;
@@ -45,7 +46,7 @@ public class VanillaEntrySetView<K, MV, V> extends AbstractCollection<Entry<K, V
     @NotNull
     @Override
     public Iterator<Entry<K, V>> iterator() {
-        return mapView.underlying().entrySetIterator();
+        return ((KeyValueStore<K,V>)mapView.underlying()).entrySetIterator();
     }
 
     @Override

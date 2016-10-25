@@ -39,7 +39,7 @@ import java.util.function.Function;
  * Interface for Map views.
  */
 public interface MapView<K, V> extends ConcurrentMap<K, V>,
-        Assetted<KeyValueStore<K, V>>,
+        Assetted<Object>,
         Updatable<MapView<K, V>>,
         KeyedVisitable<K, V>,
         Function<K, V>,
