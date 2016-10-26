@@ -161,7 +161,7 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
         result.add(new Column("index", true, true, "", String.class, false));
 
         for (@NotNull final Field declaredFields : messageClass.getDeclaredFields()) {
-            result.add(new Column(declaredFields.getName(), false, false, "",
+            result.add(new Column(declaredFields.getName(), false, true, "",
                     declaredFields.getType(), false));
         }
 

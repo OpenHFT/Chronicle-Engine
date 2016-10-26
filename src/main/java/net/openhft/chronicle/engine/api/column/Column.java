@@ -5,27 +5,28 @@ import net.openhft.chronicle.wire.AbstractMarshallable;
 /**
  * @author Rob Austin.
  */
-public class Column extends AbstractMarshallable{
+public class Column extends AbstractMarshallable {
     public final String name;
-    public boolean readOnly;
-    public boolean primaryKey;
+    public final boolean readOnly;
+    public final boolean primaryKey;
     public Object value;
-    public Class<?> type;
-    public boolean canShort;
+    public final Class<?> type;
+    public final boolean sortable;
 
-    public Column(String name, boolean readOnly, boolean primaryKey, Object value, Class<?> type, boolean canSort) {
+    public Column(String name, boolean readOnly, boolean primaryKey, Object value, Class<?> type, boolean sortable) {
         this.name = name;
         this.readOnly = readOnly;
         this.primaryKey = primaryKey;
         this.value = value;
         this.type = type;
+        this.sortable = sortable;
     }
 
     public boolean isReadOnly() {
         return readOnly;
     }
 
-    public  Class<?>  type() {
-             return type;
+    public Class<?> type() {
+        return type;
     }
 }
