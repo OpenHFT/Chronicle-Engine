@@ -16,7 +16,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static java.util.Spliterators.spliteratorUnknownSize;
@@ -39,8 +38,10 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
         this.queueView = queueView;
 
         final QueueView.Excerpt<String, V> excerpt = queueView.getExcerpt(0);
-
-        messageClass = excerpt.message().getClass();
+        if (excerpt != null)
+            messageClass = excerpt.message().getClass();
+        else
+            messageClass = Object.class;
 
     }
 
@@ -49,57 +50,17 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
         queueView.registerSubscriber("", o -> r.run());
     }
 
-    private Comparator<QueueView.Excerpt<String, V>> sort(@NotNull final List<MarshableOrderBy> marshableOrderBy) {
-
-        return (o1, o2) -> {
-            for (@NotNull MarshableOrderBy order : marshableOrderBy) {
-
-                if (o1 == null && o2 == null)
-                    return 0;
-
-                if (o1 == null)
-                    return -1;
-
-                if (o2 == null)
-                    return 1;
-
-                final String column = order.column;
-
-                try {
-                    final Field field = o1.message().getClass().getDeclaredField(column);
-                    field.setAccessible(true);
-                    @NotNull final Comparable o1Value = (Comparable) field.get(o1.message());
-                    @NotNull final Comparable o2Value = (Comparable) field.get(o2.message());
-
-                    if ((!(o1Value instanceof Comparable)) &&
-                            (!(o2Value instanceof Comparable)))
-                        return 0;
-
-                    if (!(o1Value instanceof Comparable))
-                        return order.isAscending ? -1 : 1;
-
-                    if (!(o2Value instanceof Comparable))
-                        return order.isAscending ? 1 : -1;
-
-                    return o1Value.compareTo(o2Value) * (order.isAscending ? 1 : -1);
-
-                } catch (Exception e) {
-                    Jvm.warn().on(VanillaMapView.class, e);
-                }
-
-            }
-
-            return 0;
-        };
-
-
+    @NotNull
+    @Override
+    public Iterator<Row> iterator(@NotNull final SortedFilter filters) {
+        return iterator(filters.marshableFilters, filters.fromIndex);
     }
 
     @NotNull
-    @Override
-    public Iterator<Row> iterator(@NotNull final SortedFilter sortedFilter) {
+    private Iterator<Row> iterator(@NotNull final List<MarshableFilter> filters, long fromIndex) {
 
-
+        if (fromIndex != 0)
+            System.out.println("");
         final Iterator<QueueView.Excerpt<String, V>> i = new Iterator<QueueView.Excerpt<String, V>>() {
 
             QueueView.Excerpt<String, V> next = queueView.getExcerpt(0);
@@ -124,9 +85,10 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
             }
         };
 
-        final Stream<QueueView.Excerpt<String, V>> stream = StreamSupport.stream(spliteratorUnknownSize(i, Spliterator.DISTINCT | Spliterator.SORTED | Spliterator.ORDERED), false);
-        final Iterator<QueueView.Excerpt<String, V>> core = stream
-                .filter(filter(sortedFilter.marshableFilters))
+        final Spliterator<QueueView.Excerpt<String, V>> spliterator = spliteratorUnknownSize(i, Spliterator.DISTINCT | Spliterator.SORTED | Spliterator.ORDERED);
+        final Iterator<QueueView.Excerpt<String, V>> core = StreamSupport.stream(spliterator,
+                false)
+                .filter(filter(filters))
                 .iterator();
 
 
@@ -165,10 +127,9 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
 
 
         long x = 0;
-        while (x++ < sortedFilter.fromIndex && result.hasNext()) {
+        while (x++ < fromIndex && result.hasNext()) {
             result.next();
         }
-
 
         return result;
     }
@@ -197,21 +158,14 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
     public List<Column> columns() {
         @NotNull List<Column> result = new ArrayList<>();
 
-        result.add(new Column("index", true, true, "",
-                String.class, false));
+        result.add(new Column("index", true, true, "", String.class, false));
 
-        //valueType.isAssignableFrom()
         for (@NotNull final Field declaredFields : messageClass.getDeclaredFields()) {
             result.add(new Column(declaredFields.getName(), false, false, "",
                     declaredFields.getType(), false));
         }
 
         return result;
-
-    }
-
-    private Class<?> keyType() {
-        return String.class;
     }
 
     @Nullable
@@ -244,11 +198,10 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
     }
 
     @Nullable
-    public Predicate<QueueView.Excerpt<String, V>> filter
-            (@NotNull List<MarshableFilter> filters) {
+    public Predicate<QueueView.Excerpt<String, V>> filter(@Nullable List<MarshableFilter> filters) {
         return excerpt -> {
 
-            if (filters.isEmpty())
+            if (filters == null || filters.isEmpty())
                 return true;
 
             try {
@@ -340,14 +293,10 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
     @Override
     public int rowCount(@Nullable List<MarshableFilter> sortedFilter) {
 
-
-        final QueueView.Excerpt<String, V> e = queueView.getExcerpt(0);
-        if (e == null)
-            return 0;
-
-        int count = 1;
-
-        while (queueView.getExcerpt("") != null) {
+        final Iterator<Row> iterator = iterator(sortedFilter, 0);
+        int count = 0;
+        while (iterator.hasNext()) {
+            iterator.next();
             count++;
         }
 
