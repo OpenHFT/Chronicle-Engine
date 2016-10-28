@@ -91,7 +91,6 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
                 .filter(filter(filters))
                 .iterator();
 
-
         @NotNull final Iterator<Row> result = new Iterator<Row>() {
 
             @Override
@@ -107,7 +106,7 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
 
                 @NotNull final AbstractMarshallable value = (AbstractMarshallable) e.message();
 
-                row.set("index", Long.toHexString(e.index()) + "x0");
+                row.set("index", Long.toHexString(e.index()));
 
                 for (@NotNull final Field declaredFields : value.getClass().getDeclaredFields()) {
                     if (!columnNames().contains(declaredFields.getName()))
@@ -136,9 +135,8 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
 
     @Override
     public boolean containsRowWithKey(@NotNull Object[] keys) {
-        if (keys.length == 1 && keys[0] instanceof String && ((String) keys[0]).endsWith("x0")) {
-            final long l = Long.parseLong(keys[0].toString().substring(0, ((String) keys[0])
-                    .length() - "x0".length()), 16);
+        if (keys.length == 1 && keys[0] instanceof String) {
+            final long l = Long.parseLong(keys[0].toString(), 16);
             return queueView.getExcerpt(l) != null;
         }
 
