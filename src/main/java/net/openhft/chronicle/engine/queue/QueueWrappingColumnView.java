@@ -59,8 +59,6 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
     @NotNull
     private Iterator<Row> iterator(@NotNull final List<MarshableFilter> filters, long fromIndex) {
 
-        if (fromIndex != 0)
-            System.out.println("");
         final Iterator<QueueView.Excerpt<String, V>> i = new Iterator<QueueView.Excerpt<String, V>>() {
 
             QueueView.Excerpt<String, V> next = queueView.getExcerpt(0);
@@ -157,7 +155,7 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
         result.add(new Column("index", true, true, "", String.class, false));
 
         for (@NotNull final Field declaredFields : messageClass.getDeclaredFields()) {
-            result.add(new Column(declaredFields.getName(), false, true, "",
+            result.add(new Column(declaredFields.getName(), false, false, "",
                     declaredFields.getType(), false));
         }
 

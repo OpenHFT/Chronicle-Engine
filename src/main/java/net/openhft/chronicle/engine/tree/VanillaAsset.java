@@ -118,7 +118,6 @@ public class VanillaAsset implements Asset, Closeable {
         addWrappingRule(Replication.class, LAST + "replication", VanillaReplication::new, MapView.class);
         addWrappingRule(Publisher.class, LAST + " MapReference", MapReference::new, MapView.class);
         addWrappingRule(TopicPublisher.class, LAST + " MapTopicPublisher", MapTopicPublisher::new, MapView.class);
-        System.out.println("");
         addWrappingRule(MapView.class, LAST + " VanillaMapView", VanillaMapView::new, ObjectKeyValueStore.class);
         addWrappingRule(MapColumnView.class, LAST + "Map ColumnView", MapWrappingColumnView::new,
                 MapView.class);
