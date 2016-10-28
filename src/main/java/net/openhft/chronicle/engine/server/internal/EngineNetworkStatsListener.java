@@ -76,7 +76,7 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
             wireNetworkStats.userId(sessionDetailsProvider.userId());
         }
 
-        acquireQV().publisher(wireNetworkStats);
+        acquireQV().publishAndIndex("", wireNetworkStats);
 
     }
 

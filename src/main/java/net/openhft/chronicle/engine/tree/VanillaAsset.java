@@ -209,8 +209,24 @@ public class VanillaAsset implements Asset, Closeable {
 
     @Deprecated
     public void forServer() {
-        forServer(true, uri -> 1, false);
+        forServer(true, s -> master(s, 1), false);
     }
+
+    @Nullable
+    static Integer master(String s, int defaultMaster) {
+        if (s.startsWith("/proc/connections/cluster/throughput")) {
+            final String[] split = s.split("/");
+            if (split.length > 5) {
+                try {
+                    return Integer.valueOf(split[4]);
+                } catch (NumberFormatException e) {
+                    return defaultMaster;
+                }
+            }
+        }
+        return defaultMaster;
+    }
+
 
     public void forServer(boolean daemon,
                           final Function<String, Integer> uriToHostId,
@@ -222,6 +238,10 @@ public class VanillaAsset implements Asset, Closeable {
         VanillaAsset queue = (VanillaAsset) acquireAsset("/queue");
         queue.configQueueServer();
 
+        VanillaAsset clusterConnections = (VanillaAsset) acquireAsset(
+                "/proc/connections/cluster/throughput");
+
+        clusterConnections.configQueueServer();
 
         addView(QueueConfig.class, new QueueConfig(uriToHostId, true, null, WireType.BINARY));
 

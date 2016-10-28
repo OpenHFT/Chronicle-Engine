@@ -160,14 +160,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
     }
 
 
-    @NotNull
-    public static String resourcesDir() {
-        String path = ChronicleQueueView.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-        if (path == null)
-            return ".";
-        return new File(path).getParentFile().getParentFile() + "/src/test/resources";
-    }
-
     @SuppressWarnings("WeakerAccess")
     public static WriteMarshallable newSource(long nextIndexRequired,
                                               @NotNull Class topicType,
@@ -268,6 +260,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         final Clusters clusters = asset.findView(Clusters.class);
 
         if (clusters == null) {
+            LOG.warn("no cluster found name=" + context.cluster());
             Jvm.debug().on(getClass(), "no cluster found name=" + context.cluster());
             return;
         }
@@ -733,7 +726,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
     @Nullable
     @Override
     public Object underlying() {
-        throw new UnsupportedOperationException("todo");
+        return chronicleQueue;
     }
 
     public static class LocalExcept<T, M> implements Excerpt<T, M>, Marshallable, Map.Entry<T, M> {

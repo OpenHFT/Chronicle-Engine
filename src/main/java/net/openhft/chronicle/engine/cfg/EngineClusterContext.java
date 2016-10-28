@@ -87,27 +87,29 @@ public class EngineClusterContext extends ClusterContext {
                 throw new UnsupportedOperationException("not supported class=" + o.getClass());
             };
 
-            // todo log these to a chronicle q rather than the log
-            nc.networkStatsListener(new NetworkStatsListener() {
+            if (nc.networkStatsListener() == null) {
 
-                String host;
-                long port;
+                nc.networkStatsListener(new NetworkStatsListener() {
 
-                @Override
-                public void onNetworkStats(long writeBps, long readBps, long socketPollCountPerSecond, @NotNull NetworkContext networkContext, boolean connectionStatus) {
-                    LOG.info("writeKBps=" + writeBps / 1000 +
-                            ", readKBps=" + readBps / 1000 +
-                            ", socketPollCountPerSecond=" + socketPollCountPerSecond +
-                            ", host=" + host +
-                            ", port=" + port);
-                }
+                    String host;
+                    long port;
 
-                @Override
-                public void onHostPort(String hostName, int port) {
-                    host = hostName;
-                    this.port = port;
-                }
-            });
+                    @Override
+                    public void onNetworkStats(long writeBps, long readBps, long socketPollCountPerSecond, @NotNull NetworkContext networkContext, boolean connectionStatus) {
+                        LOG.info("writeKBps=" + writeBps / 1000 +
+                                ", readKBps=" + readBps / 1000 +
+                                ", socketPollCountPerSecond=" + socketPollCountPerSecond +
+                                ", host=" + host +
+                                ", port=" + port);
+                    }
+
+                    @Override
+                    public void onHostPort(String hostName, int port) {
+                        host = hostName;
+                        this.port = port;
+                    }
+                });
+            }
 
             final Function<EngineWireNetworkContext, TcpHandler> f
                     = x -> new HeaderTcpHandler<>(handler, consumer, x);

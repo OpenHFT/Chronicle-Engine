@@ -140,9 +140,7 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
             return queueView.getExcerpt(l) != null;
         }
 
-        throw new IllegalStateException("unsupported format");
-
-
+        throw new IllegalStateException("unsupported format, keys=" + Arrays.toString(keys));
     }
 
     @Nullable

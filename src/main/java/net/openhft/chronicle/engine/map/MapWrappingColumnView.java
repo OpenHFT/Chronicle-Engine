@@ -145,7 +145,7 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
                 if (!(AbstractMarshallable.class.isAssignableFrom(mapView.keyType())))
                     row.set("key", e.getKey());
                 else
-                    throw new UnsupportedOperationException("todo");
+                    row.set("key", e.getKey().toString());
 
                 if (!(AbstractMarshallable.class.isAssignableFrom(mapView.valueType())))
                     row.set("value", e.getValue());
@@ -195,8 +195,11 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
     public List<Column> columns() {
         @NotNull List<Column> result = new ArrayList<>();
 
-        if (!(AbstractMarshallable.class.isAssignableFrom(keyType())))
+        if ((AbstractMarshallable.class.isAssignableFrom(keyType()))) {
+            result.add(new Column("key", true, true, "", String.class, false));
+        } else {
             result.add(new Column("key", false, true, "", keyType(), true));
+        }
 
         if (!(AbstractMarshallable.class.isAssignableFrom(valueType())))
             result.add(new Column("value", false, false, "", valueType(), true));
