@@ -1,9 +1,9 @@
 package net.openhft.chronicle.engine.queue;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.engine.api.column.ChronicleQueueRow;
 import net.openhft.chronicle.engine.api.column.Column;
 import net.openhft.chronicle.engine.api.column.QueueColumnView;
-import net.openhft.chronicle.engine.api.column.Row;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.map.ObjectSubscription;
@@ -15,6 +15,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.Predicate;
 import java.util.stream.StreamSupport;
 
@@ -52,16 +54,30 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
 
     @NotNull
     @Override
-    public Iterator<Row> iterator(@NotNull final SortedFilter filters) {
+    public Iterator<ChronicleQueueRow> iterator(@NotNull final SortedFilter filters) {
         return iterator(filters.marshableFilters, filters.fromIndex);
     }
 
+    Map<List<MarshableFilter>, NavigableMap<Long, ChronicleQueueRow>> indexCache = new ConcurrentHashMap<>();
+
+
     @NotNull
-    private Iterator<Row> iterator(@NotNull final List<MarshableFilter> filters, long fromIndex) {
+    private Iterator<ChronicleQueueRow> iterator(@NotNull final List<MarshableFilter> filters, long fromSequenceNumber) {
+
+        System.out.println("new iterator -> fromSequenceNumber=" + fromSequenceNumber);
+        long count = 0;
+
+        final NavigableMap<Long, ChronicleQueueRow> map = indexCache.computeIfAbsent(filters, k -> new ConcurrentSkipListMap<>());
+        final Map.Entry<Long, ChronicleQueueRow> longChronicleQueueRowEntry = map.floorEntry(fromSequenceNumber);
+
+        if (longChronicleQueueRowEntry != null)
+            count = longChronicleQueueRowEntry.getValue().seqNumber();
 
         final Iterator<QueueView.Excerpt<String, V>> i = new Iterator<QueueView.Excerpt<String, V>>() {
 
-            QueueView.Excerpt<String, V> next = queueView.getExcerpt(0);
+            QueueView.Excerpt<String, V> next = (longChronicleQueueRowEntry != null)
+                    ? queueView.getExcerpt(longChronicleQueueRowEntry.getValue().index())
+                    : queueView.getExcerpt(0);
 
             @Override
             public boolean hasNext() {
@@ -79,7 +95,6 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
                 } finally {
                     this.next = null;
                 }
-
             }
         };
 
@@ -89,7 +104,7 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
                 .filter(filter(filters))
                 .iterator();
 
-        @NotNull final Iterator<Row> result = new Iterator<Row>() {
+        @NotNull final Iterator<ChronicleQueueRow> result = new Iterator<ChronicleQueueRow>() {
 
             @Override
             public boolean hasNext() {
@@ -98,13 +113,14 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
 
             @NotNull
             @Override
-            public Row next() {
+            public ChronicleQueueRow next() {
                 final QueueView.Excerpt<String, V> e = core.next();
-                @NotNull final Row row = new Row(columns());
+                @NotNull final ChronicleQueueRow row = new ChronicleQueueRow(columns());
 
                 @NotNull final AbstractMarshallable value = (AbstractMarshallable) e.message();
 
                 row.set("index", Long.toHexString(e.index()));
+                row.index(e.index());
 
                 for (@NotNull final Field declaredFields : value.getClass().getDeclaredFields()) {
                     if (!columnNames().contains(declaredFields.getName()))
@@ -123,10 +139,17 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
         };
 
 
-        long x = 0;
-        while (x++ < fromIndex && result.hasNext()) {
-            result.next();
+        ChronicleQueueRow r = null;
+        while (count < fromSequenceNumber && result.hasNext()) {
+            r = result.next();
+            r.seqNumber(count);
+            if (r.seqNumber() % 1024 == 0)
+                map.put(count, r);
+            count++;
         }
+
+        if (longChronicleQueueRowEntry == null && r != null)
+            map.put(r.seqNumber(), r);
 
         return result;
     }
@@ -280,21 +303,49 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
 
 
     /**
-     * @param sortedFilter if {@code sortedFilter} == null or empty all the total number of rows is
-     *                     returned
+     * @param filters if {@code sortedFilter} == null or empty all the total number of rows is
+     *                returned
      * @return the number of rows the matches this query
      */
     @Override
-    public int rowCount(@Nullable List<MarshableFilter> sortedFilter) {
+    public int rowCount(@NotNull List<MarshableFilter> filters) {
+        long count = 0;
+        final NavigableMap<Long, ChronicleQueueRow> map = indexCache.computeIfAbsent(filters, k -> new ConcurrentSkipListMap<>());
 
-        final Iterator<Row> iterator = iterator(sortedFilter, 0);
-        int count = 0;
+        Iterator<ChronicleQueueRow> iterator;
+        long lastIndex = 0;
+
+        if (map != null) {
+            final Map.Entry<Long, ChronicleQueueRow> last = map.lastEntry();
+            if (last == null) {
+                iterator = iterator(filters, 0);
+            } else {
+                final ChronicleQueueRow value = last.getValue();
+                count = value.seqNumber();
+                iterator = iterator(filters, count);
+            }
+        } else
+            iterator = iterator(filters, 0);
+
+        boolean hasMoreData = false;
+        ChronicleQueueRow row = null;
         while (iterator.hasNext()) {
-            iterator.next();
+            row = iterator.next();
+            row.seqNumber(count);
             count++;
+            hasMoreData = true;
+
+            if (row.seqNumber() % 1024 == 0)
+                map.put(count, row);
         }
 
-        return count;
+
+        if (hasMoreData) {
+
+            map.put(count, row);
+        }
+
+        return (int) count;
     }
 
 }

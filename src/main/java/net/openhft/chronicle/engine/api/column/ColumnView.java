@@ -3,7 +3,6 @@ package net.openhft.chronicle.engine.api.column;
 import net.openhft.chronicle.engine.map.ObjectSubscription;
 import net.openhft.chronicle.wire.AbstractMarshallable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -43,7 +42,7 @@ public interface ColumnView {
 
     List<Column> columns();
 
-    int rowCount(@Nullable List<MarshableFilter> sortedFilter);
+    int rowCount(@NotNull List<MarshableFilter> sortedFilter);
 
     /**
      * used to add, update and delete rows
@@ -64,7 +63,7 @@ public interface ColumnView {
      */
     void registerChangeListener(@NotNull Runnable r);
 
-    Iterator<Row> iterator(SortedFilter sortedFilter);
+    Iterator<? extends Row> iterator(@NotNull SortedFilter sortedFilter);
 
     boolean canDeleteRows();
 
