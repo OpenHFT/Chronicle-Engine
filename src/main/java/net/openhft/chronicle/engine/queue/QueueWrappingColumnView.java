@@ -63,10 +63,7 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
 
     @NotNull
     private Iterator<ChronicleQueueRow> iterator(@NotNull final List<MarshableFilter> filters, long fromSequenceNumber) {
-
-        System.out.println("new iterator -> fromSequenceNumber=" + fromSequenceNumber);
         long count = 0;
-
         final NavigableMap<Long, ChronicleQueueRow> map = indexCache.computeIfAbsent(filters, k -> new ConcurrentSkipListMap<>());
         final Map.Entry<Long, ChronicleQueueRow> longChronicleQueueRowEntry = map.floorEntry(fromSequenceNumber);
 
