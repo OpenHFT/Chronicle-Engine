@@ -55,20 +55,45 @@ public class ServerEndpoint implements Closeable {
     private AcceptorEventHandler eah;
 
     public ServerEndpoint(@NotNull String hostPortDescription,
-                          @NotNull AssetTree assetTree) throws IOException {
+                          @NotNull AssetTree assetTree,
+                          @NotNull NetworkStatsListener networkStatsListener) throws IOException {
 
         eg = assetTree.root().acquireView(EventLoop.class);
         Threads.<Void, IOException>withThreadGroup(assetTree.root().getView(ThreadGroup.class), () -> {
-            start(hostPortDescription, assetTree);
+            start(hostPortDescription, assetTree, networkStatsListener);
             return null;
         });
 
         assetTree.root().addView(ServerEndpoint.class, this);
     }
 
+    public ServerEndpoint(@NotNull String hostPortDescription,
+                          @NotNull AssetTree assetTree) throws IOException {
+        this(hostPortDescription, assetTree, new NetworkStatsListener() {
+
+            private String host;
+            private long port;
+
+            @Override
+            public void onNetworkStats(long writeBps, long readBps, long socketPollCountPerSecond, @NotNull NetworkContext networkContext, boolean connectionStatus) {
+                LOG.info("writeKBps=" + writeBps / 1000 + ", readKBps=" + readBps / 1000 +
+                        ", socketPollCountPerSecond=" + socketPollCountPerSecond / 1000 + "K, host=" + host + ", port=" + port);
+            }
+
+            @Override
+            public void onHostPort(String hostName, int port) {
+                host = hostName;
+                this.port = port;
+            }
+        });
+    }
+
+
     @Nullable
     private AcceptorEventHandler start(@NotNull String hostPortDescription,
-                                       @NotNull final AssetTree assetTree) throws IOException {
+                                       @NotNull final AssetTree assetTree,
+                                       @NotNull NetworkStatsListener networkStatsListener)
+            throws IOException {
         assert eg != null;
 
         eg.start();
@@ -111,36 +136,17 @@ public class ServerEndpoint implements Closeable {
         final AcceptorEventHandler eah = new AcceptorEventHandler(
                 hostPortDescription,
                 networkContextTcpEventHandlerFunction,
-                () -> createNetworkContext(assetTree));
+                () -> createNetworkContext(assetTree, networkStatsListener));
 
         eg.addHandler(eah);
         this.eah = eah;
         return eah;
     }
 
-    private EngineWireNetworkContext createNetworkContext(AssetTree assetTree) {
+    private EngineWireNetworkContext createNetworkContext(AssetTree assetTree,
+                                                          final NetworkStatsListener networkStatsListener) {
         final EngineWireNetworkContext nc = new EngineWireNetworkContext(assetTree.root());
-
-        // todo log these to a chronicle q rather than the log
-        nc.networkStatsListener(new NetworkStatsListener() {
-
-            private String host;
-            private long port;
-
-            @Override
-            public void onNetworkStats(long writeBps, long readBps, long socketPollCountPerSecond, @NotNull NetworkContext networkContext, boolean connectionStatus) {
-                LOG.info("writeKBps=" + writeBps / 1000 + ", readKBps=" + readBps / 1000 +
-                        ", socketPollCountPerSecond=" + socketPollCountPerSecond / 1000 +
-                        "K, host=" + host + ", port=" + port);
-            }
-
-            @Override
-            public void onHostPort(String hostName, int port) {
-                host = hostName;
-                this.port = port;
-            }
-        });
-
+        nc.networkStatsListener(networkStatsListener);
         return nc;
     }
 
