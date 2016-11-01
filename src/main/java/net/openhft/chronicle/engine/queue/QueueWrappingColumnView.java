@@ -60,7 +60,6 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
 
     Map<List<MarshableFilter>, NavigableMap<Long, ChronicleQueueRow>> indexCache = new ConcurrentHashMap<>();
 
-
     @NotNull
     private Iterator<ChronicleQueueRow> iterator(@NotNull final List<MarshableFilter> filters, long fromSequenceNumber) {
         long count = 0;
@@ -130,11 +129,9 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
                     }
                 }
 
-
                 return row;
             }
         };
-
 
         ChronicleQueueRow r = null;
         while (count < fromSequenceNumber && result.hasNext()) {
@@ -245,7 +242,6 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
                             return false;
                         }
 
-
                     } else {
                         throw new UnsupportedOperationException();
                     }
@@ -298,7 +294,6 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
         }
     }
 
-
     /**
      * @param filters if {@code sortedFilter} == null or empty all the total number of rows is
      *                returned
@@ -335,7 +330,6 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
             if (row.seqNumber() % 1024 == 0)
                 map.put(count, row);
         }
-
 
         if (hasMoreData) {
 

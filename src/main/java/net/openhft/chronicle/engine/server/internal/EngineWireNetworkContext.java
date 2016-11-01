@@ -66,7 +66,6 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
                         .acquireView(MapView.class, requestContext);
             }
 
-
         } catch (Exception e) {
             if (Jvm.isDebug())
                 Jvm.debug().on(getClass(), e);
@@ -83,7 +82,6 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
     public void onHandlerChanged(TcpHandler handler) {
         this.handler = handler;
     }
-
 
     @Override
     public ConnectionListener acquireConnectionListener() {

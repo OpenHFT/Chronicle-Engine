@@ -112,7 +112,6 @@ public enum ManagementTools {
         enableManagement(assetTree, 9000);
     }
 
-
     public static void enableManagement(@NotNull AssetTree assetTree, int port) {
         try {
             startJMXRemoteService(port);
@@ -261,7 +260,6 @@ public enum ManagementTools {
                 m.put("entrySubscriberCount", "" + objectSubscription.entrySubscriberCount());
                 m.put("keyStoreValue", objectSubscription.getClass().getName());
                 m.put("path", path);
-
 
                 Iterator<Map.Entry> iterator = view.entrySetIterator();
                 while (iterator.hasNext()) {

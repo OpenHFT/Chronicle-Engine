@@ -110,7 +110,6 @@ public class VanillaAssetTree implements AssetTree {
         return this;
     }
 
-
     @NotNull
     public VanillaAssetTree forServer(boolean daemon) {
         return forServer(daemon, false);

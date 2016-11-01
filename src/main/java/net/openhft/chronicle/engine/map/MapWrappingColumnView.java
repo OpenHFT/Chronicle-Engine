@@ -8,11 +8,12 @@ import net.openhft.chronicle.engine.api.column.Row;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
-import net.openhft.chronicle.wire.AbstractMarshallable;
+import net.openhft.chronicle.wire.FieldInfo;
+import net.openhft.chronicle.wire.Marshallable;
+import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Field;
 import java.util.*;
 import java.util.function.Predicate;
 
@@ -24,6 +25,8 @@ import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
 public class MapWrappingColumnView<K, V> implements MapColumnView {
 
     private final MapView<K, V> mapView;
+    private final boolean valueMarshallable;
+    private final boolean valueMap;
     @Nullable
     private ArrayList<String> columnNames = null;
 
@@ -31,6 +34,8 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
                                  Asset asset,
                                  MapView<K, V> mapView) {
         this.mapView = mapView;
+        valueMarshallable = Marshallable.class.isAssignableFrom(mapView.valueType());
+        valueMap = Map.class.isAssignableFrom(mapView.valueType());
     }
 
     @Override
@@ -41,84 +46,62 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
     private Comparator<Map.Entry<K, V>> sort(@NotNull final List<MarshableOrderBy> marshableOrderBy) {
 
         return (o1, o2) -> {
+            if (o1 == null)
+                return o2 == null ? 0 : -1;
+
+            if (o2 == null)
+                return 1;
+
             for (@NotNull MarshableOrderBy order : marshableOrderBy) {
-
-                if (o1 == null && o2 == null)
-                    return 0;
-
-                if (o1 == null)
-                    return -1;
-
-                if (o2 == null)
-                    return 1;
 
                 final String column = order.column;
                 int result = 0;
 
+                Object c1;
+                Object c2;
+
                 if (column.equals("key")) {
-                    if (o1.getKey() instanceof CharSequence)
-                        result = String.CASE_INSENSITIVE_ORDER.compare((String) o1.getKey(), (String) o2.getKey());
-                    else if (AbstractMarshallable.class.isAssignableFrom(mapView.keyType()))
-                        throw new UnsupportedOperationException();
-                    else if (Comparable.class.isAssignableFrom(mapView.keyType()))
-                        result = ((Comparable) o1.getKey()).compareTo(o2.getKey());
+                    c1 = o1.getKey();
+                    c2 = o2.getKey();
 
+                } else if (valueMap) {
+                    c1 = ((Map) o1).get(column);
+                    c2 = ((Map) o2).get(column);
 
-                    if (result != 0) {
-                        result *= order.isAscending ? 1 : -1;
-                        return result;
+                } else if (valueMarshallable) {
+                    try {
+                        FieldInfo field = Wires.fieldInfo(o1.getValue().getClass(), column);
+
+                        c1 = field.get(o1.getValue());
+                        c2 = field.get(o2.getValue());
+
+                    } catch (Exception e) {
+                        Jvm.warn().on(MapWrappingColumnView.class, e);
+                        // skip the field.
+                        continue;
                     }
 
+                } else if (column.equals("value")) {
+                    c1 = o1.getValue();
+                    c2 = o2.getValue();
+
+                } else {
+                    // no such column.
                     continue;
                 }
 
-
-                if (column.equals("value")
-                        && (!(AbstractMarshallable.class.isAssignableFrom(mapView.valueType())))) {
-                    if (o1.getValue() instanceof CharSequence)
-                        result = String.CASE_INSENSITIVE_ORDER.compare((String) o1.getValue(), (String)
-                                o2.getValue());
-
-                    else if (o1.getValue() instanceof Comparable)
-                        result = ((Comparable) o1.getValue()).compareTo(o2.getValue());
-
-                    if (result != 0) {
-                        result *= order.isAscending ? 1 : -1;
-                        return result;
-                    }
-
-                    continue;
-
+                if (c1.getClass() == c2.getClass() && c1 instanceof Comparable && !(c1 instanceof CharSequence)) {
+                    result = ((Comparable) c1).compareTo(c2);
+                } else {
+                    result = String.CASE_INSENSITIVE_ORDER.compare(c1.toString(), c2.toString());
                 }
 
-                try {
-                    final Field field = o1.getValue().getClass().getDeclaredField(column);
-                    field.setAccessible(true);
-                    @NotNull final Comparable o1Value = (Comparable) field.get(o1.getValue());
-                    @NotNull final Comparable o2Value = (Comparable) field.get(o2.getValue());
-
-                    if ((!(o1Value instanceof Comparable)) &&
-                            (!(o2Value instanceof Comparable)))
-                        return 0;
-
-                    if (!(o1Value instanceof Comparable))
-                        return order.isAscending ? -1 : 1;
-
-                    if (!(o2Value instanceof Comparable))
-                        return order.isAscending ? 1 : -1;
-
-                    return o1Value.compareTo(o2Value) * (order.isAscending ? 1 : -1);
-
-                } catch (Exception e) {
-                    Jvm.warn().on(VanillaMapView.class, e);
-                }
-
+                if (result != 0)
+                    return order.isAscending ? result : -result;
             }
 
             return 0;
         };
-
-
     }
 
     @NotNull
@@ -142,22 +125,28 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
             public Row next() {
                 final Map.Entry e = core.next();
                 @NotNull final Row row = new Row(columns());
-                if (!(AbstractMarshallable.class.isAssignableFrom(mapView.keyType())))
-                    row.set("key", e.getKey());
-                else
+                if ((Marshallable.class.isAssignableFrom(mapView.keyType()))) {
                     row.set("key", e.getKey().toString());
+                } else {
+                    row.set("key", e.getKey());
+                }
 
-                if (!(AbstractMarshallable.class.isAssignableFrom(mapView.valueType())))
+                final List<FieldInfo> fieldInfos = Wires.fieldInfos(mapView.valueType());
+                if (fieldInfos.isEmpty()) {
                     row.set("value", e.getValue());
-                else {
-                    @NotNull final AbstractMarshallable value = (AbstractMarshallable) e.getValue();
 
-                    for (@NotNull final Field declaredFields : mapView.valueType().getDeclaredFields()) {
-                        if (!columnNames().contains(declaredFields.getName()))
+                } else {
+                    @NotNull final Marshallable value = (Marshallable) e.getValue();
+                    for (@NotNull final FieldInfo info : fieldInfos) {
+//                        System.out.println(info);
+                        if (!columnNames().contains(info.name()))
                             continue;
+
                         try {
-                            declaredFields.setAccessible(true);
-                            row.set(declaredFields.getName(), declaredFields.get(value));
+                            final Object newValue = info.get(value);
+//                            System.out.println("\t"+newValue);
+                            row.set(info.name(), newValue);
+
                         } catch (Exception e1) {
                             Jvm.warn().on(VanillaMapView.class, e1);
                         }
@@ -168,12 +157,10 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
             }
         };
 
-
         long x = 0;
         while (x++ < sortedFilter.fromIndex && result.hasNext()) {
             result.next();
         }
-
 
         return result;
     }
@@ -195,24 +182,22 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
     public List<Column> columns() {
         @NotNull List<Column> result = new ArrayList<>();
 
-        if ((AbstractMarshallable.class.isAssignableFrom(keyType()))) {
+        if ((Marshallable.class.isAssignableFrom(keyType()))) {
             result.add(new Column("key", true, true, "", String.class, false));
         } else {
             result.add(new Column("key", false, true, "", keyType(), true));
         }
 
-        if (!(AbstractMarshallable.class.isAssignableFrom(valueType())))
-            result.add(new Column("value", false, false, "", valueType(), true));
-        else {
+        if ((Marshallable.class.isAssignableFrom(valueType()))) {
             //valueType.isAssignableFrom()
-            for (@NotNull final Field declaredFields : valueType().getDeclaredFields()) {
-                result.add(new Column(declaredFields.getName(), false, false, "",
-                        declaredFields.getType(), true));
+            for (@NotNull final FieldInfo info : Wires.fieldInfos(valueType())) {
+                result.add(new Column(info.name(), false, false, "", info.type(), true));
             }
+        } else {
+            result.add(new Column("value", false, false, "", valueType(), true));
         }
 
         return result;
-
     }
 
     private Class<?> keyType() {
@@ -227,15 +212,14 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
 
         @NotNull LinkedHashSet<String> result = new LinkedHashSet<>();
 
-        if (!(AbstractMarshallable.class.isAssignableFrom(keyType())))
-            result.add("key");
+        result.add("key");
 
-        if (!(AbstractMarshallable.class.isAssignableFrom(valueType())))
-            result.add("value");
-        else {
-            for (@NotNull final Field declaredFields : valueType().getDeclaredFields()) {
-                result.add(declaredFields.getName());
+        if (Marshallable.class.isAssignableFrom(valueType())) {
+            for (@NotNull final FieldInfo fi : Wires.fieldInfos(valueType())) {
+                result.add(fi.name());
             }
+        } else {
+            result.add("value");
         }
 
         columnNames = new ArrayList<>(result);
@@ -246,12 +230,10 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
         return mapView.valueType();
     }
 
-
     @Override
     public boolean canDeleteRows() {
         return true;
     }
-
 
     @Override
     public int changedRow(@NotNull Map<String, Object> row, @NotNull Map<String, Object> oldRow) {
@@ -272,7 +254,7 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
             mapView.remove((K) oldKey);
 
         final Class<V> valueType = mapView.valueType();
-        if (!AbstractMarshallable.class.isAssignableFrom(valueType)) {
+        if (!Marshallable.class.isAssignableFrom(valueType)) {
             if (!row.containsKey("value"))
                 throw new IllegalStateException("value not found");
             assert row.size() == 2;
@@ -286,14 +268,8 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
         for (@NotNull Map.Entry<String, Object> e : row.entrySet()) {
             if ("key".equals(e.getKey()))
                 continue;
-            final Field field;
-            try {
-                field = v.getClass().getDeclaredField(e.getKey());
-                field.setAccessible(true);
-                field.set(v, ObjectUtils.convertTo(field.getType(), e.getValue()));
-            } catch (Exception e1) {
-                Jvm.warn().on(VanillaMapView.class, e1);
-            }
+            FieldInfo fi = Wires.fieldInfo(valueType, e.getKey());
+            fi.set(v, e.getValue());
         }
 
         mapView.put((K) newKey, v);
@@ -315,18 +291,15 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
 
                     if ("key".equals(f.columnName)) {
                         item = entry.getKey();
-                    } else if (!(AbstractMarshallable.class.isAssignableFrom(mapView.valueType())) &&
+                    } else if (!(Marshallable.class.isAssignableFrom(mapView.valueType())) &&
                             "value".equals(f.columnName)) {
                         item = entry.getValue();
 
-                    } else if (AbstractMarshallable.class.isAssignableFrom(mapView.valueType())) {
+                    } else if (Marshallable.class.isAssignableFrom(mapView.valueType())) {
                         try {
                             final Class valueClass = entry.getValue().getClass();
-
-
-                            final Field field = valueClass.getDeclaredField(f.columnName);
-                            field.setAccessible(true);
-                            final Object o = field.get(entry.getValue());
+                            final FieldInfo info = Wires.fieldInfo(valueClass, f.columnName);
+                            final Object o = info.get(entry.getValue());
 
                             if (o == null)
                                 return false;
@@ -340,7 +313,6 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
                         } catch (Exception e) {
                             return false;
                         }
-
 
                     } else {
                         throw new UnsupportedOperationException();
@@ -367,33 +339,71 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
         };
     }
 
-    private boolean toRange(@NotNull Number o, @NotNull String trimmed) {
-        if (trimmed.startsWith(">") || trimmed.startsWith("<")) {
-
-            @NotNull final String number = trimmed.substring(1, trimmed.length()).trim();
-
-            final Number filterNumber;
-            try {
-                filterNumber = convertTo(o.getClass(), number);
-            } catch (ClassCastException e) {
-                return false;
+    enum DOp {
+        GE(">=") {
+            @Override
+            boolean compare(double a, double b) {
+                return a >= b;
             }
+        },
+        LE("<=") {
+            @Override
+            boolean compare(double a, double b) {
+                return a <= b;
+            }
+        },
+        NE("<>", "!=", "!") {
+            @Override
+            boolean compare(double a, double b) {
+                return a != b;
+            }
+        },
+        GT(">") {
+            @Override
+            boolean compare(double a, double b) {
+                return a > b;
+            }
+        },
+        LT("<") {
+            @Override
+            boolean compare(double a, double b) {
+                return a < b;
+            }
+        },
+        EQ("==", "=", "") {
+            @Override
+            boolean compare(double a, double b) {
+                return a == b;
+            }
+        };
 
-            boolean result;
-            if (trimmed.startsWith(">"))
-                result = o.doubleValue() > filterNumber.doubleValue();
-            else if (trimmed.startsWith("<"))
-                result = o.doubleValue() < filterNumber.doubleValue();
-            else
-                throw new UnsupportedOperationException();
-            return result;
+        static final DOp[] OPS = values();
+        final String[] op;
 
-        } else {
-            final Object filterNumber = convertTo(o.getClass(), trimmed);
-            return o.equals(filterNumber);
+        DOp(String... op) {
+            this.op = op;
         }
+
+        abstract boolean compare(double a, double b);
     }
 
+    private boolean toRange(@NotNull Number o, @NotNull String trimmed) {
+        for (DOp dop : DOp.OPS) {
+            for (String op : dop.op) {
+                if (trimmed.startsWith(op)) {
+                    @NotNull final String number = trimmed.substring(op.length()).trim();
+
+                    try {
+                        final Number filterNumber = convertTo(o.getClass(), number);
+                        return dop.compare(o.doubleValue(), filterNumber.doubleValue());
+                    } catch (ClassCastException e) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return false;
+    }
 
     /**
      * @param sortedFilter if {@code sortedFilter} == null or empty all the total number of rows is
