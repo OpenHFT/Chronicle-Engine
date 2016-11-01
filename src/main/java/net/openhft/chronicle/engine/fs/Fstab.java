@@ -38,7 +38,7 @@ public class Fstab implements Marshallable {
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         StringBuilder mountDesc = new StringBuilder();
 
-        while (wire.hasMore()) {
+        while (!wire.isEmpty()) {
             MountPoint mp = wire.readEventName(mountDesc).typedMarshallable();
             mounts.put(mountDesc.toString(), mp);
         }

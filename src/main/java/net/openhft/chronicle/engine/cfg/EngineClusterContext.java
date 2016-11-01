@@ -18,10 +18,12 @@
 package net.openhft.chronicle.engine.cfg;
 
 import net.openhft.chronicle.core.annotation.UsedViaReflection;
+import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.core.util.ThrowingFunction;
 import net.openhft.chronicle.engine.HeartbeatHandler;
 import net.openhft.chronicle.engine.api.tree.Asset;
+import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.fs.EngineConnectionManager;
 import net.openhft.chronicle.engine.server.internal.EngineNetworkStatsListener;
 import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
@@ -46,7 +48,7 @@ import java.util.function.Function;
 /**
  * @author Rob Austin.
  */
-public class EngineClusterContext extends ClusterContext {
+public class EngineClusterContext extends ClusterContext  {
     private static final Logger LOG = LoggerFactory.getLogger(EngineClusterContext.class);
     Asset assetRoot;
     private byte localIdentifier;

@@ -33,7 +33,7 @@ public class ClustersCfg extends AbstractMarshallable implements Installable {
     @Override
     public ClustersCfg install(String path, AssetTree assetTree) throws Exception {
         assetTree.root().addView(Clusters.class, clusters);
-
+        clusters.install(assetTree);
         return this;
     }
 

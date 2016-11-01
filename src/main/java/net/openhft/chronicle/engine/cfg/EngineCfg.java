@@ -60,7 +60,7 @@ public class EngineCfg implements Installable {
 
     private void readMarshallable(String path, WireIn wire) {
         StringBuilder name = new StringBuilder();
-        while (wire.hasMore()) {
+        while (!wire.isEmpty()) {
             ValueIn in = wire.read(name);
             long pos = wire.bytes().readPosition();
             String path2 = path + "/" + name;
@@ -73,4 +73,6 @@ public class EngineCfg implements Installable {
             }
         }
     }
+
+
 }

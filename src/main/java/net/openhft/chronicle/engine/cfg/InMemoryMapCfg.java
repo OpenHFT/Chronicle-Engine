@@ -45,7 +45,7 @@ public class InMemoryMapCfg implements Installable {
         if (importFile != null) {
             Wire wire = Wire.fromFile(importFile);
             StringBuilder keyStr = new StringBuilder();
-            while (wire.hasMore()) {
+            while (!wire.isEmpty()) {
                 Object value = wire.readEventName(keyStr).object(valueType);
                 Object key = ObjectUtils.convertTo(keyType, keyStr);
                 mapView.put(key, value);
@@ -62,7 +62,7 @@ public class InMemoryMapCfg implements Installable {
                 .read(() -> "compression").text(this, (o, c) -> o.compression = c)
                 .read(() -> "putReturnsNull").bool(this, (o, e) -> o.putReturnsNull = e)
                 .read(() -> "removeReturnsNull").bool(this, (o, e) -> o.removeReturnsNull = e);
-        if (wire.hasMore())
+        while (!wire.isEmpty())
             wire.read(() -> "import").text(this, (o, s) -> o.importFile = s);
     }
 

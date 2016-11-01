@@ -31,20 +31,20 @@ import java.util.concurrent.ConcurrentSkipListMap;
  * Created by peter.lawrey on 17/06/2015.
  */
 public class Clusters extends AbstractMarshallable implements Marshallable, Closeable {
-    private final Map<String, EngineCluster> clusterMap;
+    private final Map<String, EngineCluster> clusterMap = new ConcurrentSkipListMap<>();
 
     public Clusters() {
-        this.clusterMap = new ConcurrentSkipListMap<>();
+
     }
 
     public Clusters(Map<String, EngineCluster> clusterMap) {
-        this.clusterMap = clusterMap;
+        this.clusterMap.putAll(clusterMap);
     }
 
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
         StringBuilder clusterName = Wires.acquireStringBuilder();
-        while (wire.hasMore()) {
+        while (!wire.isEmpty()) {
             wire.readEventName(clusterName).marshallable(host -> {
                 EngineCluster engineCluster = clusterMap.computeIfAbsent(clusterName.toString(), EngineCluster::new);
                 engineCluster.readMarshallable(host);
@@ -75,6 +75,10 @@ public class Clusters extends AbstractMarshallable implements Marshallable, Clos
         return clusterMap.get(cluster);
     }
 
+    public EngineCluster firstCluster() {
+        return clusterMap.values().iterator().next();
+    }
+
     public void put(String clusterName, EngineCluster engineCluster) {
         clusterMap.put(clusterName, engineCluster);
     }
@@ -87,5 +91,12 @@ public class Clusters extends AbstractMarshallable implements Marshallable, Clos
     @Override
     public void notifyClosing() {
         clusterMap.values().forEach(EngineCluster::notifyClosing);
+    }
+
+    /**
+     * @return the number of clusters
+     */
+    public int size() {
+        return clusterMap.size();
     }
 }

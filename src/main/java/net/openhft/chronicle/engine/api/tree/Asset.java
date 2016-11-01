@@ -312,6 +312,10 @@ public interface Asset extends Closeable {
      */
     <V> V addView(Class<V> viewType, V view);
 
+    default <V> V addView(V view) {
+        return addView((Class<V>) view.getClass(), view);
+    }
+
     /**
      * @return true if this is a simplified Asset attached to a keyed Asset.  E.g. if you subscribe
      * to a key in a Map this key uses a SubAsset.
