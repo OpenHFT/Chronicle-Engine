@@ -59,7 +59,7 @@ import static org.junit.Assert.assertNotNull;
 
 @Ignore("fails in teamcity")
 @RunWith(value = Parameterized.class)
-public class Replication3WayIntIntTest extends ThreadMonitoringTest {
+public class  Replication3WayIntIntTest extends ThreadMonitoringTest {
     public static final WireType WIRE_TYPE = WireType.TEXT;
     public static final int NUMBER_OF_TIMES = 10;
 
