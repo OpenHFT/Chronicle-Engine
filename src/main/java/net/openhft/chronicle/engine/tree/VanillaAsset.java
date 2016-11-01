@@ -226,7 +226,6 @@ public class VanillaAsset implements Asset, Closeable {
         return defaultMaster;
     }
 
-
     public void forServer(boolean daemon,
                           final Function<String, Integer> uriToHostId,
                           boolean binding) {
@@ -449,7 +448,6 @@ public class VanillaAsset implements Asset, Closeable {
             }
         });
     }
-
 
     private <V> V addView0(Class<V> viewType, V view) {
 

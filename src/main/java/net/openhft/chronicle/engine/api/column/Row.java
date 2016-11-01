@@ -15,8 +15,6 @@ public class Row {
     private final List<String> columnNames;
     private Map<String, Object> data = new LinkedHashMap<>();
 
-
-
     /**
      * @param columns all the column names that make up this row
      */

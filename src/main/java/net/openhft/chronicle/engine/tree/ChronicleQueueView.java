@@ -139,7 +139,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         });
     }
 
-
     public MapView<T, M> mapView() {
         final MapView<T, M> mapView = this.mapView;
 
@@ -152,13 +151,11 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
             if (mapView0 != null)
                 return mapView0;
 
-
             this.mapView = new QueueViewAsMapView<T, M>(this, context, asset);
             return this.mapView;
         }
 
     }
-
 
     @SuppressWarnings("WeakerAccess")
     public static WriteMarshallable newSource(long nextIndexRequired,
@@ -367,7 +364,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         throw new UnsupportedOperationException("todo");
     }
 
-
     @Override
     public void registerSubscriber(@NotNull Subscriber<MapEvent<T, M>> subscriber, @NotNull Filter<MapEvent<T, M>> filter, @NotNull Set<RequestContext.Operation> contextOperations) {
         throw new UnsupportedOperationException("todo");
@@ -414,7 +410,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
     public Publisher<M> publisher(@NotNull T topic) {
         throw new UnsupportedOperationException("todo");
     }
-
 
     @Override
     public void registerSubscriber(@NotNull T topic, @NotNull Subscriber<M> subscriber) {
@@ -587,7 +582,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         return excerptAppender.lastIndexAppended();
     }
 
-
     public long set(@NotNull M event) {
         if (isReplicating && !isSource)
             throw new IllegalStateException("You can not publish to a sink used in replication, " +
@@ -674,12 +668,10 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         Closeable.closeQuietly(this);
     }
 
-
     @Override
     public void registerSubscriber(@NotNull Subscriber<MapEvent<T, M>> subscriber) {
         mapView().registerSubscriber(subscriber);
     }
-
 
     public void unregisterSubscriber(Subscriber subscriber) {
 
@@ -856,7 +848,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
             });
 
         }
-
 
         @Nullable
         @Override

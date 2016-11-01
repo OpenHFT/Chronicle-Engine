@@ -53,7 +53,6 @@ public interface QueueView<T, M> extends TopicPublisher<T, M>, KeyedView, Assett
      */
     long publishAndIndex(@NotNull T topic, @NotNull M message);
 
-
     interface Excerpt<T, M> {
         T topic();
 
