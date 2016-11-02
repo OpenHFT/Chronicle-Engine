@@ -67,6 +67,10 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
         wireType(wireType);
     }
 
+    public int remoteIdentifier() {
+        return remoteIdentifier;
+    }
+
     private UberHandler(int localIdentifier,
                         int remoteIdentifier,
                         @NotNull WireType wireType,

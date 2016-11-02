@@ -103,6 +103,18 @@ public class ServerEndpoint implements Closeable {
         final EventLoop eventLoop = assetTree.root().findOrCreateView(EventLoop.class);
         assert eventLoop != null;
 
+/*
+        if (networkStatsListener != null) {
+            if (sc.socket() != null && sc.socket().getRemoteSocketAddress()
+                    instanceof InetSocketAddress)
+                networkStatsListener.onHostPort(
+                        ((InetSocketAddress) sc.socket().getRemoteSocketAddress()).getHostName(),
+                        ((InetSocketAddress) sc.socket().getRemoteSocketAddress()).getPort());
+        }
+*/
+
+
+
         Function<NetworkContext, TcpEventHandler> networkContextTcpEventHandlerFunction = (networkContext) -> {
             final EngineWireNetworkContext nc = (EngineWireNetworkContext) networkContext;
             if (nc.isAcceptor())

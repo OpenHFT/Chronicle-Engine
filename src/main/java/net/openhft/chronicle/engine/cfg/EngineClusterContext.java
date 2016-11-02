@@ -18,12 +18,10 @@
 package net.openhft.chronicle.engine.cfg;
 
 import net.openhft.chronicle.core.annotation.UsedViaReflection;
-import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.core.util.ThrowingFunction;
 import net.openhft.chronicle.engine.HeartbeatHandler;
 import net.openhft.chronicle.engine.api.tree.Asset;
-import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.fs.EngineConnectionManager;
 import net.openhft.chronicle.engine.server.internal.EngineNetworkStatsListener;
 import net.openhft.chronicle.engine.server.internal.EngineWireHandler;
@@ -43,12 +41,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.channels.SocketChannel;
 import java.util.function.Function;
 
 /**
  * @author Rob Austin.
  */
-public class EngineClusterContext extends ClusterContext  {
+public class EngineClusterContext extends ClusterContext {
     private static final Logger LOG = LoggerFactory.getLogger(EngineClusterContext.class);
     Asset assetRoot;
     private byte localIdentifier;
@@ -62,9 +62,37 @@ public class EngineClusterContext extends ClusterContext  {
         super();
     }
 
+    private NetworkStatsListener defaultNetworkStatsListener = new NetworkStatsListener() {
+
+        String host;
+        long port;
+
+        @Override
+        public void onNetworkStats(long writeBps,
+                                   long readBps,
+                                   long socketPollCountPerSecond,
+                                   @NotNull NetworkContext networkContext,
+                                   boolean connectionStatus) {
+
+            LOG.info("writeKBps=" + writeBps / 1000 +
+                    ", readKBps=" + readBps / 1000 +
+                    ", socketPollCountPerSecond=" + socketPollCountPerSecond +
+                    ", host=" + host +
+                    ", port=" + port);
+        }
+
+        @Override
+        public void onHostPort(String hostName, int port) {
+            host = hostName;
+            this.port = port;
+        }
+    };
+
     public ThrowingFunction<NetworkContext, TcpEventHandler, IOException> tcpEventHandlerFactory() {
         return (networkContext) -> {
+
             final EngineWireNetworkContext nc = (EngineWireNetworkContext) networkContext;
+
 
             if (nc.isAcceptor())
                 nc.wireOutPublisher(new VanillaWireOutPublisher(WireType.TEXT));
@@ -89,29 +117,10 @@ public class EngineClusterContext extends ClusterContext  {
                 throw new UnsupportedOperationException("not supported class=" + o.getClass());
             };
 
-            if (nc.networkStatsListener() == null) {
+            if (nc.networkStatsListener() == null)
+                nc.networkStatsListener(defaultNetworkStatsListener);
 
-                nc.networkStatsListener(new NetworkStatsListener() {
-
-                    String host;
-                    long port;
-
-                    @Override
-                    public void onNetworkStats(long writeBps, long readBps, long socketPollCountPerSecond, @NotNull NetworkContext networkContext, boolean connectionStatus) {
-                        LOG.info("writeKBps=" + writeBps / 1000 +
-                                ", readKBps=" + readBps / 1000 +
-                                ", socketPollCountPerSecond=" + socketPollCountPerSecond +
-                                ", host=" + host +
-                                ", port=" + port);
-                    }
-
-                    @Override
-                    public void onHostPort(String hostName, int port) {
-                        host = hostName;
-                        this.port = port;
-                    }
-                });
-            }
+            notifyHostPort(nc.socketChannel(), nc.networkStatsListener());
 
             final Function<EngineWireNetworkContext, TcpHandler> f
                     = x -> new HeaderTcpHandler<>(handler, consumer, x);
@@ -123,6 +132,22 @@ public class EngineClusterContext extends ClusterContext  {
             return handler;
 
         };
+    }
+
+
+    /**
+     * notifies the NetworkStatsListener of the host and port based on the SocketChannel
+     *
+     * @param sc SocketChannel
+     * @param nl NetworkStatsListener
+     */
+    private void notifyHostPort(final SocketChannel sc, final NetworkStatsListener nl) {
+        if (sc != null && sc.socket() != null
+                && sc.socket().getRemoteSocketAddress() instanceof InetSocketAddress) {
+            final InetSocketAddress remoteSocketAddress = (InetSocketAddress) sc.socket()
+                    .getRemoteSocketAddress();
+            nl.onHostPort(remoteSocketAddress.getHostName(), remoteSocketAddress.getPort());
+        }
     }
 
     public Asset assetRoot() {

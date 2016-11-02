@@ -17,12 +17,8 @@
 
 package net.openhft.chronicle.engine.server.internal;
 
-import net.openhft.chronicle.bytes.BytesIn;
-import net.openhft.chronicle.bytes.BytesMarshallable;
-import net.openhft.chronicle.bytes.BytesOut;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.annotation.UsedViaReflection;
-import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
@@ -55,6 +51,10 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
     private Asset rootAsset;
     private MapView<ConnectionDetails, String> hostByConnectionStatus;
     private TcpHandler handler;
+
+    public TcpHandler handler() {
+        return handler;
+    }
 
     public EngineWireNetworkContext(Asset asset) {
         this.rootAsset = asset.root();
@@ -120,8 +120,7 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
         CONNECTED, DISCONNECTED
     }
 
-    public static class ConnectionDetails extends AbstractMarshallable implements
-            BytesMarshallable, Serializable {
+    public static class ConnectionDetails extends AbstractMarshallable implements Serializable {
         int localIdentifier;
         int remoteIdentifier;
 
@@ -141,18 +140,6 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
         @Override
         public String toString() {
             return "localId=" + localIdentifier + ", remoteId=" + remoteIdentifier;
-        }
-
-        @Override
-        public void readMarshallable(BytesIn bytes) throws IORuntimeException {
-            localIdentifier = bytes.readInt();
-            remoteIdentifier = bytes.readInt();
-        }
-
-        @Override
-        public void writeMarshallable(BytesOut bytes) {
-            bytes.writeInt(localIdentifier);
-            bytes.writeInt(remoteIdentifier);
         }
     }
 

@@ -29,6 +29,7 @@ import net.openhft.chronicle.network.NetworkStats;
 import net.openhft.chronicle.network.NetworkStatsListener;
 import net.openhft.chronicle.network.WireNetworkStats;
 import net.openhft.chronicle.network.api.session.SessionDetailsProvider;
+import net.openhft.chronicle.network.cluster.AbstractSubHandler;
 import net.openhft.chronicle.network.cluster.ClusterContext;
 import net.openhft.chronicle.wire.Demarshallable;
 import net.openhft.chronicle.wire.WireIn;
@@ -43,12 +44,11 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
 
     private final Asset asset;
     private final int localIdentifier;
-    private final ThreadLocal<WireNetworkStats> wireNetworkStats;
+    private final WireNetworkStats wireNetworkStats = new WireNetworkStats();
     private QueueView qv;
 
     public EngineNetworkStatsListener(Asset asset, int localIdentifier) {
         this.localIdentifier = localIdentifier;
-        wireNetworkStats = ThreadLocal.withInitial(() -> new WireNetworkStats(localIdentifier));
         this.asset = asset;
     }
 
@@ -77,18 +77,33 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
     }
 
     @Override
-    public void onNetworkStats(long writeBps, long readBps, long socketPollCountPerSecond, @NotNull EngineWireNetworkContext nc, boolean isConnected) {
-        final WireNetworkStats wireNetworkStats = this.wireNetworkStats.get();
+    public void onNetworkStats(long writeBps, long readBps,
+                               long socketPollCountPerSecond,
+                               @NotNull EngineWireNetworkContext nc,
+                               boolean isConnected) {
         wireNetworkStats.writeBps(writeBps);
         wireNetworkStats.readBps(readBps);
         wireNetworkStats.socketPollCountPerSecond(socketPollCountPerSecond);
         wireNetworkStats.timestamp(System.currentTimeMillis());
         wireNetworkStats.isConnected(isConnected);
+
+        if (nc.handler() instanceof AbstractSubHandler) {
+            final int remoteIdentifier = ((AbstractSubHandler) nc.handler()).remoteIdentifier();
+            wireNetworkStats.remoteIdentifier(remoteIdentifier);
+
+        } else if (nc.handler() instanceof UberHandler) {
+            final UberHandler handler = (UberHandler) nc.handler();
+            wireNetworkStats.remoteIdentifier(handler.remoteIdentifier());
+            wireNetworkStats.wireType(handler.wireType());
+        }
+
         final SessionDetailsProvider sessionDetailsProvider = nc.sessionDetails();
         if (sessionDetailsProvider != null) {
             wireNetworkStats.clientId(sessionDetailsProvider.clientId());
             wireNetworkStats.userId(sessionDetailsProvider.userId());
+            wireNetworkStats.wireType(sessionDetailsProvider.wireType());
         }
+        wireNetworkStats.localIdentifier(localIdentifier);
 
         acquireQV().publishAndIndex("", wireNetworkStats);
 
@@ -96,9 +111,8 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
 
     @Override
     public void onHostPort(String hostName, int port) {
-        final WireNetworkStats wireNetworkStats = this.wireNetworkStats.get();
-        wireNetworkStats.host(hostName);
-        wireNetworkStats.port(port);
+        wireNetworkStats.remoteHostName(hostName);
+        wireNetworkStats.remotePort(port);
     }
 
     public static class Factory implements

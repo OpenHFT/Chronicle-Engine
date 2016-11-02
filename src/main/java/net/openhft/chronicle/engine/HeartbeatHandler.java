@@ -136,7 +136,7 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
 
     @Override
     public void onRead(@NotNull WireIn inWire, @NotNull WireOut outWire) {
-        if (!inWire.hasMore())
+        if (inWire.isEmpty())
             return;
         inWire.read(() -> "heartbeat").text();
     }
