@@ -837,7 +837,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         QueueViewAsMapView(final QueueView<K, V> queueView,
                            @NotNull RequestContext context,
                            @NotNull Asset asset) {
-            super(context, asset, new VanillaKeyValueStore<K, V>(context, asset));
+            super(context, asset, new VanillaKeyValueStore<>(context, asset));
             this.queueView = queueView;
 
             queueView.registerTopicSubscriber((topic, message) -> {

@@ -394,7 +394,8 @@ public class VanillaAsset implements Asset, Closeable {
             }
             return Threads.withThreadGroup(findView(ThreadGroup.class), () -> {
                 V leafView = createLeafView(viewType, rc, this);
-
+                if (leafView instanceof MapView && viewType == QueueView.class)
+                    addView(MapView.class, (MapView) leafView);
                 if (leafView != null)
                     return addView(viewType, leafView);
                 V wrappingView = createWrappingView(viewType, rc, this, null);

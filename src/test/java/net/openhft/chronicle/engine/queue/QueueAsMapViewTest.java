@@ -8,6 +8,7 @@ import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
+import net.openhft.chronicle.engine.tree.ChronicleQueueView;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
@@ -119,8 +120,6 @@ public class QueueAsMapViewTest extends ThreadMonitoringTest {
     @Test
     public void testQueueViewAsMapView() throws InterruptedException {
         YamlLogging.setAll(true);
-
-
         String messageType1 = "topic1";
         String messageType2 = "topic2";
 
@@ -131,9 +130,11 @@ public class QueueAsMapViewTest extends ThreadMonitoringTest {
         Jvm.pause(500);
 
         MapView<String, String> map = assetTree.acquireMap(uri, String.class, String.class);
+        Assert.assertTrue(map instanceof ChronicleQueueView);
+
         int i = 0;
         while (map.size() == 0) {
-            if (i++ == 1000)
+            if (i++ == 500)
                 break;
             Thread.sleep(100);
         }
@@ -164,6 +165,7 @@ public class QueueAsMapViewTest extends ThreadMonitoringTest {
                 String.class, (topic, message) -> q.add(topic + ":" + message));
 
         MapView<String, String> map = assetTree.acquireMap(uri, String.class, String.class);
+        Assert.assertTrue(map instanceof ChronicleQueueView);
         map.put("hello", "world");
         map.put("hello2", "world2");
 
