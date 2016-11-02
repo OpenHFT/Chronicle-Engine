@@ -64,7 +64,7 @@ public class  Replication3WayIntIntTest extends ThreadMonitoringTest {
     public static final int NUMBER_OF_TIMES = 10;
 
     static {
-        System.setProperty("ReplicationHandler3", "true");
+        //System.setProperty("ReplicationHandler3", "true");
     }
 
     public ServerEndpoint serverEndpoint1;

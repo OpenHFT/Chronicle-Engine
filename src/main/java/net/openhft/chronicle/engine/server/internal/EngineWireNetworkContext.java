@@ -17,8 +17,12 @@
 
 package net.openhft.chronicle.engine.server.internal;
 
+import net.openhft.chronicle.bytes.BytesIn;
+import net.openhft.chronicle.bytes.BytesMarshallable;
+import net.openhft.chronicle.bytes.BytesOut;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.annotation.UsedViaReflection;
+import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
@@ -34,6 +38,8 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Serializable;
+
 import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
 import static net.openhft.chronicle.engine.server.internal.EngineWireNetworkContext.ConnectionStatus.CONNECTED;
 import static net.openhft.chronicle.engine.server.internal.EngineWireNetworkContext.ConnectionStatus.DISCONNECTED;
@@ -47,7 +53,7 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
     static final Logger LOG = LoggerFactory.getLogger(EngineWireNetworkContext.class);
 
     private Asset rootAsset;
-    private MapView<ConnectionDetails, ConnectionStatus> hostByConnectionStatus;
+    private MapView<ConnectionDetails, String> hostByConnectionStatus;
     private TcpHandler handler;
 
     public EngineWireNetworkContext(Asset asset) {
@@ -61,7 +67,7 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
                 String path = "/proc/connections/cluster/connectivity";
                 RequestContext requestContext = requestContext(path).
                         type(ConnectionDetails.class).
-                        type2(ConnectionStatus.class);
+                        type2(String.class); // todo change to ConnectionStatus but for cMap2 it cant be an enum
                 hostByConnectionStatus = rootAsset.root().acquireAsset(path)
                         .acquireView(MapView.class, requestContext);
             }
@@ -91,14 +97,14 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
             @Override
             public void onConnected(int localIdentifier, int remoteIdentifier) {
                 ConnectionDetails key = new ConnectionDetails(localIdentifier, remoteIdentifier);
-                hostByConnectionStatus.put(key, CONNECTED);
+                hostByConnectionStatus.put(key, CONNECTED.toString());
                 LOG.info(key + ", connectionStatus=" + CONNECTED);
             }
 
             @Override
             public void onDisconnected(int localIdentifier, int remoteIdentifier) {
                 ConnectionDetails key = new ConnectionDetails(localIdentifier, remoteIdentifier);
-                hostByConnectionStatus.put(key, DISCONNECTED);
+                hostByConnectionStatus.put(key, DISCONNECTED.toString());
                 LOG.info(key + ", connectionStatus=" + DISCONNECTED);
             }
         };
@@ -114,7 +120,8 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
         CONNECTED, DISCONNECTED
     }
 
-    public static class ConnectionDetails extends AbstractMarshallable {
+    public static class ConnectionDetails extends AbstractMarshallable implements
+            BytesMarshallable, Serializable {
         int localIdentifier;
         int remoteIdentifier;
 
@@ -134,6 +141,18 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
         @Override
         public String toString() {
             return "localId=" + localIdentifier + ", remoteId=" + remoteIdentifier;
+        }
+
+        @Override
+        public void readMarshallable(BytesIn bytes) throws IORuntimeException {
+            localIdentifier = bytes.readInt();
+            remoteIdentifier = bytes.readInt();
+        }
+
+        @Override
+        public void writeMarshallable(BytesOut bytes) {
+            bytes.writeInt(localIdentifier);
+            bytes.writeInt(remoteIdentifier);
         }
     }
 

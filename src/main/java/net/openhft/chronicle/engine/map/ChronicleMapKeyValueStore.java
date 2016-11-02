@@ -194,51 +194,30 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
                 if (remoteIdentifier == localIdentifier)
                     continue;
 
-                if (Boolean.getBoolean("ReplicationHandler3")) {
 
-                    ConnectionManager connectionManager = engineCluster.findConnectionManager(remoteIdentifier);
-                    if (connectionManager == null) {
-                        Jvm.warn().on(getClass(), "connectionManager==null for remoteIdentifier=" + remoteIdentifier);
-                        engineCluster.findConnectionManager(remoteIdentifier);
-                        continue;
-                    }
-
-                    connectionManager.addListener((nc, isConnected) -> {
-
-                        if (!isConnected)
-                            return;
-
-                        if (nc.isAcceptor())
-                            return;
-
-                        final String csp = context.fullName();
-
-                        final long lastUpdateTime = ((Replica) chronicleMap).lastModificationTime(remoteIdentifier);
-
-                        WireOutPublisher publisher = nc.wireOutPublisher();
-                        publisher.publish(newMapReplicationHandler(lastUpdateTime, keyType, valueType, csp, nc.newCid()));
-                    });
-
+                ConnectionManager connectionManager = engineCluster.findConnectionManager(remoteIdentifier);
+                if (connectionManager == null) {
+                    Jvm.warn().on(getClass(), "connectionManager==null for remoteIdentifier=" + remoteIdentifier);
+                    engineCluster.findConnectionManager(remoteIdentifier);
                     continue;
                 }
 
-                if (remoteIdentifier <= localIdentifier) {
-                    if (LOG.isDebugEnabled())
-                        Jvm.debug().on(getClass(), "skipping : attempting to connect to localIdentifier=" +
-                                localIdentifier + ", remoteIdentifier=" + remoteIdentifier);
-                    continue;
-                }
+                connectionManager.addListener((nc, isConnected) -> {
 
-                if (LOG.isDebugEnabled())
-                    Jvm.debug().on(getClass(), "attempting to connect to " +
-                            "localIdentifier=" + localIdentifier + ", " +
-                            "remoteIdentifier=" + remoteIdentifier);
+                    if (!isConnected)
+                        return;
 
-                final TcpChannelHub tcpChannelHub = hostDetails.acquireTcpChannelHub(asset, eventLoop, context.wireType());
-                final ReplicationHub replicationHub = new ReplicationHub(context, tcpChannelHub,
-                        eventLoop, isClosed, context.wireType());
+                    if (nc.isAcceptor())
+                        return;
 
-                replicationHub.bootstrap(engineReplicator1, localIdentifier, remoteIdentifier);
+                    final String csp = context.fullName();
+
+                    final long lastUpdateTime = ((Replica) chronicleMap).lastModificationTime(remoteIdentifier);
+
+                    WireOutPublisher publisher = nc.wireOutPublisher();
+                    publisher.publish(newMapReplicationHandler(lastUpdateTime, keyType, valueType, csp, nc.newCid()));
+                });
+
 
             } catch (Exception e) {
                 Jvm.warn().on(getClass(), "hostDetails=" + hostDetails, e);

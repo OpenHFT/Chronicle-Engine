@@ -63,7 +63,7 @@ public class MaunualReplication2WayTest {
     public static final String SERVER1 = "192.168.1.66";
 
     static {
-        System.setProperty("ReplicationHandler3", "true");
+        //System.setProperty("ReplicationHandler3", "true");
     }
 
     public ServerEndpoint serverEndpoint1;

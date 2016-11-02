@@ -59,7 +59,7 @@ public class Replication2WayTest extends ThreadMonitoringTest {
     public static final WireType WIRE_TYPE = WireType.TEXT;
 
     static {
-        System.setProperty("ReplicationHandler3", "true");
+        //System.setProperty("ReplicationHandler3", "true");
     }
 
     public ServerEndpoint serverEndpoint1;

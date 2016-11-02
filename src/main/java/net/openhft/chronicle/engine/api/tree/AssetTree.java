@@ -299,7 +299,7 @@ public interface AssetTree extends Closeable {
 
     AssetTreeStats getUsageStats();
 
-    default <T, M> QueueView<T, M> acquireQueue(String uri, Class<T> typeClass, Class<M> messageClass) {
+    default <T, M> QueueView<T, M> acquireQueue(String uri, Class<T> typeClass, Class<M> messageClass, final String cluster) {
 
         final RequestContext requestContext = requestContext(uri);
 
@@ -307,6 +307,20 @@ public interface AssetTree extends Closeable {
             throw new UnsupportedOperationException("Its not possible to set the bootstrap when " +
                     "acquiring a queue");
 
-        return acquireView(requestContext.view("queue").type(typeClass).type2(messageClass));
+        return acquireView(requestContext.view("queue").type(typeClass).type2(messageClass)
+                .cluster(cluster));
+    }
+
+    default <T, M> QueueView<T, M> acquireQueue(String uri, Class<T> typeClass, Class<M>
+            messageClass) {
+
+        final RequestContext requestContext = requestContext(uri);
+
+        if (requestContext.bootstrap() != null)
+            throw new UnsupportedOperationException("Its not possible to set the bootstrap when " +
+                    "acquiring a queue");
+
+        return acquireView(requestContext.view("queue").type(typeClass).type2(messageClass)
+                .cluster(""));
     }
 }
