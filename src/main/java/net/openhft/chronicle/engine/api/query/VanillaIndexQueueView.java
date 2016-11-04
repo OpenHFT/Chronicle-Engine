@@ -37,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -45,6 +46,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static net.openhft.chronicle.wire.Wires.*;
 
@@ -117,13 +119,15 @@ public class VanillaIndexQueueView<V extends Marshallable>
                                 .apply(typeToString.toType(sb));
                         read.marshallable(v);
 
+                        assert v != null;
+
                         final Object k;
                         if (valueToKey != null) {
                             k = valueToKey.apply(v);
                         } else if (v instanceof KeyedMarshallable) {
                             final Bytes bytes = Wires.acquireBytes();
                             ((KeyedMarshallable) v).writeKey(bytes);
-                            k = bytesToKey.computeIfAbsent(bytes, k1 -> k1.copy());
+                            k = bytesToKey.computeIfAbsent(bytes, Bytes::copy);
                         } else
                             continue;
 
@@ -138,8 +142,11 @@ public class VanillaIndexQueueView<V extends Marshallable>
                                     .compute(k, (k1, vOld) -> {
                                         if (vOld == null)
                                             return new IndexedValue<>(deepCopy(v), dc.index());
-                                        else
-                                            return copyTo(v, vOld);
+                                        else {
+                                            copyTo(v, vOld.v());
+                                            vOld.index(dc.index());
+                                            return vOld;
+                                        }
                                     });
                             lastIndexRead = dc.index();
                         }
@@ -164,22 +171,36 @@ public class VanillaIndexQueueView<V extends Marshallable>
     public void registerSubscriber(@NotNull ConsumingSubscriber<IndexedValue<V>> sub,
                                    @NotNull IndexQuery<V> vanillaIndexQuery) {
 
+        final ExcerptTailer tailer = chronicleQueue.createTailer();
         final AtomicBoolean isClosed = new AtomicBoolean();
         activeSubscriptions.put(sub, isClosed);
 
-        final long fromIndex = vanillaIndexQuery.fromIndex() == 0 ? lastIndexRead : vanillaIndexQuery.fromIndex();
+        long fromIndex = vanillaIndexQuery.fromIndex();
+        if (fromIndex == -1) {
+            fromIndex = tailer.index();
+        } else if (fromIndex == 0) {
+            fromIndex = lastIndexRead;
+        } else
+            fromIndex = Math.min(fromIndex, lastIndexRead);
+
+
         final String eventName = vanillaIndexQuery.eventName();
         final Predicate<V> filter = vanillaIndexQuery.filter();
 
         // don't set iterator if the 'fromIndex' has not caught up.
 
-        final Iterator<IndexedValue<V>> iterator =
-                multiMap.computeIfAbsent(eventName, k -> new ConcurrentHashMap<>())
-                        .values().stream()
-                        .filter(i -> i.index() >= fromIndex && filter.test(i.v()))
-                        .iterator();
+        final Iterator<IndexedValue<V>> iterator;
 
-        final ExcerptTailer tailer = chronicleQueue.createTailer();
+
+        final ConcurrentMap<Object, IndexedValue<V>> objectIndexedValueConcurrentMap = multiMap.computeIfAbsent(eventName, k -> new ConcurrentHashMap<>());
+
+        final long fromIndex0 = fromIndex;
+        List<IndexedValue<V>> l = objectIndexedValueConcurrentMap.values().stream()
+                .filter(i -> i.index() < fromIndex0 && filter.test(i.v()))
+                .collect(Collectors.toList());
+
+        iterator = l.iterator();
+
 
         try {
             if (fromIndex != 0)
@@ -254,7 +275,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
                 indexedValue.index(index);
                 indexedValue.v(v);
                 indexedValue.timePublished(System.currentTimeMillis());
-                lastIndexRead = Math.max(lastIndexRead, dc.index());
                 indexedValue.maxIndex(lastIndexRead);
                 return indexedValue;
             }

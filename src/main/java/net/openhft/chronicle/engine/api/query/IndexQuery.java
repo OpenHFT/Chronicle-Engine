@@ -25,6 +25,10 @@ import java.util.function.Predicate;
  * @author Rob Austin.
  */
 public interface IndexQuery<V> extends Marshallable {
+
+    int FROM_END = 0;
+    int FROM_START = -1;
+
     long fromIndex();
 
     Predicate<V> filter();
