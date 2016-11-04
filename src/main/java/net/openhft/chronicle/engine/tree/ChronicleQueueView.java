@@ -276,7 +276,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         final String csp = context.fullName();
 
         if (engineCluster == null) {
-            Jvm.warn().on(getClass(), "no cluster found name=" + context.cluster());
+            Jvm.debug().on(getClass(), "no cluster found name=" + context.cluster());
+            LOG.warn("no cluster found name=" + context.cluster());
             return;
         }
 
