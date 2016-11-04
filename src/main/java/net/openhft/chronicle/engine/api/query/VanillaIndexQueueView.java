@@ -29,9 +29,9 @@ import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ExcerptTailer;
 import net.openhft.chronicle.wire.DocumentContext;
+import net.openhft.chronicle.wire.KeyedMarshallable;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.ValueIn;
-import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -40,11 +40,14 @@ import org.slf4j.LoggerFactory;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+
+import static net.openhft.chronicle.wire.Wires.*;
 
 /**
  * @author Rob Austin.
@@ -56,12 +59,12 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
     private final Function<V, ?> valueToKey;
     private final ChronicleQueue chronicleQueue;
-    private final Map<String, Map<Object, IndexedValue<V>>> multiMap = new ConcurrentHashMap<>();
+    private final Map<String, ConcurrentMap<Object, IndexedValue<V>>> multiMap = new ConcurrentHashMap<>();
     private final Map<Subscriber<IndexedValue<V>>, AtomicBoolean> activeSubscriptions
             = new ConcurrentHashMap<>();
     private final AtomicBoolean isClosed = new AtomicBoolean();
 
-    private final Object lock = new Object();
+    private final Object lastIndexLock = new Object();
     private final ThreadLocal<IndexedValue<V>> indexedValue = ThreadLocal.withInitial(IndexedValue::new);
     private final TypeToString typeToString;
     private volatile long lastIndexRead = 0;
@@ -72,7 +75,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
                                  @NotNull Asset asset,
                                  @NotNull QueueView<?, V> queueView) {
 
-        valueToKey = asset.findView(ValueToKey.class);
+       // valueToKey = asset.findView(ValueToKey.class);
 
         final EventLoop eventLoop = asset.acquireView(EventLoop.class);
         final ChronicleQueueView chronicleQueueView = (ChronicleQueueView) queueView;
@@ -103,26 +106,37 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
                 try {
                     while (dc.wire().bytes().readRemaining() > 0) {
-                        final StringBuilder sb = Wires.acquireStringBuilder();
+                        final StringBuilder sb = acquireStringBuilder();
                         final ValueIn read = dc.wire().read(sb);
 
                         final V v = (V) VanillaObjectCacheFactory.INSTANCE.get()
                                 .apply(typeToString.toType(sb));
                         read.marshallable(v);
 
-                        final Object k = valueToKey.apply(v);
+                        if (valueToKey =null) {
+                            final Object k = valueToKey.apply(v);
+                        } else if (v instanceof KeyedMarshallable){
+                            final Object k = valueToKey.apply((KeyedMarshallablev);
+                        }
+
+
                         messagesReadPerSecond++;
 
                         final String event = sb.toString();
-                        synchronized (lock) {
+                        synchronized (lastIndexLock) {
                             multiMap.computeIfAbsent(event, e -> new ConcurrentHashMap<>())
-                                    .put(k, new IndexedValue<>(v, dc.index()));
+                                    .compute(k, (k1, vOld) -> {
+                                        if (vOld == null)
+                                            return new IndexedValue<>(deepCopy(v), dc.index());
+                                        else
+                                            return copyTo(v, vOld);
+                                    });
                             lastIndexRead = dc.index();
                         }
                     }
 
                 } catch (RuntimeException e) {
-                    Jvm.warn().on(getClass(), Wires.fromSizePrefixedBlobs(dc.wire().bytes(), start - 4), e);
+                    Jvm.warn().on(getClass(), fromSizePrefixedBlobs(dc.wire().bytes(), start - 4), e);
                 }
             }
 
@@ -204,13 +218,13 @@ public class VanillaIndexQueueView<V extends Marshallable>
                 return null;
 
             if (LOG.isDebugEnabled())
-                Jvm.debug().on(getClass(), "processing the following message=" + Wires.fromSizePrefixedBlobs(dc));
+                Jvm.debug().on(getClass(), "processing the following message=" + fromSizePrefixedBlobs(dc));
 
             // we may have just been restated and have not yet caught up
             if (from > dc.index())
                 return null;
 
-            final StringBuilder sb = Wires.acquireStringBuilder();
+            final StringBuilder sb = acquireStringBuilder();
             while (dc.wire().bytes().readRemaining() > 0) {
                 final ValueIn valueIn = dc.wire().read(sb);
                 if (!eventName.contentEquals(sb)) {
