@@ -23,6 +23,7 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.cfg.EngineClusterContext;
 import net.openhft.chronicle.engine.fs.Clusters;
 import net.openhft.chronicle.engine.fs.EngineCluster;
+import net.openhft.chronicle.engine.tree.ChronicleQueueView;
 import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.network.MarshallableFunction;
 import net.openhft.chronicle.network.NetworkStats;
@@ -57,8 +58,12 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
         if (qv != null)
             return qv;
         String path = "/proc/connections/cluster/throughput/" + localIdentifier;
+
         RequestContext requestContext = requestContext(path)
-                .elementType(NetworkStats.class).cluster(clusterName());
+                .elementType(NetworkStats.class);
+
+        if (ChronicleQueueView.isQueueReplicationAvailable())
+            requestContext.cluster(clusterName());
 
         qv = asset.root().acquireAsset(requestContext
                 .fullName()).acquireView(QueueView.class, requestContext);

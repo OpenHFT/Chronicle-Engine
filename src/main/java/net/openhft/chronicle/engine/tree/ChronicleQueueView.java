@@ -210,6 +210,16 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         }
     }
 
+
+    public static boolean isQueueReplicationAvailable() {
+        try {
+            Class.forName("software.chronicle.enterprise.queue.QueueSyncReplicationHandler");
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
+
     private static void deleteFiles(File element) throws IOException {
         if (element.isDirectory()) {
             File[] files = element.listFiles();
