@@ -17,6 +17,8 @@
 
 package net.openhft.chronicle.engine.api.query;
 
+import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.core.threads.InvalidEventHandlerException;
@@ -28,10 +30,7 @@ import net.openhft.chronicle.engine.tree.ChronicleQueueView;
 import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ExcerptTailer;
-import net.openhft.chronicle.wire.DocumentContext;
-import net.openhft.chronicle.wire.KeyedMarshallable;
-import net.openhft.chronicle.wire.Marshallable;
-import net.openhft.chronicle.wire.ValueIn;
+import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -71,11 +70,13 @@ public class VanillaIndexQueueView<V extends Marshallable>
     private long lastSecond = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     private long messagesReadPerSecond = 0;
 
+    public ConcurrentMap<Bytes, BytesStore> bytesToKey = new ConcurrentHashMap<>();
+
     public VanillaIndexQueueView(@NotNull RequestContext context,
                                  @NotNull Asset asset,
                                  @NotNull QueueView<?, V> queueView) {
 
-       // valueToKey = asset.findView(ValueToKey.class);
+        valueToKey = asset.findView(ValueToKey.class);
 
         final EventLoop eventLoop = asset.acquireView(EventLoop.class);
         final ChronicleQueueView chronicleQueueView = (ChronicleQueueView) queueView;
@@ -109,22 +110,31 @@ public class VanillaIndexQueueView<V extends Marshallable>
                         final StringBuilder sb = acquireStringBuilder();
                         final ValueIn read = dc.wire().read(sb);
 
+                        if (sb.length() == 0)
+                            continue;
+
                         final V v = (V) VanillaObjectCacheFactory.INSTANCE.get()
                                 .apply(typeToString.toType(sb));
                         read.marshallable(v);
 
-                        if (valueToKey =null) {
-                            final Object k = valueToKey.apply(v);
-                        } else if (v instanceof KeyedMarshallable){
-                            final Object k = valueToKey.apply((KeyedMarshallablev);
-                        }
+                        final Object k;
+                        if (valueToKey != null) {
+                            k = valueToKey.apply(v);
+                        } else if (v instanceof KeyedMarshallable) {
+                            final Bytes bytes = Wires.acquireBytes();
+                            ((KeyedMarshallable) v).writeKey(bytes);
+                            k = bytesToKey.computeIfAbsent(bytes, k1 -> k1.copy());
+                        } else
+                            continue;
 
+                        if (k == null)
+                            continue;
 
                         messagesReadPerSecond++;
 
-                        final String event = sb.toString();
+                        final String eventName = sb.toString();
                         synchronized (lastIndexLock) {
-                            multiMap.computeIfAbsent(event, e -> new ConcurrentHashMap<>())
+                            multiMap.computeIfAbsent(eventName, e -> new ConcurrentHashMap<>())
                                     .compute(k, (k1, vOld) -> {
                                         if (vOld == null)
                                             return new IndexedValue<>(deepCopy(v), dc.index());
