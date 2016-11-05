@@ -30,6 +30,7 @@ import net.openhft.chronicle.engine.tree.ChronicleQueueView;
 import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ExcerptTailer;
+import net.openhft.chronicle.queue.impl.RollingChronicleQueue;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,6 +69,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
     private final Object lastIndexLock = new Object();
     private final ThreadLocal<IndexedValue<V>> indexedValue = ThreadLocal.withInitial(IndexedValue::new);
     private final TypeToString typeToString;
+    private final Asset asset;
     private volatile long lastIndexRead = 0;
     private long lastSecond = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     private long messagesReadPerSecond = 0;
@@ -79,16 +81,30 @@ public class VanillaIndexQueueView<V extends Marshallable>
                                  @NotNull QueueView<?, V> queueView) {
 
         valueToKey = asset.findView(ValueToKey.class);
-
+        this.asset = asset;
         final EventLoop eventLoop = asset.acquireView(EventLoop.class);
         final ChronicleQueueView chronicleQueueView = (ChronicleQueueView) queueView;
 
         chronicleQueue = chronicleQueueView.chronicleQueue();
         final ExcerptTailer tailer = chronicleQueue.createTailer();
 
+        AtomicBoolean hasMovedToStart = new AtomicBoolean();
+
         typeToString = asset.root().findView(TypeToString.class);
 
         eventLoop.addHandler(() -> {
+
+            // the first time this is run, we move to the start of the current cycle
+            if (!hasMovedToStart.get()) {
+                final RollingChronicleQueue chronicleQueue = (RollingChronicleQueue) this.chronicleQueue;
+                final int cycle = chronicleQueue.cycle();
+                long startOfCurrentCycle = chronicleQueue.rollCycle().toIndex(cycle, 0);
+                final boolean success = tailer.moveToIndex(startOfCurrentCycle);
+                hasMovedToStart.set(success);
+                if (!success)
+                    return false;
+            }
+
 
             long currentSecond = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
 
@@ -105,6 +121,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
                 if (!dc.isPresent())
                     return false;
+
                 long start = dc.wire().bytes().readPosition();
 
                 try {
@@ -172,17 +189,58 @@ public class VanillaIndexQueueView<V extends Marshallable>
                                    @NotNull IndexQuery<V> vanillaIndexQuery) {
 
         final ExcerptTailer tailer = chronicleQueue.createTailer();
+        final long start = tailer.index();
+        final long endIndex = tailer.toEnd().index();
+
+        long fromIndex0 = vanillaIndexQuery.fromIndex();
+        if (fromIndex0 == -1) {
+
+            final RollingChronicleQueue chronicleQueue = (RollingChronicleQueue) this.chronicleQueue;
+            final int cycle = chronicleQueue.cycle();
+
+            fromIndex0 = chronicleQueue.rollCycle().toIndex(cycle, 0);
+
+        } else if (fromIndex0 == 0) {
+            fromIndex0 = endIndex;
+        }
+
+        fromIndex0 = Math.min(fromIndex0,endIndex);
+        fromIndex0 = Math.max(fromIndex0,start);
+
+        final long fromIndex = fromIndex0;
+
+        if (fromIndex <= endIndex) {
+            registerSubscriber(sub, vanillaIndexQuery, tailer, fromIndex);
+            return;
+        }
+
+        // the method below ensures that all the data is loaded up-to the the current tail, as
+        // the user has asked for an index that we have not yet loaded
+        ensureAllDataIsLoadedBeforeRegistingSubsribe(sub, vanillaIndexQuery, tailer, endIndex, fromIndex);
+    }
+
+    private void ensureAllDataIsLoadedBeforeRegistingSubsribe(@NotNull ConsumingSubscriber<IndexedValue<V>> sub, @NotNull IndexQuery<V> vanillaIndexQuery, ExcerptTailer tailer, long endIndex, long fromIndex) {
+        final EventLoop eventLoop = asset.root().getView(EventLoop.class);
+        eventLoop.addHandler(() -> endOfTailCheckedRegisterSubscriber(sub, vanillaIndexQuery, tailer, endIndex, fromIndex));
+    }
+
+    /**
+     * waits till the queue is read up-to the current tail index before proceeding
+     */
+    private boolean endOfTailCheckedRegisterSubscriber(@NotNull ConsumingSubscriber<IndexedValue<V>> sub,
+                                                       @NotNull IndexQuery<V> vanillaIndexQuery,
+                                                       @NotNull ExcerptTailer tailer,
+                                                       long endIndex, long fromIndex) throws InvalidEventHandlerException {
+        if (lastIndexRead > endIndex)
+            return false;
+
+        registerSubscriber(sub, vanillaIndexQuery, tailer, fromIndex);
+        throw new InvalidEventHandlerException();
+    }
+
+    private void registerSubscriber(@NotNull ConsumingSubscriber<IndexedValue<V>> sub, @NotNull IndexQuery<V> vanillaIndexQuery, ExcerptTailer tailer, long fromIndex) {
         final AtomicBoolean isClosed = new AtomicBoolean();
         activeSubscriptions.put(sub, isClosed);
-
-        long fromIndex = vanillaIndexQuery.fromIndex();
-        if (fromIndex == -1) {
-            fromIndex = tailer.index();
-        } else if (fromIndex == 0) {
-            fromIndex = lastIndexRead;
-        } else
-            fromIndex = Math.min(fromIndex, lastIndexRead);
-
 
         final String eventName = vanillaIndexQuery.eventName();
         final Predicate<V> filter = vanillaIndexQuery.filter();

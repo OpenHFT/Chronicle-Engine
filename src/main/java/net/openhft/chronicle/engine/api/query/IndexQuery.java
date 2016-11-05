@@ -26,7 +26,16 @@ import java.util.function.Predicate;
  */
 public interface IndexQuery<V> extends Marshallable {
 
+    /**
+     * send the snapshot that is collected from all the data in the current roll cycle
+     * if you have just restarted, no data will be return until internally all the data in the
+     * current roll cycle has been read and added to the internal map
+     */
     int FROM_END = 0;
+
+    /**
+     * replay data from the start of the current roll cycle
+     */
     int FROM_START = -1;
 
     long fromIndex();
