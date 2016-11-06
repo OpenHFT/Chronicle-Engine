@@ -189,8 +189,9 @@ public class VanillaIndexQueueView<V extends Marshallable>
                                    @NotNull IndexQuery<V> vanillaIndexQuery) {
 
         final ExcerptTailer tailer = chronicleQueue.createTailer();
-        final long start = tailer.index();
-        final long endIndex = tailer.toEnd().index();
+        final long start = tailer.toStart().index();
+        final ExcerptTailer excerptTailer = tailer.toEnd();
+        final long endIndex = excerptTailer.index();
 
         long fromIndex0 = vanillaIndexQuery.fromIndex();
         if (fromIndex0 == -1) {
@@ -208,6 +209,9 @@ public class VanillaIndexQueueView<V extends Marshallable>
         fromIndex0 = Math.max(fromIndex0, start);
 
         final long fromIndex = fromIndex0;
+
+        boolean success = tailer.moveToIndex(fromIndex);
+        assert success;
 
         if (fromIndex <= endIndex) {
             registerSubscriber(sub, vanillaIndexQuery, tailer, fromIndex);
@@ -261,9 +265,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
 
         try {
-            if (fromIndex != 0)
-                if (!tailer.moveToIndex(fromIndex))
-                    throw new IllegalStateException("Failed to move to index " + Long.toHexString(fromIndex));
             final Supplier<Marshallable> supplier = excerptConsumer(vanillaIndexQuery,
                     tailer, iterator, fromIndex);
             sub.addSupplier(supplier);
