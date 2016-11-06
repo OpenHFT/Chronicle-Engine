@@ -204,8 +204,8 @@ public class VanillaIndexQueueView<V extends Marshallable>
             fromIndex0 = endIndex;
         }
 
-        fromIndex0 = Math.min(fromIndex0,endIndex);
-        fromIndex0 = Math.max(fromIndex0,start);
+        fromIndex0 = Math.min(fromIndex0, endIndex);
+        fromIndex0 = Math.max(fromIndex0, start);
 
         final long fromIndex = fromIndex0;
 
@@ -333,7 +333,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
                 indexedValue.index(index);
                 indexedValue.v(v);
                 indexedValue.timePublished(System.currentTimeMillis());
-                indexedValue.maxIndex(lastIndexRead);
+                indexedValue.maxIndex(Math.max(dc.index(), lastIndexRead));
                 return indexedValue;
             }
         }
