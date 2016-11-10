@@ -3,6 +3,7 @@ package net.openhft.chronicle.engine.net.openhft.chronicle.engine.api;
 import net.openhft.chronicle.engine.api.column.ColumnView;
 import net.openhft.chronicle.engine.api.column.MapColumnView;
 import net.openhft.chronicle.engine.api.column.Row;
+import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
@@ -27,6 +28,7 @@ import java.util.Iterator;
  */
 @RunWith(value = Parameterized.class)
 public class TestColumnView {
+
 
     @NotNull
     @Rule
@@ -66,7 +68,6 @@ public class TestColumnView {
 
     @Test
     public void test() {
-
         YamlLogging.setAll(true);
         assetTree.acquireMap("/my/data", String.class, String.class).put("hello", "world");
 
@@ -77,8 +78,28 @@ public class TestColumnView {
         final ArrayList<Row> dataCollector = new ArrayList<>();
         iterator.forEachRemaining(dataCollector::add);
         Assert.assertEquals(1, dataCollector.size());
-
     }
 
+
+    @Test
+    public void test2ChunksEachChunk300Entries() {
+
+        final int size = 600;
+
+        YamlLogging.setAll(true);
+        MapView<String, String> map = assetTree.acquireMap("/my/data", String.class, String.class);
+        for (int i = 0; i < size; i++) {
+            map.put("hello" + i, "world");
+        }
+
+
+        final Asset asset = assetTree.acquireAsset("/my/data");
+        final MapColumnView columnView = asset.acquireView(MapColumnView.class);
+        final Iterator<? extends Row> iterator = columnView.iterator(new ColumnView.SortedFilter());
+
+        final ArrayList<Row> dataCollector = new ArrayList<>();
+        iterator.forEachRemaining(dataCollector::add);
+        Assert.assertEquals(size, dataCollector.size());
+    }
 
 }
