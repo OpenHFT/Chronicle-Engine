@@ -22,6 +22,7 @@ import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.column.ColumnView;
+import net.openhft.chronicle.engine.api.column.ColumnViewIterator;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.query.IndexQueueView;
@@ -600,11 +601,6 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
     @Override
     public <O> O getObject(long cid) {
         return (O) cidToObject.get(cid);
-    }
-
-    @Override
-    public void removeObject(long cid) {
-        cidToObject.remove(cid);
     }
 
     @Override
