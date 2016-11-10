@@ -120,6 +120,7 @@ public class RequestContext implements Cloneable {
 
     private int throttlePeriodMs = 0;
     private boolean dontPersist;
+    private long token;
 
     private RequestContext() {
     }
@@ -242,6 +243,8 @@ public class RequestContext implements Cloneable {
         parser.register(() -> "entries", (s, v, $) -> v.int64(this, (o, x) -> o.entries = x));
         parser.register(() -> "averageValueSize", (s, v, $) -> v.int64(this, (o, x) -> o.averageValueSize = x));
         parser.register(() -> "dontPersist", (s, v, $) -> v.bool(this, (o, x) -> o.dontPersist = x));
+        parser.register(() -> "token", (s, v, $) -> v.int64(this, (o, x) -> o.token =
+                x));
         return parser;
     }
 
@@ -587,6 +590,15 @@ public class RequestContext implements Cloneable {
 
     public RequestContext dontPersist(boolean dontPersist) {
         this.dontPersist = dontPersist;
+        return this;
+    }
+
+    public long token() {
+        return token;
+    }
+
+    public RequestContext token(long token) {
+        this.token = token;
         return this;
     }
 

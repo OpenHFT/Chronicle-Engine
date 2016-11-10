@@ -2,7 +2,7 @@ package net.openhft.chronicle.engine.api.column;
 
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
-import net.openhft.chronicle.engine.collection.ClientWiredStatelessRowIterator;
+import net.openhft.chronicle.engine.collection.RemoteColumnViewRowIterator;
 import net.openhft.chronicle.engine.map.ObjectSubscription;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
 import net.openhft.chronicle.network.connection.CoreFields;
@@ -14,7 +14,6 @@ import net.openhft.chronicle.wire.WireKey;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -65,24 +64,24 @@ public class RemoteColumnView extends AbstractStatelessClient implements ColumnV
     }
 
 
-    private final Function<ValueIn, ClientWiredStatelessRowIterator> readIteratorProxie = v -> {
+    private final Function<ValueIn, RemoteColumnViewRowIterator> readIteratorProxie = v -> {
         final WireIn wireIn = v.wireIn();
 
         return wireIn.read("set-proxy").applyToMarshallable(wire ->
-                new ClientWiredStatelessRowIterator(
-                        hub,
+                new RemoteColumnViewRowIterator(
+                    hub,
                         wire.read(CoreFields.csp).text(),
                         wire.read(CoreFields.cid).int64()));
 
     };
 
     @Override
-    public Iterator<? extends Row> iterator(@NotNull SortedFilter sortedFilter) {
+    public ClosableIterator<? extends Row> iterator(@NotNull SortedFilter sortedFilter) {
 
-        return (ClientWiredStatelessRowIterator) proxyReturnWireConsumerInOut(
+        return (RemoteColumnViewRowIterator) proxyReturnWireConsumerInOut(
                 iterator,
                 CoreFields.reply,
-                valueOut -> valueOut.object(sortedFilter),
+                valueOut -> valueOut.marshallable(sortedFilter),
                 readIteratorProxie);
     }
 

@@ -11,6 +11,7 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 
 import static net.openhft.chronicle.engine.api.column.RemoteColumnView.EventId.*;
@@ -22,6 +23,7 @@ import static net.openhft.chronicle.network.connection.CoreFields.reply;
 class ColumnViewHandler extends AbstractHandler {
 
     private final CspManager cspManager;
+    AtomicLong nextToken = new AtomicLong();
 
     ColumnViewHandler(CspManager cspManager) {
         this.cspManager = cspManager;
@@ -95,12 +97,12 @@ class ColumnViewHandler extends AbstractHandler {
                     }
 
                     if (iterator.contentEquals(eventName)) {
-                        valueIn.marshallable(wire -> {
-                            wire.read(iterator.params()[0]).object(sortedFilter, ColumnView.SortedFilter.class);
-                            final long cid = cspManager.createProxy("ColumnViewIterator");
-                            final Iterator<? extends Row> iterator = columnView.iterator(sortedFilter);
-                            cspManager.storeObject(cid, iterator);
-                        });
+                        valueIn.marshallable(sortedFilter);
+                        long token = nextToken.incrementAndGet();
+                        final long cid = cspManager.createProxy("ColumnViewIterator", token);
+                        final Iterator<? extends Row> iterator = columnView.iterator(sortedFilter);
+                        cspManager.storeObject(cid, iterator);
+                        //});
                         return;
                     }
 

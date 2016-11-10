@@ -573,7 +573,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
         super.close();
     }
 
-    private final AtomicLong nextCid = new AtomicLong();
+    private final AtomicLong nextCid = new AtomicLong(1);
 
     /**
      * create a new cid if one does not already exist for this csp
@@ -582,7 +582,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
      * @return the cid for this csp
      */
     @Override
-    public long createCid(@NotNull CharSequence csp) {
+    public long acquireCid(@NotNull CharSequence csp) {
         final long newCid = nextCid.incrementAndGet();
         String cspStr = csp.toString();
         final Long aLong = cspToCid.putIfAbsent(cspStr, newCid);
@@ -594,15 +594,12 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
         return newCid;
     }
 
+
     @Override
     public void storeObject(long cid, Object object) {
         cidToObject.put(cid, object);
     }
 
-    @Override
-    public <O> O getObject(long cid) {
-        return (O) cidToObject.get(cid);
-    }
 
     @Override
     public void removeCid(long cid) {
@@ -616,18 +613,8 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
 
     @Override
     public long createProxy(final String type) {
-        cspBuff.setLength(0);
-        cspBuff.append(requestContext.fullName());
-        cspBuff.append("?");
-        cspBuff.append("view=").append(type);
-
-        final Class keyType = requestContext.keyType();
-        if (keyType != null)
-            cspBuff.append("&keyType=").append(keyType.getName());
-        final Class valueType = requestContext.valueType();
-        if (valueType != null)
-            cspBuff.append("&valueType=").append(valueType.getName());
-        final long cid = createCid(cspBuff);
+        createProxy0(type, cspBuff);
+        final long cid = acquireCid(cspBuff);
         outWire.writeEventName(reply).typePrefix("set-proxy")
                 .marshallable(w -> {
                     w.writeEventName(CoreFields.csp).text(cspBuff);
@@ -635,6 +622,36 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                 });
 
         return cid;
+    }
+
+    @Override
+    public long createProxy(String type, long token) {
+
+        createProxy0(type, cspBuff);
+        cspBuff.append("&token=" + token);
+
+        final long cid = acquireCid(cspBuff);
+        outWire.writeEventName(reply).typePrefix("set-proxy")
+                .marshallable(w -> {
+                    w.writeEventName(CoreFields.csp).text(cspBuff);
+                    w.writeEventName(CoreFields.cid).int64(cid);
+                });
+
+        return cid;
+    }
+
+    private void createProxy0(String type, final StringBuilder cspBuff) {
+        this.cspBuff.setLength(0);
+        this.cspBuff.append(requestContext.fullName());
+        this.cspBuff.append("?");
+        this.cspBuff.append("view=").append(type);
+
+        final Class keyType = requestContext.keyType();
+        if (keyType != null)
+            this.cspBuff.append("&keyType=").append(keyType.getName());
+        final Class valueType = requestContext.valueType();
+        if (valueType != null)
+            this.cspBuff.append("&valueType=").append(valueType.getName());
     }
 
 

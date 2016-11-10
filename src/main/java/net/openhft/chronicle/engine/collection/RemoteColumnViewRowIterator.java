@@ -17,7 +17,7 @@
 
 package net.openhft.chronicle.engine.collection;
 
-import net.openhft.chronicle.core.io.Closeable;
+import net.openhft.chronicle.engine.api.column.ClosableIterator;
 import net.openhft.chronicle.engine.api.column.Row;
 import net.openhft.chronicle.engine.server.internal.ColumnViewIteratorHandler.EventId;
 import net.openhft.chronicle.network.connection.AbstractStatelessClient;
@@ -30,17 +30,19 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-public class ClientWiredStatelessRowIterator extends
-        AbstractStatelessClient<CollectionWireHandler.EventId> implements Iterator<Row>, Closeable {
+public class RemoteColumnViewRowIterator extends
+        AbstractStatelessClient<CollectionWireHandler.EventId> implements ClosableIterator<Row> {
 
     private static final int ITTERATOR_PAGE_SIZE = 300;
     private Iterator<Row> iterator;
     private final WriteValue pageSize = valueOut -> valueOut.int32(ITTERATOR_PAGE_SIZE);
+    private AtomicBoolean isClosed = new AtomicBoolean();
 
-    public ClientWiredStatelessRowIterator(@NotNull TcpChannelHub hub,
-                                           @NotNull String csp,
-                                           long cid) {
+    public RemoteColumnViewRowIterator(@NotNull TcpChannelHub hub,
+                                       @NotNull String csp,
+                                       long cid) {
         super(hub, cid, csp);
     }
 
@@ -78,8 +80,13 @@ public class ClientWiredStatelessRowIterator extends
 
     @Override
     public void close() {
+        isClosed.set(true);
         proxyReturnVoid(EventId.close);
-        super.close();
+    }
+
+    @Override
+    public boolean isClosed() {
+        return isClosed.get();
     }
 
     @Override

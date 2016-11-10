@@ -5,15 +5,15 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Rob Austin.
  */
-public interface CspManager {
+interface CspManager {
 
-    long createCid(@NotNull CharSequence csp);
+    long acquireCid(@NotNull CharSequence csp);
 
     void storeObject(long cid, Object object);
 
-    <O> O getObject(long cid);
-
     void removeCid(long cid);
 
-    long createProxy(String eventName);
+    long createProxy(String type);
+
+    long createProxy(String type, long token);
 }

@@ -2,7 +2,6 @@ package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.column.Row;
-import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
@@ -23,15 +22,16 @@ public class ColumnViewIteratorHandler extends AbstractHandler {
 
     private final CspManager cspManager;
     private Iterator<Row> iterator;
+    private long cid;
 
-    public ColumnViewIteratorHandler(CspManager cspManager) {
+    ColumnViewIteratorHandler(CspManager cspManager) {
         this.cspManager = cspManager;
     }
 
     private final StringBuilder eventName = new StringBuilder();
 
-
     public void process(WireIn in, WireOut out, long tid, Iterator<Row> iterator, long cid) {
+
 
         setOutWire(out);
 
@@ -48,9 +48,8 @@ public class ColumnViewIteratorHandler extends AbstractHandler {
     }
 
 
-    private long cid;
     private long tid;
-    private RequestContext requestContext;
+
 
     @Nullable
     private WireIn inWire = null;

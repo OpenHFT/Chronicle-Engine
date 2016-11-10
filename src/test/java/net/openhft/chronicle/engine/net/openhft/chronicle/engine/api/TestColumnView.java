@@ -1,6 +1,8 @@
 package net.openhft.chronicle.engine.net.openhft.chronicle.engine.api;
 
-import net.openhft.chronicle.engine.api.column.ColumnView;
+import net.openhft.chronicle.engine.api.column.ClosableIterator;
+import net.openhft.chronicle.engine.api.column.ColumnViewInternal;
+import net.openhft.chronicle.engine.api.column.ColumnViewInternal.SortedFilter;
 import net.openhft.chronicle.engine.api.column.MapColumnView;
 import net.openhft.chronicle.engine.api.column.Row;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -42,7 +44,7 @@ public class TestColumnView {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Boolean[][]{
-                {false}, {true}
+                {true}, {true}
         });
     }
 
@@ -73,7 +75,7 @@ public class TestColumnView {
 
         final Asset asset = assetTree.acquireAsset("/my/data");
         final MapColumnView columnView = asset.acquireView(MapColumnView.class);
-        final Iterator<? extends Row> iterator = columnView.iterator(new ColumnView.SortedFilter());
+        final Iterator<? extends Row> iterator = columnView.iterator(new SortedFilter());
 
         final ArrayList<Row> dataCollector = new ArrayList<>();
         iterator.forEachRemaining(dataCollector::add);
@@ -82,7 +84,7 @@ public class TestColumnView {
 
 
     @Test
-    public void test2ChunksEachChunk300Entries() {
+    public void testColumnMapView2ChunksEachChunk300Entries() {
 
         final int size = 600;
 
@@ -95,11 +97,99 @@ public class TestColumnView {
 
         final Asset asset = assetTree.acquireAsset("/my/data");
         final MapColumnView columnView = asset.acquireView(MapColumnView.class);
-        final Iterator<? extends Row> iterator = columnView.iterator(new ColumnView.SortedFilter());
+        final Iterator<? extends Row> iterator = columnView.iterator(new SortedFilter());
 
         final ArrayList<Row> dataCollector = new ArrayList<>();
         iterator.forEachRemaining(dataCollector::add);
         Assert.assertEquals(size, dataCollector.size());
+    }
+
+
+    @Test
+    public void testFilteredRequestColumnView() {
+
+        final int size = 600;
+
+        YamlLogging.setAll(true);
+        MapView<String, String> map = assetTree.acquireMap("/my/data", String.class, String.class);
+        for (int i = 0; i < size; i++) {
+            map.put("hello" + i, "world");
+        }
+
+        final Asset asset = assetTree.acquireAsset("/my/data");
+        final MapColumnView columnView = asset.acquireView(MapColumnView.class);
+        SortedFilter sortedFilter = new SortedFilter();
+        sortedFilter.marshableFilters.add(new ColumnViewInternal.MarshableFilter("key", "hello0"));
+
+        final Iterator<? extends Row> iterator = columnView.iterator(sortedFilter);
+
+        final ArrayList<Row> dataCollector = new ArrayList<>();
+        iterator.forEachRemaining(dataCollector::add);
+        Assert.assertEquals(1, dataCollector.size());
+    }
+
+    @Test
+    public void testSortByKeyForColumnMapView() {
+
+        final int size = 600;
+
+        YamlLogging.setAll(true);
+        MapView<Integer, String> map = assetTree.acquireMap("/my/data", Integer.class, String.class);
+        for (int i = 0; i < size; i++) {
+            map.put(i, "world");
+        }
+
+        final Asset asset = assetTree.acquireAsset("/my/data");
+        final MapColumnView columnView = asset.acquireView(MapColumnView.class);
+        SortedFilter sortedFilter = new SortedFilter();
+        sortedFilter.marshableOrderBy.add(new ColumnViewInternal.MarshableOrderBy("key"));
+
+        final Iterator<? extends Row> iterator = columnView.iterator(sortedFilter);
+
+
+        for (int i = 0; i < size; i++) {
+            Assert.assertTrue(iterator.hasNext());
+            Row row = iterator.next();
+            Assert.assertEquals(i, row.get(0));
+            Assert.assertEquals("world", row.get(1));
+        }
+
+    }
+
+
+    @Test
+    public void testSortByKeyForColumnMapViewWithAnotherIteratorSentFirst() {
+
+        final int size = 600;
+
+        YamlLogging.setAll(true);
+        MapView<Integer, String> map = assetTree.acquireMap("/my/data", Integer.class, String.class);
+        for (int i = 0; i < size; i++) {
+            map.put(i, "world");
+        }
+
+        final Asset asset = assetTree.acquireAsset("/my/data");
+        final MapColumnView columnView = asset.acquireView(MapColumnView.class);
+        {
+            try (final ClosableIterator<? extends Row> iterator = columnView.iterator(new SortedFilter())) {
+
+            }
+
+        }
+
+        final SortedFilter sortedFilter = new SortedFilter();
+        sortedFilter.marshableOrderBy.add(new ColumnViewInternal.MarshableOrderBy("key"));
+
+        try (final ClosableIterator<? extends Row> iterator = columnView.iterator(sortedFilter)) {
+            for (int i = 0; i < size; i++) {
+                Assert.assertTrue(iterator.hasNext());
+                Row row = iterator.next();
+                Assert.assertEquals(i, row.get(0));
+                Assert.assertEquals("world", row.get(1));
+            }
+        }
+
+        System.out.println("finished");
     }
 
 }

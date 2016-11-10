@@ -5,7 +5,6 @@ import net.openhft.chronicle.wire.AbstractMarshallable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -28,6 +27,11 @@ public interface ColumnViewInternal {
         public final String column;
         public final boolean isAscending;
 
+        public MarshableOrderBy(String column) {
+            this.column = column;
+            this.isAscending = false;
+        }
+
         public MarshableOrderBy(String column, boolean isAscending) {
             this.column = column;
             this.isAscending = isAscending;
@@ -36,8 +40,8 @@ public interface ColumnViewInternal {
 
     class SortedFilter extends AbstractMarshallable {
         public long fromIndex;
-        public final List<MarshableOrderBy> marshableOrderBy = new ArrayList<>();
-        public final List<MarshableFilter> marshableFilters = new ArrayList<>();
+        public List<MarshableOrderBy> marshableOrderBy = new ArrayList<>();
+        public List<MarshableFilter> marshableFilters = new ArrayList<>();
     }
 
     List<Column> columns();
@@ -63,7 +67,7 @@ public interface ColumnViewInternal {
      */
     void registerChangeListener(@NotNull Runnable r);
 
-    Iterator<? extends Row> iterator(@NotNull SortedFilter sortedFilter);
+    ClosableIterator<? extends Row> iterator(@NotNull SortedFilter sortedFilter);
 
     boolean canDeleteRows();
 
