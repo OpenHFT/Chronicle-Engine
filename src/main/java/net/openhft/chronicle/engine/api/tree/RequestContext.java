@@ -252,7 +252,7 @@ public class RequestContext implements Cloneable {
             viewType(clazz);
 
         } catch (ClassNotFoundException iae) {
-            throw new IllegalArgumentException("Unknown view name:" + viewName);
+            throw new IllegalArgumentException("Unknown view name=" + viewName);
         }
         return this;
     }

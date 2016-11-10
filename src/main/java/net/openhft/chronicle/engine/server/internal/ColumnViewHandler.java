@@ -2,21 +2,15 @@ package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.column.ColumnView;
-import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.api.column.ColumnViewInternal;
+import net.openhft.chronicle.engine.api.column.Row;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.*;
 import java.util.function.BiConsumer;
 
 import static net.openhft.chronicle.engine.api.column.RemoteColumnView.EventId.*;
@@ -29,22 +23,12 @@ class ColumnViewHandler extends AbstractHandler {
 
     private final CspManager cspManager;
 
-    public ColumnViewHandler(CspManager cspManager) {
+    ColumnViewHandler(CspManager cspManager) {
         this.cspManager = cspManager;
     }
 
-    private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
     private final StringBuilder eventName = new StringBuilder();
-    private final StringBuilder cpsBuff = new StringBuilder();
-    private ColumnView columnView;
-
-    @NotNull
-    private final Map<Long, String> cidToCsp = new HashMap<>();
-    @NotNull
-    private final Map<String, Long> cspToCid = new HashMap<>();
-    private final AtomicLong cid = new AtomicLong();
-
-    private RequestContext requestContext;
+    private ColumnViewInternal columnView;
 
     @Nullable
     private WireIn inWire = null;
@@ -113,9 +97,9 @@ class ColumnViewHandler extends AbstractHandler {
                     if (iterator.contentEquals(eventName)) {
                         valueIn.marshallable(wire -> {
                             wire.read(iterator.params()[0]).object(sortedFilter, ColumnView.SortedFilter.class);
-                            final long cid = cspManager.createProxy(eventName.toString());
-                            cspManager.storeObject(cid, columnView.iterator(sortedFilter));
-                            outWire.writeEventName(reply).int32(cid);
+                            final long cid = cspManager.createProxy("ColumnViewIterator");
+                            final Iterator<? extends Row> iterator = columnView.iterator(sortedFilter);
+                            cspManager.storeObject(cid, iterator);
                         });
                         return;
                     }
@@ -130,7 +114,7 @@ class ColumnViewHandler extends AbstractHandler {
     };
 
 
-    public void process(WireIn in, WireOut out, ColumnView view, long tid) {
+    public void process(WireIn in, WireOut out, ColumnViewInternal view, long tid) {
 
         setOutWire(out);
 

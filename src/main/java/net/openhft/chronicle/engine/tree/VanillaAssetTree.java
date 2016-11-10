@@ -20,6 +20,8 @@ package net.openhft.chronicle.engine.tree;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.threads.EventLoop;
+import net.openhft.chronicle.engine.api.column.ColumnViewInternal.SortedFilter;
+import net.openhft.chronicle.engine.api.column.ColumnViewIterator;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.AssetTreeStats;
@@ -56,7 +58,9 @@ public class VanillaAssetTree implements AssetTree {
                 KeyFunctionPair.class,
                 KeyValueFunctionTuple.class,
                 KeyValuesTuple.class,
-                KeyValuePair.class);
+                KeyValuePair.class,
+                SortedFilter.class,
+                ColumnViewIterator.class);
     }
 
     @NotNull

@@ -26,6 +26,7 @@ import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.column.ColumnView;
 import net.openhft.chronicle.engine.api.column.MapColumnView;
 import net.openhft.chronicle.engine.api.column.QueueColumnView;
+import net.openhft.chronicle.engine.api.column.RemoteColumnView;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
@@ -150,6 +151,11 @@ public class VanillaAsset implements Asset, Closeable {
         addLeafRule(ObjectSubscription.class, LAST + " Remote", RemoteKVSSubscription::new);
     }
 
+    public void configColumnViewRemote() {
+        addLeafRule(MapColumnView.class, LAST + " Remote", RemoteColumnView::new);
+        addLeafRule(QueueColumnView.class, LAST + " Remote", RemoteColumnView::new);
+    }
+
     void configQueueCommon() {
         addWrappingRule(Reference.class, LAST + "QueueReference",
                 QueueReference::new, QueueView.class);
@@ -250,6 +256,7 @@ public class VanillaAsset implements Asset, Closeable {
 
     }
 
+
     public void forRemoteAccess(@NotNull String[] hostPortDescriptions,
                                 @NotNull WireType wire,
                                 @NotNull VanillaSessionDetails sessionDetails,
@@ -257,6 +264,7 @@ public class VanillaAsset implements Asset, Closeable {
 
         standardStack(true, false);
         configMapRemote();
+        configColumnViewRemote();
 
         VanillaAsset queue = (VanillaAsset) acquireAsset("queue");
         queue.configQueueRemote();

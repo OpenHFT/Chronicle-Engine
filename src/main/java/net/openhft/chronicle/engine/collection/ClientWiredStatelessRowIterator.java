@@ -26,7 +26,7 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WriteValue;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -35,34 +35,31 @@ public class ClientWiredStatelessRowIterator extends
         AbstractStatelessClient<CollectionWireHandler.EventId> implements Iterator<Row>, Closeable {
 
     private static final int ITTERATOR_PAGE_SIZE = 300;
-    private static final ArrayList<Row> cache = new ArrayList<>();
-    private final Iterator<Row> iterator;
+    private Iterator<Row> iterator;
     private final WriteValue pageSize = valueOut -> valueOut.int32(ITTERATOR_PAGE_SIZE);
 
     public ClientWiredStatelessRowIterator(@NotNull TcpChannelHub hub,
                                            @NotNull String csp,
                                            long cid) {
         super(hub, cid, csp);
-        iterator = cache.iterator();
     }
 
     @Override
-    public boolean hasNext() {
+    public synchronized boolean hasNext() {
 
-        if (iterator.hasNext())
+        if (iterator != null && iterator.hasNext())
             return true;
 
-        loadMoreDataIntoCache();
-
+        iterator = nextIterator();
         return iterator.hasNext();
     }
 
     @Override
-    public Row next() {
-        if (iterator.hasNext())
+    public synchronized Row next() {
+        if (iterator != null && iterator.hasNext())
             return iterator.next();
 
-        loadMoreDataIntoCache();
+        iterator = nextIterator();
 
         if (!iterator.hasNext())
             throw new NoSuchElementException();
@@ -71,13 +68,12 @@ public class ClientWiredStatelessRowIterator extends
 
     }
 
-    private void loadMoreDataIntoCache() {
-        final List<Row> rows = proxyReturnWireConsumerInOut(
-                EventId.nextChunk,
+    private Iterator<Row> nextIterator() {
+        return this.<Collection<Row>>proxyReturnWireConsumerInOut(
+                EventId.next,
                 CoreFields.reply,
                 pageSize,
-                f -> f.object(List.class));
-        cache.addAll(rows);
+                f -> f.object(List.class)).iterator();
     }
 
     @Override

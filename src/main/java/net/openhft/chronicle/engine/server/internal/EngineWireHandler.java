@@ -21,8 +21,7 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
-import net.openhft.chronicle.engine.api.column.ColumnView;
-import net.openhft.chronicle.engine.api.column.ColumnViewIterator;
+import net.openhft.chronicle.engine.api.column.*;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.query.IndexQueueView;
@@ -51,10 +50,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
@@ -210,7 +206,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
             try {
                 long startWritePosition = outWire.bytes().writePosition();
 
-                // if true the nextChunk data message will be a system message
+                // if true the next data message will be a system message
                 isSystemMessage = wire.bytes().readRemaining() == 0;
                 if (isSystemMessage) {
                     if (LOG.isDebugEnabled())
@@ -240,7 +236,10 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                             return;
                         }
 
-                        view = contextAsset.acquireView(requestContext);
+                        if (viewType != ColumnViewIterator.class)
+                            view = contextAsset.acquireView(requestContext);
+                        else
+                            view = cidToObject.get(cid);
 
                         if (viewType == MapView.class ||
                                 viewType == EntrySetView.class ||
@@ -254,7 +253,10 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                                 viewType == Replication.class ||
                                 viewType == QueueView.class ||
                                 viewType == Heartbeat.class ||
-                                viewType == IndexQueueView.class) {
+                                viewType == IndexQueueView.class ||
+                                viewType == MapColumnView.class ||
+                                viewType == QueueColumnView.class ||
+                                viewType == ColumnViewIterator.class) {
 
                             // default to string type if not provided
                             final Class<?> type = requestContext.keyType() == null ? String.class
@@ -285,7 +287,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
     private boolean hasCspChanged(@NotNull final StringBuilder cspText) {
         boolean result = !cspText.equals(lastCsp);
 
-        // if it has changed remember what it changed to, for nextChunk time this method is called.
+        // if it has changed remember what it changed to, for next time this method is called.
         if (result) {
             lastCsp.setLength(0);
             lastCsp.append(cspText);
@@ -395,14 +397,13 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                         return;
                     }
 
-                    if (viewType == ColumnView.class) {
-                        columnViewHandler.process(in, out, (ColumnView) view, tid);
+                    if (viewType == MapColumnView.class || viewType == MapColumnView.class) {
+                        columnViewHandler.process(in, out, (ColumnViewInternal) view, tid);
                         return;
                     }
 
-                    if (viewType == ColumnViewIterator.class) {
-                        columnViewIteratorHandler.process(in, out, tid,
-                                (ColumnViewIteratorHandler.ChunkIterator) cidToObject.get(cid), cid);
+                    if (ColumnViewIterator.class.isAssignableFrom(viewType)) {
+                        columnViewIteratorHandler.process(in, out, tid, (Iterator<Row>) view, cid);
                         return;
                     }
 
@@ -629,7 +630,6 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
         final long cid = createCid(cspBuff);
         outWire.writeEventName(reply).typePrefix("set-proxy")
                 .marshallable(w -> {
-
                     w.writeEventName(CoreFields.csp).text(cspBuff);
                     w.writeEventName(CoreFields.cid).int64(cid);
                 });

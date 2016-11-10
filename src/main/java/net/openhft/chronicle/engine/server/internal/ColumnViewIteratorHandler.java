@@ -13,7 +13,7 @@ import java.util.Iterator;
 import java.util.function.BiConsumer;
 
 import static net.openhft.chronicle.engine.server.internal.ColumnViewIteratorHandler.EventId.close;
-import static net.openhft.chronicle.engine.server.internal.ColumnViewIteratorHandler.EventId.nextChunk;
+import static net.openhft.chronicle.engine.server.internal.ColumnViewIteratorHandler.EventId.next;
 import static net.openhft.chronicle.network.connection.CoreFields.reply;
 
 /**
@@ -22,7 +22,7 @@ import static net.openhft.chronicle.network.connection.CoreFields.reply;
 public class ColumnViewIteratorHandler extends AbstractHandler {
 
     private final CspManager cspManager;
-    private ChunkIterator chunkIterator;
+    private Iterator<Row> iterator;
 
     public ColumnViewIteratorHandler(CspManager cspManager) {
         this.cspManager = cspManager;
@@ -31,14 +31,14 @@ public class ColumnViewIteratorHandler extends AbstractHandler {
     private final StringBuilder eventName = new StringBuilder();
 
 
-    public void process(WireIn in, WireOut out, long tid, ChunkIterator chunkIterator, long cid) {
+    public void process(WireIn in, WireOut out, long tid, Iterator<Row> iterator, long cid) {
 
         setOutWire(out);
 
         try {
             this.inWire = in;
             this.outWire = out;
-            this.chunkIterator = chunkIterator;
+            this.iterator = iterator;
             this.tid = tid;
             this.cid = cid;
             dataConsumer.accept(in, tid);
@@ -47,16 +47,6 @@ public class ColumnViewIteratorHandler extends AbstractHandler {
         }
     }
 
-
-    public static class ChunkIterator {
-        long maxChunkSize;
-        Iterator<Row> iterator;
-
-        public ChunkIterator(long maxChunkSize, Iterator<Row> iterator) {
-            this.maxChunkSize = maxChunkSize;
-            this.iterator = iterator;
-        }
-    }
 
     private long cid;
     private long tid;
@@ -81,12 +71,13 @@ public class ColumnViewIteratorHandler extends AbstractHandler {
 
                 writeData(inWire.bytes(), out -> {
 
-                    if (nextChunk.contentEquals(eventName)) {
-                        final ChunkIterator o = cspManager.getObject(cid);
+                    if (next.contentEquals(eventName)) {
 
-                        ArrayList<Row> chunk = new ArrayList<>();
-                        final Iterator<Row> iterator = o.iterator;
-                        for (int i = 0; i < o.maxChunkSize; i++) {
+                        int nextChunkSize = valueIn.int32();
+
+                        final ArrayList<Row> chunk = new ArrayList<>();
+
+                        for (int i = 0; i < nextChunkSize; i++) {
                             if (!iterator.hasNext())
                                 break;
                             chunk.add(iterator.next());
@@ -112,7 +103,7 @@ public class ColumnViewIteratorHandler extends AbstractHandler {
 
 
     public enum EventId implements ParameterizeWireKey {
-        nextChunk,
+        next,
         close;
 
         private final WireKey[] params;

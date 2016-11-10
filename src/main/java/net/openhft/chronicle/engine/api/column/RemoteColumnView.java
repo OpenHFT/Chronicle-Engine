@@ -9,8 +9,8 @@ import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.ParameterizeWireKey;
 import net.openhft.chronicle.wire.ValueIn;
+import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireKey;
-import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -38,7 +38,7 @@ public class RemoteColumnView extends AbstractStatelessClient implements ColumnV
     }
 
     private static String toURL(final RequestContext context) {
-        return context.viewType(ColumnView.class).toUri();
+        return context.toUri();
     }
 
     @Override
@@ -64,17 +64,26 @@ public class RemoteColumnView extends AbstractStatelessClient implements ColumnV
         asset.acquireView(ObjectSubscription.class).registerSubscriber(rc, o -> r.run(), empty());
     }
 
+
+    private final Function<ValueIn, ClientWiredStatelessRowIterator> readIteratorProxie = v -> {
+        final WireIn wireIn = v.wireIn();
+
+        return wireIn.read("set-proxy").applyToMarshallable(wire ->
+                new ClientWiredStatelessRowIterator(
+                        hub,
+                        wire.read(CoreFields.csp).text(),
+                        wire.read(CoreFields.cid).int64()));
+
+    };
+
     @Override
     public Iterator<? extends Row> iterator(@NotNull SortedFilter sortedFilter) {
-        final StringBuilder csp = Wires.acquireStringBuilder();
-        final Function<ValueIn, Long> function = v -> v.wireIn().read().int64();
-        long cid = (Long) proxyReturnWireConsumerInOut(
+
+        return (ClientWiredStatelessRowIterator) proxyReturnWireConsumerInOut(
                 iterator,
                 CoreFields.reply,
                 valueOut -> valueOut.object(sortedFilter),
-                function);
-
-        return new ClientWiredStatelessRowIterator(hub, csp.toString(), cid);
+                readIteratorProxie);
     }
 
     @Override
