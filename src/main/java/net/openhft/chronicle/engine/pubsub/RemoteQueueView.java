@@ -31,7 +31,7 @@ import static net.openhft.chronicle.engine.server.internal.TopicPublisherHandler
  */
 public class RemoteQueueView<T, M> extends RemoteTopicPublisher<T, M> implements QueueView<T, M> {
 
-    final ThreadLocal<LocalExcept<T, M>> threadLocal = ThreadLocal.withInitial(LocalExcept::new);
+    private final ThreadLocal<LocalExcept<T, M>> threadLocal = ThreadLocal.withInitial(LocalExcept::new);
     private final Asset asset;
 
     public RemoteQueueView(@NotNull RequestContext requestContext, @NotNull Asset asset) {

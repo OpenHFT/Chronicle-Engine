@@ -202,8 +202,7 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
     }
 
     @Override
-    public int changedRow
-            (@NotNull Map<String, Object> row, @NotNull Map<String, Object> oldRow) {
+    public int changedRow(@NotNull Map<String, Object> row, @NotNull Map<String, Object> oldRow) {
         // chronicle queue is read only
         return 0;
     }
