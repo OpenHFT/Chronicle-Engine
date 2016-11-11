@@ -29,6 +29,16 @@ public class RemoteColumnView extends AbstractStatelessClient implements ColumnV
     private final Asset asset;
     private final ThreadLocal<List> th = ThreadLocal.withInitial(ArrayList::new);
 
+    private final Function<ValueIn, RemoteColumnViewRowIterator> readIteratorProxy = v -> {
+        final WireIn wireIn = v.wireIn();
+
+        return wireIn.read("set-proxy").applyToMarshallable(wire ->
+                new RemoteColumnViewRowIterator(
+                        hub,
+                        wire.read(CoreFields.csp).text(),
+                        wire.read(CoreFields.cid).int64()));
+
+    };
 
     public RemoteColumnView(@NotNull RequestContext context, @NotNull Asset asset) {
 
@@ -49,7 +59,8 @@ public class RemoteColumnView extends AbstractStatelessClient implements ColumnV
 
     @Override
     public int rowCount(@NotNull List<MarshableFilter> sortedFilter) {
-        return proxyReturnInt(rowCount, sortedFilter);
+        int count = proxyReturnInt(rowCount, sortedFilter);
+        return count;
     }
 
     @Override
@@ -63,18 +74,6 @@ public class RemoteColumnView extends AbstractStatelessClient implements ColumnV
         asset.acquireView(ObjectSubscription.class).registerSubscriber(rc, o -> r.run(), empty());
     }
 
-
-    private final Function<ValueIn, RemoteColumnViewRowIterator> readIteratorProxie = v -> {
-        final WireIn wireIn = v.wireIn();
-
-        return wireIn.read("set-proxy").applyToMarshallable(wire ->
-                new RemoteColumnViewRowIterator(
-                    hub,
-                        wire.read(CoreFields.csp).text(),
-                        wire.read(CoreFields.cid).int64()));
-
-    };
-
     @Override
     public ClosableIterator<? extends Row> iterator(@NotNull SortedFilter sortedFilter) {
 
@@ -82,7 +81,7 @@ public class RemoteColumnView extends AbstractStatelessClient implements ColumnV
                 iterator,
                 CoreFields.reply,
                 valueOut -> valueOut.marshallable(sortedFilter),
-                readIteratorProxie);
+                readIteratorProxy);
     }
 
     @Override
@@ -91,8 +90,8 @@ public class RemoteColumnView extends AbstractStatelessClient implements ColumnV
     }
 
     @Override
-    public boolean containsRowWithKey(Object[] keys) {
-        return containsRowWithKey(keys);
+    public boolean containsRowWithKey(List keys) {
+        return (Boolean) proxyReturnWireTypedObject(containsRowWithKey, null, Boolean.class, keys);
     }
 
     @Override

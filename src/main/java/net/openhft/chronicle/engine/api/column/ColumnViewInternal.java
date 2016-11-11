@@ -71,7 +71,7 @@ public interface ColumnViewInternal {
 
     boolean canDeleteRows();
 
-    boolean containsRowWithKey(Object[] keys);
+    boolean containsRowWithKey(List keys);
 
     ObjectSubscription objectSubscription();
 

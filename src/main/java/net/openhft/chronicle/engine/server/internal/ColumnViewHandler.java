@@ -39,7 +39,8 @@ class ColumnViewHandler extends AbstractHandler {
     private Map<String, Object> newRow = new HashMap<String, Object>();
 
     private long tid;
-    private List<ColumnView.MarshableFilter> filters = new ArrayList<>();
+    private List<ColumnView.MarshableFilter> filtersList = new ArrayList<>();
+    private List<ColumnView.MarshableFilter> keysList = new ArrayList<>();
     private ColumnView.SortedFilter sortedFilter = new ColumnView.SortedFilter();
 
 
@@ -64,13 +65,14 @@ class ColumnViewHandler extends AbstractHandler {
                     }
 
                     if (rowCount.contentEquals(eventName)) {
-                        valueIn.marshallable(wire -> {
-                            wire.read(rowCount.params()[0]).object(filters, List.class);
-                            columnView.rowCount(filters);
-                        });
+                        filtersList.clear();
+                        List<ColumnView.MarshableFilter> filters = valueIn.object(filtersList, List.class);
+                        int count = columnView.rowCount(filters == null ? Collections
+                                .emptyList() : filters);
+                        outWire.writeEventName(reply).int32(count);
+
                         return;
                     }
-
 
                     if (changedRow.contentEquals(eventName)) {
                         valueIn.marshallable(wire -> {
@@ -88,11 +90,11 @@ class ColumnViewHandler extends AbstractHandler {
                     }
 
                     if (containsRowWithKey.contentEquals(eventName)) {
-                        valueIn.marshallable(wire -> {
-                            final Object[] keys = (Object[]) wire.read(containsRowWithKey.params()[0]).object();
-                            final boolean result = columnView.containsRowWithKey(keys);
-                            outWire.writeEventName(reply).bool(result);
-                        });
+                        keysList.clear();
+                        final List keys = valueIn.object(keysList, List.class);
+                        final boolean result = columnView.containsRowWithKey(keys);
+                        outWire.writeEventName(reply).bool(result);
+
                         return;
                     }
 
@@ -109,9 +111,14 @@ class ColumnViewHandler extends AbstractHandler {
                     throw new IllegalStateException("unsupported event=" + eventName);
                 });
 
-            } catch (Exception e) {
+            } catch (
+                    Exception e)
+
+            {
                 Jvm.warn().on(getClass(), e);
             }
+
+
         }
     };
 

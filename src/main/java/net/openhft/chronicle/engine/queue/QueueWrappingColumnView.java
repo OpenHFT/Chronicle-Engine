@@ -155,13 +155,13 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
     }
 
     @Override
-    public boolean containsRowWithKey(@NotNull Object[] keys) {
-        if (keys.length == 1 && keys[0] instanceof String) {
-            final long l = Long.parseLong(keys[0].toString(), 16);
+    public boolean containsRowWithKey(@NotNull List keys) {
+        if (keys.size() == 1 && keys.get(0) instanceof String) {
+            final long l = Long.parseLong(keys.get(0).toString(), 16);
             return queueView.getExcerpt(l) != null;
         }
 
-        throw new IllegalStateException("unsupported format, keys=" + Arrays.toString(keys));
+        throw new IllegalStateException("unsupported format, keys=" + keys);
     }
 
     @Nullable
@@ -206,6 +206,7 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
     public boolean canDeleteRows() {
         return false;
     }
+
 
     @Override
     public int changedRow(@NotNull Map<String, Object> row, @NotNull Map<String, Object> oldRow) {

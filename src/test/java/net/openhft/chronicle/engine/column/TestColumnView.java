@@ -1,4 +1,4 @@
-package net.openhft.chronicle.engine.net.openhft.chronicle.engine.api;
+package net.openhft.chronicle.engine.column;
 
 import net.openhft.chronicle.engine.api.column.ClosableIterator;
 import net.openhft.chronicle.engine.api.column.ColumnViewInternal;
@@ -20,10 +20,7 @@ import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * @author Rob Austin.
@@ -44,7 +41,7 @@ public class TestColumnView {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Boolean[][]{
-                {true}, {true}
+                {false}, {true}
         });
     }
 
@@ -190,6 +187,59 @@ public class TestColumnView {
         }
 
         System.out.println("finished");
+    }
+
+
+    @Test
+    public void testMapColumnViewRowCount() {
+
+        final int size = 600;
+
+        YamlLogging.setAll(true);
+        MapView<Integer, String> map = assetTree.acquireMap("/my/data", Integer.class, String.class);
+        for (int i = 0; i < size; i++) {
+            map.put(i, "world");
+        }
+
+        final Asset asset = assetTree.acquireAsset("/my/data");
+        final MapColumnView columnView = asset.acquireView(MapColumnView.class);
+        Assert.assertEquals(size, columnView.rowCount(Collections.EMPTY_LIST));
+    }
+
+
+    @Test
+    public void testCanDeleteRows() {
+
+        final int size = 600;
+
+        YamlLogging.setAll(true);
+        MapView<Integer, String> map = assetTree.acquireMap("/my/data", Integer.class, String.class);
+        for (int i = 0; i < size; i++) {
+            map.put(i, "world");
+        }
+
+        final Asset asset = assetTree.acquireAsset("/my/data");
+        final MapColumnView columnView = asset.acquireView(MapColumnView.class);
+        Assert.assertEquals(true, columnView.canDeleteRows());
+    }
+
+
+    @Test
+    public void testContainRowWithKey() {
+
+        final int size = 600;
+
+        YamlLogging.setAll(true);
+        MapView<Integer, String> map = assetTree.acquireMap("/my/data", Integer.class, String.class);
+        for (int i = 0; i < size; i++) {
+            map.put(i, "world");
+        }
+
+        final Asset asset = assetTree.acquireAsset("/my/data");
+        final MapColumnView columnView = asset.acquireView(MapColumnView.class);
+
+        Assert.assertEquals(true, columnView.containsRowWithKey(Collections.singletonList(12)));
+
     }
 
 }

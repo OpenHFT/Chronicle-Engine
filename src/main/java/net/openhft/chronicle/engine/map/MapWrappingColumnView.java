@@ -172,9 +172,9 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
     }
 
     @Override
-    public boolean containsRowWithKey(@NotNull Object[] keys) {
-        assert keys.length == 1;
-        return mapView.containsKey((K) keys[0]);
+    public boolean containsRowWithKey(@NotNull List keys) {
+        assert keys.size() == 1;
+        return mapView.containsKey((K) keys.get(0));
     }
 
     @Nullable

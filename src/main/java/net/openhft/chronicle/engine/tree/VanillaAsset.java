@@ -392,7 +392,7 @@ public class VanillaAsset implements Asset, Closeable {
     public <V> V acquireView(@NotNull Class<V> viewType, @NotNull RequestContext rc) throws
             AssetNotFoundException {
 
-        assert fullName().equals(rc.fullName()) :
+         assert fullName().equals(rc.fullName()) :
                 "fullName=" + fullName() + " ,rc.fullName()=" + rc.fullName();
 
         synchronized (viewMap) {
