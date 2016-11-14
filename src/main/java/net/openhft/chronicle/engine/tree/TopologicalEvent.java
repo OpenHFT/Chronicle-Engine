@@ -21,6 +21,9 @@ import net.openhft.chronicle.engine.api.tree.ChangeEvent;
 import net.openhft.chronicle.wire.WireKey;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+import java.util.Set;
+
 /**
  * Created by peter on 11/06/15.
  */
@@ -28,6 +31,13 @@ public interface TopologicalEvent extends ChangeEvent {
     String name();
 
     boolean added();
+
+    /**
+     * @return provides a list of the view avaible a the URI defined by {@code fullName}
+     */
+    default Set<Class> viewTypes() {
+        return Collections.emptySet();
+    }
 
     @NotNull
     default String fullName() {

@@ -26,7 +26,7 @@ import java.util.*;
  * @author Rob Austin.
  */
 @RunWith(value = Parameterized.class)
-public class TestColumnView {
+public class ColumnViewTest {
 
 
     @NotNull
@@ -45,7 +45,7 @@ public class TestColumnView {
         });
     }
 
-    public TestColumnView(Boolean isRemote) throws Exception {
+    public ColumnViewTest(Boolean isRemote) throws Exception {
 
         if (isRemote) {
             VanillaAssetTree assetTree0 = new VanillaAssetTree().forTesting();

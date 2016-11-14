@@ -63,6 +63,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Comparator;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -392,7 +393,7 @@ public class VanillaAsset implements Asset, Closeable {
     public <V> V acquireView(@NotNull Class<V> viewType, @NotNull RequestContext rc) throws
             AssetNotFoundException {
 
-         assert fullName().equals(rc.fullName()) :
+        assert fullName().equals(rc.fullName()) :
                 "fullName=" + fullName() + " ,rc.fullName()=" + rc.fullName();
 
         synchronized (viewMap) {
@@ -635,5 +636,10 @@ public class VanillaAsset implements Asset, Closeable {
         public String toString() {
             return "wraps " + underlyingType;
         }
+    }
+
+    @Override
+    public Set<Class> viewTypes() {
+        return viewMap.keySet();
     }
 }

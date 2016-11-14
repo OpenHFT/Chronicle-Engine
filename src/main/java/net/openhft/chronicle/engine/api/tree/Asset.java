@@ -27,6 +27,8 @@ import net.openhft.chronicle.engine.map.KVSSubscription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.Set;
 import java.util.function.BiPredicate;
 
 import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
@@ -400,5 +402,13 @@ public interface Asset extends Closeable {
         Class<SubscriptionCollection> subscriptionType = requestContext.getSubscriptionType();
         requestContext.viewType(subscriptionType);
         return acquireView(subscriptionType, requestContext);
+    }
+
+
+    /**
+     * @return the current view types that are available at this asset.
+     */
+    default Set<Class> viewTypes() {
+        return Collections.emptySet();
     }
 }
