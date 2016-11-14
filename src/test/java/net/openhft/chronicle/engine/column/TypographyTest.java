@@ -5,6 +5,7 @@ import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.query.Filter;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
+import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
@@ -31,6 +32,9 @@ import java.util.concurrent.TimeUnit;
 public class TypographyTest {
 
     public static final String ADD_MAP_LATER = "/add/map/later";
+
+    public static final String ADD_QUEUE_LATER = "/proc/connections/cluster/throughput/1";
+
     @NotNull
     @Rule
     public TestName name = new TestName();
@@ -60,17 +64,23 @@ public class TypographyTest {
             final VanillaAssetTree client = new VanillaAssetTree();
             assetTree = client.forRemoteAccess(hostPortDescription, WireType.BINARY);
 
-          //  assetTree.acquireMap(ADD_MAP_LATER, String.class, String.class).size();
+            //  assetTree.acquireMap(ADD_MAP_LATER, String.class, String.class).size();
             Executors.newScheduledThreadPool(1).schedule((Runnable)
                     () -> {
+                        assetTree0.acquireQueue(ADD_QUEUE_LATER,
+                                String.class, String.class);
+
                         assetTree0.acquireMap(ADD_MAP_LATER,
                                 String.class, String.class).size();
+
+
                     }, 500, TimeUnit.MILLISECONDS);
 
 
         } else {
             assetTree = (new VanillaAssetTree(1)).forTesting();
             assetTree.acquireMap(ADD_MAP_LATER, String.class, String.class).size();
+            assetTree.acquireQueue(ADD_QUEUE_LATER, String.class, String.class);
             serverEndpoint = null;
         }
 
@@ -124,4 +134,28 @@ public class TypographyTest {
 
         latch.await(100000, TimeUnit.SECONDS);
     }
+
+
+    @Test
+    public void testWhenQueueIsAddedLater() throws InterruptedException {
+
+        //  map.put("hello", "world");
+        YamlLogging.setAll(true);
+        CountDownLatch latch = new CountDownLatch(1);
+        RequestContext rc = RequestContext.requestContext("").elementType(TopologicalEvent.class)
+                .bootstrap(true);
+
+        Subscriber<TopologicalEvent> subscriber = o -> {
+            if (ADD_QUEUE_LATER.contentEquals(o.fullName()) && o.viewTypes()
+                    .contains(QueueView.class)) {
+                latch.countDown();
+            }
+        };
+
+        assetTree.acquireSubscription(rc).registerSubscriber(rc, subscriber, Filter.empty());
+
+        latch.await(100000, TimeUnit.SECONDS);
+    }
+
+
 }

@@ -99,6 +99,8 @@ public class RequestContext implements Cloneable {
         addAlias(HeartbeatHandler.class, "HeartbeatHandler");
         addAlias("software.chronicle.enterprise.queue.QueueSourceReplicationHandler");
         addAlias("software.chronicle.enterprise.queue.QueueSyncReplicationHandler");
+        addAlias(QueueView.class,"QueueView");
+        addAlias(MapView.class,"MapView");
     }
 
     private String pathName;
