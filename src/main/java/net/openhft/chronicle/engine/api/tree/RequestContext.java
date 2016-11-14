@@ -101,6 +101,8 @@ public class RequestContext implements Cloneable {
         addAlias("software.chronicle.enterprise.queue.QueueSyncReplicationHandler");
         addAlias(QueueView.class,"QueueView");
         addAlias(MapView.class,"MapView");
+        addAlias(Boolean.class,"boolean");
+
     }
 
     private String pathName;

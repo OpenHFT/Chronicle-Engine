@@ -397,7 +397,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                         return;
                     }
 
-                    if (viewType == MapColumnView.class || viewType == MapColumnView.class) {
+                    if (viewType == MapColumnView.class || viewType == QueueColumnView.class) {
                         columnViewHandler.process(in, out, (ColumnViewInternal) view, tid);
                         return;
                     }
