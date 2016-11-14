@@ -103,7 +103,7 @@ public class VanillaAsset implements Asset, Closeable {
         if (parent != null) {
             TopologySubscription parentSubs = parent.findView(TopologySubscription.class);
             if (parentSubs != null && !(parentSubs instanceof RemoteTopologySubscription))
-                parentSubs.notifyEvent(AddedAssetEvent.of(parent.fullName(), name));
+                parentSubs.notifyEvent(AddedAssetEvent.of(parent.fullName(), name, parent.viewTypes()));
         }
     }
 
@@ -470,6 +470,20 @@ public class VanillaAsset implements Asset, Closeable {
         // TODO FIX tests so this works.
 //        if (o != null && !o.equals(view))
 //            throw new IllegalStateException("Attempt to replace " + viewType + " with " + view + " was " + viewMap.get(viewType));
+
+
+        TopologySubscription topologySubscription = this.root().findView(TopologySubscription.class);
+        if (topologySubscription != null) {
+
+            String parentName = parent == null ? "" : parent.fullName();
+            if (o == null) {
+
+                topologySubscription.notifyEvent(AddedAssetEvent.of(parentName, name, viewTypes()));
+            } else {
+                topologySubscription.notifyEvent(ExistingAssetEvent.of(parentName, name, viewTypes()));
+            }
+        }
+
         return view;
     }
 
@@ -588,7 +602,7 @@ public class VanillaAsset implements Asset, Closeable {
         if (removed == null) return;
         TopologySubscription topologySubscription = removed.findView(TopologySubscription.class);
         if (topologySubscription != null)
-            topologySubscription.notifyEvent(RemovedAssetEvent.of(fullName(), name));
+            topologySubscription.notifyEvent(RemovedAssetEvent.of(fullName(), name, viewTypes()));
     }
 
     @NotNull
@@ -643,6 +657,7 @@ public class VanillaAsset implements Asset, Closeable {
         public String toString() {
             return "wraps " + underlyingType;
         }
+
     }
 
     @Override

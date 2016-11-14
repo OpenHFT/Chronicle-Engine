@@ -21,6 +21,7 @@ import org.junit.runners.Parameterized;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -29,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 @RunWith(value = Parameterized.class)
 public class TypographyTest {
 
+    public static final String ADD_MAP_LATER = "/add/map/later";
     @NotNull
     @Rule
     public TestName name = new TestName();
@@ -42,7 +44,7 @@ public class TypographyTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Boolean[][]{
-                {true}, {true}
+                {false}, {true}
         });
     }
 
@@ -58,8 +60,17 @@ public class TypographyTest {
             final VanillaAssetTree client = new VanillaAssetTree();
             assetTree = client.forRemoteAccess(hostPortDescription, WireType.BINARY);
 
+          //  assetTree.acquireMap(ADD_MAP_LATER, String.class, String.class).size();
+            Executors.newScheduledThreadPool(1).schedule((Runnable)
+                    () -> {
+                        assetTree0.acquireMap(ADD_MAP_LATER,
+                                String.class, String.class).size();
+                    }, 500, TimeUnit.MILLISECONDS);
+
+
         } else {
             assetTree = (new VanillaAssetTree(1)).forTesting();
+            assetTree.acquireMap(ADD_MAP_LATER, String.class, String.class).size();
             serverEndpoint = null;
         }
 
@@ -93,5 +104,24 @@ public class TypographyTest {
         latch.await(100000, TimeUnit.SECONDS);
     }
 
+    @Test
+    public void testWhenMapIsAddedLater() throws InterruptedException {
 
+        //  map.put("hello", "world");
+        YamlLogging.setAll(true);
+        CountDownLatch latch = new CountDownLatch(1);
+        RequestContext rc = RequestContext.requestContext("").elementType(TopologicalEvent.class)
+                .bootstrap(true);
+
+        Subscriber<TopologicalEvent> subscriber = o -> {
+            if (ADD_MAP_LATER.contentEquals(o.fullName()) && o.viewTypes()
+                    .contains(MapView.class)) {
+                latch.countDown();
+            }
+        };
+
+        assetTree.acquireSubscription(rc).registerSubscriber(rc, subscriber, Filter.empty());
+
+        latch.await(100000, TimeUnit.SECONDS);
+    }
 }

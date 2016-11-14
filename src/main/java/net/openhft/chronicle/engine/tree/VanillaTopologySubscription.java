@@ -46,7 +46,7 @@ public class VanillaTopologySubscription implements TopologySubscription {
 
     void bootstrapTree(@NotNull Asset asset, @NotNull Subscriber<TopologicalEvent> subscriber) throws InvalidSubscriberException {
         asset.forEachChild(c -> {
-            subscriber.onMessage(ExistingAssetEvent.of(asset.fullName(), c));
+            subscriber.onMessage(ExistingAssetEvent.of(asset.fullName(), c.name(), c.viewTypes()));
             bootstrapTree(c, subscriber);
         });
     }
@@ -58,7 +58,7 @@ public class VanillaTopologySubscription implements TopologySubscription {
                 // root node.
                 Asset parent = asset.parent();
                 String assetName = parent == null ? null : parent.fullName();
-                subscriber.onMessage(ExistingAssetEvent.of(assetName, asset ));
+                subscriber.onMessage(ExistingAssetEvent.of(assetName,  asset.name(),  asset.viewTypes()));
                 bootstrapTree(asset, subscriber);
             }
             subscribers.add(subscriber);
