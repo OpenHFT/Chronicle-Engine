@@ -393,8 +393,10 @@ public class VanillaAsset implements Asset, Closeable {
     public <V> V acquireView(@NotNull Class<V> viewType, @NotNull RequestContext rc) throws
             AssetNotFoundException {
 
-        assert fullName().equals(rc.fullName()) :
-                "fullName=" + fullName() + " ,rc.fullName()=" + rc.fullName();
+        if (!fullName().equals(rc.fullName())) {
+            Asset asset = this.root().acquireAsset(rc.fullName());
+            return asset.acquireView(rc);
+        }
 
         synchronized (viewMap) {
             V view = getView(viewType);
@@ -521,6 +523,9 @@ public class VanillaAsset implements Asset, Closeable {
     @NotNull
     @Override
     public Asset acquireAsset(@NotNull String childName) {
+        if ("/".contentEquals(childName))
+            return root();
+
         if (keyedAsset != Boolean.TRUE) {
             int pos = childName.indexOf('/');
             if (pos == 0) {
@@ -554,6 +559,8 @@ public class VanillaAsset implements Asset, Closeable {
 
     @Nullable
     protected Asset createAsset(@NotNull String name) {
+        if (name.length() == 0)
+            System.out.println("");
         assert name.length() > 0;
         return children.computeIfAbsent(name, keyedAsset != Boolean.TRUE
                 ? n -> new VanillaAsset(this, name)

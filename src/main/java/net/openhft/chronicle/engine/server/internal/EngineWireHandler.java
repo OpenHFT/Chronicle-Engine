@@ -236,9 +236,9 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                             return;
                         }
 
-                        if (viewType != ColumnViewIterator.class)
+                        if (viewType != ColumnViewIterator.class) {
                             view = contextAsset.acquireView(requestContext);
-                        else
+                        } else
                             view = cidToObject.get(cid);
 
                         if (viewType == MapView.class ||

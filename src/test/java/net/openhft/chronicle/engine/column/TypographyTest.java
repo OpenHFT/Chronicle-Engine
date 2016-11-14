@@ -36,6 +36,7 @@ public class TypographyTest {
 
     private final VanillaAssetTree assetTree;
     private final ServerEndpoint serverEndpoint;
+    private MapView<String, String> map;
 
 
     @Parameterized.Parameters
@@ -49,10 +50,6 @@ public class TypographyTest {
 
         if (isRemote) {
             VanillaAssetTree assetTree0 = new VanillaAssetTree().forTesting();
-
-
-            assetTree0.acquireMap("/example/data1", String.class, String.class);
-            assetTree0.acquireMap("/example/data2", String.class, String.class);
 
             String hostPortDescription = "SimpleQueueViewTest-methodName" + methodName;
             TCPRegistry.createServerSocketChannelFor(hostPortDescription);
@@ -77,6 +74,8 @@ public class TypographyTest {
 
     @Test
     public void testTypography() throws InterruptedException {
+
+        //  map.put("hello", "world");
         YamlLogging.setAll(true);
         CountDownLatch latch = new CountDownLatch(1);
         RequestContext rc = RequestContext.requestContext("").elementType(TopologicalEvent.class)

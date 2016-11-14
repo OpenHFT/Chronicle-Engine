@@ -80,6 +80,9 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
 
         subscriptions = asset.acquireView(ObjectSubscription.class, context);
         subscriptions.setKvStore(this);
+
+        // ensure the KV store get created on the server if they dont currently exist
+        longSize();
     }
 
     public RemoteKeyValueStore(@NotNull RequestContext requestContext, @NotNull Asset asset) {
