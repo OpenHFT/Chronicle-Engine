@@ -32,10 +32,7 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -58,6 +55,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * @author Rob Austin.
  */
 
+@Ignore
 @RunWith(Parameterized.class)
 public class TcpFailoverWithMonitoringTest {
 
