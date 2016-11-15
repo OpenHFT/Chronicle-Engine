@@ -89,8 +89,8 @@ public class TypographyTest {
 
     @Before
     public void before() {
-        assetTree.acquireMap("/example/data1", String.class, String.class);
-        assetTree.acquireMap("/example/data2", String.class, String.class);
+        assetTree.acquireMap("/example/data1", String.class, String.class).size();
+        assetTree.acquireMap("/example/data2", String.class, String.class).size();
     }
 
     @Test
