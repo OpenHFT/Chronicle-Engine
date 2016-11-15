@@ -73,7 +73,6 @@ public class TypographyTest {
                         assetTree0.acquireMap(ADD_MAP_LATER,
                                 String.class, String.class).size();
 
-
                     }, 500, TimeUnit.MILLISECONDS);
 
 
