@@ -10,7 +10,7 @@
     # Configure a cluster of one for now.
     clusters: !ClustersCfg {
       clusterTwo: {
-        context: !EngineClusterContext {
+       context: !EngineClusterContext {
           wireType: BINARY,
           handlerFactory: !UberHandlerFactory {},
           wireOutPublisherFactory: !VanillaWireOutPublisherFactory {},
@@ -40,7 +40,7 @@
         host2: {
            hostId: 2,
            tcpBufferSize: 65536,
-               connectUri: localhost:8081,
+           connectUri: localhost:8081,
            timeoutMs: 5000,
         }
       }

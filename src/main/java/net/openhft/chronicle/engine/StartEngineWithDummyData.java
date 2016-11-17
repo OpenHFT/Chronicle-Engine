@@ -1,12 +1,8 @@
 package net.openhft.chronicle.engine;
 
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.onoes.ExceptionKey;
-import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.engine.api.map.MapView;
-import net.openhft.chronicle.engine.fs.ChronicleMapGroupFS;
-import net.openhft.chronicle.engine.fs.FilePerKeyGroupFS;
 import net.openhft.chronicle.engine.tree.ChronicleQueueView;
 import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
@@ -15,16 +11,15 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.AbstractMarshallable;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.LockSupport;
 
-import static net.openhft.chronicle.core.onoes.PrintExceptionHandler.DEBUG;
-import static net.openhft.chronicle.core.onoes.PrintExceptionHandler.WARN;
+import static net.openhft.chronicle.core.Jvm.*;
 
 /**
  * @author Rob Austin.
@@ -32,52 +27,26 @@ import static net.openhft.chronicle.core.onoes.PrintExceptionHandler.WARN;
 class StartEngineWithDummyData {
 
 
-    static {
-        //  YamlLogging.showServerReads(true);
-        try {
-            TCPRegistry.createServerSocketChannelFor(
-                    "host.port1",
-                    "host.port2");
+    private static final String NAME = "throughputTest";
+    private static VanillaAssetTree TREE1 = EngineInstance.engineMain(1, "single-host-engine.yaml");
+    private static VanillaAssetTree TREE2 = EngineInstance.engineMain(2, "single-host-engine.yaml");
+    private static String CLUSTER_NAME = EngineInstance.firstClusterName(TREE2);
 
-            Jvm.setExceptionsHandlers(WARN, WARN, DEBUG);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public static void main(String[] args) {
+        addSampleDataToTree(TREE1);
+        LockSupport.park();
     }
 
-    private static final String NAME = "throughputTest";
-
-    private static Map<ExceptionKey, Integer> exceptionKeyIntegerMap;
-    private static VanillaAssetTree TREE2 = EngineInstance.engineMain(2);
-    private static VanillaAssetTree TREE1 = EngineInstance.engineMain(1);
-    private static String CLUSTER_NAME = EngineInstance.firstClusterName(TREE2);
-    private static VanillaAssetTree REMOTE = remote("host.port2");
-
     static {
 
         try {
 
-            ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
-            ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
+
             //Delete any files from the last run
             Files.deleteIfExists(Paths.get(OS.TARGET, NAME));
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    static VanillaAssetTree remote(final String connectionDetails) {
-        return new VanillaAssetTree().forRemoteAccess(connectionDetails);
-    }
-
-
-    static VanillaAssetTree remoteTree() {
-        return REMOTE;
-    }
-
-    static VanillaAssetTree serverTree() {
-        return TREE2;
     }
 
 
@@ -103,16 +72,12 @@ class StartEngineWithDummyData {
     }
 
 
-    public void after() {
+    public void close() {
         TREE1.close();
         TREE2.close();
-        REMOTE.close();
-
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
-        Jvm.dumpException(exceptionKeyIntegerMap);
-        assert exceptionKeyIntegerMap.isEmpty();
-        Jvm.resetExceptionHandlers();
+
     }
 
 
@@ -127,8 +92,8 @@ class StartEngineWithDummyData {
 
     private void throughput(int millionsPerMin, boolean warmup, final String cluster) {
 
-        Jvm.resetExceptionHandlers();
-        Jvm.disableDebugHandler();
+        resetExceptionHandlers();
+        disableDebugHandler();
 
         final String uri1 = "/queue/throughput/replicated";
 
@@ -144,7 +109,6 @@ class StartEngineWithDummyData {
 
 
     public static void addSampleDataToTree(final VanillaAssetTree tree) {
-        new StartEngineWithDummyData().runThroughput();
         addMyNumbers(tree);
         addApplShares(tree);
         addCountryNumerics(tree);
@@ -638,7 +602,7 @@ class StartEngineWithDummyData {
         } catch (Throwable e) {
             e.printStackTrace();
             Map<ExceptionKey, Integer> ex = new HashMap<ExceptionKey, Integer>();
-            Jvm.dumpException(ex);
+            dumpException(ex);
             System.out.println(ex);
         }
         return false;

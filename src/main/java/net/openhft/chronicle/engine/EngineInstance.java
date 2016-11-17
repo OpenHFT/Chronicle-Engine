@@ -1,16 +1,16 @@
 package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.onoes.Slf4jExceptionHandler;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
+import net.openhft.chronicle.core.pool.ClassLookup;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.cfg.*;
-import net.openhft.chronicle.engine.fs.Clusters;
-import net.openhft.chronicle.engine.fs.EngineCluster;
-import net.openhft.chronicle.engine.fs.EngineHostDetails;
+import net.openhft.chronicle.engine.fs.*;
 import net.openhft.chronicle.engine.map.CMap2EngineReplicator;
 import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
@@ -24,39 +24,42 @@ import net.openhft.chronicle.wire.TextWire;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static net.openhft.chronicle.core.Jvm.setExceptionsHandlers;
+import static net.openhft.chronicle.core.onoes.PrintExceptionHandler.WARN;
+
 /**
  * @author Rob Austin.
  */
 public class EngineInstance {
 
     static {
-        RequestContext.CLASS_ALIASES.toString();
-    }
 
-    public static void main(String[] args) {
-        engineMain(2);
+        try {
+            setExceptionsHandlers(WARN, WARN, Slf4jExceptionHandler.DEBUG);
+            ClassLookup classAliases = RequestContext.CLASS_ALIASES;
+            ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class,
+                    FilePerKeyGroupFS.class,
+                    EngineCfg.class,
+                    JmxCfg.class,
+                    ServerCfg.class,
+                    ClustersCfg.class,
+                    InMemoryMapCfg.class,
+                    FilePerKeyMapCfg.class,
+                    ChronicleMapCfg.class,
+                    MonitorCfg.class);
+
+        } catch (Exception e) {
+            System.exit(-1);
+        }
     }
 
     static final Logger LOGGER = LoggerFactory.getLogger(EngineInstance.class);
 
-    static <I extends Installable> void addClass(Class<I>... iClasses) {
-        ClassAliasPool.CLASS_ALIASES.addAlias(iClasses);
-    }
-
-    public static VanillaAssetTree engineMain(final int hostId) {
+    public static VanillaAssetTree engineMain(final int hostId, final String name) {
         try {
 
-            addClass(EngineCfg.class);
-            addClass(JmxCfg.class);
-            addClass(ServerCfg.class);
-            addClass(ClustersCfg.class);
-            addClass(InMemoryMapCfg.class);
-            addClass(FilePerKeyMapCfg.class);
-            addClass(ChronicleMapCfg.class);
-            addClass(MonitorCfg.class);
-
-            String name = "engine.yaml";
             TextWire yaml = TextWire.fromFile(name);
+
             EngineCfg installable = (EngineCfg) yaml.readObject();
 
             final VanillaAssetTree tree = new VanillaAssetTree(hostId).forServer(false);

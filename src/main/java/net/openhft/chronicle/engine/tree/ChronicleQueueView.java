@@ -172,8 +172,9 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
 
         } catch (Exception e) {
             IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
-                    " required to run this code. Please contact sales@chronicle.software");
-            Jvm.warn().on(ChronicleQueueView.class, e);
+                    " required to run chronicle-queue replication. Please contact sales@chronicle" +
+                    ".software");
+            Jvm.warn().on(ChronicleQueueView.class, licence.getMessage());
             throw licence;
         }
     }
@@ -203,9 +204,9 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
 
         } catch (Exception e) {
             IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
-                    " required to run this code." +
+                    " required to do chronicle-queue replication. " +
                     "Please contact sales@chronicle.software");
-            Jvm.warn().on(ChronicleQueueView.class, e);
+            Jvm.warn().on(ChronicleQueueView.class, licence.getMessage());
             throw licence;
         }
     }

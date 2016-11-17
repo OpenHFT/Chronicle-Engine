@@ -65,7 +65,14 @@ public class EngineConnectionManager implements ConnectionManager {
         boolean wasConnected = this.isConnected.computeIfAbsent(nc, f).getAndSet
                 (isConnected);
         if (wasConnected != isConnected)
-            connectionListeners.forEach(l -> l.onConnectionChange(nc, isConnected));
+            connectionListeners.forEach(l -> {
+                try {
+                    l.onConnectionChange(nc, isConnected);
+                } catch (IllegalStateException ignore) {
+                    // this is already logged
+                }
+
+            });
     }
 
     public static class Factory implements
