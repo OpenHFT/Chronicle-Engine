@@ -447,9 +447,9 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
 
         File baseFilePath;
         if (basePath == null)
-            baseFilePath = new File(defaultPath, "" + hostID);
+            baseFilePath = new File(defaultPath, "");
         else
-            baseFilePath = new File(basePath + "/" + defaultPath, "" + hostID);
+            baseFilePath = new File(basePath, name);
 
         if (!baseFilePath.exists())
             Files.createDirectories(baseFilePath.toPath());

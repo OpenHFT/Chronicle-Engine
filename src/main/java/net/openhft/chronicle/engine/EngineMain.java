@@ -1,144 +1,68 @@
+/*
+ * Copyright 2016 higherfrequencytrading.com
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 package net.openhft.chronicle.engine;
 
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
-import net.openhft.chronicle.engine.api.EngineReplication;
-import net.openhft.chronicle.engine.api.map.KeyValueStore;
-import net.openhft.chronicle.engine.api.map.MapView;
-import net.openhft.chronicle.engine.api.tree.Asset;
-import net.openhft.chronicle.engine.api.tree.RequestContext;
+import net.openhft.chronicle.engine.api.management.mbean.ChronicleConfig;
+import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.cfg.*;
-import net.openhft.chronicle.engine.fs.Clusters;
-import net.openhft.chronicle.engine.fs.EngineCluster;
-import net.openhft.chronicle.engine.fs.EngineHostDetails;
-import net.openhft.chronicle.engine.map.CMap2EngineReplicator;
-import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
-import net.openhft.chronicle.engine.map.VanillaMapView;
-import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
-import net.openhft.chronicle.network.NetworkStats;
-import net.openhft.chronicle.network.NetworkStatsListener;
-import net.openhft.chronicle.network.cluster.HostDetails;
 import net.openhft.chronicle.wire.TextWire;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+
 /**
- * @author Rob Austin.
+ * This engine main uses a configuration file
  */
 public class EngineMain {
-
-    static {
-        RequestContext.CLASS_ALIASES.toString();
-    }
-
-    public static void main(String[] args) {
-        engineMain(2);
-    }
-
     static final Logger LOGGER = LoggerFactory.getLogger(EngineMain.class);
+    static final int HOST_ID = Integer.getInteger("engine.hostId", 0);
 
     static <I extends Installable> void addClass(Class<I>... iClasses) {
         ClassAliasPool.CLASS_ALIASES.addAlias(iClasses);
-        // //System.setProperty("ReplicationHandler3", "true");
     }
 
-    public static VanillaAssetTree engineMain(final int hostId) {
+    public static void main(String[] args) throws IOException {
+        ChronicleConfig.init();
+        addClass(EngineCfg.class);
+        addClass(JmxCfg.class);
+        addClass(ServerCfg.class);
+        addClass(ClustersCfg.class);
+        addClass(InMemoryMapCfg.class);
+        addClass(FilePerKeyMapCfg.class);
+        addClass(ChronicleMapCfg.class);
+        addClass(MonitorCfg.class);
+
+        String name = args.length > 0 ? args[0] : "engine.yaml";
+        TextWire yaml = TextWire.fromFile(name);
+        Installable installable = (Installable) yaml.readObject();
+        AssetTree assetTree = new VanillaAssetTree(HOST_ID).forServer(false);
+        assetTree.registerSubscriber("", TopologicalEvent.class, e -> LOGGER.info("Tree change " + e));
         try {
+            installable.install("/", assetTree);
+            LOGGER.info("Engine started");
 
-            addClass(EngineCfg.class);
-            addClass(JmxCfg.class);
-            addClass(ServerCfg.class);
-            addClass(ClustersCfg.class);
-            addClass(InMemoryMapCfg.class);
-            addClass(FilePerKeyMapCfg.class);
-            addClass(ChronicleMapCfg.class);
-            addClass(MonitorCfg.class);
-
-            String name = "engine.yaml";
-            TextWire yaml = TextWire.fromFile(name);
-            EngineCfg installable = (EngineCfg) yaml.readObject();
-
-            final VanillaAssetTree tree = new VanillaAssetTree(hostId).forServer(false);
-
-            final Asset connectivityMap = tree.acquireAsset("/proc/connections/cluster/connectivity");
-            connectivityMap.addWrappingRule(MapView.class, "map directly to KeyValueStore",
-                    VanillaMapView::new,
-                    KeyValueStore.class);
-            connectivityMap.addLeafRule(EngineReplication.class, "Engine replication holder",
-                    CMap2EngineReplicator::new);
-            connectivityMap.addLeafRule(KeyValueStore.class, "KVS is Chronicle Map", (context, asset) ->
-                    new ChronicleMapKeyValueStore(context.cluster(firstClusterName(tree)), asset));
-
-            try {
-                installable.install("/", tree);
-                LOGGER.info("Engine started");
-            } catch (Exception e) {
-                LOGGER.error("Error starting a component, stopping", e);
-                tree.close();
-            }
-
-            final Clusters clusters = tree.root().getView(Clusters.class);
-
-            if (clusters == null || clusters.size() == 0) {
-                Jvm.warn().on(EngineMain.class, "cluster not found");
-                return null;
-            }
-            if (clusters.size() != 1) {
-                Jvm.warn().on(EngineMain.class, "unambiguous cluster, you have " + clusters.size() + "" +
-                        " clusters which one do you want to use?");
-                return null;
-            }
-
-            final EngineCluster engineCluster = clusters.firstCluster();
-            final HostDetails hostDetails = engineCluster.findHostDetails(hostId);
-            final String connectUri = hostDetails.connectUri();
-            engineCluster.clusterContext().assetRoot(tree.root());
-
-            final NetworkStatsListener networkStatsListener = engineCluster.clusterContext()
-                    .networkStatsListenerFactory()
-                    .apply(engineCluster.clusterContext());
-
-            final ServerEndpoint serverEndpoint = new ServerEndpoint(connectUri, tree, networkStatsListener);
-
-            // we add this as close will get called when the asset tree is closed
-            tree.root().addView(ServerEndpoint.class, serverEndpoint);
-            tree.registerSubscriber("", TopologicalEvent.class, e -> LOGGER.info("Tree change " + e));
-
-            // the reason that we have to do this is to ensure that the network stats are
-            // replicated between all hosts, if you don't acquire a queue it wont exist and so
-            // will not act as a slave in replication
-            for (EngineHostDetails engineHostDetails : engineCluster.hostDetails()) {
-
-                final int id = engineHostDetails
-                        .hostId();
-
-                tree.acquireQueue("/proc/connections/cluster/throughput/" + id,
-                        String.class,
-                        NetworkStats.class, engineCluster.clusterName());
-            }
-
-            return tree;
         } catch (Exception e) {
-            e.printStackTrace();
-            throw Jvm.rethrow(e);
+            LOGGER.error("Error starting a component, stopping", e);
+            assetTree.close();
         }
-
     }
-
-    /**
-     * @return the first cluster name
-     */
-    static String firstClusterName(VanillaAssetTree tree) {
-        final Clusters clusters = tree.root().getView(Clusters.class);
-        if (clusters == null)
-            return "";
-        final EngineCluster engineCluster = clusters.firstCluster();
-        if (engineCluster == null)
-            return "";
-        return engineCluster.clusterName();
-    }
-
-
 }

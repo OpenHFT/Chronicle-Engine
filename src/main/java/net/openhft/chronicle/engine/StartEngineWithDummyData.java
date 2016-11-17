@@ -15,7 +15,6 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.AbstractMarshallable;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -34,7 +33,7 @@ class StartEngineWithDummyData {
 
 
     static {
-      //  YamlLogging.showServerReads(true);
+        //  YamlLogging.showServerReads(true);
         try {
             TCPRegistry.createServerSocketChannelFor(
                     "host.port1",
@@ -50,9 +49,9 @@ class StartEngineWithDummyData {
     private static final String NAME = "throughputTest";
 
     private static Map<ExceptionKey, Integer> exceptionKeyIntegerMap;
-    private static VanillaAssetTree TREE2 = EngineMain.engineMain(2);
-    private static VanillaAssetTree TREE1 = EngineMain.engineMain(1);
-    private static String CLUSTER_NAME = EngineMain.firstClusterName(TREE2);
+    private static VanillaAssetTree TREE2 = EngineInstance.engineMain(2);
+    private static VanillaAssetTree TREE1 = EngineInstance.engineMain(1);
+    private static String CLUSTER_NAME = EngineInstance.firstClusterName(TREE2);
     private static VanillaAssetTree REMOTE = remote("host.port2");
 
     static {
@@ -138,25 +137,11 @@ class StartEngineWithDummyData {
         ChronicleQueueView qv1 = (ChronicleQueueView) TREE1.acquireQueue(
                 uri1, String.class, Message.class, cluster);
         TREE2.acquireQueue(uri1, String.class, Message.class, cluster);
-/*
 
-        Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
-            for (int i = 0; i < 100; i++) {
-                qv1.publishAndIndex("", new Message("hello"));
-            }
-        }, 0, 1, TimeUnit.SECONDS);
-*/
+        addSampleDataToTree(TREE2);
 
     }
 
-    public static void deleteFile(@NotNull File element) {
-        if (element.isDirectory()) {
-            for (@NotNull File sub : element.listFiles()) {
-                deleteFile(sub);
-            }
-        }
-        element.delete();
-    }
 
     public static void addSampleDataToTree(final VanillaAssetTree tree) {
         new StartEngineWithDummyData().runThroughput();
