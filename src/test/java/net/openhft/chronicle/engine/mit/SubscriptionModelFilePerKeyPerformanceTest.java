@@ -39,8 +39,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
-import static sun.jvm.hotspot.runtime.VMOps.ThreadDump;
-
 @Ignore
 public class SubscriptionModelFilePerKeyPerformanceTest {
     static final AtomicInteger counter = new AtomicInteger();
