@@ -211,7 +211,8 @@ public class VanillaIndexQueueView<V extends Marshallable>
         final long fromIndex = fromIndex0;
 
         boolean success = tailer.moveToIndex(fromIndex);
-        assert success;
+        assert success : "fromIndex=" + Long.toHexString(fromIndex)
+                + ", start=" + Long.toHexString(start) + ",end=" + Long.toHexString(endIndex);
 
         if (fromIndex <= endIndex) {
             registerSubscriber(sub, vanillaIndexQuery, tailer, fromIndex);
