@@ -195,12 +195,9 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
         long fromIndex0 = vanillaIndexQuery.fromIndex();
         if (fromIndex0 == -1) {
-
             final RollingChronicleQueue chronicleQueue = (RollingChronicleQueue) this.chronicleQueue;
             final int cycle = chronicleQueue.cycle();
-
             fromIndex0 = chronicleQueue.rollCycle().toIndex(cycle, 0);
-
         } else if (fromIndex0 == 0) {
             fromIndex0 = endIndex;
         }
@@ -211,7 +208,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
         final long fromIndex = fromIndex0;
 
         boolean success = tailer.moveToIndex(fromIndex);
-        assert success : "fromIndex=" + Long.toHexString(fromIndex)
+        assert success || (fromIndex == endIndex) : "fromIndex=" + Long.toHexString(fromIndex)
                 + ", start=" + Long.toHexString(start) + ",end=" + Long.toHexString(endIndex);
 
         if (fromIndex <= endIndex) {
