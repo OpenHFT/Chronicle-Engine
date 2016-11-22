@@ -24,12 +24,13 @@ import net.openhft.chronicle.wire.WireOut;
 import net.openhft.chronicle.wire.WriteMarshallable;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 
 /**
  * @author Rob Austin.
  */
-public interface MessageAdaptor extends BiConsumer<WireIn, WireOut>, Demarshallable, WriteMarshallable {
+public interface MessageAdaptor extends BiFunction<WireIn, WireOut, Boolean>, Demarshallable,
+        WriteMarshallable {
 
     default void onInitialize(Asset asset) {
 
