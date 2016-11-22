@@ -93,7 +93,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
 
     private volatile MapView<T, M> mapView;
 
-    public ChronicleQueueView(@NotNull RequestContext context, @NotNull Asset asset) throws IOException {
+    public ChronicleQueueView(@NotNull RequestContext context,
+                              @NotNull Asset asset) throws IOException {
         this(null, context, asset);
     }
 
