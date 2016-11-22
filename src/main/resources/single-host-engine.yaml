@@ -3,13 +3,12 @@
   # Configuration files are being placed in /etc following the Unix convention, but could be anywhere
   #
   etc: {
-
     #
     # Configure a group of node which form a local cluster.
     #
     # Configure a cluster of one for now.
     clusters: !ClustersCfg {
-      clusterTwo: {
+       clusterTwo: {
        context: !EngineClusterContext {
           wireType: BINARY,
           handlerFactory: !UberHandlerFactory {},
@@ -30,7 +29,6 @@
           connectionStrategy: !HostIdConnectionStrategy {},
           serverThreadingStrategy: CONCURRENT
         },
-
         host1: {
            hostId: 1,
            tcpBufferSize: 65536,
@@ -44,7 +42,6 @@
            timeoutMs: 5000,
         }
       }
-
     }
   }
 }

@@ -100,6 +100,8 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
             final UberHandler handler = (UberHandler) nc.handler();
             wireNetworkStats.remoteIdentifier(handler.remoteIdentifier());
             wireNetworkStats.wireType(handler.wireType());
+        } else {
+            wireNetworkStats.remoteIdentifier(0);
         }
 
         final SessionDetailsProvider sessionDetailsProvider = nc.sessionDetails();
