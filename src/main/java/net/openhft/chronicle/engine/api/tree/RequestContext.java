@@ -30,9 +30,10 @@ import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.session.Heartbeat;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
-import net.openhft.chronicle.engine.cfg.EngineClusterContext;
-import net.openhft.chronicle.engine.cfg.VanillaWireOutPublisherFactory;
+import net.openhft.chronicle.engine.cfg.*;
+import net.openhft.chronicle.engine.fs.ChronicleMapGroupFS;
 import net.openhft.chronicle.engine.fs.EngineConnectionManager;
+import net.openhft.chronicle.engine.fs.FilePerKeyGroupFS;
 import net.openhft.chronicle.engine.map.ObjectSubscription;
 import net.openhft.chronicle.engine.map.RawKVSSubscription;
 import net.openhft.chronicle.engine.query.Filter;
@@ -63,6 +64,18 @@ public class RequestContext implements Cloneable {
     public static final ClassLookup CLASS_ALIASES = ClassLookup.create();
 
     static {
+
+        CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class,
+                FilePerKeyGroupFS.class,
+                EngineCfg.class,
+                JmxCfg.class,
+                ServerCfg.class,
+                ClustersCfg.class,
+                InMemoryMapCfg.class,
+                FilePerKeyMapCfg.class,
+                ChronicleMapCfg.class,
+                MonitorCfg.class);
+
         addAliasLocal(ColumnView.class, "Column");
         addAliasLocal(QueueView.class, "Queue");
         addAliasLocal(MapView.class, "Map");
@@ -98,11 +111,10 @@ public class RequestContext implements Cloneable {
         addAlias(MapReplicationHandler.class, "MapReplicationHandler");
         addAlias(HeartbeatHandler.class, "HeartbeatHandler");
         addAlias("software.chronicle.enterprise.queue.QueueSourceReplicationHandler");
-        addAlias("software.chronicle.enterprise.queue.QueueSyncReplicationHandler");
-        addAlias(QueueView.class,"QueueView");
-        addAlias(MapView.class,"MapView");
-        addAlias(Boolean.class,"boolean");
-
+        addAlias("software.chronicle.ente§rprise.queue.QueueSyncReplicationHandler");
+        addAlias(QueueView.class, "QueueView");
+        addAlias(MapView.class, "MapView");
+        addAlias(Boolean.class, "boolean");
     }
 
     private String pathName;
