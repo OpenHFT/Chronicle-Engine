@@ -2,15 +2,16 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.onoes.Slf4jExceptionHandler;
-import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.core.pool.ClassLookup;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
-import net.openhft.chronicle.engine.cfg.*;
-import net.openhft.chronicle.engine.fs.*;
+import net.openhft.chronicle.engine.cfg.EngineCfg;
+import net.openhft.chronicle.engine.fs.Clusters;
+import net.openhft.chronicle.engine.fs.EngineCluster;
+import net.openhft.chronicle.engine.fs.EngineHostDetails;
 import net.openhft.chronicle.engine.map.CMap2EngineReplicator;
 import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
@@ -37,17 +38,6 @@ public class EngineInstance {
         try {
             setExceptionsHandlers(WARN, WARN, Slf4jExceptionHandler.DEBUG);
             ClassLookup classAliases = RequestContext.CLASS_ALIASES;
-            ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class,
-                    FilePerKeyGroupFS.class,
-                    EngineCfg.class,
-                    JmxCfg.class,
-                    ServerCfg.class,
-                    ClustersCfg.class,
-                    InMemoryMapCfg.class,
-                    FilePerKeyMapCfg.class,
-                    ChronicleMapCfg.class,
-                    MonitorCfg.class);
-
         } catch (Exception e) {
             System.exit(-1);
         }

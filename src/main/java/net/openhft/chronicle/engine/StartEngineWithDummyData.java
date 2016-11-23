@@ -40,8 +40,6 @@ class StartEngineWithDummyData {
     static {
 
         try {
-
-
             //Delete any files from the last run
             Files.deleteIfExists(Paths.get(OS.TARGET, NAME));
         } catch (Exception e) {
