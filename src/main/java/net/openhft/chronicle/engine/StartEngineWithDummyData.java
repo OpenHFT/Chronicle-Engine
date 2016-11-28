@@ -26,7 +26,6 @@ import static net.openhft.chronicle.core.Jvm.*;
  */
 class StartEngineWithDummyData {
 
-
     private static final String NAME = "throughputTest";
     private static VanillaAssetTree TREE1 = EngineInstance.engineMain(1, "single-host-engine.yaml");
     private static VanillaAssetTree TREE2 = EngineInstance.engineMain(2, "single-host-engine.yaml");
@@ -107,9 +106,19 @@ class StartEngineWithDummyData {
 
 
     public static void addSampleDataToTree(final VanillaAssetTree tree) {
+        addHistorgramData(tree);
         addMyNumbers(tree);
         addApplShares(tree);
         addCountryNumerics(tree);
+        addCountryNumerics(tree);
+    }
+
+    private static void addHistorgramData(VanillaAssetTree tree) {
+        @NotNull MapView<String, Long> mapView = tree.acquireMap("/my/demo/histogram", String.class,
+                Long.class);
+        mapView.put("50", 100L);
+        mapView.put("99.9", 110L);
+        mapView.put("99.99", 130L);
     }
 
     private static void addCountryNumerics(VanillaAssetTree tree) {

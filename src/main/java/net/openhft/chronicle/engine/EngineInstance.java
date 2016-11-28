@@ -2,12 +2,10 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.onoes.Slf4jExceptionHandler;
-import net.openhft.chronicle.core.pool.ClassLookup;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.tree.Asset;
-import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.cfg.EngineCfg;
 import net.openhft.chronicle.engine.fs.Clusters;
 import net.openhft.chronicle.engine.fs.EngineCluster;
@@ -27,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import static net.openhft.chronicle.core.Jvm.setExceptionsHandlers;
 import static net.openhft.chronicle.core.onoes.PrintExceptionHandler.WARN;
+import static net.openhft.chronicle.engine.api.tree.RequestContext.loadDefaultAliases;
 
 /**
  * @author Rob Austin.
@@ -34,11 +33,11 @@ import static net.openhft.chronicle.core.onoes.PrintExceptionHandler.WARN;
 public class EngineInstance {
 
     static {
-
         try {
             setExceptionsHandlers(WARN, WARN, Slf4jExceptionHandler.DEBUG);
-            ClassLookup classAliases = RequestContext.CLASS_ALIASES;
+            loadDefaultAliases();
         } catch (Exception e) {
+            e.printStackTrace();
             System.exit(-1);
         }
     }

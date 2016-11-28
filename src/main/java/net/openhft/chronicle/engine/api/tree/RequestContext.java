@@ -33,7 +33,6 @@ import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.cfg.*;
 import net.openhft.chronicle.engine.fs.ChronicleMapGroupFS;
 import net.openhft.chronicle.engine.fs.EngineConnectionManager;
-import net.openhft.chronicle.engine.fs.FilePerKeyGroupFS;
 import net.openhft.chronicle.engine.map.ObjectSubscription;
 import net.openhft.chronicle.engine.map.RawKVSSubscription;
 import net.openhft.chronicle.engine.query.Filter;
@@ -65,16 +64,7 @@ public class RequestContext implements Cloneable {
 
     static {
 
-        CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class,
-                FilePerKeyGroupFS.class,
-                EngineCfg.class,
-                JmxCfg.class,
-                ServerCfg.class,
-                ClustersCfg.class,
-                InMemoryMapCfg.class,
-                FilePerKeyMapCfg.class,
-                ChronicleMapCfg.class,
-                MonitorCfg.class);
+        loadDefaultAliases();
 
         addAliasLocal(ColumnView.class, "Column");
         addAliasLocal(QueueView.class, "Queue");
@@ -115,6 +105,20 @@ public class RequestContext implements Cloneable {
         addAlias(QueueView.class, "QueueView");
         addAlias(MapView.class, "MapView");
         addAlias(Boolean.class, "boolean");
+    }
+
+    public static boolean loadDefaultAliases() {
+
+        ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class,
+                EngineCfg.class,
+                JmxCfg.class,
+                ServerCfg.class,
+                ClustersCfg.class,
+                InMemoryMapCfg.class,
+                FilePerKeyMapCfg.class,
+                ChronicleMapCfg.class,
+                MonitorCfg.class);
+        return true;
     }
 
     private String pathName;
