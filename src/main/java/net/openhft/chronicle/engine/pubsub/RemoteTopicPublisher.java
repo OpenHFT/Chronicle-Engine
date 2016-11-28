@@ -59,8 +59,8 @@ public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId>
     protected RemoteTopicPublisher(@NotNull RequestContext context, @NotNull Asset asset, String view)
             throws AssetNotFoundException {
         super(asset.findView(TcpChannelHub.class), (long) 0, toUri(context, view));
-        topicClass = context.topicType();
-        messageClass = context.messageType();
+        topicClass = context.keyType();
+        messageClass = context.valueType();
 
     }
 
@@ -69,10 +69,10 @@ public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId>
                 + "?view=" + view);
 
         if (context.keyType() != String.class)
-            uri.append("&topicType=").append(context.topicType().getName());
+            uri.append("&keyType=").append(context.keyType().getName());
 
         if (context.valueType() != String.class)
-            uri.append("&messageType=").append(context.messageType().getName());
+            uri.append("&valueType=").append(context.valueType().getName());
 
         if (context.dontPersist())
             uri.append("&dontPersist=").append(context.dontPersist());

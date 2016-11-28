@@ -20,6 +20,8 @@ package net.openhft.chronicle.engine.tree;
 import net.openhft.chronicle.wire.AbstractMarshallable;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 /**
  * Created by peter on 22/05/15.
  */
@@ -27,14 +29,17 @@ public class RemovedAssetEvent extends AbstractMarshallable implements Topologic
     private String assetName;
     private String name;
 
-    private RemovedAssetEvent(String assetName, String name) {
+    private final Set<Class> viewTypes;
+
+    private RemovedAssetEvent(String assetName, String name, Set<Class> viewTypes) {
         this.assetName = assetName;
         this.name = name;
+        this.viewTypes = viewTypes;
     }
 
     @NotNull
-    public static RemovedAssetEvent of(String assetName, String name) {
-        return new RemovedAssetEvent(assetName, name);
+    public static RemovedAssetEvent of(String assetName, String name, Set<Class> viewTypes) {
+        return new RemovedAssetEvent(assetName, name, viewTypes);
     }
 
     @Override
@@ -49,5 +54,10 @@ public class RemovedAssetEvent extends AbstractMarshallable implements Topologic
 
     public String name() {
         return name;
+    }
+
+    @Override
+    public Set<Class> viewTypes() {
+        return viewTypes;
     }
 }

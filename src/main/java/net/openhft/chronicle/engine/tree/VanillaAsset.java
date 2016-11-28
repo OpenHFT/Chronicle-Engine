@@ -26,6 +26,7 @@ import net.openhft.chronicle.engine.api.collection.ValuesCollection;
 import net.openhft.chronicle.engine.api.column.ColumnView;
 import net.openhft.chronicle.engine.api.column.MapColumnView;
 import net.openhft.chronicle.engine.api.column.QueueColumnView;
+import net.openhft.chronicle.engine.api.column.RemoteColumnView;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
@@ -62,6 +63,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Comparator;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -101,7 +103,7 @@ public class VanillaAsset implements Asset, Closeable {
         if (parent != null) {
             TopologySubscription parentSubs = parent.findView(TopologySubscription.class);
             if (parentSubs != null && !(parentSubs instanceof RemoteTopologySubscription))
-                parentSubs.notifyEvent(AddedAssetEvent.of(parent.fullName(), name));
+                parentSubs.notifyEvent(AddedAssetEvent.of(parent.fullName(), name, parent.viewTypes()));
         }
     }
 
@@ -148,6 +150,11 @@ public class VanillaAsset implements Asset, Closeable {
         addLeafRule(ObjectKeyValueStore.class, LAST + " RemoteKeyValueStore",
                 RemoteKeyValueStore::new);
         addLeafRule(ObjectSubscription.class, LAST + " Remote", RemoteKVSSubscription::new);
+    }
+
+    public void configColumnViewRemote() {
+        addLeafRule(MapColumnView.class, LAST + " Remote", RemoteColumnView::new);
+        addLeafRule(QueueColumnView.class, LAST + " Remote", RemoteColumnView::new);
     }
 
     void configQueueCommon() {
@@ -250,6 +257,7 @@ public class VanillaAsset implements Asset, Closeable {
 
     }
 
+
     public void forRemoteAccess(@NotNull String[] hostPortDescriptions,
                                 @NotNull WireType wire,
                                 @NotNull VanillaSessionDetails sessionDetails,
@@ -257,6 +265,7 @@ public class VanillaAsset implements Asset, Closeable {
 
         standardStack(true, false);
         configMapRemote();
+        configColumnViewRemote();
 
         VanillaAsset queue = (VanillaAsset) acquireAsset("queue");
         queue.configQueueRemote();
@@ -384,8 +393,10 @@ public class VanillaAsset implements Asset, Closeable {
     public <V> V acquireView(@NotNull Class<V> viewType, @NotNull RequestContext rc) throws
             AssetNotFoundException {
 
-        assert fullName().equals(rc.fullName()) :
-                "fullName=" + fullName() + " ,rc.fullName()=" + rc.fullName();
+        if (!fullName().equals(rc.fullName())) {
+            Asset asset = this.root().acquireAsset(rc.fullName());
+            return asset.acquireView(rc);
+        }
 
         synchronized (viewMap) {
             V view = getView(viewType);
@@ -459,6 +470,20 @@ public class VanillaAsset implements Asset, Closeable {
         // TODO FIX tests so this works.
 //        if (o != null && !o.equals(view))
 //            throw new IllegalStateException("Attempt to replace " + viewType + " with " + view + " was " + viewMap.get(viewType));
+
+
+        TopologySubscription topologySubscription = this.root().findView(TopologySubscription.class);
+        if (topologySubscription != null) {
+
+            String parentName = parent == null ? "" : parent.fullName();
+            if (o == null) {
+
+                topologySubscription.notifyEvent(AddedAssetEvent.of(parentName, name, viewTypes()));
+            } else {
+                topologySubscription.notifyEvent(ExistingAssetEvent.of(parentName, name, viewTypes()));
+            }
+        }
+
         return view;
     }
 
@@ -512,6 +537,9 @@ public class VanillaAsset implements Asset, Closeable {
     @NotNull
     @Override
     public Asset acquireAsset(@NotNull String childName) {
+        if ("/".contentEquals(childName))
+            return root();
+
         if (keyedAsset != Boolean.TRUE) {
             int pos = childName.indexOf('/');
             if (pos == 0) {
@@ -545,6 +573,8 @@ public class VanillaAsset implements Asset, Closeable {
 
     @Nullable
     protected Asset createAsset(@NotNull String name) {
+        if (name.length() == 0)
+            System.out.println("");
         assert name.length() > 0;
         return children.computeIfAbsent(name, keyedAsset != Boolean.TRUE
                 ? n -> new VanillaAsset(this, name)
@@ -572,7 +602,7 @@ public class VanillaAsset implements Asset, Closeable {
         if (removed == null) return;
         TopologySubscription topologySubscription = removed.findView(TopologySubscription.class);
         if (topologySubscription != null)
-            topologySubscription.notifyEvent(RemovedAssetEvent.of(fullName(), name));
+            topologySubscription.notifyEvent(RemovedAssetEvent.of(fullName(), name, viewTypes()));
     }
 
     @NotNull
@@ -627,5 +657,11 @@ public class VanillaAsset implements Asset, Closeable {
         public String toString() {
             return "wraps " + underlyingType;
         }
+
+    }
+
+    @Override
+    public Set<Class> viewTypes() {
+        return viewMap.keySet();
     }
 }

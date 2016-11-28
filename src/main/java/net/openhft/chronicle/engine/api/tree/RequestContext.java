@@ -30,8 +30,8 @@ import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.session.Heartbeat;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
-import net.openhft.chronicle.engine.cfg.EngineClusterContext;
-import net.openhft.chronicle.engine.cfg.VanillaWireOutPublisherFactory;
+import net.openhft.chronicle.engine.cfg.*;
+import net.openhft.chronicle.engine.fs.ChronicleMapGroupFS;
 import net.openhft.chronicle.engine.fs.EngineConnectionManager;
 import net.openhft.chronicle.engine.map.ObjectSubscription;
 import net.openhft.chronicle.engine.map.RawKVSSubscription;
@@ -63,6 +63,9 @@ public class RequestContext implements Cloneable {
     public static final ClassLookup CLASS_ALIASES = ClassLookup.create();
 
     static {
+
+        loadDefaultAliases();
+
         addAliasLocal(ColumnView.class, "Column");
         addAliasLocal(QueueView.class, "Queue");
         addAliasLocal(MapView.class, "Map");
@@ -98,7 +101,24 @@ public class RequestContext implements Cloneable {
         addAlias(MapReplicationHandler.class, "MapReplicationHandler");
         addAlias(HeartbeatHandler.class, "HeartbeatHandler");
         addAlias("software.chronicle.enterprise.queue.QueueSourceReplicationHandler");
-        addAlias("software.chronicle.enterprise.queue.QueueSyncReplicationHandler");
+        addAlias("software.chronicle.ente§rprise.queue.QueueSyncReplicationHandler");
+        addAlias(QueueView.class, "QueueView");
+        addAlias(MapView.class, "MapView");
+        addAlias(Boolean.class, "boolean");
+    }
+
+    public static boolean loadDefaultAliases() {
+
+        ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class,
+                EngineCfg.class,
+                JmxCfg.class,
+                ServerCfg.class,
+                ClustersCfg.class,
+                InMemoryMapCfg.class,
+                FilePerKeyMapCfg.class,
+                ChronicleMapCfg.class,
+                MonitorCfg.class);
+        return true;
     }
 
     private String pathName;
@@ -120,6 +140,7 @@ public class RequestContext implements Cloneable {
 
     private int throttlePeriodMs = 0;
     private boolean dontPersist;
+    private long token;
 
     private RequestContext() {
     }
@@ -242,6 +263,8 @@ public class RequestContext implements Cloneable {
         parser.register(() -> "entries", (s, v, $) -> v.int64(this, (o, x) -> o.entries = x));
         parser.register(() -> "averageValueSize", (s, v, $) -> v.int64(this, (o, x) -> o.averageValueSize = x));
         parser.register(() -> "dontPersist", (s, v, $) -> v.bool(this, (o, x) -> o.dontPersist = x));
+        parser.register(() -> "token", (s, v, $) -> v.int64(this, (o, x) -> o.token =
+                x));
         return parser;
     }
 
@@ -252,7 +275,7 @@ public class RequestContext implements Cloneable {
             viewType(clazz);
 
         } catch (ClassNotFoundException iae) {
-            throw new IllegalArgumentException("Unknown view name:" + viewName);
+            throw new IllegalArgumentException("Unknown view name=" + viewName);
         }
         return this;
     }
@@ -587,6 +610,15 @@ public class RequestContext implements Cloneable {
 
     public RequestContext dontPersist(boolean dontPersist) {
         this.dontPersist = dontPersist;
+        return this;
+    }
+
+    public long token() {
+        return token;
+    }
+
+    public RequestContext token(long token) {
+        this.token = token;
         return this;
     }
 

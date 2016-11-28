@@ -38,6 +38,7 @@ import org.junit.runners.Parameterized.Parameters;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -118,22 +119,22 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
 
                 {
                     TopologicalEvent take = eventsQueue.poll(1, SECONDS);
-                    Assert.assertEquals(ExistingAssetEvent.of(null, ""), take);
+                    Assert.assertEquals(ExistingAssetEvent.of(null, "", Collections.emptySet()), take);
                 }
                 {
                     clientAssetTree.acquireMap("/group/" + NAME, String.class, String.class).size();
 
                     {
                         TopologicalEvent take = eventsQueue.poll(1, SECONDS);
-                        Assert.assertEquals(ExistingAssetEvent.of("/", "queue"), take);
+                        Assert.assertEquals(ExistingAssetEvent.of("/", "queue", Collections.emptySet()), take);
                     }
                     {
                         TopologicalEvent take = eventsQueue.poll(1, SECONDS);
-                        Assert.assertEquals(AddedAssetEvent.of("/", "group"), take);
+                        Assert.assertEquals(AddedAssetEvent.of("/", "group", Collections.emptySet()), take);
                     }
                     {
                         TopologicalEvent take = eventsQueue.poll(1, SECONDS);
-                        Assert.assertEquals(AddedAssetEvent.of("/group", NAME), take);
+                        Assert.assertEquals(AddedAssetEvent.of("/group", NAME, Collections.emptySet()), take);
                     }
                 }
                 {
@@ -141,14 +142,14 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
 
                     TopologicalEvent take3 = eventsQueue.poll(1, SECONDS);
 
-                    Assert.assertEquals(AddedAssetEvent.of("/group", NAME + 2), take3);
+                    Assert.assertEquals(AddedAssetEvent.of("/group", NAME + 2, Collections.emptySet()), take3);
                 }
                 {
                     // the client cannot remove maps yet.
                     serverAssetTree.acquireAsset("/group").removeChild(NAME);
 
                     TopologicalEvent take4 = eventsQueue.poll(1, SECONDS);
-                    Assert.assertEquals(RemovedAssetEvent.of("/group", NAME), take4);
+                    Assert.assertEquals(RemovedAssetEvent.of("/group", NAME, Collections.emptySet()), take4);
                 }
 
                 clientAssetTree.unregisterSubscriber(NAME, subscription);

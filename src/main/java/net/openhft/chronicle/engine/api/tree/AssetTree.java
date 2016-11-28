@@ -108,6 +108,21 @@ public interface AssetTree extends Closeable {
         return acquireView(requestContext(uri).view("pub").elementType(eClass));
     }
 
+
+    /**
+     * Acquire a publisher to a single URI.
+     *
+     * @param uri    to search for
+     * @param eClass element class.
+     * @return the Set.
+     * @throws AssetNotFoundException the view could not be constructed.
+     */
+    @NotNull
+    default <E> Publisher<E> acquirePublisher(@NotNull String uri, String basePath, Class<E> eClass)
+            throws AssetNotFoundException {
+        return acquireView(requestContext(uri).view("pub").elementType(eClass).basePath(basePath));
+    }
+
     /**
      * Acquire a reference to a single URI
      *
@@ -119,6 +134,21 @@ public interface AssetTree extends Closeable {
     @NotNull
     default <E> Reference<E> acquireReference(@NotNull String uri, Class<E> eClass) throws AssetNotFoundException {
         return acquireView(requestContext(uri).view("ref").type(eClass));
+    }
+
+
+    /**
+     * Acquire a Topic Publisher view for a URI. A Topic Publisher can publish to any topic in a
+     * group by passing the topic as an additional argument. Assumes both String topic and message
+     * class
+     *
+     * @param uri to search for
+     * @return the TopicPublisher
+     * @throws AssetNotFoundException the view could not be constructed.
+     */
+    @NotNull
+    default <T, E> TopicPublisher<T, E> acquireTopicPublisher(@NotNull String uri) throws AssetNotFoundException {
+        return acquireView(requestContext(uri).view("topicPub"));
     }
 
     /**
@@ -134,6 +164,24 @@ public interface AssetTree extends Closeable {
     @NotNull
     default <T, E> TopicPublisher<T, E> acquireTopicPublisher(@NotNull String uri, Class<T> topicClass, Class<E> messageClass) throws AssetNotFoundException {
         return acquireView(requestContext(uri).view("topicPub").type(topicClass).type2(messageClass));
+    }
+
+    /**
+     * Acquire a Topic Publisher view for a URI. A Topic Publisher can publish to any topic in a
+     * group by passing the topic as an additional argument.
+     *
+     * @param uri          to search for
+     * @param basePath     the location the topic is pushed to on the file system
+     * @param topicClass   class of topic descriptions e.g. String.class.
+     * @param messageClass class of messages to send on that topic..
+     * @return the TopicPublisher
+     * @throws AssetNotFoundException the view could not be constructed.
+     */
+    @NotNull
+    default <T, E> TopicPublisher<T, E> acquireTopicPublisher(@NotNull String uri, String basePath,
+                                                              Class<T> topicClass, Class<E> messageClass) throws AssetNotFoundException {
+        return acquireView(requestContext(uri).view("topicPub").type(topicClass).type2
+                (messageClass).basePath(basePath));
     }
 
     /**
@@ -154,6 +202,24 @@ public interface AssetTree extends Closeable {
     }
 
     /**
+     * Register a subscriber to a URI with an expected type of message by class. <p></p> e.g. if you
+     * subscribe to a type of String.class you get the keys which changed, if you subscribe to
+     * MapEvent.class you get all the changes to the map.
+     *
+     * @param uri        of the asset to subscribe to.
+     * @param eClass     the type of event/message to subscribe to
+     * @param subscriber to notify which this type of message is sent.
+     * @throws AssetNotFoundException the view could not be constructed.
+     */
+    default <E> void registerSubscriber(@NotNull String uri, String basePath, Class<E> eClass,
+                                        Subscriber<E> subscriber) throws AssetNotFoundException {
+        RequestContext rc = requestContext(uri).type2(eClass).basePath(basePath);
+
+        acquireSubscription(rc)
+                .registerSubscriber(rc, subscriber, Filter.empty());
+    }
+
+    /**
      * Register a topic subscriber to a URI with an expected type of message by topic class and
      * message class
      *
@@ -168,6 +234,26 @@ public interface AssetTree extends Closeable {
         final KVSSubscription kvsSubscription = (KVSSubscription) acquireSubscription(rc);
         kvsSubscription.registerTopicSubscriber(rc, subscriber);
     }
+
+    /**
+     * Register a topic subscriber to a URI with an expected type of message by topic class and
+     * message class
+     *
+     * @param uri          of the asset to subscribe to.
+     * @param basePath     the path the asset is stored to
+     * @param topicClass   the type of topic to subscribe to
+     * @param messageClass the type of event/message to subscribe to
+     * @param subscriber   to notify which this type of message is sent.
+     * @throws AssetNotFoundException the view could not be constructed.
+     */
+    default <T, E> void registerTopicSubscriber(@NotNull String uri, String basePath, Class<T> topicClass,
+                                                Class<E> messageClass, TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
+        RequestContext rc = requestContext(uri).keyType(topicClass).valueType(messageClass)
+                .basePath(basePath);
+        final KVSSubscription kvsSubscription = (KVSSubscription) acquireSubscription(rc);
+        kvsSubscription.registerTopicSubscriber(rc, subscriber);
+    }
+
 
     /**
      * Acquire the Subscription view for a URI.
@@ -302,6 +388,32 @@ public interface AssetTree extends Closeable {
     default <T, M> QueueView<T, M> acquireQueue(String uri, Class<T> typeClass, Class<M> messageClass, final String cluster) {
 
         final RequestContext requestContext = requestContext(uri);
+
+        if (requestContext.bootstrap() != null)
+            throw new UnsupportedOperationException("Its not possible to set the bootstrap when " +
+                    "acquiring a queue");
+
+        return acquireView(requestContext.view("queue").type(typeClass).type2(messageClass)
+                .cluster(cluster));
+    }
+
+    default <T, M> QueueView<T, M> acquireQueue(String uri, Class<T> typeClass, Class<M>
+            messageClass, final String cluster, String basePath) {
+
+        final RequestContext requestContext = requestContext(uri).basePath(basePath);
+
+        if (requestContext.bootstrap() != null)
+            throw new UnsupportedOperationException("Its not possible to set the bootstrap when " +
+                    "acquiring a queue");
+
+        return acquireView(requestContext.view("queue").type(typeClass).type2(messageClass)
+                .cluster(cluster));
+    }
+
+    default <T, M> QueueView<T, M> acquireQueue(String uri, String basePath, Class<T> typeClass,
+                                                Class<M> messageClass, final String cluster) {
+
+        final RequestContext requestContext = requestContext(uri).basePath(basePath);
 
         if (requestContext.bootstrap() != null)
             throw new UnsupportedOperationException("Its not possible to set the bootstrap when " +

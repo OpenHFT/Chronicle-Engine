@@ -2,6 +2,7 @@ package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.util.ObjectUtils;
+import net.openhft.chronicle.engine.api.column.ClosableIterator;
 import net.openhft.chronicle.engine.api.column.Column;
 import net.openhft.chronicle.engine.api.column.MapColumnView;
 import net.openhft.chronicle.engine.api.column.Row;
@@ -97,7 +98,7 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
                 }
 
                 if (result != 0)
-                    return order.isAscending ? result : -result;
+                    return order.isAscending ? -result : result;
             }
 
             return 0;
@@ -106,14 +107,19 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
 
     @NotNull
     @Override
-    public Iterator<Row> iterator(@NotNull final SortedFilter sortedFilter) {
+    public ClosableIterator<Row> iterator(@NotNull final SortedFilter sortedFilter) {
 
         final Iterator<Map.Entry<K, V>> core = mapView.entrySet().stream()
                 .filter(filter(sortedFilter.marshableFilters))
                 .sorted(sort(sortedFilter.marshableOrderBy))
                 .iterator();
 
-        @NotNull final Iterator<Row> result = new Iterator<Row>() {
+        @NotNull final ClosableIterator<Row> result = new ClosableIterator<Row>() {
+
+            @Override
+            public void close() {
+                // do nothing
+            }
 
             @Override
             public boolean hasNext() {
@@ -166,9 +172,9 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
     }
 
     @Override
-    public boolean containsRowWithKey(@NotNull Object[] keys) {
-        assert keys.length == 1;
-        return mapView.containsKey((K) keys[0]);
+    public boolean containsRowWithKey(@NotNull List keys) {
+        assert keys.size() == 1;
+        return mapView.containsKey((K) keys.get(0));
     }
 
     @Nullable

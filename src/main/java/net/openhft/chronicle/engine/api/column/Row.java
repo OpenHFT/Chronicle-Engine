@@ -1,5 +1,7 @@
 package net.openhft.chronicle.engine.api.column;
 
+import net.openhft.chronicle.wire.AbstractMarshallable;
+import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
@@ -10,10 +12,14 @@ import java.util.stream.Collectors;
 /**
  * @author Rob Austin.
  */
-public class Row {
+public class Row extends AbstractMarshallable {
 
-    private final List<String> columnNames;
+    private List<String> columnNames;
     private Map<String, Object> data = new LinkedHashMap<>();
+
+    public Row() {
+
+    }
 
     /**
      * @param columns all the column names that make up this row
@@ -34,6 +40,12 @@ public class Row {
      */
     public Object get(int columnIndex) {
         return data.get(columnNames.get(columnIndex));
+    }
+
+
+    public <R> R copyTo(R using) {
+        Wires.copyTo(data,using);
+        return using;
     }
 
     /**

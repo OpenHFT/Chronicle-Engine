@@ -29,6 +29,8 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.util.Collections;
+
 import static org.easymock.EasyMock.*;
 
 /**
@@ -64,10 +66,10 @@ public class AssetSubscriptionsTest {
         TopicSubscriber<String, String> rootTopicSubscriber = createMock(TopicSubscriber.class);
 
         // the root asset
-        rootTopoSubscriber.onMessage(ExistingAssetEvent.of(null, ""));
+        rootTopoSubscriber.onMessage(ExistingAssetEvent.of(null, "", Collections.emptySet()));
         // the one added
-        rootTopoSubscriber.onMessage(ExistingAssetEvent.of("/", "queue"));
-        rootTopoSubscriber.onMessage(AddedAssetEvent.of("/", "one"));
+        rootTopoSubscriber.onMessage(ExistingAssetEvent.of("/", "queue", Collections.emptySet()));
+        rootTopoSubscriber.onMessage(AddedAssetEvent.of("/", "one", Collections.emptySet()));
         // rootMapSubscriber - none
         // rootNameSubscriber - none
         // rootTopicSubscriber - none
@@ -86,7 +88,7 @@ public class AssetSubscriptionsTest {
 
         // the root asset
 //        rootTopoSubscriber1.onMessage(ExistingAssetEvent.of(null, ""));
-        rootTopoSubscriber1.onMessage(ExistingAssetEvent.of("/", "one"));
+        rootTopoSubscriber1.onMessage(ExistingAssetEvent.of("/", "one", Collections.emptySet()));
 
         replay(rootTopoSubscriber1, rootMapSubscriber1, rootNameSubscriber1, rootTopicSubscriber1);
 
@@ -99,18 +101,18 @@ public class AssetSubscriptionsTest {
         verify(rootTopoSubscriber1, rootMapSubscriber1, rootNameSubscriber1, rootTopicSubscriber1);
 
         Subscriber<TopologicalEvent> rootTopoSubscriber0 = createMock("sub0", Subscriber.class);
-        rootTopoSubscriber0.onMessage(ExistingAssetEvent.of(null, ""));
-        rootTopoSubscriber0.onMessage(ExistingAssetEvent.of("/", "queue"));
-        rootTopoSubscriber0.onMessage(ExistingAssetEvent.of("/", "one"));
+        rootTopoSubscriber0.onMessage(ExistingAssetEvent.of(null, "", Collections.emptySet()));
+        rootTopoSubscriber0.onMessage(ExistingAssetEvent.of("/", "queue", Collections.emptySet()));
+        rootTopoSubscriber0.onMessage(ExistingAssetEvent.of("/", "one", Collections.emptySet()));
         replay(rootTopoSubscriber0);
         tree.registerSubscriber("", TopologicalEvent.class, rootTopoSubscriber0);
         verify(rootTopoSubscriber0);
 
         // test removing an asset
         reset(rootTopoSubscriber, rootTopoSubscriber0, rootTopoSubscriber1);
-        rootTopoSubscriber.onMessage(RemovedAssetEvent.of("/", "one"));
-        rootTopoSubscriber0.onMessage(RemovedAssetEvent.of("/", "one"));
-        rootTopoSubscriber1.onMessage(RemovedAssetEvent.of("/", "one"));
+        rootTopoSubscriber.onMessage(RemovedAssetEvent.of("/", "one", Collections.emptySet()));
+        rootTopoSubscriber0.onMessage(RemovedAssetEvent.of("/", "one", Collections.emptySet()));
+        rootTopoSubscriber1.onMessage(RemovedAssetEvent.of("/", "one", Collections.emptySet()));
 
         replay(rootTopoSubscriber, rootTopoSubscriber0, rootTopoSubscriber1);
 

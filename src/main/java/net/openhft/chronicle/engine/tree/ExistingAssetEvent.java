@@ -20,22 +20,27 @@ package net.openhft.chronicle.engine.tree;
 import net.openhft.chronicle.wire.AbstractMarshallable;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 /**
  * Created by peter on 22/05/15.
  */
 public class ExistingAssetEvent extends AbstractMarshallable implements TopologicalEvent {
     private String assetName;
     private String name;
+    private Set<Class> classes;
 
-    private ExistingAssetEvent(String assetName, String name) {
+    private ExistingAssetEvent(String assetName, String name, Set<Class> viewTypes) {
         this.assetName = assetName;
         this.name = name;
+        this.classes = viewTypes;
     }
 
     @NotNull
-    public static ExistingAssetEvent of(String assetName, String name) {
-        return new ExistingAssetEvent(assetName, name);
+    public static ExistingAssetEvent of(String assetName, String name, Set<Class> viewTypes) {
+        return new ExistingAssetEvent(assetName, name, viewTypes);
     }
+
 
     @Override
     public boolean added() {
@@ -49,5 +54,19 @@ public class ExistingAssetEvent extends AbstractMarshallable implements Topologi
 
     public String name() {
         return name;
+    }
+
+    @Override
+    public Set<Class> viewTypes() {
+        return classes;
+    }
+
+    @Override
+    public String toString() {
+        return "ExistingAssetEvent{" +
+                "assetName='" + assetName + '\'' +
+                ", name='" + name + '\'' +
+                ", viewTypes=" + viewTypes() +
+                '}';
     }
 }

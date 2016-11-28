@@ -17,7 +17,6 @@
 package net.openhft.engine.chronicle.demo;
 
 import net.openhft.chronicle.core.pool.ClassAliasPool;
-import net.openhft.chronicle.engine.EngineMain;
 import net.openhft.chronicle.engine.cfg.EngineClusterContext;
 import net.openhft.engine.chronicle.demo.data.EndOfDay;
 import net.openhft.engine.chronicle.demo.data.EndOfDayShort;

@@ -21,6 +21,7 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
+import net.openhft.chronicle.engine.api.column.*;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.query.IndexQueueView;
@@ -49,21 +50,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 import static net.openhft.chronicle.core.Jvm.rethrow;
 import static net.openhft.chronicle.network.connection.CoreFields.csp;
+import static net.openhft.chronicle.network.connection.CoreFields.reply;
 
 /**
  * Created by Rob Austin
  */
 public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> implements
-        ClientClosedProvider, NetworkContextManager<EngineWireNetworkContext> {
+        ClientClosedProvider, NetworkContextManager<EngineWireNetworkContext>, CspManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(EngineWireHandler.class);
 
@@ -71,6 +72,10 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
     @NotNull
     private final CollectionWireHandler keySetHandler;
 
+    private final ColumnViewIteratorHandler columnViewIteratorHandler;
+
+    @NotNull
+    private final ColumnViewHandler columnViewHandler;
     @NotNull
     private final MapWireHandler mapWireHandler;
     @NotNull
@@ -117,15 +122,25 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
 
     private SessionDetailsProvider sessionDetails;
 
+
+    @NotNull
+    private final Map<Long, String> cidToCsp = new HashMap<>();
+
+    @NotNull
+    private final Map<Long, Object> cidToObject = new HashMap<>();
+
+    @NotNull
+    private final Map<String, Long> cspToCid = new HashMap<>();
+
     @Nullable
     private Class viewType;
     private long tid;
     private long cid;
-    private byte localIdentifier;
+
     private HostIdentifier hostIdentifier;
 
     public EngineWireHandler() {
-        this.mapWireHandler = new MapWireHandler<>();
+        this.mapWireHandler = new MapWireHandler<>(this);
         this.metaDataConsumer = metaDataConsumer();
         this.keySetHandler = new CollectionWireHandler();
         this.entrySetHandler = new CollectionWireHandler();
@@ -138,6 +153,8 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
         this.replicationHandler = new ReplicationHandler();
         this.systemHandler = new SystemHandler();
         this.indexQueueViewHandler = new IndexQueueViewHandler();
+        this.columnViewHandler = new ColumnViewHandler(this);
+        this.columnViewIteratorHandler = new ColumnViewIteratorHandler(this);
     }
 
     @Override
@@ -151,8 +168,6 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
         contextAsset = nc.isAcceptor() ? rootAsset : nc.rootAsset();
         hostIdentifier = rootAsset.findOrCreateView(HostIdentifier.class);
 
-        if (hostIdentifier != null)
-            localIdentifier = hostIdentifier.hostId();
 
         this.sessionProvider = rootAsset.getView(SessionProvider.class);
         this.eventLoop = rootAsset.findOrCreateView(EventLoop.class);
@@ -194,7 +209,8 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                 // if true the next data message will be a system message
                 isSystemMessage = wire.bytes().readRemaining() == 0;
                 if (isSystemMessage) {
-                    if (LOG.isDebugEnabled()) Jvm.debug().on(getClass(), "received system-meta-data");
+                    if (LOG.isDebugEnabled())
+                        Jvm.debug().on(getClass(), "received system-meta-data");
                     return;
                 }
 
@@ -214,12 +230,16 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
 
                         viewType = requestContext.viewType();
                         if (viewType == null) {
-                            if (LOG.isDebugEnabled()) Jvm.debug().on(getClass(), "received system-meta-data");
+                            if (LOG.isDebugEnabled())
+                                Jvm.debug().on(getClass(), "received system-meta-data");
                             isSystemMessage = true;
                             return;
                         }
 
-                        view = contextAsset.acquireView(requestContext);
+                        if (viewType != ColumnViewIterator.class) {
+                            view = contextAsset.acquireView(requestContext);
+                        } else
+                            view = cidToObject.get(cid);
 
                         if (viewType == MapView.class ||
                                 viewType == EntrySetView.class ||
@@ -233,7 +253,10 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                                 viewType == Replication.class ||
                                 viewType == QueueView.class ||
                                 viewType == Heartbeat.class ||
-                                viewType == IndexQueueView.class) {
+                                viewType == IndexQueueView.class ||
+                                viewType == MapColumnView.class ||
+                                viewType == QueueColumnView.class ||
+                                viewType == ColumnViewIterator.class) {
 
                             // default to string type if not provided
                             final Class<?> type = requestContext.keyType() == null ? String.class
@@ -374,6 +397,16 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                         return;
                     }
 
+                    if (viewType == MapColumnView.class || viewType == QueueColumnView.class) {
+                        columnViewHandler.process(in, out, (ColumnViewInternal) view, tid);
+                        return;
+                    }
+
+                    if (ColumnViewIterator.class.isAssignableFrom(viewType)) {
+                        columnViewIteratorHandler.process(in, out, tid, (Iterator<Row>) view, cid);
+                        return;
+                    }
+
                     if (viewType == ValuesCollection.class) {
                         valuesHandler.process(in, out, (ValuesCollection) view,
                                 wireAdapter.keyToWire(),
@@ -437,6 +470,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
             } finally {
                 if (sessionProvider != null)
                     sessionProvider.remove();
+                cid = 0;
             }
         }
     }
@@ -500,13 +534,13 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
 
                 final long cid1 = valueIn.int64();
                 that.cid = cid1;
-                mapWireHandler.setCid(cspText.toString(), cid1);
+                setCid(cspText.toString(), cid1);
                 return true;
             });
 
         } else if (CoreFields.cid.contentEquals(event)) {
             final long cid = read.int64();
-            final CharSequence s = mapWireHandler.getCspForCid(cid);
+            final CharSequence s = getCspForCid(cid);
             cspText.append(s);
             this.cid = cid;
         }
@@ -538,4 +572,96 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
         publisher().close();
         super.close();
     }
+
+    private final AtomicLong nextCid = new AtomicLong(1);
+
+    /**
+     * create a new cid if one does not already exist for this csp
+     *
+     * @param csp the csp we wish to check for a cid
+     * @return the cid for this csp
+     */
+    @Override
+    public long acquireCid(@NotNull CharSequence csp) {
+        final long newCid = nextCid.incrementAndGet();
+        String cspStr = csp.toString();
+        final Long aLong = cspToCid.putIfAbsent(cspStr, newCid);
+
+        if (aLong != null)
+            return aLong;
+
+        cidToCsp.put(newCid, cspStr);
+        return newCid;
+    }
+
+
+    @Override
+    public void storeObject(long cid, Object object) {
+        cidToObject.put(cid, object);
+    }
+
+
+    @Override
+    public void removeCid(long cid) {
+        cidToObject.remove(cid);
+        final String removed = cidToCsp.remove(cid);
+        if (removed != null)
+            cspToCid.remove(removed);
+    }
+
+    private final StringBuilder cspBuff = new StringBuilder();
+
+    @Override
+    public long createProxy(final String type) {
+        createProxy0(type, cspBuff);
+        final long cid = acquireCid(cspBuff);
+        outWire.writeEventName(reply).typePrefix("set-proxy")
+                .marshallable(w -> {
+                    w.writeEventName(CoreFields.csp).text(cspBuff);
+                    w.writeEventName(CoreFields.cid).int64(cid);
+                });
+
+        return cid;
+    }
+
+    @Override
+    public long createProxy(String type, long token) {
+
+        createProxy0(type, cspBuff);
+        cspBuff.append("&token=" + token);
+
+        final long cid = acquireCid(cspBuff);
+        outWire.writeEventName(reply).typePrefix("set-proxy")
+                .marshallable(w -> {
+                    w.writeEventName(CoreFields.csp).text(cspBuff);
+                    w.writeEventName(CoreFields.cid).int64(cid);
+                });
+
+        return cid;
+    }
+
+    private void createProxy0(String type, final StringBuilder cspBuff) {
+        this.cspBuff.setLength(0);
+        this.cspBuff.append(requestContext.fullName());
+        this.cspBuff.append("?");
+        this.cspBuff.append("view=").append(type);
+
+        final Class keyType = requestContext.keyType();
+        if (keyType != null)
+            this.cspBuff.append("&keyType=").append(keyType.getName());
+        final Class valueType = requestContext.valueType();
+        if (valueType != null)
+            this.cspBuff.append("&valueType=").append(valueType.getName());
+    }
+
+
+    public CharSequence getCspForCid(long cid) {
+        return cidToCsp.get(cid);
+    }
+
+    public void setCid(String csp, long cid) {
+        cidToCsp.put(cid, csp);
+    }
+
+
 }

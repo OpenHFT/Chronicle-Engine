@@ -40,6 +40,6 @@ public class RemoteTopologySubscription extends AbstractRemoteSubscription<Topol
 
     @Override
     public void notifyEvent(TopologicalEvent event) {
-        throw new UnsupportedOperationException("Remote client should not attempt to notify of a change");
+
     }
 }

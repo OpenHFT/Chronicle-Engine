@@ -93,7 +93,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
 
     private volatile MapView<T, M> mapView;
 
-    public ChronicleQueueView(@NotNull RequestContext context, @NotNull Asset asset) throws IOException {
+    public ChronicleQueueView(@NotNull RequestContext context,
+                              @NotNull Asset asset) throws IOException {
         this(null, context, asset);
     }
 
@@ -172,8 +173,9 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
 
         } catch (Exception e) {
             IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
-                    " required to run this code. Please contact sales@chronicle.software");
-            Jvm.warn().on(ChronicleQueueView.class, e);
+                    " required to run chronicle-queue replication. Please contact sales@chronicle" +
+                    ".software");
+            Jvm.warn().on(ChronicleQueueView.class, licence.getMessage());
             throw licence;
         }
     }
@@ -203,9 +205,9 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
 
         } catch (Exception e) {
             IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
-                    " required to run this code." +
+                    " required to do chronicle-queue replication. " +
                     "Please contact sales@chronicle.software");
-            Jvm.warn().on(ChronicleQueueView.class, e);
+            Jvm.warn().on(ChronicleQueueView.class, licence.getMessage());
             throw licence;
         }
     }
@@ -447,9 +449,9 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
 
         File baseFilePath;
         if (basePath == null)
-            baseFilePath = new File(defaultPath, "" + hostID);
+            baseFilePath = new File(defaultPath, "");
         else
-            baseFilePath = new File(basePath + "/" + defaultPath, "" + hostID);
+            baseFilePath = new File(basePath, name);
 
         if (!baseFilePath.exists())
             Files.createDirectories(baseFilePath.toPath());

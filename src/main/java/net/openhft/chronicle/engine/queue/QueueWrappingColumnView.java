@@ -2,6 +2,7 @@ package net.openhft.chronicle.engine.queue;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.column.ChronicleQueueRow;
+import net.openhft.chronicle.engine.api.column.ClosableIterator;
 import net.openhft.chronicle.engine.api.column.Column;
 import net.openhft.chronicle.engine.api.column.QueueColumnView;
 import net.openhft.chronicle.engine.api.tree.Asset;
@@ -54,14 +55,14 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
 
     @NotNull
     @Override
-    public Iterator<ChronicleQueueRow> iterator(@NotNull final SortedFilter filters) {
+    public ClosableIterator<ChronicleQueueRow> iterator(@NotNull final SortedFilter filters) {
         return iterator(filters.marshableFilters, filters.fromIndex);
     }
 
     Map<List<MarshableFilter>, NavigableMap<Long, ChronicleQueueRow>> indexCache = new ConcurrentHashMap<>();
 
     @NotNull
-    private Iterator<ChronicleQueueRow> iterator(@NotNull final List<MarshableFilter> filters, long fromSequenceNumber) {
+    private ClosableIterator<ChronicleQueueRow> iterator(@NotNull final List<MarshableFilter> filters, long fromSequenceNumber) {
         long count = 0;
         final NavigableMap<Long, ChronicleQueueRow> map = indexCache.computeIfAbsent(filters, k -> new ConcurrentSkipListMap<>());
         final Map.Entry<Long, ChronicleQueueRow> longChronicleQueueRowEntry = map.floorEntry(fromSequenceNumber);
@@ -100,7 +101,12 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
                 .filter(filter(filters))
                 .iterator();
 
-        @NotNull final Iterator<ChronicleQueueRow> result = new Iterator<ChronicleQueueRow>() {
+        @NotNull final ClosableIterator<ChronicleQueueRow> result = new ClosableIterator<ChronicleQueueRow>() {
+
+            @Override
+            public void close() {
+                // do nothing
+            }
 
             @Override
             public boolean hasNext() {
@@ -149,13 +155,13 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
     }
 
     @Override
-    public boolean containsRowWithKey(@NotNull Object[] keys) {
-        if (keys.length == 1 && keys[0] instanceof String) {
-            final long l = Long.parseLong(keys[0].toString(), 16);
+    public boolean containsRowWithKey(@NotNull List keys) {
+        if (keys.size() == 1 && keys.get(0) instanceof String) {
+            final long l = Long.parseLong(keys.get(0).toString(), 16);
             return queueView.getExcerpt(l) != null;
         }
 
-        throw new IllegalStateException("unsupported format, keys=" + Arrays.toString(keys));
+        throw new IllegalStateException("unsupported format, keys=" + keys);
     }
 
     @Nullable
@@ -201,9 +207,9 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
         return false;
     }
 
+
     @Override
-    public int changedRow
-            (@NotNull Map<String, Object> row, @NotNull Map<String, Object> oldRow) {
+    public int changedRow(@NotNull Map<String, Object> row, @NotNull Map<String, Object> oldRow) {
         // chronicle queue is read only
         return 0;
     }

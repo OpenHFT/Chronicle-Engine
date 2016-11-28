@@ -36,9 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -55,19 +52,14 @@ public class MapWireHandler<K, V> extends AbstractHandler {
     private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
     private final StringBuilder eventName = new StringBuilder();
     private final StringBuilder cpsBuff = new StringBuilder();
+    private final CspManager cspManager;
 
-    @NotNull
-    private final Map<Long, String> cidToCsp = new HashMap<>();
-    @NotNull
-    private final Map<String, Long> cspToCid = new HashMap<>();
-    private final AtomicLong cid = new AtomicLong();
 
     private BiConsumer<ValueOut, V> vToWire;
     @Nullable
     private Function<ValueIn, K> wireToK;
     @Nullable
     private Function<ValueIn, V> wireToV;
-    private RequestContext requestContext;
 
     @Nullable
     private WireIn inWire = null;
@@ -161,7 +153,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                     if (keySet.contentEquals(eventName) ||
                             values.contentEquals(eventName) ||
                             entrySet.contentEquals(eventName)) {
-                        createProxy(eventName.toString());
+                        cspManager.createProxy(eventName.toString());
                         return;
                     }
 
@@ -310,6 +302,10 @@ public class MapWireHandler<K, V> extends AbstractHandler {
         }
     };
 
+    public MapWireHandler(CspManager cspManager) {
+        this.cspManager = cspManager;
+    }
+
     /**
      * @param in             the data the has come in from network
      * @param out            the data that is going out to network
@@ -347,52 +343,6 @@ public class MapWireHandler<K, V> extends AbstractHandler {
         }
     }
 
-    /**
-     * create a new cid if one does not already exist for this csp
-     *
-     * @param csp the csp we wish to check for a cid
-     * @return the cid for this csp
-     */
-    private long createCid(@NotNull CharSequence csp) {
-        final long newCid = cid.incrementAndGet();
-        String cspStr = csp.toString();
-        final Long aLong = cspToCid.putIfAbsent(cspStr, newCid);
-
-        if (aLong != null)
-            return aLong;
-
-        cidToCsp.put(newCid, cspStr);
-        return newCid;
-    }
-
-    private void createProxy(final String type) {
-        outWire.writeEventName(reply).typePrefix("set-proxy")
-                .marshallable(w -> {
-
-                    cpsBuff.setLength(0);
-                    cpsBuff.append(requestContext.fullName());
-                    cpsBuff.append("?");
-                    cpsBuff.append("view=").append(type);
-
-                    final Class keyType = requestContext.keyType();
-                    if (keyType != null)
-                        cpsBuff.append("&keyType=").append(keyType.getName());
-                    final Class valueType = requestContext.valueType();
-                    if (valueType != null)
-                        cpsBuff.append("&valueType=").append(valueType.getName());
-
-                    w.writeEventName(CoreFields.csp).text(cpsBuff);
-                    w.writeEventName(CoreFields.cid).int64(createCid(cpsBuff));
-                });
-    }
-
-    public CharSequence getCspForCid(long cid) {
-        return cidToCsp.get(cid);
-    }
-
-    public void setCid(String csp, long cid) {
-        cidToCsp.put(cid, csp);
-    }
 
     public enum Params implements WireKey {
         key,
