@@ -31,11 +31,6 @@ class StartEngineWithDummyData {
     private static VanillaAssetTree TREE2 = EngineInstance.engineMain(2, "single-host-engine.yaml");
     private static String CLUSTER_NAME = EngineInstance.firstClusterName(TREE2);
 
-    public static void main(String[] args) {
-        addSampleDataToTree(TREE1);
-        LockSupport.park();
-    }
-
     static {
 
         try {
@@ -46,64 +41,10 @@ class StartEngineWithDummyData {
         }
     }
 
-
-    public static class MarketData2 extends AbstractMarshallable {
-        Date date;
-        double open;
-        double high;
-        double low;
-        double close;
-        double volume;
-        double adjClose;
-
-        public MarketData2(Date date, double open, double high, double low, double close,
-                           double adjClose, final double v) {
-            this.date = date;
-            this.open = open;
-            this.high = high;
-            this.low = low;
-            this.close = close;
-            this.volume = v;
-            this.adjClose = adjClose;
-        }
+    public static void main(String[] args) {
+        addSampleDataToTree(TREE1);
+        LockSupport.park();
     }
-
-
-    public void close() {
-        TREE1.close();
-        TREE2.close();
-        TcpChannelHub.closeAllHubs();
-        TCPRegistry.reset();
-
-    }
-
-
-    public static class Message extends AbstractMarshallable {
-        String message;
-
-        public Message(String message) {
-            this.message = message;
-        }
-    }
-
-
-    private void throughput(int millionsPerMin, boolean warmup, final String cluster) {
-
-        resetExceptionHandlers();
-        disableDebugHandler();
-
-        final String uri1 = "/queue/throughput/replicated";
-
-        @NotNull
-
-        ChronicleQueueView qv1 = (ChronicleQueueView) TREE1.acquireQueue(
-                uri1, String.class, Message.class, cluster);
-        TREE2.acquireQueue(uri1, String.class, Message.class, cluster);
-
-        addSampleDataToTree(TREE2);
-
-    }
-
 
     public static void addSampleDataToTree(final VanillaAssetTree tree) {
         addHistorgramData(tree);
@@ -512,25 +453,6 @@ class StartEngineWithDummyData {
         }
     }
 
-    public static class MarketData extends AbstractMarshallable {
-        double open;
-        double high;
-        double low;
-        double close;
-        double volume;
-        double adjClose;
-
-        public MarketData(double open, double high, double low, double close,
-                          double adjClose, final double v) {
-            this.open = open;
-            this.high = high;
-            this.low = low;
-            this.close = close;
-            this.volume = v;
-            this.adjClose = adjClose;
-        }
-    }
-
     private static void addMyNumbers(VanillaAssetTree tree) {
         @NotNull MapView<Integer, Double> intView = tree.acquireMap(
                 "/my/numbers",
@@ -602,6 +524,31 @@ class StartEngineWithDummyData {
 
     }
 
+    public void close() {
+        TREE1.close();
+        TREE2.close();
+        TcpChannelHub.closeAllHubs();
+        TCPRegistry.reset();
+
+    }
+
+    private void throughput(int millionsPerMin, boolean warmup, final String cluster) {
+
+        resetExceptionHandlers();
+        disableDebugHandler();
+
+        final String uri1 = "/queue/throughput/replicated";
+
+        @NotNull
+
+        ChronicleQueueView qv1 = (ChronicleQueueView) TREE1.acquireQueue(
+                uri1, String.class, Message.class, cluster);
+        TREE2.acquireQueue(uri1, String.class, Message.class, cluster);
+
+        addSampleDataToTree(TREE2);
+
+    }
+
     private boolean runThroughput() {
         try {
 
@@ -613,6 +560,54 @@ class StartEngineWithDummyData {
             System.out.println(ex);
         }
         return false;
+    }
+
+    public static class MarketData2 extends AbstractMarshallable {
+        Date date;
+        double open;
+        double high;
+        double low;
+        double close;
+        double volume;
+        double adjClose;
+
+        public MarketData2(Date date, double open, double high, double low, double close,
+                           double adjClose, final double v) {
+            this.date = date;
+            this.open = open;
+            this.high = high;
+            this.low = low;
+            this.close = close;
+            this.volume = v;
+            this.adjClose = adjClose;
+        }
+    }
+
+    public static class Message extends AbstractMarshallable {
+        String message;
+
+        public Message(String message) {
+            this.message = message;
+        }
+    }
+
+    public static class MarketData extends AbstractMarshallable {
+        double open;
+        double high;
+        double low;
+        double close;
+        double volume;
+        double adjClose;
+
+        public MarketData(double open, double high, double low, double close,
+                          double adjClose, final double v) {
+            this.open = open;
+            this.high = high;
+            this.low = low;
+            this.close = close;
+            this.volume = v;
+            this.adjClose = adjClose;
+        }
     }
 
 }

@@ -34,13 +34,13 @@
         host1: {
            hostId: 1,
            tcpBufferSize: 65536,
-           connectUri: localhost:8080,
+           connectUri: localhost:9090,
            timeoutMs: 5000,
         },
         host2: {
            hostId: 2,
            tcpBufferSize: 65536,
-               connectUri: localhost:8081,
+               connectUri: localhost:9091,
            timeoutMs: 5000,
         }
       }

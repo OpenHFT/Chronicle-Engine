@@ -32,6 +32,8 @@ import static net.openhft.chronicle.engine.api.tree.RequestContext.loadDefaultAl
  */
 public class EngineInstance {
 
+    static final Logger LOGGER = LoggerFactory.getLogger(EngineInstance.class);
+
     static {
         try {
             setExceptionsHandlers(WARN, WARN, Slf4jExceptionHandler.DEBUG);
@@ -41,8 +43,6 @@ public class EngineInstance {
             System.exit(-1);
         }
     }
-
-    static final Logger LOGGER = LoggerFactory.getLogger(EngineInstance.class);
 
     public static VanillaAssetTree engineMain(final int hostId, final String name) {
         try {
