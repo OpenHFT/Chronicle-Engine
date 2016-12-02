@@ -124,7 +124,14 @@ public class VanillaIndexQueueView<V extends Marshallable>
                 long start = dc.wire().bytes().readPosition();
 
                 try {
-                    while (dc.wire().bytes().readRemaining() > 0) {
+
+
+                    for (; ; ) {
+                        dc.wire().consumePadding();
+
+                        if (dc.wire().bytes().readRemaining() == 0)
+                            return true;
+
                         final StringBuilder sb = acquireStringBuilder();
                         final ValueIn read = dc.wire().read(sb);
 
@@ -318,8 +325,15 @@ public class VanillaIndexQueueView<V extends Marshallable>
             if (from > dc.index())
                 return null;
 
-            final StringBuilder sb = acquireStringBuilder();
-            while (dc.wire().bytes().readRemaining() > 0) {
+
+            for (; ; ) {
+
+                dc.wire().consumePadding();
+
+                if (dc.wire().bytes().readRemaining() == 0)
+                    break;
+
+                final StringBuilder sb = acquireStringBuilder();
                 final ValueIn valueIn = dc.wire().read(sb);
                 if (!eventName.contentEquals(sb)) {
                     valueIn.skipValue();
