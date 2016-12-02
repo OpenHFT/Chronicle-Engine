@@ -200,6 +200,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
         if (!isClosing.getAndSet(true) && connectionChangedNotifier != null)
             connectionChangedNotifier.onConnectionChanged(false, nc());
 
+        nc().acquireConnectionListener().onDisconnected(localIdentifier, remoteIdentifier(), nc().isAcceptor());
         super.close();
     }
 

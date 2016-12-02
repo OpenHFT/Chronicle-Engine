@@ -47,9 +47,12 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
     private final int localIdentifier;
     private final WireNetworkStats wireNetworkStats = new WireNetworkStats();
     private QueueView qv;
+    private volatile boolean isClosed;
+    private   EngineWireNetworkContext nc;
 
     public EngineNetworkStatsListener(Asset asset, int localIdentifier) {
         this.localIdentifier = localIdentifier;
+        wireNetworkStats.localIdentifier(localIdentifier);
         this.asset = asset;
     }
 
@@ -82,16 +85,27 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
     }
 
     @Override
+    public void networkContext(@NotNull EngineWireNetworkContext nc) {
+        this.nc = nc;
+    }
+
+    @Override
     public void onNetworkStats(long writeBps, long readBps,
-                               long socketPollCountPerSecond,
-                               @NotNull EngineWireNetworkContext nc,
-                               boolean isConnected) {
+                               long socketPollCountPerSecond) {
+        if (isClosed)
+            return;
+
         wireNetworkStats.writeBps(writeBps);
         wireNetworkStats.readBps(readBps);
         wireNetworkStats.socketPollCountPerSecond(socketPollCountPerSecond);
         wireNetworkStats.timestamp(System.currentTimeMillis());
-        wireNetworkStats.isConnected(isConnected);
+        wireNetworkStats.isConnected(!nc.isClosed());
 
+        publish();
+    }
+
+    private void nc(@NotNull EngineWireNetworkContext nc) {
+        wireNetworkStats.isAcceptor(nc.isAcceptor());
         if (nc.handler() instanceof AbstractSubHandler) {
             final int remoteIdentifier = ((AbstractSubHandler) nc.handler()).remoteIdentifier();
             wireNetworkStats.remoteIdentifier(remoteIdentifier);
@@ -110,26 +124,40 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
             wireNetworkStats.userId(sessionDetailsProvider.userId());
             wireNetworkStats.wireType(sessionDetailsProvider.wireType());
         }
-        wireNetworkStats.localIdentifier(localIdentifier);
-
-        acquireQV().publishAndIndex("", wireNetworkStats);
-
     }
 
     @Override
     public void onHostPort(String hostName, int port) {
         wireNetworkStats.remoteHostName(hostName);
         wireNetworkStats.remotePort(port);
+
+        publish();
     }
 
     @Override
     public void close() {
+        if (isClosed)
+            return;
+        isClosed = true;
         wireNetworkStats.writeBps(0);
         wireNetworkStats.readBps(0);
         wireNetworkStats.socketPollCountPerSecond(0);
         wireNetworkStats.timestamp(System.currentTimeMillis());
         wireNetworkStats.isConnected(false);
+        publish();
+    }
+
+    private void publish() {
+        if (isClosed)
+            return;
+
+        nc(nc);
         acquireQV().publishAndIndex("", wireNetworkStats);
+    }
+
+    @Override
+    public boolean isClosed() {
+        return isClosed;
     }
 
     public static class Factory implements

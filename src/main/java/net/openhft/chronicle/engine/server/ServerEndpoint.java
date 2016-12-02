@@ -80,7 +80,12 @@ public class ServerEndpoint implements Closeable {
             private long port;
 
             @Override
-            public void onNetworkStats(long writeBps, long readBps, long socketPollCountPerSecond, @NotNull NetworkContext networkContext, boolean connectionStatus) {
+            public void networkContext(NetworkContext networkContext) {
+
+            }
+
+            @Override
+            public void onNetworkStats(long writeBps, long readBps, long socketPollCountPerSecond) {
                 LOG.info("writeKBps=" + writeBps / 1000 + ", readKBps=" + readBps / 1000 +
                         ", socketPollCountPerSecond=" + socketPollCountPerSecond / 1000 + "K, " +
                         "host=" + host + ", port=" + port + ", isConnected=true");
@@ -164,6 +169,7 @@ public class ServerEndpoint implements Closeable {
                                                           final NetworkStatsListener networkStatsListener) {
         final EngineWireNetworkContext nc = new EngineWireNetworkContext(assetTree.root());
         nc.networkStatsListener(networkStatsListener);
+        networkStatsListener.networkContext(nc);
         return nc;
     }
 

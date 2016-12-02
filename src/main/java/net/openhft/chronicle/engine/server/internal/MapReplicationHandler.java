@@ -208,7 +208,7 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
         @Override
         public boolean action() throws InvalidEventHandlerException {
 
-            if (closed || nc().connectionClosed())
+            if (closed || nc().isClosed())
                 throw new InvalidEventHandlerException();
 
             final WireOutPublisher publisher = nc().wireOutPublisher();
@@ -261,7 +261,7 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
         @Override
         public String toString() {
             return "ReplicationEventHandler{" +
-                    "id=" + id + ",connectionClosed=" + nc().connectionClosed() + '}';
+                    "id=" + id + ",connectionClosed=" + nc().isClosed() + '}';
         }
 
         @Override

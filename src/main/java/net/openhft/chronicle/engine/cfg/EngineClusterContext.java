@@ -36,14 +36,13 @@ import net.openhft.chronicle.network.cluster.HostIdConnectionStrategy;
 import net.openhft.chronicle.network.connection.VanillaWireOutPublisher;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireType;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.nio.channels.SocketChannel;
 import java.util.function.Function;
+
+import static net.openhft.chronicle.network.NetworkStatsListener.notifyHostPort;
 
 /**
  * @author Rob Austin.
@@ -78,11 +77,14 @@ public class EngineClusterContext extends ClusterContext {
         long port;
 
         @Override
+        public void networkContext(NetworkContext networkContext) {
+
+        }
+
+        @Override
         public void onNetworkStats(long writeBps,
                                    long readBps,
-                                   long socketPollCountPerSecond,
-                                   @NotNull NetworkContext networkContext,
-                                   boolean connectionStatus) {
+                                   long socketPollCountPerSecond) {
 
             LOG.info("writeKBps=" + writeBps / 1000 +
                     ", readKBps=" + readBps / 1000 +
@@ -145,21 +147,6 @@ public class EngineClusterContext extends ClusterContext {
         };
     }
 
-
-    /**
-     * notifies the NetworkStatsListener of the host and port based on the SocketChannel
-     *
-     * @param sc SocketChannel
-     * @param nl NetworkStatsListener
-     */
-    private void notifyHostPort(final SocketChannel sc, final NetworkStatsListener nl) {
-        if (sc != null && sc.socket() != null
-                && sc.socket().getRemoteSocketAddress() instanceof InetSocketAddress) {
-            final InetSocketAddress remoteSocketAddress = (InetSocketAddress) sc.socket()
-                    .getRemoteSocketAddress();
-            nl.onHostPort(remoteSocketAddress.getHostName(), remoteSocketAddress.getPort());
-        }
-    }
 
     public Asset assetRoot() {
         return assetRoot;

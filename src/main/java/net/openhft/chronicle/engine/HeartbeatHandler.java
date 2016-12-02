@@ -144,7 +144,7 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
     @Override
     public void close() {
         if (connectionMonitor != null)
-            connectionMonitor.onDisconnected(localIdentifier(), remoteIdentifier());
+            connectionMonitor.onDisconnected(localIdentifier(), remoteIdentifier(),nc().isAcceptor());
         if (closable().isClosed())
             return;
         lastTimeMessageReceived = Long.MAX_VALUE;
@@ -167,7 +167,8 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
 
             if (hasHeartbeats != prev) {
                 if (!hasHeartbeats) {
-                    connectionMonitor.onDisconnected(HeartbeatHandler.this.localIdentifier(), HeartbeatHandler.this.remoteIdentifier());
+                    connectionMonitor.onDisconnected(HeartbeatHandler.this.localIdentifier(),
+                            HeartbeatHandler.this.remoteIdentifier(),nc().isAcceptor());
 
                     HeartbeatHandler.this.close();
 
@@ -179,7 +180,8 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
 
                     throw new InvalidEventHandlerException("closed");
                 } else
-                    connectionMonitor.onConnected(HeartbeatHandler.this.localIdentifier(), HeartbeatHandler.this.remoteIdentifier());
+                    connectionMonitor.onConnected(HeartbeatHandler.this.localIdentifier(),
+                            HeartbeatHandler.this.remoteIdentifier(),nc().isAcceptor());
             }
 
             return true;

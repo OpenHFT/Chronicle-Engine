@@ -1,0 +1,47 @@
+--- !EngineCfg {
+  #
+  # Configuration files are being placed in /etc following the Unix convention, but could be anywhere
+  #
+  etc: {
+    #
+    # Configure a group of node which form a local cluster.
+    #
+    # Configure a cluster of one for now.
+    clusters: !ClustersCfg {
+       clusterTwo: {
+       context: !EngineClusterContext {
+          wireType: BINARY,
+          handlerFactory: !UberHandlerFactory {},
+          wireOutPublisherFactory: !VanillaWireOutPublisherFactory {},
+          networkContextFactory: !EngineWireNetworkContextFactory {},
+          connectionEventHandler:  !EngineConnectionManagerFactory {},
+          #
+          # this listener will log to a chronicle queue
+          networkStatsListenerFactory: !EngineNetworkStatsListenerFactory {},
+          heartbeatTimeoutMs: 500_000L,
+          heartbeatIntervalMs: 300_000L,
+          #
+          # controlls how the heartbeating works
+          heartbeatFactory: !HeartbeatHandlerFactory {},
+          #
+          # connection are established origionally bi-directionlly, then the conneciton with the
+          # hostID is dropped
+          connectionStrategy: !HostIdConnectionStrategy {},
+          serverThreadingStrategy: CONCURRENT
+        },
+        host1: {
+           hostId: 1,
+           tcpBufferSize: 65536,
+           connectUri: localhost:9090,
+           timeoutMs: 5000,
+        },
+        host2: {
+           hostId: 2,
+           tcpBufferSize: 65536,
+           connectUri: localhost:9091,
+           timeoutMs: 5000,
+        }
+      }
+    }
+  }
+}

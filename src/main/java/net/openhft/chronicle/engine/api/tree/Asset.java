@@ -19,6 +19,7 @@ package net.openhft.chronicle.engine.api.tree;
 
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.util.ThrowingConsumer;
+import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.InvalidSubscriberException;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.SubscriptionCollection;
@@ -411,4 +412,17 @@ public interface Asset extends Closeable {
     default Set<Class> viewTypes() {
         return Collections.emptySet();
     }
+
+
+    @NotNull
+    default <K, V> MapView<K, V> acquireMap(@NotNull String uri, Class<K> kClass, Class<V> vClass) throws AssetNotFoundException {
+        final RequestContext requestContext = requestContext(uri);
+
+        if (requestContext.bootstrap() != null)
+            throw new UnsupportedOperationException("Its not possible to set the bootstrap when " +
+                    "acquiring a map");
+
+        return acquireView(requestContext.view("map").type(kClass).type2(vClass));
+    }
+
 }

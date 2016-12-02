@@ -33,6 +33,8 @@ import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.cfg.*;
 import net.openhft.chronicle.engine.fs.ChronicleMapGroupFS;
 import net.openhft.chronicle.engine.fs.EngineConnectionManager;
+import net.openhft.chronicle.engine.map.AuthenticatedKeyValueStore;
+import net.openhft.chronicle.engine.map.ObjectKeyValueStore;
 import net.openhft.chronicle.engine.map.ObjectSubscription;
 import net.openhft.chronicle.engine.map.RawKVSSubscription;
 import net.openhft.chronicle.engine.query.Filter;
@@ -105,6 +107,9 @@ public class RequestContext implements Cloneable {
         addAlias(QueueView.class, "QueueView");
         addAlias(MapView.class, "MapView");
         addAlias(Boolean.class, "boolean");
+        addAlias(AuthenticatedKeyValueStore.class, "AuthenticatedKeyValueStore");
+        addAlias(ObjectKeyValueStore.class, "ObjectKeyValueStore");
+
     }
 
     public static boolean loadDefaultAliases() {
