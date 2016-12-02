@@ -48,7 +48,7 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
     private final WireNetworkStats wireNetworkStats = new WireNetworkStats();
     private QueueView qv;
     private volatile boolean isClosed;
-    private   EngineWireNetworkContext nc;
+    private EngineWireNetworkContext nc;
 
     public EngineNetworkStatsListener(Asset asset, int localIdentifier) {
         this.localIdentifier = localIdentifier;
@@ -130,7 +130,8 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
     public void onHostPort(String hostName, int port) {
         wireNetworkStats.remoteHostName(hostName);
         wireNetworkStats.remotePort(port);
-
+        if (isClosed)
+            return;
         publish();
     }
 
@@ -148,9 +149,6 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
     }
 
     private void publish() {
-        if (isClosed)
-            return;
-
         nc(nc);
         acquireQV().publishAndIndex("", wireNetworkStats);
     }
