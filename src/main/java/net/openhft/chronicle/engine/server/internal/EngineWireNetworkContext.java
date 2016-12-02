@@ -45,10 +45,13 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
         extends VanillaNetworkContext<T> {
 
     static final Logger LOG = LoggerFactory.getLogger(EngineWireNetworkContext.class);
-    public static final String CONNECTIVITY_URI = "/proc/connections/cluster/connectivity";
+    private static final String PROC_CONNECTIONS_CLUSTER = "/proc/connections/cluster/";
+    private static final String CONNECTIVITY_URI = PROC_CONNECTIONS_CLUSTER + "connectivity";
+    private static final String CONNECTIVITY_HOSTS_URI = PROC_CONNECTIONS_CLUSTER + "hosts";
 
     private Asset rootAsset;
     private MapView<ConnectionDetails, ConnectionEvent> hostByConnectionStatus;
+    private MapView<String, ConnectionStatus> connectivityHosts;
     private TcpHandler handler;
 
     public TcpHandler handler() {
@@ -66,6 +69,10 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
                 ConnectionDetails.class,
                 ConnectionEvent.class);
 
+        connectivityHosts = rootAsset.root().acquireMap(
+                CONNECTIVITY_HOSTS_URI,
+                String.class,
+                ConnectionStatus.class);
     }
 
     @NotNull
@@ -88,6 +95,8 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
                 ConnectionDetails key = new ConnectionDetails(localIdentifier, remoteIdentifier, isAcceptor);
                 hostByConnectionStatus.put(key, new ConnectionEvent(CONNECTED));
                 LOG.info(key + ", connectionStatus=" + CONNECTED);
+
+                onConnectionChanged(localIdentifier, remoteIdentifier, isAcceptor);
             }
 
             @Override
@@ -95,7 +104,43 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
                 ConnectionDetails key = new ConnectionDetails(localIdentifier, remoteIdentifier, isAcceptor);
                 hostByConnectionStatus.put(key, new ConnectionEvent(DISCONNECTED));
                 LOG.info(key + ", connectionStatus=" + DISCONNECTED);
+                onConnectionChanged(localIdentifier, remoteIdentifier, isAcceptor);
+
             }
+
+            private void onConnectionChanged(int localIdentifier, int remoteIdentifier, boolean isAcceptor) {
+                ConnectionDetails k1a = new ConnectionDetails(localIdentifier,
+                        remoteIdentifier, isAcceptor);
+                ConnectionDetails k1b = new ConnectionDetails(remoteIdentifier,
+                        localIdentifier, !isAcceptor);
+
+                ConnectionDetails k2a = new ConnectionDetails(localIdentifier,
+                        remoteIdentifier, !isAcceptor);
+                ConnectionDetails k2b = new ConnectionDetails(remoteIdentifier,
+                        localIdentifier, isAcceptor);
+
+                ConnectionStatus connectionStatus = DISCONNECTED;
+                if ((get(k1a) == CONNECTED && get(k1b) == CONNECTED) ||
+                        (get(k2a) == CONNECTED && get(k2b) == CONNECTED)) {
+                    connectionStatus = CONNECTED;
+                }
+
+                if (localIdentifier < remoteIdentifier)
+                    connectivityHosts.put("" + localIdentifier + "<->" + remoteIdentifier,
+                            connectionStatus);
+                else
+                    connectivityHosts.put("" + remoteIdentifier + "<->" + localIdentifier,
+                            connectionStatus);
+            }
+
+            private ConnectionStatus get(ConnectionDetails connectionDetails) {
+                ConnectionEvent connectionEvent = hostByConnectionStatus.get(connectionDetails);
+                if (connectionEvent == null)
+                    return DISCONNECTED;
+                return connectionEvent.connectionStatus;
+            }
+
+
         };
 
     }
@@ -105,18 +150,23 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
         return "hostByConnectionStatus=" + hostByConnectionStatus.entrySet().toString();
     }
 
-    enum ConnectionStatus {
+    enum ConnectionStatus implements Serializable {
         CONNECTED, DISCONNECTED
     }
 
     private static class ConnectionEvent extends AbstractMarshallable implements Serializable {
-        public String connectionStatus;
+
+        // has to be a string as enums wont go in the chronicle map
+        public ConnectionStatus connectionStatus;
+
         public ZonedDateTime timeStamp;
 
         ConnectionEvent(ConnectionStatus connectionStatus) {
-            this.connectionStatus = connectionStatus.toString();
+            this.connectionStatus = connectionStatus;
             this.timeStamp = ZonedDateTime.now();
         }
+
+
     }
 
     public static class ConnectionDetails extends AbstractMarshallable implements Serializable {
