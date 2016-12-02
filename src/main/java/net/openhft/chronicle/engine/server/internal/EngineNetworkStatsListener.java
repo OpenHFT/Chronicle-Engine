@@ -122,6 +122,16 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
         wireNetworkStats.remotePort(port);
     }
 
+    @Override
+    public void close() {
+        wireNetworkStats.writeBps(0);
+        wireNetworkStats.readBps(0);
+        wireNetworkStats.socketPollCountPerSecond(0);
+        wireNetworkStats.timestamp(System.currentTimeMillis());
+        wireNetworkStats.isConnected(false);
+        acquireQV().publishAndIndex("", wireNetworkStats);
+    }
+
     public static class Factory implements
             MarshallableFunction<ClusterContext,
                     NetworkStatsListener>, Demarshallable {

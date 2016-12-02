@@ -71,13 +71,19 @@ public class ServerEndpoint implements Closeable {
                           @NotNull AssetTree assetTree) throws IOException {
         this(hostPortDescription, assetTree, new NetworkStatsListener() {
 
+            @Override
+            public void close() {
+                LOG.info(" host=" + host + ", port=" + port + ", isConnected=false");
+            }
+
             private String host;
             private long port;
 
             @Override
             public void onNetworkStats(long writeBps, long readBps, long socketPollCountPerSecond, @NotNull NetworkContext networkContext, boolean connectionStatus) {
                 LOG.info("writeKBps=" + writeBps / 1000 + ", readKBps=" + readBps / 1000 +
-                        ", socketPollCountPerSecond=" + socketPollCountPerSecond / 1000 + "K, host=" + host + ", port=" + port);
+                        ", socketPollCountPerSecond=" + socketPollCountPerSecond / 1000 + "K, " +
+                        "host=" + host + ", port=" + port + ", isConnected=true");
             }
 
             @Override
@@ -112,7 +118,6 @@ public class ServerEndpoint implements Closeable {
                         ((InetSocketAddress) sc.socket().getRemoteSocketAddress()).getPort());
         }
 */
-
 
 
         Function<NetworkContext, TcpEventHandler> networkContextTcpEventHandlerFunction = (networkContext) -> {

@@ -64,6 +64,16 @@ public class EngineClusterContext extends ClusterContext {
 
     private NetworkStatsListener defaultNetworkStatsListener = new NetworkStatsListener() {
 
+        @Override
+        public void close() {
+            LOG.info("writeKBps=0" +
+                    ", readKBps=0" +
+                    ", socketPollCountPerSecond=0" +
+                    ", host=" + host +
+                    ", port=" + port +
+                    ", isConnected=false");
+        }
+
         String host;
         long port;
 
@@ -78,7 +88,8 @@ public class EngineClusterContext extends ClusterContext {
                     ", readKBps=" + readBps / 1000 +
                     ", socketPollCountPerSecond=" + socketPollCountPerSecond +
                     ", host=" + host +
-                    ", port=" + port);
+                    ", port=" + port +
+                    ", isConnected=true");
         }
 
         @Override
