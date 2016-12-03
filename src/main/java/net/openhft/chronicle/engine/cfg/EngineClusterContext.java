@@ -133,7 +133,10 @@ public class EngineClusterContext extends ClusterContext {
             if (nc.networkStatsListener() == null)
                 nc.networkStatsListener(defaultNetworkStatsListener);
 
-            notifyHostPort(nc.socketChannel(), nc.networkStatsListener());
+
+            final NetworkStatsListener nl = nc.networkStatsListener();
+            if (nl != null)
+                notifyHostPort(nc.socketChannel(), nl);
 
             final Function<EngineWireNetworkContext, TcpHandler> f
                     = x -> new HeaderTcpHandler<>(handler, consumer, x);
