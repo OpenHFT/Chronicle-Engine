@@ -13,7 +13,6 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
-import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 import org.junit.rules.TestName;
@@ -119,7 +118,7 @@ public class QueueAsMapViewTest extends ThreadMonitoringTest {
 
     @Test
     public void testQueueViewAsMapView() throws InterruptedException {
-        YamlLogging.setAll(true);
+        //YamlLogging.setAll(true);
         String messageType1 = "topic1";
         String messageType2 = "topic2";
 
@@ -144,7 +143,7 @@ public class QueueAsMapViewTest extends ThreadMonitoringTest {
 
     @Test
     public void testSimpleMap() throws InterruptedException {
-        YamlLogging.setAll(true);
+        //YamlLogging.setAll(true);
 
         MapView<String, String> map = assetTree.acquireMap(uri, String.class, String.class);
         map.put("hello", "world");
@@ -155,7 +154,7 @@ public class QueueAsMapViewTest extends ThreadMonitoringTest {
 
     @Test
     public void testPopulateMapTailQueue() throws InterruptedException {
-        YamlLogging.setAll(true);
+        //YamlLogging.setAll(true);
 
         final ArrayBlockingQueue<String> q = new ArrayBlockingQueue<>(100);
 

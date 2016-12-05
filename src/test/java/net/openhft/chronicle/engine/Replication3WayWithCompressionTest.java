@@ -142,7 +142,7 @@ public class Replication3WayWithCompressionTest extends ThreadMonitoringTest {
 
     @Test
     public void testThreeWay() throws InterruptedException {
-        YamlLogging.setAll(true);
+        //YamlLogging.setAll(true);
 
         final ConcurrentMap<String, String> map1 = tree1.acquireMap(name, String.class, String
                 .class);

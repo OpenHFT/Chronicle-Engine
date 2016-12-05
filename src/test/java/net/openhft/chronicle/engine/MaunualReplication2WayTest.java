@@ -37,7 +37,6 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
-import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 import org.junit.rules.TestName;
@@ -154,7 +153,7 @@ public class MaunualReplication2WayTest {
 
     @Before
     public void beforeTest() throws IOException {
-        YamlLogging.setAll(false);
+        //YamlLogging.setAll(false);
         before();
         name = testName.getMethodName();
         Files.deleteIfExists(Paths.get(OS.TARGET, name.toString()));

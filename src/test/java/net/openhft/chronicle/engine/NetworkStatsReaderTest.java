@@ -13,7 +13,6 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.NetworkStats;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.WireNetworkStats;
-import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 import org.junit.rules.TestName;
@@ -52,7 +51,7 @@ public class NetworkStatsReaderTest {
     @Test
     public void test() throws Exception {
 
-        YamlLogging.setAll(true);
+       // YamlLogging.setAll(true);
 
         EventLoop eg = assetTree.root().findOrCreateView(EventLoop.class);
         eg.start();

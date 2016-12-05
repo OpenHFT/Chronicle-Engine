@@ -96,7 +96,7 @@ public class TypographyTest {
     public void testTypography() throws InterruptedException {
 
         //  map.put("hello", "world");
-        YamlLogging.setAll(true);
+        //YamlLogging.setAll(true);
         CountDownLatch latch = new CountDownLatch(1);
         RequestContext rc = RequestContext.requestContext("").elementType(TopologicalEvent.class)
                 .bootstrap(true);

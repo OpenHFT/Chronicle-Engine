@@ -161,7 +161,7 @@ public class ReplicationDoubleMap2WayTest {
     @Test
     public void testBootstrap() throws InterruptedException {
 
-        YamlLogging.setAll(true);
+        //YamlLogging.setAll(true);
 
         final ConcurrentMap<Double, Double> map1 = tree1.acquireMap(name, Double.class, Double
                 .class);

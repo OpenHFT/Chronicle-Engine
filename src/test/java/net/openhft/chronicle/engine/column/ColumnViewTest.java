@@ -11,7 +11,6 @@ import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
-import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -67,7 +66,7 @@ public class ColumnViewTest {
 
     @Test
     public void test() {
-        YamlLogging.setAll(true);
+        //YamlLogging.setAll(true);
         assetTree.acquireMap("/my/data", String.class, String.class).put("hello", "world");
 
         final Asset asset = assetTree.acquireAsset("/my/data");
@@ -85,7 +84,7 @@ public class ColumnViewTest {
 
         final int size = 600;
 
-        YamlLogging.setAll(true);
+        //YamlLogging.setAll(true);
         MapView<String, String> map = assetTree.acquireMap("/my/data", String.class, String.class);
         for (int i = 0; i < size; i++) {
             map.put("hello" + i, "world");
@@ -107,7 +106,7 @@ public class ColumnViewTest {
 
         final int size = 600;
 
-        YamlLogging.setAll(true);
+        //YamlLogging.setAll(true);
         MapView<String, String> map = assetTree.acquireMap("/my/data", String.class, String.class);
         for (int i = 0; i < size; i++) {
             map.put("hello" + i, "world");
@@ -130,7 +129,7 @@ public class ColumnViewTest {
 
         final int size = 600;
 
-        YamlLogging.setAll(true);
+        //YamlLogging.setAll(true);
         MapView<Integer, String> map = assetTree.acquireMap("/my/data", Integer.class, String.class);
         for (int i = 0; i < size; i++) {
             map.put(i, "world");
@@ -159,7 +158,7 @@ public class ColumnViewTest {
 
         final int size = 600;
 
-        YamlLogging.setAll(true);
+        //YamlLogging.setAll(true);
         MapView<Integer, String> map = assetTree.acquireMap("/my/data", Integer.class, String.class);
         for (int i = 0; i < size; i++) {
             map.put(i, "world");
@@ -195,7 +194,7 @@ public class ColumnViewTest {
 
         final int size = 600;
 
-        YamlLogging.setAll(true);
+        //YamlLogging.setAll(true);
         MapView<Integer, String> map = assetTree.acquireMap("/my/data", Integer.class, String.class);
         for (int i = 0; i < size; i++) {
             map.put(i, "world");
@@ -212,7 +211,7 @@ public class ColumnViewTest {
 
         final int size = 600;
 
-        YamlLogging.setAll(true);
+        //YamlLogging.setAll(true);
         MapView<Integer, String> map = assetTree.acquireMap("/my/data", Integer.class, String.class);
         for (int i = 0; i < size; i++) {
             map.put(i, "world");
@@ -229,7 +228,7 @@ public class ColumnViewTest {
 
         final int size = 600;
 
-        YamlLogging.setAll(true);
+        //YamlLogging.setAll(true);
         MapView<Integer, String> map = assetTree.acquireMap("/my/data", Integer.class, String.class);
         for (int i = 0; i < size; i++) {
             map.put(i, "world");
