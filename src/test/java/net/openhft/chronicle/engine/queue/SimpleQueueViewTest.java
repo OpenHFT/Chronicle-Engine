@@ -209,12 +209,10 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         BlockingQueue<String> values = new ArrayBlockingQueue<>(2);
         Subscriber<String> subscriber = values::add;
         assetTree.registerSubscriber(uri, String.class, subscriber);
-        Jvm.pause(600);
         publisher.publish("Message-1");
         assertEquals("Message-1", values.poll(2, SECONDS));
         publisher.publish("Message-2");
-        assertEquals("Message-2", values.poll(2, SECONDS));
-        Jvm.pause(500);
+        assertEquals("Message-2", values.poll(5, SECONDS));
         assertEquals("[]", values.toString());
     }
 
