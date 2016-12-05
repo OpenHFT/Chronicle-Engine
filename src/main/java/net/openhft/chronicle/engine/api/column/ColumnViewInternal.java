@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
+
 /**
  * @author Rob Austin.
  */
@@ -75,4 +77,70 @@ public interface ColumnViewInternal {
 
     ObjectSubscription objectSubscription();
 
+
+    enum DOp {
+        GE(">=") {
+            @Override
+            boolean compare(double a, double b) {
+                return a >= b;
+            }
+        },
+        LE("<=") {
+            @Override
+            boolean compare(double a, double b) {
+                return a <= b;
+            }
+        },
+        NE("<>", "!=", "!") {
+            @Override
+            boolean compare(double a, double b) {
+                return a != b;
+            }
+        },
+        GT(">") {
+            @Override
+            boolean compare(double a, double b) {
+                return a > b;
+            }
+        },
+        LT("<") {
+            @Override
+            boolean compare(double a, double b) {
+                return a < b;
+            }
+        },
+        EQ("==", "=", "") {
+            @Override
+            boolean compare(double a, double b) {
+                return a == b;
+            }
+        };
+
+        static final DOp[] OPS = values();
+        final String[] op;
+
+        DOp(String... op) {
+            this.op = op;
+        }
+
+        abstract boolean compare(double a, double b);
+
+        public static boolean toRange(@NotNull Number o, @NotNull String trimmed) {
+            for (DOp dop : DOp.OPS) {
+                for (String op : dop.op) {
+                    if (trimmed.startsWith(op)) {
+                        @NotNull final String number = trimmed.substring(op.length()).trim();
+
+                        try {
+                            final Number filterNumber = convertTo(o.getClass(), number);
+                            return dop.compare(o.doubleValue(), filterNumber.doubleValue());
+                        } catch (ClassCastException e) {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+    }
 }

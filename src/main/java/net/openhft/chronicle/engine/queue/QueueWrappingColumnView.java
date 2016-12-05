@@ -10,11 +10,12 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.map.ObjectSubscription;
 import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.tree.QueueView;
-import net.openhft.chronicle.wire.AbstractMarshallable;
+import net.openhft.chronicle.wire.FieldInfo;
+import net.openhft.chronicle.wire.Marshallable;
+import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -23,6 +24,8 @@ import java.util.stream.StreamSupport;
 
 import static java.util.Spliterators.spliteratorUnknownSize;
 import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
+import static net.openhft.chronicle.engine.api.column.ColumnViewInternal.DOp.toRange;
+import static net.openhft.chronicle.wire.Wires.fieldInfos;
 
 /**
  * @author Rob Austin.
@@ -95,7 +98,8 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
             }
         };
 
-        final Spliterator<QueueView.Excerpt<String, V>> spliterator = spliteratorUnknownSize(i, Spliterator.DISTINCT | Spliterator.SORTED | Spliterator.ORDERED);
+        final Spliterator<QueueView.Excerpt<String, V>> spliterator = spliteratorUnknownSize(i,
+                Spliterator.DISTINCT | Spliterator.SORTED | Spliterator.ORDERED);
         final Iterator<QueueView.Excerpt<String, V>> core = StreamSupport.stream(spliterator,
                 false)
                 .filter(filter(filters))
@@ -118,18 +122,21 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
             public ChronicleQueueRow next() {
                 final QueueView.Excerpt<String, V> e = core.next();
                 @NotNull final ChronicleQueueRow row = new ChronicleQueueRow(columns());
-
-                @NotNull final AbstractMarshallable value = (AbstractMarshallable) e.message();
+                @NotNull final Object value = e.message();
 
                 row.set("index", Long.toHexString(e.index()));
                 row.index(e.index());
 
-                for (@NotNull final Field declaredFields : value.getClass().getDeclaredFields()) {
-                    if (!columnNames().contains(declaredFields.getName()))
+                for (@NotNull final FieldInfo info : fieldInfos(value.getClass())) {
+
+                    if (!columnNames().contains(info.name()))
                         continue;
                     try {
-                        declaredFields.setAccessible(true);
-                        row.set(declaredFields.getName(), declaredFields.get(value));
+
+                        final Object newValue = info.get(value);
+//                            System.out.println("\t"+newValue);
+                        row.set(info.name(), newValue);
+
                     } catch (Exception e1) {
                         Jvm.warn().on(VanillaMapView.class, e1);
                     }
@@ -177,16 +184,15 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
 
         result.add(new Column("index", true, true, "", String.class, false));
 
-        for (@NotNull final Field declaredFields : messageClass.getDeclaredFields()) {
-            result.add(new Column(declaredFields.getName(), false, false, "",
-                    declaredFields.getType(), false));
+        for (@NotNull final FieldInfo fi : fieldInfos(messageClass)) {
+            result.add(new Column(fi.name(), false, false, "", fi.type(), false));
         }
 
         return result;
     }
 
     @Nullable
-    private ArrayList<String> columnNames() {
+    private List<String> columnNames() {
 
         if (columnNames != null)
             return columnNames;
@@ -194,13 +200,16 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
         @NotNull LinkedHashSet<String> result = new LinkedHashSet<>();
         result.add("index");
 
-        for (@NotNull final Field declaredFields : messageClass.getDeclaredFields()) {
-            result.add(declaredFields.getName());
+        // if (Marshallable.class.isAssignableFrom(messageClass)) {
+        for (@NotNull final FieldInfo fi : fieldInfos(messageClass)) {
+            result.add(fi.name());
         }
+        //  }
 
         columnNames = new ArrayList<>(result);
         return columnNames;
     }
+
 
     @Override
     public boolean canDeleteRows() {
@@ -228,12 +237,15 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
                     Object item;
                     final Class messageClass = excerpt.message().getClass();
 
-                    if (AbstractMarshallable.class.isAssignableFrom(messageClass)) {
+                    if (Marshallable.class.isAssignableFrom(messageClass)) {
                         try {
 
-                            final Field field = messageClass.getDeclaredField(f.columnName);
-                            field.setAccessible(true);
-                            final Object o = field.get(excerpt.message());
+                            // final Field field = messageClass.getDeclaredField(f.columnName);
+                            V message = excerpt.message();
+                            FieldInfo info = Wires.fieldInfo(message.getClass(), f.columnName);
+                            final Object o = info.get(message);
+                            //   field.setAccessible(true);
+                            // final Object o = field.get(excerpt.message());
 
                             if (o == null)
                                 return false;
@@ -273,32 +285,6 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
         };
     }
 
-    private boolean toRange(@NotNull Number o, @NotNull String trimmed) {
-        if (trimmed.startsWith(">") || trimmed.startsWith("<")) {
-
-            @NotNull final String number = trimmed.substring(1, trimmed.length()).trim();
-
-            final Number filterNumber;
-            try {
-                filterNumber = convertTo(o.getClass(), number);
-            } catch (ClassCastException e) {
-                return false;
-            }
-
-            boolean result;
-            if (trimmed.startsWith(">"))
-                result = o.doubleValue() > filterNumber.doubleValue();
-            else if (trimmed.startsWith("<"))
-                result = o.doubleValue() < filterNumber.doubleValue();
-            else
-                throw new UnsupportedOperationException();
-            return result;
-
-        } else {
-            final Object filterNumber = convertTo(o.getClass(), trimmed);
-            return o.equals(filterNumber);
-        }
-    }
 
     /**
      * @param filters if {@code sortedFilter} == null or empty all the total number of rows is
