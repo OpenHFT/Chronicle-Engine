@@ -128,6 +128,11 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
     }
 
     @Override
+    public boolean isClosed() {
+        return closable().isClosed();
+    }
+
+    @Override
     public void writeMarshallable(@NotNull WireOut w) {
         w.write(() -> "heartbeatTimeoutMs").int64(heartbeatTimeoutMs);
         assert heartbeatIntervalMs > 0;
@@ -144,7 +149,7 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
     @Override
     public void close() {
         if (connectionMonitor != null)
-            connectionMonitor.onDisconnected(localIdentifier(), remoteIdentifier(),nc().isAcceptor());
+            connectionMonitor.onDisconnected(localIdentifier(), remoteIdentifier(), nc().isAcceptor());
         if (closable().isClosed())
             return;
         lastTimeMessageReceived = Long.MAX_VALUE;
@@ -168,7 +173,7 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
             if (hasHeartbeats != prev) {
                 if (!hasHeartbeats) {
                     connectionMonitor.onDisconnected(HeartbeatHandler.this.localIdentifier(),
-                            HeartbeatHandler.this.remoteIdentifier(),nc().isAcceptor());
+                            HeartbeatHandler.this.remoteIdentifier(), nc().isAcceptor());
 
                     HeartbeatHandler.this.close();
 
@@ -181,7 +186,7 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
                     throw new InvalidEventHandlerException("closed");
                 } else
                     connectionMonitor.onConnected(HeartbeatHandler.this.localIdentifier(),
-                            HeartbeatHandler.this.remoteIdentifier(),nc().isAcceptor());
+                            HeartbeatHandler.this.remoteIdentifier(), nc().isAcceptor());
             }
 
             return true;
