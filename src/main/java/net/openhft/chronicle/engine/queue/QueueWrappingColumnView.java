@@ -32,6 +32,7 @@ import static net.openhft.chronicle.wire.Wires.fieldInfos;
  */
 public class QueueWrappingColumnView<K, V> implements QueueColumnView {
 
+    private final Asset asset;
     private final QueueView<String, V> queueView;
     @Nullable
     private ArrayList<String> columnNames = null;
@@ -41,6 +42,7 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
             RequestContext requestContext,
             Asset asset,
             QueueView<String, V> queueView) {
+        this.asset = asset;
         this.queueView = queueView;
 
         final QueueView.Excerpt<String, V> excerpt = queueView.getExcerpt(0);
@@ -175,6 +177,11 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
     @Override
     public ObjectSubscription objectSubscription() {
         return queueView.asset().getView(ObjectSubscription.class);
+    }
+
+    @Override
+    public Asset asset() {
+        return asset;
     }
 
     @NotNull

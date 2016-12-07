@@ -2,6 +2,7 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.onoes.ExceptionKey;
+import net.openhft.chronicle.engine.api.column.VanillaBarChart;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.tree.ChronicleQueueView;
 import net.openhft.chronicle.engine.tree.QueueView;
@@ -20,6 +21,7 @@ import java.util.Map;
 import java.util.concurrent.locks.LockSupport;
 
 import static net.openhft.chronicle.core.Jvm.*;
+import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
 
 /**
  * @author Rob Austin.
@@ -47,20 +49,17 @@ class StartEngineWithDummyData {
     }
 
     public static void addSampleDataToTree(final VanillaAssetTree tree) {
-        addHistorgramData(tree);
+
         addMyNumbers(tree);
         addApplShares(tree);
         addCountryNumerics(tree);
         addCountryNumerics(tree);
     }
 
-    private static void addHistorgramData(VanillaAssetTree tree) {
-        @NotNull MapView<String, Long> mapView = tree.acquireMap("/my/demo/histogram", String.class,
-                Long.class);
-        mapView.put("50", 100L);
-        mapView.put("99.9", 110L);
-        mapView.put("99.99", 130L);
-    }
+
+
+
+
 
     private static void addCountryNumerics(VanillaAssetTree tree) {
         @NotNull MapView<String, String> mapView = tree.acquireMap("/my/demo", String.class,
@@ -396,10 +395,20 @@ class StartEngineWithDummyData {
 
     private static void addApplShares(VanillaAssetTree tree) {
 
-        @NotNull SimpleDateFormat sd = new SimpleDateFormat("dd MMM yyyy");
+
+        String csp = "/queue/shares/APPL";
 
         QueueView<String, MarketData2> q = tree.acquireQueue
-                ("/queue/shares/APPL", String.class, MarketData2.class, CLUSTER_NAME);
+                (csp, String.class, MarketData2.class, CLUSTER_NAME);
+
+        VanillaBarChart barChart = tree.acquireView(requestContext(csp).view("BarChart"));
+        barChart.columnNameField("date");
+        barChart.columnValueField("volume");
+        barChart.title("APPL Volume");
+        barChart.dataSource(q);
+
+        @NotNull SimpleDateFormat sd = new SimpleDateFormat("dd MMM yyyy");
+
 
         try {
             q.publishAndIndex("", new MarketData2(sd.parse("7 Oct 2016"), 114.31, 114.56, 113.51, 114.06, 114.06, 24358400L));

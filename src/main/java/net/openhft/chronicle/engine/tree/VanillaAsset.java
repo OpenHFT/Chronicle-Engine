@@ -23,10 +23,7 @@ import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.core.threads.HandlerPriority;
 import net.openhft.chronicle.core.util.ThrowingConsumer;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
-import net.openhft.chronicle.engine.api.column.ColumnView;
-import net.openhft.chronicle.engine.api.column.MapColumnView;
-import net.openhft.chronicle.engine.api.column.QueueColumnView;
-import net.openhft.chronicle.engine.api.column.RemoteColumnView;
+import net.openhft.chronicle.engine.api.column.*;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.map.SubscriptionKeyValueStore;
@@ -133,6 +130,7 @@ public class VanillaAsset implements Asset, Closeable {
         addLeafRule(AuthenticatedKeyValueStore.class, LAST + " VanillaKeyValueStore", VanillaKeyValueStore::new);
         addLeafRule(SubscriptionKeyValueStore.class, LAST + " VanillaKeyValueStore", VanillaKeyValueStore::new);
         addLeafRule(KeyValueStore.class, LAST + " VanillaKeyValueStore", VanillaKeyValueStore::new);
+        addLeafRule(BarChart.class, LAST + " VanillaKeyValueStore", VanillaBarChart::new);
     }
 
     public void configMapRemote() {
@@ -150,9 +148,11 @@ public class VanillaAsset implements Asset, Closeable {
         addLeafRule(ObjectKeyValueStore.class, LAST + " RemoteKeyValueStore",
                 RemoteKeyValueStore::new);
         addLeafRule(ObjectSubscription.class, LAST + " Remote", RemoteKVSSubscription::new);
+        addLeafRule(BarChart.class, LAST + " VanillaKeyValueStore", RemoteBarChart::new);
     }
 
     public void configColumnViewRemote() {
+        addLeafRule(ColumnView.class, LAST + " Remote", RemoteColumnView::new);
         addLeafRule(MapColumnView.class, LAST + " Remote", RemoteColumnView::new);
         addLeafRule(QueueColumnView.class, LAST + " Remote", RemoteColumnView::new);
     }

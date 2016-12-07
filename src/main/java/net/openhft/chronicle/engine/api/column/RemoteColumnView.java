@@ -37,17 +37,20 @@ public class RemoteColumnView extends AbstractStatelessClient implements ColumnV
                         hub,
                         wire.read(CoreFields.csp).text(),
                         wire.read(CoreFields.cid).int64()));
-
     };
 
     public RemoteColumnView(@NotNull RequestContext context, @NotNull Asset asset) {
-
         super(asset.findView(TcpChannelHub.class), (long) 0, toURL(context));
         this.asset = asset;
     }
 
     private static String toURL(final RequestContext context) {
-        return context.toUri();
+        return context.viewType(ColumnView.class).toUri();
+    }
+
+    @Override
+    public Asset asset() {
+        return asset;
     }
 
     @Override

@@ -29,6 +29,7 @@ import net.openhft.chronicle.engine.api.session.Heartbeat;
 import net.openhft.chronicle.engine.api.set.EntrySetView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.engine.api.tree.Asset;
+import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.api.tree.RequestContextInterner;
 import net.openhft.chronicle.engine.cfg.UserStat;
@@ -98,6 +99,8 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
     @NotNull
     private final ReplicationHandler replicationHandler;
     @NotNull
+    private final BarChartHandler barChatHandler;
+    @NotNull
     private final ReadMarshallable metaDataConsumer;
     private final StringBuilder lastCsp = new StringBuilder();
     private final StringBuilder eventName = new StringBuilder();
@@ -155,6 +158,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
         this.indexQueueViewHandler = new IndexQueueViewHandler();
         this.columnViewHandler = new ColumnViewHandler(this);
         this.columnViewIteratorHandler = new ColumnViewIteratorHandler(this);
+        this.barChatHandler = new BarChartHandler(this);
     }
 
     @Override
@@ -236,7 +240,13 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                             return;
                         }
 
-                        if (viewType != ColumnViewIterator.class) {
+                        if (viewType == ColumnView.class) {
+                            try {
+                                view = contextAsset.acquireView(QueueColumnView.class);
+                            } catch (AssetNotFoundException e) {
+                                view = contextAsset.acquireView(MapColumnView.class);
+                            }
+                        } else if (viewType != ColumnViewIterator.class) {
                             view = contextAsset.acquireView(requestContext);
                         } else
                             view = cidToObject.get(cid);
@@ -256,7 +266,9 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                                 viewType == IndexQueueView.class ||
                                 viewType == MapColumnView.class ||
                                 viewType == QueueColumnView.class ||
-                                viewType == ColumnViewIterator.class) {
+                                viewType == ColumnView.class ||
+                                viewType == ColumnViewIterator.class ||
+                                viewType == BarChart.class) {
 
                             // default to string type if not provided
                             final Class<?> type = requestContext.keyType() == null ? String.class
@@ -397,7 +409,8 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                         return;
                     }
 
-                    if (viewType == MapColumnView.class || viewType == QueueColumnView.class) {
+                    if (viewType == MapColumnView.class || viewType == QueueColumnView.class ||
+                            viewType == ColumnView.class) {
                         columnViewHandler.process(in, out, (ColumnViewInternal) view, tid);
                         return;
                     }
@@ -461,6 +474,11 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                         indexQueueViewHandler.process(in, requestContext, contextAsset,
                                 publisher(), tid,
                                 outWire);
+                        return;
+                    }
+
+                    if (viewType == BarChart.class) {
+                        barChatHandler.process(in, out, (BarChart) view, tid);
                     }
                 }
 

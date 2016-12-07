@@ -136,18 +136,20 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
             public Row next() {
                 final Map.Entry e = core.next();
                 @NotNull final Row row = new Row(columns());
-                if ((Marshallable.class.isAssignableFrom(mapView.keyType()))) {
-                    row.set("key", e.getKey().toString());
-                } else {
-                    row.set("key", e.getKey());
-                }
+                addColumns(row, mapView.keyType(), "key", e.getKey());
+                addColumns(row, mapView.valueType(), "value", e.getValue());
+                return row;
+            }
 
-                final List<FieldInfo> fieldInfos = Wires.fieldInfos(mapView.valueType());
+            private void addColumns(Row row,
+                                    final Class type,
+                                    final String defaultColumnName,
+                                    final Object item) {
+                final List<FieldInfo> fieldInfos = Wires.fieldInfos(type);
                 if (fieldInfos.isEmpty()) {
-                    row.set("value", e.getValue());
-
+                    row.set(defaultColumnName, item);
                 } else {
-                    @NotNull final Marshallable value = (Marshallable) e.getValue();
+                    @NotNull final Marshallable value = (Marshallable) item;
                     for (@NotNull final FieldInfo info : fieldInfos) {
 //                        System.out.println(info);
                         if (!columnNames().contains(info.name()))
@@ -163,8 +165,6 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
                         }
                     }
                 }
-
-                return row;
             }
         };
 
@@ -188,6 +188,11 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
         return mapView.asset().getView(ObjectSubscription.class);
     }
 
+    @Override
+    public Asset asset() {
+        return asset;
+    }
+
     @NotNull
     @Override
     public List<Column> columns() {
@@ -196,7 +201,9 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
         @NotNull List<Column> result = new ArrayList<>();
 
         if ((Marshallable.class.isAssignableFrom(keyType()))) {
-            result.add(new Column("key", true, true, "", String.class, false));
+            for (@NotNull final FieldInfo info : Wires.fieldInfos(keyType())) {
+                result.add(new Column(info.name(), true, false, "", info.type(), true));
+            }
         } else {
             result.add(new Column("key", true, true, "", keyType(), true));
         }
@@ -227,7 +234,12 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
 
         @NotNull LinkedHashSet<String> result = new LinkedHashSet<>();
 
-        result.add("key");
+        if ((Marshallable.class.isAssignableFrom(keyType()))) {
+            for (@NotNull final FieldInfo fi : Wires.fieldInfos(keyType())) {
+                result.add(fi.name());
+            }
+        } else
+            result.add("key");
 
         if (Marshallable.class.isAssignableFrom(valueType())) {
             for (@NotNull final FieldInfo fi : Wires.fieldInfos(valueType())) {
@@ -356,7 +368,6 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
             }
         };
     }
-
 
 
     /**

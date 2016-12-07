@@ -111,13 +111,9 @@ class ColumnViewHandler extends AbstractHandler {
                     throw new IllegalStateException("unsupported event=" + eventName);
                 });
 
-            } catch (
-                    Exception e)
-
-            {
+            } catch (   Exception e){
                 Jvm.warn().on(getClass(), e);
             }
-
 
         }
     };

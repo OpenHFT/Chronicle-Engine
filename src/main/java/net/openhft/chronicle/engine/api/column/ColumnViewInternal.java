@@ -1,5 +1,6 @@
 package net.openhft.chronicle.engine.api.column;
 
+import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.map.ObjectSubscription;
 import net.openhft.chronicle.wire.AbstractMarshallable;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +46,8 @@ public interface ColumnViewInternal {
         public List<MarshableOrderBy> marshableOrderBy = new ArrayList<>();
         public List<MarshableFilter> marshableFilters = new ArrayList<>();
     }
+
+    Asset asset();
 
     List<Column> columns();
 
