@@ -24,12 +24,12 @@ public class VanillaBarChart extends AbstractMarshallable implements BarChart {
     }
 
     public VanillaBarChart dataSource(MapView mapView) {
-        this.columnView = mapView.asset().acquireView(QueueColumnView.class);
+        this.columnView = mapView.asset().acquireView(MapColumnView.class);
         return this;
     }
 
     public VanillaBarChart dataSource(QueueView mapView) {
-        this.columnView = mapView.asset().acquireView(MapColumnView.class);
+        this.columnView = mapView.asset().acquireView(QueueColumnView.class);
         return this;
     }
 

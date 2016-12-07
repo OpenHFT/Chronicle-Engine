@@ -57,10 +57,6 @@ class StartEngineWithDummyData {
     }
 
 
-
-
-
-
     private static void addCountryNumerics(VanillaAssetTree tree) {
         @NotNull MapView<String, String> mapView = tree.acquireMap("/my/demo", String.class,
                 String.class);
@@ -475,10 +471,18 @@ class StartEngineWithDummyData {
         @NotNull
         SimpleDateFormat sd = new SimpleDateFormat("dd MMM yyyy");
 
+        String csp = "/shares/APPL";
         @NotNull
-        MapView<Date, MarketData> map = tree.acquireMap("/shares/APPL",
+        MapView<Date, MarketData> map = tree.acquireMap(csp,
                 Date.class,
                 MarketData.class);
+
+
+        VanillaBarChart barChart = tree.acquireView(requestContext(csp).view("BarChart"));
+        barChart.columnNameField("key");
+        barChart.columnValueField("close");
+        barChart.title("APPL Close");
+        barChart.dataSource(map);
 
         try {
             map.put(sd.parse("7 Oct 2016"), new MarketData(114.31, 114.56, 113.51, 114.06, 114.06, 24358400L));
