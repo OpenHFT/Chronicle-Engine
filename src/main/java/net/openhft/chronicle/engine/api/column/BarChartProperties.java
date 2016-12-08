@@ -7,6 +7,6 @@ import net.openhft.chronicle.wire.AbstractMarshallable;
  */
 public class BarChartProperties extends AbstractMarshallable {
     public String title = "";
-    public Integer pointWidth;
     public String yAxisTitle = "";
+    public String menuLabel = "chart";
 }

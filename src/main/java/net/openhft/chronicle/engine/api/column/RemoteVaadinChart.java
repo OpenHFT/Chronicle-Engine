@@ -42,8 +42,8 @@ public class RemoteVaadinChart extends AbstractStatelessClient implements Vaadin
      * chartColumn
      */
     @Override
-    public VaadinChartType[] columnValueField() {
-        return (VaadinChartType[]) proxyReturnTypedObject(columnValueField, null, VaadinChartType[].class);
+    public VaadinChartSeries[] series() {
+        return (VaadinChartSeries[]) proxyReturnTypedObject(series, null, VaadinChartSeries[].class);
     }
 
     /**
@@ -66,7 +66,7 @@ public class RemoteVaadinChart extends AbstractStatelessClient implements Vaadin
 
     public enum EventId implements ParameterizeWireKey {
         barChartProperties,
-        columnValueField,     // used only by the queue view
+        series,     // used only by the queue view
         columnNameField,
         columnView;
         private final WireKey[] params;

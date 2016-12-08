@@ -11,7 +11,7 @@ import net.openhft.chronicle.wire.AbstractMarshallable;
  */
 public class VanillaVaadinChart extends AbstractMarshallable implements VaadinChart {
     private String columnNameField;
-    private VaadinChartType[] columnValueFields;
+    private VaadinChartSeries[] series;
     private BarChartProperties barChartProperties;
     private ColumnViewInternal columnView;
 
@@ -43,12 +43,12 @@ public class VanillaVaadinChart extends AbstractMarshallable implements VaadinCh
         return this;
     }
 
-    public VaadinChartType[] columnValueField() {
-        return columnValueFields;
+    public VaadinChartSeries[] series() {
+        return series;
     }
 
-    public VanillaVaadinChart columnValueFields(VaadinChartType... columnValueFields) {
-        this.columnValueFields = columnValueFields;
+    public VanillaVaadinChart series(VaadinChartSeries... series) {
+        this.series = series;
         return this;
     }
 

@@ -3,7 +3,7 @@ package net.openhft.chronicle.engine;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.onoes.ExceptionKey;
 import net.openhft.chronicle.engine.api.column.BarChartProperties;
-import net.openhft.chronicle.engine.api.column.VaadinChartType;
+import net.openhft.chronicle.engine.api.column.VaadinChartSeries;
 import net.openhft.chronicle.engine.api.column.VanillaVaadinChart;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.tree.ChronicleQueueView;
@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.concurrent.locks.LockSupport;
 
 import static net.openhft.chronicle.core.Jvm.*;
-import static net.openhft.chronicle.engine.api.column.VaadinChartType.Type.SPLINE;
+import static net.openhft.chronicle.engine.api.column.VaadinChartSeries.Type.SPLINE;
 import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
 
 /**
@@ -400,15 +400,15 @@ class StartEngineWithDummyData {
         QueueView<String, MarketData2> q = tree.acquireQueue
                 (csp, String.class, MarketData2.class, CLUSTER_NAME);
 
-        VanillaVaadinChart barChart = tree.acquireView(requestContext(csp).view("BarChart"));
+        VanillaVaadinChart barChart = tree.acquireView(requestContext(csp).view("Chart"));
         barChart.columnNameField("date");
-        barChart.columnValueFields(new VaadinChartType("volume"));
+        barChart.series(new VaadinChartSeries("volume"));
         barChart.dataSource(q);
 
 
         final BarChartProperties barChartProperties = new BarChartProperties();
         barChartProperties.title = "APPL Volume";
-        barChartProperties.pointWidth = 5;
+        barChartProperties.menuLabel = "volume";
         barChart.barChartProperties(barChartProperties);
         @NotNull SimpleDateFormat sd = new SimpleDateFormat("dd MMM yyyy");
 
@@ -482,15 +482,15 @@ class StartEngineWithDummyData {
         @NotNull
         MapView<Date, MarketData> map = tree.acquireMap(csp, Date.class, MarketData.class);
 
-        final VanillaVaadinChart barChart = tree.acquireView(requestContext(csp).view("BarChart"));
+        final VanillaVaadinChart barChart = tree.acquireView(requestContext(csp).view("Chart"));
         barChart.columnNameField("key");
-        VaadinChartType open = new VaadinChartType("open").type(SPLINE).yAxisLabel("price");
-        VaadinChartType close = new VaadinChartType("close");
-        barChart.columnValueFields(close, open);
+        VaadinChartSeries high = new VaadinChartSeries("high").type(SPLINE).yAxisLabel("price");
+        VaadinChartSeries low = new VaadinChartSeries("low").type(SPLINE).yAxisLabel("price");
+        barChart.series(low, high);
 
         final BarChartProperties barChartProperties = new BarChartProperties();
-        barChartProperties.title = "APPL Close";
-        barChartProperties.pointWidth = 5;
+        barChartProperties.title = "APPL High / Low";
+        barChartProperties.menuLabel = "high/low";
         barChart.barChartProperties(barChartProperties);
         barChart.dataSource(map);
 
@@ -552,7 +552,6 @@ class StartEngineWithDummyData {
         TREE2.close();
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
-
     }
 
     private void throughput(int millionsPerMin, boolean warmup, final String cluster) {

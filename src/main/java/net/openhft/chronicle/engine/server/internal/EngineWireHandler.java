@@ -99,7 +99,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
     @NotNull
     private final ReplicationHandler replicationHandler;
     @NotNull
-    private final BarChartHandler barChatHandler;
+    private final VaadinChartHandler barChatHandler;
     @NotNull
     private final ReadMarshallable metaDataConsumer;
     private final StringBuilder lastCsp = new StringBuilder();
@@ -158,7 +158,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
         this.indexQueueViewHandler = new IndexQueueViewHandler();
         this.columnViewHandler = new ColumnViewHandler(this);
         this.columnViewIteratorHandler = new ColumnViewIteratorHandler(this);
-        this.barChatHandler = new BarChartHandler(this);
+        this.barChatHandler = new VaadinChartHandler(this);
     }
 
     @Override

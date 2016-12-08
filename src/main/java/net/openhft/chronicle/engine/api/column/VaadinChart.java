@@ -14,7 +14,7 @@ public interface VaadinChart {
      * @return the name of the field in the column view that will be used to get the value of each
      * chartColumn
      */
-    VaadinChartType[] columnValueField();
+    VaadinChartSeries[] series();
 
     /**
      * @return the name of the field in the column name that will be used to get the value of each

@@ -5,13 +5,20 @@ import net.openhft.chronicle.wire.AbstractMarshallable;
 /**
  * @author Rob Austin.
  */
-public class VaadinChartType extends AbstractMarshallable {
+public class VaadinChartSeries extends AbstractMarshallable {
+
+    public VaadinChartSeries width(Integer width) {
+        this.width = width;
+        return this;
+    }
+
+    private Integer width = 5;
 
     public String yAxisLabel() {
         return yAxisLabel;
     }
 
-    public VaadinChartType yAxisLabel(String yAxisLabel) {
+    public VaadinChartSeries yAxisLabel(String yAxisLabel) {
         this.yAxisLabel = yAxisLabel;
         return this;
     }
@@ -22,6 +29,10 @@ public class VaadinChartType extends AbstractMarshallable {
         return type;
     }
 
+    public Integer width() {
+        return width;
+    }
+
     public enum Type {SPLINE, COLUMN}
 
     public String field;
@@ -29,7 +40,7 @@ public class VaadinChartType extends AbstractMarshallable {
     public Type type = Type.COLUMN;
 
 
-    public VaadinChartType(String field) {
+    public VaadinChartSeries(String field) {
         this.field = field;
     }
 
@@ -37,12 +48,12 @@ public class VaadinChartType extends AbstractMarshallable {
         return field;
     }
 
-    public VaadinChartType field(String field) {
+    public VaadinChartSeries field(String field) {
         this.field = field;
         return this;
     }
 
-    public VaadinChartType type(Type type) {
+    public VaadinChartSeries type(Type type) {
         this.type = type;
         return this;
     }

@@ -17,11 +17,11 @@ import static net.openhft.chronicle.network.connection.CoreFields.reply;
 /**
  * @author Rob Austin.
  */
-public class BarChartHandler extends AbstractHandler {
+public class VaadinChartHandler extends AbstractHandler {
     private final CspManager cspManager;
     AtomicLong nextToken = new AtomicLong();
 
-    BarChartHandler(CspManager cspManager) {
+    VaadinChartHandler(CspManager cspManager) {
         this.cspManager = cspManager;
     }
 
@@ -54,8 +54,8 @@ public class BarChartHandler extends AbstractHandler {
                         return;
                     }
 
-                    if (RemoteVaadinChart.EventId.columnValueField.contentEquals(eventName)) {
-                        outWire.writeEventName(reply).object(vaadinChart.columnValueField());
+                    if (RemoteVaadinChart.EventId.series.contentEquals(eventName)) {
+                        outWire.writeEventName(reply).object(vaadinChart.series());
                         return;
                     }
 

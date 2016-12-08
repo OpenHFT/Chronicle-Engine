@@ -23,8 +23,8 @@ import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.core.pool.ClassLookup;
 import net.openhft.chronicle.engine.HeartbeatHandler;
 import net.openhft.chronicle.engine.api.collection.ValuesCollection;
-import net.openhft.chronicle.engine.api.column.VaadinChart;
 import net.openhft.chronicle.engine.api.column.ColumnView;
+import net.openhft.chronicle.engine.api.column.VaadinChart;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.pubsub.*;
@@ -68,7 +68,7 @@ public class RequestContext implements Cloneable {
     static {
 
         loadDefaultAliases();
-        addAliasLocal(VaadinChart.class, "BarChart");
+        addAliasLocal(VaadinChart.class, "Chart");
         addAliasLocal(ColumnView.class, "COLUMN");
         addAliasLocal(QueueView.class, "Queue");
         addAliasLocal(MapView.class, "Map");
