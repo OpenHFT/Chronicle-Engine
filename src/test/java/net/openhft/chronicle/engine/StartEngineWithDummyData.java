@@ -2,7 +2,9 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.onoes.ExceptionKey;
-import net.openhft.chronicle.engine.api.column.VanillaBarChart;
+import net.openhft.chronicle.engine.api.column.BarChartProperties;
+import net.openhft.chronicle.engine.api.column.VaadinChartType;
+import net.openhft.chronicle.engine.api.column.VanillaVaadinChart;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.tree.ChronicleQueueView;
 import net.openhft.chronicle.engine.tree.QueueView;
@@ -21,6 +23,7 @@ import java.util.Map;
 import java.util.concurrent.locks.LockSupport;
 
 import static net.openhft.chronicle.core.Jvm.*;
+import static net.openhft.chronicle.engine.api.column.VaadinChartType.Type.SPLINE;
 import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
 
 /**
@@ -397,12 +400,16 @@ class StartEngineWithDummyData {
         QueueView<String, MarketData2> q = tree.acquireQueue
                 (csp, String.class, MarketData2.class, CLUSTER_NAME);
 
-        VanillaBarChart barChart = tree.acquireView(requestContext(csp).view("BarChart"));
+        VanillaVaadinChart barChart = tree.acquireView(requestContext(csp).view("BarChart"));
         barChart.columnNameField("date");
-        barChart.columnValueField("volume");
-        barChart.title("APPL Volume");
+        barChart.columnValueFields(new VaadinChartType("volume"));
         barChart.dataSource(q);
 
+
+        final BarChartProperties barChartProperties = new BarChartProperties();
+        barChartProperties.title = "APPL Volume";
+        barChartProperties.pointWidth = 5;
+        barChart.barChartProperties(barChartProperties);
         @NotNull SimpleDateFormat sd = new SimpleDateFormat("dd MMM yyyy");
 
 
@@ -471,17 +478,20 @@ class StartEngineWithDummyData {
         @NotNull
         SimpleDateFormat sd = new SimpleDateFormat("dd MMM yyyy");
 
-        String csp = "/shares/APPL";
+        final String csp = "/shares/APPL";
         @NotNull
-        MapView<Date, MarketData> map = tree.acquireMap(csp,
-                Date.class,
-                MarketData.class);
+        MapView<Date, MarketData> map = tree.acquireMap(csp, Date.class, MarketData.class);
 
-
-        VanillaBarChart barChart = tree.acquireView(requestContext(csp).view("BarChart"));
+        final VanillaVaadinChart barChart = tree.acquireView(requestContext(csp).view("BarChart"));
         barChart.columnNameField("key");
-        barChart.columnValueField("close");
-        barChart.title("APPL Close");
+        VaadinChartType open = new VaadinChartType("open").type(SPLINE).yAxisLabel("price");
+        VaadinChartType close = new VaadinChartType("close");
+        barChart.columnValueFields(close, open);
+
+        final BarChartProperties barChartProperties = new BarChartProperties();
+        barChartProperties.title = "APPL Close";
+        barChartProperties.pointWidth = 5;
+        barChart.barChartProperties(barChartProperties);
         barChart.dataSource(map);
 
         try {

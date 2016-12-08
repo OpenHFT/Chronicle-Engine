@@ -130,7 +130,7 @@ public class VanillaAsset implements Asset, Closeable {
         addLeafRule(AuthenticatedKeyValueStore.class, LAST + " VanillaKeyValueStore", VanillaKeyValueStore::new);
         addLeafRule(SubscriptionKeyValueStore.class, LAST + " VanillaKeyValueStore", VanillaKeyValueStore::new);
         addLeafRule(KeyValueStore.class, LAST + " VanillaKeyValueStore", VanillaKeyValueStore::new);
-        addLeafRule(BarChart.class, LAST + " VanillaKeyValueStore", VanillaBarChart::new);
+        addLeafRule(VaadinChart.class, LAST + " VanillaKeyValueStore", VanillaVaadinChart::new);
     }
 
     public void configMapRemote() {
@@ -148,7 +148,7 @@ public class VanillaAsset implements Asset, Closeable {
         addLeafRule(ObjectKeyValueStore.class, LAST + " RemoteKeyValueStore",
                 RemoteKeyValueStore::new);
         addLeafRule(ObjectSubscription.class, LAST + " Remote", RemoteKVSSubscription::new);
-        addLeafRule(BarChart.class, LAST + " VanillaKeyValueStore", RemoteBarChart::new);
+        addLeafRule(VaadinChart.class, LAST + " VanillaKeyValueStore", RemoteVaadinChart::new);
     }
 
     public void configColumnViewRemote() {

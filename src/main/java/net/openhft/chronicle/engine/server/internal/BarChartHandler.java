@@ -1,9 +1,9 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.core.Jvm;
-import net.openhft.chronicle.engine.api.column.BarChart;
+import net.openhft.chronicle.engine.api.column.VaadinChart;
 import net.openhft.chronicle.engine.api.column.ColumnViewInternal;
-import net.openhft.chronicle.engine.api.column.RemoteBarChart;
+import net.openhft.chronicle.engine.api.column.RemoteVaadinChart;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
@@ -26,7 +26,7 @@ public class BarChartHandler extends AbstractHandler {
     }
 
     private final StringBuilder eventName = new StringBuilder();
-    private BarChart barChart;
+    private VaadinChart vaadinChart;
 
     @Nullable
     private WireIn inWire = null;
@@ -49,22 +49,22 @@ public class BarChartHandler extends AbstractHandler {
 
                 writeData(inWire.bytes(), out -> {
 
-                    if (RemoteBarChart.EventId.title.contentEquals(eventName)) {
-                        outWire.writeEventName(reply).text(barChart.title());
+                    if (RemoteVaadinChart.EventId.barChartProperties.contentEquals(eventName)) {
+                        outWire.writeEventName(reply).typedMarshallable(vaadinChart.barChartProperties());
                         return;
                     }
 
-                    if (RemoteBarChart.EventId.columnValueField.contentEquals(eventName)) {
-                        outWire.writeEventName(reply).text(barChart.columnValueField());
+                    if (RemoteVaadinChart.EventId.columnValueField.contentEquals(eventName)) {
+                        outWire.writeEventName(reply).object(vaadinChart.columnValueField());
                         return;
                     }
 
-                    if (RemoteBarChart.EventId.columnNameField.contentEquals(eventName)) {
-                        outWire.writeEventName(reply).text(barChart.columnNameField());
+                    if (RemoteVaadinChart.EventId.columnNameField.contentEquals(eventName)) {
+                        outWire.writeEventName(reply).text(vaadinChart.columnNameField());
                         return;
                     }
-                    if (RemoteBarChart.EventId.columnView.contentEquals(eventName)) {
-                        ColumnViewInternal columnView = barChart.columnView();
+                    if (RemoteVaadinChart.EventId.columnView.contentEquals(eventName)) {
+                        ColumnViewInternal columnView = vaadinChart.columnView();
                         outWire.writeEventName(reply).text(columnView.asset().fullName());
                         return;
                     }
@@ -82,14 +82,14 @@ public class BarChartHandler extends AbstractHandler {
     };
 
 
-    public void process(WireIn in, WireOut out, BarChart barChart, long tid) {
+    public void process(WireIn in, WireOut out, VaadinChart vaadinChart, long tid) {
 
         setOutWire(out);
 
         try {
             this.inWire = in;
             this.outWire = out;
-            this.barChart = barChart;
+            this.vaadinChart = vaadinChart;
             this.tid = tid;
             dataConsumer.accept(in, tid);
         } catch (Exception e) {

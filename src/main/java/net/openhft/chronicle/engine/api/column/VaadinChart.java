@@ -3,18 +3,18 @@ package net.openhft.chronicle.engine.api.column;
 /**
  * @author Rob Austin.
  */
-public interface BarChart {
+public interface VaadinChart {
 
     /**
-     * the title of the chart
+     * the barChartProperties of the chart
      */
-    String title();
+    BarChartProperties barChartProperties();
 
     /**
      * @return the name of the field in the column view that will be used to get the value of each
      * chartColumn
      */
-    String columnValueField();
+    VaadinChartType[] columnValueField();
 
     /**
      * @return the name of the field in the column name that will be used to get the value of each

@@ -9,13 +9,13 @@ import net.openhft.chronicle.wire.AbstractMarshallable;
 /**
  * @author Rob Austin.
  */
-public class VanillaBarChart extends AbstractMarshallable implements BarChart {
+public class VanillaVaadinChart extends AbstractMarshallable implements VaadinChart {
     private String columnNameField;
-    private String columnValueField;
-    private String title;
+    private VaadinChartType[] columnValueFields;
+    private BarChartProperties barChartProperties;
     private ColumnViewInternal columnView;
 
-    public VanillaBarChart(RequestContext requestContext, Asset asset) {
+    public VanillaVaadinChart(RequestContext requestContext, Asset asset) {
 
     }
 
@@ -23,12 +23,12 @@ public class VanillaBarChart extends AbstractMarshallable implements BarChart {
         return columnNameField;
     }
 
-    public VanillaBarChart dataSource(MapView mapView) {
+    public VanillaVaadinChart dataSource(MapView mapView) {
         this.columnView = mapView.asset().acquireView(MapColumnView.class);
         return this;
     }
 
-    public VanillaBarChart dataSource(QueueView mapView) {
+    public VanillaVaadinChart dataSource(QueueView mapView) {
         this.columnView = mapView.asset().acquireView(QueueColumnView.class);
         return this;
     }
@@ -38,26 +38,26 @@ public class VanillaBarChart extends AbstractMarshallable implements BarChart {
         return columnView;
     }
 
-    public VanillaBarChart columnNameField(String columnNameField) {
+    public VanillaVaadinChart columnNameField(String columnNameField) {
         this.columnNameField = columnNameField;
         return this;
     }
 
-    public String columnValueField() {
-        return columnValueField;
+    public VaadinChartType[] columnValueField() {
+        return columnValueFields;
     }
 
-    public VanillaBarChart columnValueField(String columnValueField) {
-        this.columnValueField = columnValueField;
+    public VanillaVaadinChart columnValueFields(VaadinChartType... columnValueFields) {
+        this.columnValueFields = columnValueFields;
         return this;
     }
 
-    public String title() {
-        return title;
+    public BarChartProperties barChartProperties() {
+        return barChartProperties;
     }
 
-    public VanillaBarChart title(String title) {
-        this.title = title;
+    public VanillaVaadinChart barChartProperties(BarChartProperties barChartProperties) {
+        this.barChartProperties = barChartProperties;
         return this;
     }
 

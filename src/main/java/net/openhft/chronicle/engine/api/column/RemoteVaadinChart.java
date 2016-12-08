@@ -8,33 +8,33 @@ import net.openhft.chronicle.wire.ParameterizeWireKey;
 import net.openhft.chronicle.wire.WireKey;
 import org.jetbrains.annotations.NotNull;
 
-import static net.openhft.chronicle.engine.api.column.RemoteBarChart.EventId.*;
+import static net.openhft.chronicle.engine.api.column.RemoteVaadinChart.EventId.*;
 
 /**
  * @author Rob Austin.
  */
-public class RemoteBarChart extends AbstractStatelessClient implements BarChart {
+public class RemoteVaadinChart extends AbstractStatelessClient implements VaadinChart {
     @NotNull
     private final RequestContext context;
     @NotNull
     private final Asset asset;
 
-    public RemoteBarChart(@NotNull RequestContext context, @NotNull Asset asset) {
+    public RemoteVaadinChart(@NotNull RequestContext context, @NotNull Asset asset) {
         super(asset.findView(TcpChannelHub.class), (long) 0, toURL(context));
         this.context = context;
         this.asset = asset;
     }
 
     private static String toURL(RequestContext context) {
-        return context.viewType(BarChart.class).toUri();
+        return context.viewType(VaadinChart.class).toUri();
     }
 
     /**
-     * the title of the chart
+     * the barChartProperties of the chart
      */
     @Override
-    public String title() {
-        return (String) proxyReturnTypedObject(EventId.title, null, String.class);
+    public BarChartProperties barChartProperties() {
+        return (BarChartProperties) proxyReturnTypedObject(EventId.barChartProperties, null, BarChartProperties.class);
     }
 
     /**
@@ -42,8 +42,8 @@ public class RemoteBarChart extends AbstractStatelessClient implements BarChart 
      * chartColumn
      */
     @Override
-    public String columnValueField() {
-        return (String) proxyReturnTypedObject(columnValueField, null, String.class);
+    public VaadinChartType[] columnValueField() {
+        return (VaadinChartType[]) proxyReturnTypedObject(columnValueField, null, VaadinChartType[].class);
     }
 
     /**
@@ -65,7 +65,7 @@ public class RemoteBarChart extends AbstractStatelessClient implements BarChart 
     }
 
     public enum EventId implements ParameterizeWireKey {
-        title,
+        barChartProperties,
         columnValueField,     // used only by the queue view
         columnNameField,
         columnView;

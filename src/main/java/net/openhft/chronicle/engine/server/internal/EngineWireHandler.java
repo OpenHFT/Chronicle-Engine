@@ -268,7 +268,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                                 viewType == QueueColumnView.class ||
                                 viewType == ColumnView.class ||
                                 viewType == ColumnViewIterator.class ||
-                                viewType == BarChart.class) {
+                                viewType == VaadinChart.class) {
 
                             // default to string type if not provided
                             final Class<?> type = requestContext.keyType() == null ? String.class
@@ -477,8 +477,8 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                         return;
                     }
 
-                    if (viewType == BarChart.class) {
-                        barChatHandler.process(in, out, (BarChart) view, tid);
+                    if (viewType == VaadinChart.class) {
+                        barChatHandler.process(in, out, (VaadinChart) view, tid);
                     }
                 }
 
