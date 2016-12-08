@@ -96,6 +96,11 @@ public class ServerEndpoint implements Closeable {
                 host = hostName;
                 this.port = port;
             }
+
+            @Override
+            public void onRoundTripLatency(long nanosecondLatency) {
+
+            }
         });
     }
 

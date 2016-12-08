@@ -99,6 +99,11 @@ public class EngineClusterContext extends ClusterContext {
             host = hostName;
             this.port = port;
         }
+
+        @Override
+        public void onRoundTripLatency(long nanosecondLatency) {
+
+        }
     };
 
     public ThrowingFunction<NetworkContext, TcpEventHandler, IOException> tcpEventHandlerFactory() {

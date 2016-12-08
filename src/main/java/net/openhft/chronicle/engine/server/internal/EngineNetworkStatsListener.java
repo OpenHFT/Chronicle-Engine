@@ -18,6 +18,11 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.core.annotation.UsedViaReflection;
+import net.openhft.chronicle.core.util.Histogram;
+import net.openhft.chronicle.engine.api.column.BarChartProperties;
+import net.openhft.chronicle.engine.api.column.ColumnViewInternal;
+import net.openhft.chronicle.engine.api.column.VaadinChartSeries;
+import net.openhft.chronicle.engine.api.column.VanillaVaadinChart;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.cfg.EngineClusterContext;
@@ -32,10 +37,15 @@ import net.openhft.chronicle.network.WireNetworkStats;
 import net.openhft.chronicle.network.api.session.SessionDetailsProvider;
 import net.openhft.chronicle.network.cluster.AbstractSubHandler;
 import net.openhft.chronicle.network.cluster.ClusterContext;
+import net.openhft.chronicle.queue.ChronicleQueue;
+import net.openhft.chronicle.queue.ExcerptTailer;
+import net.openhft.chronicle.queue.TailerDirection;
 import net.openhft.chronicle.wire.Demarshallable;
 import net.openhft.chronicle.wire.WireIn;
 import org.jetbrains.annotations.NotNull;
 
+import static java.lang.Long.toHexString;
+import static net.openhft.chronicle.engine.api.column.VaadinChartSeries.Type.SPLINE;
 import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
 
 /**
@@ -43,24 +53,30 @@ import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContex
  */
 public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWireNetworkContext> {
 
+    public static final String PROC_CONNECTIONS_CLUSTER_THROUGHPUT = "/proc/connections/cluster/throughput/";
     private final Asset asset;
     private final int localIdentifier;
     private final WireNetworkStats wireNetworkStats = new WireNetworkStats();
     private QueueView qv;
     private volatile boolean isClosed;
     private EngineWireNetworkContext nc;
+    private Histogram histogram;
 
     public EngineNetworkStatsListener(Asset asset, int localIdentifier) {
         this.localIdentifier = localIdentifier;
         wireNetworkStats.localIdentifier(localIdentifier);
         this.asset = asset;
+
+        histogram = new Histogram();
+
+
     }
 
     private QueueView acquireQV() {
 
         if (qv != null)
             return qv;
-        String path = "/proc/connections/cluster/throughput/" + localIdentifier;
+        String path = PROC_CONNECTIONS_CLUSTER_THROUGHPUT + localIdentifier;
 
         RequestContext requestContext = requestContext(path)
                 .elementType(NetworkStats.class);
@@ -101,7 +117,17 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
         wireNetworkStats.timestamp(System.currentTimeMillis());
         wireNetworkStats.isConnected(!nc.isClosed());
 
+        if (histogram != null) {
+            wireNetworkStats.percentile50th((int) (histogram.percentile(0.5) / 1_000));
+            wireNetworkStats.percentile90th((int) (histogram.percentile(0.9) / 1_000));
+            wireNetworkStats.percentile99th((int) (histogram.percentile(0.99) / 1_000));
+            wireNetworkStats.percentile99_9th((int) (histogram.percentile(0.999) / 1_000));
+
+            histogram.reset();
+        }
+
         publish();
+
     }
 
     private void nc(@NotNull EngineWireNetworkContext nc) {
@@ -130,9 +156,53 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
     public void onHostPort(String hostName, int port) {
         wireNetworkStats.remoteHostName(hostName);
         wireNetworkStats.remotePort(port);
+
         if (isClosed)
             return;
         publish();
+    }
+
+    @Override
+    public void onRoundTripLatency(long nanosecondLatency) {
+        acquireHistogram().sampleNanos(nanosecondLatency);
+    }
+
+    private Histogram acquireHistogram() {
+        if (histogram != null)
+            return histogram;
+
+        histogram = new Histogram();
+        createVaadinChart();
+        return histogram;
+    }
+
+    private void createVaadinChart() {
+        final String csp = PROC_CONNECTIONS_CLUSTER_THROUGHPUT + localIdentifier + "/" +
+                wireNetworkStats + "/" + wireNetworkStats.remoteHostName();
+
+        final VanillaVaadinChart barChart = asset.acquireView(requestContext(csp).view("Chart"));
+        barChart.columnNameField("timestamp");
+        VaadinChartSeries percentile50th = new VaadinChartSeries("percentile50th").type(SPLINE).yAxisLabel
+                ("percentile50th");
+        VaadinChartSeries percentile90th = new VaadinChartSeries("percentile90th").type(SPLINE).yAxisLabel
+                ("percentile90th");
+        VaadinChartSeries percentile99th = new VaadinChartSeries("percentile99th").type(SPLINE).yAxisLabel(
+                "percentile99th");
+        VaadinChartSeries percentile99_9th = new VaadinChartSeries("percentile99_9th").type(SPLINE)
+                .yAxisLabel("percentile99_9th");
+        barChart.series(percentile50th, percentile90th, percentile99th, percentile99_9th);
+
+        final BarChartProperties barChartProperties = new BarChartProperties();
+        barChartProperties.title = "Round Trip Network Latency Distribution";
+        barChartProperties.menuLabel = "round trip latency";
+        barChart.barChartProperties(barChartProperties);
+
+        final ChronicleQueue q = (ChronicleQueue) qv.underlying();
+        final ExcerptTailer tailer = q.createTailer();
+        final long endIndex = tailer.direction(TailerDirection.BACKWARD).toEnd().index();
+        barChart.dataSource(qv);
+        barChart.barChartProperties().filter = new ColumnViewInternal.MarshableFilter("index",
+                ">=" + toHexString(endIndex));
     }
 
     @Override
