@@ -166,7 +166,6 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
             this.timeStamp = ZonedDateTime.now();
         }
 
-
     }
 
     public static class ConnectionDetails extends AbstractMarshallable implements Serializable {

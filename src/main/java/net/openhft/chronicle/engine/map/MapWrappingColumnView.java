@@ -202,7 +202,7 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
 
         if ((Marshallable.class.isAssignableFrom(keyType()))) {
             for (@NotNull final FieldInfo info : Wires.fieldInfos(keyType())) {
-                result.add(new Column(info.name(), true, false, "", info.type(), true));
+                result.add(new Column(info.name(), true, true, "", info.type(), true));
             }
         } else {
             result.add(new Column("key", true, true, "", keyType(), true));
