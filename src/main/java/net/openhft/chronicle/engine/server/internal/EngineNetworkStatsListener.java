@@ -20,7 +20,6 @@ package net.openhft.chronicle.engine.server.internal;
 import net.openhft.chronicle.core.annotation.UsedViaReflection;
 import net.openhft.chronicle.core.util.Histogram;
 import net.openhft.chronicle.engine.api.column.BarChartProperties;
-import net.openhft.chronicle.engine.api.column.ColumnViewInternal;
 import net.openhft.chronicle.engine.api.column.VaadinChartSeries;
 import net.openhft.chronicle.engine.api.column.VanillaVaadinChart;
 import net.openhft.chronicle.engine.api.tree.Asset;
@@ -37,14 +36,10 @@ import net.openhft.chronicle.network.WireNetworkStats;
 import net.openhft.chronicle.network.api.session.SessionDetailsProvider;
 import net.openhft.chronicle.network.cluster.AbstractSubHandler;
 import net.openhft.chronicle.network.cluster.ClusterContext;
-import net.openhft.chronicle.queue.ChronicleQueue;
-import net.openhft.chronicle.queue.ExcerptTailer;
-import net.openhft.chronicle.queue.TailerDirection;
 import net.openhft.chronicle.wire.Demarshallable;
 import net.openhft.chronicle.wire.WireIn;
 import org.jetbrains.annotations.NotNull;
 
-import static java.lang.Long.toHexString;
 import static net.openhft.chronicle.engine.api.column.VaadinChartSeries.Type.SPLINE;
 import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
 
@@ -179,9 +174,10 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
 
     private void createVaadinChart() {
 
-        final String csp = PROC_CONNECTIONS_CLUSTER_THROUGHPUT + "histograms/" + localIdentifier +
-                "/" +
-                wireNetworkStats.remoteHostName();
+        final String csp = PROC_CONNECTIONS_CLUSTER_THROUGHPUT + "replication-latency/" +
+                localIdentifier
+                + "-" + wireNetworkStats.remoteIdentifier();
+
 
         final VanillaVaadinChart barChart = asset.acquireView(requestContext(csp).view("Chart"));
         barChart.columnNameField("timestamp");
@@ -198,14 +194,11 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
         final BarChartProperties barChartProperties = new BarChartProperties();
         barChartProperties.title = "Round Trip Network Latency Distribution";
         barChartProperties.menuLabel = "round trip latency";
+        barChartProperties.countFromEnd = 100;
         barChart.barChartProperties(barChartProperties);
-
-        final ChronicleQueue q = (ChronicleQueue) qv.underlying();
-        final ExcerptTailer tailer = q.createTailer();
-        final long endIndex = tailer.direction(TailerDirection.BACKWARD).toEnd().index();
         barChart.dataSource(qv);
-        barChart.barChartProperties().filter = new ColumnViewInternal.MarshableFilter("index",
-                ">=" + toHexString(endIndex));
+
+
     }
 
     @Override

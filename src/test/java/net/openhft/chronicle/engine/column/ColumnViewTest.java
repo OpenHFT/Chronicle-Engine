@@ -202,7 +202,7 @@ public class ColumnViewTest {
 
         final Asset asset = assetTree.acquireAsset("/my/data");
         final MapColumnView columnView = asset.acquireView(MapColumnView.class);
-        Assert.assertEquals(size, columnView.rowCount(Collections.EMPTY_LIST));
+        Assert.assertEquals(size, columnView.rowCount(new SortedFilter()));
     }
 
 

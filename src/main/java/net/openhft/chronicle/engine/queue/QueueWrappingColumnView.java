@@ -10,6 +10,9 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.map.ObjectSubscription;
 import net.openhft.chronicle.engine.map.VanillaMapView;
 import net.openhft.chronicle.engine.tree.QueueView;
+import net.openhft.chronicle.queue.ExcerptTailer;
+import net.openhft.chronicle.queue.impl.single.SingleChronicleQueue;
+import net.openhft.chronicle.wire.DocumentContext;
 import net.openhft.chronicle.wire.FieldInfo;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.Wires;
@@ -25,6 +28,7 @@ import java.util.stream.StreamSupport;
 import static java.util.Spliterators.spliteratorUnknownSize;
 import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
 import static net.openhft.chronicle.engine.api.column.ColumnViewInternal.DOp.toRange;
+import static net.openhft.chronicle.queue.TailerDirection.BACKWARD;
 import static net.openhft.chronicle.wire.Wires.fieldInfos;
 
 /**
@@ -58,10 +62,21 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
         queueView.registerSubscriber("", o -> r.run());
     }
 
+    private ClosableIterator<ChronicleQueueRow> iteratorWithCountFromEnd(
+            @NotNull final List<MarshableFilter> filters,
+            long countFromEnd) {
+        final long index = toIndexFromEnd(countFromEnd);
+        return toIterator(filters, index);
+    }
+
     @NotNull
     @Override
     public ClosableIterator<ChronicleQueueRow> iterator(@NotNull final SortedFilter filters) {
-        return iterator(filters.marshableFilters, filters.fromIndex);
+        long countFromEnd = filters.countFromEnd;
+        if (countFromEnd > 0)
+            return iteratorWithCountFromEnd(filters.marshableFilters, countFromEnd);
+        else
+            return iterator(filters.marshableFilters, filters.fromIndex);
     }
 
     Map<List<MarshableFilter>, NavigableMap<Long, ChronicleQueueRow>> indexCache = new ConcurrentHashMap<>();
@@ -75,11 +90,31 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
         if (longChronicleQueueRowEntry != null)
             count = longChronicleQueueRowEntry.getValue().seqNumber();
 
+        final long index0 = ((longChronicleQueueRowEntry != null)) ? longChronicleQueueRowEntry
+                .getValue().index() : 0;
+
+        @NotNull final ClosableIterator<ChronicleQueueRow> result = toIterator(filters, index0);
+
+        ChronicleQueueRow r = null;
+        while (count < fromSequenceNumber && result.hasNext()) {
+            r = result.next();
+            r.seqNumber(count);
+            if (r.seqNumber() % 1024 == 0)
+                map.put(count, r);
+            count++;
+        }
+
+        if (longChronicleQueueRowEntry == null && r != null)
+            map.put(r.seqNumber(), r);
+
+        return result;
+    }
+
+    @NotNull
+    private ClosableIterator<ChronicleQueueRow> toIterator(@NotNull List<MarshableFilter> filters, final long index) {
         final Iterator<QueueView.Excerpt<String, V>> i = new Iterator<QueueView.Excerpt<String, V>>() {
 
-            QueueView.Excerpt<String, V> next = (longChronicleQueueRowEntry != null)
-                    ? queueView.getExcerpt(longChronicleQueueRowEntry.getValue().index())
-                    : queueView.getExcerpt(0);
+            QueueView.Excerpt<String, V> next = queueView.getExcerpt(index);
 
             @Override
             public boolean hasNext() {
@@ -107,7 +142,7 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
                 .filter(filter(filters))
                 .iterator();
 
-        @NotNull final ClosableIterator<ChronicleQueueRow> result = new ClosableIterator<ChronicleQueueRow>() {
+        return new ClosableIterator<ChronicleQueueRow>() {
 
             @Override
             public void close() {
@@ -147,20 +182,27 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
                 return row;
             }
         };
+    }
 
-        ChronicleQueueRow r = null;
-        while (count < fromSequenceNumber && result.hasNext()) {
-            r = result.next();
-            r.seqNumber(count);
-            if (r.seqNumber() % 1024 == 0)
-                map.put(count, r);
-            count++;
+    private long toIndexFromEnd(long countFromEnd) {
+        long fromSequenceNumber = -1;
+
+        if (countFromEnd > 0) {
+            final SingleChronicleQueue chronicleQueue = (SingleChronicleQueue) queueView.underlying();
+
+            final ExcerptTailer excerptTailer = chronicleQueue.createTailer().direction(BACKWARD).toEnd();
+            fromSequenceNumber = excerptTailer.index();
+            for (int i = 0; i < countFromEnd; i++) {
+
+                try (DocumentContext documentContext = excerptTailer.readingDocument()) {
+                    if (!documentContext.isPresent())
+                        break;
+                    fromSequenceNumber = documentContext.index();
+                }
+            }
+
         }
-
-        if (longChronicleQueueRowEntry == null && r != null)
-            map.put(r.seqNumber(), r);
-
-        return result;
+        return fromSequenceNumber;
     }
 
     @Override
@@ -299,41 +341,51 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
      * @return the number of rows the matches this query
      */
     @Override
-    public int rowCount(@NotNull List<MarshableFilter> filters) {
-        long count = 0;
-        final NavigableMap<Long, ChronicleQueueRow> map = indexCache.computeIfAbsent(filters, k -> new ConcurrentSkipListMap<>());
+    public int rowCount(@NotNull SortedFilter filters) {
+
+        long fromSequenceNumber = filters.fromIndex;
+        long countFromEnd = filters.countFromEnd;
+
+        assert countFromEnd != 0 && fromSequenceNumber == 0;
+
+        if (countFromEnd > 0) {
+            int count0 = 0;
+            ClosableIterator<ChronicleQueueRow> iterator = iterator(filters);
+
+            while (iterator.hasNext()) {
+                iterator.next();
+                count0++;
+            }
+            return count0;
+        }
+
+
+        final NavigableMap<Long, ChronicleQueueRow> map = indexCache.computeIfAbsent(filters.marshableFilters, k
+                -> new ConcurrentSkipListMap<>());
 
         Iterator<ChronicleQueueRow> iterator;
-        long lastIndex = 0;
 
+        long count = 0;
         if (map != null) {
             final Map.Entry<Long, ChronicleQueueRow> last = map.lastEntry();
             if (last == null) {
-                iterator = iterator(filters, 0);
+                iterator = iterator(filters);
             } else {
                 final ChronicleQueueRow value = last.getValue();
                 count = value.seqNumber();
-                iterator = iterator(filters, count);
+                iterator = iterator(filters);
             }
         } else
-            iterator = iterator(filters, 0);
+            iterator = iterator(filters);
 
         boolean hasMoreData = false;
         ChronicleQueueRow row = null;
         while (iterator.hasNext()) {
-            row = iterator.next();
-            row.seqNumber(count);
+         iterator.next();
             count++;
-            hasMoreData = true;
-
-            if (row.seqNumber() % 1024 == 0)
-                map.put(count, row);
         }
 
-        if (hasMoreData) {
 
-            map.put(count, row);
-        }
 
         return (int) count;
     }

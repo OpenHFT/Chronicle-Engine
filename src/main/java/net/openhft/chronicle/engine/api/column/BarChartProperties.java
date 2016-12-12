@@ -10,4 +10,5 @@ public class BarChartProperties extends AbstractMarshallable {
     public String yAxisTitle = "";
     public String menuLabel = "chart";
     public ColumnViewInternal.MarshableFilter filter;
+    public long countFromEnd;
 }

@@ -168,6 +168,7 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
             }
         };
 
+
         long x = 0;
         while (x++ < sortedFilter.fromIndex && result.hasNext()) {
             result.next();
@@ -376,12 +377,12 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
      * @return the number of rows the matches this query
      */
     @Override
-    public int rowCount(@Nullable List<MarshableFilter> sortedFilter) {
-        if (sortedFilter == null || sortedFilter.isEmpty())
+    public int rowCount(@Nullable SortedFilter sortedFilter) {
+        if (sortedFilter == null || sortedFilter.marshableFilters.isEmpty())
             return (int) mapView.longSize();
 
         return (int) mapView.entrySet().stream()
-                .filter(filter(sortedFilter))
+                .filter(filter(sortedFilter.marshableFilters))
                 .count();
     }
 

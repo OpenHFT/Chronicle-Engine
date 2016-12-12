@@ -65,12 +65,10 @@ class ColumnViewHandler extends AbstractHandler {
                     }
 
                     if (rowCount.contentEquals(eventName)) {
-                        filtersList.clear();
-                        List<ColumnView.MarshableFilter> filters = valueIn.object(filtersList, List.class);
-                        int count = columnView.rowCount(filters == null ? Collections
-                                .emptyList() : filters);
+                        ColumnViewInternal.SortedFilter filters = valueIn.object(ColumnViewInternal.SortedFilter.class);
+                        int count = columnView.rowCount(filters == null ?
+                                new ColumnViewInternal.SortedFilter() : filters);
                         outWire.writeEventName(reply).int32(count);
-
                         return;
                     }
 
@@ -111,7 +109,7 @@ class ColumnViewHandler extends AbstractHandler {
                     throw new IllegalStateException("unsupported event=" + eventName);
                 });
 
-            } catch (   Exception e){
+            } catch (Exception e) {
                 Jvm.warn().on(getClass(), e);
             }
 

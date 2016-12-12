@@ -42,6 +42,7 @@ public interface ColumnViewInternal {
     }
 
     class SortedFilter extends AbstractMarshallable {
+        public long countFromEnd;
         public long fromIndex;
         public List<MarshableOrderBy> marshableOrderBy = new ArrayList<>();
         public List<MarshableFilter> marshableFilters = new ArrayList<>();
@@ -51,7 +52,7 @@ public interface ColumnViewInternal {
 
     List<Column> columns();
 
-    int rowCount(@NotNull List<MarshableFilter> sortedFilter);
+    int rowCount(@NotNull SortedFilter sortedFilter);
 
     /**
      * used to add, update and delete rows

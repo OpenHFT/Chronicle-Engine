@@ -41,7 +41,7 @@ public class ServerCfg implements Installable, Marshallable {
     public ServerCfg install(String path, AssetTree assetTree) throws IOException {
         LOGGER.info(path + ": Starting listener on port " + port);
         serverEndpoint = new ServerEndpoint("*:" + port, assetTree);
-        YamlLogging.setAll(false);
+       // YamlLogging.setAll(false);
         return this;
     }
 
