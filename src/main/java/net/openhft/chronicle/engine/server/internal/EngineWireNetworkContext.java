@@ -125,12 +125,9 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
                     connectionStatus = CONNECTED;
                 }
 
-                if (localIdentifier < remoteIdentifier)
-                    connectivityHosts.put("" + localIdentifier + "<->" + remoteIdentifier,
-                            connectionStatus);
-                else
-                    connectivityHosts.put("" + remoteIdentifier + "<->" + localIdentifier,
-                            connectionStatus);
+                connectivityHosts.put("" + localIdentifier + "<->" + remoteIdentifier,
+                        connectionStatus);
+
             }
 
             private ConnectionStatus get(ConnectionDetails connectionDetails) {

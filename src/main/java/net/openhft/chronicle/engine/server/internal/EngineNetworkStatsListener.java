@@ -60,16 +60,17 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
     private QueueView qv;
     private volatile boolean isClosed;
     private EngineWireNetworkContext nc;
-    private Histogram histogram;
+    private Histogram histogram = null;
+
+
+    static {
+        RequestContext.loadDefaultAliases();
+    }
 
     public EngineNetworkStatsListener(Asset asset, int localIdentifier) {
         this.localIdentifier = localIdentifier;
         wireNetworkStats.localIdentifier(localIdentifier);
         this.asset = asset;
-
-        histogram = new Histogram();
-
-
     }
 
     private QueueView acquireQV() {
@@ -177,8 +178,10 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
     }
 
     private void createVaadinChart() {
-        final String csp = PROC_CONNECTIONS_CLUSTER_THROUGHPUT + localIdentifier + "/" +
-                wireNetworkStats + "/" + wireNetworkStats.remoteHostName();
+
+        final String csp = PROC_CONNECTIONS_CLUSTER_THROUGHPUT + "histograms/" + localIdentifier +
+                "/" +
+                wireNetworkStats.remoteHostName();
 
         final VanillaVaadinChart barChart = asset.acquireView(requestContext(csp).view("Chart"));
         barChart.columnNameField("timestamp");

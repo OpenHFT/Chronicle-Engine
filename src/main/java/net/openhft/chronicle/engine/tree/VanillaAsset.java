@@ -130,7 +130,7 @@ public class VanillaAsset implements Asset, Closeable {
         addLeafRule(AuthenticatedKeyValueStore.class, LAST + " VanillaKeyValueStore", VanillaKeyValueStore::new);
         addLeafRule(SubscriptionKeyValueStore.class, LAST + " VanillaKeyValueStore", VanillaKeyValueStore::new);
         addLeafRule(KeyValueStore.class, LAST + " VanillaKeyValueStore", VanillaKeyValueStore::new);
-        addLeafRule(VaadinChart.class, LAST + " VanillaKeyValueStore", VanillaVaadinChart::new);
+        addLeafRule(VaadinChart.class, LAST + " VaadinChart", VanillaVaadinChart::new);
     }
 
     public void configMapRemote() {
