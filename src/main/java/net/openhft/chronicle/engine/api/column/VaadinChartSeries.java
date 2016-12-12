@@ -40,6 +40,7 @@ public class VaadinChartSeries extends AbstractMarshallable {
     public Type type = Type.COLUMN;
 
 
+
     public VaadinChartSeries(String field) {
         this.field = field;
     }

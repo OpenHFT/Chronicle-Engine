@@ -20,6 +20,7 @@ package net.openhft.chronicle.engine.server.internal;
 import net.openhft.chronicle.core.annotation.UsedViaReflection;
 import net.openhft.chronicle.core.util.Histogram;
 import net.openhft.chronicle.engine.api.column.BarChartProperties;
+import net.openhft.chronicle.engine.api.column.ColumnViewInternal;
 import net.openhft.chronicle.engine.api.column.VaadinChartSeries;
 import net.openhft.chronicle.engine.api.column.VanillaVaadinChart;
 import net.openhft.chronicle.engine.api.tree.Asset;
@@ -182,13 +183,15 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
         final VanillaVaadinChart barChart = asset.acquireView(requestContext(csp).view("Chart"));
         barChart.columnNameField("timestamp");
         VaadinChartSeries percentile50th = new VaadinChartSeries("percentile50th").type(SPLINE).yAxisLabel
-                ("percentile50th");
+                ("microseconds");
         VaadinChartSeries percentile90th = new VaadinChartSeries("percentile90th").type(SPLINE).yAxisLabel
-                ("percentile90th");
+                ("microseconds");
         VaadinChartSeries percentile99th = new VaadinChartSeries("percentile99th").type(SPLINE).yAxisLabel(
-                "percentile99th");
+                "microseconds");
         VaadinChartSeries percentile99_9th = new VaadinChartSeries("percentile99_9th").type(SPLINE)
-                .yAxisLabel("percentile99_9th");
+                .yAxisLabel("microseconds");
+
+
         barChart.series(percentile50th, percentile90th, percentile99th, percentile99_9th);
 
         final BarChartProperties barChartProperties = new BarChartProperties();
@@ -197,6 +200,7 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
         barChartProperties.countFromEnd = 100;
         barChart.barChartProperties(barChartProperties);
         barChart.dataSource(qv);
+        barChartProperties.filter = new ColumnViewInternal.MarshableFilter("percentile99_9th", ">0");
 
 
     }
