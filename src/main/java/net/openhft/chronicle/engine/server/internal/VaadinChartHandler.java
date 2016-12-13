@@ -1,9 +1,9 @@
 package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.core.Jvm;
-import net.openhft.chronicle.engine.api.column.VaadinChart;
 import net.openhft.chronicle.engine.api.column.ColumnViewInternal;
 import net.openhft.chronicle.engine.api.column.RemoteVaadinChart;
+import net.openhft.chronicle.engine.api.column.VaadinChart;
 import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
@@ -49,8 +49,8 @@ public class VaadinChartHandler extends AbstractHandler {
 
                 writeData(inWire.bytes(), out -> {
 
-                    if (RemoteVaadinChart.EventId.barChartProperties.contentEquals(eventName)) {
-                        outWire.writeEventName(reply).typedMarshallable(vaadinChart.barChartProperties());
+                    if (RemoteVaadinChart.EventId.chartProperties.contentEquals(eventName)) {
+                        outWire.writeEventName(reply).typedMarshallable(vaadinChart.chartProperties());
                         return;
                     }
 

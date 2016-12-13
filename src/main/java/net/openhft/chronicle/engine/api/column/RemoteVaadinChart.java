@@ -30,11 +30,11 @@ public class RemoteVaadinChart extends AbstractStatelessClient implements Vaadin
     }
 
     /**
-     * the barChartProperties of the chart
+     * the chartProperties of the chart
      */
     @Override
-    public BarChartProperties barChartProperties() {
-        return (BarChartProperties) proxyReturnTypedObject(EventId.barChartProperties, null, BarChartProperties.class);
+    public ChartProperties chartProperties() {
+        return (ChartProperties) proxyReturnTypedObject(EventId.chartProperties, null, ChartProperties.class);
     }
 
     /**
@@ -65,7 +65,7 @@ public class RemoteVaadinChart extends AbstractStatelessClient implements Vaadin
     }
 
     public enum EventId implements ParameterizeWireKey {
-        barChartProperties,
+        chartProperties,
         series,     // used only by the queue view
         columnNameField,
         columnView;

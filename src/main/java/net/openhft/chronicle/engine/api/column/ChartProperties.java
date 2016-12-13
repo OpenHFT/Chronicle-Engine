@@ -8,7 +8,7 @@ import java.util.function.Function;
 /**
  * @author Rob Austin.
  */
-public class BarChartProperties extends AbstractMarshallable {
+public class ChartProperties extends AbstractMarshallable {
     public String menuLabel = "chart";
 
     // the Legend shown at the top of the chart
@@ -23,5 +23,5 @@ public class BarChartProperties extends AbstractMarshallable {
     public long countFromEnd;
 
     // if not null the ChartUI will use this function to render the field-name
-    public Function<Object, String> xAxisLableRender;
+    public Function<Object, String> xAxisLabelRender;
 }

@@ -12,7 +12,7 @@ import net.openhft.chronicle.wire.AbstractMarshallable;
 public class VanillaVaadinChart extends AbstractMarshallable implements VaadinChart {
     private String columnNameField;
     private VaadinChartSeries[] series;
-    private BarChartProperties barChartProperties;
+    private ChartProperties chartProperties;
     private ColumnViewInternal columnView;
 
     public VanillaVaadinChart(RequestContext requestContext, Asset asset) {
@@ -52,12 +52,12 @@ public class VanillaVaadinChart extends AbstractMarshallable implements VaadinCh
         return this;
     }
 
-    public BarChartProperties barChartProperties() {
-        return barChartProperties;
+    public ChartProperties chartProperties() {
+        return chartProperties;
     }
 
-    public VanillaVaadinChart barChartProperties(BarChartProperties barChartProperties) {
-        this.barChartProperties = barChartProperties;
+    public VanillaVaadinChart chartProperties(ChartProperties chartProperties) {
+        this.chartProperties = chartProperties;
         return this;
     }
 

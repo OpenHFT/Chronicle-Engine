@@ -19,7 +19,7 @@ package net.openhft.chronicle.engine.server.internal;
 
 import net.openhft.chronicle.core.annotation.UsedViaReflection;
 import net.openhft.chronicle.core.util.Histogram;
-import net.openhft.chronicle.engine.api.column.BarChartProperties;
+import net.openhft.chronicle.engine.api.column.ChartProperties;
 import net.openhft.chronicle.engine.api.column.ColumnViewInternal;
 import net.openhft.chronicle.engine.api.column.VaadinChartSeries;
 import net.openhft.chronicle.engine.api.column.VanillaVaadinChart;
@@ -212,14 +212,14 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
 
         barChart.series(percentile50th, percentile90th, percentile99th, percentile99_9th);
 
-        final BarChartProperties barChartProperties = new BarChartProperties();
-        barChartProperties.title = "Round Trip Network Latency Distribution";
-        barChartProperties.menuLabel = "round trip latency";
-        barChartProperties.countFromEnd = 30;
-        barChartProperties.xAxisLableRender = HourMinSecRenderer.INSTANCE;
-        barChart.barChartProperties(barChartProperties);
+        final ChartProperties chartProperties = new ChartProperties();
+        chartProperties.title = "Round Trip Network Latency Distribution";
+        chartProperties.menuLabel = "round trip latency";
+        chartProperties.countFromEnd = 30;
+        chartProperties.xAxisLabelRender = HourMinSecRenderer.INSTANCE;
+        barChart.chartProperties(chartProperties);
         barChart.dataSource(qv);
-        barChartProperties.filter = new ColumnViewInternal.MarshableFilter("percentile99_9th", ">0");
+        chartProperties.filter = new ColumnViewInternal.MarshableFilter("percentile99_9th", ">0");
     }
 
     @Override

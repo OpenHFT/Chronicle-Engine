@@ -33,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
-import java.time.ZonedDateTime;
 
 import static net.openhft.chronicle.engine.server.internal.EngineWireNetworkContext.ConnectionStatus.CONNECTED;
 import static net.openhft.chronicle.engine.server.internal.EngineWireNetworkContext.ConnectionStatus.DISCONNECTED;
@@ -156,11 +155,11 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
         // has to be a string as enums wont go in the chronicle map
         public ConnectionStatus connectionStatus;
 
-        public ZonedDateTime timeStamp;
+        public long timeStamp;
 
         ConnectionEvent(ConnectionStatus connectionStatus) {
             this.connectionStatus = connectionStatus;
-            this.timeStamp = ZonedDateTime.now();
+            this.timeStamp = System.currentTimeMillis();
         }
 
     }

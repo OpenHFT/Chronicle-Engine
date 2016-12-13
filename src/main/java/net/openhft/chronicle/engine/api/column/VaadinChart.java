@@ -6,9 +6,9 @@ package net.openhft.chronicle.engine.api.column;
 public interface VaadinChart {
 
     /**
-     * the barChartProperties of the chart
+     * the chartProperties of the chart
      */
-    BarChartProperties barChartProperties();
+    ChartProperties chartProperties();
 
     /**
      * @return the name of the field in the column view that will be used to get the value of each

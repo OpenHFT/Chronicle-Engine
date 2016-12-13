@@ -2,7 +2,7 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.onoes.ExceptionKey;
-import net.openhft.chronicle.engine.api.column.BarChartProperties;
+import net.openhft.chronicle.engine.api.column.ChartProperties;
 import net.openhft.chronicle.engine.api.column.VaadinChartSeries;
 import net.openhft.chronicle.engine.api.column.VanillaVaadinChart;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -406,10 +406,10 @@ class StartEngineWithDummyData {
         barChart.dataSource(q);
 
 
-        final BarChartProperties barChartProperties = new BarChartProperties();
-        barChartProperties.title = "APPL Volume";
-        barChartProperties.menuLabel = "volume";
-        barChart.barChartProperties(barChartProperties);
+        final ChartProperties chartProperties = new ChartProperties();
+        chartProperties.title = "APPL Volume";
+        chartProperties.menuLabel = "volume";
+        barChart.chartProperties(chartProperties);
         @NotNull SimpleDateFormat sd = new SimpleDateFormat("dd MMM yyyy");
 
 
@@ -488,10 +488,10 @@ class StartEngineWithDummyData {
         VaadinChartSeries low = new VaadinChartSeries("low").type(SPLINE).yAxisLabel("price");
         barChart.series(low, high);
 
-        final BarChartProperties barChartProperties = new BarChartProperties();
-        barChartProperties.title = "APPL High / Low";
-        barChartProperties.menuLabel = "high/low";
-        barChart.barChartProperties(barChartProperties);
+        final ChartProperties chartProperties = new ChartProperties();
+        chartProperties.title = "APPL High / Low";
+        chartProperties.menuLabel = "high/low";
+        barChart.chartProperties(chartProperties);
         barChart.dataSource(map);
 
         try {
