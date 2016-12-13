@@ -1,7 +1,9 @@
 package net.openhft.chronicle.engine.api.column;
 
-import net.openhft.chronicle.map.Function;
+
 import net.openhft.chronicle.wire.AbstractMarshallable;
+
+import java.util.function.Function;
 
 /**
  * @author Rob Austin.

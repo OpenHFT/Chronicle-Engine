@@ -30,7 +30,6 @@ import net.openhft.chronicle.engine.fs.Clusters;
 import net.openhft.chronicle.engine.fs.EngineCluster;
 import net.openhft.chronicle.engine.tree.ChronicleQueueView;
 import net.openhft.chronicle.engine.tree.QueueView;
-import net.openhft.chronicle.map.Function;
 import net.openhft.chronicle.network.MarshallableFunction;
 import net.openhft.chronicle.network.NetworkStats;
 import net.openhft.chronicle.network.NetworkStatsListener;
@@ -38,13 +37,13 @@ import net.openhft.chronicle.network.WireNetworkStats;
 import net.openhft.chronicle.network.api.session.SessionDetailsProvider;
 import net.openhft.chronicle.network.cluster.AbstractSubHandler;
 import net.openhft.chronicle.network.cluster.ClusterContext;
-import net.openhft.chronicle.wire.AbstractMarshallable;
 import net.openhft.chronicle.wire.Demarshallable;
 import net.openhft.chronicle.wire.WireIn;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.function.Function;
 
 import static net.openhft.chronicle.engine.api.column.VaadinChartSeries.Type.SPLINE;
 import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
@@ -158,7 +157,7 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
     public void onHostPort(String hostName, int port) {
         wireNetworkStats.remoteHostName(hostName);
         wireNetworkStats.remotePort(port);
-
+        wireNetworkStats.timestamp(System.currentTimeMillis());
         if (isClosed)
             return;
         publish();
@@ -184,7 +183,10 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
 
 
     @SuppressWarnings("WeakerAccess")
-    public static class HourMinSecRenderer extends AbstractMarshallable implements Function<Object, String> {
+    public enum HourMinSecRenderer implements Function<Object, String> {
+
+        INSTANCE;
+
         @Override
         public String apply(Object timeMs) {
             return HH_MM_SS.get().format(new Date((Long) timeMs));
@@ -213,8 +215,8 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
         final BarChartProperties barChartProperties = new BarChartProperties();
         barChartProperties.title = "Round Trip Network Latency Distribution";
         barChartProperties.menuLabel = "round trip latency";
-        barChartProperties.countFromEnd = 100;
-        barChartProperties.xAxisLableRender = new HourMinSecRenderer();
+        barChartProperties.countFromEnd = 30;
+        barChartProperties.xAxisLableRender = HourMinSecRenderer.INSTANCE;
         barChart.barChartProperties(barChartProperties);
         barChart.dataSource(qv);
         barChartProperties.filter = new ColumnViewInternal.MarshableFilter("percentile99_9th", ">0");
