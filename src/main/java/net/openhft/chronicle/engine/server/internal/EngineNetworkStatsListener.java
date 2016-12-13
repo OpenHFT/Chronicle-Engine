@@ -30,6 +30,7 @@ import net.openhft.chronicle.engine.fs.Clusters;
 import net.openhft.chronicle.engine.fs.EngineCluster;
 import net.openhft.chronicle.engine.tree.ChronicleQueueView;
 import net.openhft.chronicle.engine.tree.QueueView;
+import net.openhft.chronicle.map.Function;
 import net.openhft.chronicle.network.MarshallableFunction;
 import net.openhft.chronicle.network.NetworkStats;
 import net.openhft.chronicle.network.NetworkStatsListener;
@@ -37,9 +38,13 @@ import net.openhft.chronicle.network.WireNetworkStats;
 import net.openhft.chronicle.network.api.session.SessionDetailsProvider;
 import net.openhft.chronicle.network.cluster.AbstractSubHandler;
 import net.openhft.chronicle.network.cluster.ClusterContext;
+import net.openhft.chronicle.wire.AbstractMarshallable;
 import net.openhft.chronicle.wire.Demarshallable;
 import net.openhft.chronicle.wire.WireIn;
 import org.jetbrains.annotations.NotNull;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import static net.openhft.chronicle.engine.api.column.VaadinChartSeries.Type.SPLINE;
 import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
@@ -173,12 +178,24 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
         return histogram;
     }
 
+    private static ThreadLocal<SimpleDateFormat> HH_MM_SS = ThreadLocal.withInitial(() -> new
+            SimpleDateFormat
+            ("HH:mm.ss"));
+
+
+    @SuppressWarnings("WeakerAccess")
+    public static class HourMinSecRenderer extends AbstractMarshallable implements Function<Object, String> {
+        @Override
+        public String apply(Object timeMs) {
+            return HH_MM_SS.get().format(new Date((Long) timeMs));
+        }
+    }
+
     private void createVaadinChart() {
 
         final String csp = PROC_CONNECTIONS_CLUSTER_THROUGHPUT + "replication-latency/" +
                 localIdentifier
-                + "-" + wireNetworkStats.remoteIdentifier();
-
+                + "<->" + wireNetworkStats.remoteIdentifier();
 
         final VanillaVaadinChart barChart = asset.acquireView(requestContext(csp).view("Chart"));
         barChart.columnNameField("timestamp");
@@ -191,18 +208,16 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
         VaadinChartSeries percentile99_9th = new VaadinChartSeries("percentile99_9th").type(SPLINE)
                 .yAxisLabel("microseconds");
 
-
         barChart.series(percentile50th, percentile90th, percentile99th, percentile99_9th);
 
         final BarChartProperties barChartProperties = new BarChartProperties();
         barChartProperties.title = "Round Trip Network Latency Distribution";
         barChartProperties.menuLabel = "round trip latency";
         barChartProperties.countFromEnd = 100;
+        barChartProperties.xAxisLableRender = new HourMinSecRenderer();
         barChart.barChartProperties(barChartProperties);
         barChart.dataSource(qv);
         barChartProperties.filter = new ColumnViewInternal.MarshableFilter("percentile99_9th", ">0");
-
-
     }
 
     @Override

@@ -192,6 +192,9 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
 
             final ExcerptTailer excerptTailer = chronicleQueue.createTailer().direction(BACKWARD).toEnd();
             fromSequenceNumber = excerptTailer.index();
+            if (fromSequenceNumber ==0)
+                return 0;
+
             for (int i = 0; i < countFromEnd; i++) {
 
                 try (DocumentContext documentContext = excerptTailer.readingDocument()) {
