@@ -74,8 +74,10 @@ class ColumnViewHandler extends AbstractHandler {
 
                     if (changedRow.contentEquals(eventName)) {
                         valueIn.marshallable(wire -> {
-                            wire.read(rowCount.params()[0]).object(newRow, Map.class);
-                            wire.read(rowCount.params()[1]).object(oldRow, Map.class);
+                            newRow.clear();
+                            oldRow.clear();
+                            wire.read(changedRow.params()[0]).object(newRow, Map.class);
+                            wire.read(changedRow.params()[1]).object(oldRow, Map.class);
                             final int result = columnView.changedRow(newRow, oldRow);
                             outWire.writeEventName(reply).int32(result);
                         });
