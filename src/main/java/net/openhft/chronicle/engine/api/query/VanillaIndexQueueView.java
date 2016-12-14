@@ -124,8 +124,6 @@ public class VanillaIndexQueueView<V extends Marshallable>
                 long start = dc.wire().bytes().readPosition();
 
                 try {
-
-
                     for (; ; ) {
                         dc.wire().consumePadding();
 
@@ -134,6 +132,11 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
                         final StringBuilder sb = acquireStringBuilder();
                         final ValueIn read = dc.wire().read(sb);
+
+                        if ("history".contentEquals(sb)) {
+                            read.marshallable(MessageHistory.get());
+                            return true;
+                        }
 
                         if (sb.length() == 0)
                             continue;
