@@ -12,6 +12,7 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.AbstractMarshallable;
+import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Files;
@@ -37,7 +38,7 @@ class StartEngineWithDummyData {
     private static String CLUSTER_NAME = EngineInstance.firstClusterName(TREE2);
 
     static {
-
+        YamlLogging.setAll(true);
         try {
             //Delete any files from the last run
             Files.deleteIfExists(Paths.get(OS.TARGET, NAME));
