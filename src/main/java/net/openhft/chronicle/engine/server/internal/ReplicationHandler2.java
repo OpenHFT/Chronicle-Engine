@@ -138,7 +138,7 @@ public class ReplicationHandler2<E> extends AbstractHandler {
             outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
 
             if (identifier.contentEquals(eventName))
-                writeData(inWire.bytes(), out -> outWire.write(identifierReply).int8(hostId.hostId()));
+                writeData(inWire, out -> outWire.write(identifierReply).int8(hostId.hostId()));
 
             if (bootstrap.contentEquals(eventName)) {
                 writeData(true, inWire.bytes(), out -> {

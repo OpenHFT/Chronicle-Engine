@@ -68,7 +68,7 @@ public class ColumnViewIteratorHandler extends AbstractHandler {
 
                 outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
 
-                writeData(inWire.bytes(), out -> {
+                writeData(inWire, out -> {
 
                     if (next.contentEquals(eventName)) {
 

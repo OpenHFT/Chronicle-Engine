@@ -77,7 +77,7 @@ public class TopologyHandler<E> extends AbstractHandler {
 
             outWire.writeDocument(true, wire -> outWire.writeEventName(tid).int64(inputTid));
 
-            writeData(inWire.bytes(), out -> {
+            writeData(inWire , out -> {
 
                 if (publish.contentEquals(eventName)) {
 

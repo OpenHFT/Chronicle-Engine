@@ -401,10 +401,10 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
 
                 if (wireAdapter != null) {
 
-                    if(viewType==null)
+                    if (viewType == null)
                         return;
 
-                    if ( MapView.class.isAssignableFrom(viewType)) {
+                    if (MapView.class.isAssignableFrom(viewType)) {
                         mapWireHandler.process(in, out, (MapView) view, tid, wireAdapter,
                                 requestContext);
                         return;
@@ -435,7 +435,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                         return;
                     }
 
-                    if ( ValuesCollection.class.isAssignableFrom(viewType)) {
+                    if (ValuesCollection.class.isAssignableFrom(viewType)) {
                         valuesHandler.process(in, out, (ValuesCollection) view,
                                 wireAdapter.keyToWire(),
                                 wireAdapter.wireToKey(), ArrayList::new, tid);
@@ -463,20 +463,20 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                         return;
                     }
 
-                    if (TopicPublisher.class.isAssignableFrom(viewType) ||  QueueView.class.isAssignableFrom(viewType)) {
+                    if (TopicPublisher.class.isAssignableFrom(viewType) || QueueView.class.isAssignableFrom(viewType)) {
                         topicPublisherHandler.process(in, publisher(), tid, outWire,
                                 (TopicPublisher) view, wireAdapter);
                         return;
                     }
 
-                    if (  Publisher.class.isAssignableFrom(viewType)) {
+                    if (Publisher.class.isAssignableFrom(viewType)) {
                         publisherHandler.process(in, requestContext,
                                 publisher(), tid,
                                 (Publisher) view, outWire, wireAdapter);
                         return;
                     }
 
-                    if (  Replication.class.isAssignableFrom(viewType)) {
+                    if (Replication.class.isAssignableFrom(viewType)) {
                         replicationHandler.process(in,
                                 publisher(), tid, outWire,
                                 hostIdentifier,
@@ -485,20 +485,22 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                         return;
                     }
 
-                    if ( IndexQueueView.class.isAssignableFrom(viewType)) {
+                    if (IndexQueueView.class.isAssignableFrom(viewType)) {
                         indexQueueViewHandler.process(in, requestContext, contextAsset,
                                 publisher(), tid,
                                 outWire);
                         return;
                     }
 
-                    if (  VaadinChart.class.isAssignableFrom(viewType)) {
+                    if (VaadinChart.class.isAssignableFrom(viewType)) {
                         barChatHandler.process(in, out, (VaadinChart) view, tid);
                     }
                 }
 
             } catch (Exception e) {
-                Jvm.warn().on(getClass(), e);
+
+                Jvm.warn().on(getClass(), in.readingPeekYaml() + "/n" + in.bytes().toDebugString(),
+                        e);
 
             } finally {
                 if (sessionProvider != null)

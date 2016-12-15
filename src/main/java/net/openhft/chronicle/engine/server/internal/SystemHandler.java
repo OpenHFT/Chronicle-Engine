@@ -77,7 +77,7 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
         //noinspection ConstantConditions
         outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
 
-        writeData(inWire.bytes(), out -> {
+        writeData(inWire, out -> {
 
             if (heartbeat.contentEquals(eventName))
                 outWire.write(EventId.heartbeatReply).int64(valueIn.int64());

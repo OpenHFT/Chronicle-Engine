@@ -120,7 +120,7 @@ public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subsc
 
         outWire.writeDocument(true, wire -> outWire.writeEventName(tid).int64(inputTid));
 
-        writeData(inWire.bytes(), out -> {
+        writeData(inWire, out -> {
 
             if (after(eventName)) return;
 

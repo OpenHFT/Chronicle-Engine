@@ -54,19 +54,24 @@ abstract class AbstractHandler {
     /**
      * write and exceptions and rolls back if no data was written
      */
-    void writeData(@NotNull Bytes inBytes, @NotNull WriteMarshallable c) {
+    void writeData(@NotNull WireIn wireIn, @NotNull WriteMarshallable c) {
+
+        Bytes inBytes = wireIn.bytes();
         outWire.writeDocument(false, out -> {
             final long readPosition = inBytes.readPosition();
             final long position = outWire.bytes().writePosition();
             try {
                 c.writeMarshallable(outWire);
-
             } catch (Throwable t) {
+                final String readingYaml = wireIn.readingPeekYaml();
                 inBytes.readPosition(readPosition);
                 if (LOG.isInfoEnabled())
-                    LOG.info("While reading " + inBytes.toDebugString(),
-                            " processing wire " + c, t);
+                    LOG.info("While readingBytes=" + inBytes.toDebugString() + "\nreadingYaml=" +
+                                    readingYaml,
+                            "\nprocessing wire " + c, t);
                 outWire.bytes().writePosition(position);
+
+                outWire.writeEventName(() -> "readingYaml").text(readingYaml);
                 outWire.writeEventName(() -> "exception").throwable(t);
             }
 
