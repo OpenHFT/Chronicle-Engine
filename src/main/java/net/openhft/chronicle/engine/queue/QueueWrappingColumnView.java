@@ -87,21 +87,25 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
         final NavigableMap<Long, ChronicleQueueRow> map = indexCache.computeIfAbsent(filters, k -> new ConcurrentSkipListMap<>());
         final Map.Entry<Long, ChronicleQueueRow> longChronicleQueueRowEntry = map.floorEntry(fromSequenceNumber);
 
-        if (longChronicleQueueRowEntry != null)
-            count = longChronicleQueueRowEntry.getValue().seqNumber();
+        final long index0;
 
-        final long index0 = ((longChronicleQueueRowEntry != null)) ? longChronicleQueueRowEntry
-                .getValue().index() : 0;
+        if (longChronicleQueueRowEntry != null) {
+            ChronicleQueueRow value = longChronicleQueueRowEntry.getValue();
+            count = value.seqNumber();
+            index0 = longChronicleQueueRowEntry.getValue().index();
+        } else
+            index0 = 0;
 
         @NotNull final ClosableIterator<ChronicleQueueRow> result = toIterator(filters, index0);
 
         ChronicleQueueRow r = null;
         while (count < fromSequenceNumber && result.hasNext()) {
             r = result.next();
+            count++;
             r.seqNumber(count);
             if (r.seqNumber() % 1024 == 0)
                 map.put(count, r);
-            count++;
+
         }
 
         if (longChronicleQueueRowEntry == null && r != null)
@@ -192,7 +196,7 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
 
             final ExcerptTailer excerptTailer = chronicleQueue.createTailer().direction(BACKWARD).toEnd();
             fromSequenceNumber = excerptTailer.index();
-            if (fromSequenceNumber ==0)
+            if (fromSequenceNumber == 0)
                 return 0;
 
             for (int i = 0; i < countFromEnd; i++) {
@@ -376,6 +380,7 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
             } else {
                 final ChronicleQueueRow value = last.getValue();
                 count = value.seqNumber();
+                filters.fromIndex = last.getValue().index();
                 iterator = iterator(filters);
             }
         } else
@@ -383,12 +388,18 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
 
         boolean hasMoreData = false;
         ChronicleQueueRow row = null;
+
         while (iterator.hasNext()) {
-         iterator.next();
+            row = iterator.next();
             count++;
+            row.seqNumber(count);
+            hasMoreData = true;
+            if (row.seqNumber() % 1024 == 0)
+                map.put(count, row);
         }
 
-
+        if (hasMoreData)
+            map.put(count, row);
 
         return (int) count;
     }
