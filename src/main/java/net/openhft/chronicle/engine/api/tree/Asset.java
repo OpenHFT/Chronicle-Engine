@@ -110,7 +110,7 @@ public interface Asset extends Closeable {
      * Get or create an asset under this one.
      *
      * @param childName name of the child asset.
-     * @return
+     * @return Asset acquired
      * @throws AssetNotFoundException
      */
     @NotNull
