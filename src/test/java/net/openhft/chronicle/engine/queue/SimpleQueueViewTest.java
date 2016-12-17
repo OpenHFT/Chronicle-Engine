@@ -33,7 +33,6 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
-import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 import org.junit.rules.TestName;
@@ -255,7 +254,7 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     @Test
     @Ignore("TODO FIX Too many results")
     public void testStringPublishWithTopicSubscribe() throws InterruptedException {
-        YamlLogging.showClientReads(true);
+//        YamlLogging.showClientReads(true);
         Publisher<String> publisher = null;
         String uri = "/queue/" + methodName + DELETE_CHRONICLE_FILE;
         String messageType = "topic";

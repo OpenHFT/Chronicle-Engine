@@ -33,7 +33,6 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
-import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 
@@ -158,7 +157,7 @@ public class ReferenceChronicleTest {
         SubscriptionCollection subscription = child.subscription(false);
         assertEquals(1, subscription.subscriberCount());
 
-        YamlLogging.showServerWrites(true);
+//        YamlLogging.showServerWrites(true);
 
         AtomicInteger count = new AtomicInteger();
         map.put(key, "" + count.incrementAndGet());

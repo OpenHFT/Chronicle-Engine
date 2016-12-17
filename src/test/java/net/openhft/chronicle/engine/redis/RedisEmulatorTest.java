@@ -27,7 +27,6 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
-import net.openhft.chronicle.wire.YamlLogging;
 import org.junit.*;
 
 import java.io.IOException;
@@ -55,7 +54,7 @@ public class RedisEmulatorTest {
     @BeforeClass
     public static void setup() throws IOException{
         threadDump = new ThreadDump();
-        YamlLogging.showServerReads(true);
+//        YamlLogging.showServerReads(true);
         //For this test we can use a VanillaMapKeyValueStore
         //To test with a ChronicleMapKeyValueStore uncomment lines below
         serverAssetTree = new VanillaAssetTree().forTesting();

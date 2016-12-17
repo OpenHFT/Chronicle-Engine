@@ -127,8 +127,8 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
         final BlockingQueue<MapEvent> eventsQueue = new LinkedBlockingQueue<>();
 
-        YamlLogging.showServerWrites(true);
-        YamlLogging.showServerReads(true);
+//        YamlLogging.showServerWrites(true);
+//        YamlLogging.showServerReads(true);
 
         yamlLoggger(() -> {
             try {
