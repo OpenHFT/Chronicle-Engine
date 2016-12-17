@@ -140,6 +140,14 @@
 
     </dependencies>
 
+    <repositories>
+        <repository>
+            <id>codehausSnapshots</id>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
     <build>
         <plugins>
 
