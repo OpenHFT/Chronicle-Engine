@@ -51,6 +51,23 @@
                 <scope>import</scope>
             </dependency>
 
+            <dependency>
+                <groupId>net.openhft</groupId>
+                <artifactId>chronicle-map</artifactId>
+                <version>2.4.15</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.codehaus.jettison</groupId>
+                        <artifactId>jettison</artifactId>
+                    </exclusion>
+
+                    <exclusion>
+                        <groupId>org.ops4j.pax.url</groupId>
+                        <artifactId>pax-url-aether</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
