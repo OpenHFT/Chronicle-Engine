@@ -81,70 +81,142 @@ public interface ColumnViewInternal {
 
     ObjectSubscription objectSubscription();
 
+    default boolean toRange(Number n, @NotNull String value) {
+
+        if (value.contains(",")) {
+            String[] v = value.split("\\,");
+            if (v.length != 2)
+                return DOp.toRange(n, value, true);
+
+            boolean result = true;
+            for (String v0 : v) {
+                String v1 = v0.trim();
+                boolean isAtStart = !(v1.endsWith("]") || v1.startsWith(")"));
+                result = result && DOp.toRange(n, v1, isAtStart);
+                if (!result)
+                    return result;
+            }
+            return true;
+
+
+        } else
+            return DOp.toRange(n, value, true);
+    }
+
+
 
     enum DOp {
-        GE(">=") {
+        GE(true, ">=", "[") {
             @Override
             boolean compare(double a, double b) {
                 return a >= b;
             }
         },
-        LE("<=") {
+        LE(true, "<=") {
             @Override
             boolean compare(double a, double b) {
                 return a <= b;
             }
         },
-        NE("<>", "!=", "!") {
+        NE(true, "<>", "!=", "!") {
             @Override
             boolean compare(double a, double b) {
                 return a != b;
             }
         },
-        GT(">") {
+        GT(true, ">", "(") {
             @Override
             boolean compare(double a, double b) {
                 return a > b;
             }
         },
-        LT("<") {
+        LT(true, "<") {
             @Override
             boolean compare(double a, double b) {
                 return a < b;
             }
         },
-        EQ("==", "=", "") {
+        EQ(true, "==", "=", "") {
             @Override
             boolean compare(double a, double b) {
                 return a == b;
+            }
+        },
+
+        LT_INCLUSIVE(false, "]") {
+            @Override
+            boolean compare(double a, double b) {
+                return a <= b;
+            }
+        },
+
+        LT_EXCLUSIVE(false, ")") {
+            @Override
+            boolean compare(double a, double b) {
+                return a < b;
             }
         };
 
         static final DOp[] OPS = values();
         final String[] op;
+        private final boolean operationAtStart;
 
-        DOp(String... op) {
+        DOp(boolean operationAtStart, String... op) {
             this.op = op;
+            this.operationAtStart = operationAtStart;
+        }
+
+
+        private Number number(String op, String value, Class<? extends Number> clazz) {
+            @NotNull final String number;
+
+
+            number = (operationAtStart)
+                    ? value.substring(op.length()).trim()
+                    : value.substring(0, value.length() - op.length()).trim();
+            return convertTo(clazz, number);
         }
 
         abstract boolean compare(double a, double b);
 
-        public static boolean toRange(@NotNull Number o, @NotNull String trimmed) {
-            for (DOp dop : DOp.OPS) {
-                for (String op : dop.op) {
-                    if (trimmed.startsWith(op)) {
-                        @NotNull final String number = trimmed.substring(op.length()).trim();
+        /**
+         * @param o
+         * @param value
+         * @param operationAtStart if true the first character is expected to be the operation, otherwise the last character is ex
+         * @return
+         */
+        public static boolean toRange(@NotNull Number o, @NotNull String value, boolean operationAtStart) {
 
-                        try {
-                            final Number filterNumber = convertTo(o.getClass(), number);
-                            return dop.compare(o.doubleValue(), filterNumber.doubleValue());
-                        } catch (ClassCastException e) {
-                            return false;
-                        }
+            for (DOp dop : DOp.OPS) {
+                if (dop.operationAtStart != operationAtStart)
+                    continue;
+
+                for (String op : dop.op) {
+
+                    if (!dop.isValid(value, op))
+                        continue;
+
+                    final Number number = dop.number(op, value.trim(), o.getClass());
+
+                    try {
+                        final Number filterNumber = convertTo(o.getClass(), number);
+                        return dop.compare(o.doubleValue(), filterNumber.doubleValue());
+                    } catch (ClassCastException e) {
+                        return false;
                     }
+
                 }
             }
             return false;
         }
+
+        private boolean isValid(String value, String op) {
+            return operationAtStart ? value.startsWith(op) : value.endsWith(op);
+        }
+
+
     }
 }
+
+
+

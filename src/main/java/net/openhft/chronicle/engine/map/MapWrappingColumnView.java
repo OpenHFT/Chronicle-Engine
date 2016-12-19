@@ -19,7 +19,6 @@ import java.util.*;
 import java.util.function.Predicate;
 
 import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
-import static net.openhft.chronicle.engine.api.column.ColumnViewInternal.DOp.toRange;
 
 /**
  * @author Rob Austin.
@@ -43,6 +42,7 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
         valueMarshallable = Marshallable.class.isAssignableFrom(mapView.valueType());
         valueMap = Map.class.isAssignableFrom(mapView.valueType());
     }
+
 
     @Override
     public void registerChangeListener(@NotNull Runnable r) {
