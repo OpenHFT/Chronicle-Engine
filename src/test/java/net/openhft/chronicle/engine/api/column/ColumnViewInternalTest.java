@@ -28,6 +28,21 @@ public class ColumnViewInternalTest {
     }
 
     @Test
+    public void test2() {
+
+        MapWrappingColumnView cv = ObjectUtils.newInstance(MapWrappingColumnView.class);
+
+        ArrayList results = new ArrayList();
+        int[] numbers = {1, 2, 3, 4};
+        for (Number n : numbers) {
+            if (cv.toRange(n, "(2,4)"))
+                results.add(n);
+        }
+
+        Assert.assertEquals("[3]", results.toString());
+    }
+
+    @Test
     public void testRange() {
         Assert.assertTrue(ColumnViewInternal.DOp.toRange(3, "4]", false));
         Assert.assertTrue(ColumnViewInternal.DOp.toRange(3, "3]", false));

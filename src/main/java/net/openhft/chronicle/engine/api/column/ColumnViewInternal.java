@@ -91,7 +91,7 @@ public interface ColumnViewInternal {
             boolean result = true;
             for (String v0 : v) {
                 String v1 = v0.trim();
-                boolean isAtStart = !(v1.endsWith("]") || v1.startsWith(")"));
+                boolean isAtStart = !(v1.endsWith("]") || v1.endsWith(")"));
                 result = result && DOp.toRange(n, v1, isAtStart);
                 if (!result)
                     return result;
