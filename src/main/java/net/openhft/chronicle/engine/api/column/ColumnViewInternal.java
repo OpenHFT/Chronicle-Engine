@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
 
@@ -81,28 +82,28 @@ public interface ColumnViewInternal {
 
     ObjectSubscription objectSubscription();
 
-    default boolean toRange(Number n, @NotNull String value) {
 
+    default Predicate<Number> toPedicate(@NotNull String value) {
         if (value.contains(",")) {
             String[] v = value.split("\\,");
             if (v.length != 2)
-                return DOp.toRange(n, value, true);
+                return DOp.toPredicate(value, true);
 
-            boolean result = true;
-            for (String v0 : v) {
-                String v1 = v0.trim();
-                boolean isAtStart = !(v1.endsWith("]") || v1.endsWith(")"));
-                result = result && DOp.toRange(n, v1, isAtStart);
-                if (!result)
-                    return result;
-            }
-            return true;
+            String v1 = v[0].trim();
+            String v2 = v[1].trim();
+
+            boolean isAtEnd = v2.endsWith("]") || v2.endsWith(")");
+
+            if (!isAtEnd)
+                return n -> false;
+
+            return DOp.toPredicate(v1, true).and(DOp.toPredicate(v2, false))::test;
 
 
         } else
-            return DOp.toRange(n, value, true);
-    }
+            return DOp.toPredicate(value, true);
 
+    }
 
 
     enum DOp {
@@ -167,55 +168,85 @@ public interface ColumnViewInternal {
         }
 
 
-        private Number number(String op, String value, Class<? extends Number> clazz) {
+        private Number number(String op, String value, Class<? extends Number> clazz) throws Exception {
             @NotNull final String number;
 
 
             number = (operationAtStart)
                     ? value.substring(op.length()).trim()
                     : value.substring(0, value.length() - op.length()).trim();
-            return convertTo(clazz, number);
+            if (!number.isEmpty())
+                return convertTo(clazz, number);
+
+            throw new RuntimeException("can not parse number from '" + value + "'");
+
         }
 
         abstract boolean compare(double a, double b);
 
+
         /**
-         * @param o
          * @param value
-         * @param operationAtStart if true the first character is expected to be the operation, otherwise the last character is ex
-         * @return
+         * @param operationAtStart if true the first character is expected to be the operation,
+         *                         otherwise the last character is ex
+         * @return a  Predicate<Number>
          */
-        public static boolean toRange(@NotNull Number o, @NotNull String value, boolean operationAtStart) {
+        public static Predicate<Number> toPredicate(@NotNull String value, boolean operationAtStart) {
+
 
             for (DOp dop : DOp.OPS) {
                 if (dop.operationAtStart != operationAtStart)
                     continue;
 
+                boolean b = operationAtStart ? value.startsWith(value) : value.endsWith(value);
+                if (!b)
+                    return n -> false;
+
                 for (String op : dop.op) {
 
-                    if (!dop.isValid(value, op))
-                        continue;
+                    if (dop.operationAtStart) {
+                        if (!value.startsWith(op))
+                            continue;
+                    } else {
+                        if (!value.endsWith(op))
+                            continue;
+                    }
 
-                    final Number number = dop.number(op, value.trim(), o.getClass());
+                    final Number number;
+                    try {
+                        number = dop.number(op, value.trim(), Double.class);
+                    } catch (Exception e) {
+                        return n -> false;
+                    }
 
                     try {
-                        final Number filterNumber = convertTo(o.getClass(), number);
-                        return dop.compare(o.doubleValue(), filterNumber.doubleValue());
+                        final Number filterNumber = convertTo(double.class, number);
+                        return o -> dop.compare(o.doubleValue(), filterNumber.doubleValue());
                     } catch (ClassCastException e) {
-                        return false;
+                        return n -> false;
                     }
 
                 }
             }
-            return false;
+            return n -> false;
         }
-
-        private boolean isValid(String value, String op) {
-            return operationAtStart ? value.startsWith(op) : value.endsWith(op);
-        }
-
 
     }
+
+    default Predicate<Number> predicate(@NotNull List<MarshableFilter> filters) {
+        Predicate<Number> predicate = null;
+
+        {
+            for (MarshableFilter f : filters) {
+                if (predicate == null)
+                    predicate = toPedicate(f.filter.trim());
+                else
+                    predicate.and(toPedicate(f.filter.trim()));
+            }
+        }
+        return predicate;
+    }
+
 }
 
 

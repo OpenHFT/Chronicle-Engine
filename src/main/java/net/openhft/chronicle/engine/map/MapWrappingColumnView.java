@@ -309,6 +309,9 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
 
     @Nullable
     private Predicate<Map.Entry<K, V>> filter(@NotNull List<MarshableFilter> filters) {
+
+        final Predicate<Number> predicate = predicate(filters);
+
         return entry -> {
 
             if (filters.isEmpty())
@@ -335,7 +338,7 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
                             if (o == null)
                                 return false;
                             if (o instanceof Number) {
-                                if (toRange((Number) o, f.filter.trim()))
+                                if (predicate.test((Number) o))
                                     continue;
                                 return false;
                             }
@@ -353,7 +356,7 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
                         if (!item.toString().toLowerCase().contains(f.filter.toLowerCase()))
                             return false;
                     } else if (item instanceof Number) {
-                        if (!toRange((Number) item, f.filter.trim()))
+                        if (!predicate.test((Number) item))
                             return false;
                     } else {
                         if (!item.equals(convertTo(item.getClass(), f.filter.trim())))
