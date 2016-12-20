@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
+import static java.lang.Double.parseDouble;
 import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
 
 /**
@@ -94,6 +95,8 @@ public interface ColumnViewInternal {
             for (String x : v) {
                 String xTrimed = x.trim();
 
+                xTrimed = DOp.checkShouldPrependEQ(xTrimed);
+
                 Boolean atStart = DOp.isAtStart(xTrimed);
                 if (atStart == null)
                     continue;
@@ -105,9 +108,10 @@ public interface ColumnViewInternal {
             }
             return predicate;
 
-        } else
-            return DOp.toPredicate(value, true);
-
+        } else {
+            value = DOp.checkShouldPrependEQ(value);
+            return DOp.toPredicate(value, DOp.isAtStart(value));
+        }
     }
 
 
@@ -209,6 +213,15 @@ public interface ColumnViewInternal {
             return null;
         }
 
+        private static String checkShouldPrependEQ(String x) {
+            try {
+                parseDouble(x);
+                return "=" + x;
+            } catch (NumberFormatException e) {
+                return x;
+            }
+
+        }
 
         /**
          * @param value
@@ -216,18 +229,15 @@ public interface ColumnViewInternal {
          *                         otherwise the last character is ex
          * @return a  Predicate<Number>
          */
-        public static Predicate<Number> toPredicate(@NotNull String value, boolean operationAtStart) {
+        private static Predicate<Number> toPredicate(@NotNull String value, boolean operationAtStart) {
 
 
             for (DOp dop : DOp.OPS) {
                 if (dop.operationAtStart != operationAtStart)
                     continue;
 
-                boolean b = operationAtStart ? value.startsWith(value) : value.endsWith(value);
-                if (!b)
-                    return n -> false;
-
                 for (String op : dop.op) {
+
 
                     if (dop.operationAtStart) {
                         if (!value.startsWith(op))

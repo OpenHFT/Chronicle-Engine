@@ -37,7 +37,7 @@ public class ColumnViewInternalTest {
         MapWrappingColumnView cv = ObjectUtils.newInstance(MapWrappingColumnView.class);
 
         ArrayList results = new ArrayList();
-        int[] numbers = {1, 2, 3, 4,5};
+        int[] numbers = {1, 2, 3, 4, 5};
         Predicate<Number> predicate = cv.toPredicate("(2,4)");
         for (Number n : numbers) {
 
@@ -49,10 +49,15 @@ public class ColumnViewInternalTest {
     }
 
     @Test
-    public void testRange() {
-        Assert.assertTrue(ColumnViewInternal.DOp.toPredicate("4]", false).test(3));
-        Assert.assertTrue(ColumnViewInternal.DOp.toPredicate("3]", false).test(3));
-        Assert.assertFalse(ColumnViewInternal.DOp.toPredicate("3)", false).test(3));
-        Assert.assertTrue(ColumnViewInternal.DOp.toPredicate("4)", false).test(3));
+    public void testToPredicate() {
+        MapWrappingColumnView cv = ObjectUtils.newInstance(MapWrappingColumnView.class);
+        Assert.assertTrue(cv.toPredicate("4]").test(3));
+        Assert.assertTrue(cv.toPredicate("3]").test(3));
+        Assert.assertFalse(cv.toPredicate("3)").test(3));
+        Assert.assertTrue(cv.toPredicate("4)").test(3));
+        Assert.assertTrue(cv.toPredicate("4").test(4));
+        Assert.assertFalse(cv.toPredicate("4").test(3));
     }
+
+
 }
