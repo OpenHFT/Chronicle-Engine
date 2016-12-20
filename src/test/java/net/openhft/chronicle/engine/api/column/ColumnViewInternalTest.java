@@ -21,7 +21,7 @@ public class ColumnViewInternalTest {
         ArrayList results = new ArrayList();
         int[] numbers = {1, 2, 3, 4};
 
-        Predicate<Number> predicate = cv.toPedicate("(2,4]");
+        Predicate<Number> predicate = cv.toPredicate("(2,4]");
         for (Number n : numbers) {
 
             if (predicate.test(n))
@@ -37,8 +37,8 @@ public class ColumnViewInternalTest {
         MapWrappingColumnView cv = ObjectUtils.newInstance(MapWrappingColumnView.class);
 
         ArrayList results = new ArrayList();
-        int[] numbers = {1, 2, 3, 4};
-        Predicate<Number> predicate = cv.toPedicate("(2,4)");
+        int[] numbers = {1, 2, 3, 4,5};
+        Predicate<Number> predicate = cv.toPredicate("(2,4)");
         for (Number n : numbers) {
 
             if (predicate.test(n))

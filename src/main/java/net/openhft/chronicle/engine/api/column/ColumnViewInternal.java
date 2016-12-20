@@ -83,22 +83,27 @@ public interface ColumnViewInternal {
     ObjectSubscription objectSubscription();
 
 
-    default Predicate<Number> toPedicate(@NotNull String value) {
+    default Predicate<Number> toPredicate(@NotNull String value) {
         if (value.contains(",")) {
             String[] v = value.split("\\,");
-            if (v.length != 2)
-                return DOp.toPredicate(value, true);
+            // if (v.length != 2)
+            //    return DOp.toPredicate(value, true);
 
-            String v1 = v[0].trim();
-            String v2 = v[1].trim();
 
-            boolean isAtEnd = v2.endsWith("]") || v2.endsWith(")");
+            Predicate<Number> predicate = null;
+            for (String x : v) {
+                String xTrimed = x.trim();
 
-            if (!isAtEnd)
-                return n -> false;
+                Boolean atStart = DOp.isAtStart(xTrimed);
+                if (atStart == null)
+                    continue;
 
-            return DOp.toPredicate(v1, true).and(DOp.toPredicate(v2, false))::test;
+                predicate = (predicate == null)
+                        ? DOp.toPredicate(xTrimed, atStart)
+                        : predicate.and(DOp.toPredicate(xTrimed, atStart));
 
+            }
+            return predicate;
 
         } else
             return DOp.toPredicate(value, true);
@@ -137,7 +142,7 @@ public interface ColumnViewInternal {
                 return a < b;
             }
         },
-        EQ(true, "==", "=", "") {
+        EQ(true, "==", "=") {
             @Override
             boolean compare(double a, double b) {
                 return a == b;
@@ -184,6 +189,26 @@ public interface ColumnViewInternal {
 
         abstract boolean compare(double a, double b);
 
+        private static Boolean isAtStart(String value) {
+            for (DOp dop : DOp.OPS) {
+
+                for (String op : dop.op) {
+                    if (dop.operationAtStart) {
+                        if (value.startsWith(op))
+                            return true;
+                    } else {
+                        if (value.endsWith(op))
+                            return false;
+                    }
+
+                }
+
+
+            }
+
+            return null;
+        }
+
 
         /**
          * @param value
@@ -220,8 +245,8 @@ public interface ColumnViewInternal {
                     }
 
                     try {
-                        final Number filterNumber = convertTo(double.class, number);
-                        return o -> dop.compare(o.doubleValue(), filterNumber.doubleValue());
+                        // final Number filterNumber = convertTo(double.class, number);
+                        return o -> dop.compare(o.doubleValue(), number.doubleValue());
                     } catch (ClassCastException e) {
                         return n -> false;
                     }
@@ -235,13 +260,11 @@ public interface ColumnViewInternal {
 
     default Predicate<Number> predicate(@NotNull List<MarshableFilter> filters) {
         Predicate<Number> predicate = null;
-
         {
             for (MarshableFilter f : filters) {
-                if (predicate == null)
-                    predicate = toPedicate(f.filter.trim());
-                else
-                    predicate.and(toPedicate(f.filter.trim()));
+                predicate = (predicate == null) ?
+                        toPredicate(f.filter.trim()) :
+                        predicate.and(toPredicate(f.filter.trim()));
             }
         }
         return predicate;
