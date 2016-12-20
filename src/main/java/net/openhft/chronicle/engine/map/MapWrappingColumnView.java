@@ -151,13 +151,12 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
                 } else {
                     @NotNull final Marshallable value = (Marshallable) item;
                     for (@NotNull final FieldInfo info : fieldInfos) {
-//                        System.out.println(info);
+
                         if (!columnNames().contains(info.name()))
                             continue;
 
                         try {
                             final Object newValue = info.get(value);
-//                            System.out.println("\t"+newValue);
                             row.set(info.name(), newValue);
 
                         } catch (Exception e1) {

@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
-import static java.lang.Double.parseDouble;
 import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
 
 /**
@@ -110,7 +109,8 @@ public interface ColumnViewInternal {
 
         } else {
             value = DOp.checkShouldPrependEQ(value);
-            return DOp.toPredicate(value, DOp.isAtStart(value));
+            Boolean atStart = DOp.isAtStart(value);
+            return DOp.toPredicate(value, atStart);
         }
     }
 
@@ -214,13 +214,7 @@ public interface ColumnViewInternal {
         }
 
         private static String checkShouldPrependEQ(String x) {
-            try {
-                parseDouble(x);
-                return "=" + x;
-            } catch (NumberFormatException e) {
-                return x;
-            }
-
+            return (isAtStart(x) == null) ? "=" + x : x;
         }
 
         /**
