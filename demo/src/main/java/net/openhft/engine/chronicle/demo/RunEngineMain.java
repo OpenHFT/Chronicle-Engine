@@ -17,6 +17,7 @@
 package net.openhft.engine.chronicle.demo;
 
 import net.openhft.chronicle.core.pool.ClassAliasPool;
+import net.openhft.chronicle.engine.EngineMain;
 import net.openhft.chronicle.engine.cfg.EngineClusterContext;
 import net.openhft.engine.chronicle.demo.data.EndOfDay;
 import net.openhft.engine.chronicle.demo.data.EndOfDayShort;
@@ -29,8 +30,6 @@ import java.io.IOException;
  */
 public class RunEngineMain {
     public static void main(String[] args) throws IOException {
-
-
         addClass(EndOfDay.class);
         addClass(EndOfDayShort.class);
         addClass(EngineClusterContext.class);
@@ -42,6 +41,4 @@ public class RunEngineMain {
     public static void addClass(Class aClass) {
         ClassAliasPool.CLASS_ALIASES.addAlias(aClass);
     }
-
-
 }
