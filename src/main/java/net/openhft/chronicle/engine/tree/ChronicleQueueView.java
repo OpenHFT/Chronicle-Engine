@@ -57,10 +57,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.nio.file.Files;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BiConsumer;
 
 import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
@@ -140,30 +137,14 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         });
     }
 
-    public MapView<T, M> mapView() {
-        final MapView<T, M> mapView = this.mapView;
-
-        if (mapView != null) {
-            return mapView;
-        }
-
-        synchronized (this) {
-            MapView<T, M> mapView0 = this.mapView;
-            if (mapView0 != null)
-                return mapView0;
-
-            this.mapView = new QueueViewAsMapView<T, M>(this, context, asset);
-            return this.mapView;
-        }
-
-    }
-
     @SuppressWarnings("WeakerAccess")
     public static WriteMarshallable newSource(long nextIndexRequired,
                                               @NotNull Class topicType,
                                               @NotNull Class elementType,
                                               boolean acknowledgement,
                                               @Nullable MessageAdaptor messageAdaptor) {
+        Objects.requireNonNull(topicType);
+        Objects.requireNonNull(elementType);
         try {
             Class<?> aClass = Class.forName("software.chronicle.enterprise.queue.QueueSourceReplicationHandler");
             Constructor<?> declaredConstructor = aClass.getDeclaredConstructor(long.class, Class.class,
@@ -212,7 +193,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         }
     }
 
-
     public static boolean isQueueReplicationAvailable() {
         try {
             Class.forName("software.chronicle.enterprise.queue.QueueSyncReplicationHandler");
@@ -245,6 +225,24 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         } catch (IOException e) {
             throw Jvm.rethrow(e);
         }
+    }
+
+    public MapView<T, M> mapView() {
+        final MapView<T, M> mapView = this.mapView;
+
+        if (mapView != null) {
+            return mapView;
+        }
+
+        synchronized (this) {
+            MapView<T, M> mapView0 = this.mapView;
+            if (mapView0 != null)
+                return mapView0;
+
+            this.mapView = new QueueViewAsMapView<T, M>(this, context, asset);
+            return this.mapView;
+        }
+
     }
 
     public RollingChronicleQueue chronicleQueue() {
@@ -485,6 +483,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
             if (!dc.isPresent())
                 return null;
             final Wire wire = dc.wire();
+            long pos = wire.bytes().readPosition();
             final T topic = wire.readEvent(messageTypeClass);
             final ValueIn valueIn = wire.getValueIn();
             if (Bytes.class.isAssignableFrom(elementTypeClass)) {
@@ -492,6 +491,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
             } else {
                 final M message = valueIn.object(elementTypeClass);
                 excerpt.message(message);
+                System.out.println(pos + " " + topic + " " + message);
             }
             return excerpt
                     .topic(topic)
@@ -820,23 +820,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         }
     }
 
-    class ThreadLocalData {
-
-        final ExcerptAppender appender;
-        final ExcerptTailer tailer;
-        final ExcerptTailer replayTailer;
-        final LocalExcept excerpt;
-
-        ThreadLocalData(ChronicleQueue chronicleQueue) {
-            appender = chronicleQueue.acquireAppender();
-            appender.padToCacheAlign(net.openhft.chronicle.wire.MarshallableOut.Padding.ALWAYS);
-            tailer = chronicleQueue.createTailer();
-
-            replayTailer = chronicleQueue.createTailer();
-            excerpt = new LocalExcept();
-        }
-    }
-
     /**
      * provides mapView view support for a Queue View
      *
@@ -947,6 +930,23 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
             return replaced;
         }
 
+    }
+
+    class ThreadLocalData {
+
+        final ExcerptAppender appender;
+        final ExcerptTailer tailer;
+        final ExcerptTailer replayTailer;
+        final LocalExcept excerpt;
+
+        ThreadLocalData(ChronicleQueue chronicleQueue) {
+            appender = chronicleQueue.acquireAppender();
+            appender.padToCacheAlign(net.openhft.chronicle.wire.MarshallableOut.Padding.ALWAYS);
+            tailer = chronicleQueue.createTailer();
+
+            replayTailer = chronicleQueue.createTailer();
+            excerpt = new LocalExcept();
+        }
     }
 
 }

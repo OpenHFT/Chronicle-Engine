@@ -39,8 +39,10 @@ public class QueueConfig {
      * @param acknowledgment each replication event sends back an enableAcknowledgment, which is
      *                       then stored in the chronicle queue.
      */
-    public QueueConfig(Function<String, Integer> queueSource, boolean acknowledgment,
-                       @Nullable MessageAdaptor messageAdaptor, WireType wireType) {
+    public QueueConfig(@NotNull Function<String, Integer> queueSource,
+                       boolean acknowledgment,
+                       @Nullable MessageAdaptor messageAdaptor,
+                       @NotNull WireType wireType) {
         this.sourceB = queueSource;
         this.messageAdaptor = messageAdaptor;
         this.acknowledgment = acknowledgment;
