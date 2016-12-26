@@ -483,15 +483,14 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
             if (!dc.isPresent())
                 return null;
             final Wire wire = dc.wire();
-            long pos = wire.bytes().readPosition();
             final T topic = wire.readEvent(messageTypeClass);
             final ValueIn valueIn = wire.getValueIn();
             if (Bytes.class.isAssignableFrom(elementTypeClass)) {
                 valueIn.text(excerpt.text());
+
             } else {
                 final M message = valueIn.object(elementTypeClass);
                 excerpt.message(message);
-                System.out.println(pos + " " + topic + " " + message);
             }
             return excerpt
                     .topic(topic)
