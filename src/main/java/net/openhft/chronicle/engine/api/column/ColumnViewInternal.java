@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
 
@@ -81,28 +82,37 @@ public interface ColumnViewInternal {
 
     ObjectSubscription objectSubscription();
 
-    default boolean toRange(Number n, @NotNull String value) {
 
+    default Predicate<Number> toPredicate(@NotNull String value) {
         if (value.contains(",")) {
             String[] v = value.split("\\,");
-            if (v.length != 2)
-                return DOp.toRange(n, value, true);
+            // if (v.length != 2)
+            //    return DOp.toPredicate(value, true);
 
-            boolean result = true;
-            for (String v0 : v) {
-                String v1 = v0.trim();
-                boolean isAtStart = !(v1.endsWith("]") || v1.endsWith(")"));
-                result = result && DOp.toRange(n, v1, isAtStart);
-                if (!result)
-                    return result;
+
+            Predicate<Number> predicate = null;
+            for (String x : v) {
+                String xTrimed = x.trim();
+
+                xTrimed = DOp.checkShouldPrependEQ(xTrimed);
+
+                Boolean atStart = DOp.isAtStart(xTrimed);
+                if (atStart == null)
+                    continue;
+
+                predicate = (predicate == null)
+                        ? DOp.toPredicate(xTrimed, atStart)
+                        : predicate.and(DOp.toPredicate(xTrimed, atStart));
+
             }
-            return true;
+            return predicate;
 
-
-        } else
-            return DOp.toRange(n, value, true);
+        } else {
+            value = DOp.checkShouldPrependEQ(value);
+            Boolean atStart = DOp.isAtStart(value);
+            return DOp.toPredicate(value, atStart);
+        }
     }
-
 
 
     enum DOp {
@@ -136,7 +146,7 @@ public interface ColumnViewInternal {
                 return a < b;
             }
         },
-        EQ(true, "==", "=", "") {
+        EQ(true, "==", "=") {
             @Override
             boolean compare(double a, double b) {
                 return a == b;
@@ -167,25 +177,54 @@ public interface ColumnViewInternal {
         }
 
 
-        private Number number(String op, String value, Class<? extends Number> clazz) {
+        private Number number(String op, String value, Class<? extends Number> clazz) throws Exception {
             @NotNull final String number;
 
 
             number = (operationAtStart)
                     ? value.substring(op.length()).trim()
                     : value.substring(0, value.length() - op.length()).trim();
-            return convertTo(clazz, number);
+            if (!number.isEmpty())
+                return convertTo(clazz, number);
+
+            throw new RuntimeException("can not parse number from '" + value + "'");
+
         }
 
         abstract boolean compare(double a, double b);
 
+        private static Boolean isAtStart(String value) {
+            for (DOp dop : DOp.OPS) {
+
+                for (String op : dop.op) {
+                    if (dop.operationAtStart) {
+                        if (value.startsWith(op))
+                            return true;
+                    } else {
+                        if (value.endsWith(op))
+                            return false;
+                    }
+
+                }
+
+
+            }
+
+            return null;
+        }
+
+        private static String checkShouldPrependEQ(String x) {
+            return (isAtStart(x) == null) ? "=" + x : x;
+        }
+
         /**
-         * @param o
          * @param value
-         * @param operationAtStart if true the first character is expected to be the operation, otherwise the last character is ex
-         * @return
+         * @param operationAtStart if true the first character is expected to be the operation,
+         *                         otherwise the last character is ex
+         * @return a  Predicate<Number>
          */
-        public static boolean toRange(@NotNull Number o, @NotNull String value, boolean operationAtStart) {
+        private static Predicate<Number> toPredicate(@NotNull String value, boolean operationAtStart) {
+
 
             for (DOp dop : DOp.OPS) {
                 if (dop.operationAtStart != operationAtStart)
@@ -193,29 +232,48 @@ public interface ColumnViewInternal {
 
                 for (String op : dop.op) {
 
-                    if (!dop.isValid(value, op))
-                        continue;
 
-                    final Number number = dop.number(op, value.trim(), o.getClass());
+                    if (dop.operationAtStart) {
+                        if (!value.startsWith(op))
+                            continue;
+                    } else {
+                        if (!value.endsWith(op))
+                            continue;
+                    }
+
+                    final Number number;
+                    try {
+                        number = dop.number(op, value.trim(), Double.class);
+                    } catch (Exception e) {
+                        return n -> false;
+                    }
 
                     try {
-                        final Number filterNumber = convertTo(o.getClass(), number);
-                        return dop.compare(o.doubleValue(), filterNumber.doubleValue());
+                        // final Number filterNumber = convertTo(double.class, number);
+                        return o -> dop.compare(o.doubleValue(), number.doubleValue());
                     } catch (ClassCastException e) {
-                        return false;
+                        return n -> false;
                     }
 
                 }
             }
-            return false;
+            return n -> false;
         }
-
-        private boolean isValid(String value, String op) {
-            return operationAtStart ? value.startsWith(op) : value.endsWith(op);
-        }
-
 
     }
+
+    default Predicate<Number> predicate(@NotNull List<MarshableFilter> filters) {
+        Predicate<Number> predicate = null;
+        {
+            for (MarshableFilter f : filters) {
+                predicate = (predicate == null) ?
+                        toPredicate(f.filter.trim()) :
+                        predicate.and(toPredicate(f.filter.trim()));
+            }
+        }
+        return predicate;
+    }
+
 }
 
 

@@ -27,7 +27,6 @@ import java.util.stream.StreamSupport;
 
 import static java.util.Spliterators.spliteratorUnknownSize;
 import static net.openhft.chronicle.core.util.ObjectUtils.convertTo;
-import static net.openhft.chronicle.engine.api.column.ColumnViewInternal.DOp.toRange;
 import static net.openhft.chronicle.queue.TailerDirection.BACKWARD;
 import static net.openhft.chronicle.wire.Wires.fieldInfos;
 
@@ -281,6 +280,9 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
 
     @Nullable
     public Predicate<QueueView.Excerpt<String, V>> filter(@Nullable List<MarshableFilter> filters) {
+
+        final Predicate predicate = predicate(filters);
+
         return excerpt -> {
 
             if (filters == null || filters.isEmpty())
@@ -306,7 +308,7 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
                             if (o == null)
                                 return false;
                             if (o instanceof Number) {
-                                if (toRange((Number) o, f.filter.trim()))
+                                if (predicate.test(o))
                                     continue;
                                 return false;
                             }
@@ -324,7 +326,7 @@ public class QueueWrappingColumnView<K, V> implements QueueColumnView {
                         if (!item.toString().toLowerCase().contains(f.filter.toLowerCase()))
                             return false;
                     } else if (item instanceof Number) {
-                        if (!toRange((Number) item, f.filter.trim()))
+                        if (!predicate.test(item))
                             return false;
                     } else {
                         if (!item.equals(convertTo(item.getClass(), f.filter.trim())))
