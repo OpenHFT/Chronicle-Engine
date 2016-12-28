@@ -27,6 +27,7 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
 
     private final RequestContext requestContext;
     private final Asset asset;
+    @NotNull
     private final MapView<K, V> mapView;
     private final boolean valueMarshallable;
     private final boolean valueMap;
@@ -35,7 +36,7 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
 
     public MapWrappingColumnView(RequestContext requestContext,
                                  Asset asset,
-                                 MapView<K, V> mapView) {
+                                 @NotNull MapView<K, V> mapView) {
         this.requestContext = requestContext;
         this.asset = asset;
         this.mapView = mapView;
@@ -141,7 +142,7 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
                 return row;
             }
 
-            private void addColumns(Row row,
+            private void addColumns(@NotNull Row row,
                                     final Class type,
                                     final String defaultColumnName,
                                     final Object item) {
@@ -293,7 +294,7 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
             return 1;
         }
 
-        final V v = ObjectUtils.newInstance(valueType);
+        @NotNull final V v = ObjectUtils.newInstance(valueType);
 
         for (@NotNull Map.Entry<String, Object> e : row.entrySet()) {
             if ("key".equals(e.getKey()))
@@ -309,7 +310,7 @@ public class MapWrappingColumnView<K, V> implements MapColumnView {
     @Nullable
     private Predicate<Map.Entry<K, V>> filter(@NotNull List<MarshableFilter> filters) {
 
-        final Predicate<Number> predicate = predicate(filters);
+        @Nullable final Predicate<Number> predicate = predicate(filters);
 
         return entry -> {
 

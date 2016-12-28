@@ -54,6 +54,7 @@ public class ValuesViewTest extends ThreadMonitoringTest {
     private static MapView<String, String> map;
     private final Boolean isRemote;
     private final WireType wireType;
+    @NotNull
     public String connection = "ValuesViewTest.host.port";
     @NotNull
     @Rule
@@ -108,14 +109,14 @@ public class ValuesViewTest extends ThreadMonitoringTest {
     @Test
     public void testValues() {
 
-        final MapView<String, String> map = assetTree.acquireMap("name", String.class, String
+        @NotNull final MapView<String, String> map = assetTree.acquireMap("name", String.class, String
                 .class);
         map.put("1", "1");
         map.put("2", "2");
         map.put("3", "2");
-        final Collection<String> values = map.values();
+        @NotNull final Collection<String> values = map.values();
 
-        final ArrayList<String> result = new ArrayList<>(values);
+        @NotNull final ArrayList<String> result = new ArrayList<>(values);
         result.sort(String::compareTo);
         Assert.assertEquals(Arrays.asList("1", "2", "2"), result);
 

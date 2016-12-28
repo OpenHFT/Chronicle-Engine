@@ -53,6 +53,7 @@ public class ServerOverloadTest extends ThreadMonitoringTest {
     private static MapView<String, String> map;
     private final Boolean isRemote;
     private final WireType wireType;
+    @NotNull
     public String connection = "QueryableTest.host.port";
     @NotNull
     @Rule
@@ -110,11 +111,11 @@ public class ServerOverloadTest extends ThreadMonitoringTest {
         map = assetTree.acquireMap("name", String.class, String.class);
 
         //
-        char[] largeChar = new char[66000];
+        @NotNull char[] largeChar = new char[66000];
 
         Arrays.fill(largeChar, 'X');
 
-        final String large2MbString = new String(largeChar);
+        @NotNull final String large2MbString = new String(largeChar);
 
         for (int i = 0; i < SIZE; i++) {
 //            System.out.println("i: " + i);

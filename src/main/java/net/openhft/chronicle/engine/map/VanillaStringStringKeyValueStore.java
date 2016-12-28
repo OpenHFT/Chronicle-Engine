@@ -45,7 +45,9 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     @NotNull
     private final ObjectSubscription<String, String> subscriptions;
 
+    @NotNull
     private final SubscriptionKeyValueStore<String, BytesStore> kvStore;
+    @NotNull
     private final Asset asset;
 
     public VanillaStringStringKeyValueStore(RequestContext context, @NotNull Asset asset,
@@ -59,7 +61,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         this.asset = asset;
         this.kvStore = kvStore;
         asset.registerView(ValueReader.class, StringValueReader.BYTES_STORE_TO_STRING);
-        RawKVSSubscription<String, BytesStore> rawSubscription =
+        @NotNull RawKVSSubscription<String, BytesStore> rawSubscription =
                 (RawKVSSubscription<String, BytesStore>) kvStore.subscription(true);
         this.subscriptions = subscriptions;
         subscriptions.setKvStore(this);
@@ -101,7 +103,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         Bytes<ByteBuffer> bytes = b.valueBuffer;
         bytes.clear();
         bytes.appendUtf8(value);
-        BytesStore retBytes = kvStore.getAndPut(key, bytes);
+        @Nullable BytesStore retBytes = kvStore.getAndPut(key, bytes);
         if (retBytes == null) return null;
         else {
             String s = retBytes.toString();
@@ -118,7 +120,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     @Nullable
     @Override
     public String getAndRemove(String key) {
-        BytesStore retBytes = kvStore.getAndRemove(key);
+        @Nullable BytesStore retBytes = kvStore.getAndRemove(key);
         return retBytes == null ? null : retBytes.toString();
     }
 
@@ -126,7 +128,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     @Override
     public String getUsing(String key, Object value) {
         Buffers b = BUFFERS.get();
-        BytesStore retBytes = kvStore.getUsing(key, b.valueBuffer);
+        @Nullable BytesStore retBytes = kvStore.getUsing(key, b.valueBuffer);
         return retBytes == null ? null : retBytes.toString();
     }
 
@@ -148,7 +150,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
     @NotNull
     @Override
     public Iterator<Map.Entry<String, String>> entrySetIterator() {
-        List<Map.Entry<String, String>> entries = new ArrayList<>();
+        @NotNull List<Map.Entry<String, String>> entries = new ArrayList<>();
         try {
             for (int i = 0, seg = segments(); i < seg; i++)
                 entriesFor(i, entries::add);
@@ -168,6 +170,7 @@ public class VanillaStringStringKeyValueStore implements StringStringKeyValueSto
         throw new UnsupportedOperationException("todo");
     }
 
+    @NotNull
     @Override
     public Asset asset() {
         return asset;

@@ -37,7 +37,7 @@ public enum MapUpdate implements SerializableUpdaterWithArg<MapView, Object> {
     REPLACE_ALL {
         @Override
         public void accept(@NotNull MapView map, Object o) {
-            BiFunction function = (BiFunction) o;
+            @NotNull BiFunction function = (BiFunction) o;
             map.replaceAll(function);
         }
     }

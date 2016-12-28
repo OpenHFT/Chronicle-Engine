@@ -45,7 +45,7 @@ public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subsc
     private final BiConsumer<WireIn, Long> dataConsumer = (inWire, inputTid) -> {
 
         eventName.setLength(0);
-        final ValueIn valueIn = inWire.readEventName(eventName);
+        @NotNull final ValueIn valueIn = inWire.readEventName(eventName);
 
         if (registerTopicSubscriber.contentEquals(eventName)) {
             if (tidToListener.containsKey(tid)) {
@@ -53,7 +53,7 @@ public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subsc
                 return;
             }
 
-            final TopicSubscriber listener = new TopicSubscriber() {
+            @NotNull final TopicSubscriber listener = new TopicSubscriber() {
                 volatile boolean subscriptionEnded;
 
                 @Override
@@ -91,7 +91,7 @@ public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subsc
 
                 final StringBuilder eventName = Wires.acquireStringBuilder();
 
-                final ValueIn bootstrap = m.readEventName(eventName);
+                @NotNull final ValueIn bootstrap = m.readEventName(eventName);
                 assert listener != null;
                 tidToListener.put(inputTid, listener);
 
@@ -106,7 +106,7 @@ public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subsc
         }
 
         if (EventId.unregisterTopicSubscriber.contentEquals(eventName)) {
-            TopicSubscriber listener = (TopicSubscriber) tidToListener.remove(inputTid);
+            @NotNull TopicSubscriber listener = (TopicSubscriber) tidToListener.remove(inputTid);
             if (listener == null) {
                 Jvm.debug().on(getClass(), "No subscriber to present to unsubscribe (" + inputTid + ")");
                 return;

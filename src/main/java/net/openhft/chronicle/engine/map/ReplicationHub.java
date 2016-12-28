@@ -33,6 +33,7 @@ import net.openhft.chronicle.engine.server.internal.ReplicationHandler2.EventId;
 import net.openhft.chronicle.network.connection.*;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,8 +49,11 @@ import static net.openhft.chronicle.engine.server.internal.ReplicationHandler2.E
 class ReplicationHub extends AbstractStatelessClient {
     private static final Logger LOG = LoggerFactory.getLogger(ChronicleMapKeyValueStore.class);
     final ThreadLocal<VanillaReplicatedEntry> vre = ThreadLocal.withInitial(VanillaReplicatedEntry::new);
+    @NotNull
     private final EventLoop eventLoop;
+    @NotNull
     private final AtomicBoolean isClosed;
+    @NotNull
     private final Function<Bytes, Wire> wireType;
 
     public ReplicationHub(@NotNull RequestContext context,
@@ -65,7 +69,7 @@ class ReplicationHub extends AbstractStatelessClient {
     }
 
     private static String toUri(@NotNull final RequestContext context) {
-        final StringBuilder uri = new StringBuilder(context.fullName()
+        @NotNull final StringBuilder uri = new StringBuilder(context.fullName()
                 + "?view=" + "Replication");
 
         if (context.keyType() != String.class)
@@ -124,11 +128,11 @@ class ReplicationHub extends AbstractStatelessClient {
      * @param replication      the instance the handles the replication
      */
     private void onConnected(final byte localIdentifier, byte remoteIdentifier, @NotNull EngineReplication replication) {
-        final ModificationIterator mi = replication.acquireModificationIterator(remoteIdentifier);
+        @Nullable final ModificationIterator mi = replication.acquireModificationIterator(remoteIdentifier);
         assert mi != null;
         final long lastModificationTime = replication.lastModificationTime(remoteIdentifier);
 
-        final Bootstrap bootstrap = new Bootstrap();
+        @NotNull final Bootstrap bootstrap = new Bootstrap();
         bootstrap.lastUpdatedTime(lastModificationTime);
         bootstrap.identifier(localIdentifier);
 
@@ -155,10 +159,10 @@ class ReplicationHub extends AbstractStatelessClient {
 
                                   StringBuilder eventName = Wires.acquireStringBuilder();
 
-                                  final ValueIn valueIn = d.readEventName(eventName);
+                                  @NotNull final ValueIn valueIn = d.readEventName(eventName);
 
                                   if (EventId.bootstrap.contentEquals(eventName)) {
-                                      Bootstrap b = valueIn.typedMarshallable();
+                                      @Nullable Bootstrap b = valueIn.typedMarshallable();
 
                                       // publishes changes - pushes the replication events
                                       try {
@@ -216,7 +220,7 @@ class ReplicationHub extends AbstractStatelessClient {
     void publish(@NotNull final ModificationIterator mi,
                  @NotNull final Bootstrap remote, byte remoteIdentifier) {
 
-        final TcpChannelHub hub = this.hub;
+        @NotNull final TcpChannelHub hub = this.hub;
         mi.setModificationNotifier(eventLoop::unpause);
 
         eventLoop.addHandler(true, new RepEventHandler(hub, mi, remoteIdentifier));
@@ -310,7 +314,7 @@ class ReplicationHub extends AbstractStatelessClient {
         }
 
         @Override
-        public void accept(EngineReplication.ReplicationEntry e) {
+        public void accept(@NotNull EngineReplication.ReplicationEntry e) {
             long updateTime = Math.max(lastUpdateTime, e.timestamp());
             if (updateTime > lastUpdateTime) {
                 hasSentLastUpdateTime = false;
@@ -327,6 +331,7 @@ class ReplicationHub extends AbstractStatelessClient {
                     wireOut.writeEventName(replicationEvent).typedMarshallable(e));
         }
 
+        @NotNull
         public HandlerPriority priority() {
             return HandlerPriority.REPLICATION;
         }

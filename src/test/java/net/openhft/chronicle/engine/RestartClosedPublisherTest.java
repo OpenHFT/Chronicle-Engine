@@ -26,6 +26,7 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -43,6 +44,7 @@ public class RestartClosedPublisherTest {
     private ServerEndpoint _serverEndpoint1;
     private VanillaAssetTree _server;
     private VanillaAssetTree _remote;
+    @NotNull
     private String _testMapUri = "/test/map";
 
     private ThreadDump threadDump;
@@ -96,11 +98,11 @@ public class RestartClosedPublisherTest {
      */
     @Test
     public void testClientReconnectionOnMap() throws InterruptedException {
-        String testKey = "Key1";
+        @NotNull String testKey = "Key1";
 
         for (int i = 0; i < 2; i++) {
-            String value = "Value1";
-            BlockingQueue<String> eventQueue = new ArrayBlockingQueue<>(1);
+            @NotNull String value = "Value1";
+            @NotNull BlockingQueue<String> eventQueue = new ArrayBlockingQueue<>(1);
             connectClientAndPerformPutGetTest(testKey, value, eventQueue);
 
             value = "Value2";
@@ -108,11 +110,11 @@ public class RestartClosedPublisherTest {
         }
     }
 
-    private void connectClientAndPerformPutGetTest(String testKey, String value, BlockingQueue<String> eventQueue) throws InterruptedException {
-        VanillaAssetTree remote = new VanillaAssetTree().forRemoteAccess(CONNECTION_1, WIRE_TYPE);
+    private void connectClientAndPerformPutGetTest(String testKey, String value, @NotNull BlockingQueue<String> eventQueue) throws InterruptedException {
+        @NotNull VanillaAssetTree remote = new VanillaAssetTree().forRemoteAccess(CONNECTION_1, WIRE_TYPE);
 
-        String keySubUri = _testMapUri + "/" + testKey + "?bootstrap=false";
-        Map<String, String> map = remote.acquireMap(_testMapUri, String.class, String.class);
+        @NotNull String keySubUri = _testMapUri + "/" + testKey + "?bootstrap=false";
+        @NotNull Map<String, String> map = remote.acquireMap(_testMapUri, String.class, String.class);
 
         map.size();
 

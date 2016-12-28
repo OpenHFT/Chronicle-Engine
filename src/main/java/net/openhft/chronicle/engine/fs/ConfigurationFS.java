@@ -50,11 +50,11 @@ public class ConfigurationFS implements MountPoint {
     }
 
     public void install(String baseDir, @NotNull AssetTree assetTree) {
-        Asset asset = assetTree.acquireAsset(assetName);
+        @NotNull Asset asset = assetTree.acquireAsset(assetName);
 
         if (asset.getView(MapView.class) == null) {
             ((VanillaAsset) asset).enableTranslatingValuesToBytesStore();
-            RequestContext context = RequestContext.requestContext(assetName)
+            @NotNull RequestContext context = RequestContext.requestContext(assetName)
                     .keyType(String.class).valueType(String.class);
             asset.registerView(AuthenticatedKeyValueStore.class, new FilePerKeyValueStore(context.basePath(etcDir), asset));
             asset.acquireView(MapView.class, context);
@@ -82,13 +82,13 @@ public class ConfigurationFS implements MountPoint {
     }
 
     private void processClusters(@NotNull String value) {
-        Clusters clusters = new Clusters();
+        @NotNull Clusters clusters = new Clusters();
         clusters.readMarshallable(TextWire.from(value));
         clusters.install(assetTree);
     }
 
     private void processFstab(@NotNull String value) {
-        Fstab fstab = new Fstab();
+        @NotNull Fstab fstab = new Fstab();
         fstab.readMarshallable(TextWire.from(value));
         fstab.install(baseDir, assetTree);
     }

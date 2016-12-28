@@ -36,6 +36,8 @@ import net.openhft.chronicle.network.cluster.HostIdConnectionStrategy;
 import net.openhft.chronicle.network.connection.VanillaWireOutPublisher;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +55,7 @@ public class EngineClusterContext extends ClusterContext {
     private byte localIdentifier;
 
     @UsedViaReflection
-    private EngineClusterContext(WireIn w) {
+    private EngineClusterContext(@NotNull WireIn w) {
         super(w);
     }
 
@@ -61,6 +63,7 @@ public class EngineClusterContext extends ClusterContext {
         super();
     }
 
+    @NotNull
     private NetworkStatsListener defaultNetworkStatsListener = new NetworkStatsListener() {
 
         @Override
@@ -106,26 +109,27 @@ public class EngineClusterContext extends ClusterContext {
         }
     };
 
+    @Nullable
     public ThrowingFunction<NetworkContext, TcpEventHandler, IOException> tcpEventHandlerFactory() {
         return (networkContext) -> {
 
-            final EngineWireNetworkContext nc = (EngineWireNetworkContext) networkContext;
+            @NotNull final EngineWireNetworkContext nc = (EngineWireNetworkContext) networkContext;
 
 
             if (nc.isAcceptor())
                 nc.wireOutPublisher(new VanillaWireOutPublisher(WireType.TEXT));
             // TODO make configurable.
             networkContext.serverThreadingStrategy(ServerThreadingStrategy.CONCURRENT);
-            final TcpEventHandler handler = new TcpEventHandler(networkContext);
+            @NotNull final TcpEventHandler handler = new TcpEventHandler(networkContext);
 
-            final Function<Object, TcpHandler> consumer = o -> {
+            @NotNull final Function<Object, TcpHandler> consumer = o -> {
                 if (o instanceof SessionDetailsProvider) {
-                    final SessionDetailsProvider sessionDetails = (SessionDetailsProvider) o;
+                    @NotNull final SessionDetailsProvider sessionDetails = (SessionDetailsProvider) o;
                     nc.heartbeatTimeoutMs(heartbeatTimeoutMs());
                     nc.sessionDetails(sessionDetails);
                     nc.wireType(sessionDetails.wireType());
 
-                    final WireType wireType = nc.sessionDetails().wireType();
+                    @Nullable final WireType wireType = nc.sessionDetails().wireType();
                     if (wireType != null)
                         nc.wireOutPublisher().wireType(wireType);
                     return new EngineWireHandler();
@@ -143,10 +147,10 @@ public class EngineClusterContext extends ClusterContext {
             if (nl != null)
                 notifyHostPort(nc.socketChannel(), nl);
 
-            final Function<EngineWireNetworkContext, TcpHandler> f
+            @Nullable final Function<EngineWireNetworkContext, TcpHandler> f
                     = x -> new HeaderTcpHandler<>(handler, consumer, x);
 
-            final WireTypeSniffingTcpHandler sniffer = new
+            @NotNull final WireTypeSniffingTcpHandler sniffer = new
                     WireTypeSniffingTcpHandler<>(handler, nc, f);
 
             handler.tcpHandler(sniffer);
@@ -160,7 +164,8 @@ public class EngineClusterContext extends ClusterContext {
         return assetRoot;
     }
 
-    public EngineClusterContext assetRoot(Asset assetRoot) {
+    @NotNull
+    public EngineClusterContext assetRoot(@NotNull Asset assetRoot) {
         this.assetRoot = assetRoot;
         localIdentifier = HostIdentifier.localIdentifier(assetRoot);
         localIdentifier(localIdentifier);

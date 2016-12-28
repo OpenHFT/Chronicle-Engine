@@ -19,6 +19,7 @@ package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,7 +45,7 @@ public class RequestContextTest {
     }
     @Test
     public void testParsing() {
-        String uri = "/chronicleMapString?" +
+        @NotNull String uri = "/chronicleMapString?" +
                 "view=map&" +
                 "keyType=java.lang.Integer&" +
                 "valueType=string&" +
@@ -52,7 +53,7 @@ public class RequestContextTest {
                 "removeReturnsNull=false&" +
                 "bootstrap=true";
 //        System.out.println(uri);
-        RequestContext rc = requestContext(uri);
+        @NotNull RequestContext rc = requestContext(uri);
         assertEquals("/chronicleMapString?" +
                 "view=Map&" +
                 "keyType=int&" +
@@ -83,15 +84,15 @@ public class RequestContextTest {
 
     @Test
     public void parseDirectory() {
-        String uri = "/grandparent/parent/child/";
-        RequestContext rc = requestContext(uri);
+        @NotNull String uri = "/grandparent/parent/child/";
+        @NotNull RequestContext rc = requestContext(uri);
         assertEquals("child", rc.name());
     }
 
     @Test
     public void parseEmptyString() {
-        String uri = "";
-        RequestContext rc = requestContext(uri);
+        @NotNull String uri = "";
+        @NotNull RequestContext rc = requestContext(uri);
         assertEquals("", rc.name());
     }
 }

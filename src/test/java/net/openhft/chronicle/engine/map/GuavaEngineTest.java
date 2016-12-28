@@ -87,7 +87,7 @@ public class GuavaEngineTest {
                 .withFeatures(RESTRICTS_KEYS, RESTRICTS_VALUES)
                 .createTestSuite();
 
-        TestSuite tests = new TestSuite();
+        @NotNull TestSuite tests = new TestSuite();
         //  tests.addTest(remoteMapTests);
         tests.addTest(localMapTests);
         return tests;
@@ -166,10 +166,10 @@ public class GuavaEngineTest {
         @Nullable
         @Override
         public Map<CharSequence, CharSequence> create(@NotNull Object... objects) {
-            Map<CharSequence, CharSequence> map = newMap();
+            @Nullable Map<CharSequence, CharSequence> map = newMap();
             map.clear();
             for (Object obj : objects) {
-                Map.Entry e = (Map.Entry) obj;
+                @NotNull Map.Entry e = (Map.Entry) obj;
                 map.put((CharSequence) e.getKey(),
                         (CharSequence) e.getValue());
             }
@@ -207,9 +207,9 @@ public class GuavaEngineTest {
         public RemoteTestGenerator(@NotNull AssetTree assetTree) throws IOException {
             this.assetTree = assetTree;
             TCPRegistry.createServerSocketChannelFor("guava.test.host.port");
-            final ServerEndpoint serverEndpoint = new ServerEndpoint("guava.test.host.port", assetTree);
+            @NotNull final ServerEndpoint serverEndpoint = new ServerEndpoint("guava.test.host.port", assetTree);
 
-            final String hostname = "localhost";
+            @NotNull final String hostname = "localhost";
             this.remoteAssetTree = new VanillaAssetTree().forRemoteAccess("guava.test" +
                     ".host.port", WIRE_TYPE);
         }

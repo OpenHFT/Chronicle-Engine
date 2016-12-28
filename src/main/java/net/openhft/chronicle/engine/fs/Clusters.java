@@ -37,7 +37,7 @@ public class Clusters extends AbstractMarshallable implements Marshallable, Clos
 
     }
 
-    public Clusters(Map<String, EngineCluster> clusterMap) {
+    public Clusters(@NotNull Map<String, EngineCluster> clusterMap) {
         this.clusterMap.putAll(clusterMap);
     }
 
@@ -54,12 +54,12 @@ public class Clusters extends AbstractMarshallable implements Marshallable, Clos
 
     @Override
     public void writeMarshallable(@NotNull WireOut wire) {
-        for (Entry<String, EngineCluster> entry : clusterMap.entrySet())
+        for (@NotNull Entry<String, EngineCluster> entry : clusterMap.entrySet())
             wire.writeEventName(entry::getKey).marshallable(entry.getValue());
     }
 
     public void install(@NotNull AssetTree assetTree) {
-        final Asset root = assetTree.root();
+        @NotNull final Asset root = assetTree.root();
         root.addView(Clusters.class, this);
 
         if (clusterMap == null)

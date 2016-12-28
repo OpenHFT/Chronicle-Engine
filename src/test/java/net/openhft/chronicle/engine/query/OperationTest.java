@@ -23,6 +23,8 @@ import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -43,6 +45,7 @@ public class OperationTest extends ThreadMonitoringTest {
 
     private final WireType wireType;
 
+    @NotNull
     @Rule
     public TestName name = new TestName();
 
@@ -50,12 +53,13 @@ public class OperationTest extends ThreadMonitoringTest {
         this.wireType = wireType;
     }
 
+    @NotNull
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         // ensure the aliases have been loaded.
         RequestContext.requestContext();
 
-        final List<Object[]> list = new ArrayList<>();
+        @NotNull final List<Object[]> list = new ArrayList<>();
         list.add(new Object[]{WireType.BINARY});
         list.add(new Object[]{WireType.TEXT});
         return list;
@@ -68,11 +72,11 @@ public class OperationTest extends ThreadMonitoringTest {
         final Wire wire = wireType.apply(b);
         assert wire.startUse();
 
-        final Operation operation = new Operation(Operation.OperationType.FILTER, (SerializablePredicate) o -> true);
+        @NotNull final Operation operation = new Operation(Operation.OperationType.FILTER, (SerializablePredicate) o -> true);
         wire.writeDocument(false, w -> w.write(() -> "operation").object(operation));
 
         wire.readDocument(null, w -> {
-            final Object object = w.read(() -> "operation").object(Object.class);
+            @Nullable final Object object = w.read(() -> "operation").object(Object.class);
 
             Assert.assertNotNull(object);
         });

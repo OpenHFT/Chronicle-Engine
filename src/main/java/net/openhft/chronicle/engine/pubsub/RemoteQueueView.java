@@ -32,6 +32,7 @@ import static net.openhft.chronicle.engine.server.internal.TopicPublisherHandler
 public class RemoteQueueView<T, M> extends RemoteTopicPublisher<T, M> implements QueueView<T, M> {
 
     private final ThreadLocal<LocalExcept<T, M>> threadLocal = ThreadLocal.withInitial(LocalExcept::new);
+    @NotNull
     private final Asset asset;
 
     public RemoteQueueView(@NotNull RequestContext requestContext, @NotNull Asset asset) {
@@ -45,6 +46,7 @@ public class RemoteQueueView<T, M> extends RemoteTopicPublisher<T, M> implements
         return proxyReturnWireTypedObject(getNextAtIndex, threadLocal.get(), LocalExcept.class, index);
     }
 
+    @Nullable
     @Override
     public Excerpt<T, M> getExcerpt(T topic) {
         //noinspection unchecked
@@ -56,6 +58,7 @@ public class RemoteQueueView<T, M> extends RemoteTopicPublisher<T, M> implements
         return proxyReturnLongWithArgs(publishAndIndex, topic, message);
     }
 
+    @NotNull
     @Override
     public Asset asset() {
         return asset;

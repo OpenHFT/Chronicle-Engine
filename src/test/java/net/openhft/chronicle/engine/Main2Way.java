@@ -79,7 +79,7 @@ public class Main2Way {
         Files.deleteIfExists(Paths.get(OS.TARGET, NAME));
 
         //    TCPRegistry.createServerSocketChannelFor("host.port1", "host.port2");
-        WireType writeType = WireType.BINARY;
+        @NotNull WireType writeType = WireType.BINARY;
 
         if ("one".equals(System.getProperty("server", "one"))) {
             tree1 = create(1, writeType, "clusterThree");
@@ -115,7 +115,7 @@ public class Main2Way {
 
     @NotNull
     private static AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
-        AssetTree tree = new VanillaAssetTree((byte) hostId)
+        @NotNull AssetTree tree = new VanillaAssetTree((byte) hostId)
                 .forTesting()
                 .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);
 
@@ -152,12 +152,13 @@ public class Main2Way {
         return "key" + i;
     }
 
+    @NotNull
     public static String generateValue() {
-        char[] chars = new char[2 << 20];
+        @NotNull char[] chars = new char[2 << 20];
         Arrays.fill(chars, 'X');
 
         // with snappy this results in about 10:1 compression.
-        Random rand = new Random();
+        @NotNull Random rand = new Random();
         for (int i = 0; i < chars.length; i += 45)
             chars[rand.nextInt(chars.length)] = '.';
         return new String(chars);
@@ -167,9 +168,9 @@ public class Main2Way {
 
         YamlLogging.setAll(false);
 
-        String data = generateValue();
+        @NotNull String data = generateValue();
 
-        final ConcurrentMap<String, String> map;
+        @NotNull final ConcurrentMap<String, String> map;
         final String type = System.getProperty("server", "one");
         if ("one".equals(type)) {
             map = tree1.acquireMap(NAME, String.class, String.class);

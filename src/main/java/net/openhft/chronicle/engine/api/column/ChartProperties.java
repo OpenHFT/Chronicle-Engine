@@ -2,6 +2,7 @@ package net.openhft.chronicle.engine.api.column;
 
 
 import net.openhft.chronicle.wire.AbstractMarshallable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
 
@@ -9,12 +10,15 @@ import java.util.function.Function;
  * @author Rob Austin.
  */
 public class ChartProperties extends AbstractMarshallable {
+    @NotNull
     public String menuLabel = "chart";
 
     // the Legend shown at the top of the chart
+    @NotNull
     public String title = "";
 
     // set set, will replace the yAxis title
+    @NotNull
     public String yAxisTitle = "";
 
     public ColumnViewInternal.MarshableFilter filter;

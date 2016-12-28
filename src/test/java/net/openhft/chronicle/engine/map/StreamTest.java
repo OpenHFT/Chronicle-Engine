@@ -54,6 +54,7 @@ public class StreamTest extends ThreadMonitoringTest {
     private static MapView<String, String> map;
     private final Boolean isRemote;
     private final WireType wireType;
+    @NotNull
     public String connection = "SteamTest.host.port";
     @NotNull
     @Rule
@@ -109,7 +110,7 @@ public class StreamTest extends ThreadMonitoringTest {
     @Test
     public void testSteamCount() {
 
-        final MapView<String, String> map = assetTree.acquireMap("name", String.class, String
+        @NotNull final MapView<String, String> map = assetTree.acquireMap("name", String.class, String
                 .class);
 
         map.put("1", "1");

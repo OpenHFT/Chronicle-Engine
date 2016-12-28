@@ -83,9 +83,9 @@ public enum ManagementTools {
             LocateRegistry.createRegistry(port);
 
             // Build a URL which tells the RMIConnectorServer to bind to the RMIRegistry running on port 9000
-            JMXServiceURL url = new JMXServiceURL
+            @NotNull JMXServiceURL url = new JMXServiceURL
                     ("service:jmx:rmi:///jndi/rmi://localhost:" + port + "/jmxrmi");
-            Map<String, String> env = new HashMap<>();
+            @NotNull Map<String, String> env = new HashMap<>();
             env.put("com.sun.management.jmxremote", "true");
             env.put("com.sun.management.jmxremote.ssl", "false");
             env.put("com.sun.management.jmxremote.authenticate", "false");
@@ -144,15 +144,15 @@ public enum ManagementTools {
 
     private static void registerViewOfTree(@NotNull AssetTree tree) {
         Threads.withThreadGroup(tree.root().getView(ThreadGroup.class), () -> {
-            ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor(
+            @NotNull ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor(
                     new NamedThreadFactory("tree-watcher", true));
 
-            SessionProvider view = tree.root().findView(SessionProvider.class);
-            final SessionDetails sessionDetails = view.get();
+            @Nullable SessionProvider view = tree.root().findView(SessionProvider.class);
+            @Nullable final SessionDetails sessionDetails = view.get();
 
             ses.submit(() -> {
                 // set the session details on the JMX thread, to the same as the server system session details.
-                final SessionProvider view0 = tree.root().findView(SessionProvider.class);
+                @Nullable final SessionProvider view0 = tree.root().findView(SessionProvider.class);
                 view0.set(sessionDetails);
             });
 
@@ -169,17 +169,17 @@ public enum ManagementTools {
 
     private static void handleTreeUpdate(@NotNull AssetTree tree, @NotNull TopologicalEvent e, @NotNull ScheduledExecutorService ses) {
         try {
-            HostIdentifier hostIdentifier = tree.root().getView(HostIdentifier.class);
+            @Nullable HostIdentifier hostIdentifier = tree.root().getView(HostIdentifier.class);
             int hostId = hostIdentifier == null ? 0 : hostIdentifier.hostId();
             String treeName = tree.toString();
             if (e.added()) {
-                String assetFullName = e.fullName();
-                Asset asset = tree.getAsset(assetFullName);
+                @NotNull String assetFullName = e.fullName();
+                @Nullable Asset asset = tree.getAsset(assetFullName);
                 if (asset == null) {
                     return;
                 }
 
-                ObjectKeyValueStore<Object, Object> view = null;
+                @Nullable ObjectKeyValueStore<Object, Object> view = null;
 
                 for (Class c : new Class[]{ObjectKeyValueStore.class, SubscriptionKeyValueStore.class}) {
 
@@ -193,12 +193,12 @@ public enum ManagementTools {
                     return;
                 }
 
-                final ObjectKeyValueStore view0 = view;
-                ObjectSubscription objectSubscription = asset.getView(ObjectSubscription.class);
+                @Nullable final ObjectKeyValueStore view0 = view;
+                @Nullable ObjectSubscription objectSubscription = asset.getView(ObjectSubscription.class);
                 //ObjectName atName = new ObjectName(createObjectNameUri(e.assetName(),e.name(),treeName));
 
                 //start Dynamic MBeans Code
-                Map<String, String> m = new HashMap<>();
+                @NotNull Map<String, String> m = new HashMap<>();
                 m.put("size", "" + view.longSize());
                 m.put("keyType", view.keyType().getName());
                 m.put("valueType", view.valueType().getName());
@@ -218,7 +218,7 @@ public enum ManagementTools {
                     });
                 }
                 dynamicMBean = new AssetTreeDynamicMBean(m);
-                ObjectName atName = new ObjectName(createObjectNameUri(hostId, e.assetName(), e.name(), treeName));
+                @NotNull ObjectName atName = new ObjectName(createObjectNameUri(hostId, e.assetName(), e.name(), treeName));
                 registerTreeWithMBean(dynamicMBean, atName);
                 //end Dynamic MBeans Code
 
@@ -229,7 +229,7 @@ public enum ManagementTools {
                 //registerTreeWithMBean(atBean, atName);
 
             } else {
-                ObjectName atName = new ObjectName(createObjectNameUri(hostId, e.assetName(), e.name(), treeName));
+                @NotNull ObjectName atName = new ObjectName(createObjectNameUri(hostId, e.assetName(), e.name(), treeName));
                 unregisterTreeWithMBean(atName);
             }
         } catch (Throwable t) {
@@ -251,7 +251,7 @@ public enum ManagementTools {
                 list.add(new Attribute("Dynamic Attribute Key","Dynamic Attribute Value"));
                 mbs.setAttributes(atName,list);*/
                 //start Dynamic MBeans Code
-                Map m = new HashMap();
+                @NotNull Map m = new HashMap();
                 m.put("size", "" + view.longSize());
                 m.put("keyType", view.keyType().getName());
                 m.put("valueType", view.valueType().getName());
@@ -284,14 +284,14 @@ public enum ManagementTools {
         if (LOG.isDebugEnabled()) {
             LOG.debug("treeName=" + treeName);
         }
-        StringBuilder sb = new StringBuilder(256);
+        @NotNull StringBuilder sb = new StringBuilder(256);
         sb.append("net.openhft.chronicle.engine:tree=");
         sb.append(hostId);
         sb.append(",type=");
         sb.append(treeName);
         //sb.append("net.openhft.chronicle.engine.api.tree:type=AssetTree");
 
-        String[] names = assetName.split("/");
+        @NotNull String[] names = assetName.split("/");
         for (int i = 1; i < names.length; i++) {
             sb.append(",side").append(i).append("=").append(names[i]);
         }
@@ -326,7 +326,7 @@ public enum ManagementTools {
             return "{}";
         }
 
-        StringBuilder sb = new StringBuilder();
+        @NotNull StringBuilder sb = new StringBuilder();
 
         Iterator<Map.Entry> it = view.entrySetIterator();
         sb.append('{');

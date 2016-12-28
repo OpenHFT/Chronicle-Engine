@@ -108,7 +108,7 @@ public class TopologicalSubscriptionEventTest extends ThreadMonitoringTest {
     @Test
     public void testTopologicalEvents() throws IOException, InterruptedException {
 
-        final BlockingQueue<TopologicalEvent> eventsQueue = new LinkedBlockingQueue<>();
+        @NotNull final BlockingQueue<TopologicalEvent> eventsQueue = new LinkedBlockingQueue<>();
 
         yamlLoggger(() -> {
             try {

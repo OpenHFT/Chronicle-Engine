@@ -47,8 +47,8 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     }
 
     @Override
-    public V replace(K key, V value) {
-        V oldValue = kvStore.replace(key, value);
+    public V replace(@NotNull K key, @NotNull V value) {
+        @Nullable V oldValue = kvStore.replace(key, value);
         if (oldValue != null) {
             subscriptions.notifyEvent(UpdatedEvent.of(asset.fullName(), key, oldValue, value,
                     false, !value.equals(oldValue)));
@@ -57,7 +57,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     }
 
     @Override
-    public boolean put(K key, V value) {
+    public boolean put(@NotNull K key, V value) {
         if (subscriptions.needsPrevious()) {
             return getAndPut(key, value) != null;
         }
@@ -70,7 +70,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     }
 
     @Override
-    public boolean remove(K key) {
+    public boolean remove(@NotNull K key) {
         if (subscriptions.needsPrevious()) {
             return getAndRemove(key) != null;
         }
@@ -82,7 +82,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     }
 
     @Override
-    public boolean replaceIfEqual(K key, V oldValue, V newValue) {
+    public boolean replaceIfEqual(@NotNull K key, V oldValue, V newValue) {
         if (kvStore.replaceIfEqual(key, oldValue, newValue)) {
             subscriptions.notifyEvent(UpdatedEvent.of(asset.fullName(), key, oldValue,
                     newValue, false, true));
@@ -92,7 +92,7 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
     }
 
     @Override
-    public boolean removeIfEqual(K key, V value) {
+    public boolean removeIfEqual(@NotNull K key, V value) {
         if (kvStore.removeIfEqual(key, value)) {
             subscriptions.notifyEvent(RemovedEvent.of(asset.fullName(), key, value, false));
             return true;
@@ -102,8 +102,8 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
 
     @Nullable
     @Override
-    public V putIfAbsent(K key, V value) {
-        V ret = kvStore.putIfAbsent(key, value);
+    public V putIfAbsent(@NotNull K key, V value) {
+        @Nullable V ret = kvStore.putIfAbsent(key, value);
         if (ret == null)
             subscriptions.notifyEvent(InsertedEvent.of(asset.fullName(), key, value, false));
         return ret;
@@ -111,8 +111,8 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
 
     @Nullable
     @Override
-    public V getAndPut(K key, V value) {
-        V oldValue = kvStore.getAndPut(key, value);
+    public V getAndPut(@NotNull K key, V value) {
+        @Nullable V oldValue = kvStore.getAndPut(key, value);
 
         subscriptions.notifyEvent(oldValue == null
                 ? InsertedEvent.of(asset.fullName(), key, value, false)
@@ -122,8 +122,8 @@ public class VanillaSubscriptionKeyValueStore<K, MV, V> extends AbstractKeyValue
 
     @Nullable
     @Override
-    public V getAndRemove(K key) {
-        V oldValue = kvStore.getAndRemove(key);
+    public V getAndRemove(@NotNull K key) {
+        @Nullable V oldValue = kvStore.getAndRemove(key);
         if (oldValue != null)
             subscriptions.notifyEvent(RemovedEvent.of(asset.fullName(), key, oldValue, false));
         return oldValue;

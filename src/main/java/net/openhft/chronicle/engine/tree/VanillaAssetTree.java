@@ -79,9 +79,10 @@ public class VanillaAssetTree implements AssetTree {
         root.addView(HostIdentifier.class, new HostIdentifier((byte) hostId));
     }
 
+    @NotNull
     @Override
     public AssetTreeStats getUsageStats() {
-        AssetTreeStats ats = new AssetTreeStats();
+        @NotNull AssetTreeStats ats = new AssetTreeStats();
         root.getUsageStats(ats);
         return ats;
     }
@@ -108,7 +109,7 @@ public class VanillaAssetTree implements AssetTree {
 
     @NotNull
     public VanillaAssetTree forServer(boolean daemon, boolean binding) {
-        final HostIdentifier view = root.getView(HostIdentifier.class);
+        @Nullable final HostIdentifier view = root.getView(HostIdentifier.class);
         final int hostId = view == null ? 1 : view.hostId();
         root.forServer(daemon, (String uri) -> VanillaAsset.master(uri, hostId), binding);
         return this;
@@ -158,7 +159,7 @@ public class VanillaAssetTree implements AssetTree {
 
     @NotNull
     private VanillaSessionDetails clientSession() {
-        final VanillaSessionDetails sessionDetails = new VanillaSessionDetails();
+        @NotNull final VanillaSessionDetails sessionDetails = new VanillaSessionDetails();
         sessionDetails.userId(System.getProperty("user.name"));
         return sessionDetails;
     }
@@ -191,7 +192,7 @@ public class VanillaAssetTree implements AssetTree {
         Jvm.pause(50);
 
         // ensure that the event loop get shutdown first
-        EventLoop view = root().findView(EventLoop.class);
+        @Nullable EventLoop view = root().findView(EventLoop.class);
         Closeable.closeQuietly(view);
 
         root.close();
@@ -213,7 +214,8 @@ public class VanillaAssetTree implements AssetTree {
         return "tree-" + Optional.ofNullable(root.getView(HostIdentifier.class)).map(HostIdentifier::hostId).orElseGet(() -> (byte) 0);
     }
 
-    public VanillaAssetTree forRemoteAccess(String serverAddress, WireType wireType, Consumer<Throwable> t) {
+    @NotNull
+    public VanillaAssetTree forRemoteAccess(String serverAddress, @NotNull WireType wireType, Consumer<Throwable> t) {
         return forRemoteAccess(serverAddress, wireType);
     }
 }

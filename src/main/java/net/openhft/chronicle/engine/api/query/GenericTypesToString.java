@@ -1,6 +1,7 @@
 package net.openhft.chronicle.engine.api.query;
 
 import net.openhft.chronicle.wire.Marshallable;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -15,11 +16,11 @@ public class GenericTypesToString implements TypeToString {
     private final Map<String, Class> cache1 = new ConcurrentHashMap<>();
     private final Map<Class, String> cache2 = new ConcurrentHashMap<>();
 
-    public GenericTypesToString(Class... clazzes) {
+    public GenericTypesToString(@NotNull Class... clazzes) {
 
-        for (Class clazz : clazzes) {
+        for (@NotNull Class clazz : clazzes) {
 
-            for (Method m : clazz.getMethods()) {
+            for (@NotNull Method m : clazz.getMethods()) {
                 if (Modifier.isStatic(m.getModifiers()))
                     continue;
 
@@ -54,7 +55,7 @@ public class GenericTypesToString implements TypeToString {
     }
 
     @Override
-    public Class<? extends Marshallable> toType(CharSequence type) {
+    public Class<? extends Marshallable> toType(@NotNull CharSequence type) {
         return cache1.get(type.toString());
     }
 

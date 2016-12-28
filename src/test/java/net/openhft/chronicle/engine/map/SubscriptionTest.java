@@ -30,6 +30,7 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -92,13 +93,13 @@ public class SubscriptionTest extends ThreadMonitoringTest {
     public void testSubscriptionTest() throws IOException, InterruptedException {
         MapEventListener<String, Factor> listener;
 
-        Factor factorXYZ = new Factor();
+        @NotNull Factor factorXYZ = new Factor();
         factorXYZ.setAccountNumber("xyz");
 
-        Factor factorABC = new Factor();
+        @NotNull Factor factorABC = new Factor();
         factorABC.setAccountNumber("abc");
 
-        Factor factorDDD = new Factor();
+        @NotNull Factor factorDDD = new Factor();
         factorDDD.setAccountNumber("ddd");
 
         listener = createMock(MapEventListener.class);
@@ -110,9 +111,9 @@ public class SubscriptionTest extends ThreadMonitoringTest {
 
         replay(listener);
 
-        VanillaAssetTree serverAssetTree = new VanillaAssetTree().forTesting();
-        ServerEndpoint serverEndpoint = null;
-        Subscriber<MapEvent> mapEventSubscriber = e -> e.apply(listener);
+        @NotNull VanillaAssetTree serverAssetTree = new VanillaAssetTree().forTesting();
+        @Nullable ServerEndpoint serverEndpoint = null;
+        @NotNull Subscriber<MapEvent> mapEventSubscriber = e -> e.apply(listener);
         VanillaAssetTree assetTree;
         if (isRemote) {
             TCPRegistry.createServerSocketChannelFor("testSubscriptionTest.host.port");
@@ -122,7 +123,7 @@ public class SubscriptionTest extends ThreadMonitoringTest {
         } else {
             assetTree = serverAssetTree;
         }
-        ConcurrentMap<String, Factor> map = assetTree.acquireMap(NAME, String.class, Factor.class);
+        @NotNull ConcurrentMap<String, Factor> map = assetTree.acquireMap(NAME, String.class, Factor.class);
 
         yamlLoggger(() -> {
             System.out.print(":\n");

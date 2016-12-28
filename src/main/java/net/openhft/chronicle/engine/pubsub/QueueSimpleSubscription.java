@@ -30,6 +30,7 @@ import net.openhft.chronicle.engine.query.Filter;
 import net.openhft.chronicle.engine.tree.ChronicleQueueView;
 import net.openhft.chronicle.engine.tree.QueueView;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,12 +50,14 @@ public class QueueSimpleSubscription<E> implements SimpleSubscription<E> {
 
     // private final ObjectSubscription objectSubscription;
 
+    @NotNull
     private final ChronicleQueueView<?, E> chronicleQueue;
+    @NotNull
     private final EventLoop eventLoop;
     private final String topic;
 
     public QueueSimpleSubscription(Function<Object, E> valueReader,
-                                   Asset parent, String topic) {
+                                   @NotNull Asset parent, String topic) {
         this.valueReader = valueReader;
         this.topic = topic;
         chronicleQueue = (ChronicleQueueView) parent.acquireView(QueueView.class);
@@ -70,12 +73,12 @@ public class QueueSimpleSubscription<E> implements SimpleSubscription<E> {
 
     public void registerSubscriber(boolean bootstrap,
                                    int throttlePeriodMs,
-                                   Subscriber<E> subscriber) throws AssetNotFoundException {
+                                   @NotNull Subscriber<E> subscriber) throws AssetNotFoundException {
 
-        AtomicBoolean terminate = new AtomicBoolean();
+        @NotNull AtomicBoolean terminate = new AtomicBoolean();
         subscribers.put(subscriber, terminate);
 
-        final QueueView.Tailer<?, E> tailer = chronicleQueue.tailer();
+        @Nullable final QueueView.Tailer<?, E> tailer = chronicleQueue.tailer();
 
         eventLoop.addHandler(() -> {
 
@@ -83,7 +86,7 @@ public class QueueSimpleSubscription<E> implements SimpleSubscription<E> {
             if (terminate.get())
                 throw new InvalidEventHandlerException();
 
-            final QueueView.Excerpt<?, E> next = tailer.read();
+            @Nullable final QueueView.Excerpt<?, E> next = tailer.read();
 
             if (next == null)
                 return false;
@@ -133,7 +136,7 @@ public class QueueSimpleSubscription<E> implements SimpleSubscription<E> {
     @Override
     public void notifyMessage(Object e) {
         try {
-            E ee = e instanceof BytesStore ? valueReader.apply(e) : (E) e;
+            @NotNull E ee = e instanceof BytesStore ? valueReader.apply(e) : (E) e;
             //SubscriptionConsumer.notifyEachSubscriber(subscribers, s -> s.onMessage(ee));
         } catch (ClassCastException e1) {
             if (LOG.isDebugEnabled())
@@ -144,7 +147,7 @@ public class QueueSimpleSubscription<E> implements SimpleSubscription<E> {
 
     @Override
     public void close() {
-        for (Subscriber<E> subscriber : subscribers.keySet()) {
+        for (@NotNull Subscriber<E> subscriber : subscribers.keySet()) {
             try {
                 subscriber.onEndOfSubscription();
             } catch (Exception e) {

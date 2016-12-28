@@ -63,7 +63,7 @@ public class FilePerKeyBasedKeyMarshallableValueStore<K, V extends Marshallable>
 
     @Nullable
     private V bytesToValue(@Nullable BytesStore oldValue) {
-        V ret;
+        @Nullable V ret;
         if (oldValue != null) {
             V using = createValue.get();
             using.readMarshallable(new TextWire(oldValue.bytesForRead()));
@@ -75,7 +75,7 @@ public class FilePerKeyBasedKeyMarshallableValueStore<K, V extends Marshallable>
     }
 
     @Override
-    public boolean put(K key, V value) {
+    public boolean put(K key, @NotNull V value) {
         Wire valueWire = valueWire();
         value.writeMarshallable(valueWire);
         return kvStore.put(keyToString.apply(key), valueWire.bytes());
@@ -86,7 +86,7 @@ public class FilePerKeyBasedKeyMarshallableValueStore<K, V extends Marshallable>
     public V getAndPut(K key, @NotNull V value) {
         Wire valueWire = valueWire();
         value.writeMarshallable(valueWire);
-        BytesStore oldValue = kvStore.getAndPut(keyToString.apply(key), valueWire.bytes());
+        @Nullable BytesStore oldValue = kvStore.getAndPut(keyToString.apply(key), valueWire.bytes());
         return bytesToValue(oldValue);
     }
 
@@ -98,7 +98,7 @@ public class FilePerKeyBasedKeyMarshallableValueStore<K, V extends Marshallable>
     @Nullable
     @Override
     public V getAndRemove(K key) {
-        BytesStore oldValue = kvStore.getAndRemove(keyToString.apply(key));
+        @Nullable BytesStore oldValue = kvStore.getAndRemove(keyToString.apply(key));
         return bytesToValue(oldValue);
     }
 
@@ -127,7 +127,7 @@ public class FilePerKeyBasedKeyMarshallableValueStore<K, V extends Marshallable>
     @Override
     public void entriesFor(int segment, @NotNull SubscriptionConsumer<MapEvent<K, V>> kvConsumer)
             throws InvalidSubscriberException {
-        String assetName = asset().fullName();
+        @NotNull String assetName = asset().fullName();
         kvStore.entriesFor(segment, event -> kvConsumer.accept(InsertedEvent.of(assetName,
                 stringToKey.apply(event.getKey()), bytesToValue(event.getValue()), false)));
     }

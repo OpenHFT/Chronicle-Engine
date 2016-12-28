@@ -84,6 +84,7 @@ public class VanillaAsset implements Asset, Closeable {
     private final Map<Class, SortedMap<String, WrappingViewRecord>> wrappingViewFactoryMap =
             new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
     private final Map<Class, LeafView> leafViewMap = new ConcurrentSkipListMap<>(CLASS_COMPARATOR);
+    @Nullable
     private String fullName = null;
     private Boolean keyedAsset;
 
@@ -98,7 +99,7 @@ public class VanillaAsset implements Asset, Closeable {
             assert name != null;
         }
         if (parent != null) {
-            TopologySubscription parentSubs = parent.findView(TopologySubscription.class);
+            @Nullable TopologySubscription parentSubs = parent.findView(TopologySubscription.class);
             if (parentSubs != null && !(parentSubs instanceof RemoteTopologySubscription))
                 parentSubs.notifyEvent(AddedAssetEvent.of(parent.fullName(), name, parent.viewTypes()));
         }
@@ -193,17 +194,17 @@ public class VanillaAsset implements Asset, Closeable {
     public void standardStack(boolean daemon, boolean binding) {
         configMapCommon();
 
-        String fullName = fullName();
-        HostIdentifier hostIdentifier = findView(HostIdentifier.class);
+        @NotNull String fullName = fullName();
+        @Nullable HostIdentifier hostIdentifier = findView(HostIdentifier.class);
         if (hostIdentifier != null)
             fullName = "tree-" + hostIdentifier.hostId() + fullName;
 
-        ThreadGroup threadGroup = new ThreadGroup(fullName);
+        @NotNull ThreadGroup threadGroup = new ThreadGroup(fullName);
         addView(ThreadGroup.class, threadGroup);
         addLeafRule(EventLoop.class, LAST + " event group", (rc, asset) ->
                 Threads.<EventLoop, AssertionError>withThreadGroup(threadGroup, () -> {
                     try {
-                        EventLoop eg = new EventGroup(daemon);
+                        @NotNull EventLoop eg = new EventGroup(daemon);
                         eg.start();
                         return eg;
                     } catch (Exception e) {
@@ -219,9 +220,9 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Nullable
-    static Integer master(String s, int defaultMaster) {
+    static Integer master(@NotNull String s, int defaultMaster) {
         if (s.startsWith("/proc/connections/cluster/throughput")) {
-            final String[] split = s.split("/");
+            @NotNull final String[] split = s.split("/");
             if (split.length > 5) {
                 try {
                     return Integer.valueOf(split[4]);
@@ -234,16 +235,16 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     public void forServer(boolean daemon,
-                          final Function<String, Integer> uriToHostId,
+                          @NotNull final Function<String, Integer> uriToHostId,
                           boolean binding) {
         standardStack(daemon, binding);
 
         configMapServer();
 
-        VanillaAsset queue = (VanillaAsset) acquireAsset("/queue");
+        @NotNull VanillaAsset queue = (VanillaAsset) acquireAsset("/queue");
         queue.configQueueServer();
 
-        VanillaAsset clusterConnections = (VanillaAsset) acquireAsset(
+        @NotNull VanillaAsset clusterConnections = (VanillaAsset) acquireAsset(
                 "/proc/connections/cluster/throughput");
 
         clusterConnections.configQueueServer();
@@ -267,7 +268,7 @@ public class VanillaAsset implements Asset, Closeable {
         configMapRemote();
         configColumnViewRemote();
 
-        VanillaAsset queue = (VanillaAsset) acquireAsset("queue");
+        @NotNull VanillaAsset queue = (VanillaAsset) acquireAsset("queue");
         queue.configQueueRemote();
 
         //       addLeafRule(Subscriber.class, LAST + " topic publisher", RemoteSubscription::new);
@@ -275,14 +276,14 @@ public class VanillaAsset implements Asset, Closeable {
         addLeafRule(TopologySubscription.class, LAST + " RemoteTopologySubscription",
                 RemoteTopologySubscription::new);
 
-        SessionProvider sessionProvider = new ClientSessionProvider(sessionDetails);
+        @NotNull SessionProvider sessionProvider = new ClientSessionProvider(sessionDetails);
 
-        EventLoop eventLoop = findOrCreateView(EventLoop.class);
+        @Nullable EventLoop eventLoop = findOrCreateView(EventLoop.class);
         eventLoop.start();
         if (getView(TcpChannelHub.class) == null) {
 
             // used for client fail-over
-            final SocketAddressSupplier socketAddressSupplier = new SocketAddressSupplier(hostPortDescriptions, name);
+            @NotNull final SocketAddressSupplier socketAddressSupplier = new SocketAddressSupplier(hostPortDescriptions, name);
 
             TcpChannelHub view = Threads.withThreadGroup(findView(ThreadGroup.class),
                     () -> new TcpChannelHub(sessionProvider, eventLoop, wire, name.isEmpty() ? "/" : name,
@@ -324,7 +325,7 @@ public class VanillaAsset implements Asset, Closeable {
     public <I, U> I createWrappingView(Class viewType, RequestContext rc, @NotNull Asset asset, @Nullable U underling) throws AssetNotFoundException {
         SortedMap<String, WrappingViewRecord> smap = wrappingViewFactoryMap.get(viewType);
         if (smap != null)
-            for (WrappingViewRecord wvRecord : smap.values()) {
+            for (@NotNull WrappingViewRecord wvRecord : smap.values()) {
                 if (wvRecord.predicate.test(rc, asset)) {
                     if (underling == null)
                         underling = (U) asset.acquireView(wvRecord.underlyingType, rc);
@@ -368,7 +369,7 @@ public class VanillaAsset implements Asset, Closeable {
     @Override
     @ForceInline
     public <V> V getView(@NotNull Class<V> viewType) {
-        @SuppressWarnings("unchecked")
+        @NotNull @SuppressWarnings("unchecked")
         V view = (V) viewMap.get(viewType);
         return view;
     }
@@ -394,22 +395,22 @@ public class VanillaAsset implements Asset, Closeable {
             AssetNotFoundException {
 
         if (!fullName().equals(rc.fullName())) {
-            Asset asset = this.root().acquireAsset(rc.fullName());
+            @NotNull Asset asset = this.root().acquireAsset(rc.fullName());
             return asset.acquireView(rc);
         }
 
         synchronized (viewMap) {
-            V view = getView(viewType);
+            @Nullable V view = getView(viewType);
             if (view != null) {
                 return view;
             }
             return Threads.withThreadGroup(findView(ThreadGroup.class), () -> {
-                V leafView = createLeafView(viewType, rc, this);
+                @Nullable V leafView = createLeafView(viewType, rc, this);
                 if (leafView instanceof MapView && viewType == QueueView.class)
                     addView(MapView.class, (MapView) leafView);
                 if (leafView != null)
                     return addView(viewType, leafView);
-                V wrappingView = createWrappingView(viewType, rc, this, null);
+                @Nullable V wrappingView = createWrappingView(viewType, rc, this, null);
                 if (wrappingView == null)
                     throw new AssetNotFoundException("Unable to classify " + viewType.getName() + " context: " + rc);
 
@@ -420,7 +421,7 @@ public class VanillaAsset implements Asset, Closeable {
 
     @Override
     public String dumpRules() {
-        Wire text = new TextWire(Wires.acquireBytes());
+        @NotNull Wire text = new TextWire(Wires.acquireBytes());
         if (parent != null) {
             ((VanillaAsset) parent).dumpRules(text);
         }
@@ -429,10 +430,10 @@ public class VanillaAsset implements Asset, Closeable {
         return text.toString();
     }
 
-    private void dumpChildRules(Wire text) {
+    private void dumpChildRules(@NotNull Wire text) {
         for (Asset asset : children.values()) {
             if (asset instanceof VanillaAsset) {
-                VanillaAsset vasset = (VanillaAsset) asset;
+                @NotNull VanillaAsset vasset = (VanillaAsset) asset;
                 if (vasset.leafViewMap.size() + vasset.wrappingViewFactoryMap.size() > 0) {
                     vasset.dumpRules(text);
                 }
@@ -441,19 +442,19 @@ public class VanillaAsset implements Asset, Closeable {
         }
     }
 
-    private void dumpRules(Wire wire) {
+    private void dumpRules(@NotNull Wire wire) {
         wire.bytes().append8bit("---\n");
         wire.write("name").text(fullName())
                 .write("leaf").marshallable(w -> {
-            for (Map.Entry<Class, LeafView> entry : leafViewMap.entrySet()) {
+            for (@NotNull Map.Entry<Class, LeafView> entry : leafViewMap.entrySet()) {
                 w.writeEvent(Class.class, entry.getKey()).leaf(false)
                         .text(entry.getValue().name);
             }
         })
                 .write("wrapping").marshallable(w -> {
-            for (Map.Entry<Class, SortedMap<String, WrappingViewRecord>> entry : wrappingViewFactoryMap.entrySet()) {
+            for (@NotNull Map.Entry<Class, SortedMap<String, WrappingViewRecord>> entry : wrappingViewFactoryMap.entrySet()) {
                 w.writeEvent(Class.class, entry.getKey()).marshallable(ww -> {
-                    for (Map.Entry<String, WrappingViewRecord> recordEntry : entry.getValue().entrySet()) {
+                    for (@NotNull Map.Entry<String, WrappingViewRecord> recordEntry : entry.getValue().entrySet()) {
                         ww.writeEventName(recordEntry.getKey()).object(Class.class, recordEntry.getValue().underlyingType);
                     }
                 });
@@ -472,10 +473,10 @@ public class VanillaAsset implements Asset, Closeable {
 //            throw new IllegalStateException("Attempt to replace " + viewType + " with " + view + " was " + viewMap.get(viewType));
 
 
-        TopologySubscription topologySubscription = this.root().findView(TopologySubscription.class);
+        @Nullable TopologySubscription topologySubscription = this.root().findView(TopologySubscription.class);
         if (topologySubscription != null) {
 
-            String parentName = parent == null ? "" : parent.fullName();
+            @NotNull String parentName = parent == null ? "" : parent.fullName();
             if (o == null) {
 
                 topologySubscription.notifyEvent(AddedAssetEvent.of(parentName, name, viewTypes()));
@@ -547,8 +548,8 @@ public class VanillaAsset implements Asset, Closeable {
                 pos = childName.indexOf('/');
             }
             if (pos > 0) {
-                String name1 = childName.substring(0, pos);
-                String name2 = childName.substring(pos + 1);
+                @NotNull String name1 = childName.substring(0, pos);
+                @NotNull String name2 = childName.substring(pos + 1);
                 return getAssetOrANFE(name1).acquireAsset(name2);
             }
         }
@@ -562,7 +563,7 @@ public class VanillaAsset implements Asset, Closeable {
 
     @Nullable
     private Asset getAssetOrANFE(@NotNull String name) throws AssetNotFoundException {
-        Asset asset = children.get(name);
+        @Nullable Asset asset = children.get(name);
         if (asset == null) {
             asset = createAsset(name);
             if (asset == null)
@@ -579,14 +580,14 @@ public class VanillaAsset implements Asset, Closeable {
         return children.computeIfAbsent(name, keyedAsset != Boolean.TRUE
                 ? n -> new VanillaAsset(this, name)
                 : n -> {
-            MapView map = getView(MapView.class);
+            @Nullable MapView map = getView(MapView.class);
 
             if (map != null) {
-                SubAssetFactory saFactory = findOrCreateView(SubAssetFactory.class);
+                @Nullable SubAssetFactory saFactory = findOrCreateView(SubAssetFactory.class);
                 return saFactory.createSubAsset(this, name, map.valueType());
             }
 
-            SubAssetFactory saFactory = findOrCreateView(SubAssetFactory.class);
+            @Nullable SubAssetFactory saFactory = findOrCreateView(SubAssetFactory.class);
             return saFactory.createSubAsset(this, name, String.class);
         });
     }
@@ -600,7 +601,7 @@ public class VanillaAsset implements Asset, Closeable {
     public void removeChild(String name) {
         Asset removed = children.remove(name);
         if (removed == null) return;
-        TopologySubscription topologySubscription = removed.findView(TopologySubscription.class);
+        @Nullable TopologySubscription topologySubscription = removed.findView(TopologySubscription.class);
         if (topologySubscription != null)
             topologySubscription.notifyEvent(RemovedAssetEvent.of(fullName(), name, viewTypes()));
     }
@@ -612,11 +613,11 @@ public class VanillaAsset implements Asset, Closeable {
     }
 
     @Override
-    public void getUsageStats(AssetTreeStats ats) {
+    public void getUsageStats(@NotNull AssetTreeStats ats) {
         ats.addAsset(1, 512);
         for (Object o : viewMap.values()) {
             if (o instanceof KeyValueStore) {
-                KeyValueStore kvs = (KeyValueStore) o;
+                @NotNull KeyValueStore kvs = (KeyValueStore) o;
                 if (kvs.underlying() == null) {
                     long count = kvs.longSize();
                     ats.addAsset(count, count * 1024);
@@ -660,6 +661,7 @@ public class VanillaAsset implements Asset, Closeable {
 
     }
 
+    @NotNull
     @Override
     public Set<Class> viewTypes() {
         return viewMap.keySet();

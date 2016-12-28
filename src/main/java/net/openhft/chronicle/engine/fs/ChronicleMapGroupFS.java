@@ -71,7 +71,7 @@ public class ChronicleMapGroupFS implements Marshallable, MountPoint, LeafViewFa
 
     @Override
     public void install(String baseDir, @NotNull AssetTree assetTree) {
-        Asset asset = assetTree.acquireAsset(name);
+        @NotNull Asset asset = assetTree.acquireAsset(name);
         ((VanillaAsset) asset).enableTranslatingValuesToBytesStore();
         asset.addLeafRule(KeyValueStore.class, "use Chronicle Map", this);
         this.basePath = baseDir;

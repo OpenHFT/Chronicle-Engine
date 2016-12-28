@@ -2,6 +2,8 @@ package net.openhft.chronicle.engine.api.column;
 
 import net.openhft.chronicle.core.util.ObjectUtils;
 import net.openhft.chronicle.engine.map.MapWrappingColumnView;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -16,12 +18,12 @@ public class ColumnViewInternalTest {
     @Test
     public void test() {
 
-        MapWrappingColumnView cv = ObjectUtils.newInstance(MapWrappingColumnView.class);
+        @NotNull MapWrappingColumnView cv = ObjectUtils.newInstance(MapWrappingColumnView.class);
 
-        ArrayList results = new ArrayList();
-        int[] numbers = {1, 2, 3, 4};
+        @NotNull ArrayList results = new ArrayList();
+        @NotNull int[] numbers = {1, 2, 3, 4};
 
-        Predicate<Number> predicate = cv.toPredicate("(2,4]");
+        @Nullable Predicate<Number> predicate = cv.toPredicate("(2,4]");
         for (Number n : numbers) {
 
             if (predicate.test(n))
@@ -34,11 +36,11 @@ public class ColumnViewInternalTest {
     @Test
     public void test2() {
 
-        MapWrappingColumnView cv = ObjectUtils.newInstance(MapWrappingColumnView.class);
+        @NotNull MapWrappingColumnView cv = ObjectUtils.newInstance(MapWrappingColumnView.class);
 
-        ArrayList results = new ArrayList();
-        int[] numbers = {1, 2, 3, 4, 5};
-        Predicate<Number> predicate = cv.toPredicate("(2,4)");
+        @NotNull ArrayList results = new ArrayList();
+        @NotNull int[] numbers = {1, 2, 3, 4, 5};
+        @Nullable Predicate<Number> predicate = cv.toPredicate("(2,4)");
         for (Number n : numbers) {
 
             if (predicate.test(n))
@@ -50,7 +52,7 @@ public class ColumnViewInternalTest {
 
     @Test
     public void testToPredicate() {
-        MapWrappingColumnView cv = ObjectUtils.newInstance(MapWrappingColumnView.class);
+        @NotNull MapWrappingColumnView cv = ObjectUtils.newInstance(MapWrappingColumnView.class);
         Assert.assertTrue(cv.toPredicate("4]").test(3));
         Assert.assertTrue(cv.toPredicate("3]").test(3));
         Assert.assertFalse(cv.toPredicate("3)").test(3));

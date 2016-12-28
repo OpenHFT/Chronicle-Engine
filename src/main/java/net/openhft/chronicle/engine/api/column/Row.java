@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 public class Row extends AbstractMarshallable {
 
     private List<String> columnNames;
+    @NotNull
     private Map<String, Object> data = new LinkedHashMap<>();
 
     public Row() {
@@ -43,7 +44,8 @@ public class Row extends AbstractMarshallable {
     }
 
 
-    public <R> R copyTo(R using) {
+    @NotNull
+    public <R> R copyTo(@NotNull R using) {
         Wires.copyTo(data,using);
         return using;
     }

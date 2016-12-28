@@ -40,7 +40,7 @@ public class TopologySubscriptionHandler extends SubscriptionHandler<TopologySub
     private final BiConsumer<WireIn, Long> dataConsumer = (inWire, inputTid) -> {
 
         eventName.setLength(0);
-        final ValueIn valueIn = inWire.readEventName(eventName);
+        @NotNull final ValueIn valueIn = inWire.readEventName(eventName);
 
         try {
             if (before(inputTid, valueIn)) return;

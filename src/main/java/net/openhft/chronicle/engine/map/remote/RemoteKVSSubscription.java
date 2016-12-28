@@ -101,11 +101,11 @@ public class RemoteKVSSubscription<K, V> extends AbstractRemoteSubscription<MapE
 
                 inWire.readDocument(null, d -> {
                     StringBuilder sb = Wires.acquireStringBuilder();
-                    ValueIn valueIn = d.readEventName(sb);
+                    @NotNull ValueIn valueIn = d.readEventName(sb);
                     if (reply.contentEquals(sb)) {
                         valueIn.marshallable(m -> {
-                            final K topic = m.read(() -> "topic").object(kClass);
-                            final V message = m.read(() -> "message").object(vClass);
+                            @Nullable final K topic = m.read(() -> "topic").object(kClass);
+                            @Nullable final V message = m.read(() -> "message").object(vClass);
                             RemoteKVSSubscription.this.onEvent(topic, message, subscriber);
                         });
                     } else if (onEndOfSubscription.contentEquals(sb)) {

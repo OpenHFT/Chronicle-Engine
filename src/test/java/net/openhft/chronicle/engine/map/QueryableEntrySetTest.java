@@ -62,7 +62,9 @@ public class QueryableEntrySetTest extends ThreadMonitoringTest {
 
     private final Boolean isRemote;
     private final WireType wireType;
+    @NotNull
     public String connection = "QueryableTest.host.port";
+    @NotNull
     @Rule
     public TestName name = new TestName();
     private AssetTree assetTree = new VanillaAssetTree().forTesting();
@@ -119,18 +121,18 @@ public class QueryableEntrySetTest extends ThreadMonitoringTest {
     @Test(timeout = 10000)
     public void testQueryForEach() {
 
-        Map<String, String> expected = new HashMap<>();
+        @NotNull Map<String, String> expected = new HashMap<>();
         expected.put("1", "1");
         expected.put("2", "2");
 
-        final MapView<String, String> map = assetTree.acquireMap("name", String.class, String
+        @NotNull final MapView<String, String> map = assetTree.acquireMap("name", String.class, String
                 .class);
         map.putAll(expected);
         Utils.waitFor(() -> map.size() == expected.size());
 
-        final EntrySetView<String, Object, String> query = map.entrySet();
+        @NotNull final EntrySetView<String, Object, String> query = map.entrySet();
         query.query();
-        final Set<Map.Entry<String, String>> actual = new HashSet<>();
+        @NotNull final Set<Map.Entry<String, String>> actual = new HashSet<>();
         query.forEach(actual::add);
 
         System.out.println(actual);
@@ -140,7 +142,7 @@ public class QueryableEntrySetTest extends ThreadMonitoringTest {
     @Test(timeout = 10000)
     public void testQueryForEachWithPredicate() throws InterruptedException {
 
-        final MapView<String, String> map = assetTree.acquireMap("name", String.class, String
+        @NotNull final MapView<String, String> map = assetTree.acquireMap("name", String.class, String
                 .class);
 
         map.put("1", "1");
@@ -150,9 +152,9 @@ public class QueryableEntrySetTest extends ThreadMonitoringTest {
 //        YamlLogging.showServerReads(true);
 //        YamlLogging.showServerWrites(true);
 
-        final EntrySetView<String, Object, String> entries = map.entrySet();
-        final Query<Map.Entry<String, String>> query = entries.query();
-        final BlockingQueue<Map.Entry> result = new ArrayBlockingQueue<>(1);
+        @NotNull final EntrySetView<String, Object, String> entries = map.entrySet();
+        @NotNull final Query<Map.Entry<String, String>> query = entries.query();
+        @NotNull final BlockingQueue<Map.Entry> result = new ArrayBlockingQueue<>(1);
         final Consumer<Map.Entry<String, String>> consumer = result::add;
 
         query.filter(o -> "1".equals(o.getKey()) && "1".equals(o.getValue())).forEach(consumer);

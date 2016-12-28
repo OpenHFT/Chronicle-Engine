@@ -57,8 +57,10 @@ public class Replication10WayTest {
     public static final WireType WIRE_TYPE = WireType.TEXT;
     public static final String NAME = "/ChMaps/test";
     public static final int NUMBER_OF_SIMULATED_SERVERS = 10;
+    @NotNull
     public static ServerEndpoint[] serverEndpoint = new
             ServerEndpoint[NUMBER_OF_SIMULATED_SERVERS];
+    @NotNull
     private static AssetTree[] tree = new AssetTree[NUMBER_OF_SIMULATED_SERVERS];
     private static Map<ExceptionKey, Integer> exceptions;
     private ThreadDump threadDump;
@@ -79,7 +81,7 @@ public class Replication10WayTest {
             TCPRegistry.createServerSocketChannelFor("host.port" + (i + 1));
         }
 
-        WireType writeType = WireType.TEXT;
+        @NotNull WireType writeType = WireType.TEXT;
         for (int i = 0; i < NUMBER_OF_SIMULATED_SERVERS; i++) {
             tree[i] = create(i + 1, writeType, "clusterTen");
             serverEndpoint[i] = new ServerEndpoint("host.port" + (i + 1), tree[i]);
@@ -108,7 +110,7 @@ public class Replication10WayTest {
 
     @NotNull
     private static AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
-        AssetTree tree = new VanillaAssetTree((byte) hostId)
+        @NotNull AssetTree tree = new VanillaAssetTree((byte) hostId)
                 .forTesting()
                 .withConfig(resourcesDir() + "/10Way", OS.TARGET + "/" + hostId);
 
@@ -148,7 +150,7 @@ public class Replication10WayTest {
     @Test
     public void testTenWay() throws InterruptedException {
 
-        ConcurrentMap<String, String>[] maps = new ConcurrentMap[NUMBER_OF_SIMULATED_SERVERS];
+        @NotNull ConcurrentMap<String, String>[] maps = new ConcurrentMap[NUMBER_OF_SIMULATED_SERVERS];
         for (int i = 0; i < NUMBER_OF_SIMULATED_SERVERS; i++) {
             maps[i] = tree[i].acquireMap(NAME, String.class, String.class);
             assertNotNull(maps[i]);

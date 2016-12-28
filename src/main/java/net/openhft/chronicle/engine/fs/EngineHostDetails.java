@@ -47,7 +47,7 @@ public class EngineHostDetails extends HostDetails implements Marshallable, Clos
         super();
     }
 
-    public EngineHostDetails(int hostId, int tcpBufferSize, String connectUri) {
+    public EngineHostDetails(int hostId, int tcpBufferSize, @NotNull String connectUri) {
         super();
         hostId(hostId);
         this.tcpBufferSize(tcpBufferSize);
@@ -70,11 +70,11 @@ public class EngineHostDetails extends HostDetails implements Marshallable, Clos
         int hostId = hostId();
 
         return tcpChannelHubs.computeIfAbsent(addr, hostPort -> {
-            String[] connectURIs = new String[]{connectUri};
+            @NotNull String[] connectURIs = new String[]{connectUri};
 
-            final SocketAddressSupplier socketAddressSupplier = new SocketAddressSupplier
+            @NotNull final SocketAddressSupplier socketAddressSupplier = new SocketAddressSupplier
                     (connectURIs, "hostId=" + hostId() + ",connectUri=" + connectUri);
-            final ClientConnectionMonitor clientConnectionMonitor = asset.findView(ClientConnectionMonitor.class);
+            @Nullable final ClientConnectionMonitor clientConnectionMonitor = asset.findView(ClientConnectionMonitor.class);
             return new TcpChannelHub(new SimpleSessionProvider(sessionDetails), eventLoop, wire, "hostId=" + hostId + ",connectUri=" + connectUri,
                     socketAddressSupplier, true, clientConnectionMonitor, HandlerPriority.TIMER);
         });
@@ -96,6 +96,7 @@ public class EngineHostDetails extends HostDetails implements Marshallable, Clos
      * implements SessionProvider but always returns the same session details regardless of thread
      */
     private class SimpleSessionProvider implements SessionProvider {
+        @Nullable
         private final SessionDetails sessionDetails;
 
         SimpleSessionProvider(@Nullable SessionDetails sessionDetails) {

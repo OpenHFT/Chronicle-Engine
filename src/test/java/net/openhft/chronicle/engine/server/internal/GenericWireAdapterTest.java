@@ -40,6 +40,7 @@ import java.util.Collection;
 public class GenericWireAdapterTest {
 
     public static final Double EXPECTED = 1.23;
+    @NotNull
     private final WireType wireType;
     private ThreadDump threadDump;
 
@@ -70,7 +71,7 @@ public class GenericWireAdapterTest {
 
     @Test
     public void testValueToWire() {
-        final GenericWireAdapter<String, Double> genericWireAdapter = new GenericWireAdapter(
+        @NotNull final GenericWireAdapter<String, Double> genericWireAdapter = new GenericWireAdapter(
                 String.class, Double.class);
 
         final Bytes b = Bytes.elasticByteBuffer();

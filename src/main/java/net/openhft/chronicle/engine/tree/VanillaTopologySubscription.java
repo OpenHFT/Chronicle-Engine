@@ -24,6 +24,7 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.query.Filter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,8 +57,8 @@ public class VanillaTopologySubscription implements TopologySubscription {
         try {
             if (rc.bootstrap() != Boolean.FALSE) {
                 // root node.
-                Asset parent = asset.parent();
-                String assetName = parent == null ? null : parent.fullName();
+                @Nullable Asset parent = asset.parent();
+                @Nullable String assetName = parent == null ? null : parent.fullName();
                 subscriber.onMessage(ExistingAssetEvent.of(assetName,  asset.name(),  asset.viewTypes()));
                 bootstrapTree(asset, subscriber);
             }
@@ -94,16 +95,16 @@ public class VanillaTopologySubscription implements TopologySubscription {
 
     @Override
     public void notifyEvent(TopologicalEvent event) {
-        for (Subscriber<TopologicalEvent> sub : subscribers) {
+        for (@NotNull Subscriber<TopologicalEvent> sub : subscribers) {
             try {
                 sub.onMessage(event);
             } catch (InvalidSubscriberException expected) {
                 subscribers.remove(sub);
             }
         }
-        Asset parent = asset.parent();
+        @Nullable Asset parent = asset.parent();
         if (parent != null) {
-            TopologySubscription topologySubscription = parent.findView(TopologySubscription.class);
+            @Nullable TopologySubscription topologySubscription = parent.findView(TopologySubscription.class);
             if (topologySubscription != null)
                 topologySubscription.notifyEvent(event);
         }
@@ -111,7 +112,7 @@ public class VanillaTopologySubscription implements TopologySubscription {
 
     @Override
     public void close() {
-        for (Subscriber<TopologicalEvent> subscriber : subscribers) {
+        for (@NotNull Subscriber<TopologicalEvent> subscriber : subscribers) {
             try {
                 subscriber.onEndOfSubscription();
             } catch (Exception e) {

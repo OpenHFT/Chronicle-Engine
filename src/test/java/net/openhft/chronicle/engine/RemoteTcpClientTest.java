@@ -69,14 +69,14 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
 
     private void testStrings(int noPutsAndGets, int valueLength, @NotNull WireType wireType) throws IOException {
 
-        try (final RemoteMapSupplier<CharSequence, CharSequence> remote = new
+        try (@NotNull final RemoteMapSupplier<CharSequence, CharSequence> remote = new
                 RemoteMapSupplier<>("testStrings.host.port", CharSequence.class,
                 CharSequence.class,
                 wireType, assetTree, "test")) {
 
-            ConcurrentMap test = remote.get();
+            @NotNull ConcurrentMap test = remote.get();
 
-            Bytes bytes = Bytes.allocateElasticDirect(valueLength);
+            @NotNull Bytes bytes = Bytes.allocateElasticDirect(valueLength);
             while (bytes.readPosition() < valueLength)
                 bytes.append('x');
 
@@ -119,19 +119,19 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     public void test2MBEntries() throws IOException {
 
         // server
-        try (final RemoteMapSupplier<String, String> remote = new
+        try (@NotNull final RemoteMapSupplier<String, String> remote = new
                 RemoteMapSupplier<>("test2MBEntries.host.port", String.class,
                 String.class,
                 WireType.BINARY, assetTree, "test")) {
 
-            StringBuilder sb = new StringBuilder();
+            @NotNull StringBuilder sb = new StringBuilder();
             for (int i = 0; i < 50_000; i++) {
                 sb.append('x');
             }
 
-            String value = sb.toString();
+            @NotNull String value = sb.toString();
             long time = System.currentTimeMillis();
-            final ConcurrentMap<String, String> map = remote.get();
+            @NotNull final ConcurrentMap<String, String> map = remote.get();
             for (int i = 0; i < 2_000; i++) {
                 System.out.println(i);
                 map.put("largeEntry", value);
@@ -144,23 +144,23 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     @Test
     @Ignore("Will be very slow, of course")
     public void testLargeUpdates() throws IOException, InterruptedException {
-        char[] chars = new char[1024 * 1024];
+        @NotNull char[] chars = new char[1024 * 1024];
         Arrays.fill(chars, 'X');
-        String value = new String(chars);
+        @NotNull String value = new String(chars);
 
-        try (final RemoteMapSupplier<String, String> remote =
+        try (@NotNull final RemoteMapSupplier<String, String> remote =
                      new RemoteMapSupplier<>("testLargeUpdates.host.port",
                              String.class, String.class,
                              WireType.BINARY, assetTree, "test")) {
 
-            List<Closeable> closeables = new ArrayList<>();
+            @NotNull List<Closeable> closeables = new ArrayList<>();
 
-            List<Map<String, String>> maps = new ArrayList<>();
-            final ConcurrentMap<String, String> map = remote.get();
+            @NotNull List<Map<String, String>> maps = new ArrayList<>();
+            @NotNull final ConcurrentMap<String, String> map = remote.get();
             maps.add(map);
             for (int i = 1; i < Runtime.getRuntime().availableProcessors(); i++) {
-                AssetTree assetTree2 = new VanillaAssetTree().forRemoteAccess("testLargeUpdates.host.port", WireType.BINARY);
-                Map<String, String> map2 = assetTree2.acquireMap("test", String.class, String.class);
+                @NotNull AssetTree assetTree2 = new VanillaAssetTree().forRemoteAccess("testLargeUpdates.host.port", WireType.BINARY);
+                @NotNull Map<String, String> map2 = assetTree2.acquireMap("test", String.class, String.class);
                 maps.add(map2);
                 closeables.add(assetTree2);
             }
@@ -181,12 +181,12 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
     public void testValuesCollection() throws IOException {
 
         // server
-        try (final RemoteMapSupplier<String, String> remote = new
+        try (@NotNull final RemoteMapSupplier<String, String> remote = new
                 RemoteMapSupplier<>("testValuesCollection.host.port", String.class,
                 String.class,
                 WireType.BINARY, assetTree, "test")) {
-            final MapView<String, String> map = remote.get();
-            Map<String, String> data = new HashMap<String, String>();
+            @NotNull final MapView<String, String> map = remote.get();
+            @NotNull Map<String, String> data = new HashMap<String, String>();
             data.put("test1", "value1");
             data.put("test2", "value2");
             map.putAll(data);
@@ -194,13 +194,13 @@ public class RemoteTcpClientTest extends ThreadMonitoringTest {
             assertEquals(data.size(), map.size());
             assertEquals(data.size(), map.values().size());
 
-            Iterator<String> it = map.values().iterator();
-            ArrayList<String> values = new ArrayList<String>();
+            @NotNull Iterator<String> it = map.values().iterator();
+            @NotNull ArrayList<String> values = new ArrayList<String>();
             while (it.hasNext()) {
                 values.add(it.next());
             }
             Collections.sort(values);
-            Object[] dataValues = data.values().toArray();
+            @NotNull Object[] dataValues = data.values().toArray();
             Arrays.sort(dataValues);
             assertArrayEquals(dataValues, values.toArray());
 

@@ -73,6 +73,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
     @NotNull
     private final CollectionWireHandler keySetHandler;
 
+    @NotNull
     private final ColumnViewIteratorHandler columnViewIteratorHandler;
 
     @NotNull
@@ -140,6 +141,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
     private long tid;
     private long cid;
 
+    @Nullable
     private HostIdentifier hostIdentifier;
     private final Class[] views = {MapView.class
             , EntrySetView.class
@@ -210,7 +212,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
 
     @Override
     public void onEndOfConnection(boolean heartbeatTimeOut) {
-        for (final AbstractHandler abstractHandler : new AbstractHandler[]{mapWireHandler,
+        for (@NotNull final AbstractHandler abstractHandler : new AbstractHandler[]{mapWireHandler,
                 subscriptionHandler, topologySubscriptionHandler,
                 publisherHandler, replicationHandler}) {
             try {
@@ -247,7 +249,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                             Jvm.debug().on(getClass(), "received meta-data:\n" + wire.bytes().toHexString());
 
                         requestContext = requestContextInterner.intern(cspText);
-                        final String fullName = requestContext.fullName();
+                        @NotNull final String fullName = requestContext.fullName();
                         if (!"/".equals(fullName))
                             contextAsset = this.rootAsset.acquireAsset(fullName);
 
@@ -273,10 +275,10 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                         if (isValid(viewType)) {
 
                             // default to string type if not provided
-                            final Class<?> type = requestContext.keyType() == null ? String.class
+                            @NotNull final Class<?> type = requestContext.keyType() == null ? String.class
                                     : requestContext.keyType();
 
-                            final Class<?> type2 = requestContext.valueType() == null ? String.class
+                            @NotNull final Class<?> type2 = requestContext.valueType() == null ? String.class
                                     : requestContext.valueType();
 
                             wireAdapter = new GenericWireAdapter<>(type, type2);
@@ -300,8 +302,8 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                 ;
     }
 
-    private boolean isValid(Class viewType) {
-        for (Class v : views) {
+    private boolean isValid(@NotNull Class viewType) {
+        for (@NotNull Class v : views) {
             if (v.isAssignableFrom(viewType))
                 return true;
         }
@@ -321,7 +323,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
     }
 
     private void readTid(@NotNull WireIn metaDataWire) {
-        ValueIn valueIn = metaDataWire.readEventName(eventName);
+        @NotNull ValueIn valueIn = metaDataWire.readEventName(eventName);
         if (CoreFields.tid.contentEquals(eventName)) {
             tid = valueIn.int64();
             eventName.setLength(0);
@@ -345,7 +347,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
         }
     }
 
-    private void onRead0(@NotNull DocumentContext inDc, @NotNull WireOut out, WireIn in) {
+    private void onRead0(@NotNull DocumentContext inDc, @NotNull WireOut out, @NotNull WireIn in) {
         if (!YamlLogging.showHeartBeats()) {
             //save the previous message (the meta-data for printing later)
             //if the message turns out not to be a system message
@@ -367,7 +369,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                 if (LOG.isDebugEnabled())
                     Jvm.debug().on(getClass(), "received data:\n" + in.bytes().toHexString());
 
-                Consumer<WireType> wireTypeConsumer = wt -> {
+                @NotNull Consumer<WireType> wireTypeConsumer = wt -> {
                     wireType(wt);
                     checkWires(in.bytes(), out.bytes(), wireType());
                 };
@@ -387,7 +389,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
                     logBufferToStandardOut(prevLogMessage.append(currentLogMessage));
                 }
 
-                Map<String, UserStat> userMonitoringMap = getMonitoringMap();
+                @Nullable Map<String, UserStat> userMonitoringMap = getMonitoringMap();
                 if (userMonitoringMap != null) {
                     UserStat userStat = userMonitoringMap.get(sessionDetails.userId());
                     if (userStat == null) {
@@ -510,9 +512,10 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
         }
     }
 
+    @Nullable
     private Map<String, UserStat> getMonitoringMap() {
-        Map<String, UserStat> userMonitoringMap = null;
-        Asset userAsset = rootAsset.root().getAsset("proc/users");
+        @Nullable Map<String, UserStat> userMonitoringMap = null;
+        @Nullable Asset userAsset = rootAsset.root().getAsset("proc/users");
         if (userAsset != null && userAsset.getView(MapView.class) != null) {
             userMonitoringMap = userAsset.getView(MapView.class);
         }
@@ -531,7 +534,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
         }
     }
 
-    private void logToBuffer(@NotNull WireIn in, StringBuilder logBuffer, long start) {
+    private void logToBuffer(@NotNull WireIn in, @NotNull StringBuilder logBuffer, long start) {
         if (YamlLogging.showServerReads()) {
             logBuffer.setLength(0);
             try {
@@ -544,7 +547,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
         }
     }
 
-    private void logBufferToStandardOut(StringBuilder logBuffer) {
+    private void logBufferToStandardOut(@NotNull StringBuilder logBuffer) {
         if (logBuffer.length() > 0) {
             LOG.info("\n" + logBuffer.toString());
         }
@@ -557,13 +560,13 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
         final StringBuilder event = Wires.acquireStringBuilder();
 
         cspText.setLength(0);
-        final ValueIn read = wireIn.readEventName(event);
+        @NotNull final ValueIn read = wireIn.readEventName(event);
         if (csp.contentEquals(event)) {
             read.textTo(cspText);
 
             tryReadEvent(wireIn, (that, wire) -> {
                 final StringBuilder e = Wires.acquireStringBuilder();
-                final ValueIn valueIn = wireIn.readEventName(e);
+                @NotNull final ValueIn valueIn = wireIn.readEventName(e);
                 if (!CoreFields.cid.contentEquals(e))
                     return false;
 
@@ -619,7 +622,7 @@ public class EngineWireHandler extends WireTcpHandler<EngineWireNetworkContext> 
     @Override
     public long acquireCid(@NotNull CharSequence csp) {
         final long newCid = nextCid.incrementAndGet();
-        String cspStr = csp.toString();
+        @NotNull String cspStr = csp.toString();
         final Long aLong = cspToCid.putIfAbsent(cspStr, newCid);
 
         if (aLong != null)

@@ -42,11 +42,14 @@ import static net.openhft.chronicle.engine.api.tree.RequestContext.Operation.BOO
 public class VanillaMapView<K, V> implements MapView<K, V> {
     protected final Class keyClass;
     protected final Class valueType;
+    @NotNull
     protected final Asset asset;
+    @NotNull
     protected final RequestContext context;
     protected final boolean putReturnsNull;
     protected final boolean removeReturnsNull;
 
+    @NotNull
     private final KeyValueStore<K, V> kvStore;
     private AbstractCollection<V> values;
 
@@ -167,6 +170,7 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
             throw new NullPointerException("value can not be null");
     }
 
+    @NotNull
     @Override
     public Asset asset() {
         return asset;
@@ -212,7 +216,7 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
         if (!kvStore.isKeyType(key)) {
             return null;
         }
-        K key2 = (K) key;
+        @NotNull K key2 = (K) key;
         if (removeReturnsNull) {
             kvStore.remove(key2);
             return null;
@@ -224,7 +228,7 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
 
     @Override
     public void putAll(@net.openhft.chronicle.core.annotation.NotNull Map<? extends K, ? extends V> m) {
-        for (Entry<? extends K, ? extends V> entry : m.entrySet()) {
+        for (@NotNull Entry<? extends K, ? extends V> entry : m.entrySet()) {
             put(entry.getKey(), entry.getValue());
         }
     }
@@ -294,7 +298,7 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
 
     @Override
     public void registerTopicSubscriber(@NotNull TopicSubscriber<K, V> topicSubscriber) {
-        KVSSubscription<K, V> subscription = (KVSSubscription<K, V>) asset.subscription(true);
+        @NotNull KVSSubscription<K, V> subscription = (KVSSubscription<K, V>) asset.subscription(true);
         subscription.registerTopicSubscriber(RequestContext.requestContext().bootstrap(true).type(keyClass).type2(valueType), topicSubscriber);
     }
 
@@ -308,10 +312,10 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
                                       @NotNull Filter filter,
                                       @NotNull Set<Operation> operations) {
 
-        final RequestContext rc = context.clone();
+        @NotNull final RequestContext rc = context.clone();
         operations.forEach(e -> e.apply(rc));
 
-        KVSSubscription<K, V> subscription = (KVSSubscription<K, V>) asset.subscription(true);
+        @NotNull KVSSubscription<K, V> subscription = (KVSSubscription<K, V>) asset.subscription(true);
         subscription.registerKeySubscriber(rc.type(keyClass), subscriber, filter);
     }
 
@@ -325,11 +329,11 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
                                    @NotNull Filter<MapEvent<K, V>> filter,
                                    @NotNull Set<Operation> operations) {
 
-        final RequestContext rc = context.clone();
+        @NotNull final RequestContext rc = context.clone();
         rc.bootstrap(true).elementType(MapEvent.class);
         operations.forEach(e -> e.apply(rc));
 
-        KVSSubscription<K, V> subscription = (KVSSubscription<K, V>) asset.subscription(true);
+        @Nullable KVSSubscription<K, V> subscription = (KVSSubscription<K, V>) asset.subscription(true);
         subscription.registerSubscriber(rc, subscriber, filter);
     }
 
@@ -348,7 +352,7 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof Map) {
-            Map map = (Map) obj;
+            @NotNull Map map = (Map) obj;
             // todo use longSize()
             if (size() != map.size())
                 return false;
@@ -371,7 +375,7 @@ public class VanillaMapView<K, V> implements MapView<K, V> {
     @NotNull
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
+        @NotNull StringBuilder sb = new StringBuilder();
         sb.append("{");
         try {
             for (int i = 0; i < kvStore.segments(); i++) {

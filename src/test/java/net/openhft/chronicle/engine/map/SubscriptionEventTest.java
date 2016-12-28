@@ -35,6 +35,7 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -99,7 +100,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
         if (isRemote) {
 
             methodName(name.getMethodName());
-            final String hostPort = "SubscriptionEventTest." + name.getMethodName() + ".host.port";
+            @NotNull final String hostPort = "SubscriptionEventTest." + name.getMethodName() + ".host.port";
             TCPRegistry.createServerSocketChannelFor(hostPort);
             serverEndpoint = new ServerEndpoint(hostPort, serverAssetTree);
 
@@ -125,7 +126,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     @Test
     public void testSubscribeToChangesToTheMap() throws IOException, InterruptedException {
 
-        final BlockingQueue<MapEvent> eventsQueue = new LinkedBlockingQueue<>();
+        @NotNull final BlockingQueue<MapEvent> eventsQueue = new LinkedBlockingQueue<>();
 
 //        YamlLogging.showServerWrites(true);
 //        YamlLogging.showServerReads(true);
@@ -166,7 +167,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
         if (!isRemote)
             return;
 
-        final BlockingQueue<MapEvent> eventsQueue = new LinkedBlockingQueue<>();
+        @NotNull final BlockingQueue<MapEvent> eventsQueue = new LinkedBlockingQueue<>();
 
         yamlLoggger(() -> {
             try {
@@ -174,7 +175,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                 Subscriber<MapEvent> add = eventsQueue::add;
                 assetTree.registerSubscriber(NAME, MapEvent.class, add);
 
-                final Map serverMap = serverAssetTree.acquireMap(NAME, String.class, String.class);
+                @NotNull final Map serverMap = serverAssetTree.acquireMap(NAME, String.class, String.class);
 
                 YamlLogging.writeMessage("puts an entry into the map so that an event will be " +
                         "triggered");
@@ -223,7 +224,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
             }
         }
 
-        final BlockingQueue<TopicDetails> eventsQueue = new LinkedBlockingQueue<>();
+        @NotNull final BlockingQueue<TopicDetails> eventsQueue = new LinkedBlockingQueue<>();
 
         yamlLoggger(() -> {
             try {
@@ -232,9 +233,9 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                         "subsequently puts and entry into the map, notice that the InsertedEvent is " +
                         "received from the server");
 
-                TopicPublisher<String, String> topicPublisher = assetTree.acquireTopicPublisher(NAME, String.class, String.class);
+                @NotNull TopicPublisher<String, String> topicPublisher = assetTree.acquireTopicPublisher(NAME, String.class, String.class);
 
-                TopicSubscriber<String, String> subscriber = (topic, message) -> eventsQueue.add(new TopicDetails<>(topic, message));
+                @NotNull TopicSubscriber<String, String> subscriber = (topic, message) -> eventsQueue.add(new TopicDetails<>(topic, message));
                 assetTree.registerTopicSubscriber(NAME, String.class, String.class,
                         subscriber);
 
@@ -262,7 +263,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
         if (isRemote)
             return;
 
-        final BlockingQueue<MapEvent> eventsQueue = new LinkedBlockingQueue<>();
+        @NotNull final BlockingQueue<MapEvent> eventsQueue = new LinkedBlockingQueue<>();
 
         yamlLoggger(() -> {
             try {
@@ -291,7 +292,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     @Test
     public void testSubscribeToKeyEvents() throws IOException, InterruptedException, InvalidSubscriberException {
 
-        final BlockingQueue<String> eventsQueue = new LinkedBlockingQueue<>();
+        @NotNull final BlockingQueue<String> eventsQueue = new LinkedBlockingQueue<>();
 
         yamlLoggger(() -> {
             try {
@@ -331,17 +332,17 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
                         "subsequently puts and entry into the map, notice that the InsertedEvent is " +
                         "received from the server");
 
-                ConcurrentMap<String, String> map = assetTree.acquireMap(NAME, String.class, String.class);
+                @NotNull ConcurrentMap<String, String> map = assetTree.acquireMap(NAME, String.class, String.class);
 
                 map.put("Key-1", "Value-1");
                 map.put("Key-2", "Value-2");
 
                 assertEquals(2, map.size());
 
-                ArrayBlockingQueue<String> q = new ArrayBlockingQueue<>(1);
+                @NotNull ArrayBlockingQueue<String> q = new ArrayBlockingQueue<>(1);
 
                 assetTree.registerSubscriber(NAME + "/Key-1?bootstrap=true", String.class, q::add);
-                Asset asset = assetTree.getAsset(NAME + "/Key-1");
+                @Nullable Asset asset = assetTree.getAsset(NAME + "/Key-1");
 
                 assertTrue(asset.isSubAsset());
                 Object take = q.poll(5, TimeUnit.SECONDS);
@@ -366,7 +367,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     @Test
     public void testUnSubscribeToKeyEvents() throws IOException, InterruptedException {
 
-        final BlockingQueue<String> eventsQueue = new LinkedBlockingQueue<>();
+        @NotNull final BlockingQueue<String> eventsQueue = new LinkedBlockingQueue<>();
 
         yamlLoggger(() -> {
             try {
@@ -384,7 +385,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
                 YamlLogging.writeMessage("puts an entry into the map so that an event will be " +
                         "triggered");
-                String expected = "World";
+                @NotNull String expected = "World";
                 map.getAndPut("Hello", expected);
 
                 Object object = eventsQueue.poll(1000, MILLISECONDS);
@@ -399,7 +400,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     @Test
     public void testSubscribeToKeyEventsAndRemoveKey() throws IOException, InterruptedException {
 
-        final BlockingQueue<String> eventsQueue = new ArrayBlockingQueue<>(1024);
+        @NotNull final BlockingQueue<String> eventsQueue = new ArrayBlockingQueue<>(1024);
 
         yamlLoggger(() -> {
             try {
@@ -413,7 +414,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
                 YamlLogging.writeMessage("puts an entry into the map so that an event will be " +
                         "triggered");
-                String expected = "World";
+                @NotNull String expected = "World";
                 map.put("Hello", expected);
                 map.remove("Hello");
 
@@ -432,7 +433,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     @Test
     public void testSubscribeToMapEventsAndRemoveKey() throws IOException, InterruptedException {
 
-        final BlockingQueue<MapEvent> eventsQueue = new LinkedBlockingQueue<>();
+        @NotNull final BlockingQueue<MapEvent> eventsQueue = new LinkedBlockingQueue<>();
 
         yamlLoggger(() -> {
             try {
@@ -446,7 +447,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
                 YamlLogging.writeMessage("puts an entry into the map so that an event will be " +
                         "triggered");
-                String expected = "World";
+                @NotNull String expected = "World";
                 map.put("Hello", expected);
                 Object putEvent = eventsQueue.poll(1, SECONDS);
                 Assert.assertTrue(putEvent instanceof InsertedEvent);

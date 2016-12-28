@@ -51,9 +51,9 @@ public class VanillaSubAsset<E> implements SubAsset<E>, Closeable, TopicSubscrib
     public VanillaSubAsset(@NotNull VanillaAsset parent, String name, Class<E> type, Function<Object, E> valueReader) throws AssetNotFoundException {
         this.parent = parent;
         this.name = name;
-        TcpChannelHub tcpChannelHub = parent.findView(TcpChannelHub.class);
+        @Nullable TcpChannelHub tcpChannelHub = parent.findView(TcpChannelHub.class);
         if (tcpChannelHub == null) {
-            QueueView queueView = parent.getView(QueueView.class);
+            @Nullable QueueView queueView = parent.getView(QueueView.class);
             if (queueView == null) {
                 reference = new MapReference<>(name, type, this, parent.acquireView(MapView.class));
                 subscription = new MapSimpleSubscription<>(reference, valueReader);

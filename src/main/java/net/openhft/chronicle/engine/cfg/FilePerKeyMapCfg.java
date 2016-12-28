@@ -26,6 +26,7 @@ import net.openhft.chronicle.engine.map.FilePerKeyValueStore;
 import net.openhft.chronicle.engine.tree.VanillaAsset;
 import net.openhft.chronicle.wire.WireIn;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,14 +42,15 @@ public class FilePerKeyMapCfg implements Installable {
     private String compression;
     private String diskPath;
 
+    @Nullable
     @Override
-    public Void install(String path, AssetTree assetTree) throws IOException {
-        Asset asset = assetTree.acquireAsset(path);
+    public Void install(@NotNull String path, @NotNull AssetTree assetTree) throws IOException {
+        @NotNull Asset asset = assetTree.acquireAsset(path);
         ((VanillaAsset) asset).enableTranslatingValuesToBytesStore();
-        String uri = path + "?putReturnsNull=" + putReturnsNull + "&removeReturnsNull=" + removeReturnsNull;
-        RequestContext rc = RequestContext.requestContext(uri);
+        @NotNull String uri = path + "?putReturnsNull=" + putReturnsNull + "&removeReturnsNull=" + removeReturnsNull;
+        @NotNull RequestContext rc = RequestContext.requestContext(uri);
         asset.addView(AuthenticatedKeyValueStore.class, new FilePerKeyValueStore(rc, asset));
-        MapView mapView = assetTree.acquireMap(uri, keyType, valueType);
+        @NotNull MapView mapView = assetTree.acquireMap(uri, keyType, valueType);
         LOGGER.info("Added FilePerKeyMap " + path + ", size: " + mapView.size());
         return null;
     }
@@ -63,6 +65,7 @@ public class FilePerKeyMapCfg implements Installable {
                 .read(() -> "diskPath").text(this, (o, s) -> o.diskPath = s);
     }
 
+    @NotNull
     @Override
     public String toString() {
         return "FilePerKeyMapCfg{" +

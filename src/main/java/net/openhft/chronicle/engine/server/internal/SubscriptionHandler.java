@@ -30,6 +30,7 @@ import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,9 +93,9 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
             final Class subscriptionType = valueIn.typeLiteral();
 
             final StringBuilder sb = Wires.acquireStringBuilder();
-            final ValueIn valueIn1 = valueIn.wireIn().readEventName(sb);
+            @NotNull final ValueIn valueIn1 = valueIn.wireIn().readEventName(sb);
 
-            final Filter filter = "filter".contentEquals(sb) ?
+            @NotNull final Filter filter = "filter".contentEquals(sb) ?
                     valueIn1.object(Filter.class) :
                     Filter.empty();
 
@@ -108,15 +109,15 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
                             publisher :
                             newThrottledWireOutPublisher(requestContext.throttlePeriodMs(), publisher);
 
-            Subscriber<Object> listener = new LocalSubscriber(tid, pub);
+            @NotNull Subscriber<Object> listener = new LocalSubscriber(tid, pub);
             tidToListener.put(tid, listener);
-            RequestContext rc = requestContext.clone().elementType(subscriptionType);
-            final SubscriptionCollection subscription = asset.acquireSubscription(rc);
+            @NotNull RequestContext rc = requestContext.clone().elementType(subscriptionType);
+            @NotNull final SubscriptionCollection subscription = asset.acquireSubscription(rc);
             subscription.registerSubscriber(rc, listener, filter);
             return true;
         }
         if (unregisterSubscriber.contentEquals(eventName)) {
-            Subscriber<Object> listener = (Subscriber) tidToListener.remove(tid);
+            @NotNull Subscriber<Object> listener = (Subscriber) tidToListener.remove(tid);
             if (listener == null) {
                 Jvm.debug().on(getClass(), "No subscriber to present to unregisterSubscriber (" + tid + ")");
                 return true;
@@ -170,7 +171,7 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
             if (subscriptionEnded)
                 return;
 
-            final WriteMarshallable event = p -> {
+            @NotNull final WriteMarshallable event = p -> {
                 p.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(tid));
                 p.writeNotCompleteDocument(false, wire -> wire.write(reply).object(e));
             };
@@ -187,7 +188,7 @@ public class SubscriptionHandler<T extends SubscriptionCollection> extends Abstr
             synchronized (publisher) {
                 if (!publisher.isClosed()) {
                     // no more data.
-                    WriteMarshallable toPublish = publish -> {
+                    @NotNull WriteMarshallable toPublish = publish -> {
                         publish.writeDocument(true, wire -> wire.writeEventName(CoreFields.tid).int64(tid));
                         publish.writeDocument(false, wire ->
                                 wire.writeEventName(ObjectKVSubscriptionHandler.EventId.onEndOfSubscription).text(""));

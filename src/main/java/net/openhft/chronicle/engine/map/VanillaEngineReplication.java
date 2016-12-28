@@ -55,7 +55,9 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
     @NotNull
     private static final ThreadLocal<Instances> threadLocalInstances =
             ThreadLocal.withInitial(Instances::new);
+    @NotNull
     private final KeyValueStore<BytesStore, ReplicationData>[] keyReplicationData;
+    @NotNull
     private final KeyValueStore<IntValue, RemoteNodeReplicationState>
             modIterState;
     private final byte identifier;
@@ -245,11 +247,11 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
     @Override
     public void applyReplication(@NotNull ReplicationEntry replicatedEntry) {
         Instances i = threadLocalInstances.get();
-        BytesStore key = replicatedEntry.key();
+        @Nullable BytesStore key = replicatedEntry.key();
         while (true) {
             KeyValueStore<BytesStore, ReplicationData> keyReplicationData =
                     this.keyReplicationData[segmentForKey.segmentForKey(store, key)];
-            ReplicationData data = keyReplicationData.getUsing(key, i.usingData);
+            @Nullable ReplicationData data = keyReplicationData.getUsing(key, i.usingData);
             if (data != null)
                 i.usingData = data;
             boolean shouldApplyRemoteModification = data == null ||
@@ -286,7 +288,7 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
             if (modificationIterator != null)
                 return modificationIterator;
 
-            final VanillaModificationIterator newModificationIterator =
+            @NotNull final VanillaModificationIterator newModificationIterator =
                     new VanillaModificationIterator(remoteIdentifier);
             modificationIteratorsRequiringSettingBootstrapTimestamp.set(remoteIdentifier);
             resetNextBootstrapTimestamp(remoteIdentifier);
@@ -312,7 +314,7 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
         while (true) {
             KeyValueStore<BytesStore, ReplicationData> keyReplicationData =
                     this.keyReplicationData[segmentForKey.segmentForKey(store, key)];
-            ReplicationData data = keyReplicationData.getUsing(key, i.usingData);
+            @Nullable ReplicationData data = keyReplicationData.getUsing(key, i.usingData);
             if (data != null)
                 i.usingData = data;
             i.newData.copyFrom(data != null ? data : i.zeroData);
@@ -346,8 +348,8 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
     @Override
     public void close() throws IOException {
         try {
-            Throwable throwable = null;
-            for (KeyValueStore<BytesStore, ReplicationData> keyReplicationData :
+            @Nullable Throwable throwable = null;
+            for (@NotNull KeyValueStore<BytesStore, ReplicationData> keyReplicationData :
                     this.keyReplicationData) {
                 try {
                     keyReplicationData.close();
@@ -498,9 +500,11 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
 
         int keyReplicationDataIndex = -1;
         KeyValueStore<BytesStore, ReplicationData> keyReplicationData;
+        @Nullable
         Iterator<BytesStore> keySetIterator;
 
-        public Iterator<BytesStore> keySetIterator(KeyValueStore<BytesStore, ReplicationData>[] keyReplicationData) {
+        @Nullable
+        public Iterator<BytesStore> keySetIterator(@NotNull KeyValueStore<BytesStore, ReplicationData>[] keyReplicationData) {
             if (keySetIterator != null && keySetIterator.hasNext())
                 return keySetIterator;
 
@@ -531,11 +535,11 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
         }
 
         @Override
-        public boolean nextEntry(Consumer<ReplicationEntry> consumer) {
+        public boolean nextEntry(@NotNull Consumer<ReplicationEntry> consumer) {
 
             Instances i = threadLocalInstances.get();
             int count = keyReplicationData.length;
-            Iterator<BytesStore> keySetIterator;
+            @Nullable Iterator<BytesStore> keySetIterator;
 
             for (; ; ) {
                 keySetIterator = i.keySetIterator(keyReplicationData);
@@ -547,7 +551,7 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
                 }
                 count--;
 
-                for (Iterator<BytesStore> keyIt = keySetIterator;
+                for (@Nullable Iterator<BytesStore> keyIt = keySetIterator;
                      keyIt.hasNext(); ) {
                     BytesStore key = keyIt.next();
                     i.usingData = i.keyReplicationData.getUsing(key, i.usingData);
@@ -573,7 +577,7 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
         @Override
         public boolean hasNext() {
             Instances i = threadLocalInstances.get();
-            for (KeyValueStore<BytesStore, ReplicationData> keyReplicationData :
+            for (@NotNull KeyValueStore<BytesStore, ReplicationData> keyReplicationData :
                     VanillaEngineReplication.this.keyReplicationData) {
                 for (Iterator<BytesStore> keyIt = keyReplicationData.keySetIterator();
                      keyIt.hasNext(); ) {
@@ -589,7 +593,7 @@ public class VanillaEngineReplication<K, V, MV, Store extends SubscriptionKeyVal
         @Override
         public void dirtyEntries(long fromTimeStamp) {
             Instances i = threadLocalInstances.get();
-            for (KeyValueStore<BytesStore, ReplicationData> keyReplicationData :
+            for (@NotNull KeyValueStore<BytesStore, ReplicationData> keyReplicationData :
                     VanillaEngineReplication.this.keyReplicationData) {
                 keyReplicationData.keySetIterator().forEachRemaining(key -> {
                     i.usingData = keyReplicationData.getUsing(key, i.usingData);

@@ -24,6 +24,7 @@ import net.openhft.chronicle.engine.cfg.*;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.TextWire;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +41,7 @@ public class EngineMain {
         ClassAliasPool.CLASS_ALIASES.addAlias(iClasses);
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(@NotNull String[] args) throws IOException {
         ChronicleConfig.init();
         addClass(EngineCfg.class);
         addClass(JmxCfg.class);
@@ -51,10 +52,10 @@ public class EngineMain {
         addClass(ChronicleMapCfg.class);
         addClass(MonitorCfg.class);
 
-        String name = args.length > 0 ? args[0] : "engine.yaml";
-        TextWire yaml = TextWire.fromFile(name);
-        Installable installable = (Installable) yaml.readObject();
-        AssetTree assetTree = new VanillaAssetTree(HOST_ID).forServer(false);
+        @NotNull String name = args.length > 0 ? args[0] : "engine.yaml";
+        @NotNull TextWire yaml = TextWire.fromFile(name);
+        @NotNull Installable installable = (Installable) yaml.readObject();
+        @NotNull AssetTree assetTree = new VanillaAssetTree(HOST_ID).forServer(false);
         assetTree.registerSubscriber("", TopologicalEvent.class, e -> LOGGER.info("Tree change " + e));
         try {
             installable.install("/", assetTree);

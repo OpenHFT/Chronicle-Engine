@@ -40,8 +40,8 @@ public class RequestContextInterner {
         StringToRequestContext s = interner[h];
         if (s != null && StringUtils.isEqual(s.name, cs))
             return s.requestContext;
-        String s2 = cs.toString();
-        RequestContext rc = RequestContext.requestContext(cs);
+        @NotNull String s2 = cs.toString();
+        @NotNull RequestContext rc = RequestContext.requestContext(cs);
         rc.seal();
         interner[h] = new StringToRequestContext(s2, rc);
         return rc;

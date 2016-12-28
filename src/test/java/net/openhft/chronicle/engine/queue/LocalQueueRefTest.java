@@ -26,6 +26,7 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -67,11 +68,11 @@ public class LocalQueueRefTest extends ThreadMonitoringTest {
     @Test
     @Ignore("TODO FIX too many results")
     public void test() throws InterruptedException {
-        String uri = "/queue/" + methodName;
+        @NotNull String uri = "/queue/" + methodName;
 
-        final Reference<String> ref = assetTree.acquireReference(uri, String.class);
-        BlockingQueue<String> values = new LinkedBlockingQueue<>();
-        Subscriber<String> subscriber = e -> {
+        @NotNull final Reference<String> ref = assetTree.acquireReference(uri, String.class);
+        @NotNull BlockingQueue<String> values = new LinkedBlockingQueue<>();
+        @Nullable Subscriber<String> subscriber = e -> {
             if (e != null)
                 values.add(e);
         };
@@ -88,11 +89,11 @@ public class LocalQueueRefTest extends ThreadMonitoringTest {
     @Test
     @Ignore("TODO FIX too many results")
     public void test2() throws InterruptedException {
-        String uri = "/queue/" + methodName;
+        @NotNull String uri = "/queue/" + methodName;
         assetTree.acquireQueue(uri, String.class, String.class);
-        final Reference<String> ref = assetTree.acquireReference(uri + "/key", String.class);
-        BlockingQueue<String> values = new LinkedBlockingQueue<>();
-        TopicSubscriber<String, String> subscriber = (topic, message) -> {
+        @NotNull final Reference<String> ref = assetTree.acquireReference(uri + "/key", String.class);
+        @NotNull BlockingQueue<String> values = new LinkedBlockingQueue<>();
+        @Nullable TopicSubscriber<String, String> subscriber = (topic, message) -> {
             if (message != null)
                 values.add(message);
         };

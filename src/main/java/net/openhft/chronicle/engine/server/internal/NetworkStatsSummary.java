@@ -12,6 +12,7 @@ import net.openhft.chronicle.wire.DocumentContext;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
@@ -27,6 +28,7 @@ import static net.openhft.chronicle.wire.Wires.project;
 public class NetworkStatsSummary implements EventHandler {
     private final long index;
     private double alpha = 1.0 / 60.0;
+    @Nullable
     private final RollingChronicleQueue rollingChronicleQueue;
 
     @NotNull
@@ -38,8 +40,8 @@ public class NetworkStatsSummary implements EventHandler {
     public NetworkStatsSummary(@NotNull ChronicleQueueView qv, @NotNull MapView<String, Stats> latestStatsPerClientId) {
         rollingChronicleQueue = qv.chronicleQueue();
         this.latestStatsPerClientId = latestStatsPerClientId;
-        final Collection<Stats> values = this.latestStatsPerClientId.values();
-        final AtomicLong index = new AtomicLong();
+        @NotNull final Collection<Stats> values = this.latestStatsPerClientId.values();
+        @NotNull final AtomicLong index = new AtomicLong();
         values.forEach(v -> index.set(Math.max(index.get(), v.index)));
         this.index = index.get();
 
@@ -60,7 +62,7 @@ public class NetworkStatsSummary implements EventHandler {
                 if (!documentContext.isPresent())
                     return false;
                 StringBuilder sb = Wires.acquireStringBuilder();
-                ValueIn valueIn = documentContext.wire().read(sb);
+                @NotNull ValueIn valueIn = documentContext.wire().read(sb);
                 if ("NetworkStats".contentEquals(sb)) {
                     valueIn.marshallable(ns);
                     final String userId = ns.userId();
@@ -79,12 +81,13 @@ public class NetworkStatsSummary implements EventHandler {
         }
     }
 
+    @NotNull
     private Stats stats0 = new Stats();
 
     private void updateMap(@NotNull NetworkStats ns, final long index) {
 
         final String key = ns.userId();
-        final Stats stats = latestStatsPerClientId.getUsing(key, stats0);
+        @Nullable final Stats stats = latestStatsPerClientId.getUsing(key, stats0);
         if (stats == null) {
             Stats value = project(Stats.class, ns);
             value.writeEma = value.writeBps();
@@ -123,11 +126,13 @@ public class NetworkStatsSummary implements EventHandler {
         double readEma;
         long index;
 
+        @NotNull
         Stats writeEma(double writeEma) {
             this.writeEma = writeEma;
             return this;
         }
 
+        @NotNull
         Stats readEma(double readEma) {
             this.readEma = readEma;
             return this;

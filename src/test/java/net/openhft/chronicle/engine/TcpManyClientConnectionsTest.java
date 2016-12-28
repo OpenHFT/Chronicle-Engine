@@ -25,6 +25,7 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.wire.WireType;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -48,7 +49,9 @@ public class TcpManyClientConnectionsTest extends ThreadMonitoringTest {
     public static final int MAX = 50;
     private static final String NAME = "test";
     private static final String CONNECTION = "host.port.TcpManyConnectionsTest";
+    @NotNull
     private static ConcurrentMap[] maps = new ConcurrentMap[MAX];
+    @NotNull
     private AssetTree[] trees = new AssetTree[MAX];
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
@@ -80,7 +83,7 @@ public class TcpManyClientConnectionsTest extends ThreadMonitoringTest {
     }
 
     private void shutdownTrees() {
-        ExecutorService c = Executors.newCachedThreadPool(
+        @NotNull ExecutorService c = Executors.newCachedThreadPool(
                 new NamedThreadFactory("Tree Closer", true));
         for (int i = 0; i < MAX; i++) {
             final int j = i;
@@ -101,7 +104,7 @@ public class TcpManyClientConnectionsTest extends ThreadMonitoringTest {
     @Test
     public void test() throws IOException, InterruptedException {
 
-        final ExecutorService executorService = Executors.newCachedThreadPool();
+        @NotNull final ExecutorService executorService = Executors.newCachedThreadPool();
 
         for (int i = 0; i < MAX; i++) {
             final int j = i;

@@ -31,6 +31,7 @@ import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +60,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
         public void accept(@NotNull final WireIn inWire, Long inputTid) {
 
             eventName.setLength(0);
-            final ValueIn valueIn = inWire.readEventName(eventName);
+            @NotNull final ValueIn valueIn = inWire.readEventName(eventName);
 
             // receives replication events
             if (CoreFields.lastUpdateTime.contentEquals(eventName)) {
@@ -98,17 +99,17 @@ public class ReplicationHandler<E> extends AbstractHandler {
                         Jvm.debug().on(getClass(), "server : received bootstrap request");
 
                     // receive bootstrap
-                    final Bootstrap inBootstrap = valueIn.typedMarshallable();
+                    @Nullable final Bootstrap inBootstrap = valueIn.typedMarshallable();
                     if (inBootstrap == null)
                         return;
                     final byte id = inBootstrap.identifier();
 
-                    final ModificationIterator mi = replication.acquireModificationIterator(id);
+                    @Nullable final ModificationIterator mi = replication.acquireModificationIterator(id);
                     if (mi != null)
                         mi.dirtyEntries(inBootstrap.lastUpdatedTime());
 
                     // send bootstrap
-                    final Bootstrap outBootstrap = new Bootstrap();
+                    @NotNull final Bootstrap outBootstrap = new Bootstrap();
                     outBootstrap.identifier(hostId.hostId());
                     outBootstrap.lastUpdatedTime(replication.lastModificationTime(id));
                     outWire.writeEventName(bootstrap).typedMarshallable(outBootstrap);
@@ -131,7 +132,7 @@ public class ReplicationHandler<E> extends AbstractHandler {
     void process(@NotNull final WireIn inWire,
                  final WireOutPublisher publisher,
                  final long tid,
-                 final Wire outWire,
+                 @NotNull final Wire outWire,
                  final HostIdentifier hostId,
                  final Replication replication,
                  final EventLoop eventLoop) {

@@ -29,6 +29,7 @@ import net.openhft.chronicle.engine.map.VanillaStringStringKeyValueStore;
 import net.openhft.chronicle.engine.tree.VanillaAsset;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -65,14 +66,14 @@ public class FilePerKeyValueStoreTest {
     @Before
     public void createMap() throws IOException {
         resetChassis();
-        WireType writeType = WireType.TEXT;
+        @NotNull WireType writeType = WireType.TEXT;
         ((VanillaAsset) assetTree().root()).enableTranslatingValuesToBytesStore();
 
-        LeafViewFactory<AuthenticatedKeyValueStore> factory = (context, asset) -> new FilePerKeyValueStore(context.basePath(OS.TARGET).wireType(writeType), asset);
+        @NotNull LeafViewFactory<AuthenticatedKeyValueStore> factory = (context, asset) -> new FilePerKeyValueStore(context.basePath(OS.TARGET).wireType(writeType), asset);
         assetTree().root().addLeafRule(AuthenticatedKeyValueStore.class, "FilePer Key", factory);
 
         map = acquireMap(NAME, String.class, String.class);
-        KeyValueStore mapU = ((VanillaMapView) map).underlying();
+        @Nullable KeyValueStore mapU = ((VanillaMapView) map).underlying();
         assertEquals(VanillaStringStringKeyValueStore.class, mapU.getClass());
         assertEquals(FilePerKeyValueStore.class, mapU.underlying().getClass());
 
@@ -90,7 +91,7 @@ public class FilePerKeyValueStoreTest {
     @Ignore("todo fix")
     @Test
     public void test() throws InterruptedException {
-        List<MapEvent<String, String>> events = new ArrayList<>();
+        @NotNull List<MapEvent<String, String>> events = new ArrayList<>();
         registerSubscriber(NAME, MapEvent.class, events::add);
 
         map.put("testA", "One");

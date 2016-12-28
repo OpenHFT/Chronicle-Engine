@@ -56,12 +56,14 @@ public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
     private final Set<Subscriber<MapEvent<K, V>>> subscribers = new CopyOnWriteArraySet<>();
     private final Set<Subscriber<K>> keySubscribers = new CopyOnWriteArraySet<>();
     private final Set<EventConsumer<K, V>> downstream = new CopyOnWriteArraySet<>();
+    @Nullable
     private final SessionProvider sessionProvider;
 
     @Nullable
     private final Asset asset;
     private final Map<Subscriber, Subscriber> subscriptionDelegate = new IdentityHashMap<>();
     private KeyValueStore<K, V> kvStore;
+    @Nullable
     private Map<String, SubscriptionStat> subscriptionMonitoringMap = null;
 
     public MapKVSSubscription(@NotNull RequestContext requestContext, @NotNull Asset asset) {
@@ -177,7 +179,7 @@ public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
         if (child == null) {
             return;
         }
-        SubscriptionCollection subscription = child.subscription(false);
+        @Nullable SubscriptionCollection subscription = child.subscription(false);
         if (subscription instanceof MapSimpleSubscription) {
 //                    System.out.println(changeEvent.toString().substring(0, 100));
             ((SimpleSubscription) subscription).notifyMessage(changeEvent.getValue());
@@ -194,7 +196,7 @@ public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
     public void registerSubscriber(@NotNull RequestContext rc,
                                    @NotNull Subscriber subscriber,
                                    @NotNull Filter filter) {
-        Class eClass = rc.elementType();
+        @NotNull Class eClass = rc.elementType();
         if (eClass == Entry.class || eClass == MapEvent.class)
             registerSubscriber0(rc, subscriber, filter);
         else
@@ -205,7 +207,7 @@ public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
     @NotNull
     private <T> Subscriber<T> subscriber(@NotNull Subscriber<T> subscriber,
                                          @NotNull Filter<T> filter) {
-        final Subscriber<T> sub;
+        @NotNull final Subscriber<T> sub;
         if (filter.isEmpty())
             sub = subscriber;
         else {
@@ -219,9 +221,9 @@ public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
                                      @NotNull Subscriber<MapEvent<K, V>> subscriber,
                                      @NotNull Filter<MapEvent<K, V>> filter) {
         addToStats("subscription");
-        final Subscriber<MapEvent<K, V>> sub = subscriber(subscriber, filter);
+        @NotNull final Subscriber<MapEvent<K, V>> sub = subscriber(subscriber, filter);
         this.subscribers.add(sub);
-        Boolean bootstrap = rc.bootstrap();
+        @Nullable Boolean bootstrap = rc.bootstrap();
         if (bootstrap != Boolean.FALSE && kvStore != null) {
             try {
                 for (int i = 0; i < kvStore.segments(); i++)
@@ -245,8 +247,8 @@ public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
                                       @NotNull Subscriber<K> subscriber,
                                       @NotNull Filter<K> filter) {
         addToStats("keySubscription");
-        final Boolean bootstrap = rc.bootstrap();
-        final Subscriber<K> sub = subscriber(subscriber, filter);
+        @Nullable final Boolean bootstrap = rc.bootstrap();
+        @NotNull final Subscriber<K> sub = subscriber(subscriber, filter);
         keySubscribers.add(sub);
         if (bootstrap != Boolean.FALSE && kvStore != null) {
             try {
@@ -265,7 +267,7 @@ public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
     @Override
     public void registerTopicSubscriber(@NotNull RequestContext rc, @NotNull TopicSubscriber subscriber) {
         addToStats("topicSubscription");
-        Boolean bootstrap = rc.bootstrap();
+        @Nullable Boolean bootstrap = rc.bootstrap();
         topicSubscribers.add((TopicSubscriber<K, V>) subscriber);
         if (bootstrap != Boolean.FALSE && kvStore != null) {
             try {
@@ -291,7 +293,7 @@ public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
     @Override
     public void unregisterSubscriber(@NotNull Subscriber subscriber) {
         final Subscriber delegate = subscriptionDelegate.remove(subscriber);
-        final Subscriber s = delegate != null ? delegate : subscriber;
+        @NotNull final Subscriber s = delegate != null ? delegate : subscriber;
         boolean subscription = subscribers.remove(s);
         boolean keySubscription = keySubscribers.remove(s);
         if (subscription) removeFromStats("subscription");
@@ -310,9 +312,10 @@ public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
 
     //Needs some refactoring - need a definitive way of knowing when this map should become available
     //3 combinations, not lookedUP, exists or does not exist
+    @Nullable
     private Map getSubscriptionMap() {
         if (subscriptionMonitoringMap != null) return subscriptionMonitoringMap;
-        Asset subscriptionAsset = asset.root().getAsset("proc/subscriptions");
+        @Nullable Asset subscriptionAsset = asset.root().getAsset("proc/subscriptions");
         if (subscriptionAsset != null && subscriptionAsset.getView(MapView.class) != null) {
             subscriptionMonitoringMap = subscriptionAsset.getView(MapView.class);
         }
@@ -322,11 +325,11 @@ public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
     private void addToStats(String subType) {
         if (sessionProvider == null) return;
 
-        SessionDetails sessionDetails = sessionProvider.get();
+        @Nullable SessionDetails sessionDetails = sessionProvider.get();
         if (sessionDetails != null) {
-            String userId = sessionDetails.userId();
+            @Nullable String userId = sessionDetails.userId();
 
-            Map<String, SubscriptionStat> subStats = getSubscriptionMap();
+            @Nullable Map<String, SubscriptionStat> subStats = getSubscriptionMap();
             if (subStats != null) {
                 SubscriptionStat stat = subStats.get(userId + "~" + subType);
                 if (stat == null) {
@@ -344,11 +347,11 @@ public class MapKVSSubscription<K, V> implements ObjectSubscription<K, V>,
     private void removeFromStats(String subType) {
         if (sessionProvider == null) return;
 
-        SessionDetails sessionDetails = sessionProvider.get();
+        @Nullable SessionDetails sessionDetails = sessionProvider.get();
         if (sessionDetails != null) {
-            String userId = sessionDetails.userId();
+            @Nullable String userId = sessionDetails.userId();
 
-            Map<String, SubscriptionStat> subStats = getSubscriptionMap();
+            @Nullable Map<String, SubscriptionStat> subStats = getSubscriptionMap();
             if (subStats != null) {
                 SubscriptionStat stat = subStats.get(userId + "~" + subType);
                 if (stat == null) {

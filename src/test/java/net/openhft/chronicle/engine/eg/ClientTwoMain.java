@@ -24,6 +24,7 @@ import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -48,6 +49,7 @@ mid: 0.641515
 GBPUSD: Price{instrument='GBPEUR', bidPrice=0.64149, bidQuantity=4000000.0, askPrice=0.64154, askQuantity=3000000.0}
  */
 public class ClientTwoMain {
+    @NotNull
     private static AtomicReference<Throwable> t = new AtomicReference();
 
     static {
@@ -57,10 +59,10 @@ public class ClientTwoMain {
 
     public static void main(String[] args) {
         YamlLogging.setAll(false);
-        VanillaAssetTree assetTree = new VanillaAssetTree().forRemoteAccess("localhost:9090",
+        @NotNull VanillaAssetTree assetTree = new VanillaAssetTree().forRemoteAccess("localhost:9090",
                 WireType.TEXT);
 
-        MapView<String, Price> map = assetTree.acquireMap("/fx", String.class, Price.class);
+        @NotNull MapView<String, Price> map = assetTree.acquireMap("/fx", String.class, Price.class);
         map.put("GBPEUR", new Price("GBPEUR", 0.71023, 1e6, 0.71024, 2e6));
         map.put("GBPUSD", new Price("GBPEUR", 0.64153, 3e6, 0.64154, 2e6));
         map.put("EURUSD", new Price("EURUSD", 0.90296, 5e6, 0.90299, 4e6));

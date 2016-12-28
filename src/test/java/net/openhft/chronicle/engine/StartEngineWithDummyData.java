@@ -13,6 +13,7 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.AbstractMarshallable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -32,7 +33,9 @@ import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContex
 class StartEngineWithDummyData {
 
     private static final String NAME = "throughputTest";
+    @Nullable
     private static VanillaAssetTree TREE1 = EngineInstance.engineMain(1, "single-host-engine.yaml");
+    @Nullable
     private static VanillaAssetTree TREE2 = EngineInstance.engineMain(2, "single-host-engine.yaml");
     private static String CLUSTER_NAME = EngineInstance.firstClusterName(TREE2);
 
@@ -53,7 +56,7 @@ class StartEngineWithDummyData {
         LockSupport.park();
     }
 
-    public static void addSampleDataToTree(final VanillaAssetTree tree) {
+    public static void addSampleDataToTree(@NotNull final VanillaAssetTree tree) {
 
         addMyNumbers(tree);
         addApplShares(tree);
@@ -62,7 +65,7 @@ class StartEngineWithDummyData {
     }
 
 
-    private static void addCountryNumerics(VanillaAssetTree tree) {
+    private static void addCountryNumerics(@NotNull VanillaAssetTree tree) {
         @NotNull MapView<String, String> mapView = tree.acquireMap("/my/demo", String.class,
                 String.class);
         mapView.put("AED", "United Arab Emirates dirham");
@@ -394,21 +397,21 @@ class StartEngineWithDummyData {
         mapView.put("XAG", "Silver (one troy ounce)");
     }
 
-    private static void addApplShares(VanillaAssetTree tree) {
+    private static void addApplShares(@NotNull VanillaAssetTree tree) {
 
 
-        String csp = "/queue/shares/APPL";
+        @NotNull String csp = "/queue/shares/APPL";
 
-        QueueView<String, MarketData2> q = tree.acquireQueue
+        @NotNull QueueView<String, MarketData2> q = tree.acquireQueue
                 (csp, String.class, MarketData2.class, CLUSTER_NAME);
 
-        VanillaVaadinChart barChart = tree.acquireView(requestContext(csp).view("Chart"));
+        @NotNull VanillaVaadinChart barChart = tree.acquireView(requestContext(csp).view("Chart"));
         barChart.columnNameField("date");
         barChart.series(new VaadinChartSeries("volume"));
         barChart.dataSource(q);
 
 
-        final ChartProperties chartProperties = new ChartProperties();
+        @NotNull final ChartProperties chartProperties = new ChartProperties();
         chartProperties.title = "APPL Volume";
         chartProperties.menuLabel = "volume";
         barChart.chartProperties(chartProperties);
@@ -467,7 +470,7 @@ class StartEngineWithDummyData {
         }
     }
 
-    private static void addMyNumbers(VanillaAssetTree tree) {
+    private static void addMyNumbers(@NotNull VanillaAssetTree tree) {
         @NotNull MapView<Integer, Double> intView = tree.acquireMap(
                 "/my/numbers",
                 Integer.class,
@@ -480,17 +483,17 @@ class StartEngineWithDummyData {
         @NotNull
         SimpleDateFormat sd = new SimpleDateFormat("dd MMM yyyy");
 
-        final String csp = "/shares/APPL";
+        @NotNull final String csp = "/shares/APPL";
         @NotNull
         MapView<Date, MarketData> map = tree.acquireMap(csp, Date.class, MarketData.class);
 
-        final VanillaVaadinChart barChart = tree.acquireView(requestContext(csp).view("Chart"));
+        @NotNull final VanillaVaadinChart barChart = tree.acquireView(requestContext(csp).view("Chart"));
         barChart.columnNameField("key");
-        VaadinChartSeries high = new VaadinChartSeries("high").type(SPLINE).yAxisLabel("price");
-        VaadinChartSeries low = new VaadinChartSeries("low").type(SPLINE).yAxisLabel("price");
+        @NotNull VaadinChartSeries high = new VaadinChartSeries("high").type(SPLINE).yAxisLabel("price");
+        @NotNull VaadinChartSeries low = new VaadinChartSeries("low").type(SPLINE).yAxisLabel("price");
         barChart.series(low, high);
 
-        final ChartProperties chartProperties = new ChartProperties();
+        @NotNull final ChartProperties chartProperties = new ChartProperties();
         chartProperties.title = "APPL High / Low";
         chartProperties.menuLabel = "high/low";
         barChart.chartProperties(chartProperties);
@@ -561,7 +564,7 @@ class StartEngineWithDummyData {
         resetExceptionHandlers();
         disableDebugHandler();
 
-        final String uri1 = "/queue/throughput/replicated";
+        @NotNull final String uri1 = "/queue/throughput/replicated";
 
         @NotNull
 
@@ -579,7 +582,7 @@ class StartEngineWithDummyData {
             throughput(0, false, CLUSTER_NAME);
         } catch (Throwable e) {
             e.printStackTrace();
-            Map<ExceptionKey, Integer> ex = new HashMap<ExceptionKey, Integer>();
+            @NotNull Map<ExceptionKey, Integer> ex = new HashMap<ExceptionKey, Integer>();
             dumpException(ex);
             System.out.println(ex);
         }

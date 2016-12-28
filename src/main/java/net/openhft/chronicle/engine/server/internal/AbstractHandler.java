@@ -56,7 +56,7 @@ abstract class AbstractHandler {
      */
     void writeData(@NotNull WireIn wireIn, @NotNull WriteMarshallable c) {
 
-        Bytes inBytes = wireIn.bytes();
+        @NotNull Bytes inBytes = wireIn.bytes();
         outWire.writeDocument(false, out -> {
             final long readPosition = inBytes.readPosition();
             final long position = outWire.bytes().writePosition();
@@ -89,7 +89,7 @@ abstract class AbstractHandler {
      */
     void writeData(boolean isNotComplete, @NotNull Bytes inBytes, @NotNull WriteMarshallable c) {
 
-        final WriteMarshallable marshallable = out -> {
+        @NotNull final WriteMarshallable marshallable = out -> {
             final long readPosition = inBytes.readPosition();
             final long position = outWire.bytes().writePosition();
             try {
@@ -153,7 +153,8 @@ abstract class AbstractHandler {
      * @return If the throttlePeriodMs is set returns a throttled wire out publisher, otherwise the
      * origional
      */
-    WireOutPublisher publisher(final WireOutPublisher publisher) {
+    @NotNull
+    WireOutPublisher publisher(@NotNull final WireOutPublisher publisher) {
         return requestContext.throttlePeriodMs() == 0 ?
                 publisher :
                 newThrottledWireOutPublisher(requestContext.throttlePeriodMs(), publisher);

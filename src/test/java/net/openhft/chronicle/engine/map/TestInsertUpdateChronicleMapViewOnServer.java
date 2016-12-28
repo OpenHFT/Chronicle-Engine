@@ -50,6 +50,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 @RunWith(value = Parameterized.class)
 public class TestInsertUpdateChronicleMapViewOnServer extends ThreadMonitoringTest {
 
+    @NotNull
     public String connection = "RemoteSubscriptionTest.host.port";
     @NotNull
 
@@ -61,9 +62,10 @@ public class TestInsertUpdateChronicleMapViewOnServer extends ThreadMonitoringTe
 
     }
 
+    @NotNull
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
-        final List<Object[]> list = new ArrayList<>();
+        @NotNull final List<Object[]> list = new ArrayList<>();
         list.add(new Object[]{WireType.BINARY});
         list.add(new Object[]{WireType.TEXT});
         return list;
@@ -102,12 +104,12 @@ public class TestInsertUpdateChronicleMapViewOnServer extends ThreadMonitoringTe
     @Test
     public void testInsertFollowedByUpdate() throws InterruptedException {
 
-        final MapView<String, String> serverMap = serverAssetTree.acquireMap
+        @NotNull final MapView<String, String> serverMap = serverAssetTree.acquireMap
                 ("name?putReturnsNull=false",
                         String.class, String
                                 .class);
 
-        final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(1);
+        @NotNull final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(1);
         clientAssetTree.registerSubscriber("name?putReturnsNull=false", MapEvent.class,
                 events::add);
 
@@ -126,12 +128,12 @@ public class TestInsertUpdateChronicleMapViewOnServer extends ThreadMonitoringTe
     @Test
     public void testInsertFollowedByUpdateWhenPutReturnsNullTrue() throws InterruptedException {
 
-        final MapView<String, String> serverMap = serverAssetTree.acquireMap
+        @NotNull final MapView<String, String> serverMap = serverAssetTree.acquireMap
                 ("name?putReturnsNull=true",
                         String.class, String
                                 .class);
 
-        final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(1);
+        @NotNull final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(1);
         clientAssetTree.registerSubscriber("name?putReturnsNull=true", MapEvent.class,
                 events::add);
 

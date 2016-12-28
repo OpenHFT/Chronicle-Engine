@@ -67,7 +67,7 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
     }
 
     private static String toUri(String fullName, Class messageClass) {
-        StringBuilder uri = new StringBuilder();
+        @NotNull StringBuilder uri = new StringBuilder();
         uri.append(fullName).append("?view=reference");
 
         if (messageClass != String.class)
@@ -140,7 +140,7 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
         if (hub.outBytesLock().isHeldByCurrentThread())
             throw new IllegalStateException("Cannot view map while debugging");
 
-        final AbstractAsyncSubscription asyncSubscription = new AbstractAsyncSubscription(hub,
+        @NotNull final AbstractAsyncSubscription asyncSubscription = new AbstractAsyncSubscription(hub,
                 csp + "&bootstrap=" + bootstrap + "&throttlePeriodMs=" + throttlePeriodMs,
                 "Remote Ref registerSubscriber") {
 
@@ -154,7 +154,7 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
             public void onConsumer(@NotNull final WireIn w) {
                 w.readDocument(null, d -> {
                     final StringBuilder eventname = Wires.acquireStringBuilder();
-                    final ValueIn valueIn = d.readEventName(eventname);
+                    @NotNull final ValueIn valueIn = d.readEventName(eventname);
 
                     if (EventId.onEndOfSubscription.contentEquals(eventname)) {
                         subscriber.onEndOfSubscription();
@@ -162,7 +162,7 @@ public class RemoteReference<E> extends AbstractStatelessClient<ReferenceHandler
                         hub.unsubscribe(tid());
                     } else if (CoreFields.reply.contentEquals(eventname)) {
                         valueIn.marshallable(m -> {
-                            final E message = m.read(() -> "message").object(messageClass);
+                            @Nullable final E message = m.read(() -> "message").object(messageClass);
                             RemoteReference.this.onEvent(message, subscriber);
                         });
                     }

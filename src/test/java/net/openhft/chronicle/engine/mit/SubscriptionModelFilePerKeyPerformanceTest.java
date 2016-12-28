@@ -30,6 +30,8 @@ import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.map.AuthenticatedKeyValueStore;
 import net.openhft.chronicle.engine.map.FilePerKeyValueStore;
 import net.openhft.chronicle.engine.tree.VanillaAsset;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.*;
 
 import java.io.Closeable;
@@ -49,12 +51,13 @@ public class SubscriptionModelFilePerKeyPerformanceTest {
     private static String _twoMbTestString;
     private static int _twoMbTestStringLength;
     private static Map<String, String> _testMap;
+    @NotNull
     private static String _mapName = "PerfTestMap";
     private ThreadDump threadDump;
 
     @BeforeClass
     public static void setUpBeforeClass() {
-        char[] chars = new char[2 << 20];
+        @NotNull char[] chars = new char[2 << 20];
         Arrays.fill(chars, '~');
         _twoMbTestString = new String(chars);
         _twoMbTestStringLength = _twoMbTestString.length();
@@ -76,7 +79,7 @@ public class SubscriptionModelFilePerKeyPerformanceTest {
 
         ((VanillaAsset) Chassis.assetTree().root()).enableTranslatingValuesToBytesStore();
 
-        String basePath = OS.TARGET + "/fpk/" + counter.getAndIncrement();
+        @NotNull String basePath = OS.TARGET + "/fpk/" + counter.getAndIncrement();
         System.out.println("Writing to " + basePath);
         Chassis.assetTree().root().addLeafRule(AuthenticatedKeyValueStore.class, "FilePer Key",
                 (context, asset) -> new FilePerKeyValueStore(context.basePath(basePath), asset));
@@ -100,11 +103,11 @@ public class SubscriptionModelFilePerKeyPerformanceTest {
         String key = TestUtils.getKey(_mapName, 0);
 
         //Create subscriber and register
-        TestChronicleKeyEventSubscriber keyEventSubscriber = new TestChronicleKeyEventSubscriber(_twoMbTestStringLength);
+        @NotNull TestChronicleKeyEventSubscriber keyEventSubscriber = new TestChronicleKeyEventSubscriber(_twoMbTestStringLength);
 
         Chassis.registerSubscriber(_mapName + "?bootstrap=false", MapEvent.class, me -> keyEventSubscriber.onMessage((String) me.getValue()));
 
-        AtomicInteger counter = new AtomicInteger();
+        @NotNull AtomicInteger counter = new AtomicInteger();
         //Perform test a number of times to allow the JVM to warm up, but verify runtime against average
         TestUtils.runMultipleTimesAndVerifyAvgRuntime(i ->
                         keyEventSubscriber.waitForEvents(_noOfPuts * i, 0.1),
@@ -125,7 +128,7 @@ public class SubscriptionModelFilePerKeyPerformanceTest {
         String key = TestUtils.getKey(_mapName, 0);
 
         //Create subscriber and register
-        TestChronicleTopicSubscriber topicSubscriber = new TestChronicleTopicSubscriber(key, _twoMbTestStringLength);
+        @NotNull TestChronicleTopicSubscriber topicSubscriber = new TestChronicleTopicSubscriber(key, _twoMbTestStringLength);
 
         Chassis.registerTopicSubscriber(_mapName, String.class, String.class, topicSubscriber);
 
@@ -149,7 +152,7 @@ public class SubscriptionModelFilePerKeyPerformanceTest {
     @Test
     public void testSubscriptionMapEventListenerInsertPerformance() {
         //Create subscriber and register
-        TestChronicleMapEventListener mapEventListener = new TestChronicleMapEventListener(_mapName, _twoMbTestStringLength);
+        @NotNull TestChronicleMapEventListener mapEventListener = new TestChronicleMapEventListener(_mapName, _twoMbTestStringLength);
         Chassis.registerSubscriber(_mapName, MapEvent.class, e -> e.apply(mapEventListener));
 
         //Perform test a number of times to allow the JVM to warm up, but verify runtime against average
@@ -180,7 +183,7 @@ public class SubscriptionModelFilePerKeyPerformanceTest {
     @Test
     public void testSubscriptionMapEventListenerUpdatePerformance() {
         //Put values before testing as we want to ignore the insert events
-        Function<Integer, Object> putFunction = a -> _testMap.put(TestUtils.getKey(_mapName, a), System.nanoTime() + _twoMbTestString);
+        @NotNull Function<Integer, Object> putFunction = a -> _testMap.put(TestUtils.getKey(_mapName, a), System.nanoTime() + _twoMbTestString);
 
         IntStream.range(0, _noOfPuts).parallel().forEach(i ->
         {
@@ -188,7 +191,7 @@ public class SubscriptionModelFilePerKeyPerformanceTest {
         });
 
         //Create subscriber and register
-        TestChronicleMapEventListener mapEventListener = new TestChronicleMapEventListener(_mapName, _twoMbTestStringLength);
+        @NotNull TestChronicleMapEventListener mapEventListener = new TestChronicleMapEventListener(_mapName, _twoMbTestStringLength);
 
         Chassis.registerSubscriber(_mapName + "?bootstrap=false", MapEvent.class, e -> e.apply(mapEventListener));
 
@@ -221,7 +224,7 @@ public class SubscriptionModelFilePerKeyPerformanceTest {
         //Put values before testing as we want to ignore the insert and update events
 
         //Create subscriber and register
-        TestChronicleMapEventListener mapEventListener = new TestChronicleMapEventListener(_mapName, _twoMbTestStringLength);
+        @NotNull TestChronicleMapEventListener mapEventListener = new TestChronicleMapEventListener(_mapName, _twoMbTestStringLength);
 
         Chassis.registerSubscriber(_mapName + "?bootstrap=false", MapEvent.class, e -> e.apply(mapEventListener));
 
@@ -267,18 +270,20 @@ public class SubscriptionModelFilePerKeyPerformanceTest {
      */
     class TestChronicleKeyEventSubscriber implements Subscriber<String> {
         private int _stringLength;
+        @NotNull
         private AtomicInteger _noOfEvents = new AtomicInteger(0);
 
         public TestChronicleKeyEventSubscriber(int stringLength) {
             _stringLength = stringLength;
         }
 
+        @NotNull
         public AtomicInteger getNoOfEvents() {
             return _noOfEvents;
         }
 
         @Override
-        public void onMessage(String newValue) {
+        public void onMessage(@NotNull String newValue) {
             try {
                 Assert.assertEquals(_stringLength + 2, newValue.length(), 1);
             } catch (Error e) {
@@ -306,6 +311,7 @@ public class SubscriptionModelFilePerKeyPerformanceTest {
     class TestChronicleTopicSubscriber implements TopicSubscriber<String, String> {
         private String _keyName;
         private int _stringLength;
+        @NotNull
         private AtomicInteger _noOfEvents = new AtomicInteger(0);
 
         public TestChronicleTopicSubscriber(String keyName, int stringLength) {
@@ -319,7 +325,7 @@ public class SubscriptionModelFilePerKeyPerformanceTest {
          * @throws InvalidSubscriberException
          */
         @Override
-        public void onMessage(String topic, String message) throws InvalidSubscriberException {
+        public void onMessage(String topic, @Nullable String message) throws InvalidSubscriberException {
             if (message == null) {
                 System.out.println("topic " + topic + " deleted?");
                 return;
@@ -330,6 +336,7 @@ public class SubscriptionModelFilePerKeyPerformanceTest {
             _noOfEvents.incrementAndGet();
         }
 
+        @NotNull
         public AtomicInteger getNoOfEvents() {
             return _noOfEvents;
         }
@@ -351,8 +358,11 @@ public class SubscriptionModelFilePerKeyPerformanceTest {
      * Increments event specific counters that can be used to check agains the expected number of events.
      */
     class TestChronicleMapEventListener implements MapEventListener<String, String> {
+        @NotNull
         private AtomicInteger _noOfInsertEvents = new AtomicInteger(0);
+        @NotNull
         private AtomicInteger _noOfUpdateEvents = new AtomicInteger(0);
+        @NotNull
         private AtomicInteger _noOfRemoveEvents = new AtomicInteger(0);
         private Set<String> mapsUpdated = Collections.synchronizedSet(new TreeSet<>());
 
@@ -379,14 +389,17 @@ public class SubscriptionModelFilePerKeyPerformanceTest {
             testKeyAndValue(key, value, _noOfRemoveEvents);
         }
 
+        @NotNull
         public AtomicInteger getNoOfInsertEvents() {
             return _noOfInsertEvents;
         }
 
+        @NotNull
         public AtomicInteger getNoOfUpdateEvents() {
             return _noOfUpdateEvents;
         }
 
+        @NotNull
         public AtomicInteger getNoOfRemoveEvents() {
             return _noOfRemoveEvents;
         }
@@ -398,7 +411,7 @@ public class SubscriptionModelFilePerKeyPerformanceTest {
             mapsUpdated.clear();
         }
 
-        private void testKeyAndValue(String key, String value, AtomicInteger counterToIncrement) {
+        private void testKeyAndValue(String key, @Nullable String value, @NotNull AtomicInteger counterToIncrement) {
 //            System.out.println("key: " + key);
             counterToIncrement.getAndIncrement();
             mapsUpdated.add(key);
@@ -419,6 +432,7 @@ public class SubscriptionModelFilePerKeyPerformanceTest {
             Assert.assertEquals(toString(), noOfMaps, mapsUpdated.size());
         }
 
+        @NotNull
         @Override
         public String toString() {
             return "TestChronicleMapEventListener{" +

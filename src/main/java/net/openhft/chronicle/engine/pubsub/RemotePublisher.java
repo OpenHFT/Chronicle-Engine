@@ -68,7 +68,7 @@ public class RemotePublisher<T, M> extends AbstractStatelessClient<EventId> impl
     }
 
     private static String toUri(@NotNull final RequestContext context) {
-        final StringBuilder uri = new StringBuilder(context.fullName()
+        @NotNull final StringBuilder uri = new StringBuilder(context.fullName()
                 + "?view=publisher");
 
         if (context.messageType() != String.class)
@@ -119,7 +119,7 @@ public class RemotePublisher<T, M> extends AbstractStatelessClient<EventId> impl
     }
 
     @Override
-    public void registerSubscriber(boolean bootstrap, int throttlePeriodMs, Subscriber<M> subscriber)
+    public void registerSubscriber(boolean bootstrap, int throttlePeriodMs, @NotNull Subscriber<M> subscriber)
             throws AssetNotFoundException {
 
         if (hub.outBytesLock().isHeldByCurrentThread())
@@ -138,7 +138,7 @@ public class RemotePublisher<T, M> extends AbstractStatelessClient<EventId> impl
                 w.readDocument(null, d -> {
 
                     final StringBuilder eventname = Wires.acquireStringBuilder();
-                    final ValueIn valueIn = d.readEventName(eventname);
+                    @NotNull final ValueIn valueIn = d.readEventName(eventname);
 
                     if (onEndOfSubscription.contentEquals(eventname)) {
                         subscriber.onEndOfSubscription();
@@ -147,7 +147,7 @@ public class RemotePublisher<T, M> extends AbstractStatelessClient<EventId> impl
                     } else if (CoreFields.reply.contentEquals(eventname)) {
                         valueIn.marshallable(m -> {
                             try {
-                                final M message = m.read(() -> "message").object(messageClass);
+                                @Nullable final M message = m.read(() -> "message").object(messageClass);
                                 RemotePublisher.this.onEvent(message, subscriber);
                             } catch (InvalidSubscriberException e) {
                                 throw Jvm.rethrow(e);

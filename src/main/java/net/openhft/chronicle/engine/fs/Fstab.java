@@ -22,6 +22,7 @@ import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Map.Entry;
@@ -36,17 +37,17 @@ public class Fstab implements Marshallable {
 
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IllegalStateException {
-        StringBuilder mountDesc = new StringBuilder();
+        @NotNull StringBuilder mountDesc = new StringBuilder();
 
         while (!wire.isEmpty()) {
-            MountPoint mp = wire.readEventName(mountDesc).typedMarshallable();
+            @Nullable MountPoint mp = wire.readEventName(mountDesc).typedMarshallable();
             mounts.put(mountDesc.toString(), mp);
         }
     }
 
     @Override
     public void writeMarshallable(@NotNull WireOut wire) {
-        for (Entry<String, MountPoint> entry : mounts.entrySet())
+        for (@NotNull Entry<String, MountPoint> entry : mounts.entrySet())
             wire.writeEventName(entry::getKey).typedMarshallable(entry.getValue());
     }
 

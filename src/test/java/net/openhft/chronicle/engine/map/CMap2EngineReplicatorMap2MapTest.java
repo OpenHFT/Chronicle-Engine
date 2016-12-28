@@ -76,22 +76,22 @@ public class CMap2EngineReplicatorMap2MapTest {
     @Test
     public void testLocalPut() {
 
-        final ModificationIterator iterator1for2 = replicator1.acquireModificationIterator
+        @Nullable final ModificationIterator iterator1for2 = replicator1.acquireModificationIterator
                 (replicator2.identifier());
 
-        final ModificationIterator iterator1for3 = replicator1.acquireModificationIterator
+        @Nullable final ModificationIterator iterator1for3 = replicator1.acquireModificationIterator
                 (replicator3.identifier());
 
-        final ModificationIterator iterator2for1 = replicator2.acquireModificationIterator
+        @Nullable final ModificationIterator iterator2for1 = replicator2.acquireModificationIterator
                 (replicator1.identifier());
 
-        final ModificationIterator iterator2for3 = replicator2.acquireModificationIterator
+        @Nullable final ModificationIterator iterator2for3 = replicator2.acquireModificationIterator
                 (replicator3.identifier());
 
-        final ModificationIterator iterator3for1 = replicator3.acquireModificationIterator
+        @Nullable final ModificationIterator iterator3for1 = replicator3.acquireModificationIterator
                 (replicator1.identifier());
 
-        final ModificationIterator iterator3for2 = replicator3.acquireModificationIterator
+        @Nullable final ModificationIterator iterator3for2 = replicator3.acquireModificationIterator
                 (replicator2.identifier());
 
         map1.put("hello1", "world1");
@@ -119,7 +119,7 @@ public class CMap2EngineReplicatorMap2MapTest {
             iterator3for2.nextEntry(replicator2::applyReplication);
         }
 
-        for (Map m : new Map[]{map1, map2, map3}) {
+        for (@org.jetbrains.annotations.NotNull Map m : new Map[]{map1, map2, map3}) {
             Assert.assertEquals("world1", m.get("hello1"));
             Assert.assertEquals("world2", m.get("hello2"));
             Assert.assertEquals("world3", m.get("hello3"));
@@ -137,22 +137,22 @@ public class CMap2EngineReplicatorMap2MapTest {
         map2.put("hello2", "world2");
         map3.put("hello3", "world3");
 
-        final ModificationIterator iterator1for2 = replicator1.acquireModificationIterator
+        @Nullable final ModificationIterator iterator1for2 = replicator1.acquireModificationIterator
                 (replicator2.identifier());
 
-        final ModificationIterator iterator1for3 = replicator1.acquireModificationIterator
+        @Nullable final ModificationIterator iterator1for3 = replicator1.acquireModificationIterator
                 (replicator3.identifier());
 
-        final ModificationIterator iterator2for1 = replicator2.acquireModificationIterator
+        @Nullable final ModificationIterator iterator2for1 = replicator2.acquireModificationIterator
                 (replicator1.identifier());
 
-        final ModificationIterator iterator2for3 = replicator2.acquireModificationIterator
+        @Nullable final ModificationIterator iterator2for3 = replicator2.acquireModificationIterator
                 (replicator3.identifier());
 
-        final ModificationIterator iterator3for1 = replicator3.acquireModificationIterator
+        @Nullable final ModificationIterator iterator3for1 = replicator3.acquireModificationIterator
                 (replicator1.identifier());
 
-        final ModificationIterator iterator3for2 = replicator3.acquireModificationIterator
+        @Nullable final ModificationIterator iterator3for2 = replicator3.acquireModificationIterator
                 (replicator2.identifier());
 
         iterator1for2.dirtyEntries(0);
@@ -186,7 +186,7 @@ public class CMap2EngineReplicatorMap2MapTest {
             iterator3for2.nextEntry(replicator2::applyReplication);
         }
 
-        for (Map m : new Map[]{map1, map2, map3}) {
+        for (@org.jetbrains.annotations.NotNull Map m : new Map[]{map1, map2, map3}) {
             Assert.assertEquals("world1", m.get("hello1"));
             Assert.assertEquals("world2", m.get("hello2"));
             Assert.assertEquals("world3", m.get("hello3"));

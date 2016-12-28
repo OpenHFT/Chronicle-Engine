@@ -31,6 +31,7 @@ import net.openhft.chronicle.network.connection.WireOutConsumer;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,7 +59,7 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
     private final BiConsumer<WireIn, Long> dataConsumer = (inWire, inputTid) -> {
 
         eventName.setLength(0);
-        final ValueIn valueIn = inWire.readEventName(eventName);
+        @NotNull final ValueIn valueIn = inWire.readEventName(eventName);
 
         if (registerSubscriber.contentEquals(eventName)) {
             if (tidToListener.containsKey(tid)) {
@@ -66,13 +67,13 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
                 return;
             }
 
-            final ConsumingSubscriber<IndexedValue<V>> listener = new ConsumingSubscriber<IndexedValue<V>>() {
+            @NotNull final ConsumingSubscriber<IndexedValue<V>> listener = new ConsumingSubscriber<IndexedValue<V>>() {
 
                 volatile WireOutConsumer wireOutConsumer;
                 volatile boolean subscriptionEnded;
 
                 @Override
-                public void onMessage(IndexedValue indexedEntry) throws InvalidSubscriberException {
+                public void onMessage(@NotNull IndexedValue indexedEntry) throws InvalidSubscriberException {
 
                     if (publisher.isClosed())
                         throw new InvalidSubscriberException();
@@ -103,7 +104,7 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
                  *                        publishes writes the data
                  *                        directly to the socket
                  */
-                public void addSupplier(Supplier<Marshallable> supplier) {
+                public void addSupplier(@NotNull Supplier<Marshallable> supplier) {
                     publisher.addWireConsumer(wireOut -> {
 
                         Marshallable marshallable = supplier.get();
@@ -126,7 +127,7 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
                 }
             };
 
-            final VanillaIndexQuery<V> query = valueIn.typedMarshallable();
+            @Nullable final VanillaIndexQuery<V> query = valueIn.typedMarshallable();
 
             if (query.select().isEmpty() || query.valueClass() == null) {
                 Jvm.debug().on(getClass(), "received empty query");
@@ -140,7 +141,7 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
                 return;
             }
 
-            final IndexQueueView<ConsumingSubscriber<IndexedValue<V>>, V> indexQueueView =
+            @NotNull final IndexQueueView<ConsumingSubscriber<IndexedValue<V>>, V> indexQueueView =
                     contextAsset.acquireView(IndexQueueView.class);
             indexQueueView.registerSubscriber(listener, query);
             return;
@@ -148,7 +149,7 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
 
         if (unregisterSubscriber.contentEquals(eventName)) {
 
-            VanillaIndexQueueView<V> indexQueueView = contextAsset.acquireView(VanillaIndexQueueView.class);
+            @NotNull VanillaIndexQueueView<V> indexQueueView = contextAsset.acquireView(VanillaIndexQueueView.class);
             ConsumingSubscriber<IndexedValue<V>> listener = tidToListener.remove(inputTid);
 
             if (listener == null) {
@@ -169,7 +170,7 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
 
     @Override
     protected void unregisterAll() {
-        final VanillaIndexQueueView<V> indexQueueView = contextAsset.acquireView(VanillaIndexQueueView.class);
+        @NotNull final VanillaIndexQueueView<V> indexQueueView = contextAsset.acquireView(VanillaIndexQueueView.class);
         tidToListener.forEach((k, listener) -> indexQueueView.unregisterSubscriber(listener));
         tidToListener.clear();
     }

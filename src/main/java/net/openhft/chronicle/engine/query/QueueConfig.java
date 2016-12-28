@@ -29,9 +29,12 @@ import java.util.function.Function;
  */
 public class QueueConfig {
 
+    @NotNull
     private final Function<String, Integer> sourceB;
     private final boolean acknowledgment;
+    @Nullable
     private final MessageAdaptor messageAdaptor;
+    @NotNull
     private final WireType wireType;
 
     /**
@@ -57,6 +60,7 @@ public class QueueConfig {
         return acknowledgment;
     }
 
+    @Nullable
     public MessageAdaptor bytesFunction() {
         return messageAdaptor;
     }

@@ -27,6 +27,7 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -90,7 +91,7 @@ public class MapBootstrapTest extends ThreadMonitoringTest {
      */
     @Test(expected = java.lang.UnsupportedOperationException.class)
     public void testAcquireMapBootstrap() throws InterruptedException {
-        final Map<String, String> map1 = client.acquireMap(NAME, String.class, String.class);
+        @NotNull final Map<String, String> map1 = client.acquireMap(NAME, String.class, String.class);
         map1.put("pre-boostrap", "value");
         client.acquireMap(NAME + "?bootstrap=false", String.class, String.class);
     }
@@ -105,10 +106,10 @@ public class MapBootstrapTest extends ThreadMonitoringTest {
     @Test
     public void testTopicSubscriptionBootstrapFalse() throws InterruptedException {
 
-        final Map<String, String> map1 = client.acquireMap(NAME, String.class, String.class);
+        @NotNull final Map<String, String> map1 = client.acquireMap(NAME, String.class, String.class);
         map1.put("pre-bootstrap", "pre-bootstrap");
 
-        final BlockingQueue<String> q2 = new ArrayBlockingQueue<>(1);
+        @NotNull final BlockingQueue<String> q2 = new ArrayBlockingQueue<>(1);
 
         YamlLogging.setAll(false);
 

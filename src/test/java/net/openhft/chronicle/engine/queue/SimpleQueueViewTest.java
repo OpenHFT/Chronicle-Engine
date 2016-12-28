@@ -34,6 +34,7 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.*;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
@@ -66,13 +67,17 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     }
 
     private final boolean isRemote;
+    @NotNull
     private final WireType wireType;
     @NotNull
     @Rule
     public TestName name = new TestName();
+    @NotNull
     String methodName = "";
     private AssetTree assetTree;
+    @Nullable
     private ServerEndpoint serverEndpoint;
+    @Nullable
     private AssetTree serverAssetTree;
 
     public SimpleQueueViewTest(Boolean isRemote) {
@@ -87,9 +92,9 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         });
     }
 
-    public static void deleteFiles(File element) {
+    public static void deleteFiles(@NotNull File element) {
         if (element.isDirectory()) {
-            for (File sub : element.listFiles()) {
+            for (@NotNull File sub : element.listFiles()) {
                 deleteFiles(sub);
             }
         }
@@ -107,11 +112,11 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         if (isRemote) {
             serverAssetTree = new VanillaAssetTree().forTesting();
 
-            String hostPortDescription = "SimpleQueueViewTest-methodName" + methodName + wireType;
+            @NotNull String hostPortDescription = "SimpleQueueViewTest-methodName" + methodName + wireType;
             TCPRegistry.createServerSocketChannelFor(hostPortDescription);
             serverEndpoint = new ServerEndpoint(hostPortDescription, serverAssetTree);
 
-            final VanillaAssetTree client = new VanillaAssetTree();
+            @NotNull final VanillaAssetTree client = new VanillaAssetTree();
             assetTree = client.forRemoteAccess(hostPortDescription, WireType.BINARY);
 
         } else {
@@ -138,12 +143,12 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     @Test
     public void testStringTopicPublisherWithSubscribe() throws InterruptedException {
         //YamlLogging.setAll(true);
-        String uri = "/queue/" + methodName;
-        String messageType = "topic";
+        @NotNull String uri = "/queue/" + methodName;
+        @NotNull String messageType = "topic";
 
-        TopicPublisher<String, String> publisher = assetTree.acquireTopicPublisher(uri + DELETE_CHRONICLE_FILE, String.class, String.class);
-        BlockingQueue<String> values0 = new LinkedBlockingQueue<>();
-        Subscriber<String> subscriber = e -> {
+        @NotNull TopicPublisher<String, String> publisher = assetTree.acquireTopicPublisher(uri + DELETE_CHRONICLE_FILE, String.class, String.class);
+        @NotNull BlockingQueue<String> values0 = new LinkedBlockingQueue<>();
+        @Nullable Subscriber<String> subscriber = e -> {
             if (e != null) {
                 values0.add(e);
             }
@@ -164,29 +169,29 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     @Test
     public void testPublishAtIndexCheckIndex() throws InterruptedException {
 
-        QueueView<String, String> queueView = null;
+        @Nullable QueueView<String, String> queueView = null;
 
-        String uri = "/queue/" + methodName + DELETE_CHRONICLE_FILE;
-        String messageType = "topic";
+        @NotNull String uri = "/queue/" + methodName + DELETE_CHRONICLE_FILE;
+        @NotNull String messageType = "topic";
 
         queueView = assetTree.acquireQueue(uri, String.class, String.class);
         Jvm.pause(500);
         final long index = queueView.publishAndIndex(messageType, "Message-1");
-        final Excerpt<String, String> actual = queueView.getExcerpt(index);
+        @Nullable final Excerpt<String, String> actual = queueView.getExcerpt(index);
         assertEquals(index, actual.index());
 
         final long index2 = queueView.publishAndIndex(messageType, "Message-2");
-        final Excerpt<String, String> actual2 = queueView.getExcerpt(index2);
+        @Nullable final Excerpt<String, String> actual2 = queueView.getExcerpt(index2);
         assertEquals(index2, actual2.index());
     }
 
     @Test
     public void testStringPublish() throws InterruptedException {
-        Publisher<String> publisher = null;
+        @Nullable Publisher<String> publisher = null;
 
-        String uri = "/queue/" + methodName + DELETE_CHRONICLE_FILE;
+        @NotNull String uri = "/queue/" + methodName + DELETE_CHRONICLE_FILE;
         publisher = assetTree.acquirePublisher(uri, String.class);
-        BlockingQueue<String> values = new LinkedBlockingQueue<>();
+        @NotNull BlockingQueue<String> values = new LinkedBlockingQueue<>();
         Subscriber<String> subscriber = values::add;
         assetTree.registerSubscriber(uri, String.class, subscriber);
         Jvm.pause(500);
@@ -203,9 +208,9 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         Publisher<String> publisher;
 
         //YamlLogging.setAll(true);
-        String uri = "/queue/" + methodName + System.nanoTime() + "/key" + DELETE_CHRONICLE_FILE;
+        @NotNull String uri = "/queue/" + methodName + System.nanoTime() + "/key" + DELETE_CHRONICLE_FILE;
         publisher = assetTree.acquirePublisher(uri, String.class);
-        BlockingQueue<String> values = new ArrayBlockingQueue<>(2);
+        @NotNull BlockingQueue<String> values = new ArrayBlockingQueue<>(2);
         Subscriber<String> subscriber = values::add;
         assetTree.registerSubscriber(uri, String.class, subscriber);
         publisher.publish("Message-1");
@@ -217,11 +222,11 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
     @Test
     public void testStringPublishToAKeyTopicNotForMe() throws InterruptedException {
-        Publisher<String> publisher = null;
+        @Nullable Publisher<String> publisher = null;
 
-        String uri = "/queue/" + methodName + "/key" + DELETE_CHRONICLE_FILE;
+        @NotNull String uri = "/queue/" + methodName + "/key" + DELETE_CHRONICLE_FILE;
         publisher = assetTree.acquirePublisher(uri, String.class);
-        BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
+        @NotNull BlockingQueue<String> values = new ArrayBlockingQueue<>(1);
         Subscriber<String> subscriber = values::add;
         assetTree.registerSubscriber("/queue/" + methodName + "/keyNotForMe", String.class, subscriber);
         Jvm.pause(200);
@@ -236,11 +241,11 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     public void testStringTopicPublisherString() throws InterruptedException {
         TopicPublisher<String, String> publisher;
 
-        String uri = "/queue/" + methodName + DELETE_CHRONICLE_FILE;
-        String messageType = "topic";
+        @NotNull String uri = "/queue/" + methodName + DELETE_CHRONICLE_FILE;
+        @NotNull String messageType = "topic";
         publisher = assetTree.acquireTopicPublisher(uri, String.class, String.class);
-        BlockingQueue<String> values = new LinkedBlockingQueue<>();
-        TopicSubscriber<String, String> subscriber = (topic, message) -> values.add(topic + " " + message);
+        @NotNull BlockingQueue<String> values = new LinkedBlockingQueue<>();
+        @NotNull TopicSubscriber<String, String> subscriber = (topic, message) -> values.add(topic + " " + message);
         assetTree.registerTopicSubscriber(uri, String.class, String.class, subscriber);
         Jvm.pause(200);
         publisher.publish(messageType, "Message-1");
@@ -255,17 +260,17 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
     @Ignore("TODO FIX Too many results")
     public void testStringPublishWithTopicSubscribe() throws InterruptedException {
 //        YamlLogging.showClientReads(true);
-        Publisher<String> publisher = null;
-        String uri = "/queue/" + methodName + DELETE_CHRONICLE_FILE;
-        String messageType = "topic";
+        @Nullable Publisher<String> publisher = null;
+        @NotNull String uri = "/queue/" + methodName + DELETE_CHRONICLE_FILE;
+        @NotNull String messageType = "topic";
 
         // todo - fix
         if (!isRemote)
             assetTree.acquireQueue(uri, String.class, String.class);
         publisher = assetTree.acquirePublisher(uri + "/" + messageType, String.class);
-        BlockingQueue<String> values = new LinkedBlockingQueue<>();
+        @NotNull BlockingQueue<String> values = new LinkedBlockingQueue<>();
 
-        TopicSubscriber<String, String> subscriber = (topic, message) -> values.add(topic + " " + message);
+        @NotNull TopicSubscriber<String, String> subscriber = (topic, message) -> values.add(topic + " " + message);
         assetTree.registerTopicSubscriber(uri, String.class, String.class, subscriber);
 
         publisher.publish("Message-1");
@@ -278,28 +283,28 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
     @Test
     public void testStringPublishWithIndex() throws InterruptedException, IOException {
-        QueueView<String, String> publisher = null;
+        @Nullable QueueView<String, String> publisher = null;
 
-        String uri = "/queue/" + methodName + DELETE_CHRONICLE_FILE;
+        @NotNull String uri = "/queue/" + methodName + DELETE_CHRONICLE_FILE;
 
         publisher = assetTree.acquireQueue(uri, String.class, String
                 .class);
 
         final long index = publisher.publishAndIndex(methodName, "Message-1");
 
-        QueueView<String, String> queue = assetTree.acquireQueue(uri, String.class, String.class);
-        final Excerpt<String, String> excerpt = queue.getExcerpt(index);
+        @NotNull QueueView<String, String> queue = assetTree.acquireQueue(uri, String.class, String.class);
+        @Nullable final Excerpt<String, String> excerpt = queue.getExcerpt(index);
         assertEquals(methodName, excerpt.topic());
         assertEquals("Message-1", excerpt.message());
     }
 
     @Test
     public void testMarshablePublishToATopic() throws InterruptedException {
-        Publisher<MyMarshallable> publisher = null;
+        @Nullable Publisher<MyMarshallable> publisher = null;
 
-        String uri = "/queue/" + methodName + DELETE_CHRONICLE_FILE;
+        @NotNull String uri = "/queue/" + methodName + DELETE_CHRONICLE_FILE;
         publisher = assetTree.acquirePublisher(uri, MyMarshallable.class);
-        BlockingQueue<MyMarshallable> values2 = new LinkedBlockingQueue<>();
+        @NotNull BlockingQueue<MyMarshallable> values2 = new LinkedBlockingQueue<>();
         assetTree.registerSubscriber(uri, MyMarshallable.class, values2::add);
         publisher.publish(new MyMarshallable("Message-1"));
         publisher.publish(new MyMarshallable("Message-2"));

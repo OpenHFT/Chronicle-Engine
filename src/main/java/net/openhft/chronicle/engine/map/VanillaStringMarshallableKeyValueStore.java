@@ -53,8 +53,11 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     private final BiFunction<BytesStore, V, V> bytesToValue;
     @NotNull
     private final ObjectSubscription<String, V> subscriptions;
+    @NotNull
     private final SubscriptionKeyValueStore<String, BytesStore> kvStore;
+    @NotNull
     private final Asset asset;
+    @NotNull
     private final Class<V> valueType;
 
     public VanillaStringMarshallableKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset,
@@ -72,9 +75,9 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
         valueToBytes = toBytes(valueType, wireType);
         bytesToValue = fromBytes(valueType, wireType);
         this.kvStore = kvStore;
-        ValueReader<BytesStore, V> valueReader = bs -> bytesToValue.apply(bs, null);
+        @NotNull ValueReader<BytesStore, V> valueReader = bs -> bytesToValue.apply(bs, null);
         asset.registerView(ValueReader.class, valueReader);
-        RawKVSSubscription<String, BytesStore> rawSubscription =
+        @NotNull RawKVSSubscription<String, BytesStore> rawSubscription =
                 (RawKVSSubscription<String, BytesStore>) kvStore.subscription(true);
         this.subscriptions = subscriptions;
         rawSubscription.registerDownstream(mpe ->
@@ -85,7 +88,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
         if (type == String.class)
             return (t, bytes) -> (Bytes) bytes.appendUtf8((String) t);
         if (Marshallable.class.isAssignableFrom(type))
-            return (t, bytes) -> {
+            return (@Nullable t, bytes) -> {
                 t = acquireInstance(type, t);
                 ((Marshallable) t).writeMarshallable(wireType.apply(bytes));
                 return bytes;
@@ -104,7 +107,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
         if (type == String.class)
             return (t, bytes) -> (T) (bytes == null ? null : bytes.toString());
         if (Marshallable.class.isAssignableFrom(type))
-            return (bytes, t) -> {
+            return (bytes, @Nullable t) -> {
                 if (bytes == null)
                     return null;
 
@@ -132,7 +135,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     public V getAndPut(String key, V value) {
         Buffers b = BUFFERS.get();
         Bytes valueBytes = valueToBytes.apply(value, b.valueBuffer);
-        BytesStore retBytes = kvStore.getAndPut(key, valueBytes);
+        @Nullable BytesStore retBytes = kvStore.getAndPut(key, valueBytes);
         return retBytes == null ? null : bytesToValue.apply(retBytes, null);
     }
 
@@ -143,14 +146,14 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
 
     @Override
     public V getAndRemove(String key) {
-        BytesStore retBytes = kvStore.getAndRemove(key);
+        @Nullable BytesStore retBytes = kvStore.getAndRemove(key);
         return retBytes == null ? null : bytesToValue.apply(retBytes, null);
     }
 
     @Override
     public V getUsing(String key, Object value) {
         Buffers b = BUFFERS.get();
-        BytesStore retBytes = kvStore.getUsing(key, b.valueBuffer);
+        @Nullable BytesStore retBytes = kvStore.getUsing(key, b.valueBuffer);
         return retBytes == null ? null : bytesToValue.apply(retBytes, (V) value);
     }
 
@@ -174,7 +177,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     @Override
     public Iterator<Map.Entry<String, V>> entrySetIterator() {
         // todo optimise
-        List<Map.Entry<String, V>> entries = new ArrayList<>();
+        @NotNull List<Map.Entry<String, V>> entries = new ArrayList<>();
         try {
             for (int i = 0, seg = segments(); i < seg; i++)
                 entriesFor(i, e -> entries.add(new SimpleEntry<>(e.getKey(), e.getValue())));
@@ -188,7 +191,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
     @Override
     public Iterator<String> keySetIterator() {
         // todo optimise
-        List<String> entries = new ArrayList<>();
+        @NotNull List<String> entries = new ArrayList<>();
         try {
             for (int i = 0, seg = segments(); i < seg; i++)
                 keysFor(i, entries::add);
@@ -208,6 +211,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
         throw new UnsupportedOperationException("todo");
     }
 
+    @NotNull
     @Override
     public Asset asset() {
         return asset;
@@ -229,6 +233,7 @@ public class VanillaStringMarshallableKeyValueStore<V extends Marshallable> impl
         return String.class;
     }
 
+    @NotNull
     @Override
     public Class<V> valueType() {
         return valueType;

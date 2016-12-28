@@ -94,7 +94,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         assert type == String.class;
 
         String first = basePath;
-        String dirName = first == null ? name : first + "/" + name;
+        @NotNull String dirName = first == null ? name : first + "/" + name;
         this.dirPath = Paths.get(dirName);
 
         try {
@@ -151,12 +151,12 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
 
     private void entriesFor0(@NotNull SubscriptionConsumer<MapEvent<String, BytesStore>> kvConsumer) throws InvalidSubscriberException {
         getFiles().forEach(p -> {
-            BytesStore fileContents = null;
+            @Nullable BytesStore fileContents = null;
             try {
                 // in case the file has been deleted in the meantime.
                 fileContents = getFileContents(p, null);
                 if (fileContents != null) {
-                    InsertedEvent e = InsertedEvent.of(asset.fullName(), p.getFileName().toString(), fileContents, false);
+                    @NotNull InsertedEvent e = InsertedEvent.of(asset.fullName(), p.getFileName().toString(), fileContents, false);
                     kvConsumer.accept(e);
                 }
 
@@ -183,7 +183,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     private Stream<Map.Entry<String, BytesStore>> getEntryStream() {
         return getFiles()
                 .map(p -> {
-                    BytesStore fileContents = null;
+                    @Nullable BytesStore fileContents = null;
                     try {
                         fileContents = getFileContents(p, null);
                         return (Map.Entry<String, BytesStore>) new SimpleEntry<>(p.getFileName().toString(), fileContents);
@@ -211,7 +211,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         if (closed) throw new IllegalStateException("closed");
         Path path = dirPath.resolve(key);
         FileRecord fr = lastFileRecordMap.get(path.toFile());
-        BytesStore existingValue = getFileContents(path, null);
+        @Nullable BytesStore existingValue = getFileContents(path, null);
         writeToFile(path, value);
         if (fr != null) fr.valid = false;
         return existingValue == null ? null : existingValue;
@@ -222,7 +222,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
     @Override
     public BytesStore getAndRemove(String key) {
         if (closed) throw new IllegalStateException("closed");
-        BytesStore existing = get(key);
+        @Nullable BytesStore existing = get(key);
         if (existing != null) {
             try {
                 deleteFile(dirPath.resolve(key));
@@ -250,7 +250,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
 
     @Override
     public void clear() {
-        AtomicInteger count = new AtomicInteger();
+        @NotNull AtomicInteger count = new AtomicInteger();
         Stream<Path> files = getFiles();
         files.forEach((path) -> {
             try {
@@ -298,7 +298,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         FileRecord<BytesStore> lastFileRecord = lastFileRecordMap.get(file);
         if (lastFileRecord != null && lastFileRecord.valid
                 && file.lastModified() == lastFileRecord.timestamp) {
-            BytesStore contents = lastFileRecord.contents();
+            @Nullable BytesStore contents = lastFileRecord.contents();
             if (contents != null)
                 return contents;
         }
@@ -326,7 +326,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         try (FileChannel fc = new FileInputStream(file).getChannel()) {
             readingBytes.ensureCapacity(fc.size());
 
-            ByteBuffer dst = readingBytes.underlyingObject();
+            @Nullable ByteBuffer dst = readingBytes.underlyingObject();
             dst.clear();
 
             fc.read(dst);
@@ -351,9 +351,9 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         }
 
         File file = path.toFile();
-        File tmpFile = new File(file.getParentFile(), "." + file.getName() + "." + System.nanoTime());
-        try (FileChannel fc = new FileOutputStream(tmpFile).getChannel()) {
-            ByteBuffer byteBuffer = writingBytes.underlyingObject();
+        @NotNull File tmpFile = new File(file.getParentFile(), "." + file.getName() + "." + System.nanoTime());
+        try (@NotNull FileChannel fc = new FileOutputStream(tmpFile).getChannel()) {
+            @Nullable ByteBuffer byteBuffer = writingBytes.underlyingObject();
             byteBuffer.position(0);
             byteBuffer.limit((int) writingBytes.readLimit());
             fc.write(byteBuffer);
@@ -420,7 +420,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         public void run() {
             try {
                 while (!closed) {
-                    WatchKey key = null;
+                    @Nullable WatchKey key = null;
                     try {
                         key = processKey();
                     } catch (InterruptedException e) {
@@ -439,7 +439,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
         @NotNull
         private WatchKey processKey() throws InterruptedException {
             WatchKey key = watcher.take();
-            for (WatchEvent<?> event : key.pollEvents()) {
+            for (@NotNull WatchEvent<?> event : key.pollEvents()) {
                 Kind<?> kind = event.kind();
 
                 if (kind == StandardWatchEventKinds.OVERFLOW) {
@@ -448,7 +448,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
                 }
 
                 // get file fullName
-                WatchEvent<Path> ev = (WatchEvent<Path>) event;
+                @NotNull WatchEvent<Path> ev = (WatchEvent<Path>) event;
                 Path fileName = ev.context();
                 String mapKey = fileName.toString();
                 if (mapKey.startsWith(".")) {
@@ -459,13 +459,13 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
 
                 if (kind == StandardWatchEventKinds.ENTRY_CREATE || kind == StandardWatchEventKinds.ENTRY_MODIFY) {
                     Path p = dirPath.resolve(fileName);
-                    BytesStore mapVal = getFileContentsFromDisk(p, null);
+                    @Nullable BytesStore mapVal = getFileContentsFromDisk(p, null);
 
                     FileRecord<BytesStore> prev = lastFileRecordMap.get(p.toFile());
 //                    if (mapVal == null) {
 //                            System.out.println("Unable to read "+mapKey+", exists: "+p.toFile().exists());
 //                    }
-                    BytesStore prevContents = prev == null ? null : prev.contents();
+                    @Nullable BytesStore prevContents = prev == null ? null : prev.contents();
                     try {
                         if (mapVal != null && mapVal.contentEquals(prevContents)) {
 //                            System.out.println("... key: "+mapKey+" equal, last.keys: "+new TreeSet<>(lastFileRecordMap.keySet()));
@@ -496,7 +496,7 @@ public class FilePerKeyValueStore implements StringBytesStoreKeyValueStore, Clos
                     Path p = dirPath.resolve(fileName);
 
                     FileRecord<BytesStore> prev = lastFileRecordMap.remove(p.toFile());
-                    BytesStore lastVal = prev == null ? null : prev.contents();
+                    @Nullable BytesStore lastVal = prev == null ? null : prev.contents();
                     try {
                         subscriptions.notifyEvent(RemovedEvent.of(asset.fullName(), p.toFile().getName(), lastVal, false));
                     } finally {

@@ -25,6 +25,8 @@ import net.openhft.chronicle.wire.BinaryWire;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -51,6 +53,7 @@ public class FilterTest extends ThreadMonitoringTest {
 
     private final WireType wireType;
 
+    @NotNull
     @Rule
     public TestName name = new TestName();
 
@@ -58,10 +61,11 @@ public class FilterTest extends ThreadMonitoringTest {
         this.wireType = wireType;
     }
 
+    @NotNull
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
 
-        final List<Object[]> list = new ArrayList<>();
+        @NotNull final List<Object[]> list = new ArrayList<>();
 //            list.add(new Object[]{WireType.RAW});
         list.add(new Object[]{WireType.TEXT});
         list.add(new Object[]{WireType.BINARY});
@@ -74,7 +78,7 @@ public class FilterTest extends ThreadMonitoringTest {
         final Bytes b = Bytes.elasticByteBuffer();
         final Wire wire = wireType.apply(b);
 
-        Filter<String> expected = new Filter<>();
+        @NotNull Filter<String> expected = new Filter<>();
         expected.addFilter(o -> true);
 
         wire.write(() -> "filter").object(expected);
@@ -87,7 +91,7 @@ public class FilterTest extends ThreadMonitoringTest {
             new BinaryWire(bytes).copyTo(new TextWire(b2));
             System.out.println(wireType + ": " + b2);
         }
-        final Filter actual = wire.read(() -> "filter").object(Filter.class);
+        @Nullable final Filter actual = wire.read(() -> "filter").object(Filter.class);
 
         assert actual != null;
         Assert.assertEquals(1, actual.pipelineSize());

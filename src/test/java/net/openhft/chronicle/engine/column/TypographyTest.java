@@ -12,6 +12,7 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -38,9 +39,12 @@ public class TypographyTest {
     @NotNull
     @Rule
     public TestName name = new TestName();
+    @NotNull
     String methodName = "";
 
+    @NotNull
     private final VanillaAssetTree assetTree;
+    @Nullable
     private final ServerEndpoint serverEndpoint;
     private MapView<String, String> map;
 
@@ -55,13 +59,13 @@ public class TypographyTest {
     public TypographyTest(Boolean isRemote) throws Exception {
 
         if (isRemote) {
-            VanillaAssetTree assetTree0 = new VanillaAssetTree().forTesting();
+            @NotNull VanillaAssetTree assetTree0 = new VanillaAssetTree().forTesting();
 
-            String hostPortDescription = "SimpleQueueViewTest-methodName" + methodName;
+            @NotNull String hostPortDescription = "SimpleQueueViewTest-methodName" + methodName;
             TCPRegistry.createServerSocketChannelFor(hostPortDescription);
             serverEndpoint = new ServerEndpoint(hostPortDescription, assetTree0);
 
-            final VanillaAssetTree client = new VanillaAssetTree();
+            @NotNull final VanillaAssetTree client = new VanillaAssetTree();
             assetTree = client.forRemoteAccess(hostPortDescription, WireType.BINARY);
 
             //  assetTree.acquireMap(ADD_MAP_LATER, String.class, String.class).size();
@@ -97,11 +101,11 @@ public class TypographyTest {
 
         //  map.put("hello", "world");
         //YamlLogging.setAll(true);
-        CountDownLatch latch = new CountDownLatch(1);
-        RequestContext rc = RequestContext.requestContext("").elementType(TopologicalEvent.class)
+        @NotNull CountDownLatch latch = new CountDownLatch(1);
+        @NotNull RequestContext rc = RequestContext.requestContext("").elementType(TopologicalEvent.class)
                 .bootstrap(true);
 
-        Subscriber<TopologicalEvent> subscriber = o -> {
+        @NotNull Subscriber<TopologicalEvent> subscriber = o -> {
             if ("/example/data2".contentEquals(o.fullName()) && o.viewTypes()
                     .contains(MapView.class)) {
                 latch.countDown();
@@ -118,11 +122,11 @@ public class TypographyTest {
 
         //  map.put("hello", "world");
         YamlLogging.setAll(true);
-        CountDownLatch latch = new CountDownLatch(1);
-        RequestContext rc = RequestContext.requestContext("").elementType(TopologicalEvent.class)
+        @NotNull CountDownLatch latch = new CountDownLatch(1);
+        @NotNull RequestContext rc = RequestContext.requestContext("").elementType(TopologicalEvent.class)
                 .bootstrap(true);
 
-        Subscriber<TopologicalEvent> subscriber = o -> {
+        @NotNull Subscriber<TopologicalEvent> subscriber = o -> {
             if (ADD_MAP_LATER.contentEquals(o.fullName()) && o.viewTypes()
                     .contains(MapView.class)) {
                 latch.countDown();
@@ -140,11 +144,11 @@ public class TypographyTest {
 
         //  map.put("hello", "world");
         YamlLogging.setAll(true);
-        CountDownLatch latch = new CountDownLatch(1);
-        RequestContext rc = RequestContext.requestContext("").elementType(TopologicalEvent.class)
+        @NotNull CountDownLatch latch = new CountDownLatch(1);
+        @NotNull RequestContext rc = RequestContext.requestContext("").elementType(TopologicalEvent.class)
                 .bootstrap(true);
 
-        Subscriber<TopologicalEvent> subscriber = o -> {
+        @NotNull Subscriber<TopologicalEvent> subscriber = o -> {
             if (ADD_QUEUE_LATER.contentEquals(o.fullName()) && o.viewTypes()
                     .contains(QueueView.class)) {
                 latch.countDown();

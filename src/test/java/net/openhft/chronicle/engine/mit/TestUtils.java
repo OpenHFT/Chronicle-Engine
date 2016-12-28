@@ -17,6 +17,7 @@
 
 package net.openhft.chronicle.engine.mit;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.io.File;
@@ -70,13 +71,13 @@ public class TestUtils {
      * @param noOfRuns          Runs.
      * @param maxRuntimeInNanos Max runtime.
      */
-    public static void runMultipleTimesAndVerifyAvgRuntime(Runnable testToRun, int noOfRuns, long maxRuntimeInNanos) {
+    public static void runMultipleTimesAndVerifyAvgRuntime(@NotNull Runnable testToRun, int noOfRuns, long maxRuntimeInNanos) {
         runMultipleTimesAndVerifyAvgRuntime(x -> {
         }, testToRun, noOfRuns, maxRuntimeInNanos);
     }
 
-    public static void runMultipleTimesAndVerifyAvgRuntime(IntConsumer setup, Runnable testToRun, int noOfRuns, long maxRuntimeInNanos) {
-        AtomicLong totalTime = new AtomicLong();
+    public static void runMultipleTimesAndVerifyAvgRuntime(@NotNull IntConsumer setup, @NotNull Runnable testToRun, int noOfRuns, long maxRuntimeInNanos) {
+        @NotNull AtomicLong totalTime = new AtomicLong();
 
         // one warmup.
         IntStream.range(0, noOfRuns).forEach(e -> {
@@ -104,7 +105,7 @@ public class TestUtils {
         URL testFileUrl = ClassLoader.getSystemResource(fileName);
         URI testFileUri = testFileUrl.toURI();
 
-        final StringBuilder stringBuilder = new StringBuilder();
+        @NotNull final StringBuilder stringBuilder = new StringBuilder();
         Files.lines(Paths.get(testFileUri)).forEach(stringBuilder::append);
 
         return stringBuilder.toString();
@@ -119,14 +120,15 @@ public class TestUtils {
      * @throws IOException
      * @throws URISyntaxException
      */
+    @NotNull
     public static Map<String, Double> loadSystemResourceKeyValueCsvFileToMap(String resourcePath) throws IOException, URISyntaxException {
         URL testFileUrl = ClassLoader.getSystemResource(resourcePath);
         URI testFileUri = testFileUrl.toURI();
 
-        Map<String, Double> results = new HashMap<>();
+        @NotNull Map<String, Double> results = new HashMap<>();
 
         Files.lines(Paths.get(testFileUri)).forEach(x -> {
-            String[] strings = x.split(",");
+            @NotNull String[] strings = x.split(",");
 
             results.put(strings[0], Double.parseDouble(strings[1]));
         });
@@ -139,7 +141,7 @@ public class TestUtils {
      * @param stringToWrite
      * @throws IOException
      */
-    public static void saveTestFileToDisk(String extension, String stringToWrite) throws IOException {
+    public static void saveTestFileToDisk(String extension, @NotNull String stringToWrite) throws IOException {
         Files.write(Paths.get("./test" + extension), stringToWrite.getBytes(ISO_8859_1));
     }
 
@@ -147,7 +149,7 @@ public class TestUtils {
         deleteFile(Paths.get("./test" + extension).toString());
     }
 
-    public static void deleteFile(String path) {
+    public static void deleteFile(@NotNull String path) {
         try {
             Files.deleteIfExists(Paths.get(path));
         } catch (Exception e) {
@@ -155,8 +157,8 @@ public class TestUtils {
         }
     }
 
-    public static void createDirectoryIfNotExists(String directoryName) {
-        File directory = new File(directoryName);
+    public static void createDirectoryIfNotExists(@NotNull String directoryName) {
+        @NotNull File directory = new File(directoryName);
 
         if (!directory.exists()) {
 

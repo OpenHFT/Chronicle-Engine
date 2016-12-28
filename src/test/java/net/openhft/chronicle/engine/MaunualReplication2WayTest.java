@@ -67,6 +67,7 @@ public class MaunualReplication2WayTest {
 
     public ServerEndpoint serverEndpoint1;
     public ServerEndpoint serverEndpoint2;
+    @NotNull
     @Rule
     public TestName testName = new TestName();
     public String name;
@@ -97,7 +98,7 @@ public class MaunualReplication2WayTest {
 
         TCPRegistry.setAlias("host.port1", "host1", 8081);
         TCPRegistry.setAlias("host.port2", "host2", 8081);
-        WireType writeType = WireType.TEXT;
+        @NotNull WireType writeType = WireType.TEXT;
         tree1 = create((isHost1() ? 1 : 2), writeType, "clusterTwo");
 
         serverEndpoint1 = new ServerEndpoint("*:8081", tree1);
@@ -122,10 +123,10 @@ public class MaunualReplication2WayTest {
 
     @NotNull
     private AssetTree create(final int hostId, WireType writeType, final String clusterNam) {
-        VanillaAssetTree tree = new VanillaAssetTree((byte) hostId)
+        @NotNull VanillaAssetTree tree = new VanillaAssetTree((byte) hostId)
                 .forTesting();
 
-        Asset testBootstrap = tree.root().acquireAsset("testManualTesting");
+        @NotNull Asset testBootstrap = tree.root().acquireAsset("testManualTesting");
         testBootstrap.addWrappingRule(MapView.class, "map directly to KeyValueStore",
                 VanillaMapView::new,
                 KeyValueStore.class);
@@ -174,7 +175,7 @@ public class MaunualReplication2WayTest {
         String hostName = hostname.toString();
         boolean isHost1 = isHost1();
 
-        final ConcurrentMap<Integer, String> map1 = tree1.acquireMap(name, Integer.class, String.class);
+        @NotNull final ConcurrentMap<Integer, String> map1 = tree1.acquireMap(name, Integer.class, String.class);
         assertNotNull(map1);
 
         for (int i = 0; i < 99; i++) {
@@ -183,7 +184,7 @@ public class MaunualReplication2WayTest {
 
             Jvm.pause(5);
 
-            Map<Integer, String> m = new TreeMap<>(map1);
+            @NotNull Map<Integer, String> m = new TreeMap<>(map1);
 
             System.out.println("----------------------");
 

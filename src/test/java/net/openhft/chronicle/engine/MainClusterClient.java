@@ -23,6 +23,7 @@ import net.openhft.chronicle.engine.fs.FilePerKeyGroupFS;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
+import org.jetbrains.annotations.NotNull;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -52,23 +53,23 @@ public class MainClusterClient {
 
         //    TCPRegistry.createServerSocketChannelFor("host.port1", "host.port2");
 
-        char[] xa = new char[VALUE_SIZE - new Random().nextInt(VALUE_SIZE / 10)];
+        @NotNull char[] xa = new char[VALUE_SIZE - new Random().nextInt(VALUE_SIZE / 10)];
         Arrays.fill(xa, 'X');
-        final String x = new String(xa);
+        @NotNull final String x = new String(xa);
 
-        char[] ya = new char[VALUE_SIZE - new Random().nextInt(VALUE_SIZE / 10)];
+        @NotNull char[] ya = new char[VALUE_SIZE - new Random().nextInt(VALUE_SIZE / 10)];
         Arrays.fill(ya, 'Y');
-        final String y = new String(ya);
+        @NotNull final String y = new String(ya);
 
 //        Executors.newSingleThreadExecutor().submit(() -> {
-        VanillaAssetTree tree5 = new VanillaAssetTree("tree1")
+        @NotNull VanillaAssetTree tree5 = new VanillaAssetTree("tree1")
                 .forRemoteAccess(DESCRIPTION, WIRE_TYPE);
-        final ConcurrentMap<String, String> map1 = tree5.acquireMap(NAME1,
+        @NotNull final ConcurrentMap<String, String> map1 = tree5.acquireMap(NAME1,
                 String.class, String.class);
-        final ConcurrentMap<String, String> map2 = tree5.acquireMap(NAME2,
+        @NotNull final ConcurrentMap<String, String> map2 = tree5.acquireMap(NAME2,
                 String.class, String.class);
         for (int count = 0; ; count++) {
-            String v = DateTimeFormatter.ISO_LOCAL_TIME.format(LocalDateTime.now()) + " - " + (count % 2 == 0 ? x : y);
+            @NotNull String v = DateTimeFormatter.ISO_LOCAL_TIME.format(LocalDateTime.now()) + " - " + (count % 2 == 0 ? x : y);
             long start = System.currentTimeMillis();
             for (int i = 0; i < entries; i++) {
                 try {

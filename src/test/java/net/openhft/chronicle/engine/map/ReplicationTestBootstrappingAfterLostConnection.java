@@ -40,6 +40,7 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.*;
 
 import java.io.File;
@@ -81,7 +82,7 @@ public class ReplicationTestBootstrappingAfterLostConnection {
         //Delete any files from the last run
         Files.deleteIfExists(Paths.get(OS.TARGET, NAME));
         TCPRegistry.createServerSocketChannelFor("host.port1", "host.port2", "host.port3");
-        WireType writeType = WireType.TEXT;
+        @NotNull WireType writeType = WireType.TEXT;
 
         tree1 = create(1, writeType, "clusterTwo");
         serverEndpoint1 = new ServerEndpoint("host.port1", tree1);
@@ -110,7 +111,7 @@ public class ReplicationTestBootstrappingAfterLostConnection {
     @NotNull
     private static AssetTree create(final int hostId, WireType writeType, final String
             clusterName) {
-        AssetTree tree = new VanillaAssetTree((byte) hostId)
+        @NotNull AssetTree tree = new VanillaAssetTree((byte) hostId)
                 .forTesting()
                 .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);
 
@@ -144,14 +145,14 @@ public class ReplicationTestBootstrappingAfterLostConnection {
     @Test
     public void testCreateAndThenFindView() {
 
-        final String userId = "myUser";
-        final String securityToken = "myToken";
-        final String domain = "myDomain";
+        @NotNull final String userId = "myUser";
+        @NotNull final String securityToken = "myToken";
+        @NotNull final String domain = "myDomain";
 
         tree1.root().addView(SessionDetails.class, VanillaSessionDetails.of(userId,
                 securityToken, domain));
 
-        final SessionDetails view = tree1.root().findView(SessionDetails.class);
+        @Nullable final SessionDetails view = tree1.root().findView(SessionDetails.class);
         Assert.assertNotNull(view);
         Assert.assertEquals(userId, view.userId());
         Assert.assertEquals(securityToken, view.securityToken());
@@ -166,12 +167,12 @@ public class ReplicationTestBootstrappingAfterLostConnection {
     @Test
     public void testBootstrapWhenTheClientConnectionIsKilled() throws InterruptedException {
 
-        final ConcurrentMap<String, String> map1 = tree2.acquireMap(NAME, String.class, String
+        @NotNull final ConcurrentMap<String, String> map1 = tree2.acquireMap(NAME, String.class, String
                 .class);
         assertNotNull(map1);
 
         map1.put("hello1", "world1");
-        final ConcurrentMap<String, String> map2 = tree1.acquireMap(NAME, String.class, String
+        @NotNull final ConcurrentMap<String, String> map2 = tree1.acquireMap(NAME, String.class, String
                 .class);
         assertNotNull(map2);
         map2.put("hello2", "world2");
@@ -189,19 +190,19 @@ public class ReplicationTestBootstrappingAfterLostConnection {
     }
 
     private void simulateSomeonePullingOutTheNetworkCableAndPluginItBackIn() {
-        final Collection<EngineHostDetails> cluster = cluster();
-        final Iterator<EngineHostDetails> iterator = cluster.iterator();
+        @NotNull final Collection<EngineHostDetails> cluster = cluster();
+        @NotNull final Iterator<EngineHostDetails> iterator = cluster.iterator();
         iterator.next();
         final TcpChannelHub tcpChannelHub = iterator.next().tcpChannelHub();
         tcpChannelHub.forceDisconnect();
     }
 
     private Collection<EngineHostDetails> cluster() {
-        final Clusters clusters = tree1.root().getView(Clusters.class);
+        @Nullable final Clusters clusters = tree1.root().getView(Clusters.class);
         return clusters.get("clusterTwo").hostDetails();
     }
 
-    private void checkEqual(ConcurrentMap<String, String> map1, ConcurrentMap<String, String> map2, final int expectedSize) {
+    private void checkEqual(@NotNull ConcurrentMap<String, String> map1, @NotNull ConcurrentMap<String, String> map2, final int expectedSize) {
         for (int j = 0; j < 5; j++) {
             for (int i = 1; i <= 50; i++) {
                 if (map1.size() == expectedSize && map2.size() == expectedSize)
@@ -219,14 +220,14 @@ public class ReplicationTestBootstrappingAfterLostConnection {
     @Test
     public void testBootstrapWhenTheServerIsKilled() throws InterruptedException, IOException {
 
-        ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME
+        @NotNull ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME
                 , String.class,
                 String
                         .class);
         assertNotNull(map1);
         map1.put("hello1", "world1");
 
-        final ConcurrentMap<String, String> map2 = tree2.acquireMap(NAME, String.class, String
+        @NotNull final ConcurrentMap<String, String> map2 = tree2.acquireMap(NAME, String.class, String
                 .class);
         assertNotNull(map2);
         map2.put("hello2", "world2");
@@ -257,14 +258,14 @@ public class ReplicationTestBootstrappingAfterLostConnection {
     @Test
     public void testBootstrapWhenTheClientIsKilled() throws InterruptedException, IOException {
 
-        ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME
+        @NotNull ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME
                 , String.class,
                 String
                         .class);
         assertNotNull(map1);
         map1.put("hello1", "world1");
 
-        ConcurrentMap<String, String> map2 = tree2.acquireMap(NAME, String.class, String
+        @NotNull ConcurrentMap<String, String> map2 = tree2.acquireMap(NAME, String.class, String
                 .class);
         assertNotNull(map2);
         map2.put("hello2", "world2");
@@ -297,7 +298,7 @@ public class ReplicationTestBootstrappingAfterLostConnection {
         final Path basePath = Files.createTempDirectory("temp");
 
         //create the map with a single entry
-        ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME + "unique" + "?basePath=" + basePath
+        @NotNull ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME + "unique" + "?basePath=" + basePath
                 , String.class,
                 String
                         .class);
@@ -312,7 +313,7 @@ public class ReplicationTestBootstrappingAfterLostConnection {
         //recreate the map and load off the persisted file
         tree1 = create(1, WireType.TEXT, "clusterTwo");
         serverEndpoint1 = new ServerEndpoint("host.port3", tree1);
-        ConcurrentMap<String, String> map1a = tree1.acquireMap(NAME + "unique" + "?basePath=" +
+        @NotNull ConcurrentMap<String, String> map1a = tree1.acquireMap(NAME + "unique" + "?basePath=" +
                         basePath
                 , String.class, String.class);
         assertNotNull(map1a);
@@ -327,13 +328,13 @@ public class ReplicationTestBootstrappingAfterLostConnection {
 
         final Path basePath = Files.createTempDirectory("");
 
-        ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME + "?basePath=" + basePath
+        @NotNull ConcurrentMap<String, String> map1 = tree1.acquireMap(NAME + "?basePath=" + basePath
                 , String.class, String.class);
         assertNotNull(map1);
 
         map1.put("hello1", "world1");
 
-        final ConcurrentMap<String, String> map2 = tree2.acquireMap(NAME, String.class, String
+        @NotNull final ConcurrentMap<String, String> map2 = tree2.acquireMap(NAME, String.class, String
                 .class);
         assertNotNull(map2);
 

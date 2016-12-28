@@ -59,7 +59,7 @@ public class CollectionWireHandler<U, C extends Collection<U>> {
 
             try {
                 final StringBuilder eventName = Wires.acquireStringBuilder();
-                @SuppressWarnings("ConstantConditions")
+                @NotNull @SuppressWarnings("ConstantConditions")
                 final ValueIn valueIn = inWire.readEventName(eventName);
 
                 outWire.writeDocument(true, w -> w.writeEventName(CoreFields.tid).int64
@@ -77,7 +77,7 @@ public class CollectionWireHandler<U, C extends Collection<U>> {
                     // note :  remove on the key-set returns a boolean and on the map returns the
                     // old value
                     if (EventId.iterator.contentEquals(eventName)) {
-                        final ValueOut valueOut = out.writeEventName(CoreFields.reply);
+                        @NotNull final ValueOut valueOut = out.writeEventName(CoreFields.reply);
                         valueOut.sequence(v -> underlyingCollection.forEach(e -> toWire.accept(v, e)));
                         return;
                     }
@@ -155,7 +155,7 @@ public class CollectionWireHandler<U, C extends Collection<U>> {
                 if (YamlLogging.showServerWrites()) {
                     assert outWire.startUse();
                     try {
-                        final Bytes<?> outBytes = outWire.bytes();
+                        @NotNull final Bytes<?> outBytes = outWire.bytes();
                         long len = outBytes.writePosition();
                         if (len >= SIZE_OF_SIZE) {
                             String s = Wires.fromSizePrefixedBlobs((Wire) outWire);
@@ -172,7 +172,7 @@ public class CollectionWireHandler<U, C extends Collection<U>> {
 
     private C collectionFromWire() {
         C c = factory.get();
-        @SuppressWarnings("ConstantConditions")
+        @NotNull @SuppressWarnings("ConstantConditions")
         final ValueIn valueIn = ((Wire) outWire).getValueIn();
         while (valueIn.hasNextSequenceItem()) {
             c.add(fromWire.apply(valueIn));

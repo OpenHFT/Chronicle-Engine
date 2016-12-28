@@ -19,6 +19,7 @@ package net.openhft.chronicle.engine.tree;
 
 import net.openhft.chronicle.engine.api.tree.Asset;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by peter.lawrey on 15/06/2015.
@@ -31,7 +32,7 @@ public class HostIdentifier {
     }
 
     public static byte localIdentifier(@NotNull Asset asset) {
-        HostIdentifier hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
+        @Nullable HostIdentifier hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
         if (hostIdentifier == null)
             return 0;
 

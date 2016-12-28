@@ -17,6 +17,7 @@
 
 package net.openhft.chronicle.engine.mit;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.internal.builders.JUnit4Builder;
 import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
@@ -33,11 +34,11 @@ public class AllTestMain {
     public static void main(String[] args) throws Throwable {
         System.out.println("Start tests on " + new Date());
 
-        final List<Failure> failures = new ArrayList<>();
-        RunNotifier runNotifier = new RunNotifier();
+        @NotNull final List<Failure> failures = new ArrayList<>();
+        @NotNull RunNotifier runNotifier = new RunNotifier();
         runNotifier.addFirstListener(new RunListener() {
             @Override
-            public void testFailure(Failure failure) {
+            public void testFailure(@NotNull Failure failure) {
                 failures.add(failure);
                 System.err.println(failure);
                 failure.getException().printStackTrace();
@@ -67,7 +68,7 @@ public class AllTestMain {
                     "\tFAILED TESTS\n" +
                     "***************************");
 
-            for (Failure failure : failures) {
+            for (@NotNull Failure failure : failures) {
                 System.err.println(failure);
                 failure.getException().printStackTrace();
             }

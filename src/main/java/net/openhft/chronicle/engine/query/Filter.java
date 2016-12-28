@@ -47,8 +47,10 @@ public class Filter<E> implements Marshallable, Iterable<Operation> {
         }
     };
 
+    @NotNull
     private List<Operation> pipeline = new ArrayList<>();
 
+    @NotNull
     public static <N> Filter<N> empty() {
         //noinspection unchecked
         return EMPTY;
@@ -80,6 +82,7 @@ public class Filter<E> implements Marshallable, Iterable<Operation> {
                 .sequence(w -> pipeline.forEach(w::object));
     }
 
+    @NotNull
     @Override
     public Iterator<Operation> iterator() {
         return pipeline.iterator();
@@ -101,6 +104,7 @@ public class Filter<E> implements Marshallable, Iterable<Operation> {
         add(new Operation(project, rClass));
     }
 
+    @NotNull
     @Override
     public String toString() {
         return "Filter{" +
@@ -129,7 +133,7 @@ public class Filter<E> implements Marshallable, Iterable<Operation> {
         if (this == o) return true;
         if (!(o instanceof Filter)) return false;
 
-        Filter<?> filter = (Filter<?>) o;
+        @NotNull Filter<?> filter = (Filter<?>) o;
 
         return !(pipeline != null ? !pipeline.equals(filter.pipeline) : filter.pipeline != null);
 
@@ -153,7 +157,9 @@ public class Filter<E> implements Marshallable, Iterable<Operation> {
      */
     public static class FilteredSubscriber<E> implements Subscriber<E> {
 
+        @NotNull
         private final Subscriber<E> subscriber;
+        @NotNull
         private final Filter<E> filter;
 
         public FilteredSubscriber(@NotNull Filter<E> filter,
@@ -165,7 +171,7 @@ public class Filter<E> implements Marshallable, Iterable<Operation> {
         @Override
         public void onMessage(@NotNull E message) throws InvalidSubscriberException {
 
-            for (Operation o : filter) {
+            for (@NotNull Operation o : filter) {
                 switch (o.op()) {
                     case FILTER:
                         final Predicate<E> serializable = o.wrapped();

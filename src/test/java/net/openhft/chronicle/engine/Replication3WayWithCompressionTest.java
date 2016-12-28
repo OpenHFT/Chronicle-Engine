@@ -53,6 +53,7 @@ import static org.junit.Assert.assertNotNull;
 @Ignore
 public class Replication3WayWithCompressionTest extends ThreadMonitoringTest {
 
+    @NotNull
     @Rule
     public TestName testName = new TestName();
     //   public static final String NAME = "/ChMaps/test";
@@ -94,7 +95,7 @@ public class Replication3WayWithCompressionTest extends ThreadMonitoringTest {
                 "host.port2",
                 "host.port3");
 
-        WireType writeType = WireType.TEXT;
+        @NotNull WireType writeType = WireType.TEXT;
         tree1 = create(1, writeType, "clusterThree");
         tree2 = create(2, writeType, "clusterThree");
         tree3 = create(3, writeType, "clusterThree");
@@ -122,7 +123,7 @@ public class Replication3WayWithCompressionTest extends ThreadMonitoringTest {
 
     @NotNull
     private AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
-        AssetTree tree = new VanillaAssetTree((byte) hostId)
+        @NotNull AssetTree tree = new VanillaAssetTree((byte) hostId)
                 .forTesting()
                 .withConfig(resourcesDir() + "/3wayLegacy", OS.TARGET + "/" + hostId);
 
@@ -144,19 +145,19 @@ public class Replication3WayWithCompressionTest extends ThreadMonitoringTest {
     public void testThreeWay() throws InterruptedException {
         //YamlLogging.setAll(true);
 
-        final ConcurrentMap<String, String> map1 = tree1.acquireMap(name, String.class, String
+        @NotNull final ConcurrentMap<String, String> map1 = tree1.acquireMap(name, String.class, String
                 .class);
         assertNotNull(map1);
 
         map1.put("hello1", "world1");
 
-        final ConcurrentMap<String, String> map2 = tree2.acquireMap(name, String.class, String
+        @NotNull final ConcurrentMap<String, String> map2 = tree2.acquireMap(name, String.class, String
                 .class);
         assertNotNull(map2);
 
         map2.put("hello2", "world2");
 
-        final ConcurrentMap<String, String> map3 = tree3.acquireMap(name, String.class, String
+        @NotNull final ConcurrentMap<String, String> map3 = tree3.acquireMap(name, String.class, String
                 .class);
         assertNotNull(map3);
 
@@ -170,7 +171,7 @@ public class Replication3WayWithCompressionTest extends ThreadMonitoringTest {
             Jvm.pause(300);
         }
 
-        for (Map m : new Map[]{map1, map2, map3}) {
+        for (@NotNull Map m : new Map[]{map1, map2, map3}) {
             Assert.assertEquals("world1", m.get("hello1"));
             Assert.assertEquals("world2", m.get("hello2"));
             Assert.assertEquals("world3", m.get("hello3"));

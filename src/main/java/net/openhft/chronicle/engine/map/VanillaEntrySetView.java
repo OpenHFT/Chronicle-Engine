@@ -25,6 +25,7 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.AbstractCollection;
 import java.util.Iterator;
@@ -35,6 +36,7 @@ import java.util.Set;
  * Created by peter on 22/05/15.
  */
 public class VanillaEntrySetView<K, MV, V> extends AbstractCollection<Entry<K, V>> implements EntrySetView<K, MV, V> {
+    @NotNull
     protected final MapView<K, V> mapView;
     private final Asset asset;
 
@@ -67,7 +69,7 @@ public class VanillaEntrySetView<K, MV, V> extends AbstractCollection<Entry<K, V
     @Override
     public int hashCode() {
         int h = 0;
-        for (Entry<K, V> entry : this) {
+        for (@NotNull Entry<K, V> entry : this) {
             h += entry.hashCode();
         }
         return h;
@@ -77,15 +79,15 @@ public class VanillaEntrySetView<K, MV, V> extends AbstractCollection<Entry<K, V
     public boolean equals(Object obj) {
         if (!(obj instanceof Set))
             return false;
-        Set<Entry<K, V>> set = (Set<Entry<K, V>>) obj;
+        @NotNull Set<Entry<K, V>> set = (Set<Entry<K, V>>) obj;
         if (set.size() != size()) return false;
-        for (Entry<K, V> entry : set) {
+        for (@Nullable Entry<K, V> entry : set) {
             if (entry == null)
                 return false;
             K key = entry.getKey();
             if (key == null)
                 return false;
-            V value = mapView.get(key);
+            @Nullable V value = mapView.get(key);
             if (!BytesUtil.equals(entry.getValue(), value))
                 return false;
         }

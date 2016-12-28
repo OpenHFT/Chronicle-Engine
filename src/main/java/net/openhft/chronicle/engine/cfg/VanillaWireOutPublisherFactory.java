@@ -38,6 +38,7 @@ public class VanillaWireOutPublisherFactory implements MarshallableFunction<Wire
     public VanillaWireOutPublisherFactory() {
     }
 
+    @NotNull
     @Override
     public WireOutPublisher apply(WireType wireType) {
         return new VanillaWireOutPublisher(wireType);

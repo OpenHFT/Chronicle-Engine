@@ -25,6 +25,7 @@ import net.openhft.chronicle.engine.map.ObjectKeyValueStore;
 import net.openhft.chronicle.engine.tree.VanillaAsset;
 import net.openhft.chronicle.wire.WireIn;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,11 +43,12 @@ public class ChronicleMapCfg implements Installable {
     private long entries = -1;
     private double averageSize = -1;
 
+    @Nullable
     @Override
-    public Void install(String path, AssetTree assetTree) throws IOException {
-        Asset asset = assetTree.acquireAsset(path);
+    public Void install(@NotNull String path, @NotNull AssetTree assetTree) throws IOException {
+        @NotNull Asset asset = assetTree.acquireAsset(path);
         ((VanillaAsset) asset).enableTranslatingValuesToBytesStore();
-        RequestContext rc = RequestContext.requestContext(path);
+        @NotNull RequestContext rc = RequestContext.requestContext(path);
         rc.basePath(diskPath)
                 .putReturnsNull(putReturnsNull)
                 .removeReturnsNull(removeReturnsNull);
@@ -54,7 +56,7 @@ public class ChronicleMapCfg implements Installable {
         if (entries != -1) rc.entries(entries);
         if (averageSize != -1) rc.averageValueSize(averageSize);
 
-        ChronicleMapKeyValueStore chronicleMapKeyValueStore = new ChronicleMapKeyValueStore(rc, asset);
+        @NotNull ChronicleMapKeyValueStore chronicleMapKeyValueStore = new ChronicleMapKeyValueStore(rc, asset);
         asset.addView(ObjectKeyValueStore.class, chronicleMapKeyValueStore);
 
         return null;
@@ -72,6 +74,7 @@ public class ChronicleMapCfg implements Installable {
                 .read(() -> "averageSize").float64(this, (o, e) -> o.averageSize = e);
     }
 
+    @NotNull
     @Override
     public String toString() {
         return "ChronicleMapCfg{" +

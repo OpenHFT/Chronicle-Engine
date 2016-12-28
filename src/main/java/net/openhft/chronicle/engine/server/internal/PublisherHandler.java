@@ -50,11 +50,11 @@ public class PublisherHandler<E> extends AbstractHandler {
         public void accept(@NotNull final WireIn inWire, Long inputTid) {
 
             eventName.setLength(0);
-            final ValueIn valueIn = inWire.readEventName(eventName);
+            @NotNull final ValueIn valueIn = inWire.readEventName(eventName);
 
             if (registerSubscriber.contentEquals(eventName)) {
                 final Object key = view;
-                final Subscriber listener = message -> {
+                @NotNull final Subscriber listener = message -> {
                     synchronized (publisher) {
                         publisher.put(key, publish -> {
 
@@ -82,10 +82,10 @@ public class PublisherHandler<E> extends AbstractHandler {
             if (publish.contentEquals(eventName)) {
 
                 valueIn.marshallable(w -> {
-                    final Params[] params = publish.params();
+                    @NotNull final Params[] params = publish.params();
 
                     final Params param = params[0];
-                    final ValueIn read = w.read(param);
+                    @NotNull final ValueIn read = w.read(param);
                     final E message = wireToE.apply(read);
 
                     nullCheck(message);

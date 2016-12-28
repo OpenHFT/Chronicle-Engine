@@ -7,6 +7,7 @@ import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.ParameterizeWireKey;
 import net.openhft.chronicle.wire.WireKey;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static net.openhft.chronicle.engine.api.column.RemoteVaadinChart.EventId.*;
 
@@ -25,13 +26,15 @@ public class RemoteVaadinChart extends AbstractStatelessClient implements Vaadin
         this.asset = asset;
     }
 
-    private static String toURL(RequestContext context) {
+    @NotNull
+    private static String toURL(@NotNull RequestContext context) {
         return context.viewType(VaadinChart.class).toUri();
     }
 
     /**
      * the chartProperties of the chart
      */
+    @Nullable
     @Override
     public ChartProperties chartProperties() {
         return (ChartProperties) proxyReturnTypedObject(EventId.chartProperties, null, ChartProperties.class);
@@ -41,6 +44,7 @@ public class RemoteVaadinChart extends AbstractStatelessClient implements Vaadin
      * @return the name of the field in the column view that will be used to get the value of each
      * chartColumn
      */
+    @Nullable
     @Override
     public VaadinChartSeries[] series() {
         return (VaadinChartSeries[]) proxyReturnTypedObject(series, null, VaadinChartSeries[].class);
@@ -50,6 +54,7 @@ public class RemoteVaadinChart extends AbstractStatelessClient implements Vaadin
      * @return the name of the field in the column name that will be used to get the value of each
      * chartColumn
      */
+    @Nullable
     @Override
     public String columnNameField() {
         return (String) proxyReturnTypedObject(columnNameField, null, String.class);
@@ -58,8 +63,9 @@ public class RemoteVaadinChart extends AbstractStatelessClient implements Vaadin
     /**
      * @return the column view used to build the chart
      */
+    @NotNull
     public ColumnView columnView() {
-        String url = (String) proxyReturnTypedObject(columnView, null, String.class);
+        @Nullable String url = (String) proxyReturnTypedObject(columnView, null, String.class);
         return asset.acquireView(RequestContext.requestContext(url).viewType
                 (ColumnView.class));
     }

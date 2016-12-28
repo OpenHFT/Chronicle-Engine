@@ -50,6 +50,7 @@ public interface Visitable<E> {
      * @param <R>      data type to return.
      * @return the result of the code called.
      */
+    @Nullable
     default <R> R applyTo(@NotNull SerializableFunction<E, R> function) {
         return function.apply(get());
     }
@@ -72,6 +73,7 @@ public interface Visitable<E> {
      * @param <R>            data type to return.
      * @return the result of the code called.
      */
+    @Nullable
     default <R> R syncUpdate(@NotNull SerializableFunction<E, E> updateFunction, @NotNull SerializableFunction<E, R> returnFunction) {
         E e = updateFunction.apply(get());
         set(e);
@@ -87,6 +89,7 @@ public interface Visitable<E> {
      * @param <R>      type of the return value.
      * @return data derived.
      */
+    @Nullable
     default <T, R> R applyTo(@NotNull SerializableBiFunction<E, T, R> function, T argument) {
         return function.apply(get(), argument);
     }
@@ -113,6 +116,7 @@ public interface Visitable<E> {
      * @param <R>            data type to return.
      * @return the result of the code called.
      */
+    @Nullable
     default <UT, RT, R> R syncUpdate(@NotNull SerializableBiFunction<E, UT, E> updateFunction, @Nullable UT updateArgument,
                                      @NotNull SerializableBiFunction<E, RT, R> returnFunction, @Nullable RT returnArgument) {
         E e = updateFunction.apply(get(), updateArgument);

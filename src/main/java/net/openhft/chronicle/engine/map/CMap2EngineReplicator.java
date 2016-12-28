@@ -127,8 +127,8 @@ public class CMap2EngineReplicator implements EngineReplication,
 //        assert value.refCount()== 1;
         final KvLangBytes kv = kvByte.get();
 
-        net.openhft.lang.io.Bytes keyBytes = toLangBytes(key, kv.tmpKeyBytes, kv.key);
-        net.openhft.lang.io.Bytes valueBytes = toLangBytes(value, kv.tmpValueBytes, kv.value);
+        @NotNull net.openhft.lang.io.Bytes keyBytes = toLangBytes(key, kv.tmpKeyBytes, kv.key);
+        @NotNull net.openhft.lang.io.Bytes valueBytes = toLangBytes(value, kv.tmpValueBytes, kv.value);
 
         engineReplicationLang.put(keyBytes, valueBytes, remoteIdentifier, timestamp);
         keyBytes.position(0);
@@ -139,7 +139,7 @@ public class CMap2EngineReplicator implements EngineReplication,
     private void remove(@NotNull final BytesStore key, final byte remoteIdentifier, final long timestamp) {
 
         KvLangBytes kv = kvByte.get();
-        net.openhft.lang.io.Bytes keyBytes = toLangBytes(key, kv.tmpKeyBytes, kv.key);
+        @NotNull net.openhft.lang.io.Bytes keyBytes = toLangBytes(key, kv.tmpKeyBytes, kv.key);
         engineReplicationLang.remove(keyBytes, remoteIdentifier, timestamp);
     }
 
@@ -194,7 +194,7 @@ public class CMap2EngineReplicator implements EngineReplication,
                                            bootStrapTimeStamp) ->
                 {
                     final KvBytes threadLocal = kvBytesThreadLocal.get();
-                    VanillaReplicatedEntry entry = new VanillaReplicatedEntry(
+                    @NotNull VanillaReplicatedEntry entry = new VanillaReplicatedEntry(
                             toKey(key, threadLocal.key(key.remaining())),
                             toValue(value, threadLocal.value(value.remaining())),
                             timestamp,
@@ -207,15 +207,16 @@ public class CMap2EngineReplicator implements EngineReplication,
 
             }
 
+            @NotNull
             private PointerBytesStore toKey(final @NotNull net.openhft.lang.io.Bytes key,
-                                            final PointerBytesStore pbs) {
+                                            @NotNull final PointerBytesStore pbs) {
                 pbs.set(key.address(), key.capacity());
                 return pbs;
             }
 
             @Nullable
             private BytesStore toValue(final @Nullable net.openhft.lang.io.Bytes value,
-                                       final PointerBytesStore pbs) {
+                                       @NotNull final PointerBytesStore pbs) {
                 if (value == null)
                     return null;
 
@@ -281,10 +282,12 @@ public class CMap2EngineReplicator implements EngineReplication,
         private final PointerBytesStore key = BytesStore.nativePointer();
         private final PointerBytesStore value = BytesStore.nativePointer();
 
+        @NotNull
         private PointerBytesStore key(long size) {
             return key;
         }
 
+        @NotNull
         private PointerBytesStore value(long size) {
             return value;
         }

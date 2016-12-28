@@ -40,7 +40,7 @@ public class Utils {
     }
 
     public static void methodName(@NotNull String methodName) {
-        String methodName1 = (methodName.startsWith("test"))
+        @NotNull String methodName1 = (methodName.startsWith("test"))
                 ? methodName.substring("test".length())
                 : methodName;
         final String name = Utils.splitCamelCase(methodName1);
@@ -65,7 +65,7 @@ public class Utils {
         }
     }
 
-    public static void waitFor(BooleanSupplier test) {
+    public static void waitFor(@NotNull BooleanSupplier test) {
         for (int i = 1; i < 30; i++) {
             if (test.getAsBoolean())
                 break;

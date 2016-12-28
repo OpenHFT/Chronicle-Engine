@@ -1,12 +1,14 @@
 package net.openhft.chronicle.engine.api.column;
 
 import net.openhft.chronicle.wire.AbstractMarshallable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Rob Austin.
  */
 public class VaadinChartSeries extends AbstractMarshallable {
 
+    @NotNull
     public VaadinChartSeries width(Integer width) {
         this.width = width;
         return this;
@@ -18,6 +20,7 @@ public class VaadinChartSeries extends AbstractMarshallable {
         return yAxisLabel;
     }
 
+    @NotNull
     public VaadinChartSeries yAxisLabel(String yAxisLabel) {
         this.yAxisLabel = yAxisLabel;
         return this;
@@ -49,11 +52,13 @@ public class VaadinChartSeries extends AbstractMarshallable {
         return field;
     }
 
+    @NotNull
     public VaadinChartSeries field(String field) {
         this.field = field;
         return this;
     }
 
+    @NotNull
     public VaadinChartSeries type(Type type) {
         this.type = type;
         return this;

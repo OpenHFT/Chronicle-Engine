@@ -40,7 +40,7 @@ public interface Reference<E> extends Publisher<E>, Supplier<E>, Visitable<E> {
      */
     @Nullable
     default E getAndSet(E e) {
-        E prev = get();
+        @Nullable E prev = get();
         set(e);
         return prev;
     }
@@ -64,7 +64,7 @@ public interface Reference<E> extends Publisher<E>, Supplier<E>, Visitable<E> {
      */
     @Nullable
     default E getAndRemove() {
-        E prev = get();
+        @Nullable E prev = get();
         remove();
         return prev;
     }

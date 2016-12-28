@@ -86,7 +86,7 @@ public interface AssetTree extends Closeable {
      */
     @NotNull
     default <K, V> MapView<K, V> acquireMap(@NotNull String uri, Class<K> kClass, Class<V> vClass) throws AssetNotFoundException {
-        final RequestContext requestContext = requestContext(uri);
+        @NotNull final RequestContext requestContext = requestContext(uri);
 
         if (requestContext.bootstrap() != null)
             throw new UnsupportedOperationException("Its not possible to set the bootstrap when " +
@@ -194,8 +194,8 @@ public interface AssetTree extends Closeable {
      * @param subscriber to notify which this type of message is sent.
      * @throws AssetNotFoundException the view could not be constructed.
      */
-    default <E> void registerSubscriber(@NotNull String uri, Class<E> eClass, Subscriber<E> subscriber) throws AssetNotFoundException {
-        RequestContext rc = requestContext(uri).type2(eClass);
+    default <E> void registerSubscriber(@NotNull String uri, Class<E> eClass, @NotNull Subscriber<E> subscriber) throws AssetNotFoundException {
+        @NotNull RequestContext rc = requestContext(uri).type2(eClass);
 
         acquireSubscription(rc)
                 .registerSubscriber(rc, subscriber, Filter.empty());
@@ -212,8 +212,8 @@ public interface AssetTree extends Closeable {
      * @throws AssetNotFoundException the view could not be constructed.
      */
     default <E> void registerSubscriber(@NotNull String uri, String basePath, Class<E> eClass,
-                                        Subscriber<E> subscriber) throws AssetNotFoundException {
-        RequestContext rc = requestContext(uri).type2(eClass).basePath(basePath);
+                                        @NotNull Subscriber<E> subscriber) throws AssetNotFoundException {
+        @NotNull RequestContext rc = requestContext(uri).type2(eClass).basePath(basePath);
 
         acquireSubscription(rc)
                 .registerSubscriber(rc, subscriber, Filter.empty());
@@ -229,9 +229,9 @@ public interface AssetTree extends Closeable {
      * @param subscriber   to notify which this type of message is sent.
      * @throws AssetNotFoundException the view could not be constructed.
      */
-    default <T, E> void registerTopicSubscriber(@NotNull String uri, Class<T> topicClass, Class<E> messageClass, TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
-        RequestContext rc = requestContext(uri).keyType(topicClass).valueType(messageClass);
-        final KVSSubscription kvsSubscription = (KVSSubscription) acquireSubscription(rc);
+    default <T, E> void registerTopicSubscriber(@NotNull String uri, Class<T> topicClass, Class<E> messageClass, @NotNull TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
+        @NotNull RequestContext rc = requestContext(uri).keyType(topicClass).valueType(messageClass);
+        @NotNull final KVSSubscription kvsSubscription = (KVSSubscription) acquireSubscription(rc);
         kvsSubscription.registerTopicSubscriber(rc, subscriber);
     }
 
@@ -247,10 +247,10 @@ public interface AssetTree extends Closeable {
      * @throws AssetNotFoundException the view could not be constructed.
      */
     default <T, E> void registerTopicSubscriber(@NotNull String uri, String basePath, Class<T> topicClass,
-                                                Class<E> messageClass, TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
-        RequestContext rc = requestContext(uri).keyType(topicClass).valueType(messageClass)
+                                                Class<E> messageClass, @NotNull TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
+        @NotNull RequestContext rc = requestContext(uri).keyType(topicClass).valueType(messageClass)
                 .basePath(basePath);
-        final KVSSubscription kvsSubscription = (KVSSubscription) acquireSubscription(rc);
+        @NotNull final KVSSubscription kvsSubscription = (KVSSubscription) acquireSubscription(rc);
         kvsSubscription.registerTopicSubscriber(rc, subscriber);
     }
 
@@ -264,8 +264,8 @@ public interface AssetTree extends Closeable {
      */
     @NotNull
     default SubscriptionCollection acquireSubscription(@NotNull RequestContext requestContext) throws AssetNotFoundException {
-        Asset asset = acquireAsset(requestContext.fullName());
-        Class<SubscriptionCollection> subscriptionType = requestContext.getSubscriptionType();
+        @NotNull Asset asset = acquireAsset(requestContext.fullName());
+        @NotNull Class<SubscriptionCollection> subscriptionType = requestContext.getSubscriptionType();
         requestContext.viewType(subscriptionType);
         return asset.acquireView(subscriptionType, requestContext);
     }
@@ -278,8 +278,8 @@ public interface AssetTree extends Closeable {
      * @param subscriber to remove
      */
     default <E> void unregisterSubscriber(@NotNull String uri, @NotNull Subscriber<E> subscriber) {
-        RequestContext rc = requestContext(uri);
-        SubscriptionCollection subscription = getSubscription(rc);
+        @NotNull RequestContext rc = requestContext(uri);
+        @Nullable SubscriptionCollection subscription = getSubscription(rc);
         if (subscription == null)
             subscriber.onEndOfSubscription();
         else
@@ -294,8 +294,8 @@ public interface AssetTree extends Closeable {
      * @param subscriber to remove
      */
     default <T, E> void unregisterTopicSubscriber(@NotNull String uri, @NotNull TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
-        RequestContext rc = requestContext(uri).viewType(Subscriber.class);
-        SubscriptionCollection subscription = getSubscription(rc);
+        @NotNull RequestContext rc = requestContext(uri).viewType(Subscriber.class);
+        @Nullable SubscriptionCollection subscription = getSubscription(rc);
         if (subscription instanceof KVSSubscription)
             ((KVSSubscription) subscription).unregisterTopicSubscriber(subscriber);
         else
@@ -311,8 +311,8 @@ public interface AssetTree extends Closeable {
      */
     @Nullable
     default SubscriptionCollection getSubscription(@NotNull RequestContext requestContext) {
-        Asset asset = getAsset(requestContext.fullName());
-        Class<SubscriptionCollection> subscriptionType = requestContext.getSubscriptionType();
+        @Nullable Asset asset = getAsset(requestContext.fullName());
+        @NotNull Class<SubscriptionCollection> subscriptionType = requestContext.getSubscriptionType();
         requestContext.viewType(subscriptionType);
         return asset == null ? null : asset.getView(subscriptionType);
     }
@@ -340,7 +340,7 @@ public interface AssetTree extends Closeable {
     @NotNull
     default <E> E acquireView(@NotNull RequestContext requestContext) throws AssetNotFoundException {
 
-        final Asset asset = acquireAsset(requestContext.fullName());
+        @NotNull final Asset asset = acquireAsset(requestContext.fullName());
 
      /*   if (requestContext.viewType() == MapView.class
                 && asset.findView(MapView.class) == null) {
@@ -385,9 +385,10 @@ public interface AssetTree extends Closeable {
 
     AssetTreeStats getUsageStats();
 
-    default <T, M> QueueView<T, M> acquireQueue(String uri, Class<T> typeClass, Class<M> messageClass, final String cluster) {
+    @NotNull
+    default <T, M> QueueView<T, M> acquireQueue(@NotNull String uri, Class<T> typeClass, Class<M> messageClass, final String cluster) {
 
-        final RequestContext requestContext = requestContext(uri);
+        @NotNull final RequestContext requestContext = requestContext(uri);
 
         if (requestContext.bootstrap() != null)
             throw new UnsupportedOperationException("Its not possible to set the bootstrap when " +
@@ -397,10 +398,11 @@ public interface AssetTree extends Closeable {
                 .cluster(cluster));
     }
 
-    default <T, M> QueueView<T, M> acquireQueue(String uri, Class<T> typeClass, Class<M>
+    @NotNull
+    default <T, M> QueueView<T, M> acquireQueue(@NotNull String uri, Class<T> typeClass, Class<M>
             messageClass, final String cluster, String basePath) {
 
-        final RequestContext requestContext = requestContext(uri).basePath(basePath);
+        @NotNull final RequestContext requestContext = requestContext(uri).basePath(basePath);
 
         if (requestContext.bootstrap() != null)
             throw new UnsupportedOperationException("Its not possible to set the bootstrap when " +
@@ -410,10 +412,11 @@ public interface AssetTree extends Closeable {
                 .cluster(cluster));
     }
 
-    default <T, M> QueueView<T, M> acquireQueue(String uri, String basePath, Class<T> typeClass,
+    @NotNull
+    default <T, M> QueueView<T, M> acquireQueue(@NotNull String uri, String basePath, Class<T> typeClass,
                                                 Class<M> messageClass, final String cluster) {
 
-        final RequestContext requestContext = requestContext(uri).basePath(basePath);
+        @NotNull final RequestContext requestContext = requestContext(uri).basePath(basePath);
 
         if (requestContext.bootstrap() != null)
             throw new UnsupportedOperationException("Its not possible to set the bootstrap when " +
@@ -423,10 +426,11 @@ public interface AssetTree extends Closeable {
                 .cluster(cluster));
     }
 
-    default <T, M> QueueView<T, M> acquireQueue(String uri, Class<T> typeClass, Class<M>
+    @NotNull
+    default <T, M> QueueView<T, M> acquireQueue(@NotNull String uri, Class<T> typeClass, Class<M>
             messageClass) {
 
-        final RequestContext requestContext = requestContext(uri);
+        @NotNull final RequestContext requestContext = requestContext(uri);
 
         if (requestContext.bootstrap() != null)
             throw new UnsupportedOperationException("Its not possible to set the bootstrap when " +

@@ -23,6 +23,7 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireIn;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,16 +39,17 @@ public class InMemoryMapCfg implements Installable {
     private String compression;
     private String importFile;
 
+    @Nullable
     @Override
-    public Void install(String path, AssetTree assetTree) throws IOException {
-        String uri = path + "?putReturnsNull=" + putReturnsNull + "&removeReturnsNull=" + removeReturnsNull;
-        MapView mapView = assetTree.acquireMap(uri, keyType, valueType);
+    public Void install(String path, @NotNull AssetTree assetTree) throws IOException {
+        @NotNull String uri = path + "?putReturnsNull=" + putReturnsNull + "&removeReturnsNull=" + removeReturnsNull;
+        @NotNull MapView mapView = assetTree.acquireMap(uri, keyType, valueType);
         if (importFile != null) {
-            Wire wire = Wire.fromFile(importFile);
-            StringBuilder keyStr = new StringBuilder();
+            @NotNull Wire wire = Wire.fromFile(importFile);
+            @NotNull StringBuilder keyStr = new StringBuilder();
             while (!wire.isEmpty()) {
-                Object value = wire.readEventName(keyStr).object(valueType);
-                Object key = ObjectUtils.convertTo(keyType, keyStr);
+                @Nullable Object value = wire.readEventName(keyStr).object(valueType);
+                @Nullable Object key = ObjectUtils.convertTo(keyType, keyStr);
                 mapView.put(key, value);
             }
         }
@@ -66,6 +68,7 @@ public class InMemoryMapCfg implements Installable {
             wire.read(() -> "import").text(this, (o, s) -> o.importFile = s);
     }
 
+    @NotNull
     @Override
     public String toString() {
         return "InMemoryMapCfg{" +

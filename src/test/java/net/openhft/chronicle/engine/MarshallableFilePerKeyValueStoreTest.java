@@ -29,6 +29,7 @@ import net.openhft.chronicle.engine.map.VanillaStringMarshallableKeyValueStore;
 import net.openhft.chronicle.engine.tree.VanillaAsset;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -66,14 +67,14 @@ public class MarshallableFilePerKeyValueStoreTest {
     @Before
     public void createMap() throws IOException {
         resetChassis();
-        WireType writeType = WireType.TEXT;
+        @NotNull WireType writeType = WireType.TEXT;
         ((VanillaAsset) assetTree().root()).enableTranslatingValuesToBytesStore();
 
-        LeafViewFactory<AuthenticatedKeyValueStore> factory = (context, asset) -> new FilePerKeyValueStore(context.basePath(OS.TARGET).wireType(writeType), asset);
+        @NotNull LeafViewFactory<AuthenticatedKeyValueStore> factory = (context, asset) -> new FilePerKeyValueStore(context.basePath(OS.TARGET).wireType(writeType), asset);
         assetTree().root().addLeafRule(AuthenticatedKeyValueStore.class, "FilePer Key", factory);
 
         map = acquireMap(NAME, String.class, TestMarshallable.class);
-        KeyValueStore mapU = ((VanillaMapView) map).underlying();
+        @Nullable KeyValueStore mapU = ((VanillaMapView) map).underlying();
         assertEquals(VanillaStringMarshallableKeyValueStore.class, mapU.getClass());
         assertEquals(FilePerKeyValueStore.class, mapU.underlying().getClass());
 
@@ -91,10 +92,10 @@ public class MarshallableFilePerKeyValueStoreTest {
     @Ignore("todo fix -  see JIRA https://higherfrequencytrading.atlassian.net/browse/CE-118")
     @Test
     public void test() throws InterruptedException {
-        TestMarshallable tm = new TestMarshallable("testing1", "testing2",
+        @NotNull TestMarshallable tm = new TestMarshallable("testing1", "testing2",
                 new Nested(Arrays.asList(2.3, 4.5, 6.7, 8.9)));
 
-        List<MapEvent<String, TestMarshallable>> events = new ArrayList<>();
+        @NotNull List<MapEvent<String, TestMarshallable>> events = new ArrayList<>();
         registerSubscriber(NAME, MapEvent.class, events::add);
 
         map.put("testA", tm);

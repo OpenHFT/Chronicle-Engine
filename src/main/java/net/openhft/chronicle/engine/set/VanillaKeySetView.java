@@ -71,9 +71,9 @@ public class VanillaKeySetView<K, V> extends AbstractCollection<K> implements Ke
     public boolean equals(Object obj) {
         if (!(obj instanceof Set))
             return false;
-        Set<K> set = (Set<K>) obj;
+        @NotNull Set<K> set = (Set<K>) obj;
         if (set.size() != size()) return false;
-        for (K k : set) {
+        for (@Nullable K k : set) {
             if (k == null || !contains(k))
                 return false;
         }

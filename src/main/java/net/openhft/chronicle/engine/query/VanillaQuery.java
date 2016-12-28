@@ -66,6 +66,7 @@ public class VanillaQuery<E> implements Query<E> {
         return stream;
     }
 
+    @NotNull
     @Override
     public Subscription subscribe(Consumer<? super E> action) {
         throw new UnsupportedOperationException("todo");

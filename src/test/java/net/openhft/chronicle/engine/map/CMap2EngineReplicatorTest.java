@@ -25,6 +25,8 @@ import net.openhft.chronicle.engine.api.EngineReplication.ReplicationEntry;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.wire.TextWire;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -63,15 +65,15 @@ public class CMap2EngineReplicatorTest {
     @Test
     public void testLocalPut() throws InterruptedException {
 
-        final CMap2EngineReplicator replicator = new CMap2EngineReplicator(null);
+        @Nullable final CMap2EngineReplicator replicator = new CMap2EngineReplicator(null);
 
         ChronicleMap<String, String> map = ChronicleMapBuilder.of(String.class, String.class).
                 replication(builder().engineReplication(replicator).createWithId((byte) 2)).create();
 
-        final ModificationIterator modificationIterator = replicator.acquireModificationIterator((byte) 1);
+        @Nullable final ModificationIterator modificationIterator = replicator.acquireModificationIterator((byte) 1);
         map.put("hello", "world");
 
-        BlockingQueue<ReplicationEntry> q = new ArrayBlockingQueue<>(1);
+        @NotNull BlockingQueue<ReplicationEntry> q = new ArrayBlockingQueue<>(1);
 
         while (modificationIterator.hasNext()) {
             modificationIterator.nextEntry(q::add);
@@ -81,7 +83,7 @@ public class CMap2EngineReplicatorTest {
 
         Assert.assertEquals("hello", new TextWire(entry.key().bytesForRead()).getValueIn().text());
 
-        final BytesStore value = entry.value();
+        @Nullable final BytesStore value = entry.value();
         Assert.assertEquals("world", (value == null) ? null : new TextWire(value.bytesForRead()).getValueIn().text());
 
         Assert.assertEquals(2, entry.identifier());
@@ -93,7 +95,7 @@ public class CMap2EngineReplicatorTest {
     @Test
     public void testRemotePut() {
 
-        final CMap2EngineReplicator replicator = new CMap2EngineReplicator(null);
+        @NotNull final CMap2EngineReplicator replicator = new CMap2EngineReplicator(null);
 
         ChronicleMap map = ChronicleMapBuilder.of(String.class, String.class).
                 replication(builder().engineReplication(replicator).createWithId((byte) 2)).create();

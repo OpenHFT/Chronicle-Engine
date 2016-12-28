@@ -110,7 +110,8 @@ public enum Chassis {
         return assetTree.acquirePublisher(uri, eClass);
     }
 
-    public static <T, M> QueueView<T, M> acquireQueue(String uri, Class<T> typeClass, Class<M> messageClass) {
+    @NotNull
+    public static <T, M> QueueView<T, M> acquireQueue(@NotNull String uri, Class<T> typeClass, Class<M> messageClass) {
         return assetTree.acquireQueue(uri, typeClass, messageClass);
     }
 
@@ -140,7 +141,7 @@ public enum Chassis {
      * @param subscriber to listen to events.
      * @throws AssetNotFoundException if not found or could not be created.
      */
-    public static <E> void registerSubscriber(@NotNull String uri, Class<E> eClass, Subscriber<E> subscriber) throws AssetNotFoundException {
+    public static <E> void registerSubscriber(@NotNull String uri, Class<E> eClass, @NotNull Subscriber<E> subscriber) throws AssetNotFoundException {
         assetTree.registerSubscriber(uri, eClass, subscriber);
     }
 
@@ -166,7 +167,7 @@ public enum Chassis {
      * @param subscriber to listen to events on
      * @throws AssetNotFoundException if not found or could not be created.
      */
-    public static <T, E> void registerTopicSubscriber(@NotNull String uri, Class<T> tClass, Class<E> eClass, TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
+    public static <T, E> void registerTopicSubscriber(@NotNull String uri, Class<T> tClass, Class<E> eClass, @NotNull TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
         assetTree.registerTopicSubscriber(uri, tClass, eClass, subscriber);
     }
 

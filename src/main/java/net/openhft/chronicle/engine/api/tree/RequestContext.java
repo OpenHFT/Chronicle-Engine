@@ -189,16 +189,16 @@ public class RequestContext implements Cloneable {
     public static RequestContext requestContext(@NotNull String uri) {
 
         int queryPos = uri.indexOf('?');
-        String fullName = queryPos >= 0 ? uri.substring(0, queryPos) : uri;
-        String query = queryPos >= 0 ? uri.substring(queryPos + 1) : "";
+        @NotNull String fullName = queryPos >= 0 ? uri.substring(0, queryPos) : uri;
+        @NotNull String query = queryPos >= 0 ? uri.substring(queryPos + 1) : "";
         int lastForwardSlash = fullName.lastIndexOf('/');
         if (lastForwardSlash > 0 && fullName.length() == lastForwardSlash + 1) {
             fullName = fullName.substring(0, fullName.length() - 1);
             lastForwardSlash = fullName.lastIndexOf('/');
         }
-        String pathName = lastForwardSlash >= 0 ? fullName.substring(0, lastForwardSlash) : "";
-        String name = lastForwardSlash >= 0 ? fullName.substring(lastForwardSlash + 1) : fullName;
-        RequestContext requestContext = new RequestContext(pathName, name).queryString(query);
+        @NotNull String pathName = lastForwardSlash >= 0 ? fullName.substring(0, lastForwardSlash) : "";
+        @NotNull String name = lastForwardSlash >= 0 ? fullName.substring(lastForwardSlash + 1) : fullName;
+        @NotNull RequestContext requestContext = new RequestContext(pathName, name).queryString(query);
         return requestContext;
     }
 
@@ -225,7 +225,7 @@ public class RequestContext implements Cloneable {
 
     @NotNull
     public Class<SubscriptionCollection> getSubscriptionType() {
-        Class elementType = elementType();
+        @NotNull Class elementType = elementType();
         return elementType == TopologicalEvent.class
                 ? (Class) TopologySubscription.class
                 : elementType == BytesStore.class
@@ -237,9 +237,9 @@ public class RequestContext implements Cloneable {
     public RequestContext queryString(@NotNull String queryString) {
         if (queryString.isEmpty())
             return this;
-        WireParser<Void> parser = getWireParser();
+        @NotNull WireParser<Void> parser = getWireParser();
         Bytes bytes = Bytes.from(queryString);
-        QueryWire wire = new QueryWire(bytes);
+        @NotNull QueryWire wire = new QueryWire(bytes);
         while (bytes.readRemaining() > 0)
             parser.parseOne(wire, null);
         return this;
@@ -247,7 +247,7 @@ public class RequestContext implements Cloneable {
 
     @NotNull
     public WireParser<Void> getWireParser() {
-        WireParser<Void> parser = new VanillaWireParser<>((s, v, $) -> {
+        @NotNull WireParser<Void> parser = new VanillaWireParser<>((s, v, $) -> {
         });
         parser.register(() -> "cluster", (s, v, $) -> v.text(this, (o, x) -> o.cluster = x));
         parser.register(() -> "view", (s, v, $) -> v.text(this, RequestContext::view));
@@ -339,6 +339,7 @@ public class RequestContext implements Cloneable {
         return type;
     }
 
+    @NotNull
     public RequestContext messageType(Class clazz) {
         this.type = clazz;
         return this;
@@ -366,7 +367,7 @@ public class RequestContext implements Cloneable {
 
     @NotNull
     public String fullName() {
-        final String s = pathName.isEmpty() ? name : (pathName + "/" + name);
+        @NotNull final String s = pathName.isEmpty() ? name : (pathName + "/" + name);
         return s.startsWith("/") ? s : "/" + s;
     }
 
@@ -492,6 +493,7 @@ public class RequestContext implements Cloneable {
         return this;
     }
 
+    @Nullable
     public Boolean endSubscriptionAfterBootstrap() {
         return endSubscriptionAfterBootstrap;
     }
@@ -536,7 +538,7 @@ public class RequestContext implements Cloneable {
     @NotNull
     public RequestContext clone() {
         try {
-            RequestContext clone = (RequestContext) super.clone();
+            @NotNull RequestContext clone = (RequestContext) super.clone();
             clone.sealed = false;
             return clone;
         } catch (CloneNotSupportedException e) {
@@ -550,10 +552,11 @@ public class RequestContext implements Cloneable {
         return this;
     }
 
+    @NotNull
     public String toUri() {
-        StringBuilder sb = new StringBuilder();
+        @NotNull StringBuilder sb = new StringBuilder();
         sb.append(fullName());
-        String sep = "?";
+        @NotNull String sep = "?";
         final Class viewType = this.viewType;
         if (viewType != null) {
             String alias = CLASS_ALIASES.nameFor(viewType);
@@ -595,16 +598,19 @@ public class RequestContext implements Cloneable {
         return throttlePeriodMs;
     }
 
+    @NotNull
     public RequestContext throttlePeriodMs(int throttlePeriodMs) {
         this.throttlePeriodMs = throttlePeriodMs;
         return this;
     }
 
+    @NotNull
     public <E> RequestContext elementType(Class<E> eClass) {
         this.type2 = eClass;
         return this;
     }
 
+    @NotNull
     public RequestContext topicType(Class topicType) {
         this.type = topicType;
         return this;
@@ -614,6 +620,7 @@ public class RequestContext implements Cloneable {
         return dontPersist;
     }
 
+    @NotNull
     public RequestContext dontPersist(boolean dontPersist) {
         this.dontPersist = dontPersist;
         return this;
@@ -623,6 +630,7 @@ public class RequestContext implements Cloneable {
         return token;
     }
 
+    @NotNull
     public RequestContext token(long token) {
         this.token = token;
         return this;
@@ -631,7 +639,7 @@ public class RequestContext implements Cloneable {
     public enum Operation {
         END_SUBSCRIPTION_AFTER_BOOTSTRAP, BOOTSTRAP;
 
-        public void apply(RequestContext rc) {
+        public void apply(@NotNull RequestContext rc) {
             switch (this) {
                 case END_SUBSCRIPTION_AFTER_BOOTSTRAP:
                     rc.endSubscriptionAfterBootstrap(true);

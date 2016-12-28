@@ -27,6 +27,8 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.wire.WireType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,7 +51,9 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
     public static final int MAX = 50;
     private static final String NAME = "test";
     private static final String CONNECTION = "host.port.TcpManyConnectionsTest";
+    @NotNull
     private static MapView[] maps = new MapView[MAX];
+    @NotNull
     private AssetTree[] trees = new AssetTree[MAX];
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
@@ -78,7 +82,7 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
     }
 
     private void shutdownTrees() {
-        ExecutorService c = Executors.newCachedThreadPool(
+        @NotNull ExecutorService c = Executors.newCachedThreadPool(
                 new NamedThreadFactory("Tree Closer", true));
 
         for (int i = 0; i < MAX; i++) {
@@ -100,9 +104,9 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
     @Test
     public void test() throws IOException, InterruptedException, ExecutionException {
 
-        final ExecutorService executorService = Executors.newCachedThreadPool();
+        @NotNull final ExecutorService executorService = Executors.newCachedThreadPool();
 
-        List<Future> futures = new ArrayList<>();
+        @NotNull List<Future> futures = new ArrayList<>();
         for (int i = 0; i < MAX; i++) {
             final int j = i;
 
@@ -117,12 +121,12 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
         futures.forEach(f -> {
             try {
                 f.get();
-            } catch (InterruptedException | ExecutionException e) {
+            } catch (@NotNull InterruptedException | ExecutionException e) {
                 Jvm.rethrow(e);
             }
         });
 
-        List<Future<String>> futures2 = new ArrayList<Future<String>>();
+        @NotNull List<Future<String>> futures2 = new ArrayList<Future<String>>();
         for (int i = 0; i < MAX; i++) {
             final int j = i;
             futures2.add(executorService.submit(() -> {
@@ -131,7 +135,7 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
             }));
         }
 
-        final Iterator<Future<String>> iterator = futures2.iterator();
+        @NotNull final Iterator<Future<String>> iterator = futures2.iterator();
         for (int i = 0; i < MAX; i++) {
             final Future<String> s = iterator.next();
             final String actual = s.get();
@@ -147,9 +151,9 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
     @Test
     public void andresTest() throws IOException, InterruptedException {
 
-        final ExecutorService executorService = Executors.newCachedThreadPool();
+        @NotNull final ExecutorService executorService = Executors.newCachedThreadPool();
 
-        List<Future> futures = new ArrayList<>();
+        @NotNull List<Future> futures = new ArrayList<>();
         for (int i = 0; i < MAX; i++) {
             final int j = i;
 
@@ -157,7 +161,7 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
                 assert maps[j].size() == 0;
                 maps[j].clear();
                 maps[j].getAndPut("x", "y");
-                final Object x = maps[j].get("x");
+                @Nullable final Object x = maps[j].get("x");
                 assert "y".equals(x) : "get(\"x\")=" + x;
                 assert maps[j].size() == 1;
                 maps[j].clear();
@@ -169,7 +173,7 @@ public class TcpManyClientConnectionsOnManyMapsTest extends ThreadMonitoringTest
             try {
                 f.get();
 
-            } catch (InterruptedException | ExecutionException e) {
+            } catch (@NotNull InterruptedException | ExecutionException e) {
                 Jvm.rethrow(e);
             }
         });

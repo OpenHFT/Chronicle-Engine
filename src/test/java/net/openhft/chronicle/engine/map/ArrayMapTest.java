@@ -28,6 +28,7 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.*;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
@@ -125,11 +126,11 @@ public class ArrayMapTest extends ThreadMonitoringTest {
     @Test
     public void testByteArrayValue() {
 
-        final MapView<String, byte[]> map = assetTree.acquireMap("name", String.class, byte[]
+        @NotNull final MapView<String, byte[]> map = assetTree.acquireMap("name", String.class, byte[]
                 .class);
         map.put("1", "hello world".getBytes(ISO_8859_1));
 
-        final byte[] bytes = map.get("1");
+        @Nullable final byte[] bytes = map.get("1");
         Assert.assertArrayEquals("hello world".getBytes(ISO_8859_1), bytes);
 
     }
@@ -137,26 +138,26 @@ public class ArrayMapTest extends ThreadMonitoringTest {
     @Test
     public void testByteArrayValueWithRealBytes() {
 
-        final MapView<String, byte[]> map = assetTree.acquireMap("name", String.class, byte[]
+        @NotNull final MapView<String, byte[]> map = assetTree.acquireMap("name", String.class, byte[]
                 .class);
 
-        final byte[] expected = {1, 2, 3, 4, 5, 6, 7};
+        @NotNull final byte[] expected = {1, 2, 3, 4, 5, 6, 7};
         map.put("1", expected);
 
-        final byte[] actual = map.get("1");
+        @Nullable final byte[] actual = map.get("1");
         Assert.assertArrayEquals(expected, actual);
     }
 
     @Test
     public void testByteArrayValueWithRealBytesNegitive() {
 
-        final MapView<String, byte[]> map = assetTree.acquireMap("name", String.class, byte[]
+        @NotNull final MapView<String, byte[]> map = assetTree.acquireMap("name", String.class, byte[]
                 .class);
 
-        final byte[] expected = {-1, -2, -3, -4, -5, -6, -7};
+        @NotNull final byte[] expected = {-1, -2, -3, -4, -5, -6, -7};
         map.put("1", expected);
 
-        final byte[] actual = map.get("1");
+        @Nullable final byte[] actual = map.get("1");
         Assert.assertArrayEquals(expected, actual);
     }
 }

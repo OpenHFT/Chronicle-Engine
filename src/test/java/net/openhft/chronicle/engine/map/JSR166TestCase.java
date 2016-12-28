@@ -285,7 +285,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
      * Find missing try { ... } finally { joinPool(e); }
      */
     private void checkForkJoinPoolThreadLeaks() throws InterruptedException {
-        Thread[] survivors = new Thread[5];
+        @NotNull Thread[] survivors = new Thread[5];
         int count = Thread.enumerate(survivors);
         for (int i = 0; i < count; i++) {
             Thread thread = survivors[i];
@@ -429,7 +429,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
         else if (t instanceof Error)
             throw (Error) t;
         else {
-            AssertionFailedError afe =
+            @NotNull AssertionFailedError afe =
                     new AssertionFailedError("unexpected exception: " + t);
             afe.initCause(t);
             throw afe;
@@ -487,7 +487,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
         try {
             // No need to optimize the Assert.failing case via Thread.join.
             delay(millis);
-            for (Thread thread : threads)
+            for (@NotNull Thread thread : threads)
                 Assert.assertTrue(thread.isAlive());
         } catch (InterruptedException ie) {
             Assert.fail("Unexpected InterruptedException");
@@ -560,7 +560,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
         try {
             delay(millis);
         } catch (InterruptedException ie) {
-            AssertionFailedError afe =
+            @NotNull AssertionFailedError afe =
                     new AssertionFailedError("Unexpected InterruptedException");
             afe.initCause(ie);
             throw afe;
@@ -611,7 +611,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
      */
     @NotNull
     protected Thread newStartedThread(Runnable runnable) {
-        Thread t = new Thread(runnable);
+        @NotNull Thread t = new Thread(runnable);
         t.setDaemon(true);
         t.start();
         return t;
@@ -709,8 +709,8 @@ public class JSR166TestCase extends ThreadMonitoringTest {
 
     private byte[] serialBytes(Object o) {
         try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(bos);
+            @NotNull ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            @NotNull ObjectOutputStream oos = new ObjectOutputStream(bos);
             oos.writeObject(o);
             oos.flush();
             oos.close();
@@ -725,9 +725,9 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     @SuppressWarnings("unchecked")
     protected <T> T serialClone(@NotNull T o) {
         try {
-            ObjectInputStream ois = new ObjectInputStream
+            @NotNull ObjectInputStream ois = new ObjectInputStream
                     (new ByteArrayInputStream(serialBytes(o)));
-            T clone = (T) ois.readObject();
+            @NotNull T clone = (T) ois.readObject();
             Assert.assertSame(o.getClass(), clone.getClass());
             return clone;
         } catch (Throwable t) {
@@ -738,14 +738,14 @@ public class JSR166TestCase extends ThreadMonitoringTest {
 
     public void assertThrows(@NotNull Class<? extends Throwable> expectedExceptionClass,
                              @NotNull Runnable... throwingActions) {
-        for (Runnable throwingAction : throwingActions) {
+        for (@NotNull Runnable throwingAction : throwingActions) {
             boolean threw = false;
             try {
                 throwingAction.run();
             } catch (Throwable t) {
                 threw = true;
                 if (!expectedExceptionClass.isInstance(t)) {
-                    AssertionFailedError afe =
+                    @NotNull AssertionFailedError afe =
                             new AssertionFailedError
                                     ("Expected " + expectedExceptionClass.getName() +
                                             ", got " + t.getClass().getName());
@@ -771,7 +771,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
         Permissions perms = new Permissions();
 
         AdjustablePolicy(@NotNull Permission... permissions) {
-            for (Permission permission : permissions)
+            for (@NotNull Permission permission : permissions)
                 perms.add(permission);
         }
 
@@ -802,8 +802,8 @@ public class JSR166TestCase extends ThreadMonitoringTest {
 
         @NotNull
         public String toString() {
-            List<Permission> ps = new ArrayList<>();
-            for (Enumeration<Permission> e = perms.elements(); e.hasMoreElements(); )
+            @NotNull List<Permission> ps = new ArrayList<>();
+            for (@NotNull Enumeration<Permission> e = perms.elements(); e.hasMoreElements(); )
                 ps.add(e.nextElement());
             return "AdjustablePolicy with permissions " + ps;
         }
@@ -1035,7 +1035,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
 
         public final T call() {
             try {
-                T result = realCall();
+                @NotNull T result = realCall();
                 threadShouldThrow("InterruptedException");
                 return result;
             } catch (InterruptedException success) {
@@ -1163,7 +1163,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
             } catch (TimeoutException e) {
                 throw new AssertionFailedError("timed out");
             } catch (Exception e) {
-                AssertionFailedError afe =
+                @NotNull AssertionFailedError afe =
                         new AssertionFailedError("Unexpected exception: " + e);
                 afe.initCause(e);
                 throw afe;

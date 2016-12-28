@@ -27,6 +27,7 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
+import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 
 import java.io.IOException;
@@ -64,7 +65,7 @@ public class RedisEmulatorTest {
 //                new ChronicleMapKeyValueStore(context.basePath(OS.TARGET), asset));
         TCPRegistry.createServerSocketChannelFor("RemoteSubscriptionModelPerformanceTest.port");
 
-        ServerEndpoint serverEndpoint = new ServerEndpoint("RemoteSubscriptionModelPerformanceTest.port",
+        @NotNull ServerEndpoint serverEndpoint = new ServerEndpoint("RemoteSubscriptionModelPerformanceTest.port",
                 serverAssetTree);
         clientAssetTree = new VanillaAssetTree()
                 .forRemoteAccess("RemoteSubscriptionModelPerformanceTest.port", WireType.TEXT);
@@ -129,10 +130,10 @@ public class RedisEmulatorTest {
         assertEquals(1, hset(myStringHash, "field1", "Hello"));
         assertEquals(1, hset(myStringHash, "field2", "World"));
 
-        List<String> results = new ArrayList();
+        @NotNull List<String> results = new ArrayList();
         hgetall(myStringHash, new Consumer<Map.Entry<String, String>>() {
             @Override
-            public void accept(Map.Entry<String, String> entry) {
+            public void accept(@NotNull Map.Entry<String, String> entry) {
                 results.add(entry.getKey());
                 results.add(entry.getValue());
             }
