@@ -1,7 +1,6 @@
 package net.openhft.chronicle.engine;
 
 import net.openhft.chronicle.core.Jvm;
-import net.openhft.chronicle.core.onoes.Slf4jExceptionHandler;
 import net.openhft.chronicle.engine.api.EngineReplication;
 import net.openhft.chronicle.engine.api.map.KeyValueStore;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -36,7 +35,7 @@ public class EngineInstance {
 
     static {
         try {
-            setExceptionsHandlers(WARN, WARN, Slf4jExceptionHandler.DEBUG);
+            setExceptionsHandlers(WARN, WARN, null);
             loadDefaultAliases();
         } catch (Exception e) {
             e.printStackTrace();
