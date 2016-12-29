@@ -5,7 +5,7 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.query.QueueConfig;
 import net.openhft.chronicle.engine.tree.MessageAdaptor;
-import net.openhft.chronicle.wire.AbstractMarshallable;
+import net.openhft.chronicle.wire.AbstractMarshallableCfg;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +18,7 @@ import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContex
  * @author Rob Austin.
  *         Configures a Chronicle Queue
  */
-public class QueueCfg extends AbstractMarshallable implements Installable {
+public class QueueCfg extends AbstractMarshallableCfg implements Installable {
 
     private int masterId = 1;
     private String basePath = null;
