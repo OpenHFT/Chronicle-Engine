@@ -41,7 +41,7 @@ public class InMemoryMapCfg implements Installable {
 
     @Nullable
     @Override
-    public Void install(String path, @NotNull AssetTree assetTree) throws IOException {
+    public Void install(@NotNull String path, @NotNull AssetTree assetTree) throws IOException {
         @NotNull String uri = path + "?putReturnsNull=" + putReturnsNull + "&removeReturnsNull=" + removeReturnsNull;
         @NotNull MapView mapView = assetTree.acquireMap(uri, keyType, valueType);
         if (importFile != null) {

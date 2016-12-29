@@ -26,6 +26,7 @@ import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.TopicPublisher;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
+import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.engine.tree.QueueView.Excerpt;
@@ -51,6 +52,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.engine.Utils.methodName;
+import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -174,7 +176,14 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         @NotNull String uri = "/queue/" + methodName + DELETE_CHRONICLE_FILE;
         @NotNull String messageType = "topic";
 
-        queueView = assetTree.acquireQueue(uri, String.class, String.class);
+        @NotNull final RequestContext requestContext = requestContext(uri);
+
+        if (requestContext.bootstrap() != null)
+            throw new UnsupportedOperationException("Its not possible to set the bootstrap when " +
+                    "acquiring a queue");
+
+        queueView = assetTree.acquireView(requestContext.view("queue").type(String.class).type2(String.class)
+                .cluster(""));
         Jvm.pause(500);
         final long index = queueView.publishAndIndex(messageType, "Message-1");
         @Nullable final Excerpt<String, String> actual = queueView.getExcerpt(index);
@@ -265,8 +274,17 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
         @NotNull String messageType = "topic";
 
         // todo - fix
-        if (!isRemote)
-            assetTree.acquireQueue(uri, String.class, String.class);
+        if (!isRemote) {
+
+            @NotNull final RequestContext requestContext = requestContext(uri);
+
+            if (requestContext.bootstrap() != null)
+                throw new UnsupportedOperationException("Its not possible to set the bootstrap when " +
+                        "acquiring a queue");
+
+            assetTree.acquireView(requestContext.view("queue").type(String.class).type2(String.class)
+                    .cluster(""));
+        }
         publisher = assetTree.acquirePublisher(uri + "/" + messageType, String.class);
         @NotNull BlockingQueue<String> values = new LinkedBlockingQueue<>();
 
@@ -287,12 +305,26 @@ public class SimpleQueueViewTest extends ThreadMonitoringTest {
 
         @NotNull String uri = "/queue/" + methodName + DELETE_CHRONICLE_FILE;
 
-        publisher = assetTree.acquireQueue(uri, String.class, String
-                .class);
+        @NotNull final RequestContext requestContext1 = requestContext(uri);
+
+        if (requestContext1.bootstrap() != null)
+            throw new UnsupportedOperationException("Its not possible to set the bootstrap when " +
+                    "acquiring a queue");
+
+        publisher = assetTree.acquireView(requestContext1.view("queue").type(String.class).type2(String
+                .class)
+                .cluster(""));
 
         final long index = publisher.publishAndIndex(methodName, "Message-1");
 
-        @NotNull QueueView<String, String> queue = assetTree.acquireQueue(uri, String.class, String.class);
+        @NotNull final RequestContext requestContext = requestContext(uri);
+
+        if (requestContext.bootstrap() != null)
+            throw new UnsupportedOperationException("Its not possible to set the bootstrap when " +
+                    "acquiring a queue");
+
+        @NotNull QueueView<String, String> queue = assetTree.acquireView(requestContext.view("queue").type(String.class).type2(String.class)
+                .cluster(""));
         @Nullable final Excerpt<String, String> excerpt = queue.getExcerpt(index);
         assertEquals(methodName, excerpt.topic());
         assertEquals("Message-1", excerpt.message());

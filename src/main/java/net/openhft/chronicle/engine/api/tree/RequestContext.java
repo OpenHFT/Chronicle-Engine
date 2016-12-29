@@ -83,8 +83,6 @@ public class RequestContext implements Cloneable {
         addAlias(ObjectSubscription.class, "Subscription");
         addAlias(TopologySubscription.class, "TopologySubscription");
         addAlias(Reference.class, "Reference, Ref");
-        addAlias(Heartbeat.class, "Heartbeat");
-        addAlias(Filter.class, "Filter");
         addAlias(net.openhft.chronicle.engine.query.Operation.class, "Operation");
         // TODO replace with a proper implementation.
         addAlias(Proxy.class, "set-proxy");
@@ -106,11 +104,14 @@ public class RequestContext implements Cloneable {
         addAlias("software.chronicle.enterprise.queue.QueueSourceReplicationHandler");
         addAlias("software.chronicle.ente§rprise.queue.QueueSyncReplicationHandler");
         addAlias(QueueView.class, "QueueView");
-        addAlias(MapView.class, "MapView");
         addAlias(Boolean.class, "boolean");
         addAlias(AuthenticatedKeyValueStore.class, "AuthenticatedKeyValueStore");
         addAlias(ObjectKeyValueStore.class, "ObjectKeyValueStore");
 
+        addAlias(QueueCfg.class,
+                WireType.class,
+                Heartbeat.class,
+                Filter.class,MapView.class,QueueView.class);
     }
 
     public static boolean loadDefaultAliases() {
@@ -158,6 +159,10 @@ public class RequestContext implements Cloneable {
 
     private static void addAlias(Class type, @NotNull String aliases) {
         ClassAliasPool.CLASS_ALIASES.addAlias(type, aliases);
+    }
+
+    private static void addAlias(Class... type) {
+        ClassAliasPool.CLASS_ALIASES.addAlias(type);
     }
 
     private static void addAliasLocal(Class type, @NotNull String aliases) {
@@ -256,7 +261,8 @@ public class RequestContext implements Cloneable {
         parser.register(() -> "removeReturnsNull", (s, v, $) -> v.bool(this, (o, x) -> o.removeReturnsNull = x));
         parser.register(() -> "nullOldValueOnUpdateEvent",
                 (s, v, $) -> v.bool(this, (o, x) -> o.nullOldValueOnUpdateEvent = x));
-        parser.register(() -> "basePath", (s, v, $) -> v.text(this, (o, x) -> o.basePath = x));
+        // removed for security reasons, as this could allow remotely anyone to access files on the server
+        //  parser.register(() -> "basePath", (s, v, $) -> v.text(this, (o, x) -> o.basePath = x));
         parser.register(() -> "viewType", (s, v, $) -> v.typeLiteral(this, (o, x) -> o.viewType = x));
         parser.register(() -> "topicType", (s, v, $) -> v.typeLiteral(this, (o, x) -> o.type = x));
         parser.register(() -> "keyType", (s, v, $) -> v.typeLiteral(this, (o, x) -> o.type = x));
@@ -265,7 +271,6 @@ public class RequestContext implements Cloneable {
         parser.register(() -> "elementType", (s, v, $) -> v.typeLiteral(this, (o, x) -> o.type2 = x));
         parser.register(() -> "endSubscriptionAfterBootstrap", (s, v, $) -> v.bool(this, (o, x) -> o.endSubscriptionAfterBootstrap = x));
         parser.register(() -> "throttlePeriodMs", (s, v, $) -> v.int32(this, (o, x) -> o.throttlePeriodMs = x));
-
         parser.register(() -> "entries", (s, v, $) -> v.int64(this, (o, x) -> o.entries = x));
         parser.register(() -> "averageValueSize", (s, v, $) -> v.int64(this, (o, x) -> o.averageValueSize = x));
         parser.register(() -> "dontPersist", (s, v, $) -> v.bool(this, (o, x) -> o.dontPersist = x));

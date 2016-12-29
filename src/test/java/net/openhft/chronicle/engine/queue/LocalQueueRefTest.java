@@ -23,6 +23,7 @@ import net.openhft.chronicle.engine.api.pubsub.Reference;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
+import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +40,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.engine.Utils.methodName;
+import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -90,7 +92,15 @@ public class LocalQueueRefTest extends ThreadMonitoringTest {
     @Ignore("TODO FIX too many results")
     public void test2() throws InterruptedException {
         @NotNull String uri = "/queue/" + methodName;
-        assetTree.acquireQueue(uri, String.class, String.class);
+
+        @NotNull final RequestContext requestContext = requestContext(uri);
+
+        if (requestContext.bootstrap() != null)
+            throw new UnsupportedOperationException("Its not possible to set the bootstrap when " +
+                    "acquiring a queue");
+
+        assetTree.acquireView(requestContext.view("queue").type(String.class).type2(String.class)
+                .cluster(""));
         @NotNull final Reference<String> ref = assetTree.acquireReference(uri + "/key", String.class);
         @NotNull BlockingQueue<String> values = new LinkedBlockingQueue<>();
         @Nullable TopicSubscriber<String, String> subscriber = (topic, message) -> {

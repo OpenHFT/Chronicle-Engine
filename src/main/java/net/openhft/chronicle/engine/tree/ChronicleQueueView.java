@@ -117,7 +117,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
             throw anfe;
         }
 
-        chronicleQueue = queue != null ? queue : newInstance(context.name(), context.basePath(), hostId, queueConfig.wireType());
+        chronicleQueue = queue != null ? queue : newInstance(context.basePath(), queueConfig.wireType());
         messageTypeClass = context.messageType();
         elementTypeClass = context.elementType();
         threadLocal = ThreadLocal.withInitial(() -> new ThreadLocalData(chronicleQueue));
@@ -445,9 +445,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
                 (topic1, message) -> subscriber.onMessage((M) message));
     }
 
-    private RollingChronicleQueue newInstance(@NotNull String name,
-                                              @Nullable String basePath,
-                                              @Nullable Byte hostID,
+    private RollingChronicleQueue newInstance(@Nullable String basePath,
                                               @NotNull WireType wireType) throws IOException {
 
         if (wireType == DELTA_BINARY)

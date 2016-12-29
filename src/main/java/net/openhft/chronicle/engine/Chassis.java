@@ -22,12 +22,15 @@ import net.openhft.chronicle.engine.api.pubsub.*;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
+import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
+
+import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
 
 /**
  * This class is the starting point for a simple client or server configuration.  It defines how to
@@ -112,7 +115,15 @@ public enum Chassis {
 
     @NotNull
     public static <T, M> QueueView<T, M> acquireQueue(@NotNull String uri, Class<T> typeClass, Class<M> messageClass) {
-        return assetTree.acquireQueue(uri, typeClass, messageClass);
+
+        @NotNull final RequestContext requestContext = requestContext(uri);
+
+        if (requestContext.bootstrap() != null)
+            throw new UnsupportedOperationException("Its not possible to set the bootstrap when " +
+                    "acquiring a queue");
+
+        return assetTree.acquireView(requestContext.view("queue").type(typeClass).type2(messageClass)
+                .cluster(""));
     }
 
     /**

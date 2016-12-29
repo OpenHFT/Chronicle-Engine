@@ -38,7 +38,7 @@ public class EngineCfg implements Installable {
 
     @Nullable
     @Override
-    public Void install(String path, @NotNull AssetTree assetTree) throws Exception {
+    public Void install(@NotNull String path, @NotNull AssetTree assetTree) throws Exception {
         LOGGER.info("Building Engine " + assetTree);
         for (@NotNull Map.Entry<String, Installable> entry : installableMap.entrySet()) {
             String path2 = entry.getKey();

@@ -26,6 +26,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
+
 /**
  * @author Rob Austin.
  */
@@ -71,8 +73,15 @@ public class TypographyTest {
             //  assetTree.acquireMap(ADD_MAP_LATER, String.class, String.class).size();
             Executors.newScheduledThreadPool(1).schedule((Runnable)
                     () -> {
-                        assetTree0.acquireQueue(ADD_QUEUE_LATER,
-                                String.class, String.class);
+
+                        @NotNull final RequestContext requestContext = requestContext(ADD_QUEUE_LATER);
+
+                        if (requestContext.bootstrap() != null)
+                            throw new UnsupportedOperationException("Its not possible to set the bootstrap when " +
+                                    "acquiring a queue");
+
+                        assetTree0.acquireView(requestContext.view("queue").type(String.class).type2(String.class)
+                                .cluster(""));
 
                         assetTree0.acquireMap(ADD_MAP_LATER,
                                 String.class, String.class).size();
@@ -83,7 +92,15 @@ public class TypographyTest {
         } else {
             assetTree = (new VanillaAssetTree(1)).forTesting();
             assetTree.acquireMap(ADD_MAP_LATER, String.class, String.class).size();
-            assetTree.acquireQueue(ADD_QUEUE_LATER, String.class, String.class);
+
+            @NotNull final RequestContext requestContext = requestContext(ADD_QUEUE_LATER);
+
+            if (requestContext.bootstrap() != null)
+                throw new UnsupportedOperationException("Its not possible to set the bootstrap when " +
+                        "acquiring a queue");
+
+            assetTree.acquireView(requestContext.view("queue").type(String.class).type2(String.class)
+                    .cluster(""));
             serverEndpoint = null;
         }
 

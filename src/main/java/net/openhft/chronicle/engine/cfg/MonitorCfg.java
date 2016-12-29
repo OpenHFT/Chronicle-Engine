@@ -37,7 +37,7 @@ public class MonitorCfg extends AbstractMarshallable implements Installable {
 
     @NotNull
     @Override
-    public MonitorCfg install(String path, @NotNull AssetTree assetTree) throws IOException, URISyntaxException {
+    public MonitorCfg install(@NotNull String path, @NotNull AssetTree assetTree) throws IOException, URISyntaxException {
         ((VanillaAsset) assetTree.acquireAsset("/proc")).configMapServer();
         if (subscriptionMonitoringEnabled) {
             LOGGER.info("Enabling Subscription Monitoring for " + assetTree);

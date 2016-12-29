@@ -34,7 +34,7 @@ public class JmxCfg extends AbstractMarshallable implements Installable {
 
     @NotNull
     @Override
-    public JmxCfg install(String path, @NotNull AssetTree assetTree) {
+    public JmxCfg install(@NotNull String path, @NotNull AssetTree assetTree) {
         if (enabled) {
             LOGGER.info("Enabling JMX for " + assetTree);
             assetTree.enableManagement();
