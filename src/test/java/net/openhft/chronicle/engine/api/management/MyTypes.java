@@ -58,7 +58,7 @@ class MyTypes implements Marshallable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        MyTypes myTypes = (MyTypes) o;
+        @Nullable MyTypes myTypes = (MyTypes) o;
 
         if (b != myTypes.b) return false;
         if (Double.compare(myTypes.d, d) != 0) return false;

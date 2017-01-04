@@ -73,13 +73,17 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
 
     private static final Logger LOG = LoggerFactory.getLogger(ChronicleQueueView.class);
 
+    @NotNull
     private final RollingChronicleQueue chronicleQueue;
     private final Class<T> messageTypeClass;
     @NotNull
     private final Class<M> elementTypeClass;
     private final ThreadLocal<ThreadLocalData> threadLocal;
+    @NotNull
     private final String defaultPath;
+    @NotNull
     private final RequestContext context;
+    @NotNull
     private final Asset asset;
     private boolean isSource;
     private boolean isReplicating;
@@ -100,11 +104,11 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
                               @NotNull Asset asset) throws IOException {
         this.context = context;
         this.asset = asset;
-        String s = asset.fullName();
+        @NotNull String s = asset.fullName();
         if (s.startsWith("/")) s = s.substring(1);
         defaultPath = s;
-        final HostIdentifier hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
-        final Byte hostId = hostIdentifier == null ? null : hostIdentifier.hostId();
+        @Nullable final HostIdentifier hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
+        @Nullable final Byte hostId = hostIdentifier == null ? null : hostIdentifier.hostId();
 
         try {
             queueConfig = asset.findView(QueueConfig.class);
@@ -113,7 +117,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
             throw anfe;
         }
 
-        chronicleQueue = queue != null ? queue : newInstance(context.name(), context.basePath(), hostId, queueConfig.wireType());
+        chronicleQueue = queue != null ? queue : newInstance(context.basePath(), queueConfig.wireType());
         messageTypeClass = context.messageType();
         elementTypeClass = context.elementType();
         threadLocal = ThreadLocal.withInitial(() -> new ThreadLocalData(chronicleQueue));
@@ -122,7 +126,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         if (hostId != null)
             replication(context, asset);
 
-        EventLoop eventLoop = asset.findOrCreateView(EventLoop.class);
+        @Nullable EventLoop eventLoop = asset.findOrCreateView(EventLoop.class);
         eventLoop.addHandler(new EventHandler() {
             @Override
             public boolean action() throws InvalidEventHandlerException, InterruptedException {
@@ -130,6 +134,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
                 return false;
             }
 
+            @NotNull
             @Override
             public HandlerPriority priority() {
                 return HandlerPriority.MONITOR;
@@ -137,6 +142,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         });
     }
 
+    @NotNull
     @SuppressWarnings("WeakerAccess")
     public static WriteMarshallable newSource(long nextIndexRequired,
                                               @NotNull Class topicType,
@@ -153,7 +159,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
                     topicType, elementType, acknowledgement, messageAdaptor);
 
         } catch (Exception e) {
-            IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
+            @NotNull IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
                     " required to run chronicle-queue replication. Please contact sales@chronicle" +
                     ".software");
             Jvm.warn().on(ChronicleQueueView.class, licence.getMessage());
@@ -169,6 +175,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
      *                        queue
      * @return and instance of QueueSyncReplicationHandler
      */
+    @NotNull
     @SuppressWarnings("WeakerAccess")
     public static WriteMarshallable newSync(
             @NotNull Class topicType,
@@ -185,7 +192,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
                     acknowledgement, messageAdaptor, wireType);
 
         } catch (Exception e) {
-            IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
+            @NotNull IllegalStateException licence = new IllegalStateException("A Chronicle Queue Enterprise licence is" +
                     " required to do chronicle-queue replication. " +
                     "Please contact sales@chronicle.software");
             Jvm.warn().on(ChronicleQueueView.class, licence.getMessage());
@@ -202,12 +209,12 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         }
     }
 
-    private static void deleteFiles(File element) throws IOException {
+    private static void deleteFiles(@NotNull File element) throws IOException {
         if (element.isDirectory()) {
-            File[] files = element.listFiles();
+            @Nullable File[] files = element.listFiles();
             if (files == null)
                 return;
-            for (File sub : files) {
+            for (@NotNull File sub : files) {
                 deleteFiles(sub);
             }
         }
@@ -219,7 +226,8 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         }
     }
 
-    public static QueueView create(RequestContext context, Asset asset) {
+    @NotNull
+    public static QueueView create(@NotNull RequestContext context, @NotNull Asset asset) {
         try {
             return new ChronicleQueueView<>(context, asset);
         } catch (IOException e) {
@@ -245,12 +253,13 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
 
     }
 
+    @Nullable
     public RollingChronicleQueue chronicleQueue() {
         return chronicleQueue;
     }
 
-    public void replication(RequestContext context, Asset asset) {
-        final HostIdentifier hostIdentifier;
+    public void replication(@NotNull RequestContext context, @NotNull Asset asset) {
+        @Nullable final HostIdentifier hostIdentifier;
 
         try {
             hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
@@ -264,7 +273,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         isSource = hostIdentifier.hostId() == remoteSourceIdentifier;
         isReplicating = true;
 
-        final Clusters clusters = asset.findView(Clusters.class);
+        @Nullable final Clusters clusters = asset.findView(Clusters.class);
 
         if (clusters == null) {
             LOG.warn("no cluster found name=" + context.cluster());
@@ -273,7 +282,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         }
 
         final EngineCluster engineCluster = clusters.get(context.cluster());
-        final String csp = context.fullName();
+        @NotNull final String csp = context.fullName();
 
         if (engineCluster == null) {
             Jvm.debug().on(getClass(), "no cluster found name=" + context.cluster());
@@ -290,7 +299,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         final boolean acknowledgement = queueConfig.acknowledgment();
         final MessageAdaptor messageAdaptor = queueConfig.bytesFunction();
 
-        for (EngineHostDetails hostDetails : engineCluster.hostDetails()) {
+        for (@NotNull EngineHostDetails hostDetails : engineCluster.hostDetails()) {
 
             // its the identifier with the larger values that will establish the connection
             byte remoteIdentifier = (byte) hostDetails.hostId();
@@ -308,7 +317,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
 
                 final boolean isSource0 = (remoteIdentifier == remoteSourceIdentifier);
 
-                WriteMarshallable h = isSource0 ?
+                @NotNull WriteMarshallable h = isSource0 ?
 
                         newSource(chronicleQueue.createTailer().toEnd().index(), context.topicType(),
                                 context.elementType(),
@@ -349,6 +358,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         throw new UnsupportedOperationException("todo");
     }
 
+    @NotNull
     @Override
     public M getUsing(T key, Object using) {
         throw new UnsupportedOperationException("todo");
@@ -400,23 +410,26 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         return mapView().longSize();
     }
 
+    @NotNull
     @Override
     public M getAndPut(T key, M value) {
         return getAndPut(key, value);
     }
 
+    @Nullable
     @Override
     public M getAndRemove(T key) {
         return mapView().getAndRemove(key);
     }
 
-    public void unregisterTopicSubscriber(T topic, @NotNull TopicSubscriber<T, M> topicSubscriber) {
-        String name = "".equals(topic.toString().trim())
+    public void unregisterTopicSubscriber(@NotNull T topic, @NotNull TopicSubscriber<T, M> topicSubscriber) {
+        @NotNull String name = "".equals(topic.toString().trim())
                 ? asset.fullName() : asset
                 .fullName() + "/" + topic.toString();
         asset.unregisterTopicSubscriber(name, context.type(), context.type2(), topicSubscriber);
     }
 
+    @NotNull
     @Override
     public Publisher<M> publisher(@NotNull T topic) {
         throw new UnsupportedOperationException("todo");
@@ -424,7 +437,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
 
     @Override
     public void registerSubscriber(@NotNull T topic, @NotNull Subscriber<M> subscriber) {
-        String name = "".equals(topic.toString().trim())
+        @NotNull String name = "".equals(topic.toString().trim())
                 ? asset.fullName() : asset
                 .fullName() + "/" + topic.toString();
 
@@ -432,9 +445,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
                 (topic1, message) -> subscriber.onMessage((M) message));
     }
 
-    private RollingChronicleQueue newInstance(@NotNull String name,
-                                              @Nullable String basePath,
-                                              @Nullable Byte hostID,
+    private RollingChronicleQueue newInstance(@Nullable String basePath,
                                               @NotNull WireType wireType) throws IOException {
 
         if (wireType == DELTA_BINARY)
@@ -445,7 +456,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
 
         RollingChronicleQueue chronicleQueue;
 
-        File baseFilePath;
+        @Nullable File baseFilePath;
         if (basePath == null)
             baseFilePath = new File(defaultPath, "");
         else
@@ -454,7 +465,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         if (!baseFilePath.exists())
             Files.createDirectories(baseFilePath.toPath());
 
-        final SingleChronicleQueueBuilder builder = wireType == DEFAULT_ZERO_BINARY
+        @NotNull final SingleChronicleQueueBuilder builder = wireType == DEFAULT_ZERO_BINARY
                 ? defaultZeroBinary(baseFilePath)
                 : binary(baseFilePath);
         // TODO make configurable
@@ -463,33 +474,36 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         return builder.build();
     }
 
+    @NotNull
     private ExcerptTailer threadLocalTailer() {
         return threadLocal.get().tailer;
     }
 
+    @NotNull
     private ExcerptAppender threadLocalAppender() {
         return threadLocal.get().appender;
     }
 
+    @Nullable
     public Tailer<T, M> tailer() {
-        final ExcerptTailer tailer = ChronicleQueueView.this.chronicleQueue.createTailer();
-        final LocalExcept localExcept = new LocalExcept();
+        @NotNull final ExcerptTailer tailer = ChronicleQueueView.this.chronicleQueue.createTailer();
+        @NotNull final LocalExcept localExcept = new LocalExcept();
         return () -> ChronicleQueueView.this.next(tailer, localExcept);
     }
 
-    private Excerpt<T, M> next(ExcerptTailer excerptTailer, final LocalExcept excerpt) {
+    private Excerpt<T, M> next(@NotNull ExcerptTailer excerptTailer, @NotNull final LocalExcept excerpt) {
         excerpt.clear();
         try (DocumentContext dc = excerptTailer.readingDocument()) {
             if (!dc.isPresent())
                 return null;
             final Wire wire = dc.wire();
             final T topic = wire.readEvent(messageTypeClass);
-            final ValueIn valueIn = wire.getValueIn();
+            @NotNull final ValueIn valueIn = wire.getValueIn();
             if (Bytes.class.isAssignableFrom(elementTypeClass)) {
                 valueIn.text(excerpt.text());
 
             } else {
-                final M message = valueIn.object(elementTypeClass);
+                @Nullable final M message = valueIn.object(elementTypeClass);
                 excerpt.message(message);
             }
             return excerpt
@@ -507,7 +521,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
     @Override
     public Excerpt<T, M> getExcerpt(long index) {
         final ThreadLocalData threadLocalData = threadLocal.get();
-        ExcerptTailer excerptTailer = threadLocalData.replayTailer;
+        @NotNull ExcerptTailer excerptTailer = threadLocalData.replayTailer;
 
         if (index == 0)
             excerptTailer.toStart();
@@ -518,7 +532,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
             if (!dc.isPresent())
                 return null;
             final StringBuilder topic = Wires.acquireStringBuilder();
-            final M message = dc.wire().readEventName(topic).object(elementTypeClass);
+            @Nullable final M message = dc.wire().readEventName(topic).object(elementTypeClass);
 
             return threadLocalData.excerpt
                     .message(message)
@@ -527,25 +541,26 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         }
     }
 
+    @Nullable
     @Override
-    public Excerpt<T, M> getExcerpt(T topic) {
+    public Excerpt<T, M> getExcerpt(@NotNull T topic) {
 
         final ThreadLocalData threadLocalData = threadLocal.get();
-        ExcerptTailer excerptTailer = threadLocalData.replayTailer;
+        @NotNull ExcerptTailer excerptTailer = threadLocalData.replayTailer;
         for (; ; ) {
 
             try (DocumentContext dc = excerptTailer.readingDocument()) {
                 if (!dc.isPresent())
                     return null;
                 final StringBuilder t = Wires.acquireStringBuilder();
-                final ValueIn valueIn = dc.wire().readEventName(t);
+                @NotNull final ValueIn valueIn = dc.wire().readEventName(t);
 
-                final T topic1 = convertTo(messageTypeClass, t);
+                @Nullable final T topic1 = convertTo(messageTypeClass, t);
 
                 if (!topic.equals(topic1))
                     continue;
 
-                final M message = valueIn.object(elementTypeClass);
+                @Nullable final M message = valueIn.object(elementTypeClass);
 
                 return threadLocalData.excerpt
                         .message(message)
@@ -570,11 +585,11 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
      *                 the except
      */
     public void getExcerpt(@NotNull BiConsumer<CharSequence, M> consumer) {
-        final ExcerptTailer tailer = threadLocalTailer();
+        @NotNull final ExcerptTailer tailer = threadLocalTailer();
 
         tailer.readDocument(w -> {
             final StringBuilder eventName = Wires.acquireStringBuilder();
-            final ValueIn valueIn = w.readEventName(eventName);
+            @NotNull final ValueIn valueIn = w.readEventName(eventName);
             consumer.accept(eventName, valueIn.object(elementTypeClass));
 
         });
@@ -586,7 +601,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
             throw new IllegalStateException("You can not publish to a sink used in replication, " +
                     "you have to publish to the source");
 
-        final ExcerptAppender excerptAppender = threadLocalAppender();
+        @NotNull final ExcerptAppender excerptAppender = threadLocalAppender();
 
         try (final DocumentContext dc = excerptAppender.writingDocument()) {
             dc.wire().writeEvent(messageTypeClass, topic).object(elementTypeClass, message);
@@ -598,7 +613,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         if (isReplicating && !isSource)
             throw new IllegalStateException("You can not publish to a sink used in replication, " +
                     "you have to publish to the source");
-        final ExcerptAppender excerptAppender = threadLocalAppender();
+        @NotNull final ExcerptAppender excerptAppender = threadLocalAppender();
         excerptAppender.writeDocument(w -> w.writeEventName(() -> "").object(event));
         return excerptAppender.lastIndexAppended();
     }
@@ -655,7 +670,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
 
     public void close() {
 
-        File file = chronicleQueue.file();
+        @NotNull File file = chronicleQueue.file();
         chronicleQueue.close();
         if (dontPersist) {
             try {
@@ -697,8 +712,9 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         return chronicleQueue.dump();
     }
 
+    @Nullable
     @Override
-    public <E> Asset createSubAsset(VanillaAsset vanillaAsset, String name, Class<E> valueType) {
+    public <E> Asset createSubAsset(@NotNull VanillaAsset vanillaAsset, String name, Class<E> valueType) {
         return new VanillaSubAsset<>(vanillaAsset, name, valueType, null);
     }
 
@@ -734,16 +750,20 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
     }
 
     public static class LocalExcept<T, M> implements Excerpt<T, M>, Marshallable, Map.Entry<T, M> {
+        @Nullable
         private T topic;
+        @Nullable
         private M message;
         private Bytes bytes;
         private long index;
 
+        @Nullable
         @Override
         public T topic() {
             return topic;
         }
 
+        @Nullable
         @Override
         public M message() {
             return message;
@@ -754,21 +774,25 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
             return this.index;
         }
 
+        @NotNull
         public LocalExcept<T, M> index(long index) {
             this.index = index;
             return this;
         }
 
+        @NotNull
         LocalExcept message(M message) {
             this.message = message;
             return this;
         }
 
+        @NotNull
         LocalExcept topic(T topic) {
             this.topic = topic;
             return this;
         }
 
+        @NotNull
         @Override
         public String toString() {
             return "Except{" + "topic=" + topic + ", message=" + message + '}';
@@ -803,16 +827,19 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
             return bytes;
         }
 
+        @Nullable
         @Override
         public T getKey() {
             return topic;
         }
 
+        @Nullable
         @Override
         public M getValue() {
             return message;
         }
 
+        @NotNull
         @Override
         public M setValue(M value) {
             throw new UnsupportedOperationException("todo");
@@ -827,9 +854,10 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
      */
     private static class QueueViewAsMapView<K, V> extends VanillaMapView<K, V> {
 
+        @NotNull
         private final QueueView<K, V> queueView;
 
-        QueueViewAsMapView(final QueueView<K, V> queueView,
+        QueueViewAsMapView(@NotNull final QueueView<K, V> queueView,
                            @NotNull RequestContext context,
                            @NotNull Asset asset) {
             super(context, asset, new VanillaKeyValueStore<>(context, asset));
@@ -846,13 +874,13 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
 
         @Nullable
         @Override
-        public V put(K key, V value) {
+        public V put(@NotNull K key, @NotNull V value) {
             if (putReturnsNull) {
                 queueView.publishAndIndex(key, value);
                 super.put(key, value);
                 return null;
             } else {
-                V v = super.get(key);
+                @Nullable V v = super.get(key);
                 queueView.publishAndIndex(key, value);
                 super.put(key, value);
                 return v;
@@ -860,7 +888,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         }
 
         @Override
-        public void set(K key, V value) {
+        public void set(K key, @NotNull V value) {
             queueView.publishAndIndex((K) key, value);
             super.put(key, value);
         }
@@ -873,7 +901,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
                 super.remove(key);
                 return null;
             } else {
-                V v = super.get(key);
+                @Nullable V v = super.get(key);
                 queueView.publishAndIndex((K) key, null);
                 super.remove(key);
                 return v;
@@ -883,7 +911,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         @SuppressWarnings("WhileLoopReplaceableByForEach")
         @Override
         public void clear() {
-            Iterator<Entry<K, V>> iterator = entrySet().iterator();
+            @NotNull Iterator<Entry<K, V>> iterator = entrySet().iterator();
 
             while (iterator.hasNext()) {
                 remove(iterator.next().getKey());
@@ -892,10 +920,10 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
 
         @Nullable
         @Override
-        public V putIfAbsent(@net.openhft.chronicle.core.annotation.NotNull K key, V value) {
+        public V putIfAbsent(@net.openhft.chronicle.core.annotation.NotNull K key, @NotNull V value) {
             checkKey(key);
             checkValue(value);
-            V v = super.putIfAbsent(key, value);
+            @Nullable V v = super.putIfAbsent(key, value);
             if (v != null)
                 queueView.publishAndIndex((K) key, value);
             return v;
@@ -924,7 +952,7 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         @Override
         public V replace(@net.openhft.chronicle.core.annotation.NotNull K key,
                          @net.openhft.chronicle.core.annotation.NotNull V value) {
-            V replaced = super.replace(key, value);
+            @Nullable V replaced = super.replace(key, value);
             queueView.publishAndIndex((K) key, value);
             return replaced;
         }
@@ -933,12 +961,16 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
 
     class ThreadLocalData {
 
+        @NotNull
         final ExcerptAppender appender;
+        @NotNull
         final ExcerptTailer tailer;
+        @NotNull
         final ExcerptTailer replayTailer;
+        @NotNull
         final LocalExcept excerpt;
 
-        ThreadLocalData(ChronicleQueue chronicleQueue) {
+        ThreadLocalData(@NotNull ChronicleQueue chronicleQueue) {
             appender = chronicleQueue.acquireAppender();
             appender.padToCacheAlign(net.openhft.chronicle.wire.MarshallableOut.Padding.ALWAYS);
             tailer = chronicleQueue.createTailer();

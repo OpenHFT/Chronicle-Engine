@@ -100,7 +100,7 @@ public interface KeyValueStore<K, V> extends Assetted<KeyValueStore<K, V>>, Clos
 
     default Iterator<Map.Entry<K, V>> entrySetIterator() {
         // todo optimise
-        List<Map.Entry<K, V>> entries = new ArrayList<>();
+        @NotNull List<Map.Entry<K, V>> entries = new ArrayList<>();
         try {
             for (int i = 0, seg = segments(); i < seg; i++)
                 entriesFor(i, entries::add);
@@ -113,7 +113,7 @@ public interface KeyValueStore<K, V> extends Assetted<KeyValueStore<K, V>>, Clos
 
     default Iterator<K> keySetIterator() {
         // todo optimise
-        List<K> keys = new ArrayList<>();
+        @NotNull List<K> keys = new ArrayList<>();
         try {
             for (int i = 0, seg = segments(); i < seg; i++)
                 keysFor(i, keys::add);
@@ -162,14 +162,14 @@ public interface KeyValueStore<K, V> extends Assetted<KeyValueStore<K, V>>, Clos
 
     @org.jetbrains.annotations.Nullable
     default V putIfAbsent(K key, V value) {
-        V value2 = get(key);
+        @org.jetbrains.annotations.Nullable V value2 = get(key);
         return value2 == null ? getAndPut(key, value) : value2;
     }
 
     @NotNull
     default Iterator<V> valuesIterator() {
         // todo optimise
-        List<V> entries = new ArrayList<>();
+        @NotNull List<V> entries = new ArrayList<>();
         try {
             for (int i = 0, seg = segments(); i < seg; i++)
                 entriesFor(i, e -> entries.add(e.getValue()));

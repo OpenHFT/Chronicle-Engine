@@ -21,11 +21,13 @@ import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by peter on 17/08/15.
  */
 public class Price implements Marshallable {
+    @Nullable
     String instrument;
     double bidPrice, bidQuantity;
     double askPrice, askQuantity;
@@ -56,6 +58,7 @@ public class Price implements Marshallable {
         wire.write(() -> "askQuantity").float64(askQuantity);
     }
 
+    @NotNull
     @Override
     public String toString() {
         return "Price{" +

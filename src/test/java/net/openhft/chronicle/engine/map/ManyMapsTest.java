@@ -27,6 +27,7 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -83,21 +84,21 @@ public class ManyMapsTest {
     public void testConnectToMultipleMapsUsingTheSamePort() throws IOException {
         int noOfMaps = 100;
         int noOfKvps = 100;
-        String mapBaseName = "ManyMapsTest-";
-        AssetTree assetTree = new VanillaAssetTree().forTesting();
+        @NotNull String mapBaseName = "ManyMapsTest-";
+        @NotNull AssetTree assetTree = new VanillaAssetTree().forTesting();
 
-        Map<String, Map<String, String>> _clientMaps = new HashMap<>();
+        @NotNull Map<String, Map<String, String>> _clientMaps = new HashMap<>();
         TCPRegistry.createServerSocketChannelFor(NAME);
         //TODO CHENT-68 Only works with BINARY NOT TEXT.
-        ServerEndpoint serverEndpoint = new ServerEndpoint(NAME, assetTree);
+        @NotNull ServerEndpoint serverEndpoint = new ServerEndpoint(NAME, assetTree);
 
-        AssetTree clientAssetTree = new VanillaAssetTree().forRemoteAccess(NAME, WireType.BINARY);
+        @NotNull AssetTree clientAssetTree = new VanillaAssetTree().forRemoteAccess(NAME, WireType.BINARY);
         System.out.println("Creating maps.");
-        AtomicInteger count = new AtomicInteger();
+        @NotNull AtomicInteger count = new AtomicInteger();
         IntStream.rangeClosed(1, noOfMaps).forEach(i -> {
-            String mapName = mapBaseName + i;
+            @NotNull String mapName = mapBaseName + i;
 
-            Map<String, String> map = clientAssetTree.acquireMap(mapName, String.class, String.class);
+            @NotNull Map<String, String> map = clientAssetTree.acquireMap(mapName, String.class, String.class);
 
             for (int j = 1; j <= noOfKvps; j++) {
                 map.put(getKey(mapName, j), getValue(mapName, j));
@@ -112,7 +113,7 @@ public class ManyMapsTest {
         //Test that the number of maps created exist
         Assert.assertEquals(noOfMaps, _clientMaps.size());
 
-        for (Map.Entry<String, Map<String, String>> mapEntry : _clientMaps.entrySet()) {
+        for (@NotNull Map.Entry<String, Map<String, String>> mapEntry : _clientMaps.entrySet()) {
             System.out.println(mapEntry.getKey());
             Map<String, String> map = mapEntry.getValue();
 
@@ -121,11 +122,11 @@ public class ManyMapsTest {
 
             //Test that all the keys in this map contains the map name (ie. no other map's keys overlap).
             String key = mapEntry.getKey();
-            SerializablePredicate<String> stringPredicate = k -> !k.contains(key);
+            @NotNull SerializablePredicate<String> stringPredicate = k -> !k.contains(key);
             Assert.assertFalse(map.keySet().stream().anyMatch(stringPredicate));
 
             //Test that all the values in this map contains the map name (ie. no other map's values overlap).
-            SerializablePredicate<String> stringPredicate1 = v -> !v.contains(key);
+            @NotNull SerializablePredicate<String> stringPredicate1 = v -> !v.contains(key);
             Assert.assertFalse(map.values().stream().anyMatch(stringPredicate1));
         }
         clientAssetTree.close();

@@ -26,6 +26,7 @@ import net.openhft.chronicle.engine.VanillaAssetTreeEgMain;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -70,12 +71,12 @@ public class ConfigurationFSTest {
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
         ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
 
-        AssetTree at = new VanillaAssetTree().forTesting();
+        @NotNull AssetTree at = new VanillaAssetTree().forTesting();
         at.registerSubscriber("", TopologicalEvent.class, System.out::println);
         at.registerSubscriber("/Data", TopologicalEvent.class, System.out::println);
 
         new ConfigurationFS("/etc", null, OS.TARGET + "/confstest").subscribeTo(at);
-        Map<String, String> etc = at.acquireMap("/etc", String.class, String.class);
+        @NotNull Map<String, String> etc = at.acquireMap("/etc", String.class, String.class);
         etc.put(ConfigurationFS.CLUSTERS, "cluster1: {\n" +
                 "  context:  !EngineClusterContext  { }\n" +
                 "  host1: {\n" +

@@ -48,12 +48,13 @@ public class ObjectObjectKeyValueStore<K, V> implements KeyValueStore<K, V> {
     private final BiFunction<BytesStore, K, K> bytesToKey;
     @NotNull
     private final BiFunction<BytesStore, V, V> bytesToValue;
+    @NotNull
     private final KeyValueStore<BytesStore, BytesStore> kvStore;
     private final Asset asset;
 
     public ObjectObjectKeyValueStore(@NotNull RequestContext context, Asset asset, Assetted assetted) {
         this.asset = asset;
-        Class type = context.type();
+        @NotNull Class type = context.type();
         keyToBytes = toBytes(type);
         bytesToKey = fromBytes(type);
         Class type2 = context.type2();
@@ -88,7 +89,7 @@ public class ObjectObjectKeyValueStore<K, V> implements KeyValueStore<K, V> {
         Buffers b = BUFFERS.get();
         Bytes keyBytes = keyToBytes.apply(key, b.keyBuffer);
         Bytes valueBytes = valueToBytes.apply(value, b.valueBuffer);
-        BytesStore retBytes = kvStore.getAndPut(keyBytes, valueBytes);
+        @Nullable BytesStore retBytes = kvStore.getAndPut(keyBytes, valueBytes);
         return retBytes == null ? null : bytesToValue.apply(retBytes, null);
     }
 
@@ -104,7 +105,7 @@ public class ObjectObjectKeyValueStore<K, V> implements KeyValueStore<K, V> {
     public V getAndRemove(K key) {
         Buffers b = BUFFERS.get();
         Bytes keyBytes = keyToBytes.apply(key, b.keyBuffer);
-        BytesStore retBytes = kvStore.getAndRemove(keyBytes);
+        @Nullable BytesStore retBytes = kvStore.getAndRemove(keyBytes);
         return retBytes == null ? null : bytesToValue.apply(retBytes, null);
     }
 
@@ -113,7 +114,7 @@ public class ObjectObjectKeyValueStore<K, V> implements KeyValueStore<K, V> {
     public V getUsing(K key, Object value) {
         Buffers b = BUFFERS.get();
         Bytes keyBytes = keyToBytes.apply(key, b.keyBuffer);
-        BytesStore retBytes = kvStore.getUsing(keyBytes, b.valueBuffer);
+        @Nullable BytesStore retBytes = kvStore.getUsing(keyBytes, b.valueBuffer);
         return retBytes == null ? null : bytesToValue.apply(retBytes, (V) value);
     }
 

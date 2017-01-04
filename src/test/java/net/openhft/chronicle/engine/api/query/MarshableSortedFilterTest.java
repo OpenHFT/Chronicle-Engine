@@ -17,6 +17,7 @@
 
 package net.openhft.chronicle.engine.api.query;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -28,7 +29,7 @@ public class MarshableSortedFilterTest {
     @Test
     public void testToPredicateFalse() throws Exception {
 
-        VanillaIndexQuery marshableQuery = new VanillaIndexQuery();
+        @NotNull VanillaIndexQuery marshableQuery = new VanillaIndexQuery();
         marshableQuery.select(TestBean.class, "value.x == 2");
 
         boolean test = marshableQuery.filter().test(new TestBean(5));
@@ -39,7 +40,7 @@ public class MarshableSortedFilterTest {
     @Test
     public void testToPredicateTrue() throws Exception {
 
-        VanillaIndexQuery marshableQuery = new VanillaIndexQuery();
+        @NotNull VanillaIndexQuery marshableQuery = new VanillaIndexQuery();
         marshableQuery.select(TestBean.class, "value.x == 2");
 
         boolean test = marshableQuery.filter().test(new TestBean(2));

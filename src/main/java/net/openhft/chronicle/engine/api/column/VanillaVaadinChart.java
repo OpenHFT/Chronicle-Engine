@@ -5,6 +5,7 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.wire.AbstractMarshallable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Rob Austin.
@@ -23,12 +24,14 @@ public class VanillaVaadinChart extends AbstractMarshallable implements VaadinCh
         return columnNameField;
     }
 
-    public VanillaVaadinChart dataSource(MapView mapView) {
+    @NotNull
+    public VanillaVaadinChart dataSource(@NotNull MapView mapView) {
         this.columnView = mapView.asset().acquireView(MapColumnView.class);
         return this;
     }
 
-    public VanillaVaadinChart dataSource(QueueView mapView) {
+    @NotNull
+    public VanillaVaadinChart dataSource(@NotNull QueueView mapView) {
         this.columnView = mapView.asset().acquireView(QueueColumnView.class);
         return this;
     }
@@ -38,6 +41,7 @@ public class VanillaVaadinChart extends AbstractMarshallable implements VaadinCh
         return columnView;
     }
 
+    @NotNull
     public VanillaVaadinChart columnNameField(String columnNameField) {
         this.columnNameField = columnNameField;
         return this;
@@ -47,6 +51,7 @@ public class VanillaVaadinChart extends AbstractMarshallable implements VaadinCh
         return series;
     }
 
+    @NotNull
     public VanillaVaadinChart series(VaadinChartSeries... series) {
         this.series = series;
         return this;
@@ -56,6 +61,7 @@ public class VanillaVaadinChart extends AbstractMarshallable implements VaadinCh
         return chartProperties;
     }
 
+    @NotNull
     public VanillaVaadinChart chartProperties(ChartProperties chartProperties) {
         this.chartProperties = chartProperties;
         return this;

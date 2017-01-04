@@ -57,6 +57,7 @@ public class QueryableKeySetTest extends ThreadMonitoringTest {
 
     private final Boolean isRemote;
     private final WireType wireType;
+    @NotNull
     public String connection = "QueryableTest.host.port";
     @NotNull
     @Rule
@@ -108,14 +109,14 @@ public class QueryableKeySetTest extends ThreadMonitoringTest {
     @Test(timeout = 10000)
     public void testQueryForEach() {
 
-        final MapView<String, String> map = assetTree.acquireMap("name", String.class, String
+        @NotNull final MapView<String, String> map = assetTree.acquireMap("name", String.class, String
                 .class);
 
         map.put("1", "1");
         map.put("2", "2");
 
-        final Query<String> query = map.keySet().query();
-        final Set<String> result = new HashSet<>();
+        @NotNull final Query<String> query = map.keySet().query();
+        @NotNull final Set<String> result = new HashSet<>();
         query.forEach(result::add);
 
         Assert.assertEquals(new HashSet<>(Arrays.asList("1", "2")), result);
@@ -124,7 +125,7 @@ public class QueryableKeySetTest extends ThreadMonitoringTest {
     @Test(timeout = 10000)
     public void testQueryForEachWithPredicate() {
 
-        final MapView<String, String> map = assetTree.acquireMap("name", String.class, String
+        @NotNull final MapView<String, String> map = assetTree.acquireMap("name", String.class, String
                 .class);
 
         map.put("1", "1");
@@ -134,10 +135,10 @@ public class QueryableKeySetTest extends ThreadMonitoringTest {
 //        YamlLogging.showServerReads = true;
 //        YamlLogging.showServerWrites = true;
 
-        final KeySetView<String> remoteSetView = map.keySet();
-        final Query<String> query = remoteSetView.query();
+        @NotNull final KeySetView<String> remoteSetView = map.keySet();
+        @NotNull final Query<String> query = remoteSetView.query();
 
-        final Set<String> result = new HashSet<>();
+        @NotNull final Set<String> result = new HashSet<>();
         query.filter("1"::equals).forEach(result::add);
         Assert.assertEquals(new HashSet<>(Arrays.asList("1")), result);
     }
@@ -145,14 +146,14 @@ public class QueryableKeySetTest extends ThreadMonitoringTest {
     @Test(timeout = 10000)
     public void testQueryForCollect() {
 
-        final MapView<Integer, Integer> map = assetTree.acquireMap("name", Integer.class, Integer
+        @NotNull final MapView<Integer, Integer> map = assetTree.acquireMap("name", Integer.class, Integer
                 .class);
 
         map.put(1, 1);
         map.put(2, 2);
         map.put(3, 3);
 
-        final Query<Integer> query = map.keySet().query();
+        @NotNull final Query<Integer> query = map.keySet().query();
         Double x = query.filter((obj) -> obj >= 1 && obj <= 2).collect(averagingInt(v -> (int) v));
         Assert.assertEquals((Double) 1.5, x);
     }
@@ -160,14 +161,14 @@ public class QueryableKeySetTest extends ThreadMonitoringTest {
     @Test(timeout = 100000000)
     public void testForEach() {
 
-        final MapView<Integer, Integer> map = assetTree.acquireMap("name", Integer.class, Integer
+        @NotNull final MapView<Integer, Integer> map = assetTree.acquireMap("name", Integer.class, Integer
                 .class);
 
         map.put(1, 1);
         map.put(2, 2);
         map.put(3, 3);
 
-        final Query<Integer> query = map.keySet().query();
+        @NotNull final Query<Integer> query = map.keySet().query();
         query.filter((obj) -> obj >= 1 && obj <= 2).forEach(System.out::println);
 
     }

@@ -27,6 +27,7 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -78,12 +79,12 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
     @Test
     public void test() throws IOException, InterruptedException {
 
-        final MapView<String, String> serverMap = serverAssetTree.acquireMap(NAME, String
+        @NotNull final MapView<String, String> serverMap = serverAssetTree.acquireMap(NAME, String
                 .class, String.class);
 
         serverMap.put("hello", "world");
 
-        final MapView<String, String> map = clientTree.acquireMap(NAME, String.class,
+        @NotNull final MapView<String, String> map = clientTree.acquireMap(NAME, String.class,
                 String.class);
 
         map.registerKeySubscriber(System.out::println);
@@ -95,14 +96,14 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
     @Test(timeout = 10000)
     public void testKey() throws IOException, InterruptedException {
 
-        BlockingQueue<String> q = new ArrayBlockingQueue<>(1);
+        @NotNull BlockingQueue<String> q = new ArrayBlockingQueue<>(1);
 
         clientTree.acquireMap(NAME, String.class,
                 String.class).registerKeySubscriber(q::add);
 
         Jvm.pause(500);
 
-        final MapView<String, String> serverMap = serverAssetTree.acquireMap(NAME,
+        @NotNull final MapView<String, String> serverMap = serverAssetTree.acquireMap(NAME,
                 String.class, String.class);
 
         serverMap.put("hello", "world");
@@ -116,12 +117,12 @@ public class KeySubscriptionTest extends ThreadMonitoringTest {
         //Enable Yaml logging when running in debug.
 
         YamlLogging.setAll(false);
-        String key = "key";
-        String keyUri = NAME + "/" + key + "?bootstrap=false";
+        @NotNull String key = "key";
+        @NotNull String keyUri = NAME + "/" + key + "?bootstrap=false";
 
-        BlockingQueue<String> q = new ArrayBlockingQueue<>(2);
+        @NotNull BlockingQueue<String> q = new ArrayBlockingQueue<>(2);
 
-        final MapView<String, String> server = clientTree.acquireMap(NAME, String.class,
+        @NotNull final MapView<String, String> server = clientTree.acquireMap(NAME, String.class,
                 String.class);
 
         // we have to call an action on the server map because it lazily created

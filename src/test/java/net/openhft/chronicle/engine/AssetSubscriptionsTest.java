@@ -24,6 +24,7 @@ import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.pubsub.TopicSubscriber;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.tree.*;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -59,7 +60,7 @@ public class AssetSubscriptionsTest {
     @Test
     public void testSubscriptionsAtEachLevel() throws InvalidSubscriberException {
         // start at the top.
-        AssetTree tree = new VanillaAssetTree().forTesting();
+        @NotNull AssetTree tree = new VanillaAssetTree().forTesting();
         Subscriber<TopologicalEvent> rootTopoSubscriber = createMock("sub", Subscriber.class);
         Subscriber<MapEvent> rootMapSubscriber = createMock(Subscriber.class);
         Subscriber<String> rootNameSubscriber = createMock(Subscriber.class);

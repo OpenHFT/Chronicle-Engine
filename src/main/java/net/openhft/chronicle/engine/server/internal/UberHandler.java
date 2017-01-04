@@ -30,6 +30,7 @@ import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,6 +52,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
     private static final Logger LOG = LoggerFactory.getLogger(UberHandler.class);
     private final int remoteIdentifier;
     private final int localIdentifier;
+    @NotNull
     private AtomicBoolean isClosing = new AtomicBoolean();
     private ConnectionChangedNotifier connectionChangedNotifier;
     private Asset rootAsset;
@@ -59,10 +61,10 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
     private int writerIndex;
 
     @UsedViaReflection
-    private UberHandler(WireIn wire) {
+    private UberHandler(@NotNull WireIn wire) {
         remoteIdentifier = wire.read(() -> "remoteIdentifier").int32();
         localIdentifier = wire.read(() -> "localIdentifier").int32();
-        final WireType wireType = wire.read(() -> "wireType").object(WireType.class);
+        @Nullable final WireType wireType = wire.read(() -> "wireType").object(WireType.class);
         clusterName = wire.read(() -> "clusterName").text();
         wireType(wireType);
     }
@@ -122,11 +124,11 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
         final WireOutPublisher publisher = nc.wireOutPublisher();
         publisher(publisher);
 
-        EventLoop eventLoop = rootAsset.findOrCreateView(EventLoop.class);
+        @Nullable EventLoop eventLoop = rootAsset.findOrCreateView(EventLoop.class);
         if (!eventLoop.isClosed()) {
             eventLoop.start();
 
-            final Clusters clusters = rootAsset.findView(Clusters.class);
+            @Nullable final Clusters clusters = rootAsset.findView(Clusters.class);
 
             final EngineCluster engineCluster = clusters.get(clusterName);
             if (engineCluster == null) {
@@ -157,11 +159,11 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
     }
 
     private boolean checkIdentifierEqualsHostId() {
-        final HostIdentifier hostIdentifier = rootAsset.findOrCreateView(HostIdentifier.class);
+        @Nullable final HostIdentifier hostIdentifier = rootAsset.findOrCreateView(HostIdentifier.class);
         return hostIdentifier == null || localIdentifier == hostIdentifier.hostId();
     }
 
-    private void notifyConnectionListeners(EngineCluster cluster) {
+    private void notifyConnectionListeners(@NotNull EngineCluster cluster) {
         connectionChangedNotifier = cluster.findClusterNotifier(remoteIdentifier);
         if (connectionChangedNotifier != null)
             connectionChangedNotifier.onConnectionChanged(true, nc());
@@ -174,7 +176,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
     }
 
     private WriteMarshallable uberHandler() {
-        final UberHandler handler = new UberHandler(
+        @NotNull final UberHandler handler = new UberHandler(
                 localIdentifier,
                 remoteIdentifier,
                 wireType(),
@@ -188,7 +190,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
      */
     private void closeSoon() {
         isClosing.set(true);
-        ScheduledExecutorService closer = newSingleThreadScheduledExecutor(new NamedThreadFactory("closer", true));
+        @NotNull ScheduledExecutorService closer = newSingleThreadScheduledExecutor(new NamedThreadFactory("closer", true));
         closer.schedule(() -> {
             closer.shutdown();
             close();
@@ -291,6 +293,7 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
         public Factory() {
         }
 
+        @NotNull
         @Override
         public WriteMarshallable apply(@NotNull final ClusterContext clusterContext,
                                        @NotNull final HostDetails hostdetails) {

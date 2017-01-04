@@ -4,6 +4,7 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.map.ObjectSubscription;
 import net.openhft.chronicle.wire.AbstractMarshallable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,12 +46,15 @@ public interface ColumnViewInternal {
     class SortedFilter extends AbstractMarshallable {
         public long countFromEnd;
         public long fromIndex;
+        @NotNull
         public List<MarshableOrderBy> marshableOrderBy = new ArrayList<>();
+        @NotNull
         public List<MarshableFilter> marshableFilters = new ArrayList<>();
     }
 
     Asset asset();
 
+    @Nullable
     List<Column> columns();
 
     int rowCount(@NotNull SortedFilter sortedFilter);
@@ -74,29 +78,32 @@ public interface ColumnViewInternal {
      */
     void registerChangeListener(@NotNull Runnable r);
 
+    @NotNull
     ClosableIterator<? extends Row> iterator(@NotNull SortedFilter sortedFilter);
 
     boolean canDeleteRows();
 
     boolean containsRowWithKey(List keys);
 
+    @Nullable
     ObjectSubscription objectSubscription();
 
 
+    @Nullable
     default Predicate<Number> toPredicate(@NotNull String value) {
         if (value.contains(",")) {
-            String[] v = value.split("\\,");
+            @NotNull String[] v = value.split("\\,");
             // if (v.length != 2)
             //    return DOp.toPredicate(value, true);
 
 
-            Predicate<Number> predicate = null;
-            for (String x : v) {
-                String xTrimed = x.trim();
+            @Nullable Predicate<Number> predicate = null;
+            for (@NotNull String x : v) {
+                @NotNull String xTrimed = x.trim();
 
                 xTrimed = DOp.checkShouldPrependEQ(xTrimed);
 
-                Boolean atStart = DOp.isAtStart(xTrimed);
+                @Nullable Boolean atStart = DOp.isAtStart(xTrimed);
                 if (atStart == null)
                     continue;
 
@@ -109,7 +116,7 @@ public interface ColumnViewInternal {
 
         } else {
             value = DOp.checkShouldPrependEQ(value);
-            Boolean atStart = DOp.isAtStart(value);
+            @Nullable Boolean atStart = DOp.isAtStart(value);
             return DOp.toPredicate(value, atStart);
         }
     }
@@ -177,7 +184,8 @@ public interface ColumnViewInternal {
         }
 
 
-        private Number number(String op, String value, Class<? extends Number> clazz) throws Exception {
+        @Nullable
+        private Number number(@NotNull String op, @NotNull String value, Class<? extends Number> clazz) throws Exception {
             @NotNull final String number;
 
 
@@ -193,10 +201,10 @@ public interface ColumnViewInternal {
 
         abstract boolean compare(double a, double b);
 
-        private static Boolean isAtStart(String value) {
-            for (DOp dop : DOp.OPS) {
+        private static Boolean isAtStart(@NotNull String value) {
+            for (@NotNull DOp dop : DOp.OPS) {
 
-                for (String op : dop.op) {
+                for (@NotNull String op : dop.op) {
                     if (dop.operationAtStart) {
                         if (value.startsWith(op))
                             return true;
@@ -213,7 +221,8 @@ public interface ColumnViewInternal {
             return null;
         }
 
-        private static String checkShouldPrependEQ(String x) {
+        @NotNull
+        private static String checkShouldPrependEQ(@NotNull String x) {
             return (isAtStart(x) == null) ? "=" + x : x;
         }
 
@@ -226,11 +235,11 @@ public interface ColumnViewInternal {
         private static Predicate<Number> toPredicate(@NotNull String value, boolean operationAtStart) {
 
 
-            for (DOp dop : DOp.OPS) {
+            for (@NotNull DOp dop : DOp.OPS) {
                 if (dop.operationAtStart != operationAtStart)
                     continue;
 
-                for (String op : dop.op) {
+                for (@NotNull String op : dop.op) {
 
 
                     if (dop.operationAtStart) {
@@ -241,7 +250,7 @@ public interface ColumnViewInternal {
                             continue;
                     }
 
-                    final Number number;
+                    @Nullable final Number number;
                     try {
                         number = dop.number(op, value.trim(), Double.class);
                     } catch (Exception e) {
@@ -262,10 +271,11 @@ public interface ColumnViewInternal {
 
     }
 
+    @Nullable
     default Predicate<Number> predicate(@NotNull List<MarshableFilter> filters) {
-        Predicate<Number> predicate = null;
+        @Nullable Predicate<Number> predicate = null;
         {
-            for (MarshableFilter f : filters) {
+            for (@NotNull MarshableFilter f : filters) {
                 predicate = (predicate == null) ?
                         toPredicate(f.filter.trim()) :
                         predicate.and(toPredicate(f.filter.trim()));

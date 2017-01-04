@@ -53,13 +53,13 @@ public class SimpleEngineMain {
     static ServerEndpoint serverEndpoint;
 
     public static void main(@NotNull String... args) throws IOException {
-        VanillaAssetTree assetTree = tree();
+        @NotNull VanillaAssetTree assetTree = tree();
     }
 
     @NotNull
     public static VanillaAssetTree tree() throws IOException {
         ChronicleConfig.init();
-        VanillaAssetTree assetTree = new VanillaAssetTree(HOST_ID).forTesting(false);
+        @NotNull VanillaAssetTree assetTree = new VanillaAssetTree(HOST_ID).forTesting(false);
         if (JMX)
             assetTree.enableManagement();
 

@@ -57,7 +57,7 @@ public class ReferenceHandler<E, T> extends AbstractHandler {
         public void accept(@NotNull final WireIn inWire, Long inputTid) {
 
             eventName.setLength(0);
-            final ValueIn valueIn = inWire.readEventName(eventName);
+            @NotNull final ValueIn valueIn = inWire.readEventName(eventName);
 
             if (set.contentEquals(eventName)) {
                 view.set((E) valueIn.object(view.getType()));
@@ -71,9 +71,9 @@ public class ReferenceHandler<E, T> extends AbstractHandler {
 
             if (update2.contentEquals(eventName)) {
                 valueIn.marshallable(wire -> {
-                    final Params[] params = update2.params();
-                    final SerializableBiFunction<E, T, E> updater = (SerializableBiFunction) wire.read(params[0]).object(Object.class);
-                    final Object arg = wire.read(params[1]).object(Object.class);
+                    @NotNull final Params[] params = update2.params();
+                    @NotNull final SerializableBiFunction<E, T, E> updater = (SerializableBiFunction) wire.read(params[0]).object(Object.class);
+                    @Nullable final Object arg = wire.read(params[1]).object(Object.class);
                     view.asyncUpdate(updater, (T) arg);
                 });
                 return;
@@ -82,7 +82,7 @@ public class ReferenceHandler<E, T> extends AbstractHandler {
             if (registerSubscriber.contentEquals(eventName)) {
 
                 final Reference<E> key = view;
-                final Subscriber listener = new Subscriber() {
+                @NotNull final Subscriber listener = new Subscriber() {
                     @Override
                     public void onMessage(final Object message) {
                         synchronized (publisher) {
@@ -123,7 +123,7 @@ public class ReferenceHandler<E, T> extends AbstractHandler {
 
             if (unregisterSubscriber.contentEquals(eventName)) {
                 long subscriberTid = valueIn.int64();
-                Subscriber<E> listener = (Subscriber) tidToListener.remove(subscriberTid);
+                @NotNull Subscriber<E> listener = (Subscriber) tidToListener.remove(subscriberTid);
                 if (listener == null) {
                     Jvm.debug().on(getClass(), "No subscriber to present to unregisterSubscriber (" + subscriberTid + ")");
                     return;
@@ -158,20 +158,20 @@ public class ReferenceHandler<E, T> extends AbstractHandler {
 
                 if (update4.contentEquals(eventName)) {
                     valueIn.marshallable(wire -> {
-                        final Params[] params = update4.params();
-                        final SerializableBiFunction updater = (SerializableBiFunction) wire.read(params[0]).object(Object.class);
-                        final Object updateArg = wire.read(params[1]).object(Object.class);
-                        final SerializableBiFunction returnFunction = (SerializableBiFunction) wire.read(params[2]).object(Object.class);
-                        final Object returnArg = wire.read(params[3]).object(Object.class);
+                        @NotNull final Params[] params = update4.params();
+                        @Nullable final SerializableBiFunction updater = (SerializableBiFunction) wire.read(params[0]).object(Object.class);
+                        @Nullable final Object updateArg = wire.read(params[1]).object(Object.class);
+                        @NotNull final SerializableBiFunction returnFunction = (SerializableBiFunction) wire.read(params[2]).object(Object.class);
+                        @Nullable final Object returnArg = wire.read(params[3]).object(Object.class);
                         outWire.writeEventName(reply).object(view.syncUpdate(updater, updateArg, returnFunction, returnArg));
                     });
                     return;
                 }
 
                 valueIn.marshallable(wire -> {
-                    final Params[] params = applyTo2.params();
-                    final SerializableBiFunction function = (SerializableBiFunction) wire.read(params[0]).object(Object.class);
-                    final Object arg = wire.read(params[1]).object(Object.class);
+                    @NotNull final Params[] params = applyTo2.params();
+                    @Nullable final SerializableBiFunction function = (SerializableBiFunction) wire.read(params[0]).object(Object.class);
+                    @Nullable final Object arg = wire.read(params[1]).object(Object.class);
                     outWire.writeEventName(reply).object(view.applyTo(function, arg));
                 });
 
@@ -187,11 +187,11 @@ public class ReferenceHandler<E, T> extends AbstractHandler {
 
     void process(@NotNull final WireIn inWire,
                  final RequestContext requestContext,
-                 final WireOutPublisher publisher,
+                 @NotNull final WireOutPublisher publisher,
                  final long tid,
                  Reference view,
                  StringBuilder csp,
-                 final Wire outWire,
+                 @NotNull final Wire outWire,
                  final @NotNull WireAdapter wireAdapter) {
         this.csp = csp;
         this.vToWire = wireAdapter.valueToWire();

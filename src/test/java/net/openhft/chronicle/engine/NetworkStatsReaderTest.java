@@ -14,6 +14,7 @@ import net.openhft.chronicle.network.NetworkStats;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.WireNetworkStats;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.*;
 import org.junit.rules.TestName;
 
@@ -41,7 +42,7 @@ public class NetworkStatsReaderTest {
         SimpleQueueViewTest.deleteFiles(new File(URI));
         assetTree = (new VanillaAssetTree(1)).forServer();
 
-        String hostPortDescription = "NetworkStatsReaderTest-" + name;
+        @NotNull String hostPortDescription = "NetworkStatsReaderTest-" + name;
         TCPRegistry.createServerSocketChannelFor(hostPortDescription);
         new ServerEndpoint(hostPortDescription, assetTree);
 
@@ -53,20 +54,20 @@ public class NetworkStatsReaderTest {
 
        // YamlLogging.setAll(true);
 
-        EventLoop eg = assetTree.root().findOrCreateView(EventLoop.class);
+        @Nullable EventLoop eg = assetTree.root().findOrCreateView(EventLoop.class);
         eg.start();
-        MapView<String, NetworkStatsSummary.Stats> mapView = assetTree.acquireMap("myStats", String.class, NetworkStatsSummary.Stats.class);
+        @NotNull MapView<String, NetworkStatsSummary.Stats> mapView = assetTree.acquireMap("myStats", String.class, NetworkStatsSummary.Stats.class);
 
 
-        ArrayBlockingQueue<String> queue = new ArrayBlockingQueue<>(10);
+        @NotNull ArrayBlockingQueue<String> queue = new ArrayBlockingQueue<>(10);
         mapView.registerSubscriber((e) -> queue.add(e.getValue().toString()));
 
         eg.addHandler(new NetworkStatsSummary((ChronicleQueueView) assetTree.acquireAsset(URI).acquireView(QueueView.class), mapView));
 
         {
-            TopicPublisher<String, NetworkStats> publisher = assetTree.acquireTopicPublisher(URI,
+            @NotNull TopicPublisher<String, NetworkStats> publisher = assetTree.acquireTopicPublisher(URI,
                     String.class, NetworkStats.class);
-            WireNetworkStats networkStats = new WireNetworkStats(0);
+            @NotNull WireNetworkStats networkStats = new WireNetworkStats(0);
             networkStats.clientId(UUID.randomUUID());
             networkStats.isConnected(true);
             publisher.publish("NetworkStats", networkStats.writeBps(1).userId("1"));

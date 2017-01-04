@@ -34,13 +34,14 @@ public class MapReference<E> implements Reference<E> {
     private final String name;
     private final Class<E> eClass;
     private final MapView<String, E> underlyingMap;
+    @NotNull
     private final Asset asset;
 
-    public MapReference(@NotNull RequestContext context, Asset asset, MapView<String, E> underlying) throws AssetNotFoundException {
+    public MapReference(@NotNull RequestContext context, @NotNull Asset asset, MapView<String, E> underlying) throws AssetNotFoundException {
         this(context.name(), context.type(), asset, underlying);
     }
 
-    public MapReference(String name, Class<E> type, Asset asset, MapView<String, E> mapView) {
+    public MapReference(String name, Class<E> type, @NotNull Asset asset, MapView<String, E> mapView) {
         assert asset != null;
         this.name = name;
         this.eClass = type;
@@ -67,7 +68,7 @@ public class MapReference<E> implements Reference<E> {
     }
 
     @Override
-    public void registerSubscriber(boolean bootstrap, int throttlePeriodMs, Subscriber<E> subscriber) throws AssetNotFoundException {
+    public void registerSubscriber(boolean bootstrap, int throttlePeriodMs, @NotNull Subscriber<E> subscriber) throws AssetNotFoundException {
 
         asset.subscription(true)
                 .registerSubscriber(requestContext()
@@ -78,15 +79,15 @@ public class MapReference<E> implements Reference<E> {
     }
 
     @Override
-    public void unregisterSubscriber(Subscriber subscriber) {
-        SubscriptionCollection subscription = asset.subscription(false);
+    public void unregisterSubscriber(@NotNull Subscriber subscriber) {
+        @Nullable SubscriptionCollection subscription = asset.subscription(false);
         if (subscription != null)
             subscription.unregisterSubscriber(subscriber);
     }
 
     @Override
     public int subscriberCount() {
-        SubscriptionCollection subscription = asset.subscription(false);
+        @Nullable SubscriptionCollection subscription = asset.subscription(false);
         if (subscription != null)
             return subscription.subscriberCount();
         return 0;
@@ -97,6 +98,7 @@ public class MapReference<E> implements Reference<E> {
         return eClass;
     }
 
+    @NotNull
     @Override
     public String toString() {
         return "MapReference{" +

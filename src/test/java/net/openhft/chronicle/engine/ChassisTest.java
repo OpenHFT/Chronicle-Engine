@@ -28,6 +28,7 @@ import net.openhft.chronicle.engine.api.tree.AssetNotFoundException;
 import net.openhft.chronicle.engine.map.InsertedEvent;
 import net.openhft.chronicle.engine.map.RemovedEvent;
 import net.openhft.chronicle.engine.map.UpdatedEvent;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -65,13 +66,13 @@ public class ChassisTest {
 
     @Test
     public void simpleGetMapView() {
-        ConcurrentMap<String, String> map = acquireMap("map-name", String.class, String.class);
+        @NotNull ConcurrentMap<String, String> map = acquireMap("map-name", String.class, String.class);
 
         registerTopicSubscriber("map-name", String.class, String.class, (t, e) -> System.out.println("{ key: " + t + ", event: " + e + " }"));
 
         map.put("Hello", "World");
 
-        ConcurrentMap<String, String> map2 = acquireMap("map-name", String.class, String.class);
+        @NotNull ConcurrentMap<String, String> map2 = acquireMap("map-name", String.class, String.class);
         assertSame(map, map2);
 
         map2.put("Bye", "soon");
@@ -81,7 +82,7 @@ public class ChassisTest {
 
     @Test
     public void subscription() throws InvalidSubscriberException {
-        ConcurrentMap<String, String> map = acquireMap("map-name?putReturnsNull=true", String.class, String.class);
+        @NotNull ConcurrentMap<String, String> map = acquireMap("map-name?putReturnsNull=true", String.class, String.class);
 
         map.put("Key-1", "Value-1");
         map.put("Key-2", "Value-2");
@@ -103,7 +104,7 @@ public class ChassisTest {
         subscriber.onMessage("Topic-1");
         replay(subscriber);
 
-        TopicPublisher<String, String> publisher = acquireTopicPublisher("map-name", String.class, String.class);
+        @NotNull TopicPublisher<String, String> publisher = acquireTopicPublisher("map-name", String.class, String.class);
         publisher.publish("Topic-1", "Message-1");
         verify(subscriber);
         reset(subscriber);
@@ -142,7 +143,7 @@ public class ChassisTest {
 
     @Test
     public void keySubscription() throws InvalidSubscriberException {
-        ConcurrentMap<String, String> map = acquireMap("map-name?putReturnsNull=true", String.class, String.class);
+        @NotNull ConcurrentMap<String, String> map = acquireMap("map-name?putReturnsNull=true", String.class, String.class);
 
         map.put("Key-1", "Value-1");
         map.put("Key-2", "Value-2");
@@ -164,7 +165,7 @@ public class ChassisTest {
         subscriber.onMessage("Message-1");
         replay(subscriber);
 
-        TopicPublisher<String, String> publisher = acquireTopicPublisher("map-name", String.class, String.class);
+        @NotNull TopicPublisher<String, String> publisher = acquireTopicPublisher("map-name", String.class, String.class);
         publisher.publish("Key-1", "Message-1");
         publisher.publish("Key-2", "Message-2");
         verify(subscriber);
@@ -183,7 +184,7 @@ public class ChassisTest {
 
     @Test
     public void topicSubscription() throws InvalidSubscriberException {
-        ConcurrentMap<String, String> map = acquireMap("map-name?putReturnsNull=true", String.class, String.class);
+        @NotNull ConcurrentMap<String, String> map = acquireMap("map-name?putReturnsNull=true", String.class, String.class);
 
         map.put("Key-1", "Value-1");
         map.put("Key-2", "Value-2");
@@ -205,7 +206,7 @@ public class ChassisTest {
         subscriber.onMessage("Topic-1", "Message-1");
         replay(subscriber);
 
-        TopicPublisher<String, String> publisher = acquireTopicPublisher("map-name", String.class, String.class);
+        @NotNull TopicPublisher<String, String> publisher = acquireTopicPublisher("map-name", String.class, String.class);
         publisher.publish("Topic-1", "Message-1");
         verify(subscriber);
         reset(subscriber);
@@ -244,7 +245,7 @@ public class ChassisTest {
 
     @Test
     public void entrySubscription() throws InvalidSubscriberException {
-        ConcurrentMap<String, String> map = acquireMap("map-name?putReturnsNull=true", String.class, String.class);
+        @NotNull ConcurrentMap<String, String> map = acquireMap("map-name?putReturnsNull=true", String.class, String.class);
 
         map.put("Key-1", "Value-1");
         map.put("Key-2", "Value-2");
@@ -268,7 +269,7 @@ public class ChassisTest {
         subscriber.onMessage(InsertedEvent.of("/map-name", "Topic-1", "Message-1",false));
         replay(subscriber);
 
-        TopicPublisher<String, String> publisher = acquireTopicPublisher("map-name", String.class, String.class);
+        @NotNull TopicPublisher<String, String> publisher = acquireTopicPublisher("map-name", String.class, String.class);
         publisher.publish("Key-1", "Message-1");
         publisher.publish("Topic-1", "Message-1");
         verify(subscriber);
@@ -291,7 +292,7 @@ public class ChassisTest {
 
     @Test
     public void testStringString() throws IOException, InterruptedException {
-        final ConcurrentMap<String, String> mapProxy = Chassis.acquireMap("testStringString", String.class, String.class);
+        @NotNull final ConcurrentMap<String, String> mapProxy = Chassis.acquireMap("testStringString", String.class, String.class);
         mapProxy.put("hello", "world");
         Assert.assertEquals("world", mapProxy.get("hello"));
         assertEquals(1, mapProxy.size());
@@ -299,18 +300,18 @@ public class ChassisTest {
 
     @Test
     public void newNode() {
-        Asset group = acquireAsset("group");
-        Asset subgroup = acquireAsset("group/sub-group");
+        @NotNull Asset group = acquireAsset("group");
+        @NotNull Asset subgroup = acquireAsset("group/sub-group");
         assertEquals("/group/sub-group", subgroup.fullName());
 
-        Asset group2 = acquireAsset("/group2/sub-group");
+        @NotNull Asset group2 = acquireAsset("/group2/sub-group");
         assertEquals("/group2/sub-group", group2.fullName());
     }
 
     @Test()
     public void noAsset() {
         registerTopicSubscriber("topic-name", String.class, String.class, (t, e) -> System.out.println("{ key: " + t + ", event: " + e + " }"));
-        TopicPublisher<String, String> publisher = acquireTopicPublisher("topic-name", String.class, String.class);
+        @NotNull TopicPublisher<String, String> publisher = acquireTopicPublisher("topic-name", String.class, String.class);
         publisher.publish("hi", "there");
 
         // TODO should send a message.
@@ -318,21 +319,21 @@ public class ChassisTest {
 
     @Test(expected = AssetNotFoundException.class)
     public void noInterceptor() {
-        Asset asset = acquireAsset("");
+        @NotNull Asset asset = acquireAsset("");
 
         asset.acquireView(requestContext("").viewType(MyInterceptor.class));
     }
 
     @Test
     public void generateInterceptor() {
-        Asset asset = acquireAsset("");
+        @NotNull Asset asset = acquireAsset("");
 
         asset.addLeafRule(MyInterceptor.class, "test", (context, asset2) -> {
             assertEquals(MyInterceptor.class, context.viewType());
             return new MyInterceptor();
         });
-        MyInterceptor mi = asset.acquireView(requestContext("").viewType(MyInterceptor.class));
-        MyInterceptor mi2 = asset.acquireView(requestContext("").viewType(MyInterceptor.class));
+        @NotNull MyInterceptor mi = asset.acquireView(requestContext("").viewType(MyInterceptor.class));
+        @NotNull MyInterceptor mi2 = asset.acquireView(requestContext("").viewType(MyInterceptor.class));
         assertNotNull(mi);
         assertSame(mi, mi2);
     }

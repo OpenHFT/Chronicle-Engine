@@ -88,9 +88,11 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
     @Nullable
     private final EventLoop eventLoop;
     private final AtomicBoolean isClosed = new AtomicBoolean();
+    @Nullable
     private final SessionProvider sessionProvider;
     private Class keyType;
     private Class valueType;
+    @Nullable
     private SessionDetails replicationSessionDetails;
 
     public ChronicleMapKeyValueStore(@NotNull RequestContext context, @NotNull Asset asset) {
@@ -111,12 +113,12 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
         replicationSessionDetails = asset.root().findView(SessionDetails.class);
 
         ChronicleMapBuilder<K, V> builder = ChronicleMapBuilder.of(context.keyType(), context.valueType());
-        HostIdentifier hostIdentifier = null;
-        EngineReplication engineReplicator1 = null;
+        @Nullable HostIdentifier hostIdentifier = null;
+        @Nullable EngineReplication engineReplicator1 = null;
         try {
             engineReplicator1 = asset.acquireView(EngineReplication.class);
 
-            final EngineReplicationLangBytesConsumer langBytesConsumer = asset.findView
+            @Nullable final EngineReplicationLangBytesConsumer langBytesConsumer = asset.findView
                     (EngineReplicationLangBytesConsumer.class);
 
             hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
@@ -133,7 +135,7 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
 
         this.engineReplicator = engineReplicator1;
 
-        Boolean nullOldValueOnUpdateEvent = context.nullOldValueOnUpdateEvent();
+        @Nullable Boolean nullOldValueOnUpdateEvent = context.nullOldValueOnUpdateEvent();
         if (nullOldValueOnUpdateEvent != null && nullOldValueOnUpdateEvent) {
             builder.bytesEventListener(new NullOldValuePublishingOperations());
         } else {
@@ -151,14 +153,14 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
         if (basePath == null) {
             chronicleMap = builder.create();
         } else {
-            String pathname = basePath + "/" + context.name();
+            @NotNull String pathname = basePath + "/" + context.name();
             //noinspection ResultOfMethodCallIgnored
             new File(basePath).mkdirs();
             try {
                 chronicleMap = builder.createPersistedTo(new File(pathname));
 
             } catch (IOException e) {
-                IORuntimeException iore = new IORuntimeException("Could not access " + pathname);
+                @NotNull IORuntimeException iore = new IORuntimeException("Could not access " + pathname);
                 iore.initCause(e);
                 throw iore;
             }
@@ -167,7 +169,7 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
         if (hostIdentifier == null)
             return;
 
-        Clusters clusters = asset.findView(Clusters.class);
+        @Nullable Clusters clusters = asset.findView(Clusters.class);
 
         if (clusters == null) {
             Jvm.warn().on(getClass(), "no clusters found.");
@@ -186,7 +188,7 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
         if (LOG.isDebugEnabled())
             Jvm.debug().on(getClass(), "hostDetails : localIdentifier=" + localIdentifier + ",cluster=" + engineCluster.hostDetails());
 
-        for (EngineHostDetails hostDetails : engineCluster.hostDetails()) {
+        for (@NotNull EngineHostDetails hostDetails : engineCluster.hostDetails()) {
             try {
                 // its the identifier with the larger values that will establish the connection
                 byte remoteIdentifier = (byte) hostDetails.hostId();
@@ -210,7 +212,7 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
                     if (nc.isAcceptor())
                         return;
 
-                    final String csp = context.fullName();
+                    @NotNull final String csp = context.fullName();
 
                     final long lastUpdateTime = ((Replica) chronicleMap).lastModificationTime(remoteIdentifier);
 
@@ -406,7 +408,7 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
         }
 
         @Override
-        public void onPut(K key,
+        public void onPut(@NotNull K key,
                           V newValue,
                           @Nullable V replacedValue,
                           boolean replicationEvent,
@@ -439,7 +441,7 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
 
     private class NullOldValuePublishingOperations extends BytesMapEventListener {
         @Override
-        public void onPut(Bytes entry, long metaDataPos, long keyPos, long valuePos, boolean added, boolean replicationEvent, boolean hasValueChanged, byte identifier, byte replacedIdentifier, long timeStamp, long replacedTimeStamp, SharedSegment segment) {
+        public void onPut(Bytes entry, long metaDataPos, long keyPos, long valuePos, boolean added, boolean replicationEvent, boolean hasValueChanged, byte identifier, byte replacedIdentifier, long timeStamp, long replacedTimeStamp, @NotNull SharedSegment segment) {
             if (identifier == replacedIdentifier && timeStamp == replacedTimeStamp &&
                     !hasValueChanged)
                 return;
@@ -461,7 +463,7 @@ public class ChronicleMapKeyValueStore<K, V> implements ObjectKeyValueStore<K, V
         }
 
         @Override
-        public void onRemove(Bytes entry, long metaDataPos, long keyPos, long valuePos, boolean replicationEvent, byte identifier, byte replacedIdentifier, long timeStamp, long replacedTimeStamp, SharedSegment segment) {
+        public void onRemove(Bytes entry, long metaDataPos, long keyPos, long valuePos, boolean replicationEvent, byte identifier, byte replacedIdentifier, long timeStamp, long replacedTimeStamp, @NotNull SharedSegment segment) {
             if (identifier == replacedIdentifier && timeStamp == replacedTimeStamp)
                 return;
 

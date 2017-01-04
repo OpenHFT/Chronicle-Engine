@@ -68,8 +68,8 @@ public class FilePerKeyGroupFS implements Marshallable, MountPoint {
 
     @Override
     public void install(String baseDir, @NotNull AssetTree assetTree) {
-        RequestContext context = RequestContext.requestContext(name).basePath(baseDir + "/" + spec).recurse(this.recurse).keyType(String.class);
-        Asset asset = assetTree.acquireAsset(name);
+        @NotNull RequestContext context = RequestContext.requestContext(name).basePath(baseDir + "/" + spec).recurse(this.recurse).keyType(String.class);
+        @NotNull Asset asset = assetTree.acquireAsset(name);
         ((VanillaAsset) asset).enableTranslatingValuesToBytesStore();
         asset.registerView(KeyValueStore.class, new FilePerKeyValueStore(context, asset));
     }

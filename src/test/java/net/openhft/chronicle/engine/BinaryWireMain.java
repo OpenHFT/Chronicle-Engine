@@ -35,8 +35,8 @@ public class BinaryWireMain {
     public static void main(@NotNull String[] args) throws IOException {
         int port = 8080;
         // YamlLogging.setAll(true);
-        VanillaAssetTree assetTree = new VanillaAssetTree().forTesting(false);
-        final ServerEndpoint serverEndpoint = new ServerEndpoint("*:" + port, assetTree);
+        @NotNull VanillaAssetTree assetTree = new VanillaAssetTree().forTesting(false);
+        @NotNull final ServerEndpoint serverEndpoint = new ServerEndpoint("*:" + port, assetTree);
 
         if (args.length == 1 && args[0].compareTo("-debug") == 0) {
             System.out.println("Enabling message logging");

@@ -40,6 +40,7 @@ import net.openhft.chronicle.network.cluster.ClusterContext;
 import net.openhft.chronicle.wire.Demarshallable;
 import net.openhft.chronicle.wire.WireIn;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -60,6 +61,7 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
     private QueueView qv;
     private volatile boolean isClosed;
     private EngineWireNetworkContext nc;
+    @Nullable
     private Histogram histogram = null;
 
 
@@ -77,9 +79,9 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
 
         if (qv != null)
             return qv;
-        String path = PROC_CONNECTIONS_CLUSTER_THROUGHPUT + localIdentifier;
+        @NotNull String path = PROC_CONNECTIONS_CLUSTER_THROUGHPUT + localIdentifier;
 
-        RequestContext requestContext = requestContext(path)
+        @NotNull RequestContext requestContext = requestContext(path)
                 .elementType(NetworkStats.class);
 
         if (ChronicleQueueView.isQueueReplicationAvailable())
@@ -91,7 +93,7 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
     }
 
     private String clusterName() {
-        final Clusters view = asset.getView(Clusters.class);
+        @Nullable final Clusters view = asset.getView(Clusters.class);
 
         if (view == null)
             return "";
@@ -138,7 +140,7 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
             wireNetworkStats.remoteIdentifier(remoteIdentifier);
 
         } else if (nc.handler() instanceof UberHandler) {
-            final UberHandler handler = (UberHandler) nc.handler();
+            @NotNull final UberHandler handler = (UberHandler) nc.handler();
             wireNetworkStats.remoteIdentifier(handler.remoteIdentifier());
             wireNetworkStats.wireType(handler.wireType());
         } else {
@@ -154,7 +156,7 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
     }
 
     @Override
-    public void onHostPort(String hostName, int port) {
+    public void onHostPort(@NotNull String hostName, int port) {
         wireNetworkStats.remoteHostName(hostName);
         wireNetworkStats.remotePort(port);
         wireNetworkStats.timestamp(System.currentTimeMillis());
@@ -168,6 +170,7 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
         acquireHistogram().sampleNanos(nanosecondLatency);
     }
 
+    @Nullable
     private Histogram acquireHistogram() {
         if (histogram != null)
             return histogram;
@@ -195,24 +198,24 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
 
     private void createVaadinChart() {
 
-        final String csp = PROC_CONNECTIONS_CLUSTER_THROUGHPUT + "replication-latency/" +
+        @NotNull final String csp = PROC_CONNECTIONS_CLUSTER_THROUGHPUT + "replication-latency/" +
                 localIdentifier
                 + "<->" + wireNetworkStats.remoteIdentifier();
 
-        final VanillaVaadinChart barChart = asset.acquireView(requestContext(csp).view("Chart"));
+        @NotNull final VanillaVaadinChart barChart = asset.acquireView(requestContext(csp).view("Chart"));
         barChart.columnNameField("timestamp");
-        VaadinChartSeries percentile50th = new VaadinChartSeries("percentile50th").type(SPLINE).yAxisLabel
+        @NotNull VaadinChartSeries percentile50th = new VaadinChartSeries("percentile50th").type(SPLINE).yAxisLabel
                 ("microseconds");
-        VaadinChartSeries percentile90th = new VaadinChartSeries("percentile90th").type(SPLINE).yAxisLabel
+        @NotNull VaadinChartSeries percentile90th = new VaadinChartSeries("percentile90th").type(SPLINE).yAxisLabel
                 ("microseconds");
-        VaadinChartSeries percentile99th = new VaadinChartSeries("percentile99th").type(SPLINE).yAxisLabel(
+        @NotNull VaadinChartSeries percentile99th = new VaadinChartSeries("percentile99th").type(SPLINE).yAxisLabel(
                 "microseconds");
-        VaadinChartSeries percentile99_9th = new VaadinChartSeries("percentile99_9th").type(SPLINE)
+        @NotNull VaadinChartSeries percentile99_9th = new VaadinChartSeries("percentile99_9th").type(SPLINE)
                 .yAxisLabel("microseconds");
 
         barChart.series(percentile50th, percentile90th, percentile99th, percentile99_9th);
 
-        final ChartProperties chartProperties = new ChartProperties();
+        @NotNull final ChartProperties chartProperties = new ChartProperties();
         chartProperties.title = "Round Trip Network Latency Distribution";
         chartProperties.menuLabel = "round trip latency";
         chartProperties.countFromEnd = 30;
@@ -256,8 +259,9 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
         public Factory() {
         }
 
+        @NotNull
         @Override
-        public NetworkStatsListener apply(ClusterContext context) {
+        public NetworkStatsListener apply(@NotNull ClusterContext context) {
             return new EngineNetworkStatsListener(((EngineClusterContext) context).assetRoot(),
                     context.localIdentifier());
         }

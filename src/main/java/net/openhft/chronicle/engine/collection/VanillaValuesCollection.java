@@ -71,9 +71,9 @@ public class VanillaValuesCollection<K, V> extends AbstractCollection<V> impleme
     public boolean equals(Object obj) {
         if (!(obj instanceof Collection))
             return false;
-        Collection<V> collection = (Collection<V>) obj;
+        @NotNull Collection<V> collection = (Collection<V>) obj;
         if (collection.size() != size()) return false;
-        for (V v : collection) {
+        for (@Nullable V v : collection) {
             if (v == null || !contains(v))
                 return false;
         }

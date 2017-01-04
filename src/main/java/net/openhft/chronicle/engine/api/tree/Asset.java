@@ -59,7 +59,7 @@ public interface Asset extends Closeable {
      */
     @NotNull
     default String fullName() {
-        Asset parent = parent();
+        @Nullable Asset parent = parent();
         return parent == null
                 ? "/"
                 : parent.parent() == null
@@ -76,6 +76,7 @@ public interface Asset extends Closeable {
      * @throws AssetNotFoundException if the Subscription doesn't exist and the tree is not able to
      *                                create the Subscription.
      */
+    @Nullable
     SubscriptionCollection subscription(boolean createIfAbsent) throws AssetNotFoundException;
 
     /**
@@ -93,8 +94,8 @@ public interface Asset extends Closeable {
             pos = fullName.indexOf("/");
         }
         if (pos >= 0) {
-            String name1 = fullName.substring(0, pos);
-            String name2 = fullName.substring(pos + 1);
+            @NotNull String name1 = fullName.substring(0, pos);
+            @NotNull String name2 = fullName.substring(pos + 1);
             Asset asset = getChild(name1);
             if (asset == null) {
                 return null;
@@ -124,8 +125,8 @@ public interface Asset extends Closeable {
      */
     @Nullable
     default Asset findAsset(@NotNull String name) {
-        Asset asset = getAsset(name);
-        Asset parent = parent();
+        @Nullable Asset asset = getAsset(name);
+        @Nullable Asset parent = parent();
         if (asset == null && parent != null)
             asset = parent.findAsset(name);
         return asset;
@@ -139,8 +140,8 @@ public interface Asset extends Closeable {
      */
     @Nullable
     default <V> V findView(@NotNull Class<V> viewType) {
-        V v = getView(viewType);
-        Asset parent = parent();
+        @Nullable V v = getView(viewType);
+        @Nullable Asset parent = parent();
         if (v == null && parent != null)
             v = parent.findView(viewType);
         return v;
@@ -156,11 +157,11 @@ public interface Asset extends Closeable {
      */
     @Nullable
     default <V> V findOrCreateView(@NotNull Class<V> viewType) throws AssetNotFoundException {
-        V v = getView(viewType);
+        @Nullable V v = getView(viewType);
         if (v == null) {
             if (hasFactoryFor(viewType))
                 return acquireView(viewType);
-            Asset parent = parent();
+            @Nullable Asset parent = parent();
             if (parent != null)
                 v = parent.findOrCreateView(viewType);
         }
@@ -315,7 +316,7 @@ public interface Asset extends Closeable {
      */
     <V> V addView(Class<V> viewType, V view);
 
-    default <V> V addView(V view) {
+    default <V> V addView(@NotNull V view) {
         return addView((Class<V>) view.getClass(), view);
     }
 
@@ -332,7 +333,7 @@ public interface Asset extends Closeable {
      */
     @NotNull
     default Asset root() {
-        final Asset parent = parent();
+        @Nullable final Asset parent = parent();
         return parent == null ? this : parent.root();
     }
 
@@ -358,8 +359,8 @@ public interface Asset extends Closeable {
             @NotNull RequestContext requestContext,
             @NotNull Subscriber<Object> subscriber) {
 
-        final Class<SubscriptionCollection> subscriptionType = requestContext.getSubscriptionType();
-        final SubscriptionCollection subscription = getView(subscriptionType);
+        @NotNull final Class<SubscriptionCollection> subscriptionType = requestContext.getSubscriptionType();
+        @Nullable final SubscriptionCollection subscription = getView(subscriptionType);
 
         if (subscription == null)
             subscriber.onEndOfSubscription();
@@ -370,7 +371,7 @@ public interface Asset extends Closeable {
 
     default <T, E> void unregisterTopicSubscriber(@NotNull RequestContext requestContext,
                                                   @NotNull TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
-        SubscriptionCollection subscription = getView(requestContext.getSubscriptionType());
+        @Nullable SubscriptionCollection subscription = getView(requestContext.getSubscriptionType());
         if (subscription instanceof KVSSubscription)
             ((KVSSubscription) subscription).unregisterTopicSubscriber(subscriber);
         else
@@ -381,8 +382,8 @@ public interface Asset extends Closeable {
                                                   @NotNull Class<T> topicClass,
                                                   @NotNull Class<E> messageClass,
                                                   @NotNull TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
-        RequestContext rc = requestContext(uri).keyType(topicClass).valueType(messageClass);
-        SubscriptionCollection subscription = getView(rc.getSubscriptionType());
+        @NotNull RequestContext rc = requestContext(uri).keyType(topicClass).valueType(messageClass);
+        @Nullable SubscriptionCollection subscription = getView(rc.getSubscriptionType());
         if (subscription instanceof KVSSubscription)
             ((KVSSubscription) subscription).unregisterTopicSubscriber(subscriber);
         else
@@ -393,14 +394,15 @@ public interface Asset extends Closeable {
                                                 @NotNull Class<T> topicClass,
                                                 @NotNull Class<E> messageClass,
                                                 @NotNull TopicSubscriber<T, E> subscriber) throws AssetNotFoundException {
-        RequestContext rc = requestContext(uri).keyType(topicClass).valueType(messageClass);
-        final SubscriptionCollection subscriptionCollection = acquireSubscription(rc);
-        final KVSSubscription kvsSubscription = (KVSSubscription) subscriptionCollection;
+        @NotNull RequestContext rc = requestContext(uri).keyType(topicClass).valueType(messageClass);
+        @NotNull final SubscriptionCollection subscriptionCollection = acquireSubscription(rc);
+        @NotNull final KVSSubscription kvsSubscription = (KVSSubscription) subscriptionCollection;
         kvsSubscription.registerTopicSubscriber(rc, subscriber);
     }
 
+    @NotNull
     default SubscriptionCollection acquireSubscription(@NotNull RequestContext requestContext) {
-        Class<SubscriptionCollection> subscriptionType = requestContext.getSubscriptionType();
+        @NotNull Class<SubscriptionCollection> subscriptionType = requestContext.getSubscriptionType();
         requestContext.viewType(subscriptionType);
         return acquireView(subscriptionType, requestContext);
     }
@@ -416,7 +418,7 @@ public interface Asset extends Closeable {
 
     @NotNull
     default <K, V> MapView<K, V> acquireMap(@NotNull String uri, Class<K> kClass, Class<V> vClass) throws AssetNotFoundException {
-        final RequestContext requestContext = requestContext(uri);
+        @NotNull final RequestContext requestContext = requestContext(uri);
 
         if (requestContext.bootstrap() != null)
             throw new UnsupportedOperationException("Its not possible to set the bootstrap when " +

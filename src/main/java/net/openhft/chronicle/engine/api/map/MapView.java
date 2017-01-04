@@ -60,6 +60,7 @@ public interface MapView<K, V> extends ConcurrentMap<K, V>,
      * @param using a mutable buffer
      * @return the value.
      */
+    @Nullable
     V getUsing(K key, Object using);
 
     /**
@@ -142,6 +143,7 @@ public interface MapView<K, V> extends ConcurrentMap<K, V>,
      * @param value to set
      * @return the old value or null if absent
      */
+    @Nullable
     V getAndPut(K key, V value);
 
     /**
@@ -150,5 +152,6 @@ public interface MapView<K, V> extends ConcurrentMap<K, V>,
      * @param key to remove
      * @return the old value or null if absent.
      */
+    @Nullable
     V getAndRemove(K key);
 }

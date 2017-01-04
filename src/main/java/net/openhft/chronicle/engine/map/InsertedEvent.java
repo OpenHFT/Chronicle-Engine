@@ -33,6 +33,7 @@ import java.util.function.Function;
  */
 public class InsertedEvent<K, V> extends AbstractMarshallable implements MapEvent<K, V> {
     private boolean isReplicationEvent;
+    @Nullable
     private String assetName;
     @NotNull
     private K key;
@@ -47,10 +48,11 @@ public class InsertedEvent<K, V> extends AbstractMarshallable implements MapEven
     }
 
     @NotNull
-    public static <K, V> InsertedEvent<K, V> of(String assetName, K key, V value, boolean isReplicationEvent) {
+    public static <K, V> InsertedEvent<K, V> of(String assetName, @NotNull K key, V value, boolean isReplicationEvent) {
         return new InsertedEvent<>(assetName, key, value, isReplicationEvent);
     }
 
+    @Nullable
     @Override
     public String assetName() {
         return assetName;
@@ -89,6 +91,7 @@ public class InsertedEvent<K, V> extends AbstractMarshallable implements MapEven
         listener.insert(assetName, key, value);
     }
 
+    @NotNull
     @Override
     public V setValue(V value) {
         throw new UnsupportedOperationException();

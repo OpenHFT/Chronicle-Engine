@@ -80,9 +80,9 @@ abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient imp
         if (hub.outBytesLock().isHeldByCurrentThread())
             throw new IllegalStateException("Cannot view map while debugging");
 
-        final Boolean bootstrap = rc.bootstrap();
-        final Boolean endSubscriptionAfterBootstrap = rc.endSubscriptionAfterBootstrap();
-        String csp = this.csp;
+        @Nullable final Boolean bootstrap = rc.bootstrap();
+        @Nullable final Boolean endSubscriptionAfterBootstrap = rc.endSubscriptionAfterBootstrap();
+        @Nullable String csp = this.csp;
 
         if (bootstrap != null)
             csp = csp + "&bootstrap=" + bootstrap;
@@ -110,7 +110,7 @@ abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient imp
             public void onConsumer(@NotNull final WireIn inWire) {
                 inWire.readDocument(null, d -> {
                     final StringBuilder eventName = Wires.acquireStringBuilder();
-                    final ValueIn valueIn = d.readEventName(eventName);
+                    @NotNull final ValueIn valueIn = d.readEventName(eventName);
 
                     if (PublisherHandler.EventId.onEndOfSubscription.contentEquals(eventName)) {
                         subscriber.onEndOfSubscription();
@@ -118,9 +118,9 @@ abstract class AbstractRemoteSubscription<E> extends AbstractStatelessClient imp
                         hub.unsubscribe(tid());
 
                     } else if (CoreFields.reply.contentEquals(eventName)) {
-                        final Class aClass = rc.elementType();
+                        @NotNull final Class aClass = rc.elementType();
 
-                        final Object object = (MapEvent.class.isAssignableFrom(aClass) ||
+                        @Nullable final Object object = (MapEvent.class.isAssignableFrom(aClass) ||
                                 (TopologicalEvent.class.isAssignableFrom(aClass))) ?
                                 valueIn.typedMarshallable()
                                 : valueIn.object(rc.elementType());

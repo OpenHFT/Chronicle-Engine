@@ -28,6 +28,7 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -50,7 +51,9 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public class TestInsertUpdateChronicleMapView extends ThreadMonitoringTest {
 
     private final WireType wireType;
+    @NotNull
     public String connection = "RemoteSubscriptionTest.host.port";
+    @NotNull
     private AssetTree clientAssetTree = new VanillaAssetTree().forTesting();
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
@@ -59,9 +62,10 @@ public class TestInsertUpdateChronicleMapView extends ThreadMonitoringTest {
         this.wireType = wireType;
     }
 
+    @NotNull
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
-        final List<Object[]> list = new ArrayList<>();
+        @NotNull final List<Object[]> list = new ArrayList<>();
         list.add(new Object[]{WireType.BINARY});
         //  list.add(new Object[]{WireType.TEXT});
         return list;
@@ -98,12 +102,12 @@ public class TestInsertUpdateChronicleMapView extends ThreadMonitoringTest {
     public void testInsertFollowedByUpdate() throws InterruptedException {
         //Note you have to set the bootstrap to false in order for this test to work.
         //Otherwise it is possible that that you can get 2 insert events.
-        final MapView<String, String> serverMap = serverAssetTree.acquireMap
+        @NotNull final MapView<String, String> serverMap = serverAssetTree.acquireMap
                 ("name?putReturnsNull=false",
                         String.class, String
                                 .class);
 
-        final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(1);
+        @NotNull final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(1);
         clientAssetTree.registerSubscriber("name?putReturnsNull=false&bootstrap=false", MapEvent.class,
                 events::add);
         Jvm.pause(500);
@@ -122,12 +126,12 @@ public class TestInsertUpdateChronicleMapView extends ThreadMonitoringTest {
     @Test
     public void testInsertFollowedByUpdateWhenPutReturnsNullTrue() throws InterruptedException {
 
-        final MapView<String, String> serverMap = serverAssetTree.acquireMap
+        @NotNull final MapView<String, String> serverMap = serverAssetTree.acquireMap
                 ("name?putReturnsNull=true",
                         String.class, String
                                 .class);
 
-        final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(1);
+        @NotNull final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(1);
         clientAssetTree.registerSubscriber("name?putReturnsNull=true", MapEvent.class,
                 events::add);
         Jvm.pause(500);

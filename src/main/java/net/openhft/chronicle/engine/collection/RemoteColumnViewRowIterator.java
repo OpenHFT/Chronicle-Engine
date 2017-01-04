@@ -38,6 +38,7 @@ public class RemoteColumnViewRowIterator extends
     private static final int ITTERATOR_PAGE_SIZE = 300;
     private Iterator<Row> iterator;
     private final WriteValue pageSize = valueOut -> valueOut.int32(ITTERATOR_PAGE_SIZE);
+    @NotNull
     private AtomicBoolean isClosed = new AtomicBoolean();
 
     public RemoteColumnViewRowIterator(@NotNull TcpChannelHub hub,

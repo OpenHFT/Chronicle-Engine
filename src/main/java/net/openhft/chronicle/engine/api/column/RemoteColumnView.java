@@ -12,6 +12,7 @@ import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireKey;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,11 +27,12 @@ import static net.openhft.chronicle.engine.query.Filter.empty;
  * @author Rob Austin.
  */
 public class RemoteColumnView extends AbstractStatelessClient implements ColumnView {
+    @NotNull
     private final Asset asset;
     private final ThreadLocal<List> th = ThreadLocal.withInitial(ArrayList::new);
 
     private final Function<ValueIn, RemoteColumnViewRowIterator> readIteratorProxy = v -> {
-        final WireIn wireIn = v.wireIn();
+        @NotNull final WireIn wireIn = v.wireIn();
 
         return wireIn.read("set-proxy").applyToMarshallable(wire ->
                 new RemoteColumnViewRowIterator(
@@ -44,15 +46,18 @@ public class RemoteColumnView extends AbstractStatelessClient implements ColumnV
         this.asset = asset;
     }
 
-    private static String toURL(final RequestContext context) {
+    @NotNull
+    private static String toURL(@NotNull final RequestContext context) {
         return context.viewType(ColumnView.class).toUri();
     }
 
+    @NotNull
     @Override
     public Asset asset() {
         return asset;
     }
 
+    @Nullable
     @Override
     public List<Column> columns() {
         final List l = th.get();
@@ -73,10 +78,11 @@ public class RemoteColumnView extends AbstractStatelessClient implements ColumnV
 
     @Override
     public void registerChangeListener(@NotNull Runnable r) {
-        final RequestContext rc = RequestContext.requestContext().fullName(asset.fullName());
+        @NotNull final RequestContext rc = RequestContext.requestContext().fullName(asset.fullName());
         asset.acquireView(ObjectSubscription.class).registerSubscriber(rc, o -> r.run(), empty());
     }
 
+    @NotNull
     @Override
     public ClosableIterator<? extends Row> iterator(@NotNull SortedFilter sortedFilter) {
 
@@ -97,6 +103,7 @@ public class RemoteColumnView extends AbstractStatelessClient implements ColumnV
         return (Boolean) proxyReturnWireTypedObject(containsRowWithKey, null, Boolean.class, keys);
     }
 
+    @Nullable
     @Override
     public ObjectSubscription objectSubscription() {
         return asset.getView(ObjectSubscription.class);

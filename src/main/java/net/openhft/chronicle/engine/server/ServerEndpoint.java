@@ -116,21 +116,21 @@ public class ServerEndpoint implements Closeable {
         if (LOG.isInfoEnabled())
             LOG.info("starting server=" + hostPortDescription);
 
-        final EventLoop eventLoop = assetTree.root().findOrCreateView(EventLoop.class);
+        @Nullable final EventLoop eventLoop = assetTree.root().findOrCreateView(EventLoop.class);
         assert eventLoop != null;
 
-        Function<NetworkContext, TcpEventHandler> networkContextTcpEventHandlerFunction = (networkContext) -> {
-            final EngineWireNetworkContext nc = (EngineWireNetworkContext) networkContext;
+        @NotNull Function<NetworkContext, TcpEventHandler> networkContextTcpEventHandlerFunction = (networkContext) -> {
+            @NotNull final EngineWireNetworkContext nc = (EngineWireNetworkContext) networkContext;
             if (nc.isAcceptor())
                 nc.wireOutPublisher(new VanillaWireOutPublisher(WireType.TEXT));
-            final TcpEventHandler handler = new TcpEventHandler(networkContext);
+            @NotNull final TcpEventHandler handler = new TcpEventHandler(networkContext);
 
-            final Function<Object, TcpHandler> consumer = o -> {
+            @NotNull final Function<Object, TcpHandler> consumer = o -> {
                 if (o instanceof SessionDetailsProvider) {
-                    final SessionDetailsProvider sessionDetails = (SessionDetailsProvider) o;
+                    @NotNull final SessionDetailsProvider sessionDetails = (SessionDetailsProvider) o;
                     nc.sessionDetails(sessionDetails);
                     nc.wireType(sessionDetails.wireType());
-                    final WireType wireType = nc.sessionDetails().wireType();
+                    @Nullable final WireType wireType = nc.sessionDetails().wireType();
                     if (wireType != null)
                         nc.wireOutPublisher().wireType(wireType);
                     return new EngineWireHandler();
@@ -140,16 +140,16 @@ public class ServerEndpoint implements Closeable {
                 throw new UnsupportedOperationException("not supported class=" + o.getClass());
             };
 
-            final Function<EngineWireNetworkContext, TcpHandler> f
+            @Nullable final Function<EngineWireNetworkContext, TcpHandler> f
                     = x -> new HeaderTcpHandler<>(handler, consumer, x);
 
-            final WireTypeSniffingTcpHandler sniffer = new
+            @NotNull final WireTypeSniffingTcpHandler sniffer = new
                     WireTypeSniffingTcpHandler<>(handler, nc, f);
 
             handler.tcpHandler(sniffer);
             return handler;
         };
-        final AcceptorEventHandler eah = new AcceptorEventHandler(
+        @NotNull final AcceptorEventHandler eah = new AcceptorEventHandler(
                 hostPortDescription,
                 networkContextTcpEventHandlerFunction,
                 () -> createNetworkContext(assetTree, networkStatsListener));
@@ -159,9 +159,10 @@ public class ServerEndpoint implements Closeable {
         return eah;
     }
 
-    private EngineWireNetworkContext createNetworkContext(AssetTree assetTree,
-                                                          final NetworkStatsListener networkStatsListener) {
-        final EngineWireNetworkContext nc = new EngineWireNetworkContext(assetTree.root());
+    @NotNull
+    private EngineWireNetworkContext createNetworkContext(@NotNull AssetTree assetTree,
+                                                          @NotNull final NetworkStatsListener networkStatsListener) {
+        @NotNull final EngineWireNetworkContext nc = new EngineWireNetworkContext(assetTree.root());
         nc.networkStatsListener(networkStatsListener);
         networkStatsListener.networkContext(nc);
         return nc;

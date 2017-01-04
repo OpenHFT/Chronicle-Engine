@@ -64,6 +64,7 @@ public class Replication2WayTest extends ThreadMonitoringTest {
 
     public ServerEndpoint serverEndpoint1;
     public ServerEndpoint serverEndpoint2;
+    @NotNull
     @Rule
     public TestName testName = new TestName();
     public String name;
@@ -89,7 +90,7 @@ public class Replication2WayTest extends ThreadMonitoringTest {
                 "host.port1",
                 "host.port2");
 
-        WireType writeType = WireType.TEXT;
+        @NotNull WireType writeType = WireType.TEXT;
         tree1 = create(1, writeType, "clusterTwo");
         tree2 = create(2, writeType, "clusterTwo");
 
@@ -125,7 +126,7 @@ public class Replication2WayTest extends ThreadMonitoringTest {
 
     @NotNull
     private AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
-        AssetTree tree = new VanillaAssetTree((byte) hostId)
+        @NotNull AssetTree tree = new VanillaAssetTree((byte) hostId)
                 .forTesting()
                 .withConfig(resourcesDir() + "/2way", OS.TARGET + "/" + hostId);
 
@@ -155,13 +156,13 @@ public class Replication2WayTest extends ThreadMonitoringTest {
     @Test
     public void testBootstrap() throws InterruptedException {
 
-        final ConcurrentMap<String, String> map1 = tree1.acquireMap(name, String.class, String
+        @NotNull final ConcurrentMap<String, String> map1 = tree1.acquireMap(name, String.class, String
                 .class);
         assertNotNull(map1);
 
         map1.put("hello1", "world1");
 
-        final ConcurrentMap<String, String> map2 = tree2.acquireMap(name, String.class, String
+        @NotNull final ConcurrentMap<String, String> map2 = tree2.acquireMap(name, String.class, String
                 .class);
         assertNotNull(map2);
 
@@ -173,7 +174,7 @@ public class Replication2WayTest extends ThreadMonitoringTest {
             Jvm.pause(300);
         }
 
-        for (Map m : new Map[]{map1, map2}) {
+        for (@NotNull Map m : new Map[]{map1, map2}) {
             Assert.assertEquals("world1", m.get("hello1"));
             Assert.assertEquals("world2", m.get("hello2"));
             Assert.assertEquals(2, m.size());
@@ -183,13 +184,13 @@ public class Replication2WayTest extends ThreadMonitoringTest {
     @Test
     public void testBootstrapAllFromMap1() throws InterruptedException {
 
-        final ConcurrentMap<String, String> map1 = tree1.acquireMap(name, String.class, String
+        @NotNull final ConcurrentMap<String, String> map1 = tree1.acquireMap(name, String.class, String
                 .class);
         assertNotNull(map1);
 
         map1.put("hello1", "world1");
 
-        final ConcurrentMap<String, String> map2 = tree2.acquireMap(name, String.class, String
+        @NotNull final ConcurrentMap<String, String> map2 = tree2.acquireMap(name, String.class, String
                 .class);
         assertNotNull(map2);
 
@@ -199,7 +200,7 @@ public class Replication2WayTest extends ThreadMonitoringTest {
             Jvm.pause(300);
         }
 
-        for (Map m : new Map[]{map1, map2}) {
+        for (@NotNull Map m : new Map[]{map1, map2}) {
             Assert.assertEquals("world1", m.get("hello1"));
             Assert.assertEquals(1, m.size());
         }
@@ -208,11 +209,11 @@ public class Replication2WayTest extends ThreadMonitoringTest {
     @Test
     public void testBootstrapAllFromMap2() throws InterruptedException {
 
-        final ConcurrentMap<String, String> map1 = tree1.acquireMap(name, String.class, String
+        @NotNull final ConcurrentMap<String, String> map1 = tree1.acquireMap(name, String.class, String
                 .class);
         assertNotNull(map1);
 
-        final ConcurrentMap<String, String> map2 = tree2.acquireMap(name, String.class, String
+        @NotNull final ConcurrentMap<String, String> map2 = tree2.acquireMap(name, String.class, String
                 .class);
 
         map2.put("hello1", "world1");
@@ -225,7 +226,7 @@ public class Replication2WayTest extends ThreadMonitoringTest {
             Jvm.pause(300);
         }
 
-        for (Map m : new Map[]{map1, map2}) {
+        for (@NotNull Map m : new Map[]{map1, map2}) {
             Assert.assertEquals("world1", m.get("hello1"));
 
             Assert.assertEquals(1, m.size());
@@ -235,10 +236,10 @@ public class Replication2WayTest extends ThreadMonitoringTest {
     @Test
     public void testBootstrapAllFromMap1WithSubscription() throws InterruptedException {
 
-        AtomicInteger map1Updates = new AtomicInteger();
-        AtomicInteger map2Updates = new AtomicInteger();
+        @NotNull AtomicInteger map1Updates = new AtomicInteger();
+        @NotNull AtomicInteger map2Updates = new AtomicInteger();
 
-        final ConcurrentMap<String, String> map1 = tree1.acquireMap(name, String.class, String
+        @NotNull final ConcurrentMap<String, String> map1 = tree1.acquireMap(name, String.class, String
                 .class);
         assertNotNull(map1);
         tree1.registerSubscriber(name, MapEvent.class, f -> {
@@ -250,7 +251,7 @@ public class Replication2WayTest extends ThreadMonitoringTest {
         map1.put("hello2", "world2");
         Jvm.pause(1);
 
-        final ConcurrentMap<String, String> map2 = tree2.acquireMap(name, String.class, String
+        @NotNull final ConcurrentMap<String, String> map2 = tree2.acquireMap(name, String.class, String
                 .class);
         tree1.registerSubscriber(name, MapEvent.class, f -> {
             map2Updates.incrementAndGet();
@@ -264,7 +265,7 @@ public class Replication2WayTest extends ThreadMonitoringTest {
             Jvm.pause(300);
         }
 
-        for (Map m : new Map[]{map1, map2}) {
+        for (@NotNull Map m : new Map[]{map1, map2}) {
             Assert.assertEquals("world1", m.get("hello1"));
             Assert.assertEquals("world2", m.get("hello2"));
             Assert.assertEquals(2, m.size());
@@ -277,11 +278,11 @@ public class Replication2WayTest extends ThreadMonitoringTest {
     @Test
     public void testBootstrapAllFromMap1WithSubscription2() throws InterruptedException {
 
-        AtomicInteger map1Updates = new AtomicInteger();
+        @NotNull AtomicInteger map1Updates = new AtomicInteger();
 
-        AtomicInteger map2Updates = new AtomicInteger();
+        @NotNull AtomicInteger map2Updates = new AtomicInteger();
 
-        final ConcurrentMap<String, String> map1 = tree1.acquireMap(name, String.class, String
+        @NotNull final ConcurrentMap<String, String> map1 = tree1.acquireMap(name, String.class, String
                 .class);
         assertNotNull(map1);
         tree1.registerSubscriber(name, MapEvent.class, f -> map1Updates.incrementAndGet());
@@ -290,7 +291,7 @@ public class Replication2WayTest extends ThreadMonitoringTest {
         map1.put("hello2", "world2");
         Jvm.pause(2);
 
-        final ConcurrentMap<String, String> map2 = tree2.acquireMap(name, String.class, String
+        @NotNull final ConcurrentMap<String, String> map2 = tree2.acquireMap(name, String.class, String
                 .class);
 
         Jvm.pause(500);
@@ -308,7 +309,7 @@ public class Replication2WayTest extends ThreadMonitoringTest {
             Jvm.pause(300);
         }
 
-        for (Map m : new Map[]{map1, map2}) {
+        for (@NotNull Map m : new Map[]{map1, map2}) {
             Assert.assertEquals("world1", m.get("hello1"));
             Assert.assertEquals("world2", m.get("hello2"));
             Assert.assertEquals(2, m.size());

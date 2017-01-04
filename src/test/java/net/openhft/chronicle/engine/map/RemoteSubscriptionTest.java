@@ -64,6 +64,7 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
     @NotNull
     @Rule
     public TestName name = new TestName();
+    @NotNull
     private AssetTree clientAssetTree = new VanillaAssetTree().forTesting();
     private VanillaAssetTree serverAssetTree;
     private ServerEndpoint serverEndpoint;
@@ -72,9 +73,10 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
         this.wireType = wireType;
     }
 
+    @NotNull
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
-        final List<Object[]> list = new ArrayList<>();
+        @NotNull final List<Object[]> list = new ArrayList<>();
         list.add(new Object[]{WireType.BINARY});
         list.add(new Object[]{WireType.TEXT});
         return list;
@@ -118,10 +120,10 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
     @Test
     public void putServerListenOnClient() throws Exception {
 
-        final MapView<String, String> serverMap = serverAssetTree.acquireMap("name", String.class, String
+        @NotNull final MapView<String, String> serverMap = serverAssetTree.acquireMap("name", String.class, String
                 .class);
 
-        final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(1);
+        @NotNull final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(1);
         clientAssetTree.registerSubscriber("name", MapEvent.class, events::add);
 
         serverMap.put("hello", "world");
@@ -140,10 +142,10 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
     @Test
     public void putClientListenOnServer() throws Exception {
 
-        final MapView<String, String> clientMap = clientAssetTree.acquireMap("name", String.class, String
+        @NotNull final MapView<String, String> clientMap = clientAssetTree.acquireMap("name", String.class, String
                 .class);
 
-        final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(1);
+        @NotNull final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(1);
         serverAssetTree.registerSubscriber("name", MapEvent.class, events::add);
 
         clientMap.put("hello", "world");
@@ -162,10 +164,10 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
     @Test
     public void putClientListenOnClient() throws Exception {
 
-        final MapView<String, String> clientMap = clientAssetTree.acquireMap("name", String.class, String
+        @NotNull final MapView<String, String> clientMap = clientAssetTree.acquireMap("name", String.class, String
                 .class);
 
-        final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(1);
+        @NotNull final BlockingQueue<MapEvent> events = new ArrayBlockingQueue<>(1);
         clientAssetTree.registerSubscriber("name?putReturnsNull=true", MapEvent.class,
                 events::add);
         {
@@ -192,9 +194,9 @@ public class RemoteSubscriptionTest extends ThreadMonitoringTest {
     @Test
     public void testEndOfSubscription() throws InterruptedException {
 
-        BlockingQueue<Boolean> endSub = new ArrayBlockingQueue<>(1);
+        @NotNull BlockingQueue<Boolean> endSub = new ArrayBlockingQueue<>(1);
 
-        final Subscriber<MapEvent> eventHandler = new Subscriber<MapEvent>() {
+        @NotNull final Subscriber<MapEvent> eventHandler = new Subscriber<MapEvent>() {
 
             @Override
             public void onMessage(MapEvent mapEvent) {

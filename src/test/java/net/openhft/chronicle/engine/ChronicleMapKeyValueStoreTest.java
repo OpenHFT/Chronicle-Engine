@@ -96,7 +96,7 @@ public class ChronicleMapKeyValueStoreTest {
 
     @NotNull
     private static AssetTree create(final int hostId, Function<Bytes, Wire> writeType) {
-        AssetTree tree = new VanillaAssetTree((byte) hostId)
+        @NotNull AssetTree tree = new VanillaAssetTree((byte) hostId)
                 .forTesting()
                 .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);
 
@@ -172,7 +172,7 @@ public class ChronicleMapKeyValueStoreTest {
                 .getCodeSource().getLocation().getPath();
         if (path == null)
             return ".";
-        String resources = new File(path).getParentFile().getParentFile() + "/src/test/resources";
+        @NotNull String resources = new File(path).getParentFile().getParentFile() + "/src/test/resources";
         return resources;
     }
 }

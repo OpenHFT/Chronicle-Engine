@@ -28,6 +28,7 @@ import net.openhft.chronicle.engine.api.tree.Assetted;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.map.KVSSubscription;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by peter on 23/05/15.
@@ -66,17 +67,18 @@ public class MapTopicPublisher<T, M> implements TopicPublisher<T, M>, Assetted<M
 
     @Override
     public void registerTopicSubscriber(@NotNull TopicSubscriber<T, M> topicSubscriber) throws AssetNotFoundException {
-        KVSSubscription<T, M> subscription = (KVSSubscription) asset.subscription(true);
+        @NotNull KVSSubscription<T, M> subscription = (KVSSubscription) asset.subscription(true);
         subscription.registerTopicSubscriber(RequestContext.requestContext().bootstrap(true).type(tClass).type2(mClass), topicSubscriber);
     }
 
     @Override
     public void unregisterTopicSubscriber(@NotNull TopicSubscriber<T, M> topicSubscriber) {
-        KVSSubscription<T, M> subscription = (KVSSubscription) asset.subscription(false);
+        @NotNull KVSSubscription<T, M> subscription = (KVSSubscription) asset.subscription(false);
         if (subscription != null)
             subscription.unregisterTopicSubscriber(topicSubscriber);
     }
 
+    @NotNull
     @Override
     public Publisher<M> publisher(@NotNull T topic) {
         throw new UnsupportedOperationException("todo");

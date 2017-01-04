@@ -23,6 +23,8 @@ import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.network.VanillaSessionDetails;
 import net.openhft.chronicle.network.api.session.SessionDetails;
 import net.openhft.chronicle.network.api.session.SessionProvider;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,18 +47,18 @@ public class SessionProviderTest {
     @Test
     public void testAcquireSessionProvider() {
         Chassis.resetChassis();
-        SessionProvider sessionProvider = Chassis.getAsset("").getView(SessionProvider.class);
-        VanillaSessionDetails sessionDetails0 = new VanillaSessionDetails();
+        @Nullable SessionProvider sessionProvider = Chassis.getAsset("").getView(SessionProvider.class);
+        @NotNull VanillaSessionDetails sessionDetails0 = new VanillaSessionDetails();
 
-        MyInfo info0 = new MyInfo();
+        @NotNull MyInfo info0 = new MyInfo();
         sessionDetails0.userId("userId");
         sessionDetails0.domain("TEST-DOMAIN");
         sessionDetails0.set(MyInfo.class, info0);
         sessionProvider.set(sessionDetails0);
 
         // get me a node in the graph
-        Asset asset = Chassis.acquireAsset("test");
-        SessionDetails sessionDetails = asset.findView(SessionProvider.class).get();
+        @NotNull Asset asset = Chassis.acquireAsset("test");
+        @Nullable SessionDetails sessionDetails = asset.findView(SessionProvider.class).get();
         assertEquals("userId", sessionDetails.userId());
         assertEquals(info0, sessionDetails.get(MyInfo.class));
     }

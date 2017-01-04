@@ -29,34 +29,38 @@ import java.util.function.Function;
  */
 public class QueueConfig {
 
-    private final Function<String, Integer> sourceB;
-    private final boolean acknowledgment;
-    private final MessageAdaptor messageAdaptor;
-    private final WireType wireType;
+    @NotNull
+    Function<String, Integer> source;
+    boolean acknowledgment;
+    @Nullable
+    MessageAdaptor messageAdaptor;
+    @NotNull
+    WireType wireType;
 
     /**
-     * @param queueSource
-     * @param acknowledgment each replication event sends back an enableAcknowledgment, which is
-     *                       then stored in the chronicle queue.
+     * @param masterIDFunction a give a assert-URI returns the master ID
+     * @param acknowledgment   each replication event sends back an enableAcknowledgment, which is
+     *                         then stored in the chronicle queue.
      */
-    public QueueConfig(@NotNull Function<String, Integer> queueSource,
+    public QueueConfig(@NotNull Function<String, Integer> masterIDFunction,
                        boolean acknowledgment,
                        @Nullable MessageAdaptor messageAdaptor,
                        @NotNull WireType wireType) {
-        this.sourceB = queueSource;
+        this.source = masterIDFunction;
         this.messageAdaptor = messageAdaptor;
         this.acknowledgment = acknowledgment;
         this.wireType = wireType;
     }
 
     public Integer sourceHostId(@NotNull String uri) {
-        return sourceB.apply(uri);
+        return source.apply(uri);
     }
 
     public boolean acknowledgment() {
         return acknowledgment;
     }
 
+    @Nullable
     public MessageAdaptor bytesFunction() {
         return messageAdaptor;
     }

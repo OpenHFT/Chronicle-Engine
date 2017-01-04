@@ -30,8 +30,9 @@ import org.jetbrains.annotations.NotNull;
 public class ClustersCfg extends AbstractMarshallable implements Installable {
     final Clusters clusters = new Clusters();
 
+    @NotNull
     @Override
-    public ClustersCfg install(String path, AssetTree assetTree) throws Exception {
+    public ClustersCfg install(@NotNull String path, @NotNull AssetTree assetTree) throws Exception {
         assetTree.root().addView(Clusters.class, clusters);
         clusters.install(assetTree);
         return this;

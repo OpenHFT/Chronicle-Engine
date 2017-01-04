@@ -61,6 +61,7 @@ public class ExistingAssetEvent extends AbstractMarshallable implements Topologi
         return classes;
     }
 
+    @NotNull
     @Override
     public String toString() {
         return "ExistingAssetEvent{" +

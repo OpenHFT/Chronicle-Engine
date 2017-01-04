@@ -37,7 +37,7 @@ public class TextWireMain {
         YamlLogging.showServerReads(true);
         // the default is BinaryWire
         int port = 8088;
-        VanillaAssetTree assetTree = new VanillaAssetTree().forTesting(false);
+        @NotNull VanillaAssetTree assetTree = new VanillaAssetTree().forTesting(false);
         serverEndpoint = new ServerEndpoint("*:" + port, assetTree);
 
         if (args.length == 1 && args[0].compareTo("-debug") == 0) {

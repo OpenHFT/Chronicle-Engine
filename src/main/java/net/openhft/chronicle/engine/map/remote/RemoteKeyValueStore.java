@@ -86,6 +86,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
         this(requestContext, asset, asset.findView(TcpChannelHub.class));
     }
 
+    @NotNull
     private static String toUri(@NotNull final RequestContext context) {
         return context.viewType(MapView.class).toUri();
     }
@@ -164,7 +165,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
 
     @Override
     public void entriesFor(final int segment, @NotNull final SubscriptionConsumer<MapEvent<K, V>> kvConsumer) throws InvalidSubscriberException {
-        String assetName = asset.fullName();
+        @NotNull String assetName = asset.fullName();
         entrySet().forEach(ThrowingConsumer.asConsumer(entry ->
                 kvConsumer.accept(InsertedEvent.of(assetName, entry.getKey(), entry.getValue(), false))));
     }
@@ -184,12 +185,12 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
         if (object == null || object.getClass().isAssignableFrom(Map.class))
             return false;
 
-        final Map<? extends K, ? extends V> that = (Map<? extends K, ? extends V>) object;
+        @NotNull final Map<? extends K, ? extends V> that = (Map<? extends K, ? extends V>) object;
 
         if (that.size() != longSize())
             return false;
 
-        final Set<Map.Entry<K, V>> entries = entrySet();
+        @NotNull final Set<Map.Entry<K, V>> entries = entrySet();
         return that.entrySet().equals(entries);
     }
 
@@ -203,11 +204,11 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
     public String toString() {
         if (Jvm.isDebug()) return "toString() not available while debugging";
 
-        final Iterator<Map.Entry<K, V>> entries = entrySet().iterator();
+        @NotNull final Iterator<Map.Entry<K, V>> entries = entrySet().iterator();
         if (!entries.hasNext())
             return "{}";
 
-        StringBuilder sb = new StringBuilder();
+        @NotNull StringBuilder sb = new StringBuilder();
         sb.append('{');
 
         while (entries.hasNext()) {
@@ -301,7 +302,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
             });
         });
 
-        final Function<ValueIn, V> consumer = valueIn -> valueIn.object(vClass);
+        @Nullable final Function<ValueIn, V> consumer = valueIn -> valueIn.object(vClass);
 
         return new ClientWiredStatelessChronicleCollection<>(hub, ArrayList::new, consumer, "/" + context.name() + "?view=" + "values", cid
         );
@@ -323,10 +324,10 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
             });
         });
 
-        Function<ValueIn, Map.Entry<K, V>> consumer = valueIn -> valueIn.applyToMarshallable(r -> {
+        @NotNull Function<ValueIn, Map.Entry<K, V>> consumer = valueIn -> valueIn.applyToMarshallable(r -> {
 
-                    final K k = r.read(() -> "key").object(kClass);
-                    final V v = r.read(() -> "value").object(vClass);
+                    @Nullable final K k = r.read(() -> "key").object(kClass);
+                    @Nullable final V v = r.read(() -> "value").object(vClass);
 
                     return new Map.Entry<K, V>() {
                         @Nullable
@@ -454,7 +455,7 @@ public class RemoteKeyValueStore<K, V> extends AbstractStatelessClient<EventId>
         public final boolean equals(Object o) {
             if (!(o instanceof Map.Entry))
                 return false;
-            final Map.Entry e = (Map.Entry) o;
+            @NotNull final Map.Entry e = (Map.Entry) o;
             final Object k1 = getKey();
             final Object k2 = e.getKey();
             if (k1 == k2 || (k1 != null && k1.equals(k2))) {

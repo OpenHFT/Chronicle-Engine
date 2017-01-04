@@ -75,11 +75,11 @@ public class MapWireHandler<K, V> extends AbstractHandler {
 
             try {
                 eventName.setLength(0);
-                final ValueIn valueIn = inWire.readEventName(eventName);
+                @NotNull final ValueIn valueIn = inWire.readEventName(eventName);
 
                 if (put.contentEquals(eventName)) {
                     valueIn.marshallable(wire -> {
-                        final Params[] params = put.params();
+                        @NotNull final Params[] params = put.params();
 
                         final K key = wireToK.apply(wire.read(params[0]));
                         final V value = wireToV.apply(wire.read(params[1]));
@@ -102,9 +102,9 @@ public class MapWireHandler<K, V> extends AbstractHandler {
 
                 if (update2.contentEquals(eventName)) {
                     valueIn.marshallable(wire -> {
-                        final Params[] params = update2.params();
-                        final SerializableUpdaterWithArg updater = (SerializableUpdaterWithArg) wire.read(params[0]).object(Object.class);
-                        final Object arg = wire.read(params[1]).object(Object.class);
+                        @NotNull final Params[] params = update2.params();
+                        @NotNull final SerializableUpdaterWithArg updater = (SerializableUpdaterWithArg) wire.read(params[0]).object(Object.class);
+                        @Nullable final Object arg = wire.read(params[1]).object(Object.class);
                         map.asyncUpdate(updater, arg);
                     });
                     return;
@@ -132,7 +132,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
 
                     if (EventId.putIfAbsent.contentEquals(eventName)) {
                         valueIn.marshallable(wire -> {
-                            final Params[] params = putIfAbsent.params();
+                            @NotNull final Params[] params = putIfAbsent.params();
                             final K key = wireToK.apply(wire.read(params[0]));
                             final V newValue = wireToV.apply(wire.read(params[1]));
                             final V result = map.putIfAbsent(key, newValue);
@@ -191,7 +191,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                     if (getAndPut.contentEquals(eventName)) {
                         valueIn.marshallable(wire -> {
 
-                            final Params[] params = getAndPut.params();
+                            @NotNull final Params[] params = getAndPut.params();
                             final K key = wireToK.apply(wire.read(params[0]));
                             final V value = wireToV.apply(wire.read(params[1]));
 
@@ -213,7 +213,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
 
                     if (replace.contentEquals(eventName)) {
                         valueIn.marshallable(wire -> {
-                            final Params[] params = replace.params();
+                            @NotNull final Params[] params = replace.params();
                             final K key = wireToK.apply(wire.read(params[0]));
                             final V value = wireToV.apply(wire.read(params[1]));
                             nullCheck(key);
@@ -226,7 +226,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
 
                     if (replaceForOld.contentEquals(eventName)) {
                         valueIn.marshallable(wire -> {
-                            final Params[] params = replaceForOld.params();
+                            @NotNull final Params[] params = replaceForOld.params();
                             final K key = wireToK.apply(wire.read(params[0]));
                             V oldValue = wireToV.apply(wire.read(params[1]));
                             if (charSequenceValue)
@@ -242,7 +242,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
 
                     if (putIfAbsent.contentEquals(eventName)) {
                         valueIn.marshallable(wire -> {
-                            final Params[] params = putIfAbsent.params();
+                            @NotNull final Params[] params = putIfAbsent.params();
                             final K key = wireToK.apply(wire.read(params[0]));
                             final V value = wireToV.apply(wire.read(params[1]));
                             nullCheck(key);
@@ -256,7 +256,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
 
                     if (removeWithValue.contentEquals(eventName)) {
                         valueIn.marshallable(wire -> {
-                            final Params[] params = removeWithValue.params();
+                            @NotNull final Params[] params = removeWithValue.params();
                             final K key = wireToK.apply(wire.read(params[0]));
                             final V value = wireToV.apply(wire.read(params[1]));
                             nullCheck(key);
@@ -272,9 +272,9 @@ public class MapWireHandler<K, V> extends AbstractHandler {
 
                     if (applyTo2.contentEquals(eventName)) {
                         valueIn.marshallable(wire -> {
-                            final Params[] params = applyTo2.params();
-                            final SerializableBiFunction function = (SerializableBiFunction) wire.read(params[0]).object(Object.class);
-                            final Object arg = wire.read(params[1]).object(Object.class);
+                            @NotNull final Params[] params = applyTo2.params();
+                            @Nullable final SerializableBiFunction function = (SerializableBiFunction) wire.read(params[0]).object(Object.class);
+                            @Nullable final Object arg = wire.read(params[1]).object(Object.class);
                             //call typed object
                             outWire.writeEventName(reply).object(map.applyTo(function, arg));
                         });
@@ -283,11 +283,11 @@ public class MapWireHandler<K, V> extends AbstractHandler {
 
                     if (update4.contentEquals(eventName)) {
                         valueIn.marshallable(wire -> {
-                            final Params[] params = update4.params();
-                            final SerializableUpdaterWithArg updater = (SerializableUpdaterWithArg) wire.read(params[0]).object(Object.class);
-                            final Object updateArg = wire.read(params[1]).object(Object.class);
-                            final SerializableBiFunction returnFunction = (SerializableBiFunction) wire.read(params[2]).object(Object.class);
-                            final Object returnArg = wire.read(params[3]).object(Object.class);
+                            @NotNull final Params[] params = update4.params();
+                            @NotNull final SerializableUpdaterWithArg updater = (SerializableUpdaterWithArg) wire.read(params[0]).object(Object.class);
+                            @Nullable final Object updateArg = wire.read(params[1]).object(Object.class);
+                            @NotNull final SerializableBiFunction returnFunction = (SerializableBiFunction) wire.read(params[2]).object(Object.class);
+                            @Nullable final Object returnArg = wire.read(params[3]).object(Object.class);
                             outWire.writeEventName(reply).object(map.syncUpdate(updater, updateArg, returnFunction, returnArg));
                         });
                         return;

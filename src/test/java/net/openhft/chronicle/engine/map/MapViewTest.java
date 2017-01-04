@@ -22,6 +22,7 @@ import net.openhft.chronicle.engine.Chassis;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.api.set.KeySetView;
 import net.openhft.chronicle.wire.AbstractMarshallable;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -64,11 +65,11 @@ public class MapViewTest {
 
     @Test
     public void keySet() {
-        Map<String, String> map = Chassis.acquireMap("test", String.class, String.class);
+        @NotNull Map<String, String> map = Chassis.acquireMap("test", String.class, String.class);
         map.put("a", "one");
         map.put("b", "two");
         map.put("c", "three");
-        Set<String> keys = map.keySet();
+        @NotNull Set<String> keys = map.keySet();
         assertTrue(KeySetView.class.isInstance(keys));
         assertEquals("[a, b, c]", keys.toString());
         assertEquals(new HashSet<>(keys), keys);
@@ -80,7 +81,7 @@ public class MapViewTest {
     public void testRemoteAccess() throws IOException {
         Chassis.resetChassis();
 
-        MapView<String, UserInfo> userMap = Chassis.acquireMap("users", String.class, UserInfo.class);
+        @NotNull MapView<String, UserInfo> userMap = Chassis.acquireMap("users", String.class, UserInfo.class);
         userMap.put("userid", new UserInfo("User's Name"));
 
         userMap.registerSubscriber(System.out::println);
@@ -115,10 +116,10 @@ public class MapViewTest {
                 .subscribe(System.out::println);
         subscription.cancel();*/
 
-        Function<UserInfo, String> fullNameFunc = (Function<UserInfo, String> & Serializable) ui -> ui.fullName;
+        @NotNull Function<UserInfo, String> fullNameFunc = (Function<UserInfo, String> & Serializable) ui -> ui.fullName;
 //String fullName = userInfo.applyToKey("userid", fullNameFunc);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ObjectOutputStream oos = new ObjectOutputStream(baos);
+        @NotNull ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        @NotNull ObjectOutputStream oos = new ObjectOutputStream(baos);
         oos.writeObject(fullNameFunc);
         oos.close();
         System.out.println("fullNameFunc.size=" + baos.toByteArray().length);

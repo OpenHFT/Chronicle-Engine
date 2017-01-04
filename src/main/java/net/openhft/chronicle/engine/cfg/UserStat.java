@@ -71,6 +71,7 @@ public class UserStat implements Marshallable {
                 .write(() -> "totalInteractions").int16(totalInteractions);
     }
 
+    @NotNull
     @Override
     public String toString() {
         return "MonitorCfg{" +

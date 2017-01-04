@@ -85,7 +85,7 @@ public class MainCluster5 {
         Files.deleteIfExists(Paths.get(basePath, "test"));
 
         //    TCPRegistry.createServerSocketChannelFor("host.port1", "host.port2");
-        WireType writeType = WireType.BINARY;
+        @NotNull WireType writeType = WireType.BINARY;
 
         switch (System.getProperty("server", "one")) {
             case "one":
@@ -144,7 +144,7 @@ public class MainCluster5 {
 
     @NotNull
     static AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
-        AssetTree tree = new VanillaAssetTree((byte) hostId)
+        @NotNull AssetTree tree = new VanillaAssetTree((byte) hostId)
                 .forTesting()
                 .withConfig(resourcesDir() + "/cmkvst", OS.TARGET + "/" + hostId);
 
@@ -175,8 +175,9 @@ public class MainCluster5 {
         return "" + i;
     }
 
+    @NotNull
     public static String generateValue(char c) {
-        char[] chars = new char[100];
+        @NotNull char[] chars = new char[100];
         Arrays.fill(chars, c);
 
         // with snappy this results in about 10:1 compression.
@@ -198,8 +199,8 @@ public class MainCluster5 {
 
         final String type = System.getProperty("server", "one");
 
-        final ConcurrentMap<String, String> map1 = tree.acquireMap(NAME1, String.class, String.class);
-        final ConcurrentMap<String, String> map2 = tree.acquireMap(NAME2, String.class, String.class);
+        @NotNull final ConcurrentMap<String, String> map1 = tree.acquireMap(NAME1, String.class, String.class);
+        @NotNull final ConcurrentMap<String, String> map2 = tree.acquireMap(NAME2, String.class, String.class);
         if ("one".equals(type)) {
             for (int i = 1; i < entries; i += 10) {
                 map1.put(getKey(i), generateValue('1'));

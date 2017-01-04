@@ -34,6 +34,7 @@ import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.network.connection.WireOutPublisher;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,7 +61,7 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
     private Class valueType;
 
     @UsedViaReflection
-    private MapReplicationHandler(WireIn wire) {
+    private MapReplicationHandler(@NotNull WireIn wire) {
         timestamp = wire.read(() -> "timestamp").int64();
         keyType = wire.read(() -> "keyType").typeLiteral();
         valueType = wire.read(() -> "valueType").typeLiteral();
@@ -73,8 +74,8 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
     }
 
     @NotNull
-    public static WriteMarshallable newMapReplicationHandler(long lastUpdateTime, Class keyType, Class valueType, String csp, long cid) {
-        final MapReplicationHandler h = new MapReplicationHandler
+    public static WriteMarshallable newMapReplicationHandler(long lastUpdateTime, @NotNull Class keyType, @NotNull Class valueType, String csp, long cid) {
+        @NotNull final MapReplicationHandler h = new MapReplicationHandler
                 (lastUpdateTime, keyType, valueType);
 
         return w -> w.writeDocument(true, d -> d.writeEventName(CoreFields.csp).text(csp)
@@ -93,7 +94,7 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
     public void onRead(@NotNull WireIn inWire, @NotNull WireOut outWire) {
 
         final StringBuilder eventName = Wires.acquireStringBuilder();
-        final ValueIn valueIn = inWire.readEventName(eventName);
+        @NotNull final ValueIn valueIn = inWire.readEventName(eventName);
 
         if (lastUpdateTime.contentEquals(eventName)) {
             final long time = valueIn.int64();
@@ -117,9 +118,9 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
         if (isClosed())
             return;
 
-        Asset rootAsset = nc().rootAsset();
-        final RequestContext requestContext = RequestContext.requestContext(csp());
-        final Asset asset = rootAsset.acquireAsset(requestContext.fullName());
+        @NotNull Asset rootAsset = nc().rootAsset();
+        @NotNull final RequestContext requestContext = RequestContext.requestContext(csp());
+        @NotNull final Asset asset = rootAsset.acquireAsset(requestContext.fullName());
 
         replication = asset.acquireView(Replication.class, RequestContext.requestContext(asset
                 .fullName()).keyType(keyType).valueType(valueType));
@@ -127,18 +128,18 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
         // reflect back the map replication handler
         final long lastUpdateTime = replication.lastModificationTime
                 ((byte) remoteIdentifier());
-        WriteMarshallable writeMarshallable = newMapReplicationHandler(lastUpdateTime, keyType, valueType, csp(), cid());
+        @NotNull WriteMarshallable writeMarshallable = newMapReplicationHandler(lastUpdateTime, keyType, valueType, csp(), cid());
         publish(writeMarshallable);
 
-        final HostIdentifier hostIdentifier = rootAsset.findOrCreateView(HostIdentifier.class);
+        @Nullable final HostIdentifier hostIdentifier = rootAsset.findOrCreateView(HostIdentifier.class);
 
         if (hostIdentifier != null)
             localIdentifier = hostIdentifier.hostId();
 
-        EventLoop eventLoop = rootAsset.findOrCreateView(EventLoop.class);
+        @Nullable EventLoop eventLoop = rootAsset.findOrCreateView(EventLoop.class);
         eventLoop.start();
 
-        final ModificationIterator mi = replication.acquireModificationIterator(
+        @Nullable final ModificationIterator mi = replication.acquireModificationIterator(
                 (byte) remoteIdentifier());
 
         if (mi != null)
@@ -258,6 +259,7 @@ public class MapReplicationHandler extends AbstractSubHandler<EngineWireNetworkC
             return true;
         }
 
+        @NotNull
         @Override
         public String toString() {
             return "ReplicationEventHandler{" +

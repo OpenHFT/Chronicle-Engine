@@ -25,10 +25,12 @@ import net.openhft.chronicle.core.annotation.NotNull;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
+import org.jetbrains.annotations.Nullable;
 
 public class Operation implements Marshallable {
 
     private OperationType type;
+    @Nullable
     private Object wrapped;
 
     public Operation() {
@@ -44,6 +46,7 @@ public class Operation implements Marshallable {
         return type;
     }
 
+    @Nullable
     public <T> T wrapped() {
         return (T) wrapped;
     }
@@ -60,6 +63,7 @@ public class Operation implements Marshallable {
         wireOut.write(() -> "wrapped").object(wrapped);
     }
 
+    @org.jetbrains.annotations.NotNull
     @Override
     public String toString() {
         return "Operation{" +
@@ -73,7 +77,7 @@ public class Operation implements Marshallable {
         if (this == o) return true;
         if (!(o instanceof Operation)) return false;
 
-        Operation operation = (Operation) o;
+        @org.jetbrains.annotations.NotNull Operation operation = (Operation) o;
 
         if (type != operation.type) return false;
         return !(wrapped != null ? !wrapped.equals(operation.wrapped) : operation.wrapped != null);

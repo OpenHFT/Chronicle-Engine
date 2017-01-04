@@ -63,6 +63,7 @@ public class ReplicationDoubleMap2WayTest {
     private static AssetTree tree1;
     private static AssetTree tree2;
     private static Map<ExceptionKey, Integer> exceptions;
+    @NotNull
     @Rule
     public TestName testName = new TestName();
     public String name;
@@ -81,7 +82,7 @@ public class ReplicationDoubleMap2WayTest {
                 "host.port1",
                 "host.port2");
 
-        WireType writeType = WireType.TEXT;
+        @NotNull WireType writeType = WireType.TEXT;
         tree1 = create(1, writeType, "clusterTwo");
         tree2 = create(2, writeType, "clusterTwo");
 
@@ -115,7 +116,7 @@ public class ReplicationDoubleMap2WayTest {
 
     @NotNull
     private static AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
-        AssetTree tree = new VanillaAssetTree((byte) hostId)
+        @NotNull AssetTree tree = new VanillaAssetTree((byte) hostId)
                 .forTesting()
                 .withConfig(resourcesDir() + "/2way", OS.TARGET + "/" + hostId);
 
@@ -163,13 +164,13 @@ public class ReplicationDoubleMap2WayTest {
 
         //YamlLogging.setAll(true);
 
-        final ConcurrentMap<Double, Double> map1 = tree1.acquireMap(name, Double.class, Double
+        @NotNull final ConcurrentMap<Double, Double> map1 = tree1.acquireMap(name, Double.class, Double
                 .class);
         assertNotNull(map1);
 
         map1.put(1.0, 1.1);
 
-        final ConcurrentMap<Double, Double> map2 = tree2.acquireMap(name, Double.class, Double
+        @NotNull final ConcurrentMap<Double, Double> map2 = tree2.acquireMap(name, Double.class, Double
                 .class);
         assertNotNull(map2);
 
@@ -181,7 +182,7 @@ public class ReplicationDoubleMap2WayTest {
             Jvm.pause(300);
         }
 
-        for (Map m : new Map[]{map1, map2}) {
+        for (@NotNull Map m : new Map[]{map1, map2}) {
             Assert.assertEquals(1.1, m.get(1.0));
             Assert.assertEquals(2.1, m.get(2.0));
             Assert.assertEquals(2, m.size());

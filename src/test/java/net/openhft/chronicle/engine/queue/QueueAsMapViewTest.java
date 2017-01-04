@@ -14,6 +14,7 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.*;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
@@ -45,11 +46,15 @@ public class QueueAsMapViewTest extends ThreadMonitoringTest {
     @NotNull
     @Rule
     public TestName name = new TestName();
+    @NotNull
     String methodName = "";
     private AssetTree assetTree;
+    @Nullable
     private ServerEndpoint serverEndpoint;
+    @Nullable
     private AssetTree serverAssetTree;
 
+    @NotNull
     String uri = "/queue/" + System.nanoTime() + "/" + methodName;
 
 
@@ -65,11 +70,11 @@ public class QueueAsMapViewTest extends ThreadMonitoringTest {
         if (isRemote) {
             serverAssetTree = new VanillaAssetTree().forTesting();
 
-            String hostPortDescription = "SimpleQueueViewTest-methodName" + methodName;
+            @NotNull String hostPortDescription = "SimpleQueueViewTest-methodName" + methodName;
             TCPRegistry.createServerSocketChannelFor(hostPortDescription);
             serverEndpoint = new ServerEndpoint(hostPortDescription, serverAssetTree);
 
-            final VanillaAssetTree client = new VanillaAssetTree();
+            @NotNull final VanillaAssetTree client = new VanillaAssetTree();
             assetTree = client.forRemoteAccess(hostPortDescription, WireType.BINARY);
 
         } else {
@@ -81,9 +86,9 @@ public class QueueAsMapViewTest extends ThreadMonitoringTest {
     }
 
 
-    public static void deleteFiles(File element) {
+    public static void deleteFiles(@NotNull File element) {
         if (element.isDirectory()) {
-            for (File sub : element.listFiles()) {
+            for (@NotNull File sub : element.listFiles()) {
                 deleteFiles(sub);
             }
         }
@@ -119,16 +124,16 @@ public class QueueAsMapViewTest extends ThreadMonitoringTest {
     @Test
     public void testQueueViewAsMapView() throws InterruptedException {
         //YamlLogging.setAll(true);
-        String messageType1 = "topic1";
-        String messageType2 = "topic2";
+        @NotNull String messageType1 = "topic1";
+        @NotNull String messageType2 = "topic2";
 
-        TopicPublisher<String, String> publisher = assetTree.acquireTopicPublisher(uri + DELETE_CHRONICLE_FILE, String.class, String.class);
+        @NotNull TopicPublisher<String, String> publisher = assetTree.acquireTopicPublisher(uri + DELETE_CHRONICLE_FILE, String.class, String.class);
         publisher.publish(messageType1, "Message-1");
         publisher.publish(messageType2, "Message-2");
 
         Jvm.pause(500);
 
-        MapView<String, String> map = assetTree.acquireMap(uri, String.class, String.class);
+        @NotNull MapView<String, String> map = assetTree.acquireMap(uri, String.class, String.class);
         Assert.assertTrue(map instanceof ChronicleQueueView);
 
         int i = 0;
@@ -145,7 +150,7 @@ public class QueueAsMapViewTest extends ThreadMonitoringTest {
     public void testSimpleMap() throws InterruptedException {
         //YamlLogging.setAll(true);
 
-        MapView<String, String> map = assetTree.acquireMap(uri, String.class, String.class);
+        @NotNull MapView<String, String> map = assetTree.acquireMap(uri, String.class, String.class);
         map.put("hello", "world");
         map.put("hello2", "world");
         Assert.assertEquals(2, map.size());
@@ -156,14 +161,14 @@ public class QueueAsMapViewTest extends ThreadMonitoringTest {
     public void testPopulateMapTailQueue() throws InterruptedException {
         //YamlLogging.setAll(true);
 
-        final ArrayBlockingQueue<String> q = new ArrayBlockingQueue<>(100);
+        @NotNull final ArrayBlockingQueue<String> q = new ArrayBlockingQueue<>(100);
 
         assetTree.registerTopicSubscriber(
                 uri,
                 String.class,
                 String.class, (topic, message) -> q.add(topic + ":" + message));
 
-        MapView<String, String> map = assetTree.acquireMap(uri, String.class, String.class);
+        @NotNull MapView<String, String> map = assetTree.acquireMap(uri, String.class, String.class);
         Assert.assertTrue(map instanceof ChronicleQueueView);
         map.put("hello", "world");
         map.put("hello2", "world2");

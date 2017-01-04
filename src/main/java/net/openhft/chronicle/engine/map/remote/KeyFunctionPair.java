@@ -41,7 +41,7 @@ public class KeyFunctionPair implements Marshallable {
     }
 
     @NotNull
-    public static KeyFunctionPair of(Object key, @NotNull Object function) {
+    public static KeyFunctionPair of(@NotNull Object key, @NotNull Object function) {
         return new KeyFunctionPair(key, function);
     }
 

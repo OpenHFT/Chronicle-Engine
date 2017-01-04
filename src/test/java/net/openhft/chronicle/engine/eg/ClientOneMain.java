@@ -22,6 +22,7 @@ import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -52,10 +53,10 @@ UpdatedEvent{assetName='/test-map', key=DOGS, oldValue=St Bernard, value=Poodle}
 public class ClientOneMain {
     public static void main(String[] args) {
         YamlLogging.setAll(false);
-        VanillaAssetTree assetTree = new VanillaAssetTree().forRemoteAccess("localhost:9090",
+        @NotNull VanillaAssetTree assetTree = new VanillaAssetTree().forRemoteAccess("localhost:9090",
                 WireType.TEXT);
 
-        Map<String, String> map = assetTree.acquireMap("/test-map", String.class, String.class);
+        @NotNull Map<String, String> map = assetTree.acquireMap("/test-map", String.class, String.class);
         map.put("FUNNY", "hihi");
         map.put("LEADERSHIP", "Queen");
         map.put("MUSIC", "Queen");

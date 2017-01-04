@@ -29,6 +29,7 @@ import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.Wires;
 import net.openhft.chronicle.wire.WriteMarshallable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,10 +46,13 @@ abstract class CspTcpHander<T extends NetworkContext> extends WireTcpHandler<T> 
     final List<WriteMarshallable> writers = new ArrayList<>();
     @NotNull
     private final Map<Long, SubHandler> cidToHandle = new HashMap<>();
+    @Nullable
     private SubHandler handler;
+    @Nullable
     private HeartbeatEventHandler heartbeatEventHandler;
     private long lastCid;
 
+    @Nullable
     SubHandler handler() {
         return handler;
     }
@@ -67,10 +71,10 @@ abstract class CspTcpHander<T extends NetworkContext> extends WireTcpHandler<T> 
     boolean readMeta(@NotNull final WireIn wireIn) {
         final StringBuilder event = Wires.acquireStringBuilder();
 
-        ValueIn valueIn = wireIn.readEventName(event);
+        @NotNull ValueIn valueIn = wireIn.readEventName(event);
 
         if (csp.contentEquals(event)) {
-            final String csp = valueIn.text();
+            @Nullable final String csp = valueIn.text();
 
             long cid;
             event.setLength(0);
@@ -125,6 +129,7 @@ abstract class CspTcpHander<T extends NetworkContext> extends WireTcpHandler<T> 
         return false;
     }
 
+    @Nullable
     HeartbeatEventHandler heartbeatEventHandler() {
         return heartbeatEventHandler;
     }

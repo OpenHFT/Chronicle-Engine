@@ -12,6 +12,7 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -31,9 +32,12 @@ public class ColumnViewTest {
     @NotNull
     @Rule
     public TestName name = new TestName();
+    @NotNull
     String methodName = "";
 
+    @NotNull
     private final VanillaAssetTree assetTree;
+    @Nullable
     private final ServerEndpoint serverEndpoint;
 
 
@@ -47,13 +51,13 @@ public class ColumnViewTest {
     public ColumnViewTest(Boolean isRemote) throws Exception {
 
         if (isRemote) {
-            VanillaAssetTree assetTree0 = new VanillaAssetTree().forTesting();
+            @NotNull VanillaAssetTree assetTree0 = new VanillaAssetTree().forTesting();
 
-            String hostPortDescription = "SimpleQueueViewTest-methodName" + methodName;
+            @NotNull String hostPortDescription = "SimpleQueueViewTest-methodName" + methodName;
             TCPRegistry.createServerSocketChannelFor(hostPortDescription);
             serverEndpoint = new ServerEndpoint(hostPortDescription, assetTree0);
 
-            final VanillaAssetTree client = new VanillaAssetTree();
+            @NotNull final VanillaAssetTree client = new VanillaAssetTree();
             assetTree = client.forRemoteAccess(hostPortDescription, WireType.BINARY);
 
         } else {
@@ -69,11 +73,11 @@ public class ColumnViewTest {
         //YamlLogging.setAll(true);
         assetTree.acquireMap("/my/data", String.class, String.class).put("hello", "world");
 
-        final Asset asset = assetTree.acquireAsset("/my/data");
-        final MapColumnView columnView = asset.acquireView(MapColumnView.class);
-        final Iterator<? extends Row> iterator = columnView.iterator(new SortedFilter());
+        @NotNull final Asset asset = assetTree.acquireAsset("/my/data");
+        @NotNull final MapColumnView columnView = asset.acquireView(MapColumnView.class);
+        @NotNull final Iterator<? extends Row> iterator = columnView.iterator(new SortedFilter());
 
-        final ArrayList<Row> dataCollector = new ArrayList<>();
+        @NotNull final ArrayList<Row> dataCollector = new ArrayList<>();
         iterator.forEachRemaining(dataCollector::add);
         Assert.assertEquals(1, dataCollector.size());
     }
@@ -85,17 +89,17 @@ public class ColumnViewTest {
         final int size = 600;
 
         //YamlLogging.setAll(true);
-        MapView<String, String> map = assetTree.acquireMap("/my/data", String.class, String.class);
+        @NotNull MapView<String, String> map = assetTree.acquireMap("/my/data", String.class, String.class);
         for (int i = 0; i < size; i++) {
             map.put("hello" + i, "world");
         }
 
 
-        final Asset asset = assetTree.acquireAsset("/my/data");
-        final MapColumnView columnView = asset.acquireView(MapColumnView.class);
-        final Iterator<? extends Row> iterator = columnView.iterator(new SortedFilter());
+        @NotNull final Asset asset = assetTree.acquireAsset("/my/data");
+        @NotNull final MapColumnView columnView = asset.acquireView(MapColumnView.class);
+        @NotNull final Iterator<? extends Row> iterator = columnView.iterator(new SortedFilter());
 
-        final ArrayList<Row> dataCollector = new ArrayList<>();
+        @NotNull final ArrayList<Row> dataCollector = new ArrayList<>();
         iterator.forEachRemaining(dataCollector::add);
         Assert.assertEquals(size, dataCollector.size());
     }
@@ -107,19 +111,19 @@ public class ColumnViewTest {
         final int size = 600;
 
         //YamlLogging.setAll(true);
-        MapView<String, String> map = assetTree.acquireMap("/my/data", String.class, String.class);
+        @NotNull MapView<String, String> map = assetTree.acquireMap("/my/data", String.class, String.class);
         for (int i = 0; i < size; i++) {
             map.put("hello" + i, "world");
         }
 
-        final Asset asset = assetTree.acquireAsset("/my/data");
-        final MapColumnView columnView = asset.acquireView(MapColumnView.class);
-        SortedFilter sortedFilter = new SortedFilter();
+        @NotNull final Asset asset = assetTree.acquireAsset("/my/data");
+        @NotNull final MapColumnView columnView = asset.acquireView(MapColumnView.class);
+        @NotNull SortedFilter sortedFilter = new SortedFilter();
         sortedFilter.marshableFilters.add(new ColumnViewInternal.MarshableFilter("key", "hello0"));
 
-        final Iterator<? extends Row> iterator = columnView.iterator(sortedFilter);
+        @NotNull final Iterator<? extends Row> iterator = columnView.iterator(sortedFilter);
 
-        final ArrayList<Row> dataCollector = new ArrayList<>();
+        @NotNull final ArrayList<Row> dataCollector = new ArrayList<>();
         iterator.forEachRemaining(dataCollector::add);
         Assert.assertEquals(1, dataCollector.size());
     }
@@ -130,17 +134,17 @@ public class ColumnViewTest {
         final int size = 600;
 
         //YamlLogging.setAll(true);
-        MapView<Integer, String> map = assetTree.acquireMap("/my/data", Integer.class, String.class);
+        @NotNull MapView<Integer, String> map = assetTree.acquireMap("/my/data", Integer.class, String.class);
         for (int i = 0; i < size; i++) {
             map.put(i, "world");
         }
 
-        final Asset asset = assetTree.acquireAsset("/my/data");
-        final MapColumnView columnView = asset.acquireView(MapColumnView.class);
-        SortedFilter sortedFilter = new SortedFilter();
+        @NotNull final Asset asset = assetTree.acquireAsset("/my/data");
+        @NotNull final MapColumnView columnView = asset.acquireView(MapColumnView.class);
+        @NotNull SortedFilter sortedFilter = new SortedFilter();
         sortedFilter.marshableOrderBy.add(new ColumnViewInternal.MarshableOrderBy("key"));
 
-        final Iterator<? extends Row> iterator = columnView.iterator(sortedFilter);
+        @NotNull final Iterator<? extends Row> iterator = columnView.iterator(sortedFilter);
 
 
         for (int i = 0; i < size; i++) {
@@ -159,24 +163,24 @@ public class ColumnViewTest {
         final int size = 600;
 
         //YamlLogging.setAll(true);
-        MapView<Integer, String> map = assetTree.acquireMap("/my/data", Integer.class, String.class);
+        @NotNull MapView<Integer, String> map = assetTree.acquireMap("/my/data", Integer.class, String.class);
         for (int i = 0; i < size; i++) {
             map.put(i, "world");
         }
 
-        final Asset asset = assetTree.acquireAsset("/my/data");
-        final MapColumnView columnView = asset.acquireView(MapColumnView.class);
+        @NotNull final Asset asset = assetTree.acquireAsset("/my/data");
+        @NotNull final MapColumnView columnView = asset.acquireView(MapColumnView.class);
         {
-            try (final ClosableIterator<? extends Row> iterator = columnView.iterator(new SortedFilter())) {
+            try (@NotNull final ClosableIterator<? extends Row> iterator = columnView.iterator(new SortedFilter())) {
 
             }
 
         }
 
-        final SortedFilter sortedFilter = new SortedFilter();
+        @NotNull final SortedFilter sortedFilter = new SortedFilter();
         sortedFilter.marshableOrderBy.add(new ColumnViewInternal.MarshableOrderBy("key"));
 
-        try (final ClosableIterator<? extends Row> iterator = columnView.iterator(sortedFilter)) {
+        try (@NotNull final ClosableIterator<? extends Row> iterator = columnView.iterator(sortedFilter)) {
             for (int i = 0; i < size; i++) {
                 Assert.assertTrue(iterator.hasNext());
                 Row row = iterator.next();
@@ -195,13 +199,13 @@ public class ColumnViewTest {
         final int size = 600;
 
         //YamlLogging.setAll(true);
-        MapView<Integer, String> map = assetTree.acquireMap("/my/data", Integer.class, String.class);
+        @NotNull MapView<Integer, String> map = assetTree.acquireMap("/my/data", Integer.class, String.class);
         for (int i = 0; i < size; i++) {
             map.put(i, "world");
         }
 
-        final Asset asset = assetTree.acquireAsset("/my/data");
-        final MapColumnView columnView = asset.acquireView(MapColumnView.class);
+        @NotNull final Asset asset = assetTree.acquireAsset("/my/data");
+        @NotNull final MapColumnView columnView = asset.acquireView(MapColumnView.class);
         Assert.assertEquals(size, columnView.rowCount(new SortedFilter()));
     }
 
@@ -212,13 +216,13 @@ public class ColumnViewTest {
         final int size = 600;
 
         //YamlLogging.setAll(true);
-        MapView<Integer, String> map = assetTree.acquireMap("/my/data", Integer.class, String.class);
+        @NotNull MapView<Integer, String> map = assetTree.acquireMap("/my/data", Integer.class, String.class);
         for (int i = 0; i < size; i++) {
             map.put(i, "world");
         }
 
-        final Asset asset = assetTree.acquireAsset("/my/data");
-        final MapColumnView columnView = asset.acquireView(MapColumnView.class);
+        @NotNull final Asset asset = assetTree.acquireAsset("/my/data");
+        @NotNull final MapColumnView columnView = asset.acquireView(MapColumnView.class);
         Assert.assertEquals(true, columnView.canDeleteRows());
     }
 
@@ -229,13 +233,13 @@ public class ColumnViewTest {
         final int size = 600;
 
         //YamlLogging.setAll(true);
-        MapView<Integer, String> map = assetTree.acquireMap("/my/data", Integer.class, String.class);
+        @NotNull MapView<Integer, String> map = assetTree.acquireMap("/my/data", Integer.class, String.class);
         for (int i = 0; i < size; i++) {
             map.put(i, "world");
         }
 
-        final Asset asset = assetTree.acquireAsset("/my/data");
-        final MapColumnView columnView = asset.acquireView(MapColumnView.class);
+        @NotNull final Asset asset = assetTree.acquireAsset("/my/data");
+        @NotNull final MapColumnView columnView = asset.acquireView(MapColumnView.class);
 
         Assert.assertEquals(true, columnView.containsRowWithKey(Collections.singletonList(12)));
 

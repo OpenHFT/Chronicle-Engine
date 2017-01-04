@@ -82,6 +82,7 @@ public class SubscriptionStat implements Marshallable {
                 .write(() -> "totalSubscriptions").int16(totalSubscriptions);
     }
 
+    @NotNull
     @Override
     public String toString() {
         return "MonitorCfg{" +

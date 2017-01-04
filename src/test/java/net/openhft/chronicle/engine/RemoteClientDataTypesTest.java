@@ -26,6 +26,7 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -55,7 +56,9 @@ public class RemoteClientDataTypesTest {
     private static AssetTree _serverAssetTree;
     private static AssetTree _clientAssetTree;
     private static ServerEndpoint _serverEndpoint;
+    @NotNull
     private static String _serverAddress = "host.port1";
+    @NotNull
     private static AtomicReference<Throwable> t = new AtomicReference();
     private final WireType _wireType;
     private Class _keyClass;
@@ -133,19 +136,19 @@ public class RemoteClientDataTypesTest {
 
         YamlLogging.setAll(false);
 
-        BlockingQueue valueSubscriptionQueue = new ArrayBlockingQueue<>(1);
-        BlockingQueue eventSubscriptionQueue = new ArrayBlockingQueue<>(1);
-        BlockingQueue topicSubscriptionQueue = new ArrayBlockingQueue<>(1);
-        BlockingQueue topicOnlySubscriptionQueue = new ArrayBlockingQueue<>(1);
+        @NotNull BlockingQueue valueSubscriptionQueue = new ArrayBlockingQueue<>(1);
+        @NotNull BlockingQueue eventSubscriptionQueue = new ArrayBlockingQueue<>(1);
+        @NotNull BlockingQueue topicSubscriptionQueue = new ArrayBlockingQueue<>(1);
+        @NotNull BlockingQueue topicOnlySubscriptionQueue = new ArrayBlockingQueue<>(1);
 
-        Map testMap = _clientAssetTree.acquireMap(_mapUri, _keyClass, _valueClass);
+        @NotNull Map testMap = _clientAssetTree.acquireMap(_mapUri, _keyClass, _valueClass);
 
         //Check that the store is empty
         int size = testMap.size();
         Assert.assertEquals(0, size);
 
-        String subscriberMapUri = _mapUri + "?bootstrap=false";
-        String valueOnlySubscriberUri = _mapUri + "/" + _key.toString() + "?bootstrap=false";
+        @NotNull String subscriberMapUri = _mapUri + "?bootstrap=false";
+        @NotNull String valueOnlySubscriberUri = _mapUri + "/" + _key.toString() + "?bootstrap=false";
 
         //Register all types of subscribers
         _clientAssetTree.registerTopicSubscriber(subscriberMapUri, _keyClass, _valueClass, (t, v) -> topicSubscriptionQueue.add(v));

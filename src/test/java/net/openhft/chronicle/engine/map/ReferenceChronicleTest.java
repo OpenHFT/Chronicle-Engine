@@ -34,6 +34,7 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.*;
 
 import java.io.IOException;
@@ -92,13 +93,13 @@ public class ReferenceChronicleTest {
     @Test(timeout = 5000)
     public void testRemoteSubscriptionMUFGChronicle() throws IOException {
 
-        AssetTree serverAssetTree = new VanillaAssetTree().forTesting();
+        @NotNull AssetTree serverAssetTree = new VanillaAssetTree().forTesting();
         serverAssetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore", VanillaMapView::new, KeyValueStore.class);
         serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
                 new ChronicleMapKeyValueStore(context.basePath(OS.TARGET).entries(50).averageValueSize(2_000_000), asset));
 
-        ServerEndpoint serverEndpoint = new ServerEndpoint(hostPortToken, serverAssetTree);
-        AssetTree clientAssetTree = new VanillaAssetTree().forRemoteAccess(hostPortToken, WireType.BINARY);
+        @NotNull ServerEndpoint serverEndpoint = new ServerEndpoint(hostPortToken, serverAssetTree);
+        @NotNull AssetTree clientAssetTree = new VanillaAssetTree().forRemoteAccess(hostPortToken, WireType.BINARY);
 
         //noinspection TryFinallyCanBeTryWithResources
         try {
@@ -113,7 +114,7 @@ public class ReferenceChronicleTest {
     @Test(timeout = 5000)
     public void testLocalSubscriptionMUFGChronicle() throws IOException {
 
-        AssetTree serverAssetTree = new VanillaAssetTree().forTesting();
+        @NotNull AssetTree serverAssetTree = new VanillaAssetTree().forTesting();
         serverAssetTree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore", VanillaMapView::new, KeyValueStore.class);
         serverAssetTree.root().addLeafRule(KeyValueStore.class, "use Chronicle Map", (context, asset) ->
                 new ChronicleMapKeyValueStore(context.basePath(OS.TARGET).entries(50).averageValueSize(2_000_000), asset));
@@ -123,14 +124,14 @@ public class ReferenceChronicleTest {
     }
 
     public void test(@NotNull AssetTree assetTree) {
-        String key = "subject";
-        String _mapName = "group";
-        Map map = assetTree.acquireMap(_mapName, String.class, String.class);
+        @NotNull String key = "subject";
+        @NotNull String _mapName = "group";
+        @NotNull Map map = assetTree.acquireMap(_mapName, String.class, String.class);
         //TODO does not work without an initial put
         map.put(key, "init");
 
-        List<String> events = new ArrayList<>();
-        Subscriber<String> keyEventSubscriber = new Subscriber<String>() {
+        @NotNull List<String> events = new ArrayList<>();
+        @NotNull Subscriber<String> keyEventSubscriber = new Subscriber<String>() {
             @Override
             public void onMessage(String s) {
                 events.add(s);
@@ -142,7 +143,7 @@ public class ReferenceChronicleTest {
             }
         };
 
-        TopicSubscriber<String, String> topicSubscriber = (t, m) -> {
+        @NotNull TopicSubscriber<String, String> topicSubscriber = (t, m) -> {
             events.add(m);
         };
 
@@ -154,12 +155,12 @@ public class ReferenceChronicleTest {
         //Asset child = serverAssetTree.getAsset(_mapName);
 
         assertNotNull(child);
-        SubscriptionCollection subscription = child.subscription(false);
+        @Nullable SubscriptionCollection subscription = child.subscription(false);
         assertEquals(1, subscription.subscriberCount());
 
 //        YamlLogging.showServerWrites(true);
 
-        AtomicInteger count = new AtomicInteger();
+        @NotNull AtomicInteger count = new AtomicInteger();
         map.put(key, "" + count.incrementAndGet());
         map.put(key, "" + count.incrementAndGet());
         map.put(key, "" + count.incrementAndGet());

@@ -22,9 +22,11 @@ import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class MyMarshallable implements Marshallable {
 
+    @Nullable
     String s;
 
     public MyMarshallable(String s) {
@@ -41,6 +43,7 @@ public class MyMarshallable implements Marshallable {
         wire.write().text(s);
     }
 
+    @Nullable
     @Override
     public String toString() {
         return s;

@@ -42,6 +42,7 @@ public class EngineConnectionManager implements ConnectionManager {
     private final Set<ConnectionListener> connectionListeners = Collections.newSetFromMap(new
             IdentityHashMap<>());
 
+    @NotNull
     private ConcurrentHashMap<NetworkContext, AtomicBoolean> isConnected = new
             ConcurrentHashMap<>();
 
@@ -50,7 +51,7 @@ public class EngineConnectionManager implements ConnectionManager {
     }
 
     @Override
-    public synchronized void addListener(ConnectionListener connectionListener) {
+    public synchronized void addListener(@NotNull ConnectionListener connectionListener) {
 
         connectionListeners.add(connectionListener);
 
@@ -61,7 +62,7 @@ public class EngineConnectionManager implements ConnectionManager {
     @Override
     public synchronized void onConnectionChanged(boolean isConnected, final NetworkContext nc) {
 
-        final Function<NetworkContext, AtomicBoolean> f = v -> new AtomicBoolean();
+        @NotNull final Function<NetworkContext, AtomicBoolean> f = v -> new AtomicBoolean();
         boolean wasConnected = this.isConnected.computeIfAbsent(nc, f).getAndSet
                 (isConnected);
         if (wasConnected != isConnected)
@@ -92,6 +93,7 @@ public class EngineConnectionManager implements ConnectionManager {
 
         }
 
+        @NotNull
         @Override
         public EngineConnectionManager get() {
             return new EngineConnectionManager();

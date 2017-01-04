@@ -56,11 +56,11 @@ class GenericWireAdapter<K, V> implements WireAdapter<K, V> {
         wireToValue = in -> in.object(vClass);
         wireToEntry = valueIn -> valueIn.applyToMarshallable(x -> {
 
-            final K key = (K) ((kClass == CharSequence.class) ?
+            @NotNull final K key = (K) ((kClass == CharSequence.class) ?
                     x.read(() -> "key").object(usingKey.get(), CharSequence.class) :
                     x.read(() -> "key").object(kClass));
 
-            final V value = (V) ((vClass == CharSequence.class) ?
+            @NotNull final V value = (V) ((vClass == CharSequence.class) ?
                     x.read(() -> "value").object(usingValue.get(), CharSequence.class) :
                     x.read(() -> "value").object(vClass));
 
@@ -116,6 +116,7 @@ class GenericWireAdapter<K, V> implements WireAdapter<K, V> {
         return wireToEntry;
     }
 
+    @NotNull
     @Override
     public String toString() {
         return "GenericWireAdapter{" +

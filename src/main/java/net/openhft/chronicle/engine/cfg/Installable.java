@@ -19,11 +19,14 @@ package net.openhft.chronicle.engine.cfg;
 
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.wire.ReadMarshallable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by peter on 26/08/15.
  */
 public interface Installable extends ReadMarshallable {
-    Object install(String path, AssetTree assetTree) throws Exception;
+    @Nullable
+    Object install(@NotNull String path, @NotNull AssetTree assetTree) throws Exception;
 }
 

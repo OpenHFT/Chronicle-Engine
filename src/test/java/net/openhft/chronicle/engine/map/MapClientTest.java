@@ -144,18 +144,18 @@ public class MapClientTest extends ThreadMonitoringTest {
     public void testPutAll() throws IOException, InterruptedException {
 
         supplyMap(Integer.class, String.class, mapProxy -> yamlLoggger(() -> {
-            final Set<Entry<Integer, String>> entries = mapProxy.entrySet();
+            @NotNull final Set<Entry<Integer, String>> entries = mapProxy.entrySet();
 
             assertEquals(0, entries.size());
             assertEquals(true, entries.isEmpty());
 
-            Map<Integer, String> data = new HashMap<>();
+            @NotNull Map<Integer, String> data = new HashMap<>();
             data.put(1, "hello");
             data.put(2, "world");
             mapProxy.putAll(data);
 
-            final Set<Entry<Integer, String>> e = mapProxy.entrySet();
-            final Iterator<Entry<Integer, String>> iterator = e.iterator();
+            @NotNull final Set<Entry<Integer, String>> e = mapProxy.entrySet();
+            @NotNull final Iterator<Entry<Integer, String>> iterator = e.iterator();
             Entry<Integer, String> entry = iterator.next();
 
             if (entry.getKey() == 1) {
@@ -179,7 +179,7 @@ public class MapClientTest extends ThreadMonitoringTest {
         supplyMap(Integer.class, Map.class, map -> {
 
             {
-                final Map value = new HashMap<String, String>();
+                @NotNull final Map value = new HashMap<String, String>();
                 value.put("k1", "v1");
                 value.put("k2", "v2");
 
@@ -187,7 +187,7 @@ public class MapClientTest extends ThreadMonitoringTest {
             }
 
             {
-                final Map value = new HashMap<String, String>();
+                @NotNull final Map value = new HashMap<String, String>();
                 value.put("k3", "v3");
                 value.put("k4", "v4");
 
@@ -209,7 +209,7 @@ public class MapClientTest extends ThreadMonitoringTest {
 
     @Test
     public void testValuesCollection() throws IOException, InterruptedException {
-        HashMap<String, String> data = new HashMap<>();
+        @NotNull HashMap<String, String> data = new HashMap<>();
         data.put("test1", "value1");
         data.put("test1", "value1");
         supplyMap(String.class, String.class, mapProxy -> {
@@ -217,13 +217,13 @@ public class MapClientTest extends ThreadMonitoringTest {
             assertEquals(data.size(), mapProxy.size());
             assertEquals(data.size(), mapProxy.values().size());
 
-            Iterator<String> it = mapProxy.values().iterator();
-            ArrayList<String> values = new ArrayList<>();
+            @NotNull Iterator<String> it = mapProxy.values().iterator();
+            @NotNull ArrayList<String> values = new ArrayList<>();
             while (it.hasNext()) {
                 values.add(it.next());
             }
             Collections.sort(values);
-            Object[] dataValues = data.values().toArray();
+            @NotNull Object[] dataValues = data.values().toArray();
             Arrays.sort(dataValues);
             assertArrayEquals(dataValues, values.toArray());
         });
@@ -352,7 +352,7 @@ public class MapClientTest extends ThreadMonitoringTest {
         private final AssetTree clientAssetTree;
 
         public RemoteMapSupplier(
-                String hostPortDescription,
+                @NotNull String hostPortDescription,
                 @NotNull final Class<K> kClass,
                 @NotNull final Class<V> vClass,
                 @NotNull final WireType wireType,

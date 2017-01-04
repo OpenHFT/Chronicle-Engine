@@ -50,11 +50,11 @@ public class TopologyHandler<E> extends AbstractHandler {
         public void accept(@NotNull final WireIn inWire, Long inputTid) {
 
             eventName.setLength(0);
-            final ValueIn valueIn = inWire.readEventName(eventName);
+            @NotNull final ValueIn valueIn = inWire.readEventName(eventName);
 
             if (registerSubscriber.contentEquals(eventName)) {
 
-                final Subscriber listener = new Subscriber() {
+                @NotNull final Subscriber listener = new Subscriber() {
 
                     @Override
                     public void onMessage(final Object message) {
@@ -82,7 +82,7 @@ public class TopologyHandler<E> extends AbstractHandler {
                 if (publish.contentEquals(eventName)) {
 
                     valueIn.marshallable(wire -> {
-                        final Params[] params = publish.params();
+                        @NotNull final Params[] params = publish.params();
 
                         final E message = wireToE.apply(wire.read(params[1]));
 
@@ -99,7 +99,7 @@ public class TopologyHandler<E> extends AbstractHandler {
     void process(@NotNull final Wire inWire,
                  final Queue<Consumer<Wire>> publisher,
                  final long tid,
-                 Publisher<E> view, final Wire outWire,
+                 Publisher<E> view, @NotNull final Wire outWire,
                  final @NotNull WireAdapter<?, E> wireAdapter) {
         setOutWire(outWire);
         this.outWire = outWire;

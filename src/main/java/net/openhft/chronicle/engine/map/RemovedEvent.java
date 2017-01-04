@@ -47,7 +47,7 @@ public class RemovedEvent<K, V> extends AbstractMarshallable implements MapEvent
     }
 
     @NotNull
-    public static <K, V> RemovedEvent<K, V> of(String assetName, K key, V value, boolean isReplicationEvent) {
+    public static <K, V> RemovedEvent<K, V> of(String assetName, @NotNull K key, V value, boolean isReplicationEvent) {
         return new RemovedEvent<>(assetName, key, value, isReplicationEvent);
     }
 

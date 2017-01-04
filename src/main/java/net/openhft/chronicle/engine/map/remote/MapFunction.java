@@ -42,7 +42,7 @@ public enum MapFunction implements SerializableBiFunction<MapView, Object, Objec
         public Object apply(@NotNull MapView map, Object o) {
             Class kClass = map.keyType();
             Class vClass = map.valueType();
-            KeyValuePair kf = (KeyValuePair) o;
+            @NotNull KeyValuePair kf = (KeyValuePair) o;
             return map.remove(convertTo(kClass, kf.key), convertTo(vClass, kf.value));
         }
     },
@@ -52,10 +52,10 @@ public enum MapFunction implements SerializableBiFunction<MapView, Object, Objec
             Class kClass = map.keyType();
             Class vClass = map.valueType();
             if (o instanceof KeyValuePair) {
-                KeyValuePair kf = (KeyValuePair) o;
+                @NotNull KeyValuePair kf = (KeyValuePair) o;
                 return map.replace(convertTo(kClass, kf.key), convertTo(vClass, kf.value));
             }
-            KeyValuesTuple kf = (KeyValuesTuple) o;
+            @NotNull KeyValuesTuple kf = (KeyValuesTuple) o;
             return map.replace(convertTo(kClass, kf.key), convertTo(vClass, kf.oldValue), convertTo(vClass, kf.value));
         }
     },
@@ -64,7 +64,7 @@ public enum MapFunction implements SerializableBiFunction<MapView, Object, Objec
         public Object apply(@NotNull MapView map, Object o) {
             Class kClass = map.keyType();
             Class vClass = map.valueType();
-            KeyValuePair kf = (KeyValuePair) o;
+            @NotNull KeyValuePair kf = (KeyValuePair) o;
             return map.putIfAbsent(convertTo(kClass, kf.key), convertTo(vClass, kf.value));
         }
     },
@@ -72,7 +72,7 @@ public enum MapFunction implements SerializableBiFunction<MapView, Object, Objec
         @Override
         public Object apply(@NotNull MapView map, Object o) {
             Class kClass = map.keyType();
-            KeyFunctionPair kf = (KeyFunctionPair) o;
+            @NotNull KeyFunctionPair kf = (KeyFunctionPair) o;
             return map.computeIfAbsent(convertTo(kClass, kf.key), (Function) kf.function);
         }
     },
@@ -80,7 +80,7 @@ public enum MapFunction implements SerializableBiFunction<MapView, Object, Objec
         @Override
         public Object apply(@NotNull MapView map, Object o) {
             Class kClass = map.keyType();
-            KeyFunctionPair kf = (KeyFunctionPair) o;
+            @NotNull KeyFunctionPair kf = (KeyFunctionPair) o;
             return map.computeIfPresent(convertTo(kClass, kf.key), (BiFunction) kf.function);
         }
     },
@@ -88,7 +88,7 @@ public enum MapFunction implements SerializableBiFunction<MapView, Object, Objec
         @Override
         public Object apply(@NotNull MapView map, Object o) {
             Class kClass = map.keyType();
-            KeyFunctionPair kf = (KeyFunctionPair) o;
+            @NotNull KeyFunctionPair kf = (KeyFunctionPair) o;
             return map.compute(convertTo(kClass, kf.key), (BiFunction) kf.function);
         }
     },
@@ -97,7 +97,7 @@ public enum MapFunction implements SerializableBiFunction<MapView, Object, Objec
         public Object apply(@NotNull MapView map, Object o) {
             Class kClass = map.keyType();
             Class vClass = map.valueType();
-            KeyValueFunctionTuple kvf = (KeyValueFunctionTuple) o;
+            @NotNull KeyValueFunctionTuple kvf = (KeyValueFunctionTuple) o;
             return map.merge(convertTo(kClass, kvf.key), convertTo(vClass, kvf.value), (BiFunction) kvf.function);
         }
     },

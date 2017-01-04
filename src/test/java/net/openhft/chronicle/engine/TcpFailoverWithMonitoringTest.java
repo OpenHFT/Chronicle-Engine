@@ -109,7 +109,7 @@ public class TcpFailoverWithMonitoringTest {
         connection1 = TCPRegistry.acquireServerSocketChannel(CONNECTION_1);
         connection2 = TCPRegistry.acquireServerSocketChannel(CONNECTION_2);
 
-        final String[] connection = {CONNECTION_1, CONNECTION_2};
+        @NotNull final String[] connection = {CONNECTION_1, CONNECTION_2};
 
         failOverClient = new VanillaAssetTree("failoverClient").forRemoteAccess(connection,
                 WIRE_TYPE, clientConnectionMonitor());
@@ -173,16 +173,16 @@ public class TcpFailoverWithMonitoringTest {
     @Test
     public void test() throws InterruptedException {
 
-        final MapView<String, String> failoverClient = failOverClient.acquireMap(NAME,
+        @NotNull final MapView<String, String> failoverClient = failOverClient.acquireMap(NAME,
                 String.class,
                 String.class);
 
-        final MapView<String, String> map1 = serverAssetTree1.acquireMap(NAME,
+        @NotNull final MapView<String, String> map1 = serverAssetTree1.acquireMap(NAME,
                 String.class, String.class);
 
         Assert.assertEquals("connected " + toString(connection1), activity.poll(10, SECONDS));
 
-        final MapView<String, String> map2 = serverAssetTree2.acquireMap(NAME,
+        @NotNull final MapView<String, String> map2 = serverAssetTree2.acquireMap(NAME,
                 String.class, String.class);
 
         map1.put("hello", "server1");
@@ -202,7 +202,7 @@ public class TcpFailoverWithMonitoringTest {
 
     }
 
-    private SocketAddress toString(final ServerSocketChannel connection2) {
+    private SocketAddress toString(@NotNull final ServerSocketChannel connection2) {
         return connection2.socket().getLocalSocketAddress();
     }
 }

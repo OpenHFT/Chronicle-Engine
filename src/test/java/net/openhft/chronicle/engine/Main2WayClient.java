@@ -20,17 +20,18 @@ package net.openhft.chronicle.engine;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.engine.api.map.MapView;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by peter on 02/12/15.
  */
 public class Main2WayClient {
     public static void main(String[] args) {
-        String s = Math.random() < 0.5 ? "localhost:8081, localhost:8082" : "localhost:8082, localhost:8081";
+        @NotNull String s = Math.random() < 0.5 ? "localhost:8081, localhost:8082" : "localhost:8082, localhost:8081";
         System.out.println(s);
         ((VanillaAssetTree) Chassis.assetTree()).forRemoteAccess(s.split(", "), Main2Way.WIRE_TYPE);
-        MapView<String, String> map = Chassis.acquireMap("/ChMaps/test?putReturnsNull=true", String.class, String.class);
-        String data = Main2Way.generateValue();
+        @NotNull MapView<String, String> map = Chassis.acquireMap("/ChMaps/test?putReturnsNull=true", String.class, String.class);
+        @NotNull String data = Main2Way.generateValue();
 
         while (true) {
             for (int i = 0; i < Main2Way.entries; i += 10) {

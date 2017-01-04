@@ -55,12 +55,14 @@ public class RemoteQuery<E> implements Query<E> {
         this.subscribable = eSubscribable;
     }
 
+    @NotNull
     @Override
     public Query<E> filter(SerializablePredicate<? super E> predicate) {
         filter.addFilter(predicate);
         return this;
     }
 
+    @NotNull
     @SuppressWarnings("unchecked")
     @Override
     public <R> Query<R> map(SerializableFunction<? super E, ? extends R> mapper) {
@@ -68,6 +70,7 @@ public class RemoteQuery<E> implements Query<E> {
         return (Query<R>) this;
     }
 
+    @NotNull
     @SuppressWarnings("unchecked")
     @Override
     public <R> Query<R> project(Class<R> rClass) {
@@ -75,6 +78,7 @@ public class RemoteQuery<E> implements Query<E> {
         return (Query<R>) this;
     }
 
+    @NotNull
     @SuppressWarnings("unchecked")
     @Override
     public <R> Query<R> flatMap(SerializableFunction<? super E, ? extends Query<? extends R>> mapper) {
@@ -82,13 +86,15 @@ public class RemoteQuery<E> implements Query<E> {
         return (Query<R>) this;
     }
 
+    @NotNull
     @Override
     public Stream<E> stream() {
         throw new UnsupportedOperationException("todo");
     }
 
+    @NotNull
     @Override
-    public Subscription subscribe(Consumer<? super E> action) {
+    public Subscription subscribe(@NotNull Consumer<? super E> action) {
         subscribable.subscribe(
                 action::accept,
                 filter,
@@ -97,15 +103,15 @@ public class RemoteQuery<E> implements Query<E> {
     }
 
     @Override
-    public void forEach(Consumer<? super E> action) {
+    public void forEach(@NotNull Consumer<? super E> action) {
         forEach2(action);
     }
 
-    private void forEach2(Consumer<? super E> action) {
-        final BlockingQueue<E> queue = new ArrayBlockingQueue<E>(128);
-        final AtomicBoolean finished = new AtomicBoolean();
+    private void forEach2(@NotNull Consumer<? super E> action) {
+        @NotNull final BlockingQueue<E> queue = new ArrayBlockingQueue<E>(128);
+        @NotNull final AtomicBoolean finished = new AtomicBoolean();
 
-        final Subscriber<E> accept = new Subscriber<E>() {
+        @NotNull final Subscriber<E> accept = new Subscriber<E>() {
 
             @Override
             public void onMessage(E o) {
@@ -161,11 +167,11 @@ public class RemoteQuery<E> implements Query<E> {
     }
 
     private void dumpThreads() {
-        for (Map.Entry<Thread, StackTraceElement[]> entry : Thread.getAllStackTraces().entrySet()) {
+        for (@NotNull Map.Entry<Thread, StackTraceElement[]> entry : Thread.getAllStackTraces().entrySet()) {
             Thread thread = entry.getKey();
             if (thread.getThreadGroup().getName().equals("system"))
                 continue;
-            StringBuilder sb = new StringBuilder();
+            @NotNull StringBuilder sb = new StringBuilder();
             sb.append(thread).append(" ").append(thread.getState());
             Jvm.trimStackTrace(sb, entry.getValue());
             sb.append("\n");
@@ -174,7 +180,7 @@ public class RemoteQuery<E> implements Query<E> {
     }
 
     @Override
-    public <R, A> R collect(Collector<? super E, A, R> collector) {
+    public <R, A> R collect(@NotNull Collector<? super E, A, R> collector) {
         final A container = collector.supplier().get();
         forEach(o -> collector.accumulator().accept(container, o));
         return collector.finisher().apply(container);

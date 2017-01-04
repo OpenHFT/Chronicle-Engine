@@ -24,6 +24,7 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.*;
 import org.junit.rules.TestName;
 
@@ -56,7 +57,7 @@ public class RemoteRpc extends JSR166TestCase {
         assetTree = new VanillaAssetTree(1)
                 .forRemoteAccess("192.168.1.76:8088", WIRE_TYPE);
 
-        MapView<String, String> map = assetTree.acquireMap("/test", String.class, String.class);
+        @NotNull MapView<String, String> map = assetTree.acquireMap("/test", String.class, String.class);
 
         for (int i = 0; i < 9999; i++) {
             Jvm.pause(500);
@@ -73,7 +74,7 @@ public class RemoteRpc extends JSR166TestCase {
 
         for (int i = 0; i < 9999; i++) {
             try {
-                String hello = map.get("hello");
+                @Nullable String hello = map.get("hello");
                 System.out.println(i + " " + hello);
             } catch (IORuntimeException e) {
                 System.out.println(e.getMessage());
@@ -94,8 +95,8 @@ public class RemoteRpc extends JSR166TestCase {
         YamlLogging.showClientReads(true);
         assetTree = (new VanillaAssetTree(1)).forRemoteAccess("192.168.1.76:8088", WIRE_TYPE);
 
-        MapView<String, String> map = assetTree.acquireMap("/test", String.class, String.class);
-        MapView<String, String> map2 = assetTree.acquireMap("/test2", String.class, String
+        @NotNull MapView<String, String> map = assetTree.acquireMap("/test", String.class, String.class);
+        @NotNull MapView<String, String> map2 = assetTree.acquireMap("/test2", String.class, String
                 .class);
         map.put("hello", "world");
 

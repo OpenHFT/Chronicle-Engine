@@ -37,8 +37,9 @@ public class ServerCfg implements Installable, Marshallable {
     private ServerEndpoint serverEndpoint;
     private int heartbeatIntervalTicks, heartbeatIntervalTimeout;
 
+    @NotNull
     @Override
-    public ServerCfg install(String path, AssetTree assetTree) throws IOException {
+    public ServerCfg install(@NotNull String path, @NotNull AssetTree assetTree) throws IOException {
         LOGGER.info(path + ": Starting listener on port " + port);
         serverEndpoint = new ServerEndpoint("*:" + port, assetTree);
        // YamlLogging.setAll(false);
@@ -63,6 +64,7 @@ public class ServerCfg implements Installable, Marshallable {
         wire.write(() -> "heartbeatIntervalTimeout").int32(heartbeatIntervalTimeout);
     }
 
+    @NotNull
     @Override
     public String toString() {
         return "ServerCfg{" +

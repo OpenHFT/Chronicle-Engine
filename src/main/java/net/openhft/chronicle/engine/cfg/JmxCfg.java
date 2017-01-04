@@ -20,6 +20,7 @@ package net.openhft.chronicle.engine.cfg;
 import net.openhft.chronicle.core.annotation.UsedViaReflection;
 import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.wire.AbstractMarshallable;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,8 +32,9 @@ public class JmxCfg extends AbstractMarshallable implements Installable {
     @UsedViaReflection
     private boolean enabled;
 
+    @NotNull
     @Override
-    public JmxCfg install(String path, AssetTree assetTree) {
+    public JmxCfg install(@NotNull String path, @NotNull AssetTree assetTree) {
         if (enabled) {
             LOGGER.info("Enabling JMX for " + assetTree);
             assetTree.enableManagement();

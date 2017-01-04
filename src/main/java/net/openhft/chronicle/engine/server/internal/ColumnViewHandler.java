@@ -8,6 +8,7 @@ import net.openhft.chronicle.network.connection.CoreFields;
 import net.openhft.chronicle.wire.ValueIn;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -23,6 +24,7 @@ import static net.openhft.chronicle.network.connection.CoreFields.reply;
 class ColumnViewHandler extends AbstractHandler {
 
     private final CspManager cspManager;
+    @NotNull
     AtomicLong nextToken = new AtomicLong();
 
     ColumnViewHandler(CspManager cspManager) {
@@ -36,11 +38,15 @@ class ColumnViewHandler extends AbstractHandler {
     private WireIn inWire = null;
     @Nullable
     private Map<String, Object> oldRow = new HashMap<String, Object>();
+    @NotNull
     private Map<String, Object> newRow = new HashMap<String, Object>();
 
     private long tid;
+    @NotNull
     private List<ColumnView.MarshableFilter> filtersList = new ArrayList<>();
+    @NotNull
     private List<ColumnView.MarshableFilter> keysList = new ArrayList<>();
+    @NotNull
     private ColumnView.SortedFilter sortedFilter = new ColumnView.SortedFilter();
 
 
@@ -51,7 +57,7 @@ class ColumnViewHandler extends AbstractHandler {
         public void accept(WireIn wireIn, Long inputTid) {
 
             eventName.setLength(0);
-            final ValueIn valueIn = inWire.readEventName(eventName);
+            @NotNull final ValueIn valueIn = inWire.readEventName(eventName);
 
             try {
 
@@ -65,7 +71,7 @@ class ColumnViewHandler extends AbstractHandler {
                     }
 
                     if (rowCount.contentEquals(eventName)) {
-                        ColumnViewInternal.SortedFilter filters = valueIn.object(ColumnViewInternal.SortedFilter.class);
+                        @Nullable ColumnViewInternal.SortedFilter filters = valueIn.object(ColumnViewInternal.SortedFilter.class);
                         int count = columnView.rowCount(filters == null ?
                                 new ColumnViewInternal.SortedFilter() : filters);
                         outWire.writeEventName(reply).int32(count);
@@ -91,7 +97,7 @@ class ColumnViewHandler extends AbstractHandler {
 
                     if (containsRowWithKey.contentEquals(eventName)) {
                         keysList.clear();
-                        final List keys = valueIn.object(keysList, List.class);
+                        @Nullable final List keys = valueIn.object(keysList, List.class);
                         final boolean result = columnView.containsRowWithKey(keys);
                         outWire.writeEventName(reply).bool(result);
 
@@ -102,7 +108,7 @@ class ColumnViewHandler extends AbstractHandler {
                         valueIn.marshallable(sortedFilter);
                         long token = nextToken.incrementAndGet();
                         final long cid = cspManager.createProxy("ColumnViewIterator", token);
-                        final Iterator<? extends Row> iterator = columnView.iterator(sortedFilter);
+                        @NotNull final Iterator<? extends Row> iterator = columnView.iterator(sortedFilter);
                         cspManager.storeObject(cid, iterator);
                         //});
                         return;
@@ -119,7 +125,7 @@ class ColumnViewHandler extends AbstractHandler {
     };
 
 
-    public void process(WireIn in, WireOut out, ColumnViewInternal view, long tid) {
+    public void process(WireIn in, @NotNull WireOut out, ColumnViewInternal view, long tid) {
 
         setOutWire(out);
 

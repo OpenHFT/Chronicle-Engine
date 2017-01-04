@@ -83,8 +83,6 @@ public class RequestContext implements Cloneable {
         addAlias(ObjectSubscription.class, "Subscription");
         addAlias(TopologySubscription.class, "TopologySubscription");
         addAlias(Reference.class, "Reference, Ref");
-        addAlias(Heartbeat.class, "Heartbeat");
-        addAlias(Filter.class, "Filter");
         addAlias(net.openhft.chronicle.engine.query.Operation.class, "Operation");
         // TODO replace with a proper implementation.
         addAlias(Proxy.class, "set-proxy");
@@ -106,11 +104,14 @@ public class RequestContext implements Cloneable {
         addAlias("software.chronicle.enterprise.queue.QueueSourceReplicationHandler");
         addAlias("software.chronicle.ente§rprise.queue.QueueSyncReplicationHandler");
         addAlias(QueueView.class, "QueueView");
-        addAlias(MapView.class, "MapView");
         addAlias(Boolean.class, "boolean");
         addAlias(AuthenticatedKeyValueStore.class, "AuthenticatedKeyValueStore");
         addAlias(ObjectKeyValueStore.class, "ObjectKeyValueStore");
 
+        addAlias(QueueCfg.class,
+                WireType.class,
+                Heartbeat.class,
+                Filter.class,MapView.class,QueueView.class);
     }
 
     public static boolean loadDefaultAliases() {
@@ -160,6 +161,10 @@ public class RequestContext implements Cloneable {
         ClassAliasPool.CLASS_ALIASES.addAlias(type, aliases);
     }
 
+    private static void addAlias(Class... type) {
+        ClassAliasPool.CLASS_ALIASES.addAlias(type);
+    }
+
     private static void addAliasLocal(Class type, @NotNull String aliases) {
         CLASS_ALIASES.addAlias(type, aliases);
     }
@@ -189,16 +194,16 @@ public class RequestContext implements Cloneable {
     public static RequestContext requestContext(@NotNull String uri) {
 
         int queryPos = uri.indexOf('?');
-        String fullName = queryPos >= 0 ? uri.substring(0, queryPos) : uri;
-        String query = queryPos >= 0 ? uri.substring(queryPos + 1) : "";
+        @NotNull String fullName = queryPos >= 0 ? uri.substring(0, queryPos) : uri;
+        @NotNull String query = queryPos >= 0 ? uri.substring(queryPos + 1) : "";
         int lastForwardSlash = fullName.lastIndexOf('/');
         if (lastForwardSlash > 0 && fullName.length() == lastForwardSlash + 1) {
             fullName = fullName.substring(0, fullName.length() - 1);
             lastForwardSlash = fullName.lastIndexOf('/');
         }
-        String pathName = lastForwardSlash >= 0 ? fullName.substring(0, lastForwardSlash) : "";
-        String name = lastForwardSlash >= 0 ? fullName.substring(lastForwardSlash + 1) : fullName;
-        RequestContext requestContext = new RequestContext(pathName, name).queryString(query);
+        @NotNull String pathName = lastForwardSlash >= 0 ? fullName.substring(0, lastForwardSlash) : "";
+        @NotNull String name = lastForwardSlash >= 0 ? fullName.substring(lastForwardSlash + 1) : fullName;
+        @NotNull RequestContext requestContext = new RequestContext(pathName, name).queryString(query);
         return requestContext;
     }
 
@@ -225,7 +230,7 @@ public class RequestContext implements Cloneable {
 
     @NotNull
     public Class<SubscriptionCollection> getSubscriptionType() {
-        Class elementType = elementType();
+        @NotNull Class elementType = elementType();
         return elementType == TopologicalEvent.class
                 ? (Class) TopologySubscription.class
                 : elementType == BytesStore.class
@@ -237,9 +242,9 @@ public class RequestContext implements Cloneable {
     public RequestContext queryString(@NotNull String queryString) {
         if (queryString.isEmpty())
             return this;
-        WireParser<Void> parser = getWireParser();
+        @NotNull WireParser<Void> parser = getWireParser();
         Bytes bytes = Bytes.from(queryString);
-        QueryWire wire = new QueryWire(bytes);
+        @NotNull QueryWire wire = new QueryWire(bytes);
         while (bytes.readRemaining() > 0)
             parser.parseOne(wire, null);
         return this;
@@ -247,7 +252,7 @@ public class RequestContext implements Cloneable {
 
     @NotNull
     public WireParser<Void> getWireParser() {
-        WireParser<Void> parser = new VanillaWireParser<>((s, v, $) -> {
+        @NotNull WireParser<Void> parser = new VanillaWireParser<>((s, v, $) -> {
         });
         parser.register(() -> "cluster", (s, v, $) -> v.text(this, (o, x) -> o.cluster = x));
         parser.register(() -> "view", (s, v, $) -> v.text(this, RequestContext::view));
@@ -256,7 +261,8 @@ public class RequestContext implements Cloneable {
         parser.register(() -> "removeReturnsNull", (s, v, $) -> v.bool(this, (o, x) -> o.removeReturnsNull = x));
         parser.register(() -> "nullOldValueOnUpdateEvent",
                 (s, v, $) -> v.bool(this, (o, x) -> o.nullOldValueOnUpdateEvent = x));
-        parser.register(() -> "basePath", (s, v, $) -> v.text(this, (o, x) -> o.basePath = x));
+        // removed for security reasons, as this could allow remotely anyone to access files on the server
+        //  parser.register(() -> "basePath", (s, v, $) -> v.text(this, (o, x) -> o.basePath = x));
         parser.register(() -> "viewType", (s, v, $) -> v.typeLiteral(this, (o, x) -> o.viewType = x));
         parser.register(() -> "topicType", (s, v, $) -> v.typeLiteral(this, (o, x) -> o.type = x));
         parser.register(() -> "keyType", (s, v, $) -> v.typeLiteral(this, (o, x) -> o.type = x));
@@ -265,7 +271,6 @@ public class RequestContext implements Cloneable {
         parser.register(() -> "elementType", (s, v, $) -> v.typeLiteral(this, (o, x) -> o.type2 = x));
         parser.register(() -> "endSubscriptionAfterBootstrap", (s, v, $) -> v.bool(this, (o, x) -> o.endSubscriptionAfterBootstrap = x));
         parser.register(() -> "throttlePeriodMs", (s, v, $) -> v.int32(this, (o, x) -> o.throttlePeriodMs = x));
-
         parser.register(() -> "entries", (s, v, $) -> v.int64(this, (o, x) -> o.entries = x));
         parser.register(() -> "averageValueSize", (s, v, $) -> v.int64(this, (o, x) -> o.averageValueSize = x));
         parser.register(() -> "dontPersist", (s, v, $) -> v.bool(this, (o, x) -> o.dontPersist = x));
@@ -339,6 +344,7 @@ public class RequestContext implements Cloneable {
         return type;
     }
 
+    @NotNull
     public RequestContext messageType(Class clazz) {
         this.type = clazz;
         return this;
@@ -366,7 +372,7 @@ public class RequestContext implements Cloneable {
 
     @NotNull
     public String fullName() {
-        final String s = pathName.isEmpty() ? name : (pathName + "/" + name);
+        @NotNull final String s = pathName.isEmpty() ? name : (pathName + "/" + name);
         return s.startsWith("/") ? s : "/" + s;
     }
 
@@ -492,6 +498,7 @@ public class RequestContext implements Cloneable {
         return this;
     }
 
+    @Nullable
     public Boolean endSubscriptionAfterBootstrap() {
         return endSubscriptionAfterBootstrap;
     }
@@ -536,7 +543,7 @@ public class RequestContext implements Cloneable {
     @NotNull
     public RequestContext clone() {
         try {
-            RequestContext clone = (RequestContext) super.clone();
+            @NotNull RequestContext clone = (RequestContext) super.clone();
             clone.sealed = false;
             return clone;
         } catch (CloneNotSupportedException e) {
@@ -550,10 +557,11 @@ public class RequestContext implements Cloneable {
         return this;
     }
 
+    @NotNull
     public String toUri() {
-        StringBuilder sb = new StringBuilder();
+        @NotNull StringBuilder sb = new StringBuilder();
         sb.append(fullName());
-        String sep = "?";
+        @NotNull String sep = "?";
         final Class viewType = this.viewType;
         if (viewType != null) {
             String alias = CLASS_ALIASES.nameFor(viewType);
@@ -595,16 +603,19 @@ public class RequestContext implements Cloneable {
         return throttlePeriodMs;
     }
 
+    @NotNull
     public RequestContext throttlePeriodMs(int throttlePeriodMs) {
         this.throttlePeriodMs = throttlePeriodMs;
         return this;
     }
 
+    @NotNull
     public <E> RequestContext elementType(Class<E> eClass) {
         this.type2 = eClass;
         return this;
     }
 
+    @NotNull
     public RequestContext topicType(Class topicType) {
         this.type = topicType;
         return this;
@@ -614,6 +625,7 @@ public class RequestContext implements Cloneable {
         return dontPersist;
     }
 
+    @NotNull
     public RequestContext dontPersist(boolean dontPersist) {
         this.dontPersist = dontPersist;
         return this;
@@ -623,6 +635,7 @@ public class RequestContext implements Cloneable {
         return token;
     }
 
+    @NotNull
     public RequestContext token(long token) {
         this.token = token;
         return this;
@@ -631,7 +644,7 @@ public class RequestContext implements Cloneable {
     public enum Operation {
         END_SUBSCRIPTION_AFTER_BOOTSTRAP, BOOTSTRAP;
 
-        public void apply(RequestContext rc) {
+        public void apply(@NotNull RequestContext rc) {
             switch (this) {
                 case END_SUBSCRIPTION_AFTER_BOOTSTRAP:
                     rc.endSubscriptionAfterBootstrap(true);

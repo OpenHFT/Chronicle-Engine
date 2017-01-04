@@ -29,6 +29,7 @@ import net.openhft.chronicle.wire.AbstractMarshallable;
 import net.openhft.chronicle.wire.Demarshallable;
 import net.openhft.chronicle.wire.WireIn;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +58,7 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
         return handler;
     }
 
-    public EngineWireNetworkContext(Asset asset) {
+    public EngineWireNetworkContext(@NotNull Asset asset) {
         this.rootAsset = asset.root();
         // TODO make configurable
         serverThreadingStrategy(ServerThreadingStrategy.CONCURRENT);
@@ -84,6 +85,7 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
         this.handler = handler;
     }
 
+    @Nullable
     @Override
     public ConnectionListener acquireConnectionListener() {
 
@@ -91,7 +93,7 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
 
             @Override
             public void onConnected(int localIdentifier, int remoteIdentifier, boolean isAcceptor) {
-                ConnectionDetails key = new ConnectionDetails(localIdentifier, remoteIdentifier, isAcceptor);
+                @NotNull ConnectionDetails key = new ConnectionDetails(localIdentifier, remoteIdentifier, isAcceptor);
                 hostByConnectionStatus.put(key, new ConnectionEvent(CONNECTED));
                 LOG.info(key + ", connectionStatus=" + CONNECTED);
 
@@ -100,7 +102,7 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
 
             @Override
             public void onDisconnected(int localIdentifier, int remoteIdentifier, boolean isAcceptor) {
-                ConnectionDetails key = new ConnectionDetails(localIdentifier, remoteIdentifier, isAcceptor);
+                @NotNull ConnectionDetails key = new ConnectionDetails(localIdentifier, remoteIdentifier, isAcceptor);
                 hostByConnectionStatus.put(key, new ConnectionEvent(DISCONNECTED));
                 LOG.info(key + ", connectionStatus=" + DISCONNECTED);
                 onConnectionChanged(localIdentifier, remoteIdentifier, isAcceptor);
@@ -108,17 +110,17 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
             }
 
             private void onConnectionChanged(int localIdentifier, int remoteIdentifier, boolean isAcceptor) {
-                ConnectionDetails k1a = new ConnectionDetails(localIdentifier,
+                @NotNull ConnectionDetails k1a = new ConnectionDetails(localIdentifier,
                         remoteIdentifier, isAcceptor);
-                ConnectionDetails k1b = new ConnectionDetails(remoteIdentifier,
+                @NotNull ConnectionDetails k1b = new ConnectionDetails(remoteIdentifier,
                         localIdentifier, !isAcceptor);
 
-                ConnectionDetails k2a = new ConnectionDetails(localIdentifier,
+                @NotNull ConnectionDetails k2a = new ConnectionDetails(localIdentifier,
                         remoteIdentifier, !isAcceptor);
-                ConnectionDetails k2b = new ConnectionDetails(remoteIdentifier,
+                @NotNull ConnectionDetails k2b = new ConnectionDetails(remoteIdentifier,
                         localIdentifier, isAcceptor);
 
-                ConnectionStatus connectionStatus = DISCONNECTED;
+                @NotNull ConnectionStatus connectionStatus = DISCONNECTED;
                 if ((get(k1a) == CONNECTED && get(k1b) == CONNECTED) ||
                         (get(k2a) == CONNECTED && get(k2b) == CONNECTED)) {
                     connectionStatus = CONNECTED;
@@ -130,7 +132,7 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
             }
 
             private ConnectionStatus get(ConnectionDetails connectionDetails) {
-                ConnectionEvent connectionEvent = hostByConnectionStatus.get(connectionDetails);
+                @Nullable ConnectionEvent connectionEvent = hostByConnectionStatus.get(connectionDetails);
                 if (connectionEvent == null)
                     return DISCONNECTED;
                 return connectionEvent.connectionStatus;
@@ -141,6 +143,7 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
 
     }
 
+    @NotNull
     @Override
     public String toString() {
         return "hostByConnectionStatus=" + hostByConnectionStatus.entrySet().toString();
@@ -183,6 +186,7 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
             return remoteIdentifier;
         }
 
+        @NotNull
         @Override
         public String toString() {
             return "localId=" + localIdentifier + ", remoteId=" + remoteIdentifier + ", isAcceptor=" + isAcceptor;
@@ -200,8 +204,9 @@ public class EngineWireNetworkContext<T extends EngineWireNetworkContext>
         public Factory() {
         }
 
+        @NotNull
         @Override
-        public NetworkContext apply(ClusterContext context) {
+        public NetworkContext apply(@NotNull ClusterContext context) {
             return new EngineWireNetworkContext<>(((EngineClusterContext) context).assetRoot());
         }
     }

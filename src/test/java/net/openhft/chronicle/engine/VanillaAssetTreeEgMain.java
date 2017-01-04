@@ -27,6 +27,7 @@ import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.lang.thread.NamedThreadFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
@@ -41,22 +42,22 @@ public class VanillaAssetTreeEgMain {
             new NamedThreadFactory("all-trees-watcher", true));
 
     public static void main(String[] args) {
-        AssetTree tree = new VanillaAssetTree().forTesting();
+        @NotNull AssetTree tree = new VanillaAssetTree().forTesting();
         tree.enableManagement(18181);
 
         // start with some elements
-        ConcurrentMap<String, String> map1 = tree.acquireMap("group/map1", String.class, String.class);
+        @NotNull ConcurrentMap<String, String> map1 = tree.acquireMap("group/map1", String.class, String.class);
         map1.put("key1", "ABCDEGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz0132456789ABCDEGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz0132456789");
         map1.put("key2", "ABCDEGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz0132456789ABCDEGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz0132456789");
         map1.put("key3", "ABCDEGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz0132456789ABCDEGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz0132456789");
         map1.put("key4", "ABCDEGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz0132456789ABCDEGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz0132456789");
 
-        ConcurrentMap<String, Integer> map2 = tree.acquireMap("group/map2", String.class, Integer.class);
+        @NotNull ConcurrentMap<String, Integer> map2 = tree.acquireMap("group/map2", String.class, Integer.class);
         map2.put("key1", 11);
         map2.put("key2", 2222);
         //tree.registerSubscriber("group/map2", MapEvent.class, System.out::println);
 
-        ConcurrentMap<String, String> map3 = tree.acquireMap("group2/subgroup/map3", String.class, String.class);
+        @NotNull ConcurrentMap<String, String> map3 = tree.acquireMap("group2/subgroup/map3", String.class, String.class);
         map3.put("keyA", "value1");
         map3.put("keyB", "value1");
         map3.put("keyC", "value1");
@@ -66,7 +67,7 @@ public class VanillaAssetTreeEgMain {
         registerTextViewofTree("tree", tree);
 
         // added group2/subgroup/map4
-        ConcurrentMap<String, String> map4 = tree.acquireMap("group2/subgroup/map4", String.class, String.class);
+        @NotNull ConcurrentMap<String, String> map4 = tree.acquireMap("group2/subgroup/map4", String.class, String.class);
         map4.put("4-keyA", "value1");
         map4.put("4-keyB", "value1");
         map4.put("4-keyC", "value1");
@@ -86,15 +87,15 @@ public class VanillaAssetTreeEgMain {
 
         System.out.println("Here..............");
 
-        AssetTree tree1 = new VanillaAssetTree().forTesting();
+        @NotNull AssetTree tree1 = new VanillaAssetTree().forTesting();
         tree1.enableManagement();
-        ConcurrentMap<String, String> map_tree = tree1.acquireMap("group1/1/2/3/4/5/map", String.class, String.class);
+        @NotNull ConcurrentMap<String, String> map_tree = tree1.acquireMap("group1/1/2/3/4/5/map", String.class, String.class);
         map_tree.put("key1", "ABCDEGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz0132456789ABCDEGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz0132456789");
         map_tree.put("key2", "ABCDEGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz0132456789ABCDEGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz0132456789");
         map_tree.put("key3", "ABCDEGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz0132456789ABCDEGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz0132456789");
         map_tree.put("key4", "ABCDEGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz0132456789ABCDEGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz0132456789");
         map_tree.put("key5", "ABCDEGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz0132456789ABCDEGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz0132456789");
-        ConcurrentMap<String, String> map_tree2 = tree1.acquireMap("group1/1/map", String.class, String.class);
+        @NotNull ConcurrentMap<String, String> map_tree2 = tree1.acquireMap("group1/1/map", String.class, String.class);
         map_tree2.put("key1", "value1");
         //Jvm.pause(50000);
         tree1.root().getAsset("group1/1").removeChild("map");
@@ -119,20 +120,20 @@ public class VanillaAssetTreeEgMain {
             System.out.println(desc + " handle " + e);
             if (e.added()) {
                 System.out.println(desc + " Added a " + e.name() + " under " + e.assetName());
-                String assetFullName = e.fullName();
-                Asset asset = tree.getAsset(assetFullName);
+                @NotNull String assetFullName = e.fullName();
+                @Nullable Asset asset = tree.getAsset(assetFullName);
                 if (asset == null) {
                     System.out.println("\tbut it's not visible.");
                     return;
                 }
-                ObjectKeyValueStore view = asset.getView(ObjectKeyValueStore.class);
+                @Nullable ObjectKeyValueStore view = asset.getView(ObjectKeyValueStore.class);
                 if (view == null) {
                     System.out.println("\t[node]");
                 } else {
                     long elements = view.longSize();
                     Class keyType = view.keyType();
                     Class valueType = view.valueType();
-                    ObjectSubscription objectSubscription = asset.getView(ObjectSubscription.class);
+                    @Nullable ObjectSubscription objectSubscription = asset.getView(ObjectSubscription.class);
                     int keySubscriberCount = objectSubscription.keySubscriberCount();
                     int entrySubscriberCount = objectSubscription.entrySubscriberCount();
                     int topicSubscriberCount = objectSubscription.topicSubscriberCount();

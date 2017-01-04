@@ -60,6 +60,7 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
     private final Set<TopicSubscriber<T, M>> topicSubscribers = new CopyOnWriteArraySet<>();
     private final Set<Subscriber<ExcerptTailer>> subscribers = new CopyOnWriteArraySet<>();
     private final Set<EventConsumer<T, M>> downstream = new CopyOnWriteArraySet<>();
+    @Nullable
     private final SessionProvider sessionProvider;
 
     @Nullable
@@ -67,6 +68,7 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
     private final Map<Subscriber, Subscriber> subscriptionDelegate = new IdentityHashMap<>();
     private final Class<T> topicType;
 
+    @Nullable
     private Map<String, SubscriptionStat> subscriptionMonitoringMap = null;
     private EventLoop eventLoop;
 
@@ -149,9 +151,9 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
     public void registerSubscriber(@NotNull final RequestContext rc,
                                    @NotNull final Subscriber subscriber,
                                    @NotNull final Filter filter) {
-        final QueueView<T, M> chronicleQueue = asset.acquireView(QueueView.class, rc);
+        @NotNull final QueueView<T, M> chronicleQueue = asset.acquireView(QueueView.class, rc);
 
-        final T topic = ObjectUtils.convertTo(topicType, rc.name());
+        @Nullable final T topic = ObjectUtils.convertTo(topicType, rc.name());
         eventLoop.addHandler(() -> {
 
             QueueView.Excerpt<T, M> excerpt = chronicleQueue.getExcerpt(topic);
@@ -170,9 +172,9 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
         addToStats("topicSubscription");
 
         topicSubscribers.add(subscriber);
-        AtomicBoolean terminate = new AtomicBoolean();
+        @NotNull AtomicBoolean terminate = new AtomicBoolean();
 
-        final ChronicleQueueView<T, M> chronicleQueue = (ChronicleQueueView) asset.acquireView
+        @NotNull final ChronicleQueueView<T, M> chronicleQueue = (ChronicleQueueView) asset.acquireView
                 (QueueView.class, rc);
 
         QueueView.Tailer<T, M> iterator = chronicleQueue.tailer();
@@ -185,7 +187,7 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
             boolean busy = false;
             long start = System.nanoTime();
             do {
-                final QueueView.Excerpt<T, M> next = iterator.read();
+                @Nullable final QueueView.Excerpt<T, M> next = iterator.read();
                 if (next == null)
                     return busy;
                 try {
@@ -208,7 +210,8 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
 
     }
 
-    private T toT(CharSequence eventName) {
+    @NotNull
+    private T toT(@NotNull CharSequence eventName) {
         if (topicType == CharSequence.class)
             return (T) eventName;
         else if (topicType == String.class)
@@ -231,7 +234,7 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
     @Override
     public void unregisterSubscriber(@NotNull Subscriber subscriber) {
         final Subscriber delegate = subscriptionDelegate.get(subscriber);
-        final Subscriber s = delegate != null ? delegate : subscriber;
+        @NotNull final Subscriber s = delegate != null ? delegate : subscriber;
         boolean subscription = subscribers.remove(s);
 
         if (subscription) removeFromStats("subscription");
@@ -258,9 +261,10 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
 
     //Needs some refactoring - need a definitive way of knowing when this map should become available
     //3 combinations, not lookedUP, exists or does not exist
+    @Nullable
     private Map getSubscriptionMap() {
         if (subscriptionMonitoringMap != null) return subscriptionMonitoringMap;
-        Asset subscriptionAsset = asset.root().getAsset("proc/subscriptions");
+        @Nullable Asset subscriptionAsset = asset.root().getAsset("proc/subscriptions");
         if (subscriptionAsset != null && subscriptionAsset.getView(MapView.class) != null) {
             subscriptionMonitoringMap = subscriptionAsset.getView(MapView.class);
         }
@@ -270,11 +274,11 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
     private void addToStats(String subType) {
         if (sessionProvider == null) return;
 
-        SessionDetails sessionDetails = sessionProvider.get();
+        @Nullable SessionDetails sessionDetails = sessionProvider.get();
         if (sessionDetails != null) {
-            String userId = sessionDetails.userId();
+            @Nullable String userId = sessionDetails.userId();
 
-            Map<String, SubscriptionStat> subStats = getSubscriptionMap();
+            @Nullable Map<String, SubscriptionStat> subStats = getSubscriptionMap();
             if (subStats != null) {
                 SubscriptionStat stat = subStats.get(userId + "~" + subType);
                 if (stat == null) {
@@ -292,11 +296,11 @@ public class QueueObjectSubscription<T, M> implements ObjectSubscription<T, M> {
     private void removeFromStats(String subType) {
         if (sessionProvider == null) return;
 
-        SessionDetails sessionDetails = sessionProvider.get();
+        @Nullable SessionDetails sessionDetails = sessionProvider.get();
         if (sessionDetails != null) {
-            String userId = sessionDetails.userId();
+            @Nullable String userId = sessionDetails.userId();
 
-            Map<String, SubscriptionStat> subStats = getSubscriptionMap();
+            @Nullable Map<String, SubscriptionStat> subStats = getSubscriptionMap();
             if (subStats != null) {
                 SubscriptionStat stat = subStats.get(userId + "~" + subType);
                 if (stat == null) {

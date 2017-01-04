@@ -65,26 +65,29 @@ public class RoundTripTest {
     static final int VALUE_SIZE = 2 << 20;
     public static ServerEndpoint serverEndpoint;
     static int counter = 0;
+    @NotNull
     private static String CONNECTION_1 = "CONNECTION_1";
+    @NotNull
     private static String CONNECTION_2 = "CONNECTION_2";
+    @NotNull
     private static String CONNECTION_3 = "CONNECTION_3";
 
     private ThreadDump threadDump;
     private Map<ExceptionKey, Integer> exceptions;
 
     @NotNull
-    static AssetTree create(final int hostId, WireType writeType, final List<EngineHostDetails> hostDetails) {
+    static AssetTree create(final int hostId, WireType writeType, @NotNull final List<EngineHostDetails> hostDetails) {
 
-        AssetTree tree = new VanillaAssetTree((byte) hostId)
+        @NotNull AssetTree tree = new VanillaAssetTree((byte) hostId)
                 .forTesting();
 
-        Map<String, EngineHostDetails> hostDetailsMap = new ConcurrentSkipListMap<>();
+        @NotNull Map<String, EngineHostDetails> hostDetailsMap = new ConcurrentSkipListMap<>();
 
-        for (EngineHostDetails hd : hostDetails) {
+        for (@NotNull EngineHostDetails hd : hostDetails) {
             hostDetailsMap.put(hd.toString(), hd);
         }
 
-        final Clusters testCluster = new Clusters(Collections.singletonMap("test",
+        @NotNull final Clusters testCluster = new Clusters(Collections.singletonMap("test",
                 new EngineCluster("test")));
 
         tree.root().addWrappingRule(MapView.class, "map directly to KeyValueStore",
@@ -99,7 +102,7 @@ public class RoundTripTest {
                         .averageValueSize(VALUE_SIZE),
                         asset));
 
-        Asset asset1 = tree.acquireAsset(SIMPLE_NAME);
+        @NotNull Asset asset1 = tree.acquireAsset(SIMPLE_NAME);
         asset1.addView(Clusters.class, testCluster);
         //  VanillaAssetTreeEgMain.registerTextViewofTree("host " + hostId, tree);
 
@@ -111,8 +114,9 @@ public class RoundTripTest {
         return "" + i;
     }
 
+    @NotNull
     public static String generateValue(char c, int size) {
-        char[] chars = new char[size - 7];
+        @NotNull char[] chars = new char[size - 7];
         Arrays.fill(chars, c);
         return counter++ + " " + new String(chars);
     }
@@ -155,18 +159,18 @@ public class RoundTripTest {
         TCPRegistry.createServerSocketChannelFor(CONNECTION_2);
         TCPRegistry.createServerSocketChannelFor(CONNECTION_3);
 
-        final List<EngineHostDetails> hostDetails = new ArrayList<>();
+        @NotNull final List<EngineHostDetails> hostDetails = new ArrayList<>();
         hostDetails.add(new EngineHostDetails(1, 8 << 20, CONNECTION_1));
         hostDetails.add(new EngineHostDetails(2, 8 << 20, CONNECTION_2));
         hostDetails.add(new EngineHostDetails(3, 8 << 20, CONNECTION_3));
 
-        AssetTree serverAssetTree1 = create(1, WireType.BINARY, hostDetails);
-        AssetTree serverAssetTree2 = create(2, WireType.BINARY, hostDetails);
-        AssetTree serverAssetTree3 = create(3, WireType.BINARY, hostDetails);
+        @NotNull AssetTree serverAssetTree1 = create(1, WireType.BINARY, hostDetails);
+        @NotNull AssetTree serverAssetTree2 = create(2, WireType.BINARY, hostDetails);
+        @NotNull AssetTree serverAssetTree3 = create(3, WireType.BINARY, hostDetails);
 
-        ServerEndpoint serverEndpoint1 = new ServerEndpoint(CONNECTION_1, serverAssetTree1);
-        ServerEndpoint serverEndpoint2 = new ServerEndpoint(CONNECTION_2, serverAssetTree2);
-        ServerEndpoint serverEndpoint3 = new ServerEndpoint(CONNECTION_3, serverAssetTree3);
+        @NotNull ServerEndpoint serverEndpoint1 = new ServerEndpoint(CONNECTION_1, serverAssetTree1);
+        @NotNull ServerEndpoint serverEndpoint2 = new ServerEndpoint(CONNECTION_2, serverAssetTree2);
+        @NotNull ServerEndpoint serverEndpoint3 = new ServerEndpoint(CONNECTION_3, serverAssetTree3);
 
         ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
         ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
@@ -180,9 +184,9 @@ public class RoundTripTest {
             serverAssetTree2.acquireMap(NAME, String.class, String.class).size();
             serverAssetTree3.acquireMap(NAME, String.class, String.class).size();
 
-            final ConcurrentMap<CharSequence, CharSequence> map1 = serverAssetTree1.acquireMap(NAME, CharSequence.class, CharSequence.class);
-            final ConcurrentMap<CharSequence, CharSequence> map2 = serverAssetTree2.acquireMap(NAME, CharSequence.class, CharSequence.class);
-            final ConcurrentMap<CharSequence, CharSequence> map3 = serverAssetTree3.acquireMap(NAME, CharSequence.class, CharSequence.class);
+            @NotNull final ConcurrentMap<CharSequence, CharSequence> map1 = serverAssetTree1.acquireMap(NAME, CharSequence.class, CharSequence.class);
+            @NotNull final ConcurrentMap<CharSequence, CharSequence> map2 = serverAssetTree2.acquireMap(NAME, CharSequence.class, CharSequence.class);
+            @NotNull final ConcurrentMap<CharSequence, CharSequence> map3 = serverAssetTree3.acquireMap(NAME, CharSequence.class, CharSequence.class);
 
             map1.size();
             map2.size();
@@ -191,20 +195,20 @@ public class RoundTripTest {
             ClassAliasPool.CLASS_ALIASES.addAlias(ChronicleMapGroupFS.class);
             ClassAliasPool.CLASS_ALIASES.addAlias(FilePerKeyGroupFS.class);
 
-            CountDownLatch l = new CountDownLatch(ENTRIES * TIMES);
+            @NotNull CountDownLatch l = new CountDownLatch(ENTRIES * TIMES);
 
-            VanillaAssetTree treeC1 = new VanillaAssetTree("tree1")
+            @NotNull VanillaAssetTree treeC1 = new VanillaAssetTree("tree1")
                     .forRemoteAccess(CONNECTION_1, WIRE_TYPE);
 
-            VanillaAssetTree treeC3 = new VanillaAssetTree("tree1")
+            @NotNull VanillaAssetTree treeC3 = new VanillaAssetTree("tree1")
                     .forRemoteAccess(CONNECTION_3, WIRE_TYPE);
-            AtomicReference<CountDownLatch> latchRef = new AtomicReference<>();
+            @NotNull AtomicReference<CountDownLatch> latchRef = new AtomicReference<>();
 
             treeC3.registerSubscriber(NAME, String.class, z -> {
                 latchRef.get().countDown();
             });
 
-            final ConcurrentMap<CharSequence, CharSequence> mapC1 = treeC1.acquireMap(NAME, CharSequence.class, CharSequence
+            @NotNull final ConcurrentMap<CharSequence, CharSequence> mapC1 = treeC1.acquireMap(NAME, CharSequence.class, CharSequence
                     .class);
 
             long start = System.currentTimeMillis();
@@ -212,9 +216,9 @@ public class RoundTripTest {
             long min = Long.MAX_VALUE;
             long max = Long.MIN_VALUE;
 
-            String[] keys = new String[ENTRIES];
-            String[] values0 = new String[ENTRIES];
-            String[] values1 = new String[ENTRIES];
+            @NotNull String[] keys = new String[ENTRIES];
+            @NotNull String[] values0 = new String[ENTRIES];
+            @NotNull String[] values1 = new String[ENTRIES];
             for (int i = 0; i < ENTRIES; i++) {
                 keys[i] = getKey(i);
                 values0[i] = generateValue('X', VALUE_SIZE);
@@ -223,7 +227,7 @@ public class RoundTripTest {
             for (int j = 0; j < TIMES; j++) {
                 long timeTakenI = System.currentTimeMillis();
                 latchRef.set(new CountDownLatch(ENTRIES));
-                String[] values = j % 2 == 0 ? values0 : values1;
+                @NotNull String[] values = j % 2 == 0 ? values0 : values1;
                 for (int i = 0; i < ENTRIES; i++) {
                     mapC1.put(keys[i], values[i]);
                 }

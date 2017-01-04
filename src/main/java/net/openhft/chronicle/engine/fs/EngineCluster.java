@@ -20,6 +20,7 @@ package net.openhft.chronicle.engine.fs;
 import net.openhft.chronicle.engine.api.tree.Asset;
 import net.openhft.chronicle.engine.cfg.EngineClusterContext;
 import net.openhft.chronicle.network.cluster.Cluster;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by peter.lawrey on 17/06/2015.
@@ -36,6 +37,7 @@ public class EngineCluster extends Cluster<EngineHostDetails, EngineClusterConte
             context.assetRoot(assetRoot);
     }
 
+    @NotNull
     @Override
     protected EngineHostDetails newHostDetails() {
         return new EngineHostDetails();

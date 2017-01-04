@@ -65,7 +65,7 @@ public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId>
     }
 
     private static String toUri(@NotNull final RequestContext context, String view) {
-        final StringBuilder uri = new StringBuilder(context.fullName()
+        @NotNull final StringBuilder uri = new StringBuilder(context.fullName()
                 + "?view=" + view);
 
         if (context.keyType() != String.class)
@@ -119,15 +119,15 @@ public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId>
                 w.readDocument(null, d -> {
 
                     final StringBuilder eventname = Wires.acquireStringBuilder();
-                    final ValueIn valueIn = d.readEventName(eventname);
+                    @NotNull final ValueIn valueIn = d.readEventName(eventname);
 
                     if (onEndOfSubscription.contentEquals(eventname)) {
                         topicSubscriber.onEndOfSubscription();
                         hub.unsubscribe(tid());
                     } else if (CoreFields.reply.contentEquals(eventname)) {
                         valueIn.marshallable(m -> {
-                            final T topic = m.read(() -> "topic").object(topicClass);
-                            final M message = m.read(() -> "message").object(messageClass);
+                            @Nullable final T topic = m.read(() -> "topic").object(topicClass);
+                            @Nullable final M message = m.read(() -> "message").object(messageClass);
                             try {
                                 RemoteTopicPublisher.this.onEvent(topic, message, topicSubscriber);
                             } catch (InvalidSubscriberException e) {
@@ -146,6 +146,7 @@ public class RemoteTopicPublisher<T, M> extends AbstractStatelessClient<EventId>
         throw new UnsupportedOperationException("todo");
     }
 
+    @NotNull
     @Override
     public Publisher<M> publisher(@NotNull T topic) {
         throw new UnsupportedOperationException("tood");

@@ -18,6 +18,7 @@
 package net.openhft.chronicle.engine.api.management.mbean;
 
 import net.openhft.chronicle.wire.YamlLogging;
+import org.jetbrains.annotations.NotNull;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -30,9 +31,9 @@ public class ChronicleConfig implements ChronicleConfigMBean {
 
     public static void init() {
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-        ChronicleConfig mBean = new ChronicleConfig();
+        @NotNull ChronicleConfig mBean = new ChronicleConfig();
         try {
-            ObjectName name = new ObjectName("net.openhft.chronicle.engine:type=ChronicleConfig");
+            @NotNull ObjectName name = new ObjectName("net.openhft.chronicle.engine:type=ChronicleConfig");
             mbs.registerMBean(mBean, name);
         } catch (Exception e) {
             throw new IllegalStateException(e);

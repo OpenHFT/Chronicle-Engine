@@ -69,6 +69,7 @@ public class  Replication3WayIntIntTest extends ThreadMonitoringTest {
 
     public ServerEndpoint serverEndpoint1;
     public ServerEndpoint serverEndpoint2;
+    @NotNull
     @Rule
     public TestName testName = new TestName();
     public String name;
@@ -84,7 +85,7 @@ public class  Replication3WayIntIntTest extends ThreadMonitoringTest {
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
-        Object[][] objects = new Object[NUMBER_OF_TIMES][];
+        @NotNull Object[][] objects = new Object[NUMBER_OF_TIMES][];
         Arrays.fill(objects, new Object[]{});
         return Arrays.asList(objects);
     }
@@ -111,7 +112,7 @@ public class  Replication3WayIntIntTest extends ThreadMonitoringTest {
                 "host.port2",
                 "host.port3");
 
-        WireType writeType = WireType.TEXT;
+        @NotNull WireType writeType = WireType.TEXT;
         tree1 = create(1, writeType, "clusterThree");
         tree2 = create(2, writeType, "clusterThree");
         tree3 = create(3, writeType, "clusterThree");
@@ -142,7 +143,7 @@ public class  Replication3WayIntIntTest extends ThreadMonitoringTest {
 
     @NotNull
     private AssetTree create(final int hostId, WireType writeType, final String clusterTwo) {
-        AssetTree tree = new VanillaAssetTree((byte) hostId)
+        @NotNull AssetTree tree = new VanillaAssetTree((byte) hostId)
                 .forTesting()
                 .withConfig(resourcesDir() + "/3way", OS.TARGET + "/" + hostId);
 
@@ -162,15 +163,15 @@ public class  Replication3WayIntIntTest extends ThreadMonitoringTest {
     public void testAllDataGetsReplicated() {
 
         name = "testAllDataGetsReplicated";
-        final ConcurrentMap<Integer, Integer> map1 = tree1.acquireMap(name, Integer.class, Integer
+        @NotNull final ConcurrentMap<Integer, Integer> map1 = tree1.acquireMap(name, Integer.class, Integer
                 .class);
         assertNotNull(map1);
 
-        final ConcurrentMap<Integer, Integer> map2 = tree2.acquireMap(name, Integer.class, Integer
+        @NotNull final ConcurrentMap<Integer, Integer> map2 = tree2.acquireMap(name, Integer.class, Integer
                 .class);
         assertNotNull(map2);
 
-        final ConcurrentMap<Integer, Integer> map3 = tree3.acquireMap(name, Integer.class, Integer
+        @NotNull final ConcurrentMap<Integer, Integer> map3 = tree3.acquireMap(name, Integer.class, Integer
                 .class);
         assertNotNull(map3);
 
@@ -222,15 +223,15 @@ public class  Replication3WayIntIntTest extends ThreadMonitoringTest {
 
     }
 
-    private void put(Map<Integer, Integer> map, int toPut) {
+    private void put(@NotNull Map<Integer, Integer> map, int toPut) {
         map.put(toPut, toPut);
     }
 
     @SafeVarargs
-    private final void assertAllContain(int key, Map<Integer, Integer>... maps) {
+    private final void assertAllContain(int key, @NotNull Map<Integer, Integer>... maps) {
         Outer:
         for (int x = 0; x < 100; x++) {
-            for (Map<Integer, Integer> map : maps) {
+            for (@NotNull Map<Integer, Integer> map : maps) {
                 if (!map.containsKey(key)) {
                     Jvm.pause(100);
                     continue Outer;
@@ -245,12 +246,12 @@ public class  Replication3WayIntIntTest extends ThreadMonitoringTest {
     }
 
     @SafeVarargs
-    private final void assertFullRange(int upperBoundExclusive, Map<Integer, Integer>... maps) {
+    private final void assertFullRange(int upperBoundExclusive, @NotNull Map<Integer, Integer>... maps) {
 
         Outer:
         for (int x = 0; x < 100; x++) {
 
-            for (Map<Integer, Integer> map : maps) {
+            for (@NotNull Map<Integer, Integer> map : maps) {
                 for (int i = 0; i < upperBoundExclusive; i++) {
 
                     if (!map.containsKey(i)) {

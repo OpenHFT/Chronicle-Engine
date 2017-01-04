@@ -24,6 +24,7 @@ import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by rob on 27/04/2016.
@@ -33,6 +34,7 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
     private long index;
     private long timePublished;
     private long maxIndex;
+    @Nullable
     private V v;
     private transient Object k;
 
@@ -63,6 +65,7 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
         return maxIndex;
     }
 
+    @NotNull
     public IndexedValue maxIndex(long maxIndex) {
         this.maxIndex = maxIndex;
         return this;
@@ -75,15 +78,18 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
         return index;
     }
 
+    @NotNull
     public IndexedValue index(long index) {
         this.index = index;
         return this;
     }
 
+    @Nullable
     public V v() {
         return v;
     }
 
+    @NotNull
     public IndexedValue v(V v) {
         this.v = v;
         return this;
@@ -93,6 +99,7 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
         return k;
     }
 
+    @NotNull
     public IndexedValue k(Object k) {
         this.k = k;
         return this;
@@ -115,6 +122,7 @@ public class IndexedValue<V extends Marshallable> implements Demarshallable, Mar
         return timePublished;
     }
 
+    @NotNull
     public IndexedValue timePublished(long timePublished) {
         this.timePublished = timePublished;
         return this;

@@ -141,8 +141,10 @@ public interface EngineReplication extends Replication {
     }
 
     interface ReplicationEntry extends Marshallable {
+        @Nullable
         BytesStore key();
 
+        @Nullable
         BytesStore value();
 
         long timestamp();

@@ -60,16 +60,16 @@ public class AssetTreeDynamicMBean implements DynamicMBean {
     }
 
     public void setAttribute(@NotNull String name, String value) {
-        Attribute attribute = new Attribute(name, value);
-        AttributeList list = new AttributeList();
+        @NotNull Attribute attribute = new Attribute(name, value);
+        @NotNull AttributeList list = new AttributeList();
         list.add(attribute);
         setAttributes(list);
     }
 
     @NotNull
     public synchronized AttributeList getAttributes(@NotNull String[] names) {
-        AttributeList list = new AttributeList();
-        for (String name : names) {
+        @NotNull AttributeList list = new AttributeList();
+        for (@NotNull String name : names) {
             String value = this.properties.getProperty(name);
             if (value != null)
                 list.add(new Attribute(name, value));
@@ -79,9 +79,9 @@ public class AssetTreeDynamicMBean implements DynamicMBean {
 
     @NotNull
     public synchronized AttributeList setAttributes(@NotNull AttributeList list) {
-        Attribute[] attrs = list.toArray(new Attribute[0]);
-        AttributeList retlist = new AttributeList();
-        for (Attribute attr : attrs) {
+        @NotNull Attribute[] attrs = list.toArray(new Attribute[0]);
+        @NotNull AttributeList retlist = new AttributeList();
+        for (@NotNull Attribute attr : attrs) {
             String name = attr.getName();
             Object value = attr.getValue();
             if ((value instanceof String)) {
@@ -103,21 +103,21 @@ public class AssetTreeDynamicMBean implements DynamicMBean {
 
     @Nullable
     public synchronized MBeanInfo getMBeanInfo() {
-        SortedSet names = new TreeSet();
-        for (Iterator localIterator1 = this.properties.keySet().iterator(); localIterator1.hasNext(); ) {
+        @NotNull SortedSet names = new TreeSet();
+        for (@NotNull Iterator localIterator1 = this.properties.keySet().iterator(); localIterator1.hasNext(); ) {
             Object name = localIterator1.next();
             names.add(name);
         }
 
-        MBeanAttributeInfo[] attrs = new MBeanAttributeInfo[names.size()];
-        Iterator it = names.iterator();
+        @NotNull MBeanAttributeInfo[] attrs = new MBeanAttributeInfo[names.size()];
+        @NotNull Iterator it = names.iterator();
 
         for (int i = 0; i < attrs.length; i++) {
-            String name = (String) it.next();
+            @NotNull String name = (String) it.next();
             attrs[i] = new MBeanAttributeInfo(name, "java.lang.String", "Property " + name, true, true, false);
         }
 
-        MBeanOperationInfo[] opers = {new MBeanOperationInfo("reload", "Reload properties from file", null, "void", 1)};
+        @NotNull MBeanOperationInfo[] opers = {new MBeanOperationInfo("reload", "Reload properties from file", null, "void", 1)};
         return new MBeanInfo(getClass().getName(), "Property Manager MBean", attrs, null, opers, null);
     }
 

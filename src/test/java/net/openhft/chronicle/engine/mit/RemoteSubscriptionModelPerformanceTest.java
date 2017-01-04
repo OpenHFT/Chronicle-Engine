@@ -38,6 +38,8 @@ import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
 import net.openhft.chronicle.wire.YamlLogging;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.*;
 
 import java.io.IOException;
@@ -64,6 +66,7 @@ public class RemoteSubscriptionModelPerformanceTest {
     private static Map<String, String> _testMap;
     private static VanillaAssetTree serverAssetTree, clientAssetTree;
     private static ServerEndpoint serverEndpoint;
+    @NotNull
     private static AtomicReference<Throwable> t = new AtomicReference();
     private final String _mapName = "PerfTestMap" + counter.incrementAndGet();
     private ThreadDump threadDump;
@@ -72,7 +75,7 @@ public class RemoteSubscriptionModelPerformanceTest {
     public static void setUpBeforeClass() throws IOException {
         YamlLogging.setAll(false);
 
-        char[] chars = new char[2 << 20];
+        @NotNull char[] chars = new char[2 << 20];
         Arrays.fill(chars, '~');
         _twoMbTestString = new String(chars);
         _twoMbTestStringLength = _twoMbTestString.length();
@@ -173,13 +176,13 @@ public class RemoteSubscriptionModelPerformanceTest {
 
         //Create subscriber and register
         //Add 4 for the number of puts that is added to the string
-        TestChronicleKeyEventSubscriber keyEventSubscriber = new TestChronicleKeyEventSubscriber(_twoMbTestStringLength);
+        @NotNull TestChronicleKeyEventSubscriber keyEventSubscriber = new TestChronicleKeyEventSubscriber(_twoMbTestStringLength);
 
         clientAssetTree.registerSubscriber(_mapName + "/" + key + "?bootstrap=false", String.class, keyEventSubscriber);
         Jvm.pause(100);
         Asset child = serverAssetTree.getAsset(_mapName).getChild(key);
         Assert.assertNotNull(child);
-        SubscriptionCollection subscription = child.subscription(false);
+        @Nullable SubscriptionCollection subscription = child.subscription(false);
         Assert.assertEquals(1, subscription.subscriberCount());
 
         long start = System.nanoTime();
@@ -215,12 +218,12 @@ public class RemoteSubscriptionModelPerformanceTest {
         String key = TestUtils.getKey(_mapName, 0);
 
         //Create subscriber and register
-        TestChronicleTopicSubscriber topicSubscriber = new TestChronicleTopicSubscriber(key, _twoMbTestStringLength);
+        @NotNull TestChronicleTopicSubscriber topicSubscriber = new TestChronicleTopicSubscriber(key, _twoMbTestStringLength);
 
         clientAssetTree.registerTopicSubscriber(_mapName, String.class, String.class, topicSubscriber);
 
         Jvm.pause(100);
-        KVSSubscription subscription = (KVSSubscription) serverAssetTree.getAsset(_mapName).subscription(false);
+        @NotNull KVSSubscription subscription = (KVSSubscription) serverAssetTree.getAsset(_mapName).subscription(false);
         Assert.assertEquals(1, subscription.topicSubscriberCount());
 
         //Perform test a number of times to allow the JVM to warm up, but verify runtime against average
@@ -257,13 +260,13 @@ public class RemoteSubscriptionModelPerformanceTest {
 
         YamlLogging.setAll(false);
         //Create subscriber and register
-        TestChronicleMapEventListener mapEventListener = new TestChronicleMapEventListener(_mapName, _twoMbTestStringLength);
+        @NotNull TestChronicleMapEventListener mapEventListener = new TestChronicleMapEventListener(_mapName, _twoMbTestStringLength);
 
-        Subscriber<MapEvent> mapEventSubscriber = e -> e.apply(mapEventListener);
+        @NotNull Subscriber<MapEvent> mapEventSubscriber = e -> e.apply(mapEventListener);
         clientAssetTree.registerSubscriber(_mapName, MapEvent.class, mapEventSubscriber);
 
         Jvm.pause(100);
-        KVSSubscription subscription = (KVSSubscription) serverAssetTree.getAsset(_mapName).subscription(false);
+        @Nullable KVSSubscription subscription = (KVSSubscription) serverAssetTree.getAsset(_mapName).subscription(false);
         Assert.assertEquals(1, subscription.entrySubscriberCount());
 
         //Perform test a number of times to allow the JVM to warm up, but verify runtime against average
@@ -302,7 +305,7 @@ public class RemoteSubscriptionModelPerformanceTest {
         _testMap.clear();
 
         //Put values before testing as we want to ignore the insert events
-        Function<Integer, Object> putFunction = a -> _testMap.put(TestUtils.getKey(_mapName, a), _twoMbTestString);
+        @NotNull Function<Integer, Object> putFunction = a -> _testMap.put(TestUtils.getKey(_mapName, a), _twoMbTestString);
 
         IntStream.range(0, _noOfPuts).forEach(i ->
         {
@@ -311,12 +314,12 @@ public class RemoteSubscriptionModelPerformanceTest {
 
         Jvm.pause(100);
         //Create subscriber and register
-        TestChronicleMapEventListener mapEventListener = new TestChronicleMapEventListener(_mapName, _twoMbTestStringLength);
+        @NotNull TestChronicleMapEventListener mapEventListener = new TestChronicleMapEventListener(_mapName, _twoMbTestStringLength);
 
-        Subscriber<MapEvent> mapEventSubscriber = e -> e.apply(mapEventListener);
+        @NotNull Subscriber<MapEvent> mapEventSubscriber = e -> e.apply(mapEventListener);
         clientAssetTree.registerSubscriber(_mapName + "?bootstrap=false", MapEvent.class, mapEventSubscriber);
 
-        KVSSubscription subscription = (KVSSubscription) serverAssetTree.getAsset(_mapName).subscription(false);
+        @NotNull KVSSubscription subscription = (KVSSubscription) serverAssetTree.getAsset(_mapName).subscription(false);
 
         waitFor(() -> subscription.entrySubscriberCount() == 1);
         Assert.assertEquals(1, subscription.entrySubscriberCount());
@@ -347,7 +350,7 @@ public class RemoteSubscriptionModelPerformanceTest {
         Assert.assertEquals(0, subscription.entrySubscriberCount());
     }
 
-    private void waitFor(BooleanSupplier b) {
+    private void waitFor(@NotNull BooleanSupplier b) {
         for (int i = 1; i <= 40; i++)
             if (!b.getAsBoolean())
                 Jvm.pause(i * i);
@@ -363,9 +366,9 @@ public class RemoteSubscriptionModelPerformanceTest {
         //Put values before testing as we want to ignore the insert and update events
 
         //Create subscriber and register
-        TestChronicleMapEventListener mapEventListener = new TestChronicleMapEventListener(_mapName, _twoMbTestStringLength);
+        @NotNull TestChronicleMapEventListener mapEventListener = new TestChronicleMapEventListener(_mapName, _twoMbTestStringLength);
 
-        Subscriber<MapEvent> mapEventSubscriber = e -> e.apply(mapEventListener);
+        @NotNull Subscriber<MapEvent> mapEventSubscriber = e -> e.apply(mapEventListener);
         clientAssetTree.registerSubscriber(_mapName, MapEvent.class, mapEventSubscriber);
 
         //Perform test a number of times to allow the JVM to warm up, but verify runtime against average
@@ -407,18 +410,20 @@ public class RemoteSubscriptionModelPerformanceTest {
      */
     class TestChronicleKeyEventSubscriber implements Subscriber<String> {
         private int _stringLength;
+        @NotNull
         private AtomicInteger _noOfEvents = new AtomicInteger(0);
 
         public TestChronicleKeyEventSubscriber(int stringLength) {
             _stringLength = stringLength;
         }
 
+        @NotNull
         public AtomicInteger getNoOfEvents() {
             return _noOfEvents;
         }
 
         @Override
-        public void onMessage(String newValue) {
+        public void onMessage(@Nullable String newValue) {
             if (newValue == null) {
                 System.out.println("No value");
             } else {
@@ -436,6 +441,7 @@ public class RemoteSubscriptionModelPerformanceTest {
     class TestChronicleTopicSubscriber implements TopicSubscriber<String, String> {
         private String _keyName;
         private int _stringLength;
+        @NotNull
         private AtomicInteger _noOfEvents = new AtomicInteger(0);
 
         public TestChronicleTopicSubscriber(String keyName, int stringLength) {
@@ -450,13 +456,14 @@ public class RemoteSubscriptionModelPerformanceTest {
          * @throws InvalidSubscriberException
          */
         @Override
-        public void onMessage(String topic, String message) throws InvalidSubscriberException {
+        public void onMessage(String topic, @NotNull String message) throws InvalidSubscriberException {
             Assert.assertEquals(_keyName, topic);
             Assert.assertEquals(_stringLength, message.length());
 
             _noOfEvents.incrementAndGet();
         }
 
+        @NotNull
         public AtomicInteger getNoOfEvents() {
             return _noOfEvents;
         }
@@ -468,8 +475,11 @@ public class RemoteSubscriptionModelPerformanceTest {
      * check agains the expected number of events.
      */
     class TestChronicleMapEventListener implements MapEventListener<String, String> {
+        @NotNull
         private AtomicInteger _noOfInsertEvents = new AtomicInteger(0);
+        @NotNull
         private AtomicInteger _noOfUpdateEvents = new AtomicInteger(0);
+        @NotNull
         private AtomicInteger _noOfRemoveEvents = new AtomicInteger(0);
 
         private String _mapName;
@@ -481,28 +491,31 @@ public class RemoteSubscriptionModelPerformanceTest {
         }
 
         @Override
-        public void update(String assetName, String key, String oldValue, String newValue) {
+        public void update(String assetName, String key, String oldValue, @NotNull String newValue) {
             testKeyAndValue(key, newValue, _noOfUpdateEvents);
         }
 
         @Override
-        public void insert(String assetName, String key, String value) {
+        public void insert(String assetName, String key, @NotNull String value) {
             testKeyAndValue(key, value, _noOfInsertEvents);
         }
 
         @Override
-        public void remove(String assetName, String key, String value) {
+        public void remove(String assetName, String key, @NotNull String value) {
             testKeyAndValue(key, value, _noOfRemoveEvents);
         }
 
+        @NotNull
         public AtomicInteger getNoOfInsertEvents() {
             return _noOfInsertEvents;
         }
 
+        @NotNull
         public AtomicInteger getNoOfUpdateEvents() {
             return _noOfUpdateEvents;
         }
 
+        @NotNull
         public AtomicInteger getNoOfRemoveEvents() {
             return _noOfRemoveEvents;
         }
@@ -513,7 +526,7 @@ public class RemoteSubscriptionModelPerformanceTest {
             _noOfRemoveEvents = new AtomicInteger(0);
         }
 
-        private void testKeyAndValue(String key, String value, AtomicInteger counterToIncrement) {
+        private void testKeyAndValue(String key, @NotNull String value, @NotNull AtomicInteger counterToIncrement) {
             int counter = counterToIncrement.getAndIncrement();
             Assert.assertEquals(TestUtils.getKey(_mapName, counter), key);
             Assert.assertEquals(_stringLength, value.length());
