@@ -5,6 +5,7 @@ import net.openhft.chronicle.engine.api.tree.AssetTree;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.query.QueueConfig;
 import net.openhft.chronicle.engine.tree.MessageAdaptor;
+import net.openhft.chronicle.engine.tree.VanillaAsset;
 import net.openhft.chronicle.wire.AbstractMarshallableCfg;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +41,7 @@ public class QueueCfg extends AbstractMarshallableCfg implements Installable {
 
         final Function<String, Integer> queueSource = s -> s.equals(uriPath) ? masterId : 1;
         final Asset asset = assetTree.acquireAsset(uriPath);
+        ((VanillaAsset) asset).configQueueServer();
         final QueueConfig qc = asset.getView(QueueConfig.class);
 
         if (qc == null)
