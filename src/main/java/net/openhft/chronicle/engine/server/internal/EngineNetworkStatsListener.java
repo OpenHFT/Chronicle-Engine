@@ -28,6 +28,7 @@ import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.cfg.EngineClusterContext;
 import net.openhft.chronicle.engine.fs.Clusters;
 import net.openhft.chronicle.engine.fs.EngineCluster;
+import net.openhft.chronicle.engine.query.QueueConfig;
 import net.openhft.chronicle.engine.tree.ChronicleQueueView;
 import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.network.MarshallableFunction;
@@ -39,6 +40,7 @@ import net.openhft.chronicle.network.cluster.AbstractSubHandler;
 import net.openhft.chronicle.network.cluster.ClusterContext;
 import net.openhft.chronicle.wire.Demarshallable;
 import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +56,7 @@ import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContex
  */
 public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWireNetworkContext> {
 
-    public static final String PROC_CONNECTIONS_CLUSTER_THROUGHPUT = "/proc/connections/cluster/throughput/";
+    private static final String PROC_CONNECTIONS_CLUSTER_THROUGHPUT = "/proc/connections/cluster/throughput/";
     private final Asset asset;
     private final int localIdentifier;
     private final WireNetworkStats wireNetworkStats = new WireNetworkStats();
@@ -63,7 +65,6 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
     private EngineWireNetworkContext nc;
     @Nullable
     private Histogram histogram = null;
-
 
     static {
         RequestContext.loadDefaultAliases();
@@ -79,6 +80,7 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
 
         if (qv != null)
             return qv;
+
         @NotNull String path = PROC_CONNECTIONS_CLUSTER_THROUGHPUT + localIdentifier;
 
         @NotNull RequestContext requestContext = requestContext(path)
@@ -87,8 +89,14 @@ public class EngineNetworkStatsListener implements NetworkStatsListener<EngineWi
         if (ChronicleQueueView.isQueueReplicationAvailable())
             requestContext.cluster(clusterName());
 
-        qv = asset.root().acquireAsset(requestContext
-                .fullName()).acquireView(QueueView.class, requestContext);
+        Asset asset = this.asset.root().acquireAsset(requestContext
+                .fullName());
+
+        final QueueConfig qConfig = asset.getView(QueueConfig.class);
+        if (qConfig == null)
+            asset.addView(QueueConfig.class, new QueueConfig(s -> localIdentifier, false, null, WireType.BINARY));
+
+        qv = asset.acquireView(QueueView.class, requestContext);
         return qv;
     }
 
