@@ -15,15 +15,16 @@ public class EngineInstanceTest {
 
     @Test
     public void testEngineInstanceLoads() {
-        VanillaAssetTree assetTree = EngineInstance.engineMain(1, "engine.yaml");
-        Assert.assertNotNull(assetTree);
-        Asset asset = assetTree.getAsset("/queue/queue1");
-        Assert.assertNotNull(asset);
-        QueueView view = asset.getView(QueueView.class);
-        Assert.assertNotNull(view);
-        QueueConfig qc = asset.getView(QueueConfig.class);
-        Assert.assertNotNull(qc);
-        Assert.assertNotNull(WireType.BINARY.equals(qc.wireType()));
+        try (VanillaAssetTree assetTree = EngineInstance.engineMain(1, "engine.yaml")) {
+            Assert.assertNotNull(assetTree);
+            Asset asset = assetTree.getAsset("/queue/queue1");
+            Assert.assertNotNull(asset);
+            QueueView view = asset.getView(QueueView.class);
+            Assert.assertNotNull(view);
+            QueueConfig qc = asset.getView(QueueConfig.class);
+            Assert.assertNotNull(qc);
+            Assert.assertNotNull(WireType.BINARY.equals(qc.wireType()));
+        }
     }
 
 }
