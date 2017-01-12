@@ -502,7 +502,6 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
             } else {
                 @Nullable final M message = valueIn.object(elementTypeClass);
                 excerpt.message(message);
-                System.out.println(pos + " " + topic + " " + message);
             }
             return excerpt
                     .topic(topic)

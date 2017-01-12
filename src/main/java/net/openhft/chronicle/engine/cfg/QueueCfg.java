@@ -28,6 +28,7 @@ public class QueueCfg extends AbstractMarshallableCfg implements Installable {
     private boolean acknowledgment = false;
     private MessageAdaptor messageAdaptor = null;
     private WireType wireType = WireType.BINARY;
+    private String cluster = "";
 
     @Nullable
     @Override
@@ -51,7 +52,7 @@ public class QueueCfg extends AbstractMarshallableCfg implements Installable {
                 .type(topicClass)
                 .type2(messageClass)
                 .basePath(basePath)
-                .cluster(""));
+                .cluster(cluster));
 
         return null;
     }
