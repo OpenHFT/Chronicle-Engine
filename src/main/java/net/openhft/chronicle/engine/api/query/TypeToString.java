@@ -24,7 +24,7 @@ import net.openhft.chronicle.wire.Marshallable;
  */
 public interface TypeToString {
 
-    String typeToSting(Class type);
+    String typeToString(Class type);
 
     Class<? extends Marshallable> toType(CharSequence type);
 }

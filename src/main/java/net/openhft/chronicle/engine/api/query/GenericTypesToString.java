@@ -50,7 +50,7 @@ public class GenericTypesToString implements TypeToString {
     }
 
     @Override
-    public String typeToSting(Class type) {
+    public String typeToString(Class type) {
         return cache2.get(type);
     }
 
