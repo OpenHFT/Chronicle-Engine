@@ -65,7 +65,8 @@ public class RemoteIndexQueueView<K extends Marshallable, V extends Marshallable
     }
 
     @Override
-    public void registerSubscriber(@NotNull Subscriber<IndexedValue<V>> subscriber, @NotNull IndexQuery<V> vanillaIndexQuery) {
+    public void registerSubscriber(@NotNull Subscriber<IndexedValue<V>> subscriber,
+                                   @NotNull IndexQuery<V> vanillaIndexQuery) {
 
         @NotNull final AtomicBoolean hasAlreadySubscribed = new AtomicBoolean();
 
@@ -82,14 +83,19 @@ public class RemoteIndexQueueView<K extends Marshallable, V extends Marshallable
 
             @Override
             public void onSubscribe(@NotNull final WireOut wireOut) {
-
+                IndexQuery<V> q;
                 // this allows us to resubscribe from the last index we received
-                if (hasAlreadySubscribed.getAndSet(true))
-                    ((VanillaIndexQuery) vanillaIndexQuery).fromIndex(fromIndex);
+                if (hasAlreadySubscribed.getAndSet(true)) {
+                    VanillaIndexQuery query = vanillaIndexQuery.deepCopy();
+                    query.fromIndex(fromIndex+1);
+                    query.bootstrap(false);
+                    q = query;
+                } else
+                    q = vanillaIndexQuery;
 
                 subscribersToTid.put(subscriber, tid());
                 wireOut.writeEventName(registerSubscriber)
-                        .typedMarshallable(vanillaIndexQuery);
+                        .typedMarshallable(q);
             }
 
             @Override

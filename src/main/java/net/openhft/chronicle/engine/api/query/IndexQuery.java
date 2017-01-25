@@ -17,6 +17,7 @@
 
 package net.openhft.chronicle.engine.api.query;
 
+import net.openhft.chronicle.wire.KeyedMarshallable;
 import net.openhft.chronicle.wire.Marshallable;
 
 import java.util.function.Predicate;
@@ -34,9 +35,15 @@ public interface IndexQuery<V> extends Marshallable {
     int FROM_END = 0;
 
     /**
-     * replay data from the start of the current roll cycle
+     * replay data from the start of the current roll cycle, the start of today
      */
     int FROM_START = -1;
+
+    /**
+     * @return if {@code true} the latest update for the roll cycle ( for example day ) , is provided, the latest update is determined using the
+     * {@link KeyedMarshallable}, if false, not snapshot is return
+     */
+    boolean bootstrap();
 
     long fromIndex();
 
