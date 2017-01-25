@@ -18,13 +18,15 @@
 package net.openhft.chronicle.engine.api.query;
 
 import net.openhft.chronicle.wire.Marshallable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Rob Austin.
  */
 public interface TypeToString {
 
-    String typeToSting(Class type);
+    String typeToString(Class type);
 
+    @Nullable
     Class<? extends Marshallable> toType(CharSequence type);
 }

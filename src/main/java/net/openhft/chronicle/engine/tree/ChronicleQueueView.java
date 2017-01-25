@@ -110,12 +110,9 @@ public class ChronicleQueueView<T, M> implements QueueView<T, M>, MapView<T, M>,
         @Nullable final HostIdentifier hostIdentifier = asset.findOrCreateView(HostIdentifier.class);
         @Nullable final Byte hostId = hostIdentifier == null ? null : hostIdentifier.hostId();
 
-        try {
-            queueConfig = asset.findView(QueueConfig.class);
-        } catch (AssetNotFoundException anfe) {
-            Jvm.debug().on(getClass(), "queue config not found asset=" + asset.fullName());
-            throw anfe;
-        }
+        queueConfig = asset.findView(QueueConfig.class);
+        if (queueConfig == null)
+            throw new AssetNotFoundException("QueueConfig not found at " + asset);
 
         chronicleQueue = queue != null ? queue : newInstance(context.basePath(), queueConfig.wireType());
         messageTypeClass = context.messageType();

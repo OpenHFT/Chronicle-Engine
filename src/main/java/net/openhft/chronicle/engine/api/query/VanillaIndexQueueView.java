@@ -143,8 +143,11 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
                         if (sb.length() == 0)
                             continue;
+                        Class<? extends Marshallable> type = typeToString.toType(sb);
+                        if (type == null)
+                            continue;
                         @NotNull final V v = (V) VanillaObjectCacheFactory.INSTANCE.get()
-                                .apply(typeToString.toType(sb));
+                                .apply(type);
                         long readPosition = dc.wire().bytes().readPosition();
                         try {
                             read.marshallable(v);
@@ -346,8 +349,12 @@ public class VanillaIndexQueueView<V extends Marshallable>
                     continue;
                 }
 
+                Class<? extends Marshallable> type = typeToString.toType(sb);
+                if (type == null)
+                    continue;
+
                 @NotNull final V v = (V) VanillaObjectCacheFactory.INSTANCE.get()
-                        .apply(typeToString.toType(sb));
+                        .apply(type);
                 valueIn.marshallable(v);
 
                 if (!filter.test(v))

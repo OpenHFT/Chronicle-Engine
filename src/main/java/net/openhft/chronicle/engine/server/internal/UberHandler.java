@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
@@ -69,10 +70,6 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
         wireType(wireType);
     }
 
-    public int remoteIdentifier() {
-        return remoteIdentifier;
-    }
-
     private UberHandler(int localIdentifier,
                         int remoteIdentifier,
                         @NotNull WireType wireType,
@@ -94,6 +91,10 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
                 wire.write(() -> HANDLER).typedMarshallable(m);
             }
         };
+    }
+
+    public int remoteIdentifier() {
+        return remoteIdentifier;
     }
 
     public boolean isClosed() {
@@ -221,7 +222,11 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
             SubHandler handler = handler();
             handler.remoteIdentifier(remoteIdentifier);
             handler.localIdentifier(localIdentifier);
-            handler.onInitialize(outWire);
+            try {
+                handler.onInitialize(outWire);
+            } catch (RejectedExecutionException e) {
+                throw new IllegalStateException("EventGroup shutdown", e);
+            }
             return;
         }
 

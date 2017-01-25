@@ -12,6 +12,7 @@ import net.openhft.chronicle.engine.fs.EngineHostDetails;
 import net.openhft.chronicle.engine.map.CMap2EngineReplicator;
 import net.openhft.chronicle.engine.map.ChronicleMapKeyValueStore;
 import net.openhft.chronicle.engine.map.VanillaMapView;
+import net.openhft.chronicle.engine.query.QueueConfig;
 import net.openhft.chronicle.engine.server.ServerEndpoint;
 import net.openhft.chronicle.engine.tree.TopologicalEvent;
 import net.openhft.chronicle.engine.tree.VanillaAssetTree;
@@ -19,6 +20,7 @@ import net.openhft.chronicle.network.NetworkStats;
 import net.openhft.chronicle.network.NetworkStatsListener;
 import net.openhft.chronicle.network.cluster.HostDetails;
 import net.openhft.chronicle.wire.TextWire;
+import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -105,6 +107,10 @@ public class EngineInstance {
 
                 final int id = engineHostDetails
                         .hostId();
+                Asset asset = tree.acquireAsset("/proc/connections/cluster/throughput/" + id);
+
+                // sets the master of each of the queues
+                asset.addView(new QueueConfig(x -> id, false, null, WireType.BINARY));
 
                 tree.acquireQueue("/proc/connections/cluster/throughput/" + id,
                         String.class,
@@ -113,7 +119,6 @@ public class EngineInstance {
 
             return tree;
         } catch (Exception e) {
-            e.printStackTrace();
             throw Jvm.rethrow(e);
         }
 

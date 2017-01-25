@@ -183,6 +183,9 @@ public class VanillaAsset implements Asset, Closeable {
                 QueueWrappingColumnView::new, QueueView.class);
     }
 
+    /**
+     * the wrapping rules for the connector of the TCP/IP connection
+     */
     public void configQueueRemote() {
         configQueueCommon();
         addLeafRule(QueueView.class, LAST + " RemoteQueueView", RemoteQueueView::new);
