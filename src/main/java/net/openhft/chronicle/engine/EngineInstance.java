@@ -119,7 +119,6 @@ public class EngineInstance {
 
             return tree;
         } catch (Exception e) {
-            e.printStackTrace();
             throw Jvm.rethrow(e);
         }
 

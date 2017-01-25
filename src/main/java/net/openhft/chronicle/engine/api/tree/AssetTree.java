@@ -27,6 +27,7 @@ import net.openhft.chronicle.engine.tree.QueueView;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.Set;
 
 import static net.openhft.chronicle.engine.api.tree.RequestContext.requestContext;
@@ -184,6 +185,13 @@ public interface AssetTree extends Closeable {
                 (messageClass).basePath(basePath));
     }
 
+    @NotNull
+    default <T, E> TopicPublisher<T, E> acquireTopicPublisher(@NotNull String uri, File baseDir,
+                                                              Class<T> topicClass, Class<E> messageClass)
+            throws AssetNotFoundException {
+        return acquireTopicPublisher(uri, baseDir.getAbsolutePath(), topicClass, messageClass);
+    }
+
     /**
      * Register a subscriber to a URI with an expected type of message by class. <p></p> e.g. if you
      * subscribe to a type of String.class you get the keys which changed, if you subscribe to
@@ -254,6 +262,11 @@ public interface AssetTree extends Closeable {
         kvsSubscription.registerTopicSubscriber(rc, subscriber);
     }
 
+    default <T, E> void registerTopicSubscriber(@NotNull String uri, File baseFile, Class<T> topicClass,
+                                                Class<E> messageClass, @NotNull TopicSubscriber<T, E> subscriber)
+            throws AssetNotFoundException {
+        registerTopicSubscriber(uri, baseFile.getAbsolutePath(), topicClass, messageClass, subscriber);
+    }
 
     /**
      * Acquire the Subscription view for a URI.
