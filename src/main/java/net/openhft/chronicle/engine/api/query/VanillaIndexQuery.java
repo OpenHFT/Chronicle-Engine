@@ -19,10 +19,12 @@ package net.openhft.chronicle.engine.api.query;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.annotation.UsedViaReflection;
+import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.engine.map.QueueObjectSubscription;
 import net.openhft.chronicle.wire.AbstractMarshallable;
 import net.openhft.chronicle.wire.Demarshallable;
 import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.Wires;
 import net.openhft.compiler.CompilerUtils;
 import net.openhft.lang.model.DataValueGenerator;
 import org.jetbrains.annotations.NotNull;
@@ -47,6 +49,7 @@ public class VanillaIndexQuery<V> extends AbstractMarshallable implements Demars
     private String select;
     private String eventName;
     private long from;
+    private boolean bootstrap = true;
 
     public VanillaIndexQuery() {
     }
@@ -55,6 +58,13 @@ public class VanillaIndexQuery<V> extends AbstractMarshallable implements Demars
     public VanillaIndexQuery(@NotNull WireIn wire) {
         readMarshallable(wire);
     }
+
+
+    @Override
+    public void readMarshallable(@NotNull WireIn wire) throws IORuntimeException {
+        Wires.readMarshallable(this, wire, false);
+    }
+
 
     public Class<V> valueClass() {
         return valueClass;
@@ -93,6 +103,11 @@ public class VanillaIndexQuery<V> extends AbstractMarshallable implements Demars
         return this;
     }
 
+    @Override
+    public boolean bootstrap() {
+        return bootstrap;
+    }
+
     public long fromIndex() {
         return from;
     }
@@ -119,8 +134,13 @@ public class VanillaIndexQuery<V> extends AbstractMarshallable implements Demars
                 "valueClass=" + valueClass +
                 ", select='" + select + '\'' +
                 ", eventName='" + eventName + '\'' +
-                ", from=" + from +
+                ", from=" + Long.toHexString(from) +
                 '}';
+    }
+
+    public VanillaIndexQuery bootstrap(boolean bootstrap) {
+        this.bootstrap = bootstrap;
+        return this;
     }
 
     /**
@@ -160,7 +180,6 @@ public class VanillaIndexQuery<V> extends AbstractMarshallable implements Demars
             final String select = typedSelect.select;
 
             CharSequence toString = select.contains("\"") ? escapeQuotes(select) : select;
-
 
             @NotNull String source = new StringBuilder().
                     append("package net.openhft.chronicle.engine.api.query;\npublic class ")

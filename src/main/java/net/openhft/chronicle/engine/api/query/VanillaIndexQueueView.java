@@ -22,6 +22,7 @@ import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.core.threads.InvalidEventHandlerException;
+import net.openhft.chronicle.core.time.SystemTimeProvider;
 import net.openhft.chronicle.engine.api.pubsub.ConsumingSubscriber;
 import net.openhft.chronicle.engine.api.pubsub.Subscriber;
 import net.openhft.chronicle.engine.api.tree.Asset;
@@ -30,6 +31,7 @@ import net.openhft.chronicle.engine.tree.ChronicleQueueView;
 import net.openhft.chronicle.engine.tree.QueueView;
 import net.openhft.chronicle.queue.ChronicleQueue;
 import net.openhft.chronicle.queue.ExcerptTailer;
+import net.openhft.chronicle.queue.RollCycle;
 import net.openhft.chronicle.queue.impl.RollingChronicleQueue;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
@@ -37,8 +39,8 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -46,8 +48,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
+import static net.openhft.chronicle.engine.api.query.IndexQuery.FROM_START;
 import static net.openhft.chronicle.wire.Wires.*;
 
 /**
@@ -57,6 +59,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
         implements IndexQueueView<ConsumingSubscriber<IndexedValue<V>>, V> {
 
     private static final Logger LOG = LoggerFactory.getLogger(VanillaIndexQueueView.class);
+    private static final Iterator EMPTY_ITERATOR = Collections.EMPTY_LIST.iterator();
 
 
     private final ChronicleQueue chronicleQueue;
@@ -76,7 +79,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
     private long messagesReadPerSecond = 0;
 
     @NotNull
-    public ConcurrentMap<Bytes, BytesStore> bytesToKey = new ConcurrentHashMap<>();
+    private ConcurrentMap<Bytes, BytesStore> bytesToKey = new ConcurrentHashMap<>();
 
     public VanillaIndexQueueView(@NotNull RequestContext context,
                                  @NotNull Asset asset,
@@ -216,10 +219,12 @@ public class VanillaIndexQueueView<V extends Marshallable>
         final long endIndex = excerptTailer.index();
 
         long fromIndex0 = vanillaIndexQuery.fromIndex();
-        if (fromIndex0 == -1) {
+        if (fromIndex0 == FROM_START) {
             @NotNull final RollingChronicleQueue chronicleQueue = (RollingChronicleQueue) this.chronicleQueue;
-            final int cycle = chronicleQueue.cycle();
-            fromIndex0 = chronicleQueue.rollCycle().toIndex(cycle, 0);
+            RollCycle rollCycle = chronicleQueue.rollCycle();
+            int currentIndex = rollCycle.current(SystemTimeProvider.INSTANCE, 0);
+            final int cycle = rollCycle.toCycle(currentIndex);
+            fromIndex0 = rollCycle.toIndex(cycle, 0);
         } else if (fromIndex0 == 0) {
             fromIndex0 = endIndex;
         }
@@ -228,8 +233,8 @@ public class VanillaIndexQueueView<V extends Marshallable>
         fromIndex0 = Math.max(fromIndex0, start);
 
         final long fromIndex = fromIndex0;
+        final boolean success = tailer.moveToIndex(fromIndex);
 
-        boolean success = tailer.moveToIndex(fromIndex);
         assert success || (fromIndex == endIndex) : "fromIndex=" + Long.toHexString(fromIndex)
                 + ", start=" + Long.toHexString(start) + ",end=" + Long.toHexString(endIndex);
 
@@ -273,16 +278,14 @@ public class VanillaIndexQueueView<V extends Marshallable>
 
         @NotNull final Iterator<IndexedValue<V>> iterator;
 
-
-        final ConcurrentMap<Object, IndexedValue<V>> objectIndexedValueConcurrentMap = multiMap.computeIfAbsent(eventName, k -> new ConcurrentHashMap<>());
+        final ConcurrentMap<Object, IndexedValue<V>> map = multiMap.computeIfAbsent(eventName, k -> new ConcurrentHashMap<>());
 
         final long fromIndex0 = fromIndex;
-        List<IndexedValue<V>> l = objectIndexedValueConcurrentMap.values().stream()
-                .filter(i -> i.index() < fromIndex0 && filter.test(i.v()))
-                .collect(Collectors.toList());
 
-        iterator = l.iterator();
-
+        iterator = (vanillaIndexQuery.bootstrap())
+                ? map.values().stream().filter(
+                i -> i.index() < fromIndex0 && filter.test(i.v())).iterator()
+                : EMPTY_ITERATOR;
 
         try {
             @NotNull final Supplier<Marshallable> supplier = excerptConsumer(vanillaIndexQuery,
