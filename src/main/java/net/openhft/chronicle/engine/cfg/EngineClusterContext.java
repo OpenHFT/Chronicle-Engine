@@ -53,18 +53,11 @@ public class EngineClusterContext extends ClusterContext {
     private static final Logger LOG = LoggerFactory.getLogger(EngineClusterContext.class);
     Asset assetRoot;
     private byte localIdentifier;
-
-    @UsedViaReflection
-    private EngineClusterContext(@NotNull WireIn w) {
-        super(w);
-    }
-
-    public EngineClusterContext() {
-        super();
-    }
-
     @NotNull
     private NetworkStatsListener defaultNetworkStatsListener = new NetworkStatsListener() {
+
+        String host;
+        long port;
 
         @Override
         public void close() {
@@ -75,9 +68,6 @@ public class EngineClusterContext extends ClusterContext {
                     ", port=" + port +
                     ", isConnected=false");
         }
-
-        String host;
-        long port;
 
         @Override
         public void networkContext(NetworkContext networkContext) {
@@ -108,6 +98,15 @@ public class EngineClusterContext extends ClusterContext {
 
         }
     };
+
+    @UsedViaReflection
+    private EngineClusterContext(@NotNull WireIn w) {
+        super(w);
+    }
+
+    public EngineClusterContext() {
+        super();
+    }
 
     @Nullable
     public ThrowingFunction<NetworkContext, TcpEventHandler, IOException> tcpEventHandlerFactory() {
@@ -151,7 +150,7 @@ public class EngineClusterContext extends ClusterContext {
                     = x -> new HeaderTcpHandler<>(handler, consumer, x);
 
             @NotNull final WireTypeSniffingTcpHandler sniffer = new
-                    WireTypeSniffingTcpHandler<>(handler, nc, f);
+                    WireTypeSniffingTcpHandler<>(handler, f);
 
             handler.tcpHandler(sniffer);
             return handler;
