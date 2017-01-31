@@ -529,7 +529,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     /**
      * android-changed
      * Android does not use a SecurityManager. This will simply execute
-     * the runnable ingoring permisions.
+     * the runnable ignoring permissions.
      */
     private void runWithPermissions(@NotNull Runnable r, Permission... permissions) {
         r.run();
@@ -538,7 +538,7 @@ public class JSR166TestCase extends ThreadMonitoringTest {
     /**
      * android-changed
      * Android does not use a SecurityManager. This will simply execute
-     * the runnable ingoring permisions.
+     * the runnable ignoring permissions.
      */
     public void runWithSecurityManagerWithPermissions(@NotNull Runnable r,
                                                       Permission... permissions) {

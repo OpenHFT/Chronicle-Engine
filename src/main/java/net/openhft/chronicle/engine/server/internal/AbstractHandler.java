@@ -151,7 +151,7 @@ abstract class AbstractHandler {
     /**
      * @param publisher
      * @return If the throttlePeriodMs is set returns a throttled wire out publisher, otherwise the
-     * origional
+     * original
      */
     @NotNull
     WireOutPublisher publisher(@NotNull final WireOutPublisher publisher) {

@@ -121,7 +121,7 @@ public class EngineHostDetails extends HostDetails implements Marshallable, Clos
         }
 
         /**
-         * There is no longer any valid session detaisl and get() will return null.
+         * There is no longer any valid session details and get() will return null.
          */
         public void remove() {
             throw new UnsupportedOperationException();

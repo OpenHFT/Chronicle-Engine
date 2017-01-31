@@ -43,7 +43,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 /**
- * will periodically send a heatbeat message, the period of this message is defined by {@link
+ * will periodically send a heartbeat message, the period of this message is defined by {@link
  * HeartbeatHandler#heartbeatIntervalMs} once the heart beat is
  *
  * @author Rob Austin.
