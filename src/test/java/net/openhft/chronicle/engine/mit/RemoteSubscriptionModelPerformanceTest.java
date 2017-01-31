@@ -472,7 +472,7 @@ public class RemoteSubscriptionModelPerformanceTest {
     /**
      * Map event listener for performance testing. Checks that the key is the one expected and the
      * size of the value is as expected. Increments event specific counters that can be used to
-     * check agains the expected number of events.
+     * check against the expected number of events.
      */
     class TestChronicleMapEventListener implements MapEventListener<String, String> {
         @NotNull
