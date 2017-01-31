@@ -217,7 +217,7 @@ public class ChassisRFCTest {
         map.put("topic-1", "Message-1");
         assertEquals("Message-1", map.get("topic-1"));
 
-        assertEquals(1, map.applyTo(Map::size), 0);
+        assertEquals(1, (int) map.applyTo(Map::size), 0);
 
         map.remove("topic-1");
         assertEquals(null, map.get("topic-1"));
@@ -227,7 +227,7 @@ public class ChassisRFCTest {
         assertEquals("Message-2", map.get("topic-2"));
         assertEquals("[{name: topic-1, message: Message-1}, {name: topic-1, message: null}, {name: topic-2, message: Message-2}]", values.toString());
 
-        assertEquals(0, map.syncUpdate(m -> m.remove("topic-2"), Map::size), 0);
+        assertEquals(0, (int) map.syncUpdate(m -> m.remove("topic-2"), Map::size), 0);
         assertEquals(null, map.get("topic-2"));
         assertEquals("[{name: topic-1, message: Message-1}, {name: topic-1, message: null}, {name: topic-2, message: Message-2}, {name: topic-2, message: null}]", values.toString());
     }
