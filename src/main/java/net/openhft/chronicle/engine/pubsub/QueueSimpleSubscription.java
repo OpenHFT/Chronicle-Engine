@@ -136,7 +136,7 @@ public class QueueSimpleSubscription<E> implements SimpleSubscription<E> {
     @Override
     public void notifyMessage(Object e) {
         try {
-            @NotNull E ee = e instanceof BytesStore ? valueReader.apply(e) : (E) e;
+            @Nullable E ee = e instanceof BytesStore ? valueReader.apply(e) : (E) e;
             //SubscriptionConsumer.notifyEachSubscriber(subscribers, s -> s.onMessage(ee));
         } catch (ClassCastException e1) {
             if (LOG.isDebugEnabled())

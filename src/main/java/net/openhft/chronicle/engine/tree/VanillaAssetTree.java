@@ -32,6 +32,7 @@ import net.openhft.chronicle.engine.map.UpdatedEvent;
 import net.openhft.chronicle.engine.map.remote.*;
 import net.openhft.chronicle.network.VanillaSessionDetails;
 import net.openhft.chronicle.network.connection.ClientConnectionMonitor;
+import net.openhft.chronicle.network.connection.FatalFailureConnectionStrategy;
 import net.openhft.chronicle.threads.Threads;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
@@ -128,7 +129,7 @@ public class VanillaAssetTree implements AssetTree {
     @NotNull
     public VanillaAssetTree forRemoteAccess(@NotNull String[] hostPortDescription,
                                             @NotNull WireType wire) {
-        root.forRemoteAccess(hostPortDescription, wire, clientSession(), null);
+        root.forRemoteAccess(hostPortDescription, wire, clientSession(), null, new FatalFailureConnectionStrategy(3));
         return this;
     }
 
@@ -148,7 +149,7 @@ public class VanillaAssetTree implements AssetTree {
         if (clientConnectionMonitor != null)
             root.viewMap.put(ClientConnectionMonitor.class, clientConnectionMonitor);
 
-        root.forRemoteAccess(hostPortDescription, wire, clientSession(), clientConnectionMonitor);
+        root.forRemoteAccess(hostPortDescription, wire, clientSession(), clientConnectionMonitor, new FatalFailureConnectionStrategy(3));
         return this;
     }
 

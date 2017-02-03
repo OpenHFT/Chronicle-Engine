@@ -26,6 +26,7 @@ import net.openhft.chronicle.engine.api.pubsub.SubscriptionConsumer;
 import net.openhft.chronicle.engine.api.tree.RequestContext;
 import net.openhft.chronicle.engine.query.Filter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,7 +91,7 @@ public class MapSimpleSubscription<E> implements SimpleSubscription<E> {
     @Override
     public void notifyMessage(Object e) {
         try {
-            @NotNull E ee = e instanceof BytesStore ? valueReader.apply(e) : (E) e;
+            @Nullable E ee = e instanceof BytesStore ? valueReader.apply(e) : (E) e;
             SubscriptionConsumer.notifyEachSubscriber(subscribers, s -> s.onMessage(ee));
         } catch (ClassCastException e1) {
             if (LOG.isDebugEnabled())

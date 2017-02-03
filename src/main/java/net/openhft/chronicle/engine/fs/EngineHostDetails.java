@@ -26,6 +26,7 @@ import net.openhft.chronicle.network.api.session.SessionDetails;
 import net.openhft.chronicle.network.api.session.SessionProvider;
 import net.openhft.chronicle.network.cluster.HostDetails;
 import net.openhft.chronicle.network.connection.ClientConnectionMonitor;
+import net.openhft.chronicle.network.connection.FatalFailureConnectionStrategy;
 import net.openhft.chronicle.network.connection.SocketAddressSupplier;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.Marshallable;
@@ -54,12 +55,12 @@ public class EngineHostDetails extends HostDetails implements Marshallable, Clos
         this.connectUri(connectUri);
     }
 
-    /**
+   /* *//**
      * @param asset     a point in the asset tree, used to fine the ClientConnectionMonitor
      * @param eventLoop used to process events
      * @param wire      converts from bytes to wire for the type of the wire used
      * @return a new or existing instance of the TcpChannelHub
-     */
+     *//*
     public TcpChannelHub acquireTcpChannelHub(@NotNull final Asset asset,
                                               @NotNull final EventLoop eventLoop,
                                               @NotNull final WireType wire) {
@@ -76,10 +77,10 @@ public class EngineHostDetails extends HostDetails implements Marshallable, Clos
                     (connectURIs, "hostId=" + hostId() + ",connectUri=" + connectUri);
             @Nullable final ClientConnectionMonitor clientConnectionMonitor = asset.findView(ClientConnectionMonitor.class);
             return new TcpChannelHub(new SimpleSessionProvider(sessionDetails), eventLoop, wire, "hostId=" + hostId + ",connectUri=" + connectUri,
-                    socketAddressSupplier, true, clientConnectionMonitor, HandlerPriority.TIMER);
+                    socketAddressSupplier, true, clientConnectionMonitor, HandlerPriority.TIMER, new FatalFailureConnectionStrategy(3));
         });
     }
-
+*/
     @Override
     public void close() {
         tcpChannelHubs.values().forEach(Closeable::closeQuietly);
