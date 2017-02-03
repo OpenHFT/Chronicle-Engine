@@ -111,11 +111,12 @@ public class TypographyTest {
     public void before() {
         assetTree.acquireMap("/example/data1", String.class, String.class).size();
         assetTree.acquireMap("/example/data2", String.class, String.class).size();
+        YamlLogging.setAll(false);
     }
 
     @Test
     public void testTypography() throws InterruptedException {
-
+              YamlLogging.setAll(false);
         //  map.put("hello", "world");
         //YamlLogging.setAll(true);
         @NotNull CountDownLatch latch = new CountDownLatch(1);
@@ -138,7 +139,7 @@ public class TypographyTest {
     public void testWhenMapIsAddedLater() throws InterruptedException {
 
         //  map.put("hello", "world");
-        YamlLogging.setAll(true);
+
         @NotNull CountDownLatch latch = new CountDownLatch(1);
         @NotNull RequestContext rc = RequestContext.requestContext("").elementType(TopologicalEvent.class)
                 .bootstrap(true);
@@ -160,7 +161,7 @@ public class TypographyTest {
     public void testWhenQueueIsAddedLater() throws InterruptedException {
 
         //  map.put("hello", "world");
-        YamlLogging.setAll(true);
+
         @NotNull CountDownLatch latch = new CountDownLatch(1);
         @NotNull RequestContext rc = RequestContext.requestContext("").elementType(TopologicalEvent.class)
                 .bootstrap(true);
