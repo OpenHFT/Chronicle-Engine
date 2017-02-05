@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static net.openhft.chronicle.core.Jvm.setExceptionsHandlers;
 import static net.openhft.chronicle.core.onoes.PrintExceptionHandler.WARN;
 import static net.openhft.chronicle.engine.api.tree.RequestContext.loadDefaultAliases;
 
@@ -39,7 +38,7 @@ public class EngineInstance {
 
     static {
         try {
-            setExceptionsHandlers(WARN, WARN, null);
+            Jvm.setExceptionHandlers(WARN, WARN, null);
             loadDefaultAliases();
         } catch (Exception e) {
             e.printStackTrace();
