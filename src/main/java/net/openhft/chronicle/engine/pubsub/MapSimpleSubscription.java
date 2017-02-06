@@ -43,6 +43,7 @@ public class MapSimpleSubscription<E> implements SimpleSubscription<E> {
     private final Set<Subscriber<E>> subscribers = new CopyOnWriteArraySet<>();
     private final Reference<E> currentValue;
     private final Function<Object, E> valueReader;
+    private volatile boolean closed = true;
 
     public MapSimpleSubscription(Reference<E> reference, Function<Object, E> valueReader) {
         this.currentValue = reference;
@@ -102,6 +103,10 @@ public class MapSimpleSubscription<E> implements SimpleSubscription<E> {
 
     @Override
     public void close() {
+        if (isClosed())
+            return;
+        closed = true;
+
         for (@NotNull Subscriber<E> subscriber : subscribers) {
             try {
                 subscriber.onEndOfSubscription();
@@ -109,5 +114,10 @@ public class MapSimpleSubscription<E> implements SimpleSubscription<E> {
                 Jvm.debug().on(getClass(), e);
             }
         }
+    }
+
+    @Override
+    public boolean isClosed() {
+        return closed;
     }
 }
