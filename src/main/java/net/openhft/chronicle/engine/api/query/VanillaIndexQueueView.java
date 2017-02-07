@@ -337,42 +337,33 @@ public class VanillaIndexQueueView<V extends Marshallable>
             if (from > dc.index())
                 return null;
 
+            Class<? extends Marshallable> type = typeToString.toType(eventName);
+            if (type == null)
+                return null;
 
-            for (; ; ) {
+            //final StringBuilder eventName = acquireStringBuilder();
+            @NotNull final ValueIn valueIn = dc.wire().read(eventName);
 
-                dc.wire().consumePadding();
+            if (valueIn instanceof DefaultValueIn)
+                return null;
 
-                if (dc.wire().bytes().readRemaining() == 0)
-                    break;
 
-                final StringBuilder sb = acquireStringBuilder();
-                @NotNull final ValueIn valueIn = dc.wire().read(sb);
-                if (!eventName.contentEquals(sb)) {
-                    valueIn.skipValue();
-                    continue;
-                }
+            @NotNull final V v = (V) VanillaObjectCacheFactory.INSTANCE.get()
+                    .apply(type);
+            valueIn.marshallable(v);
 
-                Class<? extends Marshallable> type = typeToString.toType(sb);
-                if (type == null)
-                    continue;
+            if (!filter.test(v))
+                return null;
 
-                @NotNull final V v = (V) VanillaObjectCacheFactory.INSTANCE.get()
-                        .apply(type);
-                valueIn.marshallable(v);
-
-                if (!filter.test(v))
-                    continue;
-
-                final IndexedValue<V> indexedValue = this.indexedValue.get();
-                long index = dc.index();
-                indexedValue.index(index);
-                indexedValue.v(v);
-                indexedValue.timePublished(System.currentTimeMillis());
-                indexedValue.maxIndex(Math.max(dc.index(), lastIndexRead));
-                return indexedValue;
-            }
+            final IndexedValue<V> indexedValue = this.indexedValue.get();
+            long index = dc.index();
+            indexedValue.index(index);
+            indexedValue.v(v);
+            indexedValue.timePublished(System.currentTimeMillis());
+            indexedValue.maxIndex(Math.max(dc.index(), lastIndexRead));
+            return indexedValue;
         }
-        return null;
+
     }
 
     public void unregisterSubscriber(@NotNull ConsumingSubscriber<IndexedValue<V>> listener) {
