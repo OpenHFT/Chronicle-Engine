@@ -209,37 +209,41 @@ public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
 
     @Override
     protected void onRead(@NotNull DocumentContext dc, @NotNull WireOut outWire) {
-        if (isClosing.get())
-            return;
-
-        onMessageReceivedOrWritten();
-
-        Wire inWire = dc.wire();
-        if (dc.isMetaData()) {
-            if (!readMeta(inWire))
+        try {
+            if (isClosing.get())
                 return;
 
-            SubHandler handler = handler();
-            handler.remoteIdentifier(remoteIdentifier);
-            handler.localIdentifier(localIdentifier);
-            try {
-                handler.onInitialize(outWire);
-            } catch (RejectedExecutionException e) {
-                throw new IllegalStateException("EventGroup shutdown", e);
+            onMessageReceivedOrWritten();
+
+            Wire inWire = dc.wire();
+            if (dc.isMetaData()) {
+                if (!readMeta(inWire))
+                    return;
+
+                SubHandler handler = handler();
+                handler.remoteIdentifier(remoteIdentifier);
+                handler.localIdentifier(localIdentifier);
+                try {
+                    handler.onInitialize(outWire);
+                } catch (RejectedExecutionException e) {
+                    throw new IllegalStateException("EventGroup shutdown", e);
+                }
+                return;
             }
-            return;
+
+            SubHandler handler = handler();
+            if (handler == null)
+                throw new IllegalStateException("handler == null, check that the " +
+                        "Csp/Cid has been sent, failed to " +
+                        "fully " +
+                        "process the following " +
+                        "YAML\n");
+
+            if (dc.isData() && !inWire.bytes().isEmpty())
+                handler.onRead(inWire, outWire);
+        } catch (Throwable e) {
+            Jvm.warn().on(getClass(), "failed to parse:" + dc.wire().readingPeekYaml(), e);
         }
-
-        SubHandler handler = handler();
-        if (handler == null)
-            throw new IllegalStateException("handler == null, check that the " +
-                    "Csp/Cid has been sent, failed to " +
-                    "fully " +
-                    "process the following " +
-                    "YAML\n");
-
-        if (dc.isData() && !inWire.bytes().isEmpty())
-            handler.onRead(inWire, outWire);
     }
 
     @Override
