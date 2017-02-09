@@ -87,7 +87,7 @@ public class RemoteIndexQueueView<K extends Marshallable, V extends Marshallable
                 // this allows us to resubscribe from the last index we received
                 if (hasAlreadySubscribed.getAndSet(true)) {
                     VanillaIndexQuery query = vanillaIndexQuery.deepCopy();
-                    query.fromIndex(fromIndex+1);
+                    query.fromIndex(fromIndex + 1);
                     query.bootstrap(false);
                     q = query;
                 } else
@@ -111,7 +111,7 @@ public class RemoteIndexQueueView<K extends Marshallable, V extends Marshallable
                     if (reply.contentEquals(sb))
                         try {
                             @Nullable final IndexedValue<V> e = valueIn.typedMarshallable();
-                            fromIndex = e.index();
+                            fromIndex = Math.max(fromIndex, e.index());
                             subscriber.onMessage(e);
                         } catch (InvalidSubscriberException e) {
                             RemoteIndexQueueView.this.unregisterSubscriber(subscriber);
