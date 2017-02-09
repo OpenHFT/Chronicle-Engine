@@ -50,8 +50,8 @@
     # pre defended queues
     queue1: !QueueCfg {
       masterId: 1,
-      filePath: "~/my_path",
-      cluster : clusterTwo,
+      basePath: "~/my_path",
+      cluster: clusterTwo,
       topicClass: !type String,
       messageClass: !type String,
       acknowledgment: false,
