@@ -72,6 +72,12 @@ public class SystemHandler extends AbstractHandler implements ClientClosedProvid
             return;
         }
 
+        // added for delta wire to ensure the whole field and value is read, to reduce re-read on close
+        if (!valueIn.isTyped())
+            valueIn.text();
+        else
+            valueIn.skipValue();
+
         wasHeartBeat = true;
 
         //noinspection ConstantConditions

@@ -50,6 +50,7 @@ import net.openhft.chronicle.engine.tree.TopologySubscription;
 import net.openhft.chronicle.network.TcpEventHandler;
 import net.openhft.chronicle.network.cluster.ClusterContext;
 import net.openhft.chronicle.network.cluster.HostIdConnectionStrategy;
+import net.openhft.chronicle.network.cluster.TerminatorHandler;
 import net.openhft.chronicle.wire.QueryWire;
 import net.openhft.chronicle.wire.VanillaWireParser;
 import net.openhft.chronicle.wire.WireParser;
@@ -111,7 +112,10 @@ public class RequestContext implements Cloneable {
         addAlias(QueueCfg.class,
                 WireType.class,
                 Heartbeat.class,
-                Filter.class,MapView.class,QueueView.class);
+                Filter.class,
+                MapView.class,
+                QueueView.class,
+                TerminatorHandler.class);
     }
 
     public static boolean loadDefaultAliases() {

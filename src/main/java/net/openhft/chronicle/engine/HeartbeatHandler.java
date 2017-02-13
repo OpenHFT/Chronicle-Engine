@@ -63,7 +63,7 @@ public class HeartbeatHandler<T extends EngineWireNetworkContext> extends Abstra
     private Timer timer;
 
     @UsedViaReflection
-    protected HeartbeatHandler(@NotNull WireIn w) {
+    public HeartbeatHandler(@NotNull WireIn w) {
         heartbeatTimeoutMs = w.read(() -> "heartbeatTimeoutMs").int64();
         heartbeatIntervalMs = w.read(() -> "heartbeatIntervalMs").int64();
         assert heartbeatTimeoutMs >= 1000 :
