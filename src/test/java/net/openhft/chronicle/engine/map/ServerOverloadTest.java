@@ -25,6 +25,7 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
+import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 import org.junit.rules.TestName;
@@ -70,9 +71,10 @@ public class ServerOverloadTest extends ThreadMonitoringTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
-                new Object[]{false, null},
+               // new Object[]{false, null},
                 new Object[]{true, WireType.BINARY},
-                new Object[]{true, WireType.TEXT}
+                new Object[]{true, WireType.BINARY}
+              //  new Object[]{true, WireType.TEXT}
         );
     }
 
