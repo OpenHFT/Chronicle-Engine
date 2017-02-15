@@ -63,6 +63,7 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
 
         if (registerSubscriber.contentEquals(eventName)) {
             if (tidToListener.containsKey(tid)) {
+                valueIn.skipValue();
                 LOG.info("Duplicate topic registration for tid " + tid);
                 return;
             }
@@ -148,7 +149,7 @@ public class IndexQueueViewHandler<V extends Marshallable> extends AbstractHandl
         }
 
         if (unregisterSubscriber.contentEquals(eventName)) {
-
+            valueIn.skipValue();
             @NotNull VanillaIndexQueueView<V> indexQueueView = contextAsset.acquireView(VanillaIndexQueueView.class);
             ConsumingSubscriber<IndexedValue<V>> listener = tidToListener.remove(inputTid);
 

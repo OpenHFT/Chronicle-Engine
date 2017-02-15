@@ -48,7 +48,9 @@ public final class ObjectKVSubscriptionHandler extends SubscriptionHandler<Subsc
         @NotNull final ValueIn valueIn = inWire.readEventName(eventName);
 
         if (registerTopicSubscriber.contentEquals(eventName)) {
+
             if (tidToListener.containsKey(tid)) {
+                valueIn.skipValue();
                 LOG.info("Duplicate topic registration for tid " + tid);
                 return;
             }

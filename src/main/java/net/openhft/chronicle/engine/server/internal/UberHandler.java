@@ -31,8 +31,6 @@ import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
@@ -49,8 +47,7 @@ import static net.openhft.chronicle.network.cluster.TerminatorHandler.terminatio
  */
 public class UberHandler extends CspTcpHander<EngineWireNetworkContext>
         implements Demarshallable, WriteMarshallable {
-
-    private static final Logger LOG = LoggerFactory.getLogger(UberHandler.class);
+ 
     private final int remoteIdentifier;
     private final int localIdentifier;
     @NotNull
