@@ -101,7 +101,7 @@ class ColumnViewHandler extends AbstractHandler {
                         keysList.clear();
                         @Nullable final List keys = valueIn.object(keysList, List.class);
                         final boolean result = columnView.containsRowWithKey(keys);
-                        outWire.writeEventName(reply).bool(result);=
+                        outWire.writeEventName(reply).bool(result);
                         return;
                     }
 
