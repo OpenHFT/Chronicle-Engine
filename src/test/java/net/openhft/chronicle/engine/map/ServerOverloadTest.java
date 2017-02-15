@@ -25,7 +25,6 @@ import net.openhft.chronicle.engine.tree.VanillaAssetTree;
 import net.openhft.chronicle.network.TCPRegistry;
 import net.openhft.chronicle.network.connection.TcpChannelHub;
 import net.openhft.chronicle.wire.WireType;
-import net.openhft.chronicle.wire.YamlLogging;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 import org.junit.rules.TestName;
@@ -35,6 +34,7 @@ import org.junit.runners.Parameterized;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.TimeoutException;
 
 import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
 import static net.openhft.chronicle.engine.Utils.methodName;
@@ -71,10 +71,9 @@ public class ServerOverloadTest extends ThreadMonitoringTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(
-               // new Object[]{false, null},
+                new Object[]{false, null},
                 new Object[]{true, WireType.BINARY},
-                new Object[]{true, WireType.BINARY}
-              //  new Object[]{true, WireType.TEXT}
+                new Object[]{true, WireType.TEXT}
         );
     }
 
@@ -108,8 +107,8 @@ public class ServerOverloadTest extends ThreadMonitoringTest {
     }
 
     @Test
-    public void testThatSendingAlotOfDataToTheServer() {
-//        YamlLogging.setAll(true);
+    public void testThatSendingAlotOfDataToTheServer() throws TimeoutException {
+      //  YamlLogging.showServerWrites(true);
         map = assetTree.acquireMap("name", String.class, String.class);
 
         //
@@ -121,10 +120,18 @@ public class ServerOverloadTest extends ThreadMonitoringTest {
 
         for (int i = 0; i < SIZE; i++) {
 //            System.out.println("i: " + i);
-    //        Assert.assertEquals(i, map.size());
+            //        Assert.assertEquals(i, map.size());
             map.put("" + i, large2MbString);
         }
         System.out.println("gets here");
+
+        long start = System.currentTimeMillis();
+        while (map.size() < SIZE) {
+            Thread.yield();
+            if (start + 10_000 < System.currentTimeMillis())
+                throw new TimeoutException();
+        }
+
         Assert.assertEquals(SIZE, map.size());
     }
 }

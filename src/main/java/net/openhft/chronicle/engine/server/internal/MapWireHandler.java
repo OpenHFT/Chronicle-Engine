@@ -112,7 +112,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
 
                 outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
 
-                writeData(inWire , out -> {
+                writeData(inWire, out -> {
 
                     if (clear.contentEquals(eventName)) {
                         map.clear();
@@ -146,6 +146,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                     }
 
                     if (size.contentEquals(eventName)) {
+//                        valueIn.skipValue();
                         outWire.writeEventName(reply).int64(map.longSize());
                         return;
                     }
@@ -153,6 +154,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                     if (keySet.contentEquals(eventName) ||
                             values.contentEquals(eventName) ||
                             entrySet.contentEquals(eventName)) {
+   //                     valueIn.skipValue();
                         cspManager.createProxy(eventName.toString());
                         return;
                     }
@@ -266,6 +268,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                     }
 
                     if (hashCode.contentEquals(eventName)) {
+//                        valueIn.skipValue();
                         outWire.writeEventName(reply).int32(map.hashCode());
                         return;
                     }
