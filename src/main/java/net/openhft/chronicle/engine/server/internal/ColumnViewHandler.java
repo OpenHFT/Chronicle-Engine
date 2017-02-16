@@ -60,13 +60,13 @@ class ColumnViewHandler extends AbstractHandler {
             @NotNull final ValueIn valueIn = inWire.readEventName(eventName);
 
             try {
-
+                assert startEnforceInValueReadCheck(inWire);
                 outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
 
                 writeData(inWire, out -> {
 
                     if (columns.contentEquals(eventName)) {
-                        valueIn.skipValue();
+                        skipValue(valueIn);
                         outWire.writeEventName(reply).object(columnView.columns());
                         return;
                     }
@@ -92,7 +92,7 @@ class ColumnViewHandler extends AbstractHandler {
                     }
 
                     if (canDeleteRows.contentEquals(eventName)) {
-                        valueIn.skipValue();
+                        skipValue(valueIn);
                         outWire.writeEventName(reply).bool(columnView.canDeleteRows());
                         return;
                     }
@@ -120,6 +120,8 @@ class ColumnViewHandler extends AbstractHandler {
 
             } catch (Exception e) {
                 Jvm.warn().on(getClass(), e);
+            } finally {
+                assert endEnforceInValueReadCheck(inWire);
             }
 
         }

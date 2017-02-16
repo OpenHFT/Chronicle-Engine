@@ -58,124 +58,133 @@ public class ReferenceHandler<E, T> extends AbstractHandler {
 
             eventName.setLength(0);
             @NotNull final ValueIn valueIn = inWire.readEventName(eventName);
-
-            if (set.contentEquals(eventName)) {
-                view.set((E) valueIn.object(view.getType()));
-                return;
-            }
-
-            if (remove.contentEquals(eventName)) {
-                view.remove();
-                return;
-            }
-
-            if (update2.contentEquals(eventName)) {
-                valueIn.marshallable(wire -> {
-                    @NotNull final Params[] params = update2.params();
-                    @NotNull final SerializableBiFunction<E, T, E> updater = (SerializableBiFunction) wire.read(params[0]).object(Object.class);
-                    @Nullable final Object arg = wire.read(params[1]).object(Object.class);
-                    view.asyncUpdate(updater, (T) arg);
-                });
-                return;
-            }
-
-            if (registerSubscriber.contentEquals(eventName)) {
-
-                final Reference<E> key = view;
-                @NotNull final Subscriber listener = new Subscriber() {
-                    @Override
-                    public void onMessage(final Object message) {
-                        synchronized (publisher) {
-                            publisher.put(key, publish -> {
-                                publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
-                                        (inputTid));
-                                publish.writeNotCompleteDocument(false, wire -> wire.writeEventName(reply)
-                                        .marshallable(m -> m.write(Params.message).object(message)));
-                            });
-                        }
-                    }
-
-                    public void onEndOfSubscription() {
-                        synchronized (publisher) {
-                            if (!publisher.isClosed()) {
-                                publisher.put(null, publish -> {
-                                    publish.writeDocument(true, wire ->
-                                            wire.writeEventName(tid).int64(inputTid));
-                                    publish.writeDocument(false, wire ->
-                                            wire.writeEventName(EventId.onEndOfSubscription).text(""));
-                                });
-                            }
-                        }
-                    }
-                };
-
-                int p = csp.indexOf("bootstrap=");
-                boolean bootstrap = true;
-                if (p != -1) {
-                    char e = csp.charAt(p + 10);
-                    if ('f' == e) bootstrap = false;
-                }
-
-                tidToListener.put(inputTid, listener);
-                view.registerSubscriber(bootstrap, requestContext.throttlePeriodMs(), listener);
-                return;
-            }
-
-            if (unregisterSubscriber.contentEquals(eventName)) {
-                long subscriberTid = valueIn.int64();
-                @NotNull Subscriber<E> listener = (Subscriber) tidToListener.remove(subscriberTid);
-                if (listener == null) {
-                    Jvm.debug().on(getClass(), "No subscriber to present to unregisterSubscriber (" + subscriberTid + ")");
-                    return;
-                }
-                view.unregisterSubscriber(listener);
-                return;
-            }
-
-            outWire.writeDocument(true, wire -> outWire.writeEventName(tid).int64(inputTid));
-
-            writeData(inWire, out -> {
-
-                if (get.contentEquals(eventName)) {
-                    vToWire.accept(outWire.writeEventName(reply), view.get());
+            assert startEnforceInValueReadCheck(inWire);
+            try {
+                if (set.contentEquals(eventName)) {
+                    view.set((E) valueIn.object(view.getType()));
                     return;
                 }
 
-                if (getAndSet.contentEquals(eventName)) {
-                    vToWire.accept(outWire.writeEventName(reply), view.getAndSet((E) valueIn.object(view.getType())));
+                if (remove.contentEquals(eventName)) {
+                    skipValue(valueIn);
+                    view.remove();
                     return;
                 }
 
-                if (getAndRemove.contentEquals(eventName)) {
-                    vToWire.accept(outWire.writeEventName(reply), view.getAndRemove());
-                    return;
-                }
-
-                if (countSubscribers.contentEquals(eventName)) {
-                    outWire.writeEventName(reply).int64(view.subscriberCount());
-                    return;
-                }
-
-                if (update4.contentEquals(eventName)) {
+                if (update2.contentEquals(eventName)) {
                     valueIn.marshallable(wire -> {
-                        @NotNull final Params[] params = update4.params();
-                        @Nullable final SerializableBiFunction updater = (SerializableBiFunction) wire.read(params[0]).object(Object.class);
-                        @Nullable final Object updateArg = wire.read(params[1]).object(Object.class);
-                        @NotNull final SerializableBiFunction returnFunction = (SerializableBiFunction) wire.read(params[2]).object(Object.class);
-                        @Nullable final Object returnArg = wire.read(params[3]).object(Object.class);
-                        outWire.writeEventName(reply).object(view.syncUpdate(updater, updateArg, returnFunction, returnArg));
+                        @NotNull final Params[] params = update2.params();
+                        @NotNull final SerializableBiFunction<E, T, E> updater = (SerializableBiFunction) wire.read(params[0]).object(Object.class);
+                        @Nullable final Object arg = wire.read(params[1]).object(Object.class);
+                        view.asyncUpdate(updater, (T) arg);
                     });
                     return;
                 }
 
-                valueIn.marshallable(wire -> {
-                    @NotNull final Params[] params = applyTo2.params();
-                    @Nullable final SerializableBiFunction function = (SerializableBiFunction) wire.read(params[0]).object(Object.class);
-                    @Nullable final Object arg = wire.read(params[1]).object(Object.class);
-                    outWire.writeEventName(reply).object(view.applyTo(function, arg));
-                });
+                if (registerSubscriber.contentEquals(eventName)) {
+                    skipValue(valueIn);
+                    final Reference<E> key = view;
+                    @NotNull final Subscriber listener = new Subscriber() {
+                        @Override
+                        public void onMessage(final Object message) {
+                            synchronized (publisher) {
+                                publisher.put(key, publish -> {
+                                    publish.writeDocument(true, wire -> wire.writeEventName(tid).int64
+                                            (inputTid));
+                                    publish.writeNotCompleteDocument(false, wire -> wire.writeEventName(reply)
+                                            .marshallable(m -> m.write(Params.message).object(message)));
+                                });
+                            }
+                        }
 
-            });
+                        public void onEndOfSubscription() {
+                            synchronized (publisher) {
+                                if (!publisher.isClosed()) {
+                                    publisher.put(null, publish -> {
+                                        publish.writeDocument(true, wire ->
+                                                wire.writeEventName(tid).int64(inputTid));
+                                        publish.writeDocument(false, wire ->
+                                                wire.writeEventName(EventId.onEndOfSubscription).text(""));
+                                    });
+                                }
+                            }
+                        }
+                    };
+
+                    int p = csp.indexOf("bootstrap=");
+                    boolean bootstrap = true;
+                    if (p != -1) {
+                        char e = csp.charAt(p + 10);
+                        if ('f' == e) bootstrap = false;
+                    }
+
+                    tidToListener.put(inputTid, listener);
+                    view.registerSubscriber(bootstrap, requestContext.throttlePeriodMs(), listener);
+                    return;
+                }
+
+                if (unregisterSubscriber.contentEquals(eventName)) {
+                    long subscriberTid = valueIn.int64();
+                    @NotNull Subscriber<E> listener = (Subscriber) tidToListener.remove(subscriberTid);
+                    if (listener == null) {
+                        Jvm.debug().on(getClass(), "No subscriber to present to unregisterSubscriber (" + subscriberTid + ")");
+                        return;
+                    }
+                    view.unregisterSubscriber(listener);
+                    return;
+                }
+
+                outWire.writeDocument(true, wire -> outWire.writeEventName(tid).int64(inputTid));
+
+                writeData(inWire, out -> {
+
+                    if (get.contentEquals(eventName)) {
+                        skipValue(valueIn);
+                        vToWire.accept(outWire.writeEventName(reply), view.get());
+                        return;
+                    }
+
+                    if (getAndSet.contentEquals(eventName)) {
+                        vToWire.accept(outWire.writeEventName(reply), view.getAndSet((E) valueIn.object(view.getType())));
+                        return;
+                    }
+
+                    if (getAndRemove.contentEquals(eventName)) {
+                        skipValue(valueIn);
+                        vToWire.accept(outWire.writeEventName(reply), view.getAndRemove());
+                        return;
+                    }
+
+                    if (countSubscribers.contentEquals(eventName)) {
+                        skipValue(valueIn);
+                        outWire.writeEventName(reply).int64(view.subscriberCount());
+                        return;
+                    }
+
+                    if (update4.contentEquals(eventName)) {
+                        valueIn.marshallable(wire -> {
+                            @NotNull final Params[] params = update4.params();
+                            @Nullable final SerializableBiFunction updater = (SerializableBiFunction) wire.read(params[0]).object(Object.class);
+                            @Nullable final Object updateArg = wire.read(params[1]).object(Object.class);
+                            @NotNull final SerializableBiFunction returnFunction = (SerializableBiFunction) wire.read(params[2]).object(Object.class);
+                            @Nullable final Object returnArg = wire.read(params[3]).object(Object.class);
+                            outWire.writeEventName(reply).object(view.syncUpdate(updater, updateArg, returnFunction, returnArg));
+                        });
+                        return;
+                    }
+
+
+                    valueIn.marshallable(wire -> {
+                        @NotNull final Params[] params = applyTo2.params();
+                        @Nullable final SerializableBiFunction function = (SerializableBiFunction) wire.read(params[0]).object(Object.class);
+                        @Nullable final Object arg = wire.read(params[1]).object(Object.class);
+                        outWire.writeEventName(reply).object(view.applyTo(function, arg));
+                    });
+
+                });
+            } finally {
+                assert endEnforceInValueReadCheck(inWire);
+            }
         }
     };
 

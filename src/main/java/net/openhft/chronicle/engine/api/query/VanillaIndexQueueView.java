@@ -326,7 +326,7 @@ public class VanillaIndexQueueView<V extends Marshallable>
             throw Jvm.rethrow(new InvalidEventHandlerException("shutdown"));
 
         try (DocumentContext dc = tailer.readingDocument()) {
-
+            try{
             if (!dc.isPresent())
                 return null;
 
@@ -362,6 +362,14 @@ public class VanillaIndexQueueView<V extends Marshallable>
             indexedValue.timePublished(System.currentTimeMillis());
             indexedValue.maxIndex(Math.max(dc.index(), lastIndexRead));
             return indexedValue;
+
+            } finally {
+                // required for delta-wire, as it has to consume all the the fields
+                while(dc.wire().hasMore()){
+                    dc.wire().read().skipValue();
+                }
+            }
+
         }
 
     }

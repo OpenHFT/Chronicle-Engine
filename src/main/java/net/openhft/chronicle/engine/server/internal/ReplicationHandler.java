@@ -56,75 +56,80 @@ public class ReplicationHandler<E> extends AbstractHandler {
     private final BiConsumer<WireIn, Long> dataConsumer = new BiConsumer<WireIn, Long>() {
 
         final ThreadLocal<VanillaReplicatedEntry> vre = ThreadLocal.withInitial(VanillaReplicatedEntry::new);
+
         @Override
         public void accept(@NotNull final WireIn inWire, Long inputTid) {
 
             eventName.setLength(0);
             @NotNull final ValueIn valueIn = inWire.readEventName(eventName);
-
-            // receives replication events
-            if (CoreFields.lastUpdateTime.contentEquals(eventName)) {
-                if (Jvm.isDebug())
-                    LOG.info("server : received lastUpdateTime");
-                final long time = valueIn.int64();
-                final byte id = inWire.read(() -> "id").int8();
-                replication.setLastModificationTime(id, time);
-                return;
-            }
-
-            // receives replication events
-            if (replicationEvent.contentEquals(eventName)) {
-                if (Jvm.isDebug() && LOG.isDebugEnabled())
-                    Jvm.debug().on(getClass(), "server : received replicationEvent");
-                VanillaReplicatedEntry replicatedEntry = vre.get();
-                valueIn.marshallable(replicatedEntry);
-
-                if (Jvm.isDebug() && LOG.isDebugEnabled())
-                    Jvm.debug().on(getClass(), "*****\t\t\t\t ->  RECEIVED : SERVER : replication latency=" + (System
-                            .currentTimeMillis() - replicatedEntry.timestamp()) + "ms  ");
-
-                replication.applyReplication(replicatedEntry);
-                return;
-            }
-
-            assert outWire != null;
-            outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
-
-            if (identifier.contentEquals(eventName))
-                writeData(inWire, out -> outWire.write(identifierReply).int8(hostId.hostId()));
-
-            if (bootstrap.contentEquals(eventName)) {
-                writeData(true, inWire.bytes(), out -> {
-                    if (LOG.isDebugEnabled())
-                        Jvm.debug().on(getClass(), "server : received bootstrap request");
-
-                    // receive bootstrap
-                    @Nullable final Bootstrap inBootstrap = valueIn.typedMarshallable();
-                    if (inBootstrap == null)
-                        return;
-                    final byte id = inBootstrap.identifier();
-
-                    @Nullable final ModificationIterator mi = replication.acquireModificationIterator(id);
-                    if (mi != null)
-                        mi.dirtyEntries(inBootstrap.lastUpdatedTime());
-
-                    // send bootstrap
-                    @NotNull final Bootstrap outBootstrap = new Bootstrap();
-                    outBootstrap.identifier(hostId.hostId());
-                    outBootstrap.lastUpdatedTime(replication.lastModificationTime(id));
-                    outWire.writeEventName(bootstrap).typedMarshallable(outBootstrap);
-
+            assert startEnforceInValueReadCheck(inWire);
+            try {
+                // receives replication events
+                if (CoreFields.lastUpdateTime.contentEquals(eventName)) {
                     if (Jvm.isDebug())
-                        System.out.println("server : received replicationSubscribe");
+                        LOG.info("server : received lastUpdateTime");
+                    final long time = valueIn.int64();
+                    final byte id = inWire.read(() -> "id").int8();
+                    replication.setLastModificationTime(id, time);
+                    return;
+                }
 
-                    // receive bootstrap
-                    if (mi == null)
-                        return;
-                    // sends replication events back to the remote client
-                    mi.setModificationNotifier(eventLoop::unpause);
+                // receives replication events
+                if (replicationEvent.contentEquals(eventName)) {
+                    if (Jvm.isDebug() && LOG.isDebugEnabled())
+                        Jvm.debug().on(getClass(), "server : received replicationEvent");
+                    VanillaReplicatedEntry replicatedEntry = vre.get();
+                    valueIn.marshallable(replicatedEntry);
 
-                    eventLoop.addHandler(true, new ReplicationEventHandler(mi, id, inputTid));
-                });
+                    if (Jvm.isDebug() && LOG.isDebugEnabled())
+                        Jvm.debug().on(getClass(), "*****\t\t\t\t ->  RECEIVED : SERVER : replication latency=" + (System
+                                .currentTimeMillis() - replicatedEntry.timestamp()) + "ms  ");
+
+                    replication.applyReplication(replicatedEntry);
+                    return;
+                }
+
+                assert outWire != null;
+                outWire.writeDocument(true, wire -> outWire.writeEventName(CoreFields.tid).int64(tid));
+
+                if (identifier.contentEquals(eventName))
+                    writeData(inWire, out -> outWire.write(identifierReply).int8(hostId.hostId()));
+
+                if (bootstrap.contentEquals(eventName)) {
+                    writeData(true, inWire.bytes(), out -> {
+                        if (LOG.isDebugEnabled())
+                            Jvm.debug().on(getClass(), "server : received bootstrap request");
+
+                        // receive bootstrap
+                        @Nullable final Bootstrap inBootstrap = valueIn.typedMarshallable();
+                        if (inBootstrap == null)
+                            return;
+                        final byte id = inBootstrap.identifier();
+
+                        @Nullable final ModificationIterator mi = replication.acquireModificationIterator(id);
+                        if (mi != null)
+                            mi.dirtyEntries(inBootstrap.lastUpdatedTime());
+
+                        // send bootstrap
+                        @NotNull final Bootstrap outBootstrap = new Bootstrap();
+                        outBootstrap.identifier(hostId.hostId());
+                        outBootstrap.lastUpdatedTime(replication.lastModificationTime(id));
+                        outWire.writeEventName(bootstrap).typedMarshallable(outBootstrap);
+
+                        if (Jvm.isDebug())
+                            System.out.println("server : received replicationSubscribe");
+
+                        // receive bootstrap
+                        if (mi == null)
+                            return;
+                        // sends replication events back to the remote client
+                        mi.setModificationNotifier(eventLoop::unpause);
+
+                        eventLoop.addHandler(true, new ReplicationEventHandler(mi, id, inputTid));
+                    });
+                }
+            } finally {
+                assert endEnforceInValueReadCheck(inWire);
             }
         }
     };
