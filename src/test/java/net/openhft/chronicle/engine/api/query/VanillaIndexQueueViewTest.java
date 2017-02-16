@@ -72,9 +72,7 @@ public class VanillaIndexQueueViewTest {
             final Client client = new Client(URI, new String[]{"host.port1"}, typesToString);
 
             ArrayBlockingQueue q1 = new ArrayBlockingQueue(1);
-            client.subscribes(CorpBondStaticLoadEvent.class,
-                    "true", FROM_END,
-                    v -> q1.add(v.v()));
+            client.subscribes(CorpBondStaticLoadEvent.class, "true", FROM_END, v -> q1.add(v.v()));
 
             CorpBondStaticLoadEvent take = (CorpBondStaticLoadEvent) q1.poll(5, TimeUnit.SECONDS);
             System.out.println("took=" + take);
