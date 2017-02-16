@@ -51,9 +51,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
     private static final StringBuilderPool SBP = new StringBuilderPool();
     private static final Logger LOG = LoggerFactory.getLogger(MapWireHandler.class);
     private final StringBuilder eventName = new StringBuilder();
-    private final StringBuilder cpsBuff = new StringBuilder();
     private final CspManager cspManager;
-
 
     private BiConsumer<ValueOut, V> vToWire;
     @Nullable
@@ -146,7 +144,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                     }
 
                     if (size.contentEquals(eventName)) {
-//                        valueIn.skipValue();
+                        valueIn.skipValue();
                         outWire.writeEventName(reply).int64(map.longSize());
                         return;
                     }
@@ -154,7 +152,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                     if (keySet.contentEquals(eventName) ||
                             values.contentEquals(eventName) ||
                             entrySet.contentEquals(eventName)) {
-   //                     valueIn.skipValue();
+                        valueIn.skipValue();
                         cspManager.createProxy(eventName.toString());
                         return;
                     }
@@ -268,7 +266,7 @@ public class MapWireHandler<K, V> extends AbstractHandler {
                     }
 
                     if (hashCode.contentEquals(eventName)) {
-//                        valueIn.skipValue();
+                        valueIn.skipValue();
                         outWire.writeEventName(reply).int32(map.hashCode());
                         return;
                     }
