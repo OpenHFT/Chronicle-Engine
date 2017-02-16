@@ -46,10 +46,10 @@ public class EngineInstance {
         }
     }
 
-    public static VanillaAssetTree engineMain(final int hostId, final String name) {
+    public static VanillaAssetTree engineMain(final int hostId, final String yamlConfigFile) {
         try {
 
-            @NotNull TextWire yaml = TextWire.fromFile(name);
+            @NotNull TextWire yaml = TextWire.fromFile(yamlConfigFile);
 
             @NotNull EngineCfg installable = (EngineCfg) yaml.readObject();
 

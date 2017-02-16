@@ -326,48 +326,49 @@ public class VanillaIndexQueueView<V extends Marshallable>
             throw Jvm.rethrow(new InvalidEventHandlerException("shutdown"));
 
         try (DocumentContext dc = tailer.readingDocument()) {
-            try{
-            if (!dc.isPresent())
-                return null;
+            try {
+                if (!dc.isPresent())
+                    return null;
 
-            if (LOG.isDebugEnabled())
-                Jvm.debug().on(getClass(), "processing the following message=" + fromSizePrefixedBlobs(dc));
+                if (LOG.isDebugEnabled())
+                    Jvm.debug().on(getClass(), "processing the following message=" + fromSizePrefixedBlobs(dc));
 
-            // we may have just been restated and have not yet caught up
-            if (from > dc.index())
-                return null;
+                // we may have just been restated and have not yet caught up
+                if (from > dc.index())
+                    return null;
 
-            Class<? extends Marshallable> type = typeToString.toType(eventName);
-            if (type == null)
-                return null;
+                Class<? extends Marshallable> type = typeToString.toType(eventName);
+                if (type == null)
+                    return null;
 
-            //final StringBuilder eventName = acquireStringBuilder();
-            @NotNull final ValueIn valueIn = dc.wire().read(eventName);
+                //final StringBuilder eventName = acquireStringBuilder();
+                @NotNull final ValueIn valueIn = dc.wire().read(eventName);
 
-            if (valueIn instanceof DefaultValueIn)
-                return null;
+                if (valueIn instanceof DefaultValueIn)
+                    return null;
 
 
-            @NotNull final V v = (V) VanillaObjectCacheFactory.INSTANCE.get()
-                    .apply(type);
-            valueIn.marshallable(v);
+                @NotNull final V v = (V) VanillaObjectCacheFactory.INSTANCE.get()
+                        .apply(type);
+                valueIn.marshallable(v);
 
-            if (!filter.test(v))
-                return null;
+                if (!filter.test(v))
+                    return null;
 
-            final IndexedValue<V> indexedValue = this.indexedValue.get();
-            long index = dc.index();
-            indexedValue.index(index);
-            indexedValue.v(v);
-            indexedValue.timePublished(System.currentTimeMillis());
-            indexedValue.maxIndex(Math.max(dc.index(), lastIndexRead));
-            return indexedValue;
+                final IndexedValue<V> indexedValue = this.indexedValue.get();
+                long index = dc.index();
+                indexedValue.index(index);
+                indexedValue.v(v);
+                indexedValue.timePublished(System.currentTimeMillis());
+                indexedValue.maxIndex(Math.max(dc.index(), lastIndexRead));
+                return indexedValue;
 
             } finally {
-                // required for delta-wire, as it has to consume all the the fields
-                while(dc.wire().hasMore()){
-                    dc.wire().read().skipValue();
-                }
+                if (dc.isPresent() )
+                    // required for delta-wire, as it has to consume all the the fields
+                    while (dc.wire().hasMore()) {
+                        dc.wire().read().skipValue();
+                    }
             }
 
         }
