@@ -19,6 +19,7 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.engine.ThreadMonitoringTest;
 import net.openhft.chronicle.engine.api.map.MapEvent;
 import net.openhft.chronicle.engine.api.map.MapView;
@@ -101,6 +102,7 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
 
             methodName(name.getMethodName());
             @NotNull final String hostPort = "SubscriptionEventTest." + name.getMethodName() + ".host.port";
+            TCPRegistry.reset();
             TCPRegistry.createServerSocketChannelFor(hostPort);
             serverEndpoint = new ServerEndpoint(hostPort, serverAssetTree);
 
@@ -113,11 +115,9 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     }
 
     public void preAfter() {
-        assetTree.close();
-        Jvm.pause(100);
-        if (serverEndpoint != null)
-            serverEndpoint.close();
-        serverAssetTree.close();
+        Closeable.closeQuietly(assetTree);
+        Closeable.closeQuietly(serverEndpoint);
+        Closeable.closeQuietly(serverAssetTree);
         closeQuietly(map);
         TcpChannelHub.closeAllHubs();
         TCPRegistry.reset();
@@ -127,9 +127,6 @@ public class SubscriptionEventTest extends ThreadMonitoringTest {
     public void testSubscribeToChangesToTheMap() throws IOException, InterruptedException {
 
         @NotNull final BlockingQueue<MapEvent> eventsQueue = new LinkedBlockingQueue<>();
-
-//        YamlLogging.showServerWrites(true);
-//        YamlLogging.showServerReads(true);
 
         yamlLoggger(() -> {
             try {

@@ -18,6 +18,7 @@
 package net.openhft.chronicle.engine.map;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.onoes.ExceptionKey;
 import net.openhft.chronicle.core.threads.ThreadDump;
 import net.openhft.chronicle.core.util.SerializablePredicate;
@@ -39,7 +40,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
-/
 
 public class ManyMapsTest {
 
@@ -132,6 +132,7 @@ public class ManyMapsTest {
                     Assert.assertFalse(map.values().stream().anyMatch(stringPredicate1));
                 }
             }
+            Closeable.closeQuietly(serverEndpoint);
         }
         TcpChannelHub.closeAllHubs();
 
