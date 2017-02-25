@@ -49,42 +49,43 @@ public class VanillaIndexQueueViewTest {
     public void test() throws InterruptedException, IOException {
         TCPRegistry.reset();
         TCPRegistry.createServerSocketChannelFor("host.port1", "host.port2");
-        final VanillaAssetTree tree = EngineInstance.engineMain(1, "indexView-engine.yaml");
-        ChronicleQueue q = null;
-        try {
-            assert tree != null;
-            final GenericTypesToString typesToString = new GenericTypesToString(EventProcessor.class);
-            tree.root().addView(TypeToString.class, typesToString);
+        try (VanillaAssetTree tree = EngineInstance.engineMain(1, "indexView-engine.yaml")) {
+            ChronicleQueue q = null;
+            try {
+                assert tree != null;
+                final GenericTypesToString typesToString = new GenericTypesToString(EventProcessor.class);
+                tree.root().addView(TypeToString.class, typesToString);
 
-            q = queue(tree, URI);
-            final EventProcessor eventProcessor = new WriterGateway(q);
+                q = queue(tree, URI);
+                final EventProcessor eventProcessor = new WriterGateway(q);
 
-            // The reader event processor, e.g. pricing engine, will tail the input and process events received.
-            // Methods on the event processor will be invoked directly.
+                // The reader event processor, e.g. pricing engine, will tail the input and process events received.
+                // Methods on the event processor will be invoked directly.
 //            q.createTailer().methodReader(new PricingEngine());
 
-            new MockDataGenerator(tree).createMockData(eventProcessor);
-            Thread.sleep(100);
-            tree.acquireAsset(URI).acquireView(IndexQueueView.class);
+                new MockDataGenerator(tree).createMockData(eventProcessor);
+                Thread.sleep(100);
+                tree.acquireAsset(URI).acquireView(IndexQueueView.class);
 
 
-            /// CLIENT
-            final Client client = new Client(URI, new String[]{"host.port1"}, typesToString);
+                /// CLIENT
+                final Client client = new Client(URI, new String[]{"host.port1"}, typesToString);
 
-            ArrayBlockingQueue q1 = new ArrayBlockingQueue(1);
-            client.subscribes(CorpBondStaticLoadEvent.class, "true", FROM_END, v -> q1.add(v.v()));
+                ArrayBlockingQueue q1 = new ArrayBlockingQueue(1);
+                client.subscribes(CorpBondStaticLoadEvent.class, "true", FROM_END, v -> q1.add(v.v()));
 
-            CorpBondStaticLoadEvent take = (CorpBondStaticLoadEvent) q1.poll(5, TimeUnit.SECONDS);
-            System.out.println("took=" + take);
-            Assert.assertEquals(2000.75, take.getMinimumPiece(), 0);
+                CorpBondStaticLoadEvent take = (CorpBondStaticLoadEvent) q1.poll(5, TimeUnit.SECONDS);
+                System.out.println("took=" + take);
+                Assert.assertEquals(2000.75, take.getMinimumPiece(), 0);
 
-        } finally {
-            final File file = q.file();
-            System.out.println(file.getAbsolutePath());
-            tree.close();
-            if (file.isDirectory())
-                IOTools.shallowDeleteDirWithFiles((file));
+            } finally {
+                final File file = q.file();
+                System.out.println(file.getAbsolutePath());
+                tree.close();
+                if (file.isDirectory())
+                    IOTools.shallowDeleteDirWithFiles((file));
 
+            }
         }
     }
 }
